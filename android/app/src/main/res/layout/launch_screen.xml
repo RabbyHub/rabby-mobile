@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary_dark"
+    android:orientation="vertical">
+
+    <!-- https://developer.android.com/reference/android/view/ViewGroup.MarginLayoutParams#attr_android%3alayout_marginBottom -->
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="246sp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_brand_logo"
+        android:translationX="-1sp"
+        android:translationY="-40sp"
+        tools:ignore="ImageContrastCheck" />
+
+</RelativeLayout>
