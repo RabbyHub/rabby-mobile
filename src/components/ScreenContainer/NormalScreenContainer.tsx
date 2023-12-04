@@ -4,7 +4,7 @@ import React from 'react';
 import {View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-export default function RootScreenContainer({
+export default function NormalScreenContainer({
   children,
   style,
   fitStatuBar,
@@ -22,8 +22,8 @@ export default function RootScreenContainer({
         fitStatuBar && {marginTop: -1},
         {
           paddingTop: top + ScreenLayouts.headerAreaHeight,
-          paddingBottom: ScreenLayouts.bottomBarHeight,
           flexDirection: 'column',
+          width: '100%',
           height: '100%',
         },
       ]}>

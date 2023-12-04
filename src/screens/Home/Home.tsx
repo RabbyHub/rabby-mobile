@@ -4,12 +4,7 @@
  *
  * @format
  */
-import {RcIconHeaderSettings, RcIconSignatureRecord} from '@/assets/icons/home';
-import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import {ScreenLayouts} from '@/constant/layout';
-import {useThemeColors} from '@/hooks/theme';
 import React from 'react';
-import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -19,19 +14,22 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import {RootNames, ScreenColors} from '@/constant/layout';
 
-import {
-  Colors,
-  DebugInstructions,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+import TouchableView from '@/components/Touchable/TouchableView';
 
-type SectionProps = PropsWithChildren<{
+import HeaderArea from './HeaderArea';
+import {useNavigation} from '@react-navigation/native';
+import {useThemeColors} from '@/hooks/theme';
+
+function Section({
+  children,
+  title,
+}: React.PropsWithChildren<{
   title: string;
-}>;
-
-function Section({children, title}: SectionProps): JSX.Element {
+}>): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
@@ -58,57 +56,10 @@ function Section({children, title}: SectionProps): JSX.Element {
   );
 }
 
-function HeaderArea() {
+function AssetsSummary() {
+  const navigation = useNavigation();
   const colors = useThemeColors();
 
-  return (
-    <View
-      style={{
-        height: 44,
-        paddingLeft: 20,
-        paddingRight: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }}>
-      <View
-        style={{
-          // width: 255,
-          width: '100%',
-          flexShrink: 1,
-          padding: 8,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 6,
-          backgroundColor: 'rgba(255, 255, 255, 0.10)',
-        }}>
-        <Text
-          style={{
-            color: colors['neutral-title-2'],
-            fontFamily: 'SF Pro',
-            fontSize: 16,
-            fontStyle: 'normal',
-            fontWeight: '500',
-          }}>
-          Left Account Switcher
-        </Text>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingLeft: 38,
-          flexShrink: 0,
-        }}>
-        <RcIconSignatureRecord />
-        <RcIconHeaderSettings style={{marginLeft: 16}} />
-      </View>
-    </View>
-  );
-}
-
-function AssetsSummary() {
   return (
     <View
       style={{
@@ -118,13 +69,37 @@ function AssetsSummary() {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-      <Text
+      <View
         style={{
-          fontSize: 18,
-          color: 'white',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
         }}>
-        This is Assets Summary
-      </Text>
+        <Text
+          style={{
+            fontSize: 18,
+            lineHeight: 18,
+            color: 'white',
+          }}>
+          This is Assets Summary, Go to{' '}
+          <TouchableView
+            onPress={() => {
+              navigation.push(RootNames.AccountTransaction, {
+                screen: RootNames.MyBundle,
+                params: {},
+              });
+            }}>
+            <Text
+              style={{
+                color: colors['blue-default'],
+                fontSize: 18,
+                lineHeight: 18,
+              }}>
+              My Bundle
+            </Text>
+          </TouchableView>
+        </Text>
+      </View>
     </View>
   );
 }
@@ -162,30 +137,30 @@ function AssetsScrollList() {
 }
 
 function HomeScreen(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const navigation = useNavigation();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  React.useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <HomeScreen.HeaderArea />,
+    });
+  }, [navigation]);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <RootScreenContainer>
-        <View
-          style={{
-            backgroundColor: '#434EB9',
-            width: '100%',
-            height: 280,
-            flexShrink: 0,
-          }}>
-          <HeaderArea />
-          <AssetsSummary />
-        </View>
-        <AssetsScrollList />
-      </RootScreenContainer>
-    </SafeAreaView>
+    <RootScreenContainer style={{backgroundColor: ScreenColors.homeHeaderBlue}}>
+      <View
+        style={{
+          width: '100%',
+          height: 280,
+          flexShrink: 0,
+        }}>
+        <AssetsSummary />
+      </View>
+      <AssetsScrollList />
+    </RootScreenContainer>
   );
 }
+
+HomeScreen.HeaderArea = HeaderArea;
 
 const styles = StyleSheet.create({
   sectionContainer: {

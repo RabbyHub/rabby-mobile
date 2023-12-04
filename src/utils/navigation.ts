@@ -1,9 +1,19 @@
 import {createNavigationContainerRef} from '@react-navigation/native';
+import {atom, useAtomValue, useSetAtom} from 'jotai';
 
 export const navigationRef =
   createNavigationContainerRef<
     Record<string, Record<string, string | object> | undefined>
   >();
+
+const currentRouteNameAtom = atom<string | undefined>(undefined);
+export function useCurrentRouteNameInAppStatusBar() {
+  return useAtomValue(currentRouteNameAtom);
+}
+
+export function useSetCurrentRouteName() {
+  return useSetAtom(currentRouteNameAtom);
+}
 
 /**
  * navigate in pure function
