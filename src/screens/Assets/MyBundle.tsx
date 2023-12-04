@@ -1,7 +1,7 @@
 import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import {StyleSheet, View, Text} from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 
 function MyBundleScreen(): JSX.Element {
   return (

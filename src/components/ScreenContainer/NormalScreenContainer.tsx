@@ -1,8 +1,8 @@
-import {ScreenLayouts} from '@/constant/layout';
+import { ScreenLayouts } from '@/constant/layout';
 import React from 'react';
 
-import {View} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NormalScreenContainer({
   children,
@@ -13,13 +13,13 @@ export default function NormalScreenContainer({
   style?: React.ComponentProps<typeof View>['style'];
   hideBottomBar?: boolean;
 }>) {
-  const {top} = useSafeAreaInsets();
+  const { top } = useSafeAreaInsets();
 
   return (
     <View
       style={[
         style,
-        fitStatuBar && {marginTop: -1},
+        fitStatuBar && { marginTop: -1 },
         {
           paddingTop: top + ScreenLayouts.headerAreaHeight,
           flexDirection: 'column',

@@ -1,5 +1,5 @@
-import {createNavigationContainerRef} from '@react-navigation/native';
-import {atom, useAtomValue, useSetAtom} from 'jotai';
+import { createNavigationContainerRef } from '@react-navigation/native';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 export const navigationRef =
   createNavigationContainerRef<
@@ -44,7 +44,7 @@ export const redirectBackErrorHandler = (
           name: 'Root',
           state: {
             index: 0,
-            routes: [{name: defaultRouteName}],
+            routes: [{ name: defaultRouteName }],
           },
         },
       ],

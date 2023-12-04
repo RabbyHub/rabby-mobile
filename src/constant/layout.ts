@@ -1,4 +1,4 @@
-import {NativeStackNavigationOptions} from '@react-navigation/native-stack';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export const ScreenLayouts = {
   headerAreaHeight: 44,

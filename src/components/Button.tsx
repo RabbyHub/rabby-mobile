@@ -1,5 +1,5 @@
 // https://github.com/react-native-elements/react-native-elements/blob/9e26230cdfb90f22b26dc8b7362ef5ac5d5a9f81/packages/base/src/Button/Button.tsx
-import React, {useCallback, useEffect, useMemo, ReactNode} from 'react';
+import React, { useCallback, useEffect, useMemo, ReactNode } from 'react';
 import {
   ActivityIndicator,
   ActivityIndicatorProps,
@@ -15,10 +15,10 @@ import {
   ViewStyle,
   TextProps,
 } from 'react-native';
-import {colord} from 'colord';
+import { colord } from 'colord';
 
-import {useThemeColors, useColorScheme} from '@/hooks/theme';
-import {renderText} from '@/utils/renderNode';
+import { useThemeColors, useColorScheme } from '@/hooks/theme';
+import { renderText } from '@/utils/renderNode';
 
 export type ButtonProps = TouchableOpacityProps &
   TouchableNativeFeedbackProps & {
@@ -106,7 +106,7 @@ export const Button = ({
 
   const titleStyle: StyleProp<TextStyle> = useMemo(() => {
     return StyleSheet.flatten([
-      {color: currentColor},
+      { color: currentColor },
       styles.title,
       passedTitleStyle,
       disabled &&
@@ -226,7 +226,7 @@ export const Button = ({
 };
 
 export const PrimaryButton = (props: ButtonProps) => {
-  const {buttonStyle, containerStyle, titleStyle, ...rest} = props;
+  const { buttonStyle, containerStyle, titleStyle, ...rest } = props;
   return (
     <Button
       {...rest}

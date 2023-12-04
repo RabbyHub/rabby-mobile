@@ -1,8 +1,8 @@
 // https://github.com/mrousavy/react-native-mmkv/blob/master/docs/WRAPPER_JOTAI.md
 // AsyncStorage 有 bug，会闪白屏
 
-import {atomWithStorage, createJSONStorage} from 'jotai/utils';
-import {MMKV} from 'react-native-mmkv';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
+import { MMKV } from 'react-native-mmkv';
 
 const storage = new MMKV();
 

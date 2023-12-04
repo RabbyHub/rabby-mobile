@@ -5,15 +5,15 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {createCustomNativeStackNavigator as createNativeStackNavigator} from '@/utils/CustomNativeStackNavigator';
-import {colord} from 'colord';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { colord } from 'colord';
 
-import {WelcomeImage} from '@/assets/icons/common';
-import {ThemeColors} from '@/constant/theme';
-import {Button, Text, FocusAwareStatusBar} from '@/components';
-import {useThemeColors, useColorScheme} from '@/hooks/theme';
-import {useStackScreenConfig} from '@/hooks/navigation';
+import { WelcomeImage } from '@/assets/icons/common';
+import { ThemeColors } from '@/constant/theme';
+import { Button, Text, FocusAwareStatusBar } from '@/components';
+import { useThemeColors, useColorScheme } from '@/hooks/theme';
+import { useStackScreenConfig } from '@/hooks/navigation';
 
 const LoginStack = createNativeStackNavigator();
 
@@ -31,13 +31,13 @@ export default () => {
       <LoginStack.Screen
         name="Welcome"
         component={WelcomeScreen}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
     </LoginStack.Navigator>
   );
 };
 
-const WelcomeScreen = ({navigation}: NativeStackScreenProps<any>) => {
+const WelcomeScreen = ({ navigation }: NativeStackScreenProps<any>) => {
   const styles = getStyle();
 
   return (

@@ -1,4 +1,4 @@
-import {coerceNumber} from './coerce';
+import { coerceNumber } from './coerce';
 
 export const abbreviateNumber = (num: any, fixed = 1) => {
   if (num === null) {
@@ -170,11 +170,11 @@ export const formatNetworth = (num?: number, trimFractionZero = false) => {
 
   // >1b || <1m
   if (num > 1000000000 || num < 1000000) {
-    return formatNum(num, 2, {prefix: '$', floor: 0.01, trimFractionZero});
+    return formatNum(num, 2, { prefix: '$', floor: 0.01, trimFractionZero });
   }
 
   // 1m
-  return formatNum(num, 0, {prefix: '$', trimFractionZero});
+  return formatNum(num, 0, { prefix: '$', trimFractionZero });
 };
 
 export const formatPrice = (num?: number) => {
@@ -184,7 +184,7 @@ export const formatPrice = (num?: number) => {
 
   // >1
   if (num >= 1) {
-    return formatNum(num, 2, {prefix: '$', trimFractionZero: false});
+    return formatNum(num, 2, { prefix: '$', trimFractionZero: false });
   }
 
   const preNum = num.toPrecision(4);
@@ -226,15 +226,15 @@ export const formatAmount = (num?: number, keepPostiveSign?: boolean) => {
   // >= 1
   // >1b || <10k
   if (absNum > 1000000000 || absNum < 10000) {
-    return formatNum(num, 4, {trimFractionZero: false, keepPostiveSign});
+    return formatNum(num, 4, { trimFractionZero: false, keepPostiveSign });
   }
 
   // <1m
   if (absNum < 1000000) {
-    return formatNum(num, 2, {trimFractionZero: false, keepPostiveSign});
+    return formatNum(num, 2, { trimFractionZero: false, keepPostiveSign });
   }
 
-  return formatNum(num, 0, {trimFractionZero: false, keepPostiveSign});
+  return formatNum(num, 0, { trimFractionZero: false, keepPostiveSign });
 };
 
 // <- assets

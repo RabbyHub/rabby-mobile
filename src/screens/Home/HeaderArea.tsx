@@ -1,9 +1,9 @@
 import React from 'react';
-import {Text, View} from 'react-native';
-import {RcIconHeaderSettings, RcIconHistory} from '@/assets/icons/home';
-import {RootNames, ScreenColors, ScreenLayouts} from '@/constant/layout';
-import {useThemeColors} from '@/hooks/theme';
-import {useNavigation} from '@react-navigation/native';
+import { Text, View } from 'react-native';
+import { RcIconHeaderSettings, RcIconHistory } from '@/assets/icons/home';
+import { RootNames, ScreenColors, ScreenLayouts } from '@/constant/layout';
+import { useThemeColors } from '@/hooks/theme';
+import { useNavigation } from '@react-navigation/native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 
@@ -93,7 +93,7 @@ export default function HomeHeaderArea() {
             <RcIconHistory />
           </TouchableView>
           <RcIconHeaderSettings
-            style={{marginLeft: 16}}
+            style={{ marginLeft: 16 }}
             onPress={() => handlePressIcon('settings')}
           />
         </View>

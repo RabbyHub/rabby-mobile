@@ -1,11 +1,11 @@
-import {useMemo} from 'react';
-import {StyleSheet, View} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import {Icon404} from '@/assets/icons/404';
-import {Text} from '@/components';
-import {useThemeColors} from '@/hooks/theme';
-import {Colors} from '@/constant/theme';
+import { Icon404 } from '@/assets/icons/404';
+import { Text } from '@/components';
+import { useThemeColors } from '@/hooks/theme';
+import { Colors } from '@/constant/theme';
 
 export default function NotFoundScreen({
   navigation,

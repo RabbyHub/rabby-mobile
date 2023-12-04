@@ -5,13 +5,13 @@
  * @format
  */
 
-import React, {Suspense, useEffect} from 'react';
-import {StyleSheet} from 'react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import React, { Suspense, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {useColorScheme} from '@/hooks/theme';
+import { useColorScheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 

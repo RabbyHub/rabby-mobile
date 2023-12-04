@@ -1,1 +1,1 @@
-export {default as WelcomeImage} from './welcomebg.png';
+export { default as WelcomeImage } from './welcomebg.png';

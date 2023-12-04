@@ -1,8 +1,8 @@
-import {default as RcIconNavigationHomeLightCC} from './nav-home-light-cc.svg';
-import {default as RcIconNavigationDappsLightCC} from './nav-dapps-light-cc.svg';
+import { default as RcIconNavigationHomeLightCC } from './nav-home-light-cc.svg';
+import { default as RcIconNavigationDappsLightCC } from './nav-dapps-light-cc.svg';
 
-import {makeActiveIconByCC} from '@/hooks/makeThemeIcon';
-import {ThemeColors} from '@/constant/theme';
+import { makeActiveIconByCC } from '@/hooks/makeThemeIcon';
+import { ThemeColors } from '@/constant/theme';
 
 export const RcIconNavigationHomeLight = makeActiveIconByCC(
   RcIconNavigationHomeLightCC,

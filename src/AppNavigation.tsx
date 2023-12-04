@@ -1,31 +1,31 @@
-import {ColorSchemeName, StyleSheet, View, StatusBar} from 'react-native';
-import {isValidElementType} from 'react-is';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { ColorSchemeName, StyleSheet, View, StatusBar } from 'react-native';
+import { isValidElementType } from 'react-is';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
 } from '@react-navigation/native';
-import {createCustomNativeStackNavigator as createNativeStackNavigator} from '@/utils/CustomNativeStackNavigator';
-import {useEffect, useRef, useCallback, useMemo} from 'react';
+import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 // import FastImage from 'react-native-fast-image';
-import {Colors} from '@/constant/theme';
+import { Colors } from '@/constant/theme';
 
 import {
   RcIconNavigationHomeLight,
   RcIconNavigationDappsLight,
 } from '@/assets/icons/bottom-bar';
 
-import {useThemeColors, useColorScheme} from '@/hooks/theme';
+import { useThemeColors, useColorScheme } from '@/hooks/theme';
 
 import {
   navigationRef,
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
 } from '@/utils/navigation';
-import {useStackScreenConfig} from './hooks/navigation';
-import {Text} from './components';
+import { useStackScreenConfig } from './hooks/navigation';
+import { Text } from './components';
 import {
   AppRootName,
   NavigationHeadersPresets,
@@ -36,7 +36,7 @@ import {
 } from './constant/layout';
 // import {analytics} from './utils/analytics';
 
-import {WelcomeScreen} from './screens';
+import { WelcomeScreen } from './screens';
 import NotFoundScreen from './screens/NotFound';
 
 import HomeScreen from './screens/Home/Home';
@@ -53,7 +53,7 @@ const AccountStack = createNativeStackNavigator();
 const TransactionStack = createNativeStackNavigator();
 const SettingsStack = createNativeStackNavigator();
 
-const RootOptions = {animation: 'none'} as const;
+const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
   animation: 'slide_from_right',
   headerShown: false,
@@ -107,7 +107,7 @@ function AppStatusBar() {
   const isLight = useColorScheme() === 'light';
   const colors = useThemeColors();
 
-  const {statusBarBackgroundColor, statusBarStyle} = useMemo(() => {
+  const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
     const specConfig = currentRouteName
       ? RootSpecConfig[currentRouteName as any as AppRootName]
       : undefined;
@@ -180,7 +180,7 @@ export default function AppNavigation({
   }, [setCurrentRouteName]);
 
   return (
-    <View style={{flex: 1, backgroundColor: colors['neutral-bg-2']}}>
+    <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar />
       <NavigationContainer
         ref={navigationRef}
@@ -241,7 +241,7 @@ const BottomTabNavigator = () => {
   return (
     <>
       <BottomTab.Navigator
-        sceneContainerStyle={{backgroundColor: colors['neutral-bg-1']}}
+        sceneContainerStyle={{ backgroundColor: colors['neutral-bg-1'] }}
         screenOptions={{
           tabBarInactiveTintColor: isDark
             ? 'rgba(223, 223, 223, 0.4)'
@@ -266,7 +266,7 @@ const BottomTabNavigator = () => {
             borderTopWidth: 1,
             backgroundColor: colors['neutral-bg-1'],
           },
-          tabBarLabelStyle: {...tabBarLabelStyle},
+          tabBarLabelStyle: { ...tabBarLabelStyle },
           tabBarLabelPosition: 'below-icon',
           tabBarItemStyle: {
             height: ScreenLayouts.bottomBarHeight,
@@ -282,10 +282,10 @@ const BottomTabNavigator = () => {
             title: 'Home',
             headerTitle: '',
             headerShown: true,
-            tabBarLabel: ({focused}) => (
+            tabBarLabel: ({ focused }) => (
               <BottomTabLabel focused={focused} label={'Home'} />
             ),
-            tabBarIcon: ({color, focused}) => (
+            tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
                 icon={<RcIconNavigationHomeLight isActive={focused} />}
               />
@@ -304,10 +304,10 @@ const BottomTabNavigator = () => {
             headerTitle: 'Dapps',
             headerTransparent: true,
             headerShown: true,
-            tabBarLabel: ({focused}) => (
+            tabBarLabel: ({ focused }) => (
               <BottomTabLabel focused={focused} label={'Dapps'} />
             ),
-            tabBarIcon: ({color, focused}) => (
+            tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
                 icon={<RcIconNavigationDappsLight isActive={focused} />}
               />

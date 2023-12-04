@@ -1,7 +1,10 @@
-import {ColorSchemeName, useColorScheme as useColorSchemeO} from 'react-native';
+import {
+  ColorSchemeName,
+  useColorScheme as useColorSchemeO,
+} from 'react-native';
 
-import {ThemeColors, Colors} from '@/constant/theme';
-import {useGetTheme} from '@/state/theme';
+import { ThemeColors, Colors } from '@/constant/theme';
+import { useGetTheme } from '@/state/theme';
 
 // The useColorScheme value is always either light or dark, but the built-in
 // type suggests that it can be null. This will not happen in practice, so this

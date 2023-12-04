@@ -1,7 +1,7 @@
 // fork from https://github.com/omerman/jotai-nexus
-import {useEffect} from 'react';
-import {Getter, Setter, Atom, WritableAtom} from 'jotai';
-import {useAtomCallback} from 'jotai/utils';
+import { useEffect } from 'react';
+import { Getter, Setter, Atom, WritableAtom } from 'jotai';
+import { useAtomCallback } from 'jotai/utils';
 let _get!: Getter;
 let _set!: Setter;
 

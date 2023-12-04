@@ -15,14 +15,14 @@ import {
   View,
 } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import {RootNames, ScreenColors} from '@/constant/layout';
+import { RootNames, ScreenColors } from '@/constant/layout';
 
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import TouchableView from '@/components/Touchable/TouchableView';
 
 import HeaderArea from './HeaderArea';
-import {useNavigation} from '@react-navigation/native';
-import {useThemeColors} from '@/hooks/theme';
+import { useNavigation } from '@react-navigation/native';
+import { useThemeColors } from '@/hooks/theme';
 
 function Section({
   children,
@@ -146,7 +146,8 @@ function HomeScreen(): JSX.Element {
   }, [navigation]);
 
   return (
-    <RootScreenContainer style={{backgroundColor: ScreenColors.homeHeaderBlue}}>
+    <RootScreenContainer
+      style={{ backgroundColor: ScreenColors.homeHeaderBlue }}>
       <View
         style={{
           width: '100%',

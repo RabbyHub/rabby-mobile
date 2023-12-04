@@ -1,5 +1,5 @@
-import {useCallback, useRef} from 'react';
-import {TouchableOpacity, TouchableOpacityProps} from 'react-native';
+import { useCallback, useRef } from 'react';
+import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
 
 const DefaultOpacity = 0.8;
 
@@ -12,7 +12,7 @@ export const CustomTouchableOpacity = ({
   onPressOut: _onPressOut,
   ...rest
 }: TouchableOpacityProps) => {
-  const pressInPagePointRef = useRef({x: 0, y: 0});
+  const pressInPagePointRef = useRef({ x: 0, y: 0 });
 
   const handlePressIn = useCallback(
     (e: any) => {

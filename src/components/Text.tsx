@@ -1,6 +1,6 @@
-import React, {useMemo} from 'react';
-import {Text as RNText, TextProps, Platform, TextStyle} from 'react-native';
-import {moderateScale} from 'react-native-size-matters';
+import React, { useMemo } from 'react';
+import { Text as RNText, TextProps, Platform, TextStyle } from 'react-native';
+import { moderateScale } from 'react-native-size-matters';
 
 // https://github.com/react-native-elements/react-native-elements/blob/1709780f72a42b2a5d656976f2034a75a78a1796/packages/base/src/helpers/normalizeText.tsx
 function normalize(number: number, factor = 0.25) {
@@ -31,15 +31,15 @@ const defaultFontFamily = {
   ...Platform.select({
     // https://github.com/huyang2229/Blog/issues/23
     // android: { fontFamily: 'SF Pro' },
-    android: {fontFamily: 'Roboto'},
-    ios: {fontFamily: 'System'},
+    android: { fontFamily: 'Roboto' },
+    ios: { fontFamily: 'System' },
   }),
 };
 
 const RobotoLackWeights = ['200', '600', '800'];
 
 export const Text = React.forwardRef(
-  ({style, ...rest}: TextProps, ref: React.LegacyRef<RNText>) => {
+  ({ style, ...rest }: TextProps, ref: React.LegacyRef<RNText>) => {
     const _fontSize = useMemo(
       () => normalize((style as TextStyle)?.fontSize || 14),
       [style],

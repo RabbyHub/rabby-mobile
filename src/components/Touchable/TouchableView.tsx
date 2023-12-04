@@ -28,7 +28,7 @@ export default class TouchableView extends React.Component<Props> {
   };
 
   render() {
-    const {style, pressOpacity, pressColor, borderless, children, ...rest} =
+    const { style, pressOpacity, pressColor, borderless, children, ...rest } =
       this.props;
 
     return (

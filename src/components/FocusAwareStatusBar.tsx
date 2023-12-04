@@ -1,7 +1,7 @@
-import {useIsFocused} from '@react-navigation/native';
-import {StatusBar, StatusBarProps} from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { StatusBar, StatusBarProps } from 'react-native';
 
-import {useThemeColors, useColorScheme} from '@/hooks/theme';
+import { useThemeColors, useColorScheme } from '@/hooks/theme';
 
 export const FocusAwareStatusBar = (props: StatusBarProps) => {
   const isFocused = useIsFocused();

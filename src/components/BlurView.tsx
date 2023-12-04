@@ -1,6 +1,6 @@
-import {forwardRef, LegacyRef} from 'react';
-import {Platform, View} from 'react-native';
-import {useColorScheme} from '@/hooks/theme';
+import { forwardRef, LegacyRef } from 'react';
+import { Platform, View } from 'react-native';
+import { useColorScheme } from '@/hooks/theme';
 import {
   BlurView as OriginBlurView,
   BlurViewProps,
@@ -16,7 +16,7 @@ export const BlurView = forwardRef(
     },
     ref: LegacyRef<typeof OriginBlurView>,
   ) => {
-    const {blurAmount = 80, blurRadius = 30, ...otherProps} = props;
+    const { blurAmount = 80, blurRadius = 30, ...otherProps } = props;
     const theme = useColorScheme();
     return (
       <Component

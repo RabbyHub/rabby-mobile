@@ -1,6 +1,6 @@
 import React from 'react';
-import {StyleProp, StyleSheet} from 'react-native';
-import {Text} from '@/components';
+import { StyleProp, StyleSheet } from 'react-native';
+import { Text } from '@/components';
 
 /**
  *

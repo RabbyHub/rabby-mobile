@@ -1,7 +1,7 @@
 import React from 'react';
 
-import {Text, StyleSheet} from 'react-native';
-import {useThemeColors} from '@/hooks/theme';
+import { Text, StyleSheet } from 'react-native';
+import { useThemeColors } from '@/hooks/theme';
 
 export default function HeaderTitleText({
   style,

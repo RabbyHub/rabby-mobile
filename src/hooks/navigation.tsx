@@ -1,14 +1,14 @@
-import {useCallback} from 'react';
-import {StyleSheet} from 'react-native';
-import {NativeStackNavigationOptions} from '@react-navigation/native-stack';
-import {useThemeColors} from '@/hooks/theme';
-import {navigationRef} from '@/utils/navigation';
-import {CustomTouchableOpacity} from '@/components/CustomTouchableOpacity';
+import { useCallback } from 'react';
+import { StyleSheet } from 'react-native';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { useThemeColors } from '@/hooks/theme';
+import { navigationRef } from '@/utils/navigation';
+import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
-import {default as RcIconHeaderBack} from '@/assets/icons/header/back-cc.svg';
-import {makeThemeIconByCC} from '@/hooks/makeThemeIcon';
-import {ThemeColors} from '@/constant/theme';
-import {NavigationHeadersPresets} from '@/constant/layout';
+import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
+import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
+import { ThemeColors } from '@/constant/theme';
+import { NavigationHeadersPresets } from '@/constant/layout';
 
 const IconBack = makeThemeIconByCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-body'],
@@ -32,7 +32,7 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
     } else {
       navigationRef.resetRoot({
         index: 0,
-        routes: [{name: 'Root'}],
+        routes: [{ name: 'Root' }],
       });
     }
   }, []);
@@ -44,7 +44,7 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
     },
     ...NavigationHeadersPresets.onlyTitle,
     headerTintColor: colors['neutral-bg-1'],
-    headerLeft: ({tintColor}) => (
+    headerLeft: ({ tintColor }) => (
       <CustomTouchableOpacity
         style={styles.backButtonStyle}
         hitSlop={hitSlop}

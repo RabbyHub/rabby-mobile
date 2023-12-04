@@ -9,7 +9,7 @@ import {
   StackRouterOptions,
   useNavigationBuilder,
 } from '@react-navigation/native';
-import {NativeStackView} from '@react-navigation/native-stack';
+import { NativeStackView } from '@react-navigation/native-stack';
 import type {
   NativeStackNavigationEventMap,
   NativeStackNavigationOptions,
@@ -17,7 +17,7 @@ import type {
 } from '@react-navigation/native-stack/lib/typescript/src/types';
 import * as React from 'react';
 
-import {CustomStackRouter} from './CustomStackRouter';
+import { CustomStackRouter } from './CustomStackRouter';
 
 function NativeStackNavigator({
   initialRouteName,
@@ -26,7 +26,7 @@ function NativeStackNavigator({
   screenOptions,
   ...rest
 }: NativeStackNavigatorProps) {
-  const {state, descriptors, navigation, NavigationContent} =
+  const { state, descriptors, navigation, NavigationContent } =
     useNavigationBuilder<
       StackNavigationState<ParamListBase>,
       StackRouterOptions,

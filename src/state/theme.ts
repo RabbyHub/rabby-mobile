@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useAtomValue, useSetAtom} from 'jotai';
-import {atomWithStorage, createJSONStorage} from 'jotai/utils';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 
 type Theme = 'light' | 'dark' | 'system';
 

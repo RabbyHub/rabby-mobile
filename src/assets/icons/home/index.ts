@@ -1,7 +1,7 @@
-import {default as RcIconHeaderSettingsCC} from './header-settings-cc.svg';
-import {default as RcIconHistoryCC} from './header-history-cc.svg';
+import { default as RcIconHeaderSettingsCC } from './header-settings-cc.svg';
+import { default as RcIconHistoryCC } from './header-history-cc.svg';
 
-import {makeThemeIconByCC} from '@/hooks/makeThemeIcon';
+import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
 
 export const RcIconHeaderSettings = makeThemeIconByCC(RcIconHeaderSettingsCC, {
   onLight: 'white',

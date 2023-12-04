@@ -1,10 +1,10 @@
 import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import {StyleSheet, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import {useThemeColors} from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
