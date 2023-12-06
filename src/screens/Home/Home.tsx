@@ -4,11 +4,10 @@
  *
  * @format
  */
-import React from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  SafeAreaView,
+  Button,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   useColorScheme,
@@ -23,6 +22,19 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeColors } from '@/hooks/theme';
+import { useValidWalletServices } from '@/hooks/walletconnect';
+import WalletConnect from '@walletconnect/client';
+import { openWallet } from '@/utils/walletconnect';
+
+const defaultParams = {
+  bridge: 'https://derelay.rabby.io',
+  clientMeta: {
+    description: 'Connect with WalletConnect',
+    url: 'https://debank.com',
+    icons: ['https://debank.com/square.png'],
+    name: 'Rabby Wallet',
+  },
+};
 
 function Section({
   children,
@@ -138,12 +150,64 @@ function AssetsScrollList() {
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
-
+  const { isLoading, validServices } = useValidWalletServices();
   React.useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HomeScreen.HeaderArea />,
     });
   }, [navigation]);
+
+  const [state, setState] = useState<{ uri?: string; cb?: unknown }>({});
+
+  const open = useCallback(
+    async (uri: string, cb: unknown): Promise<unknown> => {
+      // console.log('open');
+      setState({
+        uri,
+        cb,
+      });
+      return undefined;
+    },
+    [setState],
+  );
+
+  const close = useCallback((): unknown => {
+    setState(currentState => {
+      // console.log('close');
+      const { cb } = currentState;
+      setTimeout(() => typeof cb === 'function' && cb(), 0);
+      return {
+        uri: undefined,
+        cb: undefined,
+      };
+    });
+    return undefined;
+  }, [setState]);
+
+  const qrcodeModal = useMemo(
+    () => ({
+      open,
+      close,
+    }),
+    [open, close],
+  );
+
+  const connect = async () => {
+    const wallet = validServices.find(
+      item => item.name.toLowerCase() === 'metamask',
+    );
+    if (wallet) {
+      const connector = new WalletConnect({
+        qrcodeModal,
+        ...defaultParams,
+      });
+      await connector.createSession();
+      console.log('uri', connector.uri);
+      openWallet(wallet, connector.uri);
+    } else {
+      console.log('no wallet');
+    }
+  };
 
   return (
     <RootScreenContainer
@@ -154,7 +218,8 @@ function HomeScreen(): JSX.Element {
           height: 280,
           flexShrink: 0,
         }}>
-        <AssetsSummary />
+        {/* <AssetsSummary /> */}
+        <Button title="connect" onPress={connect}></Button>
       </View>
       <AssetsScrollList />
     </RootScreenContainer>
