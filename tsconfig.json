@@ -1,9 +1,13 @@
 {
-  "extends": "@tsconfig/react-native/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
+    "esModuleInterop": true,
+    "noEmit": true
+  },
+  "references": [
+    {
+      "path": "./packages/app"
     }
-  }
+  ],
+  "files": [],
+  "include": ["./types"]
 }

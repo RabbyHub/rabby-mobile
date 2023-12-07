@@ -1,66 +1,33 @@
-# OSX
-#
-.DS_Store
-
-# Xcode
-#
-build/
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-ios/.xcode.env.local
-
-# Android/IntelliJ
-#
-build/
-.idea
-.gradle
-local.properties
-*.iml
-*.hprof
-.cxx/
-*.keystore
-!debug.keystore
-
-# node.js
-#
-node_modules/
+# node
 npm-debug.log
 yarn-error.log
+node_modules
+package-lock.json
 
-# fastlane
-#
-# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
-# screenshots whenever they are needed.
-# For more information about the recommended setup visit:
-# https://docs.fastlane.tools/best-practices/source-control/
+# tarball from `yarn pack`
+*.tgz
 
-**/fastlane/report.xml
-**/fastlane/Preview.html
-**/fastlane/screenshots
-**/fastlane/test_output
+# eslint cache
+.eslintcache
 
-# Bundle artifact
-*.jsbundle
+.DS_STORE
 
-# Ruby / CocoaPods
-/ios/Pods/
-/vendor/bundle/
+# Build preview message
+preview-build-message.txt
 
-# Temporary files created by Metro to check the health of the file watcher
-.metro-health-check*
+packages/*/coverage
+packages/*/dist
+packages/*/docs
 
-# testing
-/coverage
+# yarn v3 (w/o zero-install)
+# See: https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# typescript
+packages/*/*.tsbuildinfo

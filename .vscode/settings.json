@@ -1,5 +1,6 @@
 {
   "files.associations": {
-    "*.yarnrc": "yaml"
+    "*.yarnrc": "yaml",
+    "*.pro": "prolog"
   }
 }
