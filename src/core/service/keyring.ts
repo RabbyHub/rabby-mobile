@@ -13,5 +13,5 @@ export const keyringController = new KeyringController({
   onSetAddressAlias: () => {
     return '';
   },
-  preferenceService: {},
+  preferenceController: {},
 });

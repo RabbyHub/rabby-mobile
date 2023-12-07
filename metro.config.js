@@ -1,4 +1,4 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
 /**
  * Metro configuration
@@ -9,7 +9,7 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const getAppConfig = function () {
   const config = getDefaultConfig(__dirname);
 
-  const {resolver, transformer} = config;
+  const { resolver, transformer } = config;
 
   config.transformer = {
     ...transformer,
@@ -23,6 +23,7 @@ const getAppConfig = function () {
   };
   config.resolver = {
     ...resolver,
+    extraNodeModules: require('node-libs-react-native'),
     assetExts: resolver.assetExts.filter(ext => ext !== 'svg'),
     sourceExts: [...resolver.sourceExts, 'svg'],
   };

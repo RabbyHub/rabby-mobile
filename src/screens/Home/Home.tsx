@@ -23,6 +23,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
 import { useThemeColors } from '@/hooks/theme';
+import { keyringController } from '@/core/service/keyring';
 
 function Section({
   children,
@@ -82,6 +83,13 @@ function AssetsSummary() {
             color: 'white',
           }}>
           This is Assets Summary, Go to{' '}
+          <TouchableView
+            onPress={async () => {
+              const address = await keyringController.getAllAdresses();
+              console.log('accounts', address);
+            }}>
+            <Text>click</Text>
+          </TouchableView>
           <TouchableView
             onPress={() => {
               navigation.push(RootNames.AccountTransaction, {

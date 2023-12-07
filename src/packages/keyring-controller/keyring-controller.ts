@@ -60,18 +60,18 @@ export class KeyringController extends EventEmitter {
   password: string | null = null;
   onGenerateAliasName: OnGenerateAliasNameFunction;
   onSetAddressAlias: OnSetAddressAliasFunction;
-  preferenceService: any;
+  preferenceController: any;
 
   constructor({
     keyringTypes,
     onGenerateAliasName,
     onSetAddressAlias,
-    preferenceService,
+    preferenceController,
   }: {
     keyringTypes: any[];
     onGenerateAliasName: OnGenerateAliasNameFunction;
     onSetAddressAlias: OnSetAddressAliasFunction;
-    preferenceService: any;
+    preferenceController: any;
   }) {
     super();
     this.keyringTypes = keyringTypes;
@@ -85,7 +85,7 @@ export class KeyringController extends EventEmitter {
     this.keyrings = [];
     this.onGenerateAliasName = onGenerateAliasName;
     this.onSetAddressAlias = onSetAddressAlias;
-    this.preferenceService = preferenceService;
+    this.preferenceController = preferenceController;
   }
 
   loadStore(initState: any) {
@@ -929,7 +929,7 @@ export class KeyringController extends EventEmitter {
     keyring: any,
     includeHidden = true,
   ): Promise<DisplayedKeyring> {
-    const hiddenAddresses = this.preferenceService.getHiddenAddresses();
+    const hiddenAddresses = this.preferenceController.getHiddenAddresses();
     const accountsPromise: Promise<
       ({ address: string; brandName: string } | string)[]
     > = keyring.getAccountsWithBrand
