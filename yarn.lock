@@ -2237,6 +2237,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/browser-passworder@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "@metamask/browser-passworder@npm:4.3.0"
+  dependencies:
+    "@metamask/utils": ^8.2.0
+  checksum: 7992553a0cd91902aa316a931d36c2628cb5a73fcbc28a31dce4177704036d739214c580ed833079003b2c7dfd60c5648a20734badf91e2c665cfe2f56012a8c
+  languageName: node
+  linkType: hard
+
 "@metamask/create-release-branch@npm:^1.1.0":
   version: 1.1.0
   resolution: "@metamask/create-release-branch@npm:1.1.0"
@@ -2325,6 +2334,16 @@ __metadata:
     "@metamask/safe-event-emitter": ^3.0.0
     "@metamask/utils": ^8.2.0
   checksum: 7e12fb58ee2775269aa3e6e3a40d18d9053b6cefb6eaa2b80558a65986d0e451a9faf3935548d5b4eced857c6b569e768cb235ef10ff0feb72a23ccadaaff4bc
+  languageName: node
+  linkType: hard
+
+"@metamask/obs-store@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@metamask/obs-store@npm:9.0.0"
+  dependencies:
+    "@metamask/safe-event-emitter": ^3.0.0
+    readable-stream: ^3.6.2
+  checksum: 1c202a5bbdc79a6b8b3fba946c09dc5521e87260956d30db6543e7bf3d95bd44ebd958f509e3e7332041845176487fe78d3b40bdedbc213061ba849fd978e468
   languageName: node
   linkType: hard
 
@@ -2534,9 +2553,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/base-utils@^0.1.0, @rabby-wallet/base-utils@workspace:packages/base-utils":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/eth-keyring-watch@^0.1.0, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/keyring-utils": ^0.1.0
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/keyring-utils@^0.1.0, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/keyring-utils@workspace:packages/keyring-utils"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
@@ -2593,17 +2649,60 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/persist-store@workspace:packages/persist-store":
+"@rabby-wallet/persist-store@^0.1.0, @rabby-wallet/persist-store@workspace:packages/persist-store":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/persist-store@workspace:packages/persist-store"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/base-utils": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     debounce: ^2.0.0
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
     jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/service-address@workspace:packages/service-address":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/service-address@workspace:packages/service-address"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/persist-store": ^0.1.0
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
+"@rabby-wallet/service-keyring@workspace:packages/service-keyring":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/service-keyring@workspace:packages/service-keyring"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@metamask/browser-passworder": ^4.3.0
+    "@metamask/obs-store": ^9.0.0
+    "@rabby-wallet/eth-keyring-watch": ^0.1.0
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    ethereumjs-wallet: ^1.0.2
+    jest: ^27.5.1
+    loglevel: ^1.8.1
     sinon: ^9.2.4
     ts-jest: ^27.1.4
     typedoc: ^0.24.8
@@ -3910,6 +4009,13 @@ __metadata:
   bin:
     acorn: bin/acorn
   checksum: 818450408684da89423e3daae24e4dc9b68692db8ab49ea4569c7c5abb7a3f23669438bf129cc81dfdada95e1c9b944ee1bfca2c57a05a4dc73834a612fbf6a7
+  languageName: node
+  linkType: hard
+
+"aes-js@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "aes-js@npm:3.1.2"
+  checksum: 062154d50b1e433cc8c3b8ca7879f3a6375d5e79c2a507b2b6c4ec920b4cd851bf2afa7f65c98761a9da89c0ab618cbe6529e8e9a1c71f93290b53128fb8f712
   languageName: node
   linkType: hard
 
@@ -6894,7 +7000,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethereumjs-util@npm:^7.1.5":
+"ethereumjs-util@npm:^7.1.2, ethereumjs-util@npm:^7.1.5":
   version: 7.1.5
   resolution: "ethereumjs-util@npm:7.1.5"
   dependencies:
@@ -6904,6 +7010,22 @@ __metadata:
     ethereum-cryptography: ^0.1.3
     rlp: ^2.2.4
   checksum: 27a3c79d6e06b2df34b80d478ce465b371c8458b58f5afc14d91c8564c13363ad336e6e83f57eb0bd719fde94d10ee5697ceef78b5aa932087150c5287b286d1
+  languageName: node
+  linkType: hard
+
+"ethereumjs-wallet@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "ethereumjs-wallet@npm:1.0.2"
+  dependencies:
+    aes-js: ^3.1.2
+    bs58check: ^2.1.2
+    ethereum-cryptography: ^0.1.3
+    ethereumjs-util: ^7.1.2
+    randombytes: ^2.1.0
+    scrypt-js: ^3.0.1
+    utf8: ^3.0.0
+    uuid: ^8.3.2
+  checksum: 555effe571c633ca9189e08639928e7bfcb601474f5a37653a3d028b06a10fb8577408c32d425ccecb3ac25d7165322cb9786239fa09ce276532d262206feb8c
   languageName: node
   linkType: hard
 
@@ -9814,6 +9936,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"loglevel@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "loglevel@npm:1.8.1"
+  checksum: a1a62db40291aaeaef2f612334c49e531bff71cc1d01a2acab689ab80d59e092f852ab164a5aedc1a752fdc46b7b162cb097d8a9eb2cf0b299511106c29af61d
+  languageName: node
+  linkType: hard
+
 "loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
@@ -12690,7 +12819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"scrypt-js@npm:^3.0.0":
+"scrypt-js@npm:^3.0.0, scrypt-js@npm:^3.0.1":
   version: 3.0.1
   resolution: "scrypt-js@npm:3.0.1"
   checksum: b7c7d1a68d6ca946f2fbb0778e0c4ec63c65501b54023b2af7d7e9f48fdb6c6580d6f7675cd53bda5944c5ebc057560d5a6365079752546865defb3b79dea454
@@ -14293,6 +14422,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"utf8@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "utf8@npm:3.0.0"
+  checksum: cb89a69ad9ab393e3eae9b25305b3ff08bebca9adc839191a34f90777eb2942f86a96369d2839925fea58f8f722f7e27031d697f10f5f39690f8c5047303e62d
+  languageName: node
+  linkType: hard
+
 "util-deprecate@npm:^1.0.1, util-deprecate@npm:~1.0.1":
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
@@ -14313,6 +14449,15 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
   checksum: c81095493225ecfc28add49c106ca4f09cdf56bc66731aa8dabc2edbbccb1e1bfe2de6a115e5c6a380d3ea166d1636410b62ef216bb07b3feb1cfde1d95d5080
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^8.3.2":
+  version: 8.3.2
+  resolution: "uuid@npm:8.3.2"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 5575a8a75c13120e2f10e6ddc801b2c7ed7d8f3c8ac22c7ed0c7b2ba6383ec0abda88c905085d630e251719e0777045ae3236f04c812184b7c765f63a70e58df
   languageName: node
   linkType: hard
 

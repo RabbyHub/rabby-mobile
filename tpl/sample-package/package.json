@@ -1,7 +1,7 @@
 {
   "name": "@rabby-wallet/sample-package",
   "version": "0.1.0",
-  "description": "A Ethereum key management library designed for handling Watch Addresses",
+  "description": "A sample package",
   "keywords": [
     "RabbyHub",
     "Ethereum"

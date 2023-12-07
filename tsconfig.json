@@ -5,7 +5,13 @@
   },
   "references": [
     {
-      "path": "./packages/app"
+      "path": "./packages/eth-keyring-watch/tsconfig.json"
+    },
+    {
+      "path": "./packages/persist-store/tsconfig.json"
+    },
+    {
+      "path": "./packages/eth-keyring-watch/tsconfig.json"
     }
   ],
   "files": [],

@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events';
 import { addHexPrefix, bufferToHex, isValidAddress } from 'ethereumjs-util';
+import { KeyringConstructorOptions, KeyringIntf } from '@rabby-wallet/keyring-utils';
 
-const keyringType: string = 'Watch Address';
+const keyringType = 'Watch Address' as const;
 
 function sanitizeHex(hex: string): string {
   hex = hex.substring(0, 2) === '0x' ? hex.substring(2) : hex;
@@ -12,13 +13,13 @@ function sanitizeHex(hex: string): string {
   return '0x' + hex;
 }
 
-class WatchKeyring extends EventEmitter {
-  static type: string = keyringType;
-  type: string = keyringType;
+class WatchKeyring extends EventEmitter implements KeyringIntf {
+  static type = keyringType;
+  type = keyringType;
   accounts: string[] = [];
   accountToAdd: string = '';
 
-  constructor(opts: { accounts?: string[] } = {}) {
+  constructor(opts: KeyringConstructorOptions<string> = {}) {
     super();
     this.deserialize(opts);
   }

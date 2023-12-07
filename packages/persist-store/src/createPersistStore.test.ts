@@ -40,14 +40,14 @@ describe('createPersistStore', () => {
   });
 
   it('should create a persistent store with default template', async () => {
-    const store = await createPersistStore({ name: 'testStore' });
+    const store = createPersistStore({ name: 'testStore' });
     expect(store).toBeDefined();
     expect(store).toEqual({});
   });
 
   it('should create a persistent store with a given template', async () => {
     const template = { key: 'value' };
-    const store = await createPersistStore({ name: 'testStore', template });
+    const store = createPersistStore({ name: 'testStore', template });
     expect(store).toBeDefined();
     expect(store).toEqual(template);
   });
@@ -55,13 +55,13 @@ describe('createPersistStore', () => {
   it('should initialize the store from the storage if fromStorage flag is true', async () => {
     const template: StorageItemTpl = { key: 'value' };
     getItemStub.withArgs('testStore').returns(template);
-    const store = await createPersistStore({ name: 'testStore', fromStorage: true }, { storage: storageMock });
+    const store = createPersistStore({ name: 'testStore', fromStorage: true }, { storage: storageMock });
     expect(store).toBeDefined();
     expect(store).toEqual(template);
   });
 
   it('should set and persist data to storage on property set', async () => {
-    const store = await createPersistStore<{ key: string }>({ name: 'testStore', template: { key: null } });
+    const store = createPersistStore<{ key: string }>({ name: 'testStore', template: { key: null } });
     expect(store.key).toEqual(null);
 
     store.key = 'value';
@@ -69,7 +69,7 @@ describe('createPersistStore', () => {
   });
 
   it('should delete property and persist data to storage on property delete', async () => {
-    const store = await createPersistStore({ name: 'testStore', template: { key: 'value' } });
+    const store = createPersistStore({ name: 'testStore', template: { key: 'value' } });
 
     expect(store.key).toEqual('value');
 
@@ -84,7 +84,7 @@ describe('createPersistStore', () => {
   ].forEach((debounceValue = 1000) => {
     it(`[sinon | debounce: ${debounceValue}] should debounce ms the storage.setItem method when setting properties`, async () => {
       const clock = sinon.useFakeTimers();
-      const store = await createPersistStore({ name: 'testStore' }, { storage: storageMock, persistDebounce: debounceValue });
+      const store = createPersistStore({ name: 'testStore' }, { storage: storageMock, persistDebounce: debounceValue });
       store.key = 'value';
       clock.tick(debounceValue / 2);
       store.key = 'value2';
@@ -97,7 +97,7 @@ describe('createPersistStore', () => {
     it(`[memStore | debounce: ${debounceValue}] should debounce ms the storage.setItem method when setting properties`, async () => {
       const clock = sinon.useFakeTimers();
       const sinonMem = sinon.stub(memStorage);
-      const store = await createPersistStore({ name: 'testStore' }, { storage: sinonMem, persistDebounce: debounceValue });
+      const store = createPersistStore({ name: 'testStore' }, { storage: sinonMem, persistDebounce: debounceValue });
       store.key = 'value';
       clock.tick(debounceValue / 2);
       store.key = 'value2';
@@ -112,7 +112,7 @@ describe('createPersistStore', () => {
     const storedData = { key1: 'value1', key2: 'value2' };
     memStorage.setItem('testStore', storedData);
 
-    const store = await createPersistStore<typeof storedData>({ name: 'testStore' }, { storage: memStorage });
+    const store = createPersistStore<typeof storedData>({ name: 'testStore' }, { storage: memStorage });
     expect(store).toEqual(storedData);
   });
 
@@ -120,7 +120,7 @@ describe('createPersistStore', () => {
     const storedData = { key1: 'value1', key2: 'value2' };
     memStorage.setItem('testStore', storedData);
 
-    const store = await createPersistStore<typeof storedData>({ name: 'testStore' }, { storage: memStorage });
+    const store = createPersistStore<typeof storedData>({ name: 'testStore' }, { storage: memStorage });
     delete store.key1;
     expect(store).toEqual({ key2: 'value2' });
   });
@@ -130,7 +130,7 @@ describe('createPersistStore', () => {
       memStorage.clearAll();
       memStorage.setItem('testStore2', { key: 'value2' });
 
-      const store = await createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: true }, { storage: memStorage });
+      const store = createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: true }, { storage: memStorage });
 
       expect(store).toEqual({ key: 'value' });
     });
@@ -139,7 +139,7 @@ describe('createPersistStore', () => {
       memStorage.clearAll();
       memStorage.setItem('testStore2', { key: 'value2' });
 
-      const store = await createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: false }, { storage: memStorage });
+      const store = createPersistStore({ name: 'testStore', template: { key: 'value' }, fromStorage: false }, { storage: memStorage });
 
       expect(store).toEqual({ key: 'value' });
     });

@@ -1,9 +1,5 @@
 export type StorageItemTpl = { [P in string | number ]: any | null };
 
-export type FieldNilable<T> = {
-  [P in keyof T]?: T[P] | null;
-};
-
 export interface StorageAdapater<T extends Record<string, StorageItemTpl> = Record<string, StorageItemTpl>> {
   getItem<K extends keyof T>(key: string): T[K] | null | undefined
   // getAll(): FieldNilable<T>

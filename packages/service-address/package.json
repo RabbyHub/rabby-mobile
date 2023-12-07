@@ -1,12 +1,12 @@
 {
-  "name": "@rabby-wallet/persist-store",
+  "name": "@rabby-wallet/service-address",
   "version": "0.1.0",
-  "description": "A Ethereum key management library designed for handling Watch Addresses",
+  "description": "service & utils for account",
   "keywords": [
     "RabbyHub",
     "Ethereum"
   ],
-  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/persist-store#readme",
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/service-address#readme",
   "bugs": {
     "url": "https://github.com/RabbyHub/rabby-mono/issues"
   },
@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "build:docs": "typedoc",
-    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/persist-store",
+    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/service-address",
     "publish:preview": "yarn npm publish --tag preview",
     "test": "jest --reporters=jest-silent-reporter",
     "test:clean": "jest --clearCache",
@@ -31,8 +31,7 @@
     "cov:report": "open ./coverage/index.html"
   },
   "dependencies": {
-    "@rabby-wallet/base-utils": "^0.1.0",
-    "debounce": "^2.0.0",
+    "@rabby-wallet/persist-store": "^0.1.0",
     "ethereumjs-util": "^7.1.5"
   },
   "devDependencies": {

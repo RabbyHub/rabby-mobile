@@ -31,6 +31,7 @@
     "cov:report": "open ./coverage/index.html"
   },
   "dependencies": {
+    "@rabby-wallet/keyring-utils": "^0.1.0",
     "ethereumjs-util": "^7.1.5"
   },
   "devDependencies": {

@@ -8,7 +8,13 @@ This repository contains the following packages [^fn1]:
 
 <!-- start package list -->
 
+- [`@rabby-wallet/base-utils`](packages/base-utils)
 - [`@rabby-wallet/eth-keyring-watch`](packages/eth-keyring-watch)
+- [`@rabby-wallet/keyring-utils`](packages/keyring-utils)
+- [`@rabby-wallet/persist-store`](packages/persist-store)
+- [`@rabby-wallet/service-address`](packages/service-address)
+- [`@rabby-wallet/service-keyring`](packages/service-keyring)
+- [`rabby-mobile`](apps/mobile)
 
 <!-- end package list -->
 
@@ -20,7 +26,18 @@ Or, in graph form [^fn1]:
 %%{ init: { 'flowchart': { 'curve': 'bumpX' } } }%%
 graph LR;
 linkStyle default opacity:0.5
+  rabby_mobile(["rabby-mobile"]);
+  base_utils(["@rabby-wallet/base-utils"]);
   eth_keyring_watch(["@rabby-wallet/eth-keyring-watch"]);
+  keyring_utils(["@rabby-wallet/keyring-utils"]);
+  persist_store(["@rabby-wallet/persist-store"]);
+  service_address(["@rabby-wallet/service-address"]);
+  service_keyring(["@rabby-wallet/service-keyring"]);
+  rabby_mobile --> eth_keyring_watch;
+  eth_keyring_watch --> keyring_utils;
+  persist_store --> base_utils;
+  service_address --> persist_store;
+  service_keyring --> eth_keyring_watch;
 ```
 
 <!-- end dependency graph -->

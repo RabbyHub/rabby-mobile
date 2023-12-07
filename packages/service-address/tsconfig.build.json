@@ -5,10 +5,5 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "references": [
-    {
-      "path": "../keyring-utils/tsconfig.json"
-    }
-  ],
   "include": ["../../types", "./src"]
 }

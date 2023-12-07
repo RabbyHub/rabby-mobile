@@ -1,7 +1,10 @@
 {
   "references": [
     {
-      "path": "./apps/app/tsconfig.build.json"
+      "path": "./packages/eth-keyring-watch/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/persist-store/tsconfig.build.json"
     }
   ],
   "files": [],

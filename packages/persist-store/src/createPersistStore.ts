@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
+import { FieldNilable } from '@rabby-wallet/base-utils';
+
 import debounce from 'debounce';
-import { StorageItemTpl, StorageAdapater, makeMemoryStorage, FieldNilable } from './storageAdapter';
+import { StorageItemTpl, StorageAdapater, makeMemoryStorage } from './storageAdapter';
 
 const DEFAULT_STORAGE = makeMemoryStorage();
 
@@ -12,14 +14,14 @@ export interface CreatePersistStoreParams<T extends StorageItemTpl> {
   storage?: StorageAdapater<Record<string, T>>;
 }
 
-const createPersistStore = async <T extends StorageItemTpl>({
+const createPersistStore = <T extends StorageItemTpl>({
   name,
   template = Object.create(null),
   fromStorage = true,
 }: CreatePersistStoreParams<T>, opts?: {
   persistDebounce?: number;
   storage?: StorageAdapater<Record<string, StorageItemTpl>>;
-},): Promise<FieldNilable<T>> => {
+},): T => {
   let tpl = template;
 
   const {
@@ -57,7 +59,7 @@ const createPersistStore = async <T extends StorageItemTpl>({
     },
   });
 
-  return store as any;
+  return store as any as T;
 };
 
 export default createPersistStore;

@@ -6,7 +6,10 @@
   "references": [
     {
       "path": "../keyring-utils/tsconfig.json"
+    },
+    {
+      "path": "../eth-keyring-watch/tsconfig.json"
     }
   ],
-  "include": ["../../types", "./src"]
+  "include": ["../../types", "./src", "test"]
 }

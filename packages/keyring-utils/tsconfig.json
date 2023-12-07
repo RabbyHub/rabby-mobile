@@ -3,10 +3,5 @@
   "compilerOptions": {
     "baseUrl": "./"
   },
-  "references": [
-    {
-      "path": "../base-utils/tsconfig.json"
-    }
-  ],
   "include": ["../../types", "./src"]
 }
