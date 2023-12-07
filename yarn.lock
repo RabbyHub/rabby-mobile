@@ -2571,7 +2571,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-keyring-watch@^0.1.0, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
+"@rabby-wallet/eth-keyring-watch@*, @rabby-wallet/eth-keyring-watch@^0.1.0, @rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-watch@workspace:packages/eth-keyring-watch"
   dependencies:
@@ -2669,7 +2669,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/service-address@workspace:packages/service-address":
+"@rabby-wallet/service-address@*, @rabby-wallet/service-address@workspace:packages/service-address":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-address@workspace:packages/service-address"
   dependencies:
@@ -2688,7 +2688,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/service-keyring@workspace:packages/service-keyring":
+"@rabby-wallet/service-keyring@*, @rabby-wallet/service-keyring@workspace:packages/service-keyring":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-keyring@workspace:packages/service-keyring"
   dependencies:
@@ -2697,6 +2697,7 @@ __metadata:
     "@metamask/obs-store": ^9.0.0
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
     "@types/jest": ^27.4.1
+    "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -3132,6 +3133,15 @@ __metadata:
   dependencies:
     nanoid: ^3.1.23
   checksum: 3a3392ce095d6a2bd2aad69856f513b35774f943a3dc73d8ffb75127de6773203e3264188d87058bdea4c0c9a7d43ed28d0cbf3a1f1cdc086df3ee255d8e1e27
+  languageName: node
+  linkType: hard
+
+"@rematch/core@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@rematch/core@npm:2.2.0"
+  peerDependencies:
+    redux: ">=4"
+  checksum: c2ae22b9c6d19b7bd8a4d8679a8c5248733e95314eabdc0e8d85ecb4042432d315e8476fa3ccde6fbc5bde220577d55f3d7d39202136bd4a7b2ad7bc978625d0
   languageName: node
   linkType: hard
 
@@ -3692,6 +3702,16 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: d2019afdf48303a3a598a97cc9dd2284e3c04b369e791f6ba3c33232b7f8645daff97b093a19f8b3ce75ac8a261b47552cb4513226ab16d843eb9443b0f91844
+  languageName: node
+  linkType: hard
+
+"@types/readable-stream@npm:^4.0.10":
+  version: 4.0.10
+  resolution: "@types/readable-stream@npm:4.0.10"
+  dependencies:
+    "@types/node": "*"
+    safe-buffer: ~5.1.1
+  checksum: dc7cb95be737d442770fcaf1fbe3860c011f5f024c6f09c8b032f95b7ef9cce0031302715afe13e18d264b3a162e5838ce78873ec8d63eb238db49bc70906a21
   languageName: node
   linkType: hard
 
@@ -11958,7 +11978,9 @@ __metadata:
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@notifee/react-native": ^7.8.0
-    "@rabby-wallet/eth-keyring-watch": ^0.1.0
+    "@rabby-wallet/eth-keyring-watch": "*"
+    "@rabby-wallet/service-address": "*"
+    "@rabby-wallet/service-keyring": "*"
     "@react-native-async-storage/async-storage": ^1.21.0
     "@react-native-community/blur": ^4.3.2
     "@react-native-community/eslint-config": ^3.2.0
@@ -11967,6 +11989,7 @@ __metadata:
     "@react-navigation/bottom-tabs": ^6.5.11
     "@react-navigation/native": ^6.1.9
     "@react-navigation/native-stack": ^6.9.17
+    "@rematch/core": ^2.2.0
     "@tsconfig/react-native": ^3.0.0
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4

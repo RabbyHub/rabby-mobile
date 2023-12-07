@@ -7,7 +7,7 @@
   },
   "references": [
     {
-      "path": "../keyring-utils/tsconfig.json"
+      "path": "../keyring-utils/tsconfig.build.json"
     }
   ],
   "include": ["../../types", "./src"]

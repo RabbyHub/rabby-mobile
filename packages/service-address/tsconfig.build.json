@@ -5,5 +5,13 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
+  "references": [
+    {
+      "path": "../base-utils/tsconfig.build.json"
+    },
+    {
+      "path": "../persist-store/tsconfig.build.json"
+    }
+  ],
   "include": ["../../types", "./src"]
 }

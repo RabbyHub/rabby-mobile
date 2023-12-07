@@ -7,10 +7,10 @@
   },
   "references": [
     {
-      "path": "../keyring-utils/tsconfig.json"
+      "path": "../keyring-utils/tsconfig.build.json"
     },
     {
-      "path": "../eth-keyring-watch/tsconfig.json"
+      "path": "../eth-keyring-watch/tsconfig.build.json"
     }
   ],
   "include": ["../../types", "./src"]

@@ -7,21 +7,23 @@ import { StorageItemTpl, StorageAdapater, makeMemoryStorage } from './storageAda
 
 const DEFAULT_STORAGE = makeMemoryStorage();
 
-export interface CreatePersistStoreParams<T extends StorageItemTpl> {
+export interface CreatePersistStoreParams<T extends StorageItemTpl, TFORBID_DELETE extends boolean> {
   name: string;
   template?: FieldNilable<T>;
   fromStorage?: boolean;
+  allowDelete?: boolean;
   storage?: StorageAdapater<Record<string, T>>;
 }
 
-const createPersistStore = <T extends StorageItemTpl>({
+const createPersistStore = <T extends StorageItemTpl, TFORBID_DELETE extends boolean = true>({
   name,
   template = Object.create(null),
   fromStorage = true,
-}: CreatePersistStoreParams<T>, opts?: {
+  allowDelete = true
+}: CreatePersistStoreParams<T, TFORBID_DELETE>, opts?: {
   persistDebounce?: number;
   storage?: StorageAdapater<Record<string, StorageItemTpl>>;
-},): T => {
+}): TFORBID_DELETE extends false ? Partial<T> : T => {
   let tpl = template;
 
   const {
@@ -49,6 +51,10 @@ const createPersistStore = <T extends StorageItemTpl>({
     },
 
     deleteProperty(target, prop) {
+      if (!allowDelete) {
+        throw new Error('Delete property is forbidden');
+      }
+
       if (Reflect.has(target, prop)) {
         Reflect.deleteProperty(target, prop);
 

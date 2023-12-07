@@ -5,15 +5,27 @@
   },
   "references": [
     {
+      "path": "./packages/base-utils/tsconfig.json"
+    },
+    {
       "path": "./packages/eth-keyring-watch/tsconfig.json"
+    },
+    {
+      "path": "./packages/keyring-utils/tsconfig.json"
     },
     {
       "path": "./packages/persist-store/tsconfig.json"
     },
     {
-      "path": "./packages/eth-keyring-watch/tsconfig.json"
+      "path": "./packages/service-address/tsconfig.json"
+    },
+    {
+      "path": "./packages/service-keyring/tsconfig.json"
     }
   ],
   "files": [],
-  "include": ["./types"]
+  "include": ["./types"],
+  "exclude": [
+    "**/*.test.ts"
+  ]
 }
