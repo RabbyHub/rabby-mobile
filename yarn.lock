@@ -2593,6 +2593,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/persist-store@workspace:packages/persist-store":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/persist-store@workspace:packages/persist-store"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    debounce: ^2.0.0
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
 "@react-native-async-storage/async-storage@npm:^1.21.0":
   version: 1.21.0
   resolution: "@react-native-async-storage/async-storage@npm:1.21.0"
@@ -5686,6 +5705,13 @@ __metadata:
   version: 1.11.10
   resolution: "dayjs@npm:1.11.10"
   checksum: a6b5a3813b8884f5cd557e2e6b7fa569f4c5d0c97aca9558e38534af4f2d60daafd3ff8c2000fed3435cfcec9e805bcebd99f90130c6d1c5ef524084ced588c4
+  languageName: node
+  linkType: hard
+
+"debounce@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "debounce@npm:2.0.0"
+  checksum: 86a8c85528764a15a6492230ac5625a824a6681ee159450d7d4663eb4370da40449da0f8816bbf039dcd1166cc2db813bbd3a9e037fb8377eb905a487ec844be
   languageName: node
   linkType: hard
 
