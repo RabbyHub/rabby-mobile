@@ -18,7 +18,10 @@
     "*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
+    "@metamask/browser-passworder": "^4.3.0",
+    "@metamask/obs-store": "^9.0.0",
     "@notifee/react-native": "^7.8.0",
+    "@rabby-wallet/eth-watch-keyring": "^1.0.0",
     "@react-native-async-storage/async-storage": "^1.21.0",
     "@react-native-community/blur": "^4.3.2",
     "@react-navigation/bottom-tabs": "^6.5.11",
@@ -26,6 +29,7 @@
     "@react-navigation/native-stack": "^6.9.17",
     "colord": "^2.9.3",
     "dayjs": "^1.11.10",
+    "ethereumjs-util": "^7.1.5",
     "jotai": "^2.6.0",
     "node-libs-react-native": "^1.2.1",
     "react": "18.2.0",
