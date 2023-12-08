@@ -90,5 +90,9 @@
       "ethereumjs-util>ethereum-cryptography>secp256k1": true,
       "simple-git-hooks": false
     }
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.0",
+    "redux": "^5.0.0"
   }
 }

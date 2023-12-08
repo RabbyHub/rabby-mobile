@@ -1,6 +1,7 @@
 // https://github.com/mrousavy/react-native-mmkv/blob/master/docs/WRAPPER_JOTAI.md
 // AsyncStorage 有 bug，会闪白屏
 
+import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import { MMKV } from 'react-native-mmkv';
 
@@ -21,6 +22,19 @@ function removeItem(key: string): void {
 
 function clearAll(): void {
   storage.clearAll();
+}
+
+let appStorage: StorageAdapater;
+export function makeAppStorage() {
+  if (!appStorage) {
+    appStorage = {
+      getItem: (key: string) => getItem(key),
+      setItem: (key: string, value: any) => { setItem(key, value) },
+      clearAll: () => clearAll(),
+    };
+  }
+
+  return appStorage;
 }
 
 export const atomWithMMKV = <T>(key: string, initialValue: T) =>

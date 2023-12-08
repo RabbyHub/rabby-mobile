@@ -8,6 +8,10 @@ export interface StorageAdapater<T extends Record<string, StorageItemTpl> = Reco
   clearAll(): void
 }
 
+export interface StorageAdapaterOptions {
+  storageAdapter?: StorageAdapater;
+}
+
 export function makeMemoryStorage() {
   const memoryStore = new Map<string, any>();
 

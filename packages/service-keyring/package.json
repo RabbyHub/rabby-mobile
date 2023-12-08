@@ -31,8 +31,8 @@
     "cov:report": "open ./coverage/index.html"
   },
   "dependencies": {
-    "@metamask/browser-passworder": "^4.3.0",
     "@metamask/obs-store": "^9.0.0",
+    "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "^0.1.0",
     "@types/readable-stream": "^4.0.10",
     "ethereumjs-util": "^7.1.5",

@@ -1,6 +1,5 @@
 import * as sinon from 'sinon';
 import { KeyringService } from '../src/keyringService';
-import mockEncryptor from '../test/mock-encryptor';
 
 const password = 'password123';
 
@@ -8,9 +7,8 @@ describe('KeyringService setup', () => {
   let keyringService: KeyringService;
 
   beforeAll(() => {
-    keyringService = new KeyringService();
-    // @ts-expect-error just mock
-    keyringService.encryptor = mockEncryptor;
+    keyringService = new KeyringService({
+    });
   });
 
   afterEach(() => {
@@ -51,8 +49,6 @@ describe('keyringService', () => {
 
   beforeEach(async () => {
     keyringService = new KeyringService();
-    // @ts-expect-error just mock
-    keyringService.encryptor = mockEncryptor;
     keyringService.loadStore({});
     await keyringService.boot(password);
     await keyringService.clearKeyrings();

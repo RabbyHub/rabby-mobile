@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 
-export default {
+export const sinonEncryptor = {
   encrypt: sinon.stub().callsFake(function (_password, dataObj) {
     return dataObj;
   }),
@@ -9,3 +9,5 @@ export default {
     return _text;
   },
 };
+
+export default sinonEncryptor;

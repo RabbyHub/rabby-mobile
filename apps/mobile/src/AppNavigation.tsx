@@ -20,6 +20,7 @@ import {
 import { useThemeColors, useColorScheme } from '@/hooks/theme';
 
 import {
+  navigate,
   navigationRef,
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
@@ -45,6 +46,7 @@ import SettingsScreen from './screens/Settings/Settings';
 import DappsScreen from './screens/Dapps/Dapps';
 import HistoryScreen from './screens/Transaction/History';
 import MyBundleScreen from './screens/Assets/MyBundle';
+import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 
 const RootStack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -224,6 +226,11 @@ export default function AppNavigation({
             name={RootNames.StackSettings}
             component={SettingNavigator}
           />
+          <RootStack.Screen
+            name={RootNames.StackAddress}
+            component={AddressNavigator}
+          />
+
         </RootStack.Navigator>
       </NavigationContainer>
     </View>

@@ -14,8 +14,10 @@ import SplashScreen from 'react-native-splash-screen';
 import { useColorScheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
+import { useBootstrapApp } from './hooks/useBootstrap';
 
 function MainScreen() {
+  const { couldRender } = useBootstrapApp();
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -24,7 +26,7 @@ function MainScreen() {
 
   return (
     <>
-      <AppNavigation colorScheme={colorScheme} />
+      {couldRender && <AppNavigation colorScheme={colorScheme} />}
       <JotaiNexus />
     </>
   );

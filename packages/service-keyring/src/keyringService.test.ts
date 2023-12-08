@@ -14,8 +14,6 @@ describe('KeyringService setup', () => {
 
   beforeAll(() => {
     keyringService = new KeyringService();
-    // @ts-expect-error just mock
-    keyringService.encryptor = mockEncryptor;
   });
 
   afterEach(() => {
@@ -56,8 +54,6 @@ describe('keyringService#keyrings, accounts', () => {
 
   beforeEach(async () => {
     keyringService = new KeyringService();
-    // @ts-expect-error just mock
-    keyringService.encryptor = mockEncryptor;
     keyringService.loadStore({});
     await keyringService.boot(password);
     await keyringService.clearKeyrings();

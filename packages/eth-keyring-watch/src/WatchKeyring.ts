@@ -36,11 +36,11 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
     }
   }
 
-  setAccountToAdd = (account: string): void => {
+  setAccountToAdd (account: string): void {
     this.accountToAdd = account;
   };
 
-  addAccounts = async (): Promise<string[]> => {
+  async addAccounts (): Promise<string[]> {
     if (!isValidAddress(this.accountToAdd)) {
       throw new Error("The address you're are trying to import is invalid");
     }

@@ -2237,15 +2237,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/browser-passworder@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "@metamask/browser-passworder@npm:4.3.0"
-  dependencies:
-    "@metamask/utils": ^8.2.0
-  checksum: 7992553a0cd91902aa316a931d36c2628cb5a73fcbc28a31dce4177704036d739214c580ed833079003b2c7dfd60c5648a20734badf91e2c665cfe2f56012a8c
-  languageName: node
-  linkType: hard
-
 "@metamask/create-release-branch@npm:^1.1.0":
   version: 1.1.0
   resolution: "@metamask/create-release-branch@npm:1.1.0"
@@ -2553,7 +2544,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/base-utils@^0.1.0, @rabby-wallet/base-utils@workspace:packages/base-utils":
+"@rabby-wallet/base-utils@^0.1.0, @rabby-wallet/base-utils@workspace:^, @rabby-wallet/base-utils@workspace:packages/base-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
   dependencies:
@@ -2612,6 +2603,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/mobile-monorepo@workspace:."
   dependencies:
+    "@babel/runtime": ^7.20.0
     "@lavamoat/allow-scripts": ^2.3.1
     "@metamask/create-release-branch": ^1.1.0
     "@metamask/eslint-config": ^12.2.0
@@ -2641,6 +2633,7 @@ __metadata:
     nock: ^13.3.1
     prettier: ^2.7.1
     prettier-plugin-packagejson: ^2.4.5
+    redux: ^5.0.0
     rimraf: ^3.0.2
     simple-git-hooks: ^2.8.0
     ts-node: ^10.9.1
@@ -2649,7 +2642,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/persist-store@^0.1.0, @rabby-wallet/persist-store@workspace:packages/persist-store":
+"@rabby-wallet/persist-store@^0.1.0, @rabby-wallet/persist-store@workspace:^, @rabby-wallet/persist-store@workspace:packages/persist-store":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/persist-store@workspace:packages/persist-store"
   dependencies:
@@ -2669,7 +2662,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/service-address@*, @rabby-wallet/service-address@workspace:packages/service-address":
+"@rabby-wallet/service-address@workspace:^, @rabby-wallet/service-address@workspace:packages/service-address":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-address@workspace:packages/service-address"
   dependencies:
@@ -2688,13 +2681,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/service-keyring@*, @rabby-wallet/service-keyring@workspace:packages/service-keyring":
+"@rabby-wallet/service-keyring@workspace:^, @rabby-wallet/service-keyring@workspace:packages/service-keyring":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-keyring@workspace:packages/service-keyring"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
-    "@metamask/browser-passworder": ^4.3.0
     "@metamask/obs-store": ^9.0.0
+    "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/readable-stream": ^4.0.10
@@ -6209,6 +6202,13 @@ __metadata:
   dependencies:
     is-obj: ^1.0.0
   checksum: 5f4f19aa440bc548670d87f2adcbd105fa6842cd1fba3165a8a2b1380568ae82862acf8ebafcc6093fa062505d7d08d7155c7ba9a88da212f7348e95ef2bdce6
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^16.3.1":
+  version: 16.3.1
+  resolution: "dotenv@npm:16.3.1"
+  checksum: 15d75e7279018f4bafd0ee9706593dd14455ddb71b3bcba9c52574460b7ccaf67d5cf8b2c08a5af1a9da6db36c956a04a1192b101ee102a3e0cf8817bbcf3dfd
   languageName: node
   linkType: hard
 
@@ -11975,12 +11975,14 @@ __metadata:
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
     "@babel/core": ^7.20.0
+    "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-watch": "*"
-    "@rabby-wallet/service-address": "*"
-    "@rabby-wallet/service-keyring": "*"
+    "@rabby-wallet/persist-store": "workspace:^"
+    "@rabby-wallet/service-address": "workspace:^"
+    "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0
     "@react-native-community/blur": ^4.3.2
     "@react-native-community/eslint-config": ^3.2.0
@@ -12011,6 +12013,8 @@ __metadata:
     react-devtools: ^4.28.5
     react-is: 18.2.0
     react-native: 0.72.7
+    react-native-aes-crypto: ^3.0.1
+    react-native-dotenv: ^3.4.9
     react-native-fast-image: ^8.6.3
     react-native-gesture-handler: ^2.14.0
     react-native-mmkv: ^2.11.0
@@ -12121,6 +12125,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-aes-crypto@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-native-aes-crypto@npm:3.0.1"
+  checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  languageName: node
+  linkType: hard
+
 "react-native-crypto@npm:^2.0.1":
   version: 2.2.0
   resolution: "react-native-crypto@npm:2.2.0"
@@ -12138,6 +12149,17 @@ __metadata:
   peerDependencies:
     react-native-randombytes: ">=2.0.0 <4.0.0"
   checksum: 52631bf32e5d3e0aad9329e3271808a30b91f8a072d4a0c2791105cd3c3aac5d1a63a4016a570790342baa7fc4b10f15024e4d6df47e57906197d7587af450e1
+  languageName: node
+  linkType: hard
+
+"react-native-dotenv@npm:^3.4.9":
+  version: 3.4.9
+  resolution: "react-native-dotenv@npm:3.4.9"
+  dependencies:
+    dotenv: ^16.3.1
+  peerDependencies:
+    "@babel/runtime": ^7.20.6
+  checksum: 9727c6a08e1b3e53b31d620ac1e9daedd899b61c0fd5413fb4593a209c0bf73e245506fc02bdb0d3caa4abf4f4145fa8499afff8e48e22bcf317cd90dbe18b87
   languageName: node
   linkType: hard
 
@@ -12404,6 +12426,13 @@ __metadata:
     source-map: ~0.6.1
     tslib: ^2.0.1
   checksum: 03cc7f57562238ba258d468be67bf7446ce7a707bc87a087891dad15afead46c36e9aaeedf2130e2ab5a465244a9c62bfd4127849761cf8f4085abe2f3e5f485
+  languageName: node
+  linkType: hard
+
+"redux@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "redux@npm:5.0.0"
+  checksum: be49160d4bd01e10108c425ade999f1b456204895c4bdd0c7825ab09efffded51955c5c242847406a7b3f273e9011a9c102848c512a099a75617b97b13d2cca8
   languageName: node
   linkType: hard
 

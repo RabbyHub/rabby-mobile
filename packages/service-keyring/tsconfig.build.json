@@ -7,6 +7,9 @@
   },
   "references": [
     {
+      "path": "../base-utils/tsconfig.build.json"
+    },
+    {
       "path": "../keyring-utils/tsconfig.build.json"
     },
     {

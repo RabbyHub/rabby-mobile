@@ -38,6 +38,10 @@ module.exports = {
       },
     ],
     ['@babel/plugin-transform-react-jsx', {runtime: 'automatic'}],
+    ['@babel/plugin-transform-export-namespace-from'],
+    ['module:react-native-dotenv', {
+      "moduleName": "@env",
+    }]
   ],
   env: {
     production: {

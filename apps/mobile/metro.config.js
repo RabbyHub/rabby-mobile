@@ -1,3 +1,4 @@
+const path = require('path');
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
 /**
@@ -27,6 +28,10 @@ const getAppConfig = function () {
     assetExts: resolver.assetExts.filter(ext => ext !== 'svg'),
     sourceExts: [...resolver.sourceExts, 'svg'],
   };
+  config.watchFolders = [
+    path.resolve(__dirname, '../../node_modules'),
+    path.resolve(__dirname, '../../packages'),
+  ];
 
   return config;
 };

@@ -5,6 +5,9 @@
   },
   "references": [
     {
+      "path": "../base-utils/tsconfig.json"
+    },
+    {
       "path": "../keyring-utils/tsconfig.json"
     },
     {

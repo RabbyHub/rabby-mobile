@@ -1,4 +1,4 @@
-export const enum KEYRING_TYPE {
+export enum KEYRING_TYPE {
   // SimpleKeyring = 'Simple Key Pair',
   // HdKeyring = 'HD Key Tree',
   // HardwareKeyring = 'hardware',

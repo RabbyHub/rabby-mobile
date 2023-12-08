@@ -2,16 +2,18 @@ import { EventEmitter } from 'events';
 import log from 'loglevel';
 
 import * as ethUtil from 'ethereumjs-util';
-import * as encryptor from '@metamask/browser-passworder';
 import { ObservableStore } from '@metamask/obs-store';
+import { addressUtils } from '@rabby-wallet/base-utils';
+
 import { keyringSdks, KeyringClassType, KeyringInstance, KEYRING_CLASS } from './types';
 import { AccountItemWithBrandQueryResult, DisplayKeyring, DisplayedKeryring, KEYRING_TYPE, KeyringAccount, KeyringIntf, KeyringSerializedData, KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { normalizeAddress } from './utils/address';
 import { GET_WALLETCONNECT_CONFIG } from './utils/walletconnect';
+import { EncryptorAdapter, nodeEncryptor } from './utils/encryptor';
 
 interface KeyringState {
-  booted: string;
-  vault: string;
+  booted?: string;
+  vault?: string;
 }
 
 interface MemStoreState {
@@ -33,11 +35,19 @@ export class KeyringService extends EventEmitter {
 
   store!: ObservableStore<KeyringState>;
   memStore: ObservableStore<MemStoreState>;
-  encryptor: typeof encryptor = encryptor;
   password: string | null = null;
+  private encryptor: EncryptorAdapter;
 
-  constructor() {
+  constructor(options?: {
+    encryptor?: EncryptorAdapter;
+  }) {
     super();
+
+    const {
+      encryptor: inputEncryptor = nodeEncryptor,
+    } = options || {};
+
+    this.encryptor = inputEncryptor;
     this.keyringClses = Object.values(keyringSdks);
     this.memStore = new ObservableStore({
       isUnlocked: false,
@@ -51,8 +61,8 @@ export class KeyringService extends EventEmitter {
 
   loadStore(initState: Partial<KeyringState>) {
     this.store = new ObservableStore({
-      booted: initState.booted || '',
-      vault: initState.vault || '',
+      booted: initState.booted || undefined,
+      vault: initState.vault || undefined,
     });
   }
 
@@ -65,6 +75,10 @@ export class KeyringService extends EventEmitter {
 
   isBooted() {
     return !!this.store.getState().booted;
+  }
+
+  isUnlocked() {
+    return this.memStore.getState().isUnlocked;
   }
 
   hasVault() {
@@ -270,6 +284,7 @@ export class KeyringService extends EventEmitter {
     }
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
+
     return selectedKeyring
       .addAccounts(1)
       .then((): Promise<(AccountItemWithBrandQueryResult[] | string[])> => {
@@ -761,6 +776,61 @@ export class KeyringService extends EventEmitter {
         publicKey: (keyring as KeyringIntf).publicKey,
       } as DisplayedKeryring;
     });
+  }
+
+  getAllTypedAccounts(): Promise<DisplayedKeryring[]> {
+    return Promise.all(
+      this.keyrings.map((keyring) => this.displayForKeyring(keyring))
+    );
+  }
+
+  async getAllTypedVisibleAccounts(): Promise<DisplayedKeryring[]> {
+    const keyrings = await Promise.all(
+      this.keyrings.map((keyring) => this.displayForKeyring(keyring, false))
+    );
+    return keyrings.filter((keyring) => keyring.accounts.length > 0);
+  }
+
+  /** @deprecated just for compability on ctrl C-V, use getAllVisibleAccounts as possible */
+  get getAllVisibleAccountsArray () {
+    return this.getAllVisibleAccounts;
+  }
+
+  async getAllVisibleAccounts() {
+    const typedAccounts = await this.getAllTypedVisibleAccounts();
+    const result: KeyringAccount[] = [];
+    typedAccounts.forEach((accountGroup) => {
+      result.push(
+        ...accountGroup.accounts.map((account) => ({
+          address: account.address,
+          brandName: account.brandName,
+          type: accountGroup.type,
+        }))
+      );
+    });
+
+    return result;
+  }
+
+  async getAllAdresses() {
+    const keyrings = await this.getAllTypedAccounts();
+    const result: { address: string; type: string; brandName: string }[] = [];
+    keyrings.forEach((accountGroup) => {
+      result.push(
+        ...accountGroup.accounts.map((account) => ({
+          address: account.address,
+          brandName: account.brandName,
+          type: accountGroup.type,
+        }))
+      );
+    });
+
+    return result;
+  }
+
+  async hasAddress(address: string) {
+    const addresses = await this.getAllAdresses();
+    return !!addresses.find((item) => addressUtils.isSameAddress(item.address, address));
   }
 
   /**

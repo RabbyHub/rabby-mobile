@@ -23,6 +23,10 @@ export const RootNames = {
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',
+
+  StackAddress: 'StackAddress',
+  CurrentAddress: 'CurrentAddress',
+  ImportNewAddress: 'ImportNewAddress',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

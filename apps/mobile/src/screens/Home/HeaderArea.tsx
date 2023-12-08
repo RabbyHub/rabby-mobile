@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { RcIconHeaderSettings, RcIconHistory } from '@/assets/icons/home';
+import { RcIconHeaderSettings, RcIconHistory, RcIconHeaderAddAccount } from '@/assets/icons/home';
 import { RootNames, ScreenColors, ScreenLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -12,14 +12,28 @@ export default function HomeHeaderArea() {
 
   const navigation = useNavigation();
 
+  const handlePressCurrentAccount = React.useCallback(() => {
+    navigation.push(RootNames.StackAddress, {
+      screen: RootNames.CurrentAddress,
+      params: {},
+    });
+  }, []);
+
   const handlePressIcon = React.useCallback(
-    (type: 'history' | 'settings') => {
+    (type: 'history' | 'settings' | 'add-account') => {
       switch (type) {
         default:
           break;
         case 'settings': {
           navigation.push(RootNames.StackSettings, {
             screen: RootNames.Settings,
+            params: {},
+          });
+          break;
+        }
+        case 'add-account': {
+          navigation.push(RootNames.StackAddress, {
+            screen: RootNames.ImportNewAddress,
             params: {},
           });
           break;
@@ -52,7 +66,7 @@ export default function HomeHeaderArea() {
           justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-        <View
+        <TouchableView
           style={{
             // width: 255,
             width: '100%',
@@ -63,7 +77,9 @@ export default function HomeHeaderArea() {
             alignItems: 'center',
             borderRadius: 6,
             backgroundColor: 'rgba(255, 255, 255, 0.10)',
-          }}>
+          }}
+          onPress={handlePressCurrentAccount}
+        >
           <Text
             style={{
               color: colors['neutral-title-2'],
@@ -74,7 +90,7 @@ export default function HomeHeaderArea() {
             }}>
             Left Account Switcher
           </Text>
-        </View>
+        </TouchableView>
         <View
           style={{
             flexDirection: 'row',

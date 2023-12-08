@@ -1,3 +1,4 @@
+import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { createPersistStore } from '@rabby-wallet/persist-store';
 
 export interface ContactBookItem {
@@ -18,13 +19,15 @@ export type ContactBookStore = {
 export class ContactBookService {
   private store: ContactBookStore;
 
-  constructor() {
+  constructor(options?: StorageAdapaterOptions) {
     this.store = createPersistStore<ContactBookStore>({
       name: 'contactBook',
       template: {
         contacts: {},
         aliases: {},
       },
+    }, {
+      storage: options?.storageAdapter,
     });
   }
 

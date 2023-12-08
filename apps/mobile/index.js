@@ -10,4 +10,5 @@ import App from './src/App';
 import { name as appName } from './app.json';
 
 enableScreens();
+// must be called synchoronously immediately
 AppRegistry.registerComponent(appName, () => App);

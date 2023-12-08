@@ -34,11 +34,11 @@ export class DisplayKeyring {
 }
 
 export interface DisplayedKeryring {
-  type: string | KeyringTypeName;
+  type: string & KeyringTypeName;
   accounts: {
     address: string;
-    brandName: string | KeyringTypeName;
-    type?: string | KeyringTypeName;
+    brandName: string & KeyringTypeName;
+    type?: string & KeyringTypeName;
     keyring?: DisplayKeyring;
     alianName?: string;
   }[];
