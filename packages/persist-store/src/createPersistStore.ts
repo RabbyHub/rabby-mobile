@@ -1,0 +1,71 @@
+/* eslint-disable @typescript-eslint/ban-types */
+
+import { FieldNilable } from '@rabby-wallet/base-utils';
+
+import debounce from 'debounce';
+import { StorageItemTpl, StorageAdapater, makeMemoryStorage } from './storageAdapter';
+
+const DEFAULT_STORAGE = makeMemoryStorage();
+
+export interface CreatePersistStoreParams<T extends StorageItemTpl, TFORBID_DELETE extends boolean> {
+  name: string;
+  template?: FieldNilable<T>;
+  fromStorage?: boolean;
+  allowDelete?: boolean;
+  storage?: StorageAdapater<Record<string, T>>;
+}
+
+const createPersistStore = <T extends StorageItemTpl, TFORBID_DELETE extends boolean = true>({
+  name,
+  template = Object.create(null),
+  fromStorage = true,
+  allowDelete = true
+}: CreatePersistStoreParams<T, TFORBID_DELETE>, opts?: {
+  persistDebounce?: number;
+  storage?: StorageAdapater<Record<string, StorageItemTpl>>;
+}): TFORBID_DELETE extends false ? Partial<T> : T => {
+  let tpl = template;
+
+  const {
+    persistDebounce = 1000,
+    storage = DEFAULT_STORAGE
+  } = opts || {};
+
+  if (fromStorage) {
+    const storageCache = storage.getItem(name);
+    tpl = Object.assign({}, template, storageCache);
+    if (!storageCache) {
+      storage.setItem(name, tpl);
+    }
+  }
+
+  const persistStorage = debounce((name: string, obj: FieldNilable<T>) => storage.setItem(name, obj), persistDebounce);
+
+  const store = new Proxy<FieldNilable<T>>(tpl, {
+    set(target: any, prop, value) {
+      target[prop] = value;
+
+      persistStorage(name, target);
+
+      return true;
+    },
+
+    deleteProperty(target, prop) {
+      if (!allowDelete) {
+        throw new Error('Delete property is forbidden');
+      }
+
+      if (Reflect.has(target, prop)) {
+        Reflect.deleteProperty(target, prop);
+
+        persistStorage(name, target);
+      }
+
+      return true;
+    },
+  });
+
+  return store as any as T;
+};
+
+export default createPersistStore;

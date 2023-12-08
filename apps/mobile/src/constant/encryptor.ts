@@ -1,0 +1,3 @@
+import { RABBY_MOBILE_KR_PWD as RABBY_MOBILE_KR_PWD2 } from "@env"
+
+export const RABBY_MOBILE_KR_PWD = RABBY_MOBILE_KR_PWD2;
