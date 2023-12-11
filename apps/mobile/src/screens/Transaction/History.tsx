@@ -2,27 +2,12 @@ import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import { StyleSheet, View, Text } from 'react-native';
+import { HistoryList } from './components/HistoryList';
 
 function HistoryScreen(): JSX.Element {
   return (
     <NormalScreenContainer>
-      <View
-        style={[
-          {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-          },
-        ]}>
-        <Text
-          style={[
-            {
-              fontSize: 16,
-            },
-          ]}>
-          History Screen
-        </Text>
-      </View>
+      <HistoryList />
     </NormalScreenContainer>
   );
 }
