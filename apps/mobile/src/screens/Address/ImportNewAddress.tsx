@@ -12,6 +12,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { apisAddress } from '@/core/apis';
 import { useAccounts } from '@/hooks/account';
+import { ImportWalletConnect } from './components/ImportWalletConnect';
 
 const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
@@ -81,6 +82,7 @@ function BottomBlockArea() {
           <RcIconRight width={20} height={20} />
         </View>
       </TouchableView>
+      <ImportWalletConnect />
     </View>
   );
 }

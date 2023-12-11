@@ -29,7 +29,10 @@ function getLockInfo() {
 export async function tryAutoUnlockRabbyMobile() {
   const isBooted = keyringService.isBooted();
   // // leave here for debugging
-  // console.debug('tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD', RABBY_MOBILE_KR_PWD);
+  console.debug(
+    'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
+    RABBY_MOBILE_KR_PWD,
+  );
 
   if (!isBooted) {
     await keyringService.boot(RABBY_MOBILE_KR_PWD);

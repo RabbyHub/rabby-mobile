@@ -1,5 +1,6 @@
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
-import { KEYRING_TYPE, KeyringIntf } from '@rabby-wallet/keyring-utils';
+import type { KeyringIntf } from '@rabby-wallet/keyring-utils';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const keyringSdks = {
   WatchKeyring,
@@ -8,6 +9,7 @@ export const keyringSdks = {
 /** @deprecated just for compatibility on COPY codes from extension, use keyringSdks as possible */
 export const KEYRING_SDK_TYPES = keyringSdks;
 
+// TODO: 补全
 export const KEYRING_CLASS = {
   // PRIVATE_KEY: SimpleKeyring.type,
   // MNEMONIC: HdKeyring.type,
@@ -18,9 +20,7 @@ export const KEYRING_CLASS = {
   //   ONEKEY: OnekeyKeyring.type,
   //   GRIDPLUS: LatticeKeyring.type,
   // },
-  WATCH: WatchKeyring.type,
-
-  // TODO: implement in the future, replace it with #Class.type
+  WATCH: KEYRING_TYPE.WatchAddressKeyring,
   WALLETCONNECT: KEYRING_TYPE.WalletConnectKeyring,
   // GNOSIS: GnosisKeyring.type,
   // QRCODE: KeystoneKeyring.type,
@@ -28,6 +28,6 @@ export const KEYRING_CLASS = {
   // COINBASE: CoinbaseKeyring.type,
 };
 
-export type KeyringClassType = typeof keyringSdks[keyof typeof keyringSdks];
+export type KeyringClassType = (typeof keyringSdks)[keyof typeof keyringSdks];
 
 export type KeyringInstance = InstanceType<KeyringClassType> | KeyringIntf;

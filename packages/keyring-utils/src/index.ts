@@ -33,7 +33,7 @@ export class DisplayKeyring {
   activeAccounts?: (indexes: number[]) => Promise<string[]>;
 }
 
-export interface DisplayedKeryring {
+export interface DisplayedKeyring {
   type: string & KeyringTypeName;
   accounts: {
     address: string;
