@@ -6,7 +6,7 @@ export enum KEYRING_TYPE {
   WalletConnectKeyring = 'WalletConnect',
   // GnosisKeyring = 'Gnosis',
   // CoboArgusKeyring = 'CoboArgus',
-};
+}
 
 export type KeyringTypeName =
   // SimpleKeyring
@@ -15,13 +15,12 @@ export type KeyringTypeName =
   // TrezorKeyring
   // LedgerBridgeKeyring
   // OnekeyKeyring
-  | 'Watch Address'
-  | KEYRING_TYPE.WalletConnectKeyring
-  // GnosisKeyring
-  // LatticeKeyring
-  // KeystoneKeyring
-  // CoboArgusKeyring
-  // CoinbaseKeyring
+  KEYRING_TYPE.WatchAddressKeyring | KEYRING_TYPE.WalletConnectKeyring;
+// GnosisKeyring
+// LatticeKeyring
+// KeystoneKeyring
+// CoboArgusKeyring
+// CoinbaseKeyring
 
 // export const enum KeyringTypeName {
 //   // SimpleKeyring
@@ -68,11 +67,10 @@ export const HARDWARE_KEYRING_TYPES = {
   },
 } as const;
 
-export interface KeyringAccount {
+export type KeyringAccount = {
   address: string;
   brandName: string;
   type?: KeyringTypeName;
   realBrandName?: string;
   realBrandUrl?: string;
-}
-
+};

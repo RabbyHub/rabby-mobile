@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useStackScreenConfig } from "@/hooks/navigation";
-import { useThemeColors } from "@/hooks/theme";
+import { useStackScreenConfig } from '@/hooks/navigation';
+import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
@@ -52,9 +52,13 @@ export function AddressNavigator() {
               onPress={() => {
                 navigate(RootNames.ImportNewAddress);
               }}>
-              <RcIconHeaderAddAccount width={24} height={24} color={tintColor} />
+              <RcIconHeaderAddAccount
+                width={24}
+                height={24}
+                color={tintColor}
+              />
             </CustomTouchableOpacity>
-          )
+          ),
         }}
       />
       <AddressStack.Screen

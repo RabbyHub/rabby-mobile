@@ -1,12 +1,12 @@
-import { KeyringAccount, KeyringTypeName } from "./types"
+import type { KeyringAccount, KeyringTypeName } from './types';
 
 export type KeyringSerializedData<T = any> = {
   type: KeyringTypeName;
   data: T;
-}
+};
 
 export type KeyringConstructorOptions<
-  T extends KeyringAccount | string = KeyringAccount | string
+  T extends KeyringAccount | string = KeyringAccount | string,
 > = {
   accounts?: T[];
   brandName?: string;
@@ -22,40 +22,57 @@ export type AccountItemWithBrandQueryResult = KeyringAccount & {
 };
 
 export declare class KeyringIntf {
-  constructor (options?: KeyringConstructorOptions);
+  constructor(options?: KeyringConstructorOptions);
 
-  static type: KeyringTypeName;
-  type: KeyringTypeName;
+  static type: string;
+
+  type: string;
 
   /* ===================== basic members ===================== */
-  serialize(): Promise<{ accounts: string[] }>
-  deserialize(opts?: { accounts?: string[] }): Promise<void>
+  serialize(): Promise<{ accounts: string[] }>;
 
-  setAccountToAdd(account: string): void
-  addAccounts(numberOfAccounts?: number): Promise<string[]>
-  addAccounts(...args: any[]): Promise<string[]>
-  getAccounts(...args: any[]): Promise<string[]>
-  removeAccount(address: string): void
+  deserialize(opts?: { accounts?: string[] }): Promise<void>;
 
-  signTransaction(address: string, transaction: any): Promise<void>
-  signPersonalMessage(address: string, message: string): Promise<void>
-  signTypedData(address: string, data: any): Promise<void>
+  setAccountToAdd(account: string): void;
+
+  addAccounts(numberOfAccounts?: number): Promise<string[]>;
+
+  addAccounts(...args: any[]): Promise<string[]>;
+
+  getAccounts(...args: any[]): Promise<string[]>;
+
+  removeAccount(address: string): void;
+
+  signTransaction(address: string, transaction: any): Promise<void>;
+
+  signPersonalMessage(address: string, message: string): Promise<void>;
+
+  signTypedData(address: string, data: any): Promise<void>;
 
   /* ===================== optional members ===================== */
 
   publicKey?: string;
+
   /* for HD Keyring */
   byImport?: boolean;
 
-  activeAccounts?<T extends string | KeyringAccount>(indexes: number[]): Promise<T[]>
-  getFirstPage?<T extends string | AccountItemPagerQueryResult>(): Promise<T[]>
-  getNextPage?<T extends string | AccountItemPagerQueryResult>(): Promise<T[]>
+  activeAccounts?<T extends string | KeyringAccount>(
+    indexes: number[],
+  ): Promise<T[]>;
 
-  /* for some hareware wallet */
-  unlock?(hdPath: string): Promise<string | void>
-  unlock?(...args: any[]): Promise<any | void>
+  getFirstPage?<T extends string | AccountItemPagerQueryResult>(): Promise<T[]>;
 
-  getAccountsWithBrand?(...args: any[]): Promise<AccountItemWithBrandQueryResult[]>
+  getNextPage?<T extends string | AccountItemPagerQueryResult>(): Promise<T[]>;
+
+  /* for some hardware wallet */
+  unlock?(hdPath: string): Promise<string | void>;
+
+  unlock?(...args: any[]): Promise<any | void>;
+
+  getAccountsWithBrand?(
+    ...args: any[]
+  ): Promise<AccountItemWithBrandQueryResult[]>;
+
   resetResend?(): void;
 
   [P: string]: any;
