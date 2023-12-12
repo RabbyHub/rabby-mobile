@@ -1,6 +1,6 @@
 import React from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { apisBoot } from '@/core/apis';
+import { apisBoot, initApis } from '@/core/apis';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -15,6 +15,8 @@ export function useBootstrapApp() {
   const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
 
   React.useEffect(() => {
+    initApis();
+
     apisBoot
       .tryAutoUnlockRabbyMobile()
       .then(result => {

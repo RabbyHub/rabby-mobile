@@ -1,7 +1,10 @@
 import { Text } from '@/components';
+import { RootNames } from '@/constant/layout';
 import { apisWalletConnect } from '@/core/apis';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { openWallet, WalletService } from '@/hooks/walletconnect/util';
+import { eventBus, EVENTS } from '@/utils/events';
+import { navigate } from '@/utils/navigation';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
@@ -23,6 +26,18 @@ export const WalletConnectList = () => {
       openWallet(service, uri);
     }
     setUriLoading(false);
+  }, []);
+
+  React.useEffect(() => {
+    eventBus.addListener(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data => {
+      if (data.status === 'CONNECTED') {
+        navigate(RootNames.ImportSuccess, {
+          address: data.address,
+          brandName: data.brandName,
+          readBrandName: data.readBrandName,
+        });
+      }
+    });
   }, []);
 
   return (
