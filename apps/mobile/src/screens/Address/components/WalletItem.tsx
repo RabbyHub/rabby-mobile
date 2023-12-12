@@ -53,6 +53,7 @@ interface Props {
   subTitle?: string;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+  disable?: boolean;
 }
 
 export const WalletItem: React.FC<Props> = ({
@@ -61,6 +62,7 @@ export const WalletItem: React.FC<Props> = ({
   Icon,
   onPress,
   style,
+  disable,
 }) => {
   const colors = useThemeColors();
 
@@ -69,9 +71,16 @@ export const WalletItem: React.FC<Props> = ({
       style={[
         styles.entryItem,
         { backgroundColor: colors['neutral-bg-1'] },
+        // eslint-disable-next-line react-native/no-inline-styles
+        { opacity: disable ? 0.5 : 1 },
         style,
       ]}
-      onPress={onPress}>
+      onPress={() => {
+        if (disable) {
+          return;
+        }
+        onPress();
+      }}>
       <View style={styles.flexBox}>
         <Icon style={[styles.keyringIcon]} />
       </View>

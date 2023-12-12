@@ -12,11 +12,11 @@ import { SvgProps } from 'react-native-svg';
 export enum WALLET_NAME {
   Bitget = 'Bitget',
   MetaMask = 'MetaMask',
-  TokenPocket = 'TokenPocket',
+  TP = 'TP',
   Rainbow = 'Rainbow',
   imToken = 'imToken',
   Zerion = 'Zerion',
-  MathWallet = 'MathWallet',
+  MathWallet = 'MATHWALLET',
   'Trust Wallet' = 'Trust Wallet',
   UnknownWallet = 'UnknownWallet',
 }
@@ -33,10 +33,10 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     brand: WALLET_NAME.MetaMask,
     _wcId: 'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
   },
-  [WALLET_NAME.TokenPocket]: {
+  [WALLET_NAME.TP]: {
     name: 'TokenPocket',
     icon: TokenPocketSVG,
-    brand: WALLET_NAME.TokenPocket,
+    brand: WALLET_NAME.TP,
     _wcId: '20459438007b75f4f4acb98bf29aa3b800550309646d375da5fd4aac6c2a2c66',
   },
   [WALLET_NAME.Rainbow]: {
