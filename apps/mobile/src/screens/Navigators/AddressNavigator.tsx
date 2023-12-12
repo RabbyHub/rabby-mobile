@@ -64,6 +64,7 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
+        // component={ImportSuccessScreen}
         component={ImportNewAddressScreen}
         options={{
           headerTitle: 'Import New Address',

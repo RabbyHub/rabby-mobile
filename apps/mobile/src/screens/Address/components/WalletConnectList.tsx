@@ -9,6 +9,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
+import WalletSVG from '@/assets/icons/address/wallet.svg';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -42,7 +43,7 @@ export const WalletConnectList = () => {
 
   return (
     <View>
-      <WalletHeadline>Mobile Wallet Apps</WalletHeadline>
+      <WalletHeadline Icon={WalletSVG}>Mobile Wallet Apps</WalletHeadline>
       {isLoading ? <Text>Loading...</Text> : null}
       {validServices.map(service => (
         <WalletItem
