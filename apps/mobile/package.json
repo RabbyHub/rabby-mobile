@@ -45,7 +45,11 @@
     "colord": "^2.9.3",
     "dayjs": "^1.11.10",
     "jotai": "^2.6.0",
+<<<<<<< HEAD
     "nativewind": "^2.0.11",
+=======
+    "lodash": "^4.17.21",
+>>>>>>> dc3df4e (feat: query wallet ui)
     "node-libs-react-native": "^1.2.1",
     "react": "18.2.0",
     "react-is": "18.2.0",
@@ -75,6 +79,7 @@
     "@react-native/eslint-config": "^0.72.2",
     "@react-native/metro-config": "^0.72.11",
     "@tsconfig/react-native": "^3.0.0",
+    "@types/lodash": "^4.14.202",
     "@types/react": "^18.0.24",
     "@types/react-is": "^18.2.4",
     "@types/react-test-renderer": "^18.0.0",
