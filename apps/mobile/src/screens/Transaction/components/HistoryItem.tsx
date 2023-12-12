@@ -9,7 +9,9 @@ export const HistoryItem = () => {
       <View style={styles.cardHeader}>
         <Text style={styles.spam}>Scam tx</Text>
         <View style={styles.cardHeaderInner}>
-          <Text style={styles.time}>2021/12/28 07:34</Text>
+          <Text style={styles.time} numberOfLines={1}>
+            2021
+          </Text>
           <TxId />
         </View>
       </View>
@@ -37,8 +39,8 @@ const styles = StyleSheet.create({
   cardHeader: {
     padding: 12,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   spam: {
@@ -52,10 +54,15 @@ const styles = StyleSheet.create({
     color: '#6A7587',
   },
   cardHeaderInner: {
+    // width: '100%',
     flex: 1,
+    flexShrink: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minWidth: 0,
+    flexWrap: 'wrap',
+    gap: 6,
   },
   cardBody: {
     padding: 12,
@@ -83,6 +90,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     color: '#6A7587',
+    minWidth: 0,
   },
   dividerContainer: {
     paddingHorizontal: 12,
