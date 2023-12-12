@@ -1,3 +1,4 @@
+import { WalletInfo } from '@/utils/walletInfo';
 import { Linking, Platform } from 'react-native';
 import SendIntentAndroid from 'react-native-send-intent';
 
@@ -106,6 +107,7 @@ export type WalletService = {
       readonly secondary: string;
     };
   };
+  walletInfo: WalletInfo;
 };
 
 export const canOpenWallet = (walletService: WalletService) => {

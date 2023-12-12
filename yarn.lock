@@ -4148,16 +4148,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash.clonedeep@npm:^4.5.9":
-  version: 4.5.9
-  resolution: "@types/lodash.clonedeep@npm:4.5.9"
-  dependencies:
-    "@types/lodash": "*"
-  checksum: ef85512b7dce7a4f981a818ae44d11982907e1f26b5b26bedf0957c35e8591eb8e1d24fa31ca851d4b40e0a1ee88563853d762412691fe5f357e8335cead2325
-  languageName: node
-  linkType: hard
-
-"@types/lodash@npm:*":
+"@types/lodash@npm:^4.14.202":
   version: 4.14.202
   resolution: "@types/lodash@npm:4.14.202"
   checksum: a91acf3564a568c6f199912f3eb2c76c99c5a0d7e219394294213b3f2d54f672619f0fde4da22b29dc5d4c31457cd799acc2e5cb6bd90f9af04a1578483b6ff7
@@ -13663,6 +13654,7 @@ __metadata:
     "@react-navigation/native-stack": ^6.9.17
     "@rematch/core": ^2.2.0
     "@tsconfig/react-native": ^3.0.0
+    "@types/lodash": ^4.14.202
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
     "@types/react-test-renderer": ^18.0.0
@@ -13678,6 +13670,7 @@ __metadata:
     jest: ^27.5.1
     jotai: ^2.6.0
     lint-staged: ^15.2.0
+    lodash: ^4.17.21
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
