@@ -28,7 +28,10 @@ const GET_WALLETCONNECT_CONFIG = () => {
   };
 };
 
-export async function getKeyring(type: KeyringTypeName) {
+export async function getKeyring<T = KeyringInstance>(
+  type: KeyringTypeName,
+  callbackOnNewKeyring?: (keyring: KeyringInstance) => void,
+): Promise<T> {
   let keyring = keyringService.getKeyringByType(type) as any as KeyringInstance;
   let isNewKey = false;
 
@@ -44,7 +47,8 @@ export async function getKeyring(type: KeyringTypeName) {
 
   if (isNewKey) {
     await keyringService.addKeyring(keyring);
+    callbackOnNewKeyring?.(keyring);
   }
 
-  return keyring;
+  return keyring as T;
 }

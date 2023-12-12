@@ -34,9 +34,9 @@ export async function tryAutoUnlockRabbyMobile() {
     RABBY_MOBILE_KR_PWD,
   );
 
-  if (!isBooted) {
-    await keyringService.boot(RABBY_MOBILE_KR_PWD);
-  }
+  // if (!isBooted) {
+  await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  // }
 
   const lockInfo = getLockInfo();
 
