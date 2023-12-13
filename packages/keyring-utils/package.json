@@ -23,12 +23,12 @@
   "scripts": {
     "build:docs": "typedoc",
     "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/keyring-utils",
+    "cov:report": "open ./coverage/index.html",
     "publish:preview": "yarn npm publish --tag preview",
     "test": "jest --reporters=jest-silent-reporter",
     "test:clean": "jest --clearCache",
     "test:verbose": "jest --verbose",
-    "test:watch": "jest --watch",
-    "cov:report": "open ./coverage/index.html"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "ethereumjs-util": "^7.1.5"

@@ -1,5 +1,10 @@
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import {
+  DisplayKeyring,
+  KEYRING_TYPE,
+  KEYRING_CLASS,
+} from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -8,13 +13,12 @@ import type {
   KeyringSerializedData,
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
-import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import * as ethUtil from 'ethereumjs-util';
 import { EventEmitter } from 'events';
 import log from 'loglevel';
 
 import type { KeyringClassType, KeyringInstance } from './types';
-import { keyringSdks, KEYRING_CLASS } from './types';
+import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
@@ -32,6 +36,17 @@ type MemStoreState = {
   // preMnemonics: string;
 };
 
+type OnSetAddressAlias = (
+  keyring: KeyringInstance | KeyringIntf,
+  account: AccountItemWithBrandQueryResult,
+) => void;
+
+export type KeyringServiceOptions = {
+  encryptor?: EncryptorAdapter;
+  keyringClasses: KeyringClassType[];
+  onSetAddressAlias: OnSetAddressAlias;
+};
+
 export class KeyringService extends EventEmitter {
   //
   // PUBLIC METHODS
@@ -39,6 +54,8 @@ export class KeyringService extends EventEmitter {
   keyrings: KeyringInstance[];
 
   keyringClasses: KeyringClassType[];
+
+  onSetAddressAlias?: OnSetAddressAlias;
 
   /** @deprecated just for compatibility on COPY codes from extension, use keyringClasses as possible */
   get keyringTypes() {
@@ -57,15 +74,13 @@ export class KeyringService extends EventEmitter {
 
   private readonly encryptor: EncryptorAdapter;
 
-  constructor(options: {
-    encryptor?: EncryptorAdapter;
-    keyringClasses: KeyringClassType[];
-  }) {
+  constructor(options: KeyringServiceOptions) {
     super();
 
     const {
       encryptor: inputEncryptor = nodeEncryptor,
       keyringClasses = keyringSdks,
+      onSetAddressAlias,
     } = options || {};
 
     this.encryptor = inputEncryptor;
@@ -76,6 +91,7 @@ export class KeyringService extends EventEmitter {
       keyrings: [],
       // preMnemonics: '',
     });
+    this.onSetAddressAlias = onSetAddressAlias;
 
     this.keyrings = [];
   }
@@ -310,9 +326,6 @@ export class KeyringService extends EventEmitter {
    */
   addNewAccount(
     selectedKeyring: KeyringInstance | KeyringIntf,
-    options?: {
-      onAddedAddress?: (address: string) => void;
-    },
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -320,7 +333,8 @@ export class KeyringService extends EventEmitter {
       .addAccounts(1)
       .then((): Promise<AccountItemWithBrandQueryResult[] | string[]> => {
         if ((selectedKeyring as KeyringIntf).getAccountsWithBrand) {
-          return (selectedKeyring as KeyringIntf).getAccountsWithBrand!();
+          // @ts-expect-error
+          return (selectedKeyring as KeyringIntf).getAccountsWithBrand();
         }
         return selectedKeyring.getAccounts();
       })
@@ -336,7 +350,7 @@ export class KeyringService extends EventEmitter {
         }));
         allAccounts.forEach(account => {
           this.emit('newAccount', account.address);
-          options?.onAddedAddress?.(account.address);
+          this.onSetAddressAlias?.(selectedKeyring, account);
         });
         _accounts = accounts;
       })
@@ -363,6 +377,27 @@ export class KeyringService extends EventEmitter {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  /**
+   * Sign Personal Message
+   *
+   * Attempts to sign the provided message paramaters.
+   * Prefixes the hash before signing per the personal sign expectation.
+   *
+   * @param msgParams - The message parameters to sign.
+   * @param msgParams.from
+   * @param opts
+   * @param msgParams.data
+   * @returns The raw signature.
+   */
+  signPersonalMessage(msgParams: { from: string; data: any }, opts = {}) {
+    const address = normalizeAddress(msgParams.from);
+
+    return this.getKeyringForAccount(address).then(keyring => {
+      console.log(keyring.signPersonalMessage, address, msgParams.data, opts);
+      return keyring.signPersonalMessage(address, msgParams.data, opts);
+    });
   }
 
   /**
