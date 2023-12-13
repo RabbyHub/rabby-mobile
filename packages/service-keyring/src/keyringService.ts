@@ -348,7 +348,6 @@ export class KeyringService extends EventEmitter {
               ? selectedKeyring.type
               : account?.realBrandName || account.brandName,
         }));
-        console.log('allAccounts', allAccounts, this.onSetAddressAlias);
         allAccounts.forEach(account => {
           this.emit('newAccount', account.address);
           this.onSetAddressAlias?.(selectedKeyring, account);
