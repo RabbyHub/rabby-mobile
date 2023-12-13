@@ -29,7 +29,7 @@
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "^2.1.0-beta.3",
+    "@rabby-wallet/eth-walletconnect-keyring": "beta",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
