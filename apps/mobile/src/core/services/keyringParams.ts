@@ -1,7 +1,7 @@
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
-import { contactService } from '.';
+import { contactService } from './shared';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
   async (keyring, account) => {
@@ -29,6 +29,11 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
       contactService.setAlias({
         address,
         alias,
+      });
+    } else {
+      contactService.setAlias({
+        address,
+        alias: existAlias.name,
       });
     }
   };

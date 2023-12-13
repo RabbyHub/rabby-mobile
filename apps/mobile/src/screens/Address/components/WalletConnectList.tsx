@@ -20,13 +20,13 @@ const styles = StyleSheet.create({
 export const WalletConnectList = () => {
   const { isLoading, validServices } = useValidWalletServices();
   const [uriLoading, setUriLoading] = React.useState(false);
-  const idRef = React.useRef<string>();
+  const deepLinkRef = React.useRef<string>('');
   const handlePress = React.useCallback(async (service: WalletService) => {
     setUriLoading(true);
     const uri = await apisWalletConnect.getUri(service.walletInfo.brand);
     if (uri) {
       openWallet(service, uri);
-      idRef.current = service.id;
+      deepLinkRef.current = uri;
     }
     setUriLoading(false);
   }, []);
@@ -34,21 +34,18 @@ export const WalletConnectList = () => {
   React.useEffect(() => {
     eventBus.addListener(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data => {
       if (data.status === 'CONNECTED') {
-        console.log(idRef);
         apisWalletConnect
-          .importAddress(
-            data.address,
-            data.brandName,
-            data.realBrandName,
-            data.realBrandUrl,
-          )
+          .importAddress({ ...data, deepLink: deepLinkRef.current })
           .then(() => {
             navigate(RootNames.ImportSuccess, {
               address: data.address,
               brandName: data.brandName,
               realBrandName: data.realBrandName,
-              wcId: idRef.current as string,
+              deepLink: deepLinkRef.current,
             });
+          })
+          .catch(err => {
+            console.error(err);
           });
       }
     });

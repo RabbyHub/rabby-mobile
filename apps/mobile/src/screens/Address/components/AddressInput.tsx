@@ -6,7 +6,7 @@ import { Button } from '@/components';
 
 interface Props {
   address: string;
-  aliasName: string;
+  aliasName?: string;
 }
 
 export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {

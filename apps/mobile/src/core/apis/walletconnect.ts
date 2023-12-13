@@ -38,12 +38,19 @@ export async function getUri(brandName: string) {
   return uri;
 }
 
-export async function importAddress(
-  address: string,
-  brandName: string,
-  realBrandName?: string,
-  realBrandUrl?: string,
-) {
+export async function importAddress({
+  address,
+  brandName,
+  realBrandName,
+  realBrandUrl,
+  deepLink,
+}: {
+  address: string;
+  brandName: string;
+  deepLink: string;
+  realBrandName?: string;
+  realBrandUrl?: string;
+}) {
   const keyring = await getKeyring<WalletConnectKeyring>(
     KEYRING_TYPE.WalletConnectKeyring,
   );
@@ -53,6 +60,7 @@ export async function importAddress(
     brandName,
     realBrandName,
     realBrandUrl,
+    deepLink,
   });
 
   await keyringService.addNewAccount(keyring as any);
