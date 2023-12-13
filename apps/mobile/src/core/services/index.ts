@@ -8,6 +8,7 @@ import {
 
 import { makeAppStorage } from '../storage/mmkv';
 import RNEncryptor from './encryptor';
+import { onSetAddressAlias } from './keyringParams';
 
 const appStorage = makeAppStorage();
 
@@ -24,7 +25,11 @@ const encryptor: EncryptorAdapter = {
 const keyringClasses = [WalletConnectKeyring, WatchKeyring] as any;
 
 const keyringState = appStorage.getItem('keyringState');
-export const keyringService = new KeyringService({ encryptor, keyringClasses });
+export const keyringService = new KeyringService({
+  encryptor,
+  keyringClasses,
+  onSetAddressAlias,
+});
 keyringService.loadStore(keyringState || {});
 keyringService.store.subscribe(value =>
   appStorage.setItem('keyringState', value),

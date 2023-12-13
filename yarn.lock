@@ -2819,7 +2819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/keyring-utils@^0.1.0, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
+"@rabby-wallet/keyring-utils@^0.1.0, @rabby-wallet/keyring-utils@workspace:^, @rabby-wallet/keyring-utils@workspace:packages/keyring-utils":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/keyring-utils@workspace:packages/keyring-utils"
   dependencies:
@@ -2932,6 +2932,7 @@ __metadata:
     "@metamask/obs-store": ^9.0.0
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
+    "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/jest": ^27.4.1
     "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10
@@ -2945,6 +2946,8 @@ __metadata:
     typedoc: ^0.24.8
     typedoc-plugin-missing-exports: ^2.0.0
     typescript: ~4.8.4
+  peerDependencies:
+    "@rabby-wallet/keyring-utils": "*"
   languageName: unknown
   linkType: soft
 

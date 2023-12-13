@@ -1,6 +1,7 @@
 import { eventBus, EVENTS } from '@/utils/events';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { keyringService } from '../services';
 import { getKeyring } from './keyring';
 
 export function initWalletConnectKeyring() {
@@ -35,4 +36,25 @@ export async function getUri(brandName: string) {
   }
 
   return uri;
+}
+
+export async function importAddress(
+  address: string,
+  brandName: string,
+  realBrandName?: string,
+  realBrandUrl?: string,
+) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  keyring.setAccountToAdd({
+    address,
+    brandName,
+    realBrandName,
+    realBrandUrl,
+  });
+
+  await keyringService.addNewAccount(keyring as any);
+  return;
 }

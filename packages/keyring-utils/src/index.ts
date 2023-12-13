@@ -1,14 +1,16 @@
-export * from './types';
-export * from './intf';
+import type { AccountItemWithBrandQueryResult, KeyringIntf } from './intf';
+import type { KeyringTypeName } from './types';
 
-import { AccountItemWithBrandQueryResult, KeyringIntf } from './intf';
-import { KeyringTypeName } from './types';
+export * from './types';
+export * from './account';
+export * from './intf';
 
 export class DisplayKeyring {
   type: KeyringTypeName | string = '';
 
   constructor(keyring: KeyringIntf) {
     if (keyring instanceof DisplayKeyring) {
+      // eslint-disable-next-line no-constructor-return
       return keyring;
     }
     this.getAccounts = keyring.getAccounts?.bind(keyring);
@@ -33,7 +35,7 @@ export class DisplayKeyring {
   activeAccounts?: (indexes: number[]) => Promise<string[]>;
 }
 
-export interface DisplayedKeyring {
+export type DisplayedKeyring = {
   type: string & KeyringTypeName;
   accounts: {
     address: string;
@@ -45,4 +47,4 @@ export interface DisplayedKeyring {
   keyring: DisplayKeyring;
   byImport?: boolean;
   publicKey?: string;
-}
+};

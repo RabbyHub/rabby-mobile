@@ -1,15 +1,15 @@
-import { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { createPersistStore } from '@rabby-wallet/persist-store';
+import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
-export interface ContactBookItem {
+export type ContactBookItem = {
   name: string;
   address: string;
-}
+};
 
-export interface AddressAliasItem {
+export type AddressAliasItem = {
   address: string;
   alias: string;
-}
+};
 
 export type ContactBookStore = {
   contacts: Record<string, ContactBookItem>;
@@ -17,61 +17,68 @@ export type ContactBookStore = {
 };
 
 export class ContactBookService {
-  private store: ContactBookStore;
+  private readonly store: ContactBookStore;
 
   constructor(options?: StorageAdapaterOptions) {
-    this.store = createPersistStore<ContactBookStore>({
-      name: 'contactBook',
-      template: {
-        contacts: {},
-        aliases: {},
+    this.store = createPersistStore<ContactBookStore>(
+      {
+        name: 'contactBook',
+        template: {
+          contacts: {},
+          aliases: {},
+        },
       },
-    }, {
-      storage: options?.storageAdapter,
-    });
+      {
+        storage: options?.storageAdapter,
+      },
+    );
   }
 
-  addContact (contact: ContactBookItem | ContactBookItem[]) {
+  addContact(contact: ContactBookItem | ContactBookItem[]) {
     const contacts = Array.isArray(contact) ? contact : [contact];
     contacts.forEach(contact => {
       this.store.contacts[contact.address] = contact;
-    })
+    });
   }
 
-  listContacts (): ContactBookItem[] {
+  listContacts(): ContactBookItem[] {
     return Object.values(this.store.contacts);
-  };
+  }
 
-  getContactByAddress (address: string) {
+  getContactByAddress(address: string) {
     const contact = this.store.contacts[address.toLocaleLowerCase()];
-    if (!contact) return undefined;
+    if (!contact) {
+      return undefined;
+    }
 
     return contact;
-  };
+  }
 
-  getContactsByMap () {
+  getContactsByMap() {
     return Object.assign({}, this.store.contacts);
-  };
+  }
 
   setAlias(aliasItem: AddressAliasItem | AddressAliasItem[]) {
     const aliases = Array.isArray(aliasItem) ? aliasItem : [aliasItem];
     aliases.forEach(alias => {
       this.store.aliases[alias.address] = alias;
-    })
+    });
   }
 
-  listAlias () {
+  listAlias() {
     return Object.values(this.store.aliases);
-  };
+  }
 
-  getAliasByAddress (address: string) {
+  getAliasByAddress(address: string) {
     const alias = this.store.aliases[address.toLocaleLowerCase()];
-    if (!alias) return undefined;
+    if (!alias) {
+      return undefined;
+    }
 
     return alias;
   }
 
-  getAliasByMap () {
+  getAliasByMap() {
     return Object.assign({}, this.store.aliases);
-  };
+  }
 }
