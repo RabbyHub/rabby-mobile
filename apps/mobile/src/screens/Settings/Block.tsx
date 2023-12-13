@@ -5,13 +5,14 @@ import clsx from 'clsx';
 import { SvgProps } from 'react-native-svg';
 import { isValidElementType } from 'react-is';
 
-import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
 import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
-const RcIconRight = makeThemeIconByCC(RcIconRightCC, {
+import { useThemeColors } from '@/hooks/theme';
+import { styled } from 'styled-components/native';
+const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
   onDark: ThemeColors.dark['neutral-foot'],
 });
@@ -28,7 +29,9 @@ export function Block({
 
   return (
     <View className={className}>
-      <Text className="text-r-neutral-foot font-normal text-[12]">{label}</Text>
+      <Text className="text-light-neutral-title-1 dark:text-dark-neutral-title-1 font-normal text-[12]">
+        {label}
+      </Text>
       <View
         // className='bg-r-neutral-card-1 flex-col rounded-[6] mt-[8]'
         style={{
@@ -48,6 +51,15 @@ type GenerateNodeCtx = {
   rightIconNode: React.ReactNode;
 };
 
+const BlockContainer = styled(TouchableView)`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 52px;
+  padding: 16px;
+`;
+
 function BlockItem({
   label,
   icon,
@@ -63,7 +75,9 @@ function BlockItem({
   onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
 }>) {
   children = children || (
-    <Text className="font-normal text-14 text-r-neutral-title-1">{label}</Text>
+    <Text className="font-normal text-14 text-light-neutral-title-1 dark:text-dark-neutral-title-1">
+      {label}
+    </Text>
   );
 
   const colors = useThemeColors();
@@ -72,15 +86,13 @@ function BlockItem({
 
   const iconNode = isValidElementType(icon) ? (
     <View className="mr-[12]">
-      <MaybeIconEle className="w-[20] h-[20] text-r-neutral-body" />
+      <MaybeIconEle className="w-[20] h-[20]" />
     </View>
   ) : (
     (icon as React.ReactNode)
   );
 
-  const rightIconNode = (
-    <RcIconRight className="w-[20] h-[20] text-r-neutral-body" />
-  );
+  const rightIconNode = <RcIconRight className="w-[20] h-[20]" />;
 
   if (typeof rightNode === 'function') {
     rightNode = rightNode({ colors, rightIconNode });
@@ -105,7 +117,7 @@ function BlockItem({
   rightNode = rightNode || null;
 
   return (
-    <TouchableView
+    <BlockContainer
       className={clsx(
         'flex flex-row items-center justify-between',
         'w-[100%] h-[52] p-[16]',
@@ -119,7 +131,7 @@ function BlockItem({
       </View>
       {/* right area */}
       {rightNode || null}
-    </TouchableView>
+    </BlockContainer>
   );
 }
 

@@ -9,11 +9,15 @@ const rabbyColors = ['light', 'dark'].reduce(
       const tinyColor = tinycolor2(colorValue);
       const alpha = tinyColor.getAlpha();
 
-      const hexValue =
-        alpha === 1 ? tinyColor.toHexString() : tinyColor.toHex8String();
+      const hexValue = alpha
+        ? tinyColor.toHexString()
+        : tinyColor.toHex8String();
 
       if (!accu.auto[cssvarKey]) {
-        accu.auto[cssvarKey] = hexValue;
+        accu.auto[cssvarKey] = colorValue;
+        // const rgb = tinyColor.toRgb();
+        // accu.auto[cssvarKey] = `rgb(var(--${rabbyCssPrefix}-${cssvarKey}) / <alpha-value>)`;
+        // accu.rootBase.push(`--${rabbyCssPrefix}-${cssvarKey}: ${rgb.r} ${rgb.g} ${rgb.b}`);
       }
 
       accu[theme][cssvarKey] = hexValue;
@@ -25,6 +29,7 @@ const rabbyColors = ['light', 'dark'].reduce(
     light: {},
     dark: {},
     auto: {},
+    // rootBase: [],
   },
 );
 
@@ -50,19 +55,13 @@ module.exports = {
       [`${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.auto,
       [`${'rabby-'.replace(/\-$/, '')}`]: rabbyColors.auto,
 
-      [`light-${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.light,
-      [`dark-${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.dark,
+      ['light']: rabbyColors.light,
+      ['dark']: rabbyColors.dark,
     },
     fontSize: {},
     /** @notice configuration here would override the default config above */
     extend: {
-      colors: {
-        [`${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.auto,
-        [`${'rabby-'.replace(/\-$/, '')}`]: rabbyColors.auto,
-
-        [`light-${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.light,
-        [`dark-${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.dark,
-      },
+      colors: {},
     },
   },
   plugins: [],

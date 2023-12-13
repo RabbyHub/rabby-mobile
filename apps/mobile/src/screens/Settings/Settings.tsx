@@ -22,7 +22,14 @@ import {
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import { type SettingConfBlock, Block } from './Block';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
+import { useAppTheme } from '@/hooks/theme';
+import { styled } from 'styled-components/native';
+
+const Container = styled(NormalScreenContainer)`
+  flex: 1;
+  justify-content: space-between;
+  padding-bottom: 27px;
+`;
 
 function SettingsStack(): JSX.Element {
   const { appTheme, toggleThemeMode } = useAppTheme();
@@ -52,7 +59,7 @@ function SettingsStack(): JSX.Element {
             },
             rightTextNode: () => {
               return (
-                <Text className="font-normal text-14 text-r-neutral-title-1 mr-[6]">
+                <Text className="font-normal text-14 text-light-neutral-title-1 dark:text-dark-neutral-title-1 mr-[6]">
                   {stringUtils.ucfirst(appTheme)} Mode
                 </Text>
               );
@@ -104,11 +111,8 @@ function SettingsStack(): JSX.Element {
   }, [appTheme, toggleThemeMode]);
 
   return (
-    <NormalScreenContainer
-      className={clsx(
-        'justify-between padding-[27]',
-        'bg-r-neutral-bg-2 dark:bg-dark-r-neutral-bg-2',
-      )}>
+    <Container
+      className={clsx('bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2')}>
       <View className="flex-1 p-[20]">
         {Object.entries(SettingsBlocks).map(([key, block], idx) => {
           const l1key = `${key}-${idx}`;
@@ -139,7 +143,7 @@ function SettingsStack(): JSX.Element {
       <View className="items-center">
         <RcFooterLogo />
       </View>
-    </NormalScreenContainer>
+    </Container>
   );
 }
 

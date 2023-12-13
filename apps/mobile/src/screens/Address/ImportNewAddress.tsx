@@ -5,7 +5,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
-import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -13,7 +13,7 @@ import TouchableItem from '@/components/Touchable/TouchableItem';
 import { apisAddress } from '@/core/apis';
 import { useAccounts } from '@/hooks/account';
 
-const RcIconRight = makeThemeIconByCC(RcIconRightCC, {
+const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
   onDark: ThemeColors.dark['neutral-foot'],
 });
@@ -24,15 +24,14 @@ function TestBlock() {
 
   return (
     <View style={{ padding: 20 }}>
-      <TouchableItem onPress={() => {
-        apisAddress.addWatchAddress(TEST_ADDR);
-        setTimeout(fetchAccounts, 500);
-      }}>
+      <TouchableItem
+        onPress={() => {
+          apisAddress.addWatchAddress(TEST_ADDR);
+          setTimeout(fetchAccounts, 500);
+        }}>
         <>
           <Text>Add Address hongbo.eth:</Text>
-          <Text>
-            ({TEST_ADDR})
-          </Text>
+          <Text>({TEST_ADDR})</Text>
         </>
       </TouchableItem>
     </View>

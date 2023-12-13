@@ -6,7 +6,7 @@ type Props = React.ComponentProps<typeof TouchableOpacity> & {
   onLongPress?: () => void;
   delayPressIn?: number;
   borderless?: boolean;
-  pressColor: string;
+  pressColor?: string;
   pressOpacity?: number;
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;

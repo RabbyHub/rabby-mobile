@@ -5,6 +5,11 @@ import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { SvgProps } from 'react-native-svg';
 import { useGetAppThemeMode } from '@/hooks/theme';
+import {
+  ColorOrVariant,
+  isColorVariant,
+  pickColorVariants,
+} from '@/core/theme';
 
 export const makeThemeIcon = (
   LightIcon: React.FC<SvgProps>,
@@ -16,28 +21,23 @@ export const makeThemeIcon = (
     return isLight ? <LightIcon {...props} /> : <DarkIcon {...props} />;
   });
 
-export function makeThemeIconByCC(
+export function makeThemeIconFromCC(
   IconCC: React.FC<SvgProps>,
-  {
-    onLight,
-    onDark,
-  }: {
-    onLight: ColorValue;
-    onDark: ColorValue;
-  },
+  input:
+    | ColorOrVariant
+    | {
+        onLight: ColorOrVariant;
+        onDark?: ColorOrVariant;
+      },
 ) {
   return memo((props: SvgProps) => {
     const isLight = useGetAppThemeMode() === 'light';
 
-    return isLight ? (
-      <IconCC {...props} color={onLight} />
-    ) : (
-      <IconCC {...props} color={onDark} />
-    );
+    return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
   });
 }
 
-export function makeActiveIconByCC(
+export function makeActiveIconFromCC(
   IconCC: React.FC<SvgProps>,
   {
     activeColor,

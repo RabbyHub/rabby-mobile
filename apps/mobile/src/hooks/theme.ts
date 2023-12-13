@@ -4,7 +4,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 
 import {
   ThemeColors,
-  Colors,
+  AppColorsVariants,
   AppThemeScheme,
   AppColorSchemes,
 } from '@/constant/theme';
@@ -74,7 +74,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   };
 };
 
-export const useThemeColors = (): Colors => {
+export const useThemeColors = (): AppColorsVariants => {
   const binaryTheme = useGetAppThemeMode();
 
   return ThemeColors[binaryTheme];

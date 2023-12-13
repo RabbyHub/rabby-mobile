@@ -10,7 +10,7 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 // import FastImage from 'react-native-fast-image';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 
 import {
   RcIconNavigationHomeLight,
@@ -416,7 +416,7 @@ function SettingNavigator() {
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     tabItem: {
       position: 'relative',

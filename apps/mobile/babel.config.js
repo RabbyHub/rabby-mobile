@@ -34,6 +34,8 @@ module.exports = {
         ],
         alias: {
           '@': './src',
+          'styled-components/native': 'styled-components/native',
+          'styled-components': 'styled-components/native',
         },
       },
     ],
