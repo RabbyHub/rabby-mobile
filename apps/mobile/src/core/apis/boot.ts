@@ -45,7 +45,7 @@ export async function tryAutoUnlockRabbyMobile() {
     if (useBuiltInPwd) {
       const isUnlocked = keyringService.isUnlocked();
       if (!isUnlocked) {
-        keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
       }
     }
   } catch (e) {

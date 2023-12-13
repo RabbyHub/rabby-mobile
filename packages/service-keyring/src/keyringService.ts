@@ -495,7 +495,7 @@ export class KeyringService extends EventEmitter {
   async persistAllKeyrings(): Promise<boolean> {
     if (!this.password || typeof this.password !== 'string') {
       return Promise.reject(
-        new Error('KeyringController - password is not a string'),
+        new Error('KeyringService - password is not a string'),
       );
     }
 
@@ -784,7 +784,7 @@ export class KeyringService extends EventEmitter {
     includeWatchKeyring = true,
   ): Promise<any> {
     const hexed = normalizeAddress(address).toLowerCase();
-    log.debug(`KeyringController - getKeyringForAccount: ${hexed}`);
+    log.debug(`KeyringService - getKeyringForAccount: ${hexed}`);
     let keyrings = type
       ? this.keyrings.filter(keyring => keyring.type === type)
       : this.keyrings;
