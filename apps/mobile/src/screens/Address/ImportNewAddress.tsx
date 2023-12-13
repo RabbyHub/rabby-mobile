@@ -4,28 +4,12 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { StyleSheet, View, Text } from 'react-native';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
-<<<<<<< HEAD
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { RcIconRightCC } from '@/assets/icons/common';
-import { ThemeColors } from '@/constant/theme';
-import TouchableView from '@/components/Touchable/TouchableView';
-import TouchableItem from '@/components/Touchable/TouchableItem';
-import { apisAddress } from '@/core/apis';
-import { useAccounts } from '@/hooks/account';
-import { ImportWalletConnect } from './components/ImportWalletConnect';
-
-const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
-  onLight: ThemeColors.light['neutral-foot'],
-  onDark: ThemeColors.dark['neutral-foot'],
-});
-=======
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { apisAddress } from '@/core/apis';
 import { useAccounts } from '@/hooks/account';
 import { WalletConnectList } from './components/WalletConnectList';
 import { WalletItem } from './components/WalletItem';
 import { WalletHeadline } from './components/WalletHeadline';
->>>>>>> dc3df4e (feat: query wallet ui)
 
 const TEST_ADDR = '0x10b26700b0a2d3f5ef12fa250aba818ee3b43bf4';
 function TestBlock() {
