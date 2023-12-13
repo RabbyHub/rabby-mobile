@@ -132,7 +132,7 @@ export const canOpenWallet = (walletService: WalletService) => {
         ? SendIntentAndroid.isAppInstalled(
             supportWallet.androidPackageName,
           ).then(installed => {
-            console.log(supportWallet.androidPackageName, installed);
+            // console.log(supportWallet.androidPackageName, installed);
             return installed;
           })
         : Promise.resolve(false);

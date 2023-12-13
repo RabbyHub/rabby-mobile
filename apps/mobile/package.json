@@ -29,7 +29,7 @@
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "beta",
+    "@rabby-wallet/eth-walletconnect-keyring": "^2.1.0-beta.3",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
@@ -45,11 +45,8 @@
     "colord": "^2.9.3",
     "dayjs": "^1.11.10",
     "jotai": "^2.6.0",
-<<<<<<< HEAD
-    "nativewind": "^2.0.11",
-=======
     "lodash": "^4.17.21",
->>>>>>> dc3df4e (feat: query wallet ui)
+    "nativewind": "^2.0.11",
     "node-libs-react-native": "^1.2.1",
     "react": "18.2.0",
     "react-is": "18.2.0",
