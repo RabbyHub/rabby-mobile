@@ -1,16 +1,17 @@
-import { Button, Text } from '@/components';
+import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { ScreenColors, ScreenLayouts } from '@/constant/layout';
+import { RootNames, ScreenColors } from '@/constant/layout';
 import { contactService, keyringService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { openWallet } from '@/hooks/walletconnect/util';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
-import HomeHeaderArea from '../Home/HeaderArea';
+import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { navigate } from '@/utils/navigation';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
@@ -52,7 +53,7 @@ export const ImportSuccessScreen = () => {
     [colors],
   );
   const state = useNavigationState(
-    s => s.routes.find(r => r.name === 'ImportSuccess')?.params,
+    s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
   ) as {
     address: string;
     brandName: string;
@@ -60,7 +61,6 @@ export const ImportSuccessScreen = () => {
   };
   const [aliasName, setAliasName] = React.useState<string>();
   const { validServices } = useValidWalletServices();
-  const navigation = useNavigation();
 
   const handlePress = () => {
     keyringService.signPersonalMessage(
@@ -80,6 +80,10 @@ export const ImportSuccessScreen = () => {
     }
   };
 
+  const handleDone = () => {
+    navigate(RootNames.Home);
+  };
+
   React.useEffect(() => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias);
   }, [state]);
@@ -91,12 +95,11 @@ export const ImportSuccessScreen = () => {
         <Text style={styles.title}>Added successfully</Text>
       </View>
       <View style={styles.inputContainer}>
-        <Text>{state.address}</Text>
-        <Text>{state.brandName}</Text>
         <AddressInput aliasName={aliasName} address={state.address} />
 
         <Text onPress={handlePress}> 签名</Text>
       </View>
+      <FooterButton title="Done" onPress={handleDone} />
     </RootScreenContainer>
   );
 };
