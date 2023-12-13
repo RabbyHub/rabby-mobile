@@ -1,0 +1,134 @@
+import React from 'react';
+
+import { View, Text } from 'react-native';
+import clsx from 'clsx';
+import { SvgProps } from 'react-native-svg';
+import { isValidElementType } from 'react-is';
+
+import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
+
+import { RcIconRightCC } from '@/assets/icons/common';
+import { ThemeColors } from '@/constant/theme';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { useAppTheme, useThemeColors } from '@/hooks/theme';
+const RcIconRight = makeThemeIconByCC(RcIconRightCC, {
+  onLight: ThemeColors.light['neutral-foot'],
+  onDark: ThemeColors.dark['neutral-foot'],
+});
+
+export function Block({
+  label,
+  className,
+  children,
+}: React.PropsWithChildren<{
+  label: string;
+  className?: string;
+}>) {
+  const colors = useThemeColors();
+
+  return (
+    <View className={className}>
+      <Text className="text-r-neutral-foot font-normal text-[12]">{label}</Text>
+      <View
+        // className='bg-r-neutral-card-1 flex-col rounded-[6] mt-[8]'
+        style={{
+          backgroundColor: colors['neutral-card-1'],
+          flexDirection: 'column',
+          borderRadius: 6,
+          marginTop: 8,
+        }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+type GenerateNodeCtx = {
+  colors: Record<string, string>;
+  rightIconNode: React.ReactNode;
+};
+
+function BlockItem({
+  label,
+  icon,
+  rightTextNode,
+  rightNode,
+  children,
+  onPress,
+}: React.PropsWithChildren<{
+  label?: string;
+  icon?: React.ReactNode | React.FC<SvgProps>;
+  rightTextNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
+  rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
+  onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
+}>) {
+  children = children || (
+    <Text className="font-normal text-14 text-r-neutral-title-1">{label}</Text>
+  );
+
+  const colors = useThemeColors();
+
+  const MaybeIconEle = icon as React.FC<SvgProps>;
+
+  const iconNode = isValidElementType(icon) ? (
+    <View className="mr-[12]">
+      <MaybeIconEle className="w-[20] h-[20] text-r-neutral-body" />
+    </View>
+  ) : (
+    (icon as React.ReactNode)
+  );
+
+  const rightIconNode = (
+    <RcIconRight className="w-[20] h-[20] text-r-neutral-body" />
+  );
+
+  if (typeof rightNode === 'function') {
+    rightNode = rightNode({ colors, rightIconNode });
+  } else if (!rightNode) {
+    let rightLabelNode: React.ReactNode = null;
+
+    if (rightTextNode) {
+      rightLabelNode =
+        typeof rightTextNode === 'function'
+          ? rightTextNode({ colors, rightIconNode })
+          : rightTextNode;
+    }
+
+    rightNode = (
+      <View className="flex flex-row">
+        {rightLabelNode}
+        {rightIconNode}
+      </View>
+    );
+  }
+
+  rightNode = rightNode || null;
+
+  return (
+    <TouchableView
+      className={clsx(
+        'flex flex-row items-center justify-between',
+        'w-[100%] h-[52] p-[16]',
+      )}
+      disabled={!onPress}
+      onPress={() => onPress?.()}>
+      {/* left area */}
+      <View className="flex flex-row items-center justify-between">
+        {iconNode || null}
+        <View className="flex flex-row">{children}</View>
+      </View>
+      {/* right area */}
+      {rightNode || null}
+    </TouchableView>
+  );
+}
+
+Block.Item = BlockItem;
+
+export type SettingConfBlock = {
+  label: string;
+  items: Pick<
+    React.ComponentProps<typeof BlockItem>,
+    'label' | 'icon' | 'onPress' | 'rightTextNode' | 'rightNode'
+  >[];
+};

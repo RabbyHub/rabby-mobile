@@ -45,7 +45,13 @@ module.exports = {
         moduleName: '@env',
       },
     ],
-    ['nativewind/babel'],
+    [
+      'nativewind/babel',
+      {
+        // mode: "transformOnly",
+        // mode: "compileOnly",
+      },
+    ],
   ],
   env: {
     production: {

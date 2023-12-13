@@ -5465,6 +5465,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clsx@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "clsx@npm:2.0.0"
+  checksum: a2cfb2351b254611acf92faa0daf15220f4cd648bdf96ce369d729813b85336993871a4bf6978ddea2b81b5a130478339c20d9d0b5c6fc287e5147f0c059276e
+  languageName: node
+  linkType: hard
+
 "cmd-shim@npm:^6.0.0":
   version: 6.0.2
   resolution: "cmd-shim@npm:6.0.2"
@@ -12434,6 +12441,7 @@ __metadata:
     babel-plugin-module-resolver: ^5.0.0
     babel-plugin-transform-define: ^2.1.4
     babel-plugin-transform-remove-console: ^6.9.4
+    clsx: ^2.0.0
     colord: ^2.9.3
     dayjs: ^1.11.10
     eslint: ^8.44.0
@@ -12459,6 +12467,7 @@ __metadata:
     react-native-splash-screen: ^3.3.0
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
+    react-native-vector-icons: ^10.0.2
     react-test-renderer: 18.2.0
     tailwindcss: 3.3.2
     tinycolor2: ^1.6.0
@@ -12712,6 +12721,21 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: ed94adac9bf3144c5dcbf37a2956ab672d402f11c0ed75cda247d1d9136ce8977f4d01bcfc813ba576bd61ece420d66306c148057e2552828aa8fe9bad173d46
+  languageName: node
+  linkType: hard
+
+"react-native-vector-icons@npm:^10.0.2":
+  version: 10.0.2
+  resolution: "react-native-vector-icons@npm:10.0.2"
+  dependencies:
+    prop-types: ^15.7.2
+    yargs: ^16.1.1
+  bin:
+    fa-upgrade.sh: bin/fa-upgrade.sh
+    fa5-upgrade: bin/fa5-upgrade.sh
+    fa6-upgrade: bin/fa6-upgrade.sh
+    generate-icon: bin/generate-icon.js
+  checksum: 4ea424fa98c25cdf3e33c590f6e370e0ce0762051a139beb425410eba6e87627e2a68963a025db27130a94d28fbe44299c30471d62555af1654c8c6e4918afb6
   languageName: node
   linkType: hard
 
@@ -15554,7 +15578,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^16.2.0":
+"yargs@npm:^16.1.1, yargs@npm:^16.2.0":
   version: 16.2.0
   resolution: "yargs@npm:16.2.0"
   dependencies:

@@ -38,6 +38,13 @@ module.exports = {
     './src/utils/**/*.{js,jsx,ts,tsx,html}',
   ],
   theme: {
+    spacing: [
+      0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 60, 80,
+    ].reduce((m, n) => {
+      // m[n] = `${n}px`;
+      m[n] = n;
+      return m;
+    }, {}),
     screens: {},
     colors: {
       [`${rabbyCssPrefix.replace(/\-$/, '')}`]: rabbyColors.auto,
