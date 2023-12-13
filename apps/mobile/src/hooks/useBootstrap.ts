@@ -15,8 +15,6 @@ export function useBootstrapApp() {
   const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
 
   React.useEffect(() => {
-    initApis();
-
     apisBoot
       .tryAutoUnlockRabbyMobile()
       .then(result => {
@@ -25,6 +23,7 @@ export function useBootstrapApp() {
           useBuiltinPwd: result.useBuiltInPwd,
           appInitialized: true,
         }));
+        initApis();
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);
