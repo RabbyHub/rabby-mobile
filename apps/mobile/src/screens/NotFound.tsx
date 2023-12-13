@@ -36,7 +36,7 @@ const getStyles = (colors: Colors) =>
       marginTop: 4,
       fontSize: 15,
       fontWeight: '600',
-      color: colors.lightBlue,
+      color: colors['blue-light-1'],
       textAlign: 'center',
     },
     link: {
@@ -44,6 +44,6 @@ const getStyles = (colors: Colors) =>
     },
     linkText: {
       fontSize: 14,
-      color: colors.pureBlue,
+      color: colors['blue-default'],
     },
   });

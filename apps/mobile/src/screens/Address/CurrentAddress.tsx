@@ -7,7 +7,7 @@ import { useThemeColors } from '@/hooks/theme';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { removeAddress } from '@/core/apis/address';
 
-function CurrentAddressScreen(): JSX.Element {
+export default function CurrentAddressScreen(): JSX.Element {
   const { accounts, fetchAccounts } = useAccounts();
   const colors = useThemeColors();
 
@@ -34,33 +34,15 @@ function CurrentAddressScreen(): JSX.Element {
             return (
               <View
                 key={`ac-${account.address}-${idx}`}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 14,
-                  backgroundColor: colors['neutral-bg-1'],
-                  // marginBottom: idx >= accounts?.length - 1 ? 0 : 12,
-                  marginBottom: 12,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}>
+                className="p-[14] bg-r-neutral-bg-1 mb-12 flex-row items-center">
                 <Text style={{ flexShrink: 1 }}>{account.address}</Text>
                 <TouchableItem
                   onPress={() => {
                     removeAddress(account.address);
                     setTimeout(fetchAccounts, 300);
                   }}
-                  style={{
-                    flexShrink: 0,
-                    width: 50,
-                    height: '100%',
-                    marginLeft: 12,
-                    // borderRadius: 8,
-                    backgroundColor: colors['red-default'],
-                  }}>
-                  <Text style={{ textAlign: 'center', color: '#fff' }}>
-                    {' '}
-                    X{' '}
-                  </Text>
+                  className="bg-r-red-default flex-shrink-0 w-[50] h-[100%] ml-[12]">
+                  <Text className="text-center text-[#fff]"> X </Text>
                 </TouchableItem>
               </View>
             );
@@ -70,7 +52,3 @@ function CurrentAddressScreen(): JSX.Element {
     </NormalScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({});
-
-export default CurrentAddressScreen;
