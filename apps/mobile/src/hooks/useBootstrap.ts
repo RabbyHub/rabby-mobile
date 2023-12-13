@@ -25,24 +25,26 @@ export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
       setLock(prev => ({ ...prev, locked: false }));
-    }
+    };
     const onLock = () => {
       setLock(prev => ({ ...prev, locked: true }));
-    }
+    };
     keyringService.on('unlock', onUnlock);
     keyringService.on('lock', onLock);
 
     return () => {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
-    }
+    };
   }, []);
 
   const [{ appInitialized }] = useAtom(bootstrapAtom);
   React.useEffect(() => {
-    if (!locked || !appInitialized) return ;
+    if (!locked || !appInitialized) {
+      return;
+    }
 
-    initApis();
+    // initApis();
   }, [appInitialized, locked]);
 
   return { locked };
