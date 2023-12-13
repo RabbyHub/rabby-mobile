@@ -15,9 +15,10 @@ import SplashScreen from 'react-native-splash-screen';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
-import { useBootstrapApp } from './hooks/useBootstrap';
+import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 
 function MainScreen() {
+  useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
