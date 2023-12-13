@@ -26,6 +26,7 @@ function getLockInfo() {
   return info;
 }
 
+let unlockdePromise: Promise<RabbyUnlockResult> | null = null;
 export async function tryAutoUnlockRabbyMobile() {
   const isBooted = keyringService.isBooted();
   // // leave here for debugging
@@ -34,9 +35,9 @@ export async function tryAutoUnlockRabbyMobile() {
     RABBY_MOBILE_KR_PWD,
   );
 
-  // if (!isBooted) {
-  await keyringService.boot(RABBY_MOBILE_KR_PWD);
-  // }
+  if (process.env.FORCE_REBOOT && !isBooted) {
+    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  }
 
   const lockInfo = getLockInfo();
 
