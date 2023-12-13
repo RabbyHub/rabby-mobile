@@ -14,7 +14,13 @@
       "packages/*"
     ]
   },
+  "lint-staged": {
+    "apps/**/*.{js,jsx,ts,tsx}": [
+      "yarn workspace rabby-mobile lint:fix"
+    ]
+  },
   "scripts": {
+    "prepare": "husky install",
     "build": "tsc --build tsconfig.build.json --verbose",
     "build:clean": "rimraf dist '**/*.tsbuildinfo' && yarn build",
     "build:docs": "yarn workspaces foreach --parallel --interlaced --verbose run build:docs",
@@ -63,8 +69,10 @@
     "eslint-plugin-promise": "^6.1.1",
     "eth-block-tracker": "^8.0.0",
     "execa": "^5.0.0",
+    "husky": "^8.0.3",
     "isomorphic-fetch": "^3.0.0",
     "jest-silent-reporter": "^0.5.0",
+    "lint-staged": "^15.2.0",
     "nock": "^13.3.1",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.4.5",

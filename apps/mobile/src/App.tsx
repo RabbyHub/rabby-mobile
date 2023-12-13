@@ -6,6 +6,7 @@
  */
 
 import React, { Suspense, useEffect } from 'react';
+import { withExpoSnack } from 'nativewind';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
@@ -65,4 +66,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default withExpoSnack(App);

@@ -1,12 +1,12 @@
 const pkg = require('./package.json');
 
-const {version} = pkg;
+const { version } = pkg;
 
 module.exports = {
   presets: [
     [
       'module:metro-react-native-babel-preset',
-      {useTransformReactJSXExperimental: true},
+      { useTransformReactJSXExperimental: true },
     ],
   ],
   plugins: [
@@ -37,11 +37,15 @@ module.exports = {
         },
       },
     ],
-    ['@babel/plugin-transform-react-jsx', {runtime: 'automatic'}],
+    ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }],
     ['@babel/plugin-transform-export-namespace-from'],
-    ['module:react-native-dotenv', {
-      "moduleName": "@env",
-    }]
+    [
+      'module:react-native-dotenv',
+      {
+        moduleName: '@env',
+      },
+    ],
+    ['nativewind/babel'],
   ],
   env: {
     production: {

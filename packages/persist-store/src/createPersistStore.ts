@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
+import { reactive, effect as reffect, type UnwrapNestedRefs } from '@vue/reactivity';
+import cloneDeep from 'lodash.clonedeep';
 
 import { FieldNilable } from '@rabby-wallet/base-utils';
 
@@ -7,23 +9,20 @@ import { StorageItemTpl, StorageAdapater, makeMemoryStorage } from './storageAda
 
 const DEFAULT_STORAGE = makeMemoryStorage();
 
-export interface CreatePersistStoreParams<T extends StorageItemTpl, TFORBID_DELETE extends boolean> {
+export interface CreatePersistStoreParams<T extends StorageItemTpl> {
   name: string;
   template?: FieldNilable<T>;
   fromStorage?: boolean;
-  allowDelete?: boolean;
-  storage?: StorageAdapater<Record<string, T>>;
 }
 
-const createPersistStore = <T extends StorageItemTpl, TFORBID_DELETE extends boolean = true>({
+const createPersistStore = <T extends StorageItemTpl>({
   name,
   template = Object.create(null),
-  fromStorage = true,
-  allowDelete = true
-}: CreatePersistStoreParams<T, TFORBID_DELETE>, opts?: {
+  fromStorage = true
+}: CreatePersistStoreParams<T>, opts?: {
   persistDebounce?: number;
   storage?: StorageAdapater<Record<string, StorageItemTpl>>;
-}): TFORBID_DELETE extends false ? Partial<T> : T => {
+}) => {
   let tpl = template;
 
   const {
@@ -41,31 +40,15 @@ const createPersistStore = <T extends StorageItemTpl, TFORBID_DELETE extends boo
 
   const persistStorage = debounce((name: string, obj: FieldNilable<T>) => storage.setItem(name, obj), persistDebounce);
 
-  const store = new Proxy<FieldNilable<T>>(tpl, {
-    set(target: any, prop, value) {
-      target[prop] = value;
+  const original = cloneDeep(tpl) as FieldNilable<T>;
+  const store = reactive(original);
 
-      persistStorage(name, target);
-
-      return true;
-    },
-
-    deleteProperty(target, prop) {
-      if (!allowDelete) {
-        throw new Error('Delete property is forbidden');
-      }
-
-      if (Reflect.has(target, prop)) {
-        Reflect.deleteProperty(target, prop);
-
-        persistStorage(name, target);
-      }
-
-      return true;
-    },
+  // support nested
+  reffect(() => {
+    persistStorage(name, original);
   });
 
-  return store as any as T;
+  return store as T;
 };
 
 export default createPersistStore;
