@@ -39,7 +39,6 @@ export async function getUri(brandName: string) {
 
     const res = await keyring.initConnector(brandName);
     uri = res.uri;
-    console.log(uri);
   } catch (e) {
     console.error(e);
   }
