@@ -32,8 +32,8 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
           backgroundColor: colors['neutral-card-2'],
           borderRadius: 4,
           paddingHorizontal: 6,
-          paddingVertical: 11,
           marginRight: 80,
+          height: 40,
         },
         address: {
           color: colors['neutral-body'],

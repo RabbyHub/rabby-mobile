@@ -9,8 +9,15 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
-import WalletSVG from '@/assets/icons/address/wallet.svg';
+import WalletCC from '@/assets/icons/address/wallet-cc.svg';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { ThemeColors } from '@/constant/theme';
+
+export const WalletSVG = makeThemeIconFromCC(WalletCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.light['neutral-body'],
+});
 
 const styles = StyleSheet.create({
   walletItem: {

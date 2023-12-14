@@ -1,9 +1,8 @@
 import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames, ScreenColors } from '@/constant/layout';
-import { contactService, keyringService } from '@/core/services';
+import { contactService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -62,21 +61,6 @@ export const ImportSuccessScreen = () => {
     deepLink: string;
   };
   const [aliasName, setAliasName] = React.useState<string>();
-  const { openWalletByBrandName } = useValidWalletServices();
-
-  // TODO
-  const handlePress = () => {
-    keyringService.signPersonalMessage(
-      {
-        from: state.address,
-        data: '0x4578616d706c652060706572736f6e616c5f7369676e60206d657373616765',
-      },
-      {
-        brandName: state.brandName,
-      },
-    );
-    openWalletByBrandName(state.brandName);
-  };
 
   const handleDone = () => {
     navigate(RootNames.Home);
