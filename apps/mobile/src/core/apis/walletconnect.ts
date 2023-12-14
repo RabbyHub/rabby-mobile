@@ -12,7 +12,7 @@ export function bindWalletConnectEvents(keyring: KeyringInstance) {
   });
   keyring.on('sessionStatusChange', (data: any) => {
     console.log('sessionStatusChange', data);
-    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data.payload);
+    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data);
   });
   keyring.on('sessionAccountChange', (data: any) => {
     console.log('sessionAccountChange', data);

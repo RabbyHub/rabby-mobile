@@ -64,7 +64,7 @@ export function TestWalletConnectView() {
     });
 
     eventBus.addListener(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data => {
-      setSessionStatus(data?.status);
+      setSessionStatus(data.status);
     });
   }, [lastAccount]);
 
@@ -76,6 +76,7 @@ export function TestWalletConnectView() {
         <Text>brandName: {lastAccount.brandName}</Text>
         <Text>连接状态: {sessionStatus ?? '查询中'}</Text>
         <Button
+          disabled={sessionStatus !== 'DISCONNECTED'}
           buttonStyle={{
             width: 100,
             height: 40,
@@ -85,6 +86,7 @@ export function TestWalletConnectView() {
           onPress={handleConnect}
         />
         <Button
+          disabled={sessionStatus !== 'CONNECTED'}
           buttonStyle={{
             width: 100,
             height: 40,
