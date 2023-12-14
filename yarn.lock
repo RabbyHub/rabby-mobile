@@ -2827,8 +2827,8 @@ __metadata:
   linkType: soft
 
 "@rabby-wallet/eth-walletconnect-keyring@npm:beta":
-  version: 2.1.0-beta.4
-  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.4"
+  version: 2.1.0-beta.5
+  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.5"
   dependencies:
     "@ethereumjs/tx": ^3.5.2
     "@rabby-wallet/wc-client": ^1.8.10
@@ -2837,7 +2837,7 @@ __metadata:
     ethereumjs-util: ^7.1.3
     events: ^3.3.0
     web3-utils: ^1.6.0
-  checksum: eba5105fc57851c464f967112b5da184093bf4d28dad4475674b193ca44b8337bed2864749d500899acb079ca3efa425ed0ebe179f248dad9375916f7c32510a
+  checksum: ff55b2b368f4e29a4ef07255bb0cce850665cf45bc6f125b4b6165fcd2f3aa4c47b679fbc908a9987bd99ea44a8bc4dbc24f35cd965b18c47421ae86c13c8e62
   languageName: node
   linkType: hard
 

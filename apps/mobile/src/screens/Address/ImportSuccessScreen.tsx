@@ -62,6 +62,7 @@ export const ImportSuccessScreen = () => {
   const [aliasName, setAliasName] = React.useState<string>();
   const { validServices } = useValidWalletServices();
 
+  // TODO
   const handlePress = () => {
     keyringService.signPersonalMessage(
       {
@@ -96,8 +97,6 @@ export const ImportSuccessScreen = () => {
       </View>
       <View style={styles.inputContainer}>
         <AddressInput aliasName={aliasName} address={state.address} />
-
-        <Text onPress={handlePress}> 签名</Text>
       </View>
       <FooterButton title="Done" onPress={handleDone} />
     </RootScreenContainer>
