@@ -4,7 +4,7 @@ import { atom, useAtom } from 'jotai';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import { contactService, keyringService } from '@/core/services';
 
-type KeyringAccountWithAlias = KeyringAccount & {
+export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
 };
 

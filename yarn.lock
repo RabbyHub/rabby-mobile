@@ -14047,8 +14047,8 @@ __metadata:
   linkType: hard
 
 "react-native-vector-icons@npm:^10.0.2":
-  version: 10.0.3
-  resolution: "react-native-vector-icons@npm:10.0.3"
+  version: 10.0.2
+  resolution: "react-native-vector-icons@npm:10.0.2"
   dependencies:
     prop-types: ^15.7.2
     yargs: ^16.1.1
@@ -14057,7 +14057,7 @@ __metadata:
     fa5-upgrade: bin/fa5-upgrade.sh
     fa6-upgrade: bin/fa6-upgrade.sh
     generate-icon: bin/generate-icon.js
-  checksum: 77f22804b0217b4b21e8f4baaee6d33d09429bf55a31e07347fb5ab0af395b0d9adc0cbc3abd46f689ccaf07b953dc909eba95213bce7e03b562801fe4fd0768
+  checksum: 4ea424fa98c25cdf3e33c590f6e370e0ce0762051a139beb425410eba6e87627e2a68963a025db27130a94d28fbe44299c30471d62555af1654c8c6e4918afb6
   languageName: node
   linkType: hard
 

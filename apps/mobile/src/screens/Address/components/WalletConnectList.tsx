@@ -44,7 +44,7 @@ export const WalletConnectList = () => {
               deepLink: deepLinkRef.current,
             });
           })
-          .catch(err => {
+          .catch((err: any) => {
             console.error(err);
           });
       }

@@ -1,3 +1,4 @@
+import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { keyringService } from '../services';
 import { getKeyring } from './keyring';
@@ -11,10 +12,11 @@ export async function addWatchAddress(address: string) {
   return result;
 }
 
-export async function removeAddress(address: string) {
+export async function removeAddress(account: KeyringAccountWithAlias) {
   return keyringService.removeAccount(
-    address,
-    KEYRING_TYPE.WatchAddressKeyring,
+    account.address,
+    account.type as string,
+    account.brandName,
   );
 }
 

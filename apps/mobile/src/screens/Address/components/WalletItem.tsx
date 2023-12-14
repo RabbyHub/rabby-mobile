@@ -2,12 +2,12 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import { SvgProps } from 'react-native-svg';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
-const RcIconRight = makeThemeIconByCC(RcIconRightCC, {
+const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
   onDark: ThemeColors.dark['neutral-foot'],
 });
