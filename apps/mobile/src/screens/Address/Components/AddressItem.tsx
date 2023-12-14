@@ -1,4 +1,4 @@
-import { LegacyRef, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
@@ -42,24 +42,29 @@ export const AddressItem = (props: AddressItemProps) => {
     Clipboard.setString(address);
   }, [address]);
 
-  const handleClick = () => {
+  const gotoAddressDetail = useCallback(() => {
+    navigation.push(RootNames.StackAddress, {
+      screen: RootNames.AddressDetail,
+      params: {
+        address: wallet.address,
+        type: wallet.type,
+        brandName: wallet.brandName,
+        // byImport: wallet?.byImport,
+      },
+    });
+  }, [navigation, wallet.address, wallet.type, wallet.brandName]);
+
+  const handleSwitch = useCallback(() => {
     if (isCurrentAddress) {
-      navigation.push(RootNames.StackAddress, {
-        screen: RootNames.AddressDetail,
-        params: {
-          address: wallet.address,
-          type: wallet.type,
-          brandName: wallet.brandName,
-          // byImport: wallet?.byImport,
-        },
-      });
+      gotoAddressDetail();
     } else {
-      navigation.push(RootNames.AccountTransaction, {
-        screen: RootNames.MyBundle,
-        params: {},
-      });
+      // TODO:switch account
+      // navigation.push(RootNames.AccountTransaction, {
+      //   screen: RootNames.MyBundle,
+      //   params: {},
+      // });
     }
-  };
+  }, [isCurrentAddress, gotoAddressDetail]);
 
   const swipeRef = useRef<Swipeable>(null);
 
@@ -134,7 +139,7 @@ export const AddressItem = (props: AddressItemProps) => {
             )
       }>
       <TouchableOpacity
-        onPress={handleClick}
+        onPress={handleSwitch}
         style={StyleSheet.compose(
           styles.box,
           isCurrentAddress && styles.currentAddressView,
@@ -227,10 +232,14 @@ export const AddressItem = (props: AddressItemProps) => {
               />
             </View>
           ) : (
-            <RcIconInfoCC
+            <TouchableOpacity
               style={styles.infoIcon}
-              color={themeColors['neutral-foot']}
-            />
+              onPress={gotoAddressDetail}>
+              <RcIconInfoCC
+                style={styles.infoIcon}
+                color={themeColors['neutral-foot']}
+              />
+            </TouchableOpacity>
           )}
         </View>
       </TouchableOpacity>
