@@ -61,9 +61,7 @@ export interface PreferenceStore {
   };
   locale: string;
   lastTimeSendToken: Record<string, TokenItem>;
-  // highlightedAddresses: IHighlightedAddress[];
-  // aliasNames?: Record<string, string>;
-  // initAliasNames: boolean;
+  highlightedAddresses: IHighlightedAddress[];
   gasCache: GasCache;
   currentVersion: string;
 
@@ -109,9 +107,7 @@ export class PreferenceService {
           testnetBalanceMap: {},
           locale: defaultLang,
           lastTimeSendToken: {},
-          // highlightedAddresses: [],
-          // aliasNames: {},
-          // initAliasNames: false,
+          highlightedAddresses: [],
           gasCache: {},
           currentVersion: '0',
           sendLogTime: 0,
@@ -288,6 +284,25 @@ export class PreferenceService {
   //       ),
   //   );
   // };
+
+  getHighlightedAddresses = () => {
+    return (this.store.highlightedAddresses || []).filter(
+      item => !!item.brandName && !!item.address,
+    );
+  };
+  updateHighlightedAddresses = (list: IHighlightedAddress[]) => {
+    this.store.highlightedAddresses = list;
+  };
+
+  removeHighlightedAddress = (item: IHighlightedAddress) => {
+    this.store.highlightedAddresses = this.store.highlightedAddresses.filter(
+      highlighted =>
+        !(
+          isSameAddress(highlighted.address, item.address) &&
+          highlighted.brandName === item.brandName
+        ),
+    );
+  };
 
   getLastTimeGasSelection = (chainId: keyof GasCache): ChainGas | null => {
     const cache = this.store.gasCache[chainId];
