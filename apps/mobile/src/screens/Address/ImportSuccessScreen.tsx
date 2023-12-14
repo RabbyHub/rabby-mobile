@@ -4,7 +4,6 @@ import { RootNames, ScreenColors } from '@/constant/layout';
 import { contactService, keyringService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
-import { openWallet } from '@/hooks/walletconnect/util';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,9 +11,12 @@ import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
+import { useAccounts } from '@/hooks/account';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
+  const { fetchAccounts } = useAccounts();
+
   const styles = React.useMemo(
     () =>
       StyleSheet.create({
@@ -60,7 +62,7 @@ export const ImportSuccessScreen = () => {
     deepLink: string;
   };
   const [aliasName, setAliasName] = React.useState<string>();
-  const { validServices } = useValidWalletServices();
+  const { openWalletByBrandName } = useValidWalletServices();
 
   // TODO
   const handlePress = () => {
@@ -73,12 +75,7 @@ export const ImportSuccessScreen = () => {
         brandName: state.brandName,
       },
     );
-    const service = validServices.find(
-      s => s.walletInfo.brand === state.brandName,
-    );
-    if (service) {
-      openWallet(service, state.deepLink);
-    }
+    openWalletByBrandName(state.brandName);
   };
 
   const handleDone = () => {
@@ -88,6 +85,10 @@ export const ImportSuccessScreen = () => {
   React.useEffect(() => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias);
   }, [state]);
+
+  React.useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   return (
     <RootScreenContainer style={styles.rootContainer}>
