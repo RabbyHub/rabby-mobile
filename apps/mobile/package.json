@@ -13,8 +13,9 @@
     "devtools": "react-devtools",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
+    "prestart": "yarn ../../ build",
     "start": "react-native start",
-    "restart": "react-native start --reset-cache",
+    "restart": "yarn start --reset-cache",
     "test": "jest"
   },
   "lint-staged": {
