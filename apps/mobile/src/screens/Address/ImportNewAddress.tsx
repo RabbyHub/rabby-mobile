@@ -10,6 +10,8 @@ import { useAccounts } from '@/hooks/account';
 import { WalletConnectList } from './components/WalletConnectList';
 import { WalletItem } from './components/WalletItem';
 import { WalletHeadline } from './components/WalletHeadline';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 const TEST_ADDR = '0x10b26700b0a2d3f5ef12fa250aba818ee3b43bf4';
 function TestBlock() {
@@ -40,7 +42,9 @@ function BottomBlockArea() {
           title="Add Contacts"
           Icon={RcWatchAddress}
           subTitle="You can also use it as a watch-only address"
-          onPress={() => {}}
+          onPress={() => {
+            navigate(RootNames.ImportWatchAddress);
+          }}
         />
       </View>
       <View style={styles.section}>

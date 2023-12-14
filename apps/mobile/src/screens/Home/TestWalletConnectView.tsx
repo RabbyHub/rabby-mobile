@@ -8,13 +8,16 @@ import {
   WALLETCONNECT_SESSION_STATUS_MAP,
   WALLETCONNECT_STATUS_MAP,
 } from '@rabby-wallet/eth-walletconnect-keyring/type';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { ToastAndroid, View } from 'react-native';
 
 export function TestWalletConnectView() {
   const { accounts, fetchAccounts } = useAccounts();
   const { openWalletByBrandName } = useValidWalletServices();
-  const lastAccount = accounts[accounts.length - 1];
+  const lastAccount = React.useMemo(() => {
+    return accounts.find(a => a.type === KEYRING_TYPE.WalletConnectKeyring);
+  }, [accounts]);
   const [sessionStatus, setSessionStatus] =
     React.useState<keyof typeof WALLETCONNECT_SESSION_STATUS_MAP>();
 
@@ -23,6 +26,9 @@ export function TestWalletConnectView() {
   }, [fetchAccounts]);
 
   const handleConnect = async () => {
+    if (!lastAccount) {
+      return;
+    }
     apisWalletConnect
       .getUri(lastAccount.brandName, 1, lastAccount)
       .then(uri => {
@@ -33,7 +39,9 @@ export function TestWalletConnectView() {
   };
 
   const handleSignPersonalMessage = async () => {
-    console.log('handleSignPersonalMessage');
+    if (!lastAccount) {
+      return;
+    }
     const deepLink = await apisWalletConnect.getDeepLink(lastAccount);
 
     keyringService.signPersonalMessage(
@@ -51,22 +59,46 @@ export function TestWalletConnectView() {
     }
   };
 
+  const handleStatusChanged = React.useCallback((data: any) => {
+    if (data.status === WALLETCONNECT_STATUS_MAP.SIBMITTED) {
+      ToastAndroid.show(`'submitted: ${data.payload}`, ToastAndroid.SHORT);
+    }
+  }, []);
+
+  const handleSessionStatusChanged = React.useCallback((data: any) => {
+    setSessionStatus(data.status);
+  }, []);
+
   React.useEffect(() => {
     if (lastAccount) {
       apisWalletConnect.checkClientIsCreate(lastAccount).then(res => {
         setSessionStatus(res as any);
       });
     }
-    eventBus.addListener(EVENTS.WALLETCONNECT.STATUS_CHANGED, data => {
-      if (data.status === WALLETCONNECT_STATUS_MAP.SIBMITTED) {
-        ToastAndroid.show(`'submitted: ${data.payload}`, ToastAndroid.SHORT);
-      }
-    });
-
-    eventBus.addListener(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data => {
-      setSessionStatus(data.status);
-    });
   }, [lastAccount]);
+
+  React.useEffect(() => {
+    eventBus.addListener(
+      EVENTS.WALLETCONNECT.STATUS_CHANGED,
+      handleStatusChanged,
+    );
+
+    eventBus.addListener(
+      EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+      handleSessionStatusChanged,
+    );
+
+    return () => {
+      eventBus.removeListener(
+        EVENTS.WALLETCONNECT.STATUS_CHANGED,
+        handleStatusChanged,
+      );
+      eventBus.removeListener(
+        EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+        handleSessionStatusChanged,
+      );
+    };
+  }, [handleSessionStatusChanged, handleStatusChanged]);
 
   return (
     lastAccount && (
