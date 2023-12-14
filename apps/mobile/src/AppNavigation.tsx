@@ -43,10 +43,13 @@ import NotFoundScreen from './screens/NotFound';
 import HomeScreen from './screens/Home/Home';
 
 import SettingsScreen from './screens/Settings/Settings';
-import DappsScreen from './screens/Dapps/Dapps';
+// import DappsScreen from './screens/Dapps/Dapps';
 import HistoryScreen from './screens/Transaction/History';
 import MyBundleScreen from './screens/Assets/MyBundle';
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
+import { DappsScreen } from './screens/Dapps/Dapps';
+import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
+import SearchDappsScreen from './screens/Dapps/SearchDapps';
 
 const RootStack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -230,7 +233,14 @@ export default function AppNavigation({
             name={RootNames.StackAddress}
             component={AddressNavigator}
           />
-
+          <RootStack.Screen
+            name={RootNames.StackFavoritePopularDapps}
+            component={FavoritePopularDappsNavigator}
+          />
+          <RootStack.Screen
+            name={RootNames.StackSearchDapps}
+            component={SearchDappsNavigator}
+          />
         </RootStack.Navigator>
       </NavigationContainer>
     </View>
@@ -381,6 +391,66 @@ function TransactionNavigator() {
         options={{
           title: 'History',
         }}
+      />
+    </TransactionStack.Navigator>
+  );
+}
+
+function FavoritePopularDappsNavigator() {
+  const screenOptions = useStackScreenConfig();
+  const colors = useThemeColors();
+  // console.log('============== FavoritePopularNavigator Render =========');
+
+  return (
+    <TransactionStack.Navigator
+      screenOptions={{
+        ...screenOptions,
+        gestureEnabled: false,
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent',
+        },
+        headerTitleStyle: {
+          color: colors['neutral-title-1'],
+          fontWeight: 'normal',
+        },
+      }}>
+      <TransactionStack.Screen
+        name={RootNames.FavoritePopularDapps}
+        component={FavoritePopularDappsScreen}
+        options={{
+          title: 'Favorite Popular Dapp',
+        }}
+      />
+    </TransactionStack.Navigator>
+  );
+}
+
+function SearchDappsNavigator() {
+  const screenOptions = useStackScreenConfig();
+  const colors = useThemeColors();
+  // console.log('============== FavoritePopularNavigator Render =========');
+
+  return (
+    <TransactionStack.Navigator
+      screenOptions={{
+        ...screenOptions,
+        gestureEnabled: false,
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: 'transparent',
+        },
+        headerTitleStyle: {
+          color: colors['neutral-title-1'],
+          fontWeight: 'normal',
+        },
+      }}>
+      <TransactionStack.Screen
+        name={RootNames.SearchDapps}
+        component={SearchDappsScreen}
+        // options={{
+        //   title: 'Favorite Popular Dapp',
+        // }}
       />
     </TransactionStack.Navigator>
   );

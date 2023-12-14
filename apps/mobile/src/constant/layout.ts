@@ -15,7 +15,13 @@ export const RootNames = {
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',
   Home: 'Home',
+
   Dapps: 'Dapps',
+  StackFavoritePopularDapps: 'StackFavoritePopularDapps',
+  FavoritePopularDapps: 'FavoritePopularDapps',
+  StackSearchDapps: 'StackSearchDapps',
+  SearchDapps: 'SearchDapps',
+
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   StackTransaction: 'StackTransaction',
