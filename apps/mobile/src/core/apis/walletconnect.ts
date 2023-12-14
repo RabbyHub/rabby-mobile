@@ -12,7 +12,7 @@ export function bindWalletConnectEvents(keyring: KeyringInstance) {
   });
   keyring.on('sessionStatusChange', (data: any) => {
     console.log('sessionStatusChange', data);
-    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data);
+    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data.payload);
   });
   keyring.on('sessionAccountChange', (data: any) => {
     console.log('sessionAccountChange', data);
@@ -29,7 +29,14 @@ export function initWalletConnectKeyring() {
   );
 }
 
-export async function getUri(brandName: string) {
+export async function getUri(
+  brandName: string,
+  chainId?: number,
+  account?: {
+    address: string;
+    brandName: string;
+  },
+) {
   let uri: string | undefined;
 
   try {
@@ -37,7 +44,7 @@ export async function getUri(brandName: string) {
       KEYRING_TYPE.WalletConnectKeyring,
     );
 
-    const res = await keyring.initConnector(brandName);
+    const res = await keyring.initConnector(brandName, chainId, account);
     uri = res.uri;
   } catch (e) {
     console.error(e);
@@ -51,11 +58,9 @@ export async function importAddress({
   brandName,
   realBrandName,
   realBrandUrl,
-  deepLink,
 }: {
   address: string;
   brandName: string;
-  deepLink: string;
   realBrandName?: string;
   realBrandUrl?: string;
 }) {
@@ -68,9 +73,37 @@ export async function importAddress({
     brandName,
     realBrandName,
     realBrandUrl,
-    deepLink,
   });
 
   await keyringService.addNewAccount(keyring as any);
   return;
+}
+
+export async function getDeepLink({
+  address,
+  brandName,
+}: {
+  address: string;
+  brandName: string;
+}) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  const session = keyring.getSessionAccount(address, brandName);
+
+  return session?.deepLink;
+}
+
+export async function checkClientIsCreate(params: {
+  address: string;
+  brandName: string;
+}) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  const isConnected = await keyring.checkClientIsCreate(params);
+
+  return isConnected;
 }

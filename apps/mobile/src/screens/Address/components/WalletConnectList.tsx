@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import WalletSVG from '@/assets/icons/address/wallet.svg';
+import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -31,25 +32,37 @@ export const WalletConnectList = () => {
     setUriLoading(false);
   }, []);
 
-  React.useEffect(() => {
-    eventBus.addListener(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data => {
-      if (data.status === 'CONNECTED') {
-        apisWalletConnect
-          .importAddress({ ...data, deepLink: deepLinkRef.current })
-          .then(() => {
-            navigate(RootNames.ImportSuccess, {
-              address: data.address,
-              brandName: data.brandName,
-              realBrandName: data.realBrandName,
-              deepLink: deepLinkRef.current,
-            });
-          })
-          .catch((err: any) => {
-            console.error(err);
+  const handleConnected = React.useCallback((data: any) => {
+    if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
+      apisWalletConnect
+        .importAddress(data)
+        .then(() => {
+          navigate(RootNames.ImportSuccess, {
+            address: data.address,
+            brandName: data.brandName,
+            realBrandName: data.realBrandName,
+            deepLink: deepLinkRef.current,
           });
-      }
-    });
+        })
+        .catch((err: any) => {
+          console.error(err);
+        });
+    }
   }, []);
+
+  React.useEffect(() => {
+    eventBus.addListener(
+      EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+      handleConnected,
+    );
+
+    return () => {
+      eventBus.removeListener(
+        EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+        handleConnected,
+      );
+    };
+  }, [handleConnected]);
 
   return (
     <View>

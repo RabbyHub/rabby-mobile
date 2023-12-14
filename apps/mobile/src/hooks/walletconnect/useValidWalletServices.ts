@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
-import { canOpenWallet, sortedSupportWallets, WalletService } from './util';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  canOpenWallet,
+  openWallet,
+  sortedSupportWallets,
+  WalletService,
+} from './util';
 import { useMobileRegistry } from './useMobileRegistry';
 import { WALLET_INFO } from '@/utils/walletInfo';
 
@@ -48,9 +53,30 @@ export const useValidWalletServices = () => {
     }
   }, [walletServices, setLoading]);
 
+  const findWalletServiceByBrandName = useCallback(
+    (brandName: string) => {
+      const service = validServices.find(s => s.walletInfo.brand === brandName);
+
+      return service;
+    },
+    [validServices],
+  );
+
+  const openWalletByBrandName = useCallback(
+    (brandName: string, deepLink?: string) => {
+      const service = findWalletServiceByBrandName(brandName);
+      if (service) {
+        openWallet(service, deepLink);
+      }
+    },
+    [findWalletServiceByBrandName],
+  );
+
   return {
     isLoading,
     validServices,
     walletServicesError,
+    findWalletServiceByBrandName,
+    openWalletByBrandName,
   };
 };

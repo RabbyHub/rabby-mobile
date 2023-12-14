@@ -6,12 +6,10 @@ import {
   Text,
   TextInput,
   TextInputSubmitEditingEventData,
-  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
 import CopySVG from '@/assets/icons/common/copy.svg';
-import { Button } from '@/components';
 import { contactService } from '@/core/services';
 
 interface Props {
@@ -62,6 +60,7 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
 
   const handleSubmit = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
+      console.log('address', address, e.nativeEvent.text);
       contactService.setAlias({
         address,
         alias: e.nativeEvent.text,
