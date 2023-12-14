@@ -1,22 +1,30 @@
 import { eventBus, EVENTS } from '@/utils/events';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService } from '../services';
 import { getKeyring } from './keyring';
+
+export function bindWalletConnectEvents(keyring: KeyringInstance) {
+  keyring.on('statusChange', (data: any) => {
+    console.log('statusChange', data);
+    eventBus.emit(EVENTS.WALLETCONNECT.STATUS_CHANGED, data);
+  });
+  keyring.on('sessionStatusChange', (data: any) => {
+    console.log('sessionStatusChange', data);
+    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data);
+  });
+  keyring.on('sessionAccountChange', (data: any) => {
+    console.log('sessionAccountChange', data);
+    eventBus.emit(EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED, data);
+  });
+}
 
 export function initWalletConnectKeyring() {
   getKeyring<WalletConnectKeyring>(
     KEYRING_TYPE.WalletConnectKeyring,
     keyring => {
-      keyring.on('statusChange', (data: any) => {
-        eventBus.emit(EVENTS.WALLETCONNECT.STATUS_CHANGED, data);
-      });
-      keyring.on('sessionStatusChange', (data: any) => {
-        eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data);
-      });
-      keyring.on('sessionAccountChange', (data: any) => {
-        eventBus.emit(EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED, data);
-      });
+      bindWalletConnectEvents(keyring);
     },
   );
 }
@@ -31,6 +39,7 @@ export async function getUri(brandName: string) {
 
     const res = await keyring.initConnector(brandName);
     uri = res.uri;
+    console.log(uri);
   } catch (e) {
     console.error(e);
   }

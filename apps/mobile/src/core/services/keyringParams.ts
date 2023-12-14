@@ -1,6 +1,8 @@
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
+import { GET_WALLETCONNECT_CONFIG } from '@rabby-wallet/service-keyring/src/utils/walletconnect';
+import { bindWalletConnectEvents } from '../apis/walletconnect';
 import { contactService } from './shared';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
@@ -36,4 +38,18 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
         alias: existAlias.name,
       });
     }
+  };
+
+export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] =
+  Keyring => {
+    const keyring =
+      Keyring?.type === KEYRING_CLASS.WALLETCONNECT
+        ? new Keyring(GET_WALLETCONNECT_CONFIG())
+        : new Keyring();
+
+    if (Keyring.type === KEYRING_CLASS.WALLETCONNECT) {
+      bindWalletConnectEvents(keyring);
+    }
+
+    return keyring;
   };

@@ -41,10 +41,15 @@ type OnSetAddressAlias = (
   account: AccountItemWithBrandQueryResult,
 ) => void;
 
+type OnCreateKeyring = (
+  Keyring: KeyringClassType,
+) => KeyringInstance | KeyringIntf;
+
 export type KeyringServiceOptions = {
   encryptor?: EncryptorAdapter;
   keyringClasses: KeyringClassType[];
   onSetAddressAlias: OnSetAddressAlias;
+  onCreateKeyring: OnCreateKeyring;
 };
 
 export class KeyringService extends EventEmitter {
@@ -55,7 +60,9 @@ export class KeyringService extends EventEmitter {
 
   keyringClasses: KeyringClassType[];
 
-  onSetAddressAlias?: OnSetAddressAlias;
+  onSetAddressAlias!: OnSetAddressAlias;
+
+  onCreateKeyring!: OnCreateKeyring;
 
   /** @deprecated just for compatibility on COPY codes from extension, use keyringClasses as possible */
   get keyringTypes() {
@@ -81,6 +88,7 @@ export class KeyringService extends EventEmitter {
       encryptor: inputEncryptor = nodeEncryptor,
       keyringClasses = keyringSdks,
       onSetAddressAlias,
+      onCreateKeyring,
     } = options || {};
 
     this.encryptor = inputEncryptor;
@@ -92,6 +100,7 @@ export class KeyringService extends EventEmitter {
       // preMnemonics: '',
     });
     this.onSetAddressAlias = onSetAddressAlias;
+    this.onCreateKeyring = onCreateKeyring;
 
     this.keyrings = [];
   }
@@ -350,7 +359,7 @@ export class KeyringService extends EventEmitter {
         }));
         allAccounts.forEach(account => {
           this.emit('newAccount', account.address);
-          this.onSetAddressAlias?.(selectedKeyring, account);
+          this.onSetAddressAlias(selectedKeyring, account);
         });
         _accounts = accounts;
       })
@@ -576,129 +585,9 @@ export class KeyringService extends EventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    // TODO 需要特殊处理的代码放到 keyring
-    const keyring =
-      Keyring?.type === KEYRING_CLASS.WALLETCONNECT
-        ? new Keyring(GET_WALLETCONNECT_CONFIG())
-        : new Keyring();
+    const keyring = this.onCreateKeyring(Keyring);
     await keyring.deserialize(data);
-    // if (
-    //   keyring.type === HARDWARE_KEYRING_TYPES.Ledger.type &&
-    //   preference.store.useLedgerLive
-    // ) {
-    //   await keyring.updateTransportMethod(true);
-    // }
-    // if (keyring.type === KEYRING_CLASS.WALLETCONNECT) {
-    //   eventBus.addEventListener(
-    //     EVENTS.WALLETCONNECT.INIT,
-    //     ({ address, brandName, chainId }) => {
-    //       (keyring as WalletConnectKeyring).init(
-    //         address,
-    //         brandName,
-    //         !chainId ? 1 : chainId
-    //       );
-    //     }
-    //   );
-    //   (keyring as WalletConnectKeyring).on('inited', (uri) => {
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.INITED,
-    //       params: { uri },
-    //     });
-    //   });
 
-    //   keyring.on('transport_error', (data) => {
-    //     Sentry.captureException(
-    //       new Error('Transport error: ' + JSON.stringify(data))
-    //     );
-
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.TRANSPORT_ERROR,
-    //       params: data,
-    //     });
-    //   });
-    //   keyring.on('statusChange', (data) => {
-    //     if (!preference.getPopupOpen() && hasWalletConnectPageStateCache()) {
-    //       setPageStateCacheWhenPopupClose(data);
-    //     }
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.STATUS_CHANGED,
-    //       params: data,
-    //     });
-    //   });
-
-    //   keyring.on('sessionStatusChange', (data) => {
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
-    //       params: data,
-    //     });
-    //   });
-    //   keyring.on('sessionAccountChange', (data) => {
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
-    //       params: data,
-    //     });
-    //   });
-    //   keyring.on('sessionNetworkDelay', (data) => {
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.SESSION_NETWORK_DELAY,
-    //       params: data,
-    //     });
-    //   });
-    //   keyring.on('error', (error) => {
-    //     console.error(error);
-    //     Sentry.captureException(error);
-    //   });
-    // }
-
-    // if (keyring.type === KEYRING_CLASS.COINBASE) {
-    //   const coinbaseKeyring = keyring as CoinbaseKeyring;
-    //   eventBus.addEventListener(EVENTS.WALLETCONNECT.INIT, ({ address }) => {
-    //     const uri = coinbaseKeyring.connect({
-    //       address,
-    //     });
-
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: EVENTS.WALLETCONNECT.INITED,
-    //       params: { uri },
-    //     });
-    //   });
-
-    //   coinbaseKeyring.on('message', (data) => {
-    //     if (data.status === 'CHAIN_CHANGED') {
-    //       eventBus.emit(EVENTS.broadcastToUI, {
-    //         method: EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
-    //         params: {
-    //           ...data,
-    //           status: 'CONNECTED',
-    //         },
-    //       });
-    //     } else {
-    //       eventBus.emit(EVENTS.broadcastToUI, {
-    //         method: EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
-    //         params: data,
-    //       });
-    //       eventBus.emit(EVENTS.broadcastToUI, {
-    //         method: EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
-    //         params: data,
-    //       });
-    //     }
-    //   });
-    // }
-
-    // if (keyring.type === KEYRING_CLASS.GNOSIS) {
-    //   (keyring as GnosisKeyring).on(TransactionBuiltEvent, (data) => {
-    //     eventBus.emit(EVENTS.broadcastToUI, {
-    //       method: TransactionBuiltEvent,
-    //       params: data,
-    //     });
-    //     (keyring as GnosisKeyring).on(TransactionConfirmedEvent, (data) => {
-    //       eventBus.emit(EVENTS.broadcastToUI, {
-    //         method: TransactionConfirmedEvent,
-    //         params: data,
-    //       });
-    //     });
-    //   });
-    // }
     // getAccounts also validates the accounts for some keyrings
     await keyring.getAccounts();
     this.keyrings.push(keyring);

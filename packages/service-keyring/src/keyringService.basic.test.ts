@@ -1,5 +1,6 @@
 import * as sinon from 'sinon';
-import { KeyringService } from '../src/keyringService';
+
+import { KeyringService } from './keyringService';
 
 const password = 'password123';
 
@@ -7,8 +8,7 @@ describe('KeyringService setup', () => {
   let keyringService: KeyringService;
 
   beforeAll(() => {
-    keyringService = new KeyringService({
-    });
+    keyringService = new KeyringService({});
   });
 
   afterEach(() => {
@@ -18,7 +18,7 @@ describe('KeyringService setup', () => {
   describe('boot', () => {
     it('should load store', async () => {
       keyringService.loadStore({});
-      expect(keyringService.store).not.toBeUndefined();
+      expect(keyringService.store).toBeDefined();
     });
 
     it('should booted', async () => {

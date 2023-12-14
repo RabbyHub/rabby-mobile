@@ -6,7 +6,7 @@ import {
 } from '@rabby-wallet/service-keyring';
 
 import RNEncryptor from './encryptor';
-import { onSetAddressAlias } from './keyringParams';
+import { onSetAddressAlias, onCreateKeyring } from './keyringParams';
 import { appStorage } from './shared';
 
 export { contactService, appStorage } from './shared';
@@ -24,6 +24,7 @@ export const keyringService = new KeyringService({
   encryptor,
   keyringClasses,
   onSetAddressAlias,
+  onCreateKeyring,
 });
 keyringService.loadStore(keyringState || {});
 keyringService.store.subscribe(value =>
