@@ -1,18 +1,16 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 
-import { atom, useAtom } from "jotai";
-import { KeyringAccount } from "@rabby-wallet/keyring-utils";
-import { contactService, keyringService } from "@/core/services";
+import { atom, useAtom } from 'jotai';
+import { KEYRING_TYPE, KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { contactService, keyringService } from '@/core/services';
 
-type KeyringAccountWithAlias = KeyringAccount & {
+export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
 };
 
 const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
 
-export function useAccounts(opts?: {
-  disableAutoFetch?: boolean;
-}) {
+export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const [accounts, setAccounts] = useAtom(accountsAtom);
 
   const { disableAutoFetch = false } = opts || {};
@@ -25,8 +23,8 @@ export function useAccounts(opts?: {
 
     let nextAccounts: KeyringAccountWithAlias[] = [];
     try {
-      nextAccounts = await keyringService.getAllVisibleAccounts().then((list) => {
-        return list.map((account) => {
+      nextAccounts = await keyringService.getAllVisibleAccounts().then(list => {
+        return list.map(account => {
           return {
             ...account,
             aliasName: '',
@@ -41,7 +39,7 @@ export function useAccounts(opts?: {
             ...account,
             aliasName: aliasName?.alias || '',
           };
-        })
+        }),
       );
     } catch (err) {
       // Sentry.captureException(err);

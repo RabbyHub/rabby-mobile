@@ -15,7 +15,18 @@ export const RcIconHistory = makeThemeIconByCC(RcIconHistoryCC, {
   onDark: 'white',
 });
 
-export const RcIconHeaderAddAccount = makeThemeIconByCC(RcIconHeaderAddAccountCC, {
-  onLight: ThemeColors.light['neutral-title-1'],
-  onDark: ThemeColors.dark['neutral-title-1'],
-});
+export const RcIconHeaderAddAccount = makeThemeIconByCC(
+  RcIconHeaderAddAccountCC,
+  {
+    onLight: ThemeColors.light['neutral-title-1'],
+    onDark: ThemeColors.dark['neutral-title-1'],
+  },
+);
+
+export const RcIconButtonAddAccount = makeThemeIconByCC(
+  RcIconHeaderAddAccountCC,
+  {
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.light['blue-default'],
+  },
+);

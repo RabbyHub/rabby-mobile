@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useStackScreenConfig } from "@/hooks/navigation";
-import { useThemeColors } from "@/hooks/theme";
+import { useStackScreenConfig } from '@/hooks/navigation';
+import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
@@ -10,6 +10,7 @@ import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
 import { RootNames } from '@/constant/layout';
 import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
+import AddressDetailScreen from '../Address/AddressDetail';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -52,9 +53,13 @@ export function AddressNavigator() {
               onPress={() => {
                 navigate(RootNames.ImportNewAddress);
               }}>
-              <RcIconHeaderAddAccount width={24} height={24} color={tintColor} />
+              <RcIconHeaderAddAccount
+                width={24}
+                height={24}
+                color={tintColor}
+              />
             </CustomTouchableOpacity>
-          )
+          ),
         }}
       />
       <AddressStack.Screen
@@ -63,6 +68,15 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Import New Address',
           title: 'Import New Address',
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.AddressDetail}
+        //@ts-ignore
+        component={AddressDetailScreen}
+        options={{
+          headerTitle: 'Address detail',
+          title: 'Address detail',
         }}
       />
     </AddressStack.Navigator>
