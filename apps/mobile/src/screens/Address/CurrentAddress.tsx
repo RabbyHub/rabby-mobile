@@ -43,22 +43,22 @@ export default function CurrentAddressScreen(): JSX.Element {
     return [
       {
         title: 'address',
-        // data: accounts.filter(e => e.type !== 'Watch Address'),
+        data: accounts.filter(e => e.type !== 'Watch Address'),
 
-        data: [
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-          ...accounts,
-        ],
+        // data: [
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        //   ...accounts,
+        // ],
       },
       {
         title: 'Watch Address',
@@ -90,7 +90,11 @@ export default function CurrentAddressScreen(): JSX.Element {
             if (section.title === 'address') {
               return null;
             }
-            return <View style={styles.watchMargin} />;
+            return (
+              <View
+                style={sectionData?.[0]?.data.length ? styles.watchMargin : {}}
+              />
+            );
           }}
           renderSectionFooter={({ section }) => {
             if (section.title === 'address') {
