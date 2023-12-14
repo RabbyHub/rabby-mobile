@@ -12,7 +12,7 @@ import { colord } from 'colord';
 import { WelcomeImage } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import { Button, Text, FocusAwareStatusBar } from '@/components';
-import { useThemeColors, useColorScheme } from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 import { useStackScreenConfig } from '@/hooks/navigation';
 
 const LoginStack = createNativeStackNavigator();

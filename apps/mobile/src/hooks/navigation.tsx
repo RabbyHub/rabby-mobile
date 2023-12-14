@@ -6,14 +6,10 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
-import { ThemeColors } from '@/constant/theme';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { NavigationHeadersPresets } from '@/constant/layout';
 
-const IconBack = makeThemeIconByCC(RcIconHeaderBack, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.light['neutral-body'],
-});
+const IconBack = makeThemeIconFromCC(RcIconHeaderBack, 'neutral-body');
 
 const hitSlop = {
   top: 10,

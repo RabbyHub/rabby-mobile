@@ -12,14 +12,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useColorScheme } from '@/hooks/theme';
+import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useBootstrapApp } from './hooks/useBootstrap';
 
 function MainScreen() {
   const { couldRender } = useBootstrapApp();
-  const colorScheme = useColorScheme();
+  const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useEffect(() => {
     SplashScreen.hide();
@@ -27,7 +27,7 @@ function MainScreen() {
 
   return (
     <>
-      {couldRender && <AppNavigation colorScheme={colorScheme} />}
+      {couldRender && <AppNavigation colorScheme={binaryTheme} />}
       <JotaiNexus />
     </>
   );
@@ -46,24 +46,5 @@ function App(): JSX.Element {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default withExpoSnack(App);

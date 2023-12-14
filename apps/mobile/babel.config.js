@@ -34,6 +34,8 @@ module.exports = {
         ],
         alias: {
           '@': './src',
+          'styled-components/native': 'styled-components/native',
+          'styled-components': 'styled-components/native',
         },
       },
     ],
@@ -45,7 +47,13 @@ module.exports = {
         moduleName: '@env',
       },
     ],
-    ['nativewind/babel'],
+    [
+      'nativewind/babel',
+      {
+        // mode: "transformOnly",
+        // mode: "compileOnly",
+      },
+    ],
   ],
   env: {
     production: {

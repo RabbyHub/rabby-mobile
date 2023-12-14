@@ -37,6 +37,7 @@
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@rematch/core": "^2.2.0",
+    "clsx": "^2.0.0",
     "colord": "^2.9.3",
     "dayjs": "^1.11.10",
     "jotai": "^2.6.0",
@@ -54,7 +55,9 @@
     "react-native-screens": "^3.27.0",
     "react-native-size-matters": "^0.4.2",
     "react-native-splash-screen": "^3.3.0",
-    "react-native-svg": "^14.0.0"
+    "react-native-svg": "^14.0.0",
+    "react-native-vector-icons": "^10.0.2",
+    "styled-components": "^6.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

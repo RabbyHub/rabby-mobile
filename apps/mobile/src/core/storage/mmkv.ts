@@ -29,7 +29,9 @@ export function makeAppStorage() {
   if (!appStorage) {
     appStorage = {
       getItem: (key: string) => getItem(key),
-      setItem: (key: string, value: any) => { setItem(key, value) },
+      setItem: (key: string, value: any) => {
+        setItem(key, value);
+      },
       clearAll: () => clearAll(),
     };
   }
@@ -37,7 +39,7 @@ export function makeAppStorage() {
   return appStorage;
 }
 
-export const atomWithMMKV = <T>(key: string, initialValue: T) =>
+export const atomWithMMKV = <T = any>(key: string, initialValue: T) =>
   atomWithStorage<T>(
     key,
     initialValue,

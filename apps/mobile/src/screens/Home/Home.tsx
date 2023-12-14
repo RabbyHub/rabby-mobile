@@ -11,7 +11,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
@@ -22,7 +21,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 
 import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 
 function Section({
   children,
@@ -30,7 +29,7 @@ function Section({
 }: React.PropsWithChildren<{
   title: string;
 }>): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const isDarkMode = useGetAppThemeMode() === 'dark';
 
   return (
     <View style={styles.sectionContainer}>
@@ -105,7 +104,7 @@ function AssetsSummary() {
 }
 
 function AssetsScrollList() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const isDarkMode = useGetAppThemeMode() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
