@@ -15,6 +15,7 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { apisAddress } from '@/core/apis';
+import { QRCodeScanner } from '@/components/QRCodeScanner/QRCodeScanner';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -154,6 +155,7 @@ export const ImportWatchAddressScreen = () => {
         {error && (
           <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
         )}
+        {/* <QRCodeScanner /> */}
       </View>
       <FooterButton disabled={!address} title="Confirm" onPress={handleDone} />
     </RootScreenContainer>

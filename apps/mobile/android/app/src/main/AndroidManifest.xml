@@ -33,4 +33,5 @@
       <package android:name="io.zerion.android" />
       <package android:name="org.toshi" />
   </queries>
+  <uses-permission android:name="android.permission.CAMERA" />
 </manifest>

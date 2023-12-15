@@ -13744,6 +13744,7 @@ __metadata:
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
     react-native-vector-icons: ^10.0.2
+    react-native-vision-camera: ^3.6.17
     react-test-renderer: 18.2.0
     styled-components: ^6.1.1
     tailwindcss: 3.3.2
@@ -14058,6 +14059,20 @@ __metadata:
     fa6-upgrade: bin/fa6-upgrade.sh
     generate-icon: bin/generate-icon.js
   checksum: 4ea424fa98c25cdf3e33c590f6e370e0ce0762051a139beb425410eba6e87627e2a68963a025db27130a94d28fbe44299c30471d62555af1654c8c6e4918afb6
+  languageName: node
+  linkType: hard
+
+"react-native-vision-camera@npm:^3.6.17":
+  version: 3.6.17
+  resolution: "react-native-vision-camera@npm:3.6.17"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-worklets-core: "*"
+  peerDependenciesMeta:
+    react-native-worklets-core:
+      optional: true
+  checksum: 2d600b2e6e5ddae4dd4d0d3ad2f90cffe6092353f08a8a57ba4944423024f637f8a8b2069a447acadd6b6081c26514e145a9fc95283bb661bf41f0425eeaa48e
   languageName: node
   linkType: hard
 
