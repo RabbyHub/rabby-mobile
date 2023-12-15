@@ -1,6 +1,10 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { RcIconHeaderSettings, RcIconHistory, RcIconHeaderAddAccount } from '@/assets/icons/home';
+import {
+  RcIconHeaderSettings,
+  RcIconHistory,
+  RcIconHeaderAddAccount,
+} from '@/assets/icons/home';
 import { RootNames, ScreenColors, ScreenLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -78,8 +82,7 @@ export default function HomeHeaderArea() {
             borderRadius: 6,
             backgroundColor: 'rgba(255, 255, 255, 0.10)',
           }}
-          onPress={handlePressCurrentAccount}
-        >
+          onPress={handlePressCurrentAccount}>
           <Text
             style={{
               color: colors['neutral-title-2'],

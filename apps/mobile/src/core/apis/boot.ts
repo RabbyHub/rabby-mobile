@@ -1,5 +1,5 @@
-import { RABBY_MOBILE_KR_PWD } from "@/constant/encryptor";
-import { keyringService } from "../services";
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import { keyringService } from '../services';
 
 const enum PasswordStatus {
   Unknown = -1,
@@ -9,7 +9,7 @@ const enum PasswordStatus {
 
 type RabbyUnlockResult = {
   pwdStatus: PasswordStatus;
-}
+};
 
 function getLockInfo() {
   const info: RabbyUnlockResult = {
@@ -18,7 +18,7 @@ function getLockInfo() {
 
   try {
     keyringService.verifyPassword(RABBY_MOBILE_KR_PWD);
-    info.pwdStatus = PasswordStatus.UseBuiltIn
+    info.pwdStatus = PasswordStatus.UseBuiltIn;
   } catch (e) {
     info.pwdStatus = PasswordStatus.Custom;
   }

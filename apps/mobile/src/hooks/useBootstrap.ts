@@ -1,5 +1,5 @@
 import React from 'react';
-import { atom, useAtom, useAtomValue } from "jotai";
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { apisBoot } from '@/core/apis';
 
 const bootstrapAtom = atom({
@@ -7,17 +7,16 @@ const bootstrapAtom = atom({
   useBuiltinPwd: false,
 });
 
-export function useIfUseBuiltinPwd () {
+export function useIfUseBuiltinPwd() {
   return useAtomValue(bootstrapAtom).useBuiltinPwd;
 }
 
-export function useBootstrapApp () {
-  const [ {
-    appInitialized,
-  }, setBootstrap ] = useAtom(bootstrapAtom);
+export function useBootstrapApp() {
+  const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
 
   React.useEffect(() => {
-    apisBoot.tryAutoUnlockRabbyMobile()
+    apisBoot
+      .tryAutoUnlockRabbyMobile()
       .then(result => {
         setBootstrap(prev => ({
           ...prev,
@@ -25,7 +24,7 @@ export function useBootstrapApp () {
           appInitialized: true,
         }));
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('useBootstrapApp::', err);
         setBootstrap(prev => ({
           ...prev,
@@ -36,5 +35,5 @@ export function useBootstrapApp () {
 
   return {
     couldRender: appInitialized,
-  }
+  };
 }
