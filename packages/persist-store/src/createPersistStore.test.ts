@@ -98,6 +98,40 @@ describe('createPersistStore', () => {
       expect(memStorage.getItem('testStore')).toEqual({ key: { a: 'value2' } });
     });
 
+    describe('should set and persist data to storage on property nested-add-property', () => {
+      it('add new key', async () => {
+        const store = createPersistStore<{ key: Record<string, any>, opt?: string }>({ name: 'testStore', template: { key: null } }, { storage: memStorage, persistDebounce: 500 });
+        expect(store.key).toEqual(null);
+
+        store.opt = 'optvalue';
+        expect(store.opt).toEqual('optvalue');
+        expect(memStorage.getItem('testStore')).toEqual({ key: null });
+        branchClock.tick(500);
+        expect(memStorage.getItem('testStore')).toEqual({ key: null, opt: 'optvalue' });
+
+        delete store.opt;
+        expect(store.opt).toEqual(undefined);
+        branchClock.tick(500);
+        expect(memStorage.getItem('testStore')).toEqual({ key: null });
+      });
+
+      it('add nested new key', async () => {
+        const store = createPersistStore<{ key: Record<string, any> }>({ name: 'testStore', template: { key: null } }, { storage: memStorage, persistDebounce: 500 });
+        expect(store.key).toEqual(null);
+
+        store.key = {};
+        expect(store.key).toEqual({});
+        branchClock.tick(500);
+        expect(memStorage.getItem('testStore')).toEqual({ key: {} });
+
+        store.key.a = 'value2';
+        expect(store.key.a).toEqual('value2');
+
+        branchClock.tick(500);
+        expect(memStorage.getItem('testStore')).toEqual({ key: { a: 'value2' } });
+      });
+    });
+
     it('should delete property and persist data to storage on property nested-delete', async () => {
       const store = createPersistStore<{ key?: { a?: string } | null }>({ name: 'testStore', template: { key: { a: 'value' } } }, { storage: memStorage, persistDebounce: 500 });
 
