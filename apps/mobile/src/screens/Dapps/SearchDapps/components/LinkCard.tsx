@@ -47,7 +47,7 @@ export const LinkCard = ({
   return null;
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     card: {
       flexDirection: 'row',
@@ -58,6 +58,7 @@ const getStyles = (colors: Colors) =>
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       marginHorizontal: 20,
+      marginBottom: 20,
     },
     text: {
       flex: 1,

@@ -13,8 +13,9 @@
     "devtools": "react-devtools",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
+    "prestart": "yarn ../../ build",
     "start": "react-native start",
-    "restart": "react-native start --reset-cache",
+    "restart": "yarn start --reset-cache",
     "test": "jest"
   },
   "lint-staged": {
@@ -30,7 +31,7 @@
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
     "@rabby-wallet/persist-store": "workspace:^",
-    "@rabby-wallet/rabby-api": "^0.6.28",
+    "@rabby-wallet/rabby-api": "mobile-test",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-dapp": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
@@ -43,9 +44,11 @@
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
     "ahooks": "^3.7.8",
+    "clsx": "^2.0.0",
     "colord": "^2.9.3",
     "dayjs": "^1.11.10",
     "jotai": "^2.6.0",
+    "nativewind": "^2.0.11",
     "node-libs-react-native": "^1.2.1",
     "react": "18.2.0",
     "react-is": "18.2.0",
@@ -60,7 +63,8 @@
     "react-native-size-matters": "^0.4.2",
     "react-native-splash-screen": "^3.3.0",
     "react-native-svg": "^14.0.0",
-    "react-native-vector-icons": "^10.0.2"
+    "react-native-vector-icons": "^10.0.2",
+    "styled-components": "^6.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -85,6 +89,8 @@
     "react-devtools": "^4.28.5",
     "react-native-svg-transformer": "^1.1.0",
     "react-test-renderer": "18.2.0",
+    "tailwindcss": "3.3.2",
+    "tinycolor2": "^1.6.0",
     "typescript": "4.8.4"
   },
   "engines": {

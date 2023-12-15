@@ -16,14 +16,13 @@ export const contactService = new ContactBookService({
   storageAdapter: appStorage,
 });
 
-// todo
-// export const openapiService = new OpenApiService({
-//   store: {
-//     host: INITIAL_OPENAPI_URL,
-//     testnetHost: INITIAL_TESTNET_OPENAPI_URL,
-//   },
-// });
-// openapiService.init();
+export const openapiService = new OpenApiService({
+  store: {
+    host: INITIAL_OPENAPI_URL,
+    testnetHost: INITIAL_TESTNET_OPENAPI_URL,
+  },
+});
+openapiService.init();
 
 const rnEncryptor = new RNEncryptor();
 const encryptor: EncryptorAdapter = {

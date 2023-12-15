@@ -11,14 +11,13 @@ export interface BasicDappInfo {
 }
 
 export interface DappInfo {
-  origin: string;
   info: BasicDappInfo;
-  inforUpdateAt: number;
-  isFavorite: boolean;
-  isConnected: boolean;
-  chainId: string;
-  lastPath: string; // 待定
-  lastPathTimeAt: number; //
+  infoUpdateAt?: number;
+  isFavorite?: boolean;
+  isConnected?: boolean;
+  chainId?: string;
+  lastPath?: string; // 待定
+  lastPathTimeAt?: number; //
 }
 
 export type dappStore = {
@@ -49,27 +48,30 @@ export class DappService {
     });
   }
 
-  getDapp(origin: string) {
-    return this.store.dapps[origin];
+  getDapp(id: string) {
+    return this.store.dapps[id];
   }
 
   getDapps() {
     return this.store.dapps;
   }
 
-  removeDapp(origin: string) {
-    delete this.store.dapps[origin];
+  removeDapp(id: string) {
+    delete this.store.dapps[id];
   }
 
   updateDapp(dapp: DappInfo) {
-    this.store.dapps[dapp.origin] = dapp;
+    this.store.dapps[dapp.info.id] = dapp;
   }
 
-  setFavorite(origin: string, isFavorite: boolean) {
-    this.store.dapps[origin].isFavorite = isFavorite;
+  updateFavorite(origin: string, isFavorite: boolean) {
+    this.store.dapps[origin] = {
+      ...this.store.dapps[origin],
+      isFavorite,
+    };
   }
 
-  setConnected(origin: string, isConnected: boolean) {
+  updateConnected(origin: string, isConnected: boolean) {
     this.store.dapps[origin].isConnected = isConnected;
   }
 

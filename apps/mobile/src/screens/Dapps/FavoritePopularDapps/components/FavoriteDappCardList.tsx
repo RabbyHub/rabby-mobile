@@ -1,45 +1,39 @@
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { DappInfo } from '@rabby-wallet/service-dapp';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
 
-const DATA = [
-  {
-    title: '',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Favorite',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Sides',
-    data: ['French Fries', 'Onion Rings', 'Fried Shrimps'],
-  },
-  {
-    title: 'Drinks',
-    data: ['Water', 'Coke', 'Beer'],
-  },
-  {
-    title: 'Desserts',
-    data: ['Cheese Cake', 'Ice Cream'],
-  },
-];
-
-export const FavoriteDappCardList = () => {
+export const FavoriteDappCardList = ({
+  data,
+  onPress,
+}: {
+  data: DappInfo[];
+  onPress?: (dapp: DappInfo) => void;
+}) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <FlatList
-      data={DATA}
+      data={data}
       style={styles.list}
+      keyExtractor={item => item.info.id}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <DappCard />
+            <DappCard
+              data={item}
+              onPress={onPress}
+              onFavoritePress={onPress}
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                borderColor: item.isFavorite
+                  ? colors['blue-default']
+                  : 'transparent',
+              }}
+            />
           </View>
         );
       }}
@@ -47,7 +41,7 @@ export const FavoriteDappCardList = () => {
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
       paddingHorizontal: 20,

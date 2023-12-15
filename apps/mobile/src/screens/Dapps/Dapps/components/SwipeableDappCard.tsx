@@ -1,17 +1,28 @@
-import { Animated, Image, StyleSheet, Text, View } from 'react-native';
-import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
-import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconDelete from '@/assets/icons/dapp/icon-delete.svg';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect.svg';
-import { Colors } from '@/constant/theme';
-import React from 'react';
 import { useThemeColors } from '@/hooks/theme';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { DappInfo } from '@rabby-wallet/service-dapp';
+import React from 'react';
+import { Animated, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { DappCard } from '../../components/DappCard';
 
-export const SwipeableDappCard = () => {
+export const SwipeableDappCard = ({
+  data,
+  onPress,
+  onFavoritePress,
+  onRemovePress,
+  onDisconnectPress,
+  style,
+}: {
+  data: DappInfo;
+  style?: StyleProp<ViewStyle>;
+  onPress?: (dapp: DappInfo) => void;
+  onFavoritePress?: (dapp: DappInfo) => void;
+  onRemovePress?: (dapp: DappInfo) => void;
+  onDisconnectPress?: (dapp: DappInfo) => void;
+}) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const renderRightActions = React.useCallback(() => {
@@ -20,20 +31,23 @@ export const SwipeableDappCard = () => {
         <RectButton
           style={[styles.action, styles.actionDisconnect]}
           onPress={() => {
-            console.log('press disconnect');
+            onDisconnectPress?.(data);
           }}>
           <RcIconDisconnect />
         </RectButton>
         <RectButton
           style={[styles.action, styles.actionDelete]}
           onPress={() => {
-            console.log('press delete');
+            onRemovePress?.(data);
           }}>
           <RcIconDelete />
         </RectButton>
       </Animated.View>
     );
   }, [
+    data,
+    onDisconnectPress,
+    onRemovePress,
     styles.action,
     styles.actionContainer,
     styles.actionDelete,
@@ -42,12 +56,17 @@ export const SwipeableDappCard = () => {
 
   return (
     <Swipeable renderRightActions={renderRightActions}>
-      <DappCard />
+      <DappCard
+        data={data}
+        onFavoritePress={onFavoritePress}
+        onPress={onPress}
+        style={style}
+      />
     </Swipeable>
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     actionContainer: {
       flexDirection: 'row',

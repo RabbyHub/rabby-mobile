@@ -32,8 +32,11 @@
   },
   "dependencies": {
     "@rabby-wallet/base-utils": "^0.1.0",
+    "@types/lodash.clonedeep": "^4.5.9",
+    "@vue/reactivity": "^3.3.11",
     "debounce": "^2.0.0",
-    "ethereumjs-util": "^7.1.5"
+    "ethereumjs-util": "^7.1.5",
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",

@@ -1,32 +1,150 @@
 import React from 'react';
+
+import { View, Text } from 'react-native';
+
+import clsx from 'clsx';
+
+import { stringUtils } from '@rabby-wallet/base-utils';
+
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import { StyleSheet, View, Text } from 'react-native';
+import {
+  RcClearPending,
+  RcCustomRpc,
+  RcFollowUs,
+  RcInfo,
+  RcLock,
+  RcManageAddress,
+  RcSupportChains,
+  RcThemeMode,
+  RcWhitelist,
+} from '@/assets/icons/settings';
+import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
+
+import { type SettingConfBlock, Block } from './Block';
+import { useAppTheme } from '@/hooks/theme';
+import { styled } from 'styled-components/native';
+
+const Container = styled(NormalScreenContainer)`
+  flex: 1;
+  justify-content: space-between;
+  padding-bottom: 27px;
+`;
 
 function SettingsStack(): JSX.Element {
-  return (
-    <NormalScreenContainer>
-      <View
-        style={[
+  const { appTheme, toggleThemeMode } = useAppTheme();
+
+  const SettingsBlocks = React.useMemo<Record<string, SettingConfBlock>>(() => {
+    return {
+      features: {
+        label: 'Features',
+        items: [
+          // {
+          //   label: 'Lock Wallet',
+          //   icon: RcLock,
+          //   onPress: () => {},
+          // },
           {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
+            label: 'Manage Address',
+            icon: RcManageAddress,
+            onPress: () => {},
           },
-        ]}>
-        <Text
-          style={[
-            {
-              fontSize: 16,
+          {
+            label: 'Switch Theme',
+            icon: RcThemeMode,
+            onPress: () => {
+              // TODO: show modal
+
+              toggleThemeMode();
             },
-          ]}>
-          Settings Screen
-        </Text>
+            rightTextNode: () => {
+              return (
+                <Text className="font-normal text-14 text-light-neutral-title-1 dark:text-dark-neutral-title-1 mr-[6]">
+                  {stringUtils.ucfirst(appTheme)} Mode
+                </Text>
+              );
+            },
+          },
+        ],
+      },
+      settings: {
+        label: 'Settings',
+        items: [
+          {
+            label: 'Enable whitelist for sending assets',
+            icon: RcWhitelist,
+            onPress: () => {},
+          },
+          {
+            label: 'Custom RPC',
+            icon: RcCustomRpc,
+            onPress: () => {},
+          },
+          {
+            label: 'Clear Pending',
+            icon: RcClearPending,
+            onPress: () => {},
+          },
+        ],
+      },
+      aboutus: {
+        label: 'About Us',
+        items: [
+          {
+            label: 'Current Version',
+            icon: RcInfo,
+            onPress: () => {},
+          },
+          {
+            label: 'Support Chains',
+            icon: RcSupportChains,
+            onPress: () => {},
+          },
+          {
+            label: 'Follow Us',
+            icon: RcFollowUs,
+            onPress: () => {},
+          },
+        ],
+      },
+    };
+  }, [appTheme, toggleThemeMode]);
+
+  return (
+    <Container
+      className={clsx('bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2')}>
+      <View className="flex-1 p-[20]">
+        {Object.entries(SettingsBlocks).map(([key, block], idx) => {
+          const l1key = `${key}-${idx}`;
+
+          return (
+            <Block
+              key={l1key}
+              label={block.label}
+              {...(idx > 0 && {
+                className: 'mt-[16]',
+              })}>
+              {block.items.map((item, idx_l2) => {
+                return (
+                  <Block.Item
+                    key={`${l1key}-${item.label}-${idx_l2}`}
+                    label={item.label}
+                    icon={item.icon}
+                    onPress={item.onPress}
+                    rightTextNode={item.rightTextNode}
+                    rightNode={item.rightNode}
+                  />
+                );
+              })}
+            </Block>
+          );
+        })}
       </View>
-    </NormalScreenContainer>
+      <View className="items-center">
+        <RcFooterLogo />
+      </View>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({});
 
 export default SettingsStack;

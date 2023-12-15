@@ -7,21 +7,6 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import RcIconFind from '@/assets/icons/dapp/icon-find.svg';
 
-const EmptyItem = ({ style }: { style?: StyleProp<ViewStyle> }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-
-  return (
-    <View style={[styles.emptyCard, style]}>
-      <View style={styles.circle} />
-      <View style={styles.emptyCardContent}>
-        <View style={styles.rect} />
-        <View style={styles.rect1} />
-      </View>
-    </View>
-  );
-};
-
 export const SearchEmpty = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -37,7 +22,7 @@ export const SearchEmpty = () => {
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     container: {
       paddingTop: 100,

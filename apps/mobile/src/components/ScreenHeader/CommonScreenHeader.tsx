@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { makeThemeIconByCC } from '@/hooks/makeThemeIcon';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 
-const LeftBackIcon = makeThemeIconByCC(RcIconHeaderBack, {
+const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.light['neutral-body'],
 });

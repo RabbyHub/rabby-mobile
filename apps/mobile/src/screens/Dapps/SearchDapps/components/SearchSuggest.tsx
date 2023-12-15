@@ -1,8 +1,4 @@
-import { Button, PrimaryButton } from '@/components/Button';
-import { RootNames } from '@/constant/layout';
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
 import React from 'react';
 import {
   StyleProp,
@@ -46,7 +42,7 @@ export const SearchSuggest = ({
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     container: {
       padding: 20,

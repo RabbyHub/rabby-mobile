@@ -1,38 +1,22 @@
-import { SectionList, StyleSheet, Text, View } from 'react-native';
-import { SwipeableDappCard } from './SwipeableDappCard';
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import React from 'react';
-import { EmptyDapps } from './EmptyDapps';
 import { DappInfo } from '@rabby-wallet/service-dapp';
-
-const DATA = [
-  {
-    title: '',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Favorite',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Sides',
-    data: ['French Fries', 'Onion Rings', 'Fried Shrimps'],
-  },
-  {
-    title: 'Drinks',
-    data: ['Water', 'Coke', 'Beer'],
-  },
-  {
-    title: 'Desserts',
-    data: ['Cheese Cake', 'Ice Cream'],
-  },
-];
+import React from 'react';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { EmptyDapps } from './EmptyDapps';
+import { SwipeableDappCard } from './SwipeableDappCard';
 
 export const DappCardList = ({
   sections,
+  onPress,
+  onFavoritePress,
+  onRemovePress,
+  onDisconnectPress,
 }: {
   sections: { title: string; data: DappInfo[] }[];
+  onPress?: (dapp: DappInfo) => void;
+  onFavoritePress?: (dapp: DappInfo) => void;
+  onRemovePress?: (dapp: DappInfo) => void;
+  onDisconnectPress?: (dapp: DappInfo) => void;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -41,11 +25,17 @@ export const DappCardList = ({
     <SectionList
       sections={sections}
       style={styles.list}
-      // keyExtractor={(item, index) => item + index}
+      keyExtractor={item => item.info.id}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <SwipeableDappCard />
+            <SwipeableDappCard
+              data={item}
+              onPress={onPress}
+              onFavoritePress={onFavoritePress}
+              onRemovePress={onRemovePress}
+              onDisconnectPress={onDisconnectPress}
+            />
           </View>
         );
       }}
@@ -57,7 +47,7 @@ export const DappCardList = ({
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
       marginBottom: 20,

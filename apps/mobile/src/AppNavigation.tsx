@@ -10,14 +10,14 @@ import { createCustomNativeStackNavigator as createNativeStackNavigator } from '
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 // import FastImage from 'react-native-fast-image';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 
 import {
   RcIconNavigationHomeLight,
   RcIconNavigationDappsLight,
 } from '@/assets/icons/bottom-bar';
 
-import { useThemeColors, useColorScheme } from '@/hooks/theme';
+import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
 import {
   navigate,
@@ -109,7 +109,7 @@ const BottomTabLabel = ({
 
 function AppStatusBar() {
   const currentRouteName = useCurrentRouteNameInAppStatusBar();
-  const isLight = useColorScheme() === 'light';
+  const isLight = useGetAppThemeMode() === 'light';
   const colors = useThemeColors();
 
   const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
@@ -249,7 +249,7 @@ export default function AppNavigation({
 
 const BottomTabNavigator = () => {
   const colors = useThemeColors();
-  const isDark = useColorScheme() === 'dark';
+  const isDark = useGetAppThemeMode() === 'dark';
 
   if (__DEV__) {
     console.log('BottomTabNavigator Render');
@@ -487,7 +487,7 @@ function SettingNavigator() {
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     tabItem: {
       position: 'relative',

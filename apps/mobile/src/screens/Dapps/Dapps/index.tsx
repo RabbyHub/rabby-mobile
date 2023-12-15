@@ -16,6 +16,7 @@ import { Colors } from '@/constant/theme';
 import { getDappList } from '@/core/apis/dapp';
 import { dappService } from '@/core/services';
 import { DappInfo } from '@rabby-wallet/service-dapp';
+import { useDapps } from '@/hooks/useDapps';
 
 export function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -45,52 +46,33 @@ export function DappsScreen(): JSX.Element {
     });
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
-  const [data, setData] = useState<Record<string, DappInfo>>({});
-
-  useEffect(() => {
-    // const dapps = dappService.getDapps();
-    const dapps = {};
-    setData(dapps);
-  }, [setData]);
-
-  const sections = useMemo(() => {
-    const list = Object.values(data || {});
-    if (!list.length) {
-      return [];
-    }
-    const otherList: DappInfo[] = [];
-    const favoriteList: DappInfo[] = [];
-    list.forEach(item => {
-      if (item.isFavorite) {
-        favoriteList.push(item);
-      } else {
-        otherList.push(item);
-      }
-    });
-    return [
-      {
-        title: '',
-        data: otherList,
-      },
-      {
-        title: 'Favorite',
-        data: favoriteList,
-      },
-    ];
-  }, [data]);
+  const { dappSections, updateFavorite, removeDapp } = useDapps();
 
   return (
-    <NormalScreenContainer style={styles.container}>
-      <DappCardList sections={sections} />
+    <NormalScreenContainer style={styles.page}>
+      <View style={styles.container}>
+        <DappCardList
+          sections={dappSections}
+          onFavoritePress={dapp => {
+            updateFavorite(dapp.info.id, !dapp.isFavorite);
+          }}
+          onRemovePress={dapp => {
+            removeDapp(dapp.info.id);
+          }}
+        />
+      </View>
     </NormalScreenContainer>
   );
 }
 
 const getStyles = (colors: Colors) =>
   StyleSheet.create({
-    container: {
-      paddingVertical: 20,
+    page: {
       backgroundColor: colors['neutral-bg-2'],
+    },
+    container: {
+      paddingTop: 10,
+      paddingBottom: 60,
     },
     navRight: {
       marginRight: 20,

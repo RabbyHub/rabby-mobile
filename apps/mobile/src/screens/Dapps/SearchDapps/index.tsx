@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
@@ -23,6 +23,10 @@ import { SearchSuggest } from './components/SearchSuggest';
 import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
+import { useRequest } from 'ahooks';
+import { useDapps } from '@/hooks/useDapps';
+import { DappInfo } from '@rabby-wallet/service-dapp';
+import { openapiService } from '@/core/services';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -39,6 +43,40 @@ export function SearchDappsScreen(): JSX.Element {
   const [searchText, setSearchText] = React.useState('');
 
   const ref = React.useRef<any>(null);
+
+  const {
+    data,
+    runAsync: runSearch,
+    loading,
+  } = useRequest(
+    async (s: string) => {
+      console.log({ s });
+      if (!s) {
+        return [];
+      }
+      return openapiService.searchDapp({
+        q: s,
+      });
+    },
+    {
+      manual: true,
+      debounceLeading: true,
+      debounceWait: 600,
+    },
+  );
+
+  const { dapps, addDapp } = useDapps();
+
+  const list = useMemo(() => {
+    return (data || []).map(info => {
+      const local = dapps[info.id];
+
+      return {
+        ...local,
+        info,
+      } as DappInfo;
+    });
+  }, [dapps, data]);
 
   return (
     <View style={styles.page}>
@@ -63,8 +101,12 @@ export function SearchDappsScreen(): JSX.Element {
             </TouchableWithoutFeedback>
           }
           value={searchText}
-          onChangeText={setSearchText}
+          onChangeText={v => {
+            setSearchText(v);
+            runSearch(v);
+          }}
           showCancel
+          showLoading={loading}
           cancelButtonProps={{
             buttonTextStyle: styles.cancelButton,
           }}
@@ -74,17 +116,39 @@ export function SearchDappsScreen(): JSX.Element {
           onCancel={() => {
             navigation.goBack();
           }}
+          autoFocus
         />
       </View>
-      <SearchSuggest onPress={setSearchText} />
-      <LinkCard url={searchText} />
-      <SearchEmpty />
-      <SearchDappCardList />
+      {searchText ? (
+        <>
+          <LinkCard url={searchText} />
+          {loading ? null : list.length === 0 ? (
+            <SearchEmpty />
+          ) : (
+            <SearchDappCardList
+              data={list}
+              onFavoritePress={dapp => {
+                addDapp({
+                  ...dapp,
+                  isFavorite: !dapp.isFavorite,
+                });
+              }}
+            />
+          )}
+        </>
+      ) : (
+        <SearchSuggest
+          onPress={v => {
+            runSearch(v);
+            setSearchText(v);
+          }}
+        />
+      )}
     </View>
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     page: {
       flexDirection: 'column',

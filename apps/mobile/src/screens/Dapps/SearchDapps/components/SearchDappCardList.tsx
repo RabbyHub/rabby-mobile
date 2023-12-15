@@ -1,45 +1,35 @@
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
+import { DappInfo } from '@rabby-wallet/service-dapp';
 
-const DATA = [
-  {
-    title: '',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Favorite',
-    data: ['Pizza', 'Burger', 'Risotto'],
-  },
-  {
-    title: 'Sides',
-    data: ['French Fries', 'Onion Rings', 'Fried Shrimps'],
-  },
-  {
-    title: 'Drinks',
-    data: ['Water', 'Coke', 'Beer'],
-  },
-  {
-    title: 'Desserts',
-    data: ['Cheese Cake', 'Ice Cream'],
-  },
-];
-
-export const SearchDappCardList = () => {
+export const SearchDappCardList = ({
+  data,
+  onPress,
+  onFavoritePress,
+}: {
+  data: DappInfo[];
+  onPress?: (dapp: DappInfo) => void;
+  onFavoritePress?: (dapp: DappInfo) => void;
+}) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <FlatList
-      data={DATA}
+      data={data}
       style={styles.list}
+      keyExtractor={item => item.info.id}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <DappCard />
+            <DappCard
+              data={item}
+              onFavoritePress={onFavoritePress}
+              onPress={onPress}
+            />
           </View>
         );
       }}
@@ -47,7 +37,7 @@ export const SearchDappCardList = () => {
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
       paddingHorizontal: 20,

@@ -1,8 +1,7 @@
-import { Button, PrimaryButton } from '@/components/Button';
 import { RootNames } from '@/constant/layout';
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
+import { Button } from '@rneui/themed';
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
@@ -43,7 +42,9 @@ export const EmptyDapps = () => {
         })}
       </View>
       <View style={styles.footer}>
-        <PrimaryButton
+        <Button
+          buttonStyle={styles.buttonStyle}
+          titleStyle={styles.buttonTitleStyle}
           title="Start with Favorite Popular Dapp"
           onPress={() => {
             navigate(RootNames.StackFavoritePopularDapps);
@@ -54,7 +55,7 @@ export const EmptyDapps = () => {
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     container: {},
     title: {
@@ -103,5 +104,20 @@ const getStyles = (colors: Colors) =>
     },
     footer: {
       marginTop: 64,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    buttonStyle: {
+      width: 313,
+      height: 52,
+      borderRadius: 6,
+      backgroundColor: colors['blue-default'],
+      boxShadow: '0px 8px 16px 0px rgba(112, 132, 255, 0.25)',
+    },
+    buttonTitleStyle: {
+      fontSize: 15,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors['neutral-title-2'],
     },
   });
