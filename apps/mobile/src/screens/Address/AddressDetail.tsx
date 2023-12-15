@@ -8,13 +8,18 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconCopyCC, RcIconRightCC } from '@/assets/icons/common';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 import TouchableItem from '@/components/Touchable/TouchableItem';
-import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  usePinAddresses,
+  useRemoveAccount,
+} from '@/hooks/account';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button, Text } from '@/components';
 import { RcIconAddressDetailEdit } from '@/assets/icons/address';
@@ -25,10 +30,18 @@ import {
   BottomSheetModal,
   BottomSheetModalProvider,
   BottomSheetView,
+  BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { useWhitelist } from '@/hooks/whitelist';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useAlias } from '@/hooks/alias';
+import { splitNumberByStep } from '@/utils/number';
+
+const BottomInput =
+  Platform.OS === 'android' ? TextInput : BottomSheetTextInput;
 
 export type AddressDetailScreenProps = NativeStackScreenProps<
   {
@@ -45,24 +58,17 @@ export type AddressDetailScreenProps = NativeStackScreenProps<
 function AddressDetailScreen(props: AddressDetailScreenProps): JSX.Element {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const { accounts, fetchAccounts } = useAccounts();
-  const { address, type, brandName, byImport } = props.route.params;
-
-  const TEST_ADDR = '0x10b26700b0a2d3f5ef12fa250aba818ee3b43bf4';
+  const { address, type, brandName } = props.route.params;
 
   return (
     <BottomSheetModalProvider>
       <NormalScreenContainer>
-        {/* <View style={styles.view}></View> */}
         <ScrollView style={{ padding: 20, paddingBottom: 100 }}>
-          <AddressInfo account={accounts[0]} />
-
-          {/* <View>
-            <Text>address:{address}</Text>
-            <Text>type:{type}</Text>
-            <Text>byImport:{byImport}</Text>
-            <Text>brandName:{brandName}</Text>
-          </View> */}
+          <AddressInfo
+            account={
+              { address, type, brandName } as unknown as KeyringAccountWithAlias
+            }
+          />
         </ScrollView>
       </NormalScreenContainer>
     </BottomSheetModalProvider>
@@ -78,13 +84,47 @@ const AddressInfo = (props: AddressInfoProps) => {
   const navigation = useNavigation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const [aliasName, setAliasName] = useAlias(account.address);
 
-  //TODO
-  const [inWhiteList, setInWhitelist] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [note, setNote] = useState('');
-  // TODO usd value
-  const useValue = '$1,781,819';
+  const [aliasPendingName, setAliasPendingName] = useState(aliasName || '');
+
+  const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
+  const inWhiteList = useMemo(
+    () => isAddrOnWhitelist(account.address),
+    [account.address, isAddrOnWhitelist],
+  );
+
+  const setInWhitelist = useCallback(
+    (bool: boolean) => {
+      bool ? addWhitelist(account.address) : removeWhitelist(account.address);
+    },
+    [account.address, addWhitelist, removeWhitelist],
+  );
+
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses();
+  const pinned = useMemo(
+    () =>
+      pinAddresses.some(e =>
+        addressUtils.isSameAddress(e.address, account.address),
+      ),
+    [account.address, pinAddresses],
+  );
+
+  const setPinned = useCallback(
+    (bool: boolean) => {
+      togglePinAddressAsync({
+        address: account.address,
+        brandName: account.brandName,
+        nextPinned: bool,
+      });
+    },
+    [togglePinAddressAsync, account.address, account.brandName],
+  );
+
+  const useValue = useMemo(
+    () => `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`,
+    [account.balance],
+  );
 
   const codeBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -104,10 +144,6 @@ const AddressInfo = (props: AddressInfoProps) => {
     deleteBottomSheetModalRef.current?.present();
   }, []);
 
-  // const handleCloseCodeModalPress = useCallback(() => {
-  //   codeBottomSheetModalRef.current?.close();
-  // }, []);
-
   const handleCloseInputModalPress = useCallback(() => {
     inputNameBottomSheetModalRef.current?.close();
   }, []);
@@ -120,21 +156,20 @@ const AddressInfo = (props: AddressInfoProps) => {
     console.log('handleSheetChanges', index);
   }, []);
 
-  const handleDelete = useCallback(() => {
-    //TODO: delete
+  const removeAccount = useRemoveAccount();
+
+  const handleDelete = useCallback(async () => {
+    await removeAccount(account);
     handleCloseDeleteModalPress();
     navigation.goBack();
-  }, [handleCloseDeleteModalPress, navigation]);
+  }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
 
-  const changeAddressNote = useCallback(
-    (s: string) => {
-      //TOdo:change address note
+  const changeAddressNote = useCallback(() => {
+    setAliasName(aliasPendingName);
+    console.log('aliasPendingName', aliasPendingName);
 
-      setNote(s);
-      handleCloseInputModalPress();
-    },
-    [handleCloseInputModalPress],
-  );
+    handleCloseInputModalPress();
+  }, [aliasPendingName, handleCloseInputModalPress, setAliasName]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -181,7 +216,7 @@ const AddressInfo = (props: AddressInfoProps) => {
           <TouchableOpacity
             style={styles.valueView}
             onPress={handlePresentInputModalPress}>
-            <Text style={styles.valueText}>{account.aliasName || ''}</Text>
+            <Text style={styles.valueText}>{aliasName || ''}</Text>
             <RcIconAddressDetailEdit color={colors['neutral-foot']} />
           </TouchableOpacity>
         </View>
@@ -271,7 +306,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                 }}>
                 Edit address note
               </Text>
-              <TextInput
+              <BottomInput
                 style={{
                   width: '100%',
                   height: 52,
@@ -284,8 +319,8 @@ const AddressInfo = (props: AddressInfoProps) => {
                   color: colors['neutral-title-1'],
                   backgroundColor: colors['neutral-card-2'],
                 }}
-                value={note}
-                onChangeText={changeAddressNote}
+                value={aliasPendingName}
+                onChangeText={setAliasPendingName}
               />
             </View>
             <View
@@ -325,6 +360,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                   color: colors['neutral-title-2'],
                   backgroundColor: colors['blue-default'],
                 }}
+                onPress={changeAddressNote}
                 containerStyle={{
                   flexGrow: 1,
                   display: 'flex',
@@ -489,7 +525,7 @@ const AddressInfo = (props: AddressInfoProps) => {
   );
 };
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     view: {
       width: '100%',

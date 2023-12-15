@@ -81,4 +81,12 @@ export class ContactBookService {
   getAliasByMap() {
     return Object.assign({}, this.store.aliases);
   }
+
+  updateAlias(data: { address: string; name: string }) {
+    const key = data.address.toLowerCase();
+    this.store.aliases = {
+      ...this.store.aliases,
+      [key]: { alias: data.name, address: key },
+    };
+  }
 }

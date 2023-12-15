@@ -13,19 +13,32 @@ import {
   RcIconWatchAddress,
 } from '@/assets/icons/address';
 import { Text } from '@/components';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { RcIconCopyCC, RcIconInfoCC } from '@/assets/icons/common';
 import { ellipsisAddress } from '@/utils/address';
-import { KeyringAccountWithAlias } from '@/hooks/account';
+import {
+  KeyringAccountWithAlias,
+  useCurrentAccount,
+  usePinAddresses,
+  useRemoveAccount,
+} from '@/hooks/account';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { WALLET_INFO } from '@/utils/walletInfo';
+import { useWhitelist } from '@/hooks/whitelist';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { splitNumberByStep } from '@/utils/number';
+import { navigate } from '@/utils/navigation';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
   isCurrentAddress?: boolean;
 }
 export const AddressItem = (props: AddressItemProps) => {
+  const { isAddrOnWhitelist } = useWhitelist();
+  const { switchAccount } = useCurrentAccount();
+
   const { wallet, isCurrentAddress } = props;
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -34,9 +47,30 @@ export const AddressItem = (props: AddressItemProps) => {
   const walletName = wallet?.aliasName || wallet?.brandName;
   const walletNameIndex = '';
   const address = ellipsisAddress(wallet.address);
-  const usdValue = '$4,332,241';
-  const inWhitelist = true;
-  const pinned = true;
+  const usdValue = `$${splitNumberByStep(wallet.balance?.toFixed(2) || 0)}`;
+  const inWhitelist = useMemo(
+    () => isAddrOnWhitelist(wallet.address),
+    [isAddrOnWhitelist, wallet.address],
+  );
+  const removeAccount = useRemoveAccount();
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses();
+  const pinned = useMemo(
+    () =>
+      pinAddresses.some(e =>
+        addressUtils.isSameAddress(e.address, wallet.address),
+      ),
+    [pinAddresses, wallet.address],
+  );
+
+  const WalletIcon = useMemo(() => {
+    if (wallet.brandName === 'Watch Address') {
+      return RcIconWatchAddress;
+    }
+    return (
+      WALLET_INFO?.[wallet.brandName as keyof typeof WALLET_INFO].icon ||
+      WALLET_INFO.UnknownWallet
+    );
+  }, [wallet.brandName]);
 
   const copyAddress = useCallback(() => {
     Clipboard.setString(address);
@@ -58,13 +92,12 @@ export const AddressItem = (props: AddressItemProps) => {
     if (isCurrentAddress) {
       gotoAddressDetail();
     } else {
+      //@ts-ignore
+      switchAccount(wallet);
       // TODO:switch account
-      // navigation.push(RootNames.AccountTransaction, {
-      //   screen: RootNames.MyBundle,
-      //   params: {},
-      // });
+      navigate(RootNames.Home);
     }
-  }, [isCurrentAddress, gotoAddressDetail]);
+  }, [isCurrentAddress, gotoAddressDetail, switchAccount, wallet]);
 
   const swipeRef = useRef<Swipeable>(null);
 
@@ -80,10 +113,13 @@ export const AddressItem = (props: AddressItemProps) => {
     });
     const pressHandler = () => {
       if (type === 'delete') {
-        //TODO:handle delete
+        removeAccount(wallet);
       }
       if (type === 'pin') {
-        //TODO:handle pin
+        togglePinAddressAsync({
+          address: wallet.address,
+          brandName: wallet.brandName,
+        });
       }
       swipeRef.current?.close();
     };
@@ -145,7 +181,7 @@ export const AddressItem = (props: AddressItemProps) => {
           isCurrentAddress && styles.currentAddressView,
         )}>
         <View style={styles.innerView}>
-          <RcIconWatchAddress style={styles.walletLogo} />
+          <WalletIcon style={styles.walletLogo} />
           <View>
             <View>
               <View style={styles.titleView}>
@@ -247,7 +283,7 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 };
 
-const getStyles = (colors: Colors) => {
+const getStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
     swipeContainer: {
       width: '100%',

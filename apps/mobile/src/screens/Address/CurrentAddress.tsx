@@ -11,20 +11,17 @@ import {
 } from 'react-native';
 import { useAccounts } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
-import TouchableItem from '@/components/Touchable/TouchableItem';
-import { removeAddress } from '@/core/apis/address';
 import { AddressItem } from './components/AddressItem';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 import { RcIconAddressRight } from '@/assets/icons/address';
 import { RcIconButtonAddAccount } from '@/assets/icons/home';
 import { RootNames } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/core';
 
 export default function CurrentAddressScreen(): JSX.Element {
-  const { accounts, fetchAccounts } = useAccounts();
+  const { accounts } = useAccounts();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-
   const navigation = useNavigation();
 
   const gotoBundles = React.useCallback(() => {
@@ -36,7 +33,7 @@ export default function CurrentAddressScreen(): JSX.Element {
   }, [navigation]);
   const gotoAddAddress = React.useCallback(() => {
     //@ts-ignore
-    navigation(RootNames.ImportNewAddress);
+    navigation.push(RootNames.ImportNewAddress);
   }, [navigation]);
 
   const sectionData = useMemo(() => {
@@ -44,21 +41,6 @@ export default function CurrentAddressScreen(): JSX.Element {
       {
         title: 'address',
         data: accounts.filter(e => e.type !== 'Watch Address'),
-
-        // data: [
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        //   ...accounts,
-        // ],
       },
       {
         title: 'Watch Address',
@@ -106,7 +88,14 @@ export default function CurrentAddressScreen(): JSX.Element {
                   style={styles.importView}
                   onPress={gotoAddAddress}>
                   <RcIconButtonAddAccount style={styles.addAddressIcon} />
-                  <Text>Import New Address</Text>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: '600',
+                      color: colors['blue-default'],
+                    }}>
+                    Import New Address
+                  </Text>
                 </TouchableOpacity>
               </View>
             );
@@ -117,7 +106,7 @@ export default function CurrentAddressScreen(): JSX.Element {
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       paddingTop: 20,
