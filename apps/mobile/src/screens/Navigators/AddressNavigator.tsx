@@ -12,6 +12,7 @@ import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
+import AddressDetailScreen from '../Address/AddressDetail';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -82,6 +83,15 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress}
         component={ImportWatchAddressScreen}
+      />
+      <AddressStack.Screen
+        name={RootNames.AddressDetail}
+        //@ts-ignore
+        component={AddressDetailScreen}
+        options={{
+          headerTitle: 'Address detail',
+          title: 'Address detail',
+        }}
       />
     </AddressStack.Navigator>
   );

@@ -29,6 +29,7 @@ export const RootNames = {
   ImportNewAddress: 'ImportNewAddress',
   ImportSuccess: 'ImportSuccess',
   ImportWatchAddress: 'ImportWatchAddress',
+  AddressDetail: 'AddressDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
