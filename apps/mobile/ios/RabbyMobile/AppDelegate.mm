@@ -33,10 +33,10 @@ static void InitializeFlipper(UIApplication *application) {
   InitializeFlipper(application);
 #endif
 
-  // RCTBridge *bridge = [self.reactDelegate createBridgeWithDelegate:self launchOptions:launchOptions];
-  // RCTRootView *rootView = [self.reactDelegate createRootViewWithBridge:bridge
-  //                                                  moduleName:@"RabbyMobile"
-  //                                           initialProperties:nil];
+  RCTBridge *bridge = [self.reactDelegate createBridgeWithDelegate:self launchOptions:launchOptions];
+  RCTRootView *rootView = [self.reactDelegate createRootViewWithBridge:bridge
+                                                   moduleName:@"RabbyMobile"
+                                            initialProperties:nil];
 
   if (@available(iOS 13.0, *)) {
       rootView.backgroundColor = [UIColor systemBackgroundColor];
