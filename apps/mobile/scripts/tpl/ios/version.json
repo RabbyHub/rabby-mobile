@@ -1,0 +1,6 @@
+{
+  "downloadUrl": "{{ DOWNLOAD_URL }}",
+  "version": "{{ APP_VER }}",
+  "versionCode": "{{ APP_VER_CDOE }}",
+  "versionDesc": ""
+}
