@@ -551,7 +551,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStore;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHoc;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;

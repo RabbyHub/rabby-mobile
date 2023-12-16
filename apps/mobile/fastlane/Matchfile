@@ -1,0 +1,91 @@
+## Pre-requisites
+# bundle install
+
+## Manage password of repo
+# fastlane match change_password
+
+## import .cert/.pkey/.p12
+# bundle exec fastlane match
+
+## Pull certificates
+# bundle exec fastlane match --readonly
+# [CONFIGURATION=development] bundle exec fastlane match --readonly
+# CONFIGURATION=release [TYPE=appstore] bundle exec fastlane match --readonly
+# CONFIGURATION=release TYPE=adhoc bundle exec fastlane match --readonly
+
+## Create, update certificates
+# [CONFIGURATION=development] bundle exec fastlane match --readonly
+# CONFIGURATION=release [TYPE=appstore] bundle exec fastlane match --readonly
+# CONFIGURATION=release TYPE=adhoc bundle exec fastlane match --readonly
+
+## self-hosted certificates' storage repo for debank frontend group
+## use https:// if basic MATCH_GIT_BASIC_AUTHORIZATION environment variable setup
+if ENV['MATCH_GIT_BASIC_AUTHORIZATION']
+  git_url = "https://github.com/RabbyHub/apple-auto-certificates.git"
+else
+  git_url = "git@github.com:RabbyHub/apple-auto-certificates.git"
+end
+
+biz_data = {
+  :platform => "ios",
+  # en: apple id, used to get certs
+  :username => "lei.chen@debank.com",
+  :team_id => "ZPNP2SF27Q",
+  # git account of certificates repo, used to update certificates
+  :git_full_name => "richardo2016x",
+  :git_user_email => "richardo2016x@gmail.com",
+}
+
+run_type = "development"
+
+case ENV["CONFIGURATION"]
+  when "release"
+    ENV["CONFIGURATION"] = "release"
+  when "debug", "dev", "development"
+    ENV["CONFIGURATION"] = "debug"
+  else
+    ENV["CONFIGURATION"] = "debug"
+end
+
+if ENV["CONFIGURATION"] == "debug"
+    profile_name = "RabbyMobileDevelopment"
+    run_type = "development"
+    app_identifiers = ["com.debank.rabby-mobile-debug"]
+elsif ENV["CONFIGURATION"] == "release"
+  if ENV["TYPE"] == nil
+    ENV["TYPE"] = "adhoc"
+  end
+
+  app_identifiers = ["com.debank.rabby-mobile"]
+
+  case ENV["TYPE"]
+    when "adhoc"
+      run_type = "adhoc"
+      profile_name = "RabbyMobileAdHoc"
+    when "appstore"
+      run_type = "appstore"
+      profile_name = "RabbyMobileAppleStore"
+    else
+      print("Invalid ENV[\"TYPE\"] value" + ENV["TYPE"])
+  end
+end
+
+
+# more parameters, see https://docs.fastlane.tools/actions/match/#parameters
+
+git_url(git_url)
+git_full_name(biz_data[:git_full_name])
+git_user_email(biz_data[:git_user_email])
+# values: appstore, adhoc, development, enterprise, developer_id, mac_installer_distribution
+type(run_type)
+app_identifier(app_identifiers)
+username(biz_data[:username])
+team_id(biz_data[:team_id])
+platform(biz_data[:platform])
+skip_certificate_matching(false)
+skip_provisioning_profiles(false)
+profile_name(profile_name) if profile_name
+git_basic_authorization(ENV["MATCH_GIT_BASIC_AUTHORIZATION"]) if ENV['MATCH_GIT_BASIC_AUTHORIZATION']
+# values: mac_installer_distribution, developer_id_installer
+# additional_cert_types([additional_cert_type]) if additional_cert_type
+
