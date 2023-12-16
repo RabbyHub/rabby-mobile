@@ -64,7 +64,7 @@ elsif ENV["CONFIGURATION"] == "release"
       profile_name = "RabbyMobileAdHoc"
     when "appstore"
       run_type = "appstore"
-      profile_name = "RabbyMobileAppleStore"
+      profile_name = "RabbyMobileAppStore"
     else
       print("Invalid ENV[\"TYPE\"] value" + ENV["TYPE"])
   end

@@ -504,11 +504,13 @@
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Rabby;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -533,17 +535,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "Apple Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: DeBank Global Pte. Ltd. (ZPNP2SF27Q)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Rabby;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -551,7 +556,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.debank.rabby-mobile";
 				PRODUCT_NAME = RabbyMobile;
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAdHoc;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = RabbyMobileAppStore;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
