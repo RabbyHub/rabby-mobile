@@ -51,6 +51,7 @@ target 'RabbyMobile' do
   end
 
   post_install do |installer|
+    flipper_post_install(installer)
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
@@ -58,5 +59,37 @@ target 'RabbyMobile' do
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    patch_build_settings(installer)
+  end
+end
+
+def patch_build_settings(installer)
+  arch = `arch`.strip
+
+  installer.pods_project.targets.each do |target|
+    # https://github.com/facebook/react-native/issues/37748#issuecomment-1580589448
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
+    end
+    # https://github.com/CocoaPods/CocoaPods/issues/11402
+    if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
+      target.build_configurations.each do |config|
+          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+    end
+  end
+
+  projects = installer.aggregate_targets
+    .map{ |t| t.user_project }
+    .uniq{ |p| p.path }
+    .push(installer.pods_project)
+
+  projects.each do |project|
+    project.build_configurations.each do |config|
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64" if arch == "arm64"
+      config.build_settings["DEVELOPMENT_TEAM"] = "ZPNP2SF27Q"
+    end
+
+    project.save()
   end
 end

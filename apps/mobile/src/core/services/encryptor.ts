@@ -1,3 +1,4 @@
+import { NativeModules, Platform } from 'react-native'
 import Aes from 'react-native-aes-crypto';
 // TODO: we don't know what is the difference between Aes and AesForked, use Aes first,
 // but we should test AesForked later.
