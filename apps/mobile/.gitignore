@@ -66,3 +66,10 @@ yarn-error.log
 /coverage
 
 .env.local
+
+tmp.iconset
+
+ios/Package
+
+scripts/deployments/ios/manifest.plist
+scripts/deployments/ios/version.json

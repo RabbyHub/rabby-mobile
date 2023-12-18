@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   SectionList,
 } from 'react-native';

@@ -37,7 +37,10 @@ export class ContactBookService {
   addContact(contact: ContactBookItem | ContactBookItem[]) {
     const contacts = Array.isArray(contact) ? contact : [contact];
     contacts.forEach(contact => {
-      this.store.contacts[contact.address] = contact;
+      this.store.contacts = {
+        ...this.store.contacts,
+        [contact.address.toLocaleLowerCase()]: contact,
+      };
     });
   }
 
@@ -61,7 +64,10 @@ export class ContactBookService {
   setAlias(aliasItem: AddressAliasItem | AddressAliasItem[]) {
     const aliases = Array.isArray(aliasItem) ? aliasItem : [aliasItem];
     aliases.forEach(alias => {
-      this.store.aliases[alias.address] = alias;
+      this.store.aliases = {
+        ...this.store.aliases,
+        [alias.address.toLocaleLowerCase()]: alias,
+      };
     });
   }
 

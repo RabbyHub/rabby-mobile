@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 import { atom, useAtom } from 'jotai';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
@@ -69,7 +69,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
     }
   }, [setAccounts]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!disableAutoFetch) {
       fetchAccounts();
     }
@@ -133,12 +133,12 @@ export function useCurrentAccount() {
 export const usePinAddresses = () => {
   const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
 
-  const getPinAddressesAsync = React.useCallback(async () => {
+  const getPinAddressesAsync = useCallback(async () => {
     const addresses = await preferenceService.getPinAddresses();
     setPinAddresses(addresses);
   }, [setPinAddresses]);
 
-  const togglePinAddressAsync = React.useCallback(
+  const togglePinAddressAsync = useCallback(
     async (payload: {
       brandName: Account['brandName'];
       address: Account['address'];
