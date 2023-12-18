@@ -9,7 +9,7 @@ import RNEncryptor from './encryptor';
 import { onSetAddressAlias, onCreateKeyring } from './keyringParams';
 import { appStorage } from './shared';
 
-export { contactService, appStorage } from './shared';
+export * from './shared';
 
 const rnEncryptor = new RNEncryptor();
 const encryptor: EncryptorAdapter = {

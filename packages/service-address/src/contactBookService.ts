@@ -39,7 +39,7 @@ export class ContactBookService {
     contacts.forEach(contact => {
       this.store.contacts = {
         ...this.store.contacts,
-        [contact.address.toLocaleLowerCase()]: contact
+        [contact.address.toLocaleLowerCase()]: contact,
       };
     });
   }
@@ -66,7 +66,7 @@ export class ContactBookService {
     aliases.forEach(alias => {
       this.store.aliases = {
         ...this.store.aliases,
-        [alias.address.toLocaleLowerCase()]: alias
+        [alias.address.toLocaleLowerCase()]: alias,
       };
     });
   }
@@ -86,5 +86,13 @@ export class ContactBookService {
 
   getAliasByMap() {
     return Object.assign({}, this.store.aliases);
+  }
+
+  updateAlias(data: { address: string; name: string }) {
+    const key = data.address.toLowerCase();
+    this.store.aliases = {
+      ...this.store.aliases,
+      [key]: { alias: data.name, address: key },
+    };
   }
 }

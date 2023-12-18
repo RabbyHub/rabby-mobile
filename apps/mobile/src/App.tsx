@@ -13,6 +13,7 @@ import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
@@ -39,10 +40,10 @@ function App(): JSX.Element {
     <SafeAreaProvider>
       <Suspense fallback={null}>
         {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-        {/* <GestureHandlerRootView style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
           <MainScreen />
-        </GestureHandlerRootView> */}
-        <MainScreen />
+        </GestureHandlerRootView>
+        {/* <MainScreen /> */}
       </Suspense>
     </SafeAreaProvider>
   );

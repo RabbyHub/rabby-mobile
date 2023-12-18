@@ -25,3 +25,11 @@ export const RcIconHeaderAddAccount = makeThemeIconFromCC(
     onDark: ThemeColors.dark['neutral-title-1'],
   },
 );
+
+export const RcIconButtonAddAccount = makeThemeIconFromCC(
+  RcIconHeaderAddAccountCC,
+  {
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.light['blue-default'],
+  },
+);
