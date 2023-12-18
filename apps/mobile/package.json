@@ -25,11 +25,13 @@
   "dependencies": {
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
     "@debank/common": "^0.3.46",
+    "@debank/rabby-rn-security": "^0.1.1",
     "@gorhom/bottom-sheet": "5.0.0-alpha.4",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
     "@rabby-wallet/eth-walletconnect-keyring": "v2.1.0-beta.6",
     "@rabby-wallet/persist-store": "workspace:^",
+    "@rabby-wallet/rabby-api": "0.7.0-alpha.3",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
     "@react-native-async-storage/async-storage": "^1.21.0",

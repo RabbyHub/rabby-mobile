@@ -12,8 +12,8 @@ import { WalletItem } from './components/WalletItem';
 import { WalletHeadline } from './components/WalletHeadline';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { TEST_ADDR } from '@/constant/testData';
 
-const TEST_ADDR = '0x10b26700b0a2d3f5ef12fa250aba818ee3b43bf4';
 function TestBlock() {
   const { fetchAccounts } = useAccounts();
 

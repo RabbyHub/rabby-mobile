@@ -1692,6 +1692,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/rabby-rn-security@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@debank/rabby-rn-security@npm:0.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Frabby-rn-security%2F-%2Frabby-rn-security-0.1.1.tgz"
+  dependencies:
+    fastestsmallesttextencoderdecoder: ^1.0.22
+    sha256-uint8array: 0.10.3
+  checksum: cff7f24a000c62601d69b2b88509e6e8e34f0db4956d0c1329fa444ba874b30fc567c72d5fe08d1f7f1b711b353830992434d73d317829ec55b3bba85833e9dd
+  languageName: node
+  linkType: hard
+
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -2956,6 +2966,35 @@ __metadata:
     typescript: ~4.8.4
   languageName: unknown
   linkType: soft
+
+"@rabby-wallet/rabby-api@npm:0.7.0-alpha.3":
+  version: 0.7.0-alpha.3
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.0-alpha.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.0-alpha.3.tgz"
+  dependencies:
+    "@rabby-wallet/rabby-sign": ^0.3.3
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: e90c6c1b5c83dabb93f888109ef092be17bd7ee4629bdd4b0bb98fa370a3eb619aa17d05405ecfca7651132a70a543a8ad7e108fa6e6df1c3b17f9ca17553adc
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-sign@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@rabby-wallet/rabby-sign@npm:0.3.3"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+    lodash.clonedeep: ^4.5.0
+    sha256-uint8array: ^0.10.3
+    url-parse: ^1.5.1
+  checksum: 7dfe1ad40762e33ca785e44e6f80a3de1f894ce784a45514ff3c764c32e3f71f8caf539932aca88e3849d367667ac50e40197ea9ac079e9a14823e9c62b17e7b
+  languageName: node
+  linkType: hard
 
 "@rabby-wallet/service-address@workspace:^, @rabby-wallet/service-address@workspace:packages/service-address":
   version: 0.0.0-use.local
@@ -5378,6 +5417,25 @@ __metadata:
   version: 1.0.5
   resolution: "available-typed-arrays@npm:1.0.5"
   checksum: 20eb47b3cefd7db027b9bbb993c658abd36d4edd3fe1060e83699a03ee275b0c9b216cc076ff3f2db29073225fb70e7613987af14269ac1fe2a19803ccc97f1a
+  languageName: node
+  linkType: hard
+
+"axios-rate-limit@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "axios-rate-limit@npm:1.3.0"
+  peerDependencies:
+    axios: "*"
+  checksum: 19e963732231d2a0c35c19b0603aa4aeeb55a52bab5edd75908d6df1df86978afb7525b9e79fa17dca281d8d6132072c7f269d9cb90867d0a58da4f713a6dea1
+  languageName: node
+  linkType: hard
+
+"axios@npm:^0.27.2":
+  version: 0.27.2
+  resolution: "axios@npm:0.27.2"
+  dependencies:
+    follow-redirects: ^1.14.9
+    form-data: ^4.0.0
+  checksum: 38cb7540465fe8c4102850c4368053c21683af85c5fdf0ea619f9628abbcb59415d1e22ebc8a6390d2bbc9b58a9806c874f139767389c862ec9b772235f06854
   languageName: node
   linkType: hard
 
@@ -8186,6 +8244,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eth-rpc-errors@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "eth-rpc-errors@npm:4.0.3"
+  dependencies:
+    fast-safe-stringify: ^2.0.6
+  checksum: 5fa31d1a10fdb340733b9a55e38e7687222c501052ca20743cef4d0c911a9bbcc0cad54aa6bf3e4b428604c071ff519803060e1cbc79ddb7c9257c11d407d32a
+  languageName: node
+  linkType: hard
+
 "ethereum-bloom-filters@npm:^1.0.6":
   version: 1.0.10
   resolution: "ethereum-bloom-filters@npm:1.0.10"
@@ -8504,6 +8571,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fastestsmallesttextencoderdecoder@npm:^1.0.22":
+  version: 1.0.22
+  resolution: "fastestsmallesttextencoderdecoder@npm:1.0.22::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ffastestsmallesttextencoderdecoder%2F-%2Ffastestsmallesttextencoderdecoder-1.0.22.tgz"
+  checksum: cc5e6c3b4c13de41a24e1311af4d0726e85d9edd75af8a13282f9e5f2751805d869455352a0bf065ab59c9c240d078b7abd98d676da9257666402e56ce9395d0
+  languageName: node
+  linkType: hard
+
 "fastq@npm:^1.6.0":
   version: 1.15.0
   resolution: "fastq@npm:1.15.0"
@@ -8660,6 +8734,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"follow-redirects@npm:^1.14.9":
+  version: 1.15.3
+  resolution: "follow-redirects@npm:1.15.3"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 584da22ec5420c837bd096559ebfb8fe69d82512d5585004e36a3b4a6ef6d5905780e0c74508c7b72f907d1fa2b7bd339e613859e9c304d0dc96af2027fd0231
+  languageName: node
+  linkType: hard
+
 "for-each@npm:^0.3.3":
   version: 0.3.3
   resolution: "for-each@npm:0.3.3"
@@ -8687,6 +8771,17 @@ __metadata:
     combined-stream: ^1.0.8
     mime-types: ^2.1.12
   checksum: b019e8d35c8afc14a2bd8a7a92fa4f525a4726b6d5a9740e8d2623c30e308fbb58dc8469f90415a856698933c8479b01646a9dff33c87cc4e76d72aedbbf860d
+  languageName: node
+  linkType: hard
+
+"form-data@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "form-data@npm:4.0.0"
+  dependencies:
+    asynckit: ^0.4.0
+    combined-stream: ^1.0.8
+    mime-types: ^2.1.12
+  checksum: 01135bf8675f9d5c61ff18e2e2932f719ca4de964e3be90ef4c36aacfc7b9cb2fceb5eca0b7e0190e3383fe51c5b37f4cb80b62ca06a99aaabfcfd6ac7c9328c
   languageName: node
   linkType: hard
 
@@ -13715,6 +13810,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"qss@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "qss@npm:2.0.3"
+  checksum: 35cbdbb1c27e62aac2f8c0322bda283214d49adbf2c949904364e200938e60913fa01d57edee30e6b029a8e815614eb118a41f805e3343f71768daba57e68c01
+  languageName: node
+  linkType: hard
+
 "query-string@npm:6.13.5":
   version: 6.13.5
   resolution: "query-string@npm:6.13.5"
@@ -13791,11 +13893,13 @@ __metadata:
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@debank/common": ^0.3.46
+    "@debank/rabby-rn-security": ^0.1.1
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-walletconnect-keyring": v2.1.0-beta.6
     "@rabby-wallet/persist-store": "workspace:^"
+    "@rabby-wallet/rabby-api": 0.7.0-alpha.3
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0
@@ -15028,6 +15132,20 @@ __metadata:
   bin:
     sha.js: ./bin.js
   checksum: ebd3f59d4b799000699097dadb831c8e3da3eb579144fd7eb7a19484cbcbb7aca3c68ba2bb362242eb09e33217de3b4ea56e4678184c334323eca24a58e3ad07
+  languageName: node
+  linkType: hard
+
+"sha256-uint8array@npm:0.10.3":
+  version: 0.10.3
+  resolution: "sha256-uint8array@npm:0.10.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fsha256-uint8array%2F-%2Fsha256-uint8array-0.10.3.tgz"
+  checksum: c8142bb1e53ab7aff07a953562825672753bc9450a95a07e6dbda46a41dbfd5efdfceed3682ad4eb776432bd32494058265080191d8cde3ccd28b005a653039c
+  languageName: node
+  linkType: hard
+
+"sha256-uint8array@npm:^0.10.3":
+  version: 0.10.7
+  resolution: "sha256-uint8array@npm:0.10.7"
+  checksum: ff735efd42664ab3d663cbc71a2e5f58a02637e9d57e072c509b5765f5368a2dc34fafefa390e065ef24415946b780ac72fd4582eeeb745ece42256de5b85e94
   languageName: node
   linkType: hard
 
@@ -16713,7 +16831,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"url-parse@npm:^1.5.3":
+"url-parse@npm:^1.5.1, url-parse@npm:^1.5.3":
   version: 1.5.10
   resolution: "url-parse@npm:1.5.10"
   dependencies:
