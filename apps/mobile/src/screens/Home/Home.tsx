@@ -22,6 +22,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { TestWalletConnectView } from './TestWalletConnectView';
 
 function Section({
   children,
@@ -155,6 +156,7 @@ function HomeScreen(): JSX.Element {
         }}>
         <AssetsSummary />
       </View>
+      <TestWalletConnectView />
       <AssetsScrollList />
     </RootScreenContainer>
   );

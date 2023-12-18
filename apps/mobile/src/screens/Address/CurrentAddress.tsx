@@ -38,7 +38,7 @@ export default function CurrentAddressScreen(): JSX.Element {
                 <Text style={{ flexShrink: 1 }}>{account.address}</Text>
                 <TouchableItem
                   onPress={() => {
-                    removeAddress(account.address);
+                    removeAddress(account);
                     setTimeout(fetchAccounts, 300);
                   }}
                   className="bg-r-red-default flex-shrink-0 w-[50] h-[100%] ml-[12]">

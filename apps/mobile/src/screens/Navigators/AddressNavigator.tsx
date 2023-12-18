@@ -10,6 +10,8 @@ import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
 import { RootNames } from '@/constant/layout';
 import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
+import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
+import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -63,11 +65,23 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
+        // component={ImportSuccessScreen}
         component={ImportNewAddressScreen}
         options={{
           headerTitle: 'Import New Address',
           title: 'Import New Address',
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSuccess}
+        component={ImportSuccessScreen}
+        options={{
+          title: 'Added successfully',
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportWatchAddress}
+        component={ImportWatchAddressScreen}
       />
     </AddressStack.Navigator>
   );

@@ -5,7 +5,6 @@ export const GET_WALLETCONNECT_CONFIG = () => {
     // 1h
     maxDuration: 3600000,
     clientMeta: {
-      // description: t('global.appDescription'),
       description: 'The game-changing wallet for Ethereum and all EVM chains',
       url: 'https://rabby.io',
       icons: [
@@ -23,6 +22,7 @@ export const GET_WALLETCONNECT_CONFIG = () => {
       'WalletConnect',
       'FIREBLOCKS',
       'MPCVault',
+      'MetaMask',
     ],
   };
 };
