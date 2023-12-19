@@ -21,13 +21,13 @@ export const ImportSuccessScreen = () => {
       StyleSheet.create({
         rootContainer: {
           display: 'flex',
-          backgroundColor: ScreenColors.homeHeaderBlue,
+          backgroundColor: colors['blue-default'],
         },
         titleContainer: {
           width: '100%',
           height: 320,
           flexShrink: 0,
-          backgroundColor: ScreenColors.homeHeaderBlue,
+          backgroundColor: colors['neutral-bg-2'],
           color: 'white',
           display: 'flex',
           justifyContent: 'center',
