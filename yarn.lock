@@ -7217,6 +7217,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dequal@npm:2.0.3":
+  version: 2.0.3
+  resolution: "dequal@npm:2.0.3"
+  checksum: 8679b850e1a3d0ebbc46ee780d5df7b478c23f335887464023a631d1b9af051ad4a6595a44220f9ff8ff95a8ddccf019b5ad778a976fd7bbf77383d36f412f90
+  languageName: node
+  linkType: hard
+
 "des.js@npm:^1.0.0":
   version: 1.1.0
   resolution: "des.js@npm:1.1.0"
@@ -13977,6 +13984,7 @@ __metadata:
     react-is: 18.2.0
     react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
+    react-native-collapsible-tab-view: ^6.2.1
     react-native-crypto-js: ^1.0.0
     react-native-dotenv: ^3.4.9
     react-native-fast-image: ^8.6.3
@@ -13995,7 +14003,6 @@ __metadata:
     react-native-splash-screen: ^3.3.0
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
-    react-native-tab-view: ^3.5.2
     react-native-vector-icons: ^10.0.2
     react-native-vision-camera: ^3.6.17
     react-native-walkthrough-tooltip: ^1.5.0
@@ -14130,6 +14137,24 @@ __metadata:
   version: 3.0.1
   resolution: "react-native-aes-crypto@npm:3.0.1"
   checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  languageName: node
+  linkType: hard
+
+"react-native-collapsible-tab-view@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "react-native-collapsible-tab-view@npm:6.2.1"
+  dependencies:
+    use-deep-compare: ^1.1.0
+  peerDependencies:
+    "@shopify/flash-list": ">=1.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-pager-view: "*"
+    react-native-reanimated: ">=2.15.0"
+  peerDependenciesMeta:
+    "@shopify/flash-list":
+      optional: true
+  checksum: 759a4af59bf70c28c0a5e3a25e4eaf864a510757dd4affc0071f141e77f73cb19ea35c450a5090858e4bfa7ebcd77d5ce4982feadcd9ab75dde2e34ead23c451
   languageName: node
   linkType: hard
 
@@ -14358,19 +14383,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: ed94adac9bf3144c5dcbf37a2956ab672d402f11c0ed75cda247d1d9136ce8977f4d01bcfc813ba576bd61ece420d66306c148057e2552828aa8fe9bad173d46
-  languageName: node
-  linkType: hard
-
-"react-native-tab-view@npm:^3.5.2":
-  version: 3.5.2
-  resolution: "react-native-tab-view@npm:3.5.2"
-  dependencies:
-    use-latest-callback: ^0.1.5
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-pager-view: "*"
-  checksum: bd287e5543881aa662ee55418a3bd5dacb25033425a9fcb0fff21c3a3b96f956af1a77cd9bab4e7a8e94590080a5d8e3cb99cfa8613b19bf6da24bfc9b4942d4
   languageName: node
   linkType: hard
 
@@ -16952,7 +16964,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-latest-callback@npm:^0.1.5, use-latest-callback@npm:^0.1.7":
+"use-deep-compare@npm:^1.1.0":
+  version: 1.2.0
+  resolution: "use-deep-compare@npm:1.2.0"
+  dependencies:
+    dequal: 2.0.3
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: ce77e6ebbbf26ae2926606715c01306e611d4d977b43be4a80719ce75598b51b2d0b400a360679210f716dbf8165c198c1eb914a3bed1e59993551c147ed3c75
+  languageName: node
+  linkType: hard
+
+"use-latest-callback@npm:^0.1.7":
   version: 0.1.9
   resolution: "use-latest-callback@npm:0.1.9"
   peerDependencies:

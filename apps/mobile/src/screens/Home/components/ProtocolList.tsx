@@ -10,6 +10,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { useScrollToTop } from '@react-navigation/native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import {
   AbstractPortfolioToken,
@@ -71,8 +72,6 @@ const _ProtocolList = ({
   const styles = useMemo(() => getStyle(colors), [colors]);
   const ref = useRef(null);
 
-  useScrollToTop(ref);
-
   const sectionList = useMemo(
     () =>
       portfolios?.map(item => ({
@@ -89,21 +88,7 @@ const _ProtocolList = ({
       const type =
         types?.find(t => (t in TemplateDict ? t : '')) || 'unsupported';
       const PortfolioDetail = TemplateDict[type as keyof typeof TemplateDict];
-
-      return showHistory ? (
-        item._tokenList?.length ? (
-          <Card style={styles.portfolioCard} shadow>
-            <PortfolioHeader
-              name={item._originPortfolio.name}
-              data={item}
-              showHistory
-            />
-            {item._tokenList?.map(x => (
-              <TokenRow data={x} key={x.id} />
-            ))}
-          </Card>
-        ) : null
-      ) : (
+      return (
         <PortfolioDetail
           name={item._originPortfolio.name}
           data={item}
@@ -111,7 +96,7 @@ const _ProtocolList = ({
         />
       );
     },
-    [showHistory],
+    [styles.portfolioCard],
   );
 
   const renderSectionHeader = useCallback(
@@ -154,7 +139,7 @@ const _ProtocolList = ({
 
   return (
     <View style={[styles.container]}>
-      <SectionList
+      <Tabs.SectionList
         ref={ref}
         showsVerticalScrollIndicator={false}
         {...rest}
@@ -334,7 +319,6 @@ const ProjectTitle = ({
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
-      flex: 1,
       backgroundColor: colors['neutral-bg-1'],
     },
     list: {},

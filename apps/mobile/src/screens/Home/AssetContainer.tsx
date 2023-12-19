@@ -1,27 +1,22 @@
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
-import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
+import { StyleSheet } from 'react-native';
+import {
+  Tabs,
+  CollapsibleProps,
+  MaterialTabBar,
+} from 'react-native-collapsible-tab-view';
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
 
-const renderScene = SceneMap({
-  token: TokenScreen,
-  defi: DefiScreen,
-  nft: NFTScreen,
-});
+interface Props {
+  renderHeader: CollapsibleProps['renderHeader'];
+}
 
-export const AssetContainer = () => {
-  const layout = useWindowDimensions();
+export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
   const { currentAccount } = useCurrentAccount();
-  const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
-    { key: 'token', title: 'Token' },
-    { key: 'defi', title: 'Defi' },
-    { key: 'nft', title: 'NFT' },
-  ]);
   const colors = useThemeColors();
   const styles = React.useMemo(
     () =>
@@ -59,20 +54,18 @@ export const AssetContainer = () => {
   );
 
   const renderTabBar = React.useCallback(
-    (tabBarProps: any) => {
-      return (
-        <TabBar
-          {...tabBarProps}
-          style={styles.tabBarWrap}
-          tabStyle={styles.tabBar}
-          labelStyle={styles.label}
-          activeColor={colors['blue-default']}
-          inactiveColor={colors['neutral-body']}
-          indicatorStyle={styles.indicator}
-        />
-      );
-    },
-    [colors, styles],
+    (props: any) => (
+      <MaterialTabBar
+        {...props}
+        scrollEnabled={false}
+        style={styles.tabBarWrap}
+        indicatorStyle={styles.indicator}
+        tabStyle={styles.tabBar}
+        labelStyle={styles.label}
+        indicatorContainerStyle={styles.tabBarIndicator}
+      />
+    ),
+    [styles],
   );
 
   if (!currentAccount?.address) {
@@ -80,13 +73,19 @@ export const AssetContainer = () => {
   }
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      initialLayout={{ width: layout.width }}
-      sceneContainerStyle={styles.scene}
+    <Tabs.Container
+      minHeaderHeight={10}
       renderTabBar={renderTabBar}
-    />
+      renderHeader={renderHeader}>
+      <Tabs.Tab label="Token" name="Token">
+        <TokenScreen />
+      </Tabs.Tab>
+      <Tabs.Tab label="Defi" name="Defi">
+        <DefiScreen />
+      </Tabs.Tab>
+      <Tabs.Tab label="NFT" name="NFT">
+        <NFTScreen />
+      </Tabs.Tab>
+    </Tabs.Container>
   );
 };

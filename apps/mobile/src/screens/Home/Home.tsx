@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { TestWalletConnectView } from './TestWalletConnectView';
 import { AssetContainer } from './AssetContainer';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 function Section({
   children,
@@ -149,16 +150,21 @@ function HomeScreen(): JSX.Element {
   return (
     <RootScreenContainer
       style={{ backgroundColor: ScreenColors.homeHeaderBlue }}>
-      <View
-        style={{
-          width: '100%',
-          height: 280,
-          flexShrink: 0,
-        }}>
-        <AssetsSummary />
-      </View>
-      <TestWalletConnectView />
-      <AssetContainer />
+      <AssetContainer
+        renderHeader={() => (
+          <View>
+            <View
+              style={{
+                width: '100%',
+                height: 280,
+                flexShrink: 0,
+              }}>
+              <AssetsSummary />
+            </View>
+            <TestWalletConnectView />
+          </View>
+        )}
+      />
     </RootScreenContainer>
   );
 }

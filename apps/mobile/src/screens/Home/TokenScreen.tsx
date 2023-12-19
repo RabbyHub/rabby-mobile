@@ -19,9 +19,5 @@ export const TokenScreen = () => {
     tokenNetWorth,
   } = useQueryProjects(currentAccount!.address);
 
-  return (
-    <View>
-      <TokenWallet tokens={tokens} tokenNetWorth={tokenNetWorth} />
-    </View>
-  );
+  return <TokenWallet tokens={tokens} tokenNetWorth={tokenNetWorth} />;
 };

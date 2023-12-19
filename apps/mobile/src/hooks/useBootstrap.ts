@@ -68,7 +68,6 @@ export function useBootstrapApp() {
         initApis();
       })
       .catch(err => {
-        console.log(err.stack);
         console.error('useBootstrapApp::', err);
         setBootstrap(prev => ({
           ...prev,

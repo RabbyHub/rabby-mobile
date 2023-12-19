@@ -1,10 +1,28 @@
+import { useCurrentAccount } from '@/hooks/account';
 import React from 'react';
 import { Text, View } from 'react-native';
+import { ProtocolList } from './components/ProtocolList';
+import { useQueryProjects } from './hooks';
 
 export const DefiScreen = () => {
+  const { currentAccount } = useCurrentAccount();
+  const {
+    isTokensLoading,
+    isPortfoliosLoading,
+    portfolios,
+    tokens,
+    hasTokens,
+    hasPortfolios,
+    refreshPositions,
+    grossNetWorth,
+    tokenNetWorth,
+  } = useQueryProjects(currentAccount!.address);
+
   return (
-    <View>
-      <Text>Defi</Text>
-    </View>
+    <ProtocolList
+      portfolios={portfolios}
+      hasPortfolios={hasPortfolios}
+      tokenNetWorth={0}
+    />
   );
 };

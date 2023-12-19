@@ -6,8 +6,8 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  FlatList,
 } from 'react-native';
+import { Tabs } from 'react-native-collapsible-tab-view';
 
 import { AbstractPortfolioToken } from '../types';
 import { useThemeColors } from '@/hooks/theme';
@@ -178,7 +178,7 @@ export const TokenWallet = ({
         />
       );
     },
-    [showHistory, turnOn],
+    [showHistory, styles.walletToken, turnOn],
   );
 
   const keyExtractor = useCallback((item: AbstractPortfolioToken) => {
@@ -196,15 +196,13 @@ export const TokenWallet = ({
 
   return (
     <>
-      <View style={styles.container}>
-        <FlatList
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          data={combinedTokens}
-          getItemLayout={getItemLayout}
-          windowSize={2}
-        />
-      </View>
+      <Tabs.FlatList
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        data={combinedTokens}
+        getItemLayout={getItemLayout}
+        windowSize={2}
+      />
       {/* <BottomModal isVisible={on} closeModal={turnOff} height={'60%'}>
         <FlatList
           ListHeaderComponent={listHeader}
