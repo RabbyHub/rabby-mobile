@@ -15,11 +15,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from '@/hooks/theme';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
-import { useBootstrapApp } from './hooks/useBootstrap';
+import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 
 function MainScreen() {
+  useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 

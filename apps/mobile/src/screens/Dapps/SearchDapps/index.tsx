@@ -1,32 +1,19 @@
 import React, { useMemo } from 'react';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeColors } from '@/hooks/theme';
-import TouchableItem from '@/components/Touchable/TouchableItem';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import { Colors } from '@/constant/theme';
-import { SearchBar } from '@rneui/themed';
-import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
-import { SearchSuggest } from './components/SearchSuggest';
+import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
+import { openapi } from '@/core/request';
+import { useThemeColors } from '@/hooks/theme';
+import { useDapps } from '@/hooks/useDapps';
+import { DappInfo } from '@rabby-wallet/service-dapp';
+import { useNavigation } from '@react-navigation/native';
+import { SearchBar } from '@rneui/themed';
+import { useRequest } from 'ahooks';
+import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
-import { useRequest } from 'ahooks';
-import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@rabby-wallet/service-dapp';
-import { openapiService } from '@/core/services';
+import { SearchSuggest } from './components/SearchSuggest';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -54,7 +41,7 @@ export function SearchDappsScreen(): JSX.Element {
       if (!s) {
         return [];
       }
-      return openapiService.searchDapp({
+      return openapi.searchDapp({
         q: s,
       });
     },

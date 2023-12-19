@@ -4,7 +4,7 @@
  *
  * @format
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -22,6 +22,9 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { TestWalletConnectView } from './TestWalletConnectView';
+import { openapi } from '@/core/request';
+import { TEST_ADDR } from '@/constant/testData';
 
 function Section({
   children,
@@ -58,6 +61,13 @@ function Section({
 function AssetsSummary() {
   const navigation = useNavigation();
   const colors = useThemeColors();
+
+  useEffect(() => {
+    (async () => {
+      const addrBalance = await openapi.getTotalBalance(TEST_ADDR);
+      // console.log('addrBalance', addrBalance);
+    })();
+  }, []);
 
   return (
     <View
@@ -155,6 +165,7 @@ function HomeScreen(): JSX.Element {
         }}>
         <AssetsSummary />
       </View>
+      <TestWalletConnectView />
       <AssetsScrollList />
     </RootScreenContainer>
   );

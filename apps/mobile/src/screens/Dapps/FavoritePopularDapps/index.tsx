@@ -11,6 +11,7 @@ import { useRequest } from 'ahooks';
 import { StyleSheet, View } from 'react-native';
 import { FavoriteDappCardList } from './components/FavoriteDappCardList';
 import { openapiService } from '@/core/services';
+import { openapi } from '@/core/request';
 
 export function FavoritePopularDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -28,7 +29,7 @@ export function FavoritePopularDappsScreen(): JSX.Element {
   }, [navigation, getHeaderTitle]);
 
   const { data } = useRequest(async () => {
-    return openapiService.getHotDapps();
+    return openapi.getHotDapps();
   });
 
   const [selectDapps, setSelectDapps] = React.useState<string[]>([]);

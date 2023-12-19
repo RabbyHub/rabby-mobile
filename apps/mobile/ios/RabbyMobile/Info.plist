@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>RabbyMobile</string>
+	<string>Rabby</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -37,8 +37,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Anton-Regular.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<string>LaunchScreen.storyboard</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
@@ -51,5 +55,19 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+  <key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>imtokenv2</string>
+		<string>tpoutside</string>
+		<string>rainbow</string>
+		<string>trust</string>
+		<string>argent</string>
+		<string>metamask</string>
+		<string>mathwallet</string>
+		<string>zerion</string>
+		<string>cbwallet</string>
+	</array>
+  <key>NSCameraUsageDescription</key>
+  <string>$(PRODUCT_NAME) needs access to your Camera.</string>
 </dict>
 </plist>

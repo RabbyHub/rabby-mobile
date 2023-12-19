@@ -1,3 +1,4 @@
+import { NativeModules, Platform } from 'react-native'
 import Aes from 'react-native-aes-crypto';
 // TODO: we don't know what is the difference between Aes and AesForked, use Aes first,
 // but we should test AesForked later.
@@ -6,7 +7,7 @@ import Aes from 'react-native-aes-crypto';
 // const Aes = NativeModules.Aes;
 // const AesForked = NativeModules.AesForked;
 
-const algorithms = 'aes-256-cbc'
+const algorithms = 'aes-256-cbc';
 const algorithms_pbkdf2 = 'sha256';
 
 export default class RNEncryptor {
@@ -26,7 +27,11 @@ export default class RNEncryptor {
 
   _encryptWithKey = async (text: string, keyBase64: string) => {
     const iv = await Aes.randomKey(16);
-    return Aes.encrypt(text, keyBase64, iv, algorithms).then((cipher: any) => ({ cipher, iv, salt: '' }));
+    return Aes.encrypt(text, keyBase64, iv, algorithms).then((cipher: any) => ({
+      cipher,
+      iv,
+      salt: '',
+    }));
   };
 
   _decryptWithKey = (encryptedData: any, key: string, lib?: string) =>
@@ -56,14 +61,8 @@ export default class RNEncryptor {
    */
   decrypt = async (password: string, encryptedString: string) => {
     const encryptedData = JSON.parse(encryptedString);
-    const key = await this._keyFromPassword(
-      password,
-      encryptedData.salt,
-    );
-    const data = await this._decryptWithKey(
-      encryptedData,
-      key,
-    );
+    const key = await this._keyFromPassword(password, encryptedData.salt);
+    const data = await this._decryptWithKey(encryptedData, key);
     return JSON.parse(data);
   };
 }
