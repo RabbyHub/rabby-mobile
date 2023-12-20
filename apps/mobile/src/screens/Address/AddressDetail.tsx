@@ -28,7 +28,6 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
-  BottomSheetModalProvider,
   BottomSheetView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
@@ -61,17 +60,15 @@ function AddressDetailScreen(props: AddressDetailScreenProps): JSX.Element {
   const { address, type, brandName } = props.route.params;
 
   return (
-    <BottomSheetModalProvider>
-      <NormalScreenContainer>
-        <ScrollView style={{ padding: 20, paddingBottom: 100 }}>
-          <AddressInfo
-            account={
-              { address, type, brandName } as unknown as KeyringAccountWithAlias
-            }
-          />
-        </ScrollView>
-      </NormalScreenContainer>
-    </BottomSheetModalProvider>
+    <NormalScreenContainer>
+      <ScrollView style={{ padding: 20, paddingBottom: 100 }}>
+        <AddressInfo
+          account={
+            { address, type, brandName } as unknown as KeyringAccountWithAlias
+          }
+        />
+      </ScrollView>
+    </NormalScreenContainer>
   );
 }
 
