@@ -38,6 +38,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useAlias } from '@/hooks/alias';
 import { splitNumberByStep } from '@/utils/number';
+import { getWalletIcon } from '@/utils/walletInfo';
 
 const BottomInput =
   Platform.OS === 'android' ? TextInput : BottomSheetTextInput;
@@ -61,7 +62,7 @@ function AddressDetailScreen(props: AddressDetailScreenProps): JSX.Element {
 
   return (
     <NormalScreenContainer>
-      <ScrollView style={{ padding: 20, paddingBottom: 100 }}>
+      <ScrollView style={{ backgroundColor: colors['neutral-bg-2'] }}>
         <AddressInfo
           account={
             { address, type, brandName } as unknown as KeyringAccountWithAlias
@@ -122,6 +123,8 @@ const AddressInfo = (props: AddressInfoProps) => {
     () => `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`,
     [account.balance],
   );
+
+  const WalletIcon = useMemo(() => getWalletIcon(account), [account]);
 
   const codeBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -198,7 +201,7 @@ const AddressInfo = (props: AddressInfoProps) => {
               Clipboard.setString(account.address);
             }}
             style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-            <Text>{account.address}</Text>
+            <Text style={styles.valueText}>{account.address}</Text>
 
             <RcIconCopyCC
               color={colors['neutral-foot']}
@@ -236,8 +239,18 @@ const AddressInfo = (props: AddressInfoProps) => {
 
         <View style={styles.itemView}>
           <Text style={styles.labelText}>Source</Text>
-          <View style={styles.valueView}>
-            <Text>{account.brandName}</Text>
+          <View
+            style={StyleSheet.compose(styles.valueView, {
+              alignItems: 'center',
+            })}>
+            <WalletIcon style={{ width: 20, height: 20, marginRight: 6 }} />
+            <Text
+              style={{
+                fontSize: 16,
+                color: colors['neutral-body'],
+              }}>
+              {account.brandName}
+            </Text>
           </View>
         </View>
 

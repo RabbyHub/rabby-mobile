@@ -2,24 +2,17 @@ import cloneDeep from 'lodash/cloneDeep';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
 import dayjs from 'dayjs';
-// import {
-//   TokenItem,
-//   TotalBalanceResponse,
-// } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  TokenItem,
+  TotalBalanceResponse,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { CHAINS_ENUM } from '@debank/common';
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { keyringService } from '.';
-import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 
 const { isSameAddress } = addressUtils;
-
-const version = process.env.release || '0';
-
-//FIXME
-type TokenItem = any;
-type TotalBalanceResponse = any;
 
 export interface Account {
   type: string;
@@ -181,7 +174,7 @@ export class PreferenceService {
    * to the first address in address list
    */
   resetCurrentAccount = async () => {
-    const [account] = await keyringService.getAllVisibleAccountsArray();
+    const [account] = await keyringService.getAllVisibleAccounts();
     this.setCurrentAccount(account);
   };
 

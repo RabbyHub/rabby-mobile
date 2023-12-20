@@ -5,3 +5,4 @@ export { BlurView } from './BlurView';
 export { Card } from './Card';
 export { AssetAvatar } from './AssetAvatar';
 export { Tip } from './Tip';
+export * from './BottomSheetModal';

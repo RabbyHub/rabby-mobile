@@ -12,6 +12,7 @@ import {
   BRAND_ALIAS_TYPE_TEXT,
   WALLET_NAME,
 } from '@rabby-wallet/keyring-utils';
+import { RcIconWatchAddress } from '@/assets/icons/address';
 
 export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
   [WALLET_NAME.Bitget]: {
@@ -74,4 +75,14 @@ export type WalletInfo = {
   icon: React.FC<SvgProps>;
   brand: WALLET_NAME;
   _wcId?: string;
+};
+
+export const getWalletIcon = <T extends { brandName: string }>(account: T) => {
+  if (account.brandName === 'Watch Address') {
+    return RcIconWatchAddress;
+  }
+  return (
+    WALLET_INFO?.[account.brandName as keyof typeof WALLET_INFO].icon ||
+    WALLET_INFO.UnknownWallet
+  );
 };

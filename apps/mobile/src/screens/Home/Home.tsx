@@ -4,8 +4,8 @@
  *
  * @format
  */
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames, ScreenColors } from '@/constant/layout';
 
@@ -18,6 +18,8 @@ import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { TestWalletConnectView } from './TestWalletConnectView';
 import { AssetContainer } from './AssetContainer';
 import { Tabs } from 'react-native-collapsible-tab-view';
+
+import { HomeTopArea } from './components/HomeTopArea';
 
 function Section({
   children,
@@ -140,31 +142,20 @@ function AssetsSummary() {
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HomeScreen.HeaderArea />,
+      headerStyle: {
+        backgroundColor: colors['neutral-bg-1'],
+      },
     });
   }, [navigation]);
 
   return (
-    <RootScreenContainer
-      style={{ backgroundColor: ScreenColors.homeHeaderBlue }}>
-      <AssetContainer
-        renderHeader={() => (
-          <View>
-            <View
-              style={{
-                width: '100%',
-                height: 280,
-                flexShrink: 0,
-              }}>
-              <AssetsSummary />
-            </View>
-            <TestWalletConnectView />
-          </View>
-        )}
-      />
+    <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
+      <AssetContainer renderHeader={() => <HomeTopArea />} />
     </RootScreenContainer>
   );
 }
