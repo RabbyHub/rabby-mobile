@@ -16,6 +16,7 @@ import { AssetAvatar } from '@/components/AssetAvatar';
 import { useSwitch } from '@/hooks/useSwitch';
 import { useExpandList } from '@/hooks/useExpandList';
 import { SMALL_TOKEN_ID, mergeSmallTokens } from '../utils/walletMerge';
+import { formatAmount } from '@/utils/number';
 
 const ITEM_HEIGHT = 54;
 
@@ -94,7 +95,7 @@ const TokenRow = memo(
       <Container
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
         onPress={data?.id === SMALL_TOKEN_ID ? onSmallTokenPress : undefined}>
-        <View style={styles.tokenRowAmountWrap}>
+        <View style={styles.tokenRowTokenWrap}>
           {data?.id === SMALL_TOKEN_ID ? (
             <Image
               source={require('@/assets/icons/assets/small-token.png')}
@@ -106,39 +107,35 @@ const TokenRow = memo(
               chain={data?.chain}
               style={mediaStyle}
               size={logoSize}
+              chainSize={16}
             />
           )}
-          <View style={styles.tokenRowAmountInner}>
-            {data._amountStr ? (
-              <Text style={styles.tokenRowAmount} numberOfLines={1}>
-                {data._amountStr}
-              </Text>
-            ) : null}
-            {showHistory && data._amountChangeStr ? (
-              <Text style={amountChangeStyle}>{data._amountChangeStr}</Text>
-            ) : (
-              <Text
-                style={StyleSheet.flatten([
-                  styles.tokenSymbol,
-                  data.id === SMALL_TOKEN_ID && styles.smallTokenSymbol,
-                ])}>
-                {data.symbol}
-              </Text>
-            )}
+          <View style={styles.tokenRowTokenInner}>
+            <Text
+              style={StyleSheet.flatten([
+                styles.tokenSymbol,
+                data.id === SMALL_TOKEN_ID && styles.smallTokenSymbol,
+              ])}>
+              {data.symbol}
+            </Text>
+            <Text style={styles.tokenRowToken} numberOfLines={1}>
+              ${data._priceStr}
+            </Text>
           </View>
         </View>
-        <View style={styles.tokenRowPriceWrap}>
-          <Text style={styles.tokenRowPrice}>{data._priceStr}</Text>
-        </View>
+
         <View style={styles.tokenRowUsdValueWrap}>
+          <Text style={styles.tokenRowUsdValue}>
+            {formatAmount(data._amountStr ?? 0)}
+          </Text>
           <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
-          {showHistory ? (
+          {/* {showHistory ? (
             <Text style={usdChangeStyle}>
               {data._usdValueChangeStr !== '-'
                 ? `${data._usdValueChangePercent} (${data._usdValueChangeStr})`
                 : '-'}
             </Text>
-          ) : null}
+          ) : null} */}
         </View>
       </Container>
     );
@@ -175,6 +172,7 @@ export const TokenWallet = ({
           style={styles.walletToken}
           showHistory={showHistory}
           onSmallTokenPress={turnOn}
+          logoSize={36}
         />
       );
     },
@@ -218,20 +216,15 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    container: {},
-    tokenRowAmountWrap: {
+    tokenRowTokenWrap: {
       flexShrink: 1,
       flexDirection: 'row',
-      flexBasis: '47.5%',
+      flexBasis: '50%',
     },
     tokenSymbol: {
       color: colors['neutral-title-1'],
-      fontSize: 10,
-      fontWeight: '400',
-    },
-    tokenRowPriceWrap: {
-      flexBasis: '22.5%',
-      flexShrink: 1,
+      fontSize: 16,
+      fontWeight: '600',
     },
 
     walletToken: {
@@ -246,16 +239,16 @@ const getStyle = (colors: AppColorsVariants) =>
       alignItems: 'center',
     },
     tokenRowLogo: {
-      marginRight: 8,
+      marginRight: 12,
     },
-    tokenRowAmountInner: {
+    tokenRowTokenInner: {
       flexShrink: 1,
       justifyContent: 'center',
     },
-    tokenRowAmount: {
-      color: colors['neutral-title-1'],
+    tokenRowToken: {
+      color: colors['neutral-foot'],
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '400',
     },
     tokenRowPrice: {
       fontSize: 13,
@@ -268,7 +261,7 @@ const getStyle = (colors: AppColorsVariants) =>
     },
     tokenRowUsdValueWrap: {
       flexShrink: 1,
-      flexBasis: '30%',
+      flexBasis: '50%',
       alignItems: 'flex-end',
     },
     tokenRowUsdValue: {

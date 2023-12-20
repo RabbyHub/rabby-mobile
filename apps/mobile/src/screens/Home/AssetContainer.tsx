@@ -21,8 +21,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
   const styles = React.useMemo(
     () =>
       StyleSheet.create({
-        scene: {
-          flex: 1,
+        container: {
           backgroundColor: colors['neutral-bg-1'],
         },
         tabBarWrap: {
@@ -74,6 +73,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
 
   return (
     <Tabs.Container
+      containerStyle={styles.container}
       minHeaderHeight={10}
       renderTabBar={renderTabBar}
       renderHeader={renderHeader}>

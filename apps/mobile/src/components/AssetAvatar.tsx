@@ -47,7 +47,7 @@ export const AssetAvatar = memo(
       () =>
         chain
           ? {
-              uri: CHAIN_ID_LIST.get(chain)?.logo_url,
+              uri: CHAIN_ID_LIST.get(chain)?.nativeTokenLogo,
             }
           : undefined,
       [chain],
@@ -119,6 +119,6 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 12,
       position: 'absolute',
       right: -2,
-      top: -2,
+      bottom: -2,
     },
   });
