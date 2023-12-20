@@ -21,11 +21,12 @@
     },
     {
       "path": "./packages/service-keyring/tsconfig.json"
+    },
+    {
+      "path": "./packages/service-dapp/tsconfig.json"
     }
   ],
   "files": [],
   "include": ["./types"],
-  "exclude": [
-    "**/*.test.ts"
-  ]
+  "exclude": ["**/*.test.ts"]
 }

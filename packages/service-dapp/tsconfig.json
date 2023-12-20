@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.packages.json",
+  "compilerOptions": {
+    "baseUrl": "./"
+  },
+  "references": [
+    {
+      "path": "../base-utils/tsconfig.json"
+    },
+    {
+      "path": "../persist-store/tsconfig.json"
+    }
+  ],
+  "include": ["../../types", "./src"]
+}

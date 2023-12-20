@@ -13,6 +13,7 @@ This repository contains the following packages [^fn1]:
 - [`@rabby-wallet/keyring-utils`](packages/keyring-utils)
 - [`@rabby-wallet/persist-store`](packages/persist-store)
 - [`@rabby-wallet/service-address`](packages/service-address)
+- [`@rabby-wallet/service-dapp`](packages/service-dapp)
 - [`@rabby-wallet/service-keyring`](packages/service-keyring)
 - [`rabby-mobile`](apps/mobile)
 
@@ -32,11 +33,18 @@ linkStyle default opacity:0.5
   keyring_utils(["@rabby-wallet/keyring-utils"]);
   persist_store(["@rabby-wallet/persist-store"]);
   service_address(["@rabby-wallet/service-address"]);
+  service_dapp(["@rabby-wallet/service-dapp"]);
   service_keyring(["@rabby-wallet/service-keyring"]);
   rabby_mobile --> eth_keyring_watch;
+  rabby_mobile --> persist_store;
+  rabby_mobile --> service_address;
+  rabby_mobile --> service_dapp;
+  rabby_mobile --> service_keyring;
   eth_keyring_watch --> keyring_utils;
   persist_store --> base_utils;
   service_address --> persist_store;
+  service_dapp --> persist_store;
+  service_keyring --> base_utils;
   service_keyring --> eth_keyring_watch;
 ```
 

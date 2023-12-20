@@ -17,6 +17,9 @@
     },
     {
       "path": "./packages/service-keyring/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/service-dapp/tsconfig.build.json"
     }
   ],
   "files": [],
