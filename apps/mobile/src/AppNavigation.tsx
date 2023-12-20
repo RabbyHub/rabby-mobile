@@ -37,7 +37,7 @@ import {
 } from './constant/layout';
 // import {analytics} from './utils/analytics';
 
-import { WelcomeScreen } from './screens';
+// import { LoginNavigator } from './screens';
 import NotFoundScreen from './screens/NotFound';
 
 import HomeScreen from './screens/Home/Home';
@@ -202,7 +202,7 @@ export default function AppNavigation({
             component={BottomTabNavigator}
             options={RootOptions}
           />
-          <RootStack.Screen name={RootNames.Login} component={WelcomeScreen} />
+          {/* <RootStack.Screen name={RootNames.StackLogin} component={LoginNavigator} /> */}
           <RootStack.Screen
             name={RootNames.NotFound}
             component={NotFoundScreen}

@@ -1,7 +1,7 @@
 /**
  * @format
  */
-// import 'react-native-gesture-handler';
+import 'react-native-gesture-handler';
 import './global';
 
 import { enableScreens } from 'react-native-screens';
