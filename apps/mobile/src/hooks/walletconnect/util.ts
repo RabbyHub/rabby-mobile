@@ -14,6 +14,11 @@ const supportWallets: Record<
     useV2?: boolean;
   }
 > = {
+  '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662': {
+    name: 'Bitget',
+    deepLink: 'bitkeep:',
+    androidPackageName: 'com.bitget.exchange',
+  },
   '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369': {
     name: 'Rainbow',
     deepLink: 'rainbow:',

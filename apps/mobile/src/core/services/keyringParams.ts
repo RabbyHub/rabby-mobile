@@ -1,7 +1,7 @@
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
-import { GET_WALLETCONNECT_CONFIG } from '@rabby-wallet/service-keyring/src/utils/walletconnect';
+import { GET_WALLETCONNECT_CONFIG } from '../apis/keyring';
 import { bindWalletConnectEvents } from '../apis/walletconnect';
 import { contactService } from './shared';
 

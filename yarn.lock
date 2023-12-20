@@ -2866,9 +2866,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-walletconnect-keyring@npm:v2.1.0-beta.6":
-  version: 2.1.0-beta.6
-  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.6"
+"@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.7":
+  version: 2.1.0-beta.7
+  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.7"
   dependencies:
     "@ethereumjs/tx": ^3.5.2
     "@rabby-wallet/wc-client": ^1.8.10
@@ -2877,7 +2877,7 @@ __metadata:
     ethereumjs-util: ^7.1.3
     events: ^3.3.0
     web3-utils: ^1.6.0
-  checksum: cb5cd36f6577b3bd61129afa434a393becfc7557112df0828b01f03c50e1257e70ac534db308159f4186519d8737658e5b557bf3dd97fa171f775c20ac99428e
+  checksum: e4a1698f60e40fe98e117ab11845904913754d4e4c44dc81856781bdc4d4c335761b98ff24a59e361acb9aafd4088236fb45ee66b4c82903e26b1e078f492fb6
   languageName: node
   linkType: hard
 
@@ -14019,7 +14019,7 @@ __metadata:
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-watch": "*"
-    "@rabby-wallet/eth-walletconnect-keyring": v2.1.0-beta.6
+    "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.7
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.0-alpha.4
     "@rabby-wallet/service-address": "workspace:^"

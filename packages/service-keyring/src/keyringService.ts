@@ -1,10 +1,6 @@
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import {
-  DisplayKeyring,
-  KEYRING_TYPE,
-  KEYRING_CLASS,
-} from '@rabby-wallet/keyring-utils';
+import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -22,7 +18,6 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
-import { GET_WALLETCONNECT_CONFIG } from './utils/walletconnect';
 
 type KeyringState = {
   booted?: string;
