@@ -2,14 +2,12 @@ import React, { useMemo, useCallback, memo, useRef } from 'react';
 import {
   StyleSheet,
   View,
-  ViewStyle,
   Image,
-  SectionList,
   SectionListProps,
   SectionListData,
   useColorScheme,
+  TouchableOpacity,
 } from 'react-native';
-import { useScrollToTop } from '@react-navigation/native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
 import {
@@ -17,13 +15,13 @@ import {
   AbstractProject,
   AbstractPortfolio,
 } from '../types';
-import { PortfolioHeader } from './PortfolioDetail';
 import PortfolioTemplate from '../portfolios';
 import { useThemeColors } from '@/hooks/theme';
 import { PositionLoader } from './Skeleton';
 import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { Text, Card } from '@/components';
+import { Text } from '@/components';
+import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
 
 // 已支持的模板
 const TemplateDict = {
@@ -55,7 +53,6 @@ type ProtocolListProps = {
   isTokensLoading?: boolean;
   isPortfoliosLoading?: boolean;
   tokenNetWorth: number;
-  showHistory?: boolean;
 };
 
 const _ProtocolList = ({
@@ -64,7 +61,6 @@ const _ProtocolList = ({
   portfolios,
   isTokensLoading,
   isPortfoliosLoading,
-  showHistory,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
   const theme = useColorScheme();
@@ -82,8 +78,33 @@ const _ProtocolList = ({
     [portfolios],
   );
 
+  const [expandedSections, setExpandedSections] = React.useState(
+    new Set<string>(),
+  );
+
+  const handleToggle = (title: string) => {
+    setExpandedSections(prev => {
+      // Using Set here but you can use an array too
+      const next = new Set(prev);
+      if (next.has(title)) {
+        next.delete(title);
+      } else {
+        next.add(title);
+      }
+      return next;
+    });
+  };
+
   const renderItem = useCallback(
-    ({ item }: { item: AbstractPortfolio }) => {
+    ({
+      item,
+      section: { key },
+    }: {
+      item: AbstractPortfolio;
+      section: SectionListData<AbstractPortfolio>;
+    }) => {
+      const isExpanded = expandedSections.has(key!);
+
       const types = item._originPortfolio.detail_types?.reverse();
       const type =
         types?.find(t => (t in TemplateDict ? t : '')) || 'unsupported';
@@ -92,29 +113,24 @@ const _ProtocolList = ({
         <PortfolioDetail
           name={item._originPortfolio.name}
           data={item}
-          style={styles.portfolioCard}
+          style={StyleSheet.flatten([styles.portfolioCard])}
         />
       );
     },
-    [styles.portfolioCard],
+    [expandedSections, styles.portfolioCard],
   );
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionListData<AbstractPortfolio> }) => {
-      if (
-        showHistory &&
-        !section.portfolio._portfolios?.filter(
-          (x: AbstractPortfolio) => !!x._tokenList?.length,
-        )?.length
-      ) {
-        // 这个 project 的所有 pool 都没有 asset_token_list，直接不展示
-        return null;
-      }
       return (
-        <ProjectTitle data={section.portfolio} showHistory={showHistory} />
+        <ProjectTitle
+          onPress={() => handleToggle(section.key!)}
+          data={section.portfolio}
+          isExpanded={expandedSections.has(section.key!)}
+        />
       );
     },
-    [showHistory],
+    [expandedSections],
   );
 
   const ListEmptyComponent = useMemo(() => {
@@ -131,172 +147,61 @@ const _ProtocolList = ({
         <Text style={styles.emptyListText}>No assets</Text>
       </View>
     );
-  }, [isTokensLoading, isPortfoliosLoading, hasTokens, hasPortfolios]);
+  }, [
+    theme,
+    isTokensLoading,
+    isPortfoliosLoading,
+    hasTokens,
+    hasPortfolios,
+    styles,
+  ]);
 
   const ListFooterComponent = useMemo(() => {
     return <View style={styles.listFooter} />;
-  }, []);
+  }, [styles.listFooter]);
 
   return (
-    <View style={[styles.container]}>
-      <Tabs.SectionList
-        ref={ref}
-        showsVerticalScrollIndicator={false}
-        {...rest}
-        sections={sectionList}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
-        // getItemType={item => item.type}
-        ListEmptyComponent={ListEmptyComponent}
-        contentContainerStyle={styles.list}
-        // estimatedItemSize={48}
-        ListFooterComponent={ListFooterComponent}
-      />
-      {/* {isPortfoliosLoading && !hasPortfolios ? <PositionLoader space={8} /> : null} */}
-    </View>
+    <Tabs.SectionList
+      ref={ref}
+      showsVerticalScrollIndicator={false}
+      {...rest}
+      extraData={expandedSections}
+      sections={sectionList}
+      renderItem={renderItem}
+      renderSectionHeader={renderSectionHeader}
+      // getItemType={item => item.type}
+      ListEmptyComponent={ListEmptyComponent}
+      contentContainerStyle={styles.list}
+      // estimatedItemSize={48}
+      ListFooterComponent={ListFooterComponent}
+    />
   );
 };
 
 export const ProtocolList = memo(_ProtocolList);
 
-const TokenRow = memo(
-  ({
-    data,
-    style,
-    logoSize = 22,
-    logoStyle,
-  }: {
-    data: AbstractPortfolioToken;
-    style?: ViewStyle;
-    logoStyle?: ViewStyle;
-    logoSize?: number;
-  }) => {
-    const colors = useThemeColors();
-    const styles = useMemo(() => getStyle(colors), [colors]);
-
-    const mediaStyle = useMemo(
-      () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
-      [logoStyle],
-    );
-
-    const amountChangeStyle = useMemo(
-      () =>
-        StyleSheet.flatten([
-          styles.tokenRowChange,
-          {
-            fontWeight: '400' as const,
-            flexShrink: 1,
-            color:
-              data.amount <= 0
-                ? // debt
-                  colors['blue-light-1']
-                : data._amountChange
-                ? data._amountChange < 0
-                  ? colors['red-default']
-                  : colors['green-default']
-                : colors['blue-light-1'],
-          },
-        ]),
-      [data, colors],
-    );
-
-    const usdChangeStyle = useMemo(
-      () =>
-        StyleSheet.flatten([
-          styles.tokenRowChange,
-          {
-            fontWeight: '400' as const,
-            color:
-              data.amount < 0
-                ? colors['blue-light-1']
-                : data._usdValueChange
-                ? data._usdValueChange < 0
-                  ? colors['red-default']
-                  : colors['green-default']
-                : colors['blue-light-1'],
-          },
-        ]),
-      [data, colors],
-    );
-
-    return (
-      <View style={StyleSheet.flatten([styles.tokenRowWrap, style])}>
-        <View style={styles.tokenRowId}>
-          <AssetAvatar
-            logo={data?.logo_url}
-            style={mediaStyle}
-            size={logoSize}
-          />
-          <View style={styles.tokenSymbolWrap}>
-            <View style={styles.tokenRowAmountWrap}>
-              <Text style={styles.tokenRowAmount}>{data._amountStr}</Text>
-              {data.amount < 0 ? (
-                <View style={styles.tokenRowDebtWrap}>
-                  <Text style={styles.tokenRowDebt}> Debt</Text>
-                </View>
-              ) : null}
-            </View>
-            {data._amountChangeStr ? (
-              <Text style={amountChangeStyle} numberOfLines={1}>
-                {data._amountChangeStr}
-              </Text>
-            ) : (
-              <Text style={styles.tokenSymbol} numberOfLines={1}>
-                {data.symbol}
-              </Text>
-            )}
-          </View>
-        </View>
-        <View style={styles.tokenRowPriceWrap}>
-          <Text style={styles.tokenRowPrice}>{data._priceStr}</Text>
-        </View>
-        <View style={styles.tokenRowUsdValueWrap}>
-          <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
-          <Text style={usdChangeStyle}>
-            {data._usdValueChangeStr !== '-'
-              ? `${data._usdValueChangePercent} (${data._usdValueChangeStr})`
-              : '-'}
-          </Text>
-        </View>
-      </View>
-    );
-  },
-);
-
 const ProjectTitle = ({
   data,
-  showHistory,
+  onPress,
+  isExpanded,
 }: {
   data: AbstractProject;
-  showHistory?: boolean;
+  onPress?: () => void;
+  isExpanded?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
 
-  const usdChangeStyle = useMemo(
-    () =>
-      StyleSheet.flatten([
-        styles.tokenRowChange,
-        {
-          textAlign: 'right' as any,
-          color: data.netWorthChange
-            ? data.netWorthChange < 0
-              ? colors['red-default']
-              : colors['green-default']
-            : colors['blue-light-1'],
-        },
-      ]),
-    [data, colors],
-  );
-
   return (
-    <View style={styles.projectHeader}>
+    <TouchableOpacity
+      // onPress={onPress}
+      style={styles.projectHeader}>
       <View style={styles.projectHeaderName}>
         <AssetAvatar
           logo={data?.logo}
-          size={18}
+          size={36}
           chain={data?.chain}
-          chainSize={10}
+          chainSize={16}
         />
         <Text style={styles.projectName} numberOfLines={1}>
           {data?.name}
@@ -304,23 +209,23 @@ const ProjectTitle = ({
       </View>
       <View style={styles.projectHeaderUsd}>
         <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        {showHistory ? (
-          <Text style={usdChangeStyle}>
-            {data._netWorthChange === '-'
-              ? '-'
-              : `${data._netWorthChangePercent} (${data._netWorthChange})`}
-          </Text>
-        ) : null}
+        {/* <ArrowDownCC
+          style={[
+            styles.arrowButton,
+            {
+              transform: isExpanded
+                ? [{ rotate: '180deg' }]
+                : [{ rotate: '0deg' }],
+            },
+          ]}
+        /> */}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    container: {
-      backgroundColor: colors['neutral-bg-1'],
-    },
     list: {},
     emptyList: {
       marginTop: 160,
@@ -328,76 +233,10 @@ const getStyle = (colors: AppColorsVariants) =>
     },
     emptyListText: {
       fontSize: 15,
-      color: colors['blue-default'],
+      color: colors['neutral-title-1'],
       fontWeight: '600',
     },
-    // [TokenRow
-    tokenRowLogo: {
-      marginRight: 8,
-    },
-    tokenRowWrap: {
-      marginTop: 24,
-      paddingHorizontal: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    tokenRowId: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexGrow: 1,
-      flexBasis: '43%',
-    },
-    tokenRowAmountWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    tokenRowAmount: {
-      color: colors['blue-default'],
-      fontSize: 12,
-      fontWeight: '400',
-    },
-    tokenRowPriceWrap: {
-      flexGrow: 1,
-      flexBasis: '24%',
-    },
-    tokenRowPrice: {
-      fontSize: 12,
-      color: colors['blue-default'],
-      fontWeight: '400',
-    },
-    tokenRowChange: {
-      fontSize: 10,
-      fontWeight: '500',
-    },
-    tokenRowUsdValueWrap: {
-      flexGrow: 1,
-      flexBasis: '33%',
-      alignItems: 'flex-end',
-    },
-    tokenRowUsdValue: {
-      textAlign: 'right',
-      color: colors['blue-default'],
-      fontSize: 12,
-      fontWeight: '400',
-    },
-    // TokenRow]
 
-    tokenRowDebtWrap: {
-      borderWidth: 1,
-      borderColor: colors['red-default'],
-      paddingLeft: 2,
-      paddingRight: 3,
-      height: 14,
-      marginLeft: 4,
-      borderRadius: 3,
-      alignItems: 'center',
-    },
-    tokenRowDebt: {
-      lineHeight: 12,
-      color: colors['red-default'],
-      fontSize: 8,
-      fontWeight: '500',
-    },
     listFooter: {
       height: 120,
     },
@@ -405,42 +244,46 @@ const getStyle = (colors: AppColorsVariants) =>
     //projectTitle
     projectHeader: {
       marginHorizontal: 20,
-      paddingTop: 40,
-      marginBottom: 8,
+      marginBottom: 12,
       flexDirection: 'row',
       justifyContent: 'space-between',
+      height: 68,
+      alignItems: 'center',
     },
     projectHeaderName: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     projectName: {
-      marginLeft: 11,
-      color: colors['blue-light-1'],
-      fontSize: 13,
+      marginLeft: 12,
+      color: colors['neutral-title-1'],
+      fontSize: 15,
       fontWeight: '600',
     },
     projectHeaderUsd: {
       alignSelf: 'flex-end',
+      flexShrink: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 68,
     },
     projectHeaderNetWorth: {
-      color: colors['blue-light-1'],
-      fontSize: 12,
+      color: colors['neutral-title-1'],
+      fontSize: 16,
       fontWeight: '600',
       textAlign: 'right',
     },
     portfolioCard: {
-      marginBottom: 12,
-      paddingBottom: 20,
+      marginBottom: 8,
+      padding: 12,
       marginHorizontal: 20,
+      borderWidth: 0.5,
+      borderColor: colors['neutral-line'],
+      borderRadius: 6,
     },
-    tokenSymbol: {
-      fontSize: 10,
-      fontWeight: '400',
-      color: colors['blue-light-1'],
-      flexShrink: 1,
-    },
-    tokenSymbolWrap: {
-      flexShrink: 1,
+    arrowButton: {
+      width: 20,
+      color: colors['neutral-foot'],
+      marginLeft: 12,
     },
   });

@@ -9,7 +9,6 @@ import { AssetAvatar, Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { formatNetworth } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
-import { formatAmount } from '@debank/common';
 import {
   PortfolioItemToken,
   PortfolioItemNft,
@@ -17,6 +16,7 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolio } from '../types';
 import { AppColorsVariants } from '@/constant/theme';
+import { formatAmount } from '@/utils/number';
 
 export const PortfolioHeader = ({
   data,
@@ -188,7 +188,7 @@ export const TokenList = ({
 
   return list.length ? (
     <View style={StyleSheet.flatten([styles.tokenList, style])}>
-      <View style={styles.tokenRow}>
+      <View style={[styles.tokenRow, styles.tokenRowHeader]}>
         {headers.map((h, i) => {
           const isLast = i === headers.length - 1;
 
@@ -206,7 +206,7 @@ export const TokenList = ({
       </View>
       {list.map(l => {
         return (
-          <View style={styles.tokenRow} key={l.id}>
+          <View style={[styles.tokenRow, styles.tokenRowToken]} key={l.id}>
             <View style={[styles.tokenListCol, styles.tokenListSymbol]}>
               <AssetAvatar
                 logo={l._logo}
@@ -217,16 +217,15 @@ export const TokenList = ({
                 {l._symbol}
               </Text>
             </View>
-            <Text style={styles.tokenListCol}>{l._amount}</Text>
+            <Text style={styles.tokenListCol}>{formatAmount(l.amount)}</Text>
             <View
               style={StyleSheet.flatten([
                 styles.tokenListCol,
                 styles.flexCenter,
                 styles.flexRight,
+                styles.alignRight,
               ])}>
-              <Text style={[styles.tokenListCol, styles.alignRight]}>
-                {l._netWorthStr}
-              </Text>
+              <Text>{l._netWorthStr}</Text>
               {l.tip ? (
                 <Tip content={l.tip}>
                   <RcIconInfoCC
@@ -288,8 +287,6 @@ export const Supplements = ({ data }: SupplementsProps) => {
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     portfolioHeader: {
-      paddingTop: 8,
-      marginHorizontal: 12,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -303,10 +300,10 @@ const getStyle = (colors: AppColorsVariants) =>
       borderRadius: 10,
       paddingHorizontal: 8,
       height: 20,
-      backgroundColor: colord(colors['blue-default']).alpha(0.1).toRgbString(),
+      backgroundColor: colors['blue-light-1'],
     },
     portfolioTypeText: {
-      fontSize: 10,
+      fontSize: 13,
       fontWeight: '500',
       color: colors['blue-default'],
       lineHeight: 20,
@@ -315,13 +312,13 @@ const getStyle = (colors: AppColorsVariants) =>
       marginLeft: 8,
       fontSize: 13,
       fontWeight: '700',
-      color: colors['blue-default'],
+      color: colors['neutral-title-1'],
       flexShrink: 1,
     },
     portfolioNetWorth: {
       fontSize: 13,
-      fontWeight: '700',
-      color: colors['blue-default'],
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
       textAlign: 'right',
     },
     tokenRowChange: {
@@ -333,26 +330,31 @@ const getStyle = (colors: AppColorsVariants) =>
     // tokenlist
     tokenList: {
       marginTop: 8,
-      marginHorizontal: 12,
     },
     tokenRow: {
-      marginTop: 12,
       flexDirection: 'row',
       alignItems: 'center',
     },
-    tokenListHeader: {
-      flexBasis: '33.3%',
-      flexGrow: 1,
-      fontSize: 10,
-      fontWeight: '500',
-      color: colors['neutral-line'],
+    tokenRowToken: {
+      height: 40,
     },
-    tokenListCol: {
-      flexBasis: '33.3%',
+    tokenRowHeader: {
+      marginBottom: 8,
+      marginTop: 18,
+    },
+    tokenListHeader: {
+      flexBasis: '40%',
       flexGrow: 1,
       fontSize: 12,
       fontWeight: '400',
-      color: colors['blue-default'],
+      color: colors['neutral-foot'],
+    },
+    tokenListCol: {
+      flexBasis: '40%',
+      flexGrow: 1,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
     },
     tokenListSymbol: {
       flexDirection: 'row',
@@ -360,14 +362,15 @@ const getStyle = (colors: AppColorsVariants) =>
       flexShrink: 1,
     },
     tokenListSymbolText: {
-      paddingLeft: 6,
+      paddingLeft: 8,
       paddingRight: 4,
-      fontSize: 12,
-      fontWeight: '400',
-      color: colors['blue-default'],
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
       flexShrink: 1,
     },
     alignRight: {
+      flexBasis: '20%',
       textAlign: 'right',
     },
     flexCenter: {
@@ -395,7 +398,7 @@ const getStyle = (colors: AppColorsVariants) =>
       paddingLeft: 10,
       fontSize: 12,
       fontWeight: '400',
-      color: colors['neutral-line'],
+      color: colors['neutral-foot'],
     },
     fieldContent: {
       marginLeft: 8,

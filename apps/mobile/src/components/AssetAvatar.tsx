@@ -120,5 +120,6 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'absolute',
       right: -2,
       bottom: -2,
+      backgroundColor: colors['neutral-bg-2'],
     },
   });
