@@ -44,9 +44,11 @@ if [ ! -z $REALLY_UPLOAD ]; then
   aws s3 sync $script_dir/deployments/ios $RABBY_MOBILE_PUB_DEPLOYMENT/ios --acl public-read --profile debankbuild
 fi
 
+[ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
+
 if [ -z $CI ]; then
   echo "[deploy-ios-reg] force fresh CDN:"
-  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id <DIST_ID> --paths '/$s3_upload_prefix/ios'\` --profile debankbuild"
+  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios'\` --profile debankbuild"
   echo ""
 fi
 

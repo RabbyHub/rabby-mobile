@@ -2,7 +2,7 @@ import { KeyringTypeName, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService } from '../services';
 
-const GET_WALLETCONNECT_CONFIG = () => {
+export const GET_WALLETCONNECT_CONFIG = () => {
   return {
     // 1h
     maxDuration: 3600000,
@@ -24,7 +24,11 @@ const GET_WALLETCONNECT_CONFIG = () => {
       'WalletConnect',
       'FIREBLOCKS',
       'MPCVault',
-      // 'MetaMask',
+      'MetaMask',
+      'Rainbow',
+      'imToken',
+      'MATHWALLET',
+      'TRUSTWALLET',
     ],
   };
 };

@@ -23,9 +23,9 @@ checkout_s3_pub_deployment_params() {
     exit 1;
   fi
 
-  export s3_upload_prefix=$(echo "$RABBY_MOBILE_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f3-)
+  export s3_upload_prefix=$(echo "$RABBY_MOBILE_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
   # echo "[debug] s3_upload_prefix is $s3_upload_prefix"
-  export cdn_deployment_urlbase="https://download.rabby.io/downloads/$s3_upload_prefix"
+  export cdn_deployment_urlbase="https://download.rabby.io/$s3_upload_prefix"
 }
 
 replace_variables() {

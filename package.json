@@ -27,11 +27,11 @@
     "build:watch": "yarn run build --watch",
     "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
     "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
-    "normalize": "yarn constraints",
     "lint": "yarn lint:eslint && yarn lint:misc --check && yarn constraints",
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn constraints --fix && yarn lint:misc --write && yarn",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!**/CHANGELOG.md' '!**/CHANGELOG.old.md' '**/*.yml' '!.yarnrc.yml' '!merged-packages/**' --ignore-path .gitignore",
+    "normalize": "yarn constraints",
     "prepack": "./scripts/prepack.sh",
     "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
     "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
@@ -44,6 +44,10 @@
   },
   "simple-git-hooks": {
     "pre-push": "yarn lint"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.0",
+    "redux": "^5.0.0"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.3.1",
@@ -99,9 +103,5 @@
       "ethereumjs-util>ethereum-cryptography>secp256k1": true,
       "simple-git-hooks": false
     }
-  },
-  "dependencies": {
-    "@babel/runtime": "^7.20.0",
-    "redux": "^5.0.0"
   }
 }
