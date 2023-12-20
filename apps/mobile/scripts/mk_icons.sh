@@ -3,9 +3,16 @@
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname "$script_dir")
 
-ios_godfile_dir=$script_dir/bundles;
+os_name=$(uname -s)
 
 mk_ios_icons() {
+  ios_godfile_dir=$script_dir/bundles;
+
+  if [ "$os_name" != "Darwin" ]; then
+    echo "[mk_icons] not on macOS, skip."
+    return ;
+  fi
+
   local ios_icons_dir=$project_dir/ios/RabbyMobile/Images.xcassets/;
 
   # for iOS
@@ -36,7 +43,6 @@ mk_ios_icons() {
     57 57 "57w" logo-1024w.png $script_dir/deployments/ios/
   )
 
-
   for ((i=0;i<${#ios_sizes[@]};i+=5))
   do
       local w=${ios_sizes[i]}
@@ -49,9 +55,14 @@ mk_ios_icons() {
   done
 }
 
-# iconutil -c icns $iconset_dir -o $script_dir/bundles/icon.icns
-# rm -rf $iconset_dir;
+mk_android_icons() {
+  $project_dir/node_modules/.bin/s2v \
+    -t "#FFF" \
+    -i $script_dir/bundles/splash-logo.svg \
+    -o $project_dir/android/app/src/main/res/drawable/ic_brand_logo.xml
+}
 
 mk_ios_icons;
+mk_android_icons;
 
 echo "[mk_icons] success!"

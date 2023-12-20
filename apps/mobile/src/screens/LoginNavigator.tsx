@@ -9,7 +9,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { colord } from 'colord';
 
-import { WelcomeImage } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import { Button, Text, FocusAwareStatusBar } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
@@ -43,7 +42,7 @@ const WelcomeScreen = ({ navigation }: NativeStackScreenProps<any>) => {
   return (
     <View style={styles.container}>
       <FocusAwareStatusBar backgroundColor="transparent" translucent />
-      <ImageBackground
+      {/* <ImageBackground
         source={WelcomeImage}
         resizeMode="cover"
         style={styles.backgroundImage}>
@@ -56,7 +55,7 @@ const WelcomeScreen = ({ navigation }: NativeStackScreenProps<any>) => {
         <Text style={styles.subtitle}>
           Keep connected with all the things you care about in the web3 world
         </Text>
-      </ImageBackground>
+      </ImageBackground> */}
     </View>
   );
 };
