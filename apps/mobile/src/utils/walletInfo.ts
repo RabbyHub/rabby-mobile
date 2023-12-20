@@ -18,7 +18,7 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     name: BRAND_ALIAS_TYPE_TEXT.Bitget,
     icon: BitgetSVG,
     brand: WALLET_NAME.Bitget,
-    _wcId: '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
+    _wcId: '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662',
   },
   [WALLET_NAME.MetaMask]: {
     name: BRAND_ALIAS_TYPE_TEXT.MetaMask,
