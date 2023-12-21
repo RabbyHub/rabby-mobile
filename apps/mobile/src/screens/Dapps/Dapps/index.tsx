@@ -15,7 +15,10 @@ import { dappService } from '@/core/services';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { useDapps } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
-import { useActiveDappView } from '../hooks/useDappView';
+import {
+  useActiveDappView,
+  useActiveDappViewSheetModalRefs,
+} from '../hooks/useDappView';
 import SheetDappWebView from './components/SheetDappWebView';
 
 export function DappsScreen(): JSX.Element {
@@ -48,13 +51,17 @@ export function DappsScreen(): JSX.Element {
 
   const { dappSections, updateFavorite, removeDapp } = useDapps();
   const { setActiveDapp } = useActiveDappView();
+  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
 
   return (
     <NormalScreenContainer style={styles.page}>
       <View style={styles.container}>
         <DappCardList
           sections={dappSections}
-          onPress={setActiveDapp}
+          onPress={dapp => {
+            setActiveDapp(dapp);
+            toggleShowSheetModal('webviewContainerRef', true);
+          }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.info.id, !dapp.isFavorite);
           }}

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { Dimensions } from 'react-native';
 
 import {
   BottomSheetBackdrop,
@@ -12,22 +12,15 @@ import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { devLog } from '@/utils/logger';
 
+const renderBackdrop = (props: BottomSheetBackdropProps) => (
+  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+);
+
 export default function SheetWebViewTester() {
   const {
     sheetModalRefs: { webviewTesterRef },
     toggleShowSheetModal,
   } = useSheetModalsOnSettingScreen();
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
-    ),
-    [],
-  );
 
   const handleSheetChanges = useCallback(
     (index: number) => {
@@ -49,9 +42,7 @@ export default function SheetWebViewTester() {
       snapPoints={[Dimensions.get('screen').height - top]}
       onChange={handleSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
-        <View className="w-[100%]">
-          <DappWebViewControl dappId={'debank.com'} />
-        </View>
+        <DappWebViewControl dappId={'debank.com'} />
       </BottomSheetView>
     </BottomSheetModal>
   );

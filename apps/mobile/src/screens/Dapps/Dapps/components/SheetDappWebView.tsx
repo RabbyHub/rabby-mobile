@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { View, Text, Dimensions, StyleSheet } from 'react-native';
 
-import { DappInfo } from '@rabby-wallet/service-dapp';
-
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { devLog } from '@/utils/logger';
-import { useSheetModals } from '@/hooks/useSheetModal';
-import { useActiveDappView } from '../../hooks/useDappView';
 
-// const openedDappModalsAtom = atom<DappBottomSheetModalRefs>({});
+import DappWebViewControl from '@/components/WebView/DappWebViewControl';
+import { devLog } from '@/utils/logger';
+import {
+  useActiveDappView,
+  useActiveDappViewSheetModalRefs,
+} from '../../hooks/useDappView';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { ScreenLayouts } from '@/constant/layout';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { useThemeColors } from '@/hooks/theme';
+import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
+import { Button } from '@/components';
+import { RcIconDisconnect } from '@/assets/icons/dapp';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -24,17 +31,15 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 export default function SheetDappWebView() {
   const { activeDapp, setActiveDapp } = useActiveDappView();
   const {
-    sheetModalRefs: { webviewRef },
+    sheetModalRefs: { webviewContainerRef },
     toggleShowSheetModal,
-  } = useSheetModals({
-    webviewRef: useRef<BottomSheetModal>(null),
-  });
+  } = useActiveDappViewSheetModalRefs();
 
-  const handleSheetChanges = useCallback(
+  const handleBottomSheetChanges = useCallback(
     (index: number) => {
-      devLog('SheetDappWebView::handleSheetChanges', index);
-      if (index === -1) {
-        toggleShowSheetModal('webviewRef', false);
+      devLog('SheetDappWebView::handleBottomSheetChanges', index);
+      if (index == -1) {
+        toggleShowSheetModal('webviewContainerRef', false);
         setActiveDapp(null);
       }
     },
@@ -45,27 +50,111 @@ export default function SheetDappWebView() {
 
   useEffect(() => {
     if (!activeDapp) {
-      webviewRef?.current?.dismiss();
+      toggleShowSheetModal('webviewContainerRef', 'destroy');
     } else {
-      webviewRef?.current?.present();
+      toggleShowSheetModal('webviewContainerRef', true);
     }
+  }, [webviewContainerRef, activeDapp]);
 
-    return () => {
-      webviewRef?.current?.dismiss();
-    };
-  }, [webviewRef, activeDapp]);
+  const colors = useThemeColors();
 
   return (
     <BottomSheetModal
+      index={1}
       backdropComponent={renderBackdrop}
       enableContentPanningGesture={false}
-      ref={webviewRef}
-      snapPoints={[Dimensions.get('screen').height - top]}
-      onChange={handleSheetChanges}>
+      name="webviewContainerRef"
+      ref={webviewContainerRef}
+      snapPoints={['100%', Dimensions.get('screen').height - top]}
+      onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
-        <View className="w-[100%]">
-          {activeDapp && <DappWebViewControl dappId={activeDapp.info.id} />}
-        </View>
+        {activeDapp && (
+          <DappWebViewControl
+            dappId={activeDapp.info.id}
+            bottomNavH={342}
+            headerLeft={() => {
+              return (
+                <TouchableView
+                  style={[
+                    {
+                      height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                      justifyContent: 'center',
+                    },
+                  ]}
+                  onPress={() => {}}>
+                  <ChainIconImage
+                    source={require('@/screens/Dapps/icons/sample-chain-icon-tp.png')}
+                    size={24}
+                    width={24}
+                    height={24}
+                  />
+                </TouchableView>
+              );
+            }}
+            bottomSheetContent={({ bottomNavBar }) => {
+              return (
+                <View>
+                  <BottomSheetScrollView style={{ minHeight: 108 }}>
+                    <DappCardInWebViewNav data={activeDapp} />
+                  </BottomSheetScrollView>
+
+                  <View
+                    style={{
+                      // height: 179,
+                      // height: 139,
+                      paddingVertical: 16,
+                      borderTopColor: colors['neutral-line'],
+                      borderTopWidth: 1,
+                      justifyContent: 'center',
+                    }}>
+                    <View className="flex-shrink-0">{bottomNavBar}</View>
+                    <View className="flex-shrink-1 mt-[18] px-[20]">
+                      <Button
+                        onPress={() => {}}
+                        title={
+                          <View className="flex-row items-center justify-center">
+                            <RcIconDisconnect
+                              width={20}
+                              height={20}
+                              className="mr-[6]"
+                            />
+                            <Text
+                              style={{
+                                color: colors['red-default'],
+                                fontSize: 16,
+                                fontWeight: '500',
+                              }}>
+                              Disconnect
+                            </Text>
+                          </View>
+                        }
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        containerStyle={{
+                          flexGrow: 1,
+                          display: 'flex',
+                          height: 52,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderBlockColor: colors['red-default'],
+                          borderWidth: StyleSheet.hairlineWidth,
+                          borderRadius: 6,
+                        }}
+                        titleStyle={{
+                          color: colors['red-default'],
+                        }}
+                      />
+                    </View>
+                  </View>
+                </View>
+              );
+            }}
+          />
+        )}
       </BottomSheetView>
     </BottomSheetModal>
   );

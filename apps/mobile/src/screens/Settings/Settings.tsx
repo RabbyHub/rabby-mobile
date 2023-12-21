@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import clsx from 'clsx';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
 

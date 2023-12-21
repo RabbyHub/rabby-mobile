@@ -1,5 +1,12 @@
+import { createRef } from 'react';
+import { atom, useAtom, useAtomValue } from 'jotai';
+
+import {
+  DappBottomSheetModalRefs,
+  useSheetModals,
+} from '@/hooks/useSheetModal';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DappInfo } from '@rabby-wallet/service-dapp';
-import { atom, useAtom } from 'jotai';
 
 const activeDappAtom = atom<DappInfo | null>(null);
 
@@ -10,4 +17,12 @@ export function useActiveDappView() {
     activeDapp,
     setActiveDapp,
   };
+}
+
+const activeDappViewSheetModalRefs = atom({
+  webviewContainerRef: createRef<BottomSheetModal>(),
+});
+
+export function useActiveDappViewSheetModalRefs() {
+  return useSheetModals(useAtomValue(activeDappViewSheetModalRefs));
 }
