@@ -19,7 +19,7 @@ export function FavoritePopularDappsScreen(): JSX.Element {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   const getHeaderTitle = React.useCallback(() => {
-    return <HeaderTitleText>Favorite Popular Dapp</HeaderTitleText>;
+    return <HeaderTitleText>Explore Popular Dapp</HeaderTitleText>;
   }, []);
 
   React.useEffect(() => {
@@ -85,7 +85,7 @@ export function FavoritePopularDappsScreen(): JSX.Element {
           onPress={handleFavorite}
           buttonStyle={styles.buttonStyle}
           titleStyle={styles.buttonTitleStyle}
-          title={`Favorite (${selectDapps.length})`}
+          title={'Add to Favoritess'}
         />
       </View>
     </NormalScreenContainer>

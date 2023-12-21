@@ -14,6 +14,7 @@ import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
+import { ScreenLayouts } from '@/constant/layout';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -142,8 +143,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       width: '100%',
       height: '100%',
       backgroundColor: colors['neutral-bg-2'],
-      // todo
-      paddingTop: 30,
+      paddingTop: ScreenLayouts.headerAreaHeight,
     },
     container: {
       padding: 20,
@@ -157,8 +157,9 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       borderWidth: 0.5,
+      borderBottomWidth: 0.5, // don't delete
       borderColor: colors['neutral-line'],
-      height: 44,
+      height: 50,
       marginLeft: 0,
     },
     searchInput: {
