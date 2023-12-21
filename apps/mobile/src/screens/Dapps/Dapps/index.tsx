@@ -5,18 +5,18 @@ import { StyleSheet, View, ScrollView, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors } from '@/hooks/theme';
-import { DappCard } from './components/DappCard';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { DappCardList } from './components/DappCardList';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { Colors } from '@/constant/theme';
 // import { useRequest } from 'ahooks';
-import { getDappList } from '@/core/apis/dapp';
 import { dappService } from '@/core/services';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { useDapps } from '@/hooks/useDapps';
+import { AppColorsVariants } from '@/constant/theme';
+import { useActiveDappView } from '../hooks/useDappView';
+import SheetDappWebView from './components/SheetDappWebView';
 
 export function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -47,12 +47,14 @@ export function DappsScreen(): JSX.Element {
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
   const { dappSections, updateFavorite, removeDapp } = useDapps();
+  const { setActiveDapp } = useActiveDappView();
 
   return (
     <NormalScreenContainer style={styles.page}>
       <View style={styles.container}>
         <DappCardList
           sections={dappSections}
+          onPress={setActiveDapp}
           onFavoritePress={dapp => {
             updateFavorite(dapp.info.id, !dapp.isFavorite);
           }}
@@ -61,11 +63,13 @@ export function DappsScreen(): JSX.Element {
           }}
         />
       </View>
+
+      <SheetDappWebView />
     </NormalScreenContainer>
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     page: {
       backgroundColor: colors['neutral-bg-2'],

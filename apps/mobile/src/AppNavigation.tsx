@@ -456,24 +456,3 @@ function SearchDappsNavigator() {
     </TransactionStack.Navigator>
   );
 }
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    tabItem: {
-      position: 'relative',
-    },
-    tabBarLabelStyle: {
-      fontSize: 11,
-      width: '100%',
-      paddingTop: 6,
-      fontWeight: '600',
-      textAlign: 'center',
-      color: colors['blue-default'],
-      // fontFamily: 'SF Pro',
-    },
-    leftTitle: {
-      marginLeft: 8,
-      fontSize: 25,
-      fontWeight: '700',
-    },
-  });

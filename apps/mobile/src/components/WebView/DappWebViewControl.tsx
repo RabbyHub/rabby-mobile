@@ -1,9 +1,13 @@
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, Dimensions, ViewProps } from 'react-native';
+import WebView from 'react-native-webview';
+
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
+
 import { Text } from '../Text';
 
 import { ScreenLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 
 import ChainIconImage from '../Chain/ChainIconImage';
 
@@ -11,12 +15,29 @@ import SampleChainIconTPSource from './icons/sample-chain-icon-tp.png';
 import { RcIconMore } from './icons';
 import TouchableItem from '../Touchable/TouchableItem';
 import BasicWebView from './BasicWebView';
-import { useGestureEventsHandlersDefault } from '@gorhom/bottom-sheet';
+import { devLog } from '@/utils/logger';
 
-function DappWebViewHead({ ...props }: ViewProps) {
+function errorLog(...info: any) {
+  devLog('[DappWebViewControl::error]', ...info);
+}
+
+function DappWebViewHead({
+  dappId,
+  currentUrl,
+  ...props
+}: ViewProps & {
+  dappId: string;
+  currentUrl?: string | null;
+}) {
   const colors = useThemeColors();
 
-  const panDownGestureHandlers = useGestureEventsHandlersDefault();
+  const { subTitle } = useMemo(() => {
+    return {
+      subTitle: currentUrl
+        ? urlUtils.canoicalizeDappUrl(currentUrl).httpOrigin
+        : stringUtils.ensurePrefix(dappId, 'https://'),
+    };
+  }, [dappId, currentUrl]);
 
   return (
     <View {...props} style={[styles.dappWebViewHeadContainer, props.style]}>
@@ -27,20 +48,18 @@ function DappWebViewHead({ ...props }: ViewProps) {
           width={24}
           height={24}
         />
-        {/* <Text>
-          <RcSampleChainIconTP />
-        </Text> */}
       </View>
       <View
         style={styles.DappWebViewHeadTitleWrapper}
-        {...panDownGestureHandlers}>
+        // {...panDownGestureHandlers}
+      >
         {/* origin */}
         <Text
           style={{
             ...styles.HeadTitleOrigin,
             color: colors['neutral-title-1'],
           }}>
-          app.uniswap.org
+          {dappId}
         </Text>
 
         {/* main domain */}
@@ -49,7 +68,7 @@ function DappWebViewHead({ ...props }: ViewProps) {
             ...styles.HeadTitleMainDomain,
             color: colors['neutral-foot'],
           }}>
-          https://uniswap.org
+          {subTitle}
         </Text>
       </View>
       <View style={[styles.rightWrapper]}>
@@ -64,8 +83,12 @@ function DappWebViewHead({ ...props }: ViewProps) {
   );
 }
 
-export default function DappWebViewControl() {
+function DappWebViewControl({ dappId }: { dappId: string }) {
   const colors = useThemeColors();
+
+  const localWebviewRef = useRef<WebView>(null);
+
+  const [latestUrl, setLatestUrl] = useState<string | null>(null);
 
   return (
     <View
@@ -75,18 +98,26 @@ export default function DappWebViewControl() {
           backgroundColor: colors['neutral-bg-1'],
         },
       ]}>
-      <DappWebViewHead style={{ flexShrink: 0 }} />
+      <DappWebViewHead
+        dappId={dappId}
+        currentUrl={latestUrl}
+        style={{ flexShrink: 0 }}
+      />
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
         <BasicWebView
-          // source={'https://app.uniswap.org'}
-          source={'https://baidu.com'}
-          isShown
-          onTouchStart={evt => {
-            evt.preventDefault();
-            evt.stopPropagation();
+          ref={localWebviewRef}
+          source={stringUtils.ensurePrefix(dappId, 'https://')}
+          onNavigationStateChange={newNavState => {
+            const { url } = newNavState;
+
+            setLatestUrl(url);
+            if (!url) {
+              return;
+            }
           }}
+          onError={errorLog}
         />
       </View>
     </View>
@@ -131,3 +162,5 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 });
+
+export default DappWebViewControl;

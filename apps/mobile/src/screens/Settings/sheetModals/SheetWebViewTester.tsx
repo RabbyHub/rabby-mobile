@@ -7,17 +7,16 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { useSheetModalRefs } from './hooks';
-import { useThemeColors } from '@/hooks/theme';
-import { Button } from '@/components';
+import { useSheetModalsOnSettingScreen } from './hooks';
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { devLog } from '@/utils/logger';
 
-export default function ModalWebViewTesterScreen() {
+export default function SheetWebViewTester() {
   const {
-    sheetModals: { webviewTesterRef },
-  } = useSheetModalRefs();
+    sheetModalRefs: { webviewTesterRef },
+    toggleShowSheetModal,
+  } = useSheetModalsOnSettingScreen();
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -30,23 +29,15 @@ export default function ModalWebViewTesterScreen() {
     [],
   );
 
-  const { toggleShowSheetModal } = useSheetModalRefs();
-
-  // const handleCloseInputModalPress = useCallback(() => {
-  //   toggleShowSheetModal('webviewTesterRef', true, true);
-  // }, [toggleShowSheetModal]);
-
   const handleSheetChanges = useCallback(
     (index: number) => {
       devLog('handleSheetChanges', index);
       if (index === -1) {
-        toggleShowSheetModal('webviewTesterRef', false, true);
+        toggleShowSheetModal('webviewTesterRef', false);
       }
     },
     [toggleShowSheetModal],
   );
-
-  const colors = useThemeColors();
 
   const { top } = useSafeAreaInsets();
 
@@ -59,7 +50,7 @@ export default function ModalWebViewTesterScreen() {
       onChange={handleSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
         <View className="w-[100%]">
-          <DappWebViewControl />
+          <DappWebViewControl dappId={'debank.com'} />
         </View>
       </BottomSheetView>
     </BottomSheetModal>

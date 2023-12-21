@@ -119,15 +119,15 @@ function BlockItem({
   return (
     <BlockContainer
       className={clsx(
-        'flex flex-row items-center justify-between',
+        'flex-row justify-between items-center',
         'w-[100%] h-[52] p-[16]',
       )}
       disabled={!onPress}
       onPress={() => onPress?.()}>
       {/* left area */}
-      <View className="flex flex-row items-center justify-between">
+      <View className="flex-row justify-between items-center">
         {iconNode || null}
-        <View className="flex flex-row">{children}</View>
+        <View className="flex-row">{children}</View>
       </View>
       {/* right area */}
       {rightNode || null}

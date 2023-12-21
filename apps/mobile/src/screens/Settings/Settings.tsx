@@ -24,8 +24,8 @@ import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 import { type SettingConfBlock, Block } from './Block';
 import { useAppTheme } from '@/hooks/theme';
 import { styled } from 'styled-components/native';
-import { useSheetModalRefs } from './sheetModals/hooks';
-import ModalWebViewTesterScreen from './sheetModals/SheetWebViewTester';
+import { useSheetModalsOnSettingScreen } from './sheetModals/hooks';
+import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -36,7 +36,7 @@ const Container = styled(NormalScreenContainer)`
 function SettingsScreen(): JSX.Element {
   const { appTheme, toggleThemeMode } = useAppTheme();
 
-  const { toggleShowSheetModal } = useSheetModalRefs();
+  const { toggleShowSheetModal } = useSheetModalsOnSettingScreen();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -120,7 +120,7 @@ function SettingsScreen(): JSX.Element {
               label: 'WebView Test',
               icon: RcEarth,
               onPress: () => {
-                toggleShowSheetModal('webviewTesterRef', true, true);
+                toggleShowSheetModal('webviewTesterRef', true);
               },
             },
           ],
@@ -130,43 +130,41 @@ function SettingsScreen(): JSX.Element {
   })();
 
   return (
-    <BottomSheetModalProvider>
-      <Container
-        className={clsx('bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2')}>
-        <View className="flex-1 p-[20]">
-          {Object.entries(SettingsBlocks).map(([key, block], idx) => {
-            const l1key = `${key}-${idx}`;
+    <Container
+      className={clsx('bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2')}>
+      <View className="flex-1 p-[20]">
+        {Object.entries(SettingsBlocks).map(([key, block], idx) => {
+          const l1key = `${key}-${idx}`;
 
-            return (
-              <Block
-                key={l1key}
-                label={block.label}
-                {...(idx > 0 && {
-                  className: 'mt-[16]',
-                })}>
-                {block.items.map((item, idx_l2) => {
-                  return (
-                    <Block.Item
-                      key={`${l1key}-${item.label}-${idx_l2}`}
-                      label={item.label}
-                      icon={item.icon}
-                      onPress={item.onPress}
-                      rightTextNode={item.rightTextNode}
-                      rightNode={item.rightNode}
-                    />
-                  );
-                })}
-              </Block>
-            );
-          })}
-        </View>
-        <View className="items-center">
-          <RcFooterLogo />
-        </View>
-      </Container>
+          return (
+            <Block
+              key={l1key}
+              label={block.label}
+              {...(idx > 0 && {
+                className: 'mt-[16]',
+              })}>
+              {block.items.map((item, idx_l2) => {
+                return (
+                  <Block.Item
+                    key={`${l1key}-${item.label}-${idx_l2}`}
+                    label={item.label}
+                    icon={item.icon}
+                    onPress={item.onPress}
+                    rightTextNode={item.rightTextNode}
+                    rightNode={item.rightNode}
+                  />
+                );
+              })}
+            </Block>
+          );
+        })}
+      </View>
+      <View className="items-center">
+        <RcFooterLogo />
+      </View>
 
-      <ModalWebViewTesterScreen />
-    </BottomSheetModalProvider>
+      <SheetWebViewTester />
+    </Container>
   );
 }
 

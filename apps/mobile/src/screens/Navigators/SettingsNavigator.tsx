@@ -36,7 +36,7 @@ export function SettingNavigator() {
       {/* {__DEV__ && (
         <SettingsStack.Screen
           name={RootNames.SettingsWebViewTester}
-          component={ModalWebViewTesterScreen}
+          component={SheetWebViewTester}
           options={{
             title: 'Settings',
           }}

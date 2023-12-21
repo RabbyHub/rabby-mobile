@@ -16,14 +16,12 @@ import { devLog } from '@/utils/logger';
 function log(...info: any) {
   devLog('[BasicWebView::info]', ...info);
 }
-function errorLog(...info: any) {
-  devLog('[BasicWebView::error]', ...info);
-}
+
 interface IWebviewProps {
   source: string;
   reload?: () => void;
   onWebviewMessage?: (data: IMessageData) => void;
-  isShown: boolean;
+  isShown?: boolean;
 }
 
 interface IMessageData {
@@ -81,7 +79,6 @@ const BasicWebView: Parameters<
       ref={webviewRef}
       source={{ uri: source }}
       onMessage={onMessage}
-      onError={errorLog}
     />
   );
 };
