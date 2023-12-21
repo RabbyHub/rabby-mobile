@@ -5,13 +5,14 @@ import { useQueryProjects } from './hooks';
 
 export const DefiScreen = () => {
   const { currentAccount } = useCurrentAccount();
-  const { portfolios, hasPortfolios } = useQueryProjects(
+  const { portfolios, hasPortfolios, isPortfoliosLoading } = useQueryProjects(
     currentAccount!.address,
   );
 
   return (
     <ProtocolList
       portfolios={portfolios}
+      isPortfoliosLoading={isPortfoliosLoading}
       hasPortfolios={hasPortfolios}
       tokenNetWorth={0}
     />

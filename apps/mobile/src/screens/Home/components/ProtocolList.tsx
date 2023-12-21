@@ -46,20 +46,16 @@ const TemplateDict = {
 };
 
 type ProtocolListProps = {
-  hasTokens?: boolean;
   hasPortfolios?: boolean;
   tokens?: AbstractPortfolioToken[];
   portfolios?: AbstractProject[];
-  isTokensLoading?: boolean;
   isPortfoliosLoading?: boolean;
   tokenNetWorth: number;
 };
 
 const _ProtocolList = ({
-  hasTokens,
   hasPortfolios,
   portfolios,
-  isTokensLoading,
   isPortfoliosLoading,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
@@ -139,22 +135,15 @@ const _ProtocolList = ({
         ? require('@/assets/icons/assets/empty-protocol.png')
         : require('@/assets/icons/assets/empty-protocol-dark.png');
 
-    return isTokensLoading && isPortfoliosLoading ? (
+    return isPortfoliosLoading ? (
       <PositionLoader space={8} />
-    ) : hasTokens || hasPortfolios ? null : (
+    ) : hasPortfolios ? null : (
       <View style={styles.emptyList}>
         <Image source={emptySource} />
         <Text style={styles.emptyListText}>No assets</Text>
       </View>
     );
-  }, [
-    theme,
-    isTokensLoading,
-    isPortfoliosLoading,
-    hasTokens,
-    hasPortfolios,
-    styles,
-  ]);
+  }, [theme, isPortfoliosLoading, hasPortfolios, styles]);
 
   const ListFooterComponent = useMemo(() => {
     return <View style={styles.listFooter} />;

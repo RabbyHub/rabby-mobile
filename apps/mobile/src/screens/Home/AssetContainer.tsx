@@ -77,7 +77,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
       <Tabs.Tab label="Token" name="Token">
         <TokenScreen />
       </Tabs.Tab>
-      <Tabs.Tab label="Defi" name="Defi">
+      <Tabs.Tab label="DeFi" name="Defi">
         <DefiScreen />
       </Tabs.Tab>
       <Tabs.Tab label="NFT" name="NFT">

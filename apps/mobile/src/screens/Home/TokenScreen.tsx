@@ -6,7 +6,15 @@ import { useQueryProjects } from './hooks';
 // render it need currentAccount is not null
 export const TokenScreen = () => {
   const { currentAccount } = useCurrentAccount();
-  const { tokens, tokenNetWorth } = useQueryProjects(currentAccount!.address);
+  const { tokens, tokenNetWorth, isTokensLoading, hasTokens } =
+    useQueryProjects(currentAccount!.address);
 
-  return <TokenWallet tokens={tokens} tokenNetWorth={tokenNetWorth} />;
+  return (
+    <TokenWallet
+      tokens={tokens}
+      isTokensLoading={isTokensLoading}
+      hasTokens={hasTokens}
+      tokenNetWorth={tokenNetWorth}
+    />
+  );
 };

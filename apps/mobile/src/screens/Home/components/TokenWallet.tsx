@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  useColorScheme,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -24,6 +25,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { PositionLoader } from './Skeleton';
 
 const ITEM_HEIGHT = 68;
 
@@ -31,6 +33,8 @@ type TokenWalletProps = {
   tokens?: AbstractPortfolioToken[];
   showHistory?: boolean;
   tokenNetWorth?: number;
+  isTokensLoading?: boolean;
+  hasTokens?: boolean;
 };
 
 const TokenRow = memo(
@@ -157,9 +161,12 @@ export const TokenWallet = ({
   tokens,
   tokenNetWorth,
   showHistory,
+  isTokensLoading,
+  hasTokens,
 }: TokenWalletProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
+  const theme = useColorScheme();
 
   const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenSmallToken = React.useCallback(() => {
@@ -223,6 +230,22 @@ export const TokenWallet = ({
     [],
   );
 
+  const ListEmptyComponent = useMemo(() => {
+    const emptySource =
+      theme === 'light'
+        ? require('@/assets/icons/assets/empty-protocol.png')
+        : require('@/assets/icons/assets/empty-protocol-dark.png');
+
+    return isTokensLoading ? (
+      <PositionLoader space={8} />
+    ) : hasTokens ? null : (
+      <View style={styles.emptyList}>
+        <Image source={emptySource} />
+        <Text style={styles.emptyListText}>No assets</Text>
+      </View>
+    );
+  }, [theme, isTokensLoading, hasTokens, styles]);
+
   return (
     <>
       <Tabs.FlatList
@@ -230,6 +253,7 @@ export const TokenWallet = ({
         renderItem={renderItem}
         data={combinedTokens}
         getItemLayout={getItemLayout}
+        ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
       />
       <BottomSheetModal
@@ -280,6 +304,15 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    emptyList: {
+      marginTop: 160,
+      alignItems: 'center',
+    },
+    emptyListText: {
+      fontSize: 15,
+      color: colors['neutral-title-1'],
+      fontWeight: '600',
+    },
     tokenRowTokenWrap: {
       flexShrink: 1,
       flexDirection: 'row',
