@@ -145,7 +145,6 @@ export const NFTScreen = () => {
     );
   }, []);
 
-  const firstKey = sectionList[0]?.key;
   const renderSectionHeader: Exclude<
     SectionListProps<
       NFTItem[],
@@ -157,64 +156,62 @@ export const NFTScreen = () => {
       const { collection } = section;
       const chain = CHAIN_ID_LIST.get(collection!.chain);
       const iconUri = chain?.nativeTokenLogo;
-      const isFirst = section.key === firstKey;
 
       return (
-        <View>
-          {isFirst ? (
-            <View style={styles.tipContainer}>
-              <View style={styles.tipLine} />
-              <Text style={styles.tip}>
-                NFTs are not included in wallet balance
+        <View style={styles.headerContainer}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title} numberOfLines={1}>
+              {collection!.name}
+            </Text>
+            <Text
+              style={styles.length}>{`(${collection?.nft_list.length})`}</Text>
+          </View>
+          {collection?.floor_price && collection.floor_price !== 0 ? (
+            <View style={styles.floorPriceContainer}>
+              {iconUri ? (
+                <FastImage
+                  source={{
+                    uri: iconUri,
+                  }}
+                  style={styles.chainIcon}
+                />
+              ) : null}
+              <Text style={styles.floorPriceText}>
+                {chain?.name} / Floor Price:{' '}
               </Text>
-              <View style={styles.tipLine} />
+              <Text style={styles.floorPriceText}>
+                {collection.floor_price}
+              </Text>
+              <Text style={styles.floorPriceText}>
+                {collection?.native_token?.symbol}
+              </Text>
             </View>
           ) : null}
-          <View style={styles.headerContainer}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title} numberOfLines={1}>
-                {collection!.name}
-              </Text>
-              <Text
-                style={
-                  styles.length
-                }>{`(${collection?.nft_list.length})`}</Text>
-            </View>
-            {collection?.floor_price && collection.floor_price !== 0 ? (
-              <View style={styles.floorPriceContainer}>
-                {iconUri ? (
-                  <FastImage
-                    source={{
-                      uri: iconUri,
-                    }}
-                    style={styles.chainIcon}
-                  />
-                ) : null}
-                <Text style={styles.floorPriceText}>
-                  {chain?.name} / Floor Price:{' '}
-                </Text>
-                <Text style={styles.floorPriceText}>
-                  {collection.floor_price}
-                </Text>
-                <Text style={styles.floorPriceText}>
-                  {collection?.native_token?.symbol}
-                </Text>
-              </View>
-            ) : null}
-          </View>
         </View>
       );
     },
-    [firstKey, styles],
+    [styles],
   );
 
   const keyExtractor = useCallback((x: { id: any }[]) => x[0].id, []);
+
+  const renderHeaderComponent = useCallback(
+    () => (
+      <View style={styles.tipContainer}>
+        <View style={styles.tipLine} />
+        <Text style={styles.tip}>NFTs are not included in wallet balance</Text>
+        <View style={styles.tipLine} />
+      </View>
+    ),
+    [styles],
+  );
 
   return (
     <View style={styles.container}>
       {!isLoading ? (
         list.length > 0 ? (
           <Tabs.SectionList
+            ListHeaderComponent={renderHeaderComponent}
             style={styles.list}
             contentContainerStyle={styles.listContainer}
             renderItem={renderItem}
