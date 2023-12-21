@@ -13,9 +13,9 @@ export const FooterButton: React.FC<ButtonProps> = props => {
           left: 0,
           right: 0,
           bottom: 0,
-          borderTopWidth: 0.5,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors['neutral-line'],
-          backgroundColor: 'white',
+          backgroundColor: colors['neutral-title-2'],
           padding: 20,
         },
         button: {

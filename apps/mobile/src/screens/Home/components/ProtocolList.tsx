@@ -277,7 +277,7 @@ const getStyle = (colors: AppColorsVariants) =>
       marginBottom: 8,
       padding: 12,
       marginHorizontal: 20,
-      borderWidth: 0.5,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors['neutral-line'],
       borderRadius: 6,
     },

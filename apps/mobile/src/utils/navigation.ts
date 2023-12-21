@@ -20,7 +20,7 @@ export function useSetCurrentRouteName() {
  *
  * https://reactnavigation.org/docs/navigating-without-navigation-prop
  */
-export function navigate(name: string, params?: Record<string, string>) {
+export function navigate(name: string, params?: Record<string, any>) {
   if (navigationRef.isReady()) {
     // Perform navigation if the react navigation is ready to handle actions
     navigationRef.navigate(name, params);

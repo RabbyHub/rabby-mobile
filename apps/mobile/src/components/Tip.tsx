@@ -85,7 +85,9 @@ const getStyle = (colors: AppColorsVariants) =>
       shadowRadius: 8,
     },
     tooltipContent: {
-      backgroundColor: colord('white').alpha(0.96).toHslString(),
+      backgroundColor: colord(colors['neutral-title-2'])
+        .alpha(0.96)
+        .toHslString(),
       elevation: 10,
       borderRadius: 8,
       padding: 0,

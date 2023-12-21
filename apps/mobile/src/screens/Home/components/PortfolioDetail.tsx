@@ -264,7 +264,7 @@ export const Supplements = ({ data }: SupplementsProps) => {
   const linearColors = useMemo(() => {
     return [
       colord(colors['blue-default']).alpha(0.1).toRgbString(),
-      colord('white').alpha(0).toRgbString(),
+      colord(colors['neutral-title-2']).alpha(0).toRgbString(),
     ];
   }, [colors]);
 

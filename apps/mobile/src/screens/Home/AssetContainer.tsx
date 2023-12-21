@@ -33,10 +33,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         },
         label: {
           fontSize: 16,
-          height: 36,
           fontWeight: '500',
-          margin: 0,
-          padding: 0,
           textTransform: 'none',
         },
         indicator: {

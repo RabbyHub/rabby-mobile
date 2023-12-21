@@ -81,6 +81,7 @@
     "react-native-splash-screen": "^3.3.0",
     "react-native-svg": "^14.0.0",
     "react-native-vector-icons": "^10.0.2",
+    "react-native-video": "^5.2.1",
     "react-native-vision-camera": "^3.6.17",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "styled-components": "^6.1.1"

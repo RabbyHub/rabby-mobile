@@ -36,6 +36,7 @@ export const RootNames = {
   ImportSuccess: 'ImportSuccess',
   ImportWatchAddress: 'ImportWatchAddress',
   AddressDetail: 'AddressDetail',
+  NftDetail: 'NftDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

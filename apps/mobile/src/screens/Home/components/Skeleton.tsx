@@ -35,7 +35,7 @@ export const PositionLoader = ({ space }: { space: number }) => {
             styles.positionLoader,
             // eslint-disable-next-line react-native/no-inline-styles
             {
-              backgroundColor: 'white',
+              backgroundColor: colors['neutral-title-2'],
               borderTopColor: colors['neutral-line'],
               marginBottom: space,
               borderTopWidth: space ? 0 : StyleSheet.hairlineWidth,
