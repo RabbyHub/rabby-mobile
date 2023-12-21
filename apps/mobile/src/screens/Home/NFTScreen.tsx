@@ -18,10 +18,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { useQueryNft } from './hooks/nft';
-import { useHeaderHeight } from '@react-navigation/elements';
 import FastImage from 'react-native-fast-image';
 import { AppColorsVariants } from '@/constant/theme';
-import { SectionList } from 'react-native-collapsible-tab-view';
+import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
@@ -45,10 +44,11 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
   const styles = getStyle(colors, isLight);
 
   const handleNFTPress = useCallback(() => {
-    return navigate(RootNames.NftDetail, {
-      token: item,
-      collectionName,
-    });
+    // TODO: next milestone
+    // return navigate(RootNames.NftDetail, {
+    //   token: item,
+    //   collectionName,
+    // });
   }, [item, collectionName]);
 
   const numberDisplay = useMemo(() => {
@@ -131,8 +131,6 @@ export const NFTScreen = () => {
     [list],
   );
 
-  const height = useHeaderHeight();
-
   const renderItem: Exclude<
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
     void
@@ -147,56 +145,76 @@ export const NFTScreen = () => {
     );
   }, []);
 
+  const firstKey = sectionList[0]?.key;
   const renderSectionHeader: Exclude<
     SectionListProps<
       NFTItem[],
       { collection?: CollectionList }
     >['renderSectionHeader'],
     void
-  > = useCallback(({ section: { collection } }) => {
-    const chain = CHAIN_ID_LIST.get(collection!.chain);
-    const iconUri = chain?.nativeTokenLogo;
+  > = useCallback(
+    ({ section }) => {
+      const { collection } = section;
+      const chain = CHAIN_ID_LIST.get(collection!.chain);
+      const iconUri = chain?.nativeTokenLogo;
+      const isFirst = section.key === firstKey;
 
-    return (
-      <View style={styles.headerContainer}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>
-            {collection!.name}
-          </Text>
-          <Text
-            style={styles.length}>{`(${collection?.nft_list.length})`}</Text>
-        </View>
-        {collection?.floor_price && collection.floor_price !== 0 ? (
-          <View style={styles.floorPriceContainer}>
-            {iconUri ? (
-              <FastImage
-                source={{
-                  uri: iconUri,
-                }}
-                style={styles.chainIcon}
-              />
+      return (
+        <View>
+          {isFirst ? (
+            <View style={styles.tipContainer}>
+              <View style={styles.tipLine} />
+              <Text style={styles.tip}>
+                NFTs are not included in wallet balance
+              </Text>
+              <View style={styles.tipLine} />
+            </View>
+          ) : null}
+          <View style={styles.headerContainer}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title} numberOfLines={1}>
+                {collection!.name}
+              </Text>
+              <Text
+                style={
+                  styles.length
+                }>{`(${collection?.nft_list.length})`}</Text>
+            </View>
+            {collection?.floor_price && collection.floor_price !== 0 ? (
+              <View style={styles.floorPriceContainer}>
+                {iconUri ? (
+                  <FastImage
+                    source={{
+                      uri: iconUri,
+                    }}
+                    style={styles.chainIcon}
+                  />
+                ) : null}
+                <Text style={styles.floorPriceText}>
+                  {chain?.name} / Floor Price:{' '}
+                </Text>
+                <Text style={styles.floorPriceText}>
+                  {collection.floor_price}
+                </Text>
+                <Text style={styles.floorPriceText}>
+                  {collection?.native_token?.symbol}
+                </Text>
+              </View>
             ) : null}
-            <Text style={styles.floorPriceText}>
-              {chain?.name} / Floor Price:{' '}
-            </Text>
-            <Text style={styles.floorPriceText}>{collection.floor_price}</Text>
-            <Text style={styles.floorPriceText}>
-              {collection?.native_token?.symbol}
-            </Text>
           </View>
-        ) : null}
-      </View>
-    );
-  }, []);
+        </View>
+      );
+    },
+    [firstKey, styles],
+  );
 
   const keyExtractor = useCallback((x: { id: any }[]) => x[0].id, []);
 
   return (
     <View style={styles.container}>
-      <Text>NFTs are not included in wallet balance</Text>
       {!isLoading ? (
         list.length > 0 ? (
-          <SectionList
+          <Tabs.SectionList
             style={styles.list}
             contentContainerStyle={styles.listContainer}
             renderItem={renderItem}
@@ -208,20 +226,14 @@ export const NFTScreen = () => {
             initialNumToRender={5}
           />
         ) : (
-          <View>
+          <Tabs.ScrollView>
             <Text>No NFTs</Text>
-          </View>
+          </Tabs.ScrollView>
         )
       ) : (
-        <View
-          style={[
-            styles.loadingWrap,
-            {
-              marginTop: height,
-            },
-          ]}>
-          <NFTListLoader />
-        </View>
+        <Tabs.ScrollView style={[styles.loadingWrap]}>
+          <NFTListLoader detailWidth={detailWidth} />
+        </Tabs.ScrollView>
       )}
     </View>
   );
@@ -230,10 +242,26 @@ export const NFTScreen = () => {
 const getStyle = (colors: AppColorsVariants, isLight = true) =>
   StyleSheet.create({
     container: {
-      flex: 1,
       backgroundColor: colors['neutral-bg-1'],
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
+    },
+    tipContainer: {
+      position: 'relative',
+      marginVertical: 16,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tip: {
+      textAlign: 'center',
+      color: colors['neutral-foot'],
+      fontSize: 11,
+      paddingHorizontal: 10,
+    },
+    tipLine: {
+      width: 'auto',
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors['neutral-line'],
     },
     listContainer: {
       paddingBottom: 90,

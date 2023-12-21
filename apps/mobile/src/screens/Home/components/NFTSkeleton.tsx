@@ -1,9 +1,7 @@
 import { useThemeColors } from '@/hooks/theme';
 import { memo } from 'react';
 import ContentLoader, { Rect } from 'react-content-loader/native';
-import { Dimensions, View } from 'react-native';
-
-const detailWidth = (Dimensions.get('window').width - 50) / 2;
+import { View } from 'react-native';
 
 export const HeaderLoader = (props: any) => {
   const colors = useThemeColors();
@@ -22,7 +20,12 @@ export const HeaderLoader = (props: any) => {
     </ContentLoader>
   );
 };
-export const CardLoader = (props: any) => {
+export const CardLoader = ({
+  detailWidth,
+  ...props
+}: any & {
+  detailWidth: number;
+}) => {
   const colors = useThemeColors();
   return (
     <ContentLoader
@@ -47,23 +50,26 @@ export const CardLoader = (props: any) => {
   );
 };
 
-export const NFTListLoader = memo(() => (
-  <View style={{ flex: 1, width: '100%', paddingHorizontal: 20 }}>
-    {Array(5)
-      .fill(0)
-      .map((e, i) => (
-        <View key={i}>
-          <HeaderLoader />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: 10,
-            }}>
-            <CardLoader />
-            <CardLoader />
+export const NFTListLoader = memo(
+  ({ detailWidth }: { detailWidth: number }) => (
+    <View style={{ flex: 1, width: '100%', paddingHorizontal: 20 }}>
+      {Array(5)
+        .fill(0)
+        .map((e, i) => (
+          <View key={i}>
+            <HeaderLoader />
+            <View
+              style={{
+                flexDirection: 'row',
+                marginTop: 10,
+                gap: 10,
+              }}>
+              <CardLoader detailWidth={detailWidth} />
+              <CardLoader detailWidth={detailWidth} />
+              <CardLoader detailWidth={detailWidth} />
+            </View>
           </View>
-        </View>
-      ))}
-  </View>
-));
+        ))}
+    </View>
+  ),
+);

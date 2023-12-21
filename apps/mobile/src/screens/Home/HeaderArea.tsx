@@ -57,7 +57,7 @@ export default function HomeHeaderArea() {
   return (
     <View
       style={{
-        height: ScreenLayouts.headerAreaHeight,
+        height: '100%',
         backgroundColor: ScreenColors.homeHeaderBlue,
         marginLeft: -20,
         marginRight: -20,
