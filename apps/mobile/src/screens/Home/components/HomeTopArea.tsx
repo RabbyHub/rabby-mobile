@@ -134,7 +134,7 @@ export const HomeTopArea = () => {
 const getStyles = createGetStyles(colors => ({
   container: {
     padding: 20,
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors['neutral-bg-1'],
   },
   textBox: {
     flexDirection: 'row',
