@@ -76,6 +76,7 @@
     "react-native-svg": "^14.0.0",
     "react-native-vector-icons": "^10.0.2",
     "react-native-vision-camera": "^3.6.17",
+    "react-native-webview": "^13.6.3",
     "styled-components": "^6.1.1"
   },
   "devDependencies": {

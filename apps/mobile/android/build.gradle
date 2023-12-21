@@ -19,3 +19,12 @@ buildscript {
         classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'com:reactnativecommunity:webview') {
+            // https://github.com/react-native-webview/react-native-webview/issues/2578
+            details.useTarget "1.6.0"
+        }
+    }
+}

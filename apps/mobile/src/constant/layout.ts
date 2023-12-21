@@ -3,6 +3,8 @@ import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 export const ScreenLayouts = {
   headerAreaHeight: 44,
   bottomBarHeight: 84,
+
+  dappWebViewControlHeaderHeight: 44,
 };
 
 export const ScreenColors = {
@@ -24,6 +26,10 @@ export const RootNames = {
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  /* warning: dev only ------ start */
+  SettingsWebViewTester: 'SettingsWebViewTester',
+  /* warning: dev only ------ end */
+
   StackTransaction: 'StackTransaction',
   History: 'History',
 

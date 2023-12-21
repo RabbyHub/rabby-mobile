@@ -7987,17 +7987,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"escape-string-regexp@npm:2.0.0, escape-string-regexp@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "escape-string-regexp@npm:2.0.0"
+  checksum: 9f8a2d5743677c16e85c810e3024d54f0c8dea6424fad3c79ef6666e81dd0846f7437f5e729dfcdac8981bc9e5294c39b4580814d114076b8d36318f46ae4395
+  languageName: node
+  linkType: hard
+
 "escape-string-regexp@npm:^1.0.3, escape-string-regexp@npm:^1.0.5":
   version: 1.0.5
   resolution: "escape-string-regexp@npm:1.0.5"
   checksum: 6092fda75c63b110c706b6a9bfde8a612ad595b628f0bd2147eea1d3406723020810e591effc7db1da91d80a71a737a313567c5abb3813e8d9c71f4aa595b410
-  languageName: node
-  linkType: hard
-
-"escape-string-regexp@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "escape-string-regexp@npm:2.0.0"
-  checksum: 9f8a2d5743677c16e85c810e3024d54f0c8dea6424fad3c79ef6666e81dd0846f7437f5e729dfcdac8981bc9e5294c39b4580814d114076b8d36318f46ae4395
   languageName: node
   linkType: hard
 
@@ -9896,7 +9896,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -14235,6 +14235,7 @@ __metadata:
     react-native-svg-transformer: ^1.1.0
     react-native-vector-icons: ^10.0.2
     react-native-vision-camera: ^3.6.17
+    react-native-webview: ^13.6.3
     react-test-renderer: 18.2.0
     styled-components: ^6.1.1
     svg2vectordrawable: ^2.9.1
@@ -14611,6 +14612,19 @@ __metadata:
     react-native-worklets-core:
       optional: true
   checksum: 2d600b2e6e5ddae4dd4d0d3ad2f90cffe6092353f08a8a57ba4944423024f637f8a8b2069a447acadd6b6081c26514e145a9fc95283bb661bf41f0425eeaa48e
+  languageName: node
+  linkType: hard
+
+"react-native-webview@npm:^13.6.3":
+  version: 13.6.3
+  resolution: "react-native-webview@npm:13.6.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-webview%2F-%2Freact-native-webview-13.6.3.tgz"
+  dependencies:
+    escape-string-regexp: 2.0.0
+    invariant: 2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3bfe952153ba25ced17b2783f686c26cdfd7d9de0ad3a99b953fc616f1b87624172cc39ebeec3b7c213b781d709a3ae5ea0313b4dce5cb0bbdafcf6a478d64f4
   languageName: node
   linkType: hard
 

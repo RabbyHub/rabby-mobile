@@ -19,13 +19,12 @@ import {
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
+import { navigate, navigationRef } from '@/utils/navigation';
 import {
-  navigate,
-  navigationRef,
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
-} from '@/utils/navigation';
-import { useStackScreenConfig } from './hooks/navigation';
+  useStackScreenConfig,
+} from './hooks/navigation';
 import { Text } from './components';
 import {
   AppRootName,
@@ -42,11 +41,13 @@ import NotFoundScreen from './screens/NotFound';
 
 import HomeScreen from './screens/Home/Home';
 
-import SettingsScreen from './screens/Settings/Settings';
 // import DappsScreen from './screens/Dapps/Dapps';
 import HistoryScreen from './screens/Transaction/History';
 import MyBundleScreen from './screens/Assets/MyBundle';
+
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
+import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
+
 import { DappsScreen } from './screens/Dapps/Dapps';
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
@@ -56,7 +57,6 @@ const BottomTab = createBottomTabNavigator();
 
 const AccountStack = createNativeStackNavigator();
 const TransactionStack = createNativeStackNavigator();
-const SettingsStack = createNativeStackNavigator();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
@@ -192,6 +192,7 @@ export default function AppNavigation({
         // key={userId}
         onReady={onReady}
         onStateChange={onStateChange}
+        independent
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <RootStack.Navigator
@@ -453,37 +454,6 @@ function SearchDappsNavigator() {
         // }}
       />
     </TransactionStack.Navigator>
-  );
-}
-
-function SettingNavigator() {
-  const screenOptions = useStackScreenConfig();
-  const colors = useThemeColors();
-  // console.log('============== SettingNavigator Render =========');
-
-  return (
-    <SettingsStack.Navigator
-      screenOptions={{
-        ...screenOptions,
-        gestureEnabled: false,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerTitleStyle: {
-          color: colors['neutral-title-1'],
-          fontWeight: 'normal',
-        },
-        headerTitle: 'Settings',
-      }}>
-      <SettingsStack.Screen
-        name={RootNames.Settings}
-        component={SettingsScreen}
-        options={{
-          title: 'Settings',
-        }}
-      />
-    </SettingsStack.Navigator>
   );
 }
 

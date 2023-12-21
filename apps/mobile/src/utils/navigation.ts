@@ -6,15 +6,6 @@ export const navigationRef =
     Record<string, Record<string, string | object> | undefined>
   >();
 
-const currentRouteNameAtom = atom<string | undefined>(undefined);
-export function useCurrentRouteNameInAppStatusBar() {
-  return useAtomValue(currentRouteNameAtom);
-}
-
-export function useSetCurrentRouteName() {
-  return useSetAtom(currentRouteNameAtom);
-}
-
 /**
  * navigate in pure function
  *
