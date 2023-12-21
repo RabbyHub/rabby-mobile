@@ -7,6 +7,7 @@ import {
   SectionListData,
   useColorScheme,
   TouchableOpacity,
+  LayoutAnimation,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -53,6 +54,29 @@ type ProtocolListProps = {
   tokenNetWorth: number;
 };
 
+const MemoItem = memo(
+  ({ item }: { item: AbstractPortfolio }) => {
+    const colors = useThemeColors();
+    const styles = useMemo(() => getStyle(colors), [colors]);
+    const types = item._originPortfolio.detail_types?.reverse();
+    const type =
+      types?.find(t => (t in TemplateDict ? t : '')) || 'unsupported';
+    const PortfolioDetail = useMemo(
+      () => TemplateDict[type as keyof typeof TemplateDict],
+      [type],
+    );
+
+    return (
+      <PortfolioDetail
+        name={item._originPortfolio.name}
+        data={item}
+        style={StyleSheet.flatten([styles.portfolioCard])}
+      />
+    );
+  },
+  (prev, next) => prev.item.id === next.item.id,
+);
+
 const _ProtocolList = ({
   hasPortfolios,
   portfolios,
@@ -78,7 +102,9 @@ const _ProtocolList = ({
     new Set<string>(),
   );
 
-  const handleToggle = (title: string) => {
+  const handleToggle = useCallback((title: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
     setExpandedSections(prev => {
       // Using Set here but you can use an array too
       const next = new Set(prev);
@@ -89,7 +115,7 @@ const _ProtocolList = ({
       }
       return next;
     });
-  };
+  }, []);
 
   const renderItem = useCallback(
     ({
@@ -101,19 +127,13 @@ const _ProtocolList = ({
     }) => {
       const isExpanded = expandedSections.has(key!);
 
-      const types = item._originPortfolio.detail_types?.reverse();
-      const type =
-        types?.find(t => (t in TemplateDict ? t : '')) || 'unsupported';
-      const PortfolioDetail = TemplateDict[type as keyof typeof TemplateDict];
-      return (
-        <PortfolioDetail
-          name={item._originPortfolio.name}
-          data={item}
-          style={StyleSheet.flatten([styles.portfolioCard])}
-        />
-      );
+      if (!isExpanded) {
+        return null;
+      }
+
+      return <MemoItem item={item} />;
     },
-    [expandedSections, styles.portfolioCard],
+    [expandedSections],
   );
 
   const renderSectionHeader = useCallback(
@@ -126,7 +146,18 @@ const _ProtocolList = ({
         />
       );
     },
-    [expandedSections],
+    [expandedSections, handleToggle],
+  );
+
+  const renderSeparatorComponent = useCallback(
+    (props: any) => {
+      const isExpanded = expandedSections.has(props?.section?.key!);
+      if (isExpanded) {
+        return null;
+      }
+      return <View style={styles.separator} />;
+    },
+    [styles, expandedSections],
   );
 
   const ListEmptyComponent = useMemo(() => {
@@ -158,11 +189,11 @@ const _ProtocolList = ({
       sections={sectionList}
       renderItem={renderItem}
       renderSectionHeader={renderSectionHeader}
-      // getItemType={item => item.type}
+      keyExtractor={item => item.id}
       ListEmptyComponent={ListEmptyComponent}
       contentContainerStyle={styles.list}
-      // estimatedItemSize={48}
       ListFooterComponent={ListFooterComponent}
+      SectionSeparatorComponent={renderSeparatorComponent}
     />
   );
 };
@@ -182,9 +213,7 @@ const ProjectTitle = ({
   const styles = useMemo(() => getStyle(colors), [colors]);
 
   return (
-    <TouchableOpacity
-      // onPress={onPress}
-      style={styles.projectHeader}>
+    <TouchableOpacity onPress={onPress} style={styles.projectHeader}>
       <View style={styles.projectHeaderName}>
         <AssetAvatar
           logo={data?.logo}
@@ -198,7 +227,7 @@ const ProjectTitle = ({
       </View>
       <View style={styles.projectHeaderUsd}>
         <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        {/* <ArrowDownCC
+        <ArrowDownCC
           style={[
             styles.arrowButton,
             {
@@ -207,7 +236,7 @@ const ProjectTitle = ({
                 : [{ rotate: '0deg' }],
             },
           ]}
-        /> */}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -233,7 +262,6 @@ const getStyle = (colors: AppColorsVariants) =>
     //projectTitle
     projectHeader: {
       marginHorizontal: 20,
-      marginBottom: 12,
       flexDirection: 'row',
       justifyContent: 'space-between',
       height: 68,
@@ -274,5 +302,11 @@ const getStyle = (colors: AppColorsVariants) =>
       width: 20,
       color: colors['neutral-foot'],
       marginLeft: 12,
+    },
+    separator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors['neutral-line'],
+      marginRight: 20,
+      marginLeft: 68,
     },
   });
