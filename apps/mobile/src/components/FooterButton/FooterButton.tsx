@@ -15,7 +15,7 @@ export const FooterButton: React.FC<ButtonProps> = props => {
           bottom: 0,
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors['neutral-line'],
-          backgroundColor: colors['neutral-title-2'],
+          backgroundColor: colors['neutral-bg-1'],
           padding: 20,
         },
         button: {
@@ -24,6 +24,9 @@ export const FooterButton: React.FC<ButtonProps> = props => {
           borderRadius: 8,
         },
         buttonText: {
+          color: colors['neutral-title-2'],
+        },
+        disabledTitle: {
           color: colors['neutral-title-2'],
         },
       }),
@@ -36,6 +39,7 @@ export const FooterButton: React.FC<ButtonProps> = props => {
       <Button
         buttonStyle={styles.button}
         titleStyle={styles.buttonText}
+        disabledTitleStyle={styles.disabledTitle}
         {...props}
       />
     </View>

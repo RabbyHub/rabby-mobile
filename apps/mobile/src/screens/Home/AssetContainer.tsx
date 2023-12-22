@@ -35,6 +35,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
           fontSize: 16,
           fontWeight: '500',
           textTransform: 'none',
+          color: colors['neutral-body'],
         },
         indicator: {
           backgroundColor: colors['blue-default'],
@@ -57,11 +58,20 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         style={styles.tabBarWrap}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
+        activeColor={colors['blue-default']}
+        inactiveColor={colors['neutral-body']}
         labelStyle={styles.label}
         indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
-    [styles],
+    [
+      colors,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarIndicator,
+      styles.tabBarWrap,
+    ],
   );
 
   if (!currentAccount?.address) {
@@ -70,17 +80,18 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
 
   return (
     <Tabs.Container
+      lazy
       containerStyle={styles.container}
       minHeaderHeight={10}
       renderTabBar={renderTabBar}
       renderHeader={renderHeader}>
-      <Tabs.Tab label="Token" name="Token">
+      <Tabs.Tab label="Token" name="token">
         <TokenScreen />
       </Tabs.Tab>
-      <Tabs.Tab label="DeFi" name="Defi">
+      <Tabs.Tab label="DeFi" name="defi">
         <DefiScreen />
       </Tabs.Tab>
-      <Tabs.Tab label="NFT" name="NFT">
+      <Tabs.Tab label="NFT" name="nft">
         <NFTScreen />
       </Tabs.Tab>
     </Tabs.Container>

@@ -29,9 +29,9 @@ import { useStackScreenConfig } from './hooks/navigation';
 import { Text } from './components';
 import {
   AppRootName,
+  getRootSpecConfig,
   NavigationHeadersPresets,
   RootNames,
-  RootSpecConfig,
   ScreenColors,
   ScreenLayouts,
 } from './constant/layout';
@@ -61,7 +61,7 @@ const SettingsStack = createNativeStackNavigator();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
-  animation: 'slide_from_right',
+  animation: 'none',
   headerShown: false,
 } as const;
 
@@ -115,7 +115,7 @@ function AppStatusBar() {
 
   const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
     const specConfig = currentRouteName
-      ? RootSpecConfig[currentRouteName as any as AppRootName]
+      ? getRootSpecConfig(colors)[currentRouteName as any as AppRootName]
       : undefined;
 
     return {
@@ -132,7 +132,6 @@ function AppStatusBar() {
       translucent
       backgroundColor={statusBarBackgroundColor}
       barStyle={statusBarStyle}
-      animated
     />
   );
 }
@@ -145,6 +144,7 @@ export default function AppNavigation({
   const routeNameRef = useRef<string>();
   const screenOptions = useStackScreenConfig();
   const colors = useThemeColors();
+
   // console.log('============== AppNavigation Render =========');
   useEffect(
     () => {
@@ -196,7 +196,10 @@ export default function AppNavigation({
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <RootStack.Navigator
-          screenOptions={RootStackOptions}
+          screenOptions={{
+            ...RootStackOptions,
+            navigationBarColor: colors['neutral-bg-1'],
+          }}
           initialRouteName={'Root'}>
           <RootStack.Screen
             name={RootNames.StackRoot}
@@ -284,7 +287,7 @@ const BottomTabNavigator = () => {
           tabBarActiveTintColor: colors['neutral-bg-1'],
           headerTitleAlign: 'center',
           headerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: colors['neutral-bg-1'],
           },
           headerShadowVisible: true,
           headerTintColor: colors['neutral-bg-1'],
@@ -307,7 +310,7 @@ const BottomTabNavigator = () => {
             height: ScreenLayouts.bottomBarHeight,
             paddingTop: 13,
             paddingBottom: 38,
-            backgroundColor: '#fff',
+            backgroundColor: colors['neutral-bg-1'],
           },
         }}>
         <BottomTab.Screen

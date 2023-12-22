@@ -23,6 +23,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
 type ItemProps = {
   item: NFTItem;
@@ -195,43 +196,42 @@ export const NFTScreen = () => {
 
   const keyExtractor = useCallback((x: { id: any }[]) => x[0].id, []);
 
-  const renderHeaderComponent = useCallback(
-    () => (
+  const renderHeaderComponent = useCallback(() => {
+    if (!list.length) {
+      return null;
+    }
+    return (
       <View style={styles.tipContainer}>
         <View style={styles.tipLine} />
         <Text style={styles.tip}>NFTs are not included in wallet balance</Text>
         <View style={styles.tipLine} />
       </View>
-    ),
-    [styles],
-  );
+    );
+  }, [list.length, styles.tip, styles.tipContainer, styles.tipLine]);
+
+  const ListEmptyComponent = useMemo(() => {
+    return isLoading ? (
+      <NFTListLoader detailWidth={detailWidth} />
+    ) : (
+      <EmptyHolder text="No NFTs" type="card" />
+    );
+  }, [isLoading]);
 
   return (
     <View style={styles.container}>
-      {!isLoading ? (
-        list.length > 0 ? (
-          <Tabs.SectionList
-            ListHeaderComponent={renderHeaderComponent}
-            style={styles.list}
-            contentContainerStyle={styles.listContainer}
-            renderItem={renderItem}
-            renderSectionHeader={renderSectionHeader}
-            renderSectionFooter={() => <View style={styles.footContainer} />}
-            sections={sectionList}
-            keyExtractor={keyExtractor}
-            maxToRenderPerBatch={1}
-            initialNumToRender={5}
-          />
-        ) : (
-          <Tabs.ScrollView>
-            <Text>No NFTs</Text>
-          </Tabs.ScrollView>
-        )
-      ) : (
-        <Tabs.ScrollView style={[styles.loadingWrap]}>
-          <NFTListLoader detailWidth={detailWidth} />
-        </Tabs.ScrollView>
-      )}
+      <Tabs.SectionList
+        ListHeaderComponent={renderHeaderComponent}
+        style={styles.list}
+        contentContainerStyle={styles.listContainer}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
+        renderSectionFooter={() => <View style={styles.footContainer} />}
+        sections={sectionList}
+        keyExtractor={keyExtractor}
+        maxToRenderPerBatch={1}
+        initialNumToRender={5}
+        ListEmptyComponent={ListEmptyComponent}
+      />
     </View>
   );
 };

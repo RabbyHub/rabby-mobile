@@ -27,7 +27,7 @@ export const ImportSuccessScreen = () => {
           width: '100%',
           height: 320,
           flexShrink: 0,
-          backgroundColor: colors['neutral-bg-2'],
+          backgroundColor: colors['blue-default'],
           color: colors['neutral-title-2'],
           display: 'flex',
           justifyContent: 'center',

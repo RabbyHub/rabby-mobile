@@ -6,8 +6,6 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  FlatList,
-  useColorScheme,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -26,6 +24,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { PositionLoader } from './Skeleton';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
 const ITEM_HEIGHT = 68;
 
@@ -43,7 +42,6 @@ const TokenRow = memo(
     style,
     logoSize,
     logoStyle,
-    showHistory,
     onSmallTokenPress,
     onTokenPress,
   }: {
@@ -61,43 +59,6 @@ const TokenRow = memo(
     const mediaStyle = useMemo(
       () => StyleSheet.flatten([styles.tokenRowLogo, logoStyle]),
       [logoStyle, styles.tokenRowLogo],
-    );
-
-    const amountChangeStyle = useMemo(
-      () =>
-        StyleSheet.flatten([
-          styles.tokenRowChange,
-          {
-            color:
-              data.amount <= 0
-                ? // debt
-                  colors['neutral-title-1']
-                : data._amountChange
-                ? data._amountChange < 0
-                  ? colors['red-default']
-                  : colors['green-default']
-                : colors['neutral-title-1'],
-          },
-        ]),
-      [data, colors],
-    );
-
-    const usdChangeStyle = useMemo(
-      () =>
-        StyleSheet.flatten([
-          styles.tokenRowChange,
-          {
-            color:
-              data.amount < 0
-                ? colors['neutral-title-1']
-                : data._usdValueChange
-                ? data._usdValueChange < 0
-                  ? colors['red-default']
-                  : colors['green-default']
-                : colors['neutral-title-1'],
-          },
-        ]),
-      [data, colors],
     );
 
     return (
@@ -144,13 +105,6 @@ const TokenRow = memo(
             </Text>
           ) : null}
           <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
-          {/* {showHistory ? (
-            <Text style={usdChangeStyle}>
-              {data._usdValueChangeStr !== '-'
-                ? `${data._usdValueChangePercent} (${data._usdValueChangeStr})`
-                : '-'}
-            </Text>
-          ) : null} */}
         </View>
       </TouchableOpacity>
     );
@@ -166,7 +120,6 @@ export const TokenWallet = ({
 }: TokenWalletProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
-  const theme = useColorScheme();
 
   const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenSmallToken = React.useCallback(() => {
@@ -231,24 +184,17 @@ export const TokenWallet = ({
   );
 
   const ListEmptyComponent = useMemo(() => {
-    const emptySource =
-      theme === 'light'
-        ? require('@/assets/icons/assets/empty-protocol.png')
-        : require('@/assets/icons/assets/empty-protocol-dark.png');
-
     return isTokensLoading ? (
       <PositionLoader space={8} />
     ) : hasTokens ? null : (
-      <View style={styles.emptyList}>
-        <Image source={emptySource} />
-        <Text style={styles.emptyListText}>No assets</Text>
-      </View>
+      <EmptyHolder text="No tokens" type="protocol" />
     );
-  }, [theme, isTokensLoading, hasTokens, styles]);
+  }, [isTokensLoading, hasTokens]);
 
   return (
     <>
       <Tabs.FlatList
+        ListHeaderComponent={<View style={{ height: 12 }} />}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         data={combinedTokens}
@@ -271,6 +217,9 @@ export const TokenWallet = ({
       <BottomSheetModal
         backdropComponent={renderBackdrop}
         ref={tokenDetailModalRef}
+        backgroundStyle={{
+          backgroundColor: colors['neutral-bg-1'],
+        }}
         snapPoints={['50%']}>
         <BottomSheetView>
           <Text
@@ -304,15 +253,6 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    emptyList: {
-      marginTop: 160,
-      alignItems: 'center',
-    },
-    emptyListText: {
-      fontSize: 15,
-      color: colors['neutral-title-1'],
-      fontWeight: '600',
-    },
     tokenRowTokenWrap: {
       flexShrink: 1,
       flexDirection: 'row',
