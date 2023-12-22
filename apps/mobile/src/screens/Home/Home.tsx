@@ -4,15 +4,8 @@
  *
  * @format
  */
-import React, { useEffect } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useMemo } from 'react';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames, ScreenColors } from '@/constant/layout';
 
@@ -23,8 +16,10 @@ import HeaderArea from './HeaderArea';
 import { useNavigation } from '@react-navigation/native';
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { TestWalletConnectView } from './TestWalletConnectView';
-import { openapi } from '@/core/request';
-import { TEST_ADDR } from '@/constant/testData';
+import { AssetContainer } from './AssetContainer';
+import { Tabs } from 'react-native-collapsible-tab-view';
+
+import { HomeTopArea } from './components/HomeTopArea';
 
 function Section({
   children,
@@ -62,12 +57,12 @@ function AssetsSummary() {
   const navigation = useNavigation();
   const colors = useThemeColors();
 
-  useEffect(() => {
-    (async () => {
-      const addrBalance = await openapi.getTotalBalance(TEST_ADDR);
-      // console.log('addrBalance', addrBalance);
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     const addrBalance = await openapi.getTotalBalance(TEST_ADDR);
+  //     console.log('addrBalance', addrBalance);
+  //   })();
+  // }, []);
 
   return (
     <View
@@ -113,60 +108,54 @@ function AssetsSummary() {
   );
 }
 
-function AssetsScrollList() {
-  const isDarkMode = useGetAppThemeMode() === 'dark';
+// function AssetsScrollList() {
+//   const isDarkMode = useGetAppThemeMode() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+//   const backgroundStyle = {
+//     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+//   };
 
-  return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{
-        ...backgroundStyle,
-        height: '100%',
-      }}>
-      <View
-        style={{
-          backgroundColor: isDarkMode ? Colors.black : Colors.white,
-        }}>
-        {Array(100)
-          .fill(undefined)
-          .map((_, idx) => {
-            return (
-              <Section title="This One Row" key={`psuedo-row-${idx}`}>
-                This One Asset Token Row: {idx + 1}
-              </Section>
-            );
-          })}
-      </View>
-    </ScrollView>
-  );
-}
+//   return (
+//     <ScrollView
+//       contentInsetAdjustmentBehavior="automatic"
+//       style={{
+//         ...backgroundStyle,
+//         height: '100%',
+//       }}>
+//       <View
+//         style={{
+//           backgroundColor: isDarkMode ? Colors.black : Colors.white,
+//         }}>
+//         {Array(100)
+//           .fill(undefined)
+//           .map((_, idx) => {
+//             return (
+//               <Section title="This One Row" key={`psuedo-row-${idx}`}>
+//                 This One Asset Token Row: {idx + 1}
+//               </Section>
+//             );
+//           })}
+//       </View>
+//     </ScrollView>
+//   );
+// }
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HomeScreen.HeaderArea />,
+      headerStyle: {
+        backgroundColor: colors['neutral-bg-1'],
+      },
     });
   }, [navigation]);
 
   return (
-    <RootScreenContainer
-      style={{ backgroundColor: ScreenColors.homeHeaderBlue }}>
-      <View
-        style={{
-          width: '100%',
-          height: 280,
-          flexShrink: 0,
-        }}>
-        <AssetsSummary />
-      </View>
-      <TestWalletConnectView />
-      <AssetsScrollList />
+    <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
+      <AssetContainer renderHeader={() => <HomeTopArea />} />
     </RootScreenContainer>
   );
 }

@@ -1,7 +1,7 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export const ScreenLayouts = {
-  headerAreaHeight: 44,
+  headerAreaHeight: 48,
   bottomBarHeight: 84,
 };
 
@@ -36,6 +36,7 @@ export const RootNames = {
   ImportSuccess: 'ImportSuccess',
   ImportWatchAddress: 'ImportWatchAddress',
   AddressDetail: 'AddressDetail',
+  NftDetail: 'NftDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

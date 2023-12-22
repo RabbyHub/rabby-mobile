@@ -49,7 +49,7 @@ export const ImportWatchAddressScreen = () => {
           height: 320,
           flexShrink: 0,
           backgroundColor: ScreenColors.homeHeaderBlue,
-          color: 'white',
+          color: colors['neutral-title-2'],
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -57,13 +57,13 @@ export const ImportWatchAddressScreen = () => {
         title: {
           fontSize: 24,
           fontWeight: '700',
-          color: 'white',
+          color: colors['neutral-title-2'],
           marginTop: 25,
         },
         description: {
           fontSize: 15,
           fontWeight: '500',
-          color: 'white',
+          color: colors['neutral-title-2'],
           marginTop: 8,
         },
         inputContainer: {

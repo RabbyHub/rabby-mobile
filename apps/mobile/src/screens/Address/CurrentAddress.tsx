@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   SectionList,
 } from 'react-native';
-import { useAccounts } from '@/hooks/account';
+import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { AddressItem } from './components/AddressItem';
 import { AppColorsVariants } from '@/constant/theme';
@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/core';
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
+  const { currentAccount } = useCurrentAccount();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const navigation = useNavigation();
@@ -49,9 +50,11 @@ export default function CurrentAddressScreen(): JSX.Element {
   }, [accounts]);
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer style={{ backgroundColor: colors['neutral-bg-2'] }}>
       <View style={styles.container}>
-        {!!accounts[0] && <AddressItem wallet={accounts[0]} isCurrentAddress />}
+        {!!currentAccount && (
+          <AddressItem wallet={currentAccount} isCurrentAddress />
+        )}
         <View style={styles.switchTitleBox}>
           <Text style={styles.switchText}>Switch address</Text>
           <TouchableOpacity style={styles.bundlesView} onPress={gotoBundles}>

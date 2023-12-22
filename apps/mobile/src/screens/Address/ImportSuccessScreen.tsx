@@ -21,14 +21,14 @@ export const ImportSuccessScreen = () => {
       StyleSheet.create({
         rootContainer: {
           display: 'flex',
-          backgroundColor: ScreenColors.homeHeaderBlue,
+          backgroundColor: colors['blue-default'],
         },
         titleContainer: {
           width: '100%',
           height: 320,
           flexShrink: 0,
-          backgroundColor: ScreenColors.homeHeaderBlue,
-          color: 'white',
+          backgroundColor: colors['neutral-bg-2'],
+          color: colors['neutral-title-2'],
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -36,7 +36,7 @@ export const ImportSuccessScreen = () => {
         title: {
           fontSize: 24,
           fontWeight: '700',
-          color: 'white',
+          color: colors['neutral-title-2'],
           marginTop: 25,
         },
         inputContainer: {

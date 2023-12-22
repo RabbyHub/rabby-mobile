@@ -100,34 +100,32 @@ export function TestWalletConnectView() {
     };
   }, [handleSessionStatusChanged, handleStatusChanged]);
 
-  return (
-    lastAccount && (
-      <View>
-        <Text>aliasName: {lastAccount.aliasName}</Text>
-        <Text>address: {lastAccount.address}</Text>
-        <Text>brandName: {lastAccount.brandName}</Text>
-        <Text>连接状态: {sessionStatus ?? '查询中'}</Text>
-        <Button
-          disabled={sessionStatus !== 'DISCONNECTED'}
-          buttonStyle={{
-            width: 100,
-            height: 40,
-            backgroundColor: 'green',
-          }}
-          title="连接"
-          onPress={handleConnect}
-        />
-        <Button
-          disabled={sessionStatus !== 'CONNECTED'}
-          buttonStyle={{
-            width: 100,
-            height: 40,
-            backgroundColor: 'orange',
-          }}
-          title="文本签名"
-          onPress={handleSignPersonalMessage}
-        />
-      </View>
-    )
-  );
+  return lastAccount ? (
+    <View>
+      <Text>aliasName: {lastAccount.aliasName}</Text>
+      <Text>address: {lastAccount.address}</Text>
+      <Text>brandName: {lastAccount.brandName}</Text>
+      <Text>连接状态: {sessionStatus ?? '查询中'}</Text>
+      <Button
+        disabled={sessionStatus !== 'DISCONNECTED'}
+        buttonStyle={{
+          width: 100,
+          height: 40,
+          backgroundColor: 'green',
+        }}
+        title="连接"
+        onPress={handleConnect}
+      />
+      <Button
+        disabled={sessionStatus !== 'CONNECTED'}
+        buttonStyle={{
+          width: 100,
+          height: 40,
+          backgroundColor: 'orange',
+        }}
+        title="文本签名"
+        onPress={handleSignPersonalMessage}
+      />
+    </View>
+  ) : null;
 }

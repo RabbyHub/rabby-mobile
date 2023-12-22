@@ -7,15 +7,16 @@
 
 import React, { Suspense, useEffect } from 'react';
 import { withExpoSnack } from 'nativewind';
-import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -40,7 +41,9 @@ function App(): JSX.Element {
       <Suspense fallback={null}>
         {/* TODO: measure to check if memory leak occured when refresh on iOS */}
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <MainScreen />
+          <BottomSheetModalProvider>
+            <MainScreen />
+          </BottomSheetModalProvider>
         </GestureHandlerRootView>
         {/* <MainScreen /> */}
       </Suspense>
