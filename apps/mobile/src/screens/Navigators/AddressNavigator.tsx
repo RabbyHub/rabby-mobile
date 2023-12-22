@@ -39,7 +39,6 @@ export function AddressNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
         },
         headerTitle: '',
       }}>
@@ -66,7 +65,6 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
-        // component={ImportSuccessScreen}
         component={ImportNewAddressScreen}
         options={{
           headerTitle: 'Import New Address',

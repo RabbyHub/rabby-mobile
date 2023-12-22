@@ -151,6 +151,7 @@ export const ImportWatchAddressScreen = () => {
           onSubmitEditing={handleSubmit}
           style={styles.input}
           placeholder="Address / ENS"
+          placeholderTextColor={colors['neutral-title-1']}
         />
         {error && (
           <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
