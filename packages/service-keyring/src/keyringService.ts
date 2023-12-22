@@ -383,10 +383,49 @@ export class KeyringService extends RNEventEmitter {
     }
   }
 
+  //
+  // SIGNING METHODS
+  //
+
+  /**
+   * Sign Ethereum Transaction
+   *
+   * Signs an Ethereum transaction object.
+   *
+   * @param {Object} ethTx - The transaction to sign.
+   * @param {string} _fromAddress - The transaction 'from' address.
+   * @param {Object} opts - Signing options.
+   * @returns {Promise<Object>} The signed transactio object.
+   */
+  signTransaction(ethTx: any, _fromAddress: string, opts = {}) {
+    const fromAddress = normalizeAddress(_fromAddress);
+    return this.getKeyringForAccount(fromAddress).then(keyring =>
+      keyring.signTransaction(fromAddress, ethTx, opts),
+    );
+  }
+
+  /**
+   * Sign Message
+   *
+   * Attempts to sign the provided message parameters.
+   *
+   * @param {Object} msgParams - The message parameters to sign.
+   * @param msgParams.from
+   * @param opts
+   * @param msgParams.data
+   * @returns {Promise<Buffer>} The raw signature.
+   */
+  signMessage(msgParams: { from: string; data: any }, opts = {}) {
+    const address = normalizeAddress(msgParams.from);
+    return this.getKeyringForAccount(address).then(keyring => {
+      return keyring.signMessage(address, msgParams.data, opts);
+    });
+  }
+
   /**
    * Sign Personal Message
    *
-   * Attempts to sign the provided message paramaters.
+   * Attempts to sign the provided message parameters.
    * Prefixes the hash before signing per the personal sign expectation.
    *
    * @param msgParams - The message parameters to sign.
@@ -399,6 +438,26 @@ export class KeyringService extends RNEventEmitter {
     const address = normalizeAddress(msgParams.from);
     return this.getKeyringForAccount(address).then(keyring => {
       return keyring.signPersonalMessage(address, msgParams.data, opts);
+    });
+  }
+
+  /**
+   * Sign Typed Data
+   * (EIP712 https://github.com/ethereum/EIPs/pull/712#issuecomment-329988454)
+   *
+   * @param msgParams - The message parameters to sign.
+   * @param msgParams.from
+   * @param opts
+   * @param msgParams.data
+   * @returns The raw signature.
+   */
+  signTypedMessage(
+    msgParams: { from: string; data: any },
+    opts = { version: 'V1' },
+  ) {
+    const address = normalizeAddress(msgParams.from);
+    return this.getKeyringForAccount(address).then(keyring => {
+      return keyring.signTypedData(address, msgParams.data, opts);
     });
   }
 

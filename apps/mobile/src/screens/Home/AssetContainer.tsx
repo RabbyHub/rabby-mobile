@@ -80,17 +80,18 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
 
   return (
     <Tabs.Container
+      lazy
       containerStyle={styles.container}
       minHeaderHeight={10}
       renderTabBar={renderTabBar}
       renderHeader={renderHeader}>
-      <Tabs.Tab label="Token" name="Token">
+      <Tabs.Tab label="Token" name="token">
         <TokenScreen />
       </Tabs.Tab>
-      <Tabs.Tab label="DeFi" name="Defi">
+      <Tabs.Tab label="DeFi" name="defi">
         <DefiScreen />
       </Tabs.Tab>
-      <Tabs.Tab label="NFT" name="NFT">
+      <Tabs.Tab label="NFT" name="nft">
         <NFTScreen />
       </Tabs.Tab>
     </Tabs.Container>

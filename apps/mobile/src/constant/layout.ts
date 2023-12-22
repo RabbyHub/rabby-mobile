@@ -1,4 +1,5 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { AppColorsVariants } from './theme';
 
 export const ScreenLayouts = {
   headerAreaHeight: 48,
@@ -41,16 +42,18 @@ export const RootNames = {
 
 export type AppRootName = keyof typeof RootNames;
 
-export const RootSpecConfig: {
-  [P in AppRootName]?: {
-    statusBarStyle?: 'light-content' | 'dark-content';
-    statusbarBackgroundColor?: string;
+export const getRootSpecConfig = (colors: AppColorsVariants) => {
+  return {
+    Home: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['neutral-bg-1'],
+    },
+  } as {
+    [P in AppRootName]?: {
+      statusBarStyle?: 'light-content' | 'dark-content';
+      statusbarBackgroundColor?: string;
+    };
   };
-} = {
-  Home: {
-    statusbarBackgroundColor: ScreenColors.homeHeaderBlue,
-    statusBarStyle: 'light-content',
-  },
 };
 
 export const NavigationHeadersPresets = {
