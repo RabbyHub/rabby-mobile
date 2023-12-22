@@ -4,6 +4,11 @@ import { AppColorsVariants } from './theme';
 export const ScreenLayouts = {
   headerAreaHeight: 48,
   bottomBarHeight: 84,
+
+  dappWebViewControlHeaderHeight: 44,
+
+  defaultWebViewNavBottomSheetHeight: 52 + 40,
+  dappWebViewNavBottomSheetHeight: 342,
 };
 
 export const ScreenColors = {
@@ -25,6 +30,10 @@ export const RootNames = {
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  /* warning: dev only ------ start */
+  SettingsWebViewTester: 'SettingsWebViewTester',
+  /* warning: dev only ------ end */
+
   StackTransaction: 'StackTransaction',
   History: 'History',
 

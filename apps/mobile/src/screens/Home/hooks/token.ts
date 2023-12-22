@@ -86,7 +86,9 @@ export const useTokens = (
   const chainIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (updateNonce === 0) return;
+    if (updateNonce === 0) {
+      return;
+    }
     loadProcess();
     return () => {
       abortProcess.current?.abort();

@@ -89,7 +89,9 @@ export const useCurve = (
   };
 
   const refresh = async () => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
     setIsLoading(true);
     await fetch(address, true);
   };
@@ -100,7 +102,9 @@ export const useCurve = (
   }, [address]);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
     fetch(address);
   }, [address, nonce]);
 

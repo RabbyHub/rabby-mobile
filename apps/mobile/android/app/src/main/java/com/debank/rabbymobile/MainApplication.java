@@ -12,9 +12,6 @@ import java.util.List;
 
 import com.facebook.react.views.text.ReactFontManager;
 
-import org.devio.rn.splashscreen.SplashScreenReactPackage;
-import com.facebook.react.shell.MainReactPackage;
-
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {

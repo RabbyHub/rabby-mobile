@@ -33,7 +33,9 @@ export default function useCurrentBalance(
     try {
       const { total_usd_value: totalUsdValue, chain_list: chainList } =
         await apiBalance.getAddressBalance(address, force);
-      if (isCanceled) return;
+      if (isCanceled) {
+        return;
+      }
       setBalance(totalUsdValue);
       setSuccess(true);
       setChainBalances(chainList.filter(i => i.usd_value > 0).map(formatChain));
@@ -49,7 +51,9 @@ export default function useCurrentBalance(
     try {
       const { total_usd_value: totalUsdValue, chain_list: chainList } =
         await apiBalance.getAddressBalance(address, force);
-      if (isCanceled) return;
+      if (isCanceled) {
+        return;
+      }
       setTestnetBalance(totalUsdValue.toString());
       setTestnetSuccess(true);
       setTestnetChainBalances(
@@ -64,7 +68,9 @@ export default function useCurrentBalance(
   };
 
   const getCurrentBalance = async (force = false) => {
-    if (!account || noNeedBalance) return;
+    if (!account || noNeedBalance) {
+      return;
+    }
     setBalanceLoading(true);
     const cacheData = await apiBalance.getAddressCacheBalance(account);
     if (cacheData) {

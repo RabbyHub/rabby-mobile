@@ -35,3 +35,6 @@ export const RcThemeMode = makeThemeIconFromCC(RcThemeModeCC, 'neutral-body');
 
 import { default as RcWhitelistCC } from './whitelist-cc.svg';
 export const RcWhitelist = makeThemeIconFromCC(RcWhitelistCC, 'neutral-body');
+
+import { default as RcEarthCC } from './earth-cc.svg';
+export const RcEarth = makeThemeIconFromCC(RcEarthCC, 'neutral-body');

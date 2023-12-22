@@ -86,7 +86,9 @@ export const usePortfolios = (
   }, [timeAt, isLoading]);
 
   const loadProcess = async () => {
-    if (!userAddr) return;
+    if (!userAddr) {
+      return;
+    }
     projectDict.current = {};
 
     const currentAbort = new AbortController();

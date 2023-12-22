@@ -18,7 +18,7 @@ const AssetsView = [
   },
 ] as const;
 
-export type AssetsViewType = typeof AssetsView[number]['value'];
+export type AssetsViewType = (typeof AssetsView)[number]['value'];
 
 type SwichButtonProps = {
   mode: AssetsViewType;
@@ -30,7 +30,7 @@ const SwichButton = ({ mode, onModeChange }: SwichButtonProps) => {
   const styles = getStyle(colors);
 
   const handleItemPress = useCallback(
-    (x: typeof AssetsView[number]) => {
+    (x: (typeof AssetsView)[number]) => {
       if (x.value !== mode) {
         onModeChange?.(x.value);
       }
@@ -43,9 +43,16 @@ const SwichButton = ({ mode, onModeChange }: SwichButtonProps) => {
       {AssetsView.map(x => (
         <CustomTouchableOpacity
           key={x.value}
-          style={StyleSheet.flatten([styles.item, x.value === mode && styles.selected])}
+          style={StyleSheet.flatten([
+            styles.item,
+            x.value === mode && styles.selected,
+          ])}
           onPress={() => handleItemPress(x)}>
-          {<x.icon color={x.value === mode ? colors.white : colors.lightSideInfo} />}
+          {
+            <x.icon
+              color={x.value === mode ? colors.white : colors.lightSideInfo}
+            />
+          }
         </CustomTouchableOpacity>
       ))}
     </View>

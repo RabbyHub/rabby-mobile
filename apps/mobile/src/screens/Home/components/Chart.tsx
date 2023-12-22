@@ -73,18 +73,33 @@ const _Chart = ({
 
   return (
     <GestureHandlerRootView style={style}>
-      <LineChart.Provider data={data} onCurrentIndexChange={onCurrentIndexChange} yRange={yRange}>
-        <LineChart width={width || chartWidth} height={height} style={chartStyle}>
+      <LineChart.Provider
+        data={data}
+        onCurrentIndexChange={onCurrentIndexChange}
+        yRange={yRange}>
+        <LineChart
+          width={width || chartWidth}
+          height={height}
+          style={chartStyle}>
           <LineChart.Path
             width={gradientStrokWidth}
             color={
-              hidePath ? 'transparent' : LineGradient ? 'url(#lineGradient)' : isUp ? ChartColor.green : ChartColor.red
+              hidePath
+                ? 'transparent'
+                : LineGradient
+                ? 'url(#lineGradient)'
+                : isUp
+                ? ChartColor.green
+                : ChartColor.red
             }
             LineGradient={LineGradient}>
             {hideShadowGradient ? null : <LineChart.ShadowGradient />}
           </LineChart.Path>
           {showCursor ? (
-            <LineChart.CursorLine selectedIndex={selectedIndex.value} color={cursorColor || colors.pureWhite} />
+            <LineChart.CursorLine
+              selectedIndex={selectedIndex.value}
+              color={cursorColor || colors.pureWhite}
+            />
           ) : null}
           {showCursor ? (
             <LineChart.CursorCrosshair

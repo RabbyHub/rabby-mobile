@@ -7,4 +7,7 @@ export { IconDefaultTokenLight, IconDefaultTokenDark };
 
 export { default as IconDefaultNft } from './nft.svg';
 
-export const IconDefaultToken = makeThemeIcon(IconDefaultTokenLight, IconDefaultTokenDark);
+export const IconDefaultToken = makeThemeIcon(
+  IconDefaultTokenLight,
+  IconDefaultTokenDark,
+);

@@ -30,7 +30,9 @@ export const getAddressCacheBalance = async (
   address: string | undefined,
   isTestnet = false,
 ) => {
-  if (!address) return null;
+  if (!address) {
+    return null;
+  }
   if (isTestnet) {
     return await preferenceService.getTestnetAddressBalance(address);
   }

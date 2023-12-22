@@ -4,19 +4,17 @@
  *
  * @format
  */
-
 import React, { Suspense, useEffect } from 'react';
 import { withExpoSnack } from 'nativewind';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -28,10 +26,10 @@ function MainScreen() {
   }, []);
 
   return (
-    <>
+    <BottomSheetModalProvider>
       {couldRender && <AppNavigation colorScheme={binaryTheme} />}
       <JotaiNexus />
-    </>
+    </BottomSheetModalProvider>
   );
 }
 

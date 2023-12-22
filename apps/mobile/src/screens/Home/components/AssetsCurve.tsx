@@ -48,12 +48,18 @@ const _AssetsCurve = ({
   const styles = useMemo(() => getStyle(colors), [colors]);
 
   console.log('Render AssetsCurve', refreshing);
-  const totalValue = useMemo(() => numFormat(grossNetWorth, 0, '$'), [grossNetWorth]);
+  const totalValue = useMemo(
+    () => numFormat(grossNetWorth, 0, '$'),
+    [grossNetWorth],
+  );
 
   const { data, isLoading } = useQueryUsdCurve(userId);
   const sampledDataList = useMemo(() => data?.list, [data]);
   const yRange = useMemo(
-    () => (data?.list?.length ? { min: data?.minValue * 0.98, max: data?.maxValue * 1.02 } : undefined),
+    () =>
+      data?.list?.length
+        ? { min: data?.minValue * 0.98, max: data?.maxValue * 1.02 }
+        : undefined,
     [data],
   );
 
@@ -120,24 +126,35 @@ export const FixedHeader = memo(() => {
 
 const linearColors = ['#25272D', '#3E414D'];
 
-export const HeaderGradient = memo(({ children, style }: { children?: ReactNode; style?: ViewStyle }) => {
-  const height = useHeaderHeight();
+export const HeaderGradient = memo(
+  ({ children, style }: { children?: ReactNode; style?: ViewStyle }) => {
+    const height = useHeaderHeight();
 
-  return (
-    <View style={StyleSheet.flatten([{ overflow: 'visible' }, style])}>
-      <LinearGradient
-        locations={[0, 1]}
-        colors={linearColors}
-        useAngle={true}
-        angle={180}
-        style={StyleSheet.flatten([
-          { height: Layout.window.height, position: 'absolute', bottom: 0, zIndex: -1, width: Layout.window.width },
-        ])}
-      />
-      <View style={StyleSheet.flatten([{ height: height + chartHeight + 124 }])}>{children}</View>
-    </View>
-  );
-});
+    return (
+      <View style={StyleSheet.flatten([{ overflow: 'visible' }, style])}>
+        <LinearGradient
+          locations={[0, 1]}
+          colors={linearColors}
+          useAngle={true}
+          angle={180}
+          style={StyleSheet.flatten([
+            {
+              height: Layout.window.height,
+              position: 'absolute',
+              bottom: 0,
+              zIndex: -1,
+              width: Layout.window.width,
+            },
+          ])}
+        />
+        <View
+          style={StyleSheet.flatten([{ height: height + chartHeight + 124 }])}>
+          {children}
+        </View>
+      </View>
+    );
+  },
+);
 
 type ChartHeaderProps = {
   data?: {
@@ -155,14 +172,27 @@ type ChartHeaderProps = {
   style?: ViewStyle;
 };
 
-const ChartHeader = ({ data, selectedIndex, style, totalValue, isFinishOne, isDataLoading }: ChartHeaderProps) => {
+const ChartHeader = ({
+  data,
+  selectedIndex,
+  style,
+  totalValue,
+  isFinishOne,
+  isDataLoading,
+}: ChartHeaderProps) => {
   const colors = useThemeColors();
   const styles = getStyle(colors);
-  const containerStyle = useMemo(() => StyleSheet.flatten([styles.chartHeader, style]), [style, styles.chartHeader]);
+  const containerStyle = useMemo(
+    () => StyleSheet.flatten([styles.chartHeader, style]),
+    [style, styles.chartHeader],
+  );
 
   const title = useDerivedValue(() => {
     return data?.list?.[selectedIndex.value]?.timestamp
-      ? formatDate(data?.list?.[selectedIndex.value]!.timestamp, 'MMM DD, HH:mm')
+      ? formatDate(
+          data?.list?.[selectedIndex.value]!.timestamp,
+          'MMM DD, HH:mm',
+        )
       : 'Net Worth';
   });
 
@@ -189,7 +219,8 @@ const ChartHeader = ({ data, selectedIndex, style, totalValue, isFinishOne, isDa
     return {
       color: data?.zeroAssets
         ? colors.lightBlue
-        : data?.list?.[selectedIndex.value]?.isUp || (!data?.list?.[selectedIndex.value] && data?.isUp)
+        : data?.list?.[selectedIndex.value]?.isUp ||
+          (!data?.list?.[selectedIndex.value] && data?.isUp)
         ? ChartColor.green
         : ChartColor.red,
     };
@@ -218,9 +249,15 @@ const ChartHeader = ({ data, selectedIndex, style, totalValue, isFinishOne, isDa
 
   return (
     <View style={containerStyle}>
-      <AnimateableText animatedProps={titleAnimatedProps} style={styles.title} />
+      <AnimateableText
+        animatedProps={titleAnimatedProps}
+        style={styles.title}
+      />
       {isFinishOne ? (
-        <AnimateableText style={styles.balance} animatedProps={netWorthTextAnimatedProps} />
+        <AnimateableText
+          style={styles.balance}
+          animatedProps={netWorthTextAnimatedProps}
+        />
       ) : (
         <NetWorthLoader />
       )}
@@ -228,8 +265,14 @@ const ChartHeader = ({ data, selectedIndex, style, totalValue, isFinishOne, isDa
         <ChangeLoader />
       ) : (
         <View style={styles.changeWrap}>
-          <AnimateableText style={[styles.changes, earningStyle]} animatedProps={changePecentageTextAnimatedProps} />
-          <AnimateableText style={[styles.pecentage, earningStyle]} animatedProps={netChangeTextAnimatedProps} />
+          <AnimateableText
+            style={[styles.changes, earningStyle]}
+            animatedProps={changePecentageTextAnimatedProps}
+          />
+          <AnimateableText
+            style={[styles.pecentage, earningStyle]}
+            animatedProps={netChangeTextAnimatedProps}
+          />
         </View>
       )}
     </View>

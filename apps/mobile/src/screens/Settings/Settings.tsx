@@ -1,7 +1,5 @@
 import React from 'react';
-
 import { View, Text } from 'react-native';
-
 import clsx from 'clsx';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -18,12 +16,15 @@ import {
   RcSupportChains,
   RcThemeMode,
   RcWhitelist,
+  RcEarth,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import { type SettingConfBlock, Block } from './Block';
 import { useAppTheme } from '@/hooks/theme';
 import { styled } from 'styled-components/native';
+import { useSheetModalsOnSettingScreen } from './sheetModals/hooks';
+import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -31,10 +32,12 @@ const Container = styled(NormalScreenContainer)`
   padding-bottom: 27px;
 `;
 
-function SettingsStack(): JSX.Element {
+function SettingsScreen(): JSX.Element {
   const { appTheme, toggleThemeMode } = useAppTheme();
 
-  const SettingsBlocks = React.useMemo<Record<string, SettingConfBlock>>(() => {
+  const { toggleShowSheetModal } = useSheetModalsOnSettingScreen();
+
+  const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
@@ -107,8 +110,23 @@ function SettingsStack(): JSX.Element {
           },
         ],
       },
+      ...(__DEV__ && {
+        devlab: {
+          label: 'Dev Lab',
+          icon: RcEarth,
+          items: [
+            {
+              label: 'WebView Test',
+              icon: RcEarth,
+              onPress: () => {
+                toggleShowSheetModal('webviewTesterRef', true);
+              },
+            },
+          ],
+        },
+      }),
     };
-  }, [appTheme, toggleThemeMode]);
+  })();
 
   return (
     <Container
@@ -143,8 +161,10 @@ function SettingsStack(): JSX.Element {
       <View className="items-center">
         <RcFooterLogo />
       </View>
+
+      <SheetWebViewTester />
     </Container>
   );
 }
 
-export default SettingsStack;
+export default SettingsScreen;

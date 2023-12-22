@@ -38,7 +38,9 @@ export function findChainByEnum(
     : null;
   const toFallbackChain = toFallbackEnum ? CHAINS[toFallbackEnum] : null;
 
-  if (!chainEnum) return toFallbackChain;
+  if (!chainEnum) {
+    return toFallbackChain;
+  }
 
   return CHAINS[chainEnum as CHAINS_ENUM] || toFallbackChain;
 }
@@ -85,16 +87,24 @@ export function findChainByServerID(chainId: Chain['serverId']): Chain | null {
 }
 
 export function isTestnet(chainServerId?: string) {
-  if (!chainServerId) return false;
+  if (!chainServerId) {
+    return false;
+  }
   const chain = findChainByServerID(chainServerId);
-  if (!chain) return false;
+  if (!chain) {
+    return false;
+  }
   return !!chain.isTestnet;
 }
 
 export function isTestnetChainId(chainId?: string | number) {
-  if (!chainId) return false;
+  if (!chainId) {
+    return false;
+  }
   const chain = findChainByID(Number(chainId));
-  if (!chain) return false;
+  if (!chain) {
+    return false;
+  }
   return !!chain.isTestnet;
 }
 

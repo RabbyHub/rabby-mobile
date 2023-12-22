@@ -72,7 +72,10 @@ const formChartData = (data: AssetsCurve): ChartData => {
         changePecentage:
           startData.value === 0
             ? `+${x[1] === 0 ? '0' : '100.00'}%`
-            : `${change > 0 ? '+' : ''}${((change * 100) / startData.value).toFixed(2)}%`,
+            : `${change > 0 ? '+' : ''}${(
+                (change * 100) /
+                startData.value
+              ).toFixed(2)}%`,
         timestamp: x[0] * 1000,
       };
     }) || [];
@@ -89,7 +92,10 @@ const formChartData = (data: AssetsCurve): ChartData => {
     netChange: `(${numFormat(Math.abs(assetsChange), 0, '$')})`,
     netPercentage:
       startData.value !== 0
-        ? `${assetsChange >= 0 ? '+' : ''}${((assetsChange * 100) / startData.value).toFixed(2)}%`
+        ? `${assetsChange >= 0 ? '+' : ''}${(
+            (assetsChange * 100) /
+            startData.value
+          ).toFixed(2)}%`
         : `+${endNetWorth === 0 ? '0' : '100.00'}%`,
     isUp: assetsChange > 0,
     zeroAssets,
@@ -99,12 +105,17 @@ const formChartData = (data: AssetsCurve): ChartData => {
 };
 
 const formatGas = (gasResponse: GasResponse) => {
-  const gas = Number((gasResponse.gas_price_dict?.fast?.price / 1e9).toFixed(4));
-  const isUp = gasResponse?.price_change && gasResponse?.price_change?.change_percent >= 0;
+  const gas = Number(
+    (gasResponse.gas_price_dict?.fast?.price / 1e9).toFixed(4),
+  );
+  const isUp =
+    gasResponse?.price_change && gasResponse?.price_change?.change_percent >= 0;
   const noPrice = !gasResponse?.price_change?.last_price;
 
   return {
-    price: gasResponse?.price_change ? numFormat(gasResponse?.price_change?.last_price, 2, '$') : '-',
+    price: gasResponse?.price_change
+      ? numFormat(gasResponse?.price_change?.last_price, 2, '$')
+      : '-',
     _change: gasResponse?.price_change?.change_percent
       ? numFormat(gasResponse?.price_change?.change_percent, 2, '', true)
       : '-',
@@ -119,7 +130,8 @@ export const useQueryUsdCurve = (userId: string) => {
 
   return useQuery(
     [url, userId],
-    ({ signal }) => request.get<AssetsCurve>(url, { params: { user_addr: userId }, signal }),
+    ({ signal }) =>
+      request.get<AssetsCurve>(url, { params: { user_addr: userId }, signal }),
     {
       select: formChartData,
     },
