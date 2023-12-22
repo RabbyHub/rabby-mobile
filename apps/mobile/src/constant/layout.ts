@@ -10,7 +10,7 @@ export const ScreenColors = {
 };
 
 export const RootNames = {
-  Login: 'Login',
+  StackLogin: 'StackLogin',
   NotFound: 'NotFound',
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',

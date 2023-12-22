@@ -10,7 +10,6 @@ import type {
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import * as ethUtil from 'ethereumjs-util';
-import { EventEmitter } from 'events';
 import log from 'loglevel';
 
 import type { KeyringClassType, KeyringInstance } from './types';
@@ -18,6 +17,7 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
+import { RNEventEmitter } from '@rabby-wallet/base-utils';
 
 type KeyringState = {
   booted?: string;
@@ -47,7 +47,7 @@ export type KeyringServiceOptions = {
   onCreateKeyring: OnCreateKeyring;
 };
 
-export class KeyringService extends EventEmitter {
+export class KeyringService extends RNEventEmitter {
   //
   // PUBLIC METHODS
   //

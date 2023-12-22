@@ -13,7 +13,6 @@ import SplashScreen from 'react-native-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
-// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
