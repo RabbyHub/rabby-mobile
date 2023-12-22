@@ -15,16 +15,47 @@ export type KeyringAccountWithAlias = KeyringAccount & {
   balance?: number;
 };
 
-const getAliasName = (address: string) => {
-  const contact = contactService.getContactByAddress(address);
-  return contact?.name;
-};
-
 const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
+
+accountsAtom.onMount = setAtom => {
+  fetchAllAccounts().then(accounts => {
+    setAtom(accounts || []);
+  });
+};
 
 const currentAccountAtom = atom<null | Account>(null);
 
 const pinAddressesAtom = atom<IPinAddress[]>([]);
+
+async function fetchAllAccounts() {
+  let nextAccounts: KeyringAccountWithAlias[] = [];
+  try {
+    nextAccounts = await keyringService.getAllVisibleAccounts().then(list => {
+      return list.map(account => {
+        const balance = preferenceService.getAddressBalance(account.address);
+        return {
+          ...account,
+          aliasName: '',
+          balance: balance?.total_usd_value || 0,
+        };
+      });
+    });
+
+    await Promise.allSettled(
+      nextAccounts.map(async (account, idx) => {
+        const aliasName = contactService.getAliasByAddress(account.address);
+        nextAccounts[idx] = {
+          ...account,
+          aliasName: aliasName?.alias || '',
+        };
+      }),
+    );
+  } catch (err) {
+    // Sentry.captureException(err);
+  } finally {
+    return nextAccounts;
+  }
+}
 
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const [accounts, setAccounts] = useAtom(accountsAtom);
@@ -39,34 +70,9 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 
     isFetchingRef.current = true;
 
-    let nextAccounts: KeyringAccountWithAlias[] = [];
-    try {
-      nextAccounts = await keyringService.getAllVisibleAccounts().then(list => {
-        return list.map(account => {
-          const balance = preferenceService.getAddressBalance(account.address);
-          return {
-            ...account,
-            aliasName: '',
-            balance: balance?.total_usd_value || 0,
-          };
-        });
-      });
-
-      await Promise.allSettled(
-        nextAccounts.map(async (account, idx) => {
-          const aliasName = contactService.getAliasByAddress(account.address);
-          nextAccounts[idx] = {
-            ...account,
-            aliasName: aliasName?.alias || '',
-          };
-        }),
-      );
-    } catch (err) {
-      // Sentry.captureException(err);
-    } finally {
-      setAccounts(nextAccounts);
-      isFetchingRef.current = false;
-    }
+    const nextAccounts = await fetchAllAccounts();
+    setAccounts(nextAccounts);
+    isFetchingRef.current = false;
   }, [setAccounts]);
 
   useEffect(() => {
@@ -85,19 +91,19 @@ export function useCurrentAccount() {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
   const fetchCurrentAccount = useCallback(async () => {
-    const account = preferenceService.getCurrentAccount();
-    let aliasName = '';
-    if (account?.address) {
-      aliasName = getAliasName(account.address) || '';
-    }
-    setCurrentAccount(pre => {
-      return {
-        ...pre,
-        ...account,
-        aliasName,
-      };
-    });
-  }, [setCurrentAccount]);
+    const account = await preferenceService.getCurrentAccount();
+    const index = accounts.findIndex(
+      e => e.address === account?.address && e.brandName === account?.brandName,
+    );
+
+    setCurrentAccount(
+      index >= 0
+        ? (accounts[index] as any)
+        : accounts.length >= 0
+        ? (accounts[0] as any)
+        : null,
+    );
+  }, [accounts, setCurrentAccount]);
 
   const switchAccount = useCallback(
     async (account: Account) => {
@@ -106,18 +112,6 @@ export function useCurrentAccount() {
     },
     [fetchCurrentAccount],
   );
-
-  useEffect(() => {
-    if (
-      accounts?.find(
-        e =>
-          e.address === currentAccount?.address &&
-          e.brandName === currentAccount.brandName,
-      )
-    ) {
-      setCurrentAccount(null);
-    }
-  }, [accounts, currentAccount, setCurrentAccount]);
 
   useEffect(() => {
     fetchCurrentAccount();

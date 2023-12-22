@@ -46,6 +46,7 @@ export class DappService {
     dapps.forEach(item => {
       this.store.dapps[item.info.id] = item;
     });
+    this.store.dapps = { ...this.store.dapps };
   }
 
   getDapp(id: string) {
@@ -58,10 +59,12 @@ export class DappService {
 
   removeDapp(id: string) {
     delete this.store.dapps[id];
+    this.store.dapps = { ...this.store.dapps };
   }
 
   updateDapp(dapp: DappInfo) {
     this.store.dapps[dapp.info.id] = dapp;
+    this.store.dapps = { ...this.store.dapps };
   }
 
   updateFavorite(origin: string, isFavorite: boolean) {
@@ -69,17 +72,22 @@ export class DappService {
       ...this.store.dapps[origin],
       isFavorite,
     };
+
+    this.store.dapps = { ...this.store.dapps };
   }
 
   updateConnected(origin: string, isConnected: boolean) {
     this.store.dapps[origin].isConnected = isConnected;
+    this.store.dapps = { ...this.store.dapps };
   }
 
   disconnect(origin: string) {
     this.store.dapps[origin].isConnected = false;
+    this.store.dapps = { ...this.store.dapps };
   }
 
   setChainId(origin: string, chainId: string) {
     this.store.dapps[origin].chainId = chainId;
+    this.store.dapps = { ...this.store.dapps };
   }
 }

@@ -51,6 +51,7 @@ import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 import { DappsScreen } from './screens/Dapps/Dapps';
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
+import { NFTDetailScreen } from './screens/NftDetail';
 
 const RootStack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -241,6 +242,23 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.StackSearchDapps}
             component={SearchDappsNavigator}
+          />
+          <RootStack.Screen
+            name={RootNames.NftDetail}
+            component={NFTDetailScreen}
+            options={{
+              ...screenOptions,
+              title: 'NFT Detail',
+              headerShadowVisible: false,
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: '#fff',
+              },
+              headerTitleStyle: {
+                color: colors['neutral-title-1'],
+                fontWeight: 'normal',
+              },
+            }}
           />
         </RootStack.Navigator>
       </NavigationContainer>

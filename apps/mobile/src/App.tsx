@@ -11,7 +11,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 // import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
@@ -40,7 +39,9 @@ function App(): JSX.Element {
       <Suspense fallback={null}>
         {/* TODO: measure to check if memory leak occured when refresh on iOS */}
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <MainScreen />
+          <BottomSheetModalProvider>
+            <MainScreen />
+          </BottomSheetModalProvider>
         </GestureHandlerRootView>
         {/* <MainScreen /> */}
       </Suspense>

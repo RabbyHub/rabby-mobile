@@ -26,7 +26,7 @@ export const EmptyDapps = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Favorite</Text>
+      <Text style={styles.title}>Favorites</Text>
       <View style={styles.emptyList}>
         {[1, 0.8, 0.6, 0.4].map(opacity => {
           return (
@@ -45,7 +45,7 @@ export const EmptyDapps = () => {
         <Button
           buttonStyle={styles.buttonStyle}
           titleStyle={styles.buttonTitleStyle}
-          title="Start with Favorite Popular Dapp"
+          title="Explore Popular Dapps"
           onPress={() => {
             navigate(RootNames.StackFavoritePopularDapps);
           }}
@@ -62,6 +62,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       fontSize: 14,
       lineHeight: 17,
       marginVertical: 8,
+      color: colors['neutral-foot'],
     },
 
     emptyList: {

@@ -3481,6 +3481,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native/normalize-color@npm:*":
+  version: 2.1.0
+  resolution: "@react-native/normalize-color@npm:2.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-native%2Fnormalize-color%2F-%2Fnormalize-color-2.1.0.tgz"
+  checksum: 8ccbd40b3c7629f1dc97b3e9aadd95fd3507fcf2e37535a6299a70436ab891c34cbdc4240b07380553d6e85dd909e23d5773b5be1da2906b026312e0b0768838
+  languageName: node
+  linkType: hard
+
 "@react-native/normalize-colors@npm:<0.73.0, @react-native/normalize-colors@npm:^0.72.0":
   version: 0.72.0
   resolution: "@react-native/normalize-colors@npm:0.72.0"
@@ -7389,6 +7396,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deprecated-react-native-prop-types@npm:^2.2.0":
+  version: 2.3.0
+  resolution: "deprecated-react-native-prop-types@npm:2.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdeprecated-react-native-prop-types%2F-%2Fdeprecated-react-native-prop-types-2.3.0.tgz"
+  dependencies:
+    "@react-native/normalize-color": "*"
+    invariant: "*"
+    prop-types: "*"
+  checksum: d14f4be1dfe780a7fa9197a31b4a9a2b409c8cf1bf677713fd92d06733dee1043578662d1a8858541cf06164ae91d295db6e595f29bf13e808d9fb37bc58c90b
+  languageName: node
+  linkType: hard
+
 "deprecated-react-native-prop-types@npm:^4.2.3":
   version: 4.2.3
   resolution: "deprecated-react-native-prop-types@npm:4.2.3"
@@ -7397,6 +7415,13 @@ __metadata:
     invariant: ^2.2.4
     prop-types: ^15.8.1
   checksum: 294752f9f15733b66473022d8258a14aac850e4a3db7e802ef189a09871236f5a110f8fe588468ae1df92f24641ae29de05943074dc54da02a5e4262935f913d
+  languageName: node
+  linkType: hard
+
+"dequal@npm:2.0.3":
+  version: 2.0.3
+  resolution: "dequal@npm:2.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdequal%2F-%2Fdequal-2.0.3.tgz"
+  checksum: 8679b850e1a3d0ebbc46ee780d5df7b478c23f335887464023a631d1b9af051ad4a6595a44220f9ff8ff95a8ddccf019b5ad778a976fd7bbf77383d36f412f90
   languageName: node
   linkType: hard
 
@@ -7738,6 +7763,13 @@ __metadata:
     minimalistic-assert: ^1.0.1
     minimalistic-crypto-utils: ^1.0.1
   checksum: d56d21fd04e97869f7ffcc92e18903b9f67f2d4637a23c860492fbbff5a3155fd9ca0184ce0c865dd6eb2487d234ce9551335c021c376cd2d3b7cb749c7d10f4
+  languageName: node
+  linkType: hard
+
+"eme-encryption-scheme-polyfill@npm:^2.0.1":
+  version: 2.1.1
+  resolution: "eme-encryption-scheme-polyfill@npm:2.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Feme-encryption-scheme-polyfill%2F-%2Feme-encryption-scheme-polyfill-2.1.1.tgz"
+  checksum: 5d67fac0f95cc7e2066c68a15d8ecfb508d0c3774d3b8a37013da1a3a6a25ce86d6f8e185d885aa802c1fca48a3348f13dd310e54966fb96faba833a1e62000b
   languageName: node
   linkType: hard
 
@@ -8568,6 +8600,13 @@ __metadata:
   version: 5.0.1
   resolution: "event-target-shim@npm:5.0.1"
   checksum: 1ffe3bb22a6d51bdeb6bf6f7cf97d2ff4a74b017ad12284cc9e6a279e727dc30a5de6bb613e5596ff4dc3e517841339ad09a7eec44266eccb1aa201a30448166
+  languageName: node
+  linkType: hard
+
+"eventemitter3@npm:^4.0.4":
+  version: 4.0.7
+  resolution: "eventemitter3@npm:4.0.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Feventemitter3%2F-%2Feventemitter3-4.0.7.tgz"
+  checksum: 1875311c42fcfe9c707b2712c32664a245629b42bb0a5a84439762dd0fd637fc54d078155ea83c2af9e0323c9ac13687e03cfba79b03af9f40c89b4960099374
   languageName: node
   linkType: hard
 
@@ -9787,6 +9826,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immer@npm:^10.0.3":
+  version: 10.0.3
+  resolution: "immer@npm:10.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmer%2F-%2Fimmer-10.0.3.tgz"
+  checksum: 76acabe6f40e752028313762ba477a5d901e57b669f3b8fb406b87b9bb9b14e663a6fbbf5a6d1ab323737dd38f4b2494a4e28002045b88948da8dbf482309f28
+  languageName: node
+  linkType: hard
+
 "import-fresh@npm:^2.0.0":
   version: 2.0.0
   resolution: "import-fresh@npm:2.0.0"
@@ -9893,6 +9939,15 @@ __metadata:
   version: 0.12.2
   resolution: "intersection-observer@npm:0.12.2"
   checksum: d1fa9ebbb1e0baafe88ad95545bbb93f92bdcb8789912a2bd11b2463ab177ef185052c9c79c26187833d633f404acb077d4b1249353c5f6e2ca5cd64f50e216b
+  languageName: node
+  linkType: hard
+
+"invariant@npm:*":
+  version: 2.2.4
+  resolution: "invariant@npm:2.2.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Finvariant%2F-%2Finvariant-2.2.4.tgz"
+  dependencies:
+    loose-envify: ^1.0.0
+  checksum: cc3182d793aad82a8d1f0af697b462939cb46066ec48bbf1707c150ad5fad6406137e91a262022c269702e01621f35ef60269f6c0d7fd178487959809acdfb14
   languageName: node
   linkType: hard
 
@@ -11465,6 +11520,13 @@ __metadata:
     node-gyp-build: ^4.2.0
     readable-stream: ^3.6.0
   checksum: 2bf27b97b2f24225b1b44027de62be547f5c7326d87d249605665abd0c8c599d774671c35504c62c9b922cae02758504c6f76a73a84234d23af8a2211afaaa11
+  languageName: node
+  linkType: hard
+
+"keymirror@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "keymirror@npm:0.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fkeymirror%2F-%2Fkeymirror-0.1.1.tgz"
+  checksum: be8f0bc5ff7d561d729f935ef55b4dbbea7b56a4714f044a2212088730f4d52f73935c38c5a9604e0f1157611725ee493cb7d08d1f3eb34151c0aa999236206a
   languageName: node
   linkType: hard
 
@@ -13331,6 +13393,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-queue@npm:6.6.2":
+  version: 6.6.2
+  resolution: "p-queue@npm:6.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-queue%2F-%2Fp-queue-6.6.2.tgz"
+  dependencies:
+    eventemitter3: ^4.0.4
+    p-timeout: ^3.2.0
+  checksum: 832642fcc4ab6477b43e6d7c30209ab10952969ed211c6d6f2931be8a4f9935e3578c72e8cce053dc34f2eb6941a408a2c516a54904e989851a1a209cf19761c
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "p-timeout@npm:3.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-timeout%2F-%2Fp-timeout-3.2.0.tgz"
+  dependencies:
+    p-finally: ^1.0.0
+  checksum: 3dd0eaa048780a6f23e5855df3dd45c7beacff1f820476c1d0d1bcd6648e3298752ba2c877aa1c92f6453c7dd23faaf13d9f5149fc14c0598a142e2c5e8d649c
+  languageName: node
+  linkType: hard
+
 "p-try@npm:^2.0.0":
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
@@ -13982,6 +14063,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prop-types@npm:*, prop-types@npm:^15.6.1":
+  version: 15.8.1
+  resolution: "prop-types@npm:15.8.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fprop-types%2F-%2Fprop-types-15.8.1.tgz"
+  dependencies:
+    loose-envify: ^1.4.0
+    object-assign: ^4.1.1
+    react-is: ^16.13.1
+  checksum: c056d3f1c057cb7ff8344c645450e14f088a915d078dcda795041765047fa080d38e5d626560ccaac94a4e16e3aa15f3557c1a9a8d1174530955e992c675e459
+  languageName: node
+  linkType: hard
+
 "prop-types@npm:^15.7.2, prop-types@npm:^15.8.0, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
@@ -14204,6 +14296,7 @@ __metadata:
     colord: ^2.9.3
     dayjs: ^1.11.10
     eslint: ^8.44.0
+    immer: ^10.0.3
     jest: ^27.5.1
     jotai: ^2.6.0
     lint-staged: ^15.2.0
@@ -14211,18 +14304,23 @@ __metadata:
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
+    p-queue: 6.6.2
     prettier: ^2.7.1
     react: 18.2.0
+    react-content-loader: ^6.2.1
     react-devtools: ^4.28.5
     react-is: 18.2.0
     react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
+    react-native-collapsible-tab-view: ^6.2.1
     react-native-crypto-js: ^1.0.0
     react-native-dotenv: ^3.4.9
     react-native-fast-image: ^8.6.3
     react-native-gesture-handler: ^2.14.0
     react-native-get-random-values: ^1.10.0
+    react-native-linear-gradient: ^2.8.3
     react-native-mmkv: ^2.11.0
+    react-native-pager-view: ^6.2.3
     react-native-qrcode-svg: ^6.2.0
     react-native-randombytes: ^3.6.1
     react-native-reanimated: ^3.6.1
@@ -14234,7 +14332,9 @@ __metadata:
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
     react-native-vector-icons: ^10.0.2
+    react-native-video: ^5.2.1
     react-native-vision-camera: ^3.6.17
+    react-native-walkthrough-tooltip: ^1.5.0
     react-native-webview: ^13.6.3
     react-test-renderer: 18.2.0
     styled-components: ^6.1.1
@@ -14292,6 +14392,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-content-loader@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "react-content-loader@npm:6.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-content-loader%2F-%2Freact-content-loader-6.2.1.tgz"
+  peerDependencies:
+    react: ">=16.0.0"
+  checksum: f777d408256a4218677e47f4cf3988d9fd8e556450e9b85ee1eb3952a5d5802573cea0df5eaf4dbc936c9522f355657de6f8ab0ecdf035d7dccdef15b45c9dae
+  languageName: node
+  linkType: hard
+
 "react-devtools-core@npm:4.28.5, react-devtools-core@npm:^4.27.2":
   version: 4.28.5
   resolution: "react-devtools-core@npm:4.28.5"
@@ -14315,6 +14424,13 @@ __metadata:
   bin:
     react-devtools: bin.js
   checksum: a9be872f22fa538062abcd9394127b1b5f453d47b570161918ccae03e9a94adfc736a2a4c1fbdd55ae8409abfa367403c1e1b8f571162a9c67fdcb64ceecedc3
+  languageName: node
+  linkType: hard
+
+"react-fast-compare@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "react-fast-compare@npm:2.0.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-fast-compare%2F-%2Freact-fast-compare-2.0.4.tgz"
+  checksum: 06046595f90a4e3e3a56f40a8078c00aa71bdb064ddb98343f577f546aa22e888831fd45f009c93b34707cc842b4c637737e956fd13d6f80607ee92fb9cf9a1c
   languageName: node
   linkType: hard
 
@@ -14352,6 +14468,24 @@ __metadata:
   version: 3.0.1
   resolution: "react-native-aes-crypto@npm:3.0.1"
   checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  languageName: node
+  linkType: hard
+
+"react-native-collapsible-tab-view@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "react-native-collapsible-tab-view@npm:6.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-collapsible-tab-view%2F-%2Freact-native-collapsible-tab-view-6.2.1.tgz"
+  dependencies:
+    use-deep-compare: ^1.1.0
+  peerDependencies:
+    "@shopify/flash-list": ">=1.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-pager-view: "*"
+    react-native-reanimated: ">=2.15.0"
+  peerDependenciesMeta:
+    "@shopify/flash-list":
+      optional: true
+  checksum: 759a4af59bf70c28c0a5e3a25e4eaf864a510757dd4affc0071f141e77f73cb19ea35c450a5090858e4bfa7ebcd77d5ce4982feadcd9ab75dde2e34ead23c451
   languageName: node
   linkType: hard
 
@@ -14430,6 +14564,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-linear-gradient@npm:^2.8.3":
+  version: 2.8.3
+  resolution: "react-native-linear-gradient@npm:2.8.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-linear-gradient%2F-%2Freact-native-linear-gradient-2.8.3.tgz"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: f980d324e551bbc475c6406bdc5250a08242020cbe653412fa169bbdf51e28a502e225de105b4d696d6a1a1b733d44782469020f4936d8b3ce0e2c78e51cf58f
+  languageName: node
+  linkType: hard
+
 "react-native-mmkv@npm:^2.11.0":
   version: 2.11.0
   resolution: "react-native-mmkv@npm:2.11.0"
@@ -14437,6 +14581,16 @@ __metadata:
     react: "*"
     react-native: ">=0.71.0"
   checksum: 23ba624db8a4c530532aaab78705b58d1c9eefc3173dae3b1f86c8cb4d0e5abe3d175079c263251bfed406dc9f6ccda3657f138177916866ea0c0dc8fa3d2389
+  languageName: node
+  linkType: hard
+
+"react-native-pager-view@npm:^6.2.3":
+  version: 6.2.3
+  resolution: "react-native-pager-view@npm:6.2.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-pager-view%2F-%2Freact-native-pager-view-6.2.3.tgz"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: e82a7a485045727c82b9d93d759118d5c1b12d11c3a0e3d644d638041a2bfb96e998472e245fa6e09806667ec188a8f1c7a951895ae88fc6ca614f80df939fc2
   languageName: node
   linkType: hard
 
@@ -14601,6 +14755,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-video@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "react-native-video@npm:5.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-video%2F-%2Freact-native-video-5.2.1.tgz"
+  dependencies:
+    deprecated-react-native-prop-types: ^2.2.0
+    keymirror: ^0.1.1
+    prop-types: ^15.7.2
+    shaka-player: ^2.5.9
+  checksum: efbc09a47e3080dde2986a3a1ea3f32b815317f99013c015522fd2e6ed937ed02244761f4dd5c8f5bf0260bf8a1d518315025cae499c16a6c3b1cd0fa6935d2d
+  languageName: node
+  linkType: hard
+
 "react-native-vision-camera@npm:^3.6.17":
   version: 3.6.17
   resolution: "react-native-vision-camera@npm:3.6.17"
@@ -14612,6 +14778,18 @@ __metadata:
     react-native-worklets-core:
       optional: true
   checksum: 2d600b2e6e5ddae4dd4d0d3ad2f90cffe6092353f08a8a57ba4944423024f637f8a8b2069a447acadd6b6081c26514e145a9fc95283bb661bf41f0425eeaa48e
+  languageName: node
+  linkType: hard
+
+"react-native-walkthrough-tooltip@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "react-native-walkthrough-tooltip@npm:1.5.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-walkthrough-tooltip%2F-%2Freact-native-walkthrough-tooltip-1.5.0.tgz"
+  dependencies:
+    prop-types: ^15.6.1
+    react-fast-compare: ^2.0.4
+  peerDependencies:
+    "@types/react": ">=16.8.24 <18"
+  checksum: 214cb894acb340afed2970e6e5836484953c6dec6d823a440ac3cd05fc74b5b5962895fe87a60f2cc706309e4c22e93c3d24388220a3eb6f0d16fa351b0af061
   languageName: node
   linkType: hard
 
@@ -15463,6 +15641,15 @@ __metadata:
   version: 0.10.7
   resolution: "sha256-uint8array@npm:0.10.7"
   checksum: ff735efd42664ab3d663cbc71a2e5f58a02637e9d57e072c509b5765f5368a2dc34fafefa390e065ef24415946b780ac72fd4582eeeb745ece42256de5b85e94
+  languageName: node
+  linkType: hard
+
+"shaka-player@npm:^2.5.9":
+  version: 2.5.23
+  resolution: "shaka-player@npm:2.5.23::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fshaka-player%2F-%2Fshaka-player-2.5.23.tgz"
+  dependencies:
+    eme-encryption-scheme-polyfill: ^2.0.1
+  checksum: 219c5ab073edd0f70582809df533d29f0369a5d8e31507ea76ddc71f3c8e11e9b63b61671ce19d7d3c464d7f3035581a4820903535ce24d4d5da7a94a98ca064
   languageName: node
   linkType: hard
 
@@ -17235,6 +17422,17 @@ __metadata:
     punycode: ^1.4.1
     qs: ^6.11.2
   checksum: f9e7886f46a16f96d2e42fbcc5d682c231c55ef5442c1ff66150c0f6556f6e3a97d094a84f51be15ec2432711d212eb60426659ce418f5fcadeaa3f601532c4e
+  languageName: node
+  linkType: hard
+
+"use-deep-compare@npm:^1.1.0":
+  version: 1.2.1
+  resolution: "use-deep-compare@npm:1.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fuse-deep-compare%2F-%2Fuse-deep-compare-1.2.1.tgz"
+  dependencies:
+    dequal: 2.0.3
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: f65a880d0cf126484f5a5772c665f7d05ea7834e73d2a76a26c1c6a4101604f9f75fb836903a191ddca9eeafe5f8faa648cc712079046147affa1ea6b4b84d2f
   languageName: node
   linkType: hard
 

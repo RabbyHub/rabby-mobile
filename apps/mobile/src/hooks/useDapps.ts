@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { dappService } from '@/core/services';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { atom, useAtom } from 'jotai';
+import { dappService } from '@/core/services/shared';
 
 const dappsAtom = atom<Record<string, DappInfo>>({});
 
@@ -62,10 +62,10 @@ export const useDapps = () => {
       },
 
       {
-        title: favoriteList?.length ? 'Favorite' : '',
+        title: 'Favorites',
         data: favoriteList,
       },
-    ];
+    ].filter(item => item.data.length);
   }, [dapps]);
 
   React.useEffect(() => {
