@@ -53,7 +53,7 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
 
 const styles = StyleSheet.create({
   headerTitleStyle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   backButtonStyle: {
