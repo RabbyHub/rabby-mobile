@@ -121,6 +121,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       alignItems: 'center',
       // flexWrap: 'wrap',
       overflow: 'hidden',
+      color: colors['neutral-body'],
     },
 
     dappName: {

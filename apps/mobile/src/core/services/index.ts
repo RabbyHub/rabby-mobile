@@ -37,4 +37,4 @@ keyringService.store.subscribe(value =>
   appStorage.setItem('keyringState', value),
 );
 
-export const dappService = new DappService({ storageAdapter: appStorage });
+// export const dappService = new DappService({ storageAdapter: appStorage });
