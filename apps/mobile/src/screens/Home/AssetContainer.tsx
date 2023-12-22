@@ -35,6 +35,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
           fontSize: 16,
           fontWeight: '500',
           textTransform: 'none',
+          color: colors['neutral-body'],
         },
         indicator: {
           backgroundColor: colors['blue-default'],
@@ -57,11 +58,20 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         style={styles.tabBarWrap}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
+        activeColor={colors['blue-default']}
+        inactiveColor={colors['neutral-body']}
         labelStyle={styles.label}
         indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
-    [styles],
+    [
+      colors,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarIndicator,
+      styles.tabBarWrap,
+    ],
   );
 
   if (!currentAccount?.address) {

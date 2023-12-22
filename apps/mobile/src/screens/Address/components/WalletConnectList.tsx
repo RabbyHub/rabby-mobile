@@ -16,7 +16,7 @@ import { ThemeColors } from '@/constant/theme';
 
 export const WalletSVG = makeThemeIconFromCC(WalletCC, {
   onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
 });
 
 const styles = StyleSheet.create({

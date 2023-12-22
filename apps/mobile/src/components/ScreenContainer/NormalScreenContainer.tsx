@@ -1,4 +1,5 @@
 import { ScreenLayouts } from '@/constant/layout';
+import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 
 import { View, ViewProps } from 'react-native';
@@ -15,6 +16,7 @@ export default function NormalScreenContainer({
   hideBottomBar?: boolean;
 }>) {
   const { top } = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
     <View
@@ -26,6 +28,7 @@ export default function NormalScreenContainer({
           flexDirection: 'column',
           width: '100%',
           height: '100%',
+          backgroundColor: colors['neutral-bg-2'],
         },
       ]}>
       {children}

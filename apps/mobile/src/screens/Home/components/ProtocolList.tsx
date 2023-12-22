@@ -2,10 +2,8 @@ import React, { useMemo, useCallback, memo, useRef } from 'react';
 import {
   StyleSheet,
   View,
-  Image,
   SectionListProps,
   SectionListData,
-  useColorScheme,
   TouchableOpacity,
   LayoutAnimation,
 } from 'react-native';
@@ -23,6 +21,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
 import { Text } from '@/components';
 import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
 // 已支持的模板
 const TemplateDict = {
@@ -83,7 +82,6 @@ const _ProtocolList = ({
   isPortfoliosLoading,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
-  const theme = useColorScheme();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const ref = useRef(null);
@@ -161,20 +159,12 @@ const _ProtocolList = ({
   );
 
   const ListEmptyComponent = useMemo(() => {
-    const emptySource =
-      theme === 'light'
-        ? require('@/assets/icons/assets/empty-protocol.png')
-        : require('@/assets/icons/assets/empty-protocol-dark.png');
-
     return isPortfoliosLoading ? (
       <PositionLoader space={8} />
     ) : hasPortfolios ? null : (
-      <View style={styles.emptyList}>
-        <Image source={emptySource} />
-        <Text style={styles.emptyListText}>No assets</Text>
-      </View>
+      <EmptyHolder text="No assets" type="protocol" />
     );
-  }, [theme, isPortfoliosLoading, hasPortfolios, styles]);
+  }, [isPortfoliosLoading, hasPortfolios]);
 
   const ListFooterComponent = useMemo(() => {
     return <View style={styles.listFooter} />;
@@ -297,6 +287,7 @@ const getStyle = (colors: AppColorsVariants) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors['neutral-line'],
       borderRadius: 6,
+      backgroundColor: colors['neutral-bg-1'],
     },
     arrowButton: {
       width: 20,

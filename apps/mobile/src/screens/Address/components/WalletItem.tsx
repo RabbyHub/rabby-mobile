@@ -70,7 +70,7 @@ export const WalletItem: React.FC<Props> = ({
     <TouchableView
       style={[
         styles.entryItem,
-        { backgroundColor: colors['neutral-bg-1'] },
+        { backgroundColor: colors['neutral-card-1'] },
         // eslint-disable-next-line react-native/no-inline-styles
         { opacity: disable ? 0.5 : 1 },
         style,
