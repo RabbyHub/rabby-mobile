@@ -54,7 +54,7 @@ export default function SheetDappWebView() {
     } else {
       toggleShowSheetModal('webviewContainerRef', true);
     }
-  }, [webviewContainerRef, activeDapp]);
+  }, [toggleShowSheetModal, activeDapp]);
 
   const colors = useThemeColors();
 
