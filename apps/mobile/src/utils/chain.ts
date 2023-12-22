@@ -273,6 +273,19 @@ export function varyAndSortChainItems(deps: {
   };
 }
 
+export const formatChain = (
+  item: ChainWithBalance,
+): DisplayChainWithWhiteLogo => {
+  const chainsArray = Object.values(CHAINS);
+  const chain = chainsArray.find(chain => chain.id === item.community_id);
+
+  return {
+    ...item,
+    logo: chain?.logo || item.logo_url,
+    whiteLogo: chain?.whiteLogo,
+  };
+};
+
 export function makeTokenFromChain(chain: Chain): TokenItem {
   return {
     id: chain.nativeTokenAddress,
