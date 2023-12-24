@@ -5,7 +5,7 @@ import WebView, { WebViewNavigation } from 'react-native-webview';
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetModal,
+  BottomSheetModalProvider,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
@@ -27,6 +27,10 @@ import { devLog } from '@/utils/logger';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import clsx from 'clsx';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { AppBottomSheetModal } from '../customized/BottomSheet';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
@@ -145,18 +149,8 @@ export default function DappWebViewControl({
     sheetModalRefs: { webviewNavRef },
     toggleShowSheetModal,
   } = useSheetModals({
-    webviewNavRef: useRef<BottomSheetModal>(null),
+    webviewNavRef: useRef<AppBottomSheetModal>(null),
   });
-
-  const handleBottomSheetChanges = useCallback(
-    (index: number) => {
-      devLog('DappWebViewControl::handleBottomSheetChanges', index);
-      if (index == -1) {
-        // toggleShowSheetModal('webviewNavRef', false);
-      }
-    },
-    [toggleShowSheetModal],
-  );
 
   const handlePressMoreDefault = useCallback(() => {
     toggleShowSheetModal('webviewNavRef', true);
@@ -205,11 +199,14 @@ export default function DappWebViewControl({
     return bottomSheetContent || bottomNavBar;
   }, [bottomSheetContent, bottomNavBar]);
 
+  const { safeTop } = useSafeSizes();
+
   return (
     <View
       style={[
         styles.dappWebViewControl,
         {
+          position: 'relative',
           backgroundColor: colors['neutral-bg-1'],
         },
       ]}>
@@ -252,22 +249,28 @@ export default function DappWebViewControl({
         />
       </View>
 
-      <BottomSheetModal
-        index={0}
-        backdropComponent={renderBackdrop}
-        enableContentPanningGesture={false}
-        name="webviewNavRef"
-        ref={webviewNavRef}
-        snapPoints={[bottomNavH]}
-        onChange={(index: number) => {
-          if (index === -1) {
-            // toggleShowSheetModal('webviewNavRef', false);
-          }
+      <View
+        className={clsx('absolute left-[0] h-[100%] w-[100%]')}
+        style={{
+          // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
+          // the parent of this component
+          top: -ScreenLayouts.headerAreaHeight,
         }}>
-        <BottomSheetView className="px-[20] items-center justify-center">
-          {bottomSheetContentNode}
-        </BottomSheetView>
-      </BottomSheetModal>
+        <BottomSheetModalProvider>
+          <AppBottomSheetModal
+            index={0}
+            backdropComponent={renderBackdrop}
+            enableContentPanningGesture={false}
+            name="webviewNavRef"
+            handleHeight={28}
+            ref={webviewNavRef}
+            snapPoints={[bottomNavH + safeTop]}>
+            <BottomSheetView className="px-[20] items-center justify-center">
+              {bottomSheetContentNode}
+            </BottomSheetView>
+          </AppBottomSheetModal>
+        </BottomSheetModalProvider>
+      </View>
     </View>
   );
 }
