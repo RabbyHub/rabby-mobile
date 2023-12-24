@@ -39,9 +39,7 @@ function App(): JSX.Element {
       <Suspense fallback={null}>
         {/* TODO: measure to check if memory leak occured when refresh on iOS */}
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <MainScreen />
-          </BottomSheetModalProvider>
+          <MainScreen />
         </GestureHandlerRootView>
         {/* <MainScreen /> */}
       </Suspense>

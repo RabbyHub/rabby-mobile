@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetModal,
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
@@ -23,6 +24,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { RcIconDisconnect } from '@/assets/icons/dapp';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -46,8 +48,6 @@ export default function SheetDappWebView() {
     [toggleShowSheetModal, setActiveDapp],
   );
 
-  const { top } = useSafeAreaInsets();
-
   useEffect(() => {
     if (!activeDapp) {
       toggleShowSheetModal('webviewContainerRef', 'destroy');
@@ -57,15 +57,16 @@ export default function SheetDappWebView() {
   }, [toggleShowSheetModal, activeDapp]);
 
   const colors = useThemeColors();
+  const { safeOffScreenTop } = useSafeSizes();
 
   return (
-    <BottomSheetModal
-      index={1}
+    <AppBottomSheetModal
+      index={0}
       backdropComponent={renderBackdrop}
       enableContentPanningGesture={false}
       name="webviewContainerRef"
       ref={webviewContainerRef}
-      snapPoints={['100%', Dimensions.get('screen').height - top]}
+      snapPoints={[safeOffScreenTop]}
       onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
         {activeDapp && (
@@ -156,6 +157,6 @@ export default function SheetDappWebView() {
           />
         )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

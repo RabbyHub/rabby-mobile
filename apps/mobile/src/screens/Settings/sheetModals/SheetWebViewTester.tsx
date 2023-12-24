@@ -1,16 +1,15 @@
 import { useCallback } from 'react';
-import { Dimensions } from 'react-native';
 
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { useSheetModalsOnSettingScreen } from './hooks';
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { devLog } from '@/utils/logger';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -32,18 +31,18 @@ export default function SheetWebViewTester() {
     [toggleShowSheetModal],
   );
 
-  const { top } = useSafeAreaInsets();
+  const { safeOffScreenTop } = useSafeSizes();
 
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       backdropComponent={renderBackdrop}
       enableContentPanningGesture={false}
       ref={webviewTesterRef}
-      snapPoints={[Dimensions.get('screen').height - top]}
+      snapPoints={[safeOffScreenTop]}
       onChange={handleSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
         <DappWebViewControl dappId={'debank.com'} />
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }
