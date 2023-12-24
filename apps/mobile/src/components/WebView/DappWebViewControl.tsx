@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
-import WebView, { WebViewNavigation } from 'react-native-webview';
+import { useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import WebView from 'react-native-webview';
+import clsx from 'clsx';
 
 import {
   BottomSheetBackdrop,
@@ -27,8 +28,6 @@ import { devLog } from '@/utils/logger';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import clsx from 'clsx';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 
@@ -37,6 +36,34 @@ function errorLog(...info: any) {
 }
 
 const PRESS_OPACITY = 0.3;
+
+function BottomSheetMoreLayout({
+  children
+} : React.PropsWithChildren) {
+  if (Platform.OS !== 'ios') {
+    return (
+      <View
+        className={clsx('absolute left-[0] h-[100%] w-[100%]')}
+        style={{
+          // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
+          // the parent of this component
+          top: -ScreenLayouts.headerAreaHeight,
+        }}>
+        {children}
+      </View>
+    )
+  }
+
+  return <>{children}</>
+};
+
+function useBottomSheetMoreLayout(bottomNavH: number) {
+  const { safeTop, safeOffHeader } = useSafeSizes();
+
+  return {
+    topSnapPoint: Platform.OS === 'ios' ? bottomNavH + safeOffHeader : bottomNavH + safeTop
+  }
+}
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -199,7 +226,7 @@ export default function DappWebViewControl({
     return bottomSheetContent || bottomNavBar;
   }, [bottomSheetContent, bottomNavBar]);
 
-  const { safeTop } = useSafeSizes();
+  const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
   return (
     <View
@@ -230,7 +257,7 @@ export default function DappWebViewControl({
           </Text>
         </View>
         <View style={[styles.touchableHeadWrapper]}>
-          <TouchableView onPress={handlePressMore}>
+          <TouchableView onPress={handlePressMore} style={[styles.touchableHeadWrapper]}>
             <RcIconMore width={24} height={24} />
           </TouchableView>
         </View>
@@ -249,13 +276,7 @@ export default function DappWebViewControl({
         />
       </View>
 
-      <View
-        className={clsx('absolute left-[0] h-[100%] w-[100%]')}
-        style={{
-          // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
-          // the parent of this component
-          top: -ScreenLayouts.headerAreaHeight,
-        }}>
+      <BottomSheetMoreLayout>
         <BottomSheetModalProvider>
           <AppBottomSheetModal
             index={0}
@@ -264,13 +285,13 @@ export default function DappWebViewControl({
             name="webviewNavRef"
             handleHeight={28}
             ref={webviewNavRef}
-            snapPoints={[bottomNavH + safeTop]}>
+            snapPoints={[topSnapPoint]}>
             <BottomSheetView className="px-[20] items-center justify-center">
               {bottomSheetContentNode}
             </BottomSheetView>
           </AppBottomSheetModal>
         </BottomSheetModalProvider>
-      </View>
+      </BottomSheetMoreLayout>
     </View>
   );
 }
