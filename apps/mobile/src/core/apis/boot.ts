@@ -34,7 +34,7 @@ export async function tryAutoUnlockRabbyMobile() {
     RABBY_MOBILE_KR_PWD,
   );
 
-  if (process.env.FORCE_REBOOT && !isBooted) {
+  if (!isBooted) {
     await keyringService.boot(RABBY_MOBILE_KR_PWD);
   }
 
