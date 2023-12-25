@@ -48,7 +48,7 @@ fi
 
 if [ -z $CI ]; then
   echo "[deploy-ios-reg] force fresh CDN:"
-  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios'\` --profile debankbuild"
+  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
   echo ""
 fi
 
