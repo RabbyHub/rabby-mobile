@@ -1,4 +1,11 @@
+const child_process = require('child_process');
+
 const pkg = require('./package.json');
+
+const BUILD_GIT_HASH = child_process
+  .execSync('git log --format="%h" -n 1')
+  .toString()
+  .trim();
 
 const { version } = pkg;
 
@@ -16,6 +23,7 @@ module.exports = {
         'process.env.APP_VERSION': version,
         'process.env.BUILD_TIME': new Date().toISOString(),
         'process.env.BUILD_ENV': process.env.BUILD_ENV,
+        'process.env.BUILD_GIT_HASH': BUILD_GIT_HASH,
       },
     ],
     [

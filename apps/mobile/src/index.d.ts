@@ -5,6 +5,7 @@
 declare module '@env' {
   declare const Env: {
     RABBY_MOBILE_KR_PWD: string;
+    BUILD_CHANNEL: 'development' | 'regression' | 'production';
   };
 
   export = Env;

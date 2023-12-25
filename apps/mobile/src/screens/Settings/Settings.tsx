@@ -21,10 +21,11 @@ import {
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import { type SettingConfBlock, Block } from './Block';
-import { useAppTheme } from '@/hooks/theme';
+import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { styled } from 'styled-components/native';
 import { useSheetModalsOnSettingScreen } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
+import { BUILD_CHANNEL } from '@/constant/env';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -36,6 +37,8 @@ function SettingsScreen(): JSX.Element {
   const { appTheme, toggleThemeMode } = useAppTheme();
 
   const { toggleShowSheetModal } = useSheetModalsOnSettingScreen();
+
+  const colors = useThemeColors();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -98,6 +101,18 @@ function SettingsScreen(): JSX.Element {
             icon: RcInfo,
             onPress: () => {},
           },
+          // TODO: only show in non-production mode
+          // BUILD_CHANNEL === 'production' && {
+          {
+            label: 'Build Hash',
+            icon: RcInfo,
+            onPress: () => {},
+            rightNode: (
+              <Text style={{ color: colors['neutral-body'] }}>
+                {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+              </Text>
+            ),
+          },
           {
             label: 'Support Chains',
             icon: RcSupportChains,
@@ -108,7 +123,7 @@ function SettingsScreen(): JSX.Element {
             icon: RcFollowUs,
             onPress: () => {},
           },
-        ],
+        ].filter(Boolean),
       },
       ...(__DEV__ && {
         devlab: {
