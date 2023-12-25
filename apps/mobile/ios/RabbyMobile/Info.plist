@@ -34,6 +34,7 @@
 		<string>mathwallet</string>
 		<string>zerion</string>
 		<string>cbwallet</string>
+		<string>blob</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

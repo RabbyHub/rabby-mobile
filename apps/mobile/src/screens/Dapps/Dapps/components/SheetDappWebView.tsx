@@ -9,8 +9,6 @@ import {
 } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { devLog } from '@/utils/logger';
 import {
@@ -64,6 +62,8 @@ export default function SheetDappWebView() {
       index={0}
       backdropComponent={renderBackdrop}
       enableContentPanningGesture={false}
+      enablePanDownToClose
+      enableHandlePanningGesture
       name="webviewContainerRef"
       ref={webviewContainerRef}
       snapPoints={[safeOffScreenTop]}
