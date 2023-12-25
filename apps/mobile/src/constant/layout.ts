@@ -54,7 +54,7 @@ export type AppRootName = keyof typeof RootNames;
 export const getRootSpecConfig = (colors: AppColorsVariants) => {
   return {
     Home: {
-      statusBarStyle: 'light-content',
+      statusBarStyle: 'dark-content',
       statusbarBackgroundColor: colors['neutral-bg-1'],
     },
   } as {
