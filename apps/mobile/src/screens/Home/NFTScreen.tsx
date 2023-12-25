@@ -228,9 +228,8 @@ export const NFTScreen = () => {
         renderSectionFooter={() => <View style={styles.footContainer} />}
         sections={sectionList}
         keyExtractor={keyExtractor}
-        maxToRenderPerBatch={1}
-        initialNumToRender={5}
         ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={false}
       />
     </View>
   );

@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import CopySVG from '@/assets/icons/common/copy.svg';
+import { RcIconCopyCC } from '@/assets/icons/common';
 import { contactService } from '@/core/services';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toast } from '@/components/Toast';
 
 interface Props {
   address: string;
@@ -37,7 +39,7 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
         },
         address: {
           color: colors['neutral-body'],
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: '400',
           marginRight: 4,
         },
@@ -47,6 +49,10 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
           alignItems: 'center',
           paddingTop: 10,
           paddingBottom: 12,
+          flexWrap: 'wrap',
+        },
+        icon: {
+          color: colors['neutral-foot'],
         },
       }),
 
@@ -54,13 +60,12 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
   );
 
   const onCopy = React.useCallback(() => {
-    // TODO: copy address
-    console.log('onCopy');
-  }, []);
+    Clipboard.setString(address);
+    toast.success('Copied');
+  }, [address]);
 
   const handleSubmit = React.useCallback(
     (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
-      console.log('address', address, e.nativeEvent.text);
       contactService.setAlias({
         address,
         alias: e.nativeEvent.text,
@@ -79,7 +84,8 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
         <Text style={styles.address}>{address}</Text>
         <Text>
-          <CopySVG />
+          {/* @ts-ignore */}
+          <RcIconCopyCC style={styles.icon} />
         </Text>
       </TouchableOpacity>
     </View>

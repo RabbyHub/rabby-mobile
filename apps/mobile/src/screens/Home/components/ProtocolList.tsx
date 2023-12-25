@@ -173,7 +173,6 @@ const _ProtocolList = ({
   return (
     <Tabs.SectionList
       ref={ref}
-      showsVerticalScrollIndicator={false}
       {...rest}
       extraData={expandedSections}
       sections={sectionList}
@@ -184,6 +183,7 @@ const _ProtocolList = ({
       contentContainerStyle={styles.list}
       ListFooterComponent={ListFooterComponent}
       SectionSeparatorComponent={renderSeparatorComponent}
+      stickySectionHeadersEnabled={false}
     />
   );
 };

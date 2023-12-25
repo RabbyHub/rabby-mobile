@@ -7407,6 +7407,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deprecated-react-native-prop-types@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "deprecated-react-native-prop-types@npm:2.3.0"
+  dependencies:
+    "@react-native/normalize-color": "*"
+    invariant: "*"
+    prop-types: "*"
+  checksum: d14f4be1dfe780a7fa9197a31b4a9a2b409c8cf1bf677713fd92d06733dee1043578662d1a8858541cf06164ae91d295db6e595f29bf13e808d9fb37bc58c90b
+  languageName: node
+  linkType: hard
+
 "deprecated-react-native-prop-types@npm:^4.2.3":
   version: 4.2.3
   resolution: "deprecated-react-native-prop-types@npm:4.2.3"
@@ -14074,7 +14085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.7.2, prop-types@npm:^15.8.0, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.10, prop-types@npm:^15.7.2, prop-types@npm:^15.8.0, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -14324,6 +14335,7 @@ __metadata:
     react-native-qrcode-svg: ^6.2.0
     react-native-randombytes: ^3.6.1
     react-native-reanimated: ^3.6.1
+    react-native-root-toast: ^3.5.1
     react-native-safe-area-context: ^4.7.4
     react-native-screens: ^3.27.0
     react-native-send-intent: ^1.3.0
@@ -14648,6 +14660,26 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 245e542de7496081c4c64fe219a6d33a4d7195502fd6e9c12374c04acb1318bdeb0c50889def5e213e3fe3cd0f6316b113a6b1c382715f1b6cf8a6a29f0cf4ab
+  languageName: node
+  linkType: hard
+
+"react-native-root-siblings@npm:^4.0.0":
+  version: 4.1.1
+  resolution: "react-native-root-siblings@npm:4.1.1"
+  checksum: a4df9213be4864ec9ca5a99dd5e9218034a3cda66faa76b8910247a5e728d720df297f4dde811d83219adf370762a62948a8d954f8198bb3e4512e4dbc7dad00
+  languageName: node
+  linkType: hard
+
+"react-native-root-toast@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "react-native-root-toast@npm:3.5.1"
+  dependencies:
+    deprecated-react-native-prop-types: ^2.3.0
+    prop-types: ^15.5.10
+    react-native-root-siblings: ^4.0.0
+  peerDependencies:
+    react-native: ">=0.47.0"
+  checksum: bb0f6494c518f95b2d4c478c275257e5199644469c515e624656c57fe82accda4038ad74d80e64e4cd3aa8a9df51470bd996242e706875155d6904f669e3c799
   languageName: node
   linkType: hard
 
