@@ -9,7 +9,7 @@ import { withExpoSnack } from 'nativewind';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
-// import { RootSiblingParent } from 'react-native-root-siblings';
+import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
@@ -35,15 +35,17 @@ function MainScreen() {
 
 function App(): JSX.Element {
   return (
-    <SafeAreaProvider>
-      <Suspense fallback={null}>
-        {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <MainScreen />
-        </GestureHandlerRootView>
-        {/* <MainScreen /> */}
-      </Suspense>
-    </SafeAreaProvider>
+    <RootSiblingParent>
+      <SafeAreaProvider>
+        <Suspense fallback={null}>
+          {/* TODO: measure to check if memory leak occured when refresh on iOS */}
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <MainScreen />
+          </GestureHandlerRootView>
+          {/* <MainScreen /> */}
+        </Suspense>
+      </SafeAreaProvider>
+    </RootSiblingParent>
   );
 }
 

@@ -13,6 +13,7 @@ import WalletCC from '@/assets/icons/address/wallet-cc.svg';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
+import { toast } from '@/components/Toast';
 
 export const WalletSVG = makeThemeIconFromCC(WalletCC, {
   onLight: ThemeColors.light['neutral-body'],
@@ -53,6 +54,7 @@ export const WalletConnectList = () => {
         })
         .catch((err: any) => {
           console.error(err);
+          toast.show(err.message);
         });
     }
   }, []);

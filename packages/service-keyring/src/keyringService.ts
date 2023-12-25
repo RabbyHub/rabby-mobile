@@ -1,5 +1,5 @@
 import { ObservableStore } from '@metamask/obs-store';
-import { addressUtils } from '@rabby-wallet/base-utils';
+import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
 import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
@@ -17,7 +17,6 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
-import { RNEventEmitter } from '@rabby-wallet/base-utils';
 
 type KeyringState = {
   booted?: string;
@@ -34,7 +33,7 @@ type MemStoreState = {
 type OnSetAddressAlias = (
   keyring: KeyringInstance | KeyringIntf,
   account: AccountItemWithBrandQueryResult,
-) => void;
+) => Promise<void>;
 
 type OnCreateKeyring = (
   Keyring: KeyringClassType,
@@ -352,11 +351,14 @@ export class KeyringService extends RNEventEmitter {
               ? selectedKeyring.type
               : account?.realBrandName || account.brandName,
         }));
-        allAccounts.forEach(account => {
-          this.emit('newAccount', account.address);
-          this.onSetAddressAlias(selectedKeyring, account);
-        });
         _accounts = accounts;
+
+        return Promise.all(
+          allAccounts.map(async account => {
+            this.emit('newAccount', account.address);
+            return this.onSetAddressAlias(selectedKeyring, account);
+          }),
+        );
       })
       .then(this.persistAllKeyrings.bind(this))
       .then(this._updateMemStoreKeyrings.bind(this))
@@ -392,10 +394,10 @@ export class KeyringService extends RNEventEmitter {
    *
    * Signs an Ethereum transaction object.
    *
-   * @param {Object} ethTx - The transaction to sign.
-   * @param {string} _fromAddress - The transaction 'from' address.
-   * @param {Object} opts - Signing options.
-   * @returns {Promise<Object>} The signed transactio object.
+   * @param ethTx - The transaction to sign.
+   * @param _fromAddress - The transaction 'from' address.
+   * @param opts - Signing options.
+   * @returns The signed transactio object.
    */
   signTransaction(ethTx: any, _fromAddress: string, opts = {}) {
     const fromAddress = normalizeAddress(_fromAddress);
@@ -409,11 +411,11 @@ export class KeyringService extends RNEventEmitter {
    *
    * Attempts to sign the provided message parameters.
    *
-   * @param {Object} msgParams - The message parameters to sign.
+   * @param msgParams - The message parameters to sign.
    * @param msgParams.from
    * @param opts
    * @param msgParams.data
-   * @returns {Promise<Buffer>} The raw signature.
+   * @returns The raw signature.
    */
   signMessage(msgParams: { from: string; data: any }, opts = {}) {
     const address = normalizeAddress(msgParams.from);
@@ -837,7 +839,7 @@ export class KeyringService extends RNEventEmitter {
     return result;
   }
 
-  async getAllAdresses() {
+  async getAllAddresses() {
     const keyrings = await this.getAllTypedAccounts();
     const result: { address: string; type: string; brandName: string }[] = [];
     keyrings.forEach(accountGroup => {
@@ -854,7 +856,7 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async hasAddress(address: string) {
-    const addresses = await this.getAllAdresses();
+    const addresses = await this.getAllAddresses();
     return Boolean(
       addresses.find(item => addressUtils.isSameAddress(item.address, address)),
     );
