@@ -57,6 +57,12 @@ export const getRootSpecConfig = (colors: AppColorsVariants) => {
       statusBarStyle: 'dark-content',
       statusbarBackgroundColor: colors['neutral-bg-1'],
     },
+    ImportWatchAddress: {
+      statusBarStyle: 'light-content',
+    },
+    ImportSuccess: {
+      statusBarStyle: 'light-content',
+    },
   } as {
     [P in AppRootName]?: {
       statusBarStyle?: 'light-content' | 'dark-content';

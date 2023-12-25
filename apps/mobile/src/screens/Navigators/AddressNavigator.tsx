@@ -37,6 +37,7 @@ export function AddressNavigator() {
         headerStyle: {
           backgroundColor: 'transparent',
         },
+        headerTintColor: colors['neutral-title-1'],
         headerTitleStyle: {
           color: colors['neutral-title-1'],
         },
@@ -81,6 +82,9 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress}
         component={ImportWatchAddressScreen}
+        options={{
+          headerTintColor: colors['neutral-title-2'],
+        }}
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}
