@@ -37,32 +37,33 @@ function errorLog(...info: any) {
 
 const PRESS_OPACITY = 0.3;
 
-function BottomSheetMoreLayout({
-  children
-} : React.PropsWithChildren) {
-  if (Platform.OS !== 'ios') {
-    return (
-      <View
-        className={clsx('absolute left-[0] h-[100%] w-[100%]')}
-        style={{
-          // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
-          // the parent of this component
-          top: -ScreenLayouts.headerAreaHeight,
-        }}>
-        {children}
-      </View>
-    )
-  }
+// function BottomSheetMoreLayout({
+//   children
+// } : React.PropsWithChildren) {
+//   if (Platform.OS !== 'ios') {
+//     return (
+//       <View
+//         className={clsx('absolute left-[0] h-[100%] w-[100%]')}
+//         style={{
+//           // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
+//           // the parent of this component
+//           top: -ScreenLayouts.headerAreaHeight,
+//         }}>
+//         {children}
+//       </View>
+//     )
+//   }
 
-  return <>{children}</>
-};
+//   return <>{children}</>
+// };
 
 function useBottomSheetMoreLayout(bottomNavH: number) {
   const { safeTop, safeOffHeader } = useSafeSizes();
 
   return {
-    topSnapPoint: Platform.OS === 'ios' ? bottomNavH + safeOffHeader : bottomNavH + safeTop
-  }
+    // topSnapPoint: Platform.OS === 'ios' ? bottomNavH + safeOffHeader : bottomNavH + safeTop
+    topSnapPoint: bottomNavH + safeOffHeader,
+  };
 }
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
@@ -257,7 +258,9 @@ export default function DappWebViewControl({
           </Text>
         </View>
         <View style={[styles.touchableHeadWrapper]}>
-          <TouchableView onPress={handlePressMore} style={[styles.touchableHeadWrapper]}>
+          <TouchableView
+            onPress={handlePressMore}
+            style={[styles.touchableHeadWrapper]}>
             <RcIconMore width={24} height={24} />
           </TouchableView>
         </View>
@@ -276,22 +279,20 @@ export default function DappWebViewControl({
         />
       </View>
 
-      <BottomSheetMoreLayout>
-        <BottomSheetModalProvider>
-          <AppBottomSheetModal
-            index={0}
-            backdropComponent={renderBackdrop}
-            enableContentPanningGesture={false}
-            name="webviewNavRef"
-            handleHeight={28}
-            ref={webviewNavRef}
-            snapPoints={[topSnapPoint]}>
-            <BottomSheetView className="px-[20] items-center justify-center">
-              {bottomSheetContentNode}
-            </BottomSheetView>
-          </AppBottomSheetModal>
-        </BottomSheetModalProvider>
-      </BottomSheetMoreLayout>
+      <BottomSheetModalProvider>
+        <AppBottomSheetModal
+          index={0}
+          backdropComponent={renderBackdrop}
+          enableContentPanningGesture={false}
+          name="webviewNavRef"
+          handleHeight={28}
+          ref={webviewNavRef}
+          snapPoints={[topSnapPoint]}>
+          <BottomSheetView className="px-[20] items-center justify-center">
+            {bottomSheetContentNode}
+          </BottomSheetView>
+        </AppBottomSheetModal>
+      </BottomSheetModalProvider>
     </View>
   );
 }
