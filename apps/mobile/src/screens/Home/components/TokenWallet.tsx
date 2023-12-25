@@ -25,6 +25,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { PositionLoader } from './Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 const ITEM_HEIGHT = 68;
 
@@ -202,7 +203,7 @@ export const TokenWallet = ({
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
       />
-      <BottomSheetModal
+      <AppBottomSheetModal
         backdropComponent={renderBackdrop}
         ref={smallTokenModalRef}
         snapPoints={['50%', '100%']}>
@@ -212,9 +213,9 @@ export const TokenWallet = ({
           data={restTokens}
           style={styles.scrollView}
         />
-      </BottomSheetModal>
+      </AppBottomSheetModal>
 
-      <BottomSheetModal
+      <AppBottomSheetModal
         backdropComponent={renderBackdrop}
         ref={tokenDetailModalRef}
         backgroundStyle={{
@@ -246,7 +247,7 @@ export const TokenWallet = ({
             Coming soon
           </Text>
         </BottomSheetView>
-      </BottomSheetModal>
+      </AppBottomSheetModal>
     </>
   );
 };
