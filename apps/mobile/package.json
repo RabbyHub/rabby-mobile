@@ -29,7 +29,7 @@
     "@gorhom/bottom-sheet": "5.0.0-alpha.4",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.7",
+    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.8",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-api": "0.7.0-alpha.4",
     "@rabby-wallet/service-address": "workspace:^",

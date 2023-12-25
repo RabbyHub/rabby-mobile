@@ -129,7 +129,7 @@ function AppStatusBar() {
 
   return (
     <StatusBar
-      translucent
+      // translucent
       backgroundColor={statusBarBackgroundColor}
       barStyle={statusBarStyle}
     />

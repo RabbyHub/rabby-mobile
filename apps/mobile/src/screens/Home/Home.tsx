@@ -155,7 +155,9 @@ function HomeScreen(): JSX.Element {
 
   return (
     <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
-      <AssetContainer renderHeader={() => <HomeTopArea />} />
+      <SafeAreaView style={styles.safeView}>
+        <AssetContainer renderHeader={() => <HomeTopArea />} />
+      </SafeAreaView>
     </RootScreenContainer>
   );
 }
@@ -163,6 +165,10 @@ function HomeScreen(): JSX.Element {
 HomeScreen.HeaderArea = HeaderArea;
 
 const styles = StyleSheet.create({
+  safeView: {
+    flex: 1,
+    overflow: 'hidden',
+  },
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,

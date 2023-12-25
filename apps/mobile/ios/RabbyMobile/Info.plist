@@ -22,6 +22,20 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>imtokenv2</string>
+		<string>tpoutside</string>
+		<string>rainbow</string>
+		<string>bitkeep</string>
+		<string>trust</string>
+		<string>argent</string>
+		<string>metamask</string>
+		<string>mathwallet</string>
+		<string>zerion</string>
+		<string>cbwallet</string>
+		<string>blob</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -35,6 +49,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIAppFonts</key>
@@ -55,21 +71,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-  <key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>imtokenv2</string>
-		<string>tpoutside</string>
-		<string>rainbow</string>
-		<string>bitkeep</string>
-		<string>trust</string>
-		<string>argent</string>
-		<string>metamask</string>
-		<string>mathwallet</string>
-		<string>zerion</string>
-		<string>cbwallet</string>
-		<string>blob</string>
-	</array>
-  <key>NSCameraUsageDescription</key>
-  <string>$(PRODUCT_NAME) needs access to your Camera.</string>
 </dict>
 </plist>
