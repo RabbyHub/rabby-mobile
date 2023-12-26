@@ -31,6 +31,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@debank/common": "^0.3.47",
     "@rabby-wallet/persist-store": "^0.1.0",
     "ethereumjs-util": "^7.1.5"
   },

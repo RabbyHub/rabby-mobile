@@ -295,9 +295,7 @@ const flowContext = flow
 
 function reportStatsData() {
   // const statsData = notificationService.getStatsData();
-
   // if (!statsData || statsData.reported) return;
-
   // if (statsData?.signed) {
   //   const sData: any = {
   //     type: statsData?.type,
@@ -326,9 +324,7 @@ function reportStatsData() {
   //     trigger: statsData?.trigger,
   //   });
   // }
-
   // statsData.reported = true;
-
   // notificationService.setStatsData(statsData);
 }
 
