@@ -435,6 +435,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-proposal-decorators@npm:^7.23.6":
+  version: 7.23.6
+  resolution: "@babel/plugin-proposal-decorators@npm:7.23.6"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.23.6
+    "@babel/helper-plugin-utils": ^7.22.5
+    "@babel/helper-replace-supers": ^7.22.20
+    "@babel/helper-skip-transparent-expression-wrappers": ^7.22.5
+    "@babel/helper-split-export-declaration": ^7.22.6
+    "@babel/plugin-syntax-decorators": ^7.23.3
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 9d69891e0c37c73a8fd5deafbf42bd82e727f96a779cf1e5e194d97f856e04e79d2d39081c48ffcea596e6ff95024016479d728772e692999ab5af74d4106f27
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-proposal-export-default-from@npm:^7.0.0":
   version: 7.23.3
   resolution: "@babel/plugin-proposal-export-default-from@npm:7.23.3"
@@ -561,6 +577,17 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 3e80814b5b6d4fe17826093918680a351c2d34398a914ce6e55d8083d72a9bdde4fbaf6a2dcea0e23a03de26dc2917ae3efd603d27099e2b98380345703bf948
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-syntax-decorators@npm:^7.23.3":
+  version: 7.23.3
+  resolution: "@babel/plugin-syntax-decorators@npm:7.23.3"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.22.5
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 07f6e488df0a061428e02629af9a1908b2e8abdcac2e5cfaa267be66dc30897be6e29df7c7f952d33f3679f9585ac9fcf6318f9c827790ab0b0928d5514305cd
   languageName: node
   linkType: hard
 
@@ -2847,9 +2874,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/base-utils@workspace:packages/base-utils"
   dependencies:
-    "@debank/common": ^0.3.47
     "@metamask/auto-changelog": ^3.4.3
-    "@rabby-wallet/rabby-api": ^0.7.0-alpha.3
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
@@ -2983,7 +3008,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.0-alpha.4, @rabby-wallet/rabby-api@npm:^0.7.0-alpha.3":
+"@rabby-wallet/rabby-api@npm:0.7.0-alpha.4":
   version: 0.7.0-alpha.4
   resolution: "@rabby-wallet/rabby-api@npm:0.7.0-alpha.4"
   dependencies:
@@ -4658,6 +4683,13 @@ __metadata:
   version: 4.2.4
   resolution: "@types/stylis@npm:4.2.4"
   checksum: 0734b4136192f97f4c8792ea41f1293091dfda53434ede08281fa42689d31f16cd1ad0e058de88c11980c18aae29e62a87027b235b98ab0cb237641b6ec44bcb
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^9.0.7":
+  version: 9.0.7
+  resolution: "@types/uuid@npm:9.0.7"
+  checksum: c7321194aeba9ea173efd1e721403bdf4e7ae6945f8f8cdbc87c791f4b505ccf3dbc4a8883d90b394ef13b7c2dc778045792b05dbb23b3c746f8ea347804d448
   languageName: node
   linkType: hard
 
@@ -14464,6 +14496,7 @@ __metadata:
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
     "@babel/core": ^7.20.0
+    "@babel/plugin-proposal-decorators": ^7.23.6
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
@@ -14498,6 +14531,7 @@ __metadata:
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
     "@types/react-test-renderer": ^18.0.0
+    "@types/uuid": ^9.0.7
     "@walletconnect/react-native-compat": ^2.10.6
     ahooks: ^3.7.8
     babel-jest: ^27.5.1
@@ -14557,6 +14591,7 @@ __metadata:
     svg2vectordrawable: ^2.9.1
     tailwindcss: 3.3.2
     tinycolor2: ^1.6.0
+    ts-toolbelt: ^9.6.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -17144,6 +17179,13 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: fde256c9073969e234526e2cfead42591b9a2aec5222bac154b0de2fa9e4ceb30efcd717ee8bc785a56f3a119bdd5aa27b333d9dbec94ed254bd26f8944c67ac
+  languageName: node
+  linkType: hard
+
+"ts-toolbelt@npm:^9.6.0":
+  version: 9.6.0
+  resolution: "ts-toolbelt@npm:9.6.0"
+  checksum: 9f35fd95d895a5d32ea9fd2e532a695b0bae6cbff6832b77292efa188a0ed1ed6e54f63f74a8920390f3d909a7a3adb20a144686372a8e78b420246a9bd3d58a
   languageName: node
   linkType: hard
 

@@ -1,7 +1,6 @@
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { isHexString } from 'ethereumjs-util';
-
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
     return false;
@@ -11,7 +10,6 @@ export const is1559Tx = (tx: Tx) => {
     isHexString(tx.maxPriorityFeePerGas || '')
   );
 };
-
 export const GASPRICE_RANGE = {
   [CHAINS_ENUM.ETH]: [0, 20000],
   [CHAINS_ENUM.BOBA]: [0, 20000],
@@ -35,7 +33,6 @@ export const GASPRICE_RANGE = {
   [CHAINS_ENUM.BTT]: [0, 20000000000],
   [CHAINS_ENUM.METIS]: [0, 50000],
 };
-
 export const validateGasPriceRange = (tx: Tx) => {
   const chain = Object.values(CHAINS).find(c => c.id === tx.chainId);
   if (!chain) {

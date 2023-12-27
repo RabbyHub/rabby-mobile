@@ -31,8 +31,6 @@
     "cov:report": "open ./coverage/index.html"
   },
   "dependencies": {
-    "@debank/common": "^0.3.47",
-    "@rabby-wallet/rabby-api": "^0.7.0-alpha.3",
     "ethereumjs-util": "^7.1.5"
   },
   "devDependencies": {

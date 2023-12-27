@@ -318,13 +318,13 @@ export class KeyringService extends RNEventEmitter {
       : Promise.resolve(newAccountArray);
   }
 
+  // eslint-disable-next-line jsdoc/require-returns
   /**
    * Add New Account
    *
    * Calls the `addAccounts` method on the given keyring,
    * and then saves those changes.
    * @param selectedKeyring
-   * @param options
    * @param options.onAddedAddress
    */
   addNewAccount(
@@ -350,6 +350,9 @@ export class KeyringService extends RNEventEmitter {
             typeof account === 'string'
               ? selectedKeyring.type
               : account?.realBrandName || account.brandName,
+          type: (typeof account === 'string'
+            ? selectedKeyring.type
+            : account?.type || account.type) as KeyringTypeName,
         }));
         _accounts = accounts;
 

@@ -8,7 +8,9 @@ import internalMethod from './internalMethod';
 
 const IGNORE_CHECK = ['wallet_importAddress'];
 
-export default async <T = void>(req: ProviderRequest): Promise<T> => {
+export default async function provider<T = void>(
+  req: ProviderRequest,
+): Promise<T> {
   const {
     data: { method },
   } = req;
@@ -27,4 +29,4 @@ export default async <T = void>(req: ProviderRequest): Promise<T> => {
   }
 
   return rpcFlow(req) as any;
-};
+}

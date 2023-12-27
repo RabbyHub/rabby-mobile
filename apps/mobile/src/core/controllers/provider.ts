@@ -34,14 +34,13 @@ import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';
 import { Account } from '../services/preference';
-import { txUtils } from '@rabby-wallet/base-utils';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
 import { findChainByEnum } from '@/utils/chain';
+import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
+import { eventBus, EVENTS } from '@/utils/events';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
-
-const { validateGasPriceRange, is1559Tx } = txUtils;
 
 const reportSignText = (params: {
   method: string;
@@ -669,9 +668,7 @@ class ProviderController extends BaseController {
       signedTransactionSuccess = true;
       // statsData.signed = true;
       // statsData.signedSuccess = true;
-      // eventBus.emit(EVENTS.broadcastToUI, {
-      //   method: EVENTS.TX_SUBMITTING,
-      // });
+      eventBus.emit(EVENTS.TX_SUBMITTING, {});
       try {
         validateGasPriceRange(approvalRes);
         let hash: string | undefined = undefined;
