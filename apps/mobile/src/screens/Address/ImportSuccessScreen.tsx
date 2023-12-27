@@ -1,6 +1,6 @@
 import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
-import { RootNames, ScreenColors } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { contactService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigationState } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
 import { useAccounts } from '@/hooks/account';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
@@ -76,13 +77,15 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer style={styles.rootContainer}>
-      <View style={styles.titleContainer}>
-        <ImportSuccessSVG style={styles.logo} />
-        <Text style={styles.title}>Added successfully</Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <AddressInput aliasName={aliasName} address={state.address} />
-      </View>
+      <KeyboardAwareScrollView>
+        <View style={styles.titleContainer}>
+          <ImportSuccessSVG style={styles.logo} />
+          <Text style={styles.title}>Added successfully</Text>
+        </View>
+        <View style={styles.inputContainer}>
+          <AddressInput aliasName={aliasName} address={state.address} />
+        </View>
+      </KeyboardAwareScrollView>
       <FooterButton title="Done" onPress={handleDone} />
     </RootScreenContainer>
   );

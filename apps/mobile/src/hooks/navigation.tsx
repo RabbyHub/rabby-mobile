@@ -8,11 +8,10 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { NavigationHeadersPresets } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/native';
 
-const IconBack = makeThemeIconFromCC(RcIconHeaderBack, 'neutral-body');
+const IconBack = RcIconHeaderBack;
 
 const currentRouteNameAtom = atom<string | undefined>(undefined);
 export function useCurrentRouteNameInAppStatusBar() {

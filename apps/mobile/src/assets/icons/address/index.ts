@@ -7,3 +7,4 @@ export { default as RcIconAddressDelete } from './delete.svg';
 export { default as RcIconAddressDetailEdit } from './edit.svg';
 
 export { default as RcIconAddressWhitelistCC } from './whitelist.svg';
+export { default as RcIconScannerCC } from './scanner-cc.svg';
