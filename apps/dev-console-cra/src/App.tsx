@@ -9,9 +9,7 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        Dev Console Page
-      </header>
+      <header className="App-header">Dev Console Page</header>
       <DebugPostMessage />
     </div>
   );

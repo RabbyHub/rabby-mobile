@@ -1,16 +1,17 @@
 /// <reference path="global.d.ts" />
 
-import "@rabby-wallet/rn-webview-bridge";
+import '@rabby-wallet/rn-webview-bridge';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import 'antd-mobile/es/global'
+import 'antd-mobile/es/global';
 
 import './index.less';
 import App from './App';
 // import reportWebVitals from './reportWebVitals';
 
+/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
   <React.StrictMode>

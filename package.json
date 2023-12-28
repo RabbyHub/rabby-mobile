@@ -18,6 +18,9 @@
   "lint-staged": {
     "apps/mobile/*.{js,jsx,ts,tsx}": [
       "yarn workspace rabby-mobile lint:commit:fix"
+    ],
+    "apps/dev-console-cra/*.{js,jsx,ts,tsx}": [
+      "yarn workspace dev-console-cra lint:commit:fix"
     ]
   },
   "scripts": {

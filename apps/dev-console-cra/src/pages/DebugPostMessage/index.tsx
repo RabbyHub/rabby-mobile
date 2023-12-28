@@ -15,12 +15,12 @@ export default function DebugPostMessage() {
       if (event.ports.length) {
         console.log('DebugPostMessage::event.ports', event.ports);
       }
-    }
+    };
     window.addEventListener('message', listener);
 
     return () => {
       window.removeEventListener('message', listener);
-    }
+    };
   }, []);
 
   return (
@@ -30,7 +30,7 @@ export default function DebugPostMessage() {
           <Grid.Item>
             <div>
               <Button
-                size='small'
+                size="small"
                 color="primary"
                 onClick={() => {
                   webviewInPagePostMessage();
@@ -40,10 +40,8 @@ export default function DebugPostMessage() {
               </Button>
             </div>
           </Grid.Item>
-          <Grid.Item>
-          </Grid.Item>
-          <Grid.Item>
-          </Grid.Item>
+          <Grid.Item></Grid.Item>
+          <Grid.Item></Grid.Item>
         </Grid>
       </DemoBlock>
     </>

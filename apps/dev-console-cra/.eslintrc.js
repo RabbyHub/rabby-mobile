@@ -30,6 +30,14 @@ module.exports = {
       'no-extra-parens': 0,
       'no-magic-numbers': 0,
       'no-unused-vars': 0,
+      '@typescript-eslint/no-unused-vars': [
+        'off', {
+          'vars': 'all',
+          'args': 'none',
+          "ignoreRestSiblings": true,
+          'varsIgnorePattern': "(React)"
+        }
+      ],
       semi: 0,
       'react/sort-comp': 0,
       'react/prop-types': 0,

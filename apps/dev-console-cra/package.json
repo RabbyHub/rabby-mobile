@@ -41,7 +41,10 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject"
+    "eject": "react-app-rewired eject",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
+    "lint:fix": "eslint --fix --ext .js,.jsx,.ts,.tsx src",
+    "lint:commit:fix": "eslint --quiet --fix --ext .js,.jsx,.ts,.tsx src"
   },
   "eslintConfig": {
     "extends": [

@@ -296,7 +296,10 @@ export default function DappWebViewControl({
             onError={errorLog}
             webviewDebuggingEnabled={__DEV__}
             onMessage={nativeEvent => {
-              console.log('WebView:: onMessage nativeEvent', nativeEvent);
+              console.log(
+                '[feat] WebView:: onMessage nativeEvent',
+                nativeEvent,
+              );
               webviewProps?.onMessage?.(nativeEvent);
 
               webviewRef.current?.injectJavaScript(

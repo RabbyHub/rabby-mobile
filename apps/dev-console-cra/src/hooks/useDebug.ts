@@ -1,15 +1,15 @@
 /// <reference path="../global.d.ts" />
 
 import VConsole from 'vconsole';
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from 'react';
 
 import { atom, useAtom } from 'jotai';
 
 const vConsoleAtom = atom<VConsole | null>(null);
 
 function setVConsoleSwithXY(x: number, y: number) {
-  localStorage.setItem('vConsole_switch_x', (window.innerWidth - x) + '');
-  localStorage.setItem('vConsole_switch_y', (window.innerHeight - y) + '');
+  localStorage.setItem('vConsole_switch_x', window.innerWidth - x + '');
+  localStorage.setItem('vConsole_switch_y', window.innerHeight - y + '');
 }
 
 /**
@@ -41,17 +41,17 @@ export function useVConsole(options: { isTop?: boolean } = {}) {
 
   return {
     vConsole,
-  }
+  };
 }
 
 export function useSendMessageFromRNWebView() {
   const sendHello = useCallback(() => {
-    if (!window.ReactNativeWebView) return ;
+    if (!window.ReactNativeWebView) return;
 
     window.ReactNativeWebView.postMessage('Hello from React');
   }, []);
 
   return {
     sendHello,
-  }
+  };
 }
