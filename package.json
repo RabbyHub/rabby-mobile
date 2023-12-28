@@ -11,12 +11,13 @@
   "workspaces": {
     "packages": [
       "apps/*",
-      "packages/*"
+      "packages/*",
+      "packages-forked/*"
     ]
   },
   "lint-staged": {
-    "apps/**/*.{js,jsx,ts,tsx}": [
-      "yarn workspace rabby-mobile lint:fix"
+    "apps/mobile/*.{js,jsx,ts,tsx}": [
+      "yarn workspace rabby-mobile lint:commit:fix"
     ]
   },
   "scripts": {
@@ -46,8 +47,7 @@
     "pre-push": "yarn lint"
   },
   "dependencies": {
-    "@babel/runtime": "^7.20.0",
-    "redux": "^5.0.0"
+    "@babel/runtime": "^7.20.0"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.3.1",

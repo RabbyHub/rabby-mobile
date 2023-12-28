@@ -11,6 +11,7 @@
     "devtools": "react-devtools",
     "doctor": "react-native doctor",
     "ios": "react-native run-ios",
+    "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
     "restart": "yarn start --reset-cache",
@@ -19,7 +20,7 @@
     "test": "jest"
   },
   "lint-staged": {
-    "*.{,js,jsx,ts,tsx}": "eslint --fix",
+    "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
     "*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
@@ -66,6 +67,7 @@
     "react-native-crypto-js": "^1.0.0",
     "react-native-dotenv": "^3.4.9",
     "react-native-fast-image": "^8.6.3",
+    "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.14.0",
     "react-native-get-random-values": "^1.10.0",
     "react-native-linear-gradient": "^2.8.3",

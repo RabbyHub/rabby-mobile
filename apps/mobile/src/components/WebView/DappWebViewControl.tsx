@@ -30,9 +30,21 @@ import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
+import { JS_POST_MESSAGE_TO_PROVIDER } from '../../../../../packages/rn-webview-bridge/src/browserScripts';
+import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
+}
+
+function convertToWebviewUrl(dappId: string) {
+  if (__DEV__) {
+    if (dappId.startsWith('http://')) {
+      return dappId;
+    }
+  }
+
+  return stringUtils.ensurePrefix(dappId, 'https://');
 }
 
 const PRESS_OPACITY = 0.3;
@@ -143,6 +155,7 @@ export default function DappWebViewControl({
   bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
   headerLeft,
   bottomSheetContent,
+  webviewProps,
 }: {
   dappId: string;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
@@ -152,6 +165,7 @@ export default function DappWebViewControl({
   bottomSheetContent?:
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
+  webviewProps?: React.ComponentProps<typeof WebView>;
 }) {
   const colors = useThemeColors();
 
@@ -163,11 +177,13 @@ export default function DappWebViewControl({
     webviewActions,
   } = useWebViewControl();
 
+  const { entryScriptWeb3 } = useLoadEntryScriptWeb3({ isTop: true });
+
   const { subTitle } = useMemo(() => {
     return {
       subTitle: latestUrl
         ? urlUtils.canoicalizeDappUrl(latestUrl).httpOrigin
-        : stringUtils.ensurePrefix(dappId, 'https://'),
+        : convertToWebviewUrl(dappId),
     };
   }, [dappId, latestUrl]);
 
@@ -266,15 +282,35 @@ export default function DappWebViewControl({
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
-        <WebView
-          style={[styles.dappWebView]}
-          ref={webviewRef}
-          source={{
-            uri: stringUtils.ensurePrefix(dappId, 'https://'),
-          }}
-          onNavigationStateChange={webviewActions.onNavigationStateChange}
-          onError={errorLog}
-        />
+        {entryScriptWeb3 && (
+          <WebView
+            {...webviewProps}
+            style={[styles.dappWebView, webviewProps?.style]}
+            ref={webviewRef}
+            source={{
+              uri: convertToWebviewUrl(dappId),
+            }}
+            injectedJavaScriptBeforeContentLoaded={entryScriptWeb3}
+            injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+            onNavigationStateChange={webviewActions.onNavigationStateChange}
+            onError={errorLog}
+            webviewDebuggingEnabled={__DEV__}
+            onMessage={nativeEvent => {
+              console.log('WebView:: onMessage nativeEvent', nativeEvent);
+              webviewProps?.onMessage?.(nativeEvent);
+
+              webviewRef.current?.injectJavaScript(
+                JS_POST_MESSAGE_TO_PROVIDER(
+                  JSON.stringify({
+                    type: 'hello',
+                    data: 'I have received your message!',
+                  }),
+                  '*',
+                ),
+              );
+            }}
+          />
+        )}
       </View>
 
       <BottomSheetMoreLayout>

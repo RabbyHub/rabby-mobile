@@ -14,6 +14,9 @@
       "path": "./packages/keyring-utils/tsconfig.json"
     },
     {
+      "path": "./packages/rn-webview-bridge/tsconfig.json"
+    },
+    {
       "path": "./packages/persist-store/tsconfig.json"
     },
     {
@@ -24,6 +27,15 @@
     },
     {
       "path": "./packages/service-dapp/tsconfig.json"
+    },
+    {
+      "path": "./packages-forked/object-multiplex/tsconfig.json"
+    },
+    {
+      "path": "./packages-forked/post-message-stream/tsconfig.json"
+    },
+    {
+      "path": "./packages-forked/providers/tsconfig.json"
     }
   ],
   "files": [],
