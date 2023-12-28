@@ -7,6 +7,8 @@ export const DefiScreen = () => {
   const { currentAccount } = useCurrentAccount();
   const { portfolios, hasPortfolios, isPortfoliosLoading } = useQueryProjects(
     currentAccount!.address,
+    false,
+    true,
   );
 
   return (

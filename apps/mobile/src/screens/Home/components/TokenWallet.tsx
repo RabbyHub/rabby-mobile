@@ -13,8 +13,10 @@ import { AbstractPortfolioToken } from '../types';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { useExpandList } from '@/hooks/useExpandList';
-import { SMALL_TOKEN_ID, mergeSmallTokens } from '../utils/walletMerge';
+import {
+  SMALL_TOKEN_ID,
+  useMergeSmallTokens,
+} from '../hooks/useMergeSmallTokens';
 import { formatAmount } from '@/utils/number';
 import {
   BottomSheetBackdrop,
@@ -32,7 +34,6 @@ const ITEM_HEIGHT = 68;
 type TokenWalletProps = {
   tokens?: AbstractPortfolioToken[];
   showHistory?: boolean;
-  tokenNetWorth?: number;
   isTokensLoading?: boolean;
   hasTokens?: boolean;
 };
@@ -93,7 +94,7 @@ const TokenRow = memo(
             </Text>
             {data._priceStr ? (
               <Text style={styles.tokenRowPrice} numberOfLines={1}>
-                ${data._priceStr}
+                {data._priceStr}
               </Text>
             ) : null}
           </View>
@@ -114,7 +115,6 @@ const TokenRow = memo(
 
 export const TokenWallet = ({
   tokens,
-  tokenNetWorth,
   showHistory,
   isTokensLoading,
   hasTokens,
@@ -132,18 +132,7 @@ export const TokenWallet = ({
     tokenDetailModalRef.current?.present();
   }, []);
 
-  const {
-    hasExpandSwitch: hasTokensCentiSwitch,
-    thresholdIndex: tokensThresholdIdx,
-  } = useExpandList(tokens, tokenNetWorth);
-
-  const combinedTokens = useMemo(() => {
-    return mergeSmallTokens(tokens, hasTokensCentiSwitch, tokensThresholdIdx);
-  }, [tokens, hasTokensCentiSwitch, tokensThresholdIdx]);
-
-  const restTokens = useMemo(() => {
-    return tokens?.slice(tokensThresholdIdx);
-  }, [tokens, tokensThresholdIdx]);
+  const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);
 
   const renderItem = useCallback(
     ({ item }: { item: AbstractPortfolioToken }) => {
@@ -198,7 +187,7 @@ export const TokenWallet = ({
         ListHeaderComponent={<View style={{ height: 12 }} />}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        data={combinedTokens}
+        data={mainTokens}
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
@@ -206,11 +195,11 @@ export const TokenWallet = ({
       <AppBottomSheetModal
         backdropComponent={renderBackdrop}
         ref={smallTokenModalRef}
-        snapPoints={['50%', '100%']}>
+        snapPoints={['50%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          data={restTokens}
+          data={smallTokens}
           style={styles.scrollView}
         />
       </AppBottomSheetModal>
