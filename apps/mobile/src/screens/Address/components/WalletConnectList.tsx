@@ -2,7 +2,7 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisWalletConnect } from '@/core/apis';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
-import { openWallet, WalletService } from '@/hooks/walletconnect/util';
+import { openWallet } from '@/hooks/walletconnect/util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { navigate } from '@/utils/navigation';
 import React from 'react';
@@ -14,6 +14,7 @@ import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnec
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
 import { toast } from '@/components/Toast';
+import { WalletInfo } from '@/utils/walletInfo';
 
 export const WalletSVG = makeThemeIconFromCC(WalletCC, {
   onLight: ThemeColors.light['neutral-body'],
@@ -30,9 +31,9 @@ export const WalletConnectList = () => {
   const { isLoading, validServices } = useValidWalletServices();
   const [uriLoading, setUriLoading] = React.useState(false);
   const deepLinkRef = React.useRef<string>('');
-  const handlePress = React.useCallback(async (service: WalletService) => {
+  const handlePress = React.useCallback(async (service: WalletInfo) => {
     setUriLoading(true);
-    const uri = await apisWalletConnect.getUri(service.walletInfo.brand);
+    const uri = await apisWalletConnect.getUri(service.brand);
     if (uri) {
       openWallet(service, uri);
       deepLinkRef.current = uri;
@@ -81,9 +82,9 @@ export const WalletConnectList = () => {
         <WalletItem
           disable={uriLoading}
           style={styles.walletItem}
-          key={service.name}
-          title={service.name}
-          Icon={service.walletInfo.icon}
+          key={service.displayName}
+          title={service.displayName}
+          Icon={service.icon}
           onPress={() => handlePress(service)}
         />
       ))}

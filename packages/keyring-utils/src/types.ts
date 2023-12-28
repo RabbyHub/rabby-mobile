@@ -116,5 +116,6 @@ export const BRAND_ALIAS_TYPE_TEXT = {
   [WALLET_NAME.Bitget]: 'Bitget',
   [WALLET_NAME.MathWallet]: 'MathWallet',
   [WALLET_NAME.TRUSTWALLET]: 'Trust Wallet',
-  [WALLET_NAME.Rainbow]: 'TruRainbow',
+  [WALLET_NAME.Rainbow]: 'Rainbow',
+  [WALLET_NAME.UnknownWallet]: 'UnknownWallet',
 };
