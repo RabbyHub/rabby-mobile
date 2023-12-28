@@ -42,13 +42,16 @@ export const ImportSuccessScreen = () => {
         },
         inputContainer: {
           backgroundColor: colors['neutral-bg-2'],
-          height: '100%',
           paddingVertical: 24,
           paddingHorizontal: 20,
         },
         logo: {
           width: 240,
           height: 240,
+        },
+        keyboardView: {
+          height: '100%',
+          backgroundColor: colors['neutral-bg-2'],
         },
       }),
 
@@ -77,7 +80,7 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer style={styles.rootContainer}>
-      <KeyboardAwareScrollView>
+      <KeyboardAwareScrollView style={styles.keyboardView}>
         <View style={styles.titleContainer}>
           <ImportSuccessSVG style={styles.logo} />
           <Text style={styles.title}>Added successfully</Text>

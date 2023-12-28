@@ -97,7 +97,7 @@ export const ImportWatchAddressScreen = () => {
 
   return (
     <RootScreenContainer style={styles.rootContainer}>
-      <KeyboardAwareScrollView>
+      <KeyboardAwareScrollView style={styles.keyboardView}>
         <View style={styles.titleContainer}>
           <WatchLogoSVG style={styles.logo} />
           <Text style={styles.title}>Add Contacts</Text>
@@ -110,10 +110,10 @@ export const ImportWatchAddressScreen = () => {
             onBlur={() => {
               setHasBlur(true);
             }}
-            onChange={() => {
+            onChange={e => {
+              handleSubmit(e);
               setError(undefined);
             }}
-            onSubmitEditing={handleSubmit}
             style={[
               styles.input,
               {
@@ -171,10 +171,12 @@ const getStyles = function (colors: AppColorsVariants) {
     },
     inputContainer: {
       backgroundColor: colors['neutral-bg-2'],
-      height: '100%',
       paddingVertical: 24,
       paddingHorizontal: 20,
-      marginBottom: 300,
+    },
+    keyboardView: {
+      height: '100%',
+      backgroundColor: colors['neutral-bg-2'],
     },
     logo: {
       width: 240,

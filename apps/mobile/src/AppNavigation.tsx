@@ -61,7 +61,7 @@ const TransactionStack = createNativeStackNavigator();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
-  animation: 'none',
+  animation: 'slide_from_right',
   headerShown: false,
 } as const;
 
