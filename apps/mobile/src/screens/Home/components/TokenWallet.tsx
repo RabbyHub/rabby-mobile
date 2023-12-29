@@ -102,9 +102,7 @@ const TokenRow = memo(
 
         <View style={styles.tokenRowUsdValueWrap}>
           {data._amountStr ? (
-            <Text style={styles.tokenRowAmount}>
-              {formatAmount(data._amountStr ?? 0)}
-            </Text>
+            <Text style={styles.tokenRowAmount}>{data._amountStr}</Text>
           ) : null}
           <Text style={styles.tokenRowUsdValue}>{data._usdValueStr}</Text>
         </View>
