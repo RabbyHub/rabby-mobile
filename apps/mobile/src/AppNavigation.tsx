@@ -199,7 +199,7 @@ export default function AppNavigation({
         <RootStack.Navigator
           screenOptions={{
             ...RootStackOptions,
-            navigationBarColor: colors['neutral-bg-1'],
+            navigationBarColor: 'transparent',
           }}
           initialRouteName={'Root'}>
           <RootStack.Screen
