@@ -16,12 +16,10 @@ import { useCurve } from '@/hooks/useCurve';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useNavigation } from '@react-navigation/native';
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 export const HomeTopArea = () => {
-  const navigation = useNavigation();
   const { currentAccount } = useCurrentAccount();
   const { balance } = useCurrentBalance(currentAccount?.address, true, false);
   const { result: curveData } = useCurve(currentAccount?.address, 0, balance);
@@ -84,35 +82,40 @@ export const HomeTopArea = () => {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.textBox}>
-          <Text style={styles.usdText}>
-            {usd}
-            <Text
-              style={StyleSheet.compose(
-                styles.percent,
-                isDecrease && styles.decrease,
-              )}>
-              {' '}
-              {percent}
+      <ImageBackground
+        source={require('@/assets/icons/home/bg.png')}
+        resizeMode="contain"
+        style={styles.image}>
+        <View style={styles.container}>
+          <View style={styles.textBox}>
+            <Text style={styles.usdText}>
+              {usd}
+              <Text
+                style={StyleSheet.compose(
+                  styles.percent,
+                  isDecrease && styles.decrease,
+                )}>
+                {' '}
+                {percent}
+              </Text>
             </Text>
-          </Text>
-        </View>
+          </View>
 
-        <View style={styles.group}>
-          {actions.map(item => (
-            <TouchableView
-              style={styles.action}
-              onPress={item.onPress}
-              key={item.title}>
-              <View style={styles.actionIconWrapper}>
-                <item.Icon style={styles.actionIcon} />
-              </View>
-              <Text style={styles.actionText}>{item.title}</Text>
-            </TouchableView>
-          ))}
+          <View style={styles.group}>
+            {actions.map(item => (
+              <TouchableView
+                style={styles.action}
+                onPress={item.onPress}
+                key={item.title}>
+                <View style={styles.actionIconWrapper}>
+                  <item.Icon style={styles.actionIcon} />
+                </View>
+                <Text style={styles.actionText}>{item.title}</Text>
+              </TouchableView>
+            ))}
+          </View>
         </View>
-      </View>
+      </ImageBackground>
 
       <BSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
         <BottomSheetView style={styles.list}>
@@ -134,7 +137,10 @@ export const HomeTopArea = () => {
 const getStyles = createGetStyles(colors => ({
   container: {
     padding: 20,
-    backgroundColor: colors['neutral-bg-1'],
+  },
+  image: {
+    flex: 1,
+    justifyContent: 'center',
   },
   textBox: {
     flexDirection: 'row',
