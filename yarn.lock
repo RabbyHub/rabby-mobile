@@ -14085,7 +14085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.10, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.0, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.10, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.0, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -14344,6 +14344,7 @@ __metadata:
     react-native-splash-screen: ^3.3.0
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
+    react-native-switch: ^1.5.1
     react-native-vector-icons: ^10.0.2
     react-native-video: ^5.2.1
     react-native-vision-camera: ^3.6.17
@@ -14780,6 +14781,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: ed94adac9bf3144c5dcbf37a2956ab672d402f11c0ed75cda247d1d9136ce8977f4d01bcfc813ba576bd61ece420d66306c148057e2552828aa8fe9bad173d46
+  languageName: node
+  linkType: hard
+
+"react-native-switch@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "react-native-switch@npm:1.5.1"
+  dependencies:
+    prop-types: ^15.6.0
+  peerDependencies:
+    react-native: ">=0.29"
+  checksum: 0ee7af977fac9fce5a5eac1981be9db80c527d0499c2149a40d848811bfd489048864a7bcc34f537f1dc011ef778e5495bd5f96d678c71cd8215616f0403fc29
   languageName: node
   linkType: hard
 

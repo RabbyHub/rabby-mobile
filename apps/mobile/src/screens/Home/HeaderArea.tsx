@@ -15,6 +15,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { Text } from '@/components';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
+import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export default function HomeHeaderArea() {
   const colors = useThemeColors();
@@ -80,7 +82,16 @@ export default function HomeHeaderArea() {
           style={styles.touchBox}
           onPress={handlePressCurrentAccount}>
           <View style={styles.accountBox}>
-            <WalletIcon style={styles.walletIcon} />
+            <View className="relative">
+              <WalletIcon style={styles.walletIcon} />
+              {currentAccount && (
+                <CommonSignal
+                  address={currentAccount?.address}
+                  brandName={currentAccount?.brandName}
+                  type={currentAccount?.type as unknown as KEYRING_TYPE}
+                />
+              )}
+            </View>
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
