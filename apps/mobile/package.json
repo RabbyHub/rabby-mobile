@@ -82,6 +82,7 @@
     "react-native-size-matters": "^0.4.2",
     "react-native-splash-screen": "^3.3.0",
     "react-native-svg": "^14.0.0",
+    "react-native-switch": "^1.5.1",
     "react-native-vector-icons": "^10.0.2",
     "react-native-video": "^5.2.1",
     "react-native-vision-camera": "^3.6.17",

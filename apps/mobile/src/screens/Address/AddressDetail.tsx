@@ -1,15 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import {
-  Dimensions,
-  StyleSheet,
-  Switch,
-  TextInput,
-  TouchableOpacity,
-  View,
-  Platform,
-} from 'react-native';
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconCopyCC, RcIconRightCC } from '@/assets/icons/common';
@@ -17,11 +9,12 @@ import { AppColorsVariants } from '@/constant/theme';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import {
   KeyringAccountWithAlias,
+  useAccounts,
   usePinAddresses,
   useRemoveAccount,
 } from '@/hooks/account';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button, Text } from '@/components';
+import { AppSwitch, Button, Text } from '@/components';
 import { RcIconAddressDetailEdit } from '@/assets/icons/address';
 import QRCode from 'react-native-qrcode-svg';
 import {
@@ -39,9 +32,12 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useAlias } from '@/hooks/alias';
 import { splitNumberByStep } from '@/utils/number';
 import { getWalletIcon } from '@/utils/walletInfo';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
-const BottomInput =
-  Platform.OS === 'android' ? TextInput : BottomSheetTextInput;
+import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+
+const BottomInput = BottomSheetTextInput;
 
 export type AddressDetailScreenProps = NativeStackScreenProps<
   {
@@ -57,17 +53,23 @@ export type AddressDetailScreenProps = NativeStackScreenProps<
 
 function AddressDetailScreen(props: AddressDetailScreenProps): JSX.Element {
   const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
   const { address, type, brandName } = props.route.params;
+  const { accounts } = useAccounts();
+  const account = useMemo(
+    () =>
+      accounts.find(
+        e =>
+          addressUtils.isSameAddress(e.address, address) &&
+          e.brandName === brandName &&
+          e.type === type,
+      ),
+    [accounts, address, type, brandName],
+  );
 
   return (
     <NormalScreenContainer>
       <ScrollView style={{ backgroundColor: colors['neutral-bg-2'] }}>
-        <AddressInfo
-          account={
-            { address, type, brandName } as unknown as KeyringAccountWithAlias
-          }
-        />
+        {account && <AddressInfo account={account} />}
       </ScrollView>
     </NormalScreenContainer>
   );
@@ -152,10 +154,6 @@ const AddressInfo = (props: AddressInfoProps) => {
     deleteBottomSheetModalRef.current?.close();
   }, []);
 
-  const handleCodeSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
-  }, []);
-
   const removeAccount = useRemoveAccount();
 
   const handleDelete = useCallback(async () => {
@@ -166,8 +164,6 @@ const AddressInfo = (props: AddressInfoProps) => {
 
   const changeAddressNote = useCallback(() => {
     setAliasName(aliasPendingName);
-    console.log('aliasPendingName', aliasPendingName);
-
     handleCloseInputModalPress();
   }, [aliasPendingName, handleCloseInputModalPress, setAliasName]);
 
@@ -183,7 +179,7 @@ const AddressInfo = (props: AddressInfoProps) => {
   );
 
   return (
-    <View style={{ gap: 20 }}>
+    <View style={{ gap: 20, paddingHorizontal: 20, paddingTop: 20 }}>
       <View style={styles.view}>
         <View
           style={[
@@ -236,29 +232,46 @@ const AddressInfo = (props: AddressInfoProps) => {
             </TouchableItem>
           </View>
         </View>
-
-        <View style={styles.itemView}>
-          <Text style={styles.labelText}>Source</Text>
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            paddingVertical: 20,
+            gap: 10,
+          }}>
           <View
-            style={StyleSheet.compose(styles.valueView, {
-              alignItems: 'center',
-            })}>
-            <WalletIcon style={{ width: 20, height: 20, marginRight: 6 }} />
-            <Text
-              style={{
-                fontSize: 16,
-                color: colors['neutral-body'],
-              }}>
-              {account.brandName}
-            </Text>
+            style={[styles.itemView, styles.noBOrderBottom, { minHeight: 0 }]}>
+            <Text style={styles.labelText}>Source</Text>
+            <View
+              style={StyleSheet.compose(styles.valueView, {
+                alignItems: 'center',
+              })}>
+              <WalletIcon style={{ width: 20, height: 20, marginRight: 6 }} />
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: colors['neutral-body'],
+                }}>
+                {account.brandName}
+              </Text>
+            </View>
           </View>
+          {account.type === KEYRING_TYPE.WalletConnectKeyring && (
+            <View>
+              <SessionStatusBar
+                address={account.address}
+                brandName={account.brandName}
+                bgColor={colors['neutral-card2']}
+                textColor={colors['neutral-title-1']}
+              />
+            </View>
+          )}
         </View>
 
-        <BottomSheetModal
+        <AppBottomSheetModal
           backdropComponent={renderBackdrop}
           ref={codeBottomSheetModalRef}
-          snapPoints={[407]}
-          onChange={handleCodeSheetChanges}>
+          snapPoints={[407]}>
           <BottomSheetView
             style={{
               paddingHorizontal: 45,
@@ -286,13 +299,12 @@ const AddressInfo = (props: AddressInfoProps) => {
               <QRCode value={account.address} size={235} />
             </View>
           </BottomSheetView>
-        </BottomSheetModal>
+        </AppBottomSheetModal>
 
-        <BottomSheetModal
+        <AppBottomSheetModal
           backdropComponent={renderBackdrop}
           ref={inputNameBottomSheetModalRef}
-          snapPoints={[300]}
-          onChange={handleCodeSheetChanges}>
+          snapPoints={[300]}>
           <BottomSheetView
             style={{
               paddingVertical: 20,
@@ -349,48 +361,25 @@ const AddressInfo = (props: AddressInfoProps) => {
               <Button
                 onPress={handleCloseInputModalPress}
                 title={'Cancel'}
-                containerStyle={{
-                  flexGrow: 1,
-                  display: 'flex',
-                  height: 52,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderBlockColor: colors['blue-default'],
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderRadius: 8,
-                }}
-                titleStyle={{
-                  color: colors['blue-default'],
-                }}>
+                containerStyle={styles.btnCancelContainer}
+                titleStyle={styles.btnCancelTitle}>
                 Cancel
               </Button>
               <Button
                 title={'Confirm'}
-                titleStyle={{
-                  color: colors['neutral-title-2'],
-                  backgroundColor: colors['blue-default'],
-                }}
+                titleStyle={styles.btnConfirmTitle}
                 onPress={changeAddressNote}
-                containerStyle={{
-                  flexGrow: 1,
-                  display: 'flex',
-                  height: 52,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: colors['blue-default'],
-                  borderRadius: 8,
-                }}>
+                containerStyle={styles.btnConfirmContainer}>
                 Confirm
               </Button>
             </View>
           </BottomSheetView>
-        </BottomSheetModal>
+        </AppBottomSheetModal>
 
-        <BottomSheetModal
+        <AppBottomSheetModal
           backdropComponent={renderBackdrop}
           ref={deleteBottomSheetModalRef}
-          snapPoints={[300]}
-          onChange={handleCodeSheetChanges}>
+          snapPoints={[300]}>
           <BottomSheetView
             style={{
               paddingVertical: 20,
@@ -412,7 +401,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                   color: colors['neutral-title-1'],
                   textAlign: 'center',
                 }}>
-                Delete address{' '}
+                Delete Address{' '}
               </Text>
               <Text
                 style={{
@@ -442,73 +431,37 @@ const AddressInfo = (props: AddressInfoProps) => {
               <Button
                 onPress={handleCloseDeleteModalPress}
                 title={'Cancel'}
-                containerStyle={{
-                  flexGrow: 1,
-                  display: 'flex',
-                  height: 52,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderColor: colors['blue-default'],
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderRadius: 8,
-                }}
-                titleStyle={{
-                  color: colors['blue-default'],
-                }}>
+                containerStyle={styles.btnCancelContainer}
+                titleStyle={styles.btnCancelTitle}>
                 Cancel
               </Button>
               <Button
                 onPress={handleDelete}
                 title={'Confirm'}
-                titleStyle={{
-                  color: colors['neutral-title-2'],
-                  backgroundColor: colors['blue-default'],
-                }}
-                containerStyle={{
-                  flexGrow: 1,
-                  display: 'flex',
-                  height: 52,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: colors['blue-default'],
-                  borderRadius: 8,
-                }}>
+                titleStyle={styles.btnConfirmTitle}
+                containerStyle={styles.btnConfirmContainer}>
                 Confirm
               </Button>
             </View>
           </BottomSheetView>
-        </BottomSheetModal>
+        </AppBottomSheetModal>
       </View>
       <View style={styles.view}>
-        <View style={styles.itemView}>
+        <View
+          style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}>
           <Text style={styles.labelText}>Add to Whitelist</Text>
           <View style={styles.valueView}>
-            <Switch
-              trackColor={{
-                false: colors['neutral-line'],
-                true: colors['blue-default'],
-              }}
-              thumbColor={colors['neutral-title-2']}
-              onValueChange={setInWhitelist}
-              value={inWhiteList}
-            />
+            <AppSwitch onValueChange={setInWhitelist} value={inWhiteList} />
           </View>
         </View>
       </View>
 
       <View style={styles.view}>
-        <View style={styles.itemView}>
+        <View
+          style={StyleSheet.compose(styles.itemView, styles.noBOrderBottom)}>
           <Text style={styles.labelText}>Pin in list</Text>
           <View style={styles.valueView}>
-            <Switch
-              trackColor={{
-                false: colors['neutral-line'],
-                true: colors['blue-default'],
-              }}
-              thumbColor={colors['neutral-title-2']}
-              onValueChange={setPinned}
-              value={pinned}
-            />
+            <AppSwitch onValueChange={setPinned} value={pinned} />
           </View>
         </View>
       </View>
@@ -516,16 +469,15 @@ const AddressInfo = (props: AddressInfoProps) => {
       <TouchableOpacity
         style={styles.view}
         onPress={handlePresentDeleteModalPress}>
-        <View style={styles.itemView}>
-          <Text style={[styles.labelText, { color: colors['red-default'] }]}>
+        <View
+          style={StyleSheet.compose(styles.itemView, styles.noBOrderBottom)}>
+          <Text
+            style={StyleSheet.flatten([styles.labelText, styles.deleteColor])}>
             Delete Address{' '}
           </Text>
           <View style={styles.valueView}>
             <RcIconRightCC
-              style={{
-                width: 20,
-                height: 20,
-              }}
+              style={styles.rightIcon}
               color={colors['neutral-foot']}
             />
           </View>
@@ -552,18 +504,24 @@ const getStyles = (colors: AppColorsVariants) =>
       width: '100%',
       display: 'flex',
       flexDirection: 'row',
-      // flexWrap: 'wrap',
       justifyContent: 'space-between',
       alignContent: 'center',
       alignItems: 'center',
-      // paddingVertical: 14,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors['neutral-line'],
+    },
+    deleteColor: {
+      color: colors['red-default'],
+    },
+    noBOrderBottom: {
+      borderBottomWidth: 0,
     },
     valueView: {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 2,
     },
     labelText: {
       fontSize: 16,
@@ -596,6 +554,36 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 12,
       fontStyle: 'normal',
       fontWeight: '500',
+    },
+    rightIcon: {
+      width: 20,
+      height: 20,
+    },
+    btnCancelContainer: {
+      flexGrow: 1,
+      display: 'flex',
+      height: 52,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderColor: colors['blue-default'],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 8,
+    },
+    btnCancelTitle: {
+      color: colors['blue-default'],
+    },
+    btnConfirmContainer: {
+      flexGrow: 1,
+      display: 'flex',
+      height: 52,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors['blue-default'],
+      borderRadius: 8,
+    },
+    btnConfirmTitle: {
+      color: colors['neutral-title-2'],
+      backgroundColor: colors['blue-default'],
     },
   });
 

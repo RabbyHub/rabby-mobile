@@ -30,19 +30,24 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { splitNumberByStep } from '@/utils/number';
 import { navigate } from '@/utils/navigation';
+import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
+import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
+import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
   isCurrentAddress?: boolean;
 }
 export const AddressItem = (props: AddressItemProps) => {
+  const { wallet, isCurrentAddress } = props;
   const { isAddrOnWhitelist } = useWhitelist();
   const { switchAccount } = useCurrentAccount();
 
-  const { wallet, isCurrentAddress } = props;
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
   const navigation = useNavigation<any>();
+
+  const isWalletConnect = wallet?.type === KEYRING_TYPE.WalletConnectKeyring;
 
   const walletName = wallet?.aliasName || wallet?.brandName;
   const walletNameIndex = '';
@@ -94,7 +99,6 @@ export const AddressItem = (props: AddressItemProps) => {
     } else {
       //@ts-ignore
       switchAccount(wallet);
-      // TODO:switch account
       navigate(RootNames.Home);
     }
   }, [isCurrentAddress, gotoAddressDetail, switchAccount, wallet]);
@@ -178,10 +182,27 @@ export const AddressItem = (props: AddressItemProps) => {
         onPress={handleSwitch}
         style={StyleSheet.compose(
           styles.box,
-          isCurrentAddress && styles.currentAddressView,
+          StyleSheet.compose(
+            isCurrentAddress && styles.currentAddressView,
+            isCurrentAddress && isWalletConnect && styles.isWalletConnect,
+          ),
         )}>
-        <View style={styles.innerView}>
-          <WalletIcon style={styles.walletLogo} />
+        <View
+          style={StyleSheet.compose(
+            styles.innerView,
+            isCurrentAddress &&
+              isWalletConnect && {
+                flexShrink: 0,
+              },
+          )}>
+          <View className="relative mr-[12px]">
+            <WalletIcon style={styles.walletLogo} />
+            <CommonSignal
+              address={wallet.address}
+              brandName={wallet.brandName}
+              type={wallet.type}
+            />
+          </View>
           <View>
             <View>
               <View style={styles.titleView}>
@@ -278,6 +299,13 @@ export const AddressItem = (props: AddressItemProps) => {
             </TouchableOpacity>
           )}
         </View>
+
+        {isCurrentAddress && isWalletConnect && (
+          <SessionStatusBar
+            address={wallet.address}
+            brandName={wallet.brandName}
+          />
+        )}
       </TouchableOpacity>
     </Swipeable>
   );
@@ -295,9 +323,9 @@ const getStyles = (colors: AppColorsVariants) => {
       paddingRight: 16,
       minHeight: 64,
       backgroundColor: colors['neutral-card-1'],
+      justifyContent: 'center',
     },
     innerView: {
-      flex: 1,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
@@ -306,6 +334,10 @@ const getStyles = (colors: AppColorsVariants) => {
     currentAddressView: {
       backgroundColor: colors['blue-default'],
     },
+    isWalletConnect: {
+      height: 118,
+      gap: 16,
+    },
     currentAddressText: {
       color: colors['neutral-title-2'],
     },
@@ -313,7 +345,6 @@ const getStyles = (colors: AppColorsVariants) => {
       width: 32,
       height: 32,
       borderRadius: 32,
-      marginRight: 12,
     },
     copyIcon: {
       marginLeft: 4,

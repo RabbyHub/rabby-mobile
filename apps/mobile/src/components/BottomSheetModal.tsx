@@ -5,6 +5,7 @@ import {
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback } from 'react';
+import { AppBottomSheetModal } from './customized/BottomSheet';
 
 export const BSheetModal = forwardRef<BottomSheetModal, BottomSheetModalProps>(
   (props, ref) => {
@@ -15,9 +16,9 @@ export const BSheetModal = forwardRef<BottomSheetModal, BottomSheetModalProps>(
       [],
     );
     return (
-      <BottomSheetModal ref={ref} backdropComponent={Backdrop} {...props}>
+      <AppBottomSheetModal ref={ref} backdropComponent={Backdrop} {...props}>
         {props.children}
-      </BottomSheetModal>
+      </AppBottomSheetModal>
     );
   },
 );
