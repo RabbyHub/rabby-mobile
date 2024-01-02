@@ -6,12 +6,11 @@ import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { useNavigation } from '@react-navigation/native';
-import { Button } from '@rneui/themed';
 import { useRequest } from 'ahooks';
 import { StyleSheet, View } from 'react-native';
 import { FavoriteDappCardList } from './components/FavoriteDappCardList';
-import { openapiService } from '@/core/services';
 import { openapi } from '@/core/request';
+import { FooterButton } from '@/components/FooterButton/FooterButton';
 
 export function FavoritePopularDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -80,14 +79,11 @@ export function FavoritePopularDappsScreen(): JSX.Element {
           }}
         />
       </View>
-      <View style={styles.footer}>
-        <Button
-          onPress={handleFavorite}
-          buttonStyle={styles.buttonStyle}
-          titleStyle={styles.buttonTitleStyle}
-          title={'Add to Favoritess'}
-        />
-      </View>
+      <FooterButton
+        width={248}
+        onPress={handleFavorite}
+        title={'Add to Favorites'}
+      />
     </NormalScreenContainer>
   );
 }
@@ -102,35 +98,5 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     container: {
       flex: 1,
       paddingTop: 10,
-    },
-    footer: {
-      // position: 'absolute',
-      // bottom: 0,
-      // left: 0,
-      // right: 0,
-      flexShrink: 0,
-      backgroundColor: '#FFFFFF',
-      padding: 20,
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderTopColor: colors['neutral-line'],
-      borderTopWidth: 0.5,
-      borderTopStyle: 'solid',
-    },
-
-    buttonStyle: {
-      backgroundColor: colors['blue-default'],
-      borderRadius: 8,
-      width: 248,
-      height: 52,
-      boxShadow: '0px 8px 16px 0px rgba(112, 132, 255, 0.25)',
-    },
-
-    buttonTitleStyle: {
-      color: colors['neutral-title-2'],
-      fontWeight: '600',
-      fontSize: 16,
-      lineHeight: 19,
     },
   });

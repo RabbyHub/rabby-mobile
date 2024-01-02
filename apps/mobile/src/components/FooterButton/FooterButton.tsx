@@ -3,9 +3,13 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ButtonProps, Button } from '../Button';
 
-export const FooterButton: React.FC<ButtonProps> = props => {
+export const FooterButton: React.FC<
+  ButtonProps & {
+    width?: number;
+  }
+> = props => {
   const colors = useThemeColors();
-
+  const { width } = props;
   const styles = React.useMemo(
     () =>
       StyleSheet.create({
@@ -49,20 +53,28 @@ export const FooterButton: React.FC<ButtonProps> = props => {
           elevation: 4,
         },
       }),
-
     [colors],
   );
 
   return (
-    <View style={styles.footer}>
+    <View
+      style={[
+        styles.footer,
+        width
+          ? // eslint-disable-next-line react-native/no-inline-styles
+            {
+              alignItems: 'center',
+            }
+          : {},
+      ]}>
       <View>
+        <View style={[styles.buttonShadow, styles.button]} />
         <Button
-          buttonStyle={styles.button}
+          buttonStyle={[styles.button, { width }]}
           titleStyle={styles.buttonText}
           disabledTitleStyle={styles.disabledTitle}
           {...props}
         />
-        <View style={[styles.buttonShadow, styles.button]} />
       </View>
     </View>
   );

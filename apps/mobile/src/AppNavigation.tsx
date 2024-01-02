@@ -61,7 +61,7 @@ const TransactionStack = createNativeStackNavigator();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
-  animation: 'none',
+  animation: 'slide_from_right',
   headerShown: false,
 } as const;
 
@@ -199,7 +199,7 @@ export default function AppNavigation({
         <RootStack.Navigator
           screenOptions={{
             ...RootStackOptions,
-            navigationBarColor: colors['neutral-bg-1'],
+            navigationBarColor: 'transparent',
           }}
           initialRouteName={'Root'}>
           <RootStack.Screen

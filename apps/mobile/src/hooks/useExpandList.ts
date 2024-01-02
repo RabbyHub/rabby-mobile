@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { useSwitch } from './useSwitch';
 
-// https://debankglobal.larksuite.com/docx/L48zdOFZQofLZ9xddN4uQIFMsnj
-// 折叠资产列表逻辑
-// 1. list 长度要大于 15
-// 2. 折叠阈值为 list 总和的 1%
-// 3. 资产 > 1000 的不折叠
-// 4. 满足以上条件的小于 3 个，不折叠
-// 5. 特殊情况，200 个 1，全部折叠
+// Logic of expand portfolios
+// 1. length of list more than 15
+// 2. threshold of expand is 1% of portfolios
+// 3. portfolio will not expand if usd value is more than 1000
+// 4. only expand if expand count more than 3
 export const getExpandListSwitch = <
   T extends { netWorth?: number; _usdValue?: number },
 >(
@@ -16,13 +14,11 @@ export const getExpandListSwitch = <
 ) => {
   const listLength = list?.length || 0;
 
-  // 条件 2，条件 3
-  const threadhold = Math.min((totalValue || 0) / 100, 1000);
+  const threshold = Math.min((totalValue || 0) / 1000, 1000);
   const thresholdIndex = list
-    ? list.findIndex(m => (m._usdValue || m.netWorth || 0) < threadhold)
+    ? list.findIndex(m => (m._usdValue || m.netWorth || 0) < threshold)
     : -1;
 
-  // 条件 1，条件 4, 条件 5
   const hasExpandSwitch =
     listLength >= 15 && thresholdIndex > -1 && thresholdIndex <= listLength - 4;
 

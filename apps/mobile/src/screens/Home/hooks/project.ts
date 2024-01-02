@@ -1,26 +1,24 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
-import { useIsFocused } from '@react-navigation/native';
-
 import { useTokens } from './token';
 import { usePortfolios } from './usePortfolio';
 import { useSafeState } from '@/hooks/useSafeState';
 
 const Cache_Timeout = 5 * 60;
 
-export const useQueryProjects = (userAddr: string, withHistory = false) => {
-  const isFocused = useIsFocused();
+export const useQueryProjects = (
+  userAddr: string | undefined,
+  withHistory = false,
+  visible: boolean,
+  isTestnet = false,
+) => {
   const [time, setTime] = useSafeState(dayjs().subtract(1, 'day'));
 
   useEffect(() => {
-    if (
-      isFocused &&
-      time!.add(1, 'day').add(Cache_Timeout, 's').isBefore(dayjs())
-    ) {
-      refreshPositions();
+    if (time!.add(1, 'day').add(Cache_Timeout, 's').isBefore(dayjs())) {
+      // refreshPositions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, time]);
+  }, [time]);
 
   const historyTime = useMemo(
     () => (withHistory ? time : undefined),
@@ -34,7 +32,9 @@ export const useQueryProjects = (userAddr: string, withHistory = false) => {
     hasValue: hasTokens,
     updateData: updateTokens,
     walletProject,
-  } = useTokens(userAddr, historyTime);
+    customizeTokens,
+    blockedTokens,
+  } = useTokens(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
     data: portfolios,
@@ -42,7 +42,7 @@ export const useQueryProjects = (userAddr: string, withHistory = false) => {
     hasValue: hasPortfolios,
     netWorth: portfolioNetWorth,
     updateData: updatePortfolio,
-  } = usePortfolios(userAddr, historyTime);
+  } = usePortfolios(userAddr, historyTime, visible, isTestnet);
 
   const refreshPositions = useCallback(() => {
     if (!isTokensLoading && !isPortfoliosLoading) {
@@ -73,6 +73,8 @@ export const useQueryProjects = (userAddr: string, withHistory = false) => {
     hasTokens,
     hasPortfolios,
     tokens,
+    customizeTokens,
+    blockedTokens,
     portfolios,
     walletProject,
   };

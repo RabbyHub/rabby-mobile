@@ -12,8 +12,7 @@ import {
   PortfolioProject,
 } from '../types';
 import { calcPercent, formatPrice } from '@/utils/math';
-import { formatUsdValue } from '@/utils/number';
-import { formatAmount } from '@debank/common';
+import { formatUsdValue, formatAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 
 export const pQueue = new PQueue({
