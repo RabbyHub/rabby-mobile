@@ -4,7 +4,7 @@ import { ethErrors } from 'eth-rpc-errors';
 //   notificationService,
 //   permissionService,
 // } from 'background/service';
-import { dappService, keyringService } from '../services';
+import { dappService, keyringService, notificationService } from '../services';
 import PromiseFlow from '@/utils/promiseFlow';
 import { CHAINS } from '@debank/common';
 import providerController from './provider';
@@ -13,6 +13,7 @@ import { ProviderRequest } from './type';
 // import * as Sentry from '@sentry/browser';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -86,11 +87,10 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         lockedOrigins.add(origin);
         try {
-          // TODO
-          // await notificationService.requestApproval(
-          //   { lock: true },
-          //   { height: 628 }
-          // );
+          await notificationService.requestApproval(
+            { lock: true },
+            { height: 628 },
+          );
           lockedOrigins.delete(origin);
         } catch (e) {
           lockedOrigins.delete(origin);
@@ -119,14 +119,14 @@ const flowContext = flow
         ctx.request.requestedApproval = true;
         connectOrigins.add(origin);
         try {
-          // const { defaultChain, signPermission } =
-          //   await notificationService.requestApproval(
-          //     {
-          //       params: { origin, name, icon },
-          //       approvalComponent: 'Connect',
-          //     },
-          //     { height: 800 },
-          //   );
+          const { defaultChain, signPermission } =
+            await notificationService.requestApproval(
+              {
+                params: { origin, name, icon },
+                approvalComponent: 'Connect',
+              },
+              { height: 800 },
+            );
           connectOrigins.delete(origin);
           const dapp = dappService.getDapp(origin);
           if (dapp) {
@@ -198,19 +198,19 @@ const flowContext = flow
           }
         }
       }
-      // ctx.approvalRes = await notificationService.requestApproval(
-      //   {
-      //     approvalComponent: approvalType,
-      //     params: {
-      //       $ctx: ctx?.request?.data?.$ctx,
-      //       method,
-      //       data: ctx.request.data.params,
-      //       session: { origin, name, icon },
-      //     },
-      //     origin,
-      //   },
-      //   { height: windowHeight },
-      // );
+      ctx.approvalRes = await notificationService.requestApproval(
+        {
+          approvalComponent: approvalType,
+          params: {
+            $ctx: ctx?.request?.data?.$ctx,
+            method,
+            data: ctx.request.data.params,
+            session: { origin, name, icon },
+          },
+          origin,
+        },
+        { height: windowHeight },
+      );
       if (isSignApproval(approvalType)) {
         const dapp = dappService.getDapp(origin);
         dappService.updateDapp({
@@ -241,13 +241,10 @@ const flowContext = flow
         )
           .then(result => {
             if (isSignApproval(approvalType)) {
-              // eventBus.emit(EVENTS.broadcastToUI, {
-              //   method: EVENTS.SIGN_FINISHED,
-              //   params: {
-              //     success: true,
-              //     data: result,
-              //   },
-              // });
+              eventBus.emit(EVENTS.SIGN_FINISHED, {
+                success: true,
+                data: result,
+              });
             }
             return result;
           })
@@ -255,32 +252,29 @@ const flowContext = flow
           .catch((e: any) => {
             // Sentry.captureException(e);
             if (isSignApproval(approvalType)) {
-              // eventBus.emit(EVENTS.broadcastToUI, {
-              //   method: EVENTS.SIGN_FINISHED,
-              //   params: {
-              //     success: false,
-              //     errorMsg: e?.message || JSON.stringify(e),
-              //   },
-              // });
+              eventBus.emit(EVENTS.SIGN_FINISHED, {
+                success: false,
+                errorMsg: e?.message || JSON.stringify(e),
+              });
             }
           });
       });
-    // notificationService.setCurrentRequestDeferFn(requestDeferFn);
+    notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
       ctx.request.requestedApproval = true;
-      // const res = await notificationService.requestApproval({
-      //   approvalComponent: uiRequestComponent,
-      //   params: rest,
-      //   origin,
-      //   approvalType,
-      //   isUnshift: true,
-      // });
-      // if (res?.uiRequestComponent) {
-      //   return await requestApprovalLoop(res);
-      // } else {
-      //   return res;
-      // }
+      const res = await notificationService.requestApproval({
+        approvalComponent: uiRequestComponent,
+        params: rest,
+        origin,
+        approvalType,
+        isUnshift: true,
+      });
+      if (res?.uiRequestComponent) {
+        return await requestApprovalLoop(res);
+      } else {
+        return res;
+      }
     }
     if (uiRequestComponent) {
       ctx.request.requestedApproval = true;
@@ -294,6 +288,7 @@ const flowContext = flow
   .callback();
 
 function reportStatsData() {
+  // TODO
   // const statsData = notificationService.getStatsData();
   // if (!statsData || statsData.reported) return;
   // if (statsData?.signed) {
@@ -337,7 +332,7 @@ export default (request: ProviderRequest) => {
     if (ctx.request.requestedApproval) {
       flow.requestedApproval = false;
       // only unlock notification if current flow is an approval flow
-      // notificationService.unLock();
+      notificationService.unLock();
       keyringService.resetResend();
     }
   });
