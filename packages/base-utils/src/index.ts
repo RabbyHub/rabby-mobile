@@ -1,5 +1,3 @@
-import { url } from 'inspector';
-
 export * from './type-helpers';
 
 export * as addressUtils from './isomorphic/address';

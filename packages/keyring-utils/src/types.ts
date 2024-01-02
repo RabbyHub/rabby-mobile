@@ -70,7 +70,7 @@ export const HARDWARE_KEYRING_TYPES = {
 export type KeyringAccount = {
   address: string;
   brandName: string;
-  type?: KeyringTypeName;
+  type: KeyringTypeName;
   realBrandName?: string;
   realBrandUrl?: string;
 };

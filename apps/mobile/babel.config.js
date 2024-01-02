@@ -63,6 +63,7 @@ module.exports = {
         // mode: "compileOnly",
       },
     ],
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
   ],
   env: {
     production: {

@@ -26,6 +26,8 @@ import { styled } from 'styled-components/native';
 import { useSheetModalsOnSettingScreen } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
+import { useNavigation } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -39,6 +41,8 @@ function SettingsScreen(): JSX.Element {
   const { toggleShowSheetModal } = useSheetModalsOnSettingScreen();
 
   const colors = useThemeColors();
+
+  const navigation = useNavigation();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -135,6 +139,15 @@ function SettingsScreen(): JSX.Element {
               icon: RcEarth,
               onPress: () => {
                 toggleShowSheetModal('webviewTesterRef', true);
+              },
+            },
+            {
+              label: 'ProviderController Test',
+              icon: RcEarth,
+              onPress: () => {
+                navigation.push(RootNames.ProviderControllerTester, {
+                  params: {},
+                });
               },
             },
           ],

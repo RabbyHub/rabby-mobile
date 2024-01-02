@@ -31,7 +31,7 @@ export const RootNames = {
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   /* warning: dev only ------ start */
-  SettingsWebViewTester: 'SettingsWebViewTester',
+  ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */
 
   StackTransaction: 'StackTransaction',

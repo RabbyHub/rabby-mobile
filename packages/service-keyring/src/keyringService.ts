@@ -318,13 +318,13 @@ export class KeyringService extends RNEventEmitter {
       : Promise.resolve(newAccountArray);
   }
 
+  // eslint-disable-next-line jsdoc/require-returns
   /**
    * Add New Account
    *
    * Calls the `addAccounts` method on the given keyring,
    * and then saves those changes.
    * @param selectedKeyring
-   * @param options
    * @param options.onAddedAddress
    */
   addNewAccount(
@@ -350,6 +350,9 @@ export class KeyringService extends RNEventEmitter {
             typeof account === 'string'
               ? selectedKeyring.type
               : account?.realBrandName || account.brandName,
+          type: (typeof account === 'string'
+            ? selectedKeyring.type
+            : account?.type || account.type) as KeyringTypeName,
         }));
         _accounts = accounts;
 
@@ -394,16 +397,15 @@ export class KeyringService extends RNEventEmitter {
    *
    * Signs an Ethereum transaction object.
    *
-   * @param ethTx - The transaction to sign.
-   * @param _fromAddress - The transaction 'from' address.
-   * @param opts - Signing options.
-   * @returns The signed transactio object.
+   * @param keyring
+   * @param {Object} ethTx - The transaction to sign.
+   * @param {string} _fromAddress - The transaction 'from' address.
+   * @param {Object} opts - Signing options.
+   * @returns {Promise<Object>} The signed transactio object.
    */
-  signTransaction(ethTx: any, _fromAddress: string, opts = {}) {
+  signTransaction(keyring: any, ethTx: any, _fromAddress: string, opts = {}) {
     const fromAddress = normalizeAddress(_fromAddress);
-    return this.getKeyringForAccount(fromAddress).then(keyring =>
-      keyring.signTransaction(fromAddress, ethTx, opts),
-    );
+    return keyring.signTransaction(fromAddress, ethTx, opts);
   }
 
   /**
@@ -411,11 +413,11 @@ export class KeyringService extends RNEventEmitter {
    *
    * Attempts to sign the provided message parameters.
    *
-   * @param msgParams - The message parameters to sign.
+   * @param {Object} msgParams - The message parameters to sign.
    * @param msgParams.from
    * @param opts
    * @param msgParams.data
-   * @returns The raw signature.
+   * @returns {Promise<Buffer>} The raw signature.
    */
   signMessage(msgParams: { from: string; data: any }, opts = {}) {
     const address = normalizeAddress(msgParams.from);
@@ -427,40 +429,43 @@ export class KeyringService extends RNEventEmitter {
   /**
    * Sign Personal Message
    *
-   * Attempts to sign the provided message parameters.
+   * Attempts to sign the provided message paramaters.
    * Prefixes the hash before signing per the personal sign expectation.
    *
-   * @param msgParams - The message parameters to sign.
-   * @param msgParams.from
+   * @param keyring
+   * @param {Object} msgParams - The message parameters to sign.
    * @param opts
+   * @param msgParams.from
    * @param msgParams.data
-   * @returns The raw signature.
+   * @returns {Promise<Buffer>} The raw signature.
    */
-  signPersonalMessage(msgParams: { from: string; data: any }, opts = {}) {
+  signPersonalMessage(
+    keyring: any,
+    msgParams: { from: string; data: any },
+    opts = {},
+  ) {
     const address = normalizeAddress(msgParams.from);
-    return this.getKeyringForAccount(address).then(keyring => {
-      return keyring.signPersonalMessage(address, msgParams.data, opts);
-    });
+    return keyring.signPersonalMessage(address, msgParams.data, opts);
   }
 
   /**
    * Sign Typed Data
    * (EIP712 https://github.com/ethereum/EIPs/pull/712#issuecomment-329988454)
    *
-   * @param msgParams - The message parameters to sign.
-   * @param msgParams.from
+   * @param keyring
+   * @param {Object} msgParams - The message parameters to sign.
    * @param opts
+   * @param msgParams.from
    * @param msgParams.data
-   * @returns The raw signature.
+   * @returns {Promise<Buffer>} The raw signature.
    */
   signTypedMessage(
-    msgParams: { from: string; data: any },
+    keyring: any,
+    msgParams: { from: string | number; data: any },
     opts = { version: 'V1' },
   ) {
     const address = normalizeAddress(msgParams.from);
-    return this.getKeyringForAccount(address).then(keyring => {
-      return keyring.signTypedData(address, msgParams.data, opts);
-    });
+    return keyring.signTypedData(address, msgParams.data, opts);
   }
 
   /**

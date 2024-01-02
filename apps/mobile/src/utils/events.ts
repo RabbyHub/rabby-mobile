@@ -3,7 +3,6 @@ import EventEmitter from 'events';
 export const eventBus = new EventEmitter();
 
 export const EVENTS = {
-  broadcastToUI: 'broadcastToUI',
   broadcastToBackground: 'broadcastToBackground',
   TX_COMPLETED: 'TX_COMPLETED',
   SIGN_FINISHED: 'SIGN_FINISHED',
