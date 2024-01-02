@@ -25,13 +25,13 @@
       "path": "./packages/service-dapp/tsconfig.build.json"
     },
     {
-      "path": "./packages-forked/object-multiplex/tsconfig.build.json"
+      "path": "./packages/object-multiplex/tsconfig.build.json"
     },
     {
-      "path": "./packages-forked/post-message-stream/tsconfig.build.json"
+      "path": "./packages/post-message-stream/tsconfig.build.json"
     },
     {
-      "path": "./packages-forked/providers/tsconfig.build.json"
+      "path": "./packages/providers/tsconfig.build.json"
     }
   ],
   "files": [],

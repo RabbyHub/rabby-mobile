@@ -31,7 +31,7 @@ type InitializedProviderDetails = {
  *
  * The mock connection stream used to create the provider is also returned.
  * This stream is setup initially just to respond to the
- * `metamask_getProviderState` method. Further responses can be setup via the
+ * `rabby_getProviderState` method. Further responses can be setup via the
  * `onMethodCalled` configuration, or sent using the connection stream
  * directly.
  *
@@ -65,7 +65,7 @@ async function getInitializedProvider({
   const connectionStream = new MockConnectionStream((name, data) => {
     if (
       name === 'rabby-provider' &&
-      data.method === 'metamask_getProviderState'
+      data.method === 'rabby_getProviderState'
     ) {
       // Wrap in `setTimeout` to ensure a reply is received by the provider
       // after the provider has processed the request, to ensure that the

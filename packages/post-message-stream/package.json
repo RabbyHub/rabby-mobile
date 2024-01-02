@@ -2,7 +2,7 @@
   "name": "@rabby-wallet/post-message-stream",
   "version": "8.0.0",
   "description": "Sets up a duplex object stream over window.postMessage",
-  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages-forked/post-message-stream#readme",
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/post-message-stream#readme",
   "bugs": {
     "url": "https://github.com/RabbyHub/rabby-mono/issues"
   },
