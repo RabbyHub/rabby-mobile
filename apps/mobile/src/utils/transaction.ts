@@ -1,4 +1,5 @@
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { isHexString } from 'ethereumjs-util';
 export const is1559Tx = (tx: Tx) => {

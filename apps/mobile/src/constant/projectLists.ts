@@ -1,4 +1,5 @@
-import { Chain, CHAINS } from '@debank/common';
+import { Chain } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 
 interface PortfolioChain extends Chain {
   isSupportHistory: boolean;

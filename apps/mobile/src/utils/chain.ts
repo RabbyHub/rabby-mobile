@@ -1,4 +1,5 @@
-import { Chain, CHAINS, CHAINS_ENUM } from '@debank/common';
+import { Chain, CHAINS_ENUM } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import {
   ChainWithBalance,
   TokenItem,
