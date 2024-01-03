@@ -546,7 +546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-proposal-private-methods@npm:^7.16.0, @babel/plugin-proposal-private-methods@npm:^7.18.6":
+"@babel/plugin-proposal-private-methods@npm:^7.16.0":
   version: 7.18.6
   resolution: "@babel/plugin-proposal-private-methods@npm:7.18.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40babel%2Fplugin-proposal-private-methods%2F-%2Fplugin-proposal-private-methods-7.18.6.tgz"
   dependencies:
@@ -4621,7 +4621,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native/codegen@npm:^0.72.8":
+"@react-native/codegen@npm:^0.72.7":
   version: 0.72.8
   resolution: "@react-native/codegen@npm:0.72.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-native%2Fcodegen%2F-%2Fcodegen-0.72.8.tgz"
   dependencies:
@@ -23221,7 +23221,6 @@ __metadata:
   dependencies:
     "@babel/core": ^7.20.0
     "@babel/plugin-proposal-decorators": ^7.23.6
-    "@babel/plugin-proposal-private-methods": ^7.18.6
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
@@ -23296,7 +23295,7 @@ __metadata:
     react-devtools: ^4.28.5
     react-error-boundary: ^4.0.12
     react-is: 18.2.0
-    react-native: ^0.72.8
+    react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
     react-native-collapsible-tab-view: ^6.2.1
     react-native-crypto-js: ^1.0.0
@@ -24090,23 +24089,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native@npm:^0.72.8":
-  version: 0.72.8
-  resolution: "react-native@npm:0.72.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native%2F-%2Freact-native-0.72.8.tgz"
+"react-native@npm:0.72.7":
+  version: 0.72.7
+  resolution: "react-native@npm:0.72.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native%2F-%2Freact-native-0.72.7.tgz"
   dependencies:
     "@jest/create-cache-key-function": ^29.2.1
     "@react-native-community/cli": 11.3.10
     "@react-native-community/cli-platform-android": 11.3.10
     "@react-native-community/cli-platform-ios": 11.3.10
     "@react-native/assets-registry": ^0.72.0
-    "@react-native/codegen": ^0.72.8
+    "@react-native/codegen": ^0.72.7
     "@react-native/gradle-plugin": ^0.72.11
     "@react-native/js-polyfills": ^0.72.1
     "@react-native/normalize-colors": ^0.72.0
     "@react-native/virtualized-lists": ^0.72.8
     abort-controller: ^3.0.0
     anser: ^1.4.9
-    ansi-regex: ^5.0.0
     base64-js: ^1.1.2
     deprecated-react-native-prop-types: ^4.2.3
     event-target-shim: ^5.0.1
@@ -24135,7 +24133,7 @@ __metadata:
     react: 18.2.0
   bin:
     react-native: cli.js
-  checksum: ee4583d0aa65cb4fb0f614de3c4dbbe46d8046659e7209243dd855f7d7a2e7f28f07d4de3d81cc5a4b590294dd408eb954280bef087a02d7fc616ae85885c2a6
+  checksum: 587490c63bba709347e99edbe29f2a10d5a358e296d214960e066bd803d5a71a49b5e199208cf85cd6f6d3ce5fdbe5134e9480eb268b41b29807c833f7d45a34
   languageName: node
   linkType: hard
 

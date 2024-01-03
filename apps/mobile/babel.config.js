@@ -64,8 +64,9 @@ module.exports = {
       },
     ],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
-    '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-proposal-private-methods',
+    // ['@babel/plugin-transform-flow-strip-types', { loose: true }],
+    // ['@babel/plugin-proposal-class-properties', { loose: true }],
+    // ['@babel/plugin-proposal-private-methods', { loose: true }],
   ],
   env: {
     production: {

@@ -6,10 +6,6 @@ setJSExceptionHandler((error, isFatal) => {
   console.debug('setJSExceptionHandler:: error', error);
 }, true);
 
-ErrorUtils.setGlobalHandler((error, isFatal) => {
-  console.debug('setGlobalHandler:: error', error);
-});
-
 setNativeExceptionHandler(
   exceptionString => {
     // your exception handler code here
@@ -21,3 +17,13 @@ setNativeExceptionHandler(
   !__DEV__,
   true,
 );
+
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  if (__DEV__) {
+    console.debug('setGlobalHandler:: error', error);
+  }
+
+  if (isFatal) {
+    // WIP: alert on release mode?
+  }
+});

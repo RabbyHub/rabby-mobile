@@ -19,16 +19,16 @@ const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
 
 export function Block({
   label,
-  className,
+  style,
   children,
 }: React.PropsWithChildren<{
   label: string;
-  className?: string;
+  style: React.ComponentProps<typeof View>['style'];
 }>) {
   const colors = useThemeColors();
 
   return (
-    <View className={className}>
+    <View style={style}>
       <Text className="text-light-neutral-title-1 dark:text-dark-neutral-title-1 font-normal text-[12]">
         {label}
       </Text>
