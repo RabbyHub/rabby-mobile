@@ -52,6 +52,7 @@ import { DappsScreen } from './screens/Dapps/Dapps';
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { NFTDetailScreen } from './screens/NftDetail';
+import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 
 const RootStack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -61,7 +62,7 @@ const TransactionStack = createNativeStackNavigator();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
-  animation: 'none',
+  animation: 'slide_from_right',
   headerShown: false,
 } as const;
 
@@ -188,6 +189,7 @@ export default function AppNavigation({
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar />
+      <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}
         // key={userId}
@@ -199,7 +201,7 @@ export default function AppNavigation({
         <RootStack.Navigator
           screenOptions={{
             ...RootStackOptions,
-            navigationBarColor: colors['neutral-bg-1'],
+            navigationBarColor: 'transparent',
           }}
           initialRouteName={'Root'}>
           <RootStack.Screen

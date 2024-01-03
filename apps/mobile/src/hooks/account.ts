@@ -23,7 +23,7 @@ accountsAtom.onMount = setAtom => {
   });
 };
 
-const currentAccountAtom = atom<null | Account>(null);
+const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
 
 const pinAddressesAtom = atom<IPinAddress[]>([]);
 

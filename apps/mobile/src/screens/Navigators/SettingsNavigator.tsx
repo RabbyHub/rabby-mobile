@@ -3,6 +3,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import SettingsScreen from '../Settings/Settings';
+import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
@@ -33,15 +34,15 @@ export function SettingNavigator() {
           title: 'Settings',
         }}
       />
-      {/* {__DEV__ && (
+      {__DEV__ && (
         <SettingsStack.Screen
-          name={RootNames.SettingsWebViewTester}
-          component={SheetWebViewTester}
+          name={RootNames.ProviderControllerTester}
+          component={ProviderControllerTester}
           options={{
             title: 'Settings',
           }}
         />
-      )} */}
+      )}
     </SettingsStack.Navigator>
   );
 }

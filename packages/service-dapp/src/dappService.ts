@@ -1,3 +1,4 @@
+import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { createPersistStore } from '@rabby-wallet/persist-store';
 
@@ -15,7 +16,8 @@ export interface DappInfo {
   infoUpdateAt?: number;
   isFavorite?: boolean;
   isConnected?: boolean;
-  chainId?: string;
+  isSigned?: boolean;
+  chainId: CHAINS_ENUM;
   lastPath?: string; // 待定
   lastPathTimeAt?: number; //
 }
@@ -57,6 +59,14 @@ export class DappService {
     return this.store.dapps;
   }
 
+  getConnectedDapp(id: string) {
+    const dapp = this.getDapp(id);
+    if (dapp.isConnected) {
+      return dapp;
+    }
+    return null;
+  }
+
   removeDapp(id: string) {
     delete this.store.dapps[id];
     this.store.dapps = { ...this.store.dapps };
@@ -86,8 +96,13 @@ export class DappService {
     this.store.dapps = { ...this.store.dapps };
   }
 
-  setChainId(origin: string, chainId: string) {
+  setChainId(origin: string, chainId: CHAINS_ENUM) {
     this.store.dapps[origin].chainId = chainId;
     this.store.dapps = { ...this.store.dapps };
+  }
+
+  isInternalDapp(origin: string) {
+    // TODO: use real condition
+    return false;
   }
 }

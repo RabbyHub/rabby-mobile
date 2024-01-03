@@ -11,18 +11,20 @@ import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
 import { keyringService } from '.';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 const { isSameAddress } = addressUtils;
 
-export interface Account {
-  type: string;
-  address: string;
-  brandName: string;
-  aliasName?: string;
-  displayBrandName?: string;
-  index?: number;
-  balance?: number;
-}
+// export interface Account {
+//   type: string;
+//   address: string;
+//   brandName: string;
+//   aliasName?: string;
+//   displayBrandName?: string;
+//   index?: number;
+//   balance?: number;
+// }
+export interface Account extends KeyringAccountWithAlias {}
 
 export interface ChainGas {
   gasPrice?: number | null; // custom cached gas price

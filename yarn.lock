@@ -242,6 +242,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-create-class-features-plugin@npm:^7.23.7":
+  version: 7.23.7
+  resolution: "@babel/helper-create-class-features-plugin@npm:7.23.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40babel%2Fhelper-create-class-features-plugin%2F-%2Fhelper-create-class-features-plugin-7.23.7.tgz"
+  dependencies:
+    "@babel/helper-annotate-as-pure": ^7.22.5
+    "@babel/helper-environment-visitor": ^7.22.20
+    "@babel/helper-function-name": ^7.23.0
+    "@babel/helper-member-expression-to-functions": ^7.23.0
+    "@babel/helper-optimise-call-expression": ^7.22.5
+    "@babel/helper-replace-supers": ^7.22.20
+    "@babel/helper-skip-transparent-expression-wrappers": ^7.22.5
+    "@babel/helper-split-export-declaration": ^7.22.6
+    semver: ^6.3.1
+  peerDependencies:
+    "@babel/core": ^7.0.0
+  checksum: 33e60714b856c3816a7965d4c76278cc8f430644a2dfc4eeafad2f7167c4fbd2becdb74cbfeb04b02efd6bbd07176ef53c6683262b588e65d378438e9c55c26b
+  languageName: node
+  linkType: hard
+
 "@babel/helper-create-regexp-features-plugin@npm:^7.18.6, @babel/helper-create-regexp-features-plugin@npm:^7.22.15, @babel/helper-create-regexp-features-plugin@npm:^7.22.5":
   version: 7.22.15
   resolution: "@babel/helper-create-regexp-features-plugin@npm:7.22.15"
@@ -586,6 +605,19 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 9d69891e0c37c73a8fd5deafbf42bd82e727f96a779cf1e5e194d97f856e04e79d2d39081c48ffcea596e6ff95024016479d728772e692999ab5af74d4106f27
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-proposal-decorators@npm:^7.23.6":
+  version: 7.23.7
+  resolution: "@babel/plugin-proposal-decorators@npm:7.23.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40babel%2Fplugin-proposal-decorators%2F-%2Fplugin-proposal-decorators-7.23.7.tgz"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.23.7
+    "@babel/helper-plugin-utils": ^7.22.5
+    "@babel/plugin-syntax-decorators": ^7.23.3
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 53c3d3af451ea75fa48cb26811dce8a9cdcc51ff4bd48fa037482a6527e0c3eec1737541ab0f7e7d5c210cbe81badda15cf043b21049e036ef376deabf176c06
   languageName: node
   linkType: hard
 
@@ -2345,10 +2377,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:^0.3.46":
-  version: 0.3.46
-  resolution: "@debank/common@npm:0.3.46"
-  checksum: c7806b69ff07bbeee23cc6b23059afb5e8b51d5ac95c1732d51733b8e8193a6045d0b40433e07b5224016fce0e16f2440d9c861b0729f0e658069bf80ccd1381
+"@debank/common@npm:^0.3.47, @debank/common@npm:latest":
+  version: 0.3.48
+  resolution: "@debank/common@npm:0.3.48::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Fcommon%2F-%2Fcommon-0.3.48.tgz"
+  checksum: 8820d320891460819381b69c147212f3ff3b18a19ccac43ddbaaa35df5ebdede2578ed0cc43963120951ccb2e92c276f14d5486043adb40e76f5823bdb727b7b
   languageName: node
   linkType: hard
 
@@ -3835,7 +3867,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/eth-sig-util@npm:^5.0.0":
+"@metamask/eth-sig-util@npm:5.1.0, @metamask/eth-sig-util@npm:^5.0.0":
   version: 5.1.0
   resolution: "@metamask/eth-sig-util@npm:5.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Feth-sig-util%2F-%2Feth-sig-util-5.1.0.tgz"
   dependencies:
@@ -4607,6 +4639,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-dapp@workspace:packages/service-dapp"
   dependencies:
+    "@debank/common": ^0.3.47
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/persist-store": ^0.1.0
     "@types/jest": ^27.4.1
@@ -6126,6 +6159,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/accepts@npm:*":
+  version: 1.3.7
+  resolution: "@types/accepts@npm:1.3.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Faccepts%2F-%2Faccepts-1.3.7.tgz"
+  dependencies:
+    "@types/node": "*"
+  checksum: 7678cf74976e16093aff6e6f9755826faf069ac1e30179276158ce46ea246348ff22ca6bdd46cef08428881337d9ceefbf00bab08a7731646eb9fc9449d6a1e7
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.0.0, @types/babel__core@npm:^7.1.14":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
@@ -6279,6 +6321,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/content-disposition@npm:*":
+  version: 0.5.8
+  resolution: "@types/content-disposition@npm:0.5.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fcontent-disposition%2F-%2Fcontent-disposition-0.5.8.tgz"
+  checksum: eeea868fb510ae7a32aa2d7de680fba79d59001f3e758a334621e10bc0a6496d3a42bb79243a5e53b9c63cb524522853ccc144fe1ab160c4247d37cdb81146c4
+  languageName: node
+  linkType: hard
+
+"@types/cookies@npm:*":
+  version: 0.7.10
+  resolution: "@types/cookies@npm:0.7.10::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fcookies%2F-%2Fcookies-0.7.10.tgz"
+  dependencies:
+    "@types/connect": "*"
+    "@types/express": "*"
+    "@types/keygrip": "*"
+    "@types/node": "*"
+  checksum: 99cd44a193398932ff7926cfaac1eb4441d3dc47c3f64fdfb28861acbeb290b6db6a20376f993defc9d302db92bb1d36189b89ba447a633f960535f3f0d34e2d
+  languageName: node
+  linkType: hard
+
 "@types/debug@npm:^4.1.7":
   version: 4.1.12
   resolution: "@types/debug@npm:4.1.12"
@@ -6415,6 +6476,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/http-assert@npm:*":
+  version: 1.5.5
+  resolution: "@types/http-assert@npm:1.5.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fhttp-assert%2F-%2Fhttp-assert-1.5.5.tgz"
+  checksum: cd6bb7fd42cc6e2a702cb55370b8b25231954ad74c04bcd185b943a74ded3d4c28099c30f77b26951df2426441baff41718816c60b5af80efe2b8888d900bf93
+  languageName: node
+  linkType: hard
+
 "@types/http-cache-semantics@npm:*":
   version: 4.0.4
   resolution: "@types/http-cache-semantics@npm:4.0.4"
@@ -6532,12 +6600,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/keygrip@npm:*":
+  version: 1.0.6
+  resolution: "@types/keygrip@npm:1.0.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fkeygrip%2F-%2Fkeygrip-1.0.6.tgz"
+  checksum: d157f60bf920492347791d2b26d530d5069ce05796549fbacd4c24d66ffbebbcb0ab67b21e7a1b80a593b9fd4b67dc4843dec04c12bbc2e0fddfb8577a826c41
+  languageName: node
+  linkType: hard
+
 "@types/keyv@npm:^3.1.1, @types/keyv@npm:^3.1.4":
   version: 3.1.4
   resolution: "@types/keyv@npm:3.1.4"
   dependencies:
     "@types/node": "*"
   checksum: e009a2bfb50e90ca9b7c6e8f648f8464067271fd99116f881073fa6fa76dc8d0133181dd65e6614d5fb1220d671d67b0124aef7d97dc02d7e342ab143a47779d
+  languageName: node
+  linkType: hard
+
+"@types/koa-compose@npm:*, @types/koa-compose@npm:^3.2.8":
+  version: 3.2.8
+  resolution: "@types/koa-compose@npm:3.2.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fkoa-compose%2F-%2Fkoa-compose-3.2.8.tgz"
+  dependencies:
+    "@types/koa": "*"
+  checksum: 95c32bdee738ac7c10439bbf6342ca3b9f0aafd7e8118739eac7fb0fa703a23cfe4c88f63e13a69a16fbde702e0bcdc62b272aa734325fc8efa7e5625479752e
+  languageName: node
+  linkType: hard
+
+"@types/koa@npm:*":
+  version: 2.13.12
+  resolution: "@types/koa@npm:2.13.12::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fkoa%2F-%2Fkoa-2.13.12.tgz"
+  dependencies:
+    "@types/accepts": "*"
+    "@types/content-disposition": "*"
+    "@types/cookies": "*"
+    "@types/http-assert": "*"
+    "@types/http-errors": "*"
+    "@types/keygrip": "*"
+    "@types/koa-compose": "*"
+    "@types/node": "*"
+  checksum: 4a2e7e19bf91779d0a3c46b8838d6faba5ee0e9a888e5ef8683722c21aa8efcf35f86d1a661adb56ca9f239f7724e306055e33bfa1b2dc008b9c0fa9fcc12bee
   languageName: node
   linkType: hard
 
@@ -6985,7 +7085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:^9.0.1":
+"@types/uuid@npm:^9.0.1, @types/uuid@npm:^9.0.7":
   version: 9.0.7
   resolution: "@types/uuid@npm:9.0.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fuuid%2F-%2Fuuid-9.0.7.tgz"
   checksum: c7321194aeba9ea173efd1e721403bdf4e7ae6945f8f8cdbc87c791f4b505ccf3dbc4a8883d90b394ef13b7c2dc778045792b05dbb23b3c746f8ea347804d448
@@ -20516,6 +20616,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"koa-compose@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "koa-compose@npm:4.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fkoa-compose%2F-%2Fkoa-compose-4.1.0.tgz"
+  checksum: 46cb16792d96425e977c2ae4e5cb04930280740e907242ec9c25e3fb8b4a1d7b54451d7432bc24f40ec62255edea71894d2ceeb8238501842b4e48014f2e83db
+  languageName: node
+  linkType: hard
+
 "labeled-stream-splicer@npm:^2.0.0":
   version: 2.0.2
   resolution: "labeled-stream-splicer@npm:2.0.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flabeled-stream-splicer%2F-%2Flabeled-stream-splicer-2.0.2.tgz"
@@ -25200,7 +25307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:*, prop-types@npm:^15.6.1":
+"prop-types@npm:*, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fprop-types%2F-%2Fprop-types-15.8.1.tgz"
   dependencies:
@@ -25437,13 +25544,15 @@ __metadata:
   resolution: "rabby-mobile@workspace:apps/mobile"
   dependencies:
     "@babel/core": ^7.20.0
+    "@babel/plugin-proposal-decorators": ^7.23.6
     "@babel/plugin-proposal-private-methods": ^7.18.6
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@debank/common": ^0.3.46
+    "@debank/common": latest
     "@debank/rabby-rn-security": ^0.1.1
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
+    "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.8
@@ -25467,12 +25576,14 @@ __metadata:
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
     "@tsconfig/react-native": ^3.0.0
+    "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
     "@types/pump": ^1.1.3
     "@types/react": ^18.0.24
     "@types/react-is": ^18.2.4
     "@types/react-test-renderer": ^18.0.0
     "@types/through2": ^2.0.41
+    "@types/uuid": ^9.0.7
     "@walletconnect/react-native-compat": ^2.10.6
     ahooks: ^3.7.8
     babel-jest: ^27.5.1
@@ -25493,6 +25604,7 @@ __metadata:
     jotai: ^2.6.0
     json-rpc-engine: ^6.1.0
     json-rpc-middleware-stream: ^5.0.1
+    koa-compose: ^4.1.0
     lint-staged: ^15.2.0
     lodash: ^4.17.21
     metro-react-native-babel-preset: 0.76.8
@@ -25519,6 +25631,7 @@ __metadata:
     react-native-fs: ^2.20.0
     react-native-gesture-handler: ^2.14.0
     react-native-get-random-values: ^1.10.0
+    react-native-keyboard-aware-scroll-view: ^0.9.5
     react-native-linear-gradient: ^2.8.3
     react-native-mmkv: ^2.11.0
     react-native-pager-view: ^6.2.3
@@ -25533,6 +25646,7 @@ __metadata:
     react-native-splash-screen: ^3.3.0
     react-native-svg: ^14.0.0
     react-native-svg-transformer: ^1.1.0
+    react-native-switch: ^1.5.1
     react-native-vector-icons: ^10.0.2
     react-native-video: ^5.2.1
     react-native-vision-camera: ^3.6.17
@@ -25540,10 +25654,12 @@ __metadata:
     react-native-webview: ^13.6.3
     react-test-renderer: 18.2.0
     readable-stream: 3.6.2
+    reflect-metadata: 0.1.13
     styled-components: ^6.1.1
     svg2vectordrawable: ^2.9.1
     tailwindcss: 3.3.2
     tinycolor2: ^1.6.0
+    ts-toolbelt: ^9.6.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -26021,6 +26137,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-iphone-x-helper@npm:^1.0.3":
+  version: 1.3.1
+  resolution: "react-native-iphone-x-helper@npm:1.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-iphone-x-helper%2F-%2Freact-native-iphone-x-helper-1.3.1.tgz"
+  peerDependencies:
+    react-native: ">=0.42.0"
+  checksum: 024376646009a966e33e12fc2358751830818b0fb73b1c601a64eb5e490d2dc43eec23668991b985a8c412a84d087f20eb45bb9b593567c08b66e741b7bddda5
+  languageName: node
+  linkType: hard
+
+"react-native-keyboard-aware-scroll-view@npm:^0.9.5":
+  version: 0.9.5
+  resolution: "react-native-keyboard-aware-scroll-view@npm:0.9.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-keyboard-aware-scroll-view%2F-%2Freact-native-keyboard-aware-scroll-view-0.9.5.tgz"
+  dependencies:
+    prop-types: ^15.6.2
+    react-native-iphone-x-helper: ^1.0.3
+  peerDependencies:
+    react-native: ">=0.48.4"
+  checksum: 5eec2aedb886213dfed4c8428a443b565dce80ba9fcf5897171e4c8829d4dd64c5011ac004d93f29adfc83ad6f88c2838d1a5b45255dc4a49bd1c0a169245800
+  languageName: node
+  linkType: hard
+
 "react-native-linear-gradient@npm:^2.8.3":
   version: 2.8.3
   resolution: "react-native-linear-gradient@npm:2.8.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-linear-gradient%2F-%2Freact-native-linear-gradient-2.8.3.tgz"
@@ -26203,6 +26340,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: ed94adac9bf3144c5dcbf37a2956ab672d402f11c0ed75cda247d1d9136ce8977f4d01bcfc813ba576bd61ece420d66306c148057e2552828aa8fe9bad173d46
+  languageName: node
+  linkType: hard
+
+"react-native-switch@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "react-native-switch@npm:1.5.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-switch%2F-%2Freact-native-switch-1.5.1.tgz"
+  dependencies:
+    prop-types: ^15.6.0
+  peerDependencies:
+    react-native: ">=0.29"
+  checksum: 0ee7af977fac9fce5a5eac1981be9db80c527d0499c2149a40d848811bfd489048864a7bcc34f537f1dc011ef778e5495bd5f96d678c71cd8215616f0403fc29
   languageName: node
   linkType: hard
 
@@ -26684,6 +26832,13 @@ __metadata:
   version: 5.0.0
   resolution: "redux@npm:5.0.0"
   checksum: be49160d4bd01e10108c425ade999f1b456204895c4bdd0c7825ab09efffded51955c5c242847406a7b3f273e9011a9c102848c512a099a75617b97b13d2cca8
+  languageName: node
+  linkType: hard
+
+"reflect-metadata@npm:0.1.13":
+  version: 0.1.13
+  resolution: "reflect-metadata@npm:0.1.13::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freflect-metadata%2F-%2Freflect-metadata-0.1.13.tgz"
+  checksum: 798d379a7b6f6455501145419505c97dd11cbc23857a386add2b9ef15963ccf15a48d9d15507afe01d4cd74116df8a213247200bac00320bd7c11ddeaa5e8fb4
   languageName: node
   linkType: hard
 
@@ -30094,6 +30249,13 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: fde256c9073969e234526e2cfead42591b9a2aec5222bac154b0de2fa9e4ceb30efcd717ee8bc785a56f3a119bdd5aa27b333d9dbec94ed254bd26f8944c67ac
+  languageName: node
+  linkType: hard
+
+"ts-toolbelt@npm:^9.6.0":
+  version: 9.6.0
+  resolution: "ts-toolbelt@npm:9.6.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fts-toolbelt%2F-%2Fts-toolbelt-9.6.0.tgz"
+  checksum: 9f35fd95d895a5d32ea9fd2e532a695b0bae6cbff6832b77292efa188a0ed1ed6e54f63f74a8920390f3d909a7a3adb20a144686372a8e78b420246a9bd3d58a
   languageName: node
   linkType: hard
 

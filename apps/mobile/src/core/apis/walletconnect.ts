@@ -104,3 +104,51 @@ export async function checkClientIsCreate(params: {
 
   return isConnected;
 }
+
+export async function getSessionStatus(address: string, brandName: string) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  return keyring.getSessionStatus(address, brandName);
+}
+export async function killWalletConnectConnector(
+  address: string,
+  brandName: string,
+  silent?: boolean,
+) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+  if (keyring) {
+    await keyring.closeConnector({ address, brandName }, silent);
+  }
+}
+
+export async function getWalletConnectSessionAccount(
+  address: string,
+  brandName: string,
+) {
+  try {
+    const keyring = await getKeyring<WalletConnectKeyring>(
+      KEYRING_TYPE.WalletConnectKeyring,
+    );
+    if (keyring) {
+      return keyring.getSessionAccount(address, brandName);
+    }
+  } catch (e) {
+    // ignore
+  }
+  return null;
+}
+
+export async function getCommonWalletConnectInfo(address: string) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  if (keyring) {
+    return keyring.getCommonWalletConnectInfo(address);
+  }
+  return;
+}

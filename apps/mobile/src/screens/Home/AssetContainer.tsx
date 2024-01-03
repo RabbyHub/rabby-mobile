@@ -27,6 +27,8 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         tabBarWrap: {
           backgroundColor: colors['neutral-bg-1'],
           shadowColor: 'transparent',
+          borderColor: colors['neutral-line'],
+          borderWidth: StyleSheet.hairlineWidth,
         },
         tabBar: {
           height: 36,
@@ -55,7 +57,6 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
       <MaterialTabBar
         {...props}
         scrollEnabled={false}
-        style={styles.tabBarWrap}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
         activeColor={colors['blue-default']}
@@ -64,14 +65,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
-    [
-      colors,
-      styles.indicator,
-      styles.label,
-      styles.tabBar,
-      styles.tabBarIndicator,
-      styles.tabBarWrap,
-    ],
+    [colors, styles],
   );
 
   if (!currentAccount?.address) {
@@ -84,6 +78,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
       containerStyle={styles.container}
       minHeaderHeight={10}
       renderTabBar={renderTabBar}
+      headerContainerStyle={styles.tabBarWrap}
       renderHeader={renderHeader}>
       <Tabs.Tab label="Token" name="token">
         <TokenScreen />
