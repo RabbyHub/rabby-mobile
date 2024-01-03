@@ -86,7 +86,10 @@ export const SessionStatusBar: React.FC<Props> = ({
       killWalletConnectConnector(address, brandName, true);
       const service = findWalletServiceByBrandName(brandName);
       if (service) {
-        const uri = await apisWalletConnect.getUri(service?.walletInfo.brand);
+        const uri = await apisWalletConnect.getUri(service?.brand, 1, {
+          address,
+          brandName,
+        });
         if (uri) {
           openWallet(service, uri);
         }

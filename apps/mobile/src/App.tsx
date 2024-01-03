@@ -15,6 +15,7 @@ import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
+import { ThemeProvider } from '@rneui/themed';
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -36,15 +37,16 @@ function MainScreen() {
 function App(): JSX.Element {
   return (
     <RootSiblingParent>
-      <SafeAreaProvider>
-        <Suspense fallback={null}>
-          {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <MainScreen />
-          </GestureHandlerRootView>
-          {/* <MainScreen /> */}
-        </Suspense>
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <Suspense fallback={null}>
+            {/* TODO: measure to check if memory leak occured when refresh on iOS */}
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <MainScreen />
+            </GestureHandlerRootView>
+          </Suspense>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </RootSiblingParent>
   );
 }

@@ -1645,6 +1645,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.22.5, @babel/runtime@npm:^7.23.2":
+  version: 7.23.7
+  resolution: "@babel/runtime@npm:7.23.7"
+  dependencies:
+    regenerator-runtime: ^0.14.0
+  checksum: eba85bd24d250abb5ae19b16cffc15a54d3894d8228ace40fa4c0e2f1938f28b38ad3e3430ebff9a1ef511eeb8c527e36044ac19076d6deafa52cef35d8624b9
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.0.0, @babel/template@npm:^7.22.15, @babel/template@npm:^7.3.3":
   version: 7.22.15
   resolution: "@babel/template@npm:7.22.15"
@@ -3030,6 +3039,16 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 52bf73c6aaf8a41e959c771a3dd91328d6a34f7e9eebd2c41e8c29b1420c7ce9432f78bc101092513997e1f3a575d5b402f81ef9a0125b17345195f9be100d6d
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-security-engine@npm:^1.1.17":
+  version: 1.1.17
+  resolution: "@rabby-wallet/rabby-security-engine@npm:1.1.17"
+  peerDependencies:
+    "@debank/common": ^0.3.5
+    "@rabby-wallet/rabby-api": ^0.6.9
+  checksum: 7fa19886ef50617af4b3cf273c2749a8b25271af83564614d6007d16e6d511fc17ef3908a1606c502a11caaf27555017c8e45b59b79c23af45b397737d1efe81
   languageName: node
   linkType: hard
 
@@ -8847,9 +8866,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter3@npm:^4.0.4":
+"eventemitter3@npm:^4.0.7":
   version: 4.0.7
-  resolution: "eventemitter3@npm:4.0.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Feventemitter3%2F-%2Feventemitter3-4.0.7.tgz"
+  resolution: "eventemitter3@npm:4.0.7"
   checksum: 1875311c42fcfe9c707b2712c32664a245629b42bb0a5a84439762dd0fd637fc54d078155ea83c2af9e0323c9ac13687e03cfba79b03af9f40c89b4960099374
   languageName: node
   linkType: hard
@@ -9885,6 +9904,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-parse-stringify@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "html-parse-stringify@npm:3.0.1"
+  dependencies:
+    void-elements: 3.1.0
+  checksum: 334fdebd4b5c355dba8e95284cead6f62bf865a2359da2759b039db58c805646350016d2017875718bc3c4b9bf81a0d11be5ee0cf4774a3a5a7b97cde21cfd67
+  languageName: node
+  linkType: hard
+
 "http-cache-semantics@npm:^4.0.0, http-cache-semantics@npm:^4.1.0, http-cache-semantics@npm:^4.1.1":
   version: 4.1.1
   resolution: "http-cache-semantics@npm:4.1.1"
@@ -10017,6 +10045,15 @@ __metadata:
   bin:
     husky: lib/bin.js
   checksum: 837bc7e4413e58c1f2946d38fb050f5d7324c6f16b0fd66411ffce5703b294bd21429e8ba58711cd331951ee86ed529c5be4f76805959ff668a337dbfa82a1b0
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^23.7.14":
+  version: 23.7.14
+  resolution: "i18next@npm:23.7.14"
+  dependencies:
+    "@babel/runtime": ^7.23.2
+  checksum: 70d04c3846db9826c66d0daed0c74de7efcd069bd881f28b5cdddbd8d76f38c68cfa1115b884a94d4c483c3533d1c8ba6a6ba1f9d6c1a29ebfb635c40c0dc00a
   languageName: node
   linkType: hard
 
@@ -13644,22 +13681,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-queue@npm:6.6.2":
-  version: 6.6.2
-  resolution: "p-queue@npm:6.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-queue%2F-%2Fp-queue-6.6.2.tgz"
+"p-queue@npm:7.3":
+  version: 7.3.4
+  resolution: "p-queue@npm:7.3.4"
   dependencies:
-    eventemitter3: ^4.0.4
-    p-timeout: ^3.2.0
-  checksum: 832642fcc4ab6477b43e6d7c30209ab10952969ed211c6d6f2931be8a4f9935e3578c72e8cce053dc34f2eb6941a408a2c516a54904e989851a1a209cf19761c
+    eventemitter3: ^4.0.7
+    p-timeout: ^5.0.2
+  checksum: a21b8a4dd75f64a4988e4468cc344d1b45132506ddd2c771932d3de446d108ee68713b629e0d3f0809c227bc10eafc613edde6ae741d9f60db89b6031e40921c
   languageName: node
   linkType: hard
 
-"p-timeout@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "p-timeout@npm:3.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-timeout%2F-%2Fp-timeout-3.2.0.tgz"
-  dependencies:
-    p-finally: ^1.0.0
-  checksum: 3dd0eaa048780a6f23e5855df3dd45c7beacff1f820476c1d0d1bcd6648e3298752ba2c877aa1c92f6453c7dd23faaf13d9f5149fc14c0598a142e2c5e8d649c
+"p-timeout@npm:^5.0.2":
+  version: 5.1.0
+  resolution: "p-timeout@npm:5.1.0"
+  checksum: f5cd4e17301ff1ff1d8dbf2817df0ad88c6bba99349fc24d8d181827176ad4f8aca649190b8a5b1a428dfd6ddc091af4606835d3e0cb0656e04045da5c9e270c
   languageName: node
   linkType: hard
 
@@ -14517,6 +14552,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.8
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.0-alpha.4
+    "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-dapp": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -14551,6 +14587,7 @@ __metadata:
     colord: ^2.9.3
     dayjs: ^1.11.10
     eslint: ^8.44.0
+    i18next: ^23.7.14
     immer: ^10.0.3
     jest: ^27.5.1
     jotai: ^2.6.0
@@ -14560,11 +14597,12 @@ __metadata:
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
-    p-queue: 6.6.2
+    p-queue: 7.3
     prettier: ^2.7.1
     react: 18.2.0
     react-content-loader: ^6.2.1
     react-devtools: ^4.28.5
+    react-i18next: ^14.0.0
     react-is: 18.2.0
     react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
@@ -14701,6 +14739,24 @@ __metadata:
   peerDependencies:
     react: ">=17.0.0"
   checksum: 4258eabdbbf74aaebc38ad1fd7cfdc1984d2a844a2247b39a341c55c1beb02d5e855e6473ec5683205a52b2251d0f7dffa07cd8100f402dd2698af88b932d946
+  languageName: node
+  linkType: hard
+
+"react-i18next@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "react-i18next@npm:14.0.0"
+  dependencies:
+    "@babel/runtime": ^7.22.5
+    html-parse-stringify: ^3.0.1
+  peerDependencies:
+    i18next: ">= 23.2.3"
+    react: ">= 16.8.0"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: ab41bc1db8f0d127d608087444906c0b5ae8decbd442f8d64dffdb05cc8112f024f705818d347cbc5f9cb9cbb9bca137a171ee810494130da917f7befb5669b2
   languageName: node
   linkType: hard
 
@@ -17863,6 +17919,13 @@ __metadata:
   version: 1.0.1
   resolution: "vlq@npm:1.0.1"
   checksum: 67ab6dd35c787eaa02c0ff1a869dd07a230db08722fb6014adaaf432634808ddb070765f70958b47997e438c331790cfcf20902411b0d6453f1a2a5923522f55
+  languageName: node
+  linkType: hard
+
+"void-elements@npm:3.1.0":
+  version: 3.1.0
+  resolution: "void-elements@npm:3.1.0"
+  checksum: 0390f818107fa8fce55bb0a5c3f661056001c1d5a2a48c28d582d4d847347c2ab5b7f8272314cac58acf62345126b6b09bea623a185935f6b1c3bbce0dfd7f7f
   languageName: node
   linkType: hard
 
