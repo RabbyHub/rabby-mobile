@@ -32,6 +32,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { JS_POST_MESSAGE_TO_PROVIDER } from '../../../../../packages/rn-webview-bridge/src/browserScripts';
 import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
+import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
@@ -148,15 +149,7 @@ function BottomNavControl({
   );
 }
 
-export default function DappWebViewControl({
-  dappId,
-  onPressMore,
-
-  bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
-  headerLeft,
-  bottomSheetContent,
-  webviewProps,
-}: {
+type DappWebViewControlProps = {
   dappId: string;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
 
@@ -166,7 +159,69 @@ export default function DappWebViewControl({
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
   webviewProps?: React.ComponentProps<typeof WebView>;
+};
+
+function useDefaultNodes({
+  headerLeft,
+  bottomSheetContent,
+  webviewRef,
+  webviewState,
+  webviewActions,
+}: {
+  headerLeft?: DappWebViewControlProps['headerLeft'];
+  bottomSheetContent?: DappWebViewControlProps['bottomSheetContent'];
+  webviewRef: React.RefObject<WebView>;
+  webviewState: WebViewState;
+  webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
+  const defaultHeaderLeft = useMemo(() => {
+    return (
+      <View style={[styles.touchableHeadWrapper]}>
+        <Text> </Text>
+      </View>
+    );
+  }, []);
+
+  const headerLeftNode = useMemo(() => {
+    if (typeof headerLeft === 'function') {
+      return headerLeft() || defaultHeaderLeft;
+    }
+
+    return headerLeft || defaultHeaderLeft;
+  }, [headerLeft]);
+
+  const bottomNavBar = useMemo(() => {
+    return (
+      <BottomNavControl
+        webviewState={webviewState}
+        webviewActions={webviewActions}
+      />
+    );
+  }, [webviewRef, webviewState, webviewActions]);
+
+  const bottomSheetContentNode = useMemo(() => {
+    if (typeof bottomSheetContent === 'function') {
+      return bottomSheetContent({ bottomNavBar }) || bottomNavBar;
+    }
+
+    return bottomSheetContent || bottomNavBar;
+  }, [bottomSheetContent, bottomNavBar]);
+
+  return {
+    headerLeftNode,
+    bottomSheetContentNode,
+  };
+}
+
+export default function DappWebViewControl({
+  dappId,
+  onPressMore,
+
+  bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
+  headerLeft,
+  bottomSheetContent,
+  webviewProps,
+}: DappWebViewControlProps) {
   const colors = useThemeColors();
 
   const {
@@ -208,40 +263,21 @@ export default function DappWebViewControl({
     return handlePressMoreDefault();
   }, [handlePressMoreDefault]);
 
-  const defaultHeaderLeft = useMemo(() => {
-    return (
-      <View style={[styles.touchableHeadWrapper]}>
-        <Text> </Text>
-      </View>
-    );
-  }, []);
-
-  const headerLeftNode = useMemo(() => {
-    if (typeof headerLeft === 'function') {
-      return headerLeft() || defaultHeaderLeft;
-    }
-
-    return headerLeft || defaultHeaderLeft;
-  }, [headerLeft]);
-
-  const bottomNavBar = useMemo(() => {
-    return (
-      <BottomNavControl
-        webviewState={webviewState}
-        webviewActions={webviewActions}
-      />
-    );
-  }, [webviewRef, webviewState, webviewActions]);
-
-  const bottomSheetContentNode = useMemo(() => {
-    if (typeof bottomSheetContent === 'function') {
-      return bottomSheetContent({ bottomNavBar }) || bottomNavBar;
-    }
-
-    return bottomSheetContent || bottomNavBar;
-  }, [bottomSheetContent, bottomNavBar]);
-
+  const { headerLeftNode, bottomSheetContentNode } = useDefaultNodes({
+    headerLeft,
+    bottomSheetContent,
+    webviewRef,
+    webviewState,
+    webviewActions,
+  });
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
+
+  const urlRef = useRef<string>('about:blank');
+  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    dappId,
+    urlRef,
+    webviewRef,
+  });
 
   return (
     <View
@@ -295,22 +331,28 @@ export default function DappWebViewControl({
             onNavigationStateChange={webviewActions.onNavigationStateChange}
             onError={errorLog}
             webviewDebuggingEnabled={__DEV__}
-            onMessage={nativeEvent => {
-              console.log(
-                '[feat] WebView:: onMessage nativeEvent',
-                nativeEvent,
-              );
-              webviewProps?.onMessage?.(nativeEvent);
+            onLoadStart={nativeEvent => {
+              webviewProps?.onLoadStart?.(nativeEvent);
+              onLoadStart(nativeEvent);
+            }}
+            onMessage={event => {
+              // // leave here for debug
+              // if (__DEV__) {
+              //   console.log('WebView:: onMessage event', event);
+              // }
+              onBridgeMessage(event);
+              webviewProps?.onMessage?.(event);
 
-              webviewRef.current?.injectJavaScript(
-                JS_POST_MESSAGE_TO_PROVIDER(
-                  JSON.stringify({
-                    type: 'hello',
-                    data: 'I have received your message!',
-                  }),
-                  '*',
-                ),
-              );
+              // // leave here for debug
+              // webviewRef.current?.injectJavaScript(
+              //   JS_POST_MESSAGE_TO_PROVIDER(
+              //     JSON.stringify({
+              //       type: 'hello',
+              //       data: 'I have received your message!',
+              //     }),
+              //     '*',
+              //   ),
+              // );
             }}
           />
         )}

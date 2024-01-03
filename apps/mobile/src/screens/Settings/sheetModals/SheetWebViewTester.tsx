@@ -44,8 +44,8 @@ export default function SheetWebViewTester() {
       <BottomSheetView className="px-[20] items-center justify-center">
         {/* <DappWebViewControl dappId={'debank.com'} /> */}
         {/* <DappWebViewControl dappId={DEV_CONSOLE_URL} /> */}
-        <DappWebViewControl dappId={'http://192.168.0.12:3000'} />
-        {/* <DappWebViewControl dappId={'https://metamask.github.io/test-dapp'} /> */}
+        {/* <DappWebViewControl dappId={'http://192.168.0.12:3000'} /> */}
+        <DappWebViewControl dappId={'https://metamask.github.io/test-dapp'} />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

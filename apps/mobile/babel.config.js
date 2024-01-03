@@ -49,6 +49,8 @@ module.exports = {
     ],
     ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }],
     ['@babel/plugin-transform-export-namespace-from'],
+    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-proposal-private-methods',
     'react-native-reanimated/plugin',
     [
       'module:react-native-dotenv',

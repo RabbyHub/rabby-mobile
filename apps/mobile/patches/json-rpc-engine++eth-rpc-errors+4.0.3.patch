@@ -1,0 +1,18 @@
+diff --git a/node_modules/json-rpc-engine/node_modules/eth-rpc-errors/dist/classes.js b/node_modules/json-rpc-engine/node_modules/eth-rpc-errors/dist/classes.js
+index f71061a..1cdf38d 100644
+--- a/node_modules/json-rpc-engine/node_modules/eth-rpc-errors/dist/classes.js
++++ b/node_modules/json-rpc-engine/node_modules/eth-rpc-errors/dist/classes.js
+@@ -32,9 +32,10 @@ class EthereumRpcError extends Error {
+         if (this.data !== undefined) {
+             serialized.data = this.data;
+         }
+-        if (this.stack) {
+-            serialized.stack = this.stack;
+-        }
++        // access Error.stack cause crash on React Native 0.72.x
++        // if (this.stack) {
++        //     serialized.stack = this.stack;
++        // }
+         return serialized;
+     }
+     /**

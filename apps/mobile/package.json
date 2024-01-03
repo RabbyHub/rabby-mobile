@@ -17,7 +17,8 @@
     "restart": "yarn start --reset-cache",
     "build:deps": "yarn ../../ build",
     "start": "yarn build:deps && react-native start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "sh ./scripts/postinstall.sh"
   },
   "lint-staged": {
     "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
@@ -58,6 +59,7 @@
     "eth-json-rpc-errors": "^2.0.2",
     "eth-json-rpc-filters": "^6.0.1",
     "eth-json-rpc-middleware": "^9.0.1",
+    "eth-rpc-errors": "^4.0.3",
     "immer": "^10.0.3",
     "jotai": "^2.6.0",
     "json-rpc-engine": "^6.1.0",
@@ -66,15 +68,18 @@
     "nativewind": "^2.0.11",
     "node-libs-react-native": "^1.2.1",
     "p-queue": "6.6.2",
+    "pump": "^3.0.0",
     "react": "18.2.0",
     "react-content-loader": "^6.2.1",
+    "react-error-boundary": "^4.0.12",
     "react-is": "18.2.0",
-    "react-native": "0.72.7",
+    "react-native": "^0.72.8",
     "react-native-aes-crypto": "^3.0.1",
     "react-native-collapsible-tab-view": "^6.2.1",
     "react-native-crypto-js": "^1.0.0",
     "react-native-device-info": "^10.12.0",
     "react-native-dotenv": "^3.4.9",
+    "react-native-exception-handler": "^2.10.10",
     "react-native-fast-image": "^8.6.3",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.14.0",
@@ -97,6 +102,7 @@
     "react-native-vision-camera": "^3.6.17",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "^13.6.3",
+    "readable-stream": "3.6.2",
     "styled-components": "^6.1.1"
   },
   "devDependencies": {
@@ -120,6 +126,8 @@
     "jest": "^27.5.1",
     "lint-staged": "^15.2.0",
     "metro-react-native-babel-preset": "0.76.8",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
     "react-devtools": "^4.28.5",
     "react-native-svg-transformer": "^1.1.0",
@@ -128,6 +136,11 @@
     "tailwindcss": "3.3.2",
     "tinycolor2": "^1.6.0",
     "typescript": "4.8.4"
+  },
+  "resolutions": {
+    "eth-rpc-errors": "^4.0.3",
+    "json-rpc-engine/eth-rpc-errors": "^4.0.3",
+    "readable-stream": "3.6.2"
   },
   "engines": {
     "node": ">=16.0.0"
