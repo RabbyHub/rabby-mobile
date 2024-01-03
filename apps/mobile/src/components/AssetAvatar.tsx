@@ -47,7 +47,7 @@ export const AssetAvatar = memo(
       () =>
         chain
           ? {
-              uri: CHAIN_ID_LIST.get(chain)?.nativeTokenLogo,
+              uri: CHAIN_ID_LIST.get(chain)?.logo,
             }
           : undefined,
       [chain],

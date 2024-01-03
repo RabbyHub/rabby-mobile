@@ -3,7 +3,6 @@ import { Account } from '@/core/services/preference';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
-import { CHAINS_ENUM } from '@debank/common';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { WaitingSignMessageComponent } from './map';

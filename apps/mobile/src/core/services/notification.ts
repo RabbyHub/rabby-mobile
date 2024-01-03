@@ -2,7 +2,7 @@ import Events from 'events';
 import { ethErrors } from 'eth-rpc-errors';
 import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
 import { preferenceService, transactionHistoryService } from './shared';

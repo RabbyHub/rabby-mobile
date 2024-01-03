@@ -50,7 +50,8 @@
     "pre-push": "yarn lint"
   },
   "dependencies": {
-    "@babel/runtime": "^7.20.0"
+    "@babel/runtime": "^7.20.0",
+    "@debank/common": "^0.3.48"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.3.1",

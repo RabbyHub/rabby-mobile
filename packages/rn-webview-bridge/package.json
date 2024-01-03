@@ -37,7 +37,6 @@
     "ethereumjs-util": "^7.1.5",
     "pump": "^3.0.0",
     "readable-stream": "^4.5.1",
-    "redux": "^5.0.0",
     "stream-browserify": "^3.0.0",
     "uuid": "^9.0.1"
   },

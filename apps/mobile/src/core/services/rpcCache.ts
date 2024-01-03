@@ -1,4 +1,4 @@
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 
 type CacheState = Map<
   string,
