@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
+    "@debank/common": "^0.3.48",
     "redux": "^5.0.0"
   },
   "devDependencies": {

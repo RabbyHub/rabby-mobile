@@ -1712,10 +1712,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:^0.3.47, @debank/common@npm:latest":
+"@debank/common@npm:^0.3.47":
   version: 0.3.47
   resolution: "@debank/common@npm:0.3.47"
   checksum: eb4634ef99f5a580636ed5c65d647bf8ab13b72b4e57b59c08af77ea657dcf7dc985cf69015a6d07410d83a32b869eebe6e883dfaa865f325d2315445e6b7877
+  languageName: node
+  linkType: hard
+
+"@debank/common@npm:^0.3.48":
+  version: 0.3.48
+  resolution: "@debank/common@npm:0.3.48"
+  checksum: 8820d320891460819381b69c147212f3ff3b18a19ccac43ddbaaa35df5ebdede2578ed0cc43963120951ccb2e92c276f14d5486043adb40e76f5823bdb727b7b
   languageName: node
   linkType: hard
 
@@ -2945,6 +2952,7 @@ __metadata:
   resolution: "@rabby-wallet/mobile-monorepo@workspace:."
   dependencies:
     "@babel/runtime": ^7.20.0
+    "@debank/common": ^0.3.48
     "@lavamoat/allow-scripts": ^2.3.1
     "@metamask/create-release-branch": ^1.1.0
     "@metamask/eslint-config": ^12.2.0
@@ -14500,7 +14508,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@debank/common": latest
+    "@debank/common": ^0.3.48
     "@debank/rabby-rn-security": ^0.1.1
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
     "@metamask/eth-sig-util": 5.1.0

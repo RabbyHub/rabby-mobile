@@ -7,7 +7,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { eventBus, EVENTS } from '@/utils/events';
-import { CHAINS_ENUM } from '@debank/common';
 import React from 'react';
 import { Text, View } from 'react-native';
 

@@ -1,4 +1,5 @@
-import { CHAINS_ENUM, CHAINS } from '@debank/common';
+import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { keyringService } from '../services';
 import { dappService } from '@/core/services/shared';
 import providerController from './provider';
