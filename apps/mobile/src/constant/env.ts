@@ -1,3 +1,7 @@
-import { BUILD_CHANNEL as BUILD_CHANNEL_ } from '@env';
+import {
+  BUILD_CHANNEL as BUILD_CHANNEL_,
+  DEV_CONSOLE_URL as DEV_CONSOLE_URL_,
+} from '@env';
 
 export const BUILD_CHANNEL = BUILD_CHANNEL_;
+export const DEV_CONSOLE_URL = DEV_CONSOLE_URL_;

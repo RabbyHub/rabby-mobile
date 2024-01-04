@@ -20,7 +20,9 @@ export const splitNumberByStep = (
 };
 
 export const formatTokenAmount = (amount: number | string, decimals = 4) => {
-  if (!amount) return '0';
+  if (!amount) {
+    return '0';
+  }
   const bn = new BigNumber(amount);
   const str = bn.toFixed();
   const split = str.split('.');
@@ -37,7 +39,9 @@ export const numberWithCommasIsLtOne = (
   if (x === undefined || x === null) {
     return '-';
   }
-  if (x.toString() === '0') return '0';
+  if (x.toString() === '0') {
+    return '0';
+  }
 
   if (x < 0.00005) {
     return '< 0.0001';
@@ -90,7 +94,9 @@ export const formatPrice = (price: string | number) => {
 };
 
 export const intToHex = (n: number) => {
-  if (n % 1 !== 0) throw new Error(`${n} is not int`);
+  if (n % 1 !== 0) {
+    throw new Error(`${n} is not int`);
+  }
   return `0x${n.toString(16)}`;
 };
 
@@ -109,8 +115,12 @@ export const formatAmount = (amount: string | number, decimals = 4) => {
   if (amount > 1e9) {
     return `${new BigNumber(amount).div(1e9).toFormat(4)}B`;
   }
-  if (amount > 10000) return formatNumber(amount);
-  if (amount > 1) return formatNumber(amount, 4);
+  if (amount > 10000) {
+    return formatNumber(amount);
+  }
+  if (amount > 1) {
+    return formatNumber(amount, 4);
+  }
   if (amount < 0.00001) {
     if (amount.toString().length > 10) {
       return Number(amount).toExponential(4);
@@ -139,7 +149,9 @@ export const calcPercent = (
 export function coerceInteger(input: any, fallbackInt = 0) {
   const output = parseInt(input, 10);
 
-  if (Number.isNaN(output)) return fallbackInt;
+  if (Number.isNaN(output)) {
+    return fallbackInt;
+  }
 
   return output;
 }
@@ -147,7 +159,9 @@ export function coerceInteger(input: any, fallbackInt = 0) {
 export function coerceFloat(input: any, fallbackNum = 0) {
   const output = parseFloat(input);
 
-  if (Number.isNaN(output)) return fallbackNum;
+  if (Number.isNaN(output)) {
+    return fallbackNum;
+  }
 
   return output;
 }

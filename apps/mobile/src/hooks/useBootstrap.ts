@@ -4,6 +4,7 @@ import { apisBoot } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
+import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -50,11 +51,44 @@ export function useInitializeAppOnTop() {
   return { locked };
 }
 
+const loadEntryScriptWeb3Atom = atom('');
+export function useLoadEntryScriptWeb3(options?: { isTop?: boolean }) {
+  const [{ locked }] = useAtom(lockAtom);
+  const [{ appInitialized }] = useAtom(bootstrapAtom);
+
+  const [entryScriptWeb3, setEntryScriptWeb3] = useAtom(
+    loadEntryScriptWeb3Atom,
+  );
+  const { isTop } = options || {};
+
+  React.useEffect(() => {
+    if (!isTop) {
+      return;
+    }
+    if (entryScriptWeb3) {
+      return;
+    }
+    if (locked || !appInitialized) {
+      return;
+    }
+
+    EntryScriptWeb3.init().then(js => {
+      setEntryScriptWeb3(js);
+    });
+  }, [isTop, appInitialized, locked, entryScriptWeb3]);
+
+  return {
+    entryScriptWeb3Loaded: appInitialized && !!entryScriptWeb3,
+    entryScriptWeb3,
+  };
+}
+
 /**
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp() {
   const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
+  useLoadEntryScriptWeb3({ isTop: true });
 
   React.useEffect(() => {
     apisBoot
