@@ -86,10 +86,10 @@ function StyledButton({
 const TEST_DAPP_INFO = {
   description:
     'Galxe is the leading platform for building Web3 community. With over 14 million active users, Galxe has propelled the growth of Optimism, Polygon, Arbitrum, and more than 4000 partners with reward-based loyalty programs.',
-  id: 'galxe.com',
+  id: 'metamask.github.io',
   logo_url:
     'https://static.debank.com/image/project/logo_url/galxe/90baa6ae2cb97b4791f02fe66abec4b2.png',
-  name: 'Galxe',
+  name: 'Metamask',
   tags: [],
   user_range: 'User >10k',
 };

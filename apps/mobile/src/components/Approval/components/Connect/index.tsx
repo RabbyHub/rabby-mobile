@@ -1,3 +1,4 @@
+// TODO: 缺少 Spin，参考插件
 import { Button } from '@/components/Button';
 import { toast } from '@/components/Toast';
 import { SIGN_PERMISSION_TYPES } from '@/constant/permission';
@@ -27,12 +28,11 @@ import PQueue from 'p-queue/dist/index';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Text, View } from 'react-native';
-import styled from 'styled-components/native';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import RuleResult from './RuleResult';
 import { SignTestnetPermission } from './SignTestnetPermission';
 import UserListDrawer from './UserListDrawer';
-import ArrowDownSVG from '@/ui/assets/approval/arrow-down-blue.svg';
+import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 
@@ -88,51 +88,52 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       paddingHorizontal: 20,
     },
+    footer: {
+      display: 'flex',
+      flexDirection: 'column',
+      padding: 20,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors['neutral-card-2'],
+      backgroundColor: colors['neutral-card-1'],
+      marginBottom: 15,
+    },
+    securityTip: {
+      width: '100%',
+      fontWeight: '500',
+      fontSize: 13,
+      lineHeight: 15,
+      padding: 6,
+      display: 'flex',
+      alignItems: 'center',
+      borderRadius: 4,
+      position: 'relative',
+      flexDirection: 'row',
+      marginTop: 12,
+    },
+    securityTipIcon: {
+      marginRight: 6,
+    },
+    button: {
+      width: '100%',
+      height: 52,
+    },
+    connectButton: {
+      backgroundColor: colors['blue-default'],
+    },
+    connectButtonText: {
+      color: colors['neutral-title-2'],
+    },
+    lastButton: {
+      marginTop: 20,
+    },
+    cancelButtonText: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
   });
-
-const Footer = styled.View`
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  border-top: 1px solid var(--r-neutral-card-2, rgba(255, 255, 255, 0.06));
-  width: 100%;
-  background: var(--r-neutral-card-1, #fff);
-  .ant-btn {
-    width: 100%;
-    height: 52px;
-    &:nth-child(1) {
-      margin-bottom: 12px;
-    }
-    &:nth-last-child(1) {
-      margin-top: 20px;
-    }
-  }
-  .security-tip {
-    width: 100%;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    padding: 6px;
-    display: flex;
-    align-items: center;
-    border-radius: 4px;
-    position: relative;
-    &::before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border: 5px solid transparent;
-      border-bottom: 8px solid currentColor;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    .icon-level {
-      margin-right: 6px;
-    }
-  }
-`;
 
 const RuleDesc = [
   {
@@ -267,7 +268,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
     return engineResults.filter(item => item.enable);
   }, [engineResults]);
 
-  const connectBtnStatus = useMemo(() => {
+  let connectBtnStatus = useMemo(() => {
     let disabled = false;
     let text = '';
     let forbiddenCount = 0;
@@ -562,11 +563,17 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
     activePopup('CANCEL_CONNECT');
   };
 
+  const LevelTipColor = connectBtnStatus.text
+    ? SecurityLevelTipColor[connectBtnStatus.level]
+    : {};
+  const LevelTipColorIcon = LevelTipColor.icon;
+
   return (
     <View style={styles.connectWrapper}>
       <View style={styles.approvalConnect}>
         <View className="flex justify-between items-center mb-20">
           <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
+          {/* TODO */}
           {/* <ChainSelector
             title={
               <View>
@@ -639,65 +646,78 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
           value={signPermission}
           onChange={v => setSignPermission(v)}
         />
-        {/* <Footer>
-          <View className="action-buttons flex flex-col mt-4 items-center">
-            <Button
-              type="primary"
-              onPress={() => handleAllow()}
-              disabled={connectBtnStatus.disabled}
-              className={clsx({
-                'mb-0': !connectBtnStatus.text,
-              })}>
-              {t('page.connect.connectBtn')}
-            </Button>
-            {connectBtnStatus.text && (
-              <View
-                className={clsx('security-tip', connectBtnStatus.level)}
+        <View style={styles.footer}>
+          <Button
+            buttonStyle={[styles.button, styles.connectButton]}
+            titleStyle={styles.connectButtonText}
+            type="primary"
+            onPress={() => handleAllow()}
+            disabled={connectBtnStatus.disabled}
+            disabledTitleStyle={{
+              color: colors['neutral-title-1'],
+            }}
+            className={clsx({
+              'mb-0': !connectBtnStatus.text,
+            })}
+            title={t('page.connect.connectBtn')}
+          />
+          {connectBtnStatus.text && (
+            <View
+              style={[
+                styles.securityTip,
+                {
+                  backgroundColor: LevelTipColor.bg,
+                },
+              ]}>
+              <LevelTipColorIcon
+                style={[
+                  styles.securityTipIcon,
+                  {
+                    color: LevelTipColor.bg,
+                  },
+                ]}
+              />
+              <Text
+                className="flex-1"
                 style={{
-                  color: SecurityLevelTipColor[connectBtnStatus.level].bg,
-                  backgroundColor:
-                    SecurityLevelTipColor[connectBtnStatus.level].bg,
+                  color: LevelTipColor.text,
                 }}>
-                <img
-                  src={SecurityLevelTipColor[connectBtnStatus.level].icon}
-                  className="icon icon-level"
-                />
-                <span
-                  className="flex-1"
+                {connectBtnStatus.text}
+              </Text>
+              <Text
+                className="underline text-13 font-medium cursor-pointer"
+                style={{
+                  color: LevelTipColor.text,
+                }}
+                onPress={onIgnoreAllRules}>
+                {t('page.connect.ignoreAll')}
+              </Text>
+            </View>
+          )}
+          <Button
+            type="primary"
+            ghost
+            buttonStyle={[styles.button, styles.lastButton]}
+            onPress={
+              displayBlockedRequestApproval ? activeCancelPopup : handleCancel
+            }
+            title={
+              <View style={styles.cancelButtonText}>
+                <Text
                   style={{
-                    color: SecurityLevelTipColor[connectBtnStatus.level].text,
+                    color: colors['blue-default'],
                   }}>
-                  {connectBtnStatus.text}
-                </span>
-                <span
-                  className="underline text-13 font-medium cursor-pointer"
-                  style={{
-                    color: SecurityLevelTipColor[connectBtnStatus.level].text,
-                  }}
-                  onClick={onIgnoreAllRules}>
-                  {t('page.connect.ignoreAll')}
-                </span>
+                  {connectBtnStatus.cancelBtnText}
+                </Text>
+                {displayBlockedRequestApproval && (
+                  <ArrowDownSVG className="w-16" />
+                )}
               </View>
-            )}
-            <Button
-              type="primary"
-              ghost
-              className={clsx(
-                'rabby-btn-ghost',
-                'flex items-center justify-center gap-2',
-              )}
-              onPress={
-                displayBlockedRequestApproval ? activeCancelPopup : handleCancel
-              }>
-              {connectBtnStatus.cancelBtnText}
-              {displayBlockedRequestApproval && (
-                <ArrowDownSVG className="w-16" />
-              )}
-            </Button>
-          </View>
-        </Footer> */}
+            }
+          />
+        </View>
       </View>
-      {/* <RuleDrawer
+      <RuleDrawer
         selectRule={selectRule}
         visible={ruleDrawerVisible}
         onIgnore={handleIgnoreRule}
@@ -713,7 +733,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
         visible={listDrawerVisible}
         onChange={handleUserListChange}
         onClose={() => setListDrawerVisible(false)}
-      /> */}
+      />
     </View>
   );
 };

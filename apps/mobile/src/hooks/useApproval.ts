@@ -42,7 +42,7 @@ export const useApproval = () => {
     }
 
     if (approval) {
-      await rejectApproval(err, stay, isInternal);
+      await notificationService.rejectApproval(err, stay, isInternal);
     }
     if (!stay) {
       // history.push('/');

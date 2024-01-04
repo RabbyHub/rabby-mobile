@@ -1,84 +1,62 @@
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { Radio } from '@/components/Radio';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popup, Checkbox } from 'ui/component';
-import styled, { createGlobalStyle } from 'styled-components';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const UserListDrawerWrapper = styled.div`
-  .origin {
-    display: flex;
-    margin-bottom: 80px;
-    font-weight: 500;
-    font-size: 22px;
-    line-height: 26px;
-    color: var(--r-neutral-title-1, #192945);
-    .logo {
-      width: 24px;
-      height: 24px;
-      margin-right: 8px;
-    }
-  }
-`;
-
-const Footer = styled.div`
-  background: var(--r-neutral-card-2, #f2f4f7);
-  border-radius: 6px;
-  .item {
-    display: flex;
-    cursor: pointer;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    color: var(--r-neutral-title-1, #192945);
-    position: relative;
-    border: 1px solid transparent;
-    .rabby-checkbox__wrapper {
-      .rabby-checkbox {
-        border: 1px solid var(--r-neutral-line);
-        background-color: var(--r-neutral-foot) !important;
-      }
-      &.checked {
-        .rabby-checkbox {
-          background-color: var(--r-blue-default, #7084ff) !important;
-          border: none;
-        }
-      }
-    }
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 18px;
-      width: 328px;
-      height: 1px;
-      background-color: var(--r-neutral-line, #e5e9ef);
-    }
-    &:hover {
-      background: var(--r-blue-light-1, #eef1ff);
-      border: 1px solid var(--r-blue-default, #7084ff);
-      border-radius: 6px;
-    }
-    &:nth-last-child(1) {
-      &::after {
-        display: none;
-      }
-    }
-  }
-`;
-
-const GlobalStyle = createGlobalStyle`
-  .user-list-drawer {
-    .ant-drawer-title {
-      text-align: left;
-      font-weight: 700;
-      font-size: 15px;
-      line-height: 18px;
-      color: #13141A;
-    }
-  }
-`;
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+    modalTitle: {
+      fontSize: 15,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+      marginBottom: 16,
+      paddingTop: 24,
+      textAlign: 'center',
+    },
+    origin: {
+      display: 'flex',
+      marginBottom: 80,
+      fontWeight: 500,
+      fontSize: 22,
+      lineHeight: 26,
+      color: colors['neutral-title-1'],
+      flexDirection: 'row',
+    },
+    logo: {
+      width: 24,
+      height: 24,
+      marginRight: 8,
+    },
+    text: {
+      flex: 1,
+      overflow: 'hidden',
+    },
+    footer: {
+      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 6,
+    },
+    footerItem: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      fontWeight: 500,
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-title-1'],
+      position: 'relative',
+      flexDirection: 'row',
+    },
+  });
 
 interface Props {
   origin: string;
@@ -106,73 +84,93 @@ const UserListDrawer = ({
   onClose,
 }: Props) => {
   const { t } = useTranslation();
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+
+  React.useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
 
   return (
-    <Popup
-      visible={visible}
-      onClose={onClose}
-      height="340"
-      closable
-      title={t('page.connect.manageWhiteBlackList')}
-      className="user-list-drawer"
-      isSupportDarkMode
-    >
-      <GlobalStyle />
-      <UserListDrawerWrapper>
-        <div className="origin">
-          <img src={logo} className="logo" />
-          <span className="flex-1 whitespace-nowrap overflow-hidden overflow-ellipsis">
-            {origin}
-          </span>
-        </div>
-      </UserListDrawerWrapper>
-      <Footer>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: false, onWhitelist: false })}
-        >
-          <div>{t('page.connect.noMark')}</div>
-          <div>
-            <Checkbox
+    <AppBottomSheetModal
+      ref={modalRef}
+      onDismiss={onClose}
+      snapPoints={['45%']}>
+      <BottomSheetView style={styles.mainView}>
+        <Text style={styles.modalTitle}>
+          {t('page.connect.manageWhiteBlackList')}
+        </Text>
+        <View>
+          <View style={styles.origin}>
+            <Image source={{ uri: logo }} style={styles.logo} />
+            <Text style={styles.text}>{origin}</Text>
+          </View>
+        </View>
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.footerItem}
+            onPress={() =>
+              onChange({ onBlacklist: false, onWhitelist: false })
+            }>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['neutral-title-1'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.connect.noMark')}
               checked={!onWhitelist && !onBlacklist}
-              onChange={() =>
+              onPress={() =>
                 onChange({ onBlacklist: false, onWhitelist: false })
               }
             />
-          </div>
-        </div>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: false, onWhitelist: true })}
-        >
-          <div className="text-r-green-default">
-            {t('page.connect.trusted')}
-          </div>
-          <div>
-            <Checkbox
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerItem}
+            onPress={() => onChange({ onBlacklist: false, onWhitelist: true })}>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['green-default'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.connect.trusted')}
               checked={onWhitelist}
-              onChange={() =>
+              onPress={() =>
                 onChange({ onBlacklist: false, onWhitelist: true })
               }
             />
-          </div>
-        </div>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: true, onWhitelist: false })}
-        >
-          <div className="text-r-red-default">{t('page.connect.blocked')}</div>
-          <div>
-            <Checkbox
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerItem}
+            onPress={() => onChange({ onBlacklist: true, onWhitelist: false })}>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['red-default'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.connect.blocked')}
               checked={onBlacklist}
-              onChange={() =>
+              onPress={() =>
                 onChange({ onBlacklist: true, onWhitelist: false })
               }
             />
-          </div>
-        </div>
-      </Footer>
-    </Popup>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
   );
 };
 

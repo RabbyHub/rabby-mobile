@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { apisBoot, initApis } from '@/core/apis';
+import { apisBoot } from '@/core/apis';
 import { keyringService } from '@/core/services';
+import { initApis } from '@/core/apis/init';
+import { initServices } from '@/core/services/init';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -43,8 +45,6 @@ export function useInitializeAppOnTop() {
     if (!locked || !appInitialized) {
       return;
     }
-
-    // initApis();
   }, [appInitialized, locked]);
 
   return { locked };
@@ -59,13 +59,14 @@ export function useBootstrapApp() {
   React.useEffect(() => {
     apisBoot
       .tryAutoUnlockRabbyMobile()
-      .then(result => {
+      .then(async result => {
         setBootstrap(prev => ({
           ...prev,
           useBuiltinPwd: result.useBuiltInPwd,
           appInitialized: true,
         }));
-        initApis();
+        await initServices();
+        await initApis();
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);

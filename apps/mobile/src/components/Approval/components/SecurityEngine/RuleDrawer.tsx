@@ -1,290 +1,301 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Switch } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popup, Checkbox } from 'ui/component';
 import {
   RuleConfig,
   Level,
   NumberDefine,
   EnumDefine,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import styled from 'styled-components';
 import { sortBy } from 'lodash';
-import { SecurityEngineLevel, SecurityEngineLevelOrder } from 'consts';
-import clsx from 'clsx';
-import { useHover } from '@/ui/utils';
 import RuleDetailDrawer from './RuleDetailDrawer';
-import { ReactComponent as RcIconArrowRight } from 'ui/assets/sign/arrow-right.svg';
-import IconError from 'ui/assets/sign/security-engine/error-big.svg';
-import IconDisable from 'ui/assets/sign/security-engine/disable-big.svg';
-import IconQuestionMark from 'ui/assets/sign/tx/question-mark.svg';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import ThemeIcon from '@/ui/component/ThemeMode/ThemeIcon';
+import RcIconArrowRight from '@/assets/icons/approval/arrow-right.svg';
+import IconError from '@/assets/icons/security-engine/error-big.svg';
+import IconDisable from '@/assets/icons/security-engine/disable-big.svg';
+import IconQuestionMark from '@/assets/icons/approval/question-mark.svg';
+import {
+  SecurityEngineLevelOrder,
+  SecurityEngineLevel,
+} from '@/constant/security';
+import { Tip } from '@/components/Tip';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
-const RuleDrawerWrapper = styled.div`
-  border-radius: 8px;
-  padding: 16px;
-  height: 300px;
-  overflow: auto;
-  position: relative;
-  margin-bottom: 20px;
-  .value-desc {
-    font-weight: 500;
-    font-size: 15px;
-    line-height: 18px;
-    color: var(--r-neutral-title-1, #f7fafc);
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--r-neutral-line, rgba(255, 255, 255, 0.1));
-    margin-bottom: 14px;
-    display: flex;
-    .desc-title {
-      font-size: 13px;
-      line-height: 15px;
-      color: var(--r-neutral-body, #d3d8e0);
-      margin-right: 6px;
-      font-weight: normal;
-      margin-top: 1px;
-    }
-  }
-  .threshold {
-    font-size: 13px;
-    line-height: 18px;
-    color: var(--r-neutral-body, #d3d8e0);
-    p {
-      font-size: 13px;
-      line-height: 15px;
-      color: var(--r-neutral-body, #d3d8e0);
-      margin-bottom: 8px;
-    }
-    .value {
-      color: #13141a;
-      font-weight: 500;
-    }
-    .rule-threshold {
-      display: flex;
-      margin-top: 8px;
-      border-radius: 4px;
-      padding: 18px 12px;
-      .level-icon {
-        width: 16px;
-        height: 16px;
-        margin-right: 4px;
-      }
-      .level-text {
-        font-weight: 500;
-        font-size: 15px;
-        line-height: 18px;
-        margin-right: 8px;
-      }
-      .threshold-text {
-        font-weight: 500;
-        font-size: 15px;
-        line-height: 18px;
-        color: var(--r-neutral-title-1, #f7fafc);
-      }
-      .current-value {
-        font-size: 12px;
-        line-height: 14px;
-        color: var(--r-neutral-foot, #babec5);
-      }
-    }
-  }
-  .rule-threshold-footer {
-    position: absolute;
-    bottom: 0;
-    padding: 0 16px 16px;
-    left: 0;
-    width: 100%;
-    .risk-confirm {
-      display: flex;
-      justify-content: center;
-      font-size: 12px;
-      line-height: 14px;
-      color: #707280;
-      margin-bottom: 12px;
-      .rabby-checkbox__wrapper {
-        .rabby-checkbox {
-          border: 1px solid var(--r-neutral-line);
-          background-color: var(--r-neutral-foot) !important;
-        }
-        &.checked {
-          .rabby-checkbox {
-            background-color: var(--r-blue-default, #7084ff) !important;
-            border: none;
-          }
-        }
-      }
-    }
-    .forbidden-tip {
-      margin-bottom: 12px;
-      font-size: 12px;
-      line-height: 14px;
-      text-align: center;
-      color: #13141a;
-    }
-    .button-ignore {
-      padding: 12px;
-      width: 100%;
-      height: 40px;
-      font-weight: 500;
-      font-size: 13px;
-      line-height: 15px;
-      text-align: center;
-      color: #ffffff;
-      &[disabled] {
-        opacity: 0.4;
-      }
-    }
-  }
-  &.safe {
-    background: rgba(0, 192, 135, 0.06);
-    .rule-threshold {
-      background: rgba(39, 193, 147, 0.06);
-      .level-text {
-        color: #27c193;
-      }
-    }
-  }
-  &.warning {
-    background: rgba(255, 176, 32, 0.06);
-    .rule-threshold {
-      background: rgba(255, 176, 32, 0.06);
-      .level-text {
-        color: #ffb020;
-      }
-    }
-    .rule-threshold-footer {
-      .button-ignore {
-        background: #ffb020;
-        border-color: #ffb020;
-        &:hover {
-          background: #ffb020;
-          border-color: #ffb020;
-          box-shadow: 0px 8px 16px rgba(255, 176, 32, 0.3);
-        }
-        &:focus {
-          box-shadow: 0px 8px 16px rgba(255, 176, 32, 0.3);
-        }
-      }
-    }
-  }
-  &.danger {
-    background: rgba(236, 81, 81, 0.06);
-    .rule-threshold {
-      background: rgba(236, 81, 81, 0.06);
-      .level-text {
-        color: #ec5151;
-      }
-    }
-    .rule-threshold-footer {
-      .button-ignore {
-        background: #ec5151;
-        border-color: #ec5151;
-        &:hover {
-          background: #ec5151;
-          border-color: #ec5151;
-          box-shadow: 0px 8px 16px rgba(236, 81, 81, 0.3);
-        }
-        &:focus {
-          box-shadow: 0px 8px 16px rgba(236, 81, 81, 0.3);
-        }
-      }
-    }
-  }
-  &.forbidden {
-    background: rgba(175, 22, 14, 0.06);
-    .rule-threshold {
-      background: rgba(236, 81, 81, 0.06);
-      .level-text {
-        color: #af160e;
-      }
-    }
-    .rule-threshold-footer {
-      .button-ignore {
-        background: #af160e;
-        border-color: #af160e;
-      }
-    }
-  }
-  &.error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--r-neutral-card-2, #f5f6fa);
-  }
-  &.proceed {
-    background: var(--r-neutral-card-2, #f5f6fa);
-    .rule-threshold {
-      background: var(--r-neutral-card-3, #f7fafc);
-      .level-text {
-        color: var(--r-neutral-foot, #babec5);
-      }
-    }
-    .rule-threshold-footer {
-      .rabby-checkbox__label {
-        color: var(--r-neutral-foot, #babec5);
-      }
+import { StyleSheet } from 'react-native';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { Radio } from '@/components/Radio';
+import { Button } from '@/components';
+import { Switch } from '@rneui/themed';
 
-      .button-ignore {
-        background: #707280;
-        border-color: transparent;
-        &:hover {
-          background: #707280;
-          border-color: #707280;
-          box-shadow: 0px 8px 16px rgba(112, 114, 128, 0.3);
-        }
-        &:focus {
-          box-shadow: 0px 8px 16px rgba(112, 114, 128, 0.3);
-        }
-      }
-    }
-  }
-`;
+const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      borderRadius: 8,
+      padding: 16,
+      height: 300,
+      position: 'relative',
+      marginBottom: 20,
+    },
+    text: {
+      fontSize: 15,
+      color: colors['neutral-title-1'],
+      textAlign: 'center',
+      fontWeight: '500',
+    },
+    valueDesc: {
+      fontWeight: '500',
+      fontSize: 15,
+      lineHeight: 18,
+      color: colors['neutral-title-1'],
+      paddingBottom: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors['neutral-line'],
+      marginBottom: 14,
+      display: 'flex',
+      flexDirection: 'row',
+    },
+    descTitle: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-body'],
+      marginRight: 6,
+      fontWeight: 'normal',
+      marginTop: 1,
+    },
+    threshold: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors['neutral-body'],
+    },
+    thresholdText: {
+      fontWeight: '500',
+      fontSize: 15,
+      lineHeight: 18,
+      color: colors['neutral-title-1'],
+    },
+    currentValue: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+    },
+    ruleThreshold: {
+      display: 'flex',
+      marginTop: 8,
+      borderRadius: 4,
+      padding: 18,
+      flexDirection: 'row',
+    },
+    levelIcon: {
+      width: 16,
+      height: 16,
+      marginRight: 4,
+    },
+    levelText: {
+      fontWeight: '500',
+      fontSize: 15,
+      lineHeight: 18,
+      marginRight: 8,
+    },
+    ruleThresholdFooter: {
+      width: '100%',
+      flex: 1,
+      justifyContent: 'flex-end',
+    },
+    riskConfirm: {
+      display: 'flex',
+      justifyContent: 'center',
+      fontSize: 12,
+      lineHeight: 14,
+      color: '#707280',
+      marginBottom: 12,
+      flexDirection: 'row',
+    },
+    forbiddenTip: {
+      marginBottom: 12,
+      fontSize: 12,
+      lineHeight: 14,
+      textAlign: 'center',
+      color: '#13141a',
+    },
+    buttonIgnore: {
+      padding: 12,
+      width: '100%',
+      height: 40,
+      fontWeight: '500',
+    },
+    buttonIgnoreText: {
+      fontSize: 13,
+      lineHeight: 15,
+      textAlign: 'center',
+      color: '#ffffff',
+    },
+    safe: {
+      backgroundColor: 'rgba(0, 192, 135, 0.06)',
+    },
+    warning: {
+      backgroundColor: 'rgba(255, 176, 32, 0.06)',
+    },
+    danger: {
+      backgroundColor: 'rgba(236, 81, 81, 0.06)',
+    },
+    forbidden: {
+      backgroundColor: 'rgba(175, 22, 14, 0.06)',
+    },
+    error: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#f5f6fa',
+    },
+    proceed: {
+      backgroundColor: '#f5f6fa',
+    },
+  });
 
-const RuleFooter = styled.div`
-  background: var(--r-neutral-card-2, rgba(255, 255, 255, 0.06));
-  border-radius: 6px;
-  .item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    color: var(--r-neutral-title-1, #f7fafc);
-    .right {
-      display: flex;
-      font-size: 12px;
-      line-height: 14px;
-      text-align: right;
-      color: var(--r-neutral-body, #d3d8e0);
-      font-weight: normal;
-      align-items: center;
-    }
-    &:nth-child(1) {
-      position: relative;
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 18px;
-        width: 328px;
-        height: 1px;
-        background-color: var(--r-neutral-line, rgba(255, 255, 255, 0.1));
-      }
-    }
-    &:nth-child(2) {
-      cursor: pointer;
-      .icon-arrow-right {
-        width: 16px;
-        height: 16px;
-        margin-left: 4px;
-      }
-    }
+const safeStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {
+      backgroundColor: 'rgba(39, 193, 147, 0.06)',
+    },
+    levelText: {
+      color: '#27c193',
+    },
+    buttonIgnore: {},
+  });
+
+const warningStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {
+      backgroundColor: 'rgba(255, 176, 32, 0.06)',
+    },
+    levelText: {
+      color: '#ffb020',
+    },
+    buttonIgnore: {
+      backgroundColor: '#ffb020',
+      borderColor: '#ffb020',
+    },
+  });
+
+const dangerStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {
+      backgroundColor: 'rgba(236, 81, 81, 0.06)',
+    },
+    levelText: {
+      color: '#ec5151',
+    },
+    buttonIgnore: {
+      backgroundColor: '#ec5151',
+      borderColor: '#ec5151',
+    },
+  });
+
+const forbiddenStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {
+      backgroundColor: 'rgba(236, 81, 81, 0.06)',
+    },
+    levelText: {
+      color: '#af160e',
+    },
+    buttonIgnore: {
+      backgroundColor: '#af160e',
+      borderColor: '#af160e',
+    },
+  });
+
+const errorStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {},
+    levelText: {},
+    buttonIgnore: {},
+  });
+
+const proceedStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    ruleThreshold: {
+      backgroundColor: colors['neutral-card-3'],
+    },
+    levelText: {
+      color: colors['neutral-foot'],
+    },
+    buttonIgnore: {
+      backgroundColor: '#707280',
+      borderColor: 'transparent',
+    },
+  });
+
+const getLevelStyles = (
+  colors: AppColorsVariants,
+  level?: Level | 'proceed',
+) => {
+  switch (level) {
+    case Level.SAFE:
+      return safeStyles(colors);
+    case Level.WARNING:
+      return warningStyles(colors);
+    case Level.DANGER:
+      return dangerStyles(colors);
+    case Level.FORBIDDEN:
+      return forbiddenStyles(colors);
+    case Level.ERROR:
+      return errorStyles(colors);
+    case 'proceed':
+      return proceedStyles(colors);
+    default:
+      return { ruleThreshold: {}, levelText: {}, buttonIgnore: {} };
   }
-`;
+};
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+    modalTitle: {
+      color: colors['neutral-title-1'],
+      fontSize: 20,
+      lineHeight: 23,
+      textAlign: 'center',
+      fontWeight: '500',
+      marginVertical: 15,
+    },
+    ruleFooter: {
+      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 6,
+      overflow: 'hidden',
+    },
+    ruleFooterItem: {
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      fontWeight: '500',
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-title-1'],
+      flexDirection: 'row',
+    },
+
+    ruleFooterItemRight: {
+      fontSize: 12,
+      lineHeight: 14,
+      textAlign: 'right',
+      color: colors['neutral-body'],
+      fontWeight: 'normal',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    iconRight: {
+      width: 16,
+      height: 16,
+      marginLeft: 4,
+    },
+  });
 
 interface Props {
   selectRule: {
@@ -308,13 +319,14 @@ const RuleDrawer = ({
   onUndo,
   onRuleEnableStatusChange,
 }: Props) => {
+  const modalRef = useRef<AppBottomSheetModal>(null);
   const [accepted, setAccepted] = useState(false);
   const [changed, setChanged] = useState(false);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [ruleDetailDrawerVisible, setRuleDetailDrawerVisible] = useState(false);
   const { t } = useTranslation();
-
-  const [isHovering, hoverProps] = useHover();
+  // don't have hover event in mobile
+  const isHovering = false;
   const currentLevel = useMemo(() => {
     if (!selectRule || selectRule.ignored) return 'proceed';
     return selectRule.level;
@@ -357,12 +369,8 @@ const RuleDrawer = ({
       case 'percent':
       case 'int': {
         const { max: valueMax, min: valueMin } = ruleConfig.valueDefine;
-        const {
-          max,
-          min,
-          maxIncluded,
-          minIncluded,
-        } = levelThreshold as NumberDefine;
+        const { max, min, maxIncluded, minIncluded } =
+          levelThreshold as NumberDefine;
         const arr: string[] = [];
         if (min !== null) {
           if (minIncluded) {
@@ -370,12 +378,14 @@ const RuleDrawer = ({
               arr.push(min.toString());
             } else {
               arr.push(
-                `≥${min}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`
+                `≥${min}${
+                  ruleConfig.valueDefine.type === 'percent' ? '%' : ''
+                }`,
               );
             }
           } else {
             arr.push(
-              `>${min}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`
+              `>${min}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`,
             );
           }
         }
@@ -385,12 +395,14 @@ const RuleDrawer = ({
               arr.push(max.toString());
             } else {
               arr.push(
-                `≤${max}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`
+                `≤${max}${
+                  ruleConfig.valueDefine.type === 'percent' ? '%' : ''
+                }`,
               );
             }
           } else {
             arr.push(
-              `<${max}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`
+              `<${max}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`,
             );
           }
         } else {
@@ -400,7 +412,7 @@ const RuleDrawer = ({
       }
       case 'enum':
         return (levelThreshold as string[])
-          .map((item) => (ruleConfig.valueDefine as EnumDefine).display[item])
+          .map(item => (ruleConfig.valueDefine as EnumDefine).display[item])
           .join(' or ');
       default:
         return '';
@@ -415,10 +427,10 @@ const RuleDrawer = ({
       ...ruleConfig.customThreshold,
     };
 
-    return sortBy(Object.keys(threshold), (key) => {
-      return SecurityEngineLevelOrder.findIndex((k) => k === key);
+    return sortBy(Object.keys(threshold), key => {
+      return SecurityEngineLevelOrder.findIndex(k => k === key);
     })
-      .map((level) => SecurityEngineLevel[level]?.text)
+      .map(level => SecurityEngineLevel[level]?.text)
       .join('/');
   }, [selectRule]);
 
@@ -484,175 +496,225 @@ const RuleDrawer = ({
 
   useEffect(() => {
     if (!visible) {
+      modalRef.current?.close();
       reset();
+    } else {
+      modalRef.current?.present();
     }
   }, [visible]);
-
+  const colors = useThemeColors();
+  const ruleDrawerWrapperStyles = getRuleDrawerWrapperStyles(colors);
   const content = () => {
     if (!selectRule) return null;
     if (!selectRule.ruleConfig.enable) {
       return (
-        <RuleDrawerWrapper className={clsx(Level.ERROR)}>
-          <img src={IconDisable} />
-          <p className="text-15 text-gray-content mt-4 text-center font-medium">
+        <View
+          style={[
+            StyleSheet.flatten([
+              ruleDrawerWrapperStyles.container,
+              ruleDrawerWrapperStyles.error,
+            ]),
+          ]}>
+          <IconDisable />
+          <Text
+            style={[
+              ruleDrawerWrapperStyles.text,
+              // eslint-disable-next-line react-native/no-inline-styles
+              {
+                marginTop: 4,
+              },
+            ]}>
             {t('page.securityEngine.ruleDisabled')}
-          </p>
-        </RuleDrawerWrapper>
+          </Text>
+        </View>
       );
     } else if (selectRule.level === Level.ERROR) {
       return (
-        <RuleDrawerWrapper className={clsx(selectRule.level)}>
-          <img src={IconError} />
-          <p className="text-15 text-gray-content mt-16 text-center font-medium">
+        <View
+          style={StyleSheet.flatten([
+            ruleDrawerWrapperStyles.container,
+            ruleDrawerWrapperStyles[selectRule.level],
+          ])}>
+          <IconError />
+          <Text
+            style={[
+              ruleDrawerWrapperStyles.text,
+              // eslint-disable-next-line react-native/no-inline-styles
+              {
+                marginTop: 16,
+              },
+            ]}>
             {t('page.securityEngine.unknownResult')}
-          </p>
-        </RuleDrawerWrapper>
+          </Text>
+        </View>
       );
     } else {
       const valueTooltip = selectRule.ruleConfig.valueTooltip;
+      const Icon = currentLevel && SecurityEngineLevel[currentLevel].icon;
+      const levelStyles = getLevelStyles(colors, currentLevel);
       return (
-        <RuleDrawerWrapper
-          className={clsx(selectRule.ignored ? 'proceed' : selectRule.level)}
-        >
-          <div className="value-desc">
-            <span className="desc-title">Description:</span>
-            <div className="relative">
-              {selectRule.ruleConfig.valueDescription}
+        <View
+          style={StyleSheet.flatten([
+            ruleDrawerWrapperStyles.container,
+            selectRule.ignored
+              ? ruleDrawerWrapperStyles.proceed
+              : selectRule.level && ruleDrawerWrapperStyles[selectRule.level],
+          ])}>
+          <View style={ruleDrawerWrapperStyles.valueDesc}>
+            <Text style={ruleDrawerWrapperStyles.descTitle}>Description:</Text>
+            <View className="flex-1 relative">
+              <Text> {selectRule.ruleConfig.valueDescription}</Text>
               {valueTooltip ? (
-                <TooltipWithMagnetArrow
-                  className="rectangle w-[max-content] max-w-[355px]"
-                  title={valueTooltip}
-                >
-                  <img
-                    src={IconQuestionMark}
-                    className="inline-block ml-[3px]"
-                  />
-                </TooltipWithMagnetArrow>
+                <Tip content={valueTooltip}>
+                  <IconQuestionMark className="inline-block ml-[3px]" />
+                </Tip>
               ) : null}
-            </div>
-          </div>
-          <div className="threshold">
-            <p>{t('page.securityEngine.alertTriggerReason')}</p>
-            <div className="rule-threshold">
-              {currentLevel && (
-                <img
-                  className="level-icon"
-                  src={SecurityEngineLevel[currentLevel].icon}
-                />
-              )}
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={ruleDrawerWrapperStyles.threshold}>
+              {t('page.securityEngine.alertTriggerReason')}
+            </Text>
+            <View
+              style={StyleSheet.flatten([
+                ruleDrawerWrapperStyles.ruleThreshold,
+                levelStyles.ruleThreshold,
+              ])}>
+              {Icon && <Icon style={ruleDrawerWrapperStyles.levelIcon} />}
               {selectRule.level && (
-                <span className="level-text">
+                <Text
+                  style={StyleSheet.flatten([
+                    ruleDrawerWrapperStyles.levelText,
+                    levelStyles.levelText,
+                  ])}>
                   {SecurityEngineLevel[selectRule.level].text}:
-                </span>
+                </Text>
               )}
-              <div>
-                <div className="threshold-text">
+              <View>
+                <Text style={ruleDrawerWrapperStyles.thresholdText}>
                   {t('page.securityEngine.whenTheValueIs', {
                     value: displayThreshold,
                   })}
-                </div>
-                <div className="current-value">
+                </Text>
+                <Text style={ruleDrawerWrapperStyles.currentValue}>
                   {t('page.securityEngine.currentValueIs', {
                     value: displayThreshold,
                   })}
-                </div>
-              </div>
-            </div>
+                </Text>
+              </View>
+            </View>
             {selectRule.level !== 'safe' && (
-              <div className="rule-threshold-footer">
+              <View style={ruleDrawerWrapperStyles.ruleThresholdFooter}>
                 {selectRule.level === Level.DANGER && (
-                  <div
-                    className={clsx('risk-confirm', {
-                      'opacity-50': selectRule.ignored,
-                    })}
-                  >
-                    <Checkbox
+                  <View
+                    style={[
+                      ruleDrawerWrapperStyles.riskConfirm,
+                      // eslint-disable-next-line react-native/no-inline-styles
+                      {
+                        opacity: selectRule.ignored ? 0.5 : 1,
+                      },
+                    ]}>
+                    <Radio
+                      title={t('page.securityEngine.understandRisk')}
                       checked={selectRule.ignored || accepted}
-                      onChange={(val) => setAccepted(val)}
-                    >
-                      {t('page.securityEngine.understandRisk')}
-                    </Checkbox>
-                  </div>
+                      onPress={() =>
+                        setAccepted(!(selectRule.ignored || accepted))
+                      }
+                    />
+                  </View>
                 )}
                 {selectRule.level === Level.FORBIDDEN && (
-                  <p className="forbidden-tip">
+                  <Text style={ruleDrawerWrapperStyles.forbiddenTip}>
                     {t('page.securityEngine.forbiddenCantIgnore')}
-                  </p>
+                  </Text>
                 )}
-                <div {...hoverProps}>
+                <View>
                   <Button
                     type="primary"
-                    className="button-ignore"
-                    style={{
-                      backgroundColor: ignoreButtonContent.color,
-                    }}
-                    onClick={
+                    buttonStyle={StyleSheet.flatten([
+                      {
+                        backgroundColor: ignoreButtonContent.color as any,
+                      },
+                      ruleDrawerWrapperStyles.buttonIgnore,
+                      levelStyles.buttonIgnore,
+                    ])}
+                    titleStyle={ruleDrawerWrapperStyles.buttonIgnoreText}
+                    onPress={
                       selectRule.ignored ? handleUndoIgnore : handleIgnore
                     }
+                    disabledStyle={StyleSheet.flatten([
+                      {
+                        backgroundColor: ignoreButtonContent.color as any,
+                      },
+                      levelStyles.buttonIgnore,
+                    ])}
+                    disabledTitleStyle={{
+                      color: colors['neutral-title-1'],
+                    }}
                     disabled={ignoreButtonDisabled}
-                  >
-                    {ignoreButtonContent.text}
-                  </Button>
-                </div>
-              </div>
+                    title={ignoreButtonContent.text}
+                  />
+                </View>
+              </View>
             )}
-          </div>
-        </RuleDrawerWrapper>
+          </View>
+        </View>
       );
     }
   };
 
+  const styles = getStyles(colors);
   return (
-    <Popup
-      visible={visible}
-      onClose={handleClose}
-      height="510"
-      className="rule-detail-modal"
-      closable
-      title={t('page.securityEngine.ruleDetailTitle')}
-      isSupportDarkMode
-    >
-      {selectRule && (
-        <>
-          {content()}
-          <RuleFooter>
-            <div className="item">
-              <div className="left">{t('page.securityEngine.enableRule')}</div>
-              <div className="right">
-                <Switch
-                  checked={
-                    enabled === null ? selectRule.ruleConfig.enable : enabled
-                  }
-                  onChange={(val) => handleEnableStatusChange(val)}
-                />
-              </div>
-            </div>
-            <div
-              className="item"
-              onClick={() => setRuleDetailDrawerVisible(true)}
-            >
-              <div className="left">
-                {t('page.securityEngine.viewRiskLevel')}
-              </div>
-              <div className="right">
-                {ruleLevels}
-                <ThemeIcon
-                  src={RcIconArrowRight}
-                  className="icon-arrow-right"
-                />
-              </div>
-            </div>
-          </RuleFooter>
-        </>
-      )}
-      {selectRule && (
-        <RuleDetailDrawer
-          visible={ruleDetailDrawerVisible}
-          rule={selectRule.ruleConfig}
-          onCancel={() => setRuleDetailDrawerVisible(false)}
-        />
-      )}
-    </Popup>
+    <AppBottomSheetModal
+      ref={modalRef}
+      onDismiss={handleClose}
+      snapPoints={['60%']}>
+      <BottomSheetView style={styles.mainView}>
+        <Text style={styles.modalTitle}>
+          {t('page.securityEngine.ruleDetailTitle')}
+        </Text>
+        {selectRule && (
+          <>
+            {content()}
+            <View style={styles.ruleFooter}>
+              <View style={styles.ruleFooterItem}>
+                <Text>{t('page.securityEngine.enableRule')}</Text>
+                <View style={styles.ruleFooterItemRight}>
+                  <Switch
+                    value={
+                      enabled === null ? selectRule.ruleConfig.enable : enabled
+                    }
+                    onChange={_ =>
+                      handleEnableStatusChange(
+                        !(enabled === null
+                          ? selectRule.ruleConfig.enable
+                          : enabled),
+                      )
+                    }
+                  />
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.ruleFooterItem}
+                onPress={() => setRuleDetailDrawerVisible(true)}>
+                <Text>{t('page.securityEngine.viewRiskLevel')}</Text>
+                <View style={styles.ruleFooterItemRight}>
+                  <Text>{ruleLevels}</Text>
+                  <RcIconArrowRight style={styles.iconRight} />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+        {selectRule && (
+          <RuleDetailDrawer
+            visible={ruleDetailDrawerVisible}
+            rule={selectRule.ruleConfig}
+            onCancel={() => setRuleDetailDrawerVisible(false)}
+          />
+        )}
+      </BottomSheetView>
+    </AppBottomSheetModal>
   );
 };
 

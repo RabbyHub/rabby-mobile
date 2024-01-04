@@ -169,7 +169,7 @@ const RuleResult = ({
         )}
         {(rule.id === '1006' || rule.id === '1007') && (
           <TouchableOpacity
-            className="flex cursor-pointer flex-row items-center"
+            className="flex flex-row items-center"
             onPress={onEditUserList}>
             <Text>
               {!userListResult && t('page.connect.noMark')}
@@ -210,12 +210,6 @@ const RuleResult = ({
           right={-12}
         />
       )}
-      <SecurityLevelTag
-        enable={false}
-        level="proceed"
-        onClick={handleClick}
-        right={-12}
-      />
       {rule.result && ignored && (
         <SecurityLevelTag
           enable={rule.result.enable}
