@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import {
   RcIconHeaderSettings,
   RcIconHistory,
@@ -19,8 +24,9 @@ import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export default function HomeHeaderArea() {
+  const { width } = useWindowDimensions();
   const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const styles = useMemo(() => getStyles(colors, width), [colors, width]);
   const navigation = useNavigation();
   const { currentAccount } = useCurrentAccount();
 
@@ -120,7 +126,7 @@ export default function HomeHeaderArea() {
   );
 }
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyles = (colors: AppColorsVariants, width: number) =>
   StyleSheet.create({
     container: {
       marginLeft: -20,
@@ -141,7 +147,7 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
     },
     touchBox: {
-      maxWidth: '100%',
+      maxWidth: width - 20 - 107,
       paddingHorizontal: 8,
       paddingVertical: 10,
       flexDirection: 'row',
@@ -155,11 +161,10 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'center',
       alignItems: 'center',
       gap: 6,
-      flexWrap: 'nowrap',
+      maxWidth: width - 20 - 107 - 8 * 2 - 16,
     },
     titleText: {
-      maxWidth:
-        Dimensions.get('window').width - 20 - 106 - 8 * 2 - 16 - 6 - 80 - 28,
+      flexShrink: 1,
       color: colors['neutral-title-1'],
       fontFamily: 'SF Pro',
       fontSize: 18,
