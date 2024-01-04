@@ -8,7 +8,11 @@ import {
   TouchableOpacity,
   SectionList,
 } from 'react-native';
-import { useAccounts, useCurrentAccount } from '@/hooks/account';
+import {
+  useAccounts,
+  useCurrentAccount,
+  usePinAddresses,
+} from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { AddressItem } from './components/AddressItem';
 import { AppColorsVariants } from '@/constant/theme';
@@ -16,10 +20,16 @@ import { RcIconAddressRight } from '@/assets/icons/address';
 import { RcIconButtonAddAccount } from '@/assets/icons/home';
 import { RootNames } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/core';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import groupBy from 'lodash/groupBy';
+import { sortAccountsByBalance } from '@/utils/account';
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
   const { currentAccount } = useCurrentAccount();
+  const { pinAddresses: highlightedAddresses } = usePinAddresses();
+
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const navigation = useNavigation();
@@ -37,17 +47,51 @@ export default function CurrentAddressScreen(): JSX.Element {
   }, [navigation]);
 
   const sectionData = useMemo(() => {
+    const restAccounts = [...accounts];
+    let highlightedAccounts: typeof accounts = [];
+    let watchModeHighlightedAccounts: typeof accounts = [];
+
+    highlightedAddresses.forEach(highlighted => {
+      const idx = restAccounts.findIndex(
+        account =>
+          addressUtils.isSameAddress(account.address, highlighted.address) &&
+          account.brandName === highlighted.brandName,
+      );
+      if (idx > -1) {
+        if (restAccounts[idx].type === KEYRING_CLASS.WATCH) {
+          watchModeHighlightedAccounts.push(restAccounts[idx]);
+        } else {
+          highlightedAccounts.push(restAccounts[idx]);
+        }
+        restAccounts.splice(idx, 1);
+      }
+    });
+    const data = groupBy(restAccounts, e =>
+      e.type === KEYRING_CLASS.WATCH ? '1' : '0',
+    );
+    highlightedAccounts = sortAccountsByBalance(highlightedAccounts);
+    watchModeHighlightedAccounts = sortAccountsByBalance(
+      watchModeHighlightedAccounts,
+    );
+
+    const normalAccounts = highlightedAccounts
+      .concat(sortAccountsByBalance(data['0'] || []))
+      .filter(e => !!e);
+    const watchModeAccounts = watchModeHighlightedAccounts
+      .concat(sortAccountsByBalance(data['1'] || []))
+      .filter(e => !!e);
+
     return [
       {
         title: 'address',
-        data: accounts.filter(e => e.type !== 'Watch Address'),
+        data: normalAccounts,
       },
       {
         title: 'Watch Address',
-        data: accounts.filter(e => e.type === 'Watch Address'),
+        data: watchModeAccounts,
       },
     ];
-  }, [accounts]);
+  }, [accounts, highlightedAddresses]);
 
   return (
     <NormalScreenContainer style={{ backgroundColor: colors['neutral-bg-2'] }}>

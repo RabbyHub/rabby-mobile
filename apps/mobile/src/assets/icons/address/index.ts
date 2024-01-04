@@ -8,3 +8,4 @@ export { default as RcIconAddressDetailEdit } from './edit.svg';
 
 export { default as RcIconAddressWhitelistCC } from './whitelist.svg';
 export { default as RcIconScannerCC } from './scanner-cc.svg';
+export { default as RcIconScannerDownArrowCC } from './scan-down-arrow-cc.svg';
