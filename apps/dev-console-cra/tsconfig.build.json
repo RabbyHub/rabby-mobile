@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"],
+    },
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,
+    "noEmitOnError": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "jsx": "react"
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

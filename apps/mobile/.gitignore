@@ -74,3 +74,5 @@ ios/Package
 
 scripts/deployments/ios/manifest.plist
 scripts/deployments/ios/version.json
+
+**/InpageBridgeWeb3.js

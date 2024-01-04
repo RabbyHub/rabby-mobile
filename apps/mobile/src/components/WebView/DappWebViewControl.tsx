@@ -30,9 +30,22 @@ import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
+import { JS_POST_MESSAGE_TO_PROVIDER } from '../../../../../packages/rn-webview-bridge/src/browserScripts';
+import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
+import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
+}
+
+function convertToWebviewUrl(dappId: string) {
+  if (__DEV__) {
+    if (dappId.startsWith('http://')) {
+      return dappId;
+    }
+  }
+
+  return stringUtils.ensurePrefix(dappId, 'https://');
 }
 
 const PRESS_OPACITY = 0.3;
@@ -136,14 +149,7 @@ function BottomNavControl({
   );
 }
 
-export default function DappWebViewControl({
-  dappId,
-  onPressMore,
-
-  bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
-  headerLeft,
-  bottomSheetContent,
-}: {
+type DappWebViewControlProps = {
   dappId: string;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
 
@@ -152,46 +158,22 @@ export default function DappWebViewControl({
   bottomSheetContent?:
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
+  webviewProps?: React.ComponentProps<typeof WebView>;
+};
+
+function useDefaultNodes({
+  headerLeft,
+  bottomSheetContent,
+  webviewRef,
+  webviewState,
+  webviewActions,
+}: {
+  headerLeft?: DappWebViewControlProps['headerLeft'];
+  bottomSheetContent?: DappWebViewControlProps['bottomSheetContent'];
+  webviewRef: React.RefObject<WebView>;
+  webviewState: WebViewState;
+  webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
-  const colors = useThemeColors();
-
-  const {
-    webviewRef,
-    webviewState,
-
-    latestUrl,
-    webviewActions,
-  } = useWebViewControl();
-
-  const { subTitle } = useMemo(() => {
-    return {
-      subTitle: latestUrl
-        ? urlUtils.canoicalizeDappUrl(latestUrl).httpOrigin
-        : stringUtils.ensurePrefix(dappId, 'https://'),
-    };
-  }, [dappId, latestUrl]);
-
-  const {
-    sheetModalRefs: { webviewNavRef },
-    toggleShowSheetModal,
-  } = useSheetModals({
-    webviewNavRef: useRef<AppBottomSheetModal>(null),
-  });
-
-  const handlePressMoreDefault = useCallback(() => {
-    toggleShowSheetModal('webviewNavRef', true);
-  }, [toggleShowSheetModal]);
-
-  const handlePressMore = useCallback(() => {
-    if (typeof onPressMore === 'function') {
-      return onPressMore({
-        defaultAction: handlePressMoreDefault,
-      });
-    }
-
-    return handlePressMoreDefault();
-  }, [handlePressMoreDefault]);
-
   const defaultHeaderLeft = useMemo(() => {
     return (
       <View style={[styles.touchableHeadWrapper]}>
@@ -225,7 +207,77 @@ export default function DappWebViewControl({
     return bottomSheetContent || bottomNavBar;
   }, [bottomSheetContent, bottomNavBar]);
 
+  return {
+    headerLeftNode,
+    bottomSheetContentNode,
+  };
+}
+
+export default function DappWebViewControl({
+  dappId,
+  onPressMore,
+
+  bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
+  headerLeft,
+  bottomSheetContent,
+  webviewProps,
+}: DappWebViewControlProps) {
+  const colors = useThemeColors();
+
+  const {
+    webviewRef,
+    webviewState,
+
+    latestUrl,
+    webviewActions,
+  } = useWebViewControl();
+
+  const { entryScriptWeb3 } = useLoadEntryScriptWeb3({ isTop: true });
+
+  const { subTitle } = useMemo(() => {
+    return {
+      subTitle: latestUrl
+        ? urlUtils.canoicalizeDappUrl(latestUrl).httpOrigin
+        : convertToWebviewUrl(dappId),
+    };
+  }, [dappId, latestUrl]);
+
+  const {
+    sheetModalRefs: { webviewNavRef },
+    toggleShowSheetModal,
+  } = useSheetModals({
+    webviewNavRef: useRef<AppBottomSheetModal>(null),
+  });
+
+  const handlePressMoreDefault = useCallback(() => {
+    toggleShowSheetModal('webviewNavRef', true);
+  }, [toggleShowSheetModal]);
+
+  const handlePressMore = useCallback(() => {
+    if (typeof onPressMore === 'function') {
+      return onPressMore({
+        defaultAction: handlePressMoreDefault,
+      });
+    }
+
+    return handlePressMoreDefault();
+  }, [handlePressMoreDefault]);
+
+  const { headerLeftNode, bottomSheetContentNode } = useDefaultNodes({
+    headerLeft,
+    bottomSheetContent,
+    webviewRef,
+    webviewState,
+    webviewActions,
+  });
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
+
+  const urlRef = useRef<string>('about:blank');
+  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    dappId,
+    urlRef,
+    webviewRef,
+  });
 
   return (
     <View
@@ -266,15 +318,44 @@ export default function DappWebViewControl({
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
-        <WebView
-          style={[styles.dappWebView]}
-          ref={webviewRef}
-          source={{
-            uri: stringUtils.ensurePrefix(dappId, 'https://'),
-          }}
-          onNavigationStateChange={webviewActions.onNavigationStateChange}
-          onError={errorLog}
-        />
+        {entryScriptWeb3 && (
+          <WebView
+            {...webviewProps}
+            style={[styles.dappWebView, webviewProps?.style]}
+            ref={webviewRef}
+            source={{
+              uri: convertToWebviewUrl(dappId),
+            }}
+            injectedJavaScriptBeforeContentLoaded={entryScriptWeb3}
+            injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+            onNavigationStateChange={webviewActions.onNavigationStateChange}
+            onError={errorLog}
+            webviewDebuggingEnabled={__DEV__}
+            onLoadStart={nativeEvent => {
+              webviewProps?.onLoadStart?.(nativeEvent);
+              onLoadStart(nativeEvent);
+            }}
+            onMessage={event => {
+              // // leave here for debug
+              // if (__DEV__) {
+              //   console.log('WebView:: onMessage event', event);
+              // }
+              onBridgeMessage(event);
+              webviewProps?.onMessage?.(event);
+
+              // // leave here for debug
+              // webviewRef.current?.injectJavaScript(
+              //   JS_POST_MESSAGE_TO_PROVIDER(
+              //     JSON.stringify({
+              //       type: 'hello',
+              //       data: 'I have received your message!',
+              //     }),
+              //     '*',
+              //   ),
+              // );
+            }}
+          />
+        )}
       </View>
 
       <BottomSheetMoreLayout>

@@ -13,7 +13,8 @@ import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
-import JotaiNexus from './components/JotaiNexus';
+import JotaiNexus from '@/components/JotaiNexus';
+import AppErrorBoundary from '@/components/ErrorBoundary';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 
 function MainScreen() {
@@ -35,17 +36,19 @@ function MainScreen() {
 
 function App(): JSX.Element {
   return (
-    <RootSiblingParent>
-      <SafeAreaProvider>
-        <Suspense fallback={null}>
-          {/* TODO: measure to check if memory leak occured when refresh on iOS */}
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <MainScreen />
-          </GestureHandlerRootView>
-          {/* <MainScreen /> */}
-        </Suspense>
-      </SafeAreaProvider>
-    </RootSiblingParent>
+    <AppErrorBoundary>
+      <RootSiblingParent>
+        <SafeAreaProvider>
+          <Suspense fallback={null}>
+            {/* TODO: measure to check if memory leak occured when refresh on iOS */}
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <MainScreen />
+            </GestureHandlerRootView>
+            {/* <MainScreen /> */}
+          </Suspense>
+        </SafeAreaProvider>
+      </RootSiblingParent>
+    </AppErrorBoundary>
   );
 }
 

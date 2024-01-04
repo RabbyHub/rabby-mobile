@@ -1,0 +1,66 @@
+{
+  "name": "@rabby-wallet/rn-webview-bridge",
+  "version": "0.1.0",
+  "description": "A sample package",
+  "keywords": [
+    "RabbyHub",
+    "Ethereum"
+  ],
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/rn-webview-bridge#readme",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mono/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mono.git"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build:docs": "typedoc",
+    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/rn-webview-bridge",
+    "publish:preview": "yarn npm publish --tag preview",
+    "test": "jest --reporters=jest-silent-reporter",
+    "test:clean": "jest --clearCache",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch",
+    "cov:report": "open ./coverage/index.html"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.0",
+    "@rabby-wallet/object-multiplex": "workspace:^",
+    "@rabby-wallet/universal-providers": "workspace:^",
+    "ethereumjs-util": "^7.1.5",
+    "pump": "^3.0.0",
+    "readable-stream": "^4.5.1",
+    "stream-browserify": "^3.0.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.23.6",
+    "@metamask/auto-changelog": "^3.4.3",
+    "@types/jest": "^27.4.1",
+    "@types/sinon": "^9.0.10",
+    "babel-loader": "^9.1.3",
+    "deepmerge": "^4.2.2",
+    "jest": "^27.5.1",
+    "sinon": "^9.2.4",
+    "ts-jest": "^27.1.4",
+    "typedoc": "^0.24.8",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "~4.8.4",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

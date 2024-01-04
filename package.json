@@ -15,8 +15,11 @@
     ]
   },
   "lint-staged": {
-    "apps/**/*.{js,jsx,ts,tsx}": [
-      "yarn workspace rabby-mobile lint:fix"
+    "apps/mobile/*.{js,jsx,ts,tsx}": [
+      "yarn workspace rabby-mobile lint:commit:fix"
+    ],
+    "apps/dev-console-cra/*.{js,jsx,ts,tsx}": [
+      "yarn workspace dev-console-cra lint:commit:fix"
     ]
   },
   "scripts": {
@@ -35,6 +38,7 @@
     "prepack": "./scripts/prepack.sh",
     "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
     "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
+    "postinstall": "yarn apps/mobile postinstall",
     "setup": "yarn install",
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
@@ -47,8 +51,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
-    "@debank/common": "^0.3.48",
-    "redux": "^5.0.0"
+    "@debank/common": "^0.3.48"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.3.1",
