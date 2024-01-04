@@ -78,7 +78,7 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
     <View style={styles.container}>
       <TextInput
         onSubmitEditing={handleSubmit}
-        defaultValue={aliasName}
+        value={aliasName}
         style={styles.input}
       />
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
