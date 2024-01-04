@@ -4605,6 +4605,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/hooks@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@react-native-community/hooks@npm:3.0.0"
+  peerDependencies:
+    react: ">=17.0.2"
+    react-native: ">=0.65"
+  checksum: 4fefcc22883ca7e21ad26e12830671e7287e29eed8fc51fdebebbccdd27b53f7743f64f55d640a74ea2dae4fed1f44b7be40410938564e736a2c3bbb9a770d3e
+  languageName: node
+  linkType: hard
+
 "@react-native-community/netinfo@npm:^11.2.0":
   version: 11.2.1
   resolution: "@react-native-community/netinfo@npm:11.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-native-community%2Fnetinfo%2F-%2Fnetinfo-11.2.1.tgz"
@@ -23241,6 +23251,7 @@ __metadata:
     "@react-native-clipboard/clipboard": ^1.13.0
     "@react-native-community/blur": ^4.3.2
     "@react-native-community/eslint-config": ^3.2.0
+    "@react-native-community/hooks": ^3.0.0
     "@react-native-community/netinfo": ^11.2.0
     "@react-native/eslint-config": ^0.72.2
     "@react-native/metro-config": ^0.72.11

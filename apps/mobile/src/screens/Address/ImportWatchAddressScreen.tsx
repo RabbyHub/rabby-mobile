@@ -1,11 +1,10 @@
-import { Button, Text } from '@/components';
+import { Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   NativeSyntheticEvent,
-  ScrollView,
   StyleSheet,
   TextInput,
   TextInputSubmitEditingEventData,
@@ -20,6 +19,12 @@ import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TouchableItem from '@/components/Touchable/TouchableItem';
+import { CameraPopup } from './components/CameraPopup';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { Code } from 'react-native-vision-camera';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import TouchableView from '@/components/Touchable/TouchableView';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -36,11 +41,10 @@ const ERROR_MESSAGE = {
 };
 
 export const ImportWatchAddressScreen = () => {
+  const codeRef = useRef<BottomSheetModal>(null);
   const colors = useThemeColors();
   const [input, setInput] = React.useState('');
-  const [address, setAddress] = React.useState('');
   const [error, setError] = React.useState<INPUT_ERROR>();
-  const [hasBlur, setHasBlur] = React.useState(false);
   const [ensResult, setEnsResult] = React.useState<null | {
     addr: string;
     name: string;
@@ -48,10 +52,19 @@ export const ImportWatchAddressScreen = () => {
   const styles = getStyles(colors);
 
   const handleDone = async () => {
+    if (!input) {
+      setError(INPUT_ERROR.REQUIRED);
+      return;
+    }
+    if (!isValidHexAddress(input as any)) {
+      setError(INPUT_ERROR.INVALID_ADDRESS);
+      return;
+    }
     try {
-      await apisAddress.addWatchAddress(address);
+      await apisAddress.addWatchAddress(input);
       navigate(RootNames.ImportSuccess, {
-        address,
+        address: input,
+        brandName: KEYRING_CLASS.WATCH,
       });
     } catch (e) {
       setError(INPUT_ERROR.ADDRESS_EXIST);
@@ -65,16 +78,29 @@ export const ImportWatchAddressScreen = () => {
     [],
   );
 
-  React.useEffect(() => {
-    if (!hasBlur) {
-      return;
+  const openCamera = React.useCallback(() => {
+    codeRef.current?.present();
+  }, []);
+
+  const onSubmitEditing = React.useCallback(() => {
+    if (!error && ensResult && input !== ensResult.addr) {
+      setInput(ensResult.addr);
     }
+  }, [error, ensResult, input]);
+
+  const onCodeScanned = (codes: Code[]) => {
+    if (codes[0].value && isValidHexAddress(codes[0].value as `0x${string}`)) {
+      codeRef.current?.close();
+      setInput(codes[0].value);
+    }
+  };
+
+  useEffect(() => {
     if (!input) {
-      setError(INPUT_ERROR.REQUIRED);
+      setError(undefined);
       return;
     }
-    if (isValidHexAddress(input as any)) {
-      setAddress(input);
+    if (isValidHexAddress(input as `0x${string}`)) {
       setError(undefined);
       return;
     }
@@ -85,6 +111,7 @@ export const ImportWatchAddressScreen = () => {
           setEnsResult(result);
           setError(undefined);
         } else {
+          setEnsResult(null);
           setError(INPUT_ERROR.INVALID_ADDRESS);
         }
       })
@@ -93,7 +120,7 @@ export const ImportWatchAddressScreen = () => {
         setEnsResult(null);
         setError(INPUT_ERROR.INVALID_ADDRESS);
       });
-  }, [input, hasBlur]);
+  }, [input]);
 
   return (
     <RootScreenContainer style={styles.rootContainer}>
@@ -107,13 +134,8 @@ export const ImportWatchAddressScreen = () => {
         </View>
         <View style={styles.inputContainer}>
           <TextInput
-            onBlur={() => {
-              setHasBlur(true);
-            }}
-            onChange={e => {
-              handleSubmit(e);
-              setError(undefined);
-            }}
+            value={input}
+            onChange={handleSubmit}
             style={[
               styles.input,
               {
@@ -122,17 +144,49 @@ export const ImportWatchAddressScreen = () => {
                   : colors['neutral-line'],
               },
             ]}
+            onSubmitEditing={onSubmitEditing}
             placeholder="Address / ENS"
             placeholderTextColor={colors['neutral-title-1']}
           />
 
+          {!error && ensResult && input === ensResult.addr && (
+            <Text style={styles.ensText}>ENS: {ensResult.name}</Text>
+          )}
+
+          {!error && ensResult && input !== ensResult.addr && (
+            <View style={styles.ensResultBox}>
+              <TouchableItem
+                onPress={() => {
+                  setInput(ensResult.addr);
+                }}>
+                <Text style={styles.ensResult}>{ensResult.addr}</Text>
+              </TouchableItem>
+            </View>
+          )}
+
           {error && (
             <Text style={styles.errorMessage}>{ERROR_MESSAGE[error]}</Text>
           )}
-          {/* <Button title="Scan via camera" icon={<RcIconScannerCC />} /> */}
+          <TouchableView
+            onPress={openCamera}
+            style={[
+              styles.scanButtonContainer,
+              !error && ensResult && input === ensResult.addr && styles.ensMt,
+            ]}>
+            <RcIconScannerCC
+              color={colors['neutral-line']}
+              style={styles.scanIcon}
+            />
+            <Text style={styles.scanButtonTitle}>Scan via camera</Text>
+          </TouchableView>
         </View>
       </KeyboardAwareScrollView>
-      <FooterButton disabled={!address} title="Confirm" onPress={handleDone} />
+      <FooterButton
+        disabled={!input || !!error}
+        title="Confirm"
+        onPress={handleDone}
+      />
+      <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
     </RootScreenContainer>
   );
 };
@@ -173,6 +227,9 @@ const getStyles = function (colors: AppColorsVariants) {
       backgroundColor: colors['neutral-bg-2'],
       paddingVertical: 24,
       paddingHorizontal: 20,
+      flex: 1,
+      position: 'relative',
+      minHeight: 80,
     },
     keyboardView: {
       height: '100%',
@@ -186,6 +243,7 @@ const getStyles = function (colors: AppColorsVariants) {
       color: colors['red-default'],
       fontSize: 13,
       marginTop: 12,
+      marginBottom: 16,
     },
     input: {
       backgroundColor: colors['neutral-card-1'],
@@ -195,6 +253,53 @@ const getStyles = function (colors: AppColorsVariants) {
       height: 52,
       color: colors['neutral-title-1'],
       borderWidth: 1,
+    },
+
+    ensResultBox: {
+      height: 48,
+      padding: 4,
+      borderRadius: 6,
+      backgroundColor: colors['neutral-bg-1'],
+      position: 'absolute',
+      top: 24 + 52 + 6,
+      left: 20,
+      width: '100%',
+      zIndex: 2,
+    },
+
+    ensResult: {
+      backgroundColor: colors['blue-light-1'],
+      height: '100%',
+      alignItems: 'center',
+      fontSize: 13,
+      borderRadius: 6,
+    },
+    ensText: {
+      fontSize: 13,
+      color: colors['neutral-body'],
+      marginVertical: 12,
+    },
+    scanButtonContainer: {
+      width: 148,
+      height: 36,
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 6,
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+      paddingLeft: 12,
+      marginTop: 16,
+    },
+    ensMt: {
+      marginTop: 0,
+    },
+    scanButtonTitle: {
+      color: colors['neutral-title-1'],
+      fontSize: 12,
+    },
+    scanIcon: {
+      width: 14,
+      height: 14,
     },
   });
 };
