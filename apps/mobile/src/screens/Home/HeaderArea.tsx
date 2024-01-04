@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import {
   RcIconHeaderSettings,
   RcIconHistory,
@@ -141,8 +141,7 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
     },
     touchBox: {
-      width: '100%',
-      flexShrink: 1,
+      maxWidth: '100%',
       paddingHorizontal: 8,
       paddingVertical: 10,
       flexDirection: 'row',
@@ -152,7 +151,6 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-2'],
     },
     accountBox: {
-      flex: 1,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
@@ -160,7 +158,8 @@ const getStyles = (colors: AppColorsVariants) =>
       flexWrap: 'nowrap',
     },
     titleText: {
-      flex: 1,
+      maxWidth:
+        Dimensions.get('window').width - 20 - 106 - 8 * 2 - 16 - 6 - 80 - 28,
       color: colors['neutral-title-1'],
       fontFamily: 'SF Pro',
       fontSize: 18,
