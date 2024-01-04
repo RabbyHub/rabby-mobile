@@ -30,7 +30,6 @@ import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { JS_POST_MESSAGE_TO_PROVIDER } from '../../../../../packages/rn-webview-bridge/src/browserScripts';
 import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 
@@ -226,6 +225,10 @@ export default function DappWebViewControl({
 
   const {
     webviewRef,
+    urlRef,
+    titleRef,
+    iconRef,
+
     webviewState,
 
     latestUrl,
@@ -272,11 +275,14 @@ export default function DappWebViewControl({
   });
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
-  const urlRef = useRef<string>('about:blank');
   const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
     dappId,
-    urlRef,
     webviewRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
   });
 
   return (

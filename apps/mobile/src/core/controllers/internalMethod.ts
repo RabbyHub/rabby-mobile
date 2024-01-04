@@ -4,6 +4,7 @@ import { keyringService } from '../services';
 import { dappService } from '@/core/services/shared';
 import providerController from './provider';
 import { findChainByEnum } from '@/utils/chain';
+import { ProviderRequest } from './type';
 
 const networkIdMap: {
   [key: string]: string;
@@ -19,7 +20,7 @@ const tabCheckin = ({
   session.setProp({ origin, name, icon });
 };
 
-const getProviderState = async req => {
+const getProviderState = async (req: ProviderRequest) => {
   const {
     session: { origin },
   } = req;
@@ -54,4 +55,5 @@ const getProviderState = async req => {
 export default {
   tabCheckin,
   getProviderState,
+  rabby_getProviderState: getProviderState,
 };

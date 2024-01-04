@@ -21,15 +21,17 @@ import {
 } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
 import { keyringService } from '../services';
-import getRpcMethodMiddleware from './middlewares/RPCMethodMiddleware';
+import getRpcMethodMiddleware, {
+  RefLikeObject,
+} from './middlewares/RPCMethodMiddleware';
 import WebView from 'react-native-webview';
 
 type BackgroundBridgeOptions = {
-  webview: React.MutableRefObject<WebView | null>;
-  url: string;
+  webview: RefLikeObject<WebView | null>;
+  urlRef: RefLikeObject<string>;
+  titleRef: RefLikeObject<string>;
+  iconRef: RefLikeObject<string | undefined>;
   isMainFrame: boolean;
-
-  isWalletConnect?: boolean;
 };
 
 export class BackgroundBridge extends EventEmitter {
@@ -39,45 +41,41 @@ export class BackgroundBridge extends EventEmitter {
   #webviewOrigin: string;
 
   #disconnected: boolean = true;
-  #url: string;
+  #urlRef: RefLikeObject<string> = { current: '' };
+  #titleRef: RefLikeObject<string> = { current: '' };
+  #iconRef: RefLikeObject<string | undefined> = { current: '' };
+
   #engine: JsonRpcEngine | null = null;
 
   get url() {
-    return this.#url;
+    return this.#urlRef.current;
   }
 
   constructor(options: BackgroundBridgeOptions) {
     super();
 
-    const { webview, url, isMainFrame, isWalletConnect } = options;
+    const { webview, urlRef, titleRef, iconRef, isMainFrame } = options;
 
     this.#webview = webview.current;
-    this.#webviewOrigin = urlUtils.canoicalizeDappUrl(url).httpOrigin;
+    this.#webviewOrigin = urlUtils.canoicalizeDappUrl(
+      urlRef.current,
+    ).httpOrigin;
+
+    this.#urlRef = urlRef;
+    this.#titleRef = titleRef;
+    this.#iconRef = iconRef;
 
     this.port = new Port(this.#webview, isMainFrame);
 
-    this.#url = url;
-
-    const portStream = new MobilePortStream(this.port, url);
+    const portStream = new MobilePortStream(this.port, urlRef.current);
     // setup multiplexing
     const portMux = setupMultiplex(portStream);
     // connect features
-    this._setupProviderConnection(
-      portMux.createStream(
-        isWalletConnect ? 'walletconnect-provider' : 'rabby-provider',
-      ),
-    );
+    this._setupProviderConnection(portMux.createStream('rabby-provider'));
   }
 
   isUnlocked() {
     return keyringService.isUnlocked();
-  }
-
-  getProviderState() {
-    return {
-      isUnlocked: this.isUnlocked(),
-      ...this.getProviderNetworkState(),
-    };
   }
 
   onUnlock() {
@@ -180,7 +178,10 @@ export class BackgroundBridge extends EventEmitter {
     engine.push(
       getRpcMethodMiddleware({
         hostname: this.#webviewOrigin,
-        getProviderState: this.getProviderState.bind(this),
+        urlRef: this.#urlRef,
+        titleRef: this.#titleRef,
+        iconRef: this.#iconRef,
+        bridge: this,
       }),
     );
 

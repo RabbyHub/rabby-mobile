@@ -51,24 +51,24 @@ export class DappService {
     this.store.dapps = { ...this.store.dapps };
   }
 
-  getDapp(id: string) {
-    return this.store.dapps[id];
+  getDapp(dappOrigin: string) {
+    return this.store.dapps[dappOrigin];
   }
 
   getDapps() {
     return this.store.dapps;
   }
 
-  getConnectedDapp(id: string) {
-    const dapp = this.getDapp(id);
+  getConnectedDapp(dappOrigin: string) {
+    const dapp = this.getDapp(dappOrigin);
     if (dapp.isConnected) {
       return dapp;
     }
     return null;
   }
 
-  removeDapp(id: string) {
-    delete this.store.dapps[id];
+  removeDapp(dappOrigin: string) {
+    delete this.store.dapps[dappOrigin];
     this.store.dapps = { ...this.store.dapps };
   }
 

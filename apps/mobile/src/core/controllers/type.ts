@@ -2,13 +2,15 @@ export type ProviderRequest<TMethod extends string = string> = {
   data: {
     method: TMethod;
     params?: any;
-    $ctx?: any;
+    $ctx?: {
+      postMessageToWebView?: (msg: any, origin: string) => void;
+    };
   };
-  session?: {
+  session: {
     name: string;
     origin: string;
     icon: string;
-  } | null;
+  };
   origin?: string;
   requestedApproval?: boolean;
 };

@@ -23,7 +23,7 @@ export function Block({
   children,
 }: React.PropsWithChildren<{
   label: string;
-  style: React.ComponentProps<typeof View>['style'];
+  style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const colors = useThemeColors();
 

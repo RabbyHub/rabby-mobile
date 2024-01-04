@@ -17,6 +17,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 export const DappCard = ({
   data,
@@ -58,7 +59,7 @@ export const DappCard = ({
         />
         <View style={styles.dappContent}>
           <Text style={styles.dappOrigin} numberOfLines={1}>
-            {data.info.id}
+            {stringUtils.unPrefix(data.info.id, 'https://')}
           </Text>
           <View style={styles.dappInfo}>
             <Text

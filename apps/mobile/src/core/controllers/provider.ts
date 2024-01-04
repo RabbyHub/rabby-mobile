@@ -273,12 +273,13 @@ class ProviderController extends BaseController {
   }: {
     session: Session;
   }) => {
-    if (!dappService.getDapp(origin).isConnected) {
+    if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
 
     const _account = await this.getCurrentAccount();
     const account = _account ? [_account.address.toLowerCase()] : [];
+
     // sessionService.broadcastEvent('accountsChanged', account);
     // const connectSite = dappService.getConnectedDapp(origin);
     // if (connectSite) {

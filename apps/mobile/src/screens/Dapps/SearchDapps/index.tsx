@@ -42,9 +42,11 @@ export function SearchDappsScreen(): JSX.Element {
       if (!s) {
         return [];
       }
-      return openapi.searchDapp({
-        q: s,
-      });
+      return openapi
+        .searchDapp({
+          q: s,
+        })
+        .then(r => r.dapps);
     },
     {
       manual: true,
