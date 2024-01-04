@@ -201,7 +201,6 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   const { currentAccount: account } = useCurrentAccount();
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  const [showModal] = useState(false);
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
@@ -652,7 +651,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
             titleStyle={styles.connectButtonText}
             type="primary"
             onPress={() => handleAllow()}
-            disabled={connectBtnStatus.disabled}
+            disabled={isLoading || connectBtnStatus.disabled}
             disabledTitleStyle={{
               color: colors['neutral-title-1'],
             }}
