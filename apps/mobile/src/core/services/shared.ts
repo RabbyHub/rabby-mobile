@@ -5,6 +5,7 @@ import { WhitelistService } from './whitelist';
 import { DappService } from '@rabby-wallet/service-dapp';
 import { NotificationService } from './notification';
 import { TransactionHistoryService } from './transactionHistory';
+import { SecurityEngineService } from './securityEngine';
 
 export const appStorage = makeAppStorage();
 
@@ -29,3 +30,5 @@ export const notificationService = new NotificationService();
 export const transactionHistoryService = new TransactionHistoryService({
   storageAdapter: appStorage,
 });
+
+export const securityEngineService = new SecurityEngineService();

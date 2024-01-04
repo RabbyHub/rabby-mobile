@@ -17,8 +17,8 @@ export function bindWalletConnectEvents(keyring: KeyringInstance) {
   });
 }
 
-export function initWalletConnectKeyring() {
-  getKeyring<WalletConnectKeyring>(
+export async function initWalletConnectKeyring() {
+  return getKeyring<WalletConnectKeyring>(
     KEYRING_TYPE.WalletConnectKeyring,
     keyring => {
       bindWalletConnectEvents(keyring);

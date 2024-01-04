@@ -160,17 +160,6 @@ export const TokenWallet = ({
     [],
   );
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
-    ),
-    [],
-  );
-
   const ListEmptyComponent = useMemo(() => {
     return isTokensLoading ? (
       <PositionLoader space={8} />
@@ -190,10 +179,7 @@ export const TokenWallet = ({
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
       />
-      <AppBottomSheetModal
-        backdropComponent={renderBackdrop}
-        ref={smallTokenModalRef}
-        snapPoints={['50%']}>
+      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['50%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
           keyExtractor={keyExtractor}
@@ -203,7 +189,6 @@ export const TokenWallet = ({
       </AppBottomSheetModal>
 
       <AppBottomSheetModal
-        backdropComponent={renderBackdrop}
         ref={tokenDetailModalRef}
         backgroundStyle={{
           backgroundColor: colors['neutral-bg-1'],
