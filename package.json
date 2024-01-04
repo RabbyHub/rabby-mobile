@@ -38,7 +38,7 @@
     "prepack": "./scripts/prepack.sh",
     "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
     "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
-    "postinstall": "yarn apps/mobile postinstall",
+    "postinstall": "yarn build && yarn apps/mobile postinstall",
     "setup": "yarn install",
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
