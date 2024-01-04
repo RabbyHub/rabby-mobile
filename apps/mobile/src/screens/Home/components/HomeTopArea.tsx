@@ -16,13 +16,22 @@ import { useCurve } from '@/hooks/useCurve';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { Skeleton } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 export const HomeTopArea = () => {
   const { currentAccount } = useCurrentAccount();
-  const { balance } = useCurrentBalance(currentAccount?.address, true, false);
-  const { result: curveData } = useCurve(currentAccount?.address, 0, balance);
+  const { balance, balanceLoading, balanceFromCache } = useCurrentBalance(
+    currentAccount?.address,
+    true,
+    false,
+  );
+  const { result: curveData, isLoading } = useCurve(
+    currentAccount?.address,
+    0,
+    balance,
+  );
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const usd = useMemo(
@@ -88,17 +97,27 @@ export const HomeTopArea = () => {
         style={styles.image}>
         <View style={styles.container}>
           <View style={styles.textBox}>
-            <Text style={styles.usdText}>
-              {usd}
-              <Text
-                style={StyleSheet.compose(
-                  styles.percent,
-                  isDecrease && styles.decrease,
-                )}>
-                {' '}
-                {percent}
+            {
+              <Text style={styles.usdText}>
+                {(balanceLoading && !balanceFromCache) ||
+                balance === null ||
+                (balanceFromCache && balance === 0) ? (
+                  <Skeleton width={140} height={38} />
+                ) : (
+                  usd
+                )}
+                {!isLoading && (
+                  <Text
+                    style={StyleSheet.compose(
+                      styles.percent,
+                      isDecrease && styles.decrease,
+                    )}>
+                    {' '}
+                    {percent}
+                  </Text>
+                )}
               </Text>
-            </Text>
+            }
           </View>
 
           <View style={styles.group}>
