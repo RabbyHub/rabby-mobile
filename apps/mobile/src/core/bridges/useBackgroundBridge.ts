@@ -3,6 +3,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
+import { sessionService } from '../services/session';
 
 export function useBackgroundBridges() {
   const [, setSpinner] = useState(false);
@@ -76,6 +77,18 @@ export function useSetupWebview({
       iconRef,
       isMainFrame,
     });
+
+    // todo tabId
+    const tabId = 1;
+    const session = sessionService.getOrCreateSession(tabId, urlBridge);
+    session?.setProp({
+      origin: urlBridge,
+      icon: '//todo',
+      name: '//todo',
+    });
+    session?.setPortMessage(newBridge);
+
+    // todo deleteSessionsByTabId
 
     putBackgroundBridge(newBridge);
   };
