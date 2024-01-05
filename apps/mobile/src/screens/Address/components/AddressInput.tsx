@@ -17,9 +17,14 @@ import { toast } from '@/components/Toast';
 interface Props {
   address: string;
   aliasName?: string;
+  onChange?: (aliasName: string) => void;
 }
 
-export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
+export const AddressInput: React.FC<Props> = ({
+  address,
+  aliasName,
+  onChange,
+}) => {
   const colors = useThemeColors();
   const styles = React.useMemo(
     () =>
@@ -74,12 +79,23 @@ export const AddressInput: React.FC<Props> = ({ address, aliasName }) => {
     [address],
   );
 
+  const [editingAliasName, setEditingAliasName] = React.useState<string>(
+    aliasName || '',
+  );
+  React.useEffect(() => {
+    setEditingAliasName(aliasName || '');
+  }, [aliasName]);
+
   return (
     <View style={styles.container}>
       <TextInput
         onSubmitEditing={handleSubmit}
-        value={aliasName}
+        value={editingAliasName}
         style={styles.input}
+        onChange={nativeEvent => {
+          setEditingAliasName(nativeEvent.nativeEvent.text);
+          onChange?.(nativeEvent.nativeEvent.text);
+        }}
       />
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
         <Text style={styles.address}>{address}</Text>

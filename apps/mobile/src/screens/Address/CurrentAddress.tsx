@@ -108,9 +108,12 @@ export default function CurrentAddressScreen(): JSX.Element {
         </View>
         <SectionList
           sections={sectionData}
-          keyExtractor={item => `${item.address}-${item.brandName}`}
+          keyExtractor={item =>
+            `${item.address}-${item.type}-${item.brandName}`
+          }
           renderItem={({ item, index, section }) => (
             <View
+              key={`${item.address}-${item.type}-${item.brandName}-${index}`}
               style={
                 index < section.data.length - 1 ? styles.itemGap : undefined
               }>

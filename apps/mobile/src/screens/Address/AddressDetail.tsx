@@ -139,8 +139,9 @@ const AddressInfo = (props: AddressInfoProps) => {
   }, []);
 
   const handlePresentInputModalPress = useCallback(() => {
+    setAliasPendingName(aliasName || '');
     inputNameBottomSheetModalRef.current?.present();
-  }, []);
+  }, [aliasName]);
 
   const handlePresentDeleteModalPress = useCallback(() => {
     deleteBottomSheetModalRef.current?.present();
@@ -361,15 +362,26 @@ const AddressInfo = (props: AddressInfoProps) => {
               <Button
                 onPress={handleCloseInputModalPress}
                 title={'Cancel'}
-                containerStyle={styles.btnCancelContainer}
-                titleStyle={styles.btnCancelTitle}>
+                buttonStyle={[styles.buttonStyle]}
+                titleStyle={styles.btnCancelTitle}
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnCancelContainer,
+                ]}>
                 Cancel
               </Button>
               <Button
                 title={'Confirm'}
+                buttonStyle={[
+                  styles.buttonStyle,
+                  { backgroundColor: colors['blue-default'] },
+                ]}
                 titleStyle={styles.btnConfirmTitle}
                 onPress={changeAddressNote}
-                containerStyle={styles.btnConfirmContainer}>
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnConfirmContainer,
+                ]}>
                 Confirm
               </Button>
             </View>
@@ -431,15 +443,26 @@ const AddressInfo = (props: AddressInfoProps) => {
               <Button
                 onPress={handleCloseDeleteModalPress}
                 title={'Cancel'}
-                containerStyle={styles.btnCancelContainer}
-                titleStyle={styles.btnCancelTitle}>
+                buttonStyle={[styles.buttonStyle]}
+                titleStyle={styles.btnCancelTitle}
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnCancelContainer,
+                ]}>
                 Cancel
               </Button>
               <Button
                 onPress={handleDelete}
                 title={'Confirm'}
+                buttonStyle={[
+                  styles.buttonStyle,
+                  { backgroundColor: colors['red-default'] },
+                ]}
                 titleStyle={styles.btnConfirmTitle}
-                containerStyle={styles.btnConfirmContainer}>
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnConfirmContainer,
+                ]}>
                 Confirm
               </Button>
             </View>
@@ -559,31 +582,28 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 20,
       height: 20,
     },
-    btnCancelContainer: {
-      flexGrow: 1,
+    btnContainer: {
+      flexShrink: 1,
       display: 'flex',
       height: 52,
       justifyContent: 'center',
       alignItems: 'center',
+      borderRadius: 8,
+    },
+    buttonStyle: {
+      width: '100%',
+      height: '100%',
+    },
+    btnCancelContainer: {
       borderColor: colors['blue-default'],
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 8,
     },
     btnCancelTitle: {
       color: colors['blue-default'],
     },
-    btnConfirmContainer: {
-      flexGrow: 1,
-      display: 'flex',
-      height: 52,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors['blue-default'],
-      borderRadius: 8,
-    },
+    btnConfirmContainer: {},
     btnConfirmTitle: {
       color: colors['neutral-title-2'],
-      backgroundColor: colors['blue-default'],
     },
   });
 
