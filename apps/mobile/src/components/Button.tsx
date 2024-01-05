@@ -99,8 +99,7 @@ export const Button = ({
   const TouchableComponentInternal =
     TouchableComponent ||
     Platform.select({
-      android: TouchableOpacity,
-      // android: linearGradientProps ? TouchableOpacity : TouchableNativeFeedback,
+      android: linearGradientProps ? TouchableOpacity : TouchableNativeFeedback,
       default: TouchableOpacity,
     });
 
