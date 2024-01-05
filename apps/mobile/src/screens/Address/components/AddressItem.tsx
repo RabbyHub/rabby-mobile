@@ -93,11 +93,10 @@ export const AddressItem = (props: AddressItemProps) => {
     });
   }, [navigation, wallet.address, wallet.type, wallet.brandName]);
 
-  const handleSwitch = useCallback(() => {
+  const handleSwitch = useCallback(async () => {
     if (isCurrentAddress) {
       gotoAddressDetail();
     } else {
-      //@ts-ignore
       switchAccount(wallet);
       navigate(RootNames.Home);
     }

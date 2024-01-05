@@ -64,14 +64,18 @@ export const ImportSuccessScreen = () => {
     brandName: string;
     deepLink: string;
   };
-  const [aliasName, setAliasName] = React.useState<string>();
+  const [aliasName, setAliasName] = React.useState<string>('');
 
   const handleDone = () => {
+    contactService.setAlias({
+      address: state.address,
+      alias: aliasName || '',
+    });
     navigate(RootNames.Home);
   };
 
   React.useEffect(() => {
-    setAliasName(contactService.getAliasByAddress(state.address)?.alias);
+    setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
 
   console.log('import success screen', contactService.listAlias());
@@ -88,7 +92,11 @@ export const ImportSuccessScreen = () => {
           <Text style={styles.title}>Added successfully</Text>
         </View>
         <View style={styles.inputContainer}>
-          <AddressInput aliasName={aliasName} address={state.address} />
+          <AddressInput
+            aliasName={aliasName}
+            address={state.address}
+            onChange={setAliasName}
+          />
         </View>
       </KeyboardAwareScrollView>
       <FooterButton title="Done" onPress={handleDone} />

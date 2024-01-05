@@ -9,6 +9,7 @@ import {
 } from '@/core/services';
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -93,7 +94,9 @@ export function useCurrentAccount() {
   const fetchCurrentAccount = useCallback(async () => {
     const account = await preferenceService.getCurrentAccount();
     const index = accounts.findIndex(
-      e => e.address === account?.address && e.brandName === account?.brandName,
+      e =>
+        addressUtils.isSameAddress(e.address, account?.address || '') &&
+        e.brandName === account?.brandName,
     );
 
     setCurrentAccount(
