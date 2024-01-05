@@ -9,6 +9,7 @@ repo_dir=$(dirname $(dirname $project_dir))
 [[ -z "${webpack_mode}" ]] && webpack_mode="production";
 
 rm -f $repo_dir/apps/mobile/android/app/src/main/assets/InpageBridgeWeb3.js
+rm -f $repo_dir/apps/mobile/src/core/InpageBridgeWeb3.js
 mkdir -p $script_dir/inpage-bridge/dist && rm -rf $script_dir/inpage-bridge/dist/*
 cd $script_dir/inpage-bridge/inpage
 $repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_mode
@@ -20,3 +21,4 @@ $repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_m
 
 # cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/src/core/bridges/InpageBridgeWeb3.js
 cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/android/app/src/main/assets/InpageBridgeWeb3.js
+cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/src/core/InpageBridgeWeb3.js
