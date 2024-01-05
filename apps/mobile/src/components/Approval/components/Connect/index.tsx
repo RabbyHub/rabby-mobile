@@ -35,6 +35,7 @@ import UserListDrawer from './UserListDrawer';
 import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -590,9 +591,11 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
           /> */}
         </View>
         <View style={styles.connectCard}>
-          {/* <FallbackSiteLogo url={icon} origin={origin} width="40px" /> */}
-          {/* TODO */}
-          <Image source={{ uri: icon }} style={{ width: 40, height: 40 }} />
+          <DappIcon
+            origin={origin}
+            source={{ uri: icon }}
+            style={{ width: 40, height: 40 }}
+          />
           <Text style={styles.connectOrigin}>{origin}</Text>
         </View>
       </View>
@@ -653,7 +656,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
             onPress={() => handleAllow()}
             disabled={isLoading || connectBtnStatus.disabled}
             disabledTitleStyle={{
-              color: colors['neutral-title-1'],
+              color: colors['neutral-title-2'],
             }}
             className={clsx({
               'mb-0': !connectBtnStatus.text,

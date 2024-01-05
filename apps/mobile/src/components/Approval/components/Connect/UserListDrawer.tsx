@@ -2,6 +2,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Radio } from '@/components/Radio';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -107,7 +108,11 @@ const UserListDrawer = ({
         </Text>
         <View>
           <View style={styles.origin}>
-            <Image source={{ uri: logo }} style={styles.logo} />
+            <DappIcon
+              origin={origin}
+              source={{ uri: logo }}
+              style={{ width: 40, height: 40 }}
+            />
             <Text style={styles.text}>{origin}</Text>
           </View>
         </View>
