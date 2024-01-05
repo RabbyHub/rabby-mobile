@@ -1,0 +1,31 @@
+import { CHAINS_ENUM } from '@debank/common';
+
+export const SAFE_GAS_LIMIT_RATIO = {
+  '1284': 2,
+  '1285': 2,
+  '1287': 2,
+};
+export const GAS_TOP_UP_ADDRESS = '0x7559e1bbe06e94aeed8000d5671ed424397d25b5';
+
+export const DEFAULT_GAS_LIMIT_RATIO = 1.5;
+
+export const MINIMUM_GAS_LIMIT = 21000;
+
+// opstack L2 chains
+export const OP_STACK_ENUMS = [
+  CHAINS_ENUM.OP,
+  CHAINS_ENUM.BASE,
+  CHAINS_ENUM.ZORA,
+  CHAINS_ENUM.OPBNB,
+];
+
+export const ARB_LIKE_L2_CHAINS = [CHAINS_ENUM.ARBITRUM, CHAINS_ENUM.AURORA];
+
+export const CAN_ESTIMATE_L1_FEE_CHAINS = [
+  ...OP_STACK_ENUMS,
+  CHAINS_ENUM.SCRL,
+  ...ARB_LIKE_L2_CHAINS,
+  CHAINS_ENUM.PZE,
+  CHAINS_ENUM.ERA,
+  CHAINS_ENUM.LINEA,
+];

@@ -72,6 +72,14 @@ interface TxHistoryStore {
 
 // TODO
 export class TransactionHistoryService {
+  async getNonceByChain(from: string, chainId: number): Promise<string> {
+    throw new Error('Method not implemented.');
+  }
+  async getList(
+    address: string,
+  ): Promise<{ pendings: any } | { pendings: any }> {
+    throw new Error('Method not implemented.');
+  }
   /**
    * @description notice, always set store.transactions by calling `_setStoreTransaction`
    */
