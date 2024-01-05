@@ -85,7 +85,9 @@ export const DappCard = ({
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
             <RcIconTriangle style={styles.triangle} />
-            <Text style={styles.dappDescText}>{data.info.description}</Text>
+            <Text style={styles.dappDescText} numberOfLines={2}>
+              {data.info.description}
+            </Text>
           </View>
         </View>
       ) : null}
@@ -159,7 +161,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     dappDesc: {
       position: 'relative',
-      color: colors['neutral-body'],
       backgroundColor: colors['neutral-card-3'],
       padding: 8,
       borderRadius: 4,
@@ -167,6 +168,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     dappDescText: {
       fontSize: 14,
       lineHeight: 20,
+      color: colors['neutral-body'],
     },
     triangle: {
       position: 'absolute',

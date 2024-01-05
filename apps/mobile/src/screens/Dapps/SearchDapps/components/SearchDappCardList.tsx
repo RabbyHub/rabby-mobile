@@ -9,10 +9,12 @@ export const SearchDappCardList = ({
   data,
   onPress,
   onFavoritePress,
+  onEndReached,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
+  onEndReached?: () => void;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -22,6 +24,8 @@ export const SearchDappCardList = ({
       data={data}
       style={styles.list}
       keyExtractor={item => item.info.id}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.8}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
