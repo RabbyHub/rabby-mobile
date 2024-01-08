@@ -30,7 +30,7 @@ import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
+import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 
 function errorLog(...info: any) {
@@ -235,7 +235,7 @@ export default function DappWebViewControl({
     webviewActions,
   } = useWebViewControl();
 
-  const { entryScriptWeb3 } = useLoadEntryScriptWeb3({ isTop: true });
+  const { fullScript } = useJavaScriptBeforeContentLoaded({ isTop: true });
 
   const { subTitle } = useMemo(() => {
     return {
@@ -324,7 +324,7 @@ export default function DappWebViewControl({
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
-        {entryScriptWeb3 && (
+        {fullScript && (
           <WebView
             {...webviewProps}
             style={[styles.dappWebView, webviewProps?.style]}
@@ -332,7 +332,7 @@ export default function DappWebViewControl({
             source={{
               uri: convertToWebviewUrl(dappId),
             }}
-            injectedJavaScriptBeforeContentLoaded={entryScriptWeb3}
+            injectedJavaScriptBeforeContentLoaded={fullScript}
             injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
             onNavigationStateChange={webviewActions.onNavigationStateChange}
             onError={errorLog}

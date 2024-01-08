@@ -5,6 +5,7 @@ import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
+import { JS_LOAD_V_CONSOLE } from '@/core/bridges/builtInScripts/loadVConsole';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -52,7 +53,9 @@ export function useInitializeAppOnTop() {
 }
 
 const loadEntryScriptWeb3Atom = atom('');
-export function useLoadEntryScriptWeb3(options?: { isTop?: boolean }) {
+export function useJavaScriptBeforeContentLoaded(options?: {
+  isTop?: boolean;
+}) {
   const [{ locked }] = useAtom(lockAtom);
   const [{ appInitialized }] = useAtom(bootstrapAtom);
 
@@ -77,9 +80,16 @@ export function useLoadEntryScriptWeb3(options?: { isTop?: boolean }) {
     });
   }, [isTop, appInitialized, locked, entryScriptWeb3]);
 
+  const fullScript = React.useMemo(() => {
+    return __DEV__
+      ? [entryScriptWeb3, JS_LOAD_V_CONSOLE].join('\n')
+      : entryScriptWeb3;
+  }, [entryScriptWeb3]);
+
   return {
     entryScriptWeb3Loaded: appInitialized && !!entryScriptWeb3,
     entryScriptWeb3,
+    fullScript: fullScript,
   };
 }
 
@@ -88,7 +98,7 @@ export function useLoadEntryScriptWeb3(options?: { isTop?: boolean }) {
  */
 export function useBootstrapApp() {
   const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
-  useLoadEntryScriptWeb3({ isTop: true });
+  useJavaScriptBeforeContentLoaded({ isTop: true });
 
   React.useEffect(() => {
     apisBoot

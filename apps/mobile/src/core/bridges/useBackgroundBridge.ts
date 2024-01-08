@@ -79,6 +79,7 @@ export function useSetupWebview({
     });
 
     const session = sessionService.getOrCreateSession(newBridge);
+    console.log('[feat] session', session);
     session?.setProp({
       origin: urlBridge,
       icon: '//todo',
