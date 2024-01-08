@@ -190,4 +190,12 @@ export class BackgroundBridge extends EventEmitter {
     // engine.push(providerAsMiddleware(provider));
     return engine;
   }
+
+  /**
+   * @deprecated
+   * @param payload
+   */
+  sendNotification(payload: { method: string; params?: any }) {
+    this.#engine && this.#engine.emit('notification', payload);
+  }
 }

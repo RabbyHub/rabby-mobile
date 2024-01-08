@@ -1,3 +1,4 @@
+import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
 
 // import { permissionService } from 'background/service';
@@ -19,10 +20,23 @@ export class Session {
 
   pms: BackgroundBridge[] = [];
 
-  pushMessage(event, data) {
+  pushMessage(event: BroadcastEvent, data: any) {
     this.pms.forEach(pm => {
-      // pm.send('message', { event, data });
-      pm.port.postMessage({ event, data }, this.origin);
+      pm.port.postMessage(
+        {
+          name: 'rabby-provider',
+          data: {
+            method: event,
+            params: data,
+          },
+        },
+        this.origin,
+      );
+
+      // pm.sendNotification({
+      //   method: event,
+      //   params: data,
+      // });
     });
   }
 
@@ -77,7 +91,7 @@ const deleteSession = (key: SessionKey) => {
   sessionMap.delete(key);
 };
 
-const broadcastEvent = (ev, data?, origin?: string) => {
+const broadcastEvent = (ev: BroadcastEvent, data?: any, origin?: string) => {
   let sessions: { key: SessionKey; data: Session }[] = [];
   sessionMap.forEach((session, key) => {
     // todo: permission

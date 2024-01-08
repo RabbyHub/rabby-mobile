@@ -15,6 +15,11 @@ import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
 import { ScreenLayouts } from '@/constant/layout';
+import {
+  useActiveDappView,
+  useActiveDappViewSheetModalRefs,
+} from '../hooks/useDappView';
+import SheetDappWebView from '../Dapps/components/SheetDappWebView';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -68,6 +73,9 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
+  const { setActiveDapp } = useActiveDappView();
+  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
+
   return (
     <View style={styles.page}>
       <View style={styles.header}>
@@ -111,12 +119,22 @@ export function SearchDappsScreen(): JSX.Element {
       </View>
       {searchText ? (
         <>
-          <LinkCard url={searchText} />
+          <LinkCard
+            url={searchText}
+            onPress={dapp => {
+              // setActiveDapp(dapp);
+              // toggleShowSheetModal('webviewContainerRef', true);
+            }}
+          />
           {loading ? null : list.length === 0 ? (
             <SearchEmpty />
           ) : (
             <SearchDappCardList
               data={list}
+              onPress={dapp => {
+                setActiveDapp(dapp);
+                toggleShowSheetModal('webviewContainerRef', true);
+              }}
               onFavoritePress={dapp => {
                 addDapp({
                   ...dapp,
@@ -134,6 +152,7 @@ export function SearchDappsScreen(): JSX.Element {
           }}
         />
       )}
+      <SheetDappWebView />
     </View>
   );
 }

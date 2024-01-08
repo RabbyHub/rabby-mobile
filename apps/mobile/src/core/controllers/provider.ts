@@ -40,6 +40,7 @@ import BigNumber from 'bignumber.js';
 import { findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
+import { sessionService } from '../services/session';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -302,7 +303,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
     if (
-      !dappService.getDapp(origin).isConnected ||
+      !dappService.getDapp(origin)?.isConnected ||
       !keyringService.isUnlocked()
     ) {
       return [];

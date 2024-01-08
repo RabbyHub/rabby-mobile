@@ -11,6 +11,8 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
+import { sessionService } from '@/core/services/session';
+import { BroadcastEvent } from '@/constant/event';
 
 let appVersion = '';
 
@@ -102,9 +104,9 @@ RPCMethodsMiddleParameters) =>
       eth_getTransactionByHash: async () => {},
       eth_getTransactionByBlockHashAndIndex: async () => {},
       eth_getTransactionByBlockNumberAndIndex: async () => {},
-      // eth_chainId: async () => {
-      //   res.result = '0x1';
-      // },
+      eth_chainId: async () => {
+        res.result = '0x1';
+      },
       eth_hashrate: () => {
         res.result = '0x00';
       },
@@ -115,9 +117,16 @@ RPCMethodsMiddleParameters) =>
         res.result = true;
       },
       net_version: async () => {
+        // setTimeout(() => {
+        //   sessionService.broadcastEvent(BroadcastEvent.chainChanged, {
+        //     chainId: '0x6',
+        //     networkVersion: '6',
+        //   });
+        //   console.log('chainChanged');
+        // }, 5000);
         res.result = 1;
       },
-      // eth_accounts: getEthAccounts,
+      eth_accounts: getEthAccounts,
       eth_coinbase: getEthAccounts,
       parity_defaultAccount: getEthAccounts,
       eth_sendTransaction: async () => {},
