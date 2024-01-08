@@ -9,6 +9,7 @@ export interface SessionProp {
   name: string;
 }
 
+type SessionKey = BackgroundBridge;
 export class Session {
   origin = '';
 
@@ -32,6 +33,9 @@ export class Session {
   }
 
   setPortMessage(pm: BackgroundBridge) {
+    if (this.pms.includes(pm)) {
+      return;
+    }
     this.pms.push(pm);
   }
 
@@ -43,46 +47,38 @@ export class Session {
 }
 
 // for each tab
-const sessionMap = new Map<string, Session | null>();
+const sessionMap = new Map<BackgroundBridge, Session | null>();
 
 const getSessionMap = () => {
   return sessionMap;
 };
 
-const getSession = (key: string) => {
+const getSession = (key: SessionKey) => {
   return sessionMap.get(key);
 };
 
-const getOrCreateSession = (id: number, origin: string) => {
-  if (sessionMap.has(`${id}-${origin}`)) {
-    return getSession(`${id}-${origin}`);
+const getOrCreateSession = (key: SessionKey) => {
+  if (sessionMap.has(key)) {
+    return getSession(key);
   }
 
-  return createSession(`${id}-${origin}`, null);
+  return createSession(key, null);
 };
 
-const createSession = (key: string, data?: null | SessionProp) => {
+const createSession = (key: SessionKey, data?: null | SessionProp) => {
   const session = new Session(data);
   sessionMap.set(key, session);
+  session.setPortMessage(key);
 
   return session;
 };
 
-const deleteSessionsByTabId = (tabId: number) => {
-  for (const key of sessionMap.keys()) {
-    const [sessionTab] = key.split('-');
-    if (sessionTab === tabId.toString()) {
-      deleteSession(key);
-    }
-  }
-};
-
-const deleteSession = (key: string) => {
+const deleteSession = (key: SessionKey) => {
   sessionMap.delete(key);
 };
 
 const broadcastEvent = (ev, data?, origin?: string) => {
-  let sessions: { key: string; data: Session }[] = [];
+  let sessions: { key: SessionKey; data: Session }[] = [];
   sessionMap.forEach((session, key) => {
     // todo: permission
     // if (session && permissionService.hasPermission(session.origin)) {
@@ -115,6 +111,5 @@ export const sessionService = {
   getSession,
   getOrCreateSession,
   deleteSession,
-  deleteSessionsByTabId,
   broadcastEvent,
 };

@@ -78,17 +78,12 @@ export function useSetupWebview({
       isMainFrame,
     });
 
-    // todo tabId
-    const tabId = 1;
-    const session = sessionService.getOrCreateSession(tabId, urlBridge);
+    const session = sessionService.getOrCreateSession(newBridge);
     session?.setProp({
       origin: urlBridge,
       icon: '//todo',
       name: '//todo',
     });
-    session?.setPortMessage(newBridge);
-
-    // todo deleteSessionsByTabId
 
     putBackgroundBridge(newBridge);
   };
@@ -146,7 +141,10 @@ export function useSetupWebview({
 
     // Reset the previous bridges
     backgroundBridgeRefs.current.length &&
-      backgroundBridgeRefs.current.forEach(bridge => bridge.onDisconnect());
+      backgroundBridgeRefs.current.forEach(bridge => {
+        bridge.onDisconnect();
+        sessionService.deleteSession(bridge);
+      });
 
     // // Cancel loading the page if we detect its a phishing page
     // const { hostname } = new URL(nativeEvent.url);
