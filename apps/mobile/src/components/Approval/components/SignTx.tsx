@@ -293,12 +293,7 @@ const explainGas = async ({
   const chain = Object.values(CHAINS).find(item => item.id === chainId);
   if (!chain) throw new Error(`${chainId} is not found in supported chains`);
   if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
-    const res = await apiProvider.fetchEstimatedL1Fee(
-      {
-        txParams: tx,
-      },
-      chain.enum,
-    );
+    const res = await apiProvider.fetchEstimatedL1Fee(tx, chain.enum);
     gasCostTokenAmount = new BigNumber(res).div(1e18).plus(gasCostTokenAmount);
     maxGasCostAmount = new BigNumber(res).div(1e18).plus(maxGasCostAmount);
   }
