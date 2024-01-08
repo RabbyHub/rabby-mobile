@@ -2,19 +2,19 @@ import React, { useMemo } from 'react';
 
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
+import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '@rneui/themed';
-import { useRequest } from 'ahooks';
+import { useDebounce, useInfiniteScroll } from 'ahooks';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
-import { ScreenLayouts } from '@/constant/layout';
 import {
   useActiveDappView,
   useActiveDappViewSheetModalRefs,
@@ -37,33 +37,51 @@ export function SearchDappsScreen(): JSX.Element {
 
   const ref = React.useRef<any>(null);
 
-  const {
-    data,
-    runAsync: runSearch,
-    loading,
-  } = useRequest(
-    async (s: string) => {
-      console.log({ s });
-      if (!s) {
-        return [];
+  const debouncedSearchValue = useDebounce(searchText, {
+    wait: 500,
+  });
+
+  const { data, loading, loadMore } = useInfiniteScroll(
+    async d => {
+      if (!debouncedSearchValue) {
+        return {
+          list: [],
+          page: {
+            start: 0,
+            limit: 0,
+            total: 0,
+          },
+          next: 0,
+        };
       }
-      return openapi
-        .searchDapp({
-          q: s,
-        })
-        .then(r => r.dapps);
+      const limit = d?.page?.limit || 30;
+      const start = d?.next || 0;
+      const res = await openapi.searchDapp({
+        q: debouncedSearchValue,
+        // chain_id: chainInfo?.serverId,
+        start,
+        limit,
+      });
+      return {
+        list: res.dapps,
+        page: res.page,
+        next: res.page.start + res.page.limit,
+      };
     },
     {
-      manual: true,
-      debounceLeading: true,
-      debounceWait: 600,
+      reloadDeps: [debouncedSearchValue],
+      target: ref,
+      // eslint-disable-next-line @typescript-eslint/no-shadow
+      isNoMore(data) {
+        return !!data && (data?.list?.length || 0) >= data?.page?.total;
+      },
     },
   );
 
   const { dapps, addDapp } = useDapps();
 
   const list = useMemo(() => {
-    return (data || []).map(info => {
+    return (data?.list || []).map(info => {
       const local = dapps[info.id];
 
       return {
@@ -101,7 +119,7 @@ export function SearchDappsScreen(): JSX.Element {
           value={searchText}
           onChangeText={v => {
             setSearchText(v);
-            runSearch(v);
+            // runSearch(v);
           }}
           showCancel
           showLoading={loading}
@@ -117,10 +135,10 @@ export function SearchDappsScreen(): JSX.Element {
           autoFocus
         />
       </View>
-      {searchText ? (
+      {debouncedSearchValue ? (
         <>
           <LinkCard
-            url={searchText}
+            url={debouncedSearchValue}
             onPress={dapp => {
               // setActiveDapp(dapp);
               // toggleShowSheetModal('webviewContainerRef', true);
@@ -130,6 +148,7 @@ export function SearchDappsScreen(): JSX.Element {
             <SearchEmpty />
           ) : (
             <SearchDappCardList
+              onEndReached={loadMore}
               data={list}
               onPress={dapp => {
                 setActiveDapp(dapp);
@@ -147,7 +166,7 @@ export function SearchDappsScreen(): JSX.Element {
       ) : (
         <SearchSuggest
           onPress={v => {
-            runSearch(v);
+            // runSearch(v);
             setSearchText(v);
           }}
         />

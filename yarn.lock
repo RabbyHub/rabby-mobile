@@ -4075,9 +4075,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.0-alpha.4":
-  version: 0.7.0-alpha.4
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.0-alpha.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.0-alpha.4.tgz"
+"@rabby-wallet/rabby-api@npm:0.7.0-alpha.7":
+  version: 0.7.0-alpha.7
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.0-alpha.7"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -4088,7 +4088,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 52bf73c6aaf8a41e959c771a3dd91328d6a34f7e9eebd2c41e8c29b1420c7ce9432f78bc101092513997e1f3a575d5b402f81ef9a0125b17345195f9be100d6d
+  checksum: 709e407ac0b6d8dff57e9790171bb2b0647e762f1632d8bda52bd74a6875cb4b726a3817ac577732826a5327b74084aeccaf538a8fd94b3fefaa5a4b5bd35449
   languageName: node
   linkType: hard
 
@@ -23285,7 +23285,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.8
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.0-alpha.4
+    "@rabby-wallet/rabby-api": 0.7.0-alpha.7
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-dapp": "workspace:^"

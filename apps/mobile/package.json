@@ -35,7 +35,7 @@
     "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.8",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
-    "@rabby-wallet/rabby-api": "0.7.0-alpha.4",
+    "@rabby-wallet/rabby-api": "0.7.0-alpha.7",
     "@rabby-wallet/rabby-security-engine": "^1.1.17",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-dapp": "workspace:^",
