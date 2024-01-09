@@ -12,6 +12,14 @@ const USER_REJECTED_ERRORS = ['user rejected', 'user denied', 'user cancelled'];
 
 const USER_REJECTED_ERROR_CODE = 4001;
 
+// module augumention
+declare module 'json-rpc-engine' {
+  export interface JsonRpcRequest<T> {
+    // add origin to request
+    origin: string;
+  }
+}
+
 /**
  * Returns a middleware that appends the DApp origin to request
  */

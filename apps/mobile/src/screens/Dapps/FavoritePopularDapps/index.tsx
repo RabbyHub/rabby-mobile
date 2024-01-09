@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { FavoriteDappCardList } from './components/FavoriteDappCardList';
 import { openapi } from '@/core/request';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 export function FavoritePopularDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -39,17 +40,20 @@ export function FavoritePopularDappsScreen(): JSX.Element {
     setSelectDapps(
       Object.values(dapps)
         .filter(item => item.isFavorite)
-        .map(item => item.info.id),
+        .map(item => item.origin),
     );
   }, [dapps]);
 
   const list = useMemo(() => {
     return (data || []).map(info => {
-      const local = dapps[info.id];
+      const origin = stringUtils.ensurePrefix(info.id, 'https://');
+      const local = dapps[origin];
+
       return {
         ...local,
+        origin,
         info: info as DappInfo['info'],
-        isFavorite: selectDapps.includes(info.id),
+        isFavorite: selectDapps.includes(origin),
       };
     });
   }, [dapps, data, selectDapps]);
@@ -59,22 +63,16 @@ export function FavoritePopularDappsScreen(): JSX.Element {
     navigation.goBack();
   }, [addDapp, list, navigation]);
 
-  console.log({
-    dapps,
-  });
-
   return (
     <NormalScreenContainer style={styles.page}>
       <View style={styles.container}>
         <FavoriteDappCardList
           data={list}
           onPress={dapp => {
-            if (selectDapps.includes(dapp.info.id)) {
-              setSelectDapps(prev =>
-                prev.filter(item => item !== dapp.info.id),
-              );
+            if (selectDapps.includes(dapp.origin)) {
+              setSelectDapps(prev => prev.filter(item => item !== dapp.origin));
             } else {
-              setSelectDapps(prev => [...prev, dapp.info.id]);
+              setSelectDapps(prev => [...prev, dapp.origin]);
             }
           }}
         />

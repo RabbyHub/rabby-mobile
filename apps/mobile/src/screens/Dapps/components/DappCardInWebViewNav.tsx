@@ -26,23 +26,29 @@ export const DappCardInWebViewNav = ({
                 }
               : undefined
           }
-          origin={data.info.id}
+          origin={data.origin}
           style={styles.dappIcon}
         />
         <View style={styles.dappContent}>
           <Text style={styles.dappOrigin} numberOfLines={1}>
-            {data.info.id}
+            {data.origin}
           </Text>
           <View style={styles.dappInfo}>
-            <Text
-              style={[styles.dappInfoText, styles.dappName]}
-              numberOfLines={1}>
-              {data.info.name}
-            </Text>
-            <View style={styles.divider} />
-            <Text style={styles.dappInfoText} numberOfLines={1}>
-              {data.info.user_range}
-            </Text>
+            {data.info.name ? (
+              <Text
+                style={[styles.dappInfoText, styles.dappName]}
+                numberOfLines={1}>
+                {data.info.name}
+              </Text>
+            ) : null}
+            {data.info.name && data.info.user_range ? (
+              <View style={styles.divider} />
+            ) : null}
+            {data.info.user_range ? (
+              <Text style={styles.dappInfoText} numberOfLines={1}>
+                {data.info.user_range}
+              </Text>
+            ) : null}
           </View>
         </View>
       </View>

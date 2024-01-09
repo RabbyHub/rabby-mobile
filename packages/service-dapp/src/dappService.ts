@@ -12,6 +12,7 @@ export interface BasicDappInfo {
 }
 
 export interface DappInfo {
+  origin: string;
   info: BasicDappInfo;
   infoUpdateAt?: number;
   isFavorite?: boolean;
@@ -46,34 +47,50 @@ export class DappService {
   addDapp(dapp: DappInfo | DappInfo[]) {
     const dapps = Array.isArray(dapp) ? dapp : [dapp];
     dapps.forEach(item => {
-      this.store.dapps[item.info.id] = item;
+      this.store.dapps[item.origin] = item;
     });
     this.store.dapps = { ...this.store.dapps };
   }
 
-  getDapp(id: string) {
-    return this.store.dapps[id];
+  getDapp(dappOrigin: string) {
+    return this.store.dapps[dappOrigin];
   }
 
   getDapps() {
     return this.store.dapps;
   }
 
-  getConnectedDapp(id: string) {
-    const dapp = this.getDapp(id);
+  getConnectedDapp(dappOrigin: string) {
+    const dapp = this.getDapp(dappOrigin);
     if (dapp.isConnected) {
       return dapp;
     }
     return null;
   }
 
-  removeDapp(id: string) {
-    delete this.store.dapps[id];
+  getFavoriteDapps() {
+    return Object.values(this.store.dapps).filter(dapp => dapp.isFavorite);
+  }
+
+  getConnectedDapps() {
+    return Object.values(this.store.dapps).filter(dapp => dapp.isConnected);
+  }
+
+  removeDapp(dappOrigin: string) {
+    delete this.store.dapps[dappOrigin];
     this.store.dapps = { ...this.store.dapps };
   }
 
   updateDapp(dapp: DappInfo) {
-    this.store.dapps[dapp.info.id] = dapp;
+    this.store.dapps[dapp.origin] = dapp;
+    this.store.dapps = { ...this.store.dapps };
+  }
+
+  patchDapp(dappOrigin: string, dapp: Partial<DappInfo>) {
+    this.store.dapps[dappOrigin] = {
+      ...this.store.dapps[dappOrigin],
+      ...dapp,
+    };
     this.store.dapps = { ...this.store.dapps };
   }
 

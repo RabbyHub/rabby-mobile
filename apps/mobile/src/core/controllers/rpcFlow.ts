@@ -14,6 +14,7 @@ import { ProviderRequest } from './type';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -45,6 +46,10 @@ const flowContext = flow
       data: { method },
     } = ctx.request;
     ctx.mapMethod = underline2Camelcase(method);
+
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: before check method');
+
     if (Reflect.getMetadata('PRIVATE', providerController, ctx.mapMethod)) {
       // Reject when dapp try to call private controller function
       throw ethErrors.rpc.methodNotFound({
@@ -73,6 +78,8 @@ const flowContext = flow
         session: { origin },
       },
     } = ctx;
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: before check lock');
 
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
       // check lock
@@ -98,6 +105,8 @@ const flowContext = flow
         }
       }
     }
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: after check lock');
 
     return next();
   })
@@ -109,8 +118,10 @@ const flowContext = flow
       },
       mapMethod,
     } = ctx;
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: before check connect');
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
-      if (!dappService.getDapp(origin).isConnected) {
+      if (!dappService.getDapp(origin)?.isConnected) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
             'Already processing connect. Please wait.',
@@ -130,7 +141,11 @@ const flowContext = flow
           connectOrigins.delete(origin);
           const dapp = dappService.getDapp(origin);
           if (dapp) {
-            dappService.updateConnected(origin, true);
+            dappService.updateDapp({
+              ...dapp,
+              chainId: defaultChain || CHAINS_ENUM.ETH,
+              isConnected: true,
+            });
           } else {
             // TODO add new dapp
             // dappService.addDapp({})
@@ -141,7 +156,8 @@ const flowContext = flow
         }
       }
     }
-
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: after check connect');
     return next();
   })
   .use(async (ctx, next) => {
@@ -153,8 +169,11 @@ const flowContext = flow
       },
       mapMethod,
     } = ctx;
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
+
     let windowHeight = 800;
     // TODO: remove this
     if ('height' in options) {
@@ -227,11 +246,13 @@ const flowContext = flow
     // process request
     const [approvalType] =
       Reflect.getMetadata('APPROVAL', providerController, mapMethod) || [];
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: before process request');
     const { uiRequestComponent, ...rest } = approvalRes || {};
     const {
       session: { origin },
     } = request;
-    const requestDeferFn = () =>
+    const requestDeferFn = async () =>
       new Promise((resolve, reject) => {
         return Promise.resolve(
           providerController[mapMethod]({
@@ -256,6 +277,8 @@ const flowContext = flow
                 success: false,
                 errorMsg: e?.message || JSON.stringify(e),
               });
+            } else if (__DEV__) {
+              console.error(e);
             }
           });
       });
@@ -282,6 +305,9 @@ const flowContext = flow
       reportStatsData();
       return result;
     }
+
+    // // leave here for debug
+    // console.debug('[debug] flowContext:: after process request', await requestDefer);
 
     return requestDefer;
   })
@@ -323,7 +349,7 @@ function reportStatsData() {
   // notificationService.setStatsData(statsData);
 }
 
-export default (request: ProviderRequest) => {
+export default async (request: ProviderRequest) => {
   const ctx: any = { request: { ...request, requestedApproval: false } };
   // notificationService.setStatsData();
   return flowContext(ctx).finally(() => {

@@ -9,6 +9,10 @@ import { ethErrors } from 'eth-rpc-errors';
 import { recoverPersonalSignature } from '@metamask/eth-sig-util';
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
+import { sendRequest } from '@/core/apis/sendRequest';
+import { ProviderRequest } from '@/core/controllers/type';
+import { sessionService } from '@/core/services/session';
+import { BroadcastEvent } from '@/constant/event';
 
 let appVersion = '';
 
@@ -32,13 +36,15 @@ export enum ApprovalTypes {
   ///: END:ONLY_INCLUDE_IF
 }
 
+export type RefLikeObject<T> = { current: T };
+
 export interface RPCMethodsMiddleParameters {
   hostname: string;
-  getProviderState: () => any;
   // navigation: any;
-  // url: { current: string };
-  // title: { current: string };
-  // icon: { current: string | undefined };
+  urlRef: RefLikeObject<string>;
+  titleRef: RefLikeObject<string>;
+  iconRef: RefLikeObject<string | undefined>;
+  bridge: import('../BackgroundBridge').BackgroundBridge;
   // // Bookmarks
   // isHomepage: () => boolean;
   // // Show autocomplete
@@ -53,12 +59,12 @@ export interface RPCMethodsMiddleParameters {
  */
 export const getRpcMethodMiddleware = ({
   hostname,
-  getProviderState,
+  urlRef,
+  titleRef,
+  iconRef,
+  bridge,
 }: // navigation,
 // // Website info
-// url,
-// title,
-// icon,
 // // Bookmarks
 // isHomepage,
 // // Show autocomplete
@@ -68,7 +74,7 @@ export const getRpcMethodMiddleware = ({
 // tabId,
 RPCMethodsMiddleParameters) =>
   // all user facing RPC calls not implemented by the provider
-  createAsyncMiddleware(async (req: any, res: any, next: any) => {
+  createAsyncMiddleware<{}, any>(async (req, res, next) => {
     // Used by eth_accounts and eth_coinbase RPCs.
     const getEthAccounts = async () => {
       const accounts = await keyringService.getAccounts();
@@ -77,20 +83,15 @@ RPCMethodsMiddleParameters) =>
 
       return accounts;
     };
-
     const checkTabActive = () => {};
 
+    const providerSessionBase: ProviderRequest['session'] & object = {
+      name: titleRef.current,
+      origin: req.origin,
+      icon: iconRef.current || '',
+    };
+
     const rpcMethods: any = {
-      /**
-       * This method is used by the inpage provider to get its state on
-       * initialization.
-       */
-      rabby_getProviderState: async () => {
-        res.result = {
-          ...getProviderState(),
-          accounts: [],
-        };
-      },
       wallet_getPermissions: async () => new Promise<any>(resolve => {}),
       wallet_requestPermissions: async () => {
         res.result = [
@@ -116,12 +117,14 @@ RPCMethodsMiddleParameters) =>
         res.result = true;
       },
       net_version: async () => {
+        // setTimeout(() => {
+        //   sessionService.broadcastEvent(BroadcastEvent.chainChanged, {
+        //     chainId: '0x6',
+        //     networkVersion: '6',
+        //   });
+        //   console.log('chainChanged');
+        // }, 5000);
         res.result = 1;
-      },
-      eth_requestAccounts: async () => {
-        const { params } = req;
-
-        res.result = await getEthAccounts();
       },
       eth_accounts: getEthAccounts,
       eth_coinbase: getEthAccounts,
@@ -133,8 +136,8 @@ RPCMethodsMiddleParameters) =>
       personal_sign: async () => {},
 
       personal_ecRecover: () => {
-        const data = req.params[0];
-        const signature = req.params[1];
+        const data = req.params?.[0];
+        const signature = req.params?.[1];
         const address = recoverPersonalSignature({ data, signature });
 
         res.result = address;
@@ -171,10 +174,7 @@ RPCMethodsMiddleParameters) =>
     };
 
     if (__DEV__) {
-      console.debug('[getRpcMethodMiddleware] req.method: ', req.method);
-    }
-    if (!rpcMethods[req.method]) {
-      return next();
+      console.debug(`[getRpcMethodMiddleware] req.method: '${req.method}'`);
     }
     const isWhiteListedMethod = isWhitelistedRPC(req.method);
 
@@ -182,9 +182,33 @@ RPCMethodsMiddleParameters) =>
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.REQUEST_SEND
       }
-      await rpcMethods[req.method]();
+      if (rpcMethods[req.method]) {
+        if (__DEV__) {
+          console.debug(
+            `[getRpcMethodMiddleware] req.method: '${req.method}' use customized route`,
+          );
+        }
+        await rpcMethods[req.method]();
+      } else {
+        if (__DEV__) {
+          console.debug(
+            `[getRpcMethodMiddleware] req.method: '${req.method}' use providerController`,
+          );
+        }
+        res.result = await sendRequest(
+          {
+            method: req.method,
+            params: req.params,
+            $ctx: {},
+          },
+          providerSessionBase,
+        );
+      }
       if (__DEV__) {
-        console.log('[getRpcMethodMiddleware] res.result: ', res.result);
+        console.debug(
+          `[getRpcMethodMiddleware] res.result for method '${req.method}': `,
+          res.result,
+        );
       }
 
       if (isWhiteListedMethod) {
@@ -193,6 +217,12 @@ RPCMethodsMiddleParameters) =>
     } catch (e) {
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.ERROR
+      }
+      if (__DEV__) {
+        console.debug(
+          `[getRpcMethodMiddleware] error for method '${req.method}': `,
+          e,
+        );
       }
       throw e;
     }

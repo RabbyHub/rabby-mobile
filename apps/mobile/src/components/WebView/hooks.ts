@@ -10,6 +10,9 @@ export type WebViewState = Pick<
 
 export function useWebViewControl() {
   const webviewRef = useRef<WebView>(null);
+  const urlRef = useRef<string>('about:blank');
+  const titleRef = useRef<string>('');
+  const iconRef = useRef<string | undefined>();
 
   const [webviewState, setWebViewState] = useState<WebViewState>({
     canGoBack: false,
@@ -23,6 +26,10 @@ export function useWebViewControl() {
     (newNavState: WebViewNavigation) => {
       // // leave here for debug
       // devLog('onNavigationStateChange::newNavState', newNavState);
+
+      // update ref first, then trigger state update
+      urlRef.current = newNavState.url || '';
+      titleRef.current = newNavState.title || '';
 
       setWebViewState({
         canGoBack: newNavState.canGoBack,
@@ -54,6 +61,10 @@ export function useWebViewControl() {
   return {
     webviewState,
     webviewRef,
+    urlRef,
+    titleRef,
+    iconRef,
+
     latestUrl: webviewState.url,
 
     webviewActions: {

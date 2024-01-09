@@ -270,7 +270,7 @@ describe('StreamProvider', () => {
 
       it('returns response object on success', async () => {
         setNextRpcEngineResponse(null, { result: 42 });
-        await new Promise((done) => {
+        await new Promise(done => {
           (streamProvider as any)._rpcRequest(
             { method: 'foo', params: ['bar'] },
             (error: Error | null, response: any) => {
@@ -294,7 +294,7 @@ describe('StreamProvider', () => {
 
       it('returns response object on error', async () => {
         setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-        await new Promise((done) => {
+        await new Promise(done => {
           (streamProvider as any)._rpcRequest(
             { method: 'foo', params: ['bar'] },
             (error: Error | null, response: any) => {
@@ -318,7 +318,7 @@ describe('StreamProvider', () => {
 
       it('calls _handleAccountsChanged on request for eth_accounts', async () => {
         setNextRpcEngineResponse(null, { result: ['0x1'] });
-        await new Promise((done) => {
+        await new Promise(done => {
           (streamProvider as any)._rpcRequest(
             { method: 'eth_accounts' },
             (error: Error | null, response: any) => {
@@ -343,7 +343,7 @@ describe('StreamProvider', () => {
 
       it('calls _handleAccountsChanged with empty array on eth_accounts request returning error', async () => {
         setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-        await new Promise((done) => {
+        await new Promise(done => {
           (streamProvider as any)._rpcRequest(
             { method: 'eth_accounts' },
             (error: Error | null, res: any) => {
@@ -388,15 +388,15 @@ describe('StreamProvider', () => {
         await streamProvider.initialize();
         expect(requestMock).toHaveBeenCalledTimes(1);
 
-        await new Promise<void>((resolve) => {
-          streamProvider.once('chainChanged', (newChainId) => {
+        await new Promise<void>(resolve => {
+          streamProvider.once('chainChanged', newChainId => {
             expect(newChainId).toBe('0x1');
             resolve();
           });
 
           mockStream.notify(mockStreamName, {
             jsonrpc: '2.0',
-            method: 'metamask_chainChanged',
+            method: 'rabby_chainChanged',
             params: { chainId: '0x1', networkVersion: '0x1' },
           });
         });
@@ -428,15 +428,15 @@ describe('StreamProvider', () => {
 
         const emitSpy = jest.spyOn(streamProvider, 'emit');
 
-        await new Promise<void>((resolve) => {
-          streamProvider.once('disconnect', (error) => {
+        await new Promise<void>(resolve => {
+          streamProvider.once('disconnect', error => {
             expect(error.code).toBe(1013);
             resolve();
           });
 
           mockStream.notify(mockStreamName, {
             jsonrpc: '2.0',
-            method: 'metamask_chainChanged',
+            method: 'rabby_chainChanged',
             // A "loading" networkVersion indicates the network is changing.
             // Although the chainId is different, chainChanged should not be
             // emitted in this case.
@@ -452,15 +452,15 @@ describe('StreamProvider', () => {
         // These should be unchanged.
         expect(streamProvider.chainId).toBe('0x0');
 
-        await new Promise<void>((resolve) => {
-          streamProvider.once('chainChanged', (newChainId) => {
+        await new Promise<void>(resolve => {
+          streamProvider.once('chainChanged', newChainId => {
             expect(newChainId).toBe('0x1');
             resolve();
           });
 
           mockStream.notify(mockStreamName, {
             jsonrpc: '2.0',
-            method: 'metamask_chainChanged',
+            method: 'rabby_chainChanged',
             // The networkVersion will be ignored here, we're just setting it
             // to something other than 'loading'.
             params: { chainId: '0x1', networkVersion: '1' },

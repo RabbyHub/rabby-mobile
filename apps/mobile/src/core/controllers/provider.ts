@@ -40,6 +40,8 @@ import BigNumber from 'bignumber.js';
 import { findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
+import { sessionService } from '../services/session';
+import { BroadcastEvent } from '@/constant/event';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -273,27 +275,29 @@ class ProviderController extends BaseController {
   }: {
     session: Session;
   }) => {
-    if (!dappService.getDapp(origin).isConnected) {
+    if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
 
     const _account = await this.getCurrentAccount();
     const account = _account ? [_account.address.toLowerCase()] : [];
-    // sessionService.broadcastEvent('accountsChanged', account);
-    // const connectSite = dappService.getConnectedDapp(origin);
-    // if (connectSite) {
-    //   const chain = CHAINS[connectSite.chainId];
-    //   // rabby:chainChanged event must be sent before chainChanged event
-    //   sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
-    //   sessionService.broadcastEvent(
-    //     'chainChanged',
-    //     {
-    //       chain: chain.hex,
-    //       networkVersion: chain.network,
-    //     },
-    //     origin,
-    //   );
-    // }
+
+    sessionService.broadcastEvent(BroadcastEvent.accountsChanged, account);
+    const connectSite = dappService.getConnectedDapp(origin);
+
+    if (connectSite) {
+      const chain = CHAINS[connectSite.chainId];
+      // // rabby:chainChanged event must be sent before chainChanged event
+      // sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
+      sessionService.broadcastEvent(
+        BroadcastEvent.chainChanged,
+        {
+          chain: chain.hex,
+          networkVersion: chain.network,
+        },
+        origin,
+      );
+    }
 
     return account;
   };
@@ -301,7 +305,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
     if (
-      !dappService.getDapp(origin).isConnected ||
+      !dappService.getDapp(origin)?.isConnected ||
       !keyringService.isUnlocked()
     ) {
       return [];
