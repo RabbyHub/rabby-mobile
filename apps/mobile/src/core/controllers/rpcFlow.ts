@@ -140,7 +140,11 @@ const flowContext = flow
           connectOrigins.delete(origin);
           const dapp = dappService.getDapp(origin);
           if (dapp) {
-            dappService.updateConnected(origin, true);
+            dappService.updateDapp({
+              ...dapp,
+              chainId: defaultChain,
+              isConnected: true,
+            });
           } else {
             // TODO add new dapp
             // dappService.addDapp({})
