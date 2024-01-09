@@ -63,10 +63,7 @@ async function getInitializedProvider({
 } = {}): Promise<InitializedProviderDetails> {
   const onWrite = jest.fn();
   const connectionStream = new MockConnectionStream((name, data) => {
-    if (
-      name === 'rabby-provider' &&
-      data.method === 'rabby_getProviderState'
-    ) {
+    if (name === 'rabby-provider' && data.method === 'rabby_getProviderState') {
       // Wrap in `setTimeout` to ensure a reply is received by the provider
       // after the provider has processed the request, to ensure that the
       // provider recognizes the id.
@@ -179,7 +176,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('.sendAsync returns response object on success', async () => {
       setNextRpcEngineResponse(null, { result: 42 });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.sendAsync(
           { method: 'foo', params: ['bar'] },
           (error: Error | null, response: any) => {
@@ -205,7 +202,7 @@ describe('RabbyInpageProvider: RPC', () => {
         { result: 41 },
         { result: 40 },
       ]);
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.sendAsync(
           [
             { method: 'foo', params: ['bar'] },
@@ -236,7 +233,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('.sendAsync returns response object on error', async () => {
       setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.sendAsync(
           { method: 'foo', params: ['bar'] },
           (error: Error | null, response: any) => {
@@ -286,7 +283,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('.send callback signature returns response object on success', async () => {
       setNextRpcEngineResponse(null, { result: 42 });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.send(
           { method: 'foo', params: ['bar'] },
           (error: any, response: any) => {
@@ -308,7 +305,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('.send callback signature returns response object on error', async () => {
       setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.send(
           { method: 'foo', params: ['bar'] },
           (error: any, response: any) => {
@@ -465,7 +462,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('returns response object on success', async () => {
       setNextRpcEngineResponse(null, { result: 42 });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider._rpcRequest(
           { method: 'foo', params: ['bar'] },
           (error: any, response: any) => {
@@ -487,7 +484,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('returns response object on error', async () => {
       setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider._rpcRequest(
           { method: 'foo', params: ['bar'] },
           (error: any, response: any) => {
@@ -509,7 +506,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('calls _handleAccountsChanged on request for eth_accounts', async () => {
       setNextRpcEngineResponse(null, { result: ['0x1'] });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider._rpcRequest(
           { method: 'eth_accounts' },
           (error: any, response: any) => {
@@ -533,7 +530,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('calls _handleAccountsChanged with empty array on eth_accounts request returning error', async () => {
       setNextRpcEngineResponse(new Error('foo'), { error: 'foo' });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider._rpcRequest(
           { method: 'eth_accounts' },
           (error: any, response: any) => {
@@ -638,7 +635,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('callback signature returns response object on success', async () => {
       setNextRpcRequestResponse(null, { result: 42 });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.send(
           { method: 'foo', params: ['bar'] },
           (error: Error | null, response: any) => {
@@ -660,7 +657,7 @@ describe('RabbyInpageProvider: RPC', () => {
 
     it('callback signature returns response object on error', async () => {
       setNextRpcRequestResponse(new Error('foo'), { error: 'foo' });
-      await new Promise((done) => {
+      await new Promise(done => {
         provider.send(
           { method: 'foo', params: ['bar'] },
           (error: Error | null, response: any) => {
@@ -739,15 +736,15 @@ describe('RabbyInpageProvider: RPC', () => {
     it('calls chainChanged when receiving a new chainId', async () => {
       const { provider, connectionStream } = await getInitializedProvider();
 
-      await new Promise((resolve) => {
-        provider.once('chainChanged', (newChainId) => {
+      await new Promise(resolve => {
+        provider.once('chainChanged', newChainId => {
           expect(newChainId).toBe('0x1');
           resolve(undefined);
         });
 
         connectionStream.notify(RabbyInpageProviderStreamName, {
           jsonrpc: '2.0',
-          method: 'metamask_chainChanged',
+          method: 'rabby_chainChanged',
           params: { chainId: '0x1', networkVersion: '1' },
         });
       });
@@ -756,15 +753,15 @@ describe('RabbyInpageProvider: RPC', () => {
     it('calls networkChanged when receiving a new networkVersion', async () => {
       const { provider, connectionStream } = await getInitializedProvider();
 
-      await new Promise((resolve) => {
-        provider.once('networkChanged', (newNetworkId) => {
+      await new Promise(resolve => {
+        provider.once('networkChanged', newNetworkId => {
           expect(newNetworkId).toBe('1');
           resolve(undefined);
         });
 
         connectionStream.notify(RabbyInpageProviderStreamName, {
           jsonrpc: '2.0',
-          method: 'metamask_chainChanged',
+          method: 'rabby_chainChanged',
           params: { chainId: '0x1', networkVersion: '1' },
         });
       });
@@ -780,15 +777,15 @@ describe('RabbyInpageProvider: RPC', () => {
 
       const emitSpy = jest.spyOn(provider, 'emit');
 
-      await new Promise<void>((resolve) => {
-        provider.once('disconnect', (error) => {
+      await new Promise<void>(resolve => {
+        provider.once('disconnect', error => {
           expect((error as any).code).toBe(1013);
           resolve();
         });
 
         connectionStream.notify(RabbyInpageProviderStreamName, {
           jsonrpc: '2.0',
-          method: 'metamask_chainChanged',
+          method: 'rabby_chainChanged',
           // A "loading" networkVersion indicates the network is changing.
           // Although the chainId is different, chainChanged should not be
           // emitted in this case.
@@ -805,15 +802,15 @@ describe('RabbyInpageProvider: RPC', () => {
       expect(provider.chainId).toBe('0x0');
       expect(provider.networkVersion).toBe('0');
 
-      await new Promise<void>((resolve) => {
-        provider.once('chainChanged', (newChainId) => {
+      await new Promise<void>(resolve => {
+        provider.once('chainChanged', newChainId => {
           expect(newChainId).toBe('0x1');
           resolve();
         });
 
         connectionStream.notify(RabbyInpageProviderStreamName, {
           jsonrpc: '2.0',
-          method: 'metamask_chainChanged',
+          method: 'rabby_chainChanged',
           params: { chainId: '0x1', networkVersion: '1' },
         });
       });
@@ -1035,7 +1032,7 @@ describe('RabbyInpageProvider: Miscellanea', () => {
       const mockStream = new MockConnectionStream();
       const inpageProvider = new RabbyInpageProvider(mockStream);
 
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 1));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 1));
       expect(requestMock).toHaveBeenCalledTimes(1);
       expect(inpageProvider.chainId).toBe('0x0');
       expect(inpageProvider.networkVersion).toBe('0');
@@ -1046,9 +1043,7 @@ describe('RabbyInpageProvider: Miscellanea', () => {
 
   describe('isConnected', () => {
     it('returns isConnected state', () => {
-      const provider: any = new RabbyInpageProvider(
-        new MockConnectionStream(),
-      );
+      const provider: any = new RabbyInpageProvider(new MockConnectionStream());
       provider.autoRefreshOnNetworkChange = false;
 
       expect(provider.isConnected()).toBe(false);

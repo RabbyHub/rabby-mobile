@@ -25,7 +25,7 @@ export const DappCardList = ({
     <SectionList
       sections={sections}
       style={styles.list}
-      keyExtractor={item => item.info.id}
+      keyExtractor={item => item.origin}
       stickySectionHeadersEnabled={false}
       renderItem={({ item }) => {
         return (

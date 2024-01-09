@@ -4,6 +4,7 @@ import { DappInfo } from '@rabby-wallet/service-dapp';
 import { atom, useAtom } from 'jotai';
 import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { useFocusEffect } from '@react-navigation/native';
 
 const dappsAtom = atom<Record<string, DappInfo>>({});
 
@@ -22,7 +23,7 @@ export const useDapps = () => {
       const dataList = Array.isArray(data) ? data : [data];
       dataList.forEach(item => {
         // now we must ensure all dappOrigin has https:// prefix
-        item.info.id = stringUtils.ensurePrefix(item.info.id, 'https://');
+        item.origin = stringUtils.ensurePrefix(item.info.id, 'https://');
       });
       const res = dappService.addDapp(data);
       getDapps();
@@ -47,36 +48,46 @@ export const useDapps = () => {
     [getDapps],
   );
 
+  const disconnectDapp = useCallback(
+    (origin: string) => {
+      dappService.disconnect(origin);
+      getDapps();
+    },
+    [getDapps],
+  );
+
+  const connectedApps = useMemo(() => {
+    return Object.values(dapps || {}).filter(item => item.isConnected);
+  }, [dapps]);
+
+  const favoriteApps = useMemo(() => {
+    return Object.values(dapps || {}).filter(item => item.isFavorite);
+  }, [dapps]);
+
   const dappSections = useMemo(() => {
-    const list = Object.values(dapps || {});
-    if (!list.length) {
-      return [];
-    }
-    const otherList: DappInfo[] = [];
-    const favoriteList: DappInfo[] = [];
-    list.forEach(item => {
-      if (item.isFavorite) {
-        favoriteList.push(item);
-      } else {
-        otherList.push(item);
-      }
-    });
     return [
       {
         title: '',
-        data: otherList,
+        data: connectedApps,
       },
 
       {
         title: 'Favorites',
-        data: favoriteList,
+        data: favoriteApps,
       },
     ].filter(item => item.data.length);
-  }, [dapps]);
+  }, [connectedApps, favoriteApps]);
 
-  React.useEffect(() => {
-    getDapps();
-  }, [getDapps]);
+  // React.useEffect(() => {
+  //   getDapps();
+  // }, [getDapps]);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('useFocusEffect');
+      getDapps();
+    }, [getDapps]),
+  );
 
   return {
     dapps,
@@ -85,5 +96,6 @@ export const useDapps = () => {
     addDapp,
     updateFavorite,
     removeDapp,
+    disconnectDapp,
   };
 };

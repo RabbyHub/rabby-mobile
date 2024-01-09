@@ -14,6 +14,7 @@ import { ProviderRequest } from './type';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -142,7 +143,7 @@ const flowContext = flow
           if (dapp) {
             dappService.updateDapp({
               ...dapp,
-              chainId: defaultChain,
+              chainId: defaultChain || CHAINS_ENUM.ETH,
               isConnected: true,
             });
           } else {

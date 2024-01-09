@@ -19,7 +19,7 @@ export const FavoriteDappCardList = ({
     <FlatList
       data={data}
       style={styles.list}
-      keyExtractor={item => item.info.id}
+      keyExtractor={item => item.origin}
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>

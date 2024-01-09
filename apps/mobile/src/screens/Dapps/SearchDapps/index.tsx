@@ -20,6 +20,7 @@ import {
   useActiveDappViewSheetModalRefs,
 } from '../hooks/useDappView';
 import SheetDappWebView from '../Dapps/components/SheetDappWebView';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -82,10 +83,12 @@ export function SearchDappsScreen(): JSX.Element {
 
   const list = useMemo(() => {
     return (data?.list || []).map(info => {
-      const local = dapps[info.id];
+      const origin = stringUtils.ensurePrefix(info.id, 'https://');
+      const local = dapps[origin];
 
       return {
         ...local,
+        origin,
         info,
       } as DappInfo;
     });

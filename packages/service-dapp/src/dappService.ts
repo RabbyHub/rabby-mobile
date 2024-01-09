@@ -12,6 +12,7 @@ export interface BasicDappInfo {
 }
 
 export interface DappInfo {
+  origin: string;
   info: BasicDappInfo;
   infoUpdateAt?: number;
   isFavorite?: boolean;
@@ -46,7 +47,7 @@ export class DappService {
   addDapp(dapp: DappInfo | DappInfo[]) {
     const dapps = Array.isArray(dapp) ? dapp : [dapp];
     dapps.forEach(item => {
-      this.store.dapps[item.info.id] = item;
+      this.store.dapps[item.origin] = item;
     });
     this.store.dapps = { ...this.store.dapps };
   }
@@ -67,13 +68,29 @@ export class DappService {
     return null;
   }
 
+  getFavoriteDapps() {
+    return Object.values(this.store.dapps).filter(dapp => dapp.isFavorite);
+  }
+
+  getConnectedDapps() {
+    return Object.values(this.store.dapps).filter(dapp => dapp.isConnected);
+  }
+
   removeDapp(dappOrigin: string) {
     delete this.store.dapps[dappOrigin];
     this.store.dapps = { ...this.store.dapps };
   }
 
   updateDapp(dapp: DappInfo) {
-    this.store.dapps[dapp.info.id] = dapp;
+    this.store.dapps[dapp.origin] = dapp;
+    this.store.dapps = { ...this.store.dapps };
+  }
+
+  patchDapp(dappOrigin: string, dapp: Partial<DappInfo>) {
+    this.store.dapps[dappOrigin] = {
+      ...this.store.dapps[dappOrigin],
+      ...dapp,
+    };
     this.store.dapps = { ...this.store.dapps };
   }
 

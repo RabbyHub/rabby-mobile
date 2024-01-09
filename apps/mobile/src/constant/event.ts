@@ -1,5 +1,8 @@
 export enum BroadcastEvent {
-  accountsChanged = 'metamask_accountsChanged',
-  unlockStateChanged = 'metamask_unlockStateChanged',
-  chainChanged = 'metamask_chainChanged',
+  accountsChanged = 'rabby_accountsChanged',
+  /**
+   * @deprecated
+   */
+  unlockStateChanged = 'rabby_unlockStateChanged',
+  chainChanged = 'rabby_chainChanged',
 }

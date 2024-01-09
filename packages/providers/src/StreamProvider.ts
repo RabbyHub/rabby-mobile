@@ -93,13 +93,13 @@ export abstract class AbstractStreamProvider extends BaseProvider {
     this._rpcEngine.push(this._jsonRpcConnection.middleware);
 
     // Handle JSON-RPC notifications
-    this._jsonRpcConnection.events.on('notification', (payload) => {
+    this._jsonRpcConnection.events.on('notification', payload => {
       const { method, params } = payload;
-      if (method === 'metamask_accountsChanged') {
+      if (method === 'rabby_accountsChanged') {
         this._handleAccountsChanged(params);
-      } else if (method === 'metamask_unlockStateChanged') {
+      } else if (method === 'rabby_unlockStateChanged') {
         this._handleUnlockStateChanged(params);
-      } else if (method === 'metamask_chainChanged') {
+      } else if (method === 'rabby_chainChanged') {
         this._handleChainChanged(params);
       } else if (EMITTED_NOTIFICATIONS.includes(method)) {
         this.emit('message', {

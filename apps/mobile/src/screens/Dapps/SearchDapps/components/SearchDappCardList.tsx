@@ -23,7 +23,7 @@ export const SearchDappCardList = ({
     <FlatList
       data={data}
       style={styles.list}
-      keyExtractor={item => item.info.id}
+      keyExtractor={item => item.origin}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.8}
       renderItem={({ item }) => {
