@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-import { WalletControllerType, isSameAddress, useWallet } from '@/ui/utils';
 import {
   ExplainTxResponse,
   TokenItem,
@@ -33,10 +31,7 @@ import {
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import { useState, useCallback, useEffect } from 'react';
-import PQueue from 'p-queue';
-import { getTimeSpan } from 'ui/utils/time';
-import { ALIAS_ADDRESS, CHAINS } from 'consts';
-import { TransactionGroup } from '@/background/service/transactionHistory';
+import PQueue from 'p-queue/dist/index';
 import { isTestnet } from '@/utils/chain';
 import { findChainByServerID } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
@@ -45,7 +40,16 @@ import {
   transactionHistoryService,
   whitelistService,
 } from '@/core/services';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { OpenApiService } from '@rabby-wallet/rabby-api';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { CHAINS } from '@/constant/chains';
+import { getTimeSpan } from '@/utils/time';
+import { apiSecurityEngine } from '@/core/apis';
+import i18n from '@/utils/i18n';
 
+const { isSameAddress } = addressUtils;
 export interface ReceiveTokenItem extends TokenItem {
   min_amount: number;
   min_raw_amount: string;
@@ -562,9 +566,7 @@ const fetchNFTApproveRequiredData = async ({
   spender: string;
   address: string;
   chainId: string;
-  apiProvider:
-    | WalletControllerType['openapi']
-    | WalletControllerType['testnetOpenapi'];
+  apiProvider: OpenApiService;
 }) => {
   const queue = new PQueue();
   const result: ApproveNFTRequireData = {
@@ -626,9 +628,7 @@ const fetchTokenApproveRequireData = async ({
   token: TokenItem;
   address: string;
   chainId: string;
-  apiProvider:
-    | WalletControllerType['openapi']
-    | WalletControllerType['testnetOpenapi'];
+  apiProvider: OpenApiService;
 }) => {
   const queue = new PQueue();
   const result: ApproveTokenRequireData = {
@@ -900,7 +900,7 @@ export const fetchActionRequiredData = async ({
       );
       return {
         pendingTxs,
-      };
+      } as any;
     } else {
       return {
         pendingTxs: [],
@@ -972,8 +972,8 @@ export const fetchActionRequiredData = async ({
       );
       result.usedChains = usedChainList;
     });
-    const whitelist = await wallet.getWhitelist();
-    const whitelistEnable = await wallet.isWhitelistEnabled();
+    const whitelist = await whitelistService.getWhitelist();
+    const whitelistEnable = await whitelistService.isWhitelistEnabled();
     result.whitelistEnable = whitelistEnable;
     result.onTransferWhitelist = whitelist.includes(
       actionData.sendNFT.to.toLowerCase(),
@@ -1309,7 +1309,6 @@ export const formatSecurityEngineCtx = ({
 };
 
 export const useUserData = () => {
-  const wallet = useWallet();
   const [userData, setUserData] = useState<UserData>({
     originWhitelist: [],
     originBlacklist: [],
@@ -1320,15 +1319,15 @@ export const useUserData = () => {
   });
 
   useEffect(() => {
-    wallet.getSecurityEngineUserData().then(setUserData);
+    setUserData(apiSecurityEngine.getSecurityEngineUserData());
   }, []);
 
   const updateUserData = useCallback(
     async (userData: UserData) => {
-      await wallet.updateUserData(userData);
+      await apiSecurityEngine.updateUserData(userData);
       setUserData(userData);
     },
-    [userData, wallet],
+    [userData],
   );
 
   return [userData, updateUserData] as const;

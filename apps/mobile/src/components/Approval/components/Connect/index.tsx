@@ -16,7 +16,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
-import { Chain, CHAINS, CHAINS_ENUM } from '@debank/common';
+import { Chain, CHAINS_ENUM } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import {
   ContextActionData,
