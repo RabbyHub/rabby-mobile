@@ -218,6 +218,12 @@ RPCMethodsMiddleParameters) =>
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.ERROR
       }
+      if (__DEV__) {
+        console.debug(
+          `[getRpcMethodMiddleware] error for method '${req.method}': `,
+          e,
+        );
+      }
       throw e;
     }
   });

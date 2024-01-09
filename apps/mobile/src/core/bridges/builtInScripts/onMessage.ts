@@ -3,7 +3,7 @@ export const JS_LOG_ON_MESSAGE = `
   // log message from react native
 
   window.addEventListener('message', function(event) {
-    console.log('received event.data', event.data);
+    console.log('received event', event);
   });
 })();
 `;

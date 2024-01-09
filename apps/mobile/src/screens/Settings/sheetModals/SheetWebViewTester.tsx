@@ -13,6 +13,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { DEV_CONSOLE_URL } from '@/constant/env';
 import type { DappInfo } from '@rabby-wallet/service-dapp';
 import { useDapps } from '@/hooks/useDapps';
+import { CHAINS_ENUM } from '@debank/common';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -20,8 +21,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 
 const DAPP_METAMASK_TEST_DAPP: DappInfo = {
   info: {
-    // @ts-expect-error
-    chain_ids: ['eth', 'scrl'],
+    // chain_ids: ['eth', 'scrl'],
     description: '',
     id: 'https://metamask.github.io',
     logo_url: '',
@@ -29,6 +29,7 @@ const DAPP_METAMASK_TEST_DAPP: DappInfo = {
     tags: [],
     user_range: 'User <100',
   },
+  chainId: CHAINS_ENUM.ETH,
   isFavorite: true,
 };
 

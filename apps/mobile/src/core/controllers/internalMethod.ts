@@ -30,6 +30,7 @@ const getProviderState = async (req: ProviderRequest) => {
   if (networkIdMap[chainEnum]) {
     networkVersion = networkIdMap[chainEnum];
   } else {
+    // TODO: it maybe throw error
     networkVersion = await providerController.netVersion(req);
     networkIdMap[chainEnum] = networkVersion;
   }
