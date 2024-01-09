@@ -159,9 +159,6 @@ export const Button = ({
             styles.buttonOrientation,
             isClearType && styles.clearButtonStyle,
             {
-              flexDirection: 'row',
-            },
-            {
               backgroundColor: bgColor,
               borderColor: colors['blue-default'],
               borderWidth: ghost ? 1 : 0,
@@ -249,6 +246,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     paddingHorizontal: 0,
+    width: '100%',
+    height: '100%',
   },
   buttonOrientation: {},
   clearButtonStyle: {
