@@ -26,7 +26,7 @@ const SecurityLevel = ({ level }: { level: Level | 'proceed' }) => {
     return SecurityEngineLevel[level];
   }, [level]);
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>

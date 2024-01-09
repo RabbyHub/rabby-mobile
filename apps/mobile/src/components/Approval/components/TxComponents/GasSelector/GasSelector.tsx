@@ -25,7 +25,11 @@ import { GasSelectorSkeleton } from './GasSelectorSkeleton';
 import { getStyles } from './styles';
 import { useThemeColors } from '@/hooks/theme';
 import SecurityLevelTagNoText from '../../SecurityEngine/SecurityLevelTagNoText';
-import { AppBottomSheetModal, Tip } from '@/components';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+  Tip,
+} from '@/components';
 import { formatTokenAmount } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
@@ -514,7 +518,7 @@ const GasSelector = ({
     }
   }, [gasList, selectedGas, isReady, chainId]);
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const modalRef = useRef<AppBottomSheetModal>(null);
   useEffect(() => {
     if (modalVisible) {
@@ -640,9 +644,7 @@ const GasSelector = ({
         ref={modalRef}
         onDismiss={() => setModalVisible(false)}>
         <BottomSheetView style={styles.modalWrap}>
-          <Text style={styles.modalTitle}>
-            {t('page.signTx.gasSelectorTitle')}
-          </Text>
+          <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
           <View style={styles.gasSelectorModalTop}>
             {disabled ? (
               <Text style={styles.gasSelectorModalAmount}>

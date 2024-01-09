@@ -80,7 +80,7 @@ export const GasSelectPanel = ({
   gasPriceMedian: number | null;
 }) => {
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
 
   return (

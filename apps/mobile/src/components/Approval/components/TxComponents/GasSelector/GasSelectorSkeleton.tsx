@@ -6,7 +6,7 @@ import { getStyles } from './styles';
 
 export const GasSelectorSkeleton = () => {
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   return (
     <View style={styles.gasSelector}>
       <View>

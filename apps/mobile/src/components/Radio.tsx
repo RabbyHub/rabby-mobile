@@ -24,7 +24,7 @@ const getStyles = (colors: AppColorsVariants) => {
 
 export const Radio: React.FC<CheckBoxProps> = ({ children, ...props }) => {
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const getIcon = React.useCallback(
     (bgColor: string) => {
       return (

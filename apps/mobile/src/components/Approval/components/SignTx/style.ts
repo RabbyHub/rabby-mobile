@@ -7,5 +7,6 @@ export const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 15,
       paddingVertical: 18,
       backgroundColor: colors['neutral-bg-2'],
+      height: '100%',
     },
   });

@@ -1,172 +1,75 @@
-import { KEYRING_CATEGORY } from '@/constant';
-import { Popup } from '@/ui/component';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import { useAccount } from '@/ui/store-hooks';
-import { useWallet } from '@/ui/utils';
 import { CHAINS_ENUM } from '@debank/common';
 import { CHAINS } from '@/constant/chains';
 import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import clsx from 'clsx';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled, { createGlobalStyle } from 'styled-components';
-import { ReactComponent as SvgIconArrowRight } from 'ui/assets/approval/edit-arrow-right.svg';
-import IconChecked from 'ui/assets/box-checked.svg';
-import IconUnChecked from 'ui/assets/box-unchecked.svg';
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewProps,
+  ViewStyle,
+} from 'react-native';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useCurrentAccount } from '@/hooks/account';
+import { openapi } from '@/core/request';
+import { Tip } from '@/components/Tip';
+import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+import IconChecked from '@/assets/icons/common/box-checked.svg';
+import IconUnChecked from '@/assets/icons/common/box-unchecked.svg';
+import { useThemeColors } from '@/hooks/theme';
+import { getStyles } from './styles';
+import { TouchableOpacity } from 'react-native';
 
-const GlobalStyle = createGlobalStyle`
-  .broadcast-mode-popup {
-    .ant-drawer-close {
-      padding-top: 24px
-    }
-  }
-`;
-const Wrapper = styled.div`
-  border-radius: 6px;
-  background-color: var(--r-neutral-card-1, rgba(255, 255, 255, 0.06));
-  padding: 0 12px;
+// const OptionList = styled.div`
+//   margin-bottom: -12px;
+//   .option {
+//     padding: 12px 16px;
+//     border-radius: 6px;
+//     background: var(--r-neutral-card-2, #f2f4f7);
+//     border: 1px solid transparent;
+//     cursor: pointer;
 
-  .broadcast-mode {
-    &-header {
-      display: flex;
-      padding: 16px 0 12px 0;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 0.5px solid var(--r-neutral-line, rgba(255, 255, 255, 0.1));
-    }
-    &-title {
-      color: var(--r-neutral-title-1, #192945);
-      font-size: 15px;
-      font-weight: 400;
-      line-height: 18px;
-    }
-    &-extra {
-      color: var(--r-neutral-title-1, #192945);
-      font-size: 15px;
-      font-weight: 400;
-      line-height: 18px;
+//     & + .option {
+//       margin-top: 12px;
+//     }
 
-      display: flex;
-      align-items: center;
-      gap: 4px;
+//     &.is-selected {
+//       border: 1px solid var(--r-blue-default, #7084ff);
+//       background: var(--r-blue-light-1, #eef1ff);
+//     }
+//     &:not(.is-disabled):hover {
+//       border: 1px solid var(--r-blue-default, #7084ff);
+//     }
 
-      margin-left: auto;
+//     &.is-disabled {
+//       cursor: not-allowed;
+//       opacity: 0.5;
+//     }
 
-      cursor: pointer;
+//     &-title {
+//       color: var(--r-neutral-title-1, #192945);
+//       font-size: 15px;
+//       font-weight: 500;
+//       line-height: 18px;
+//       margin-bottom: 4px;
+//     }
 
-      svg {
-        path {
-          stroke: var(--r-neutral-foot, #6a7587);
-        }
-      }
-    }
-    &-body {
-      padding: 12px 0;
-
-      ul {
-        margin-top: 0px;
-        margin-bottom: 0;
-        font-size: 13px;
-        color: var(--r-neutral-body, #3e495e);
-
-        li {
-          position: relative;
-          margin-bottom: 8px;
-          padding-left: 12px;
-          &:last-child {
-            margin-bottom: 0;
-          }
-          &::before {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 100%;
-            background-color: var(--r-neutral-body, #3e495e);
-            left: 0;
-            top: 8px;
-          }
-        }
-      }
-
-      .deadline {
-        &-options {
-          display: flex;
-          gap: 6px;
-          align-items: center;
-        }
-        &-option {
-          padding: 2px 4px;
-          border-radius: 2px;
-          background: var(--r-neutral-card-2, #f2f4f7);
-          min-width: 40px;
-
-          color: var(--r-neutral-title-1, #192945);
-          text-align: center;
-          font-size: 13px;
-          line-height: 16px;
-          font-weight: 400;
-          border: 1px solid transparent;
-          border: 0.5px solid transparent;
-
-          cursor: pointer;
-
-          &:hover {
-            border-color: var(--r-blue-default, #7084ff);
-          }
-          &.is-selected {
-            border-color: var(--r-blue-default, #7084ff);
-            background: var(--r-blue-light-1, #eef1ff);
-          }
-        }
-      }
-    }
-  }
-`;
-
-const OptionList = styled.div`
-  margin-bottom: -12px;
-  .option {
-    padding: 12px 16px;
-    border-radius: 6px;
-    background: var(--r-neutral-card-2, #f2f4f7);
-    border: 1px solid transparent;
-    cursor: pointer;
-
-    & + .option {
-      margin-top: 12px;
-    }
-
-    &.is-selected {
-      border: 1px solid var(--r-blue-default, #7084ff);
-      background: var(--r-blue-light-1, #eef1ff);
-    }
-    &:not(.is-disabled):hover {
-      border: 1px solid var(--r-blue-default, #7084ff);
-    }
-
-    &.is-disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    &-title {
-      color: var(--r-neutral-title-1, #192945);
-      font-size: 15px;
-      font-weight: 500;
-      line-height: 18px;
-      margin-bottom: 4px;
-    }
-
-    &-desc {
-      color: var(--r-neutral-body, #3e495e);
-      font-size: 13px;
-      font-weight: 400;
-      line-height: 16px;
-    }
-  }
-`;
+//     &-desc {
+//       color: var(--r-neutral-body, #3e495e);
+//       font-size: 13px;
+//       font-weight: 400;
+//       line-height: 16px;
+//     }
+//   }
+// `;
 
 interface BroadcastModeProps {
   value: {
@@ -174,8 +77,7 @@ interface BroadcastModeProps {
     lowGasDeadline?: number;
   };
   onChange?: (value: { type: TxPushType; lowGasDeadline?: number }) => void;
-  className?: string;
-  style?: React.CSSProperties;
+  style?: StyleProp<ViewStyle>;
   chain: CHAINS_ENUM;
   isSpeedUp?: boolean;
   isCancel?: boolean;
@@ -184,26 +86,27 @@ interface BroadcastModeProps {
 export const BroadcastMode = ({
   value,
   onChange,
-  className,
   style,
   chain,
   isSpeedUp,
   isCancel,
   isGasTopUp,
 }: BroadcastModeProps) => {
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [drawerVisible, setDrawerVisible] = React.useState(false);
   const { t } = useTranslation();
-  const [account] = useAccount();
-  const wallet = useWallet();
+  const { currentAccount: account } = useCurrentAccount();
   const { data: supportedPushType } = useRequest(
-    () => wallet.openapi.gasSupportedPushType(CHAINS[chain]?.serverId),
+    () => openapi.gasSupportedPushType(CHAINS[chain]?.serverId),
     {
       refreshDeps: [chain],
     },
   );
-  const { data: hasCustomRPC } = useRequest(() => wallet.hasCustomRPC(chain), {
-    refreshDeps: [chain],
-  });
+  // const { data: hasCustomRPC } = useRequest(() => wallet.hasCustomRPC(chain), {
+  //   refreshDeps: [chain],
+  // });
+  const hasCustomRPC = false;
 
   const disabledMap = React.useMemo(() => {
     const result = {
@@ -226,7 +129,7 @@ export const BroadcastMode = ({
       return result;
     }
 
-    if (account?.type === KEYRING_CATEGORY.WalletConnect) {
+    if (account?.type === 'WalletConnect') {
       Object.keys(result).forEach(key => {
         result[key] = {
           disabled: true,
@@ -305,110 +208,133 @@ export const BroadcastMode = ({
 
   const selectedOption = options.find(option => option.value === value.type);
 
+  const modalRef = useRef<AppBottomSheetModal>(null);
+
+  useEffect(() => {
+    if (drawerVisible) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [drawerVisible]);
+
   return (
-    <>
-      <GlobalStyle />
-      <Wrapper className={className} style={style}>
-        <div className="broadcast-mode-header text-r-neutral-title-1">
-          <div className="broadcast-mode-title">
+    <View style={StyleSheet.flatten([styles.wrapper, style])}>
+      <View>
+        <View style={styles.broadcastModeHeader}>
+          <Text style={styles.broadcastModeTitle}>
             {t('page.signTx.BroadcastMode.title')}
-          </div>
-          <div
-            className="broadcast-mode-extra"
-            onClick={() => {
+          </Text>
+          <TouchableOpacity
+            style={styles.broadcastModeExtra}
+            onPress={() => {
               setDrawerVisible(true);
             }}>
-            {selectedOption?.title}
-            <SvgIconArrowRight />
-          </div>
-        </div>
-        <div className="broadcast-mode-body text-r-neutral-body">
-          <ul>
-            <li>{selectedOption?.desc}</li>
-            {value.type === 'low_gas' ? (
-              <li className="flex items-center gap-[6px]">
-                {t('page.signTx.BroadcastMode.lowGasDeadline.label')}
-                <div className="deadline-options">
+            <Text style={styles.broadcastModeExtraText}>
+              {selectedOption?.title}
+            </Text>
+            <IconArrowRight />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.broadcastModeBody}>
+          <View style={styles.broadcastModeBodyUl}>
+            <View
+              style={StyleSheet.flatten([
+                styles.broadcastModeBodyLi,
+                styles.broadcastModeBodyLiFirst,
+              ])}>
+              <View style={styles.broadcastModeBodyLiBefore} />
+              <Text style={styles.broadcastModeBodyLiText}>
+                {selectedOption?.desc}
+              </Text>
+            </View>
+            {/* TODO: 当前不需要，WalletConnect 不支持 */}
+            {/* {value.type === 'low_gas' ? (
+              <View
+                style={StyleSheet.flatten([
+                  styles.broadcastModeBodyLi,
+                ])}>
+                <View style={styles.broadcastModeBodyLiBefore} />
+
+                <Text style={styles.broadcastModeBodyLiText}>
+                  {t('page.signTx.BroadcastMode.lowGasDeadline.label')}
+                </Text>
+                <View style={styles.deadlineOptions}>
                   {deadlineOptions.map(item => {
                     return (
-                      <div
+                      <TouchableOpacity
                         key={item.value}
-                        className={clsx(
-                          'deadline-option',
-                          item.value === value.lowGasDeadline && 'is-selected',
-                        )}
-                        onClick={() => {
+                        style={StyleSheet.flatten([
+                          styles.deadlineOption,
+                          item.value === value.lowGasDeadline &&
+                            styles.deadlineOptionSelected,
+                        ])}
+                        onPress={() => {
                           onChange?.({
                             type: value.type,
                             lowGasDeadline: item.value,
                           });
                         }}>
-                        {item.title}
-                      </div>
+                        <Text style={styles.deadlineOptionText}>
+                          {item.title}
+                        </Text>
+                      </TouchableOpacity>
                     );
                   })}
-                </div>
-              </li>
-            ) : null}
-          </ul>
-        </div>
-      </Wrapper>
-      <Popup
-        placement="bottom"
-        height="352px"
-        visible={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
-        maskClosable
-        closable
-        title={t('page.signTx.BroadcastMode.title')}
-        className="broadcast-mode-popup"
-        isSupportDarkMode>
-        <OptionList>
-          {options.map(option => (
-            <TooltipWithMagnetArrow
-              title={option.tips || ''}
-              className="rectangle w-[max-content]"
-              align={{
-                offset: [0, 34],
-              }}
-              placement="top"
-              arrowPointAtCenter
-              key={option.value}>
-              <div
-                className={clsx(
-                  'option',
-                  option.value === value.type && 'is-selected',
-                  option.disabled && 'is-disabled',
-                )}
-                onClick={() => {
-                  if (option.disabled) {
-                    return;
-                  }
-                  onChange?.({
-                    type: option.value,
-                    lowGasDeadline:
-                      option.value === 'low_gas'
-                        ? deadlineOptions[1]?.value
-                        : undefined,
-                  });
-                  setDrawerVisible(false);
-                }}>
-                <div className="flex items-center gap-[4px]">
-                  <div className="mr-auto">
-                    <div className="option-title">{option.title}</div>
-                    <div className="option-desc">{option.desc}</div>
-                  </div>
-                  {option.value === value.type ? (
-                    <img src={IconChecked} alt="" />
-                  ) : (
-                    <img src={IconUnChecked} alt="" />
+                </View>
+              </View>
+            ) : null} */}
+          </View>
+        </View>
+      </View>
+      {/* TODO: 当前不需要，WalletConnect 不支持 */}
+      {/* <AppBottomSheetModal
+        ref={modalRef}
+        snapPoints={['50%']}
+        onDismiss={() => setDrawerVisible(false)}>
+        <BottomSheetView>
+          <AppBottomSheetModalTitle
+            title={t('page.signTx.BroadcastMode.title')}
+          />
+          <OptionList>
+            {options.map(option => (
+              <Tip content={option.tips || ''} key={option.value}>
+                <div
+                  className={clsx(
+                    'option',
+                    option.value === value.type && 'is-selected',
+                    option.disabled && 'is-disabled',
                   )}
+                  onClick={() => {
+                    if (option.disabled) {
+                      return;
+                    }
+                    onChange?.({
+                      type: option.value,
+                      lowGasDeadline:
+                        option.value === 'low_gas'
+                          ? deadlineOptions[1]?.value
+                          : undefined,
+                    });
+                    setDrawerVisible(false);
+                  }}>
+                  <div className="flex items-center gap-[4px]">
+                    <div className="mr-auto">
+                      <div className="option-title">{option.title}</div>
+                      <div className="option-desc">{option.desc}</div>
+                    </div>
+                    {option.value === value.type ? (
+                      <IconChecked />
+                    ) : (
+                      <IconUnChecked />
+                    )}
+                  </div>
                 </div>
-              </div>
-            </TooltipWithMagnetArrow>
-          ))}
-        </OptionList>
-      </Popup>
-    </>
+              </Tip>
+            ))}
+          </OptionList>
+        </BottomSheetView>
+      </AppBottomSheetModal> */}
+    </View>
   );
 };

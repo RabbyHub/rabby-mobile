@@ -202,7 +202,7 @@ interface ConnectProps {
 export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   const { currentAccount: account } = useCurrentAccount();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);

@@ -1028,7 +1028,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   // }, [scrollInfo, scrollRefSize]);
 
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <View>
@@ -1094,8 +1094,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             />
           </View>
         )}
-        {/* <BroadcastMode
-          className="mt-[12px]"
+        <BroadcastMode
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{
+            marginTop: 12,
+          }}
           chain={chain.enum}
           value={pushInfo}
           isCancel={isCancel}
@@ -1104,7 +1107,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onChange={value => {
             setPushInfo(value);
           }}
-        />*/}
+        />
 
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}

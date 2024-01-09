@@ -75,7 +75,7 @@ const RuleResult = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const handleClick = () => {
     if (!rule.result) return;
     onSelect({

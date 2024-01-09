@@ -83,7 +83,7 @@ export const GasSelectContainer = ({
   disabled?: boolean;
 }) => {
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
   const handlePanelSelection = (e, item) => {

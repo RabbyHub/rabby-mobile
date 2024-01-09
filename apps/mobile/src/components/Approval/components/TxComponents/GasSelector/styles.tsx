@@ -94,13 +94,6 @@ export const getStyles = (colors: AppColorsVariants) =>
       width: 15,
       marginRight: 8,
     },
-    modalTitle: {
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-1'],
-      textAlign: 'center',
-    },
     gasSelectorModalTop: {
       paddingTop: 12,
       paddingBottom: 24,
