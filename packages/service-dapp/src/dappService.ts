@@ -2,6 +2,8 @@ import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { createPersistStore } from '@rabby-wallet/persist-store';
 
+import { INTERNAL_REQUEST_ORIGIN } from './constant';
+
 export interface BasicDappInfo {
   id: string;
   name: string;
@@ -49,6 +51,14 @@ export class DappService {
       this.store.dapps[item.info.id] = item;
     });
     this.store.dapps = { ...this.store.dapps };
+  }
+
+  isConnected(id: string) {
+    if (id === INTERNAL_REQUEST_ORIGIN) {
+      return true;
+    }
+    const dapp = this.getDapp(id);
+    return dapp ? dapp.isConnected : false;
   }
 
   getDapp(id: string) {

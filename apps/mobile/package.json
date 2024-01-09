@@ -28,6 +28,10 @@
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
     "@debank/common": "^0.3.48",
     "@debank/rabby-rn-security": "^0.1.1",
+    "@eth-optimism/contracts-ts": "^0.17.0",
+    "@ethereumjs/common": "4.1.0",
+    "@ethereumjs/tx": "5.1.0",
+    "@ethereumjs/util": "^9.0.1",
     "@gorhom/bottom-sheet": "5.0.0-alpha.4",
     "@metamask/eth-sig-util": "5.1.0",
     "@notifee/react-native": "^7.8.0",
@@ -63,6 +67,7 @@
     "eth-json-rpc-filters": "^6.0.1",
     "eth-json-rpc-middleware": "^9.0.1",
     "eth-rpc-errors": "^4.0.3",
+    "ethers": "5.4.2",
     "i18next": "^23.7.14",
     "immer": "^10.0.3",
     "jotai": "^2.6.0",
@@ -111,7 +116,8 @@
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "^13.6.3",
     "readable-stream": "3.6.2",
-    "styled-components": "^6.1.1"
+    "styled-components": "^6.1.1",
+    "web3": "^4.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

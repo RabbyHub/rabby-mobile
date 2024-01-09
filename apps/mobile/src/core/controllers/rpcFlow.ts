@@ -110,7 +110,7 @@ const flowContext = flow
       mapMethod,
     } = ctx;
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
-      if (!dappService.getDapp(origin).isConnected) {
+      if (!dappService.isConnected(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
             'Already processing connect. Please wait.',

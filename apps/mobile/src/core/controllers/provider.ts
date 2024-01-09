@@ -192,7 +192,7 @@ class ProviderController extends BaseController {
     } = req;
 
     if (
-      !dappService.getDapp(origin).isConnected &&
+      !dappService.isConnected(origin) &&
       !SAFE_RPC_METHODS.includes(method)
     ) {
       throw ethErrors.provider.unauthorized();
@@ -273,7 +273,7 @@ class ProviderController extends BaseController {
   }: {
     session: Session;
   }) => {
-    if (!dappService.getDapp(origin).isConnected) {
+    if (!dappService.isConnected(origin)) {
       throw ethErrors.provider.unauthorized();
     }
 
@@ -301,7 +301,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
     if (
-      !dappService.getDapp(origin).isConnected ||
+      !dappService.isConnected(origin) ||
       !keyringService.isUnlocked()
     ) {
       return [];
@@ -312,7 +312,7 @@ class ProviderController extends BaseController {
   };
 
   ethCoinbase = async ({ session: { origin } }: { session: Session }) => {
-    if (!dappService.getDapp(origin).isConnected) {
+    if (!dappService.isConnected(origin)) {
       return null;
     }
 
