@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { CreateParams, EVENT_NAMES } from './types';
-import { events, MODAL_VIEWS, SNAP_POINTS } from './utils';
+import {
+  events,
+  makeBottomSheetProps,
+  MODAL_VIEWS,
+  SNAP_POINTS,
+} from './utils';
+import { useThemeColors } from '@/hooks/theme';
 
 type ModalData = {
   snapPoints: (string | number)[];
@@ -80,19 +86,27 @@ export const GlobalBottomSheetModal = () => {
     };
   }, [handleCreate, handlePresent, handleRemove]);
 
+  const colors = useThemeColors();
+
   return (
     <View>
-      {modals.map(modal => (
-        <AppBottomSheetModal
-          onDismiss={() => handleDismiss(modal.id)}
-          key={modal.id}
-          ref={modal.ref}
-          name={modal.id}
-          children={MODAL_VIEWS[modal.params.name]}
-          snapPoints={modal.snapPoints}
-          stackBehavior="push"
-        />
-      ))}
+      {modals.map(modal => {
+        return (
+          <AppBottomSheetModal
+            onDismiss={() => handleDismiss(modal.id)}
+            key={modal.id}
+            ref={modal.ref}
+            name={modal.id}
+            children={MODAL_VIEWS[modal.params.name]}
+            snapPoints={modal.snapPoints}
+            stackBehavior="push"
+            {...makeBottomSheetProps({
+              params: modal.params,
+              colors,
+            })}
+          />
+        );
+      })}
     </View>
   );
 };
