@@ -170,6 +170,31 @@ function ProviderControllerTester(): JSX.Element {
       });
   }, [account]);
 
+  const handleSendEth = React.useCallback(() => {
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: account,
+            to: '0x0c54FcCd2e384b4BB6f2E405Bf5Cbc15a017AaFb',
+            value: '0x0',
+            gasLimit: '0x5028',
+            maxFeePerGas: '0x2540be400',
+            maxPriorityFeePerGas: '0x3b9aca00',
+          },
+        ],
+      },
+      TEST_SESSION,
+    )
+      .then(res => {
+        console.log(res);
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  }, [account]);
+
   React.useEffect(() => {
     addDapp({
       info: TEST_DAPP_INFO,
@@ -178,7 +203,7 @@ function ProviderControllerTester(): JSX.Element {
   }, [addDapp]);
 
   React.useEffect(() => {
-    if (account && currentAccount) {
+    if (account && currentAccount && currentAccount.type === 'WalletConnect') {
       apisWalletConnect
         .checkClientIsCreate(currentAccount)
         .then(res => {
@@ -187,6 +212,8 @@ function ProviderControllerTester(): JSX.Element {
         .catch(e => {
           console.error(e);
         });
+    } else {
+      setConnectStatus('CONNECTED');
     }
   }, [account, currentAccount]);
 
@@ -213,11 +240,11 @@ function ProviderControllerTester(): JSX.Element {
               title="SIGN"
             />
           </Section>
-          <Section title="Sign Transaction">
+          <Section title="Send Eth">
             <StyledButton
               disabled={!account || !isClientCreated}
-              onPress={handlSignTransaction}
-              title="SIGN"
+              onPress={handleSendEth}
+              title="Send EIP 1559 Transaction"
             />
           </Section>
         </View>

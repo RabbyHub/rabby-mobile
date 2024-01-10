@@ -1,4 +1,4 @@
-import Common, { Hardfork } from '@ethereumjs/common';
+import { Hardfork, Common } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
@@ -300,10 +300,7 @@ class ProviderController extends BaseController {
 
   @Reflect.metadata('SAFE', true)
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
-    if (
-      !dappService.isConnected(origin) ||
-      !keyringService.isUnlocked()
-    ) {
+    if (!dappService.isConnected(origin) || !keyringService.isUnlocked()) {
       return [];
     }
 

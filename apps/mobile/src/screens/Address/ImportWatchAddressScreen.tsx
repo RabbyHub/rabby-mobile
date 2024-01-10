@@ -49,7 +49,7 @@ export const ImportWatchAddressScreen = () => {
     addr: string;
     name: string;
   }>(null);
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   const handleDone = async () => {
     if (!input) {

@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { SecurityEngineLevel } from '@/constant/security';
 import ArrowRightSVG from '@/assets/icons/approval/arrow-right-lite.svg';
 
@@ -111,12 +118,14 @@ const SecurityLevelTag = ({
   translucent,
   onClick,
   right = -13,
+  style,
 }: {
   enable: boolean;
   level: Level | 'proceed';
   translucent?: boolean;
   onClick?(): void;
   right?: number;
+  style?: StyleProp<ViewStyle>;
 }) => {
   const wrapperStyles = StyleSheet.flatten([
     styles.wrapper,
@@ -129,6 +138,7 @@ const SecurityLevelTag = ({
     level === 'proceed' && styles.proceed,
     level === 'error' && styles.error,
     { right },
+    style,
   ]);
 
   return (

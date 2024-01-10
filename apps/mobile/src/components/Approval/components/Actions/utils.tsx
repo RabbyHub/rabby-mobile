@@ -1,5 +1,3 @@
-import i18n from '@/utils/i18n';
-import { isSameAddress } from '@/utils/address';
 import {
   ExplainTxResponse,
   TokenItem,
@@ -33,10 +31,7 @@ import {
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import { useState, useCallback, useEffect } from 'react';
-import PQueue from 'p-queue';
-import { getTimeSpan } from '@/utils/time';
-import { CHAINS } from '@/constant/chains';
-import { ALIAS_ADDRESS } from '@/constant';
+import PQueue from 'p-queue/dist/index';
 // import { TransactionGroup } from '@/background/service/transactionHistory';
 import { isTestnet } from '@/utils/chain';
 import { findChainByServerID } from '@/utils/chain';
@@ -45,9 +40,17 @@ import {
   keyringService,
   transactionHistoryService,
   whitelistService,
-  securityEngineService,
 } from '@/core/services';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { OpenApiService } from '@rabby-wallet/rabby-api';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { CHAINS } from '@/constant/chains';
+import { getTimeSpan } from '@/utils/time';
+import { apiSecurityEngine } from '@/core/apis';
+import i18n from '@/utils/i18n';
 
+const { isSameAddress } = addressUtils;
 export interface ReceiveTokenItem extends TokenItem {
   min_amount: number;
   min_raw_amount: string;
@@ -525,8 +528,7 @@ export interface ApproveNFTRequireData {
 
 export type RevokeNFTRequireData = ApproveNFTRequireData;
 export interface CancelTxRequireData {
-  // TODO
-  pendingTxs: any[];
+  pendingTxs: TransactionGroup[];
 }
 
 export interface PushMultiSigRequireData {
@@ -564,6 +566,7 @@ const fetchNFTApproveRequiredData = async ({
   spender: string;
   address: string;
   chainId: string;
+  apiProvider: OpenApiService;
 }) => {
   const queue = new PQueue();
   const result: ApproveNFTRequireData = {
@@ -621,6 +624,7 @@ const fetchTokenApproveRequireData = async ({
   token: TokenItem;
   address: string;
   chainId: string;
+  apiProvider: OpenApiService;
 }) => {
   const queue = new PQueue();
   const result: ApproveTokenRequireData = {
@@ -854,6 +858,7 @@ export const fetchActionRequiredData = async ({
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.revokePermit2) {
@@ -863,6 +868,7 @@ export const fetchActionRequiredData = async ({
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.revokeToken) {
@@ -872,6 +878,7 @@ export const fetchActionRequiredData = async ({
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.cancelTx) {
@@ -879,16 +886,14 @@ export const fetchActionRequiredData = async ({
       chain => chain.serverId === chainId,
     );
     if (chain) {
-      const pendingTxs = [];
-      // TODO
-      // const pendingTxs = await transactionHistoryService.getPendingTxsByNonce(
-      //   address,
-      //   chain.id,
-      //   Number(actionData.cancelTx.nonce),
-      // );
+      const pendingTxs = await transactionHistoryService.getPendingTxsByNonce(
+        address,
+        chain.id,
+        Number(actionData.cancelTx.nonce),
+      );
       return {
         pendingTxs,
-      };
+      } as any;
     } else {
       return {
         pendingTxs: [],
@@ -974,6 +979,7 @@ export const fetchActionRequiredData = async ({
       address,
       chainId,
       spender: actionData.approveNFT.spender,
+      apiProvider,
     });
   }
   if (actionData.revokeNFT) {
@@ -981,6 +987,7 @@ export const fetchActionRequiredData = async ({
       address,
       chainId,
       spender: actionData.revokeNFT.spender,
+      apiProvider,
     });
   }
   if (actionData.approveNFTCollection) {
@@ -988,6 +995,7 @@ export const fetchActionRequiredData = async ({
       address,
       chainId,
       spender: actionData.approveNFTCollection.spender,
+      apiProvider,
     });
   }
   if (actionData.revokeNFTCollection) {
@@ -995,6 +1003,7 @@ export const fetchActionRequiredData = async ({
       address,
       chainId,
       spender: actionData.revokeNFTCollection.spender,
+      apiProvider,
     });
   }
   if (actionData.pushMultiSig) {
@@ -1303,14 +1312,16 @@ export const useUserData = () => {
   });
 
   useEffect(() => {
-    const data = securityEngineService.getUserData();
-    setUserData(data);
+    setUserData(apiSecurityEngine.getSecurityEngineUserData());
   }, []);
 
-  const updateUserData = useCallback(async (data: UserData) => {
-    securityEngineService.updateUserData(data);
-    setUserData(data);
-  }, []);
+  const updateUserData = useCallback(
+    async (userData: UserData) => {
+      await apiSecurityEngine.updateUserData(userData);
+      setUserData(userData);
+    },
+    [userData],
+  );
 
   return [userData, updateUserData] as const;
 };

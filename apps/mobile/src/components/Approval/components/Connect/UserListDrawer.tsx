@@ -1,4 +1,7 @@
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
 import { Radio } from '@/components/Radio';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -14,15 +17,6 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
-    },
-    modalTitle: {
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      marginBottom: 16,
-      paddingTop: 24,
-      textAlign: 'center',
     },
     origin: {
       display: 'flex',
@@ -87,7 +81,7 @@ const UserListDrawer = ({
   const { t } = useTranslation();
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   React.useEffect(() => {
     if (!visible) {
@@ -103,9 +97,9 @@ const UserListDrawer = ({
       onDismiss={onClose}
       snapPoints={['45%']}>
       <BottomSheetView style={styles.mainView}>
-        <Text style={styles.modalTitle}>
-          {t('page.connect.manageWhiteBlackList')}
-        </Text>
+        <AppBottomSheetModalTitle
+          title={t('page.connect.manageWhiteBlackList')}
+        />
         <View>
           <View style={styles.origin}>
             <DappIcon

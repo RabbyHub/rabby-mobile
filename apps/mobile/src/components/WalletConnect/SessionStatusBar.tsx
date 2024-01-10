@@ -5,9 +5,7 @@ import { SessionSignal } from './SessionSignal';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDisplayBrandName } from '@/hooks/walletconnect/useDisplayBrandName';
 import { useThemeColors } from '@/hooks/theme';
-import { apisWalletConnect } from '@/core/apis';
-import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
-import { openWallet } from '@/hooks/walletconnect/util';
+import { useConnectWallet } from '@/hooks/walletconnect/useConnectWallet';
 
 interface Props {
   address: string;
@@ -52,8 +50,6 @@ export const SessionStatusBar: React.FC<Props> = ({
     [bgColor, colors, textColor],
   );
 
-  const { findWalletServiceByBrandName } = useValidWalletServices();
-
   const { status } = useSessionStatus(
     {
       address,
@@ -79,21 +75,13 @@ export const SessionStatusBar: React.FC<Props> = ({
     }
   }, [status]);
 
+  const connectWallet = useConnectWallet();
+
   const handleButton = async () => {
     if (tipStatus === 'CONNECTED') {
       killWalletConnectConnector(address, brandName, true);
     } else if (tipStatus === 'DISCONNECTED') {
-      killWalletConnectConnector(address, brandName, true);
-      const service = findWalletServiceByBrandName(brandName);
-      if (service) {
-        const uri = await apisWalletConnect.getUri(service?.brand, 1, {
-          address,
-          brandName,
-        });
-        if (uri) {
-          openWallet(service, uri);
-        }
-      }
+      connectWallet({ address, brandName });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
     }
   };
@@ -109,18 +97,16 @@ export const SessionStatusBar: React.FC<Props> = ({
   }, [displayBrandName, tipStatus]);
 
   return (
-    <>
-      <View style={styles.container}>
-        <View style={styles.leftBox}>
-          <SessionSignal address={address} brandName={brandName} size="small" />
-          <Text style={styles.text}>{content}</Text>
-        </View>
-        <TouchableOpacity onPress={handleButton}>
-          <Text style={[styles.text, styles.underline]}>
-            {tipStatus === 'CONNECTED' ? 'Disconnect' : 'Connect'}
-          </Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.leftBox}>
+        <SessionSignal address={address} brandName={brandName} size="small" />
+        <Text style={styles.text}>{content}</Text>
       </View>
-    </>
+      <TouchableOpacity onPress={handleButton}>
+        <Text style={[styles.text, styles.underline]}>
+          {tipStatus === 'CONNECTED' ? 'Disconnect' : 'Connect'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };

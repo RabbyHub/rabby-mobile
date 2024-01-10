@@ -16,7 +16,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
-import { Chain, CHAINS, CHAINS_ENUM } from '@debank/common';
+import { Chain, CHAINS_ENUM } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import {
   ContextActionData,
@@ -201,7 +202,7 @@ interface ConnectProps {
 export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   const { currentAccount: account } = useCurrentAccount();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [, resolveApproval, rejectApproval] = useApproval();
   const { t } = useTranslation();
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
