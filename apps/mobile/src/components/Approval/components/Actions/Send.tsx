@@ -1,32 +1,18 @@
+import { View } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
-import styled from 'styled-components';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ParsedActionData, SendRequireData } from './utils';
-import { formatTokenAmount, formatUsdValue } from 'ui/utils/number';
-import { ellipsisTokenSymbol, getTokenSymbol } from 'ui/utils/token';
-import { useRabbyDispatch } from '@/ui/store';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import LogoWithText from './components/LogoWithText';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
-
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 
 const Send = ({
   data,
@@ -40,23 +26,23 @@ const Send = ({
   engineResults: Result[];
 }) => {
   const actionData = data!;
-  const dispatch = useRabbyDispatch();
+  const { init } = useApprovalSecurityEngine();
   const { t } = useTranslation();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
   }, [engineResults]);
 
   useEffect(() => {
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
           <Row isTitle>{t('page.signTx.send.sendToken')}</Row>
@@ -69,7 +55,7 @@ const Send = ({
                   <Values.TokenSymbol token={actionData.token} />
                 </>
               }
-              logoRadius="100%"
+              logoRadius={16}
             />
             <ul className="desc-list">
               <li>
@@ -77,7 +63,7 @@ const Send = ({
                 {formatUsdValue(
                   new BigNumber(actionData.token.price)
                     .times(actionData.token.amount)
-                    .toFixed()
+                    .toFixed(),
                 )}
               </li>
             </ul>
@@ -165,7 +151,7 @@ const Send = ({
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 
