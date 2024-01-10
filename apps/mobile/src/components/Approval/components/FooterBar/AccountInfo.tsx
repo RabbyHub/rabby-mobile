@@ -1,25 +1,20 @@
-import { Account } from '@/background/service/preference';
-import {
-  KEYRING_ICONS,
-  KEYRING_CLASS,
-  WALLET_BRAND_CONTENT,
-  WALLET_BRAND_TYPES,
-  KEYRING_ICONS_WHITE,
-} from '@/constant';
-import { AddressViewer } from '@/ui/component';
-import useCurrentBalance from '@/ui/hooks/useCurrentBalance';
-import { splitNumberByStep, useWallet } from '@/ui/utils';
 import clsx from 'clsx';
 import React from 'react';
 import { WalletConnectAccount } from './WalletConnectAccount';
 import { Chain } from '@debank/common';
-import { LedgerAccount } from './LedgerAccount';
-import { CommonAccount } from './CommonAccount';
-import { KeystoneAccount } from './KeystoneAccount';
-import { GridPlusAccount } from './GridPlusAccount';
-import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useThemeMode } from '@/ui/hooks/usePreference';
+import { CommonAccount } from './CommonAccount';
+import { Account } from '@/core/services/preference';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { splitNumberByStep } from '@/utils/number';
+import { contactService } from '@/core/services';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_ICONS, KEYRING_ICONS_WHITE } from '@/constant/icon';
+import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { Tip } from '@/components/Tip';
+import { StyleSheet, Text, View } from 'react-native';
+import { AddressViewer } from '@/components/AddressViewer';
+import { AppColorsVariants } from '@/constant/theme';
 
 export interface Props {
   account: Account;
@@ -27,33 +22,61 @@ export interface Props {
   chain?: Chain;
 }
 
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      backgroundColor: colors['neutral-card-3'],
+      borderRadius: 8,
+      padding: 12,
+      gap: 12,
+    },
+    addressInfoContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      height: 18,
+    },
+    addressContainer: {
+      gap: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    nickname: {
+      maxWidth: 170,
+      overflow: 'hidden',
+      fontSize: 15,
+      lineHeight: 20,
+      color: colors['neutral-body'],
+    },
+    addressViewer: {
+      fontSize: 13,
+      color: colors['neutral-foot'],
+    },
+    balance: {
+      fontSize: 13,
+      color: colors['neutral-foot'],
+      fontWeight: '500',
+    },
+  });
+
 export const AccountInfo: React.FC<Props> = ({
   account,
   chain,
   isTestnet = false,
 }) => {
   const [nickname, setNickname] = React.useState<string>();
-  const [balance] = useCurrentBalance(account?.address);
+  const { balance } = useCurrentBalance(account?.address);
   const displayBalance = splitNumberByStep((balance || 0).toFixed(2));
-  const wallet = useWallet();
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   const init = async () => {
-    const result = await wallet.getAlianName(
-      account?.address?.toLowerCase() || ''
+    const result = await contactService.getAliasByAddress(
+      account?.address?.toLowerCase() || '',
     );
-    setNickname(result);
-    checkIfNeedPassphrase();
-  };
-
-  const [needPassphrase, setNeedPassphrase] = React.useState(false);
-  const checkIfNeedPassphrase = () => {
-    if (account?.type === KEYRING_CLASS.MNEMONIC && account?.address) {
-      wallet
-        .getMnemonicKeyringIfNeedPassphrase('address', account.address)
-        .then((result) => {
-          setNeedPassphrase(result);
-        });
+    if (result) {
+      setNickname(result.alias);
     }
   };
 
@@ -61,135 +84,24 @@ export const AccountInfo: React.FC<Props> = ({
     init();
   }, [account]);
 
-  const { isDarkTheme } = useThemeMode();
+  const binaryTheme = useGetAppThemeMode();
+  const isDarkTheme = binaryTheme === 'dark';
 
   return (
-    <div
-      className={clsx(
-        'bg-r-neutral-card-3 rounded-[8px]',
-        'py-[12px] px-[12px] mb-[12px]',
-        'space-y-10'
-      )}
-    >
-      <div className={clsx('flex items-center justify-between', 'h-18')}>
-        <div className="space-x-6 flex items-center">
-          <Tooltip title={nickname}>
-            <div
-              className={clsx(
-                'text-r-neutral-body text-[15px]',
-                'max-w-[170px] overflow-ellipsis whitespace-nowrap overflow-hidden',
-                'leading-[20px]'
-              )}
-            >
-              {nickname}
-            </div>
-          </Tooltip>
-          <AddressViewer
-            showArrow={false}
-            address={account.address}
-            className={clsx('text-13 text-r-neutral-foot mt-[2px]')}
-          />
-        </div>
+    <View style={styles.wrapper}>
+      <View style={styles.addressInfoContainer}>
+        <View style={styles.addressContainer}>
+          <Tip content={nickname}>
+            <Text style={styles.nickname}>{nickname}</Text>
+          </Tip>
+          <AddressViewer showArrow={false} address={account.address} />
+        </View>
         {isTestnet ? null : (
-          <div
-            className="text-13 font-medium text-r-neutral-foot mt-[4px]"
-            title={displayBalance}
-          >
-            ${displayBalance}
-          </div>
+          <Text style={styles.balance}>${displayBalance}</Text>
         )}
-      </div>
+      </View>
       {account?.type === KEYRING_CLASS.WALLETCONNECT && (
         <WalletConnectAccount chain={chain} account={account} />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.LEDGER && <LedgerAccount />}
-      {account?.type === KEYRING_CLASS.HARDWARE.GRIDPLUS && <GridPlusAccount />}
-      {account?.type === KEYRING_CLASS.HARDWARE.ONEKEY && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.ONEKEY.lightIcon
-              : WALLET_BRAND_CONTENT.ONEKEY.icon
-          }
-          tip={t('page.signFooterBar.addressTip.onekey')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.TREZOR && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.TREZOR.lightIcon
-              : WALLET_BRAND_CONTENT.TREZOR.icon
-          }
-          tip={t('page.signFooterBar.addressTip.trezor')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.BITBOX02 && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.BITBOX02.lightIcon
-              : WALLET_BRAND_CONTENT.BITBOX02.icon
-          }
-          tip={t('page.signFooterBar.addressTip.bitbox')}
-        />
-      )}
-      {account?.brandName === WALLET_BRAND_TYPES.KEYSTONE && (
-        <KeystoneAccount />
-      )}
-      {account?.brandName === WALLET_BRAND_TYPES.AIRGAP && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.AirGap.lightIcon
-              : WALLET_BRAND_CONTENT.AirGap.icon
-          }
-          tip={t('page.signFooterBar.addressTip.airgap')}
-        />
-      )}
-      {account?.brandName === WALLET_BRAND_TYPES.COOLWALLET && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.CoolWallet.lightIcon
-              : WALLET_BRAND_CONTENT.CoolWallet.icon
-          }
-          tip={t('page.signFooterBar.addressTip.coolwallet')}
-        />
-      )}
-      {account?.brandName === WALLET_BRAND_TYPES.IMTOKENOFFLINE && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.imTokenOffline.lightIcon
-              : WALLET_BRAND_CONTENT.imTokenOffline.icon
-          }
-          tip={t('page.signFooterBar.addressTip.coolwallet')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.PRIVATE_KEY && (
-        <CommonAccount
-          icon={
-            (isDarkTheme ? KEYRING_ICONS_WHITE : KEYRING_ICONS)[
-              KEYRING_CLASS.PRIVATE_KEY
-            ]
-          }
-          tip={t('page.signFooterBar.addressTip.privateKey')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.MNEMONIC && (
-        <CommonAccount
-          icon={
-            (isDarkTheme ? KEYRING_ICONS_WHITE : KEYRING_ICONS)[
-              KEYRING_CLASS.MNEMONIC
-            ]
-          }
-          tip={
-            needPassphrase
-              ? t('page.signFooterBar.addressTip.seedPhraseWithPassphrase')
-              : t('page.signFooterBar.addressTip.seedPhrase')
-          }
-        />
       )}
       {account?.type === KEYRING_CLASS.WATCH && (
         <CommonAccount
@@ -201,29 +113,6 @@ export const AccountInfo: React.FC<Props> = ({
           tip={t('page.signFooterBar.addressTip.watchAddress')}
         />
       )}
-      {account?.type === KEYRING_CLASS.GNOSIS && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.Gnosis.lightIcon
-              : WALLET_BRAND_CONTENT.Gnosis.icon
-          }
-          tip={t('page.signFooterBar.addressTip.safe')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.CoboArgus && (
-        <CommonAccount
-          icon={
-            isDarkTheme
-              ? WALLET_BRAND_CONTENT.CoboArgus.lightIcon
-              : WALLET_BRAND_CONTENT.CoboArgus.icon
-          }
-          tip={t('page.signFooterBar.addressTip.coboSafe')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.Coinbase && (
-        <WalletConnectAccount chain={chain} account={account} />
-      )}
-    </div>
+    </View>
   );
 };

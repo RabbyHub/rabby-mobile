@@ -24,7 +24,7 @@ import { useSize, useScroll } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -70,6 +70,8 @@ import {
 import { TxTypeComponent } from './TxTypeComponent';
 import { normalizeTxParams } from './util';
 import { getStyles } from './style';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useGlobalBottomSheetModalStyle } from '@/components/GlobalBottomSheetModal/useGlobalBottomSheetModalStyle';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -777,7 +779,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
       setCanProcess(false);
       setCantProcessReason(
-        <div>{t('page.signTx.canOnlyUseImportedAddress')}</div>,
+        <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>,
       );
     }
   };
@@ -1029,10 +1031,17 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { setHandleStyle } = useGlobalBottomSheetModalStyle();
+
+  useEffect(() => {
+    setHandleStyle({
+      backgroundColor: colors['neutral-bg-2'],
+    });
+  }, [colors, setHandleStyle]);
 
   return (
-    <View>
-      <View style={styles.approvalTx}>
+    <BottomSheetView style={styles.wrapper}>
+      <ScrollView style={styles.approvalTx}>
         {txDetail && (
           <View>
             {/* {txDetail && (
@@ -1117,8 +1126,8 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onRuleEnableStatusChange={handleRuleEnableStatusChange}
           onClose={handleRuleDrawerClose}
         />
-      </View>
-      {/* {txDetail && (
+      </ScrollView>
+      {txDetail && (
         <FooterBar
           hasShadow={footerShowShadow}
           origin={origin}
@@ -1148,7 +1157,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             hasUnProcessSecurityResult
           }
         />
-      )} */}
+      )}
       {/* TODO */}
       {/* <TokenDetailPopup
         token={tokenDetail.selectToken}
@@ -1158,6 +1167,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         hideOperationButtons
         variant="add"
       /> */}
-    </View>
+    </BottomSheetView>
   );
 };

@@ -1,22 +1,102 @@
-import { Account } from '@/background/service/preference';
-import { KEYRINGS_LOGOS, WALLET_BRAND_CONTENT } from '@/constant';
-import { SessionSignal } from '@/ui/component/WalletConnect/SessionSignal';
-import { useDisplayBrandName } from '@/ui/component/WalletConnect/useDisplayBrandName';
-import { useSessionChainId } from '@/ui/component/WalletConnect/useSessionChainId';
-import { useSessionStatus } from '@/ui/component/WalletConnect/useSessionStatus';
-import { useWalletConnectIcon } from '@/ui/component/WalletConnect/useWalletConnectIcon';
-import { useCommonPopupView, useWallet } from '@/ui/utils';
+import { Button } from '@/components';
+import { SessionSignal } from '@/components/WalletConnect/SessionSignal';
+import { KEYRINGS_LOGOS } from '@/constant/icon';
+import { AppColorsVariants } from '@/constant/theme';
+import { apisWalletConnect } from '@/core/apis';
+import { Account } from '@/core/services/preference';
+import { useThemeColors } from '@/hooks/theme';
+import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { useSessionStatus } from '@/hooks/useSessionStatus';
+import { useConnectWallet } from '@/hooks/walletconnect/useConnectWallet';
+import { useDisplayBrandName } from '@/hooks/walletconnect/useDisplayBrandName';
+import { useSessionChainId } from '@/hooks/walletconnect/useSessionChainId';
+import { useWalletConnectIcon } from '@/hooks/walletconnect/useWalletConnectIcon';
+import { WALLET_INFO } from '@/utils/walletInfo';
 import { Chain } from '@debank/common';
-import { Button } from 'antd';
-import clsx from 'clsx';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CommonAccount } from './CommonAccount';
 
 export interface Props {
   account: Account;
   chain?: Chain;
 }
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    text: {
+      color: colors['blue-default'],
+      lineHeight: 20,
+      fontSize: 13,
+      position: 'absolute',
+      right: 0,
+      top: -1,
+    },
+    button: {
+      backgroundColor: colors['blue-default'],
+      height: 40,
+      marginTop: 12,
+      width: '100%',
+    },
+    buttonText: {
+      color: colors['neutral-title-2'],
+    },
+  });
+
+const TipContent = ({
+  tipStatus,
+  chain,
+  displayBrandName,
+}: {
+  tipStatus: string;
+  chain?: Props['chain'];
+  displayBrandName: string;
+}) => {
+  const { t } = useTranslation();
+
+  switch (tipStatus) {
+    case 'ACCOUNT_ERROR':
+      return (
+        <View className="text-orange">
+          <Text>
+            {t('page.signFooterBar.walletConnect.connectedButCantSign')}
+          </Text>
+          <Text className="whitespace-nowrap mt-8">
+            {t('page.signFooterBar.walletConnect.switchToCorrectAddress')}
+          </Text>
+        </View>
+      );
+    case 'CHAIN_ERROR':
+      return (
+        <View className="text-orange">
+          <Text>
+            {t('page.signFooterBar.walletConnect.connectedButCantSign')}
+          </Text>
+          <Text className="mt-8">
+            {t('page.signFooterBar.walletConnect.switchChainAlert', {
+              chain: chain?.name,
+            })}
+          </Text>
+        </View>
+      );
+    case 'DISCONNECTED':
+      return (
+        <Text className="text-red-forbidden">
+          {t('page.signFooterBar.walletConnect.notConnectToMobile', {
+            brand: displayBrandName,
+          })}
+        </Text>
+      );
+
+    default:
+      return (
+        <Text className="text-black">
+          {t('page.signFooterBar.walletConnect.connected')}
+        </Text>
+      );
+  }
+};
 
 export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   const { activePopup, setAccount, setVisible } = useCommonPopupView();
@@ -28,22 +108,19 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     type,
   });
   const addressTypeIcon = React.useMemo(
-    () =>
-      brandIcon ||
-      WALLET_BRAND_CONTENT?.[brandName]?.image ||
-      KEYRINGS_LOGOS[type],
-    [type, brandName, brandIcon]
+    () => brandIcon || WALLET_INFO?.[brandName]?.icon || KEYRINGS_LOGOS[type],
+    [type, brandName, brandIcon],
   );
   const [displayBrandName, realBrandName] = useDisplayBrandName(
     brandName,
-    address
+    address,
   );
   const { status } = useSessionStatus(
     {
       address,
       brandName,
     },
-    true
+    true,
   );
   const sessionChainId = useSessionChainId({
     address,
@@ -69,56 +146,13 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     }
   }, [status, sessionChainId, chain]);
 
-  const wallet = useWallet();
   React.useEffect(() => {
     if (chain && sessionChainId && chain.id !== sessionChainId) {
-      wallet.walletConnectSwitchChain(account, chain.id);
+      apisWalletConnect.walletConnectSwitchChain(account, chain.id);
     }
   }, [sessionChainId, chain]);
 
-  const TipContent = () => {
-    switch (tipStatus) {
-      case 'ACCOUNT_ERROR':
-        return (
-          <div className="text-orange">
-            <div>
-              {t('page.signFooterBar.walletConnect.connectedButCantSign')}
-            </div>
-            <div className="whitespace-nowrap mt-8">
-              {t('page.signFooterBar.walletConnect.switchToCorrectAddress')}
-            </div>
-          </div>
-        );
-      case 'CHAIN_ERROR':
-        return (
-          <div className="text-orange">
-            <div>
-              {t('page.signFooterBar.walletConnect.connectedButCantSign')}
-            </div>
-            <div className="mt-8">
-              {t('page.signFooterBar.walletConnect.switchChainAlert', {
-                chain: chain?.name,
-              })}
-            </div>
-          </div>
-        );
-      case 'DISCONNECTED':
-        return (
-          <div className="text-red-forbidden">
-            {t('page.signFooterBar.walletConnect.notConnectToMobile', {
-              brand: displayBrandName,
-            })}
-          </div>
-        );
-
-      default:
-        return (
-          <div className="text-black">
-            {t('page.signFooterBar.walletConnect.connected')}
-          </div>
-        );
-    }
-  };
+  const connectWallet = useConnectWallet();
 
   const handleButton = () => {
     setAccount({
@@ -128,11 +162,11 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       chainId: chain?.id,
     });
     if (tipStatus === 'DISCONNECTED') {
-      activePopup('WalletConnect');
+      connectWallet({ address, brandName });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
-      activePopup('SwitchAddress');
+      activePopup('SWITCH_ADDRESS');
     } else if (tipStatus === 'CHAIN_ERROR') {
-      activePopup('SwitchChain');
+      activePopup('SWITCH_CHAIN');
     }
   };
 
@@ -141,6 +175,9 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       setVisible(false);
     }
   }, [tipStatus]);
+
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <CommonAccount
@@ -153,33 +190,33 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
           brandName={brandName}
         />
       }
-      tip={<TipContent />}
+      tip={
+        <TipContent
+          tipStatus={tipStatus}
+          chain={chain}
+          displayBrandName={displayBrandName}
+        />
+      }
       icon={addressTypeIcon}
       footer={
         tipStatus === 'DISCONNECTED' && (
           <Button
-            onClick={handleButton}
-            className="w-full h-[40px] mt-[12px]"
+            onPress={handleButton}
+            buttonStyle={styles.button}
+            titleStyle={styles.buttonText}
             type="primary"
-          >
-            {t('page.signFooterBar.connectButton')}
-          </Button>
+            title={t('page.signFooterBar.connectButton')}
+          />
         )
-      }
-    >
-      <div
-        onClick={handleButton}
-        className={clsx(
-          'underline cursor-pointer',
-          'absolute right-0 top-[-1px]',
-          'text-12 leading-[20px] font-medium text-r-neutral-body'
-        )}
-      >
-        {tipStatus === 'ACCOUNT_ERROR' &&
-          t('page.signFooterBar.walletConnect.howToSwitch')}
-        {tipStatus === 'CHAIN_ERROR' &&
-          t('page.signFooterBar.walletConnect.howToSwitch')}
-      </div>
+      }>
+      <TouchableOpacity onPress={handleButton}>
+        <Text style={styles.text}>
+          {tipStatus === 'ACCOUNT_ERROR' &&
+            t('page.signFooterBar.walletConnect.howToSwitch')}
+          {tipStatus === 'CHAIN_ERROR' &&
+            t('page.signFooterBar.walletConnect.howToSwitch')}
+        </Text>
+      </TouchableOpacity>
     </CommonAccount>
   );
 };

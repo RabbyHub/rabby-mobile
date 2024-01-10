@@ -1,26 +1,21 @@
+import { useSessionStatus } from '@/hooks/useSessionStatus';
+import { useDisplayBrandName } from '@/hooks/walletconnect/useDisplayBrandName';
+import { useSessionChainId } from '@/hooks/walletconnect/useSessionChainId';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Props } from './ActionsContainer';
-import { useDisplayBrandName } from '@/ui/component/WalletConnect/useDisplayBrandName';
-import { useSessionChainId } from '@/ui/component/WalletConnect/useSessionChainId';
-import { useSessionStatus } from '@/ui/component/WalletConnect/useSessionStatus';
 import { ProcessActions } from './ProcessActions';
 
-export const WalletConnectProcessActions: React.FC<Props> = (props) => {
-  const {
-    account,
-    disabledProcess,
-    tooltipContent,
-    enableTooltip,
-    chain,
-  } = props;
+export const WalletConnectProcessActions: React.FC<Props> = props => {
+  const { account, disabledProcess, tooltipContent, enableTooltip, chain } =
+    props;
   const { t } = useTranslation();
   const { status } = useSessionStatus(account);
   const sessionChainId = useSessionChainId(account);
   const chainError = chain && sessionChainId !== chain.id;
   const [displayBrandName] = useDisplayBrandName(
     account.brandName,
-    account.address
+    account.address,
   );
   const content = React.useMemo(() => {
     if (status === 'ACCOUNT_ERROR') {
@@ -28,12 +23,14 @@ export const WalletConnectProcessActions: React.FC<Props> = (props) => {
     }
 
     if (!status || status === 'DISCONNECTED') {
+      // @ts-expect-error
       return t('page.signFooterBar.walletConnect.connectBeforeSign', [
         displayBrandName,
       ]);
     }
 
     if (chainError) {
+      // @ts-expect-error
       return t('page.signFooterBar.walletConnect.chainSwitched', [chain.name]);
     }
 
@@ -45,6 +42,7 @@ export const WalletConnectProcessActions: React.FC<Props> = (props) => {
       {...props}
       tooltipContent={content}
       disabledProcess={
+        // @ts-expect-error
         (status !== 'CONNECTED' && status !== 'CHAIN_CHANGED') ||
         chainError ||
         disabledProcess

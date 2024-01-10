@@ -1,9 +1,11 @@
 import React from 'react';
 import clsx from 'clsx';
-import { Signal } from '@/ui/component/Signal';
+import { SvgProps } from 'react-native-svg';
+import { Signal } from '@/components/Signal';
+import { Text, View } from 'react-native';
 
 export interface Props {
-  icon: string;
+  icon: React.FC<SvgProps>;
   signal?: 'CONNECTED' | 'DISCONNECTED';
   customSignal?: React.ReactNode;
   tip?: React.ReactNode;
@@ -30,18 +32,20 @@ export const CommonAccount: React.FC<Props> = ({
     }
   }, [signal]);
 
+  const Icon = icon;
+
   return (
-    <section>
-      <div className={clsx('space-x-6 flex items-start', 'relative')}>
-        <div className="relative">
-          <img src={icon} className="w-[20px] h-[20px]" />
-          {customSignal}
+    <View>
+      <View className={clsx('space-x-6 flex items-start flex-row', 'relative')}>
+        <View className="relative">
+          <Icon className="w-[20px] h-[20px]" />
+          <View>{customSignal}</View>
           {signal && <Signal isBadge color={bgColor} />}
-        </div>
-        <div className="text-13 w-full text-r-neutral-foot">{tip}</div>
+        </View>
+        <Text className="text-13 w-full text-r-neutral-foot">{tip}</Text>
         {children}
-      </div>
+      </View>
       {footer}
-    </section>
+    </View>
   );
 };

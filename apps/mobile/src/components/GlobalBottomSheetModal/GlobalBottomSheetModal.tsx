@@ -1,7 +1,9 @@
+import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { View } from 'react-native';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { CreateParams, EVENT_NAMES } from './types';
+import { useGlobalBottomSheetModalStyle } from './useGlobalBottomSheetModalStyle';
 import { events, MODAL_VIEWS, SNAP_POINTS } from './utils';
 
 type ModalData = {
@@ -14,6 +16,8 @@ type ModalData = {
 export const GlobalBottomSheetModal = () => {
   const [modals, setModals] = React.useState<ModalData[]>([]);
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
+  const { handleStyle, setHandleStyle } = useGlobalBottomSheetModalStyle();
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -58,6 +62,9 @@ export const GlobalBottomSheetModal = () => {
     setModals(prev => {
       return prev.filter(modal => modal.id !== key);
     });
+    setHandleStyle({
+      backgroundColor: colors['neutral-bg-1'],
+    });
   }, []);
 
   const handleDismiss = React.useCallback(
@@ -85,6 +92,7 @@ export const GlobalBottomSheetModal = () => {
       {modals.map(modal => (
         <AppBottomSheetModal
           onDismiss={() => handleDismiss(modal.id)}
+          handleStyle={handleStyle}
           key={modal.id}
           ref={modal.ref}
           name={modal.id}

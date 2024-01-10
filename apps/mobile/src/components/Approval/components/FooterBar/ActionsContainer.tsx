@@ -1,11 +1,34 @@
-import { Button } from 'antd';
-import clsx from 'clsx';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Account } from '@/background/service/preference';
 import { Chain } from '@debank/common';
-import { useCommonPopupView, useWallet } from '@/ui/utils';
-import { ReactComponent as ArrowDownSVG } from '@/ui/assets/approval/arrow-down-blue.svg';
+import { Account } from '@/core/services/preference';
+import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { notificationService } from '@/core/services';
+import { Button } from '@/components';
+import { StyleSheet, Text, View } from 'react-native';
+import ArrowDownCC from '@/assets/icons/common/arrow-down-cc.svg';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    button: {
+      width: 108,
+      height: 48,
+      borderColor: colors['blue-default'],
+      borderWidth: 1,
+      borderRadius: 8,
+    },
+    buttonText: {
+      color: colors['blue-default'],
+    },
+    wrapper: {
+      position: 'relative',
+      flexDirection: 'row',
+      marginTop: 12,
+      justifyContent: 'space-between',
+    },
+  });
 
 export interface Props {
   onSubmit(): void;
@@ -18,29 +41,23 @@ export interface Props {
   chain?: Chain;
 }
 
-export const ActionsContainer: React.FC<Pick<Props, 'onCancel'>> = ({
-  children,
-  onCancel,
-}) => {
-  const wallet = useWallet();
+export const ActionsContainer: React.FC<
+  Pick<Props, 'onCancel' | 'children'>
+> = ({ children, onCancel }) => {
   const { t } = useTranslation();
-  const [
-    displayBlockedRequestApproval,
-    setDisplayBlockedRequestApproval,
-  ] = React.useState(false);
-  const [
-    displayCancelAllApproval,
-    setDisplayCancelAllApproval,
-  ] = React.useState(false);
+  const [displayBlockedRequestApproval, setDisplayBlockedRequestApproval] =
+    React.useState(false);
+  const [displayCancelAllApproval, setDisplayCancelAllApproval] =
+    React.useState(false);
   const { activePopup, setData } = useCommonPopupView();
 
   React.useEffect(() => {
-    wallet
-      .checkNeedDisplayBlockedRequestApproval()
-      .then(setDisplayBlockedRequestApproval);
-    wallet
-      .checkNeedDisplayCancelAllApproval()
-      .then(setDisplayCancelAllApproval);
+    setDisplayBlockedRequestApproval(
+      notificationService.checkNeedDisplayBlockedRequestApproval(),
+    );
+    setDisplayCancelAllApproval(
+      notificationService.checkNeedDisplayCancelAllApproval(),
+    );
   }, []);
 
   const displayPopup =
@@ -52,28 +69,27 @@ export const ActionsContainer: React.FC<Pick<Props, 'onCancel'>> = ({
       displayBlockedRequestApproval,
       displayCancelAllApproval,
     });
-    activePopup('CancelApproval');
+    activePopup('CANCEL_APPROVAL');
   };
 
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   return (
-    <div className="flex gap-[12px] relative justify-end">
+    <View style={styles.wrapper}>
       {children}
       <Button
-        type="ghost"
-        className={clsx(
-          'w-[102px] h-[48px] border-blue-light text-blue-light',
-          'hover:bg-[#8697FF1A] active:bg-[#0000001A]',
-          'rounded-[8px]',
-          'before:content-none',
-          'z-10',
-          'flex items-center justify-center gap-2'
-        )}
-        onClick={displayPopup ? activeCancelPopup : onCancel}
-      >
-        {t('global.cancelButton')}
-
-        {displayPopup && <ArrowDownSVG className="w-16" />}
-      </Button>
-    </div>
+        type="clear"
+        buttonStyle={styles.button}
+        titleStyle={styles.buttonText}
+        onPress={displayPopup ? activeCancelPopup : onCancel}
+        title={
+          <View>
+            <Text style={styles.buttonText}>{t('global.cancelButton')}</Text>
+            {displayPopup && <ArrowDownCC className="w-16" />}
+          </View>
+        }
+      />
+    </View>
   );
 };

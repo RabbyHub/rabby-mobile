@@ -1,21 +1,24 @@
-import { Account } from '@/background/service/preference';
-import { FallbackSiteLogo } from '@/ui/component';
-import { useRabbyDispatch, useRabbySelector } from '@/ui/store';
-import { useWallet } from '@/ui/utils';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
+import { Tip } from '@/components/Tip';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { CHAINS } from '@/constant/chains';
+import { SecurityEngineLevel } from '@/constant/security';
+import { AppColorsVariants } from '@/constant/theme';
+import { dappService, preferenceService } from '@/core/services';
+import { Account } from '@/core/services/preference';
+import { useThemeColors } from '@/hooks/theme';
+import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { ConnectedSite } from 'background/service/permission';
+import { DappInfo } from '@rabby-wallet/service-dapp';
 import clsx from 'clsx';
-import { CHAINS, INTERNAL_REQUEST_ORIGIN, SecurityEngineLevel } from 'consts';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
-import { useThemeMode } from '@/ui/hooks/usePreference';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -30,124 +33,100 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   onIgnoreAllRules(): void;
 }
 
-const Wrapper = styled.section`
-  padding: 20px;
-  padding-top: 12px;
-  border-radius: 16px 16px 0px 0px;
-  background: var(--r-neutral-bg-1, #3d4251);
-  box-shadow: 0px -8px 24px 0px rgba(0, 0, 0, 0.1);
-  position: relative;
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 40,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      backgroundColor: colors['neutral-bg-1'],
+      position: 'relative',
+    },
+    dappIcon: {
+      width: 24,
+      height: 24,
+    },
+    chainLogo: {
+      width: 14,
+      height: 14,
+      borderRadius: 100,
+      position: 'absolute',
+      top: -4,
+      right: -4,
+    },
+    requestOrigin: {
+      height: 30,
+      fontWeight: '500',
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-foot'],
+      paddingBottom: 12,
+      position: 'relative',
+      marginBottom: 12,
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    origin: {
+      color: colors['neutral-title-1'],
+      flex: 1,
+      overflow: 'hidden',
+      // textOverflow: 'ellipsis',
+      // whiteSpace: 'nowrap',
+      fontSize: 15,
+      lineHeight: 18,
+    },
+    right: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+    },
+    securityLevelTip: {
+      marginTop: 10,
+      borderRadius: 4,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      display: 'flex',
+      position: 'relative',
+      flexDirection: 'row',
+    },
+    securityLevelTipText: {
+      fontWeight: '500',
+      fontSize: 13,
+      lineHeight: 15,
+    },
+    iconLevel: {
+      width: 14,
+      height: 14,
+      marginRight: 6,
+    },
+    securityLevelTag: {
+      marginTop: -15,
+    },
+    container: {
+      position: 'relative',
+    },
+  });
 
-  .request-origin {
-    height: 30px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    color: #707280;
-    padding-bottom: 12px;
-    position: relative;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    position: relative;
-    .origin {
-      color: var(--r-neutral-title-1, #f7fafc);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 15px;
-      line-height: 18px;
-    }
-    .right {
-      font-size: 12px;
-      line-height: 14px;
-      color: #707280;
-    }
-    .security-level-tag {
-      margin-top: -15px;
-    }
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100vw;
-      margin-left: -20px;
-      height: 1px;
-      height: 0.5px;
-      background-color: var(--r-neutral-line, rgba(255, 255, 255, 0.1));
-    }
-  }
-  .security-level-tip {
-    margin-top: 10px;
-    border-radius: 4px;
-    padding: 6px 10px 6px 8px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    display: flex;
-    position: relative;
-    .icon-level {
-      width: 14px;
-      height: 14px;
-      margin-right: 6px;
-    }
-    &::before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border: 5px solid transparent;
-      border-bottom: 8px solid currentColor;
-      top: -12px;
-      left: 115px;
-    }
-  }
-`;
-
-const Shadow = styled.div`
-  pointer-events: none;
-  position: absolute;
-  top: -85px;
-  height: 85px;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(217, 217, 217, 0) 10.74%,
-    rgba(175, 175, 175, 0.168147) 41.66%,
-    rgba(130, 130, 130, 0.35) 83.44%
-  );
-  z-index: 10;
-`;
-
-const ChainLogo = styled.img`
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 14px;
-  height: 14px;
-  border-radius: 100%;
-`;
-
-const SecurityLevelTipColor = {
+const getSecurityLevelTipColor = (colors: AppColorsVariants) => ({
   [Level.FORBIDDEN]: {
-    bg: 'var(--r-red-light-2, #EFD4D1)',
-    text: 'var(--r-red-dark, #AE2A19)',
+    bg: colors['red-light-2'],
+    text: colors['red-dark'],
     icon: SecurityEngineLevel[Level.FORBIDDEN].icon,
   },
   [Level.DANGER]: {
-    bg: 'var(--r-red-light, #FFDFDB)',
-    text: 'var(--r-red-default, #E34935)',
+    bg: colors['red-light'],
+    text: colors['red-default'],
     icon: SecurityEngineLevel[Level.DANGER].icon,
   },
   [Level.WARNING]: {
-    bg: 'var(--r-orange-light, #FFEDCB)',
-    text: 'var(--r-orange-default, #FFB020)',
+    bg: colors['orange-light'],
+    text: colors['orange-default'],
     icon: SecurityEngineLevel[Level.WARNING].icon,
   },
-};
+});
 
 export const FooterBar: React.FC<Props> = ({
   origin,
@@ -161,48 +140,53 @@ export const FooterBar: React.FC<Props> = ({
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
-  const [
-    connectedSite,
-    setConnectedSite,
-  ] = React.useState<ConnectedSite | null>(null);
-  const wallet = useWallet();
-  const dispatch = useRabbyDispatch();
+  const [connectedSite, setConnectedSite] = React.useState<DappInfo | null>(
+    null,
+  );
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const SecurityLevelTipColor = getSecurityLevelTipColor(colors);
 
-  const displayOirigin = useMemo(() => {
+  const displayOrigin = useMemo(() => {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       return 'Rabby Wallet';
     }
     return origin;
   }, [origin]);
 
-  const { rules, processedRules } = useRabbySelector((s) => ({
-    rules: s.securityEngine.rules,
-    processedRules: s.securityEngine.currentTx.processedRules,
-  }));
+  const {
+    rules,
+    currentTx: { processedRules },
+    ...apiApprovalSecurityEngine
+  } = useApprovalSecurityEngine();
 
   const currentChain = useMemo(() => {
     if (origin === INTERNAL_REQUEST_ORIGIN) {
       return props.chain || CHAINS.ETH;
     } else {
-      if (!connectedSite) return CHAINS.ETH;
-      return CHAINS[connectedSite.chain];
+      if (!connectedSite) {
+        return CHAINS.ETH;
+      }
+      return CHAINS[connectedSite.chainId];
     }
   }, [props.chain, origin, connectedSite]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
   }, [engineResults]);
 
   const handleClickRule = (id: string) => {
-    const rule = rules.find((item) => item.id === id);
-    if (!rule) return;
+    const rule = rules.find(item => item.id === id);
+    if (!rule) {
+      return;
+    }
     const result = engineResultMap[id];
-    dispatch.securityEngine.openRuleDrawer({
+    apiApprovalSecurityEngine.openRuleDrawer({
       ruleConfig: rule,
       value: result?.value,
       level: result?.level,
@@ -212,16 +196,17 @@ export const FooterBar: React.FC<Props> = ({
 
   const init = async () => {
     const currentAccount =
-      gnosisAccount || (await wallet.syncGetCurrentAccount());
-    if (currentAccount) setAccount(currentAccount);
-    dispatch.securityEngine.init();
+      gnosisAccount || (await preferenceService.getCurrentAccount());
+    if (currentAccount) {
+      setAccount(currentAccount);
+    }
+    apiApprovalSecurityEngine.init();
   };
 
   useEffect(() => {
     if (origin) {
-      wallet.getConnectedSite(origin).then((site) => {
-        site && setConnectedSite(site);
-      });
+      const site = dappService.getDapp(origin);
+      site && setConnectedSite(site);
     }
   }, [origin]);
 
@@ -229,40 +214,42 @@ export const FooterBar: React.FC<Props> = ({
     init();
   }, []);
 
-  const { isDarkTheme } = useThemeMode();
-
   if (!account) {
     return null;
   }
 
+  const Icon = securityLevel
+    ? SecurityLevelTipColor[securityLevel].icon
+    : undefined;
   return (
-    <div className="relative">
-      {!isDarkTheme && hasShadow && <Shadow />}
-      <Wrapper
+    <View style={styles.container}>
+      {/* {!isDarkTheme && hasShadow && <Shadow />} */}
+      <View
+        style={styles.wrapper}
         className={clsx({
-          'has-shadow': !isDarkTheme && hasShadow,
-        })}
-      >
+          // 'has-shadow': !isDarkTheme && hasShadow,
+        })}>
         {origin && (
-          <div className="request-origin">
+          <View style={styles.requestOrigin}>
             {originLogo && (
-              <div className="relative mr-8">
-                <FallbackSiteLogo
-                  url={originLogo}
+              <View className="relative mr-8">
+                <DappIcon
+                  source={{ uri: originLogo }}
                   origin={origin}
-                  width="24px"
-                  height="24px"
+                  style={styles.dappIcon}
                 />
-                <TooltipWithMagnetArrow
-                  className="rectangle w-[max-content]"
-                  title={currentChain.name}
-                >
-                  <ChainLogo src={currentChain.logo} />
-                </TooltipWithMagnetArrow>
-              </div>
+                <Tip content={currentChain.name}>
+                  <Image
+                    source={{ uri: currentChain.logo }}
+                    style={styles.chainLogo}
+                  />
+                </Tip>
+              </View>
             )}
-            <span className="origin">{displayOirigin}</span>
-            <span className="right">{t('page.signFooterBar.requestFrom')}</span>
+            <Text style={styles.origin}>{displayOrigin}</Text>
+            <Text style={styles.right}>
+              {t('page.signFooterBar.requestFrom')}
+            </Text>
             {engineResultMap['1088'] && (
               <SecurityLevelTagNoText
                 enable={engineResultMap['1088'].enable}
@@ -272,8 +259,8 @@ export const FooterBar: React.FC<Props> = ({
                     : engineResultMap['1088'].level
                 }
                 onClick={() => handleClickRule('1088')}
-                right="0px"
-                className="security-level-tag"
+                right={0}
+                style={styles.securityLevelTag}
               />
             )}
             {engineResultMap['1089'] && (
@@ -285,10 +272,10 @@ export const FooterBar: React.FC<Props> = ({
                     : engineResultMap['1089'].level
                 }
                 onClick={() => handleClickRule('1089')}
-                className="security-level-tag"
+                style={styles.securityLevelTag}
               />
             )}
-          </div>
+          </View>
         )}
         <AccountInfo
           chain={props.chain}
@@ -297,37 +284,40 @@ export const FooterBar: React.FC<Props> = ({
         />
         <ActionGroup account={account} {...props} />
         {securityLevel && hasUnProcessSecurityResult && (
-          <div
+          <View
             className="security-level-tip"
-            style={{
-              color: SecurityLevelTipColor[securityLevel].bg,
-              backgroundColor: SecurityLevelTipColor[securityLevel].bg,
-            }}
-          >
-            <img
-              src={SecurityLevelTipColor[securityLevel].icon}
-              className="icon icon-level"
-            />
-            <span
+            style={StyleSheet.flatten([
+              styles.securityLevelTip,
+              {
+                backgroundColor: SecurityLevelTipColor[securityLevel].bg,
+              },
+            ])}>
+            <Icon style={styles.iconLevel} />
+            <Text
               className="flex-1"
-              style={{
-                color: SecurityLevelTipColor[securityLevel].text,
-              }}
-            >
+              style={StyleSheet.flatten([
+                styles.securityLevelTipText,
+                {
+                  color: SecurityLevelTipColor[securityLevel].text,
+                },
+              ])}>
               {t('page.signFooterBar.processRiskAlert')}
-            </span>
-            <span
-              className="underline text-13 font-medium cursor-pointer"
-              style={{
-                color: SecurityLevelTipColor[securityLevel].text,
-              }}
-              onClick={onIgnoreAllRules}
-            >
-              {t('page.signFooterBar.ignoreAll')}
-            </span>
-          </div>
+            </Text>
+            <TouchableOpacity onPress={onIgnoreAllRules}>
+              <Text
+                className="underline text-13 font-medium"
+                style={StyleSheet.flatten([
+                  styles.securityLevelTipText,
+                  {
+                    color: SecurityLevelTipColor[securityLevel].text,
+                  },
+                ])}>
+                {t('page.signFooterBar.ignoreAll')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
-      </Wrapper>
-    </div>
+      </View>
+    </View>
   );
 };

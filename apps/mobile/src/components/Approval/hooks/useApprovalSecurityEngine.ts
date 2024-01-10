@@ -50,7 +50,7 @@ export const useApprovalSecurityEngine = () => {
       setCurrentTx(prev => {
         return {
           ...prev,
-          payload,
+          ...payload,
         };
       });
     },

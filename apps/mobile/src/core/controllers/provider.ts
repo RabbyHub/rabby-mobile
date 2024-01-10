@@ -1,4 +1,4 @@
-import Common, { Hardfork } from '@ethereumjs/common';
+import { Hardfork, Common } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,

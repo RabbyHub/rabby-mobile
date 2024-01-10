@@ -1,8 +1,28 @@
-import { Button, Tooltip } from 'antd';
 import React from 'react';
 import { ActionsContainer, Props } from './ActionsContainer';
-import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
+import { Tip } from '@/components/Tip';
+import { StyleSheet, View } from 'react-native';
+import { Button } from '@/components';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    button: {
+      width: 233,
+      height: 48,
+      borderColor: colors['blue-default'],
+      borderWidth: 1,
+      borderRadius: 8,
+    },
+    buttonText: {
+      color: colors['blue-default'],
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+  });
 
 export const ProcessActions: React.FC<Props> = ({
   onSubmit,
@@ -11,29 +31,26 @@ export const ProcessActions: React.FC<Props> = ({
   tooltipContent,
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   return (
     <ActionsContainer onCancel={onCancel}>
-      <Tooltip
-        overlayClassName="rectangle sign-tx-forbidden-tooltip"
-        title={tooltipContent}
-      >
-        <div className="absolute left-0 right-0">
+      <Tip
+        // @ts-expect-error
+        content={tooltipContent}>
+        <View>
           <Button
             disabled={disabledProcess}
-            type="ghost"
-            className={clsx(
-              'w-[246px] h-[48px] border-blue-light text-blue-light',
-              'hover:bg-[#8697FF1A] active:bg-[#0000001A]',
-              'disabled:bg-transparent disabled:opacity-40 disabled:hover:bg-transparent',
-              'rounded-[8px]',
-              'before:content-none'
-            )}
-            onClick={onSubmit}
-          >
-            {t('page.signFooterBar.beginSigning')}
-          </Button>
-        </div>
-      </Tooltip>
+            type="clear"
+            buttonStyle={styles.button}
+            titleStyle={styles.buttonText}
+            disabledStyle={styles.disabled}
+            onPress={onSubmit}
+            title={t('page.signFooterBar.beginSigning')}
+          />
+        </View>
+      </Tip>
     </ActionsContainer>
   );
 };

@@ -36,7 +36,7 @@
     "@metamask/eth-sig-util": "5.1.0",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.8",
+    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.11",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-api": "0.7.0-alpha.7",

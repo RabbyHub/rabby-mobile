@@ -180,7 +180,7 @@ function ProviderControllerTester(): JSX.Element {
   }, [addDapp]);
 
   React.useEffect(() => {
-    if (account && currentAccount) {
+    if (account && currentAccount && currentAccount.type === 'WalletConnect') {
       apisWalletConnect
         .checkClientIsCreate(currentAccount)
         .then(res => {
@@ -189,6 +189,8 @@ function ProviderControllerTester(): JSX.Element {
         .catch(e => {
           console.error(e);
         });
+    } else {
+      setConnectStatus('CONNECTED');
     }
   }, [account, currentAccount]);
 

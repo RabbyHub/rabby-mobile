@@ -1,9 +1,31 @@
-import { Button, Tooltip } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionsContainer, Props } from './ActionsContainer';
-import clsx from 'clsx';
-import { ReactComponent as IconClose } from 'ui/assets/close-white.svg';
+import { StyleSheet, View } from 'react-native';
+import { Button } from '@/components/Button';
+import { Tip } from '@/components/Tip';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    button: {
+      width: '100%',
+      height: 48,
+      borderColor: colors['blue-default'],
+      borderWidth: 1,
+      borderRadius: 8,
+    },
+    buttonText: {
+      color: colors['neutral-title-2'],
+    },
+    buttonDisabled: {
+      borderColor: colors['blue-light-1'],
+    },
+    buttonWrapper: {
+      marginRight: 10,
+    },
+  });
 
 export const SubmitActions: React.FC<Props> = ({
   disabledProcess,
@@ -18,72 +40,26 @@ export const SubmitActions: React.FC<Props> = ({
   const handleClickSign = React.useCallback(() => {
     setIsSign(true);
   }, []);
-
-  const handleClickConfirm = React.useCallback(() => {
-    onSubmit();
-  }, [onSubmit]);
-
-  const handleClickCancel = React.useCallback(() => {
-    setIsSign(false);
-  }, []);
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
     <ActionsContainer onCancel={onCancel}>
-      {isSign ? (
-        <div
-          className={clsx(
-            'bg-blue-light text-white',
-            'rounded-[8px] h-[48px]',
-            'flex items-center',
-            'relative',
-            'before:absolute before:right-[60px]',
-            'before:bg-[#FFFFFF1A]',
-            'before:h-[32px] before:w-1',
-            'hover:before:hidden',
-            'overflow-hidden'
-          )}
-        >
-          <button
-            className={clsx(
-              'hover:bg-[#00000033]',
-              'w-[184px] h-full',
-              'font-medium'
-            )}
-            onClick={handleClickConfirm}
-          >
-            {t('global.confirmButton')}
-          </button>
-          <button
-            className={clsx(
-              'hover:bg-[#00000033]',
-              'w-[60px] h-full',
-              'flex justify-center items-center'
-            )}
-            onClick={handleClickCancel}
-          >
-            <IconClose />
-          </button>
-        </div>
-      ) : (
-        <Tooltip
-          overlayClassName="rectangle sign-tx-forbidden-tooltip"
-          title={enableTooltip ? tooltipContent : null}
-        >
-          <div>
+      {isSign ? null : (
+        // @ts-expect-error
+        <Tip content={enableTooltip ? tooltipContent : undefined}>
+          <View style={styles.buttonWrapper}>
             <Button
               disabled={disabledProcess}
               type="primary"
-              className={clsx(
-                'w-[246px] h-[48px] rounded-[8px]',
-                'disabled:opacity-40 disabled:bg-blue-light',
-                'before:content-none'
-              )}
-              onClick={handleClickSign}
-            >
-              {t('page.signFooterBar.signAndSubmitButton')}
-            </Button>
-          </div>
-        </Tooltip>
+              buttonStyle={styles.button}
+              titleStyle={styles.buttonText}
+              disabledStyle={styles.buttonDisabled}
+              onPress={handleClickSign}
+              title={t('page.signFooterBar.signAndSubmitButton')}
+            />
+          </View>
+        </Tip>
       )}
     </ActionsContainer>
   );

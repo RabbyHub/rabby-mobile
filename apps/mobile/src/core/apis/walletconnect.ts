@@ -3,6 +3,7 @@ import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService } from '../services';
+import { Account } from '../services/preference';
 import { getKeyring } from './keyring';
 
 export function bindWalletConnectEvents(keyring: KeyringInstance) {
@@ -149,6 +150,20 @@ export async function getCommonWalletConnectInfo(address: string) {
 
   if (keyring) {
     return keyring.getCommonWalletConnectInfo(address);
+  }
+  return;
+}
+
+export async function walletConnectSwitchChain(
+  account: Account,
+  chainId: number,
+) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  if (keyring) {
+    return keyring.switchEthereumChain(account.brandName, chainId);
   }
   return;
 }
