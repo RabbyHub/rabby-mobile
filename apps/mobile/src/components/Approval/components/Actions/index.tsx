@@ -1,28 +1,31 @@
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { Chain, ExplainTxResponse } from 'background/service/openapi';
+import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
+import { Chain } from '@debank/common';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
-import BalanceChange from '../TxComponents/BalanceChange';
-import ViewRawModal from '../TxComponents/ViewRawModal';
-import ApproveNFT from './ApproveNFT';
-import ApproveNFTCollection from './ApproveNFTCollection';
-import CancelTx from './CancelTx';
-import ContractCall from './ContractCall';
-import DeployContract from './DeployContract';
-import RevokeNFT from './RevokeNFT';
-import RevokeNFTCollection from './RevokeNFTCollection';
+// import BalanceChange from '../TxComponents/BalanceChange';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColorsVariants } from '@/constant/theme';
+// import ViewRawModal from '../TxComponents/ViewRawModal';
+// import ApproveNFT from './ApproveNFT';
+// import ApproveNFTCollection from './ApproveNFTCollection';
+// import CancelTx from './CancelTx';
+// import ContractCall from './ContractCall';
+// import DeployContract from './DeployContract';
+// import RevokeNFT from './RevokeNFT';
+// import RevokeNFTCollection from './RevokeNFTCollection';
 import Send from './Send';
-import SendNFT from './SendNFT';
-import Swap from './Swap';
-import TokenApprove from './TokenApprove';
-import RevokeTokenApprove from './RevokeTokenApprove';
-import WrapToken from './WrapToken';
-import UnWrapToken from './UnWrapToken';
-import PushMultiSig from './PushMultiSig';
-import CrossToken from './CrossToken';
-import CrossSwapToken from './CrossSwapToken';
-import RevokePermit2 from './RevokePermit2';
+// import SendNFT from './SendNFT';
+// import Swap from './Swap';
+// import TokenApprove from './TokenApprove';
+// import RevokeTokenApprove from './RevokeTokenApprove';
+// import WrapToken from './WrapToken';
+// import UnWrapToken from './UnWrapToken';
+// import PushMultiSig from './PushMultiSig';
+// import CrossToken from './CrossToken';
+// import CrossSwapToken from './CrossSwapToken';
+// import RevokePermit2 from './RevokePermit2';
 import {
   ActionRequireData,
   ApproveNFTRequireData,
@@ -38,115 +41,90 @@ import {
   WrapTokenRequireData,
   getActionTypeText,
 } from './utils';
-import IconArrowRight, {
-  ReactComponent as RcIconArrowRight,
-} from 'ui/assets/approval/edit-arrow-right.svg';
-import IconSpeedUp from 'ui/assets/sign/tx/speedup.svg';
-import IconQuestionMark from 'ui/assets/sign/question-mark-24.svg';
-import IconRabbyDecoded from 'ui/assets/sign/rabby-decoded.svg';
-import IconCheck, {
-  ReactComponent as RcIconCheck,
-} from 'src/ui/assets/approval/icon-check.svg';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
-import clsx from 'clsx';
-import ThemeIcon from '@/ui/component/ThemeMode/ThemeIcon';
+import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
+import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 
-export const SignTitle = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  .left {
-    display: flex;
-    font-size: 18px;
-    line-height: 21px;
-    color: var(--r-neutral-title-1, #f7fafc);
-    flex: 1;
-    .icon-speedup {
-      width: 10px;
-      margin-right: 6px;
-      cursor: pointer;
-    }
-  }
-  .right {
-    font-size: 14px;
-    line-height: 16px;
-    color: #999999;
-    cursor: pointer;
-  }
-`;
-
-export const ActionWrapper = styled.div`
-  background-color: var(--r-neutral-bg-1, #fff);
-  border-radius: 8px;
-  .action-header {
-    display: flex;
-    justify-content: space-between;
-    background: var(--r-blue-default, #7084ff);
-    padding: 13px;
-    align-items: center;
-    color: #fff;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    .left {
-      font-weight: 500;
-      font-size: 16px;
-      line-height: 19px;
-    }
-    .right {
-      font-size: 14px;
-      line-height: 16px;
-      position: relative;
-      .decode-tooltip {
-        max-width: 358px;
-        &:not(.ant-tooltip-hidden) {
-          left: -321px !important;
-          .ant-tooltip-arrow {
-            left: 333px;
-          }
-        }
-        .ant-tooltip-arrow-content {
-          background-color: var(--r-neutral-bg-1, #fff);
-        }
-        .ant-tooltip-inner {
-          background-color: var(--r-neutral-bg-1, #fff);
-          padding: 0;
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--r-neutral-body, #3e495e);
-          border-radius: 6px;
-        }
-      }
-    }
-    &.is-unknown {
-      background: var(--r-neutral-foot, #6a7587);
-    }
-  }
-  .container {
-    padding: 14px;
-    /* border: 0.5px solid var(--r-neutral-line, rgba(255, 255, 255, 0.1)); */
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    background-color: var(--r-neutral-card-1, rgba(255, 255, 255, 0.06));
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      .left {
-        font-weight: 500;
-        font-size: 16px;
-        line-height: 19px;
-        color: #222222;
-      }
-      .right {
-        font-size: 14px;
-        line-height: 16px;
-        color: #999999;
-      }
-    }
-  }
-`;
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    signTitle: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 15,
+    },
+    leftContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    leftText: {
+      fontSize: 18,
+      lineHeight: 21,
+      color: colors['neutral-title-1'],
+    },
+    speedUpIcon: {
+      width: 10,
+      marginRight: 6,
+    },
+    rightText: {
+      fontSize: 14,
+      lineHeight: 16,
+      color: '#999999',
+    },
+    actionWrapper: {
+      backgroundColor: colors['neutral-bg-1'],
+      borderRadius: 8,
+    },
+    actionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors['blue-default'],
+      padding: 13,
+      alignItems: 'center',
+      color: '#fff',
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+    },
+    left: {
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 19,
+    },
+    right: {
+      fontSize: 14,
+      lineHeight: 16,
+      position: 'relative',
+    },
+    decodeTooltip: {
+      maxWidth: 358,
+    },
+    isUnknown: {
+      backgroundColor: colors['neutral-foot'],
+    },
+    container: {
+      padding: 14,
+      borderBottomLeftRadius: 6,
+      borderBottomRightRadius: 6,
+      backgroundColor: colors['neutral-card1'],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    containerLeft: {
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 19,
+      color: '#222222',
+    },
+    containerRight: {
+      fontSize: 14,
+      lineHeight: 16,
+      color: '#999999',
+    },
+  });
 
 const Actions = ({
   data,
@@ -171,80 +149,51 @@ const Actions = ({
     return getActionTypeText(data);
   }, [data]);
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
 
   const handleViewRawClick = () => {
-    ViewRawModal.open({
-      raw,
-      abi: txDetail?.abi_str,
-    });
+    // ViewRawModal.open({
+    //   raw,
+    //   abi: txDetail?.abi_str,
+    // });
   };
 
   return (
     <>
-      <SignTitle>
-        <div className="left relative">
-          {isSpeedUp && (
-            <TooltipWithMagnetArrow
-              overlayClassName="rectangle w-[max-content]"
-              title={t('page.signTx.speedUpTooltip')}
-            >
-              <img src={IconSpeedUp} className="icon icon-speedup" />
-            </TooltipWithMagnetArrow>
-          )}
-          {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
-        </div>
-        <div
-          className="float-right text-12 cursor-pointer flex items-center view-raw"
-          onClick={handleViewRawClick}
-        >
-          {t('page.signTx.viewRaw')}
-          <ThemeIcon className="icon icon-arrow-right" src={RcIconArrowRight} />
-        </div>
-      </SignTitle>
-      <ActionWrapper>
-        <div
-          className={clsx('action-header', {
-            'is-unknown': data.contractCall,
-          })}
-        >
-          <div className="left">{actionName}</div>
-          <div className="right">
-            <TooltipWithMagnetArrow
-              placement="bottom"
-              overlayClassName="rectangle w-[max-content] decode-tooltip"
-              title={
-                data.contractCall ? (
-                  <NoActionAlert
-                    data={{
-                      chainId: chain.serverId,
-                      contractAddress:
-                        requireData && 'id' in requireData
-                          ? requireData.id
-                          : txDetail.type_call?.contract,
-                      selector: raw.data.toString(),
-                    }}
-                  />
-                ) : (
-                  <span className="flex w-[358px] p-12 items-center">
-                    <ThemeIcon src={RcIconCheck} className="mr-4 w-12" />
-                    {t('page.signTx.decodedTooltip')}
-                  </span>
-                )
-              }
-            >
-              {data.contractCall ? (
-                <img src={IconQuestionMark} className="w-24" />
-              ) : (
-                <img
-                  src={IconRabbyDecoded}
-                  className="icon icon-rabby-decoded"
-                />
-              )}
-            </TooltipWithMagnetArrow>
-          </div>
-        </div>
-        <div className="container">
-          {data.swap && (
+      <View style={styles.signTitle}>
+        <View className="left relative">
+          {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
+          <Text>
+            {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={handleViewRawClick}>
+          <View className="float-right text-12 cursor-pointer flex items-center view-raw">
+            <Text>{t('page.signTx.viewRaw')}</Text>
+            <RcIconArrowRight />
+          </View>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.actionWrapper}>
+        <View
+          style={{
+            ...styles.actionHeader,
+            ...(data.contractCall ? styles.isUnknown : {}),
+          }}>
+          <View>
+            <Text style={styles.left}>{actionName}</Text>
+          </View>
+          <View>
+            {data.contractCall ? (
+              <IconQuestionMark className="w-24" />
+            ) : (
+              <IconRabbyDecoded className="w-24" />
+            )}
+          </View>
+        </View>
+        <View style={styles.container}>
+          {/* {data.swap && (
             <Swap
               data={data.swap}
               requireData={requireData as SwapRequireData}
@@ -283,7 +232,7 @@ const Actions = ({
               chain={chain}
               engineResults={engineResults}
             />
-          )}
+          )} */}
           {data.send && (
             <Send
               data={data.send}
@@ -292,7 +241,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          {data.approveToken && (
+          {/* {data.approveToken && (
             <TokenApprove
               data={data.approveToken}
               requireData={requireData as ApproveTokenRequireData}
@@ -329,8 +278,7 @@ const Actions = ({
               chain={chain}
               engineResults={engineResults}
               onChange={onChange}
-              raw={raw}
-            ></CancelTx>
+              raw={raw}></CancelTx>
           )}
           {data?.sendNFT && (
             <SendNFT
@@ -389,13 +337,13 @@ const Actions = ({
               onChange={onChange}
               raw={raw}
             />
-          )}
-        </div>
-      </ActionWrapper>
-      <BalanceChange
+          )} */}
+        </View>
+      </View>
+      {/* <BalanceChange
         version={txDetail.pre_exec_version}
         data={txDetail.balance_change}
-      />
+      /> */}
     </>
   );
 };

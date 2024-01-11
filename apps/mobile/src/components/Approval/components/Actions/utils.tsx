@@ -32,6 +32,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { useState, useCallback, useEffect } from 'react';
 import PQueue from 'p-queue/dist/index';
+// import { TransactionGroup } from '@/background/service/transactionHistory';
 import { isTestnet } from '@/utils/chain';
 import { findChainByServerID } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
@@ -561,7 +562,6 @@ const fetchNFTApproveRequiredData = async ({
   spender,
   address,
   chainId,
-  apiProvider,
 }: {
   spender: string;
   address: string;
@@ -582,12 +582,12 @@ const fetchNFTApproveRequiredData = async ({
   };
 
   queue.add(async () => {
-    const credit = await apiProvider.getContractCredit(spender, chainId);
+    const credit = await openapi.getContractCredit(spender, chainId);
     result.rank = credit.rank_at;
   });
 
   queue.add(async () => {
-    const { desc } = await apiProvider.addrDesc(spender);
+    const { desc } = await openapi.addrDesc(spender);
     if (desc.contract && desc.contract[chainId]) {
       result.bornAt = desc.contract[chainId].create_at;
     }
@@ -599,7 +599,7 @@ const fetchNFTApproveRequiredData = async ({
     result.isDanger = desc.contract?.[chainId]?.is_danger || null;
   });
   queue.add(async () => {
-    const hasInteraction = await apiProvider.hasInteraction(
+    const hasInteraction = await openapi.hasInteraction(
       address,
       chainId,
       spender,
@@ -607,10 +607,7 @@ const fetchNFTApproveRequiredData = async ({
     result.hasInteraction = hasInteraction.has_interaction;
   });
   queue.add(async () => {
-    const { usd_value } = await apiProvider.getTokenNFTExposure(
-      chainId,
-      spender,
-    );
+    const { usd_value } = await openapi.getTokenNFTExposure(chainId, spender);
     result.riskExposure = usd_value;
   });
   await waitQueueFinished(queue);
@@ -620,7 +617,6 @@ const fetchNFTApproveRequiredData = async ({
 const fetchTokenApproveRequireData = async ({
   spender,
   token,
-  apiProvider,
   address,
   chainId,
 }: {
@@ -647,22 +643,19 @@ const fetchTokenApproveRequireData = async ({
     },
   };
   queue.add(async () => {
-    const credit = await apiProvider.getContractCredit(spender, chainId);
+    const credit = await openapi.getContractCredit(spender, chainId);
     result.rank = credit.rank_at;
   });
   queue.add(async () => {
-    const { usd_value } = await apiProvider.tokenApproveExposure(
-      spender,
-      chainId,
-    );
+    const { usd_value } = await openapi.tokenApproveExposure(spender, chainId);
     result.riskExposure = usd_value;
   });
   queue.add(async () => {
-    const t = await apiProvider.getToken(address, chainId, token.id);
+    const t = await openapi.getToken(address, chainId, token.id);
     result.token = t;
   });
   queue.add(async () => {
-    const { desc } = await apiProvider.addrDesc(spender);
+    const { desc } = await openapi.addrDesc(spender);
     if (desc.contract && desc.contract[chainId]) {
       result.bornAt = desc.contract[chainId].create_at;
     }
@@ -674,7 +667,7 @@ const fetchTokenApproveRequireData = async ({
     result.protocol = getProtocol(desc.protocol, chainId);
   });
   queue.add(async () => {
-    const hasInteraction = await apiProvider.hasInteraction(
+    const hasInteraction = await openapi.hasInteraction(
       address,
       chainId,
       spender,
@@ -861,31 +854,31 @@ export const fetchActionRequiredData = async ({
   if (actionData.approveToken) {
     const { token, spender } = actionData.approveToken;
     return await fetchTokenApproveRequireData({
-      apiProvider,
       chainId,
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.revokePermit2) {
     const { token, spender } = actionData.revokePermit2;
     return await fetchTokenApproveRequireData({
-      apiProvider,
       chainId,
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.revokeToken) {
     const { token, spender } = actionData.revokeToken;
     return await fetchTokenApproveRequireData({
-      apiProvider,
       chainId,
       address,
       token,
       spender,
+      apiProvider,
     });
   }
   if (actionData.cancelTx) {
@@ -985,32 +978,32 @@ export const fetchActionRequiredData = async ({
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      apiProvider,
       spender: actionData.approveNFT.spender,
+      apiProvider,
     });
   }
   if (actionData.revokeNFT) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      apiProvider,
       spender: actionData.revokeNFT.spender,
+      apiProvider,
     });
   }
   if (actionData.approveNFTCollection) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      apiProvider,
       spender: actionData.approveNFTCollection.spender,
+      apiProvider,
     });
   }
   if (actionData.revokeNFTCollection) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      apiProvider,
       spender: actionData.revokeNFTCollection.spender,
+      apiProvider,
     });
   }
   if (actionData.pushMultiSig) {

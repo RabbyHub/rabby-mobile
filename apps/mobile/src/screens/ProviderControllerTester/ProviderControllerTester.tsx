@@ -127,6 +127,29 @@ function ProviderControllerTester(): JSX.Element {
       });
   }, []);
 
+  const handlSignTransaction = React.useCallback(() => {
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: account,
+            to: account,
+            value: '0x0',
+            chainId: 1,
+          },
+        ],
+      },
+      TEST_SESSION,
+    )
+      .then(res => {
+        console.log(res);
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  }, [account]);
+
   const handlePersonalSign = React.useCallback(() => {
     sendRequest(
       {

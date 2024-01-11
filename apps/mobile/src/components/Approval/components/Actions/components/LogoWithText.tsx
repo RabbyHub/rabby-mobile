@@ -1,60 +1,87 @@
+import { Image, View, Text, TextStyle } from 'react-native';
 import React, { ReactNode } from 'react';
-import styled from 'styled-components';
-import IconUnknown from 'ui/assets/token-default.svg';
+import { StyleSheet } from 'react-native';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColorsVariants } from '@/constant/theme';
+import IconUnknown from '@/assets/icons/token/default.svg';
 
-const Wrapper = styled.div`
-  display: flex;
-  align-items: center;
-  .logo {
-    width: 16px;
-    height: 16px;
-    margin-right: 6px;
-  }
-  .text {
-    font-weight: 500;
-    font-size: 15px;
-    line-height: 18px;
-    color: var(--r-neutral-title-1, #192945);
-    margin-right: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-`;
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    logo: {
+      width: 16,
+      height: 16,
+      marginRight: 6,
+    },
+    text: {
+      fontWeight: '500',
+      fontSize: 15,
+      lineHeight: 18,
+      color: colors['neutral-title-1'],
+      marginRight: 4,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+  });
 
 const LogoWithText = ({
   logo,
   text,
   icon,
-  logoRadius = '',
+  logoRadius,
   logoSize = 16,
   textStyle = {},
-  className,
 }: {
   logo?: string;
   text: string | ReactNode;
   icon?: ReactNode;
-  logoRadius?: string;
+  logoRadius?: number;
   logoSize?: number;
-  textStyle?: React.CSSProperties;
+  textStyle?: TextStyle;
   className?: string;
 }) => {
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
+
   return (
-    <Wrapper className={className}>
-      <img
-        src={logo || IconUnknown}
-        className="logo"
+    <View style={styles.wrapper}>
+      {logo ? (
+        <Image
+          src={logo}
+          source={{
+            uri: logo,
+          }}
+          style={{
+            ...styles.logo,
+            borderRadius: logoRadius,
+            width: logoSize,
+            height: logoSize,
+          }}
+        />
+      ) : (
+        <IconUnknown
+          style={{
+            ...styles.logo,
+            borderRadius: logoRadius,
+            width: logoSize,
+            height: logoSize,
+          }}
+        />
+      )}
+      <Text
         style={{
-          borderRadius: logoRadius,
-          width: `${logoSize}px`,
-          height: `${logoSize}px`,
-        }}
-      />
-      <div className="text" style={textStyle}>
+          ...styles.text,
+          ...textStyle,
+        }}>
         {text}
-      </div>
+      </Text>
       {icon || null}
-    </Wrapper>
+    </View>
   );
 };
 

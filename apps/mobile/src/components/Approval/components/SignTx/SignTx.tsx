@@ -1044,7 +1044,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       <ScrollView style={styles.approvalTx}>
         {txDetail && (
           <View>
-            {/* {txDetail && (
+            {txDetail && (
               <TxTypeComponent
                 isReady={isReady}
                 actionData={actionData}
@@ -1060,7 +1060,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 isSpeedUp={isSpeedUp}
                 engineResults={engineResults}
               />
-            )} */}
+            )}
             <GasSelector
               disabled={false}
               isReady={isReady}

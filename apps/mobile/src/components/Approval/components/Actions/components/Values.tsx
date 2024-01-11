@@ -1,50 +1,70 @@
 import React, { useMemo, ReactNode, useState, useEffect } from 'react';
-import { message } from 'antd';
-import styled from 'styled-components';
-import ClipboardJS from 'clipboard';
+import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
-import { Chain, TokenItem } from 'background/service/openapi';
-import AddressMemo from './AddressMemo';
-import userDataDrawer from './UserListDrawer';
-import { CHAINS } from 'consts';
-import { isSameAddress, useWallet } from 'ui/utils';
-import { getTimeSpan } from 'ui/utils/time';
-import { useRabbyDispatch } from 'ui/store';
-import { formatUsdValue, formatAmount } from 'ui/utils/number';
+import { Chain, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { toast } from '@/components/Toast';
+// import AddressMemo from './AddressMemo';
+import UserListDrawer from './UserListDrawer';
+import { CHAINS } from '@/constant/chains';
+import { getTimeSpan } from '@/utils/time';
+import { formatUsdValue, formatAmount } from '@/utils/number';
 import LogoWithText from './LogoWithText';
-import { ellipsis } from '@/ui/utils/address';
-import { ellipsisTokenSymbol, getTokenSymbol } from 'ui/utils/token';
-import { openInTab } from '@/ui/utils';
-import IconEdit from 'ui/assets/editpen.svg';
-import IconSuccess from 'ui/assets/success.svg';
-import IconScam from 'ui/assets/sign/tx/token-scam.svg';
-import IconFake from 'ui/assets/sign/tx/token-fake.svg';
-import IconAddressCopy from 'ui/assets/icon-copy-2.svg';
-import IconExternal from 'ui/assets/icon-share.svg';
-import IconInteracted from 'ui/assets/sign/tx/interacted.svg';
-import IconNotInteracted from 'ui/assets/sign/tx/not-interacted.svg';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import AccountAlias from '../../AccountAlias';
+import { ellipsis } from '@/utils/address';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import IconEdit from '@/assets/icons/approval/editpen.svg';
+import IconScam from '@/assets/icons/sign/tx/token-scam.svg';
+import IconFake from '@/assets/icons/sign/tx/token-fake.svg';
+import IconAddressCopy from '@/assets/icons/sign/icon-copy-2.svg';
+import IconExternal from '@/assets/icons/sign/icon-share.svg';
+import IconInteracted from '@/assets/icons/sign/tx/interacted.svg';
+import IconNotInteracted from '@/assets/icons/sign/tx/not-interacted.svg';
+import AccountAlias from './AccountAlias';
+import {
+  addContractWhitelist,
+  removeAddressWhitelist,
+  addAddressWhitelist,
+  addContractBlacklist,
+  addAddressBlacklist,
+  removeContractBlacklist,
+  removeAddressBlacklist,
+  removeContractWhitelist,
+} from '@/core/apis/securityEngine';
+import { useWhitelist } from '@/hooks/whitelist';
+import { keyringService } from '@/core/services';
+import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
+
+const { isSameAddress } = addressUtils;
 
 const Boolean = ({ value }: { value: boolean }) => {
   return <>{value ? 'Yes' : 'No'}</>;
 };
 
-const TokenAmountWrapper = styled.div`
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-`;
+const styles = StyleSheet.create({
+  addressMarkWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+  iconEditAlias: {
+    width: 13,
+    height: 13,
+  },
+  tokenAmountWrapper: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+});
+
 const TokenAmount = ({ value }: { value: string | number }) => {
-  return (
-    <TokenAmountWrapper title={String(value)}>
-      {formatAmount(value)}
-    </TokenAmountWrapper>
-  );
+  return <Text style={styles.tokenAmountWrapper}>{formatAmount(value)}</Text>;
 };
 
 const Percentage = ({ value }: { value: number }) => {
-  return <>{(value * 100).toFixed(2)}%</>;
+  return <Text>{(value * 100).toFixed(2)}%</Text>;
 };
 
 const USDValue = ({ value }: { value: number | string }) => {
@@ -73,7 +93,7 @@ const TimeSpan = ({
     }
     return '1 minute ago';
   }, [value, to]);
-  return <>{timeSpan}</>;
+  return <Text>{timeSpan}</Text>;
 };
 
 const TimeSpanFuture = ({
@@ -97,17 +117,9 @@ const TimeSpanFuture = ({
     }
     return '1 minute';
   }, [from, to]);
-  return <>{timeSpan}</>;
+  return <Text>{timeSpan}</Text>;
 };
 
-const AddressMarkWrapper = styled.div`
-  display: inline-flex;
-  cursor: pointer;
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-  }
-`;
 const AddressMark = ({
   onWhitelist,
   onBlacklist,
@@ -124,107 +136,83 @@ const AddressMark = ({
   onChange(): void;
 }) => {
   const chainId = chain.serverId;
-  const wallet = useWallet();
-  const dispatch = useRabbyDispatch();
   const { t } = useTranslation();
+  const { init } = useApprovalSecurityEngine();
+  const [visible, setVisible] = React.useState(false);
   const handleEditMark = () => {
-    userDataDrawer({
-      address: address,
-      chain,
-      onWhitelist,
-      onBlacklist,
-      async onChange(data) {
-        if (data.onWhitelist && !onWhitelist) {
-          if (isContract && chainId) {
-            await wallet.addContractWhitelist({
-              address,
-              chainId,
-            });
-          } else {
-            await wallet.addAddressWhitelist(address);
-          }
-          message.success({
-            duration: 3,
-            icon: <i />,
-            content: (
-              <div>
-                <div className="flex gap-4">
-                  <img src={IconSuccess} alt="" />
-                  <div className="text-white">Mark as "Trusted"</div>
-                </div>
-              </div>
-            ),
-          });
-        }
-        if (data.onBlacklist && !onBlacklist) {
-          if (isContract && chainId) {
-            await wallet.addContractBlacklist({
-              address,
-              chainId,
-            });
-          } else {
-            await wallet.addAddressBlacklist(address);
-          }
-          message.success({
-            duration: 3,
-            icon: <i />,
-            content: (
-              <div>
-                <div className="flex gap-4">
-                  <img src={IconSuccess} alt="" />
-                  <div className="text-white">Mark as "Blocked"</div>
-                </div>
-              </div>
-            ),
-          });
-        }
-        if (
-          !data.onBlacklist &&
-          !data.onWhitelist &&
-          (onBlacklist || onWhitelist)
-        ) {
-          if (isContract && chainId) {
-            await wallet.removeContractBlacklist({
-              address,
-              chainId,
-            });
-            await wallet.removeContractWhitelist({
-              address,
-              chainId,
-            });
-          } else {
-            await wallet.removeAddressBlacklist(address);
-            await wallet.removeAddressWhitelist(address);
-          }
-          message.success({
-            duration: 3,
-            icon: <i />,
-            content: (
-              <div>
-                <div className="flex gap-4">
-                  <img src={IconSuccess} alt="" />
-                  <div className="text-white">
-                    {t('page.signTx.markRemoved')}
-                  </div>
-                </div>
-              </div>
-            ),
-          });
-        }
-        dispatch.securityEngine.init();
-        onChange();
-      },
-    });
+    setVisible(true);
+  };
+  const handleChange = async (data: {
+    onWhitelist: boolean;
+    onBlacklist: boolean;
+  }) => {
+    if (data.onWhitelist && !onWhitelist) {
+      if (isContract && chainId) {
+        addContractWhitelist({
+          address,
+          chainId,
+        });
+      } else {
+        addAddressWhitelist(address);
+      }
+      toast.success('Mark as "Trusted"');
+    }
+    if (data.onBlacklist && !onBlacklist) {
+      if (isContract && chainId) {
+        addContractBlacklist({
+          address,
+          chainId,
+        });
+      } else {
+        addAddressBlacklist(address);
+      }
+      toast.success('Mark as "Blocked"');
+    }
+    if (
+      !data.onBlacklist &&
+      !data.onWhitelist &&
+      (onBlacklist || onWhitelist)
+    ) {
+      if (isContract && chainId) {
+        removeContractBlacklist({
+          address,
+          chainId,
+        });
+        removeContractWhitelist({
+          address,
+          chainId,
+        });
+      } else {
+        removeAddressBlacklist(address);
+        removeAddressWhitelist(address);
+      }
+      toast.success(t('page.signTx.markRemoved'));
+    }
+    init();
+    onChange();
   };
   return (
-    <AddressMarkWrapper onClick={handleEditMark}>
-      <span className="mr-6">
-        {onWhitelist && t('page.signTx.trusted')}
-        {onBlacklist && t('page.signTx.blocked')}
-        {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
-      </span>
-      <img src={IconEdit} className="icon-edit-alias icon" />
-    </AddressMarkWrapper>
+    <View>
+      <TouchableOpacity onPress={handleEditMark}>
+        <View style={styles.addressMarkWrapper}>
+          <Text className="mr-6">
+            {onWhitelist && t('page.signTx.trusted')}
+            {onBlacklist && t('page.signTx.blocked')}
+            {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
+          </Text>
+          <IconEdit className="icon-edit-alias icon" />
+        </View>
+      </TouchableOpacity>
+      <UserListDrawer
+        address={address}
+        chain={chain}
+        onWhitelist={onWhitelist}
+        onBlacklist={onBlacklist}
+        onChange={handleChange}
+        visible={visible}
+        onClose={() => setVisible(false)}
+      />
+    </View>
   );
 };
 
@@ -243,7 +231,7 @@ const Protocol = ({
         <LogoWithText
           logo={value.logo_url}
           text={value.name}
-          logoRadius="100%"
+          logoRadius={logoSize}
           logoSize={logoSize}
           textStyle={textStyle}
         />
@@ -261,32 +249,14 @@ const TokenLabel = ({
   isScam: boolean;
   isFake: boolean;
 }) => {
-  const { t } = useTranslation();
   return (
-    <div className="flex gap-4 shrink-0 relative">
-      {isFake && (
-        <TooltipWithMagnetArrow
-          overlayClassName="rectangle w-[max-content]"
-          title={t('page.signTx.fakeTokenAlert')}
-        >
-          <img src={IconFake} className="icon icon-fake w-12" />
-        </TooltipWithMagnetArrow>
-      )}
-      {isScam && (
-        <TooltipWithMagnetArrow
-          overlayClassName="rectangle w-[max-content]"
-          title={t('page.signTx.scamTokenAlert')}
-        >
-          <img src={IconScam} className="icon icon-scam w-14" />
-        </TooltipWithMagnetArrow>
-      )}
-    </div>
+    <View className="flex gap-4 shrink-0 relative">
+      {isFake && <IconFake className="w-12" />}
+      {isScam && <IconScam className="w-14" />}
+    </View>
   );
 };
 
-const AddressWrapper = styled.div`
-  display: flex;
-`;
 const Address = ({
   address,
   chain,
@@ -299,146 +269,120 @@ const Address = ({
   const { t } = useTranslation();
   const handleClickContractId = () => {
     if (!chain) return;
-    openInTab(chain.scanLink.replace(/tx\/_s_/, `address/${address}`), false);
+    // openInTab(chain.scanLink.replace(/tx\/_s_/, `address/${address}`), false);
   };
   const handleCopyContractAddress = () => {
-    const clipboard = new ClipboardJS('.value-address', {
-      text: function () {
-        return address;
-      },
-    });
-
-    clipboard.on('success', () => {
-      message.success({
-        duration: 3,
-        icon: <i />,
-        content: (
-          <div>
-            <div className="flex gap-4 mb-4">
-              <img src={IconSuccess} alt="" />
-              {t('global.copied')}
-            </div>
-            <div className="text-white">{address}</div>
-          </div>
-        ),
-      });
-      clipboard.destroy();
-    });
+    Clipboard.setString(address);
+    toast.success(t('global.copied'));
   };
   return (
-    <AddressWrapper className="value-address relative">
-      <TooltipWithMagnetArrow
-        title={address}
-        className="rectangle w-[max-content]"
-      >
-        <span>{ellipsis(address)}</span>
-      </TooltipWithMagnetArrow>
+    <View className="relative flex">
+      <Text>{ellipsis(address)}</Text>
       {chain && (
-        <img
-          onClick={handleClickContractId}
-          src={IconExternal}
+        <IconExternal
+          onPress={handleClickContractId}
           width={iconWidth}
           height={iconWidth}
-          className="ml-6 cursor-pointer"
+          className="ml-6"
         />
       )}
-      <img
-        onClick={handleCopyContractAddress}
-        src={IconAddressCopy}
+      <IconAddressCopy
+        onPress={handleCopyContractAddress}
         width={iconWidth}
         height={iconWidth}
-        className="ml-6 cursor-pointer icon-copy"
+        className="ml-6 icon-copy"
       />
-    </AddressWrapper>
+    </View>
   );
 };
 
-const Text = ({ children }: { children: ReactNode }) => {
+const TextValue = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="overflow-hidden overflow-ellipsis whitespace-nowrap">
+    <View className="overflow-hidden overflow-ellipsis whitespace-nowrap">
       {children}
-    </div>
+    </View>
   );
 };
 
 const DisplayChain = ({ chainServerId }: { chainServerId: string }) => {
   const chain = useMemo(() => {
-    return Object.values(CHAINS).find(
-      (item) => item.serverId === chainServerId
-    );
+    return Object.values(CHAINS).find(item => item.serverId === chainServerId);
   }, [chainServerId]);
   if (!chain) return null;
   return (
-    <span className="flex items-center">
-      on {chain.name} <img src={chain.logo} className="ml-4 w-14 h-14" />
-    </span>
+    <View className="flex items-center">
+      <Text>on {chain.name} </Text>
+      <Image
+        source={{
+          uri: chain.logo,
+        }}
+        className="ml-4 w-14 h-14"
+      />
+    </View>
   );
 };
 
 const Interacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className="flex">
+    <Text className="flex">
       {value ? (
         <>
-          <img src={IconInteracted} className="mr-4 w-14" />{' '}
-          {t('page.signTx.interacted')}
+          <IconInteracted className="mr-4 w-14" />{' '}
+          <Text>{t('page.signTx.interacted')}</Text>
         </>
       ) : (
         <>
-          <img src={IconNotInteracted} className="mr-4 w-14" />{' '}
-          {t('page.signTx.neverInteracted')}
+          <IconNotInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.neverInteracted')}</Text>
         </>
       )}
-    </span>
+    </Text>
   );
 };
 
 const Transacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   return (
-    <span className="flex">
+    <View className="flex">
       {value ? (
         <>
-          <img src={IconInteracted} className="mr-4 w-14" />{' '}
-          {t('page.signTx.transacted')}
+          <IconInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.transacted')}</Text>
         </>
       ) : (
         <>
-          <img src={IconNotInteracted} className="mr-4 w-14" />{' '}
-          {t('page.signTx.neverTransacted')}
+          <IconNotInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.neverTransacted')}</Text>
         </>
       )}
-    </span>
+    </View>
   );
 };
 
 const TokenSymbol = ({ token }: { token: TokenItem }) => {
-  const dispatch = useRabbyDispatch();
   const handleClickTokenSymbol = () => {
-    dispatch.sign.openTokenDetailPopup(token);
+    // TODO
+    // dispatch.sign.openTokenDetailPopup(token);
   };
   return (
-    <span
+    <Text
       className="hover:underline cursor-pointer"
-      onClick={handleClickTokenSymbol}
-      title={getTokenSymbol(token)}
-    >
+      onPress={handleClickTokenSymbol}>
       {ellipsisTokenSymbol(getTokenSymbol(token))}
-    </span>
+    </Text>
   );
 };
 
 const KnownAddress = ({ address }: { address: string }) => {
-  const wallet = useWallet();
   const [hasAddress, setHasAddress] = useState(false);
   const [inWhitelist, setInWhitelist] = useState(false);
+  const { whitelist } = useWhitelist();
   const { t } = useTranslation();
 
   const handleAddressChange = async (addr: string) => {
-    const res = await wallet.hasAddress(addr);
-    const whitelist = await wallet.getWhitelist();
-    setInWhitelist(!!whitelist.find((item) => isSameAddress(item, addr)));
+    const res = await keyringService.hasAddress(addr);
+    setInWhitelist(!!whitelist.find(item => isSameAddress(item, addr)));
     setHasAddress(res);
   };
 
@@ -449,11 +393,11 @@ const KnownAddress = ({ address }: { address: string }) => {
   if (!hasAddress) return null;
 
   return (
-    <span className="text-13">
+    <Text className="text-13">
       {inWhitelist
         ? t('page.connect.onYourWhitelist')
         : t('page.signTx.importedAddress')}
-    </span>
+    </Text>
   );
 };
 
@@ -461,7 +405,7 @@ export {
   Boolean,
   TokenAmount,
   Percentage,
-  AddressMemo,
+  // AddressMemo,
   AddressMark,
   USDValue,
   TimeSpan,
@@ -469,7 +413,7 @@ export {
   Protocol,
   TokenLabel,
   Address,
-  Text,
+  TextValue,
   DisplayChain,
   Interacted,
   Transacted,
