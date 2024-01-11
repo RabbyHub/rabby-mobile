@@ -104,36 +104,22 @@ RPCMethodsMiddleParameters) =>
       eth_getTransactionByHash: async () => {},
       eth_getTransactionByBlockHashAndIndex: async () => {},
       eth_getTransactionByBlockNumberAndIndex: async () => {},
-      eth_chainId: async () => {
-        res.result = '0x1';
-      },
-      eth_hashrate: () => {
-        res.result = '0x00';
-      },
+      // eth_hashrate: () => {
+      //   res.result = '0x00';
+      // },
       eth_mining: () => {
         res.result = false;
       },
       net_listening: () => {
         res.result = true;
       },
-      net_version: async () => {
-        // setTimeout(() => {
-        //   sessionService.broadcastEvent(BroadcastEvent.chainChanged, {
-        //     chainId: '0x6',
-        //     networkVersion: '6',
-        //   });
-        //   console.log('chainChanged');
-        // }, 5000);
-        res.result = 1;
-      },
-      eth_accounts: getEthAccounts,
-      eth_coinbase: getEthAccounts,
+      // TODO: if useless, delete it
       parity_defaultAccount: getEthAccounts,
       eth_sendTransaction: async () => {},
       eth_signTransaction: async () => {},
-      eth_sign: async () => {},
+      // eth_sign: async () => {},
 
-      personal_sign: async () => {},
+      // personal_sign: async () => {},
 
       personal_ecRecover: () => {
         const data = req.params?.[0];

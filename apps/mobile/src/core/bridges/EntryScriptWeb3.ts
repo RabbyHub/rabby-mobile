@@ -11,7 +11,7 @@ const EntryScriptWeb3 = {
             `${RNFS.MainBundlePath}/InpageBridgeWeb3.js`,
             'utf8',
           )
-        : await RNFS.readFileAssets('InpageBridgeWeb3.js');
+        : await RNFS.readFileAssets('custom/InpageBridgeWeb3.js');
 
     return this.entryScriptWeb3;
   },

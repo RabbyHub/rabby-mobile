@@ -3,7 +3,8 @@ import {
   setNativeExceptionHandler,
 } from 'react-native-exception-handler';
 setJSExceptionHandler((error, isFatal) => {
-  console.debug('setJSExceptionHandler:: error', error);
+  console.debug('setJSExceptionHandler:: error');
+  console.log(error);
 }, true);
 
 setNativeExceptionHandler(
@@ -20,7 +21,8 @@ setNativeExceptionHandler(
 
 ErrorUtils.setGlobalHandler((error, isFatal) => {
   if (__DEV__) {
-    console.debug('setGlobalHandler:: error', error);
+    console.debug('setGlobalHandler:: error');
+    console.log(error);
   }
 
   if (isFatal) {

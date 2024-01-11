@@ -12,6 +12,8 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { keyringService } from '.';
 import { KeyringAccountWithAlias } from '@/hooks/account';
+import { sessionService } from './session';
+import { BroadcastEvent } from '@/constant/event';
 
 const { isSameAddress } = addressUtils;
 
@@ -194,9 +196,9 @@ export class PreferenceService {
   setCurrentAccount = (account: Account | null) => {
     this.store.currentAccount = account;
     if (account) {
-      // sessionService.broadcastEvent('accountsChanged', [
-      //   account.address.toLowerCase(),
-      // ]);
+      sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
+        account.address.toLowerCase(),
+      ]);
       // syncStateToUI(BROADCAST_TO_UI_EVENTS.accountsChanged, account);
     }
   };

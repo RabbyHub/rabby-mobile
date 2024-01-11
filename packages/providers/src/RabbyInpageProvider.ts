@@ -89,7 +89,9 @@ export class RabbyInpageProvider extends AbstractStreamProvider {
   /**
    * Indicating that this provider is a Rabby provider.
    */
-  public readonly isRabby: true;
+  public readonly isRabby: true = true;
+  public readonly _isRabby: true = true;
+  public readonly isMetaMask: true = true;
 
   /**
    * Creates a new `RabbyInpageProvider`.
@@ -127,7 +129,6 @@ export class RabbyInpageProvider extends AbstractStreamProvider {
     this._initializeStateAsync();
 
     this.#networkVersion = null;
-    this.isRabby = true;
 
     this._sendSync = this._sendSync.bind(this);
     this.enable = this.enable.bind(this);

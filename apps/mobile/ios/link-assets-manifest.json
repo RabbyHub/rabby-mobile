@@ -4,6 +4,10 @@
     {
       "path": "assets/fonts/Anton-Regular.ttf",
       "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
+    },
+    {
+      "path": "assets/custom/InpageBridgeWeb3.js",
+      "sha1": "ae430ba9e1c7f496ac655fb65118d4b22cd567b1"
     }
   ]
 }

@@ -14,11 +14,13 @@
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
+    "link-assets": "react-native-asset",
     "restart": "yarn start --reset-cache",
     "build:deps": "yarn ../../ build",
-    "start": "yarn build:deps && react-native start",
+    "start": "yarn build:deps && yarn build-inpage && react-native start",
     "test": "jest",
-    "postinstall": "sh ./scripts/postinstall.sh"
+    "build-inpage": "sh ./scripts/postinstall.sh",
+    "postinstall": "yarn build-inpage && yarn link-assets"
   },
   "lint-staged": {
     "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
@@ -146,6 +148,7 @@
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
     "react-devtools": "^4.28.5",
+    "react-native-asset": "^2.1.1",
     "react-native-svg-transformer": "^1.1.0",
     "react-test-renderer": "18.2.0",
     "reflect-metadata": "0.1.13",
