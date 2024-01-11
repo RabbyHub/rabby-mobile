@@ -17,6 +17,7 @@ export const SwipeableDappCard = ({
   onRemovePress,
   onDisconnectPress,
   style,
+  isActive,
 }: {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
@@ -24,9 +25,13 @@ export const SwipeableDappCard = ({
   onFavoritePress?: (dapp: DappInfo) => void;
   onRemovePress?: (dapp: DappInfo) => void;
   onDisconnectPress?: (dapp: DappInfo) => void;
+  isActive?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  const isConnected = !!data?.isConnected;
+
   const renderRightActions = React.useCallback(
     (
       progress: Animated.AnimatedInterpolation<number>,
@@ -40,19 +45,28 @@ export const SwipeableDappCard = ({
       });
 
       return (
-        <Animated.View style={[styles.actionContainer]}>
-          <Animated.View
-            style={{
-              transform: [{ translateX: trans[0] }],
-            }}>
-            <RectButton
-              style={[styles.action, styles.actionDisconnect]}
-              onPress={() => {
-                onDisconnectPress?.(data);
+        <Animated.View
+          style={[
+            styles.actionContainer,
+            // eslint-disable-next-line react-native/no-inline-styles
+            {
+              width: isConnected ? 128 : 64,
+            },
+          ]}>
+          {isConnected ? (
+            <Animated.View
+              style={{
+                transform: [{ translateX: trans[0] }],
               }}>
-              <RcIconDisconnect />
-            </RectButton>
-          </Animated.View>
+              <RectButton
+                style={[styles.action, styles.actionDisconnect]}
+                onPress={() => {
+                  onDisconnectPress?.(data);
+                }}>
+                <RcIconDisconnect />
+              </RectButton>
+            </Animated.View>
+          ) : null}
           <Animated.View
             style={{
               transform: [{ translateX: trans[1] }],
@@ -70,6 +84,7 @@ export const SwipeableDappCard = ({
     },
     [
       data,
+      isConnected,
       onDisconnectPress,
       onRemovePress,
       styles.action,
@@ -90,6 +105,7 @@ export const SwipeableDappCard = ({
         onFavoritePress={onFavoritePress}
         onPress={onPress}
         style={[styles.cardStyle, style]}
+        isActive={isActive}
       />
     </Swipeable>
   );

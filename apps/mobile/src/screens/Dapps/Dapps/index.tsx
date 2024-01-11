@@ -1,20 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import React, { useMemo } from 'react';
 
-import { StyleSheet, View, ScrollView, Text } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeColors } from '@/hooks/theme';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { DappCardList } from './components/DappCardList';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import TouchableItem from '@/components/Touchable/TouchableItem';
-import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useThemeColors } from '@/hooks/theme';
+import { navigate } from '@/utils/navigation';
+import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { DappCardList } from './components/DappCardList';
 // import { useRequest } from 'ahooks';
-import { dappService } from '@/core/services';
-import { DappInfo } from '@rabby-wallet/service-dapp';
-import { useDapps } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
+import { useDapps } from '@/hooks/useDapps';
 import {
   useActiveDappView,
   useActiveDappViewSheetModalRefs,
@@ -49,11 +47,28 @@ export function DappsScreen(): JSX.Element {
     });
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
-  const { dappSections, updateFavorite, removeDapp, disconnectDapp, getDapps } =
+  const { updateFavorite, removeDapp, disconnectDapp, getDapps, favoriteApps } =
     useDapps();
-  const { setActiveDapp } = useActiveDappView();
+  const { setActiveDapp, activeDapp } = useActiveDappView();
   const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
-  // todo refresh dapps when webview close
+  const dappSections = useMemo(() => {
+    return [
+      {
+        title: '',
+        data: activeDapp ? [activeDapp] : [],
+        type: 'active',
+      },
+
+      {
+        title: 'Favorites',
+        data: favoriteApps,
+      },
+    ].filter(item => item.data.length);
+  }, [activeDapp, favoriteApps]);
+
+  // useEffect(() => {
+  //   getDapps();
+  // }, [activeDapp, getDapps]);
 
   return (
     <NormalScreenContainer style={styles.page}>
