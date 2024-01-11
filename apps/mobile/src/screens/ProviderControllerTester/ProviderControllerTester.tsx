@@ -70,6 +70,7 @@ function StyledButton({
     color: colors['neutral-title-2'],
     margin: 5,
     padding: 10,
+    height: 50,
   };
   return (
     <Button

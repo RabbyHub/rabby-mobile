@@ -8,6 +8,7 @@ export default function RootScreenContainer({
   children,
   style,
   fitStatuBar,
+  hideBottomBar,
 }: React.PropsWithChildren<{
   fitStatuBar?: boolean;
   style?: React.ComponentProps<typeof View>['style'];
@@ -20,9 +21,9 @@ export default function RootScreenContainer({
       style={[
         style,
         fitStatuBar && { marginTop: -1 },
+        !hideBottomBar && { paddingBottom: ScreenLayouts.bottomBarHeight },
         {
           paddingTop: top + ScreenLayouts.headerAreaHeight,
-          paddingBottom: ScreenLayouts.bottomBarHeight,
           flexDirection: 'column',
           height: '100%',
         },

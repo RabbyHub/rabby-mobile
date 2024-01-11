@@ -85,7 +85,7 @@ export const ImportSuccessScreen = () => {
   }, [fetchAccounts]);
 
   return (
-    <RootScreenContainer style={styles.rootContainer}>
+    <RootScreenContainer hideBottomBar style={styles.rootContainer}>
       <KeyboardAwareScrollView style={styles.keyboardView}>
         <View style={styles.titleContainer}>
           <ImportSuccessSVG style={styles.logo} />

@@ -52,7 +52,7 @@ export class DappService {
     this.store.dapps = { ...this.store.dapps };
   }
 
-  getDapp(dappOrigin: string) {
+  getDapp(dappOrigin: string): DappInfo | undefined {
     return this.store.dapps[dappOrigin];
   }
 
@@ -62,7 +62,7 @@ export class DappService {
 
   getConnectedDapp(dappOrigin: string) {
     const dapp = this.getDapp(dappOrigin);
-    if (dapp.isConnected) {
+    if (dapp?.isConnected) {
       return dapp;
     }
     return null;
