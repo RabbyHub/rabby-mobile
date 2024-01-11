@@ -1,3 +1,4 @@
+import { View, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React from 'react';
@@ -25,24 +26,24 @@ export const SecurityListItem: React.FC<Props> = ({
   if (!engineResult) {
     if (defaultText) {
       return (
-        <li>
-          <span>{defaultText}</span>
-        </li>
+        <View>
+          <Text>{defaultText}</Text>
+        </View>
       );
     }
     return null;
   }
 
   return (
-    <li className="text-13 leading-[15px]">
-      <span>
+    <View className="text-13 leading-[15px]">
+      <Text>
         {engineResult.level === Level.DANGER && dangerText}
         {engineResult.level === Level.WARNING && warningText}
         {engineResult.level === Level.SAFE && safeText}
         {engineResult.level === Level.FORBIDDEN && forbiddenText}
-      </span>
+      </Text>
 
       <SecurityListItemTag id={id} engineResult={engineResult} />
-    </li>
+    </View>
   );
 };

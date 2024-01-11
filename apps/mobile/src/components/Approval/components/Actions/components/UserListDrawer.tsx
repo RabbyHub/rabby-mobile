@@ -1,76 +1,75 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
-import styled, { createGlobalStyle } from 'styled-components';
-import { Popup, Checkbox } from 'ui/component';
-import { Chain } from 'background/service/openapi';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
+import { Radio } from '@/components/Radio';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Chain } from '@debank/common';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
-const Footer = styled.div`
-  background: #f5f6fa;
-  border-radius: 6px;
-  .item {
-    display: flex;
-    cursor: pointer;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 15px;
-    color: #13141a;
-    position: relative;
-    border: 1px solid transparent;
-    .rabby-checkbox__wrapper {
-      .rabby-checkbox {
-        border: 1px solid var(--r-neutral-line);
-        background-color: var(--r-neutral-foot) !important;
-      }
-      &.checked {
-        .rabby-checkbox {
-          background-color: var(--r-blue-default, #7084ff) !important;
-          border: none;
-        }
-      }
-    }
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 18px;
-      width: 328px;
-      height: 1px;
-      background-color: #e5e9ef;
-    }
-    &:hover {
-      background: var(--r-blue-light-1, #eef1ff);
-      border: 1px solid var(--r-blue-default, #7084ff);
-      border-radius: 6px;
-    }
-    &:nth-last-child(1) {
-      &::after {
-        display: none;
-      }
-    }
-  }
-`;
-
-const GlobalStyle = createGlobalStyle`
-  .user-list-drawer {
-    .ant-drawer-title {
-      text-align: left;
-      font-weight: 700;
-      font-size: 15px;
-      line-height: 18px;
-      color: #13141A;
-    }
-  }
-`;
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+    footer: {
+      backgroundColor: '#f5f6fa',
+      borderRadius: 6,
+    },
+    item: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      fontWeight: '500',
+      fontSize: 13,
+      lineHeight: 15,
+      color: '#13141a',
+      position: 'relative',
+      borderBottomWidth: 1,
+      borderBottomColor: '#e5e9ef',
+    },
+    checkboxWrapper: {
+      borderWidth: 1,
+      borderColor: colors['neutral-line'], // Default color if --r-neutral-line is not available
+      backgroundColor: colors['neutral-foot'], // Default color if --r-neutral-foot is not available
+    },
+    checked: {
+      backgroundColor: colors['blue-default'], // Default color if --r-blue-default is not available
+      borderWidth: 0,
+    },
+    afterLine: {
+      position: 'absolute',
+      bottom: 0,
+      left: 18,
+      width: 328,
+      height: 1,
+      backgroundColor: '#e5e9ef',
+    },
+    hover: {
+      backgroundColor: colors['blue-light-1'], // Default color if --r-blue-light-1 is not available
+      borderWidth: 1,
+      borderColor: colors['blue-default'], // Default color if --r-blue-default is not available
+      borderRadius: 6,
+    },
+    lastChild: {
+      borderBottomWidth: 0,
+    },
+  });
 
 interface Props {
   address: string;
   chain: Chain;
   onWhitelist: boolean;
   onBlacklist: boolean;
+  visible: boolean;
+  onClose(): void;
   onChange({
     onWhitelist,
     onBlacklist,
@@ -86,98 +85,98 @@ const UserListDrawer = ({
   onWhitelist,
   onBlacklist,
   onChange,
+  visible,
+  onClose,
 }: Props) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
+  React.useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
   return (
-    <div>
-      <GlobalStyle />
-      <Footer>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: false, onWhitelist: false })}
-        >
-          <div>{t('page.signTx.noMark')}</div>
-          <div>
-            <Checkbox
-              checked={!onWhitelist && !onBlacklist}
-              onChange={() =>
-                onChange({ onBlacklist: false, onWhitelist: false })
-              }
-            />
-          </div>
-        </div>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: false, onWhitelist: true })}
-        >
-          <div className="text-green">{t('page.signTx.trusted')}</div>
-          <div>
-            <Checkbox
-              checked={onWhitelist}
-              onChange={() =>
-                onChange({ onBlacklist: false, onWhitelist: true })
-              }
-            />
-          </div>
-        </div>
-        <div
-          className="item"
-          onClick={() => onChange({ onBlacklist: true, onWhitelist: false })}
-        >
-          <div className="text-red">{t('page.signTx.blocked')}</div>
-          <div>
-            <Checkbox
-              checked={onBlacklist}
-              onChange={() =>
-                onChange({ onBlacklist: true, onWhitelist: false })
-              }
-            />
-          </div>
-        </div>
-      </Footer>
-    </div>
+    <AppBottomSheetModal
+      ref={modalRef}
+      onDismiss={onClose}
+      snapPoints={['45%']}>
+      <BottomSheetView style={styles.mainView}>
+        <AppBottomSheetModalTitle
+          title={t('page.signTx.myMarkWithContract', {
+            chainName: chain.name,
+          })}
+        />
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() =>
+              onChange({ onBlacklist: false, onWhitelist: false })
+            }>
+            <View>
+              <Radio
+                // eslint-disable-next-line react-native/no-inline-styles
+                textStyle={{
+                  color: colors['neutral-title-1'],
+                  flex: 1,
+                }}
+                right
+                iconRight
+                title={t('page.signTx.noMark')}
+                checked={!onWhitelist && !onBlacklist}
+                onPress={() =>
+                  onChange({ onBlacklist: false, onWhitelist: false })
+                }
+              />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => onChange({ onBlacklist: false, onWhitelist: true })}>
+            <View>
+              <Radio
+                // eslint-disable-next-line react-native/no-inline-styles
+                textStyle={{
+                  color: colors['green-default'],
+                  flex: 1,
+                }}
+                right
+                iconRight
+                title={t('page.signTx.trusted')}
+                checked={!onWhitelist && !onBlacklist}
+                onPress={() =>
+                  onChange({ onBlacklist: false, onWhitelist: true })
+                }
+              />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => onChange({ onBlacklist: true, onWhitelist: false })}>
+            <View>
+              <Radio
+                // eslint-disable-next-line react-native/no-inline-styles
+                textStyle={{
+                  color: colors['red-default'],
+                  flex: 1,
+                }}
+                right
+                iconRight
+                title={t('page.signTx.blocked')}
+                checked={!onWhitelist && !onBlacklist}
+                onPress={() =>
+                  onChange({ onBlacklist: true, onWhitelist: false })
+                }
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
   );
 };
 
-export default ({
-  address,
-  chain,
-  onWhitelist,
-  onBlacklist,
-  onChange,
-}: {
-  address: string;
-  chain: Chain;
-  onWhitelist: boolean;
-  onBlacklist: boolean;
-  onChange({
-    onWhitelist,
-    onBlacklist,
-  }: {
-    onWhitelist: boolean;
-    onBlacklist: boolean;
-  }): void;
-}) => {
-  const { destroy } = Popup.info({
-    content: (
-      <UserListDrawer
-        address={address}
-        chain={chain}
-        onWhitelist={onWhitelist}
-        onBlacklist={onBlacklist}
-        onChange={(res) => {
-          onChange(res);
-          destroy();
-        }}
-      />
-    ),
-    height: 240,
-    closable: true,
-    title: i18n.t('page.signTx.myMarkWithContract', {
-      chainName: chain.name,
-    }),
-    className: 'user-list-drawer',
-    onClose: () => destroy(),
-    onCancel: () => destroy(),
-  });
-};
+export default UserListDrawer;

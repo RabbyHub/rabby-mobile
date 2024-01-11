@@ -4,21 +4,22 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
 import { Chain, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components/Toast';
-import AddressMemo from './AddressMemo';
-import userDataDrawer from './UserListDrawer';
+// import AddressMemo from './AddressMemo';
+import UserListDrawer from './UserListDrawer';
 import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import LogoWithText from './LogoWithText';
-import { ellipsis, isSameAddress } from '@/utils/address';
+import { ellipsis } from '@/utils/address';
+import { addressUtils } from '@rabby-wallet/base-utils';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
-import IconEdit from 'ui/assets/editpen.svg';
-import IconScam from 'ui/assets/sign/tx/token-scam.svg';
-import IconFake from 'ui/assets/sign/tx/token-fake.svg';
-import IconAddressCopy from 'ui/assets/icon-copy-2.svg';
-import IconExternal from 'ui/assets/icon-share.svg';
-import IconInteracted from 'ui/assets/sign/tx/interacted.svg';
-import IconNotInteracted from 'ui/assets/sign/tx/not-interacted.svg';
+import IconEdit from '@/assets/icons/approval/editpen.svg';
+import IconScam from '@/assets/icons/sign/tx/token-scam.svg';
+import IconFake from '@/assets/icons/sign/tx/token-fake.svg';
+import IconAddressCopy from '@/assets/icons/sign/icon-copy-2.svg';
+import IconExternal from '@/assets/icons/sign/icon-share.svg';
+import IconInteracted from '@/assets/icons/sign/tx/interacted.svg';
+import IconNotInteracted from '@/assets/icons/sign/tx/not-interacted.svg';
 import AccountAlias from './AccountAlias';
 import {
   addContractWhitelist,
@@ -32,6 +33,9 @@ import {
 } from '@/core/apis/securityEngine';
 import { useWhitelist } from '@/hooks/whitelist';
 import { keyringService } from '@/core/services';
+import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
+
+const { isSameAddress } = addressUtils;
 
 const Boolean = ({ value }: { value: boolean }) => {
   return <>{value ? 'Yes' : 'No'}</>;
@@ -56,11 +60,11 @@ const styles = StyleSheet.create({
 });
 
 const TokenAmount = ({ value }: { value: string | number }) => {
-  return <View style={styles.tokenAmountWrapper}>{formatAmount(value)}</View>;
+  return <Text style={styles.tokenAmountWrapper}>{formatAmount(value)}</Text>;
 };
 
 const Percentage = ({ value }: { value: number }) => {
-  return <>{(value * 100).toFixed(2)}%</>;
+  return <Text>{(value * 100).toFixed(2)}%</Text>;
 };
 
 const USDValue = ({ value }: { value: number | string }) => {
@@ -89,7 +93,7 @@ const TimeSpan = ({
     }
     return '1 minute ago';
   }, [value, to]);
-  return <>{timeSpan}</>;
+  return <Text>{timeSpan}</Text>;
 };
 
 const TimeSpanFuture = ({
@@ -113,7 +117,7 @@ const TimeSpanFuture = ({
     }
     return '1 minute';
   }, [from, to]);
-  return <>{timeSpan}</>;
+  return <Text>{timeSpan}</Text>;
 };
 
 const AddressMark = ({
@@ -133,71 +137,82 @@ const AddressMark = ({
 }) => {
   const chainId = chain.serverId;
   const { t } = useTranslation();
+  const { init } = useApprovalSecurityEngine();
+  const [visible, setVisible] = React.useState(false);
   const handleEditMark = () => {
-    userDataDrawer({
-      address: address,
-      chain,
-      onWhitelist,
-      onBlacklist,
-      async onChange(data) {
-        if (data.onWhitelist && !onWhitelist) {
-          if (isContract && chainId) {
-            await addContractWhitelist({
-              address,
-              chainId,
-            });
-          } else {
-            await addAddressWhitelist(address);
-          }
-          toast.success('Mark as "Trusted"');
-        }
-        if (data.onBlacklist && !onBlacklist) {
-          if (isContract && chainId) {
-            await addContractBlacklist({
-              address,
-              chainId,
-            });
-          } else {
-            await addAddressBlacklist(address);
-          }
-          toast.success('Mark as "Blocked"');
-        }
-        if (
-          !data.onBlacklist &&
-          !data.onWhitelist &&
-          (onBlacklist || onWhitelist)
-        ) {
-          if (isContract && chainId) {
-            await removeContractBlacklist({
-              address,
-              chainId,
-            });
-            await removeContractWhitelist({
-              address,
-              chainId,
-            });
-          } else {
-            await removeAddressBlacklist(address);
-            await removeAddressWhitelist(address);
-          }
-          toast.success(t('page.signTx.markRemoved'));
-        }
-        dispatch.securityEngine.init();
-        onChange();
-      },
-    });
+    setVisible(true);
+  };
+  const handleChange = async (data: {
+    onWhitelist: boolean;
+    onBlacklist: boolean;
+  }) => {
+    if (data.onWhitelist && !onWhitelist) {
+      if (isContract && chainId) {
+        addContractWhitelist({
+          address,
+          chainId,
+        });
+      } else {
+        addAddressWhitelist(address);
+      }
+      toast.success('Mark as "Trusted"');
+    }
+    if (data.onBlacklist && !onBlacklist) {
+      if (isContract && chainId) {
+        addContractBlacklist({
+          address,
+          chainId,
+        });
+      } else {
+        addAddressBlacklist(address);
+      }
+      toast.success('Mark as "Blocked"');
+    }
+    if (
+      !data.onBlacklist &&
+      !data.onWhitelist &&
+      (onBlacklist || onWhitelist)
+    ) {
+      if (isContract && chainId) {
+        removeContractBlacklist({
+          address,
+          chainId,
+        });
+        removeContractWhitelist({
+          address,
+          chainId,
+        });
+      } else {
+        removeAddressBlacklist(address);
+        removeAddressWhitelist(address);
+      }
+      toast.success(t('page.signTx.markRemoved'));
+    }
+    init();
+    onChange();
   };
   return (
-    <TouchableOpacity onPress={handleEditMark}>
-      <View style={styles.addressMarkWrapper}>
-        <Text className="mr-6">
-          {onWhitelist && t('page.signTx.trusted')}
-          {onBlacklist && t('page.signTx.blocked')}
-          {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
-        </Text>
-        <IconEdit className="icon-edit-alias icon" />
-      </View>
-    </TouchableOpacity>
+    <View>
+      <TouchableOpacity onPress={handleEditMark}>
+        <View style={styles.addressMarkWrapper}>
+          <Text className="mr-6">
+            {onWhitelist && t('page.signTx.trusted')}
+            {onBlacklist && t('page.signTx.blocked')}
+            {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
+          </Text>
+          <IconEdit className="icon-edit-alias icon" />
+        </View>
+      </TouchableOpacity>
+      <UserListDrawer
+        address={address}
+        chain={chain}
+        onWhitelist={onWhitelist}
+        onBlacklist={onBlacklist}
+        onChange={handleChange}
+        visible={visible}
+        onClose={() => setVisible(false)}
+      />
+    </View>
   );
 };
 
@@ -234,7 +249,6 @@ const TokenLabel = ({
   isScam: boolean;
   isFake: boolean;
 }) => {
-  const { t } = useTranslation();
   return (
     <View className="flex gap-4 shrink-0 relative">
       {isFake && <IconFake className="w-12" />}
@@ -296,15 +310,15 @@ const DisplayChain = ({ chainServerId }: { chainServerId: string }) => {
   }, [chainServerId]);
   if (!chain) return null;
   return (
-    <Text className="flex items-center">
-      on {chain.name}{' '}
+    <View className="flex items-center">
+      <Text>on {chain.name} </Text>
       <Image
         source={{
           uri: chain.logo,
         }}
         className="ml-4 w-14 h-14"
       />
-    </Text>
+    </View>
   );
 };
 
@@ -314,12 +328,13 @@ const Interacted = ({ value }: { value: boolean }) => {
     <Text className="flex">
       {value ? (
         <>
-          <IconInteracted className="mr-4 w-14" /> {t('page.signTx.interacted')}
+          <IconInteracted className="mr-4 w-14" />{' '}
+          <Text>{t('page.signTx.interacted')}</Text>
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-4 w-14" />{' '}
-          {t('page.signTx.neverInteracted')}
+          <IconNotInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.neverInteracted')}</Text>
         </>
       )}
     </Text>
@@ -329,18 +344,19 @@ const Interacted = ({ value }: { value: boolean }) => {
 const Transacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   return (
-    <Text className="flex">
+    <View className="flex">
       {value ? (
         <>
-          <IconInteracted className="mr-4 w-14" /> {t('page.signTx.transacted')}
+          <IconInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.transacted')}</Text>
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-4 w-14" />{' '}
-          {t('page.signTx.neverTransacted')}
+          <IconNotInteracted className="mr-4 w-14" />
+          <Text>{t('page.signTx.neverTransacted')}</Text>
         </>
       )}
-    </Text>
+    </View>
   );
 };
 
@@ -389,7 +405,7 @@ export {
   Boolean,
   TokenAmount,
   Percentage,
-  AddressMemo,
+  // AddressMemo,
   AddressMark,
   USDValue,
   TimeSpan,

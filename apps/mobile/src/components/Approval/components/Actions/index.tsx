@@ -1,10 +1,10 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@debank/common';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import BalanceChange from '../TxComponents/BalanceChange';
+// import BalanceChange from '../TxComponents/BalanceChange';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 // import ViewRawModal from '../TxComponents/ViewRawModal';
@@ -42,10 +42,9 @@ import {
   getActionTypeText,
 } from './utils';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import IconSpeedUp from 'ui/assets/sign/tx/speedup.svg';
-import IconQuestionMark from 'ui/assets/sign/question-mark-24.svg';
-import IconRabbyDecoded from 'ui/assets/sign/rabby-decoded.svg';
-import clsx from 'clsx';
+import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
+import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -163,32 +162,37 @@ const Actions = ({
   return (
     <>
       <View style={styles.signTitle}>
-        <div className="left relative">
+        <View className="left relative">
           {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
-          {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
-        </div>
-        <div
-          className="float-right text-12 cursor-pointer flex items-center view-raw"
-          onClick={handleViewRawClick}>
-          {t('page.signTx.viewRaw')}
-          <RcIconArrowRight />
-        </div>
+          <Text>
+            {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={handleViewRawClick}>
+          <View className="float-right text-12 cursor-pointer flex items-center view-raw">
+            <Text>{t('page.signTx.viewRaw')}</Text>
+            <RcIconArrowRight />
+          </View>
+        </TouchableOpacity>
       </View>
       <View style={styles.actionWrapper}>
-        <div
-          className={clsx('action-header', {
-            'is-unknown': data.contractCall,
-          })}>
-          <div className="left">{actionName}</div>
-          <div className="right">
+        <View
+          style={{
+            ...styles.actionHeader,
+            ...(data.contractCall ? styles.isUnknown : {}),
+          }}>
+          <View>
+            <Text style={styles.left}>{actionName}</Text>
+          </View>
+          <View>
             {data.contractCall ? (
               <IconQuestionMark className="w-24" />
             ) : (
               <IconRabbyDecoded className="w-24" />
             )}
-          </div>
-        </div>
-        <div className="container">
+          </View>
+        </View>
+        <View style={styles.container}>
           {/* {data.swap && (
             <Swap
               data={data.swap}
@@ -334,12 +338,12 @@ const Actions = ({
               raw={raw}
             />
           )} */}
-        </div>
+        </View>
       </View>
-      <BalanceChange
+      {/* <BalanceChange
         version={txDetail.pre_exec_version}
         data={txDetail.balance_change}
-      />
+      /> */}
     </>
   );
 };

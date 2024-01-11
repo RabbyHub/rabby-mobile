@@ -1,15 +1,16 @@
-import { Image, View } from 'react-native';
+import { Image, View, Text, TextStyle } from 'react-native';
 import React, { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import IconUnknown from 'ui/assets/token-default.svg';
+import IconUnknown from '@/assets/icons/token/default.svg';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     wrapper: {
       display: 'flex',
       alignItems: 'center',
+      flexDirection: 'row',
     },
     logo: {
       width: 16,
@@ -41,7 +42,7 @@ const LogoWithText = ({
   icon?: ReactNode;
   logoRadius?: number;
   logoSize?: number;
-  textStyle?: React.CSSProperties;
+  textStyle?: TextStyle;
   className?: string;
 }) => {
   const colors = useThemeColors();
@@ -72,13 +73,13 @@ const LogoWithText = ({
           }}
         />
       )}
-      <div
+      <Text
         style={{
           ...styles.text,
           ...textStyle,
         }}>
         {text}
-      </div>
+      </Text>
       {icon || null}
     </View>
   );

@@ -9,7 +9,3 @@ export const enum AddressType {
   CONTRACT = 'CONTRACT',
   UNKNOWN = 'UNKNOWN',
 }
-
-export const isSameAddress = (a: string, b: string) => {
-  return a.toLowerCase() === b.toLowerCase();
-};

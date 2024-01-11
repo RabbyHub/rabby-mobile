@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import LogoWithText from './components/LogoWithText';
-import ViewMore from './components/ViewMore';
+// import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 
@@ -45,40 +45,44 @@ const Send = ({
     <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.send.sendToken')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.send.sendToken')}</Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
               text={
                 <>
-                  {formatTokenAmount(actionData.token.amount)}{' '}
+                  <Text>{formatTokenAmount(actionData.token.amount)} </Text>
                   <Values.TokenSymbol token={actionData.token} />
                 </>
               }
               logoRadius={16}
             />
-            <ul className="desc-list">
-              <li>
+            <View className="desc-list">
+              <Text>
                 ≈
                 {formatUsdValue(
                   new BigNumber(actionData.token.price)
                     .times(actionData.token.amount)
                     .toFixed(),
                 )}
-              </li>
-            </ul>
+              </Text>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.send.sendTo')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.send.sendTo')}</Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={actionData.to} chain={chain} />
-              <ul className="desc-list">
-                <li>
+              <View className="desc-list">
+                {/* <View>
                   <Values.AddressMemo address={actionData.to} />
-                </li>
-                {requireData.name && <li>{requireData.name}</li>}
+                </View> */}
+                {requireData.name && <Text>{requireData.name}</Text>}
                 <SecurityListItem
                   engineResult={engineResultMap['1016']}
                   dangerText={t('page.signTx.send.receiverIsTokenAddress')}
@@ -91,7 +95,7 @@ const Send = ({
                 />
                 {requireData.cex && (
                   <>
-                    <li>
+                    <View>
                       <LogoWithText
                         logo={requireData.cex.logo}
                         text={requireData.cex.name}
@@ -103,7 +107,7 @@ const Send = ({
                           fontWeight: 'normal',
                         }}
                       />
-                    </li>
+                    </View>
                     <SecurityListItem
                       engineResult={engineResultMap['1021']}
                       dangerText={t('page.signTx.send.notTopupAddress')}
@@ -128,8 +132,8 @@ const Send = ({
                   safeText={t('page.signTx.send.onMyWhitelist')}
                   id="1033"
                 />
-                <li>
-                  <ViewMore
+                <View>
+                  {/* <ViewMore
                     type="receiver"
                     data={{
                       token: actionData.token,
@@ -144,10 +148,10 @@ const Send = ({
                       name: requireData.name,
                       onTransferWhitelist: requireData.onTransferWhitelist,
                     }}
-                  />
-                </li>
-              </ul>
-            </div>
+                  /> */}
+                </View>
+              </View>
+            </View>
           </Row>
         </Col>
       </Table>
