@@ -15,6 +15,7 @@
 		519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */; };
 		7699B88040F8A987B510C191 /* libPods-RabbyMobile-RabbyMobileTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-RabbyMobile-RabbyMobileTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		12BAE8EB566B4061B104821D /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = DD83B92F20BF483CBC0A993E /* InpageBridgeWeb3.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		DD83B92F20BF483CBC0A993E /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */,
+				DD83B92F20BF483CBC0A993E /* InpageBridgeWeb3.js */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -256,6 +259,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */,
+				12BAE8EB566B4061B104821D /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

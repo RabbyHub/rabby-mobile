@@ -1,14 +1,16 @@
+import React from 'react';
 import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
-import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { CreateParams, EVENT_NAMES, MODAL_NAMES } from './types';
 import { useGlobalBottomSheetModalStyle } from './useGlobalBottomSheetModalStyle';
+
 import {
   APPROVAL_SNAP_POINTS,
   events,
+  makeBottomSheetProps,
   MODAL_VIEWS,
   SNAP_POINTS,
 } from './utils';
@@ -103,6 +105,7 @@ export const GlobalBottomSheetModal = () => {
   }, [handleCreate, handlePresent, handleRemove]);
 
   const height = useSafeAreaInsets();
+
   return (
     <View>
       {modals.map(modal => (
@@ -117,6 +120,10 @@ export const GlobalBottomSheetModal = () => {
           children={MODAL_VIEWS[modal.params.name]}
           snapPoints={modal.snapPoints}
           stackBehavior="push"
+          {...makeBottomSheetProps({
+            params: modal.params,
+            colors,
+          })}
         />
       ))}
     </View>

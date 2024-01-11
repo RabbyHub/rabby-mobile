@@ -11,6 +11,9 @@ import { SwitchAddress } from '../CommonPopup/SwitchAddress';
 import { SwitchChain } from '../CommonPopup/SwitchChain';
 import { CancelConnect } from '../CommonPopup/CancelConnect';
 import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
+import { AppBottomSheetModal } from '../customized/BottomSheet';
+
+import type { ThemeColors } from '@/constant/theme';
 
 export const events = new EventEmitter();
 
@@ -65,3 +68,22 @@ export const globalBottomSheetModalAddListener = (
 export const presentGlobalBottomSheetModal = (key: string) => {
   events.emit(EVENT_NAMES.PRESENT, key);
 };
+
+export function makeBottomSheetProps(ctx: {
+  params: CreateParams;
+  colors: (typeof ThemeColors)['light'];
+  prevProps?: any;
+}): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
+  if (ctx.params?.name === 'APPROVAL') {
+    return {
+      handleStyle: {
+        backgroundColor: ctx.colors['neutral-bg-2'],
+      },
+      handleIndicatorStyle: {
+        backgroundColor: ctx.colors['neutral-line'],
+      },
+    };
+  }
+
+  return {};
+}

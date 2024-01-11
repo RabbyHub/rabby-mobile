@@ -11,7 +11,7 @@ const ErrorFallback: React.ComponentType<FallbackProps> = ({
     <View style={[styles.container]}>
       <View>
         <Text> Something went wrong: </Text>
-        <Button title="try Again" onPress={resetErrorBoundary} />
+        <Button title="Try Again" onPress={resetErrorBoundary} />
       </View>
     </View>
   );
