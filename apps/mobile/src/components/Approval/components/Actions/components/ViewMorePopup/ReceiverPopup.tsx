@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
+import { View, Text } from 'react-native';
+import { Chain } from '@debank/common';
 import { ContractDesc, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import LogoWithText from '../LogoWithText';
-import { ellipsisTokenSymbol, getTokenSymbol } from '@/ui/utils/token';
+import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import { getStyle } from '../ViewMore';
+import { useThemeColors } from '@/hooks/theme';
 
 interface ReceiverData {
   address: string;
@@ -41,6 +44,8 @@ export interface ReceiverPopupProps extends Props {
 
 export const ReceiverPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
   const receiverType = useMemo(() => {
     if (data.contract) {
       return 'Contract';
@@ -72,80 +77,82 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
   }, [data]);
 
   return (
-    <div>
-      <div className="title">
-        {t('page.signTx.send.sendTo')}{' '}
+    <View>
+      <View style={styles.title}>
+        <Text>{t('page.signTx.send.sendTo')}</Text>
         <Values.Address
           address={data.address}
           chain={data.chain}
           iconWidth="14px"
         />
-      </div>
-      <Table className="view-more-table">
+      </View>
+      <Table style={styles.viewMoreTable}>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.addressNote')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.addressNote')}</Text>
           </Row>
           <Row>
             <Values.AddressMemo address={data.address} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.addressTypeTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.addressTypeTitle')}</Text>
           </Row>
           <Row>
-            <div>
-              {receiverType}
+            <View>
+              <Text>{receiverType}</Text>
               {((data.contract && !contractOnCurrentChain) ||
                 data.name ||
                 contractOnCurrentChain?.multisig) && (
-                <ul className="desc-list">
+                <View className="desc-list">
                   {contractOnCurrentChain &&
                     contractOnCurrentChain.multisig && (
-                      <li>MultiSig: {contractOnCurrentChain.multisig.name}</li>
+                      <Text>
+                        MultiSig: {contractOnCurrentChain.multisig.name}
+                      </Text>
                     )}
                   {data.contract && !contractOnCurrentChain && (
-                    <li>{t('page.signTx.send.notOnThisChain')}</li>
+                    <Text>{t('page.signTx.send.notOnThisChain')}</Text>
                   )}
-                  {data.name && <li>{data.name}</li>}
-                </ul>
+                  {data.name && <Text>{data.name}</Text>}
+                </View>
               )}
-            </div>
+            </View>
           </Row>
         </Col>
         {data.cex && (
           <Col>
-            <Row className="bg-r-neutral-card-3">
-              {t('page.signTx.send.cexAddress')}
+            <Row style={styles.firstRow}>
+              <Text>{t('page.signTx.send.cexAddress')}</Text>
             </Row>
             <Row>
-              <div>
+              <View>
                 <LogoWithText logo={data.cex.logo} text={data.cex.name} />
                 {(!data.cex.isDeposit || !data.cex.supportToken) && (
-                  <ul className="desc-list">
+                  <View className="desc-list">
                     {!data.cex.isDeposit && (
-                      <li>{t('page.signTx.send.notTopupAddress')}</li>
+                      <Text>{t('page.signTx.send.notTopupAddress')}</Text>
                     )}
                     {!data.cex.supportToken && (
-                      <li>
+                      <Text>
                         {t('page.signTx.send.tokenNotSupport', [
                           data.token
                             ? ellipsisTokenSymbol(getTokenSymbol(data.token))
                             : 'NFT',
                         ])}
-                      </li>
+                      </Text>
                     )}
-                  </ul>
+                  </View>
                 )}
-              </div>
+              </View>
             </Row>
           </Col>
         )}
         {data.isTokenContract && (
           <Col>
-            <Row className="bg-r-neutral-card-3">
-              {t('page.signTx.send.receiverIsTokenAddress')}
+            <Row style={styles.firstRow}>
+              <Text>{t('page.signTx.send.receiverIsTokenAddress')}</Text>
             </Row>
             <Row>
               <Values.Boolean value={data.isTokenContract} />
@@ -153,42 +160,49 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
           </Col>
         )}
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {data.contract
-              ? t('page.signTx.deployTimeTitle')
-              : t('page.signTx.firstOnChain')}
+          <Row style={styles.firstRow}>
+            <Text>
+              {data.contract
+                ? t('page.signTx.deployTimeTitle')
+                : t('page.signTx.firstOnChain')}
+            </Text>
           </Row>
           <Row>
             <Values.TimeSpan value={bornAt} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.send.addressBalanceTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.send.addressBalanceTitle')}</Text>
           </Row>
           <Row>
             <Values.USDValue value={data.usd_value} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.transacted')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.transacted')}</Text>
           </Row>
           <Row>
             <Values.Boolean value={data.hasTransfer} />
           </Row>
         </Col>
-        <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.send.whitelistTitle')}
+        <Col
+          style={{
+            borderBottomWidth: 0,
+          }}>
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.send.whitelistTitle')}</Text>
           </Row>
           <Row>
-            {data.onTransferWhitelist
-              ? t('page.signTx.send.onMyWhitelist')
-              : t('page.signTx.send.notOnWhitelist')}
+            <Text>
+              {data.onTransferWhitelist
+                ? t('page.signTx.send.onMyWhitelist')
+                : t('page.signTx.send.notOnWhitelist')}
+            </Text>
           </Row>
         </Col>
       </Table>
-    </div>
+    </View>
   );
 };

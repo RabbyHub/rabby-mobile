@@ -1,90 +1,120 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, Input } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
-import { Popup } from 'ui/component';
-import { useAlias } from '@/ui/utils';
-import IconEdit from 'ui/assets/editpen.svg';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { ButtonSheetInput } from '@/components/Input';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { Button } from '@/components/Button';
+import { useAlias } from '@/hooks/alias';
+import IconEdit from '@/assets/icons/approval/editpen.svg';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+  });
 
 const AddressMemo = ({ address }: { address: string }) => {
   const [addressAlias, updateAlias] = useAlias(address);
-  const inputRef = useRef<Input>(null);
-  const [form] = useForm();
+  const [visible, setVisible] = useState(false);
+  const [inputText, setInputText] = useState(addressAlias || '');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [canSubmit, setCanSubmit] = useState(false);
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
 
-  const updateAddressMemo = (
-    alias: string | undefined,
-    update: (memo: string) => void
-  ) => {
-    form.setFieldsValue({
-      memo: alias,
-    });
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
-    const { destroy } = Popup.info({
-      title: t('component.Contact.EditModal.title'),
-      isSupportDarkMode: true,
-      height: 215,
-      content: (
-        <div className="pt-[4px]">
-          <Form
-            form={form}
-            onFinish={async () => {
-              form
-                .validateFields()
-                .then((values) => {
-                  return update(values.memo);
-                })
-                .then(() => {
-                  destroy();
-                });
-            }}
-            initialValues={{
-              memo: alias,
-            }}
-          >
-            <Form.Item
-              name="memo"
-              className="h-[80px] mb-0"
-              rules={[{ required: true, message: 'Please input address note' }]}
-            >
-              <Input
-                ref={inputRef}
-                className="popup-input h-[48px]"
-                size="large"
-                placeholder="Please input address note"
-                autoFocus
-                allowClear
-                spellCheck={false}
-                autoComplete="off"
-                maxLength={50}
-              ></Input>
-            </Form.Item>
-            <div className="text-center">
-              <Button
-                type="primary"
-                size="large"
-                className="w-[200px]"
-                htmlType="submit"
-              >
-                {t('global.confirm')}
-              </Button>
-            </div>
-          </Form>
-        </div>
-      ),
-    });
+  const handleConfirm = () => {
+    if (!inputText) {
+      setErrorMessage('Please input address note');
+    }
+    updateAlias(inputText);
+    setVisible(false);
   };
 
+  const handleEditMemo = () => {
+    setVisible(true);
+  };
+
+  const handleTextChange = (text: string) => {
+    setInputText(text);
+  };
+
+  useEffect(() => {
+    setInputText(addressAlias || '');
+  }, [addressAlias]);
+
+  React.useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!inputText) {
+      setCanSubmit(false);
+    } else {
+      setCanSubmit(true);
+    }
+  }, [inputText]);
+
   return (
-    <div
-      className="inline-flex cursor-pointer"
-      onClick={() => updateAddressMemo(addressAlias, updateAlias)}
-    >
-      <span className="mr-6">{addressAlias || '-'}</span>
-      <img src={IconEdit} className="icon-edit-alias icon w-[13px]" />
-    </div>
+    <View>
+      <TouchableOpacity onPress={handleEditMemo}>
+        <View className="flex flex-row items-center">
+          <Text className="mr-6">{addressAlias || '-'}</Text>
+          <IconEdit className="w-[13px]" />
+        </View>
+      </TouchableOpacity>
+      <AppBottomSheetModal
+        ref={modalRef}
+        onDismiss={() => setVisible(false)}
+        snapPoints={['30%']}>
+        <BottomSheetView style={styles.mainView}>
+          <AppBottomSheetModalTitle
+            title={t('component.Contact.EditModal.title')}
+          />
+          <View className="pt-[4px]">
+            <ButtonSheetInput
+              onChangeText={handleTextChange}
+              maxLength={50}
+              autoFocus
+              value={inputText}
+              placeholder="Please input address note"
+            />
+            <Text className="mt-10 text-r-red-default">{errorMessage}</Text>
+            <View className="flex flex-row justify-center mt-40">
+              <Button
+                buttonStyle={{
+                  width: 200,
+                  backgroundColor: colors['blue-default'],
+                  height: 44,
+                  padding: 10,
+                }}
+                titleStyle={{
+                  color: '#fff',
+                  fontSize: 15,
+                }}
+                disabled={!canSubmit}
+                onPress={handleConfirm}
+                title={t('global.confirm')}
+              />
+            </View>
+          </View>
+        </BottomSheetView>
+      </AppBottomSheetModal>
+    </View>
   );
 };
 

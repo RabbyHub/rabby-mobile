@@ -10,6 +10,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderWidth: 0.5,
       borderColor: colors['neutral-line'], // Default color if --r-neutral-line is not available
       borderRadius: 8,
+      overflow: 'hidden',
     },
     colWrapper: {
       display: 'flex',
@@ -102,11 +103,21 @@ const Table = ({
   return <View style={{ ...styles.tableWrapper, ...style }}>{children}</View>;
 };
 
-const Col = ({ children }: { children: ReactNode }) => {
+const Col = ({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+}) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   return (
-    <View style={styles.colWrapper} className="col">
+    <View
+      style={{
+        ...styles.colWrapper,
+        ...(style || {}),
+      }}>
       {children}
     </View>
   );

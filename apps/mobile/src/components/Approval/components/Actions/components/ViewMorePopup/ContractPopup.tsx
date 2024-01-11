@@ -1,10 +1,15 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from 'background/service/openapi';
-import { useRabbySelector } from '@/ui/store';
-import { isSameAddress } from '@/ui/utils';
+import { Chain } from '@debank/common';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
+import { getStyle } from '../ViewMore';
+import { useThemeColors } from '@/hooks/theme';
+
+const { isSameAddress } = addressUtils;
 
 interface ContractData {
   address: string;
@@ -29,82 +34,87 @@ export interface ContractPopupProps extends Props {
 
 export const ContractPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
-  const { contractBlacklist, contractWhitelist } = useRabbySelector((state) => {
-    return state.securityEngine.userData;
-  });
+  const { userData } = useApprovalSecurityEngine();
+  const { contractBlacklist, contractWhitelist } = userData;
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
 
   const { isInBlackList, isInWhiteList } = useMemo(() => {
     return {
       isInBlackList: contractBlacklist.some(
         ({ address, chainId }) =>
           isSameAddress(address, data.address) &&
-          chainId === data.chain.serverId
+          chainId === data.chain.serverId,
       ),
       isInWhiteList: contractWhitelist.some(
         ({ address, chainId }) =>
           isSameAddress(address, data.address) &&
-          chainId === data.chain.serverId
+          chainId === data.chain.serverId,
       ),
     };
   }, [data.address, data.chain, contractBlacklist, contractWhitelist]);
   return (
-    <div>
-      <div className="title">
-        {data.title || t('page.signTx.interactContract')}{' '}
+    <View>
+      <View style={styles.title}>
+        <Text>{data.title || t('page.signTx.interactContract')}</Text>
         <Values.Address
           address={data.address}
           chain={data.chain}
           iconWidth="14px"
         />
-      </div>
-      <Table className="view-more-table">
+      </View>
+      <Table style={styles.viewMoreTable}>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.protocolTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.protocolTitle')}</Text>
           </Row>
           <Row>
             <Values.Protocol value={data.protocol} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.interacted')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.interacted')}</Text>
           </Row>
           <Row>
             <Values.Boolean value={data.hasInteraction} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.deployTimeTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.deployTimeTitle')}</Text>
           </Row>
           <Row>
             <Values.TimeSpan value={data.bornAt} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.popularity')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.popularity')}</Text>
           </Row>
           <Row>
-            {data.rank
-              ? t('page.signTx.contractPopularity', [
-                  data.rank,
-                  data.chain.name,
-                ])
-              : '-'}
+            <Text>
+              {data.rank
+                ? t('page.signTx.contractPopularity', [
+                    data.rank,
+                    data.chain.name,
+                  ])
+                : '-'}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.addressNote')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.addressNote')}</Text>
           </Row>
           <Row>
             <Values.AddressMemo address={data.address} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">{t('page.signTx.myMark')}</Row>
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.myMark')}</Text>
+          </Row>
           <Row>
             <Values.AddressMark
               isContract
@@ -117,6 +127,6 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
           </Row>
         </Col>
       </Table>
-    </div>
+    </View>
   );
 };

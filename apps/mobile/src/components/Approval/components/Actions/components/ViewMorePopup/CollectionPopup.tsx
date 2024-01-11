@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View, Text } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { CollectionWithFloorPrice } from '@rabby-wallet/rabby-api/dist/types';
-import { formatAmount } from '@/ui/utils/number';
-import styled from 'styled-components';
+import { formatAmount } from '@/utils/number';
+import { getStyle } from '../ViewMore';
+import { useThemeColors } from '@/hooks/theme';
 
 interface CollectionData {
   collection: CollectionWithFloorPrice;
@@ -20,48 +22,53 @@ export interface CollectionPopupProps extends Props {
   type: 'collection';
 }
 
-const Title = styled.div`
-  font-size: 15px;
-  font-weight: 18px;
-  color: #333;
-  display: flex;
-  font-weight: 500;
-  margin-bottom: 10px;
-  .left {
-    color: #4b4d59;
-    margin-right: 6px;
-    font-weight: normal;
-  }
-  .right {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 15,
+    fontWeight: '500', // Assuming this is the correct fontWeight
+    color: '#333',
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  left: {
+    color: '#4b4d59',
+    marginRight: 6,
+    fontWeight: 'normal',
+  },
+  right: {
+    flex: 1,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+});
 
 export const CollectionPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const viewMoreStyles = getStyle(colors);
   return (
     <div>
-      <Title>
-        <span className="left">{t('page.signTx.nftCollection')}</span>
-        <span className="right">{data.collection.name}</span>
-      </Title>
-      <Table className="view-more-table">
+      <View style={styles.title}>
+        <Text style={styles.left}>{t('page.signTx.nftCollection')}</Text>
+        <Text style={styles.right}>{data.collection.name}</Text>
+      </View>
+      <Table style={viewMoreStyles.viewMoreTable}>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.floorPrice')}
+          <Row style={viewMoreStyles.firstRow}>
+            <Text>{t('page.signTx.floorPrice')}</Text>
           </Row>
           <Row>
-            {data.collection.floor_price !== null
-              ? `${formatAmount(data.collection.floor_price)} ETH`
-              : '-'}
+            <Text>
+              {data.collection.floor_price !== null
+                ? `${formatAmount(data.collection.floor_price)} ETH`
+                : '-'}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.contractAddress')}
+          <Row style={viewMoreStyles.firstRow}>
+            <Text>{t('page.signTx.contractAddress')}</Text>
           </Row>
           <Row>
             <Values.Address address={data.collection.id} chain={data.chain} />

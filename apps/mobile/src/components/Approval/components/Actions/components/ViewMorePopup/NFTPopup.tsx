@@ -1,11 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from 'background/service/openapi';
-import NFTWithName from '../NFTWithName';
+import { Chain } from '@debank/common';
+// import NFTWithName from '../NFTWithName';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
-import { formatAmount } from '@/ui/utils/number';
+import { formatAmount } from '@/utils/number';
+import { getStyle } from '../ViewMore';
+import { useThemeColors } from '@/hooks/theme';
 
 interface NFTData {
   nft: NFTItem;
@@ -22,44 +25,49 @@ export interface NFTPopupProps extends Props {
 
 export const NFTPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
+
   return (
-    <div>
-      <div className="title flex">
-        <span className="mr-16 text-15 text-r-neutral-body">NFT</span>
-        <NFTWithName
+    <View>
+      <View style={styles.title} className="title flex">
+        <Text className="mr-16 text-15 text-r-neutral-body">NFT</Text>
+        {/* <NFTWithName
           nft={data.nft}
           textStyle={{
             fontSize: '15px',
             lineHeight: '18px',
           }}
-        />
-      </div>
-      <Table className="view-more-table">
+        /> */}
+      </View>
+      <Table style={styles.viewMoreTable}>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.collectionTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.collectionTitle')}</Text>
           </Row>
           <Row>{data.nft.collection ? data.nft.collection.name : '-'}</Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.floorPrice')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.floorPrice')}</Text>
           </Row>
           <Row>
-            {data.nft?.collection?.floor_price
-              ? `${formatAmount(data?.nft?.collection?.floor_price)} ETH`
-              : '-'}
+            <Text>
+              {data.nft?.collection?.floor_price
+                ? `${formatAmount(data?.nft?.collection?.floor_price)} ETH`
+                : '-'}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.contractAddress')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.contractAddress')}</Text>
           </Row>
           <Row>
             <Values.Address address={data.nft.contract_id} chain={data.chain} />
           </Row>
         </Col>
       </Table>
-    </div>
+    </View>
   );
 };

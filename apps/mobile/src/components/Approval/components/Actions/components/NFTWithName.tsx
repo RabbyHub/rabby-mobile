@@ -5,7 +5,7 @@ import {
   TransferingNFTItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
-import { ellipsisTokenSymbol } from 'ui/utils/token';
+import { ellipsisTokenSymbol } from '@/utils/token';
 import styled from 'styled-components';
 import { TokenLabel } from './Values';
 import clsx from 'clsx';

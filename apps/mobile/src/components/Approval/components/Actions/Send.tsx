@@ -10,7 +10,7 @@ import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import LogoWithText from './components/LogoWithText';
-// import ViewMore from './components/ViewMore';
+import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 
@@ -79,9 +79,9 @@ const Send = ({
             <View>
               <Values.Address address={actionData.to} chain={chain} />
               <View className="desc-list">
-                {/* <View>
+                <View>
                   <Values.AddressMemo address={actionData.to} />
-                </View> */}
+                </View>
                 {requireData.name && <Text>{requireData.name}</Text>}
                 <SecurityListItem
                   engineResult={engineResultMap['1016']}
@@ -101,8 +101,8 @@ const Send = ({
                         text={requireData.cex.name}
                         logoSize={14}
                         textStyle={{
-                          fontSize: '13px',
-                          lineHeight: '15px',
+                          fontSize: 13,
+                          lineHeight: 15,
                           color: '#4B4D59',
                           fontWeight: 'normal',
                         }}
@@ -133,7 +133,7 @@ const Send = ({
                   id="1033"
                 />
                 <View>
-                  {/* <ViewMore
+                  <ViewMore
                     type="receiver"
                     data={{
                       token: actionData.token,
@@ -148,7 +148,7 @@ const Send = ({
                       name: requireData.name,
                       onTransferWhitelist: requireData.onTransferWhitelist,
                     }}
-                  /> */}
+                  />
                 </View>
               </View>
             </View>
