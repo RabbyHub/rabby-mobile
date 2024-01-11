@@ -18,7 +18,10 @@ import {
 } from '@/constant/security';
 import { Tip } from '@/components/Tip';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { StyleSheet } from 'react-native';
@@ -256,14 +259,6 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
-    },
-    modalTitle: {
-      color: colors['neutral-title-1'],
-      fontSize: 20,
-      lineHeight: 23,
-      textAlign: 'center',
-      fontWeight: '500',
-      marginVertical: 15,
     },
     ruleFooter: {
       backgroundColor: colors['neutral-card-2'],
@@ -663,16 +658,17 @@ const RuleDrawer = ({
     }
   };
 
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   return (
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={handleClose}
       snapPoints={['60%']}>
       <BottomSheetView style={styles.mainView}>
-        <Text style={styles.modalTitle}>
-          {t('page.securityEngine.ruleDetailTitle')}
-        </Text>
+        <AppBottomSheetModalTitle
+          title={t('page.securityEngine.ruleDetailTitle')}
+        />
+
         {selectRule && (
           <>
             {content()}

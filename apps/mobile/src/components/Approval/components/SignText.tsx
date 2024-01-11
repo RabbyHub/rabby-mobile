@@ -1,15 +1,15 @@
-import { Button } from '@/components/Button';
 import { Account } from '@/core/services/preference';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import { WaitingSignMessageComponent } from './map';
 import { RcRabbyBrandIcon, RcViewRawRight } from '../icons';
 import TouchableView from '@/components/Touchable/TouchableView';
 import clsx from 'clsx';
 import { styled } from 'styled-components/native';
+import { FooterBar } from './FooterBar/FooterBar';
 
 const FloorContainer = styled(View)`
   padding-left: 20px;
@@ -58,14 +58,10 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   };
 
   return (
-    <View className="py-[8] h-[100%] bg-r-neutral-bg2">
+    <View className="w-[100%] relative py-[8] h-[100%] bg-r-neutral-bg2">
       <FloorContainer
         className={clsx('flex-row justify-between items-center', 'px-[20]')}>
-        <Text
-          className="text-r-neutral-title1 font-[500]"
-          style={{
-            fontSize: 16,
-          }}>
+        <Text className="text-r-neutral-title1 font-[500] text-[16px]">
           SignText
         </Text>
 
@@ -92,11 +88,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
             'flex-row justify-between items-center',
             'bg-r-blue-default rounded-[6px]',
           )}>
-          <Text
-            className="text-r-neutral-title2 font-[500]"
-            style={{
-              fontSize: 16,
-            }}>
+          <Text className="text-r-neutral-title2 font-[500] text-[16px]">
             Send Text
           </Text>
           <View>
@@ -119,11 +111,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
             'bg-r-neutral-bg2',
             'pl-[13] pr-[13]',
           )}>
-          <Text
-            className="text-r-neutral-foot font-[400]"
-            style={{
-              fontSize: 13,
-            }}>
+          <Text className="text-r-neutral-foot font-[400] text-[13px]">
             Message
           </Text>
         </View>
@@ -131,27 +119,27 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
 
       <FloorContainer>
         <View className="bg-r-neutral-card3 rounded-[6px] p-[12]">
-          <Text>{JSON.stringify(params, null, '  ')}</Text>
+          <Text className="text-r-neutral-body font-[500]">
+            {JSON.stringify(params?.data, null, '\t\t')}
+          </Text>
         </View>
       </FloorContainer>
 
-      <FloorContainer className="mt-[13]">
-        <Button
-          onPress={handleAllow}
-          title="Sign"
-          titleStyle={{
-            color: colors['neutral-title-2'],
+      <View
+        className="absolute w-[100%] left-0 bottom-0"
+        style={{
+          maxWidth: Dimensions.get('window').width,
+        }}>
+        <FooterBar
+          origin={params?.session?.origin}
+          onIgnoreAllRules={() => {}}
+          onSubmit={() => {
+            handleAllow();
           }}
-          containerStyle={{
-            width: '100%',
-            height: 44,
-          }}
-          buttonStyle={{
-            backgroundColor: colors['blue-default'],
-            // padding: 10,
-          }}
+          onCancel={() => {}}
+          disabledProcess={false}
         />
-      </FloorContainer>
+      </View>
     </View>
   );
 };
