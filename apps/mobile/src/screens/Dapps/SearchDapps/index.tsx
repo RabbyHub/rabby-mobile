@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
@@ -21,6 +21,8 @@ import {
 } from '../hooks/useDappView';
 import SheetDappWebView from '../Dapps/components/SheetDappWebView';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -153,6 +155,7 @@ export function SearchDappsScreen(): JSX.Element {
             <SearchDappCardList
               onEndReached={loadMore}
               data={list}
+              total={data?.page?.total}
               onPress={dapp => {
                 setActiveDapp(dapp);
                 toggleShowSheetModal('webviewContainerRef', true);

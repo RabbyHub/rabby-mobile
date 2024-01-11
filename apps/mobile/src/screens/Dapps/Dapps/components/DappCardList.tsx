@@ -12,7 +12,7 @@ export const DappCardList = ({
   onRemovePress,
   onDisconnectPress,
 }: {
-  sections: { title: string; data: DappInfo[] }[];
+  sections: { title: string; data: DappInfo[]; type?: string }[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onRemovePress?: (dapp: DappInfo) => void;
@@ -27,10 +27,11 @@ export const DappCardList = ({
       style={styles.list}
       keyExtractor={item => item.origin}
       stickySectionHeadersEnabled={false}
-      renderItem={({ item }) => {
+      renderItem={({ item, section }) => {
         return (
           <View style={styles.listItem}>
             <SwipeableDappCard
+              isActive={section.type === 'active'}
               data={item}
               onPress={onPress}
               onFavoritePress={onFavoritePress}

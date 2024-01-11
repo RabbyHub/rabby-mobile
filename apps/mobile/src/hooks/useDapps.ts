@@ -64,19 +64,19 @@ export const useDapps = () => {
     return Object.values(dapps || {}).filter(item => item.isFavorite);
   }, [dapps]);
 
-  const dappSections = useMemo(() => {
-    return [
-      {
-        title: '',
-        data: connectedApps,
-      },
+  // const dappSections = useMemo(() => {
+  //   return [
+  //     {
+  //       title: '',
+  //       data: connectedApps,
+  //     },
 
-      {
-        title: 'Favorites',
-        data: favoriteApps,
-      },
-    ].filter(item => item.data.length);
-  }, [connectedApps, favoriteApps]);
+  //     {
+  //       title: 'Favorites',
+  //       data: favoriteApps,
+  //     },
+  //   ].filter(item => item.data.length);
+  // }, [connectedApps, favoriteApps]);
 
   // React.useEffect(() => {
   //   getDapps();
@@ -91,7 +91,7 @@ export const useDapps = () => {
 
   return {
     dapps,
-    dappSections,
+    favoriteApps,
     getDapps,
     addDapp,
     updateFavorite,
