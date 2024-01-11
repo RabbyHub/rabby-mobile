@@ -1,11 +1,26 @@
 import { useThemeColors } from '@/hooks/theme';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useRef } from 'react';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
 import { DappInfo } from '@rabby-wallet/service-dapp';
-import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal/utils';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChainByEnum } from '@/utils/chain';
+import RcIconDropdown from '@/assets/icons/dapp/icon-dropdown.svg';
+import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
+import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 
 export const SearchDappCardList = ({
   data,
@@ -13,15 +28,33 @@ export const SearchDappCardList = ({
   onFavoritePress,
   onEndReached,
   total,
+  chain,
+  onChainChange,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onEndReached?: () => void;
   total?: number;
+  chain?: CHAINS_ENUM;
+  onChainChange?: (chain?: CHAINS_ENUM) => void;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const chainInfo = React.useMemo(() => {
+    return findChainByEnum(chain);
+  }, [chain]);
+  const { closePopup, activePopup, setData } = useCommonPopupView();
+
+  const activeSelectChainPopup = () => {
+    setData({
+      value: chain,
+      onChange: (v: CHAINS_ENUM) => {
+        onChainChange?.(v);
+      },
+    });
+    activePopup('SELECT_CHAIN');
+  };
 
   return (
     <>
@@ -29,15 +62,40 @@ export const SearchDappCardList = ({
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <Text style={styles.listHeaderText}>
-              Found about {total ?? '-'} results.
+              Found about{' '}
+              <Text style={styles.listHeaderTextStrong}>
+                {total != null ? total : '-'}
+              </Text>{' '}
+              results.
             </Text>
             <TouchableOpacity
               onPress={() => {
-                createGlobalBottomSheetModal({
-                  name: MODAL_NAMES.SWITCH_CHAIN,
-                });
+                activeSelectChainPopup();
               }}>
-              <Text>hello</Text>
+              {chainInfo ? (
+                <View className="flex-row items-center px-[10] py-[6] rounded-l-[4] rounded-r-[4] bg-r-neutral-card1">
+                  <Image
+                    source={{
+                      uri: chainInfo.logo,
+                    }}
+                    className="w-[20] h-[20] rounded-full mr-[6]"
+                  />
+                  <Text className="mr-[9]">{chainInfo.name}</Text>
+                  <TouchableWithoutFeedback
+                    onPress={() => {
+                      onChainChange?.(undefined);
+                    }}>
+                    <RcIconClose />
+                  </TouchableWithoutFeedback>
+                </View>
+              ) : (
+                <View className="flex-row items-center gap-[2]">
+                  <Text className="text-r-neutral-body text-[13] leading-[16] font-medium">
+                    Select Chain
+                  </Text>
+                  <RcIconDropdown />
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         }
@@ -71,10 +129,19 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       alignItems: 'center',
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingBottom: 9,
+      height: 32,
+      marginBottom: 8,
     },
     listHeaderText: {
+      fontSize: 13,
+      lineHeight: 16,
+      color: colors['neutral-foot'],
+    },
+    listHeaderTextStrong: {
+      fontSize: 13,
+      lineHeight: 16,
       color: colors['neutral-body'],
+      fontWeight: '500',
     },
     listItem: {
       marginBottom: 12,

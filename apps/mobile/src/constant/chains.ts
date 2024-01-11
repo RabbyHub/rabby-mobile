@@ -2275,3 +2275,7 @@ export const CHAINS = CHAINS_LIST.reduce((res, chain) => {
     [chain.enum]: chain,
   };
 }, {} as Record<CHAINS_ENUM, Chain>);
+
+export const MAINNET_CHAINS_LIST = CHAINS_LIST.filter(
+  chain => !chain.isTestnet,
+);

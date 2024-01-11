@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 
-import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
+import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
@@ -23,6 +23,8 @@ import SheetDappWebView from '../Dapps/components/SheetDappWebView';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChainByEnum } from '@/utils/chain';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -39,6 +41,7 @@ export function SearchDappsScreen(): JSX.Element {
   const [searchText, setSearchText] = React.useState('');
 
   const ref = React.useRef<any>(null);
+  const [chain, setChain] = React.useState<CHAINS_ENUM>();
 
   const debouncedSearchValue = useDebounce(searchText, {
     wait: 500,
@@ -59,9 +62,10 @@ export function SearchDappsScreen(): JSX.Element {
       }
       const limit = d?.page?.limit || 30;
       const start = d?.next || 0;
+      const chainInfo = findChainByEnum(chain);
       const res = await openapi.searchDapp({
         q: debouncedSearchValue,
-        // chain_id: chainInfo?.serverId,
+        chain_id: chainInfo?.serverId,
         start,
         limit,
       });
@@ -72,7 +76,7 @@ export function SearchDappsScreen(): JSX.Element {
       };
     },
     {
-      reloadDeps: [debouncedSearchValue],
+      reloadDeps: [debouncedSearchValue, chain],
       target: ref,
       // eslint-disable-next-line @typescript-eslint/no-shadow
       isNoMore(data) {
@@ -124,6 +128,7 @@ export function SearchDappsScreen(): JSX.Element {
           value={searchText}
           onChangeText={v => {
             setSearchText(v);
+            setChain(undefined);
             // runSearch(v);
           }}
           showCancel
@@ -153,6 +158,8 @@ export function SearchDappsScreen(): JSX.Element {
             <SearchEmpty />
           ) : (
             <SearchDappCardList
+              chain={chain}
+              onChainChange={setChain}
               onEndReached={loadMore}
               data={list}
               total={data?.page?.total}

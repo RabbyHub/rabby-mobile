@@ -1,7 +1,7 @@
 import { CHAINS_ENUM, Chain } from '@debank/common';
 import clsx from 'clsx';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 
 export const SelectChainItem = ({
   data,
@@ -19,16 +19,19 @@ export const SelectChainItem = ({
       onPress={() => {
         onPress?.(data?.enum);
       }}>
-      <View className={clsx('flex-row items-center gap-12 py-16', className)}>
+      <View className={'flex-row items-center w-full gap-[12] py-[16]'}>
         <Image
           source={{
-            uri: data?.logo,
+            uri: data.logo,
           }}
-          className="w-32 h-32 rounded-full"
+          className="w-[32] h-[32] rounded-full"
         />
-        <Text className="text-16 leading-19 text-r-neutral-title1 font-medium">
-          {data?.name}
-        </Text>
+        <View className="flex-row justify-between flex-1">
+          <Text className="text-[16] leading-[19] text-r-neutral-title1 font-medium">
+            {data?.name}
+          </Text>
+          {value && value === data?.enum ? <RcIconChecked /> : null}
+        </View>
       </View>
     </TouchableOpacity>
   );

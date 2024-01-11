@@ -1,3 +1,4 @@
+import { MAINNET_CHAINS_LIST } from '@/constant/chains';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
@@ -6,27 +7,68 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
+import RcIconSearch from '@/assets/icons/select-chain/icon-search.svg';
+import { CHAINS_ENUM } from '@debank/common';
+import RcIconFind from '@/assets/icons/select-chain/icon-find.svg';
 
 export const SelectChain: React.FC = () => {
-  const { setTitle, account, setHeight } = useCommonPopupView();
+  const { data, closePopup, setData } = useCommonPopupView();
+
+  const value = data?.value;
+  const onChange = (v: CHAINS_ENUM) => {
+    data?.onChange?.(v);
+    closePopup();
+  };
+
+  return <SelectChainRaw value={value} onChange={onChange} />;
+};
+
+const SelectChainRaw = ({
+  value,
+  onChange,
+}: {
+  value?: CHAINS_ENUM;
+  onChange?: (value: CHAINS_ENUM) => void;
+}) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [search, setSearch] = React.useState('');
 
-  React.useEffect(() => {
-    setTitle(t('page.dashboard.hd.howToSwitch'));
-    setHeight(420);
-  }, [setHeight, setTitle, t]);
+  const list = React.useMemo(() => {
+    const searchKeyword = search.trim().toLowerCase();
+    if (searchKeyword) {
+      return MAINNET_CHAINS_LIST.filter(item =>
+        [item.name, item.enum, item.nativeTokenSymbol].some(item =>
+          item.toLowerCase().includes(searchKeyword),
+        ),
+      );
+    }
+    return MAINNET_CHAINS_LIST;
+  }, [search]);
 
   return (
-    <View className="p-[10px]">
+    <View className="h-full px-[20] pt-[10] pb-[32]">
       <Input
-        leftIcon={<Text>q</Text>}
+        leftIcon={<RcIconSearch />}
         containerStyle={styles.containerStyle}
         inputContainerStyle={styles.inputContainerStyle}
         placeholder="Search chain"
+        value={search}
+        onChangeText={text => {
+          setSearch(text);
+        }}
       />
-      <SelectChainList />
+      {list?.length ? (
+        <SelectChainList data={list} value={value} onChange={onChange} />
+      ) : (
+        <View className="items-center pt-[180]">
+          <RcIconFind />
+          <Text className="pt-[12] text-[13] leading-[16] text-r-neutral-body">
+            No Chains
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -35,6 +77,8 @@ const getStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
     containerStyle: {
       paddingHorizontal: 0,
+      paddingVertical: 0,
+      marginBottom: -8,
     },
     inputContainerStyle: {
       borderWidth: 1,

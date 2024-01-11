@@ -11,6 +11,7 @@ import { SwitchAddress } from '../CommonPopup/SwitchAddress';
 import { SwitchChain } from '../CommonPopup/SwitchChain';
 import { CancelConnect } from '../CommonPopup/CancelConnect';
 import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
+import { SelectChain } from '../CommonPopup/SelectChain';
 
 export const events = new EventEmitter();
 
@@ -20,6 +21,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.SWITCH_ADDRESS]: ['80%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
+  [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -39,6 +41,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.ReactNode> = {
   [MODAL_NAMES.SWITCH_ADDRESS]: <SwitchAddress />,
   [MODAL_NAMES.SWITCH_CHAIN]: <SwitchChain />,
   [MODAL_NAMES.CANCEL_CONNECT]: <CancelConnect />,
+  [MODAL_NAMES.SELECT_CHAIN]: <SelectChain />,
 };
 
 export const createGlobalBottomSheetModal = (params: CreateParams) => {

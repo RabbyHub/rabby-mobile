@@ -35,6 +35,7 @@ export const useCommonPopupView = () => {
   const [id, setId] = useAtom(idAtom);
 
   const activePopup = (name: CommonPopupComponentName) => {
+    console.log(name);
     setComponentName(name);
     setVisible(true);
 
