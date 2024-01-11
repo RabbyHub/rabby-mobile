@@ -70,7 +70,7 @@ import {
 import { TxTypeComponent } from './TxTypeComponent';
 import { normalizeTxParams } from './util';
 import { getStyles } from './style';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useGlobalBottomSheetModalStyle } from '@/components/GlobalBottomSheetModal/useGlobalBottomSheetModalStyle';
 
 interface SignTxProps<TData extends any[] = any[]> {
@@ -1126,6 +1126,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onRuleEnableStatusChange={handleRuleEnableStatusChange}
           onClose={handleRuleDrawerClose}
         />
+        <View style={styles.placeholder} />
       </ScrollView>
       {txDetail && (
         <FooterBar

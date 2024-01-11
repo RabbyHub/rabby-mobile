@@ -6,10 +6,13 @@ export const getStyles = (colors: AppColorsVariants) =>
     wrapper: {
       backgroundColor: colors['neutral-bg-2'],
       height: '100%',
+      position: 'relative',
     },
     approvalTx: {
       paddingHorizontal: 15,
-      paddingVertical: 18,
-      height: '100%',
+      flex: 1,
+    },
+    placeholder: {
+      height: 18,
     },
   });

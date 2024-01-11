@@ -28,7 +28,7 @@ import clsx from 'clsx';
 import PQueue from 'p-queue/dist/index';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import RuleResult from './RuleResult';
 import { SignTestnetPermission } from './SignTestnetPermission';

@@ -167,3 +167,28 @@ export async function walletConnectSwitchChain(
   }
   return;
 }
+
+export async function getWalletConnectStatus(
+  address: string,
+  brandName: string,
+) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  if (keyring) {
+    return keyring.getConnectorStatus(address, brandName);
+  }
+  return;
+}
+
+export async function resendWalletConnect(account: Account) {
+  const keyring = await getKeyring<WalletConnectKeyring>(
+    KEYRING_TYPE.WalletConnectKeyring,
+  );
+
+  if (keyring) {
+    return keyring.resend(account);
+  }
+  return;
+}

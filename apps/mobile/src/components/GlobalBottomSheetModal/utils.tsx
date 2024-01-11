@@ -1,4 +1,9 @@
-import { CreateParams, EVENT_NAMES, MODAL_NAMES } from './types';
+import {
+  APPROVAL_MODAL_NAMES,
+  CreateParams,
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from './types';
 import EventEmitter from 'events';
 import { uniqueId } from 'lodash';
 import { Approval } from '../Approval';
@@ -10,17 +15,26 @@ import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
 export const events = new EventEmitter();
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
-  [MODAL_NAMES.APPROVAL]: ['80%'],
-  // [MODAL_NAMES.WALLET_CONNECT]: ['80%'],
+  [MODAL_NAMES.APPROVAL]: ['100%'],
   [MODAL_NAMES.CANCEL_APPROVAL]: ['80%'],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['80%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: ['80%'],
 };
 
+export const APPROVAL_SNAP_POINTS: Record<
+  APPROVAL_MODAL_NAMES,
+  (string | number)[]
+> = {
+  [APPROVAL_MODAL_NAMES.Connect]: ['100%'],
+  [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
+  [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
+  [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
+  [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360],
+};
+
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.ReactNode> = {
   [MODAL_NAMES.APPROVAL]: <Approval />,
-  // [MODAL_NAMES.WALLET_CONNECT]: ['80%'],
   [MODAL_NAMES.CANCEL_APPROVAL]: <CancelApproval />,
   [MODAL_NAMES.SWITCH_ADDRESS]: <SwitchAddress />,
   [MODAL_NAMES.SWITCH_CHAIN]: <SwitchChain />,

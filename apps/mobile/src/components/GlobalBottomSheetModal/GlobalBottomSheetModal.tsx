@@ -1,10 +1,17 @@
 import { useThemeColors } from '@/hooks/theme';
+import { useApproval } from '@/hooks/useApproval';
 import React from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { CreateParams, EVENT_NAMES } from './types';
 import { useGlobalBottomSheetModalStyle } from './useGlobalBottomSheetModalStyle';
-import { events, MODAL_VIEWS, SNAP_POINTS } from './utils';
+import {
+  APPROVAL_SNAP_POINTS,
+  events,
+  MODAL_VIEWS,
+  SNAP_POINTS,
+} from './utils';
 
 type ModalData = {
   snapPoints: (string | number)[];
@@ -36,14 +43,21 @@ export const GlobalBottomSheetModal = () => {
     currentModal.current?.present();
   }, []);
 
+  const [getApproval] = useApproval();
+
   const handleCreate = React.useCallback(
-    (id: string, params: CreateParams) => {
+    async (id: string, params: CreateParams) => {
+      const _approval = await getApproval();
+      const approvalComponent = _approval?.data?.approvalComponent;
+
       setModals(prev => [
         ...prev,
         {
           id,
           params,
-          snapPoints: SNAP_POINTS[params.name],
+          snapPoints: approvalComponent
+            ? APPROVAL_SNAP_POINTS[approvalComponent]
+            : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);
@@ -87,10 +101,13 @@ export const GlobalBottomSheetModal = () => {
     };
   }, [handleCreate, handlePresent, handleRemove]);
 
+  const height = useSafeAreaInsets();
   return (
     <View>
       {modals.map(modal => (
         <AppBottomSheetModal
+          topInset={height.top}
+          enableContentPanningGesture={false}
           onDismiss={() => handleDismiss(modal.id)}
           handleStyle={handleStyle}
           key={modal.id}

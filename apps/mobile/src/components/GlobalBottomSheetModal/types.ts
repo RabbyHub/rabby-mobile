@@ -7,6 +7,14 @@ export enum MODAL_NAMES {
   'CANCEL_APPROVAL' = 'CANCEL_APPROVAL',
 }
 
+export enum APPROVAL_MODAL_NAMES {
+  'Connect' = 'Connect',
+  'SignText' = 'SignText',
+  'SignTypedData' = 'SignTypedData',
+  'SignTx' = 'SignTx',
+  'WatchAddressWaiting' = 'WatchAddressWaiting',
+}
+
 export type CreateParams = {
   name: MODAL_NAMES;
   [key: string]: any;

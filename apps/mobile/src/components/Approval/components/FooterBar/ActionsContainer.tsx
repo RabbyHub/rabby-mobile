@@ -28,6 +28,14 @@ const getStyles = (colors: AppColorsVariants) =>
       marginTop: 12,
       justifyContent: 'space-between',
     },
+    cancelWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    cancelIcon: {
+      color: colors['blue-default'],
+    },
   });
 
 export interface Props {
@@ -84,9 +92,12 @@ export const ActionsContainer: React.FC<
         titleStyle={styles.buttonText}
         onPress={displayPopup ? activeCancelPopup : onCancel}
         title={
-          <View>
+          <View style={styles.cancelWrapper}>
             <Text style={styles.buttonText}>{t('global.cancelButton')}</Text>
-            {displayPopup && <ArrowDownCC className="w-16" />}
+            {displayPopup && (
+              //@ts-expect-error
+              <ArrowDownCC style={styles.cancelIcon} width={12} />
+            )}
           </View>
         }
       />
