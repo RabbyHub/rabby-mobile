@@ -16,10 +16,10 @@ export const events = new EventEmitter();
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
-  [MODAL_NAMES.CANCEL_APPROVAL]: ['80%'],
+  [MODAL_NAMES.CANCEL_APPROVAL]: [288],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['80%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['80%'],
-  [MODAL_NAMES.CANCEL_CONNECT]: ['80%'],
+  [MODAL_NAMES.CANCEL_CONNECT]: [244],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<

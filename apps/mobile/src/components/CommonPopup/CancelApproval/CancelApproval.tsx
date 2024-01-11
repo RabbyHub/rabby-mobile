@@ -3,22 +3,37 @@ import { CancelItem } from './CancelItem';
 import { useTranslation } from 'react-i18next';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 
-// TODO
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: 20,
+    },
+    title: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+      textAlign: 'center',
+    },
+    buttonGroup: {
+      rowGap: 10,
+      marginTop: 20,
+    },
+  });
+
 export const CancelApproval = () => {
-  const { data, setTitle, setHeight, closePopup } = useCommonPopupView();
+  const { data, closePopup } = useCommonPopupView();
   const { onCancel, displayBlockedRequestApproval, displayCancelAllApproval } =
     data;
   const [pendingApprovalCount, setPendingApprovalCount] = React.useState(0);
   const { t } = useTranslation();
 
   React.useEffect(() => {
-    setTitle(t('page.signFooterBar.cancelTransaction'));
-    if (displayBlockedRequestApproval && displayCancelAllApproval) {
-      setHeight(288);
-    } else {
-      setHeight(244);
-    }
     setPendingApprovalCount(notificationService.approvals.length);
   }, [displayBlockedRequestApproval, displayCancelAllApproval]);
 
@@ -34,13 +49,18 @@ export const CancelApproval = () => {
     onCancel();
     closePopup();
   };
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <div>
-      <div className="text-r-neutral-body text-13 font-normal text-center leading-[16px]">
+    <BottomSheetView style={styles.wrapper}>
+      <AppBottomSheetModalTitle
+        title={t('page.signFooterBar.cancelTransaction')}
+      />
+      <Text style={styles.title}>
         {t('page.signFooterBar.detectedMultipleRequestsFromThisDapp')}
-      </div>
-      <div className="space-y-10 mt-20">
+      </Text>
+      <View style={styles.buttonGroup}>
         <CancelItem onClick={handleCancel}>
           {t('page.signFooterBar.cancelCurrentTransaction')}
         </CancelItem>
@@ -56,7 +76,7 @@ export const CancelApproval = () => {
             {t('page.signFooterBar.blockDappFromSendingRequests')}
           </CancelItem>
         )}
-      </div>
-    </div>
+      </View>
+    </BottomSheetView>
   );
 };

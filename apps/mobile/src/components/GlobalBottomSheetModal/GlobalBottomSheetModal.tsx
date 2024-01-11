@@ -4,7 +4,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { CreateParams, EVENT_NAMES } from './types';
+import { CreateParams, EVENT_NAMES, MODAL_NAMES } from './types';
 import { useGlobalBottomSheetModalStyle } from './useGlobalBottomSheetModalStyle';
 import {
   APPROVAL_SNAP_POINTS,
@@ -55,9 +55,10 @@ export const GlobalBottomSheetModal = () => {
         {
           id,
           params,
-          snapPoints: approvalComponent
-            ? APPROVAL_SNAP_POINTS[approvalComponent]
-            : SNAP_POINTS[params.name],
+          snapPoints:
+            approvalComponent && params.name === MODAL_NAMES.APPROVAL
+              ? APPROVAL_SNAP_POINTS[approvalComponent]
+              : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);

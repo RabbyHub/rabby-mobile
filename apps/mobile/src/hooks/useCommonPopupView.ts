@@ -23,6 +23,7 @@ const visibleAtom = atom<boolean>(false);
 const componentNameAtom = atom<CommonPopupComponentName | undefined | false>(
   false,
 );
+const idAtom = atom<string | undefined>(undefined);
 
 export const useCommonPopupView = () => {
   const [componentName, setComponentName] = useAtom(componentNameAtom);
@@ -31,21 +32,24 @@ export const useCommonPopupView = () => {
   const [height, setHeight] = useAtom(heightAtom);
   const [account, setAccount] = useAtom(accountAtom);
   const [data, setData] = useAtom(dataAtom);
+  const [id, setId] = useAtom(idAtom);
 
   const activePopup = (name: CommonPopupComponentName) => {
     setComponentName(name);
     setVisible(true);
 
-    createGlobalBottomSheetModal({
-      name: MODAL_NAMES[name],
-    });
+    setId(
+      createGlobalBottomSheetModal({
+        name: MODAL_NAMES[name],
+      }),
+    );
   };
 
   const closePopup = () => {
     setVisible(false);
 
     if (componentName) {
-      removeGlobalBottomSheetModal(MODAL_NAMES[componentName]);
+      removeGlobalBottomSheetModal(id);
     }
 
     setComponentName(undefined);
