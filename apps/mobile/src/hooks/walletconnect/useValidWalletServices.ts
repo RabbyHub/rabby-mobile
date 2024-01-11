@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { canOpenWallet, openWallet } from './util';
 import { WalletInfo, WALLET_INFO } from '@/utils/walletInfo';
+import { apisWalletConnect } from '@/core/apis';
 
 const walletInfoValues = Object.values(WALLET_INFO);
 
@@ -39,10 +40,27 @@ export const useValidWalletServices = () => {
     [findWalletServiceByBrandName],
   );
 
+  const openWalletByAccount = useCallback(
+    (account: { address: string; brandName: string }) => {
+      apisWalletConnect
+        .getDeepLink({
+          address: account?.address,
+          brandName: account?.brandName,
+        })
+        .then(uri => {
+          if (uri) {
+            openWalletByBrandName(account.brandName, uri);
+          }
+        });
+    },
+    [openWalletByBrandName],
+  );
+
   return {
     isLoading,
     validServices,
     findWalletServiceByBrandName,
     openWalletByBrandName,
+    openWalletByAccount,
   };
 };
