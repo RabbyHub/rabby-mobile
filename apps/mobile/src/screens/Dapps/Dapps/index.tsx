@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import { StyleSheet, View, ScrollView, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors } from '@/hooks/theme';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
@@ -49,9 +49,11 @@ export function DappsScreen(): JSX.Element {
     });
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
-  const { dappSections, updateFavorite, removeDapp } = useDapps();
+  const { dappSections, updateFavorite, removeDapp, disconnectDapp, getDapps } =
+    useDapps();
   const { setActiveDapp } = useActiveDappView();
   const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
+  // todo refresh dapps when webview close
 
   return (
     <NormalScreenContainer style={styles.page}>
@@ -63,10 +65,13 @@ export function DappsScreen(): JSX.Element {
             toggleShowSheetModal('webviewContainerRef', true);
           }}
           onFavoritePress={dapp => {
-            updateFavorite(dapp.info.id, !dapp.isFavorite);
+            updateFavorite(dapp.origin, !dapp.isFavorite);
           }}
           onRemovePress={dapp => {
-            removeDapp(dapp.info.id);
+            removeDapp(dapp.origin);
+          }}
+          onDisconnectPress={dapp => {
+            disconnectDapp(dapp.origin);
           }}
         />
       </View>

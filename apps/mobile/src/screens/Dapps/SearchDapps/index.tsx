@@ -15,6 +15,12 @@ import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
+import {
+  useActiveDappView,
+  useActiveDappViewSheetModalRefs,
+} from '../hooks/useDappView';
+import SheetDappWebView from '../Dapps/components/SheetDappWebView';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -77,14 +83,19 @@ export function SearchDappsScreen(): JSX.Element {
 
   const list = useMemo(() => {
     return (data?.list || []).map(info => {
-      const local = dapps[info.id];
+      const origin = stringUtils.ensurePrefix(info.id, 'https://');
+      const local = dapps[origin];
 
       return {
         ...local,
+        origin,
         info,
       } as DappInfo;
     });
   }, [dapps, data]);
+
+  const { setActiveDapp } = useActiveDappView();
+  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
 
   return (
     <View style={styles.page}>
@@ -129,13 +140,23 @@ export function SearchDappsScreen(): JSX.Element {
       </View>
       {debouncedSearchValue ? (
         <>
-          <LinkCard url={debouncedSearchValue} />
+          <LinkCard
+            url={debouncedSearchValue}
+            onPress={dapp => {
+              // setActiveDapp(dapp);
+              // toggleShowSheetModal('webviewContainerRef', true);
+            }}
+          />
           {loading ? null : list.length === 0 ? (
             <SearchEmpty />
           ) : (
             <SearchDappCardList
               onEndReached={loadMore}
               data={list}
+              onPress={dapp => {
+                setActiveDapp(dapp);
+                toggleShowSheetModal('webviewContainerRef', true);
+              }}
               onFavoritePress={dapp => {
                 addDapp({
                   ...dapp,
@@ -153,6 +174,7 @@ export function SearchDappsScreen(): JSX.Element {
           }}
         />
       )}
+      <SheetDappWebView />
     </View>
   );
 }

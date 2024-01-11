@@ -199,6 +199,7 @@ function ProviderControllerTester(): JSX.Element {
     addDapp({
       info: TEST_DAPP_INFO,
       chainId: CHAINS_ENUM.ETH,
+      origin: TEST_DAPP_INFO.id,
     });
   }, [addDapp]);
 

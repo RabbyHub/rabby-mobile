@@ -49,7 +49,7 @@ export const DappIcon = ({
   const [bgColor, originName] = useMemo(() => {
     const bgIndex = Math.abs(hashCode(origin) % 12);
 
-    return [bgColorList[bgIndex].toLowerCase(), getOriginName(origin)];
+    return [bgColorList[bgIndex].toLowerCase(), getOriginName(origin || '')];
   }, [origin]);
 
   if (source) {

@@ -1,4 +1,4 @@
-import { Hardfork, Common } from '@ethereumjs/common';
+import Common, { Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
@@ -40,6 +40,8 @@ import BigNumber from 'bignumber.js';
 import { findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
+import { sessionService } from '../services/session';
+import { BroadcastEvent } from '@/constant/event';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -192,7 +194,7 @@ class ProviderController extends BaseController {
     } = req;
 
     if (
-      !dappService.isConnected(origin) &&
+      !dappService.getDapp(origin).isConnected &&
       !SAFE_RPC_METHODS.includes(method)
     ) {
       throw ethErrors.provider.unauthorized();
@@ -273,34 +275,39 @@ class ProviderController extends BaseController {
   }: {
     session: Session;
   }) => {
-    if (!dappService.isConnected(origin)) {
+    if (!dappService.getDapp(origin)?.isConnected) {
       throw ethErrors.provider.unauthorized();
     }
 
     const _account = await this.getCurrentAccount();
     const account = _account ? [_account.address.toLowerCase()] : [];
-    // sessionService.broadcastEvent('accountsChanged', account);
-    // const connectSite = dappService.getConnectedDapp(origin);
-    // if (connectSite) {
-    //   const chain = CHAINS[connectSite.chainId];
-    //   // rabby:chainChanged event must be sent before chainChanged event
-    //   sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
-    //   sessionService.broadcastEvent(
-    //     'chainChanged',
-    //     {
-    //       chain: chain.hex,
-    //       networkVersion: chain.network,
-    //     },
-    //     origin,
-    //   );
-    // }
+
+    sessionService.broadcastEvent(BroadcastEvent.accountsChanged, account);
+    const connectSite = dappService.getConnectedDapp(origin);
+
+    if (connectSite) {
+      const chain = CHAINS[connectSite.chainId];
+      // // rabby:chainChanged event must be sent before chainChanged event
+      // sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
+      sessionService.broadcastEvent(
+        BroadcastEvent.chainChanged,
+        {
+          chain: chain.hex,
+          networkVersion: chain.network,
+        },
+        origin,
+      );
+    }
 
     return account;
   };
 
   @Reflect.metadata('SAFE', true)
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
-    if (!dappService.isConnected(origin) || !keyringService.isUnlocked()) {
+    if (
+      !dappService.getDapp(origin)?.isConnected ||
+      !keyringService.isUnlocked()
+    ) {
       return [];
     }
 
@@ -309,7 +316,7 @@ class ProviderController extends BaseController {
   };
 
   ethCoinbase = async ({ session: { origin } }: { session: Session }) => {
-    if (!dappService.isConnected(origin)) {
+    if (!dappService.getDapp(origin).isConnected) {
       return null;
     }
 

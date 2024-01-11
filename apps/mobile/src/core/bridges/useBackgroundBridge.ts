@@ -1,53 +1,39 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 
-import { atom, useAtom } from 'jotai';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
-
-const backgroundBridgesAtom = atom<BackgroundBridge[]>([]);
+import type { WebViewNavigation } from 'react-native-webview';
+import { sessionService } from '../services/session';
 
 export function useBackgroundBridges() {
-  const [backgroundBridges, setBackgroundBridges] = useAtom(
-    backgroundBridgesAtom,
-  );
+  const [, setSpinner] = useState(false);
+  const backgroundBridgeRefs = useRef<BackgroundBridge[]>([]);
 
-  const backgroundBridgeRefs = useRef(backgroundBridges);
+  const putBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
+    const prev = backgroundBridgeRefs.current;
+    prev.push(bridge);
 
-  const putBackgroundBridge = useCallback(
-    (bridge: BackgroundBridge) => {
-      setBackgroundBridges((prev: BackgroundBridge[]) => {
-        prev.push(bridge);
-        backgroundBridgeRefs.current = prev;
+    backgroundBridgeRefs.current = prev;
+    setSpinner(prev => !prev);
+  }, []);
 
-        return prev;
-      });
-    },
-    [setBackgroundBridges],
-  );
+  const removeBackgroundBridge = useCallback((bridge: BackgroundBridge) => {
+    const prev = backgroundBridgeRefs.current;
+    const idx = prev.indexOf(bridge);
 
-  const removeBackgroundBridge = useCallback(
-    (bridge: BackgroundBridge) => {
-      setBackgroundBridges((prev: BackgroundBridge[]) => {
-        const idx = prev.indexOf(bridge);
+    if (idx === -1) {
+      return prev;
+    }
 
-        if (idx === -1) {
-          return prev;
-        }
+    prev.splice(idx, 1);
 
-        prev.splice(idx, 1);
-
-        backgroundBridgeRefs.current = prev;
-
-        return prev;
-      });
-    },
-    [setBackgroundBridges],
-  );
+    backgroundBridgeRefs.current = prev;
+  }, []);
 
   const clearBackgroundBridges = useCallback(() => {
-    setBackgroundBridges([]);
     backgroundBridgeRefs.current = [];
-  }, [setBackgroundBridges]);
+    setSpinner(prev => !prev);
+  }, []);
 
   return {
     backgroundBridgeRefs,
@@ -65,11 +51,15 @@ type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
 
 export function useSetupWebview({
   dappId,
-  urlRef,
+  siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
 }: {
   dappId: string;
-  urlRef: React.MutableRefObject<string>;
+  siteInfoRefs: {
+    urlRef: React.MutableRefObject<string>;
+    titleRef: React.MutableRefObject<string>;
+    iconRef: React.MutableRefObject<string | undefined>;
+  };
   webviewRef: React.MutableRefObject<WebView | null>;
 }) {
   const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
@@ -79,10 +69,20 @@ export function useSetupWebview({
     urlBridge: string,
     isMainFrame: boolean = true,
   ) => {
+    urlRef.current = urlBridge;
     const newBridge = new BackgroundBridge({
       webview: webviewRef,
-      url: urlBridge,
+      urlRef,
+      titleRef,
+      iconRef,
       isMainFrame,
+    });
+
+    const session = sessionService.getOrCreateSession(newBridge);
+    session?.setProp({
+      origin: urlBridge,
+      icon: '//todo',
+      name: '//todo',
     });
 
     putBackgroundBridge(newBridge);
@@ -104,6 +104,7 @@ export function useSetupWebview({
           const bridgeOrigin = urlUtils.canoicalizeDappUrl(
             bridge.url,
           ).httpOrigin;
+
           if (bridgeOrigin === senderOrigin) {
             bridge.onMessage(data);
           }
@@ -115,6 +116,13 @@ export function useSetupWebview({
     }
   };
 
+  const changeUrl = async (navInfo: WebViewNavigation) => {
+    urlRef.current = navInfo.url;
+    titleRef.current = navInfo.title;
+    // if (navInfo.icon) iconRef.current = navInfo.icon;
+  };
+
+  // would be called every time the url changes
   const onLoadStart: OnLoadStart = async ({ nativeEvent }) => {
     if (
       nativeEvent.url !== urlRef.current &&
@@ -126,14 +134,17 @@ export function useSetupWebview({
 
     // setError(false);
 
-    // changeUrl(nativeEvent);
+    changeUrl(nativeEvent);
     // sendActiveAccount();
 
     // icon.current = null;
 
     // Reset the previous bridges
     backgroundBridgeRefs.current.length &&
-      backgroundBridgeRefs.current.forEach(bridge => bridge.onDisconnect());
+      backgroundBridgeRefs.current.forEach(bridge => {
+        bridge.onDisconnect();
+        sessionService.deleteSession(bridge);
+      });
 
     // // Cancel loading the page if we detect its a phishing page
     // const { hostname } = new URL(nativeEvent.url);

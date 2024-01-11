@@ -30,8 +30,7 @@ import TouchableView from '../Touchable/TouchableView';
 import { WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { JS_POST_MESSAGE_TO_PROVIDER } from '../../../../../packages/rn-webview-bridge/src/browserScripts';
-import { useLoadEntryScriptWeb3 } from '@/hooks/useBootstrap';
+import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 
 function errorLog(...info: any) {
@@ -226,13 +225,17 @@ export default function DappWebViewControl({
 
   const {
     webviewRef,
+    urlRef,
+    titleRef,
+    iconRef,
+
     webviewState,
 
     latestUrl,
     webviewActions,
   } = useWebViewControl();
 
-  const { entryScriptWeb3 } = useLoadEntryScriptWeb3({ isTop: true });
+  const { fullScript } = useJavaScriptBeforeContentLoaded({ isTop: true });
 
   const { subTitle } = useMemo(() => {
     return {
@@ -272,11 +275,14 @@ export default function DappWebViewControl({
   });
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
-  const urlRef = useRef<string>('about:blank');
   const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
     dappId,
-    urlRef,
     webviewRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
   });
 
   return (
@@ -318,7 +324,7 @@ export default function DappWebViewControl({
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
-        {entryScriptWeb3 && (
+        {fullScript && (
           <WebView
             {...webviewProps}
             style={[styles.dappWebView, webviewProps?.style]}
@@ -326,7 +332,7 @@ export default function DappWebViewControl({
             source={{
               uri: convertToWebviewUrl(dappId),
             }}
-            injectedJavaScriptBeforeContentLoaded={entryScriptWeb3}
+            injectedJavaScriptBeforeContentLoaded={fullScript}
             injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
             onNavigationStateChange={webviewActions.onNavigationStateChange}
             onError={errorLog}

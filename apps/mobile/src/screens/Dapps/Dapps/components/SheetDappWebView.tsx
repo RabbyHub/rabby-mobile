@@ -71,7 +71,7 @@ export default function SheetDappWebView() {
       <BottomSheetView className="px-[20] items-center justify-center">
         {activeDapp && (
           <DappWebViewControl
-            dappId={activeDapp.info.id}
+            dappId={activeDapp.origin}
             bottomNavH={342}
             headerLeft={() => {
               return (
