@@ -315,3 +315,11 @@ export function makeTokenFromChain(chain: Chain): TokenItem {
     time_at: 0,
   };
 }
+
+const chainsDict = keyBy(CHAINS, 'serverId');
+export const getChain = (chainId?: string) => {
+  if (!chainId) {
+    return null;
+  }
+  return chainsDict[chainId];
+};

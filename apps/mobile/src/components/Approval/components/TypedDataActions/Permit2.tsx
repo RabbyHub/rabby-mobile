@@ -1,38 +1,19 @@
 import React, { useEffect, useMemo } from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
-import { Chain } from 'background/service/openapi';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ApproveTokenRequireData, TypedDataActionData } from './utils';
-import { ellipsisTokenSymbol, getTokenSymbol } from 'ui/utils/token';
-import { formatAmount } from '@/ui/utils/number';
-import { useRabbyDispatch } from '@/ui/store';
 import { Table, Col, Row } from '../Actions/components/Table';
 import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
-
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+import { Text, View } from 'react-native';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import { formatAmount } from '@/utils/number';
+import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import { Chain } from '@debank/common';
 
 const Permit2 = ({
   data,
@@ -46,12 +27,12 @@ const Permit2 = ({
   engineResults: Result[];
 }) => {
   const actionData = data!;
-  const dispatch = useRabbyDispatch();
   const { t } = useTranslation();
+  const { init } = useApprovalSecurityEngine();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
@@ -64,69 +45,77 @@ const Permit2 = ({
   }, [requireData]);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveToken')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.tokenApprove.approveToken')}</Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
               text={
-                <div className="overflow-hidden overflow-ellipsis flex">
+                <View className="overflow-hidden flex flex-row">
                   <Values.TokenAmount value={actionData.token.amount} />
-                  <span className="ml-2">
+                  <View className="ml-2">
                     <Values.TokenSymbol token={actionData.token} />
-                  </span>
-                </div>
+                  </View>
+                </View>
               }
-              logoRadius="100%"
+              logoRadius={16}
             />
-            <ul className="desc-list">
-              <li>
-                {t('page.signTx.tokenApprove.myBalance')}{' '}
-                <span>{formatAmount(tokenBalance)}</span>{' '}
-                {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-              </li>
-            </ul>
+            <View className="desc-list">
+              <View className="flex-row">
+                <Text>{t('page.signTx.tokenApprove.myBalance')} </Text>
+                <Text>{formatAmount(tokenBalance)} </Text>
+                <Text>
+                  {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+                </Text>
+              </View>
+            </View>
           </Row>
         </Col>
         <Col>
           <Row isTitle tip={t('page.signTypedData.permit2.sigExpireTimeTip')}>
-            {t('page.signTypedData.permit2.sigExpireTime')}
+            <Text>{t('page.signTypedData.permit2.sigExpireTime')}</Text>
           </Row>
           <Row>
-            {actionData.sig_expire_at ? (
-              <Values.TimeSpanFuture to={actionData.sig_expire_at} />
-            ) : (
-              '-'
-            )}
+            <Text>
+              {actionData.sig_expire_at ? (
+                <Values.TimeSpanFuture to={actionData.sig_expire_at} />
+              ) : (
+                '-'
+              )}
+            </Text>
           </Row>
         </Col>
         <Col>
           <Row isTitle>
-            {t('page.signTypedData.permit2.approvalExpiretime')}
+            <Text>{t('page.signTypedData.permit2.approvalExpiretime')}</Text>
           </Row>
           <Row>
-            {actionData.expire_at ? (
-              <Values.TimeSpanFuture to={actionData.expire_at} />
-            ) : (
-              '-'
-            )}
+            <Text>
+              {actionData.expire_at ? (
+                <Values.TimeSpanFuture to={actionData.expire_at} />
+              ) : (
+                '-'
+              )}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveTo')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.tokenApprove.approveTo')}</Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={actionData.spender} chain={chain} />
-            </div>
-            <ul className="desc-list">
+            </View>
+            <View className="desc-list">
               <ProtocolListItem protocol={requireData.protocol} />
 
               <SecurityListItem
@@ -187,21 +176,19 @@ const Permit2 = ({
                 safeText={t('page.signTx.markAsTrust')}
               />
 
-              <li>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                  }}
-                />
-              </li>
-            </ul>
+              <ViewMore
+                type="spender"
+                data={{
+                  ...requireData,
+                  spender: actionData.spender,
+                  chain,
+                }}
+              />
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

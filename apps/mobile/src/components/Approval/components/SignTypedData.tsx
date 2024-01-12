@@ -28,7 +28,7 @@ import { apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { dappService, preferenceService } from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useAsync } from 'react-use';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
@@ -393,7 +393,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.approvalTx}>
+      <ScrollView style={styles.approvalTx}>
         {isLoading && (
           <Skeleton
             style={{
@@ -413,7 +413,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             origin={params.session.origin}
           />
         )}
-      </View>
+      </ScrollView>
 
       <FooterBar
         hasShadow={footerShowShadow}

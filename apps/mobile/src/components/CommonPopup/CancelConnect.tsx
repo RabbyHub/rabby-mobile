@@ -27,15 +27,22 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 export const CancelConnect = () => {
-  const { data } = useCommonPopupView();
+  const { data, closePopup } = useCommonPopupView();
   const { onCancel, displayBlockedRequestApproval } = data;
   const { t } = useTranslation();
 
   const handleBlockedRequestApproval = () => {
+    closePopup();
     notificationService.blockedDapp();
+    onCancel();
   };
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  const handleCancel = () => {
+    onCancel();
+    closePopup();
+  };
 
   return (
     <BottomSheetView style={styles.wrapper}>
@@ -46,7 +53,7 @@ export const CancelConnect = () => {
         {t('page.signFooterBar.detectedMultipleRequestsFromThisDapp')}
       </Text>
       <View style={styles.buttonGroup}>
-        <CancelItem onClick={onCancel}>
+        <CancelItem onClick={handleCancel}>
           {t('page.signFooterBar.cancelCurrentConnection')}
         </CancelItem>
         {displayBlockedRequestApproval && (

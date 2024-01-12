@@ -10,9 +10,10 @@ import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import { Text, View } from 'react-native';
-import { Chain, formatAmount } from '@debank/common';
+import { Chain } from '@debank/common';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import { formatAmount } from '@/utils/number';
 
 const Permit = ({
   data,
@@ -39,7 +40,7 @@ const Permit = ({
 
   const tokenBalance = useMemo(() => {
     return new BigNumber(requireData.token.raw_amount || '0')
-      .View(10 ** requireData.token.decimals)
+      .div(10 ** requireData.token.decimals)
       .toFixed();
   }, [requireData]);
 
@@ -51,7 +52,9 @@ const Permit = ({
     <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveToken')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.tokenApprove.approveToken')}</Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
@@ -78,18 +81,22 @@ const Permit = ({
         </Col>
         <Col>
           <Row isTitle tip={t('page.signTypedData.permit2.sigExpireTimeTip')}>
-            {t('page.signTypedData.permit2.sigExpireTime')}
+            <Text>{t('page.signTypedData.permit2.sigExpireTime')}</Text>
           </Row>
           <Row>
-            {actionData.expire_at ? (
-              <Values.TimeSpanFuture to={actionData.expire_at} />
-            ) : (
-              '-'
-            )}
+            <Text>
+              {actionData.expire_at ? (
+                <Values.TimeSpanFuture to={actionData.expire_at} />
+              ) : (
+                '-'
+              )}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveTo')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.tokenApprove.approveTo')}</Text>
+          </Row>
           <Row>
             <View>
               <Values.Address address={actionData.spender} chain={chain} />
@@ -155,16 +162,14 @@ const Permit = ({
                 safeText={t('page.signTx.markAsTrust')}
               />
 
-              <View>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                  }}
-                />
-              </View>
+              <ViewMore
+                type="spender"
+                data={{
+                  ...requireData,
+                  spender: actionData.spender,
+                  chain,
+                }}
+              />
             </View>
           </Row>
         </Col>

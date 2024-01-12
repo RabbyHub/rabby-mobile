@@ -1,12 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
-import styled from 'styled-components';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { SwapTokenOrderRequireData, TypedDataActionData } from './utils';
-import { formatAmount, formatUsdValue } from '@/ui/utils/number';
-import { useRabbyDispatch, useRabbySelector } from '@/ui/store';
 import { Table, Col, Row } from '../Actions/components/Table';
 import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
@@ -14,28 +10,14 @@ import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import { isSameAddress } from '@/ui/utils';
+import { Chain } from '@debank/common';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { Text, View } from 'react-native';
+const { isSameAddress } = addressUtils;
 
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
-
-const Permit = ({
+const SwapTokenOrder = ({
   data,
   requireData,
   chain,
@@ -55,41 +37,38 @@ const Permit = ({
     expireAt,
   } = data!;
   const { t } = useTranslation();
-  const { rules, processedRules, contractWhitelist } = useRabbySelector(
-    (s) => ({
-      rules: s.securityEngine.rules,
-      processedRules: s.securityEngine.currentTx.processedRules,
-      contractWhitelist: s.securityEngine.userData.contractWhitelist,
-    })
-  );
+  const {
+    rules,
+    currentTx: { processedRules },
+    userData: { contractWhitelist },
+    ...apiApprovalSecurityEngine
+  } = useApprovalSecurityEngine();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
-      (item) =>
+      item =>
         item.chainId === chain.serverId &&
-        isSameAddress(item.address, requireData.id)
+        isSameAddress(item.address ?? '', requireData.id ?? ''),
     );
   }, [contractWhitelist, requireData]);
 
   const hasReceiver = useMemo(() => {
-    return !isSameAddress(receiver, requireData.sender);
+    return !isSameAddress(receiver ?? '', requireData.sender ?? '');
   }, [requireData, receiver]);
-
-  const dispatch = useRabbyDispatch();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
   }, [engineResults]);
 
   const handleClickRule = (id: string) => {
-    const rule = rules.find((item) => item.id === id);
+    const rule = rules.find(item => item.id === id);
     if (!rule) return;
     const result = engineResultMap[id];
-    dispatch.securityEngine.openRuleDrawer({
+    apiApprovalSecurityEngine.openRuleDrawer({
       ruleConfig: rule,
       value: result?.value,
       level: result?.level,
@@ -100,47 +79,53 @@ const Permit = ({
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    dispatch.securityEngine.init();
+    apiApprovalSecurityEngine.init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.payToken')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.swap.payToken')}</Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
-                  {formatAmount(payToken.amount)}{' '}
+                <View className="flex-row">
+                  <Text>{formatAmount(payToken.amount)} </Text>
                   <Values.TokenSymbol token={payToken} />
-                </>
+                </View>
               }
-              logoRadius="100%"
+              logoRadius={16}
             />
-            <ul className="desc-list">
-              <li>
+            <View className="desc-list">
+              <Text>
                 ≈
                 {formatUsdValue(
-                  new BigNumber(payToken.amount).times(payToken.price).toFixed()
+                  new BigNumber(payToken.amount)
+                    .times(payToken.price)
+                    .toFixed(),
                 )}
-              </li>
-            </ul>
+              </Text>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.minReceive')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.swap.minReceive')}</Text>
+          </Row>
           <Row>
-            <div className="flex relative pr-10">
+            <View className="flex relative pr-10 flex-row">
               <LogoWithText
                 logo={receiveToken.logo_url}
-                logoRadius="100%"
+                logoRadius={16}
                 text={
-                  <>
-                    {formatAmount(receiveToken.amount)}{' '}
+                  <View className="flex-row">
+                    <Text>{formatAmount(receiveToken.amount)} </Text>
                     <Values.TokenSymbol token={receiveToken} />
-                  </>
+                  </View>
                 }
                 icon={
                   <Values.TokenLabel
@@ -174,40 +159,42 @@ const Permit = ({
                   onClick={() => handleClickRule('1091')}
                 />
               )}
-            </div>
-            <ul className="desc-list">
-              <li>
+            </View>
+            <View className="desc-list">
+              <Text>
                 ≈
                 {formatUsdValue(
                   new BigNumber(receiveToken.amount)
                     .times(receiveToken.price)
-                    .toFixed()
+                    .toFixed(),
                 )}
-              </li>
+              </Text>
               <SecurityListItem
                 engineResult={engineResultMap['1095']}
                 id="1095"
                 dangerText={
-                  <>
-                    {t('page.signTx.swap.valueDiff')}{' '}
-                    <Values.Percentage value={usdValuePercentage!} /> (
-                    {formatUsdValue(usdValueDiff || '')})
-                  </>
+                  <View>
+                    <Text>{t('page.signTx.swap.valueDiff')} </Text>
+                    <Values.Percentage value={usdValuePercentage!} />
+                    <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                  </View>
                 }
                 warningText={
-                  <>
-                    {t('page.signTx.swap.valueDiff')}{' '}
-                    <Values.Percentage value={usdValuePercentage!} /> (
-                    {formatUsdValue(usdValueDiff || '')})
-                  </>
+                  <View>
+                    <Text>{t('page.signTx.swap.valueDiff')} </Text>
+                    <Values.Percentage value={usdValuePercentage!} />
+                    <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                  </View>
                 }
               />
-            </ul>
+            </View>
           </Row>
         </Col>
         {expireAt && (
           <Col>
-            <Row isTitle>{t('page.signTypedData.buyNFT.expireTime')}</Row>
+            <Row isTitle>
+              <Text>{t('page.signTypedData.buyNFT.expireTime')}</Text>
+            </Row>
             <Row>
               <Values.TimeSpanFuture to={expireAt} />
             </Row>
@@ -215,42 +202,46 @@ const Permit = ({
         )}
         {hasReceiver && (
           <Col>
-            <Row isTitle>{t('page.signTx.swap.receiver')}</Row>
+            <Row isTitle>
+              <Text>{t('page.signTx.swap.receiver')}</Text>
+            </Row>
             <Row>
               <Values.Address address={receiver} chain={chain} />
-              <ul className="desc-list">
+              <View className="desc-list">
                 <SecurityListItem
                   engineResult={engineResultMap['1094']}
                   id="1094"
                   warningText={t('page.signTx.swap.unknownAddress')}
                 />
                 {!engineResultMap['1094'] && (
-                  <>
-                    <li>
+                  <View>
+                    <View>
                       <Values.AccountAlias address={receiver} />
-                    </li>
-                    <li>
+                    </View>
+                    <View>
                       <Values.KnownAddress address={receiver} />
-                    </li>
-                  </>
+                    </View>
+                  </View>
                 )}
-              </ul>
+              </View>
             </Row>
           </Col>
         )}
         <Col>
-          <Row isTitle>{t('page.signTypedData.buyNFT.listOn')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTypedData.buyNFT.listOn')}</Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={requireData.id} chain={chain} />
-            </div>
-            <ul className="desc-list">
+            </View>
+            <View className="desc-list">
               <ProtocolListItem protocol={requireData.protocol} />
-              <li>
+              <View>
                 <Values.Interacted value={requireData.hasInteraction} />
-              </li>
+              </View>
 
-              {isInWhitelist && <li>{t('page.signTx.markAsTrust')}</li>}
+              {isInWhitelist && <Text>{t('page.signTx.markAsTrust')}</Text>}
 
               <SecurityListItem
                 id="1135"
@@ -263,7 +254,7 @@ const Permit = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <li>
+              <View>
                 <ViewMore
                   type="contract"
                   data={{
@@ -276,13 +267,13 @@ const Permit = ({
                     title: t('page.signTypedData.buyNFT.listOn'),
                   }}
                 />
-              </li>
-            </ul>
+              </View>
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 
-export default Permit;
+export default SwapTokenOrder;

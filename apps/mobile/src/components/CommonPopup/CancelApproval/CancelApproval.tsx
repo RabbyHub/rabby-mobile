@@ -42,7 +42,9 @@ export const CancelApproval = () => {
   };
 
   const handleBlockedRequestApproval = () => {
+    closePopup();
     notificationService.blockedDapp();
+    onCancel();
   };
 
   const handleCancel = () => {

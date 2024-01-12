@@ -30,14 +30,7 @@ import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { Chain } from '@debank/common';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
@@ -160,7 +153,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 16,
       fontWeight: '500',
       color: colors['neutral-body'],
-      height: 320,
+      // height: 320,
     },
     noAction: {
       backgroundColor: colors['neutral-card-3'],
@@ -273,7 +266,7 @@ const Actions = ({
         </View>
         {data?.actionType && (
           <View style={styles.container}>
-            {/* {data.permit && chain && (
+            {data.permit && chain && (
               <Permit
                 data={data.permit}
                 requireData={requireData as ApproveTokenRequireData}
@@ -305,7 +298,7 @@ const Actions = ({
                 engineResults={engineResults}
               />
             )}
-            {data.buyNFT && chain && (
+            {/*   {data.buyNFT && chain && (
               <BuyNFT
                 data={data.buyNFT}
                 requireData={requireData as ContractRequireData}
@@ -313,8 +306,8 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )}
-            {data.batchSellNFT && chain && (
+            )}*/}
+            {/*  {data.batchSellNFT && chain && (
               <BatchSellNFT
                 data={data.batchSellNFT}
                 requireData={requireData as ContractRequireData}
@@ -322,8 +315,8 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )}
-            {data.sellNFT && chain && (
+            )} */}
+            {/* {data.sellNFT && chain && (
               <SellNFT
                 data={data.sellNFT}
                 requireData={requireData as ContractRequireData}
@@ -331,15 +324,15 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )}
-            {data.signMultiSig && (
+            )} */}
+            {/* {data.signMultiSig && (
               <SignMultisig
                 data={data.signMultiSig}
                 requireData={requireData as MultiSigRequireData}
                 chain={chain}
                 engineResults={engineResults}
               />
-            )}
+            )} */}
             {data.createKey && (
               <CreateKey data={data.createKey} engineResults={engineResults} />
             )}
@@ -349,7 +342,7 @@ const Actions = ({
                 engineResults={engineResults}
               />
             )}
-            {data.contractCall && chain && (
+            {/* {data.contractCall && chain && (
               <ContractCall
                 data={data.permit}
                 requireData={requireData as ContractRequireData}
@@ -357,19 +350,19 @@ const Actions = ({
                 engineResults={engineResults}
                 raw={raw}
               />
-            )}
-            {data.coboSafeCreate && (
+            )} */}
+            {/* {data.coboSafeCreate && (
               <CoboSafeCreate data={data.coboSafeCreate} />
-            )}
-            {data.coboSafeModificationRole && (
+            )} */}
+            {/* {data.coboSafeModificationRole && (
               <CoboSafeModificationRule data={data.coboSafeModificationRole} />
-            )}
-            {data.coboSafeModificationDelegatedAddress && (
+            )} */}
+            {/* {data.coboSafeModificationDelegatedAddress && (
               <CoboSafeModificationDelegatedAddress
                 data={data.coboSafeModificationDelegatedAddress}
               />
-            )}
-            {data.coboSafeModificationTokenApproval && (
+            )} */}
+            {/* {data.coboSafeModificationTokenApproval && (
               <CoboSafeModificationTokenApproval
                 data={data.coboSafeModificationTokenApproval}
               />
@@ -382,13 +375,13 @@ const Actions = ({
           <Text style={styles.messageTitle}>{t('page.signText.message')}</Text>
           <View style={styles.messageTitleLine} />
         </View>
-        <ScrollView
+        <View
           style={StyleSheet.flatten([
             styles.messageContent,
             data ? {} : styles.noAction,
           ])}>
           <Text>{message}</Text>
-        </ScrollView>
+        </View>
       </View>
     </View>
   );
