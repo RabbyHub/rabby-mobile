@@ -1,10 +1,15 @@
+import { View, Text } from 'react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from 'background/service/openapi';
-import { useRabbySelector } from '@/ui/store';
-import { isSameAddress } from '@/ui/utils';
+import { Chain } from '@debank/common';
+import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useThemeColors } from '@/hooks/theme';
+import { getStyle } from '../ViewMore';
+
+const { isSameAddress } = addressUtils;
 
 interface NFTSpenderData {
   spender: string;
@@ -32,57 +37,64 @@ export interface NFTSpenderPopupProps extends Props {
 
 export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
-
-  const { contractBlacklist, contractWhitelist } = useRabbySelector((state) => {
-    return state.securityEngine.userData;
-  });
+  const { userData } = useApprovalSecurityEngine();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
+  const { contractBlacklist, contractWhitelist } = userData;
 
   const { isInBlackList, isInWhiteList } = useMemo(() => {
     return {
       isInBlackList: contractBlacklist.some(
         ({ address, chainId }) =>
           isSameAddress(address, data.spender) &&
-          chainId === data.chain.serverId
+          chainId === data.chain.serverId,
       ),
       isInWhiteList: contractWhitelist.some(
         ({ address, chainId }) =>
           isSameAddress(address, data.spender) &&
-          chainId === data.chain.serverId
+          chainId === data.chain.serverId,
       ),
     };
   }, [data.spender, data.chain, contractBlacklist, contractWhitelist]);
   return (
-    <div>
-      <div className="title">
-        {data.isRevoke
-          ? t('page.signTx.revokeTokenApprove.revokeFrom')
-          : t('page.signTx.tokenApprove.approveTo')}{' '}
+    <View>
+      <View style={styles.title}>
+        <Text>
+          {data.isRevoke
+            ? t('page.signTx.revokeTokenApprove.revokeFrom')
+            : t('page.signTx.tokenApprove.approveTo')}
+        </Text>
+
         <Values.Address
           address={data.spender}
           chain={data.chain}
           iconWidth="14px"
         />
-      </div>
-      <Table className="view-more-table">
+      </View>
+      <Table style={styles.viewMoreTable}>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.protocolTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.protocolTitle')}</Text>
           </Row>
           <Row>
             <Values.Protocol value={data.protocol} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.addressTypeTitle')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.addressTypeTitle')}</Text>
           </Row>
-          <Row>{data.isEOA ? 'EOA' : 'Contract'}</Row>
+          <Row>
+            <Text>{data.isEOA ? 'EOA' : 'Contract'}</Text>
+          </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {data.isEOA
-              ? t('page.signTx.firstOnChain')
-              : t('page.signTx.deployTimeTitle')}
+          <Row style={styles.firstRow}>
+            <Text>
+              {data.isEOA
+                ? t('page.signTx.firstOnChain')
+                : t('page.signTx.deployTimeTitle')}
+            </Text>
           </Row>
           <Row>
             <Values.TimeSpan value={data.bornAt} />
@@ -91,49 +103,52 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
         <Col>
           <Row
             tip={t('page.signTx.nftApprove.nftContractTrustValueTip')}
-            className="bg-r-neutral-card-3"
-          >
-            {t('page.signTx.trustValue')}
+            style={styles.firstRow}>
+            <Text>{t('page.signTx.trustValue')}</Text>
           </Row>
           <Row>
             {data.riskExposure === null ? (
-              '-'
+              <Text>-</Text>
             ) : (
               <Values.USDValue value={data.riskExposure} />
             )}
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.popularity')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.popularity')}</Text>
           </Row>
           <Row>
-            {data.rank
-              ? t('page.signTx.contractPopularity', [
-                  data.rank,
-                  data.chain.name,
-                ])
-              : '-'}
+            <Text>
+              {data.rank
+                ? t('page.signTx.contractPopularity', [
+                    data.rank,
+                    data.chain.name,
+                  ])
+                : '-'}
+            </Text>
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.interacted')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.interacted')}</Text>
           </Row>
           <Row>
             <Values.Boolean value={data.hasInteraction} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">
-            {t('page.signTx.addressNote')}
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.addressNote')}</Text>
           </Row>
           <Row>
             <Values.AddressMemo address={data.spender} />
           </Row>
         </Col>
         <Col>
-          <Row className="bg-r-neutral-card-3">{t('page.signTx.myMark')}</Row>
+          <Row style={styles.firstRow}>
+            <Text>{t('page.signTx.myMark')}</Text>
+          </Row>
           <Row>
             <Values.AddressMark
               isContract
@@ -147,8 +162,8 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
         </Col>
         {data.isDanger && (
           <Col>
-            <Row className="bg-r-neutral-card-3">
-              {t('page.signTx.tokenApprove.flagByRabby')}
+            <Row style={styles.firstRow}>
+              <Text>{t('page.signTx.tokenApprove.flagByRabby')}</Text>
             </Row>
             <Row>
               <Values.Boolean value={!!data.isDanger} />
@@ -156,6 +171,6 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
           </Col>
         )}
       </Table>
-    </div>
+    </View>
   );
 };

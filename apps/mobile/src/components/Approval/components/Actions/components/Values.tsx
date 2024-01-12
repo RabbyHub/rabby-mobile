@@ -1,10 +1,17 @@
 import React, { useMemo, ReactNode, useState, useEffect } from 'react';
-import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  Image,
+  TouchableOpacity,
+  TextStyle,
+} from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
 import { Chain, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components/Toast';
-// import AddressMemo from './AddressMemo';
+import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
 import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
@@ -38,7 +45,7 @@ import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEng
 const { isSameAddress } = addressUtils;
 
 const Boolean = ({ value }: { value: boolean }) => {
-  return <>{value ? 'Yes' : 'No'}</>;
+  return <Text>{value ? 'Yes' : 'No'}</Text>;
 };
 
 const styles = StyleSheet.create({
@@ -223,7 +230,7 @@ const Protocol = ({
 }: {
   value?: { name: string; logo_url: string } | null;
   logoSize?: number;
-  textStyle?: React.CSSProperties;
+  textStyle?: TextStyle;
 }) => {
   return (
     <>
@@ -276,21 +283,26 @@ const Address = ({
     toast.success(t('global.copied'));
   };
   return (
-    <View className="relative flex">
-      <Text>{ellipsis(address)}</Text>
+    <View className="relative flex flex-row items-center">
+      <Text
+        className="mr-6 text-r-neutral-title1 font-medium"
+        style={{ fontSize: 15 }}>
+        {ellipsis(address)}
+      </Text>
       {chain && (
         <IconExternal
           onPress={handleClickContractId}
           width={iconWidth}
           height={iconWidth}
-          className="ml-6"
+          style={{
+            marginRight: 6,
+          }}
         />
       )}
       <IconAddressCopy
         onPress={handleCopyContractAddress}
         width={iconWidth}
         height={iconWidth}
-        className="ml-6 icon-copy"
       />
     </View>
   );
@@ -344,7 +356,7 @@ const Interacted = ({ value }: { value: boolean }) => {
 const Transacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   return (
-    <View className="flex">
+    <View className="flex flex-row">
       {value ? (
         <>
           <IconInteracted className="mr-4 w-14" />
@@ -405,7 +417,7 @@ export {
   Boolean,
   TokenAmount,
   Percentage,
-  // AddressMemo,
+  AddressMemo,
   AddressMark,
   USDValue,
   TimeSpan,

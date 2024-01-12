@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Popup } from 'ui/component';
+import { View, StyleSheet, Text } from 'react-native';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { SpenderPopup, SpenderPopupProps } from './ViewMorePopup/SpenderPopup';
 import {
   ContractPopup,
@@ -20,6 +21,8 @@ import {
   NFTSpenderPopupProps,
 } from './ViewMorePopup/NFTSpenderPopup';
 import { useTranslation } from 'react-i18next';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 type Props =
   | SpenderPopupProps
@@ -29,37 +32,47 @@ type Props =
   | NFTPopupProps
   | CollectionPopupProps;
 
-const PopupContainer = styled.div`
-  .title {
-    font-size: 16px;
-    line-height: 19px;
-    color: var(--r-neutral-title-1, #192945);
-    display: flex;
-    margin-bottom: 14px;
-    .value-address {
-      font-weight: 500;
-      margin-left: 7px;
-    }
-  }
-  .view-more-table {
-    .row {
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      font-size: 15px;
-
-      &:nth-child(1) {
-        max-width: 140px;
-        border-right: 0.5px solid var(--r-neutral-line);
-        flex-shrink: 0;
-      }
-    }
-  }
-`;
+export const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+    popupContainer: {},
+    title: {
+      fontSize: 16,
+      lineHeight: 19,
+      color: colors['neutral-title-1'],
+      flexDirection: 'row',
+      marginBottom: 14,
+    },
+    valueAddress: {
+      fontWeight: '500',
+      marginLeft: 7,
+    },
+    viewMoreTable: {},
+    row: {
+      minHeight: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      fontSize: 15,
+    },
+    firstRow: {
+      maxWidth: 140,
+      borderRightWidth: 0.5,
+      borderRightColor: colors['neutral-line'],
+      backgroundColor: colors['neutral-card-3'],
+      flexShrink: 0,
+    },
+  });
 
 const ViewMore = (props: Props) => {
   const [popupVisible, setPopupVisible] = useState(false);
   const { t } = useTranslation();
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
 
   const handleClickViewMore = () => {
     setPopupVisible(true);
@@ -83,26 +96,38 @@ const ViewMore = (props: Props) => {
     }
   }, [props.type]);
 
+  React.useEffect(() => {
+    if (!popupVisible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [popupVisible]);
+
   return (
     <>
-      <span className="underline cursor-pointer" onClick={handleClickViewMore}>
+      <Text className="underline cursor-pointer" onPress={handleClickViewMore}>
         {t('page.approvals.component.ViewMore.text')}
-      </span>
-      <Popup
-        visible={popupVisible}
-        closable
-        onClose={() => setPopupVisible(false)}
-        height={height}
-      >
-        <PopupContainer>
-          {props.type === 'contract' && <ContractPopup data={props.data} />}
-          {props.type === 'spender' && <SpenderPopup data={props.data} />}
-          {props.type === 'nftSpender' && <NFTSpenderPopup data={props.data} />}
-          {props.type === 'receiver' && <ReceiverPopup data={props.data} />}
-          {props.type === 'nft' && <NFTPopup data={props.data} />}
-          {props.type === 'collection' && <CollectionPopup data={props.data} />}
-        </PopupContainer>
-      </Popup>
+      </Text>
+      <AppBottomSheetModal
+        ref={modalRef}
+        onDismiss={() => setPopupVisible(false)}
+        snapPoints={[height]}>
+        <BottomSheetView style={styles.mainView}>
+          <View style={styles.popupContainer}>
+            {props.type === 'contract' && <ContractPopup data={props.data} />}
+            {props.type === 'spender' && <SpenderPopup data={props.data} />}
+            {props.type === 'nftSpender' && (
+              <NFTSpenderPopup data={props.data} />
+            )}
+            {props.type === 'receiver' && <ReceiverPopup data={props.data} />}
+            {props.type === 'nft' && <NFTPopup data={props.data} />}
+            {props.type === 'collection' && (
+              <CollectionPopup data={props.data} />
+            )}
+          </View>
+        </BottomSheetView>
+      </AppBottomSheetModal>
     </>
   );
 };
