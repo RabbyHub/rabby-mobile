@@ -8,7 +8,7 @@ import { useThemeColors } from '@/hooks/theme';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
 });
 
 export default function CommonScreenHeader({

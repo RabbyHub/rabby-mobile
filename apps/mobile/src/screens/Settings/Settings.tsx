@@ -28,6 +28,7 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { WindView } from '@/components/NativeWind';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -159,7 +160,7 @@ function SettingsScreen(): JSX.Element {
   return (
     <Container
       className={clsx('bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2')}>
-      <View className="flex-1 p-[20]">
+      <WindView className="flex-1 p-[20]">
         {Object.entries(SettingsBlocks).map(([key, block], idx) => {
           const l1key = `${key}-${idx}`;
 
@@ -167,9 +168,7 @@ function SettingsScreen(): JSX.Element {
             <Block
               key={l1key}
               label={block.label}
-              {...(idx > 0 && {
-                className: 'mt-[16]',
-              })}>
+              className={clsx(idx > 0 && 'mt-[16]')}>
               {block.items.map((item, idx_l2) => {
                 return (
                   <Block.Item
@@ -185,7 +184,7 @@ function SettingsScreen(): JSX.Element {
             </Block>
           );
         })}
-      </View>
+      </WindView>
       <View className="items-center">
         <RcFooterLogo />
       </View>

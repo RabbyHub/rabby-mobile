@@ -2,7 +2,10 @@ import * as React from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { View, StyleSheet, Button, Text } from 'react-native';
 
-const appErrorHandler = (error: Error) => {};
+const appErrorHandler = (error: Error) => {
+  console.warn('[AppErrorBoundary::appErrorHandler] error occured');
+  console.error(error);
+};
 
 const ErrorFallback: React.ComponentType<FallbackProps> = ({
   resetErrorBoundary,

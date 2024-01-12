@@ -36,6 +36,7 @@ const rabbyColors = ['light', 'dark'].reduce(
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
+    './index.js',
     './src/*.{js,jsx,ts,tsx,html}',
     './src/components/**/*.{js,jsx,ts,tsx,html}',
     './src/hooks/**/*.{js,jsx,ts,tsx,html}',
