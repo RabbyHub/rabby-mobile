@@ -45,6 +45,7 @@ import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
 import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
+import ViewRawModal from '../TxComponents/ViewRawModal';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -153,10 +154,10 @@ const Actions = ({
   const styles = getStyle(colors);
 
   const handleViewRawClick = () => {
-    // ViewRawModal.open({
-    //   raw,
-    //   abi: txDetail?.abi_str,
-    // });
+    ViewRawModal.open({
+      raw,
+      abi: txDetail?.abi_str,
+    });
   };
 
   return (
@@ -169,7 +170,7 @@ const Actions = ({
           </Text>
         </View>
         <TouchableOpacity onPress={handleViewRawClick}>
-          <View className="float-right text-12 cursor-pointer flex items-center view-raw">
+          <View className="float-right text-12 cursor-pointer flex flex-row items-center view-raw">
             <Text>{t('page.signTx.viewRaw')}</Text>
             <RcIconArrowRight />
           </View>

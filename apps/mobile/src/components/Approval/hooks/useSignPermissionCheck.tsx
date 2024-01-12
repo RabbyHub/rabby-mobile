@@ -1,13 +1,11 @@
 import { BigNumber } from 'bignumber.js';
-import { SIGN_PERMISSION_TYPES } from '@/constant';
-import { useWallet } from '@/ui/utils';
 import { CHAINS_LIST } from '@debank/common';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEffect, useMemo } from 'react';
-import { Button, Modal } from 'antd';
 import styled from 'styled-components';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { dappService } from '@/core/services';
 
 const Content = styled.div`
   text-align: center;
@@ -45,26 +43,23 @@ export const useSignPermissionCheck = ({
   onOk?: () => void;
   onDisconnect?: () => void;
 }) => {
-  const wallet = useWallet();
   const chain = useMemo(
     () =>
       chainId
-        ? CHAINS_LIST.find((item) =>
-            new BigNumber(item.network).isEqualTo(chainId)
+        ? CHAINS_LIST.find(item =>
+            new BigNumber(item.network).isEqualTo(chainId),
           )
         : undefined,
-    [chainId]
+    [chainId],
   );
 
   const { data: connectedSite } = useRequest(
     () => {
-      return origin
-        ? wallet.getConnectedSite(origin)
-        : Promise.resolve(undefined);
+      return origin ? dappService.getDapp(origin) : Promise.resolve(undefined);
     },
     {
       refreshDeps: [origin],
-    }
+    },
   );
 
   const handleOk = useMemoizedFn(() => {
@@ -101,8 +96,7 @@ export const useSignPermissionCheck = ({
               onClick={() => {
                 destroy();
                 handleOk();
-              }}
-            >
+              }}>
               {t('global.ok')}
             </Button>
             <div className="footer">
@@ -111,8 +105,7 @@ export const useSignPermissionCheck = ({
                 onClick={() => {
                   destroy();
                   handleDisconnect();
-                }}
-              >
+                }}>
                 {t('component.signPermissionCheckModal.reconnect')}
               </span>
             </div>

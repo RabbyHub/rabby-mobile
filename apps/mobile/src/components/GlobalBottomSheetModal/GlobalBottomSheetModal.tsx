@@ -108,24 +108,28 @@ export const GlobalBottomSheetModal = () => {
 
   return (
     <View>
-      {modals.map(modal => (
-        <AppBottomSheetModal
-          topInset={height.top}
-          enableContentPanningGesture={false}
-          onDismiss={() => handleDismiss(modal.id)}
-          handleStyle={handleStyle}
-          key={modal.id}
-          ref={modal.ref}
-          name={modal.id}
-          children={MODAL_VIEWS[modal.params.name]}
-          snapPoints={modal.snapPoints}
-          stackBehavior="push"
-          {...makeBottomSheetProps({
-            params: modal.params,
-            colors,
-          })}
-        />
-      ))}
+      {modals.map(modal => {
+        const ModalView = MODAL_VIEWS[modal.params.name];
+
+        return (
+          <AppBottomSheetModal
+            topInset={height.top}
+            enableContentPanningGesture={false}
+            onDismiss={() => handleDismiss(modal.id)}
+            handleStyle={handleStyle}
+            key={modal.id}
+            ref={modal.ref}
+            name={modal.id}
+            children={<ModalView {...modal.params} />}
+            snapPoints={modal.snapPoints}
+            stackBehavior="push"
+            {...makeBottomSheetProps({
+              params: modal.params,
+              colors,
+            })}
+          />
+        );
+      })}
     </View>
   );
 };
