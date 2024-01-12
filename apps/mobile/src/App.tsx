@@ -13,15 +13,19 @@ import { RootSiblingParent } from 'react-native-root-siblings';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
-import JotaiNexus from '@/components/JotaiNexus';
+// import JotaiNexus from '@/components/JotaiNexus';
 import AppErrorBoundary from '@/components/ErrorBoundary';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 import { ThemeProvider } from '@rneui/themed';
+import { useSetupServiceStub } from './core/storage/serviceStoreStub';
+import SheetDappWebView from './screens/Dapps/Dapps/components/SheetDappWebView';
 
 function MainScreen() {
   useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
+
+  useSetupServiceStub();
 
   useEffect(() => {
     SplashScreen.hide();
@@ -30,7 +34,9 @@ function MainScreen() {
   return (
     <BottomSheetModalProvider>
       {couldRender && <AppNavigation colorScheme={binaryTheme} />}
-      <JotaiNexus />
+      {/* <JotaiNexus /> */}
+
+      <SheetDappWebView />
     </BottomSheetModalProvider>
   );
 }

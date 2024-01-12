@@ -23,6 +23,9 @@ import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useDapps } from '@/hooks/useDapps';
+import { toast } from '@/components/Toast';
+import clsx from 'clsx';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
@@ -57,6 +60,11 @@ export default function SheetDappWebView() {
   const colors = useThemeColors();
   const { safeOffScreenTop } = useSafeSizes();
 
+  const { disconnectDapp, isDappConnected } = useDapps();
+
+  const isActiveDappConnected =
+    !!activeDapp && isDappConnected(activeDapp.origin);
+
   return (
     <AppBottomSheetModal
       index={0}
@@ -72,8 +80,14 @@ export default function SheetDappWebView() {
         {activeDapp && (
           <DappWebViewControl
             dappId={activeDapp.origin}
-            bottomNavH={342}
+            bottomNavH={
+              isActiveDappConnected
+                ? ScreenLayouts.dappWebViewNavBottomSheetHeight
+                : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
+            }
             headerLeft={() => {
+              if (!isActiveDappConnected) return null;
+
               return (
                 <TouchableView
                   style={[
@@ -84,7 +98,7 @@ export default function SheetDappWebView() {
                   ]}
                   onPress={() => {}}>
                   <ChainIconImage
-                    source={require('@/screens/Dapps/icons/sample-chain-icon-tp.png')}
+                    chainEnum={activeDapp.chainId}
                     size={24}
                     width={24}
                     height={24}
@@ -101,17 +115,22 @@ export default function SheetDappWebView() {
 
                   <View
                     style={{
-                      // height: 179,
-                      // height: 139,
                       paddingVertical: 16,
                       borderTopColor: colors['neutral-line'],
                       borderTopWidth: 1,
                       justifyContent: 'center',
                     }}>
                     <View className="flex-shrink-0">{bottomNavBar}</View>
-                    <View className="flex-shrink-1 mt-[18] px-[20]">
+                    <View
+                      className={clsx(
+                        'flex-shrink-1 mt-[18] px-[20]',
+                        !isActiveDappConnected && 'hidden',
+                      )}>
                       <Button
-                        onPress={() => {}}
+                        onPress={() => {
+                          disconnectDapp(activeDapp.origin);
+                          toast.success('Disconnected');
+                        }}
                         title={
                           <View className="flex-row items-center justify-center">
                             <RcIconDisconnect

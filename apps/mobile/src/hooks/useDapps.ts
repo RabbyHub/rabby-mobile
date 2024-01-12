@@ -5,16 +5,15 @@ import { atom, useAtom } from 'jotai';
 import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useFocusEffect } from '@react-navigation/native';
+import { dappsAtom } from '@/core/storage/serviceStoreStub';
 
-const dappsAtom = atom<Record<string, DappInfo>>({});
-
-export const useDapps = () => {
+export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
 
   const getDapps = useCallback(() => {
     const res = dappService.getDapps();
 
-    setDapps({ ...res });
+    setDapps(res);
     return res;
   }, [setDapps]);
 
@@ -26,7 +25,6 @@ export const useDapps = () => {
         item.origin = stringUtils.ensurePrefix(item.info.id, 'https://');
       });
       const res = dappService.addDapp(data);
-      getDapps();
       return res;
     },
     [getDapps],
@@ -35,7 +33,6 @@ export const useDapps = () => {
   const updateFavorite = useCallback(
     (id: string, v: boolean) => {
       dappService.updateFavorite(id, v);
-      getDapps();
     },
     [getDapps],
   );
@@ -43,7 +40,6 @@ export const useDapps = () => {
   const removeDapp = useCallback(
     (id: string) => {
       dappService.removeDapp(id);
-      getDapps();
     },
     [getDapps],
   );
@@ -51,10 +47,33 @@ export const useDapps = () => {
   const disconnectDapp = useCallback(
     (origin: string) => {
       dappService.disconnect(origin);
-      getDapps();
     },
     [getDapps],
   );
+
+  const isDappConnected = useCallback(
+    (origin: string) => {
+      const dapp = dapps[origin];
+      return !!dapp?.isConnected;
+    },
+    [dapps],
+  );
+
+  return {
+    dapps,
+    getDapps,
+    addDapp,
+    updateFavorite,
+    removeDapp,
+    disconnectDapp,
+    isDappConnected,
+  };
+}
+
+export const useDappsHome = () => {
+  const [dapps] = useAtom(dappsAtom);
+  const { getDapps, addDapp, updateFavorite, removeDapp, disconnectDapp } =
+    useDapps();
 
   const connectedApps = useMemo(() => {
     return Object.values(dapps || {}).filter(item => item.isConnected);
@@ -78,13 +97,9 @@ export const useDapps = () => {
     ].filter(item => item.data.length);
   }, [connectedApps, favoriteApps]);
 
-  // React.useEffect(() => {
-  //   getDapps();
-  // }, [getDapps]);
-
   useFocusEffect(
     useCallback(() => {
-      console.log('useFocusEffect');
+      console.log('[useDapps] useFocusEffect');
       getDapps();
     }, [getDapps]),
   );

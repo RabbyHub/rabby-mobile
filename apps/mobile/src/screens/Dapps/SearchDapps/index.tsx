@@ -174,7 +174,6 @@ export function SearchDappsScreen(): JSX.Element {
           }}
         />
       )}
-      <SheetDappWebView />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import { StyleSheet, View, ScrollView, Text } from 'react-native';
@@ -10,10 +10,7 @@ import { DappCardList } from './components/DappCardList';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-// import { useRequest } from 'ahooks';
-import { dappService } from '@/core/services';
-import { DappInfo } from '@rabby-wallet/service-dapp';
-import { useDapps } from '@/hooks/useDapps';
+import { useDappsHome } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
 import {
   useActiveDappView,
@@ -49,8 +46,8 @@ export function DappsScreen(): JSX.Element {
     });
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
-  const { dappSections, updateFavorite, removeDapp, disconnectDapp, getDapps } =
-    useDapps();
+  const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
+    useDappsHome();
   const { setActiveDapp } = useActiveDappView();
   const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
   // todo refresh dapps when webview close
@@ -75,8 +72,6 @@ export function DappsScreen(): JSX.Element {
           }}
         />
       </View>
-
-      <SheetDappWebView />
     </NormalScreenContainer>
   );
 }

@@ -11,8 +11,6 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { sessionService } from '@/core/services/session';
-import { BroadcastEvent } from '@/constant/event';
 
 let appVersion = '';
 
