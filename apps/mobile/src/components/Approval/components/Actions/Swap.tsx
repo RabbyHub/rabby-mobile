@@ -239,11 +239,13 @@ const Swap = ({
                 </>
               )}
               {balanceChange.support && !balanceChange.success && (
-                <DescItem>{t('page.signTx.swap.simulationFailed')}</DescItem>
+                <DescItem>
+                  <Text>{t('page.signTx.swap.simulationFailed')}</Text>
+                </DescItem>
               )}
               {!balanceChange.support && (
                 <DescItem>
-                  {t('page.signTx.swap.simulationNotSupport')}
+                  <Text>{t('page.signTx.swap.simulationNotSupport')}</Text>
                 </DescItem>
               )}
             </View>

@@ -4,7 +4,7 @@ import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@debank/common';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-// import BalanceChange from '../TxComponents/BalanceChange';
+import BalanceChange from '../TxComponents/BalanceChange';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 // import ViewRawModal from '../TxComponents/ViewRawModal';
@@ -342,10 +342,10 @@ const Actions = ({
           )} */}
         </View>
       </View>
-      {/* <BalanceChange
+      <BalanceChange
         version={txDetail.pre_exec_version}
         data={txDetail.balance_change}
-      /> */}
+      />
     </>
   );
 };

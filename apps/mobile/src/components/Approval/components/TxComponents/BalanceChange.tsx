@@ -1,21 +1,33 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
-import { CHAINS_ENUM } from 'consts';
+import { CHAINS_ENUM } from '@debank/common';
 import {
   BalanceChange as IBalanceChange,
   TokenItem,
-} from 'background/service/openapi';
-import { formatAmount } from 'ui/utils/number';
-import useBalanceChange from '@/ui/hooks/useBalanceChange';
+} from '@rabby-wallet/rabby-api/dist/types';
+import { formatAmount } from '@/utils/number';
+import useBalanceChange from '../..//hooks/useBalanceChange';
 import { Table, Col, Row } from '../Actions/components/Table';
 import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
-import { ReactComponent as RcIconAlert } from 'ui/assets/sign/tx/alert-currentcolor.svg';
-import { formatNumber, formatUsdValue } from 'ui/utils/number';
-import { getTokenSymbol } from '@/ui/utils/token';
-import { useRabbyDispatch } from 'ui/store';
-import ThemeIcon from '@/ui/component/ThemeMode/ThemeIcon';
+import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
+import { formatNumber, formatUsdValue } from '@/utils/number';
+import { getTokenSymbol } from '@/utils/token';
+import DescItem from '../Actions/components/DescItem';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColorsVariants } from '@/constant/theme';
+
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    tokenBalanceChange: {
+      marginTop: 14,
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
+      padding: 15,
+    },
+  });
 
 const NFTBalanceChange = ({
   data,
@@ -25,54 +37,55 @@ const NFTBalanceChange = ({
   type: 'receive' | 'send';
 }) => {
   const { t } = useTranslation();
-  const {
-    hasReceives,
-    receiveNftList,
-    hasTransferedOut,
-    sendNftList,
-  } = React.useMemo(() => {
-    const sendNftList = data.send_nft_list.slice(0);
-    const countSendNft = sendNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0
-    );
-    const hasTransferedOut = sendNftList.length > 0;
+  const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
+    React.useMemo(() => {
+      const sendNftList = data.send_nft_list.slice(0);
+      const countSendNft = sendNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasTransferedOut = sendNftList.length > 0;
 
-    const receiveNftList = data.receive_nft_list.slice(0);
-    const countReceives = receiveNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0
-    );
-    const hasReceives = receiveNftList.length > 0;
+      const receiveNftList = data.receive_nft_list.slice(0);
+      const countReceives = receiveNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasReceives = receiveNftList.length > 0;
 
-    return {
-      hasReceives,
-      countReceives,
-      receiveNftList,
-      hasTransferedOut,
-      countSendNft,
-      sendNftList,
-    };
-  }, [data]);
+      return {
+        hasReceives,
+        countReceives,
+        receiveNftList,
+        hasTransferedOut,
+        countSendNft,
+        sendNftList,
+      };
+    }, [data]);
 
   if (type === 'receive' && hasReceives) {
     return (
       <Col>
         <Row isTitle>{t('page.signTx.nftIn')}</Row>
-        <div className="flex-1 overflow-hidden">
-          {receiveNftList.map((item) => (
+        <View className="flex-1 overflow-hidden">
+          {receiveNftList.map((item, index) => (
             <Row
-              className="has-bottom-border"
+              hasBottomBorder
               key={`${item.id}-${item.inner_id}`}
-            >
-              <div className="flex">
-                <span
-                  className="flex-1 overflow-hidden whitespace-nowrap overflow-ellipsis"
-                  title={item.collection ? item.collection.name : item.name}
-                >
-                  <span className="text-green">+ {item.amount}</span>{' '}
-                  {item.collection ? item.collection.name : item.name}
-                </span>
+              style={
+                index === receiveNftList.length - 1
+                  ? {
+                      borderBottomWidth: 0,
+                    }
+                  : {}
+              }>
+              <View className="flex flex-row">
+                <View className="flex-1">
+                  <Text className="text-r-green-default">+ {item.amount}</Text>
+                  <Text>
+                    {item.collection ? item.collection.name : item.name}
+                  </Text>
+                </View>
                 <Values.TokenLabel
                   isFake={item.collection?.is_verified === false}
                   isScam={
@@ -80,10 +93,10 @@ const NFTBalanceChange = ({
                     !!item.collection?.is_suspicious
                   }
                 />
-              </div>
+              </View>
             </Row>
           ))}
-        </div>
+        </View>
       </Col>
     );
   }
@@ -91,20 +104,25 @@ const NFTBalanceChange = ({
     return (
       <Col>
         <Row isTitle>{t('page.signTx.balanceChange.nftOut')}</Row>
-        <div className="flex-1 overflow-hidden">
-          {sendNftList.map((item) => (
+        <View className="flex-1 overflow-hidden">
+          {sendNftList.map((item, index) => (
             <Row
-              className="has-bottom-border"
+              hasBottomBorder
               key={`${item.id}-${item.inner_id}`}
-            >
-              <div className="flex">
-                <span
-                  className="flex-1 overflow-hidden whitespace-nowrap overflow-ellipsis"
-                  title={item.collection ? item.collection.name : item.name}
-                >
-                  <span className="text-red-forbidden">- {item.amount}</span>{' '}
-                  {item.collection ? item.collection.name : item.name}
-                </span>
+              style={
+                index === sendNftList.length - 1
+                  ? {
+                      borderBottomWidth: 0,
+                    }
+                  : {}
+              }>
+              <View className="flex">
+                <View className="flex-1">
+                  <Text className="text-r-red-default">- {item.amount}</Text>
+                  <Text>
+                    {item.collection ? item.collection.name : item.name}
+                  </Text>
+                </View>
                 <Values.TokenLabel
                   isFake={item.collection?.is_verified === false}
                   isScam={
@@ -112,10 +130,10 @@ const NFTBalanceChange = ({
                     !!item.collection?.is_suspicious
                   }
                 />
-              </div>
+              </View>
             </Row>
           ))}
-        </div>
+        </View>
       </Col>
     );
   }
@@ -132,9 +150,10 @@ const BalanceChange = ({
   chainEnum?: CHAINS_ENUM;
   version: 'v0' | 'v1' | 'v2';
 }) => {
-  const dispatch = useRabbyDispatch();
   const { t } = useTranslation();
   const isSuccess = data.success;
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
 
   const { hasTokenChange, hasNFTChange } = useBalanceChange({
     balance_change: data,
@@ -142,134 +161,145 @@ const BalanceChange = ({
 
   const hasChange = hasNFTChange || hasTokenChange;
 
-  const {
-    receiveTokenList,
-    sendTokenList,
-    showUsdValueDiff,
-  } = React.useMemo(() => {
-    const receiveTokenList = data.receive_token_list;
-    const sendTokenList = data.send_token_list;
-    const showUsdValueDiff =
-      data.receive_nft_list.length <= 0 &&
-      data.send_nft_list.length <= 0 &&
-      (data.send_token_list.length > 0 || data.receive_token_list.length > 0);
-    return {
-      receiveTokenList,
-      sendTokenList,
-      showUsdValueDiff,
-    };
-  }, [data]);
+  const { receiveTokenList, sendTokenList, showUsdValueDiff } =
+    React.useMemo(() => {
+      const receiveTokenList = data.receive_token_list;
+      const sendTokenList = data.send_token_list;
+      const showUsdValueDiff =
+        data.receive_nft_list.length <= 0 &&
+        data.send_nft_list.length <= 0 &&
+        (data.send_token_list.length > 0 || data.receive_token_list.length > 0);
+      return {
+        receiveTokenList,
+        sendTokenList,
+        showUsdValueDiff,
+      };
+    }, [data]);
 
   const handleClickToken = (t: TokenItem) => {
-    dispatch.sign.openTokenDetailPopup(t);
+    // TODO
+    // dispatch.sign.openTokenDetailPopup(t);
   };
 
   if (version === 'v0') {
     return (
-      <div className="token-balance-change">
-        <div className="token-balance-change-content">
+      <View style={styles.tokenBalanceChange}>
+        <View>
           <Table>
             <Col>
               <Row>
-                <span className="text-15 text-r-neutral-title-1 font-medium">
+                <Text className="text-[15px] text-r-neutral-title-1 font-medium">
                   {t('page.signTx.balanceChange.notSupport')}
-                </span>
+                </Text>
               </Row>
             </Col>
           </Table>
-        </div>
-      </div>
+        </View>
+      </View>
     );
   }
 
   if (version === 'v1' && data.error) {
     return (
-      <div className="token-balance-change">
-        <div className="token-balance-change-content">
+      <View style={styles.tokenBalanceChange}>
+        <View>
           <Table>
             <Col>
               <Row>
-                <span className="text-15 text-r-neutral-title-1 font-medium">
+                <Text className="text-[15px] text-r-neutral-title-1 font-medium">
                   {isSuccess
                     ? t('page.signTx.balanceChange.successTitle')
                     : t('page.signTx.balanceChange.failedTitle')}
-                </span>
+                </Text>
               </Row>
             </Col>
             <Col>
               <Row>
-                <span className="text-15 text-r-neutral-title-1 font-medium">
+                <Text className="text-r-neutral-title-1 font-medium">
                   {t('page.signTx.balanceChange.errorTitle')}
-                </span>
+                </Text>
               </Row>
             </Col>
           </Table>
-        </div>
-      </div>
+        </View>
+      </View>
     );
   }
 
   return (
-    <div className="token-balance-change">
-      <p className="text-16 text-r-neutral-title-1 font-medium mb-12 flex items-center">
-        <span>
+    <View style={styles.tokenBalanceChange}>
+      <View className="mb-[12] flex flex-row items-center">
+        <Text className="text-[16px] font-medium text-r-neutral-title-1">
           {isSuccess
             ? t('page.signTx.balanceChange.successTitle')
             : t('page.signTx.balanceChange.failedTitle')}
-        </span>
+        </Text>
         {showUsdValueDiff && (
-          <span className="flex-1 whitespace-nowrap overflow-hidden overflow-ellipsis text-r-neutral-body text-right text-13 font-normal">
+          <Text className="flex-1 text-r-neutral-body text-right text-[13px]">
             {`${data.usd_value_change >= 0 ? '+' : '-'} $${formatNumber(
-              Math.abs(data.usd_value_change)
+              Math.abs(data.usd_value_change),
             )}`}
-          </span>
+          </Text>
         )}
-      </p>
-      <div className="token-balance-change-content">
+      </View>
+      <View>
         <Table>
           {!hasChange && isSuccess && (
             <Col>
               <Row>
-                <span className="text-15 font-medium text-r-neutral-title-1">
+                <Text className="text-[15px] font-medium text-r-neutral-title-1">
                   {t('page.signTx.balanceChange.noBalanceChange')}
-                </span>
+                </Text>
               </Row>
             </Col>
           )}
           {data.error && (
             <Col>
-              <Row className="text-14 font-medium flex">
-                <ThemeIcon
-                  src={RcIconAlert}
-                  className="w-[15px] mr-6 text-r-neutral-body top-[2px] relative"
-                />
-                {data.error.msg} #{data.error.code}
+              <Row>
+                <View className="flex flex-row">
+                  <RcIconAlert className="w-[15px] mr-[6] text-r-neutral-body top-[2px] relative" />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '500',
+                    }}>
+                    {data.error.msg} #{data.error.code}
+                  </Text>
+                </View>
               </Row>
             </Col>
           )}
           {sendTokenList && sendTokenList.length > 0 && (
             <Col>
-              <Row isTitle>{t('page.signTx.balanceChange.tokenOut')}</Row>
-              <div className="flex-1 overflow-hidden">
-                {sendTokenList.map((token) => (
-                  <Row className="has-bottom-border" key={token.id}>
+              <Row isTitle>
+                <Text>{t('page.signTx.balanceChange.tokenOut')}</Text>
+              </Row>
+              <View className="flex-1 overflow-hidden">
+                {sendTokenList.map((token, index) => (
+                  <Row
+                    hasBottomBorder
+                    key={token.id}
+                    style={
+                      index === sendTokenList.length - 1
+                        ? {
+                            borderBottomWidth: 0,
+                          }
+                        : {}
+                    }>
                     <LogoWithText
                       logo={token.logo_url}
                       text={
                         <>
-                          <span className="text-red-forbidden">
+                          <Text className="text-r-red-default">
                             - {formatAmount(token.amount)}
-                          </span>{' '}
-                          <span
-                            onClick={() => handleClickToken(token)}
-                            className="hover:underline cursor-pointer"
-                          >
+                          </Text>
+                          <Text onPress={() => handleClickToken(token)}>
                             {getTokenSymbol(token)}
-                          </span>
+                          </Text>
                         </>
                       }
                       key={token.id}
-                      logoRadius="100%"
+                      logoRadius={16}
                       icon={
                         <Values.TokenLabel
                           isFake={token.is_verified === false}
@@ -279,44 +309,53 @@ const BalanceChange = ({
                         />
                       }
                     />
-                    <ul className="desc-list">
-                      <li>
+
+                    <DescItem>
+                      <Text>
                         ≈{' '}
                         {formatUsdValue(
                           new BigNumber(token.amount)
                             .times(token.price)
-                            .toFixed()
+                            .toFixed(),
                         )}
-                      </li>
-                    </ul>
+                      </Text>
+                    </DescItem>
                   </Row>
                 ))}
-              </div>
+              </View>
             </Col>
           )}
           {receiveTokenList && receiveTokenList.length > 0 && (
             <Col>
-              <Row isTitle>{t('page.signTx.balanceChange.tokenIn')}</Row>
-              <div className="flex-1 overflow-hidden">
-                {receiveTokenList.map((token) => (
-                  <Row className="has-bottom-border" key={token.id}>
+              <Row isTitle>
+                <Text>{t('page.signTx.balanceChange.tokenIn')}</Text>
+              </Row>
+              <View className="flex-1 overflow-hidden">
+                {receiveTokenList.map((token, index) => (
+                  <Row
+                    hasBottomBorder
+                    key={token.id}
+                    style={
+                      index === receiveTokenList.length - 1
+                        ? {
+                            borderBottomWidth: 0,
+                          }
+                        : {}
+                    }>
                     <LogoWithText
                       logo={token.logo_url}
                       text={
                         <>
-                          <span className="text-green">
+                          <Text className="text-r-green-default">
                             + {formatAmount(token.amount)}
-                          </span>{' '}
-                          <span
-                            onClick={() => handleClickToken(token)}
-                            className="hover:underline cursor-pointer"
-                          >
+                          </Text>
+                          <Text onPress={() => handleClickToken(token)}>
                             {getTokenSymbol(token)}
-                          </span>
+                          </Text>
                         </>
                       }
                       key={token.id}
-                      logoRadius="100%"
+                      logoRadius={16}
                       icon={
                         <Values.TokenLabel
                           isFake={token.is_verified === false}
@@ -326,26 +365,26 @@ const BalanceChange = ({
                         />
                       }
                     />
-                    <ul className="desc-list">
-                      <li>
+                    <DescItem>
+                      <Text>
                         ≈{' '}
                         {formatUsdValue(
                           new BigNumber(token.amount)
                             .times(token.price)
-                            .toFixed()
+                            .toFixed(),
                         )}
-                      </li>
-                    </ul>
+                      </Text>
+                    </DescItem>
                   </Row>
                 ))}
-              </div>
+              </View>
             </Col>
           )}
-          <NFTBalanceChange type="send" data={data}></NFTBalanceChange>
-          <NFTBalanceChange type="receive" data={data}></NFTBalanceChange>
+          <NFTBalanceChange type="send" data={data} />
+          <NFTBalanceChange type="receive" data={data} />
         </Table>
-      </div>
-    </div>
+      </View>
+    </View>
   );
 };
 
