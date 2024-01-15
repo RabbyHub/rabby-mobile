@@ -11,10 +11,10 @@ import { SwitchAddress } from '../CommonPopup/SwitchAddress';
 import { SwitchChain } from '../CommonPopup/SwitchChain';
 import { CancelConnect } from '../CommonPopup/CancelConnect';
 import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
-import { SelectChain } from '../CommonPopup/SelectChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
 import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
+import { SelectChain } from '../SelectChain';
 
 export const events = new EventEmitter();
 

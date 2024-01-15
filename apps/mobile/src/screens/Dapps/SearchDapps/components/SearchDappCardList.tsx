@@ -1,5 +1,15 @@
+import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
+import RcIconDropdown from '@/assets/icons/dapp/icon-dropdown.svg';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal/utils';
 import { useThemeColors } from '@/hooks/theme';
-import React, { useRef } from 'react';
+import { findChainByEnum } from '@/utils/chain';
+import { CHAINS_ENUM } from '@debank/common';
+import { DappInfo } from '@rabby-wallet/service-dapp';
+import React from 'react';
 import {
   Image,
   StyleSheet,
@@ -10,17 +20,6 @@ import {
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
-import { DappInfo } from '@rabby-wallet/service-dapp';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { CHAINS_ENUM } from '@debank/common';
-import { findChainByEnum } from '@/utils/chain';
-import RcIconDropdown from '@/assets/icons/dapp/icon-dropdown.svg';
-import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
-import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 
 export const SearchDappCardList = ({
   data,
@@ -44,16 +43,16 @@ export const SearchDappCardList = ({
   const chainInfo = React.useMemo(() => {
     return findChainByEnum(chain);
   }, [chain]);
-  const { closePopup, activePopup, setData } = useCommonPopupView();
 
   const activeSelectChainPopup = () => {
-    setData({
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.SELECT_CHAIN,
       value: chain,
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);
+        removeGlobalBottomSheetModal(id);
       },
     });
-    activePopup('SELECT_CHAIN');
   };
 
   return (

@@ -1,29 +1,16 @@
+import RcIconFind from '@/assets/icons/select-chain/icon-find.svg';
+import RcIconSearch from '@/assets/icons/select-chain/icon-search.svg';
 import { MAINNET_CHAINS_LIST } from '@/constant/chains';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { CHAINS_ENUM } from '@debank/common';
 import { Input } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
-import RcIconSearch from '@/assets/icons/select-chain/icon-search.svg';
-import { CHAINS_ENUM } from '@debank/common';
-import RcIconFind from '@/assets/icons/select-chain/icon-find.svg';
 
-export const SelectChain: React.FC = () => {
-  const { data, closePopup, setData } = useCommonPopupView();
-
-  const value = data?.value;
-  const onChange = (v: CHAINS_ENUM) => {
-    data?.onChange?.(v);
-    closePopup();
-  };
-
-  return <SelectChainRaw value={value} onChange={onChange} />;
-};
-
-const SelectChainRaw = ({
+export const SelectChain = ({
   value,
   onChange,
 }: {

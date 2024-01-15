@@ -11,9 +11,13 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '../GlobalBottomSheetModal/utils';
 
 interface ChainSelectorProps {
   value: CHAINS_ENUM;
@@ -68,19 +72,19 @@ export const ChainSelector = ({
 }: ChainSelectorProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { closePopup, activePopup, setData } = useCommonPopupView();
   const chainInfo = React.useMemo(() => {
     return findChainByEnum(value);
   }, [value]);
 
   const activeSelectChainPopup = () => {
-    setData({
-      value,
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.SELECT_CHAIN,
+      value: value,
       onChange: (v: CHAINS_ENUM) => {
         onChange?.(v);
+        removeGlobalBottomSheetModal(id);
       },
     });
-    activePopup('SELECT_CHAIN');
   };
 
   const handleClickSelector = () => {
