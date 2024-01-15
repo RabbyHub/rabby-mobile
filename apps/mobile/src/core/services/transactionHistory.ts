@@ -242,7 +242,7 @@ export class TransactionHistoryService {
         storage: options?.storageAdapter,
       },
     );
-    if (!this.store.transactions) {
+    if (!Array.isArray(this.store.transactions)) {
       this.store.transactions = [];
     }
 
