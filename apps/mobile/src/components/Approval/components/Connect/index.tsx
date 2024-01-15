@@ -602,7 +602,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
       </View>
 
       <View style={styles.ruleList}>
-        {RuleDesc.map(rule => {
+        {RuleDesc.map((rule, index) => {
           if (rule.id === '1006') {
             return (
               <RuleResult
@@ -619,7 +619,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
                 hasSafe={hasSafe}
                 hasForbidden={hasForbidden}
                 onEditUserList={handleEditUserDataList}
-                key={rule.id}
+                key={`${rule.id}_${index}`}
               />
             );
           } else {
@@ -627,7 +627,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
               return (
                 <RuleResult
                   rule={sortRules.find(item => item.id === rule.id)!}
-                  key={rule.id}
+                  key={`${rule.id}_${index}`}
                   onSelect={handleSelectRule}
                   collectList={collectList}
                   popularLevel={originPopularLevel}
