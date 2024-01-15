@@ -348,7 +348,12 @@ export default function DappWebViewControl({
       </View>
 
       {/* webvbiew */}
-      <View style={[styles.dappWebViewContainer]}>
+      <View style={[
+        styles.dappWebViewContainer,
+        {
+          maxHeight: Dimensions.get('window').height - ScreenLayouts.dappWebViewControlHeaderHeight,
+        }
+      ]}>
         {entryScriptWeb3Loaded && (
           <WebView
             // cacheEnabled={false}
