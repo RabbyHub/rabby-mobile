@@ -13,10 +13,9 @@ import { RootNames } from '@/constant/layout';
 import { useDappsHome } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
 import {
-  useActiveDappView,
-  useActiveDappViewSheetModalRefs,
+  useActiveViewSheetModalRefs,
+  useOpenDappView,
 } from '../hooks/useDappView';
-import SheetDappWebView from './components/SheetDappWebView';
 
 export function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -48,8 +47,8 @@ export function DappsScreen(): JSX.Element {
 
   const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
     useDappsHome();
-  const { setActiveDapp } = useActiveDappView();
-  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
+  const { addOpenedDapp, closeOpenedDapp } = useOpenDappView();
+  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
   // todo refresh dapps when webview close
 
   return (
@@ -58,13 +57,18 @@ export function DappsScreen(): JSX.Element {
         <DappCardList
           sections={dappSections}
           onPress={dapp => {
-            setActiveDapp(dapp);
-            toggleShowSheetModal('webviewContainerRef', true);
+            addOpenedDapp(dapp.origin, { isActiveDapp: true });
+            toggleShowSheetModal('dappWebviewContainerRef', true);
           }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.origin, !dapp.isFavorite);
           }}
+          onClosePress={dapp => {
+            // for 'inUse' section, close it rather than remove it.
+            closeOpenedDapp(dapp.origin);
+          }}
           onRemovePress={dapp => {
+            // for 'favorites' section, close it rather than remove it.
             removeDapp(dapp.origin);
           }}
           onDisconnectPress={dapp => {

@@ -11,10 +11,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
 import { devLog } from '@/utils/logger';
-import {
-  useActiveDappView,
-  useActiveDappViewSheetModalRefs,
-} from '../../hooks/useDappView';
+import { useActiveViewSheetModalRefs } from '../../hooks/useDappView';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -26,44 +23,51 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components/Toast';
 import clsx from 'clsx';
+import { DappInfo } from '@rabby-wallet/service-dapp';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
 );
 
-export default function SheetDappWebView() {
-  const { activeDapp, setActiveDapp } = useActiveDappView();
+export default function SheetDappWebView({
+  dapp,
+  onHideModal,
+}: {
+  dapp: DappInfo | null;
+  onHideModal?: (dapp: DappInfo | null) => void;
+}) {
   const {
-    sheetModalRefs: { webviewContainerRef },
+    sheetModalRefs: { dappWebviewContainerRef },
     toggleShowSheetModal,
-  } = useActiveDappViewSheetModalRefs();
+  } = useActiveViewSheetModalRefs();
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('SheetDappWebView::handleBottomSheetChanges', index);
       if (index == -1) {
-        toggleShowSheetModal('webviewContainerRef', false);
-        setActiveDapp(null);
+        toggleShowSheetModal('dappWebviewContainerRef', false);
+        onHideModal?.(dapp);
       }
     },
-    [toggleShowSheetModal, setActiveDapp],
+    [toggleShowSheetModal],
   );
 
   useEffect(() => {
-    if (!activeDapp) {
-      toggleShowSheetModal('webviewContainerRef', 'destroy');
+    if (!dapp) {
+      toggleShowSheetModal('dappWebviewContainerRef', 'destroy');
     } else {
-      toggleShowSheetModal('webviewContainerRef', true);
+      toggleShowSheetModal('dappWebviewContainerRef', true);
     }
-  }, [toggleShowSheetModal, activeDapp]);
+  }, [toggleShowSheetModal, dapp]);
 
   const colors = useThemeColors();
   const { safeOffScreenTop } = useSafeSizes();
 
   const { disconnectDapp, isDappConnected } = useDapps();
 
-  const isActiveDappConnected =
-    !!activeDapp && isDappConnected(activeDapp.origin);
+  const isConnected = !!dapp && isDappConnected(dapp.origin);
+
+  if (!dapp) return null;
 
   return (
     <AppBottomSheetModal
@@ -72,109 +76,107 @@ export default function SheetDappWebView() {
       enableContentPanningGesture={false}
       enablePanDownToClose
       enableHandlePanningGesture
-      name="webviewContainerRef"
-      ref={webviewContainerRef}
+      name="dappWebviewContainerRef"
+      ref={dappWebviewContainerRef}
       snapPoints={[safeOffScreenTop]}
       onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
-        {activeDapp && (
-          <DappWebViewControl
-            dappId={activeDapp.origin}
-            bottomNavH={
-              isActiveDappConnected
-                ? ScreenLayouts.dappWebViewNavBottomSheetHeight
-                : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
-            }
-            headerLeft={() => {
-              if (!isActiveDappConnected) return null;
+        <DappWebViewControl
+          dappId={dapp.origin}
+          bottomNavH={
+            isConnected
+              ? ScreenLayouts.dappWebViewNavBottomSheetHeight
+              : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
+          }
+          headerLeft={() => {
+            if (!isConnected) return null;
 
-              return (
-                <TouchableView
-                  style={[
-                    {
-                      height: ScreenLayouts.dappWebViewControlHeaderHeight,
-                      justifyContent: 'center',
-                    },
-                  ]}
-                  onPress={() => {}}>
-                  <ChainIconImage
-                    chainEnum={activeDapp.chainId}
-                    size={24}
-                    width={24}
-                    height={24}
-                  />
-                </TouchableView>
-              );
-            }}
-            bottomSheetContent={({ bottomNavBar }) => {
-              return (
-                <View>
-                  <BottomSheetScrollView style={{ minHeight: 108 }}>
-                    <DappCardInWebViewNav data={activeDapp} />
-                  </BottomSheetScrollView>
+            return (
+              <TouchableView
+                style={[
+                  {
+                    height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                    justifyContent: 'center',
+                  },
+                ]}
+                onPress={() => {}}>
+                <ChainIconImage
+                  chainEnum={dapp.chainId}
+                  size={24}
+                  width={24}
+                  height={24}
+                />
+              </TouchableView>
+            );
+          }}
+          bottomSheetContent={({ bottomNavBar }) => {
+            return (
+              <View>
+                <BottomSheetScrollView style={{ minHeight: 108 }}>
+                  <DappCardInWebViewNav data={dapp} />
+                </BottomSheetScrollView>
 
+                <View
+                  style={{
+                    paddingVertical: 16,
+                    borderTopColor: colors['neutral-line'],
+                    borderTopWidth: 1,
+                    justifyContent: 'center',
+                  }}>
+                  <View className="flex-shrink-0">{bottomNavBar}</View>
                   <View
-                    style={{
-                      paddingVertical: 16,
-                      borderTopColor: colors['neutral-line'],
-                      borderTopWidth: 1,
-                      justifyContent: 'center',
-                    }}>
-                    <View className="flex-shrink-0">{bottomNavBar}</View>
-                    <View
-                      className={clsx(
-                        'flex-shrink-1 mt-[18] px-[20]',
-                        !isActiveDappConnected && 'hidden',
-                      )}>
-                      <Button
-                        onPress={() => {
-                          disconnectDapp(activeDapp.origin);
-                          toast.success('Disconnected');
-                        }}
-                        title={
-                          <View className="flex-row items-center justify-center">
-                            <RcIconDisconnect
-                              width={20}
-                              height={20}
-                              className="mr-[6]"
-                            />
-                            <Text
-                              style={{
-                                color: colors['red-default'],
-                                fontSize: 16,
-                                fontWeight: '500',
-                              }}>
-                              Disconnect
-                            </Text>
-                          </View>
-                        }
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                        containerStyle={{
-                          flexGrow: 1,
-                          display: 'flex',
-                          height: 52,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          borderBlockColor: colors['red-default'],
-                          borderWidth: StyleSheet.hairlineWidth,
-                          borderRadius: 6,
-                        }}
-                        titleStyle={{
-                          color: colors['red-default'],
-                        }}
-                      />
-                    </View>
+                    className={clsx(
+                      'flex-shrink-1 mt-[18] px-[20]',
+                      !isConnected && 'hidden',
+                    )}>
+                    <Button
+                      onPress={() => {
+                        disconnectDapp(dapp.origin);
+                        toast.success('Disconnected');
+                      }}
+                      title={
+                        <View className="flex-row items-center justify-center">
+                          <RcIconDisconnect
+                            width={20}
+                            height={20}
+                            className="mr-[6]"
+                          />
+                          <Text
+                            style={{
+                              color: colors['red-default'],
+                              fontSize: 16,
+                              fontWeight: '500',
+                            }}>
+                            Disconnect
+                          </Text>
+                        </View>
+                      }
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      containerStyle={{
+                        flexGrow: 1,
+                        display: 'flex',
+                        height: 52,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderBlockColor: colors['red-default'],
+                        borderWidth: StyleSheet.hairlineWidth,
+                        borderRadius: 6,
+                      }}
+                      titleStyle={{
+                        color: colors['red-default'],
+                      }}
+                    />
                   </View>
                 </View>
-              );
-            }}
-          />
-        )}
+              </View>
+            );
+          }}
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

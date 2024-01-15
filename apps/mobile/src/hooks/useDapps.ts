@@ -6,6 +6,7 @@ import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useFocusEffect } from '@react-navigation/native';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
+import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -75,9 +76,7 @@ export const useDappsHome = () => {
   const { getDapps, addDapp, updateFavorite, removeDapp, disconnectDapp } =
     useDapps();
 
-  const connectedApps = useMemo(() => {
-    return Object.values(dapps || {}).filter(item => item.isConnected);
-  }, [dapps]);
+  const { openedDapps } = useOpenDappView();
 
   const favoriteApps = useMemo(() => {
     return Object.values(dapps || {}).filter(item => item.isFavorite);
@@ -86,16 +85,18 @@ export const useDappsHome = () => {
   const dappSections = useMemo(() => {
     return [
       {
-        title: '',
-        data: connectedApps,
+        key: 'inUse',
+        title: 'In Use',
+        data: openedDapps,
       },
 
       {
+        key: 'favorites',
         title: 'Favorites',
         data: favoriteApps,
       },
     ].filter(item => item.data.length);
-  }, [connectedApps, favoriteApps]);
+  }, [openedDapps, favoriteApps]);
 
   useFocusEffect(
     useCallback(() => {
