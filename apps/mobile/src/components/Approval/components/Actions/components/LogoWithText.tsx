@@ -1,4 +1,10 @@
-import { Image, View, Text, TextStyle } from 'react-native';
+import {
+  Image,
+  View,
+  Text,
+  TextStyle,
+  ImageSourcePropType,
+} from 'react-native';
 import React, { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
@@ -37,7 +43,7 @@ const LogoWithText = ({
   logoSize = 16,
   textStyle = {},
 }: {
-  logo?: string;
+  logo?: string | ImageSourcePropType;
   text: string | ReactNode;
   icon?: ReactNode;
   logoRadius?: number;
@@ -52,10 +58,14 @@ const LogoWithText = ({
     <View style={styles.wrapper}>
       {logo ? (
         <Image
-          src={logo}
-          source={{
-            uri: logo,
-          }}
+          src={typeof logo === 'string' ? logo : undefined}
+          source={
+            typeof logo === 'string'
+              ? {
+                  uri: logo,
+                }
+              : logo
+          }
           style={{
             ...styles.logo,
             borderRadius: logoRadius,

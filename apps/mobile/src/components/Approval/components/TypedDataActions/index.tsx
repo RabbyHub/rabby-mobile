@@ -35,7 +35,7 @@ import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
 import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegatedAddress';
-import CoboSafeModificationRule from './CoboSafeModificationRole';
+import CoboSafeModificationRule from './CoboSafeModificationRule';
 import CoboSafeModificationTokenApproval from './CoboSafeModificationTokenApproval';
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -298,7 +298,7 @@ const Actions = ({
                 engineResults={engineResults}
               />
             )}
-            {/*   {data.buyNFT && chain && (
+            {data.buyNFT && chain && (
               <BuyNFT
                 data={data.buyNFT}
                 requireData={requireData as ContractRequireData}
@@ -306,8 +306,8 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )}*/}
-            {/*  {data.batchSellNFT && chain && (
+            )}
+            {data.batchSellNFT && chain && (
               <BatchSellNFT
                 data={data.batchSellNFT}
                 requireData={requireData as ContractRequireData}
@@ -315,8 +315,8 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )} */}
-            {/* {data.sellNFT && chain && (
+            )}
+            {data.sellNFT && chain && (
               <SellNFT
                 data={data.sellNFT}
                 requireData={requireData as ContractRequireData}
@@ -324,15 +324,15 @@ const Actions = ({
                 engineResults={engineResults}
                 sender={data.sender}
               />
-            )} */}
-            {/* {data.signMultiSig && (
+            )}
+            {data.signMultiSig && (
               <SignMultisig
                 data={data.signMultiSig}
                 requireData={requireData as MultiSigRequireData}
                 chain={chain}
                 engineResults={engineResults}
               />
-            )} */}
+            )}
             {data.createKey && (
               <CreateKey data={data.createKey} engineResults={engineResults} />
             )}
@@ -342,7 +342,7 @@ const Actions = ({
                 engineResults={engineResults}
               />
             )}
-            {/* {data.contractCall && chain && (
+            {data.contractCall && chain && (
               <ContractCall
                 data={data.permit}
                 requireData={requireData as ContractRequireData}
@@ -350,23 +350,23 @@ const Actions = ({
                 engineResults={engineResults}
                 raw={raw}
               />
-            )} */}
-            {/* {data.coboSafeCreate && (
+            )}
+            {data.coboSafeCreate && (
               <CoboSafeCreate data={data.coboSafeCreate} />
-            )} */}
-            {/* {data.coboSafeModificationRole && (
+            )}
+            {data.coboSafeModificationRole && (
               <CoboSafeModificationRule data={data.coboSafeModificationRole} />
-            )} */}
-            {/* {data.coboSafeModificationDelegatedAddress && (
+            )}
+            {data.coboSafeModificationDelegatedAddress && (
               <CoboSafeModificationDelegatedAddress
                 data={data.coboSafeModificationDelegatedAddress}
               />
-            )} */}
-            {/* {data.coboSafeModificationTokenApproval && (
+            )}
+            {data.coboSafeModificationTokenApproval && (
               <CoboSafeModificationTokenApproval
                 data={data.coboSafeModificationTokenApproval}
               />
-            )} */}
+            )}
           </View>
         )}
       </View>

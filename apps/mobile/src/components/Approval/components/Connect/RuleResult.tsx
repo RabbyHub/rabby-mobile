@@ -140,7 +140,7 @@ const RuleResult = ({
             {collectList.length <= 0 && t('page.connect.noWebsite')}
             {collectList.length > 0 &&
               collectList.slice(0, 10).map(item => (
-                <View className="collect-list-item">
+                <View key={item.logo_url} className="collect-list-item">
                   <Tip content={item.name} placement="top">
                     <Image
                       style={styles.collectListItemImage}

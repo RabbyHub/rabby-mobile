@@ -37,6 +37,8 @@ import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
+import { ChainSelector } from '@/components/ChainSelector';
+import { Spin } from '@/components/Spin';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -54,15 +56,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 20,
       color: colors['neutral-title-1'],
     },
-    chainSelector: {
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: colors['neutral-bg-1'],
-      color: colors['neutral-title-1'],
-      fontSize: 13,
-      borderWidth: 1,
-      borderColor: colors['neutral-line'],
-    },
+    chainSelector: {},
     chainIconComp: {
       width: 16,
       height: 16,
@@ -134,6 +128,11 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 2,
+    },
+    titleWrapper: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
     },
   });
 
@@ -570,64 +569,38 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   const LevelTipColorIcon = LevelTipColor.icon;
 
   return (
-    <View style={styles.connectWrapper}>
-      <View style={styles.approvalConnect}>
-        <View className="flex justify-between items-center mb-20">
-          <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
-          {/* TODO */}
-          {/* <ChainSelector
-            title={
-              <View>
-                <Text className="chain-selector-tips">
-                  {t('page.connect.selectChainToConnect')}
-                </Text>
-                <View className="chain-selector-site">{origin}</View>
-              </View>
-            }
-            value={defaultChain}
-            onChange={handleChainChange}
-            connection
-            showModal={showModal}
-            modalHeight={540}
-          /> */}
+    <Spin spinning={isLoading}>
+      <View style={styles.connectWrapper}>
+        <View style={styles.approvalConnect}>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
+            <ChainSelector
+              style={styles.chainSelector}
+              value={defaultChain}
+              onChange={handleChainChange}
+              connection
+            />
+          </View>
+          <View style={styles.connectCard}>
+            <DappIcon
+              origin={origin}
+              source={{ uri: icon }}
+              style={{ width: 40, height: 40 }}
+            />
+            <Text style={styles.connectOrigin}>{origin}</Text>
+          </View>
         </View>
-        <View style={styles.connectCard}>
-          <DappIcon
-            origin={origin}
-            source={{ uri: icon }}
-            style={{ width: 40, height: 40 }}
-          />
-          <Text style={styles.connectOrigin}>{origin}</Text>
-        </View>
-      </View>
 
-      <View style={styles.ruleList}>
-        {RuleDesc.map(rule => {
-          if (rule.id === '1006') {
-            return (
-              <RuleResult
-                rule={{
-                  id: '1006',
-                  desc: t('page.connect.markRuleText'),
-                  result: userListResult || null,
-                }}
-                onSelect={handleSelectRule}
-                collectList={collectList}
-                popularLevel={originPopularLevel}
-                userListResult={userListResult}
-                ignored={processedRules.includes(rule.id)}
-                hasSafe={hasSafe}
-                hasForbidden={hasForbidden}
-                onEditUserList={handleEditUserDataList}
-                key={rule.id}
-              />
-            );
-          } else {
-            if (sortRules.find(item => item.id === rule.id) || rule.fixed) {
+        <View style={styles.ruleList}>
+          {RuleDesc.map((rule, index) => {
+            if (rule.id === '1006') {
               return (
                 <RuleResult
-                  rule={sortRules.find(item => item.id === rule.id)!}
-                  key={rule.id}
+                  rule={{
+                    id: '1006',
+                    desc: t('page.connect.markRuleText'),
+                    result: userListResult || null,
+                  }}
                   onSelect={handleSelectRule}
                   collectList={collectList}
                   popularLevel={originPopularLevel}
@@ -636,107 +609,125 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
                   hasSafe={hasSafe}
                   hasForbidden={hasForbidden}
                   onEditUserList={handleEditUserDataList}
+                  key={`${rule.id}_${index}`}
                 />
               );
             } else {
-              return null;
+              if (sortRules.find(item => item.id === rule.id) || rule.fixed) {
+                return (
+                  <RuleResult
+                    rule={sortRules.find(item => item.id === rule.id)!}
+                    key={`${rule.id}_${index}`}
+                    onSelect={handleSelectRule}
+                    collectList={collectList}
+                    popularLevel={originPopularLevel}
+                    userListResult={userListResult}
+                    ignored={processedRules.includes(rule.id)}
+                    hasSafe={hasSafe}
+                    hasForbidden={hasForbidden}
+                    onEditUserList={handleEditUserDataList}
+                  />
+                );
+              } else {
+                return null;
+              }
             }
-          }
-        })}
-      </View>
-      <View>
-        <SignTestnetPermission
-          value={signPermission}
-          onChange={v => setSignPermission(v)}
-        />
-        <View style={styles.footer}>
-          <Button
-            buttonStyle={[styles.button, styles.connectButton]}
-            titleStyle={styles.connectButtonText}
-            type="primary"
-            onPress={() => handleAllow()}
-            disabled={isLoading || connectBtnStatus.disabled}
-            disabledTitleStyle={{
-              color: colors['neutral-title-2'],
-            }}
-            className={clsx({
-              'mb-0': !connectBtnStatus.text,
-            })}
-            title={t('page.connect.connectBtn')}
-          />
-          {connectBtnStatus.text && (
-            <View
-              style={[
-                styles.securityTip,
-                {
-                  backgroundColor: LevelTipColor.bg,
-                },
-              ]}>
-              <LevelTipColorIcon
-                style={[
-                  styles.securityTipIcon,
-                  {
-                    color: LevelTipColor.bg,
-                  },
-                ]}
-              />
-              <Text
-                className="flex-1"
-                style={{
-                  color: LevelTipColor.text,
-                }}>
-                {connectBtnStatus.text}
-              </Text>
-              <Text
-                className="underline text-13 font-medium cursor-pointer"
-                style={{
-                  color: LevelTipColor.text,
-                }}
-                onPress={onIgnoreAllRules}>
-                {t('page.connect.ignoreAll')}
-              </Text>
-            </View>
-          )}
-          <Button
-            type="primary"
-            ghost
-            buttonStyle={[styles.button, styles.lastButton]}
-            onPress={
-              displayBlockedRequestApproval ? activeCancelPopup : handleCancel
-            }
-            title={
-              <View style={styles.cancelButtonText}>
-                <Text
-                  style={{
-                    color: colors['blue-default'],
-                  }}>
-                  {connectBtnStatus.cancelBtnText}
-                </Text>
-                {displayBlockedRequestApproval && (
-                  <ArrowDownSVG className="w-16" />
-                )}
-              </View>
-            }
-          />
+          })}
         </View>
+        <View>
+          <SignTestnetPermission
+            value={signPermission}
+            onChange={v => setSignPermission(v)}
+          />
+          <View style={styles.footer}>
+            <Button
+              buttonStyle={[styles.button, styles.connectButton]}
+              titleStyle={styles.connectButtonText}
+              type="primary"
+              onPress={() => handleAllow()}
+              disabled={isLoading || connectBtnStatus.disabled}
+              disabledTitleStyle={{
+                color: colors['neutral-title-2'],
+              }}
+              className={clsx({
+                'mb-0': !connectBtnStatus.text,
+              })}
+              title={t('page.connect.connectBtn')}
+            />
+            {connectBtnStatus.text && (
+              <View
+                style={[
+                  styles.securityTip,
+                  {
+                    backgroundColor: LevelTipColor.bg,
+                  },
+                ]}>
+                <LevelTipColorIcon
+                  style={[
+                    styles.securityTipIcon,
+                    {
+                      color: LevelTipColor.bg,
+                    },
+                  ]}
+                />
+                <Text
+                  className="flex-1"
+                  style={{
+                    color: LevelTipColor.text,
+                  }}>
+                  {connectBtnStatus.text}
+                </Text>
+                <Text
+                  className="underline text-13 font-medium cursor-pointer"
+                  style={{
+                    color: LevelTipColor.text,
+                  }}
+                  onPress={onIgnoreAllRules}>
+                  {t('page.connect.ignoreAll')}
+                </Text>
+              </View>
+            )}
+            <Button
+              type="primary"
+              ghost
+              buttonStyle={[styles.button, styles.lastButton]}
+              onPress={
+                displayBlockedRequestApproval ? activeCancelPopup : handleCancel
+              }
+              title={
+                <View style={styles.cancelButtonText}>
+                  <Text
+                    style={{
+                      color: colors['blue-default'],
+                    }}>
+                    {connectBtnStatus.cancelBtnText}
+                  </Text>
+                  {displayBlockedRequestApproval && (
+                    <ArrowDownSVG className="w-16" />
+                  )}
+                </View>
+              }
+            />
+          </View>
+        </View>
+        <RuleDrawer
+          selectRule={selectRule}
+          visible={ruleDrawerVisible}
+          onIgnore={handleIgnoreRule}
+          onUndo={handleUndoIgnore}
+          onRuleEnableStatusChange={handleRuleEnableStatusChange}
+          onClose={handleRuleDrawerClose}
+        />
+        <UserListDrawer
+          origin={origin}
+          logo={icon}
+          onWhitelist={isInWhitelist}
+          onBlacklist={isInBlacklist}
+          visible={listDrawerVisible}
+          onChange={handleUserListChange}
+          onClose={() => setListDrawerVisible(false)}
+        />
       </View>
-      <RuleDrawer
-        selectRule={selectRule}
-        visible={ruleDrawerVisible}
-        onIgnore={handleIgnoreRule}
-        onUndo={handleUndoIgnore}
-        onRuleEnableStatusChange={handleRuleEnableStatusChange}
-        onClose={handleRuleDrawerClose}
-      />
-      <UserListDrawer
-        origin={origin}
-        logo={icon}
-        onWhitelist={isInWhitelist}
-        onBlacklist={isInBlacklist}
-        visible={listDrawerVisible}
-        onChange={handleUserListChange}
-        onClose={() => setListDrawerVisible(false)}
-      />
-    </View>
+    </Spin>
   );
 };

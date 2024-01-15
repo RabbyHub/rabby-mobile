@@ -1,13 +1,10 @@
 import React from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Col, Row, Table } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { TypedDataActionData } from './utils';
-import IconSafe from '@/ui/assets/walletlogo/safe.svg';
-
-const Wrapper = styled.div``;
+import { Text, View } from 'react-native';
 
 const CoboSafeCreate = ({
   data,
@@ -18,40 +15,47 @@ const CoboSafeCreate = ({
   const actionData = data!;
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.coboSafeCreate.safeWalletTitle')}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.coboSafeCreate.safeWalletTitle')}</Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={actionData.multisig_id} />
-            </div>
-            <ul className="desc-list">
-              <li>
+            </View>
+            <View className="desc-list">
+              <View>
                 <Values.AddressMemo address={actionData.multisig_id} />
-              </li>
+              </View>
 
               <LogoWithText
-                logo={IconSafe}
+                logo={require('@/assets/icons/wallet/safe.svg')}
                 text="Safe"
                 logoSize={14}
-                logoRadius="100%"
+                logoRadius={16}
+                // eslint-disable-next-line react-native/no-inline-styles
                 textStyle={{
                   fontWeight: 'normal',
-                  fontSize: '13px',
-                  lineHeight: '15px',
+                  fontSize: 13,
+                  lineHeight: 15,
                   color: '#4B4D59',
                 }}
               />
-            </ul>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.coboSafeCreate.descriptionTitle')}</Row>
-          <Row>{actionData.desc}</Row>
+          <Row isTitle>
+            <Text>{t('page.signTx.coboSafeCreate.descriptionTitle')}</Text>
+          </Row>
+          <Row>
+            <Text>{actionData.desc}</Text>
+          </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

@@ -9,7 +9,7 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

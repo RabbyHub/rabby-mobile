@@ -19,6 +19,7 @@ export enum APPROVAL_MODAL_NAMES {
 
 export type CreateParams = {
   name: MODAL_NAMES;
+  approvalComponent?: APPROVAL_MODAL_NAMES;
   [key: string]: any;
 };
 
