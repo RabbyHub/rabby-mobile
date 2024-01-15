@@ -1,5 +1,11 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Dimensions,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import WebView from 'react-native-webview';
 import clsx from 'clsx';
 
@@ -158,6 +164,7 @@ type DappWebViewControlProps = {
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
   webviewProps?: React.ComponentProps<typeof WebView>;
+  style?: StyleProp<ViewStyle>;
 };
 
 function useDefaultNodes({
@@ -187,7 +194,7 @@ function useDefaultNodes({
     }
 
     return headerLeft || defaultHeaderLeft;
-  }, [headerLeft]);
+  }, [headerLeft, defaultHeaderLeft]);
 
   const bottomNavBar = useMemo(() => {
     return (
@@ -196,7 +203,7 @@ function useDefaultNodes({
         webviewActions={webviewActions}
       />
     );
-  }, [webviewRef, webviewState, webviewActions]);
+  }, [webviewState, webviewActions]);
 
   const bottomSheetContentNode = useMemo(() => {
     if (typeof bottomSheetContent === 'function') {
@@ -220,6 +227,7 @@ export default function DappWebViewControl({
   headerLeft,
   bottomSheetContent,
   webviewProps,
+  style,
 }: DappWebViewControlProps) {
   const colors = useThemeColors();
 
@@ -265,7 +273,7 @@ export default function DappWebViewControl({
     }
 
     return handlePressMoreDefault();
-  }, [handlePressMoreDefault]);
+  }, [handlePressMoreDefault, onPressMore]);
 
   const { headerLeftNode, bottomSheetContentNode } = useDefaultNodes({
     headerLeft,
@@ -289,6 +297,7 @@ export default function DappWebViewControl({
   return (
     <View
       style={[
+        style,
         styles.dappWebViewControl,
         {
           position: 'relative',

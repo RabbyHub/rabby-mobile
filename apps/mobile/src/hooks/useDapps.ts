@@ -18,39 +18,27 @@ export function useDapps() {
     return res;
   }, [setDapps]);
 
-  const addDapp = useCallback(
-    (data: DappInfo | DappInfo[]) => {
-      const dataList = Array.isArray(data) ? data : [data];
-      dataList.forEach(item => {
-        // now we must ensure all dappOrigin has https:// prefix
-        item.origin = stringUtils.ensurePrefix(item.info.id, 'https://');
-      });
-      const res = dappService.addDapp(data);
-      return res;
-    },
-    [getDapps],
-  );
+  const addDapp = useCallback((data: DappInfo | DappInfo[]) => {
+    const dataList = Array.isArray(data) ? data : [data];
+    dataList.forEach(item => {
+      // now we must ensure all dappOrigin has https:// prefix
+      item.origin = stringUtils.ensurePrefix(item.info.id, 'https://');
+    });
+    const res = dappService.addDapp(data);
+    return res;
+  }, []);
 
-  const updateFavorite = useCallback(
-    (id: string, v: boolean) => {
-      dappService.updateFavorite(id, v);
-    },
-    [getDapps],
-  );
+  const updateFavorite = useCallback((id: string, v: boolean) => {
+    dappService.updateFavorite(id, v);
+  }, []);
 
-  const removeDapp = useCallback(
-    (id: string) => {
-      dappService.removeDapp(id);
-    },
-    [getDapps],
-  );
+  const removeDapp = useCallback((id: string) => {
+    dappService.removeDapp(id);
+  }, []);
 
-  const disconnectDapp = useCallback(
-    (origin: string) => {
-      dappService.disconnect(origin);
-    },
-    [getDapps],
-  );
+  const disconnectDapp = useCallback((origin: string) => {
+    dappService.disconnect(origin);
+  }, []);
 
   const isDappConnected = useCallback(
     (origin: string) => {

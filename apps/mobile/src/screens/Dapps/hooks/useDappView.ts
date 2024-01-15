@@ -29,7 +29,7 @@ export function useOpenDappView() {
       });
 
       if (options?.isActiveDapp) {
-        setActiveDappOrigin(activeDappOrigin);
+        setActiveDappOrigin(dappOrigin);
       }
     },
     [setOpenedOriginsDapps, setActiveDappOrigin],
@@ -43,7 +43,7 @@ export function useOpenDappView() {
         setActiveDappOrigin(null);
       }
     },
-    [setOpenedOriginsDapps, activeDappOrigin],
+    [setOpenedOriginsDapps, activeDappOrigin, setActiveDappOrigin],
   );
 
   const hideActiveDapp = useCallback(
@@ -68,11 +68,11 @@ export function useOpenDappView() {
       }
     });
 
-    const regActiveDapp = activeDappOrigin ? dapps[activeDappOrigin] : null;
+    const retActiveDapp = activeDappOrigin ? dapps[activeDappOrigin] : null;
 
     return {
       openedDapps: retOpenedDapps,
-      activeDapp: regActiveDapp,
+      activeDapp: retActiveDapp,
     };
   }, [dapps, activeDappOrigin, openedDappOrigins]);
 
