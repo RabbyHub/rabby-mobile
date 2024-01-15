@@ -1,3 +1,5 @@
+import type { FieldNilable } from "@rabby-wallet/base-utils";
+
 export type StorageItemTpl = { [P in string | number ]: any | null };
 
 export interface StorageAdapater<T extends Record<string, StorageItemTpl> = Record<string, StorageItemTpl>> {
@@ -8,8 +10,9 @@ export interface StorageAdapater<T extends Record<string, StorageItemTpl> = Reco
   clearAll(): void
 }
 
-export interface StorageAdapaterOptions {
+export interface StorageAdapaterOptions<T extends Record<string, StorageItemTpl> = Record<string, StorageItemTpl>> {
   storageAdapter?: StorageAdapater;
+  beforePersist?: (store: FieldNilable<T>) => void;
 }
 
 export function makeMemoryStorage() {

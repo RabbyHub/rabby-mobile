@@ -1,26 +1,31 @@
-import React from 'react';
+import { findChainByEnum } from '@/utils/chain';
+import { CHAINS_ENUM } from '@debank/common';
+import React, { useMemo } from 'react';
 import { Image, ImageProps, StyleSheet } from 'react-native';
-import { useThemeColors } from '@/hooks/theme';
-import {
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
 
 export default function ChainIconImage({
-  chainOrigin,
+  chainEnum,
+  source,
   size = 20,
   ...props
 }: React.PropsWithoutRef<
-  ImageProps & {
+  Omit<ImageProps, 'source'> & {
+    source?: ImageProps['source'];
     size?: number;
-    chainOrigin?: string;
+    chainEnum?: string;
   }
 >) {
+  const chainLogoUri = useMemo(
+    () => findChainByEnum(chainEnum, { fallback: CHAINS_ENUM.ETH })!.logo,
+    [chainEnum],
+  );
+
   return (
     <Image
       width={size}
       height={size}
       {...props}
+      source={source || { uri: chainLogoUri }}
       style={[{ height: size, width: size }, props.style]}
     />
   );

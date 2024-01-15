@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { View, Text } from 'react-native';
-import clsx from 'clsx';
 import { SvgProps } from 'react-native-svg';
 import { isValidElementType } from 'react-is';
+import { styled } from 'styled-components/native';
 
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
@@ -11,7 +11,8 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
-import { styled } from 'styled-components/native';
+import { WindView } from '@/components/NativeWind';
+
 const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
   onDark: ThemeColors.dark['neutral-foot'],
@@ -23,25 +24,27 @@ export function Block({
   children,
 }: React.PropsWithChildren<{
   label: string;
+  className?: string;
   style?: React.ComponentProps<typeof View>['style'];
 }>) {
   const colors = useThemeColors();
 
   return (
     <View style={style}>
-      <Text className="text-light-neutral-title-1 dark:text-dark-neutral-title-1 font-normal text-[12]">
+      <Text
+        className="font-normal text-[12]"
+        style={{
+          color: colors['neutral-title-1'],
+        }}>
         {label}
       </Text>
-      <View
-        // className='bg-r-neutral-card-1 flex-col rounded-[6] mt-[8]'
+      <WindView
+        className="rounded-[6px] mt-[8] flex-col"
         style={{
           backgroundColor: colors['neutral-card-1'],
-          flexDirection: 'column',
-          borderRadius: 6,
-          marginTop: 8,
         }}>
         {children}
-      </View>
+      </WindView>
     </View>
   );
 }
@@ -74,13 +77,17 @@ function BlockItem({
   rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
 }>) {
+  const colors = useThemeColors();
+
   children = children || (
-    <Text className="font-normal text-14 text-light-neutral-title-1 dark:text-dark-neutral-title-1">
+    <Text
+      className="font-normal text-[14] "
+      style={{
+        color: colors['neutral-title-1'],
+      }}>
       {label}
     </Text>
   );
-
-  const colors = useThemeColors();
 
   const MaybeIconEle = icon as React.FC<SvgProps>;
 
@@ -107,30 +114,24 @@ function BlockItem({
     }
 
     rightNode = (
-      <View className="flex flex-row">
+      <>
         {rightLabelNode}
         {rightIconNode}
-      </View>
+      </>
     );
   }
 
-  rightNode = rightNode || null;
-
   return (
-    <BlockContainer
-      className={clsx(
-        'flex-row justify-between items-center',
-        'w-[100%] h-[52] p-[16]',
-      )}
-      disabled={!onPress}
-      onPress={() => onPress?.()}>
+    <BlockContainer disabled={!onPress} onPress={() => onPress?.()}>
       {/* left area */}
-      <View className="flex-row justify-between items-center">
-        {iconNode || null}
-        <View className="flex-row">{children}</View>
-      </View>
+      <WindView className="flex-row flex-shrink-1 items-center">
+        <View>{iconNode || null}</View>
+        <View>{children}</View>
+      </WindView>
       {/* right area */}
-      {rightNode || null}
+      <WindView className="flex-row flex-shrink-0">
+        {rightNode || null}
+      </WindView>
     </BlockContainer>
   );
 }

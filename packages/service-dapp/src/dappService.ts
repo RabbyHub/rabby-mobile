@@ -1,6 +1,6 @@
 import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import { createPersistStore } from '@rabby-wallet/persist-store';
+import { createPersistStore, StoreServiceBase } from '@rabby-wallet/persist-store';
 
 export interface BasicDappInfo {
   id: string;
@@ -23,25 +23,17 @@ export interface DappInfo {
   lastPathTimeAt?: number; //
 }
 
-export type dappStore = {
+export type DappStore = {
   dapps: Record<string, DappInfo>;
 };
 
-export class DappService {
-  private readonly store: dappStore;
-
-  constructor(options?: StorageAdapaterOptions) {
-    this.store = createPersistStore<dappStore>(
-      {
-        name: 'dapps',
-        template: {
-          dapps: {},
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
+export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
+  constructor(options?: StorageAdapaterOptions<DappStore>) {
+    super('dapps', {
+      dapps: {},
+    }, {
+      storageAdapter: options?.storageAdapter,
+    });
   }
 
   addDapp(dapp: DappInfo | DappInfo[]) {

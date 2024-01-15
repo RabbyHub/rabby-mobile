@@ -10,12 +10,14 @@ export const DappCardList = ({
   onPress,
   onFavoritePress,
   onRemovePress,
+  onClosePress,
   onDisconnectPress,
 }: {
   sections: { title: string; data: DappInfo[]; type?: string }[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onRemovePress?: (dapp: DappInfo) => void;
+  onClosePress?: (dapp: DappInfo) => void;
   onDisconnectPress?: (dapp: DappInfo) => void;
 }) => {
   const colors = useThemeColors();
@@ -35,7 +37,9 @@ export const DappCardList = ({
               data={item}
               onPress={onPress}
               onFavoritePress={onFavoritePress}
-              onRemovePress={onRemovePress}
+              onRemovePress={
+                section.key === 'inUse' ? onClosePress : onRemovePress
+              }
               onDisconnectPress={onDisconnectPress}
             />
           </View>

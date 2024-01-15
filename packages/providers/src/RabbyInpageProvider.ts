@@ -481,7 +481,7 @@ export class RabbyInpageProvider extends AbstractStreamProvider {
    * events and sets relevant public state. Does nothing if neither the chainId
    * nor the networkVersion are different from existing values.
    *
-   * @fires MetamaskInpageProvider#networkChanged
+   * @fires RabbyInpageProvider#networkChanged
    * @param networkInfo - An object with network info.
    * @param networkInfo.chainId - The latest chain ID.
    * @param networkInfo.networkVersion - The latest network ID.

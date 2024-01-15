@@ -5,7 +5,7 @@ import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
-import { JS_LOAD_V_CONSOLE } from '@/core/bridges/builtInScripts/loadVConsole';
+import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
 
 const bootstrapAtom = atom({
@@ -41,7 +41,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, []);
+  }, [setLock]);
 
   const [{ appInitialized }] = useAtom(bootstrapAtom);
   React.useEffect(() => {
@@ -53,43 +53,53 @@ export function useInitializeAppOnTop() {
   return { locked };
 }
 
-const loadEntryScriptWeb3Atom = atom('');
+const loadEntryScriptsAtom = atom({
+  inPageWeb3: '',
+  vConsole: '',
+});
 export function useJavaScriptBeforeContentLoaded(options?: {
   isTop?: boolean;
 }) {
   const [{ locked }] = useAtom(lockAtom);
   const [{ appInitialized }] = useAtom(bootstrapAtom);
 
-  const [entryScriptWeb3, setEntryScriptWeb3] = useAtom(
-    loadEntryScriptWeb3Atom,
-  );
+  const [entryScripts, setEntryScripts] = useAtom(loadEntryScriptsAtom);
   const { isTop } = options || {};
 
   React.useEffect(() => {
-    if (!isTop) {
-      return;
-    }
-    if (entryScriptWeb3) {
-      return;
-    }
-    if (locked || !appInitialized) {
-      return;
-    }
+    if (!appInitialized) return;
+    if (!isTop || entryScripts.inPageWeb3) return;
 
-    EntryScriptWeb3.init().then(js => {
-      setEntryScriptWeb3(js);
+    Promise.allSettled([
+      EntryScriptWeb3.init(),
+      __DEV__ ? EntryScriptVConsole.init() : Promise.resolve(''),
+    ]).then(([reqInPageWeb3, reqVConsole]) => {
+      const inPageWeb3 =
+        reqInPageWeb3.status === 'fulfilled' ? reqInPageWeb3.value : '';
+      const vConsole =
+        reqVConsole.status === 'fulfilled' ? reqVConsole.value : '';
+
+      setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
     });
-  }, [isTop, appInitialized, locked, entryScriptWeb3]);
+  }, [isTop, appInitialized, locked, entryScripts.inPageWeb3, setEntryScripts]);
 
   const fullScript = React.useMemo(() => {
-    return __DEV__
-      ? [entryScriptWeb3, JS_LOAD_V_CONSOLE, JS_LOG_ON_MESSAGE].join('\n')
-      : entryScriptWeb3;
-  }, [entryScriptWeb3]);
+    return [
+      entryScripts.inPageWeb3,
+      __DEV__ ? entryScripts.vConsole : '',
+      JS_LOG_ON_MESSAGE,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }, [entryScripts.inPageWeb3, entryScripts.vConsole]);
 
   return {
-    entryScriptWeb3Loaded: appInitialized && !!entryScriptWeb3,
-    entryScriptWeb3,
+    entryScriptWeb3Loaded: [
+      appInitialized,
+      !!entryScripts.inPageWeb3,
+      __DEV__ ? !!entryScripts.vConsole : true,
+    ].every(x => !!x),
+    entryScripts,
     fullScript: fullScript,
   };
 }
@@ -120,7 +130,7 @@ export function useBootstrapApp() {
           appInitialized: true,
         }));
       });
-  }, []);
+  }, [setBootstrap]);
 
   return {
     couldRender: appInitialized,
