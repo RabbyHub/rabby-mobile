@@ -23,7 +23,7 @@ import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 import { type SettingConfBlock, Block } from './Block';
 import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { styled } from 'styled-components/native';
-import { useSheetModalsOnSettingScreen } from './sheetModals/hooks';
+import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
 import { useNavigation } from '@react-navigation/native';
@@ -39,7 +39,7 @@ const Container = styled(NormalScreenContainer)`
 function SettingsScreen(): JSX.Element {
   const { appTheme, toggleThemeMode } = useAppTheme();
 
-  const { toggleShowSheetModal } = useSheetModalsOnSettingScreen();
+  const { openMetaMaskTestDapp } = useSheetWebViewTester();
 
   const colors = useThemeColors();
 
@@ -139,7 +139,7 @@ function SettingsScreen(): JSX.Element {
               label: 'WebView Test',
               icon: RcEarth,
               onPress: () => {
-                toggleShowSheetModal('webviewTesterRef', true);
+                openMetaMaskTestDapp();
               },
             },
             {

@@ -21,7 +21,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
 );
 
 export function OpenedDappWebViewStub() {
-  const { openedDapps, activeDapp, hideActiveDapp } = useOpenDappView();
+  const { openedDappItems, activeDapp, hideActiveDapp } = useOpenDappView();
 
   const {
     sheetModalRefs: { dappWebviewContainerRef },
@@ -61,7 +61,7 @@ export function OpenedDappWebViewStub() {
       snapPoints={[safeOffScreenTop]}
       onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
-        {openedDapps.map((dappInfo, idx) => {
+        {openedDappItems.map((dappInfo, idx) => {
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
           const key = `${dappInfo.origin}-${dappInfo.chainId}-${idx}`;
 

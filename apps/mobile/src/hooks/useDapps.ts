@@ -64,7 +64,7 @@ export const useDappsHome = () => {
   const { getDapps, addDapp, updateFavorite, removeDapp, disconnectDapp } =
     useDapps();
 
-  const { openedDapps } = useOpenDappView();
+  const { openedDappItems } = useOpenDappView();
 
   const favoriteApps = useMemo(() => {
     return Object.values(dapps || {}).filter(item => item.isFavorite);
@@ -75,7 +75,7 @@ export const useDappsHome = () => {
       {
         key: 'inUse',
         title: 'In Use',
-        data: openedDapps,
+        data: openedDappItems,
       },
 
       {
@@ -84,7 +84,7 @@ export const useDappsHome = () => {
         data: favoriteApps,
       },
     ].filter(item => item.data.length);
-  }, [openedDapps, favoriteApps]);
+  }, [openedDappItems, favoriteApps]);
 
   useFocusEffect(
     useCallback(() => {

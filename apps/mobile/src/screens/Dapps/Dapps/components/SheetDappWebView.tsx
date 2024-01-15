@@ -1,17 +1,9 @@
-import { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 
-import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetScrollView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
-import { devLog } from '@/utils/logger';
-import { useActiveViewSheetModalRefs } from '../../hooks/useDappView';
+import { OpenedDappInfo } from '../../hooks/useDappView';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -19,19 +11,15 @@ import { useThemeColors } from '@/hooks/theme';
 import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { RcIconDisconnect } from '@/assets/icons/dapp';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components/Toast';
 import clsx from 'clsx';
-import { DappInfo } from '@rabby-wallet/service-dapp';
 
 export default function SheetDappWebViewInner({
   dapp,
-  onHideModal,
   style,
 }: {
-  dapp: DappInfo | null;
-  onHideModal?: (dapp: DappInfo | null) => void;
+  dapp: OpenedDappInfo | null;
   style: StyleProp<ViewStyle>;
 }) {
   const colors = useThemeColors();
@@ -45,7 +33,8 @@ export default function SheetDappWebViewInner({
   return (
     <DappWebViewControl
       style={style}
-      dappId={dapp.origin}
+      dappOrigin={dapp.origin}
+      initialUrl={dapp.$openParams?.initialUrl}
       bottomNavH={
         isConnected
           ? ScreenLayouts.dappWebViewNavBottomSheetHeight
