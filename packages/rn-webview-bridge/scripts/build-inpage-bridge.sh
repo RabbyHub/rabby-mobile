@@ -8,14 +8,14 @@ repo_dir=$(dirname $(dirname $project_dir))
 
 [[ -z "${webpack_mode}" ]] && webpack_mode="production";
 
-files=(
+web3_bridges_files=(
   # for iOS
   "$repo_dir/apps/mobile/src/core/bridges/InpageBridgeWeb3.js"
   # for Android
   "$repo_dir/apps/mobile/assets/custom/InpageBridgeWeb3.js"
 )
-# remove all files
-for file in "${files[@]}"
+# remove all web3_bridges_files
+for file in "${web3_bridges_files[@]}"
 do
   rm -f $file
 done
@@ -29,12 +29,20 @@ node $script_dir/inpage-bridge/content-script/build.js
 cat dist/inpage-bundle.js content-script/index.js > dist/index-raw.js
 $repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_mode
 
-# cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/src/core/bridges/InpageBridgeWeb3.js
-# cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/android/app/src/main/assets/InpageBridgeWeb3.js
-
 # copy dist to targets
-for file in "${files[@]}"
+for file in "${web3_bridges_files[@]}"
 do
   mkdir -p $(dirname $file)
   cp $script_dir/inpage-bridge/dist/index.js $file
+done
+
+vconsole_targets=(
+  # for iOS
+  "$repo_dir/apps/mobile/src/core/bridges/vconsole.min.js"
+)
+
+for file in "${vconsole_targets[@]}"
+do
+  mkdir -p $(dirname $file)
+  cp $repo_dir/apps/mobile/assets/custom/vconsole.min.js $file
 done

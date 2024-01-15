@@ -235,7 +235,8 @@ export default function DappWebViewControl({
     webviewActions,
   } = useWebViewControl();
 
-  const { fullScript } = useJavaScriptBeforeContentLoaded({ isTop: true });
+  const { entryScriptWeb3Loaded, fullScript } =
+    useJavaScriptBeforeContentLoaded({ isTop: false });
 
   const { subTitle } = useMemo(() => {
     return {
@@ -324,8 +325,10 @@ export default function DappWebViewControl({
 
       {/* webvbiew */}
       <View style={[styles.dappWebViewContainer]}>
-        {fullScript && (
+        {entryScriptWeb3Loaded && (
           <WebView
+            cacheEnabled={false}
+            startInLoadingState
             {...webviewProps}
             style={[styles.dappWebView, webviewProps?.style]}
             ref={webviewRef}
