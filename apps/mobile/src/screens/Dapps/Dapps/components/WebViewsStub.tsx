@@ -46,7 +46,7 @@ export function OpenedDappWebViewStub() {
          * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
          * it will umount children component of BottomSheetModal
          */
-        toggleShowSheetModal('dappWebviewContainerRef', false);
+        toggleShowSheetModal('dappWebviewContainerRef', 0);
         hideActiveDapp();
       }
     },
