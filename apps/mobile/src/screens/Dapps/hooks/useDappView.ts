@@ -46,11 +46,22 @@ export function useOpenDappView() {
         typeof dappOrigin === 'string' ? { origin: dappOrigin } : dappOrigin;
 
       setOpenedOriginsDapps(prev => {
-        if (!prev.find(item => item.origin === dappOrigin)) {
+        const itemIdx = prev.findIndex(
+          prevItem => prevItem.origin === item.origin,
+        );
+        if (itemIdx === -1) {
           return [...prev, item];
         }
 
-        return prev;
+        prev[itemIdx] = {
+          ...prev[itemIdx],
+          $openParams: {
+            ...item.$openParams,
+            ...prev[itemIdx].$openParams,
+          },
+        };
+
+        return [...prev];
       });
 
       const { isActiveDapp = true } = options || {};

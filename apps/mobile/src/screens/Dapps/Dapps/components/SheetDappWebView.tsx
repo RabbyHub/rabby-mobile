@@ -14,6 +14,7 @@ import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components/Toast';
 import clsx from 'clsx';
+import { useEffect } from 'react';
 
 export default function SheetDappWebViewInner({
   dapp,
@@ -29,6 +30,13 @@ export default function SheetDappWebViewInner({
   const isConnected = !!dapp && isDappConnected(dapp.origin);
 
   if (!dapp) return null;
+
+  // // leave here for debug
+  // useEffect(() => {
+  //   return () => {
+  //     console.log('SheetDappWebViewInner:: unmount', dapp);
+  //   }
+  // }, []);
 
   return (
     <DappWebViewControl

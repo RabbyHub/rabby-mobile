@@ -351,7 +351,8 @@ export default function DappWebViewControl({
       <View style={[styles.dappWebViewContainer]}>
         {entryScriptWeb3Loaded && (
           <WebView
-            cacheEnabled={false}
+            // cacheEnabled={false}
+            cacheEnabled
             startInLoadingState
             {...webviewProps}
             style={[styles.dappWebView, webviewProps?.style]}

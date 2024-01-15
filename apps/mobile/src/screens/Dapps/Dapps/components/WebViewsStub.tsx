@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@gorhom/bottom-sheet';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+  <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
 );
 
 export function OpenedDappWebViewStub() {
@@ -28,42 +28,54 @@ export function OpenedDappWebViewStub() {
     toggleShowSheetModal,
   } = useActiveViewSheetModalRefs();
 
+  const { safeOffScreenTop } = useSafeSizes();
+  const { snapPoints, indexAsExpanded, indexAsCollapsed } = useMemo(() => {
+    const range = ['1%', safeOffScreenTop];
+    return {
+      snapPoints: range,
+      indexAsExpanded: range.length - 1,
+      indexAsCollapsed: 0,
+    };
+  }, [safeOffScreenTop]);
+
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
-      if (index == -1) {
+      if (index <= indexAsCollapsed) {
+        /**
+         * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
+         * it will umount children component of BottomSheetModal
+         */
         toggleShowSheetModal('dappWebviewContainerRef', false);
         hideActiveDapp();
       }
     },
-    [toggleShowSheetModal, hideActiveDapp],
+    [toggleShowSheetModal, hideActiveDapp, indexAsCollapsed],
   );
 
   useEffect(() => {
-    if (!activeDapp) {
-      toggleShowSheetModal('dappWebviewContainerRef', 'destroy');
-    } else {
-      toggleShowSheetModal('dappWebviewContainerRef', true);
+    if (activeDapp) {
+      toggleShowSheetModal('dappWebviewContainerRef', 1);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
-  const { safeOffScreenTop } = useSafeSizes();
-
   return (
     <AppBottomSheetModal
-      index={0}
+      index={indexAsExpanded}
+      // detached={true}
+      // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enableContentPanningGesture={false}
-      enablePanDownToClose
+      enablePanDownToClose={false}
       enableHandlePanningGesture
       name="dappWebviewContainerRef"
       ref={dappWebviewContainerRef}
-      snapPoints={[safeOffScreenTop]}
+      snapPoints={snapPoints}
       onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
         {openedDappItems.map((dappInfo, idx) => {
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${dappInfo.chainId}-${idx}`;
+          const key = `${dappInfo.origin}-${dappInfo.chainId}`;
 
           return (
             <SheetDappWebViewInner

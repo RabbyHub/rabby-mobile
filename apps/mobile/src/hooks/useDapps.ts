@@ -7,6 +7,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { useFocusEffect } from '@react-navigation/native';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
+import { apisDapp } from '@/core/apis';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -36,13 +37,15 @@ export function useDapps() {
     dappService.removeDapp(id);
   }, []);
 
-  const disconnectDapp = useCallback((origin: string) => {
-    dappService.disconnect(origin);
+  const disconnectDapp = useCallback((dappOrigin: string) => {
+    dappService.disconnect(dappOrigin);
+
+    apisDapp.removeConnectedSite(dappOrigin);
   }, []);
 
   const isDappConnected = useCallback(
-    (origin: string) => {
-      const dapp = dapps[origin];
+    (dappOrigin: string) => {
+      const dapp = dapps[dappOrigin];
       return !!dapp?.isConnected;
     },
     [dapps],
