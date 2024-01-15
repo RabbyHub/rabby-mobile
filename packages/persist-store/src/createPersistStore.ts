@@ -60,12 +60,16 @@ const createPersistStore = <T extends StorageItemTpl>({
 }: CreatePersistStoreParams<T>, opts?: {
   persistDebounce?: number;
   storage?: StorageAdapater<Record<string, StorageItemTpl>>;
+  beforePersist?: (obj: FieldNilable<T>) => void;
+  beforeSetKV?: <K extends string>(k: K, value: FieldNilable<T>[K]) => void;
 }) => {
   let tpl = template;
 
   const {
     persistDebounce = 1000,
-    storage = DEFAULT_STORAGE
+    storage = DEFAULT_STORAGE,
+    beforePersist,
+    beforeSetKV
   } = opts || {};
 
   if (fromStorage) {
@@ -77,6 +81,7 @@ const createPersistStore = <T extends StorageItemTpl>({
   }
 
   const persistStorage = debounce((name: string, obj: FieldNilable<T>) => {
+    beforePersist?.(obj);
     storage.setItem(name, obj);
   }, persistDebounce, { immediate: false });
 
@@ -95,6 +100,8 @@ const createPersistStore = <T extends StorageItemTpl>({
           }));
         }
 
+        beforeSetKV?.(prop, value);
+
         target[prop] = value;
         persistStorage(name, target);
 
@@ -104,6 +111,8 @@ const createPersistStore = <T extends StorageItemTpl>({
       deleteProperty(target, prop: string) {
         if (Reflect.has(target, prop)) {
           fieldEffector.removeEffector(prop);
+
+          beforeSetKV?.(prop, undefined);
 
           Reflect.deleteProperty(target, prop);
           persistStorage(name, target);
@@ -115,7 +124,7 @@ const createPersistStore = <T extends StorageItemTpl>({
     const rstore = reactive(store);
 
     let initTracked = false;
-    // support nested
+    // TODO: support nested?
     reffect(() => {
       if (!initTracked) {
         // add stub here to ref rstore

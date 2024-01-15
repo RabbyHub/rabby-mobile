@@ -10,12 +10,14 @@ export const DappCardList = ({
   onPress,
   onFavoritePress,
   onRemovePress,
+  onClosePress,
   onDisconnectPress,
 }: {
   sections: { title: string; data: DappInfo[] }[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onRemovePress?: (dapp: DappInfo) => void;
+  onClosePress?: (dapp: DappInfo) => void;
   onDisconnectPress?: (dapp: DappInfo) => void;
 }) => {
   const colors = useThemeColors();
@@ -27,14 +29,16 @@ export const DappCardList = ({
       style={styles.list}
       keyExtractor={item => item.origin}
       stickySectionHeadersEnabled={false}
-      renderItem={({ item }) => {
+      renderItem={({ item, section }) => {
         return (
           <View style={styles.listItem}>
             <SwipeableDappCard
               data={item}
               onPress={onPress}
               onFavoritePress={onFavoritePress}
-              onRemovePress={onRemovePress}
+              onRemovePress={
+                section.key === 'inUse' ? onClosePress : onRemovePress
+              }
               onDisconnectPress={onDisconnectPress}
             />
           </View>

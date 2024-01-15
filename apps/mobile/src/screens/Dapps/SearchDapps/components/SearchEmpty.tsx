@@ -1,6 +1,5 @@
 import { Button, PrimaryButton } from '@/components/Button';
 import { RootNames } from '@/constant/layout';
-import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import React from 'react';
@@ -16,7 +15,9 @@ export const SearchEmpty = () => {
       <RcIconFind />
       <View style={styles.content}>
         <Text style={styles.text}>No Dapp found</Text>
-        <Text style={styles.text}>请检查你的搜索内容或尝试搜索Dapp的URL</Text>
+        <Text style={styles.text}>
+          Please check your search content or try to search the URL of the Dapp
+        </Text>
       </View>
     </View>
   );

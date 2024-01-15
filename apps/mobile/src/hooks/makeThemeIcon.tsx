@@ -5,11 +5,7 @@ import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { SvgProps } from 'react-native-svg';
 import { useGetAppThemeMode } from '@/hooks/theme';
-import {
-  ColorOrVariant,
-  isColorVariant,
-  pickColorVariants,
-} from '@/core/theme';
+import { ColorOrVariant, pickColorVariants } from '@/core/theme';
 
 export const makeThemeIcon = (
   LightIcon: React.FC<SvgProps>,

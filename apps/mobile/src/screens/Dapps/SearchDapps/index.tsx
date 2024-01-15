@@ -16,10 +16,10 @@ import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
 import {
-  useActiveDappView,
-  useActiveDappViewSheetModalRefs,
+  useActiveViewSheetModalRefs,
+  useOpenUrlView,
+  useOpenDappView,
 } from '../hooks/useDappView';
-import SheetDappWebView from '../Dapps/components/SheetDappWebView';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
 export function SearchDappsScreen(): JSX.Element {
@@ -94,8 +94,9 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
-  const { setActiveDapp } = useActiveDappView();
-  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
+  const { addOpenedDapp } = useOpenDappView();
+  const { setOpenedUrl } = useOpenUrlView();
+  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
   return (
     <View style={styles.page}>
@@ -142,9 +143,10 @@ export function SearchDappsScreen(): JSX.Element {
         <>
           <LinkCard
             url={debouncedSearchValue}
-            onPress={dapp => {
-              // setActiveDapp(dapp);
-              // toggleShowSheetModal('webviewContainerRef', true);
+            onPress={generalUrl => {
+              // TODO: should we validate the url?
+              setOpenedUrl(generalUrl);
+              toggleShowSheetModal('urlWebviewContainerRef', true);
             }}
           />
           {loading ? null : list.length === 0 ? (
@@ -154,8 +156,8 @@ export function SearchDappsScreen(): JSX.Element {
               onEndReached={loadMore}
               data={list}
               onPress={dapp => {
-                setActiveDapp(dapp);
-                toggleShowSheetModal('webviewContainerRef', true);
+                addOpenedDapp(dapp.origin);
+                toggleShowSheetModal('dappWebviewContainerRef', true);
               }}
               onFavoritePress={dapp => {
                 addDapp({
@@ -174,7 +176,6 @@ export function SearchDappsScreen(): JSX.Element {
           }}
         />
       )}
-      <SheetDappWebView />
     </View>
   );
 }

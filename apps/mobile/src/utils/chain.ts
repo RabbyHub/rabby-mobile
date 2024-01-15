@@ -4,7 +4,6 @@ import {
   ChainWithBalance,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { keyBy } from 'lodash';
 
 const ALL_CHAINS = Object.values(CHAINS);
 const ALL_CHAINS_TESTNET = [] as Chain[];
