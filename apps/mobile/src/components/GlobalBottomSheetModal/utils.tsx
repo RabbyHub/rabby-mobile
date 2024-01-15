@@ -32,7 +32,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   APPROVAL_MODAL_NAMES,
   (string | number)[]
 > = {
-  [APPROVAL_MODAL_NAMES.Connect]: ['100%'],
+  [APPROVAL_MODAL_NAMES.Connect]: ['90%'],
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
@@ -79,6 +79,16 @@ export function makeBottomSheetProps(ctx: {
   colors: (typeof ThemeColors)['light'];
   prevProps?: any;
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
+  if (ctx.params.approvalComponent === 'Connect') {
+    return {
+      handleStyle: {
+        backgroundColor: ctx.colors['neutral-bg-1'],
+      },
+      handleIndicatorStyle: {
+        backgroundColor: ctx.colors['neutral-line'],
+      },
+    };
+  }
   if (ctx.params?.name === 'APPROVAL') {
     return {
       handleStyle: {

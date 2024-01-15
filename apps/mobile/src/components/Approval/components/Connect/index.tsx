@@ -37,6 +37,7 @@ import ArrowDownSVG from '@/assets/icons/approval/arrow-down-blue.svg';
 import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
+import { ChainSelector } from '@/components/ChainSelector';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -54,15 +55,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 20,
       color: colors['neutral-title-1'],
     },
-    chainSelector: {
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: colors['neutral-bg-1'],
-      color: colors['neutral-title-1'],
-      fontSize: 13,
-      borderWidth: 1,
-      borderColor: colors['neutral-line'],
-    },
+    chainSelector: {},
     chainIconComp: {
       width: 16,
       height: 16,
@@ -134,6 +127,11 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 2,
+    },
+    titleWrapper: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
     },
   });
 
@@ -572,24 +570,14 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   return (
     <View style={styles.connectWrapper}>
       <View style={styles.approvalConnect}>
-        <View className="flex justify-between items-center mb-20">
+        <View style={styles.titleWrapper}>
           <Text style={styles.approvalTitle}>{t('page.connect.title')}</Text>
-          {/* TODO */}
-          {/* <ChainSelector
-            title={
-              <View>
-                <Text className="chain-selector-tips">
-                  {t('page.connect.selectChainToConnect')}
-                </Text>
-                <View className="chain-selector-site">{origin}</View>
-              </View>
-            }
+          <ChainSelector
+            style={styles.chainSelector}
             value={defaultChain}
             onChange={handleChainChange}
             connection
-            showModal={showModal}
-            modalHeight={540}
-          /> */}
+          />
         </View>
         <View style={styles.connectCard}>
           <DappIcon

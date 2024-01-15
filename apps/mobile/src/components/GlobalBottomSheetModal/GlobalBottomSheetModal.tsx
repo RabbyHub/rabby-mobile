@@ -56,7 +56,10 @@ export const GlobalBottomSheetModal = () => {
         ...prev,
         {
           id,
-          params,
+          params: {
+            ...params,
+            approvalComponent,
+          },
           snapPoints:
             approvalComponent && params.name === MODAL_NAMES.APPROVAL
               ? APPROVAL_SNAP_POINTS[approvalComponent]
