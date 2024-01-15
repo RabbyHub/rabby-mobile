@@ -13,6 +13,7 @@ import LogoWithText from './components/LogoWithText';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import DescItem from './components/DescItem';
 
 const Send = ({
   data,
@@ -59,7 +60,7 @@ const Send = ({
               }
               logoRadius={16}
             />
-            <View className="desc-list">
+            <DescItem>
               <Text>
                 ≈
                 {formatUsdValue(
@@ -68,7 +69,7 @@ const Send = ({
                     .toFixed(),
                 )}
               </Text>
-            </View>
+            </DescItem>
           </Row>
         </Col>
         <Col>
@@ -78,11 +79,15 @@ const Send = ({
           <Row>
             <View>
               <Values.Address address={actionData.to} chain={chain} />
-              <View className="desc-list">
-                <View>
+              <View>
+                <DescItem>
                   <Values.AddressMemo address={actionData.to} />
-                </View>
-                {requireData.name && <Text>{requireData.name}</Text>}
+                </DescItem>
+                {requireData.name && (
+                  <DescItem>
+                    <Text>{requireData.name}</Text>
+                  </DescItem>
+                )}
                 <SecurityListItem
                   engineResult={engineResultMap['1016']}
                   dangerText={t('page.signTx.send.receiverIsTokenAddress')}

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useAlias } from '@/hooks/alias';
@@ -32,9 +32,9 @@ const AccountAlias = ({ address }: { address: string }) => {
           KEYRING_ICONS[account.type]
         }
       /> */}
-      <span className="flex-1 overflow-hidden overflow-ellipsis whitespace-nowrap">
+      <Text className="flex-1 overflow-hidden overflow-ellipsis whitespace-nowrap">
         {alias}
-      </span>
+      </Text>
     </View>
   );
 };

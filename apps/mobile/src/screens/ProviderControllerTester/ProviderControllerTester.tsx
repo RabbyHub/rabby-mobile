@@ -244,6 +244,33 @@ function ProviderControllerTester(): JSX.Element {
       });
   }, [account]);
 
+  const handleSwap = React.useCallback(() => {
+    const tx = {
+      chainId: 1,
+      from: '0xf08c90c7f470b640a21dd9b3744eca3d1d16a044',
+      to: '0x1111111254eeb25477b68fb85ed929f73a960582',
+      value: '0x2386f26fc10000',
+      data: '0x0502b1c50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002386f26fc1000000000000000000000000000000000000000000000000000000000000017f6aaf0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000180000000000000003b6d0340b4e16d0168e52d35cacd2c6185b44281ec28c9dc10d1df6e',
+      gas: '0x2a5d8',
+      maxFeePerGas: '0x4e3b29200',
+      maxPriorityFeePerGas: '0x4e3b29200',
+      nonce: '0xc2',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    )
+      .then(res => {
+        console.log(res);
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  }, [account]);
+
   React.useEffect(() => {
     addDapp({
       info: TEST_DAPP_INFO,
@@ -307,6 +334,13 @@ function ProviderControllerTester(): JSX.Element {
               disabled={!account || !isClientCreated}
               onPress={handleSendEth}
               title="Send EIP 1559 Transaction"
+            />
+          </Section>
+          <Section title="Swap">
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleSwap}
+              title="Swap Transaction"
             />
           </Section>
         </View>

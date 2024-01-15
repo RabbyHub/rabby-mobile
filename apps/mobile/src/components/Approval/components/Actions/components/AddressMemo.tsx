@@ -73,7 +73,7 @@ const AddressMemo = ({ address }: { address: string }) => {
     <View>
       <TouchableOpacity onPress={handleEditMemo}>
         <View className="flex flex-row items-center">
-          <Text className="mr-6">{addressAlias || '-'}</Text>
+          <Text className="mr-2">{addressAlias || '-'}</Text>
           <IconEdit className="w-[13px]" />
         </View>
       </TouchableOpacity>
