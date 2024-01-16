@@ -8,8 +8,8 @@ import BalanceChange from '../TxComponents/BalanceChange';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 // import ViewRawModal from '../TxComponents/ViewRawModal';
-// import ApproveNFT from './ApproveNFT';
-// import ApproveNFTCollection from './ApproveNFTCollection';
+import ApproveNFT from './ApproveNFT';
+import ApproveNFTCollection from './ApproveNFTCollection';
 // import CancelTx from './CancelTx';
 // import ContractCall from './ContractCall';
 // import DeployContract from './DeployContract';
@@ -290,14 +290,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          {data?.approveNFT && (
-            <ApproveNFT
-              data={data.approveNFT}
-              requireData={requireData as ApproveNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
-            />
-          )}
+          
           {data?.revokeNFT && (
             <RevokeNFT
               data={data.revokeNFT}
@@ -309,14 +302,6 @@ const Actions = ({
           {data?.revokeNFTCollection && (
             <RevokeNFTCollection
               data={data.revokeNFTCollection}
-              requireData={requireData as RevokeNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
-            />
-          )}
-          {data?.approveNFTCollection && (
-            <ApproveNFTCollection
-              data={data.approveNFTCollection}
               requireData={requireData as RevokeNFTRequireData}
               chain={chain}
               engineResults={engineResults}
@@ -340,6 +325,22 @@ const Actions = ({
               raw={raw}
             />
           )} */}
+          {data?.approveNFT && (
+            <ApproveNFT
+              data={data.approveNFT}
+              requireData={requireData as ApproveNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
+          {data?.approveNFTCollection && (
+            <ApproveNFTCollection
+              data={data.approveNFTCollection}
+              requireData={requireData as RevokeNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
         </View>
       </View>
       <BalanceChange
