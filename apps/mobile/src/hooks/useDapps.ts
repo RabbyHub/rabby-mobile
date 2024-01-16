@@ -78,7 +78,7 @@ export const useDappsHome = () => {
       {
         key: 'inUse',
         title: 'In Use',
-        data: openedDappItems,
+        data: openedDappItems.map(item => item.maybeDappInfo!).filter(Boolean),
       },
 
       {

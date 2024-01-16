@@ -98,7 +98,9 @@ export function OpenedDappWebViewStub() {
       <BottomSheetView className="px-[20] items-center justify-center">
         {openedDappItems.map((dappInfo, idx) => {
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${dappInfo.chainId}`;
+          const key = `${dappInfo.origin}-${
+            dappInfo.maybeDappInfo?.chainId || 'ETH'
+          }`;
 
           return (
             <SheetDappWebViewInner
@@ -113,6 +115,9 @@ export function OpenedDappWebViewStub() {
   );
 }
 
+/**
+ * @deprecated
+ */
 export function OpenedWebViewsStub() {
   const { openedNonDappOrigin } = useOpenUrlView();
 

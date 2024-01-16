@@ -94,7 +94,7 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
-  const { addOpenedDapp } = useOpenDappView();
+  const { openUrlAsDapp } = useOpenDappView();
   const { setOpenedUrl } = useOpenUrlView();
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
@@ -145,8 +145,8 @@ export function SearchDappsScreen(): JSX.Element {
             url={debouncedSearchValue}
             onPress={generalUrl => {
               // TODO: should we validate the url?
-              setOpenedUrl(generalUrl);
-              toggleShowSheetModal('urlWebviewContainerRef', true);
+              openUrlAsDapp(generalUrl);
+              toggleShowSheetModal('dappWebviewContainerRef', true);
             }}
           />
           {loading ? null : list.length === 0 ? (
@@ -156,7 +156,7 @@ export function SearchDappsScreen(): JSX.Element {
               onEndReached={loadMore}
               data={list}
               onPress={dapp => {
-                addOpenedDapp(dapp.origin, { isActiveDapp: true });
+                openUrlAsDapp(dapp.origin);
                 toggleShowSheetModal('dappWebviewContainerRef', true);
               }}
               onFavoritePress={dapp => {

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import DappWebViewControl from '@/components/WebView/DappWebViewControl';
-import { OpenedDappInfo } from '../../hooks/useDappView';
+import { OpenedDappItem } from '../../hooks/useDappView';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
@@ -14,13 +14,12 @@ import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { useDapps } from '@/hooks/useDapps';
 import { toast } from '@/components/Toast';
 import clsx from 'clsx';
-import { useEffect } from 'react';
 
 export default function SheetDappWebViewInner({
   dapp,
   style,
 }: {
-  dapp: OpenedDappInfo | null;
+  dapp: OpenedDappItem | null;
   style: StyleProp<ViewStyle>;
 }) {
   const colors = useThemeColors();
@@ -50,6 +49,7 @@ export default function SheetDappWebViewInner({
       }
       headerLeft={() => {
         if (!isConnected) return null;
+        if (!dapp.maybeDappInfo?.chainId) return null;
 
         return (
           <TouchableView
@@ -61,7 +61,7 @@ export default function SheetDappWebViewInner({
             ]}
             onPress={() => {}}>
             <ChainIconImage
-              chainEnum={dapp.chainId}
+              chainEnum={dapp.maybeDappInfo?.chainId}
               size={24}
               width={24}
               height={24}
@@ -72,9 +72,11 @@ export default function SheetDappWebViewInner({
       bottomSheetContent={({ bottomNavBar }) => {
         return (
           <View>
-            <BottomSheetScrollView style={{ minHeight: 108 }}>
-              <DappCardInWebViewNav data={dapp} />
-            </BottomSheetScrollView>
+            {dapp?.maybeDappInfo && (
+              <BottomSheetScrollView style={{ minHeight: 108 }}>
+                <DappCardInWebViewNav data={dapp.maybeDappInfo} />
+              </BottomSheetScrollView>
+            )}
 
             <View
               style={{

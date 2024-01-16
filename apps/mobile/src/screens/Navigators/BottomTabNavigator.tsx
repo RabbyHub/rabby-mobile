@@ -19,7 +19,7 @@ import HomeScreen from '@/screens/Home/Home';
 import { DappsScreen } from '@/screens/Dapps/Dapps';
 import {
   OpenedDappWebViewStub,
-  OpenedWebViewsStub,
+  // OpenedWebViewsStub,
 } from '../Dapps/Dapps/components/WebViewsStub';
 
 const BottomTab = createBottomTabNavigator();
@@ -153,7 +153,7 @@ export default function BottomTabNavigator() {
       </BottomTab.Navigator>
 
       <OpenedDappWebViewStub />
-      <OpenedWebViewsStub />
+      {/* <OpenedWebViewsStub /> */}
     </>
   );
 }
