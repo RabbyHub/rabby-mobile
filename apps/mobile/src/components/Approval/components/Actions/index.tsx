@@ -10,8 +10,8 @@ import { AppColorsVariants } from '@/constant/theme';
 // import ViewRawModal from '../TxComponents/ViewRawModal';
 import ApproveNFT from './ApproveNFT';
 import ApproveNFTCollection from './ApproveNFTCollection';
-// import CancelTx from './CancelTx';
-// import ContractCall from './ContractCall';
+import CancelTx from './CancelTx';
+import ContractCall from './ContractCall';
 // import DeployContract from './DeployContract';
 // import RevokeNFT from './RevokeNFT';
 // import RevokeNFTCollection from './RevokeNFTCollection';
@@ -23,8 +23,8 @@ import Swap from './Swap';
 // import WrapToken from './WrapToken';
 // import UnWrapToken from './UnWrapToken';
 // import PushMultiSig from './PushMultiSig';
-// import CrossToken from './CrossToken';
-// import CrossSwapToken from './CrossSwapToken';
+import CrossToken from './CrossToken';
+import CrossSwapToken from './CrossSwapToken';
 // import RevokePermit2 from './RevokePermit2';
 import {
   ActionRequireData,
@@ -202,7 +202,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          {/*
+
           {data.crossToken && (
             <CrossToken
               data={data.crossToken}
@@ -219,6 +219,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
+          {/*
           {data.wrapToken && (
             <WrapToken
               data={data.wrapToken}
@@ -273,15 +274,6 @@ const Actions = ({
               raw={raw}
             />
           )}
-          {data.cancelTx && (
-            <CancelTx
-              data={data.cancelTx}
-              requireData={requireData as CancelTxRequireData}
-              chain={chain}
-              engineResults={engineResults}
-              onChange={onChange}
-              raw={raw}></CancelTx>
-          )}
           {data?.sendNFT && (
             <SendNFT
               data={data.sendNFT}
@@ -314,17 +306,17 @@ const Actions = ({
               requireData={requireData as PushMultiSigRequireData}
               chain={chain}
             />
-          )}
-          {data.contractCall && (
-            <ContractCall
-              data={data.contractCall}
-              requireData={requireData as ContractCallRequireData}
+          )}*/}
+          {data.cancelTx && (
+            <CancelTx
+              data={data.cancelTx}
+              requireData={requireData as CancelTxRequireData}
               chain={chain}
               engineResults={engineResults}
               onChange={onChange}
               raw={raw}
             />
-          )} */}
+          )}
           {data?.approveNFT && (
             <ApproveNFT
               data={data.approveNFT}
@@ -339,6 +331,16 @@ const Actions = ({
               requireData={requireData as RevokeNFTRequireData}
               chain={chain}
               engineResults={engineResults}
+            />
+          )}
+          {data.contractCall && (
+            <ContractCall
+              data={data.contractCall}
+              requireData={requireData as ContractCallRequireData}
+              chain={chain}
+              engineResults={engineResults}
+              onChange={onChange}
+              raw={raw}
             />
           )}
         </View>

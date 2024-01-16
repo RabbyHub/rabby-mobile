@@ -7,7 +7,7 @@ import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import { ParsedActionData, WrapTokenRequireData } from './utils';
 import { formatAmount } from 'ui/utils/number';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import ViewMore from './components/ViewMore';
 import { useRabbyDispatch, useRabbySelector } from '@/ui/store';

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PushMultiSigAction } from '@rabby-wallet/rabby-api/dist/types';
 import { Col, Row, Table } from './components/Table';
 import * as Values from './components/Values';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { PushMultiSigRequireData } from './utils';
 import LogoWithText from './components/LogoWithText';
 

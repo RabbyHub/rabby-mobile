@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ParsedActionData, RevokeNFTRequireData } from './utils';
 import { useRabbyDispatch } from '@/ui/store';

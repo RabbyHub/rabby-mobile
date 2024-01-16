@@ -73,8 +73,8 @@ const TokenAmount = ({ value }: { value: string | number }) => {
   );
 };
 
-const Percentage = ({ value }: { value: number }) => {
-  return <Text>{(value * 100).toFixed(2)}%</Text>;
+const Percentage = ({ value, style }: { value: number; style?: TextStyle }) => {
+  return <Text style={style}>{(value * 100).toFixed(2)}%</Text>;
 };
 
 const USDValue = ({ value }: { value: number | string }) => {
@@ -319,19 +319,25 @@ const TextValue = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const DisplayChain = ({ chainServerId }: { chainServerId: string }) => {
+const DisplayChain = ({
+  chainServerId,
+  textStyle,
+}: {
+  chainServerId: string;
+  textStyle?: TextStyle;
+}) => {
   const chain = useMemo(() => {
     return Object.values(CHAINS).find(item => item.serverId === chainServerId);
   }, [chainServerId]);
   if (!chain) return null;
   return (
-    <View className="flex items-center">
-      <Text>on {chain.name} </Text>
+    <View className="flex flex-row items-center">
+      <Text style={textStyle}>on {chain.name} </Text>
       <Image
         source={{
           uri: chain.logo,
         }}
-        className="ml-4 w-14 h-14"
+        className="ml-[4] w-[14] h-[14]"
       />
     </View>
   );
@@ -349,7 +355,12 @@ const Interacted = ({
     <View className="flex flex-row items-center">
       {value ? (
         <>
-          <IconInteracted className="mr-[4] w-[14]" />
+          <IconInteracted
+            style={{
+              marginRight: 4,
+              width: 14,
+            }}
+          />
           <Text style={textStyle}>{t('page.signTx.interacted')}</Text>
         </>
       ) : (
@@ -407,7 +418,13 @@ const TokenSymbol = ({
   );
 };
 
-const KnownAddress = ({ address }: { address: string }) => {
+const KnownAddress = ({
+  address,
+  textStyle,
+}: {
+  address: string;
+  textStyle?: TextStyle;
+}) => {
   const [hasAddress, setHasAddress] = useState(false);
   const [inWhitelist, setInWhitelist] = useState(false);
   const { whitelist } = useWhitelist();
@@ -426,7 +443,7 @@ const KnownAddress = ({ address }: { address: string }) => {
   if (!hasAddress) return null;
 
   return (
-    <Text className="text-13">
+    <Text style={textStyle}>
       {inWhitelist
         ? t('page.connect.onYourWhitelist')
         : t('page.signTx.importedAddress')}
