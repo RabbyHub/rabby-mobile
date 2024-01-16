@@ -72,6 +72,7 @@
     "ethers": "5.4.2",
     "i18next": "^23.7.14",
     "immer": "^10.0.3",
+    "interval-promise": "^1.4.0",
     "jotai": "^2.6.0",
     "json-rpc-engine": "^6.1.0",
     "json-rpc-middleware-stream": "^5.0.1",

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React from 'react';
@@ -14,6 +14,16 @@ export interface Props {
   defaultText?: string | React.ReactNode;
   forbiddenText?: string | React.ReactNode;
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    marginVertical: 4,
+  },
+  text: {
+    fontSize: 13,
+    lineHeight: 15,
+  },
+});
 
 export const SecurityListItem: React.FC<Props> = ({
   id,
@@ -36,15 +46,38 @@ export const SecurityListItem: React.FC<Props> = ({
   }
 
   return (
-    <DescItem>
-      <Text>
-        {engineResult.level === Level.DANGER && dangerText}
-        {engineResult.level === Level.WARNING && warningText}
-        {engineResult.level === Level.SAFE && safeText}
-        {engineResult.level === Level.FORBIDDEN && forbiddenText}
-      </Text>
-
+    <View style={styles.wrapper}>
+      <DescItem>
+        {engineResult.level === Level.DANGER ? (
+          typeof dangerText === 'string' ? (
+            <Text>{dangerText}</Text>
+          ) : (
+            dangerText
+          )
+        ) : null}
+        {engineResult.level === Level.WARNING ? (
+          typeof warningText === 'string' ? (
+            <Text>{warningText}</Text>
+          ) : (
+            warningText
+          )
+        ) : null}
+        {engineResult.level === Level.SAFE ? (
+          typeof safeText === 'string' ? (
+            <Text>{safeText}</Text>
+          ) : (
+            safeText
+          )
+        ) : null}
+        {engineResult.level === Level.FORBIDDEN ? (
+          typeof forbiddenText === 'string' ? (
+            <Text>{forbiddenText}</Text>
+          ) : (
+            forbiddenText
+          )
+        ) : null}
+      </DescItem>
       <SecurityListItemTag id={id} engineResult={engineResult} />
-    </DescItem>
+    </View>
   );
 };

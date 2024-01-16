@@ -149,7 +149,7 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
         {data.isDanger && (
           <Col>
             <Row style={styles.firstRow}>
-              {t('page.signTx.tokenApprove.flagByRabby')}
+              <Text>{t('page.signTx.tokenApprove.flagByRabby')}</Text>
             </Row>
             <Row>
               <Values.Boolean value={!!data.isDanger} />

@@ -5,6 +5,7 @@ import {
   ExplainTxResponse,
   Tx,
   TxPushType,
+  TxRequest,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { produce } from 'immer';
 import { nanoid } from 'nanoid';
@@ -12,6 +13,9 @@ import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortBy, minBy, maxBy } from 'lodash';
+import { openapi, testOpenapi } from '../request';
+import { CHAINS } from '@debank/common';
+import { EVENTS, eventBus } from '@/utils/events';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -255,10 +259,234 @@ export class TransactionHistoryService {
         item => item.hash === tx.hash || item.reqId === tx.reqId,
       );
       if (index !== -1) {
-        draft[index] = tx;
+        draft[index] = { ...tx };
       }
     });
   }
+
+  completeTx({
+    address,
+    chainId,
+    nonce,
+    hash,
+    success = true,
+    gasUsed,
+    reqId,
+  }: {
+    address: string;
+    chainId: number;
+    nonce: number;
+    hash?: string;
+    reqId?: string;
+    success?: boolean;
+    gasUsed?: number;
+  }) {
+    const target = this.getTransactionGroups({
+      address,
+      chainId,
+      nonce,
+    })?.[0];
+    if (!target.isPending) {
+      return;
+    }
+
+    target.isPending = false;
+    target.isFailed = !success;
+    if (gasUsed) {
+      target.maxGasTx.gasUsed = gasUsed;
+    }
+
+    this.updateTx(target.maxGasTx);
+
+    // this._setStoreTransaction({
+    //   ...this.store.transactions,
+    //   [normalizedAddress]: {
+    //     ...this.store.transactions[normalizedAddress],
+    //     [key]: target,
+    //   },
+    // });
+    const chain = Object.values(CHAINS).find(
+      item => item.id === Number(target.chainId),
+    );
+    // if (chain) {
+    //   stats.report('completeTransaction', {
+    //     chainId: chain.serverId,
+    //     success,
+    //     preExecSuccess:
+    //       target.explain.pre_exec.success && target.explain.calcSuccess,
+    //     createBy: target?.$ctx?.ga ? 'rabby' : 'dapp',
+    //     source: target?.$ctx?.ga?.source || '',
+    //     trigger: target?.$ctx?.ga?.trigger || '',
+    //   });
+    // }
+    // this.clearBefore({ address, chainId, nonce });
+  }
+
+  async reloadTx(
+    {
+      address,
+      chainId,
+      nonce,
+    }: {
+      address: string;
+      chainId: number;
+      nonce: number;
+    },
+    duration: number | boolean = 0,
+  ) {
+    const target = this.getTransactionGroups({
+      address,
+      chainId,
+      nonce,
+    })?.[0];
+    if (!target) {
+      return;
+    }
+
+    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    const { txs } = target;
+
+    const broadcastedTxs = txs.filter(
+      tx => tx && tx.hash && !tx.isSubmitFailed && !tx.isWithdrawed,
+    ) as (TransactionHistoryItem & { hash: string })[];
+
+    try {
+      const results = await Promise.all(
+        broadcastedTxs.map(tx =>
+          openapi.getTx(
+            chain.serverId,
+            tx.hash!,
+            Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0),
+          ),
+        ),
+      );
+      const completed = results.find(
+        result => result.code === 0 && result.status !== 0,
+      );
+      if (!completed) {
+        if (
+          duration !== false &&
+          typeof duration === 'number' &&
+          duration < 1000 * 15
+        ) {
+          // maximum retry 15 times;
+          setTimeout(() => {
+            this.reloadTx({ address, chainId, nonce });
+          }, Number(duration) + 1000);
+        }
+        return;
+      }
+      const completedTx = txs.find(tx => tx.hash === completed.hash)!;
+      this.updateTx({
+        ...completedTx,
+        gasUsed: completed.gas_used,
+      });
+      // TOFIX
+      this.completeTx({
+        address,
+        chainId,
+        nonce,
+        hash: completedTx.hash,
+        success: completed.status === 1,
+        reqId: completedTx.reqId,
+      });
+      eventBus.emit(EVENTS.broadcastToUI, {
+        method: EVENTS.RELOAD_TX,
+        params: {
+          addressList: [address],
+        },
+      });
+    } catch (e) {
+      if (
+        duration !== false &&
+        typeof duration === 'number' &&
+        duration < 1000 * 15
+      ) {
+        // maximum retry 15 times;
+        setTimeout(() => {
+          this.reloadTx({ address, chainId, nonce });
+        }, Number(duration) + 1000);
+      }
+    }
+  }
+
+  updateTxByTxRequest = (txRequest: TxRequest) => {
+    const { chainId, from } = txRequest.signed_tx;
+    const nonce = txRequest.nonce;
+
+    const target = this.getTransactionGroups({
+      address: from,
+      chainId,
+      nonce,
+    })?.[0];
+    if (!target) {
+      return;
+    }
+
+    const tx = target.txs.find(
+      item => item.reqId && item.reqId === txRequest.id,
+    );
+
+    if (!tx) {
+      return;
+    }
+
+    const isSubmitFailed =
+      txRequest.push_status === 'failed' && txRequest.is_finished;
+
+    this.updateTx({
+      ...tx,
+      hash: txRequest.tx_id || undefined,
+      isWithdrawed:
+        txRequest.is_withdraw ||
+        (txRequest.is_finished && !txRequest.tx_id && !txRequest.push_status),
+      isSubmitFailed: isSubmitFailed,
+    });
+  };
+
+  reloadTxRequest = async ({
+    address,
+    chainId,
+    nonce,
+  }: {
+    address: string;
+    chainId: number;
+    nonce: number;
+  }) => {
+    const key = `${chainId}-${nonce}`;
+    const from = address.toLowerCase();
+    const target = this.store.transactions[from][key];
+    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    console.log('reloadTxRequest', target);
+    if (!target) {
+      return;
+    }
+    const { txs } = target;
+    const unbroadcastedTxs = txs.filter(
+      tx =>
+        tx && tx.reqId && !tx.hash && !tx.isSubmitFailed && !tx.isWithdrawed,
+    ) as (TransactionHistoryItem & { reqId: string })[];
+
+    console.log('reloadTxRequest', unbroadcastedTxs);
+    if (unbroadcastedTxs.length) {
+      const service = chain?.isTestnet ? testOpenapi : openapi;
+      await service
+        .getTxRequests(unbroadcastedTxs.map(tx => tx.reqId))
+        .then(res => {
+          res.forEach((item, index) => {
+            this.updateTxByTxRequest(item);
+
+            eventBus.emit(EVENTS.broadcastToUI, {
+              method: EVENTS.RELOAD_TX,
+              params: {
+                addressList: [address],
+              },
+            });
+          });
+        })
+        .catch(e => console.error(e));
+    }
+  };
 }
 
 export class TransactionGroup {
@@ -283,14 +511,34 @@ export class TransactionGroup {
   }
 
   get isPending() {
-    return this.maxGasTx.isPending;
+    return !!this.maxGasTx.isPending;
+  }
+
+  set isPending(v: boolean) {
+    this.maxGasTx.isPending = v;
   }
   get isSubmitFailed() {
-    return this.maxGasTx.isSubmitFailed;
+    return !!this.maxGasTx.isSubmitFailed;
+  }
+
+  set isSubmitFailed(v: boolean) {
+    this.maxGasTx.isSubmitFailed = v;
   }
 
   get isWithdrawed() {
-    return this.maxGasTx.isWithdrawed;
+    return !!this.maxGasTx.isWithdrawed;
+  }
+
+  set isWithdrawed(v: boolean) {
+    this.maxGasTx.isWithdrawed = v;
+  }
+
+  get isFailed() {
+    return !!this.maxGasTx.isFailed;
+  }
+
+  set isFailed(v: boolean) {
+    this.maxGasTx.isFailed = v;
   }
 
   get createdAt() {

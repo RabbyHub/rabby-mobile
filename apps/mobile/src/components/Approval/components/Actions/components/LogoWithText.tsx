@@ -30,8 +30,8 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       marginRight: 4,
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      // textOverflow: 'ellipsis',
+      // whiteSpace: 'nowrap',
     },
   });
 
@@ -42,14 +42,16 @@ const LogoWithText = ({
   logoRadius,
   logoSize = 16,
   textStyle = {},
+  textNode,
 }: {
   logo?: string | ImageSourcePropType;
-  text: string | ReactNode;
+  text?: string | ReactNode;
   icon?: ReactNode;
   logoRadius?: number;
   logoSize?: number;
   textStyle?: TextStyle;
   className?: string;
+  textNode?: ReactNode;
 }) => {
   const colors = useThemeColors();
   const styles = getStyle(colors);
@@ -83,6 +85,7 @@ const LogoWithText = ({
           }}
         />
       )}
+      {textNode}
       <Text
         style={{
           ...styles.text,

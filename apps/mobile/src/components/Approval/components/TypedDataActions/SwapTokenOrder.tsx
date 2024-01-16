@@ -15,6 +15,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { Text, View } from 'react-native';
+import DescItem from '../Actions/components/DescItem';
 const { isSameAddress } = addressUtils;
 
 const SwapTokenOrder = ({
@@ -92,23 +93,25 @@ const SwapTokenOrder = ({
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
-              text={
-                <View className="flex-row">
-                  <Text>{formatAmount(payToken.amount)} </Text>
+              textNode={
+                <View className="flex-row flex-1">
+                  <Text>{formatAmount(payToken.amount)}</Text>
                   <Values.TokenSymbol token={payToken} />
                 </View>
               }
               logoRadius={16}
             />
             <View className="desc-list">
-              <Text>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(payToken.amount)
-                    .times(payToken.price)
-                    .toFixed(),
-                )}
-              </Text>
+              <DescItem>
+                <Text>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(payToken.amount)
+                      .times(payToken.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -160,33 +163,37 @@ const SwapTokenOrder = ({
                 />
               )}
             </View>
-            <View className="desc-list">
-              <Text>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(receiveToken.amount)
-                    .times(receiveToken.price)
-                    .toFixed(),
-                )}
-              </Text>
-              <SecurityListItem
-                engineResult={engineResultMap['1095']}
-                id="1095"
-                dangerText={
-                  <View>
-                    <Text>{t('page.signTx.swap.valueDiff')} </Text>
-                    <Values.Percentage value={usdValuePercentage!} />
-                    <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
-                  </View>
-                }
-                warningText={
-                  <View>
-                    <Text>{t('page.signTx.swap.valueDiff')} </Text>
-                    <Values.Percentage value={usdValuePercentage!} />
-                    <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
-                  </View>
-                }
-              />
+            <View className="relative desc-list">
+              <DescItem>
+                <Text>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(receiveToken.amount)
+                      .times(receiveToken.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
+              <View className="relative">
+                <SecurityListItem
+                  engineResult={engineResultMap['1095']}
+                  id="1095"
+                  dangerText={
+                    <View className="flex-row flex-wrap">
+                      <Text>{t('page.signTx.swap.valueDiff')} </Text>
+                      <Values.Percentage value={usdValuePercentage!} />
+                      <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                    </View>
+                  }
+                  warningText={
+                    <View className="flex-row flex-wrap">
+                      <Text>{t('page.signTx.swap.valueDiff')} </Text>
+                      <Values.Percentage value={usdValuePercentage!} />
+                      <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                    </View>
+                  }
+                />
+              </View>
             </View>
           </Row>
         </Col>
@@ -236,12 +243,18 @@ const SwapTokenOrder = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
-              <View>
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
+              <DescItem>
                 <Values.Interacted value={requireData.hasInteraction} />
-              </View>
+              </DescItem>
 
-              {isInWhitelist && <Text>{t('page.signTx.markAsTrust')}</Text>}
+              {isInWhitelist && (
+                <DescItem>
+                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -254,7 +267,7 @@ const SwapTokenOrder = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <View>
+              <DescItem>
                 <ViewMore
                   type="contract"
                   data={{
@@ -267,7 +280,7 @@ const SwapTokenOrder = ({
                     title: t('page.signTypedData.buyNFT.listOn'),
                   }}
                 />
-              </View>
+              </DescItem>
             </View>
           </Row>
         </Col>

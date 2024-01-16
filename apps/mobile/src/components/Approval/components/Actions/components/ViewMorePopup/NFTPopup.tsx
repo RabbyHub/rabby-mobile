@@ -45,7 +45,9 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
           <Row style={styles.firstRow}>
             <Text>{t('page.signTx.collectionTitle')}</Text>
           </Row>
-          <Row>{data.nft.collection ? data.nft.collection.name : '-'}</Row>
+          <Row>
+            <Text>{data.nft.collection ? data.nft.collection.name : '-'}</Text>
+          </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>

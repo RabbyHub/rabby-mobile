@@ -13,6 +13,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
 import { Tip } from '@/components/Tip';
+import DescItem from '../Actions/components/DescItem';
 const { isSameAddress } = addressUtils;
 
 const ContractCall = ({
@@ -71,12 +72,18 @@ const ContractCall = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
-              <View>
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
+              <DescItem>
                 <Values.Interacted value={requireData.hasInteraction} />
-              </View>
+              </DescItem>
 
-              {isInWhitelist && <Text>{t('page.signTx.markAsTrust')}</Text>}
+              {isInWhitelist && (
+                <DescItem>
+                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -89,17 +96,19 @@ const ContractCall = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <ViewMore
-                type="contract"
-                data={{
-                  hasInteraction: requireData.hasInteraction,
-                  bornAt: requireData.bornAt,
-                  protocol: requireData.protocol,
-                  rank: requireData.rank,
-                  address: requireData.id,
-                  chain,
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="contract"
+                  data={{
+                    hasInteraction: requireData.hasInteraction,
+                    bornAt: requireData.bornAt,
+                    protocol: requireData.protocol,
+                    rank: requireData.rank,
+                    address: requireData.id,
+                    chain,
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>

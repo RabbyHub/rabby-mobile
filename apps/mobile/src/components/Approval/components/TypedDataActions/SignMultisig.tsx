@@ -9,6 +9,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Chain } from '@debank/common';
 import { CHAINS } from '@/constant/chains';
 import { Text, View } from 'react-native';
+import DescItem from '../Actions/components/DescItem';
 
 const PushMultiSig = ({
   data,
@@ -56,11 +57,11 @@ const PushMultiSig = ({
                 chain={multiSigInfo?.chain}
               />
               <View className="desc-list">
-                <View>
+                <DescItem>
                   <Values.AddressMemo address={data.multisig_id} />
-                </View>
+                </DescItem>
                 {multiSigInfo && (
-                  <View>
+                  <DescItem>
                     <LogoWithText
                       logo={multiSigInfo.logo_url}
                       text={multiSigInfo.name}
@@ -74,7 +75,7 @@ const PushMultiSig = ({
                         color: '#4B4D59',
                       }}
                     />
-                  </View>
+                  </DescItem>
                 )}
               </View>
             </View>

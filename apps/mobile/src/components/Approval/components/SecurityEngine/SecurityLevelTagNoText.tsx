@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   wrapper: {
-    padding: 4,
+    padding: 2,
     display: 'flex',
     position: 'absolute',
     top: '50%',
