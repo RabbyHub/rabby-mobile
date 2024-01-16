@@ -6,6 +6,8 @@ import { DappService } from '@rabby-wallet/service-dapp';
 import { NotificationService } from './notification';
 import { TransactionHistoryService } from './transactionHistory';
 import { SecurityEngineService } from './securityEngine';
+import { TransactionWatcherService } from './transactionWatcher';
+import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
 
 export const appStorage = makeAppStorage();
 
@@ -30,5 +32,14 @@ export const notificationService = new NotificationService();
 export const transactionHistoryService = new TransactionHistoryService({
   storageAdapter: appStorage,
 });
+
+export const transactionWatcherService = new TransactionWatcherService({
+  storageAdapter: appStorage,
+});
+
+export const transactionBroadcastWatcherService =
+  new TransactionBroadcastWatcherService({
+    storageAdapter: appStorage,
+  });
 
 export const securityEngineService = new SecurityEngineService();
