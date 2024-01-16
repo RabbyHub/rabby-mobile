@@ -97,7 +97,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
     entryScriptWeb3Loaded: [
       appInitialized,
       !!entryScripts.inPageWeb3,
-      __DEV__ ? !!entryScripts.vConsole : true,
+      // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
     entryScripts,
     fullScript: fullScript,
