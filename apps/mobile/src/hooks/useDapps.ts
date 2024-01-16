@@ -74,7 +74,8 @@ export const useDappsHome = () => {
     return [
       {
         key: 'inUse',
-        title: 'In Use',
+        title: '',
+        type: 'active',
         data: openedDapps,
       },
 
