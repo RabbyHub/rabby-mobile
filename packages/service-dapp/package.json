@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",
+    "@rabby-wallet/rabby-api": "0.7.0-alpha.7",
     "@types/jest": "^27.4.1",
     "@types/sinon": "^9.0.10",
     "deepmerge": "^4.2.2",

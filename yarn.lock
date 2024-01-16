@@ -4191,6 +4191,7 @@ __metadata:
     "@debank/common": ^0.3.47
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/persist-store": ^0.1.0
+    "@rabby-wallet/rabby-api": 0.7.0-alpha.7
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2

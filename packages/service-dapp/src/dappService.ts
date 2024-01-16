@@ -1,15 +1,10 @@
 import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import { createPersistStore, StoreServiceBase } from '@rabby-wallet/persist-store';
-
-export interface BasicDappInfo {
-  id: string;
-  name: string;
-  logo_url: string;
-  description: string;
-  user_range: string;
-  tags: string[];
-}
+import {
+  createPersistStore,
+  StoreServiceBase,
+} from '@rabby-wallet/persist-store';
+import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 
 export interface DappInfo {
   origin: string;
@@ -29,11 +24,15 @@ export type DappStore = {
 
 export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
   constructor(options?: StorageAdapaterOptions<DappStore>) {
-    super('dapps', {
-      dapps: {},
-    }, {
-      storageAdapter: options?.storageAdapter,
-    });
+    super(
+      'dapps',
+      {
+        dapps: {},
+      },
+      {
+        storageAdapter: options?.storageAdapter,
+      },
+    );
   }
 
   addDapp(dapp: DappInfo | DappInfo[]) {
