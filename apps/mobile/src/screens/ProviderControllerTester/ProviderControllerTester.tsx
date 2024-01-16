@@ -27,7 +27,6 @@ import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@debank/common';
-import { toast } from '@/components/Toast';
 import { useCurrentAccount } from '@/hooks/account';
 import { apisWalletConnect } from '@/core/apis';
 

@@ -7,7 +7,11 @@
     },
     {
       "path": "assets/custom/InpageBridgeWeb3.js",
-      "sha1": "ae430ba9e1c7f496ac655fb65118d4b22cd567b1"
+      "sha1": "f8f3142c22acf521f4c6106e24e6cb1386c7664f"
+    },
+    {
+      "path": "assets/custom/vconsole.min.js",
+      "sha1": "cc79a9522ef457188c18283228b2b8759b7faf1e"
     }
   ]
 }

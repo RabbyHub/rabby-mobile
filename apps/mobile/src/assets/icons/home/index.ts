@@ -16,13 +16,13 @@ export const RcIconHeaderSettings = makeThemeIconFromCC(
   RcIconHeaderSettingsCC,
   {
     onLight: ThemeColors.light['neutral-foot'],
-    onDark: ThemeColors.light['neutral-foot'],
+    onDark: ThemeColors.dark['neutral-foot'],
   },
 );
 
 export const RcIconHistory = makeThemeIconFromCC(RcIconHistoryCC, {
   onLight: ThemeColors.light['neutral-foot'],
-  onDark: ThemeColors.light['neutral-foot'],
+  onDark: ThemeColors.dark['neutral-foot'],
 });
 
 export const RcIconHeaderAddAccount = makeThemeIconFromCC(

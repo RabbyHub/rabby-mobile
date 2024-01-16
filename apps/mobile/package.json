@@ -14,13 +14,13 @@
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
-    "link-assets": "react-native-asset",
     "restart": "yarn start --reset-cache",
     "build:deps": "yarn ../../ build",
     "start": "yarn build:deps && yarn build-inpage && react-native start",
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",
-    "postinstall": "yarn build-inpage && yarn link-assets"
+    "link-assets": "react-native-asset",
+    "postinstall": "yarn build-inpage"
   },
   "lint-staged": {
     "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
