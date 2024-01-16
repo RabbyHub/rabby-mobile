@@ -1,9 +1,6 @@
-// import { dappService } from '../services';
+import { sessionService } from '../services/session';
+import { BroadcastEvent } from '@/constant/event';
 
-// export const getDappList = () => {
-//   const dapps = dappService.getDapps();
-//   const favorites = Object.values(dapps).filter(dapp => dapp.isFavorite);
-//   const others = Object.values(dapps).filter(dapp => !dapp.isFavorite);
-
-//   return { favorites, others };
-// };
+export function removeConnectedSite(origin: string) {
+  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [], origin);
+}

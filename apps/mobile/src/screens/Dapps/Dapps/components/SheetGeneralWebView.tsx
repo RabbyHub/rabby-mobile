@@ -63,7 +63,7 @@ export default function SheetGeneralWebView({ url }: { url: string | null }) {
       onChange={handleBottomSheetChanges}>
       <BottomSheetView className="px-[20] items-center justify-center">
         <DappWebViewControl
-          dappId={url}
+          dappOrigin={url}
           bottomSheetContent={({ bottomNavBar }) => {
             return (
               <View>
