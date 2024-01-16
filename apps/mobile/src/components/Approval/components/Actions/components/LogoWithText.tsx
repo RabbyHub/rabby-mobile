@@ -30,8 +30,8 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       marginRight: 4,
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      // textOverflow: 'ellipsis',
+      // whiteSpace: 'nowrap',
     },
   });
 

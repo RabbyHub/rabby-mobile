@@ -37,9 +37,9 @@ const styles = StyleSheet.create({
   },
   right: {
     flex: 1,
-    whiteSpace: 'nowrap',
+    // whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    // textOverflow: 'ellipsis',
   },
 });
 

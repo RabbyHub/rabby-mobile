@@ -168,6 +168,7 @@ function SettingsScreen(): JSX.Element {
       )}>
       <View
         style={{
+          flex: 1,
           maxHeight:
             Dimensions.get('screen').height -
             (safeTop + safeOffBottom + ScreenLayouts.headerAreaHeight),
