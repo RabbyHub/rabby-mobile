@@ -15,10 +15,7 @@ import { setupMultiplex } from '../utils/streams';
 import type { Substream } from '@rabby-wallet/object-multiplex/dist/Substream';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
-import {
-  createOriginMiddleware,
-  // createLoggerMiddleware,
-} from './middlewares';
+import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
 import { keyringService } from '../services';
 import getRpcMethodMiddleware, {
@@ -98,15 +95,6 @@ export class BackgroundBridge extends EventEmitter {
     // });
   }
 
-  getProviderNetworkState() {
-    // WIP: network state
-    const result = {
-      networkVersion: '',
-      chainId: '',
-    };
-    return result;
-  }
-
   onMessage = (msg: Record<string, any>) => {
     this.port.emit('message', { name: msg.name, data: msg.data });
   };
@@ -122,23 +110,24 @@ export class BackgroundBridge extends EventEmitter {
    * @param stm
    */
   _setupProviderConnection(portOutStream: Substream) {
-    // we have no engine, we dont need to setup a provider
-
     this.#engine = this._setupProviderEngine();
 
-    // // setup connection
+    // setup connection
     const providerStream = createEngineStream({ engine: this.#engine });
 
     pump(portOutStream, providerStream, portOutStream, (err: any) => {
       // handle any middleware cleanup
       // @ts-expect-error force access _middleware
       this.#engine?._middleware.forEach(mid => {
-        if (mid.destroy && typeof mid.destroy === 'function') {
+        if (typeof mid?.destroy === 'function') {
           mid.destroy();
         }
       });
-      if (err) {
-        console.log('Error with provider stream conn', err);
+      if (__DEV__ && err) {
+        console.warn(
+          '[BackgroundBridge::_setupProviderConnection] Error with provider stream conn',
+          err,
+        );
       }
     });
   }

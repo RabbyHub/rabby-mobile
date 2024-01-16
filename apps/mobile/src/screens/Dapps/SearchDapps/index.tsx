@@ -156,7 +156,7 @@ export function SearchDappsScreen(): JSX.Element {
               onEndReached={loadMore}
               data={list}
               onPress={dapp => {
-                addOpenedDapp(dapp.origin);
+                addOpenedDapp(dapp.origin, { isActiveDapp: true });
                 toggleShowSheetModal('dappWebviewContainerRef', true);
               }}
               onFavoritePress={dapp => {

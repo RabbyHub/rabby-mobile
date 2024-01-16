@@ -50,11 +50,11 @@ type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
   Function;
 
 export function useSetupWebview({
-  dappId,
+  dappOrigin,
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
 }: {
-  dappId: string;
+  dappOrigin: string;
   siteInfoRefs: {
     urlRef: React.MutableRefObject<string>;
     titleRef: React.MutableRefObject<string>;
@@ -154,8 +154,9 @@ export function useSetupWebview({
     // }
 
     backgroundBridgeRefs.current = [];
-    const dappOrigin = urlUtils.canoicalizeDappUrl(dappId).httpOrigin;
-    initializeBackgroundBridge(dappOrigin, true);
+    const formattedDappOrigin =
+      urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+    initializeBackgroundBridge(formattedDappOrigin, true);
   };
 
   return {

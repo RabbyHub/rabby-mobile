@@ -203,7 +203,7 @@ class ProviderController extends BaseController {
     const site = dappService.getDapp(origin);
     let chainServerId = CHAINS[CHAINS_ENUM.ETH].serverId;
     if (site) {
-      chainServerId = CHAINS[site.chainId].serverId;
+      chainServerId = CHAINS[site.chainId]?.serverId || chainServerId;
     }
     if (forceChainServerId) {
       chainServerId = forceChainServerId;

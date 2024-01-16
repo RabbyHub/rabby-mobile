@@ -52,7 +52,7 @@ export const DappIcon = ({
     return [bgColorList[bgIndex].toLowerCase(), getOriginName(origin || '')];
   }, [origin]);
 
-  if (source) {
+  if (source?.uri) {
     return <Image source={source} style={style} />;
   }
 
