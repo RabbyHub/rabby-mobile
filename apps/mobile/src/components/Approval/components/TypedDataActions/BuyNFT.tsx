@@ -17,6 +17,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import DescItem from '../Actions/components/DescItem';
 const { isSameAddress } = addressUtils;
 
 const BuyNFT = ({
@@ -93,14 +94,16 @@ const BuyNFT = ({
               logoRadius={16}
             />
             <View className="desc-list">
-              <Text>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(actionData.pay_token.amount)
-                    .times(actionData.pay_token.price)
-                    .toFixed(),
-                )}
-              </Text>
+              <DescItem>
+                <Text>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(actionData.pay_token.amount)
+                      .times(actionData.pay_token.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -135,13 +138,15 @@ const BuyNFT = ({
               />
             )}
             <View className="desc-list">
-              <ViewMore
-                type="nft"
-                data={{
-                  nft: actionData.receive_nft,
-                  chain,
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="nft"
+                  data={{
+                    nft: actionData.receive_nft,
+                    chain,
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -183,9 +188,15 @@ const BuyNFT = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
 
-              {isInWhitelist && <li>{t('page.signTx.markAsTrust')}</li>}
+              {isInWhitelist && (
+                <Text>
+                  <DescItem>{t('page.signTx.markAsTrust')}</DescItem>
+                </Text>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -199,15 +210,17 @@ const BuyNFT = ({
                 warningText={t('page.signTx.markAsBlock')}
               />
 
-              <ViewMore
-                type="contract"
-                data={{
-                  ...requireData,
-                  address: requireData.id,
-                  chain,
-                  title: t('page.signTypedData.buyNFT.listOn'),
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="contract"
+                  data={{
+                    ...requireData,
+                    address: requireData.id,
+                    chain,
+                    title: t('page.signTypedData.buyNFT.listOn'),
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>

@@ -17,6 +17,7 @@ import { Chain } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
+import DescItem from '../Actions/components/DescItem';
 const { isSameAddress } = addressUtils;
 
 const ApproveNFT = ({
@@ -87,13 +88,15 @@ const ApproveNFT = ({
           <Row>
             <NFTWithName nft={actionData.pay_nft} />
             <View className="desc-list">
-              <ViewMore
-                type="nft"
-                data={{
-                  nft: actionData.pay_nft,
-                  chain,
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="nft"
+                  data={{
+                    nft: actionData.pay_nft,
+                    chain,
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -145,14 +148,16 @@ const ApproveNFT = ({
               )}
             </View>
             <View className="desc-list">
-              <Text>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(actionData.receive_token.amount)
-                    .times(actionData.receive_token.price)
-                    .toFixed(),
-                )}
-              </Text>
+              <DescItem>
+                <Text>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(actionData.receive_token.amount)
+                      .times(actionData.receive_token.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -198,13 +203,11 @@ const ApproveNFT = ({
             </Row>
             <Row>
               <Values.Address address={actionData.receiver} chain={chain} />
-              <View className="desc-list">
-                <SecurityListItem
-                  id="1082"
-                  engineResult={engineResultMap['1082']}
-                  dangerText={t('page.signTx.swap.notPaymentAddress')}
-                />
-              </View>
+              <SecurityListItem
+                id="1082"
+                engineResult={engineResultMap['1082']}
+                dangerText={t('page.signTx.swap.notPaymentAddress')}
+              />
             </Row>
           </Col>
         )}
@@ -217,9 +220,15 @@ const ApproveNFT = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
 
-              {isInWhitelist && <Text>{t('page.signTx.markAsTrust')}</Text>}
+              {isInWhitelist && (
+                <DescItem>
+                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -232,15 +241,18 @@ const ApproveNFT = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <ViewMore
-                type="contract"
-                data={{
-                  ...requireData,
-                  address: requireData.id,
-                  chain,
-                  title: t('page.signTypedData.buyNFT.listOn'),
-                }}
-              />
+
+              <DescItem>
+                <ViewMore
+                  type="contract"
+                  data={{
+                    ...requireData,
+                    address: requireData.id,
+                    chain,
+                    title: t('page.signTypedData.buyNFT.listOn'),
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>

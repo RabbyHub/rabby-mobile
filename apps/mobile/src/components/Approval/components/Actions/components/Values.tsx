@@ -61,13 +61,16 @@ const styles = StyleSheet.create({
   },
   tokenAmountWrapper: {
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    flex: 1,
   },
 });
 
 const TokenAmount = ({ value }: { value: string | number }) => {
-  return <Text style={styles.tokenAmountWrapper}>{formatAmount(value)}</Text>;
+  return (
+    <Text style={styles.tokenAmountWrapper} numberOfLines={1}>
+      {formatAmount(value)}
+    </Text>
+  );
 };
 
 const Percentage = ({ value }: { value: number }) => {
@@ -243,7 +246,7 @@ const Protocol = ({
           textStyle={textStyle}
         />
       ) : (
-        '-'
+        <Text>-</Text>
       )}
     </>
   );

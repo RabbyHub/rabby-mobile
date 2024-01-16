@@ -10,7 +10,6 @@ const getStyles = (colors: AppColorsVariants) =>
       borderWidth: 0.5,
       borderColor: colors['neutral-line'], // Default color if --r-neutral-line is not available
       borderRadius: 8,
-      overflow: 'hidden',
     },
     colWrapper: {
       display: 'flex',

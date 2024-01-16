@@ -14,6 +14,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@debank/common';
+import DescItem from '../Actions/components/DescItem';
 
 const Permit2 = ({
   data,
@@ -58,8 +59,8 @@ const Permit2 = ({
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
-              text={
-                <View className="overflow-hidden flex flex-row">
+              textNode={
+                <View className="overflow-hidden flex flex-row flex-1">
                   <Values.TokenAmount value={actionData.token.amount} />
                   <View className="ml-2">
                     <Values.TokenSymbol token={actionData.token} />
@@ -69,13 +70,15 @@ const Permit2 = ({
               logoRadius={16}
             />
             <View className="desc-list">
-              <View className="flex-row">
-                <Text>{t('page.signTx.tokenApprove.myBalance')} </Text>
-                <Text>{formatAmount(tokenBalance)} </Text>
-                <Text>
-                  {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-                </Text>
-              </View>
+              <DescItem>
+                <View className="flex-row">
+                  <Text>{t('page.signTx.tokenApprove.myBalance')}</Text>
+                  <Text>{formatAmount(tokenBalance)}</Text>
+                  <Text>
+                    {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+                  </Text>
+                </View>
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -176,14 +179,16 @@ const Permit2 = ({
                 safeText={t('page.signTx.markAsTrust')}
               />
 
-              <ViewMore
-                type="spender"
-                data={{
-                  ...requireData,
-                  spender: actionData.spender,
-                  chain,
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="spender"
+                  data={{
+                    ...requireData,
+                    spender: actionData.spender,
+                    chain,
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>

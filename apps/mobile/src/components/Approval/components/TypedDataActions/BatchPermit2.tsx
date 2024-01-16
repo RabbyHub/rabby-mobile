@@ -14,6 +14,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { Text, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import DescItem from '../Actions/components/DescItem';
 
 const Permit2 = ({
   data,
@@ -67,8 +68,8 @@ const Permit2 = ({
               <Row key={token.id}>
                 <LogoWithText
                   logo={token.logo_url}
-                  text={
-                    <View className="overflow-hidden overflow-ellipsis flex">
+                  textNode={
+                    <View className="overflow-hidden overflow-ellipsis flex flex-1">
                       <Values.TokenAmount value={token.amount} />
                       <View className="ml-2">
                         <Values.TokenSymbol token={token} />
@@ -78,11 +79,13 @@ const Permit2 = ({
                   logoRadius={16}
                 />
                 <View className="desc-list">
-                  <View>
-                    <Text>{t('page.signTx.tokenApprove.myBalance')} </Text>
-                    <Text>{formatAmount(tokenBalanceMap[token.id])} </Text>
-                    <Text>{ellipsisTokenSymbol(getTokenSymbol(token))}</Text>
-                  </View>
+                  <DescItem>
+                    <View>
+                      <Text>{t('page.signTx.tokenApprove.myBalance')} </Text>
+                      <Text>{formatAmount(tokenBalanceMap[token.id])} </Text>
+                      <Text>{ellipsisTokenSymbol(getTokenSymbol(token))}</Text>
+                    </View>
+                  </DescItem>
                 </View>
               </Row>
             ))}
@@ -125,7 +128,9 @@ const Permit2 = ({
               <Values.Address address={actionData.spender} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
 
               <SecurityListItem
                 id="1109"

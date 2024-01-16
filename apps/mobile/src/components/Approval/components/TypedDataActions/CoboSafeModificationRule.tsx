@@ -5,6 +5,7 @@ import { TypedDataActionData } from './utils';
 import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Text, View } from 'react-native';
+import DescItem from '../Actions/components/DescItem';
 
 const CoboSafeModificationRule = ({
   data,
@@ -28,22 +29,24 @@ const CoboSafeModificationRule = ({
               <Values.Address address={actionData.multisig_id} />
             </View>
             <View className="desc-list">
-              <View>
+              <DescItem>
                 <Values.AddressMemo address={actionData.multisig_id} />
-              </View>
-              <LogoWithText
-                logo={require('@/assets/icons/wallet/safe.svg')}
-                text="Safe"
-                logoSize={14}
-                logoRadius={16}
-                // eslint-disable-next-line react-native/no-inline-styles
-                textStyle={{
-                  fontWeight: 'normal',
-                  fontSize: 13,
-                  lineHeight: 15,
-                  color: '#4B4D59',
-                }}
-              />
+              </DescItem>
+              <DescItem>
+                <LogoWithText
+                  logo={require('@/assets/icons/wallet/safe.svg')}
+                  text="Safe"
+                  logoSize={14}
+                  logoRadius={16}
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  textStyle={{
+                    fontWeight: 'normal',
+                    fontSize: 13,
+                    lineHeight: 15,
+                    color: '#4B4D59',
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>

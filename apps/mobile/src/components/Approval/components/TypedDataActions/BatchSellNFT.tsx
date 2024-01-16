@@ -17,6 +17,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import DescItem from '../Actions/components/DescItem';
 const { isSameAddress } = addressUtils;
 
 const BatchSellNFT = ({
@@ -149,14 +150,16 @@ const BatchSellNFT = ({
               )}
             </View>
             <View className="desc-list">
-              <Text>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(actionData.receive_token.amount)
-                    .times(actionData.receive_token.price)
-                    .toFixed(),
-                )}
-              </Text>
+              <DescItem>
+                <Text>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(actionData.receive_token.amount)
+                      .times(actionData.receive_token.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
             </View>
           </Row>
         </Col>
@@ -219,9 +222,15 @@ const BatchSellNFT = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
 
-              {isInWhitelist && <Text>{t('page.signTx.markAsTrust')}</Text>}
+              {isInWhitelist && (
+                <DescItem>
+                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -234,15 +243,17 @@ const BatchSellNFT = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <ViewMore
-                type="contract"
-                data={{
-                  ...requireData,
-                  address: requireData.id,
-                  chain,
-                  title: t('page.signTypedData.buyNFT.listOn'),
-                }}
-              />
+              <DescItem>
+                <ViewMore
+                  type="contract"
+                  data={{
+                    ...requireData,
+                    address: requireData.id,
+                    chain,
+                    title: t('page.signTypedData.buyNFT.listOn'),
+                  }}
+                />
+              </DescItem>
             </View>
           </Row>
         </Col>
