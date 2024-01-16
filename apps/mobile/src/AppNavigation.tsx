@@ -53,6 +53,10 @@ import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { NFTDetailScreen } from './screens/NftDetail';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import {
+  OpenedDappWebViewStub,
+  OpenedWebViewsStub,
+} from './screens/Dapps/Dapps/components/WebViewsStub';
 
 const RootStack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -356,6 +360,9 @@ const BottomTabNavigator = () => {
           }}
         />
       </BottomTab.Navigator>
+
+      <OpenedDappWebViewStub />
+      <OpenedWebViewsStub />
     </>
   );
 };

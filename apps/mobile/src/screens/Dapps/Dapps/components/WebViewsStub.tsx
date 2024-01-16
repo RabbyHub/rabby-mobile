@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { BackHandler } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   useOpenUrlView,
@@ -15,6 +15,7 @@ import {
   BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { useFocusEffect } from '@react-navigation/native';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -58,6 +59,28 @@ export function OpenedDappWebViewStub() {
       toggleShowSheetModal('dappWebviewContainerRef', 1);
     }
   }, [toggleShowSheetModal, activeDapp]);
+
+  const onFocusBackHandler = useCallback(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        /**
+         * @see https://reactnavigation.org/docs/custom-android-back-button-handling/
+         *
+         * Returning true from onBackPress denotes that we have handled the event,
+         * and react-navigation's listener will not get called, thus not popping the screen.
+         *
+         * Returning false will cause the event to bubble up and react-navigation's listener
+         * will pop the screen.
+         */
+        return !!activeDapp;
+      },
+    );
+
+    return () => subscription.remove();
+  }, [activeDapp]);
+
+  useFocusEffect(onFocusBackHandler);
 
   return (
     <AppBottomSheetModal
