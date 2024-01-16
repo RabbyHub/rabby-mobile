@@ -1,12 +1,13 @@
 import React from 'react';
 import LogoWithText from './LogoWithText';
-import { View } from 'react-native';
+import { TextStyle, View } from 'react-native';
 
 export interface Props {
   protocol: {
     name: string;
     logo_url: string;
   } | null;
+  style?: TextStyle;
 }
 
 // const LogoWithTextStyled = styled(LogoWithText)`
@@ -18,7 +19,7 @@ export interface Props {
 //   }
 // `;
 
-export const ProtocolListItem: React.FC<Props> = ({ protocol }) => {
+export const ProtocolListItem: React.FC<Props> = ({ protocol, style }) => {
   if (!protocol) {
     return null;
   }
@@ -29,6 +30,7 @@ export const ProtocolListItem: React.FC<Props> = ({ protocol }) => {
         logo={protocol.logo_url}
         text={protocol.name}
         logoRadius={16}
+        textStyle={style}
       />
     </View>
   );

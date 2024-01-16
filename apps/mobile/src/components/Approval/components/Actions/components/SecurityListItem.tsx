@@ -3,6 +3,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React from 'react';
 import { SecurityListItemTag } from './SecurityListItemTag';
+import DescItem from './DescItem';
 
 export interface Props {
   id: string;
@@ -26,16 +27,16 @@ export const SecurityListItem: React.FC<Props> = ({
   if (!engineResult) {
     if (defaultText) {
       return (
-        <View>
+        <DescItem>
           <Text>{defaultText}</Text>
-        </View>
+        </DescItem>
       );
     }
     return null;
   }
 
   return (
-    <View className="text-13 leading-[15px]">
+    <DescItem>
       <Text>
         {engineResult.level === Level.DANGER && dangerText}
         {engineResult.level === Level.WARNING && warningText}
@@ -44,6 +45,6 @@ export const SecurityListItem: React.FC<Props> = ({
       </Text>
 
       <SecurityListItemTag id={id} engineResult={engineResult} />
-    </View>
+    </DescItem>
   );
 };
