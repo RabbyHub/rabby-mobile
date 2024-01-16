@@ -38,19 +38,20 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
 }
 
-function convertToWebviewUrl(dappId: string) {
+function convertToWebviewUrl(dappOrigin: string) {
   if (__DEV__) {
-    if (dappId.startsWith('http://')) {
-      return dappId;
+    if (dappOrigin.startsWith('http://')) {
+      return dappOrigin;
     }
   }
 
-  return stringUtils.ensurePrefix(dappId, 'https://');
+  return stringUtils.ensurePrefix(dappOrigin, 'https://');
 }
 
 const PRESS_OPACITY = 0.3;
@@ -155,7 +156,8 @@ function BottomNavControl({
 }
 
 type DappWebViewControlProps = {
-  dappId: string;
+  dappOrigin: string;
+  initialUrl?: string;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
 
   bottomNavH?: number;
@@ -220,7 +222,8 @@ function useDefaultNodes({
 }
 
 export default function DappWebViewControl({
-  dappId,
+  dappOrigin,
+  initialUrl: _initialUrl,
   onPressMore,
 
   bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
@@ -250,9 +253,9 @@ export default function DappWebViewControl({
     return {
       subTitle: latestUrl
         ? urlUtils.canoicalizeDappUrl(latestUrl).httpOrigin
-        : convertToWebviewUrl(dappId),
+        : convertToWebviewUrl(dappOrigin),
     };
-  }, [dappId, latestUrl]);
+  }, [dappOrigin, latestUrl]);
 
   const {
     sheetModalRefs: { webviewNavRef },
@@ -285,7 +288,7 @@ export default function DappWebViewControl({
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
   const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
-    dappId,
+    dappOrigin,
     webviewRef,
     siteInfoRefs: {
       urlRef,
@@ -293,6 +296,18 @@ export default function DappWebViewControl({
       iconRef,
     },
   });
+
+  const initialUrl = useMemo(() => {
+    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
+
+    if (
+      canoicalizeDappUrl(_initialUrl).origin !==
+      canoicalizeDappUrl(dappOrigin).origin
+    )
+      return convertToWebviewUrl(dappOrigin);
+
+    return convertToWebviewUrl(_initialUrl);
+  }, [dappOrigin, _initialUrl]);
 
   return (
     <View
@@ -312,7 +327,7 @@ export default function DappWebViewControl({
               ...styles.HeadTitleOrigin,
               color: colors['neutral-title-1'],
             }}>
-            {dappId}
+            {dappOrigin}
           </Text>
 
           <Text
@@ -333,16 +348,25 @@ export default function DappWebViewControl({
       </View>
 
       {/* webvbiew */}
-      <View style={[styles.dappWebViewContainer]}>
+      <View
+        style={[
+          styles.dappWebViewContainer,
+          {
+            maxHeight:
+              Dimensions.get('window').height -
+              ScreenLayouts.dappWebViewControlHeaderHeight,
+          },
+        ]}>
         {entryScriptWeb3Loaded && (
           <WebView
-            cacheEnabled={false}
+            // cacheEnabled={false}
+            cacheEnabled
             startInLoadingState
             {...webviewProps}
             style={[styles.dappWebView, webviewProps?.style]}
             ref={webviewRef}
             source={{
-              uri: convertToWebviewUrl(dappId),
+              uri: initialUrl,
             }}
             injectedJavaScriptBeforeContentLoaded={fullScript}
             injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
