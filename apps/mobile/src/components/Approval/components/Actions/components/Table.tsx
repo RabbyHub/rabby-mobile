@@ -126,10 +126,12 @@ const Col = ({
 const Row = ({
   children,
   isTitle = false,
+  hasBottomBorder = false,
   tip,
   style,
 }: {
   children: ReactNode;
+  hasBottomBorder?: Boolean;
   isTitle?: boolean;
   tip?: string;
   style?: ViewStyle;
@@ -141,6 +143,7 @@ const Row = ({
       style={{
         ...(isTitle ? styles.title : styles.notTitle),
         ...styles.rowWrapper,
+        ...(hasBottomBorder ? styles.hasBottomBorder : {}),
         ...style,
       }}
       className="relative">

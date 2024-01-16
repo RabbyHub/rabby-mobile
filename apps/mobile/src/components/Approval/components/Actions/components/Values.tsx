@@ -285,7 +285,7 @@ const Address = ({
   return (
     <View className="relative flex flex-row items-center">
       <Text
-        className="mr-6 text-r-neutral-title1 font-medium"
+        className="mr-[6] text-r-neutral-title1 font-medium"
         style={{ fontSize: 15 }}>
         {ellipsis(address)}
       </Text>
@@ -334,37 +334,51 @@ const DisplayChain = ({ chainServerId }: { chainServerId: string }) => {
   );
 };
 
-const Interacted = ({ value }: { value: boolean }) => {
+const Interacted = ({
+  value,
+  textStyle,
+}: {
+  value: boolean;
+  textStyle?: TextStyle;
+}) => {
   const { t } = useTranslation();
   return (
-    <Text className="flex">
+    <View className="flex flex-row items-center">
       {value ? (
         <>
-          <IconInteracted className="mr-4 w-14" />{' '}
-          <Text>{t('page.signTx.interacted')}</Text>
+          <IconInteracted className="mr-[4] w-[14]" />
+          <Text style={textStyle}>{t('page.signTx.interacted')}</Text>
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-4 w-14" />
-          <Text>{t('page.signTx.neverInteracted')}</Text>
+          <IconNotInteracted className="mr-[4] w-[14]" />
+          <Text style={textStyle}>{t('page.signTx.neverInteracted')}</Text>
         </>
       )}
-    </Text>
+    </View>
   );
 };
 
 const Transacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   return (
-    <View className="flex flex-row">
+    <View className="flex flex-row items-center w-full">
       {value ? (
         <>
-          <IconInteracted className="mr-4 w-14" />
+          <IconInteracted
+            style={{
+              marginRight: 6,
+            }}
+          />
           <Text>{t('page.signTx.transacted')}</Text>
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-4 w-14" />
+          <IconNotInteracted
+            style={{
+              marginRight: 6,
+            }}
+          />
           <Text>{t('page.signTx.neverTransacted')}</Text>
         </>
       )}
@@ -372,15 +386,19 @@ const Transacted = ({ value }: { value: boolean }) => {
   );
 };
 
-const TokenSymbol = ({ token }: { token: TokenItem }) => {
+const TokenSymbol = ({
+  token,
+  style,
+}: {
+  token: TokenItem;
+  style?: TextStyle;
+}) => {
   const handleClickTokenSymbol = () => {
     // TODO
     // dispatch.sign.openTokenDetailPopup(token);
   };
   return (
-    <Text
-      className="hover:underline cursor-pointer"
-      onPress={handleClickTokenSymbol}>
+    <Text onPress={handleClickTokenSymbol} style={style}>
       {ellipsisTokenSymbol(getTokenSymbol(token))}
     </Text>
   );

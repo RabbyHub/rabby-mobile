@@ -3,6 +3,7 @@
 
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
+import { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
 import { MMKV } from 'react-native-mmkv';
 
 const storage = new MMKV();
@@ -39,14 +40,25 @@ export function makeAppStorage() {
   return appStorage;
 }
 
-export const atomWithMMKV = <T = any>(key: string, initialValue: T) =>
-  atomWithStorage<T>(
-    key,
-    initialValue,
-    createJSONStorage<T>(() => ({
-      getItem,
-      setItem,
-      removeItem,
-      clearAll,
-    })),
-  );
+export const atomByMMKV = <T = any>(
+  key: string,
+  initialValue: T,
+  options?: {
+    setupSubscribe(ctx: {
+      jsonStore: SyncStorage<T>;
+    }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
+  },
+) => {
+  const jsonStore = createJSONStorage<T>(() => ({
+    getItem,
+    setItem,
+    removeItem,
+    clearAll,
+  }));
+
+  if (typeof options?.setupSubscribe === 'function') {
+    jsonStore.subscribe = options?.setupSubscribe({ jsonStore });
+  }
+
+  return atomWithStorage<T>(key, initialValue, jsonStore);
+};

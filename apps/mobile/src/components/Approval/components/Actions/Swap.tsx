@@ -1,39 +1,46 @@
 import React, { useMemo, useEffect } from 'react';
 import { BigNumber } from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { StyleSheet, View, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { ParsedActionData, SwapRequireData } from './utils';
-import { formatAmount, formatUsdValue } from 'ui/utils/number';
-import { Chain } from 'background/service/openapi';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { Chain } from '@debank/common';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import { isSameAddress } from '@/ui/utils';
-import { useRabbyDispatch, useRabbySelector } from '@/ui/store';
 import { SecurityListItem } from './components/SecurityListItem';
 import { ProtocolListItem } from './components/ProtocolListItem';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import useCommonStyle from '../../hooks/useCommonStyle';
+import DescItem from './components/DescItem';
+import { useThemeColors } from '@/hooks/theme';
 
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+const { isSameAddress } = addressUtils;
+
+const styles = StyleSheet.create({
+  wrapper: {},
+  header: {
+    marginTop: 15,
+  },
+  iconEditAlias: {
+    width: 13,
+    height: 13,
+    cursor: 'pointer',
+  },
+  iconScamToken: {
+    marginLeft: 4,
+    width: 13,
+  },
+  iconFakeToken: {
+    marginLeft: 4,
+    width: 13,
+  },
+});
+
 const Swap = ({
   data,
   requireData,
@@ -58,26 +65,23 @@ const Swap = ({
 
   const { t } = useTranslation();
 
-  const { rules, processedRules, contractWhitelist } = useRabbySelector(
-    (s) => ({
-      rules: s.securityEngine.rules,
-      processedRules: s.securityEngine.currentTx.processedRules,
-      contractWhitelist: s.securityEngine.userData.contractWhitelist,
-    })
-  );
-  const dispatch = useRabbyDispatch();
+  const colors = useThemeColors();
+  const commonStyle = useCommonStyle();
+
+  const { currentTx, userData, rules, openRuleDrawer, init } =
+    useApprovalSecurityEngine();
 
   const isInWhitelist = useMemo(() => {
-    return contractWhitelist.some(
-      (item) =>
+    return userData.contractWhitelist.some(
+      item =>
         item.chainId === chain.serverId &&
-        isSameAddress(item.address, requireData.id)
+        isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [userData, requireData, chain]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
@@ -88,64 +92,84 @@ const Swap = ({
   }, [requireData, receiver]);
 
   const handleClickRule = (id: string) => {
-    const rule = rules.find((item) => item.id === id);
+    const rule = rules.find(item => item.id === id);
     if (!rule) return;
     const result = engineResultMap[id];
-    dispatch.securityEngine.openRuleDrawer({
+    openRuleDrawer({
       ruleConfig: rule,
       value: result?.value,
       level: result?.level,
-      ignored: processedRules.includes(id),
+      ignored: currentTx.processedRules.includes(id),
     });
   };
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.payToken')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.payToken')}
+            </Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
-                  {formatAmount(payToken.amount)}{' '}
-                  <Values.TokenSymbol token={payToken} />
-                </>
+                <View className="flex flex-row">
+                  <Text style={commonStyle.primaryText}>
+                    {formatAmount(payToken.amount)}
+                  </Text>
+                  <Values.TokenSymbol
+                    token={payToken}
+                    style={commonStyle.primaryText}
+                  />
+                </View>
               }
-              logoRadius="100%"
+              logoRadius={16}
             />
-            <ul className="desc-list">
-              <li>
+            <DescItem>
+              <Text style={commonStyle.secondaryText}>
                 ≈
                 {formatUsdValue(
-                  new BigNumber(payToken.amount).times(payToken.price).toFixed()
+                  new BigNumber(payToken.amount)
+                    .times(payToken.price)
+                    .toFixed(),
                 )}
-              </li>
-            </ul>
+              </Text>
+            </DescItem>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.receiveToken')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.receiveToken')}
+            </Text>
+          </Row>
           <Row>
-            <div className="flex relative pr-10">
+            <View className="flex relative pr-[10]">
               <LogoWithText
                 logo={receiveToken.logo_url}
-                logoRadius="100%"
+                logoRadius={16}
                 text={
                   balanceChange.success && balanceChange.support ? (
-                    <>
-                      {formatAmount(receiveToken.amount)}{' '}
-                      <Values.TokenSymbol token={receiveToken} />
-                    </>
+                    <View className="flex flex-row">
+                      <Text style={commonStyle.primaryText}>
+                        {formatAmount(receiveToken.amount)}
+                      </Text>
+                      <Values.TokenSymbol
+                        token={receiveToken}
+                        style={commonStyle.primaryText}
+                      />
+                    </View>
                   ) : (
-                    t('page.signTx.swap.failLoadReceiveToken')
+                    <Text style={commonStyle.primaryText}>
+                      {t('page.signTx.swap.failLoadReceiveToken')}
+                    </Text>
                   )
                 }
                 icon={
@@ -162,7 +186,7 @@ const Swap = ({
                 <SecurityLevelTagNoText
                   enable={engineResultMap['1008'].enable}
                   level={
-                    processedRules.includes('1008')
+                    currentTx.processedRules.includes('1008')
                       ? 'proceed'
                       : engineResultMap['1008'].level
                   }
@@ -173,112 +197,134 @@ const Swap = ({
                 <SecurityLevelTagNoText
                   enable={engineResultMap['1009'].enable}
                   level={
-                    processedRules.includes('1009')
+                    currentTx.processedRules.includes('1009')
                       ? 'proceed'
                       : engineResultMap['1009'].level
                   }
                   onClick={() => handleClickRule('1009')}
                 />
               )}
-            </div>
-            <ul className="desc-list">
+            </View>
+            <View>
               {balanceChange.success && balanceChange.support && (
                 <>
-                  <li>
-                    ≈
-                    {formatUsdValue(
-                      new BigNumber(receiveToken.amount)
-                        .times(receiveToken.price)
-                        .toFixed()
-                    )}
-                  </li>
+                  <DescItem>
+                    <Text style={commonStyle.secondaryText}>
+                      ≈
+                      {formatUsdValue(
+                        new BigNumber(receiveToken.amount)
+                          .times(receiveToken.price)
+                          .toFixed(),
+                      )}
+                    </Text>
+                  </DescItem>
                   <SecurityListItem
                     engineResult={engineResultMap['1012']}
                     id="1012"
                     dangerText={
-                      <>
+                      <Text style={commonStyle.secondaryText}>
                         {t('page.signTx.swap.valueDiff')}{' '}
                         <Values.Percentage value={usdValuePercentage!} /> (
                         {formatUsdValue(usdValueDiff || '')})
-                      </>
+                      </Text>
                     }
                     warningText={
-                      <>
+                      <Text style={commonStyle.secondaryText}>
                         {t('page.signTx.swap.valueDiff')}{' '}
                         <Values.Percentage value={usdValuePercentage!} /> (
                         {formatUsdValue(usdValueDiff || '')})
-                      </>
+                      </Text>
                     }
                   />
                 </>
               )}
               {balanceChange.support && !balanceChange.success && (
-                <li>{t('page.signTx.swap.simulationFailed')}</li>
+                <DescItem>
+                  <Text>{t('page.signTx.swap.simulationFailed')}</Text>
+                </DescItem>
               )}
               {!balanceChange.support && (
-                <li>{t('page.signTx.swap.simulationNotSupport')}</li>
+                <DescItem>
+                  <Text>{t('page.signTx.swap.simulationNotSupport')}</Text>
+                </DescItem>
               )}
-            </ul>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.minReceive')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.minReceive')}
+            </Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <LogoWithText
                 logo={minReceive.logo_url}
-                logoRadius="100%"
+                logoRadius={16}
                 text={
-                  <>
+                  <Text style={commonStyle.primaryText}>
                     {formatAmount(minReceive.amount)}{' '}
-                    <Values.TokenSymbol token={minReceive} />
-                  </>
+                    <Values.TokenSymbol
+                      token={minReceive}
+                      style={commonStyle.primaryText}
+                    />
+                  </Text>
                 }
               />
-            </div>
-            <ul className="desc-list">
-              <li>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(minReceive.amount)
-                    .times(minReceive.price)
-                    .toFixed()
+            </View>
+            <View>
+              <DescItem>
+                <Text style={commonStyle.secondaryText}>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(minReceive.amount)
+                      .times(minReceive.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
+              <DescItem>
+                {slippageTolerance === null && (
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.swap.slippageFailToLoad')}
+                  </Text>
                 )}
-              </li>
-              <li>
-                {slippageTolerance === null &&
-                  t('page.signTx.swap.slippageFailToLoad')}
                 {slippageTolerance !== null && (
-                  <>
+                  <Text style={commonStyle.secondaryText}>
                     {t('page.signTx.swap.slippageTolerance')}{' '}
                     {hasReceiver ? (
                       '-'
                     ) : (
                       <Values.Percentage value={slippageTolerance} />
                     )}
-                  </>
+                  </Text>
                 )}
                 {engineResultMap['1011'] && (
                   <SecurityLevelTagNoText
                     enable={engineResultMap['1011'].enable}
                     level={
-                      processedRules.includes('1011')
+                      currentTx.processedRules.includes('1011')
                         ? 'proceed'
                         : engineResultMap['1011'].level
                     }
                     onClick={() => handleClickRule('1011')}
                   />
                 )}
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
         {hasReceiver && (
           <Col>
-            <Row isTitle>{t('page.signTx.swap.receiver')}</Row>
+            <Row isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.swap.receiver')}
+              </Text>
+            </Row>
             <Row>
               <Values.Address address={receiver} chain={chain} />
-              <ul className="desc-list">
+              <View>
                 <SecurityListItem
                   engineResult={engineResultMap['1069']}
                   id="1069"
@@ -286,44 +332,69 @@ const Swap = ({
                 />
                 {!engineResultMap['1069'] && (
                   <>
-                    <li>
+                    <DescItem>
                       <Values.AccountAlias address={receiver} />
-                    </li>
-                    <li>
+                    </DescItem>
+                    <DescItem>
                       <Values.KnownAddress address={receiver} />
-                    </li>
+                    </DescItem>
                   </>
                 )}
-              </ul>
+              </View>
             </Row>
           </Col>
         )}
         <Col>
-          <Row isTitle>{t('page.signTx.interactContract')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interactContract')}
+            </Text>
+          </Row>
           <Row>
-            <div>
-              <Values.Address address={requireData.id} chain={chain} />
-            </div>
-            <ul className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
-              <li>
-                <Values.Interacted value={requireData.hasInteraction} />
-              </li>
+            <Values.Address address={requireData.id} chain={chain} />
+            <View>
+              <DescItem>
+                <ProtocolListItem
+                  protocol={requireData.protocol}
+                  style={commonStyle.secondaryText}
+                />
+              </DescItem>
 
-              {isInWhitelist && <li>{t('page.signTx.markAsTrust')}</li>}
+              <DescItem>
+                <Values.Interacted
+                  value={requireData.hasInteraction}
+                  textStyle={commonStyle.secondaryText}
+                />
+              </DescItem>
+
+              {isInWhitelist && (
+                <DescItem>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsTrust')}
+                  </Text>
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
                 engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
+                forbiddenText={
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsBlock')}
+                  </Text>
+                }
               />
 
               <SecurityListItem
                 id="1137"
                 engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
+                warningText={
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsBlock')}
+                  </Text>
+                }
               />
-              <li>
+              <DescItem>
                 <ViewMore
                   type="contract"
                   data={{
@@ -335,12 +406,12 @@ const Swap = ({
                     chain,
                   }}
                 />
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

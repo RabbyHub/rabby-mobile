@@ -23,7 +23,7 @@ const config: ToastOptions = {
 const show = (message: any, extraConfig?: ToastOptions) => {
   let msg = message;
   if (typeof message !== 'string') {
-    // 免得崩溃
+    // avoid crash
     msg = ' ';
   }
 
@@ -35,7 +35,7 @@ const toastWithIcon =
   (message: string, _config?: Partial<ToastOptions>) => {
     let msg = message;
     if (typeof message !== 'string') {
-      // 免得崩溃
+      // avoid crash
       msg = ' ';
     }
 

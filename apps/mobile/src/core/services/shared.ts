@@ -1,8 +1,10 @@
-import { ContactBookService } from '@rabby-wallet/service-address';
 import { makeAppStorage } from '../storage/mmkv';
+
+import { ContactBookService } from '@rabby-wallet/service-address';
+import { DappService } from '@rabby-wallet/service-dapp';
+
 import { PreferenceService } from './preference';
 import { WhitelistService } from './whitelist';
-import { DappService } from '@rabby-wallet/service-dapp';
 import { NotificationService } from './notification';
 import { TransactionHistoryService } from './transactionHistory';
 import { SecurityEngineService } from './securityEngine';

@@ -584,7 +584,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
           <View style={styles.connectCard}>
             <DappIcon
               origin={origin}
-              source={{ uri: icon }}
+              source={icon ? { uri: icon } : undefined}
               style={{ width: 40, height: 40 }}
             />
             <Text style={styles.connectOrigin}>{origin}</Text>

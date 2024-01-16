@@ -20,7 +20,6 @@ import {
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { useSize, useScroll } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -70,8 +69,7 @@ import {
 import { TxTypeComponent } from './TxTypeComponent';
 import { normalizeTxParams } from './util';
 import { getStyles } from './style';
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useGlobalBottomSheetModalStyle } from '@/components/GlobalBottomSheetModal/useGlobalBottomSheetModalStyle';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -1031,13 +1029,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { setHandleStyle } = useGlobalBottomSheetModalStyle();
-
-  useEffect(() => {
-    setHandleStyle({
-      backgroundColor: colors['neutral-bg-2'],
-    });
-  }, [colors, setHandleStyle]);
 
   return (
     <BottomSheetView style={styles.wrapper}>

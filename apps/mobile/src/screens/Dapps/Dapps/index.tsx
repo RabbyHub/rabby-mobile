@@ -1,5 +1,5 @@
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useMemo } from 'react';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
@@ -11,13 +11,13 @@ import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
 import { DappCardList } from './components/DappCardList';
 // import { useRequest } from 'ahooks';
+import { useDappsHome } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
 import { useDapps } from '@/hooks/useDapps';
 import {
-  useActiveDappView,
-  useActiveDappViewSheetModalRefs,
+  useActiveViewSheetModalRefs,
+  useOpenDappView,
 } from '../hooks/useDappView';
-import SheetDappWebView from './components/SheetDappWebView';
 
 export function DappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -47,28 +47,11 @@ export function DappsScreen(): JSX.Element {
     });
   }, [navigation, getHeaderTitle, getHeaderRight]);
 
-  const { updateFavorite, removeDapp, disconnectDapp, getDapps, favoriteApps } =
-    useDapps();
-  const { setActiveDapp, activeDapp } = useActiveDappView();
-  const { toggleShowSheetModal } = useActiveDappViewSheetModalRefs();
-  const dappSections = useMemo(() => {
-    return [
-      {
-        title: '',
-        data: activeDapp ? [activeDapp] : [],
-        type: 'active',
-      },
-
-      {
-        title: 'Favorites',
-        data: favoriteApps,
-      },
-    ].filter(item => item.data.length);
-  }, [activeDapp, favoriteApps]);
-
-  // useEffect(() => {
-  //   getDapps();
-  // }, [activeDapp, getDapps]);
+  const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
+    useDappsHome();
+  const { addOpenedDapp, closeOpenedDapp } = useOpenDappView();
+  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
+  // todo refresh dapps when webview close
 
   return (
     <NormalScreenContainer style={styles.page}>
@@ -76,13 +59,18 @@ export function DappsScreen(): JSX.Element {
         <DappCardList
           sections={dappSections}
           onPress={dapp => {
-            setActiveDapp(dapp);
-            toggleShowSheetModal('webviewContainerRef', true);
+            addOpenedDapp(dapp.origin, { isActiveDapp: true });
+            toggleShowSheetModal('dappWebviewContainerRef', true);
           }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.origin, !dapp.isFavorite);
           }}
+          onClosePress={dapp => {
+            // for 'inUse' section, close it rather than remove it.
+            closeOpenedDapp(dapp.origin);
+          }}
           onRemovePress={dapp => {
+            // for 'favorites' section, close it rather than remove it.
             removeDapp(dapp.origin);
           }}
           onDisconnectPress={dapp => {
@@ -90,8 +78,6 @@ export function DappsScreen(): JSX.Element {
           }}
         />
       </View>
-
-      <SheetDappWebView />
     </NormalScreenContainer>
   );
 }

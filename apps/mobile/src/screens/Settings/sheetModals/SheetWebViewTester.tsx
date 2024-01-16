@@ -59,9 +59,9 @@ export default function SheetWebViewTester() {
 
   const { dapps, addDapp } = useDapps();
 
-  console.debug('[debug] dapps', dapps);
-
   useEffect(() => {
+    console.debug('[debug] dapps', dapps);
+
     if (!showing) false;
     if (dapps[DAPP_METAMASK_TEST_DAPP.info.id]) return;
 

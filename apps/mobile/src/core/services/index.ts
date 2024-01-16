@@ -1,7 +1,6 @@
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { ContactBookService } from '@rabby-wallet/service-address';
-import { DappService } from '@rabby-wallet/service-dapp';
 import {
   EncryptorAdapter,
   KeyringService,
@@ -36,5 +35,3 @@ keyringService.loadStore(keyringState || {});
 keyringService.store.subscribe(value =>
   appStorage.setItem('keyringState', value),
 );
-
-// export const dappService = new DappService({ storageAdapter: appStorage });

@@ -8,7 +8,7 @@ import {
   AppThemeScheme,
   AppColorSchemes,
 } from '@/constant/theme';
-import { atomWithMMKV } from '@/core/storage/mmkv';
+import { atomByMMKV } from '@/core/storage/mmkv';
 import { useColorScheme } from 'nativewind';
 
 function coerceColorSchemeName(
@@ -18,7 +18,7 @@ function coerceColorSchemeName(
   return appTheme === 'system' ? themeBySystem ?? 'light' : appTheme;
 }
 
-const ThemeStoreBase = atomWithMMKV('AppTheme', 'light' as AppThemeScheme);
+const ThemeStoreBase = atomByMMKV('AppTheme', 'light' as AppThemeScheme);
 
 const ThemeModeStore = atom(
   get => get(ThemeStoreBase),
@@ -57,14 +57,14 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
       setAppTheme(nextTheme);
       setColorScheme(nextTheme);
     },
-    [appTheme, setAppTheme],
+    [appTheme, setAppTheme, setColorScheme],
   );
 
   React.useEffect(() => {
     if (options?.isAppTop) {
       setColorScheme(appTheme);
     }
-  }, [options?.isAppTop, appTheme]);
+  }, [options?.isAppTop, appTheme, setColorScheme]);
 
   return {
     appTheme,
