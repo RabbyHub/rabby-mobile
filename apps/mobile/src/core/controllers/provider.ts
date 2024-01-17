@@ -194,7 +194,7 @@ class ProviderController extends BaseController {
     } = req;
 
     if (
-      !dappService.getDapp(origin).isConnected &&
+      !dappService.getDapp(origin)?.isConnected &&
       !SAFE_RPC_METHODS.includes(method)
     ) {
       throw ethErrors.provider.unauthorized();

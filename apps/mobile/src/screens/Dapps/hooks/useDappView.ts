@@ -6,6 +6,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DappInfo } from '@rabby-wallet/service-dapp';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { createDappBySession } from '@/core/apis/dapp';
 
 const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
 
@@ -112,15 +113,20 @@ export function useOpenDappView() {
   const { openedDappItems, activeDapp } = useMemo(() => {
     const retOpenedDapps = [] as OpenedDappItem[];
     openedDappRecords.forEach(item => {
-      if (dapps[item.origin]) {
-        retOpenedDapps.push({
-          ...item,
-          maybeDappInfo: dapps[item.origin],
-        });
-      }
+      retOpenedDapps.push({
+        ...item,
+        maybeDappInfo: dapps[item.origin],
+      });
     });
 
-    const retActiveDapp = activeDappOrigin ? dapps[activeDappOrigin] : null;
+    const retActiveDapp = activeDappOrigin
+      ? dapps[activeDappOrigin] ||
+        createDappBySession({
+          origin: activeDappOrigin,
+          name: 'Temp Dapp',
+          icon: '',
+        })
+      : null;
 
     return {
       openedDappItems: retOpenedDapps,

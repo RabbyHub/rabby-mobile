@@ -1,4 +1,4 @@
-import { BasicDappInfo, DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@rabby-wallet/service-dapp';
 import { dappService } from '../services';
 import { sessionService } from '../services/session';
 import { BroadcastEvent } from '@/constant/event';
@@ -37,7 +37,7 @@ export const createDappBySession = ({
       description: '',
       user_range: '',
       tags: [],
-      // chain_ids: [],
+      chain_ids: [],
     },
   };
 };
