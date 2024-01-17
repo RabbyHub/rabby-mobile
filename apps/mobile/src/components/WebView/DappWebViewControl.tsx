@@ -161,6 +161,9 @@ type DappWebViewControlProps = {
 
   bottomNavH?: number;
   headerLeft?: React.ReactNode | (() => React.ReactNode);
+  headerNode?:
+    | React.ReactNode
+    | ((ctx: { header: React.ReactNode | null }) => React.ReactNode);
   bottomSheetContent?:
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
@@ -228,6 +231,7 @@ export default function DappWebViewControl({
 
   bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
   headerLeft,
+  headerNode,
   bottomSheetContent,
   webviewProps,
   webviewNode,
@@ -285,6 +289,51 @@ export default function DappWebViewControl({
     webviewState,
     webviewActions,
   });
+
+  const renderedHeaderNode = useMemo(() => {
+    const node = (
+      <View style={[styles.dappWebViewHeadContainer]}>
+        <View style={[styles.touchableHeadWrapper]}>{headerLeftNode}</View>
+        <View style={styles.DappWebViewHeadTitleWrapper}>
+          <Text
+            style={{
+              ...styles.HeadTitleOrigin,
+              color: colors['neutral-title-1'],
+            }}>
+            {dappOrigin}
+          </Text>
+
+          <Text
+            style={{
+              ...styles.HeadTitleMainDomain,
+              color: colors['neutral-foot'],
+            }}>
+            {subTitle}
+          </Text>
+        </View>
+        <View style={[styles.touchableHeadWrapper]}>
+          <TouchableView
+            onPress={handlePressMore}
+            style={[styles.touchableHeadWrapper]}>
+            <RcIconMore width={24} height={24} />
+          </TouchableView>
+        </View>
+      </View>
+    );
+    if (typeof headerNode === 'function') {
+      return headerNode({ header: node });
+    }
+
+    return headerNode || node;
+  }, [
+    headerLeftNode,
+    headerNode,
+    colors,
+    dappOrigin,
+    handlePressMore,
+    subTitle,
+  ]);
+
   const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
   const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
@@ -383,33 +432,7 @@ export default function DappWebViewControl({
           backgroundColor: colors['neutral-bg-1'],
         },
       ]}>
-      <View style={[styles.dappWebViewHeadContainer]}>
-        <View style={[styles.touchableHeadWrapper]}>{headerLeftNode}</View>
-        <View style={styles.DappWebViewHeadTitleWrapper}>
-          <Text
-            style={{
-              ...styles.HeadTitleOrigin,
-              color: colors['neutral-title-1'],
-            }}>
-            {dappOrigin}
-          </Text>
-
-          <Text
-            style={{
-              ...styles.HeadTitleMainDomain,
-              color: colors['neutral-foot'],
-            }}>
-            {subTitle}
-          </Text>
-        </View>
-        <View style={[styles.touchableHeadWrapper]}>
-          <TouchableView
-            onPress={handlePressMore}
-            style={[styles.touchableHeadWrapper]}>
-            <RcIconMore width={24} height={24} />
-          </TouchableView>
-        </View>
-      </View>
+      {renderedHeaderNode}
 
       {/* webvbiew */}
       <View

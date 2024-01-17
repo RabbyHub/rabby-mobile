@@ -44,7 +44,10 @@ export const AppBottomSheetModal = forwardRef<
 >((props, ref) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const renderBackdrop = useCallback(
+  const renderBackdrop = useCallback<
+    React.ComponentProps<typeof BottomSheetModal>['backdropComponent'] &
+      Function
+  >(
     props => (
       <BottomSheetBackdrop
         {...props}

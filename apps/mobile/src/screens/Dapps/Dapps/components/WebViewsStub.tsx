@@ -14,6 +14,7 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView,
+  useBottomSheetGestureHandlers,
 } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -22,16 +23,50 @@ import { useDapps } from '@/hooks/useDapps';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
 );
 
-const DFLT_WEBVIEW_SCROLL_STATE = {
-  isScrolling: false,
-  yPoint: 0,
-  yPointOnLastEnd: -1,
-};
+/**
+ * @description make sure put this Component under BottomSheetView
+ */
+function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
+  const { handlePanGestureHandler } = useBottomSheetGestureHandlers();
+
+  const panGesture = useMemo(() => {
+    let gesture = Gesture.Pan()
+      .enabled(true)
+      .shouldCancelWhenOutside(false)
+      .runOnJS(false)
+      .onStart(handlePanGestureHandler.handleOnStart)
+      .onChange(handlePanGestureHandler.handleOnChange)
+      .onEnd(handlePanGestureHandler.handleOnEnd)
+      .onFinalize(handlePanGestureHandler.handleOnFinalize);
+
+    return gesture;
+  }, [
+    handlePanGestureHandler.handleOnChange,
+    handlePanGestureHandler.handleOnEnd,
+    handlePanGestureHandler.handleOnFinalize,
+    handlePanGestureHandler.handleOnStart,
+  ]);
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        key="DappAppControlBottomSheetHandleContainer"
+        accessible={true}
+        accessibilityRole="adjustable"
+        accessibilityLabel="Bottom Sheet handle"
+        accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet">
+        {headerNode}
+      </Animated.View>
+    </GestureDetector>
+  );
+}
 
 export function OpenedDappWebViewStub() {
   const { openedDappItems, activeDapp, hideActiveDapp } = useOpenDappView();
@@ -169,6 +204,9 @@ export function OpenedDappWebViewStub() {
                     />
                   </TouchableView>
                 );
+              }}
+              headerNode={({ header }) => {
+                return <WebViewControlHeader headerNode={header} />;
               }}
               bottomSheetContent={({ bottomNavBar }) => {
                 return (
