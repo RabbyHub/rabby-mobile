@@ -12,20 +12,20 @@ import ApproveNFT from './ApproveNFT';
 import ApproveNFTCollection from './ApproveNFTCollection';
 import CancelTx from './CancelTx';
 import ContractCall from './ContractCall';
-// import DeployContract from './DeployContract';
-// import RevokeNFT from './RevokeNFT';
-// import RevokeNFTCollection from './RevokeNFTCollection';
+import DeployContract from './DeployContract';
+import RevokeNFT from './RevokeNFT';
+import RevokeNFTCollection from './RevokeNFTCollection';
 import Send from './Send';
-// import SendNFT from './SendNFT';
+import SendNFT from './SendNFT';
 import Swap from './Swap';
-// import TokenApprove from './TokenApprove';
-// import RevokeTokenApprove from './RevokeTokenApprove';
-// import WrapToken from './WrapToken';
-// import UnWrapToken from './UnWrapToken';
-// import PushMultiSig from './PushMultiSig';
+import TokenApprove from './TokenApprove';
+import RevokeTokenApprove from './RevokeTokenApprove';
+import WrapToken from './WrapToken';
+import UnWrapToken from './UnWrapToken';
+import PushMultiSig from './PushMultiSig';
 import CrossToken from './CrossToken';
 import CrossSwapToken from './CrossSwapToken';
-// import RevokePermit2 from './RevokePermit2';
+import RevokePermit2 from './RevokePermit2';
 import {
   ActionRequireData,
   ApproveNFTRequireData,
@@ -219,7 +219,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          {/*
+
           {data.wrapToken && (
             <WrapToken
               data={data.wrapToken}
@@ -235,7 +235,7 @@ const Actions = ({
               chain={chain}
               engineResults={engineResults}
             />
-          )} */}
+          )}
           {data.send && (
             <Send
               data={data.send}
@@ -244,7 +244,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          {/* {data.approveToken && (
+          {data.approveToken && (
             <TokenApprove
               data={data.approveToken}
               requireData={requireData as ApproveTokenRequireData}
@@ -282,7 +282,7 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-          
+
           {data?.revokeNFT && (
             <RevokeNFT
               data={data.revokeNFT}
@@ -306,7 +306,7 @@ const Actions = ({
               requireData={requireData as PushMultiSigRequireData}
               chain={chain}
             />
-          )}*/}
+          )}
           {data.cancelTx && (
             <CancelTx
               data={data.cancelTx}
