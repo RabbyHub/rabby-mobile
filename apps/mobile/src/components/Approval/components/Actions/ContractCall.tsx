@@ -1,56 +1,24 @@
 import React, { useEffect, useMemo } from 'react';
-import styled from 'styled-components';
+import { View, Text } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ContractCallRequireData, ParsedActionData } from './utils';
-import { formatTokenAmount } from 'ui/utils/number';
-import { useRabbyDispatch, useRabbySelector } from '@/ui/store';
+import { formatTokenAmount } from '@/utils/number';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { ProtocolListItem } from './components/ProtocolListItem';
 import { SecurityListItem } from './components/SecurityListItem';
-import IconQuestionMark from 'ui/assets/sign/tx/question-mark.svg';
-import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import { isSameAddress } from '@/ui/utils';
+import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 
-const Wrapper = styled.div`
-  .contract-call-header {
-    border-bottom: 1px solid #ededed;
-    padding-bottom: 15px;
-    .alert {
-      display: flex;
-      margin-bottom: 9px;
-      align-items: center;
-      font-weight: 500;
-      font-size: 12px;
-      line-height: 14px;
-      color: #333333;
-      .icon-alert {
-        margin-right: 6px;
-        width: 15px;
-      }
-    }
-  }
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+import useCommonStyle from '../../hooks/useCommonStyle';
+import DescItem from './components/DescItem';
+
+const { isSameAddress } = addressUtils;
 
 const ContractCall = ({
   requireData,
@@ -64,115 +32,121 @@ const ContractCall = ({
   engineResults: Result[];
   onChange(tx: Record<string, any>): void;
 }) => {
-  const dispatch = useRabbyDispatch();
+  const { userData, init } = useApprovalSecurityEngine();
   const { t } = useTranslation();
-  const { contractWhitelist } = useRabbySelector((state) => {
-    return state.securityEngine.userData;
-  });
+  const commonStyle = useCommonStyle();
+  const { contractWhitelist } = userData;
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
-      (item) =>
+      item =>
         item.chainId === chain.serverId &&
-        isSameAddress(item.address, requireData.id)
+        isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
   }, [engineResults]);
 
   useEffect(() => {
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.interactContract')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interactContract')}
+            </Text>
+          </Row>
           <Row>
-            <div>
-              <Values.Address address={requireData.id} chain={chain} />
-            </div>
-            <ul className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
-              <li>
-                <Values.Interacted value={requireData.hasInteraction} />
-              </li>
+            <Values.Address address={requireData.id} chain={chain} />
 
-              {isInWhitelist && <li>{t('page.signTx.markAsTrust')}</li>}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
+            <ProtocolListItem protocol={requireData.protocol} />
+            <DescItem>
+              <Values.Interacted
+                value={requireData.hasInteraction}
+                textStyle={commonStyle.secondaryText}
               />
+            </DescItem>
 
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
+            {isInWhitelist && (
+              <DescItem>
+                <Text>{t('page.signTx.markAsTrust')}</Text>
+              </DescItem>
+            )}
+
+            <SecurityListItem
+              id="1135"
+              engineResult={engineResultMap['1135']}
+              forbiddenText={t('page.signTx.markAsBlock')}
+            />
+
+            <SecurityListItem
+              id="1137"
+              engineResult={engineResultMap['1137']}
+              warningText={t('page.signTx.markAsBlock')}
+            />
+            <DescItem>
+              <ViewMore
+                type="contract"
+                data={{
+                  hasInteraction: requireData.hasInteraction,
+                  bornAt: requireData.bornAt,
+                  protocol: requireData.protocol,
+                  rank: requireData.rank,
+                  address: requireData.id,
+                  chain,
+                }}
               />
-              <li>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    hasInteraction: requireData.hasInteraction,
-                    bornAt: requireData.bornAt,
-                    protocol: requireData.protocol,
-                    rank: requireData.rank,
-                    address: requireData.id,
-                    chain,
-                  }}
-                />
-              </li>
-            </ul>
+            </DescItem>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.contractCall.operation')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.contractCall.operation')}
+            </Text>
+          </Row>
           <Row>
-            <div className="relative flex items-center">
-              {requireData.call.func || '-'}
-              <TooltipWithMagnetArrow
-                overlayClassName="rectangle w-[max-content]"
-                title={
-                  requireData.call.func
-                    ? t('page.signTx.contractCall.operationABIDesc')
-                    : t('page.signTx.contractCall.operationCantDecode')
-                }
-              >
-                <img src={IconQuestionMark} className="w-12 ml-6" />
-              </TooltipWithMagnetArrow>
-            </div>
+            <View className="relative flex items-center flex-row">
+              <Text>{requireData.call.func || '-'}</Text>
+              <IconQuestionMark className="w-[12] ml-[6]" />
+            </View>
           </Row>
         </Col>
         {new BigNumber(requireData.payNativeTokenAmount).gt(0) && (
           <Col>
             <Row isTitle>
-              {t('page.signTx.contractCall.payNativeToken', {
-                symbol: requireData.nativeTokenSymbol,
-              })}
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.contractCall.payNativeToken', {
+                  symbol: requireData.nativeTokenSymbol,
+                })}
+              </Text>
             </Row>
             {
               <Row>
-                {formatTokenAmount(
-                  new BigNumber(requireData.payNativeTokenAmount)
-                    .div(1e18)
-                    .toFixed()
-                )}{' '}
-                {requireData.nativeTokenSymbol}
+                <Text>
+                  {formatTokenAmount(
+                    new BigNumber(requireData.payNativeTokenAmount)
+                      .div(1e18)
+                      .toFixed(),
+                  )}{' '}
+                  {requireData.nativeTokenSymbol}
+                </Text>
               </Row>
             }
           </Col>
         )}
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

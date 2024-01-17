@@ -1,48 +1,17 @@
 import React, { useEffect } from 'react';
-import styled from 'styled-components';
+import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Chain } from 'background/service/openapi';
+import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ParsedActionData, RevokeNFTRequireData } from './utils';
-import { useRabbyDispatch } from '@/ui/store';
 import { Table, Col, Row } from './components/Table';
 import NFTWithName from './components/NFTWithName';
 import * as Values from './components/Values';
 import { ProtocolListItem } from './components/ProtocolListItem';
 import ViewMore from './components/ViewMore';
-
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  li .name-and-address {
-    justify-content: flex-start;
-    .address {
-      font-weight: 400;
-      font-size: 12px;
-      line-height: 14px;
-      color: #999999;
-    }
-    img {
-      width: 12px !important;
-      height: 12px !important;
-      margin-left: 4px !important;
-    }
-  }
-`;
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import useCommonStyle from '../../hooks/useCommonStyle';
+import DescItem from './components/DescItem';
 
 const RevokeNFT = ({
   data,
@@ -55,22 +24,27 @@ const RevokeNFT = ({
   engineResults: Result[];
 }) => {
   const actionData = data!;
-  const dispatch = useRabbyDispatch();
   const { t } = useTranslation();
+  const { init } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
 
   useEffect(() => {
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.revokeNFTApprove.revokeNFT')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.revokeNFTApprove.revokeNFT')}
+            </Text>
+          </Row>
           <Row>
             <NFTWithName nft={actionData?.nft}></NFTWithName>
-            <ul className="desc-list">
-              <li>
+            <View>
+              <DescItem>
                 <ViewMore
                   type="nft"
                   data={{
@@ -78,19 +52,26 @@ const RevokeNFT = ({
                     chain,
                   }}
                 />
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.revokeTokenApprove.revokeFrom')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.revokeTokenApprove.revokeFrom')}
+            </Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={actionData.spender} chain={chain} />
-            </div>
-            <ul className="desc-list">
-              <ProtocolListItem protocol={requireData.protocol} />
-              <li>
+            </View>
+            <View>
+              <ProtocolListItem
+                protocol={requireData.protocol}
+                style={commonStyle.primaryText}
+              />
+              <DescItem>
                 <ViewMore
                   type="nftSpender"
                   data={{
@@ -100,12 +81,12 @@ const RevokeNFT = ({
                     isRevoke: true,
                   }}
                 />
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

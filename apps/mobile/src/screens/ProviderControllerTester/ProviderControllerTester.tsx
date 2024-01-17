@@ -270,6 +270,114 @@ function ProviderControllerTester(): JSX.Element {
       });
   }, [account]);
 
+  const handleApproveNFT = () => {
+    const tx = {
+      chainId: 1,
+      from: '0xf08c90c7f470b640a21dd9b3744eca3d1d16a044',
+      to: '0x79fcdef22feed20eddacbb2587640e45491b757f',
+      data: '0x095ea7b3000000000000000000000000341a1fbd51825e5a107db54ccb3166deba1454790000000000000000000000000000000000000000000000000000000000000479',
+      gas: '0x1205c',
+      maxFeePerGas: '0x773594000',
+      maxPriorityFeePerGas: '0x773594000',
+      nonce: '0xc2',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    )
+      .then(res => {
+        console.log(res);
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  };
+
+  const handleApproveCollection = () => {
+    const tx = {
+      chainId: 1,
+      from: '0xf08c90c7f470b640a21dd9b3744eca3d1d16a044',
+      to: '0x79fcdef22feed20eddacbb2587640e45491b757f',
+      data: '0xa22cb465000000000000000000000000341a1fbd51825e5a107db54ccb3166deba1454790000000000000000000000000000000000000000000000000000000000000001',
+      gas: '0x111e9',
+      maxFeePerGas: '0x89d5f3200',
+      maxPriorityFeePerGas: '0x89d5f3200',
+      nonce: '0xc2',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    );
+  };
+
+  const handleCrossToken = () => {
+    const tx = {
+      chainId: 1,
+      from: '0xf08c90c7f470b640a21dd9b3744eca3d1d16a044',
+      to: '0x150f94b44927f078737562f0fcf3c95c01cc2376',
+      value: '0x165fa13c58de92a',
+      data: '0x1114cd2a000000000000000000000000000000000000000000000000000000000000006e000000000000000000000000f08c90c7f470b640a21dd9b3744eca3d1d16a04400000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000016345785d8a000000000000000000000000000000000000000000000000000001617eb90b26c0000000000000000000000000000000000000000000000000000000000000000014f08c90c7f470b640a21dd9b3744eca3d1d16a044000000000000000000000000',
+      gas: '0xa40a5',
+      maxFeePerGas: '0x861c46800',
+      maxPriorityFeePerGas: '0x861c46800',
+      nonce: '0xc2',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    );
+  };
+
+  const handleCrossSwapToken = () => {
+    const tx = {
+      chainId: 1,
+      from: '0x341a1fbd51825e5a107db54ccb3166deba145479',
+      to: '0x8731d54e9d02c286767d56ac03e8037c07e01e98',
+      value: '0x2b49b6803e92a',
+      data: '0x9fbf10fc000000000000000000000000000000000000000000000000000000000000006e00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002000000000000000000000000341a1fbd51825e5a107db54ccb3166deba1454790000000000000000000000000000000000000000000000000000000000989680000000000000000000000000000000000000000000000000000000000097d330000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000014341a1fbd51825e5a107db54ccb3166deba1454790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+      gas: '0x8ea18',
+      maxFeePerGas: '0x773594000',
+      maxPriorityFeePerGas: '0x773594000',
+      nonce: '0x65',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    );
+  };
+
+  const handleContractCall = () => {
+    const tx = {
+      chainId: 1,
+      from: '0xf08c90c7f470b640a21dd9b3744eca3d1d16a044',
+      to: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+      data: '0x8456cb59',
+      gas: '0x8b17',
+      maxFeePerGas: '0x89d5f3200',
+      maxPriorityFeePerGas: '0x89d5f3200',
+      nonce: '0xc2',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    );
+  };
+
   React.useEffect(() => {
     addDapp({
       info: TEST_DAPP_INFO,
@@ -340,6 +448,35 @@ function ProviderControllerTester(): JSX.Element {
               disabled={!account || !isClientCreated}
               onPress={handleSwap}
               title="Swap Transaction"
+            />
+          </Section>
+          <Section title="NFT">
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleApproveNFT}
+              title="Approve NFT"
+            />
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleApproveCollection}
+              title="Approve Collection"
+            />
+          </Section>
+          <Section title="Cross Chain">
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleCrossToken}
+              title="Cross Token"
+            />
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleCrossSwapToken}
+              title="Cross Swap"
+            />
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              onPress={handleContractCall}
+              title="Contract Call"
             />
           </Section>
         </View>

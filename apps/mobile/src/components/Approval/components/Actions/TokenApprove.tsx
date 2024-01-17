@@ -1,43 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, Input } from 'antd';
-import styled from 'styled-components';
+import { View, Text } from 'react-native';
 import BigNumber from 'bignumber.js';
-import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import { Chain, TokenItem } from 'background/service/openapi';
+import { Chain } from '@debank/common';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ApproveTokenRequireData, ParsedActionData } from './utils';
-import { ellipsisTokenSymbol, getTokenSymbol } from 'ui/utils/token';
-import { ellipsisOverflowedText } from '@/ui/utils';
-import { getCustomTxParamsData } from 'ui/utils/transaction';
-import { formatAmount, formatUsdValue } from '@/ui/utils/number';
-import { useRabbyDispatch } from '@/ui/store';
-import { Popup } from 'ui/component';
+import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
+import { ellipsisOverflowedText } from '@/utils/text';
+import { getCustomTxParamsData } from '@/utils/transaction';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { ProtocolListItem } from './components/ProtocolListItem';
-
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+import useCommonStyle from '../../hooks/useCommonStyle';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import DescItem from './components/DescItem';
 
 interface ApproveAmountModalProps {
   amount: number | string;
@@ -46,107 +27,104 @@ interface ApproveAmountModalProps {
   onChange(value: string): void;
   visible: boolean;
 }
+// TODO
+// const ApproveAmountModal = ({
+//   balance,
+//   amount,
+//   token,
+//   visible,
+//   onChange,
+// }: ApproveAmountModalProps) => {
+//   const inputRef = useRef<Input>(null);
+//   const { t } = useTranslation();
+//   const [customAmount, setCustomAmount] = useState(
+//     new BigNumber(amount).toFixed(),
+//   );
+//   const [tokenPrice, setTokenPrice] = useState(
+//     new BigNumber(amount).times(token.price).toNumber(),
+//   );
+//   const [canSubmit, setCanSubmit] = useState(false);
+//   const handleSubmit = () => {
+//     onChange(customAmount);
+//   };
+//   const handleChange = (value: string) => {
+//     if (/^\d*(\.\d*)?$/.test(value)) {
+//       setCustomAmount(value);
+//     }
+//   };
 
-const ApproveAmountModal = ({
-  balance,
-  amount,
-  token,
-  visible,
-  onChange,
-}: ApproveAmountModalProps) => {
-  const inputRef = useRef<Input>(null);
-  const { t } = useTranslation();
-  const [customAmount, setCustomAmount] = useState(
-    new BigNumber(amount).toFixed()
-  );
-  const [tokenPrice, setTokenPrice] = useState(
-    new BigNumber(amount).times(token.price).toNumber()
-  );
-  const [canSubmit, setCanSubmit] = useState(false);
-  const handleSubmit = () => {
-    onChange(customAmount);
-  };
-  const handleChange = (value: string) => {
-    if (/^\d*(\.\d*)?$/.test(value)) {
-      setCustomAmount(value);
-    }
-  };
+//   useEffect(() => {
+//     if (
+//       !customAmount ||
+//       Number(customAmount) <= 0 ||
+//       Number.isNaN(Number(customAmount))
+//     ) {
+//       setCanSubmit(false);
+//     } else {
+//       setCanSubmit(true);
+//     }
+//     setTokenPrice(Number(customAmount || 0) * token.price);
+//   }, [customAmount]);
 
-  useEffect(() => {
-    if (
-      !customAmount ||
-      Number(customAmount) <= 0 ||
-      Number.isNaN(Number(customAmount))
-    ) {
-      setCanSubmit(false);
-    } else {
-      setCanSubmit(true);
-    }
-    setTokenPrice(Number(customAmount || 0) * token.price);
-  }, [customAmount]);
+//   useEffect(() => {
+//     if (visible) {
+//       setTimeout(() => {
+//         inputRef.current?.focus();
+//       }, 0);
+//     }
+//   }, [visible]);
 
-  useEffect(() => {
-    if (visible) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-    }
-  }, [visible]);
-
-  return (
-    <Form onFinish={handleSubmit}>
-      <Form.Item>
-        <Input
-          value={customAmount}
-          onChange={(e) => handleChange(e.target.value)}
-          bordered={false}
-          addonAfter={
-            <span title={getTokenSymbol(token)}>
-              {ellipsisTokenSymbol(getTokenSymbol(token), 4)}
-            </span>
-          }
-          ref={inputRef}
-        />
-      </Form.Item>
-      <div className="approve-amount-footer overflow-hidden gap-[8px]">
-        <span
-          className="est-approve-price truncate"
-          title={formatUsdValue(new BigNumber(tokenPrice).toFixed(2))}
-        >
-          ≈
-          {ellipsisOverflowedText(
-            formatUsdValue(new BigNumber(tokenPrice).toFixed()),
-            18,
-            true
-          )}
-        </span>
-        {balance && (
-          <span
-            className="token-approve-balance truncate"
-            title={formatAmount(balance)}
-            onClick={() => {
-              setCustomAmount(balance);
-            }}
-          >
-            {t('global.Balance')}:{' '}
-            {formatAmount(new BigNumber(balance).toFixed(4))}
-          </span>
-        )}
-      </div>
-      <div className="flex justify-center mt-32 popup-footer">
-        <Button
-          type="primary"
-          className="w-[200px]"
-          size="large"
-          htmlType="submit"
-          disabled={!canSubmit}
-        >
-          {t('global.confirmButton')}
-        </Button>
-      </div>
-    </Form>
-  );
-};
+//   return (
+//     <Form onFinish={handleSubmit}>
+//       <Form.Item>
+//         <Input
+//           value={customAmount}
+//           onChange={e => handleChange(e.target.value)}
+//           bordered={false}
+//           addonAfter={
+//             <span title={getTokenSymbol(token)}>
+//               {ellipsisTokenSymbol(getTokenSymbol(token), 4)}
+//             </span>
+//           }
+//           ref={inputRef}
+//         />
+//       </Form.Item>
+//       <div className="approve-amount-footer overflow-hidden gap-[8px]">
+//         <span
+//           className="est-approve-price truncate"
+//           title={formatUsdValue(new BigNumber(tokenPrice).toFixed(2))}>
+//           ≈
+//           {ellipsisOverflowedText(
+//             formatUsdValue(new BigNumber(tokenPrice).toFixed()),
+//             18,
+//             true,
+//           )}
+//         </span>
+//         {balance && (
+//           <span
+//             className="token-approve-balance truncate"
+//             title={formatAmount(balance)}
+//             onClick={() => {
+//               setCustomAmount(balance);
+//             }}>
+//             {t('global.Balance')}:{' '}
+//             {formatAmount(new BigNumber(balance).toFixed(4))}
+//           </span>
+//         )}
+//       </div>
+//       <div className="flex justify-center mt-32 popup-footer">
+//         <Button
+//           type="primary"
+//           className="w-[200px]"
+//           size="large"
+//           htmlType="submit"
+//           disabled={!canSubmit}>
+//           {t('global.confirmButton')}
+//         </Button>
+//       </div>
+//     </Form>
+//   );
+// };
 
 const TokenApprove = ({
   data,
@@ -165,12 +143,13 @@ const TokenApprove = ({
 }) => {
   const actionData = data!;
   const [editApproveModalVisible, setEditApproveModalVisible] = useState(false);
-  const dispatch = useRabbyDispatch();
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
+  const { init } = useApprovalSecurityEngine();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
@@ -207,66 +186,76 @@ const TokenApprove = ({
   };
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
           <Row isTitle>{t('page.signTx.tokenApprove.approveToken')}</Row>
           <Row>
             <LogoWithText
-              className="flex-1 pr-10"
               logo={actionData.token.logo_url}
               text={
-                <div className="overflow-hidden overflow-ellipsis flex justify-between items-center">
-                  <div className="flex flex-1 overflow-hidden">
+                <View className="overflow-hidden overflow-ellipsis flex flex-row justify-between items-center">
+                  <View className="flex flex-row flex-1 overflow-hidden">
                     <Values.TokenAmount value={actionData.token.amount} />
-                    <span className="ml-2">
-                      <Values.TokenSymbol token={requireData.token} />
-                    </span>
-                  </div>
+                    <Values.TokenSymbol
+                      token={requireData.token}
+                      style={{
+                        marginLeft: 2,
+                        ...commonStyle.primaryText,
+                      }}
+                    />
+                  </View>
                   <span
                     className="text-blue-light text-12 font-medium cursor-pointer ml-4"
-                    onClick={() => setEditApproveModalVisible(true)}
-                  >
+                    onClick={() => setEditApproveModalVisible(true)}>
                     {t('global.editButton')}
                   </span>
-                </div>
+                </View>
               }
-              logoRadius="100%"
+              logoRadius={16}
               textStyle={{
                 flex: 1,
               }}
             />
-            <ul className="desc-list">
-              <li>
-                {t('page.signTx.tokenApprove.myBalance')}{' '}
-                <span
-                  className={clsx(
-                    new BigNumber(approveAmount).gt(tokenBalance)
-                      ? 'underline cursor-pointer'
-                      : ''
-                  )}
-                  onClick={handleClickTokenBalance}
-                >
+            <View className="desc-list">
+              <DescItem>
+                <Text style={commonStyle.secondaryText}>
+                  {t('page.signTx.tokenApprove.myBalance')}{' '}
+                </Text>
+                <Text
+                  style={{
+                    ...commonStyle.secondaryText,
+                    textDecorationLine: new BigNumber(approveAmount).gt(
+                      tokenBalance,
+                    )
+                      ? 'underline'
+                      : 'none',
+                  }}
+                  onPress={handleClickTokenBalance}>
                   {formatAmount(tokenBalance)}
-                </span>{' '}
-                {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-              </li>
-            </ul>
+                </Text>
+                <Text style={commonStyle.secondaryText}>
+                  {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+                </Text>
+              </DescItem>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveTo')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.tokenApprove.approveTo')}
+            </Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={actionData.spender} chain={chain} />
-            </div>
-            <ul className="desc-list">
+            </View>
+            <View className="desc-list">
               <ProtocolListItem protocol={requireData.protocol} />
 
               <SecurityListItem
@@ -327,7 +316,7 @@ const TokenApprove = ({
                 safeText={t('page.signTx.markAsTrust')}
               />
 
-              <li>
+              <DescItem>
                 <ViewMore
                   type="spender"
                   data={{
@@ -336,19 +325,18 @@ const TokenApprove = ({
                     chain,
                   }}
                 />
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
       </Table>
-      <Popup
+      {/* <Popup
         visible={editApproveModalVisible}
         className="edit-approve-amount-modal"
         height={280}
         title={t('page.signTx.tokenApprove.amountPopupTitle')}
         onCancel={() => setEditApproveModalVisible(false)}
-        destroyOnClose
-      >
+        destroyOnClose>
         <ApproveAmountModal
           balance={tokenBalance}
           amount={approveAmount}
@@ -356,8 +344,8 @@ const TokenApprove = ({
           onChange={handleApproveAmountChange}
           visible={editApproveModalVisible}
         />
-      </Popup>
-    </Wrapper>
+      </Popup> */}
+    </View>
   );
 };
 

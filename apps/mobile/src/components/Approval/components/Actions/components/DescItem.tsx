@@ -12,6 +12,7 @@ const getStyle = (colors: AppColorsVariants) =>
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      marginTop: 4,
     },
     ball: {
       position: 'absolute',

@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { BigNumber } from 'bignumber.js';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Table, Col, Row } from './components/Table';
@@ -8,32 +8,18 @@ import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { ParsedActionData, SwapRequireData } from './utils';
-import { formatAmount, formatUsdValue } from 'ui/utils/number';
-import { Chain } from 'background/service/openapi';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { Chain } from '@debank/common';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import { useRabbyDispatch, useRabbySelector } from '@/ui/store';
 import { SecurityListItem } from './components/SecurityListItem';
 import { ProtocolListItem } from './components/ProtocolListItem';
-import { isSameAddress } from '@/ui/utils';
+import { addressUtils } from '@rabby-wallet/base-utils';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import useCommonStyle from '../../hooks/useCommonStyle';
+import DescItem from './components/DescItem';
 
-const Wrapper = styled.div`
-  .header {
-    margin-top: 15px;
-  }
-  .icon-edit-alias {
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-  }
-  .icon-scam-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-  .icon-fake-token {
-    margin-left: 4px;
-    width: 13px;
-  }
-`;
+const { isSameAddress } = addressUtils;
+
 const Swap = ({
   data,
   requireData,
@@ -45,32 +31,25 @@ const Swap = ({
   chain: Chain;
   engineResults: Result[];
 }) => {
+  const { payToken, receiveToken, usdValueDiff, usdValuePercentage, receiver } =
+    data!;
   const {
-    payToken,
-    receiveToken,
-    usdValueDiff,
-    usdValuePercentage,
-    receiver,
-  } = data!;
-
-  const { rules, processedRules, contractWhitelist } = useRabbySelector(
-    (s) => ({
-      rules: s.securityEngine.rules,
-      processedRules: s.securityEngine.currentTx.processedRules,
-      contractWhitelist: s.securityEngine.userData.contractWhitelist,
-    })
-  );
-  const dispatch = useRabbyDispatch();
-
+    rules,
+    currentTx: { processedRules },
+    userData: { contractWhitelist },
+    openRuleDrawer,
+    init,
+  } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
   const { t } = useTranslation();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
-      (item) =>
+      item =>
         item.chainId === chain.serverId &&
-        isSameAddress(item.address, requireData.id)
+        isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const hasReceiver = useMemo(() => {
     return !isSameAddress(receiver, requireData.sender);
@@ -78,17 +57,17 @@ const Swap = ({
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
-    engineResults.forEach((item) => {
+    engineResults.forEach(item => {
       map[item.id] = item;
     });
     return map;
   }, [engineResults]);
 
   const handleClickRule = (id: string) => {
-    const rule = rules.find((item) => item.id === id);
+    const rule = rules.find(item => item.id === id);
     if (!rule) return;
     const result = engineResultMap[id];
-    dispatch.securityEngine.openRuleDrawer({
+    openRuleDrawer({
       ruleConfig: rule,
       value: result?.value,
       level: result?.level,
@@ -97,50 +76,67 @@ const Swap = ({
   };
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    dispatch.securityEngine.init();
+    init();
   }, []);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.payToken')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.payToken')}
+            </Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
               text={
                 <>
-                  {formatAmount(payToken.amount)}{' '}
+                  <Text style={commonStyle.primaryText}>
+                    {formatAmount(payToken.amount)}{' '}
+                  </Text>
                   <Values.TokenSymbol token={payToken} />
                 </>
               }
-              logoRadius="100%"
+              logoRadius={16}
             />
-            <ul className="desc-list">
-              <li>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(payToken.amount).times(payToken.price).toFixed()
-                )}
-              </li>
-              <li>
-                <Values.DisplayChain chainServerId={payToken.chain} />
-              </li>
-            </ul>
+            <View>
+              <DescItem>
+                <Text style={commonStyle.secondaryText}>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(payToken.amount)
+                      .times(payToken.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
+              <DescItem>
+                <Values.DisplayChain
+                  chainServerId={payToken.chain}
+                  textStyle={commonStyle.secondaryText}
+                />
+              </DescItem>
+            </View>
           </Row>
         </Col>
         <Col>
-          <Row isTitle>{t('page.signTx.swap.minReceive')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.minReceive')}
+            </Text>
+          </Row>
           <Row>
-            <div className="flex relative pr-10">
+            <View className="flex flex-row relative pr-[10]">
               <LogoWithText
                 logo={receiveToken.logo_url}
-                logoRadius="100%"
+                logoRadius={16}
                 text={
                   <>
-                    {formatAmount(receiveToken.min_amount)}{' '}
+                    <Text style={commonStyle.primaryText}>
+                      {formatAmount(receiveToken.min_amount)}{' '}
+                    </Text>
                     <Values.TokenSymbol token={receiveToken} />
                   </>
                 }
@@ -176,46 +172,70 @@ const Swap = ({
                   onClick={() => handleClickRule('1098')}
                 />
               )}
-            </div>
-            <ul className="desc-list">
-              <li>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(receiveToken.min_amount)
-                    .times(receiveToken.price)
-                    .toFixed()
-                )}
-              </li>
-              <li>
-                <Values.DisplayChain chainServerId={receiveToken.chain} />
-              </li>
+            </View>
+            <View>
+              <DescItem>
+                <Text style={commonStyle.secondaryText}>
+                  ≈
+                  {formatUsdValue(
+                    new BigNumber(receiveToken.min_amount)
+                      .times(receiveToken.price)
+                      .toFixed(),
+                  )}
+                </Text>
+              </DescItem>
+              <DescItem>
+                <Values.DisplayChain
+                  chainServerId={receiveToken.chain}
+                  textStyle={commonStyle.secondaryText}
+                />
+              </DescItem>
               <SecurityListItem
                 engineResult={engineResultMap['1105']}
                 id="1105"
                 dangerText={
                   <>
-                    {t('page.signTx.swap.valueDiff')}{' '}
-                    <Values.Percentage value={usdValuePercentage!} /> (
-                    {formatUsdValue(usdValueDiff || '')})
+                    <Text style={commonStyle.secondaryText}>
+                      {t('page.signTx.swap.valueDiff')}{' '}
+                    </Text>
+                    <Values.Percentage
+                      value={usdValuePercentage!}
+                      style={commonStyle.secondaryText}
+                    />
+                    <Text style={commonStyle.secondaryText}>
+                      ({formatUsdValue(usdValueDiff || '')})
+                    </Text>
                   </>
                 }
                 warningText={
                   <>
-                    {t('page.signTx.swap.valueDiff')}{' '}
-                    <Values.Percentage value={usdValuePercentage!} /> (
-                    {formatUsdValue(usdValueDiff || '')})
+                    <Text style={commonStyle.secondaryText}>
+                      {t('page.signTx.swap.valueDiff')}{' '}
+                    </Text>
+                    <Values.Percentage
+                      value={usdValuePercentage!}
+                      style={commonStyle.secondaryText}
+                    />
+                    <Text style={commonStyle.secondaryText}>
+                      {' '}
+                      ({formatUsdValue(usdValueDiff || '')})
+                    </Text>
                   </>
                 }
               />
-            </ul>
+            </View>
           </Row>
         </Col>
         {hasReceiver && (
           <Col>
-            <Row isTitle>{t('page.signTx.swap.receiver')}</Row>
+            <Row isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.swap.receiver')}
+              </Text>
+            </Row>
             <Row>
               <Values.Address address={receiver} chain={chain} />
-              <ul className="desc-list">
+              <View>
                 <SecurityListItem
                   engineResult={engineResultMap['1103']}
                   id="1103"
@@ -223,31 +243,37 @@ const Swap = ({
                 />
                 {!engineResultMap['1103'] && (
                   <>
-                    <li>
+                    <DescItem>
                       <Values.AccountAlias address={receiver} />
-                    </li>
-                    <li>
+                    </DescItem>
+                    <DescItem>
                       <Values.KnownAddress address={receiver} />
-                    </li>
+                    </DescItem>
                   </>
                 )}
-              </ul>
+              </View>
             </Row>
           </Col>
         )}
         <Col>
-          <Row isTitle>{t('page.signTx.interactContract')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interactContract')}
+            </Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={requireData.id} chain={chain} />
-            </div>
-            <ul className="desc-list">
+            </View>
+            <View>
               <ProtocolListItem protocol={requireData.protocol} />
-              <li>
+              <DescItem>
                 <Values.Interacted value={requireData.hasInteraction} />
-              </li>
+              </DescItem>
 
-              {isInWhitelist && <li>{t('page.signTx.markAsTrust')}</li>}
+              {isInWhitelist && (
+                <DescItem>{t('page.signTx.markAsTrust')}</DescItem>
+              )}
 
               <SecurityListItem
                 id="1135"
@@ -260,7 +286,7 @@ const Swap = ({
                 engineResult={engineResultMap['1137']}
                 warningText={t('page.signTx.markAsBlock')}
               />
-              <li>
+              <DescItem>
                 <ViewMore
                   type="contract"
                   data={{
@@ -272,12 +298,12 @@ const Swap = ({
                     chain,
                   }}
                 />
-              </li>
-            </ul>
+              </DescItem>
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 
