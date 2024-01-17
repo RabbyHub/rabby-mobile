@@ -1,5 +1,6 @@
 import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
+import { dappService } from './shared';
 
 // import { permissionService } from 'background/service';
 // import PortMessage from '@/utils/message/portMessage';
@@ -94,9 +95,7 @@ const deleteSession = (key: SessionKey) => {
 const broadcastEvent = (ev: BroadcastEvent, data?: any, origin?: string) => {
   let sessions: { key: SessionKey; data: Session }[] = [];
   sessionMap.forEach((session, key) => {
-    // todo: permission
-    // if (session && permissionService.hasPermission(session.origin)) {
-    if (session) {
+    if (session && dappService.hasPermission(session.origin)) {
       sessions.push({
         key,
         data: session,

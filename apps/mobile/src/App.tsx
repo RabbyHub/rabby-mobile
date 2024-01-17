@@ -18,10 +18,6 @@ import AppErrorBoundary from '@/components/ErrorBoundary';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 import { ThemeProvider } from '@rneui/themed';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
-import {
-  OpenedDappWebViewStub,
-  OpenedWebViewsStub,
-} from './screens/Dapps/Dapps/components/WebViewsStub';
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -38,9 +34,6 @@ function MainScreen() {
     <BottomSheetModalProvider>
       {couldRender && <AppNavigation colorScheme={binaryTheme} />}
       {/* <JotaiNexus /> */}
-
-      <OpenedDappWebViewStub />
-      <OpenedWebViewsStub />
     </BottomSheetModalProvider>
   );
 }

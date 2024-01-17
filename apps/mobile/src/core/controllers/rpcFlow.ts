@@ -15,6 +15,7 @@ import { ProviderRequest } from './type';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { CHAINS_ENUM } from '@debank/common';
+import { apisAddress, apisDapp } from '../apis';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -139,17 +140,15 @@ const flowContext = flow
               { height: 800 },
             );
           connectOrigins.delete(origin);
-          const dapp = dappService.getDapp(origin);
-          if (dapp) {
-            dappService.updateDapp({
-              ...dapp,
-              chainId: defaultChain || CHAINS_ENUM.ETH,
-              isConnected: true,
-            });
-          } else {
-            // TODO add new dapp
-            // dappService.addDapp({})
-          }
+          apisDapp.connect({
+            origin,
+            chainId: defaultChain || CHAINS_ENUM.ETH,
+            session: {
+              name,
+              icon,
+              origin,
+            },
+          });
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;

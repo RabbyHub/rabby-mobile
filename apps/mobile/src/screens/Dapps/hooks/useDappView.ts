@@ -3,18 +3,20 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { createDappBySession } from '@/core/apis/dapp';
 
 const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
 
-type OpenedDappItem = {
+export type OpenedDappItem = {
   origin: DappInfo['origin'];
   $openParams?: {
     initialUrl?: string;
   };
+  maybeDappInfo?: DappInfo;
 };
-export type OpenedDappInfo = OpenedDappItem & DappInfo;
 const openedDappRecordsAtom = atom<OpenedDappItem[]>([]);
 
 const activeWebViewSheetModalRefs = atom({
@@ -37,13 +39,20 @@ export function useOpenDappView() {
     openedDappRecordsAtom,
   );
 
-  const addOpenedDapp = useCallback(
+  const openUrlAsDapp = useCallback(
     (
-      dappOrigin: DappInfo['origin'] | OpenedDappItem,
+      dappUrl: DappInfo['origin'] | OpenedDappItem,
       options?: { isActiveDapp?: boolean },
     ) => {
-      const item =
-        typeof dappOrigin === 'string' ? { origin: dappOrigin } : dappOrigin;
+      const item = typeof dappUrl === 'string' ? { origin: dappUrl } : dappUrl;
+
+      const itemUrl = item.origin;
+      item.origin = canoicalizeDappUrl(itemUrl).origin;
+
+      item.$openParams = {
+        ...item.$openParams,
+        initialUrl: item.$openParams?.initialUrl || itemUrl,
+      };
 
       setOpenedOriginsDapps(prev => {
         const itemIdx = prev.findIndex(
@@ -102,17 +111,22 @@ export function useOpenDappView() {
   }, [toggleShowSheetModal]);
 
   const { openedDappItems, activeDapp } = useMemo(() => {
-    const retOpenedDapps = [] as (OpenedDappItem & DappInfo)[];
+    const retOpenedDapps = [] as OpenedDappItem[];
     openedDappRecords.forEach(item => {
-      if (dapps[item.origin]) {
-        retOpenedDapps.push({
-          ...item,
-          ...dapps[item.origin],
-        });
-      }
+      retOpenedDapps.push({
+        ...item,
+        maybeDappInfo: dapps[item.origin],
+      });
     });
 
-    const retActiveDapp = activeDappOrigin ? dapps[activeDappOrigin] : null;
+    const retActiveDapp = activeDappOrigin
+      ? dapps[activeDappOrigin] ||
+        createDappBySession({
+          origin: activeDappOrigin,
+          name: 'Temp Dapp',
+          icon: '',
+        })
+      : null;
 
     return {
       openedDappItems: retOpenedDapps,
@@ -125,7 +139,7 @@ export function useOpenDappView() {
     openedDappItems,
 
     showDappWebViewModal,
-    addOpenedDapp,
+    openUrlAsDapp,
     removeOpenedDapp,
     hideActiveDapp,
     closeOpenedDapp,
@@ -133,6 +147,9 @@ export function useOpenDappView() {
 }
 
 const openedNonDappOriginAtom = atom<string | null>(null);
+/**
+ * @deprecated
+ */
 export function useOpenUrlView() {
   const [openedNonDappOrigin, setOpenedNonDappOrigin] = useAtom(
     openedNonDappOriginAtom,

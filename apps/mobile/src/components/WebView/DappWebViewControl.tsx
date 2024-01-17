@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,7 +7,6 @@ import {
   ViewStyle,
 } from 'react-native';
 import WebView from 'react-native-webview';
-import clsx from 'clsx';
 
 import {
   BottomSheetBackdrop,
@@ -162,23 +161,27 @@ type DappWebViewControlProps = {
 
   bottomNavH?: number;
   headerLeft?: React.ReactNode | (() => React.ReactNode);
+  headerNode?:
+    | React.ReactNode
+    | ((ctx: { header: React.ReactNode | null }) => React.ReactNode);
   bottomSheetContent?:
     | React.ReactNode
     | ((ctx: { bottomNavBar: React.ReactNode }) => React.ReactNode);
   webviewProps?: React.ComponentProps<typeof WebView>;
+  webviewNode?:
+    | React.ReactNode
+    | ((ctx: { webview: React.ReactNode | null }) => React.ReactNode);
   style?: StyleProp<ViewStyle>;
 };
 
 function useDefaultNodes({
   headerLeft,
   bottomSheetContent,
-  webviewRef,
   webviewState,
   webviewActions,
 }: {
   headerLeft?: DappWebViewControlProps['headerLeft'];
   bottomSheetContent?: DappWebViewControlProps['bottomSheetContent'];
-  webviewRef: React.RefObject<WebView>;
   webviewState: WebViewState;
   webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
@@ -228,8 +231,10 @@ export default function DappWebViewControl({
 
   bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
   headerLeft,
+  headerNode,
   bottomSheetContent,
   webviewProps,
+  webviewNode,
   style,
 }: DappWebViewControlProps) {
   const colors = useThemeColors();
@@ -281,44 +286,12 @@ export default function DappWebViewControl({
   const { headerLeftNode, bottomSheetContentNode } = useDefaultNodes({
     headerLeft,
     bottomSheetContent,
-    webviewRef,
     webviewState,
     webviewActions,
   });
-  const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
-  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
-    dappOrigin,
-    webviewRef,
-    siteInfoRefs: {
-      urlRef,
-      titleRef,
-      iconRef,
-    },
-  });
-
-  const initialUrl = useMemo(() => {
-    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
-
-    if (
-      canoicalizeDappUrl(_initialUrl).origin !==
-      canoicalizeDappUrl(dappOrigin).origin
-    )
-      return convertToWebviewUrl(dappOrigin);
-
-    return convertToWebviewUrl(_initialUrl);
-  }, [dappOrigin, _initialUrl]);
-
-  return (
-    <View
-      style={[
-        style,
-        styles.dappWebViewControl,
-        {
-          position: 'relative',
-          backgroundColor: colors['neutral-bg-1'],
-        },
-      ]}>
+  const renderedHeaderNode = useMemo(() => {
+    const node = (
       <View style={[styles.dappWebViewHeadContainer]}>
         <View style={[styles.touchableHeadWrapper]}>{headerLeftNode}</View>
         <View style={styles.DappWebViewHeadTitleWrapper}>
@@ -346,55 +319,132 @@ export default function DappWebViewControl({
           </TouchableView>
         </View>
       </View>
+    );
+    if (typeof headerNode === 'function') {
+      return headerNode({ header: node });
+    }
+
+    return headerNode || node;
+  }, [
+    headerLeftNode,
+    headerNode,
+    colors,
+    dappOrigin,
+    handlePressMore,
+    subTitle,
+  ]);
+
+  const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
+
+  const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    dappOrigin,
+    webviewRef,
+    siteInfoRefs: {
+      urlRef,
+      titleRef,
+      iconRef,
+    },
+  });
+
+  const initialUrl = useMemo(() => {
+    if (!_initialUrl) return convertToWebviewUrl(dappOrigin);
+
+    if (
+      canoicalizeDappUrl(_initialUrl).origin !==
+      canoicalizeDappUrl(dappOrigin).origin
+    )
+      return convertToWebviewUrl(dappOrigin);
+
+    return convertToWebviewUrl(_initialUrl);
+  }, [dappOrigin, _initialUrl]);
+
+  const renderedWebviewNode = useMemo(() => {
+    if (!entryScriptWeb3Loaded) return null;
+
+    const node = (
+      <WebView
+        // cacheEnabled={false}
+        cacheEnabled
+        startInLoadingState
+        {...webviewProps}
+        style={[styles.dappWebView, webviewProps?.style]}
+        ref={webviewRef}
+        source={{
+          uri: initialUrl,
+          // TODO: cusotmize userAgent here
+          // 'User-Agent': ''
+        }}
+        injectedJavaScriptBeforeContentLoaded={fullScript}
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+        onNavigationStateChange={webviewActions.onNavigationStateChange}
+        onError={errorLog}
+        webviewDebuggingEnabled={__DEV__}
+        onLoadStart={nativeEvent => {
+          webviewProps?.onLoadStart?.(nativeEvent);
+          onLoadStart(nativeEvent);
+        }}
+        onMessage={event => {
+          // // leave here for debug
+          // if (__DEV__) {
+          //   console.log('WebView:: onMessage event', event);
+          // }
+          onBridgeMessage(event);
+          webviewProps?.onMessage?.(event);
+
+          // // leave here for debug
+          // webviewRef.current?.injectJavaScript(
+          //   JS_POST_MESSAGE_TO_PROVIDER(
+          //     JSON.stringify({
+          //       type: 'hello',
+          //       data: 'I have received your message!',
+          //     }),
+          //     '*',
+          //   ),
+          // );
+        }}
+      />
+    );
+
+    if (typeof webviewNode === 'function') {
+      return webviewNode({ webview: node });
+    }
+
+    return webviewNode || node;
+  }, [
+    webviewProps,
+    entryScriptWeb3Loaded,
+    fullScript,
+    initialUrl,
+    onBridgeMessage,
+    onLoadStart,
+    webviewActions.onNavigationStateChange,
+    webviewNode,
+    webviewRef,
+  ]);
+
+  return (
+    <View
+      style={[
+        style,
+        styles.dappWebViewControl,
+        {
+          position: 'relative',
+          backgroundColor: colors['neutral-bg-1'],
+        },
+      ]}>
+      {renderedHeaderNode}
 
       {/* webvbiew */}
-      <View style={[
-        styles.dappWebViewContainer,
-        {
-          maxHeight: Dimensions.get('window').height - ScreenLayouts.dappWebViewControlHeaderHeight,
-        }
-      ]}>
-        {entryScriptWeb3Loaded && (
-          <WebView
-            // cacheEnabled={false}
-            cacheEnabled
-            startInLoadingState
-            {...webviewProps}
-            style={[styles.dappWebView, webviewProps?.style]}
-            ref={webviewRef}
-            source={{
-              uri: initialUrl,
-            }}
-            injectedJavaScriptBeforeContentLoaded={fullScript}
-            injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-            onNavigationStateChange={webviewActions.onNavigationStateChange}
-            onError={errorLog}
-            webviewDebuggingEnabled={__DEV__}
-            onLoadStart={nativeEvent => {
-              webviewProps?.onLoadStart?.(nativeEvent);
-              onLoadStart(nativeEvent);
-            }}
-            onMessage={event => {
-              // // leave here for debug
-              // if (__DEV__) {
-              //   console.log('WebView:: onMessage event', event);
-              // }
-              onBridgeMessage(event);
-              webviewProps?.onMessage?.(event);
-
-              // // leave here for debug
-              // webviewRef.current?.injectJavaScript(
-              //   JS_POST_MESSAGE_TO_PROVIDER(
-              //     JSON.stringify({
-              //       type: 'hello',
-              //       data: 'I have received your message!',
-              //     }),
-              //     '*',
-              //   ),
-              // );
-            }}
-          />
-        )}
+      <View
+        style={[
+          styles.dappWebViewContainer,
+          {
+            maxHeight:
+              Dimensions.get('window').height -
+              ScreenLayouts.dappWebViewControlHeaderHeight,
+          },
+        ]}>
+        {renderedWebviewNode}
       </View>
 
       <BottomSheetMoreLayout>
