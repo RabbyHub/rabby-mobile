@@ -2007,7 +2007,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:^0.3.47, @debank/common@npm:^0.3.48":
+"@debank/common@npm:^0.3.48":
   version: 0.3.49
   resolution: "@debank/common@npm:0.3.49::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Fcommon%2F-%2Fcommon-0.3.49.tgz"
   checksum: 57f145524b11eceed57e8470ba61bbe88e3e9617862b4f840a947ee82ae23fce67c0d28400842367961a8b6143475b34f47eaaa9026331647284f77e2a5dfba8
@@ -4972,26 +4972,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/service-address@workspace:packages/service-address"
   dependencies:
-    "@metamask/auto-changelog": ^3.4.3
-    "@rabby-wallet/persist-store": ^0.1.0
-    "@types/jest": ^27.4.1
-    "@types/sinon": ^9.0.10
-    deepmerge: ^4.2.2
-    ethereumjs-util: ^7.1.5
-    jest: ^27.5.1
-    sinon: ^9.2.4
-    ts-jest: ^27.1.4
-    typedoc: ^0.24.8
-    typedoc-plugin-missing-exports: ^2.0.0
-    typescript: ~4.8.4
-  languageName: unknown
-  linkType: soft
-
-"@rabby-wallet/service-dapp@workspace:^, @rabby-wallet/service-dapp@workspace:packages/service-dapp":
-  version: 0.0.0-use.local
-  resolution: "@rabby-wallet/service-dapp@workspace:packages/service-dapp"
-  dependencies:
-    "@debank/common": ^0.3.47
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/persist-store": ^0.1.0
     "@types/jest": ^27.4.1
@@ -24635,7 +24615,6 @@ __metadata:
     "@rabby-wallet/rabby-api": 0.7.0-alpha.7
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/service-address": "workspace:^"
-    "@rabby-wallet/service-dapp": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0
     "@react-native-clipboard/clipboard": ^1.13.0

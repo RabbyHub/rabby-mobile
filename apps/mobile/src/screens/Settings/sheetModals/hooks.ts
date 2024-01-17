@@ -3,7 +3,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { atom, useAtomValue } from 'jotai';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { CHAINS_ENUM } from '@debank/common';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 
@@ -35,7 +35,7 @@ export const DAPP_METAMASK_TEST_DAPP: DappInfo = {
 export function useSheetWebViewTester() {
   const { dapps, addDapp, updateFavorite } = useDapps();
 
-  const { addOpenedDapp, showDappWebViewModal } = useOpenDappView();
+  const { openUrlAsDapp, showDappWebViewModal } = useOpenDappView();
 
   const makeSureTestDapp = React.useCallback(() => {
     if (dapps[DAPP_METAMASK_TEST_DAPP.origin]) {
@@ -56,7 +56,7 @@ export function useSheetWebViewTester() {
   const openMetaMaskTestDapp = React.useCallback(() => {
     makeSureTestDapp();
 
-    addOpenedDapp(
+    openUrlAsDapp(
       {
         origin: DAPP_METAMASK_TEST_DAPP.origin,
         $openParams: {
@@ -66,7 +66,7 @@ export function useSheetWebViewTester() {
       { isActiveDapp: true },
     );
     showDappWebViewModal();
-  }, [makeSureTestDapp, addOpenedDapp, showDappWebViewModal]);
+  }, [makeSureTestDapp, openUrlAsDapp, showDappWebViewModal]);
 
   return {
     makeSureTestDapp,

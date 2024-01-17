@@ -1,7 +1,6 @@
 import { makeAppStorage } from '../storage/mmkv';
 
 import { ContactBookService } from '@rabby-wallet/service-address';
-import { DappService } from '@rabby-wallet/service-dapp';
 
 import { PreferenceService } from './preference';
 import { WhitelistService } from './whitelist';
@@ -10,6 +9,7 @@ import { TransactionHistoryService } from './transactionHistory';
 import { SecurityEngineService } from './securityEngine';
 import { TransactionWatcherService } from './transactionWatcher';
 import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
+import { DappService } from './dappService';
 
 export const appStorage = makeAppStorage();
 

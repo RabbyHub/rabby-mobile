@@ -6,7 +6,7 @@ import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '@rneui/themed';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
@@ -101,7 +101,7 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
-  const { addOpenedDapp } = useOpenDappView();
+  const { openUrlAsDapp } = useOpenDappView();
   const { setOpenedUrl } = useOpenUrlView();
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
   const isDomain = isPossibleDomain(debouncedSearchValue);
@@ -154,8 +154,8 @@ export function SearchDappsScreen(): JSX.Element {
             url={debouncedSearchValue}
             onPress={generalUrl => {
               // TODO: should we validate the url?
-              setOpenedUrl(generalUrl);
-              toggleShowSheetModal('urlWebviewContainerRef', true);
+              openUrlAsDapp(generalUrl);
+              toggleShowSheetModal('dappWebviewContainerRef', true);
             }}
           />
           <SearchDappCardList
@@ -167,8 +167,9 @@ export function SearchDappsScreen(): JSX.Element {
             empty={<SearchEmpty isDomain={isDomain} />}
             total={data?.page?.total}
             onPress={dapp => {
-              addOpenedDapp(dapp.origin, { isActiveDapp: true });
+              openUrlAsDapp(dapp.origin);
               toggleShowSheetModal('dappWebviewContainerRef', true);
+              console.log('press dapp', dapp.origin);
             }}
             onFavoritePress={dapp => {
               addDapp({

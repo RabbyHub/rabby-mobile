@@ -1,7 +1,7 @@
 import RcIconDelete from '@/assets/icons/dapp/icon-delete.svg';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect.svg';
 import { useThemeColors } from '@/hooks/theme';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { Animated, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';

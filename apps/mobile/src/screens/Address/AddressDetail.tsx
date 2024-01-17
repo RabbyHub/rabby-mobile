@@ -305,6 +305,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         <AppBottomSheetModal
           backdropComponent={renderBackdrop}
           ref={inputNameBottomSheetModalRef}
+          keyboardBlurBehavior="restore"
           snapPoints={[300]}>
           <BottomSheetView
             style={{

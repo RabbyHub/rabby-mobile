@@ -1,6 +1,5 @@
-import { ColorSchemeName, StyleSheet, View, StatusBar } from 'react-native';
+import { ColorSchemeName, View, StatusBar } from 'react-native';
 import { isValidElementType } from 'react-is';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   NavigationContainer,
   DefaultTheme,
@@ -8,14 +7,6 @@ import {
 } from '@react-navigation/native';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { useEffect, useRef, useCallback, useMemo } from 'react';
-
-// import FastImage from 'react-native-fast-image';
-import { AppColorsVariants } from '@/constant/theme';
-
-import {
-  RcIconNavigationHomeLight,
-  RcIconNavigationDappsLight,
-} from '@/assets/icons/bottom-bar';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
@@ -26,20 +17,11 @@ import {
   useStackScreenConfig,
 } from './hooks/navigation';
 import { Text } from './components';
-import {
-  AppRootName,
-  getRootSpecConfig,
-  NavigationHeadersPresets,
-  RootNames,
-  ScreenColors,
-  ScreenLayouts,
-} from './constant/layout';
+import { AppRootName, getRootSpecConfig, RootNames } from './constant/layout';
 // import {analytics} from './utils/analytics';
 
 // import { LoginNavigator } from './screens';
 import NotFoundScreen from './screens/NotFound';
-
-import HomeScreen from './screens/Home/Home';
 
 // import DappsScreen from './screens/Dapps/Dapps';
 import HistoryScreen from './screens/Transaction/History';
@@ -48,14 +30,14 @@ import MyBundleScreen from './screens/Assets/MyBundle';
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
-import { DappsScreen } from './screens/Dapps/Dapps';
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { NFTDetailScreen } from './screens/NftDetail';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 
+import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
+
 const RootStack = createNativeStackNavigator();
-const BottomTab = createBottomTabNavigator();
 
 const AccountStack = createNativeStackNavigator();
 const TransactionStack = createNativeStackNavigator();
@@ -65,49 +47,6 @@ const RootStackOptions = {
   animation: 'slide_from_right',
   headerShown: false,
 } as const;
-
-const BottomTabIcon = ({
-  icon: Icon,
-  ...otherProps
-}: {
-  icon: MemoziedAppSvgIcon | React.ReactNode;
-} & React.ComponentProps<MemoziedAppSvgIcon>) => {
-  if (!isValidElementType(Icon)) {
-    return Icon || null;
-  }
-
-  return !Icon ? null : <Icon width={24} height={24} {...otherProps} />;
-};
-
-const tabBarLabelStyle = {
-  fontSize: 11,
-  width: '100%',
-  paddingTop: 6,
-  fontWeight: '600',
-  textAlign: 'center',
-  // fontFamily: 'SF Pro',
-} as const;
-
-const BottomTabLabel = ({
-  label,
-  children = label,
-  focused,
-}: React.PropsWithChildren<{
-  label?: string;
-  focused: boolean;
-}>) => {
-  const colors = useThemeColors();
-
-  return (
-    <Text
-      style={{
-        ...tabBarLabelStyle,
-        color: focused ? colors['blue-default'] : colors['neutral-foot'],
-      }}>
-      {children}
-    </Text>
-  );
-};
 
 function AppStatusBar() {
   const currentRouteName = useCurrentRouteNameInAppStatusBar();
@@ -270,95 +209,6 @@ export default function AppNavigation({
     </View>
   );
 }
-
-const BottomTabNavigator = () => {
-  const colors = useThemeColors();
-  const isDark = useGetAppThemeMode() === 'dark';
-
-  if (__DEV__) {
-    console.log('BottomTabNavigator Render');
-  }
-
-  return (
-    <>
-      <BottomTab.Navigator
-        sceneContainerStyle={{ backgroundColor: colors['neutral-bg-1'] }}
-        screenOptions={{
-          tabBarInactiveTintColor: isDark
-            ? 'rgba(223, 223, 223, 0.4)'
-            : 'rgba(25, 35, 60, 0.4)',
-          tabBarActiveTintColor: colors['neutral-bg-1'],
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: colors['neutral-bg-1'],
-          },
-          headerShadowVisible: true,
-          headerTintColor: colors['neutral-bg-1'],
-          headerTitleStyle: {
-            color: colors['neutral-title-1'],
-            fontWeight: 'bold',
-          },
-          headerTransparent: true,
-          tabBarStyle: {
-            position: 'absolute',
-            // height: Platform.OS === 'ios' ? 90 : 70,
-            height: ScreenLayouts.bottomBarHeight,
-            borderTopColor: colors['neutral-line'],
-            borderTopWidth: 1,
-            backgroundColor: colors['neutral-bg-1'],
-          },
-          tabBarLabelStyle: { ...tabBarLabelStyle },
-          tabBarLabelPosition: 'below-icon',
-          tabBarItemStyle: {
-            height: ScreenLayouts.bottomBarHeight,
-            paddingTop: 13,
-            paddingBottom: 38,
-            backgroundColor: colors['neutral-bg-1'],
-          },
-        }}>
-        <BottomTab.Screen
-          name={RootNames.Home}
-          component={HomeScreen}
-          options={{
-            title: 'Home',
-            headerTitle: '',
-            headerShown: true,
-            tabBarLabel: ({ focused }) => (
-              <BottomTabLabel focused={focused} label={'Home'} />
-            ),
-            tabBarIcon: ({ color, focused }) => (
-              <BottomTabIcon
-                icon={<RcIconNavigationHomeLight isActive={focused} />}
-              />
-            ),
-          }}
-        />
-        <BottomTab.Screen
-          name={RootNames.Dapps}
-          component={DappsScreen}
-          options={{
-            title: 'Dapps',
-            headerTitleStyle: {
-              fontWeight: '500',
-              fontSize: 17,
-            },
-            headerTitle: 'Dapps',
-            headerTransparent: true,
-            headerShown: true,
-            tabBarLabel: ({ focused }) => (
-              <BottomTabLabel focused={focused} label={'Dapps'} />
-            ),
-            tabBarIcon: ({ color, focused }) => (
-              <BottomTabIcon
-                icon={<RcIconNavigationDappsLight isActive={focused} />}
-              />
-            ),
-          }}
-        />
-      </BottomTab.Navigator>
-    </>
-  );
-};
 
 function AccountNavigator() {
   const screenOptions = useStackScreenConfig();

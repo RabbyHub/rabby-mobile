@@ -1,5 +1,5 @@
 import { useThemeColors } from '@/hooks/theme';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { EmptyDapps } from './EmptyDapps';

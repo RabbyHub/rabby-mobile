@@ -8,7 +8,6 @@ import {
 import { useThemeColors } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
-import { DappInfo } from '@rabby-wallet/service-dapp';
 import React, { ReactNode } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import {
@@ -17,6 +16,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
+import { DappInfo } from '@/core/services/dappService';
 
 export const SearchDappCardList = ({
   data,

@@ -1,5 +1,5 @@
 import { useThemeColors } from '@/hooks/theme';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
