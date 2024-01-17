@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { BackHandler } from 'react-native';
-import { AppBottomSheetModal } from '@/components';
+import { AppBottomSheetModal, Button } from '@/components';
 import {
   useOpenUrlView,
   useOpenDappView,
   useActiveViewSheetModalRefs,
 } from '../../hooks/useDappView';
-import SheetDappWebViewInner from './SheetDappWebView';
+import { BottomSheetContent } from './DappWebViewControlWidgets';
 import SheetGeneralWebView from './SheetGeneralWebView';
 import { devLog } from '@/utils/logger';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -17,9 +17,21 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
 
+import DappWebViewControl from '@/components/WebView/DappWebViewControl';
+import { useDapps } from '@/hooks/useDapps';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { ScreenLayouts } from '@/constant/layout';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
 );
+
+const DFLT_WEBVIEW_SCROLL_STATE = {
+  isScrolling: false,
+  yPoint: 0,
+  yPointOnLastEnd: -1,
+};
 
 export function OpenedDappWebViewStub() {
   const { openedDappItems, activeDapp, hideActiveDapp } = useOpenDappView();
@@ -39,6 +51,12 @@ export function OpenedDappWebViewStub() {
     };
   }, [safeOffScreenTop]);
 
+  const { isDappConnected } = useDapps();
+
+  const hideDappSheetModal = useCallback(() => {
+    dappWebviewContainerRef?.current?.snapToIndex(0);
+  }, [dappWebviewContainerRef]);
+
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
@@ -47,11 +65,11 @@ export function OpenedDappWebViewStub() {
          * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
          * it will umount children component of BottomSheetModal
          */
-        toggleShowSheetModal('dappWebviewContainerRef', 0);
+        hideDappSheetModal();
         hideActiveDapp();
       }
     },
-    [toggleShowSheetModal, hideActiveDapp, indexAsCollapsed],
+    [hideActiveDapp, hideDappSheetModal, indexAsCollapsed],
   );
 
   useEffect(() => {
@@ -88,25 +106,78 @@ export function OpenedDappWebViewStub() {
       // detached={true}
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
-      enableContentPanningGesture={false}
       enablePanDownToClose={false}
+      enableContentPanningGesture={false}
       enableHandlePanningGesture
       name="dappWebviewContainerRef"
       ref={dappWebviewContainerRef}
       snapPoints={snapPoints}
       onChange={handleBottomSheetChanges}>
-      <BottomSheetView className="px-[20] items-center justify-center">
+      <BottomSheetView
+        className="items-center justify-center"
+        style={{
+          height: '100%',
+        }}>
         {openedDappItems.map((dappInfo, idx) => {
+          const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
           const key = `${dappInfo.origin}-${
             dappInfo.maybeDappInfo?.chainId || 'ETH'
           }`;
 
           return (
-            <SheetDappWebViewInner
+            <DappWebViewControl
               key={key}
-              style={{ ...(!isActiveDapp && { display: 'none' }) }}
-              dapp={dappInfo}
+              style={[!isActiveDapp && { display: 'none' }]}
+              dappOrigin={dappInfo.origin}
+              initialUrl={dappInfo.$openParams?.initialUrl}
+              webviewProps={{
+                /**
+                 * @platform ios
+                 */
+                contentMode: 'mobile',
+                /**
+                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                 * @platform android
+                 */
+                nestedScrollEnabled: false,
+              }}
+              bottomNavH={
+                isConnected
+                  ? ScreenLayouts.dappWebViewNavBottomSheetHeight
+                  : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
+              }
+              headerLeft={() => {
+                if (!isConnected) return null;
+                if (!dappInfo.maybeDappInfo?.chainId) return null;
+
+                return (
+                  <TouchableView
+                    style={[
+                      {
+                        height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                        justifyContent: 'center',
+                      },
+                    ]}
+                    onPress={() => {}}>
+                    <ChainIconImage
+                      chainEnum={dappInfo.maybeDappInfo?.chainId}
+                      size={24}
+                      width={24}
+                      height={24}
+                    />
+                  </TouchableView>
+                );
+              }}
+              bottomSheetContent={({ bottomNavBar }) => {
+                return (
+                  <BottomSheetContent
+                    dappInfo={dappInfo}
+                    bottomNavBar={bottomNavBar}
+                  />
+                );
+              }}
             />
           );
         })}
