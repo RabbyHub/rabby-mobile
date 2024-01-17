@@ -1,5 +1,5 @@
 export function ucfirst<T extends string>(str: T): Capitalize<T> {
-  return str.charAt(0).toUpperCase() + str.slice(1) as Capitalize<T>;
+  return (str.charAt(0).toUpperCase() + str.slice(1)) as Capitalize<T>;
 }
 
 export function ensurePrefix(str = '', prefix = '/') {
@@ -16,4 +16,8 @@ export function unPrefix(str = '', prefix = '/') {
 
 export function unSuffix(str = '', suffix = '/') {
   return str.endsWith(suffix) ? str.slice(0, -suffix.length) : str;
+}
+
+export function isStringOrNumber(data: any) {
+  return typeof data === 'string' || typeof data === 'number';
 }

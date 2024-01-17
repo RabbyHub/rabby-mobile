@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
-import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
+import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
@@ -21,6 +21,11 @@ import {
   useOpenDappView,
 } from '../hooks/useDappView';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChainByEnum } from '@/utils/chain';
+import { isPossibleDomain } from '@/utils/url';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -37,6 +42,7 @@ export function SearchDappsScreen(): JSX.Element {
   const [searchText, setSearchText] = React.useState('');
 
   const ref = React.useRef<any>(null);
+  const [chain, setChain] = React.useState<CHAINS_ENUM>();
 
   const debouncedSearchValue = useDebounce(searchText, {
     wait: 500,
@@ -57,9 +63,10 @@ export function SearchDappsScreen(): JSX.Element {
       }
       const limit = d?.page?.limit || 30;
       const start = d?.next || 0;
+      const chainInfo = findChainByEnum(chain);
       const res = await openapi.searchDapp({
         q: debouncedSearchValue,
-        // chain_id: chainInfo?.serverId,
+        chain_id: chainInfo?.serverId,
         start,
         limit,
       });
@@ -70,7 +77,7 @@ export function SearchDappsScreen(): JSX.Element {
       };
     },
     {
-      reloadDeps: [debouncedSearchValue],
+      reloadDeps: [debouncedSearchValue, chain],
       target: ref,
       // eslint-disable-next-line @typescript-eslint/no-shadow
       isNoMore(data) {
@@ -97,6 +104,7 @@ export function SearchDappsScreen(): JSX.Element {
   const { openUrlAsDapp } = useOpenDappView();
   const { setOpenedUrl } = useOpenUrlView();
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
+  const isDomain = isPossibleDomain(debouncedSearchValue);
 
   return (
     <View style={styles.page}>
@@ -123,6 +131,7 @@ export function SearchDappsScreen(): JSX.Element {
           value={searchText}
           onChangeText={v => {
             setSearchText(v);
+            setChain(undefined);
             // runSearch(v);
           }}
           showCancel
@@ -149,25 +158,26 @@ export function SearchDappsScreen(): JSX.Element {
               toggleShowSheetModal('dappWebviewContainerRef', true);
             }}
           />
-          {loading ? null : list.length === 0 ? (
-            <SearchEmpty />
-          ) : (
-            <SearchDappCardList
-              onEndReached={loadMore}
-              data={list}
-              onPress={dapp => {
-                openUrlAsDapp(dapp.origin);
-                toggleShowSheetModal('dappWebviewContainerRef', true);
-                console.log('press dapp', dapp.origin);
-              }}
-              onFavoritePress={dapp => {
-                addDapp({
-                  ...dapp,
-                  isFavorite: !dapp.isFavorite,
-                });
-              }}
-            />
-          )}
+          <SearchDappCardList
+            chain={chain}
+            onChainChange={setChain}
+            onEndReached={loadMore}
+            data={list}
+            loading={loading}
+            empty={<SearchEmpty isDomain={isDomain} />}
+            total={data?.page?.total}
+            onPress={dapp => {
+              openUrlAsDapp(dapp.origin);
+              toggleShowSheetModal('dappWebviewContainerRef', true);
+              console.log('press dapp', dapp.origin);
+            }}
+            onFavoritePress={dapp => {
+              addDapp({
+                ...dapp,
+                isFavorite: !dapp.isFavorite,
+              });
+            }}
+          />
         </>
       ) : (
         <SearchSuggest

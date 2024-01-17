@@ -41,7 +41,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, []);
+  }, [setLock]);
 
   const [{ appInitialized }] = useAtom(bootstrapAtom);
   React.useEffect(() => {
@@ -81,7 +81,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 
       setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
     });
-  }, [isTop, appInitialized, locked, entryScripts.inPageWeb3]);
+  }, [isTop, appInitialized, locked, entryScripts.inPageWeb3, setEntryScripts]);
 
   const fullScript = React.useMemo(() => {
     return [
@@ -97,7 +97,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
     entryScriptWeb3Loaded: [
       appInitialized,
       !!entryScripts.inPageWeb3,
-      __DEV__ ? !!entryScripts.vConsole : true,
+      // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
     entryScripts,
     fullScript: fullScript,
@@ -130,7 +130,7 @@ export function useBootstrapApp() {
           appInitialized: true,
         }));
       });
-  }, []);
+  }, [setBootstrap]);
 
   return {
     couldRender: appInitialized,

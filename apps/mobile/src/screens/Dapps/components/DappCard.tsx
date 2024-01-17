@@ -18,8 +18,11 @@ import {
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { CHAINS } from '@/constant/chains';
+import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 
 export const DappCard = ({
+  isActive,
   data,
   onPress,
   onFavoritePress,
@@ -29,9 +32,12 @@ export const DappCard = ({
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
+  isActive?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  const chain = CHAINS[data.chainId];
 
   return (
     <TouchableOpacity
@@ -39,24 +45,34 @@ export const DappCard = ({
       onPress={() => {
         onPress?.(data);
       }}>
-      <View style={styles.body}>
-        {/* <Image
-          source={{
-            uri: data.info.logo_url,
-          }}
-          style={styles.dappIcon}
-        /> */}
-        <DappIcon
-          source={
-            data?.info?.logo_url
-              ? {
-                  uri: data.info.logo_url,
-                }
-              : undefined
-          }
-          origin={data.origin}
-          style={styles.dappIcon}
-        />
+      <View style={styles.body} onStartShouldSetResponder={() => true}>
+        <View style={styles.dappIconWraper}>
+          <DappIcon
+            source={
+              data?.info?.logo_url
+                ? {
+                    uri: data.info.logo_url,
+                  }
+                : undefined
+            }
+            origin={data.origin}
+            style={styles.dappIcon}
+          />
+          {isActive ? <View style={styles.dappIconCircle} /> : null}
+          <>
+            {data?.isConnected && chain ? (
+              <Image
+                source={{
+                  uri: chain?.logo,
+                }}
+                style={styles.chainIcon}
+              />
+            ) : null}
+            {!data?.isConnected ? (
+              <RcIconDisconnect style={styles.chainIcon} />
+            ) : null}
+          </>
+        </View>
         <View style={styles.dappContent}>
           <Text style={styles.dappOrigin} numberOfLines={1}>
             {stringUtils.unPrefix(data.origin, 'https://')}
@@ -182,9 +198,30 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       left: 8,
       top: -8,
     },
+    dappIconWraper: {
+      position: 'relative',
+    },
     dappIcon: {
       width: 32,
       height: 32,
       borderRadius: 16,
+    },
+    dappIconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 40,
+      borderWidth: 1.5,
+      borderColor: colors['green-default'],
+      position: 'absolute',
+      top: -4,
+      left: -4,
+    },
+    chainIcon: {
+      width: 16,
+      height: 16,
+      borderRadius: 16,
+      position: 'absolute',
+      right: -2,
+      bottom: -2,
     },
   });

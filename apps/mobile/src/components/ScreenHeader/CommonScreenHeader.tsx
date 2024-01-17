@@ -54,7 +54,7 @@ export default function CommonScreenHeader({
     }
 
     return children;
-  }, [children]);
+  }, [children, textStyle]);
 
   return (
     <View style={[style, styles.title]}>

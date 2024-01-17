@@ -1,14 +1,19 @@
-import { Button } from '@/components/Button';
-import { toast } from '@/components/Toast';
-import { apisWalletConnect } from '@/core/apis';
-import { Account } from '@/core/services/preference';
-import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import Process from './Process';
 import { useApproval } from '@/hooks/useApproval';
-import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
+import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { useSessionStatus } from '@/hooks/useSessionStatus';
 import { eventBus, EVENTS } from '@/utils/events';
-import React from 'react';
-import { Text, View } from 'react-native';
+import { CHAINS } from '@debank/common';
+import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
+import { toast } from '@/components/Toast';
+import { preferenceService, transactionHistoryService } from '@/core/services';
+import { Account } from '@/core/services/preference';
+import { apisWalletConnect } from '@/core/apis';
+import { View } from 'react-native';
+import { useApprovalPopup } from '@/hooks/useApprovalPopup';
+import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 
 interface ApprovalParams {
   address: string;
@@ -22,140 +27,218 @@ interface ApprovalParams {
 }
 
 export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
+  const { setVisible, closePopup } = useCommonPopupView();
+  const [connectStatus, setConnectStatus] = useState(
+    WALLETCONNECT_STATUS_MAP.WAITING,
+  );
+  const [connectError, setConnectError] = useState<null | {
+    code?: number;
+    message?: string;
+  }>(null);
+
+  const [result, setResult] = useState('');
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const { currentAccount } = useCurrentAccount();
-  const colors = useThemeColors();
-  const { openWalletByBrandName } = useValidWalletServices();
-  const isSignTextRef = React.useRef(false);
-  const [result, setResult] = React.useState('');
-  const explainRef = React.useRef<any | null>(null);
-  const [signFinishedData, setSignFinishedData] = React.useState<{
+  const chain = Object.values(CHAINS).find(
+    item => item.id === (params.chainId || 1),
+  )!.enum;
+  const isSignTextRef = useRef(false);
+  const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
+  const explainRef = useRef<any | null>(null);
+  const [signFinishedData, setSignFinishedData] = useState<{
     data: any;
     approvalId: string;
   }>();
+  const [isClickDone, setIsClickDone] = useState(false);
+  const { status: sessionStatus } = useSessionStatus(currentAccount!);
+  const { t } = useTranslation();
 
-  const bindSignFinished = async data => {
+  const initWalletConnect = async () => {
+    const account = (await preferenceService.getCurrentAccount())!;
+    const status = await apisWalletConnect.getWalletConnectStatus(
+      account.address,
+      account.brandName,
+    );
+    if (status) {
+      setConnectStatus(
+        status === null ? WALLETCONNECT_STATUS_MAP.PENDING : status,
+      );
+    }
+
+    const signingTx = await transactionHistoryService.getSigningTx(
+      params.signingTxId!,
+    );
+
+    explainRef.current = signingTx?.explain;
+    if (
+      status !== WALLETCONNECT_STATUS_MAP.CONNECTED &&
+      status !== WALLETCONNECT_STATUS_MAP.SIBMITTED
+    ) {
+      eventBus.emit(EVENTS.broadcastToBackground, {
+        method: EVENTS.WALLETCONNECT.INIT,
+        data: account,
+      });
+    }
+  };
+  const approvalPopup = useApprovalPopup();
+  const handleCancel = () => {
+    approvalPopup.closePopup();
+    rejectApproval('user cancel');
+  };
+
+  const handleRetry = async () => {
+    const account = (await preferenceService.getCurrentAccount())!;
+
+    setConnectStatus(WALLETCONNECT_STATUS_MAP.PENDING);
+    setConnectError(null);
+    apisWalletConnect.resendWalletConnect(account);
+    toast.success(t('page.signFooterBar.walletConnect.requestSuccessToast'));
+  };
+
+  const init = async () => {
     const approval = await getApproval();
-    const account = params.isGnosis ? params.account! : currentAccount;
+    const account = (await preferenceService.getCurrentAccount())!;
+
+    setCurrentAccount(account);
+
     let isSignTriggered = false;
     const isText = params.isGnosis
       ? true
       : approval?.data.approvalType !== 'SignTx';
     isSignTextRef.current = isText;
 
-    if (data.success) {
-      let sig = data.data;
-      setResult(sig);
-      toast.success(sig);
-      try {
-        // if (params.isGnosis) {
-        //   sig = adjustV('eth_signTypedData', sig);
-        //   const sigs = await wallet.getGnosisTransactionSignatures();
-        //   if (sigs.length > 0) {
-        //     await wallet.gnosisAddConfirmation(account.address, sig);
-        //   } else {
-        //     await wallet.gnosisAddSignature(account.address, sig);
-        //     await wallet.postGnosisTransaction();
-        //   }
-        // }
-      } catch (e: any) {
-        rejectApproval(e.message);
-        return;
+    eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
+      if (data.success) {
+        let sig = data.data;
+        setResult(sig);
+        setSignFinishedData({
+          data: sig,
+          approvalId: approval!.id,
+        });
+      } else {
+        rejectApproval(data.errorMsg);
       }
-      if (!isSignTextRef.current) {
-        // const tx = approval.data?.params;
-        const explain = explainRef.current;
-        if (explain) {
-          // const { nonce, from, chainId } = tx;
-          // const explain = await wallet.getExplainCache({
-          //   nonce: Number(nonce),
-          //   address: from,
-          //   chainId: Number(chainId),
-          // });
-          //   wallet.reportStats('signedTransaction', {
-          //     type: account.brandName,
-          //     chainId: findChainByEnum(chain)?.serverId || '',
-          //     category: KEYRING_CATEGORY_MAP[account.type],
-          //     success: true,
-          //     preExecSuccess: explain
-          //       ? explain?.calcSuccess && explain?.pre_exec.success
-          //       : true,
-          //     createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-          //     source: params?.$ctx?.ga?.source || '',
-          //     trigger: params?.$ctx?.ga?.trigger || '',
-          //   });
+    });
+
+    eventBus.addListener(
+      EVENTS.WALLETCONNECT.STATUS_CHANGED,
+      async ({ status, payload }) => {
+        setVisible(true);
+        setConnectStatus(status);
+        if (
+          status !== WALLETCONNECT_STATUS_MAP.FAILD &&
+          status !== WALLETCONNECT_STATUS_MAP.REJECTED
+        ) {
+          if (!isText && !isSignTriggered) {
+            const explain = explainRef.current;
+
+            if (explain) {
+              // TODO
+              // wallet.reportStats('signTransaction', {
+              //   type: account.brandName,
+              //   chainId: findChainByEnum(chain)?.serverId || '',
+              //   category: KEYRING_CATEGORY_MAP[account.type],
+              //   preExecSuccess: explain
+              //     ? explain?.calcSuccess && explain?.pre_exec.success
+              //     : true,
+              //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+              //   source: params?.$ctx?.ga?.source || '',
+              //   trigger: params?.$ctx?.ga?.trigger || '',
+              // });
+            }
+            // matomoRequestEvent({
+            //   category: 'Transaction',
+            //   action: 'Submit',
+            //   label: account.brandName,
+            // });
+            isSignTriggered = true;
+          }
+          if (isText && !isSignTriggered) {
+            // TODO
+            // wallet.reportStats('startSignText', {
+            //   type: account.brandName,
+            //   category: KEYRING_CATEGORY_MAP[account.type],
+            //   method: params?.extra?.signTextMethod,
+            // });
+            isSignTriggered = true;
+          }
         }
-      }
-      // TODO
-      // setSignFinishedData({
-      //   data: sig,
-      //   approvalId: approval!.id,
-      // });
-      resolveApproval(sig, false, false, approval!.id);
-    } else {
-      if (!isSignTextRef.current) {
-        // const tx = approval.data?.params;
-        const explain = explainRef.current;
-        if (explain) {
-          // const { nonce, from, chainId } = tx;
-          // const explain = await wallet.getExplainCache({
-          //   nonce: Number(nonce),
-          //   address: from,
-          //   chainId: Number(chainId),
-          // });
-          // wallet.reportStats('signedTransaction', {
-          //   type: account.brandName,
-          //   chainId: findChainByEnum(chain)?.serverId || '',
-          //   category: KEYRING_CATEGORY_MAP[account.type],
-          //   success: false,
-          //   preExecSuccess: explain
-          //     ? explain?.calcSuccess && explain?.pre_exec.success
-          //     : true,
-          //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-          //   source: params?.$ctx?.ga?.source || '',
-          //   trigger: params?.$ctx?.ga?.trigger || '',
-          // });
+        switch (status) {
+          case WALLETCONNECT_STATUS_MAP.CONNECTED:
+            break;
+          case WALLETCONNECT_STATUS_MAP.FAILD:
+          case WALLETCONNECT_STATUS_MAP.REJECTED:
+            if (payload?.code) {
+              try {
+                const error = JSON.parse(payload.message);
+                setConnectError({
+                  code: payload.code,
+                  message: error.message,
+                });
+              } catch (e) {
+                setConnectError(payload);
+              }
+            } else {
+              setConnectError(
+                (payload?.params && payload.params[0]) || payload,
+              );
+            }
+            break;
+          case WALLETCONNECT_STATUS_MAP.SIBMITTED:
+            setResult(payload);
+            break;
         }
-      }
-      rejectApproval(data.errorMsg);
-    }
+      },
+    );
+    initWalletConnect();
   };
 
-  React.useEffect(() => {
-    eventBus.addListener(EVENTS.SIGN_FINISHED, bindSignFinished);
-
-    return () => {
-      eventBus.removeListener(EVENTS.SIGN_FINISHED, bindSignFinished);
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    init();
   }, []);
 
-  React.useEffect(() => {
-    if (!currentAccount) {
-      return;
+  useEffect(() => {
+    if (signFinishedData && isClickDone) {
+      closePopup();
+      resolveApproval(
+        signFinishedData.data,
+        false,
+        false,
+        signFinishedData.approvalId,
+      );
     }
-    apisWalletConnect
-      .getDeepLink({
-        address: currentAccount?.address,
-        brandName: currentAccount?.brandName,
-      })
-      .then(uri => {
-        if (uri) {
-          openWalletByBrandName(currentAccount.brandName, uri);
-        }
-      });
-  }, [currentAccount, openWalletByBrandName]);
+  }, [signFinishedData, isClickDone]);
+
+  useEffect(() => {
+    if (sessionStatus === 'DISCONNECTED') {
+      setVisible(false);
+      toast.info(t('page.signFooterBar.ledger.notConnected'));
+    } else {
+    }
+  }, [sessionStatus]);
+
+  const { openWalletByAccount } = useValidWalletServices();
+  useEffect(() => {
+    if (currentAccount) {
+      openWalletByAccount(currentAccount);
+    }
+  }, [currentAccount, openWalletByAccount]);
 
   return (
     <View>
-      <Text
-        style={{
-          fontSize: 30,
-        }}>
-        WatchAddressWaiting
-      </Text>
-      <Text>{currentAccount?.address}</Text>
+      <View>
+        {currentAccount && (
+          <Process
+            chain={chain}
+            result={result}
+            status={connectStatus}
+            error={connectError}
+            onRetry={handleRetry}
+            onCancel={handleCancel}
+            account={currentAccount}
+            onDone={() => setIsClickDone(true)}
+          />
+        )}
+      </View>
     </View>
   );
 };

@@ -93,6 +93,22 @@ export const KEYRING_CLASS = {
   // COINBASE: CoinbaseKeyring.type,
 };
 
+export enum KEYRING_CATEGORY {
+  Mnemonic = 'Mnemonic',
+  PrivateKey = 'PrivateKey',
+  WatchMode = 'WatchMode',
+  Contract = 'Contract',
+  Hardware = 'Hardware',
+  WalletConnect = 'WalletConnect',
+}
+
+export const KEYRING_CATEGORY_MAP = {
+  [KEYRING_CLASS.MNEMONIC]: KEYRING_CATEGORY.Mnemonic,
+  [KEYRING_CLASS.PRIVATE_KEY]: KEYRING_CATEGORY.PrivateKey,
+  [KEYRING_CLASS.WATCH]: KEYRING_CATEGORY.WatchMode,
+  [KEYRING_CLASS.WALLETCONNECT]: KEYRING_CATEGORY.WalletConnect,
+};
+
 export enum WALLET_NAME {
   Bitget = 'Bitget',
   MetaMask = 'MetaMask',

@@ -32,5 +32,5 @@ export function useSetupServiceStub() {
     return () => {
       disposes.forEach(dispose => dispose());
     };
-  }, []);
+  }, [setDappServices]);
 }

@@ -4,6 +4,7 @@ export const eventBus = new EventEmitter();
 
 export const EVENTS = {
   broadcastToBackground: 'broadcastToBackground',
+  broadcastToUI: 'broadcastToUI',
   TX_COMPLETED: 'TX_COMPLETED',
   SIGN_FINISHED: 'SIGN_FINISHED',
   TX_SUBMITTING: 'TX_SUBMITTING',

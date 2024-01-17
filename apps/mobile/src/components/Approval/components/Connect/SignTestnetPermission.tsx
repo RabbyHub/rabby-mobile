@@ -9,7 +9,10 @@ import { preferenceService } from '@/core/services';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Radio } from '@/components/Radio';
 
@@ -28,15 +31,6 @@ const getStyles = (colors: AppColorsVariants) =>
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
       flexDirection: 'row',
-    },
-    modalTitle: {
-      fontSize: 20,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['neutral-title-1'],
-      marginBottom: 16,
-      paddingTop: 24,
-      textAlign: 'center',
     },
     radioText: {
       fontSize: 15,
@@ -86,7 +80,7 @@ export const SignTestnetPermission = ({
   onChange,
 }: SignTestnetPermissionProps) => {
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const isShowTestnet = preferenceService.getIsShowTestnet();
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const value = _value || SIGN_PERMISSION_TYPES.MAINNET_AND_TESTNET;
@@ -122,9 +116,9 @@ export const SignTestnetPermission = ({
 
       <AppBottomSheetModal ref={modalRef} snapPoints={[300]}>
         <BottomSheetView style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>
-            {t('page.connect.SignTestnetPermission.title')}
-          </Text>
+          <AppBottomSheetModalTitle
+            title={t('page.connect.SignTestnetPermission.title')}
+          />
 
           <View style={styles.radioGroupContainer}>
             {options.map(item => {

@@ -316,7 +316,7 @@ class ProviderController extends BaseController {
   };
 
   ethCoinbase = async ({ session: { origin } }: { session: Session }) => {
-    if (!dappService.getDapp(origin).isConnected) {
+    if (!dappService.getDapp(origin)?.isConnected) {
       return null;
     }
 

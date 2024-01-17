@@ -40,7 +40,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
     this.store.dapps = { ...this.store.dapps };
   }
 
-  getDapp(dappOrigin: string) {
+  getDapp(dappOrigin: string): DappInfo | undefined {
     return this.store.dapps[dappOrigin];
   }
 
@@ -50,7 +50,7 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
 
   getConnectedDapp(dappOrigin: string) {
     const dapp = this.getDapp(dappOrigin);
-    if (dapp.isConnected) {
+    if (dapp?.isConnected) {
       return dapp;
     }
     return null;

@@ -1,0 +1,162 @@
+import { StyleSheet, View, Text } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { Chain } from '@debank/common';
+import { Result } from '@rabby-wallet/rabby-security-engine';
+import { maxBy } from 'lodash';
+import { useTranslation } from 'react-i18next';
+import { ParsedActionData, CancelTxRequireData } from './utils';
+import IconAlert from '@/assets/icons/sign/tx/alert.svg';
+import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColorsVariants } from '@/constant/theme';
+
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors['blue-light-1'],
+      borderColor: colors['blue-default'],
+      borderWidth: 1,
+      borderRadius: 6,
+      padding: 12,
+      position: 'relative',
+    },
+    internalTransaction: {
+      padding: 0,
+      position: 'absolute',
+      textAlign: 'center',
+      zIndex: 1,
+      color: colors['blue-default'], // Assuming a default color if var(--r-blue-default) is not defined
+      fontSize: 12,
+      lineHeight: 12,
+      top: -7,
+      left: 10,
+    },
+    bg: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0.5,
+      width: '100%',
+      height: 6,
+      backgroundColor: colors['blue-light-1'], // Assuming a default color if var(--r-blue-light-1) is not defined
+      zIndex: -1,
+    },
+    txItem: {
+      paddingBottom: 13,
+      marginBottom: 13,
+      borderBottomWidth: 1,
+      borderBottomColor: '#e0e3f1',
+      display: 'flex',
+      justifyContent: 'space-between',
+      flexDirection: 'row',
+    },
+    txItemTextFirst: {
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 16,
+      color: colors['neutral-title-1'], // Assuming a default color if var(--r-neutral-title-1) is not defined
+    },
+    txItemTextSecond: {
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 16,
+      color: colors['neutral-foot'], // Assuming a default color if var(--r-neutral-foot) is not defined
+    },
+    gasPriceTip: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 24,
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 16,
+      color: '#333333',
+      marginTop: 15,
+    },
+  });
+
+const CancelTx = ({
+  data,
+  requireData,
+  raw,
+}: {
+  data: ParsedActionData['cancelTx'];
+  requireData: CancelTxRequireData;
+  chain: Chain;
+  raw: Record<string, string | number>;
+  engineResults: Result[];
+  onChange(tx: Record<string, any>): void;
+}) => {
+  const { t } = useTranslation();
+  const { init } = useApprovalSecurityEngine();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  const pendingTx = useMemo(() => {
+    let tx: { type: string; gasPrice: number } | null = null;
+    requireData.pendingTxs.forEach(group => {
+      let type = t('page.signTx.unknownAction');
+      const target = maxBy(group.txs, item =>
+        Number(item.rawTx.gasPrice || item.rawTx.maxFeePerGas || 0),
+      );
+      if (target) {
+        // TODO
+        // type = getActionTypeText(target.rawTx.);
+        const res = {
+          type,
+          gasPrice: Number(
+            target.rawTx.gasPrice || target.rawTx.maxFeePerGas || 0,
+          ),
+        };
+        if (tx && res.gasPrice > tx.gasPrice) {
+          tx = res;
+        } else {
+          tx = res;
+        }
+      }
+    });
+    return tx as { type: string; gasPrice: number } | null;
+  }, [requireData]);
+
+  const canCancel = useMemo(() => {
+    if (!pendingTx) return true;
+    const currentGasPrice = Number(raw.gasPrice || raw.maxFeePerGas || 0);
+    return currentGasPrice > pendingTx.gasPrice;
+  }, [raw, pendingTx]);
+
+  return (
+    <View>
+      {requireData.pendingTxs.length > 0 && (
+        <>
+          <View style={styles.container}>
+            <View style={styles.internalTransaction}>
+              <Text>{t('page.signTx.cancelTx.txToBeCanceled')}</Text>
+              <View style={styles.bg} />
+            </View>
+            {pendingTx && (
+              <View style={styles.txItem}>
+                <Text style={styles.txItemTextFirst}>{pendingTx.type}</Text>
+                <Text style={styles.txItemTextSecond}>
+                  {pendingTx.gasPrice / 1e9} Gwei
+                </Text>
+              </View>
+            )}
+          </View>
+          {pendingTx && !canCancel && (
+            <View style={styles.gasPriceTip}>
+              <IconAlert className="w-[15px] mr-10" />
+              {t('page.signTx.cancelTx.gasPriceAlert', {
+                value: pendingTx.gasPrice / 1e9,
+              })}
+            </View>
+          )}
+        </>
+      )}
+    </View>
+  );
+};
+
+export default CancelTx;

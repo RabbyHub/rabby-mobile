@@ -49,7 +49,7 @@ export const ImportWatchAddressScreen = () => {
     addr: string;
     name: string;
   }>(null);
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   const handleDone = async () => {
     if (!input) {
@@ -123,7 +123,7 @@ export const ImportWatchAddressScreen = () => {
   }, [input]);
 
   return (
-    <RootScreenContainer style={styles.rootContainer}>
+    <RootScreenContainer hideBottomBar style={styles.rootContainer}>
       <KeyboardAwareScrollView style={styles.keyboardView}>
         <View style={styles.titleContainer}>
           <WatchLogoSVG style={styles.logo} />

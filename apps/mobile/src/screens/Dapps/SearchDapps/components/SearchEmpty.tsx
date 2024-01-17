@@ -1,12 +1,9 @@
-import { Button, PrimaryButton } from '@/components/Button';
-import { RootNames } from '@/constant/layout';
-import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
-import React from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import RcIconFind from '@/assets/icons/dapp/icon-find.svg';
+import { useThemeColors } from '@/hooks/theme';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-export const SearchEmpty = () => {
+export const SearchEmpty = ({ isDomain }: { isDomain?: boolean }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
@@ -15,9 +12,11 @@ export const SearchEmpty = () => {
       <RcIconFind />
       <View style={styles.content}>
         <Text style={styles.text}>No Dapp found</Text>
-        <Text style={styles.text}>
-          Please check your search content or try to search the URL of the Dapp
-        </Text>
+        {isDomain ? null : (
+          <Text style={styles.text}>
+            Please review your input or try searching the Dapp URL.
+          </Text>
+        )}
       </View>
     </View>
   );

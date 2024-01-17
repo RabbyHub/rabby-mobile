@@ -1,7 +1,13 @@
 import { CHAINS_ENUM } from '@debank/common';
+import abi from 'human-standard-token-abi';
 import { CHAINS } from '@/constant/chains';
-import type { Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { isHexString } from 'ethereumjs-util';
+import BigNumber from 'bignumber.js';
+import { minBy } from 'lodash';
+import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { ethers } from 'ethers';
+
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
     return false;
@@ -52,3 +58,174 @@ export const validateGasPriceRange = (tx: Tx) => {
   }
   return true;
 };
+
+export const convert1559ToLegacy = tx => {
+  return {
+    chainId: tx.chainId,
+    from: tx.from,
+    to: tx.to,
+    value: tx.value,
+    data: tx.data,
+    gas: tx.gas,
+    gasPrice: tx.maxFeePerGas,
+    nonce: tx.nonce,
+  };
+};
+
+export const convertLegacyTo1559 = (tx: Tx) => {
+  return {
+    chainId: tx.chainId,
+    from: tx.from,
+    to: tx.to,
+    value: tx.value,
+    data: tx.data,
+    gas: tx.gas,
+    maxFeePerGas: tx.gasPrice,
+    maxPriorityFeePerGas: tx.gasPrice,
+    nonce: tx.nonce,
+  };
+};
+
+export function getKRCategoryByType(type?: string) {
+  return KEYRING_CATEGORY_MAP[type as any] || null;
+}
+
+export const calcMaxPriorityFee = (
+  gasList: GasLevel[],
+  target: GasLevel,
+  chainId: number,
+  useMaxFee: boolean,
+) => {
+  if (chainId !== 1 || useMaxFee) {
+    return target.price;
+  }
+  if (target.priority_price && target.priority_price !== null) {
+    return target.priority_price;
+  }
+  // only enable auto-priorityFee for ETH currently
+  const min = minBy(
+    gasList.filter(item => item.level !== 'custom'),
+    'price',
+  );
+  if (min) {
+    if (target.price < min.price) return target.price / 10;
+    const basePriorityFee = target.price / 10;
+    if (min.level === target.level) {
+      return basePriorityFee;
+    } else {
+      const gap = target.price - min.price;
+      const value = new BigNumber(gap)
+        .times(0.8)
+        .plus(basePriorityFee)
+        .toFixed(1);
+      return Number(value);
+    }
+  } else {
+    return target.price;
+  }
+};
+
+export function makeTransactionId(
+  fromAddr: string,
+  nonce: number | string,
+  chainEnum: string,
+) {
+  if (typeof nonce === 'number') {
+    nonce = `0x${nonce.toString(16)}`;
+  } else if (typeof nonce === 'string') {
+    nonce = nonce.startsWith('0x') ? nonce : `0x${nonce}`;
+  }
+  return `${fromAddr}_${nonce}_${chainEnum}`;
+}
+
+const hstInterface = new ethers.utils.Interface(abi);
+
+export function getTokenData(data: string) {
+  try {
+    return hstInterface.parseTransaction({ data });
+  } catch (error) {
+    return undefined;
+  }
+}
+
+export function getTokenAddressParam(
+  tokenData: ethers.utils.TransactionDescription,
+): string {
+  const value = tokenData?.args?._to || tokenData?.args?.[0];
+  return value?.toString().toLowerCase();
+}
+
+export function calcTokenValue(value: string, decimals: number) {
+  const multiplier = Math.pow(10, Number(decimals || 0));
+  return new BigNumber(String(value)).times(multiplier);
+}
+
+export function getCustomTxParamsData(
+  data: string,
+  {
+    customPermissionAmount,
+    decimals,
+  }: { customPermissionAmount: string; decimals: number },
+) {
+  const methodId = data.substring(0, 10);
+  if (methodId === '0x39509351') {
+    // increaseAllowance
+    const iface = new ethers.utils.Interface([
+      {
+        inputs: [
+          { internalType: 'address', name: 'spender', type: 'address' },
+          { internalType: 'uint256', name: 'increment', type: 'uint256' },
+        ],
+        name: 'increaseAllowance',
+        outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ]);
+    const [spender] = iface.decodeFunctionData('increaseAllowance', data);
+    const customPermissionValue = calcTokenValue(
+      customPermissionAmount,
+      decimals,
+    );
+    const calldata = iface.encodeFunctionData('increaseAllowance', [
+      spender,
+      customPermissionValue.toFixed(),
+    ]);
+    return calldata;
+  } else {
+    const tokenData = getTokenData(data);
+
+    if (!tokenData) {
+      throw new Error('Invalid data');
+    }
+    let spender = getTokenAddressParam(tokenData);
+    if (spender.startsWith('0x')) {
+      spender = spender.substring(2);
+    }
+    const [signature, tokenValue] = data.split(spender);
+
+    if (!signature || !tokenValue) {
+      throw new Error('Invalid data');
+    } else if (tokenValue.length !== 64) {
+      throw new Error(
+        'Invalid token value; should be exactly 64 hex digits long (u256)',
+      );
+    }
+
+    let customPermissionValue = calcTokenValue(
+      customPermissionAmount,
+      decimals,
+    ).toString(16);
+
+    if (customPermissionValue.length > 64) {
+      throw new Error('Custom value is larger than u256');
+    }
+
+    customPermissionValue = customPermissionValue.padStart(
+      tokenValue.length,
+      '0',
+    );
+    const customTxParamsData = `${signature}${spender}${customPermissionValue}`;
+    return customTxParamsData;
+  }
+}

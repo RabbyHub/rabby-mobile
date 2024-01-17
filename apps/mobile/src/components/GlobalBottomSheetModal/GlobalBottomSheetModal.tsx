@@ -1,14 +1,23 @@
-import React, { useCallback } from 'react';
+import React from 'react';
+import { useThemeColors } from '@/hooks/theme';
+import { useApproval } from '@/hooks/useApproval';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { CreateParams, EVENT_NAMES } from './types';
 import {
+  APPROVAL_MODAL_NAMES,
+  CreateParams,
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from './types';
+
+import {
+  APPROVAL_SNAP_POINTS,
   events,
   makeBottomSheetProps,
   MODAL_VIEWS,
   SNAP_POINTS,
 } from './utils';
-import { useThemeColors } from '@/hooks/theme';
 
 type ModalData = {
   snapPoints: (string | number)[];
@@ -20,6 +29,7 @@ type ModalData = {
 export const GlobalBottomSheetModal = () => {
   const [modals, setModals] = React.useState<ModalData[]>([]);
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -38,14 +48,26 @@ export const GlobalBottomSheetModal = () => {
     currentModal.current?.present();
   }, []);
 
+  const [getApproval] = useApproval();
+
   const handleCreate = React.useCallback(
-    (id: string, params: CreateParams) => {
+    async (id: string, params: CreateParams) => {
+      const _approval = await getApproval();
+      const approvalComponent = _approval?.data
+        ?.approvalComponent as APPROVAL_MODAL_NAMES;
+
       setModals(prev => [
         ...prev,
         {
           id,
-          params,
-          snapPoints: SNAP_POINTS[params.name],
+          params: {
+            ...params,
+            approvalComponent,
+          },
+          snapPoints:
+            approvalComponent && params.name === MODAL_NAMES.APPROVAL
+              ? APPROVAL_SNAP_POINTS[approvalComponent]
+              : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);
@@ -86,18 +108,22 @@ export const GlobalBottomSheetModal = () => {
     };
   }, [handleCreate, handlePresent, handleRemove]);
 
-  const colors = useThemeColors();
+  const height = useSafeAreaInsets();
 
   return (
     <View>
       {modals.map(modal => {
+        const ModalView = MODAL_VIEWS[modal.params.name];
+
         return (
           <AppBottomSheetModal
+            topInset={height.top}
+            enableContentPanningGesture={false}
             onDismiss={() => handleDismiss(modal.id)}
             key={modal.id}
             ref={modal.ref}
             name={modal.id}
-            children={MODAL_VIEWS[modal.params.name]}
+            children={<ModalView {...modal.params} />}
             snapPoints={modal.snapPoints}
             stackBehavior="push"
             {...makeBottomSheetProps({
