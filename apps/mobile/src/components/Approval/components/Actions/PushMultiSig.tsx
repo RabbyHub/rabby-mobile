@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import styled from 'styled-components';
+import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PushMultiSigAction } from '@rabby-wallet/rabby-api/dist/types';
 import { Col, Row, Table } from './components/Table';
@@ -7,8 +7,8 @@ import * as Values from './components/Values';
 import { Chain } from '@debank/common';
 import { PushMultiSigRequireData } from './utils';
 import LogoWithText from './components/LogoWithText';
-
-const Wrapper = styled.div``;
+import useCommonStyle from '../../hooks/useCommonStyle';
+import DescItem from './components/DescItem';
 
 const PushMultiSig = ({
   data,
@@ -19,6 +19,7 @@ const PushMultiSig = ({
   requireData: PushMultiSigRequireData;
   chain: Chain;
 }) => {
+  const commonStyle = useCommonStyle();
   const { t } = useTranslation();
   const multiSigInfo = useMemo(() => {
     const contract = requireData.contract?.[chain.serverId];
@@ -28,39 +29,43 @@ const PushMultiSig = ({
   }, [requireData, chain]);
 
   return (
-    <Wrapper>
+    <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.submitMultisig.multisigAddress')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.submitMultisig.multisigAddress')}
+            </Text>
+          </Row>
           <Row>
-            <div>
+            <View>
               <Values.Address address={data.multisig_id} chain={chain} />
-              <ul className="desc-list">
-                <li>
+              <View className="desc-list">
+                <DescItem>
                   <Values.AddressMemo address={data.multisig_id} />
-                </li>
+                </DescItem>
                 {multiSigInfo && (
-                  <li>
+                  <DescItem>
                     <LogoWithText
                       logo={multiSigInfo.logo_url}
                       text={multiSigInfo.name}
                       logoSize={14}
-                      logoRadius="100%"
+                      logoRadius={14}
                       textStyle={{
                         fontWeight: 'normal',
-                        fontSize: '13px',
-                        lineHeight: '15px',
+                        fontSize: 13,
+                        lineHeight: 15,
                         color: '#4B4D59',
                       }}
                     />
-                  </li>
+                  </DescItem>
                 )}
-              </ul>
-            </div>
+              </View>
+            </View>
           </Row>
         </Col>
       </Table>
-    </Wrapper>
+    </View>
   );
 };
 

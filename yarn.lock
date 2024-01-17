@@ -4780,6 +4780,7 @@ __metadata:
     eslint-plugin-promise: ^6.1.1
     eth-block-tracker: ^8.0.0
     execa: ^5.0.0
+    human-standard-token-abi: ^2.0.0
     husky: ^8.0.3
     isomorphic-fetch: ^3.0.0
     jest-silent-reporter: ^0.5.0
@@ -16696,6 +16697,13 @@ __metadata:
   version: 5.0.0
   resolution: "human-signals@npm:5.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fhuman-signals%2F-%2Fhuman-signals-5.0.0.tgz"
   checksum: 6504560d5ed91444f16bea3bd9dfc66110a339442084e56c3e7fa7bbdf3f406426d6563d662bdce67064b165eac31eeabfc0857ed170aaa612cf14ec9f9a464c
+  languageName: node
+  linkType: hard
+
+"human-standard-token-abi@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "human-standard-token-abi@npm:2.0.0"
+  checksum: 80501595a470d4fc8866ab82311ccf3619023e36083f0656e5733be82870f2d0eecf8d24635159d760d87583ac0c5497ac460d1eb0813ac5e4c0df106c5a8ad6
   languageName: node
   linkType: hard
 
