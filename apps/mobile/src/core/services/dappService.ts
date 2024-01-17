@@ -1,9 +1,6 @@
 import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
-import {
-  createPersistStore,
-  StoreServiceBase,
-} from '@rabby-wallet/persist-store';
+import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 
 export interface DappInfo {
@@ -107,6 +104,10 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
   setChainId(origin: string, chainId: CHAINS_ENUM) {
     this.store.dapps[origin].chainId = chainId;
     this.store.dapps = { ...this.store.dapps };
+  }
+
+  hasPermission(origin: string) {
+    return !!this.store.dapps[origin]?.isConnected;
   }
 
   isInternalDapp(origin: string) {

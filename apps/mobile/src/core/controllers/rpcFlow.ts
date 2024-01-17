@@ -140,22 +140,15 @@ const flowContext = flow
               { height: 800 },
             );
           connectOrigins.delete(origin);
-          const dapp = dappService.getDapp(origin);
-          if (dapp) {
-            dappService.updateDapp({
-              ...dapp,
-              chainId: defaultChain || CHAINS_ENUM.ETH,
-              isConnected: true,
-            });
-          } else {
-            dappService.addDapp({
-              ...apisDapp.createDappBySession({ origin, name, icon }),
-              isConnected: true,
-              chainId: defaultChain || CHAINS_ENUM.ETH,
-            });
-
-            apisDapp.syncBasicDappInfo(origin);
-          }
+          apisDapp.connect({
+            origin,
+            chainId: defaultChain || CHAINS_ENUM.ETH,
+            session: {
+              name,
+              icon,
+              origin,
+            },
+          });
         } catch (e) {
           connectOrigins.delete(origin);
           throw e;

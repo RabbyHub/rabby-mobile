@@ -6,7 +6,7 @@ import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '@rneui/themed';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
@@ -158,6 +158,7 @@ export function SearchDappsScreen(): JSX.Element {
               onPress={dapp => {
                 openUrlAsDapp(dapp.origin);
                 toggleShowSheetModal('dappWebviewContainerRef', true);
+                console.log('press dapp', dapp.origin);
               }}
               onFavoritePress={dapp => {
                 addDapp({
