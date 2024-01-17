@@ -25,6 +25,7 @@ import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModa
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@debank/common';
 import { findChainByEnum } from '@/utils/chain';
+import { isPossibleDomain } from '@/utils/url';
 
 export function SearchDappsScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -103,6 +104,7 @@ export function SearchDappsScreen(): JSX.Element {
   const { addOpenedDapp } = useOpenDappView();
   const { setOpenedUrl } = useOpenUrlView();
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
+  const isDomain = isPossibleDomain(debouncedSearchValue);
 
   return (
     <View style={styles.page}>
@@ -156,27 +158,25 @@ export function SearchDappsScreen(): JSX.Element {
               toggleShowSheetModal('urlWebviewContainerRef', true);
             }}
           />
-          {loading ? null : list.length === 0 ? (
-            <SearchEmpty />
-          ) : (
-            <SearchDappCardList
-              chain={chain}
-              onChainChange={setChain}
-              onEndReached={loadMore}
-              data={list}
-              total={data?.page?.total}
-              onPress={dapp => {
-                addOpenedDapp(dapp.origin, { isActiveDapp: true });
-                toggleShowSheetModal('dappWebviewContainerRef', true);
-              }}
-              onFavoritePress={dapp => {
-                addDapp({
-                  ...dapp,
-                  isFavorite: !dapp.isFavorite,
-                });
-              }}
-            />
-          )}
+          <SearchDappCardList
+            chain={chain}
+            onChainChange={setChain}
+            onEndReached={loadMore}
+            data={list}
+            loading={loading}
+            empty={<SearchEmpty isDomain={isDomain} />}
+            total={data?.page?.total}
+            onPress={dapp => {
+              addOpenedDapp(dapp.origin, { isActiveDapp: true });
+              toggleShowSheetModal('dappWebviewContainerRef', true);
+            }}
+            onFavoritePress={dapp => {
+              addDapp({
+                ...dapp,
+                isFavorite: !dapp.isFavorite,
+              });
+            }}
+          />
         </>
       ) : (
         <SearchSuggest

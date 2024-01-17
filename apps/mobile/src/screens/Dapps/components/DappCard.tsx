@@ -45,7 +45,7 @@ export const DappCard = ({
       onPress={() => {
         onPress?.(data);
       }}>
-      <View style={styles.body}>
+      <View style={styles.body} onStartShouldSetResponder={() => true}>
         <View style={styles.dappIconWraper}>
           <DappIcon
             source={
