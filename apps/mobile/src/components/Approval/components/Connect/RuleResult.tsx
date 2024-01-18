@@ -75,7 +75,7 @@ const RuleResult = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const handleClick = () => {
     if (!rule.result) return;
     onSelect({
@@ -140,7 +140,9 @@ const RuleResult = ({
             {collectList.length <= 0 && t('page.connect.noWebsite')}
             {collectList.length > 0 &&
               collectList.slice(0, 10).map((item, idx) => (
-                <View key={`${item.name}-${idx}`} className="collect-list-item">
+                <View
+                  key={`${item.name}-${item.logo_url}-${idx}`}
+                  className="collect-list-item">
                   <Tip content={item.name} placement="top">
                     <Image
                       style={styles.collectListItemImage}

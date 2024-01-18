@@ -13,12 +13,6 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal/utils';
 
-// TODO app 会报错
-// @ts-ignore
-ethErrors.provider.userRejectedRequest = function (message: string) {
-  return new Error(message) as any;
-};
-
 export interface Approval {
   id: string;
   taskId: number | null;

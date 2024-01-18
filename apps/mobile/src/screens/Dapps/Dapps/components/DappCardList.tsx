@@ -1,5 +1,5 @@
 import { useThemeColors } from '@/hooks/theme';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { EmptyDapps } from './EmptyDapps';
@@ -13,7 +13,7 @@ export const DappCardList = ({
   onClosePress,
   onDisconnectPress,
 }: {
-  sections: { title: string; data: DappInfo[] }[];
+  sections: { title: string; data: DappInfo[]; type?: string }[];
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   onRemovePress?: (dapp: DappInfo) => void;
@@ -33,6 +33,7 @@ export const DappCardList = ({
         return (
           <View style={styles.listItem}>
             <SwipeableDappCard
+              isActive={section.type === 'active'}
               data={item}
               onPress={onPress}
               onFavoritePress={onFavoritePress}

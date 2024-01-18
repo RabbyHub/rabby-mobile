@@ -90,71 +90,59 @@ RPCMethodsMiddleParameters) =>
     };
 
     const rpcMethods: any = {
-      wallet_getPermissions: async () => new Promise<any>(resolve => {}),
-      wallet_requestPermissions: async () => {
-        res.result = [
-          {
-            parentCapability: 'eth_accounts',
-          },
-        ];
-      },
-
-      eth_getTransactionByHash: async () => {},
-      eth_getTransactionByBlockHashAndIndex: async () => {},
-      eth_getTransactionByBlockNumberAndIndex: async () => {},
-      // eth_hashrate: () => {
-      //   res.result = '0x00';
+      // wallet_getPermissions: async () => new Promise<any>(resolve => {}),
+      // wallet_requestPermissions: async () => {
+      //   res.result = [
+      //     {
+      //       parentCapability: 'eth_accounts',
+      //     },
+      //   ];
       // },
-      eth_mining: () => {
-        res.result = false;
-      },
-      net_listening: () => {
-        res.result = true;
-      },
-      // TODO: if useless, delete it
-      parity_defaultAccount: getEthAccounts,
-      eth_sendTransaction: async () => {},
-      eth_signTransaction: async () => {},
-      // eth_sign: async () => {},
-
-      // personal_sign: async () => {},
-
-      personal_ecRecover: () => {
-        const data = req.params?.[0];
-        const signature = req.params?.[1];
-        const address = recoverPersonalSignature({ data, signature });
-
-        res.result = address;
-      },
-
-      parity_checkRequest: () => {},
-
-      eth_signTypedData: async () => {},
-
-      eth_signTypedData_v3: async () => {},
-
-      eth_signTypedData_v4: async () => {},
-
-      web3_clientVersion: async () => {
-        if (!appVersion) {
-          appVersion = await getVersion();
-        }
-        res.result = `Rabby/${appVersion}/Mobile`;
-      },
-
-      wallet_scanQRCode: () =>
-        new Promise<void>((resolve, reject) => {
-          checkTabActive();
-        }),
-
-      wallet_watchAsset: async () => {},
-      wallet_addEthereumChain: () => {
-        checkTabActive();
-      },
-
-      wallet_switchEthereumChain: () => {
-        checkTabActive();
-      },
+      // eth_getTransactionByHash: async () => {},
+      // eth_getTransactionByBlockHashAndIndex: async () => {},
+      // eth_getTransactionByBlockNumberAndIndex: async () => {},
+      // // eth_hashrate: () => {
+      // //   res.result = '0x00';
+      // // },
+      // eth_mining: () => {
+      //   res.result = false;
+      // },
+      // net_listening: () => {
+      //   res.result = true;
+      // },
+      // // TODO: if useless, delete it
+      // parity_defaultAccount: getEthAccounts,
+      // eth_sendTransaction: async () => {},
+      // eth_signTransaction: async () => {},
+      // // eth_sign: async () => {},
+      // // personal_sign: async () => {},
+      // personal_ecRecover: () => {
+      //   const data = req.params?.[0];
+      //   const signature = req.params?.[1];
+      //   const address = recoverPersonalSignature({ data, signature });
+      //   res.result = address;
+      // },
+      // parity_checkRequest: () => {},
+      // eth_signTypedData: async () => {},
+      // eth_signTypedData_v3: async () => {},
+      // eth_signTypedData_v4: async () => {},
+      // web3_clientVersion: async () => {
+      //   if (!appVersion) {
+      //     appVersion = await getVersion();
+      //   }
+      //   res.result = `Rabby/${appVersion}/Mobile`;
+      // },
+      // wallet_scanQRCode: () =>
+      //   new Promise<void>((resolve, reject) => {
+      //     checkTabActive();
+      //   }),
+      // wallet_watchAsset: async () => {},
+      // wallet_addEthereumChain: () => {
+      //   checkTabActive();
+      // },
+      // wallet_switchEthereumChain: () => {
+      //   checkTabActive();
+      // },
     };
 
     if (__DEV__) {

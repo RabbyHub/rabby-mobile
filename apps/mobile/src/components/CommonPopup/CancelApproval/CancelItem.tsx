@@ -1,36 +1,41 @@
 import clsx from 'clsx';
 import React from 'react';
-import styled from 'styled-components';
-import IconArrowRight from '@/ui/assets/dashboard/settings/icon-right-arrow.svg';
-import { Image } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 export interface Props {
   onClick(): void;
   children: React.ReactNode;
 }
 
-const Styled = styled.div`
-  border-color: var(--r-neutral-card-2) !important;
-  &:hover {
-    border-color: var(--r-blue-default) !important;
-  }
-`;
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: 16,
+      paddingVertical: 15,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 6,
+    },
+    text: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+    },
+  });
 
-// TODO
 export const CancelItem: React.FC<Props> = ({ children, onClick }) => {
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   return (
-    <Styled
-      onClick={onClick}
-      className={clsx(
-        'px-16 py-[15px]',
-        'flex items-start justify-between',
-        'text-r-neutral-title-1 text-14 font-medium',
-        'border rounded-md',
-        'bg-r-neutral-card-2  cursor-pointer',
-        'hover:bg-r-blue-light-1',
-      )}>
-      <span>{children}</span>
-      {/* <Image source={IconArrowRight} className="w-20" /> */}
-    </Styled>
+    <TouchableOpacity onPress={onClick} style={styles.wrapper}>
+      <Text style={styles.text}>{children}</Text>
+      <RcIconArrowRight className="w-20" />
+    </TouchableOpacity>
   );
 };

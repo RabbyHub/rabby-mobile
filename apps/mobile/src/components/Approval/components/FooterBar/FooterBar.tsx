@@ -10,7 +10,7 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Chain } from '@debank/common';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import clsx from 'clsx';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

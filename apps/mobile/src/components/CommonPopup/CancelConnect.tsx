@@ -1,32 +1,59 @@
 import { notificationService } from '@/core/services';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { CancelItem } from './CancelApproval/CancelItem';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 
-// TODO
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    wrapper: {
+      paddingHorizontal: 20,
+    },
+    title: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+      textAlign: 'center',
+    },
+    buttonGroup: {
+      rowGap: 10,
+      marginTop: 20,
+    },
+  });
+
 export const CancelConnect = () => {
-  const { data, setTitle, setHeight } = useCommonPopupView();
+  const { data, closePopup } = useCommonPopupView();
   const { onCancel, displayBlockedRequestApproval } = data;
   const { t } = useTranslation();
 
-  React.useEffect(() => {
-    setTitle(t('page.signFooterBar.cancelConnection'));
-
-    setHeight(244);
-  }, [displayBlockedRequestApproval]);
-
   const handleBlockedRequestApproval = () => {
+    closePopup();
     notificationService.blockedDapp();
+    onCancel();
+  };
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  const handleCancel = () => {
+    onCancel();
+    closePopup();
   };
 
   return (
-    <div>
-      <div className="text-r-neutral-body text-13 font-normal text-center leading-[16px]">
+    <BottomSheetView style={styles.wrapper}>
+      <AppBottomSheetModalTitle
+        title={t('page.signFooterBar.cancelConnection')}
+      />
+      <Text className="text-r-neutral-body text-13 font-normal text-center leading-[16px]">
         {t('page.signFooterBar.detectedMultipleRequestsFromThisDapp')}
-      </div>
-      <div className="space-y-10 mt-20">
-        <CancelItem onClick={onCancel}>
+      </Text>
+      <View style={styles.buttonGroup}>
+        <CancelItem onClick={handleCancel}>
           {t('page.signFooterBar.cancelCurrentConnection')}
         </CancelItem>
         {displayBlockedRequestApproval && (
@@ -34,7 +61,7 @@ export const CancelConnect = () => {
             {t('page.signFooterBar.blockDappFromSendingRequests')}
           </CancelItem>
         )}
-      </div>
-    </div>
+      </View>
+    </BottomSheetView>
   );
 };

@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import { StyleSheet, View, ScrollView, Text } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeColors } from '@/hooks/theme';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { DappCardList } from './components/DappCardList';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import TouchableItem from '@/components/Touchable/TouchableItem';
-import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useThemeColors } from '@/hooks/theme';
+import { navigate } from '@/utils/navigation';
+import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { DappCardList } from './components/DappCardList';
+// import { useRequest } from 'ahooks';
 import { useDappsHome } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
+import { useDapps } from '@/hooks/useDapps';
 import {
   useActiveViewSheetModalRefs,
   useOpenDappView,
@@ -47,7 +49,7 @@ export function DappsScreen(): JSX.Element {
 
   const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
     useDappsHome();
-  const { addOpenedDapp, closeOpenedDapp } = useOpenDappView();
+  const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
   // todo refresh dapps when webview close
 
@@ -57,7 +59,7 @@ export function DappsScreen(): JSX.Element {
         <DappCardList
           sections={dappSections}
           onPress={dapp => {
-            addOpenedDapp(dapp.origin, { isActiveDapp: true });
+            openUrlAsDapp(dapp.origin);
             toggleShowSheetModal('dappWebviewContainerRef', true);
           }}
           onFavoritePress={dapp => {

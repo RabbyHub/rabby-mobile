@@ -5,10 +5,21 @@ export enum MODAL_NAMES {
   'SWITCH_CHAIN' = 'SWITCH_CHAIN',
   'CANCEL_CONNECT' = 'CANCEL_CONNECT',
   'CANCEL_APPROVAL' = 'CANCEL_APPROVAL',
+  'SELECT_CHAIN' = 'SELECT_CHAIN',
+  'VIEW_RAW_DETAILS' = 'VIEW_RAW_DETAILS',
+}
+
+export enum APPROVAL_MODAL_NAMES {
+  'Connect' = 'Connect',
+  'SignText' = 'SignText',
+  'SignTypedData' = 'SignTypedData',
+  'SignTx' = 'SignTx',
+  'WatchAddressWaiting' = 'WatchAddressWaiting',
 }
 
 export type CreateParams = {
   name: MODAL_NAMES;
+  approvalComponent?: APPROVAL_MODAL_NAMES;
   [key: string]: any;
 };
 

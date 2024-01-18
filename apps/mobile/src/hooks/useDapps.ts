@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { atom, useAtom } from 'jotai';
 import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -34,13 +34,11 @@ export function useDapps() {
   }, []);
 
   const removeDapp = useCallback((id: string) => {
-    dappService.removeDapp(id);
+    apisDapp.removeDapp(id);
   }, []);
 
   const disconnectDapp = useCallback((dappOrigin: string) => {
-    dappService.disconnect(dappOrigin);
-
-    apisDapp.removeConnectedSite(dappOrigin);
+    apisDapp.disconnect(dappOrigin);
   }, []);
 
   const isDappConnected = useCallback(
@@ -77,8 +75,9 @@ export const useDappsHome = () => {
     return [
       {
         key: 'inUse',
-        title: 'In Use',
-        data: openedDappItems,
+        title: '',
+        type: 'active',
+        data: openedDappItems.map(item => item.maybeDappInfo!).filter(Boolean),
       },
 
       {
@@ -99,6 +98,7 @@ export const useDappsHome = () => {
   return {
     dapps,
     dappSections,
+    favoriteApps,
     getDapps,
     addDapp,
     updateFavorite,

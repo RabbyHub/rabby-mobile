@@ -51,7 +51,8 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
-    "@debank/common": "^0.3.48"
+    "@debank/common": "^0.3.48",
+    "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.3.1",

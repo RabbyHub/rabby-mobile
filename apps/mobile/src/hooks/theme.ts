@@ -57,14 +57,14 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
       setAppTheme(nextTheme);
       setColorScheme(nextTheme);
     },
-    [appTheme, setAppTheme],
+    [appTheme, setAppTheme, setColorScheme],
   );
 
   React.useEffect(() => {
     if (options?.isAppTop) {
       setColorScheme(appTheme);
     }
-  }, [options?.isAppTop, appTheme]);
+  }, [options?.isAppTop, appTheme, setColorScheme]);
 
   return {
     appTheme,

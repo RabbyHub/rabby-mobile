@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@rabby-wallet/service-dapp';
+import { DappInfo } from '@/core/services/dappService';
 import { useNavigation } from '@react-navigation/native';
 import { useRequest } from 'ahooks';
 import { StyleSheet, View } from 'react-native';
