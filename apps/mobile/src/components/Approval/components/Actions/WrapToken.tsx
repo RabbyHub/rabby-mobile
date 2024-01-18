@@ -163,9 +163,7 @@ const WrapToken = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
+            <Values.Address address={requireData.id} chain={chain} />
             <View className="desc-list">
               {requireData.protocol && (
                 <DescItem>

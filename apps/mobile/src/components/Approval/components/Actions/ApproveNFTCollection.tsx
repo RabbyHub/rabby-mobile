@@ -75,9 +75,7 @@ const ApproveNFTCollection = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={actionData.spender} chain={chain} />
-            </View>
+            <Values.Address address={actionData.spender} chain={chain} />
             <View>
               <ProtocolListItem protocol={requireData.protocol} />
 
