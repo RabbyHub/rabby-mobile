@@ -80,6 +80,7 @@ export interface PreferenceStore {
   isShowTestnet?: boolean;
   // themeMode?: DARK_MODE_TYPE;
   addressSortStore: AddressSortStore;
+  isInvited?: boolean;
 }
 
 export interface AddressSortStore {
@@ -123,6 +124,7 @@ export class PreferenceService {
           addressSortStore: {
             ...defaultAddressSortStore,
           },
+          isInvited: false,
         },
       },
       {
@@ -136,6 +138,10 @@ export class PreferenceService {
       this.resetAddressSortStoreExpiredValue();
     }
     return key ? this.store[key] : this.store;
+  };
+
+  setPreference = (params: Partial<PreferenceStore>) => {
+    Object.assign(this.store, params);
   };
 
   getLastTimeSendToken = (address: string) => {

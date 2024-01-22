@@ -18,6 +18,7 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackLogin: 'StackLogin',
+  StackGetStarted: 'StackGetStarted',
   NotFound: 'NotFound',
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',
@@ -31,6 +32,7 @@ export const RootNames = {
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */

@@ -34,6 +34,7 @@ import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { NFTDetailScreen } from './screens/NftDetail';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
@@ -148,7 +149,10 @@ export default function AppNavigation({
             component={BottomTabNavigator}
             options={RootOptions}
           />
-          {/* <RootStack.Screen name={RootNames.StackLogin} component={LoginNavigator} /> */}
+          <RootStack.Screen
+            name={RootNames.StackGetStarted}
+            component={GetStartedNavigator}
+          />
           <RootStack.Screen
             name={RootNames.NotFound}
             component={NotFoundScreen}

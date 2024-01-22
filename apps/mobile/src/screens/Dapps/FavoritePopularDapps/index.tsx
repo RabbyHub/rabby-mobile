@@ -96,6 +96,5 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     container: {
       flex: 1,
       paddingTop: 10,
-      paddingBottom: 107,
     },
   });
