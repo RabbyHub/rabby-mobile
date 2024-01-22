@@ -73,9 +73,7 @@ const ApproveNFT = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={actionData.spender} chain={chain} />
-            </View>
+            <Values.Address address={actionData.spender} chain={chain} />
             <View>
               <DescItem>
                 <ProtocolListItem

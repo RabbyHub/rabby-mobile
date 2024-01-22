@@ -259,9 +259,7 @@ const CrossSwapToken = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
+            <Values.Address address={requireData.id} chain={chain} />
             <View>
               <DescItem>
                 <ProtocolListItem

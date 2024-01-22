@@ -262,9 +262,7 @@ const Swap = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
+            <Values.Address address={requireData.id} chain={chain} />
             <View>
               <ProtocolListItem protocol={requireData.protocol} />
               <DescItem>

@@ -60,14 +60,25 @@ const styles = StyleSheet.create({
     height: 13,
   },
   tokenAmountWrapper: {
-    overflow: 'hidden',
     flex: 1,
   },
 });
 
-const TokenAmount = ({ value }: { value: string | number }) => {
+const TokenAmount = ({
+  value,
+  style,
+}: {
+  value: string | number;
+  style?: TextStyle;
+}) => {
   return (
-    <Text style={styles.tokenAmountWrapper} numberOfLines={1}>
+    <Text
+      style={{
+        ...styles.tokenAmountWrapper,
+        ...(style || {}),
+      }}
+      numberOfLines={1}
+      ellipsizeMode="tail">
       {formatAmount(value)}
     </Text>
   );
@@ -286,7 +297,12 @@ const Address = ({
     toast.success(t('global.copied'));
   };
   return (
-    <View className="relative flex flex-row items-center">
+    <View
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+      }}>
       <Text
         className="mr-[6] text-r-neutral-title1 font-medium"
         style={{ fontSize: 15 }}>

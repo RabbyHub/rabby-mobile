@@ -193,14 +193,32 @@ const TokenApprove = ({
     <View>
       <Table>
         <Col>
-          <Row isTitle>{t('page.signTx.tokenApprove.approveToken')}</Row>
+          <Row isTitle>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.tokenApprove.approveToken')}
+            </Text>
+          </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
               text={
-                <View className="overflow-hidden overflow-ellipsis flex flex-row justify-between items-center">
-                  <View className="flex flex-row flex-1 overflow-hidden">
-                    <Values.TokenAmount value={actionData.token.amount} />
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <View
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'row',
+                    }}>
+                    <Values.TokenAmount
+                      value={actionData.token.amount}
+                      style={commonStyle.primaryText}
+                    />
                     <Values.TokenSymbol
                       token={requireData.token}
                       style={{
@@ -209,11 +227,11 @@ const TokenApprove = ({
                       }}
                     />
                   </View>
-                  <span
-                    className="text-blue-light text-12 font-medium cursor-pointer ml-4"
-                    onClick={() => setEditApproveModalVisible(true)}>
+                  <Text
+                    className="text-blue-light text-[12] font-medium ml-[4]"
+                    onPress={() => setEditApproveModalVisible(true)}>
                     {t('global.editButton')}
-                  </span>
+                  </Text>
                 </View>
               }
               logoRadius={16}
@@ -223,24 +241,26 @@ const TokenApprove = ({
             />
             <View className="desc-list">
               <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  {t('page.signTx.tokenApprove.myBalance')}{' '}
-                </Text>
-                <Text
-                  style={{
-                    ...commonStyle.secondaryText,
-                    textDecorationLine: new BigNumber(approveAmount).gt(
-                      tokenBalance,
-                    )
-                      ? 'underline'
-                      : 'none',
-                  }}
-                  onPress={handleClickTokenBalance}>
-                  {formatAmount(tokenBalance)}
-                </Text>
-                <Text style={commonStyle.secondaryText}>
-                  {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-                </Text>
+                <View className="flex flex-row">
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.tokenApprove.myBalance')}{' '}
+                  </Text>
+                  <Text
+                    style={{
+                      ...commonStyle.secondaryText,
+                      textDecorationLine: new BigNumber(approveAmount).gt(
+                        tokenBalance,
+                      )
+                        ? 'underline'
+                        : 'none',
+                    }}
+                    onPress={handleClickTokenBalance}>
+                    {formatAmount(tokenBalance)}{' '}
+                  </Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+                  </Text>
+                </View>
               </DescItem>
             </View>
           </Row>
@@ -252,10 +272,8 @@ const TokenApprove = ({
             </Text>
           </Row>
           <Row>
+            <Values.Address address={actionData.spender} chain={chain} />
             <View>
-              <Values.Address address={actionData.spender} chain={chain} />
-            </View>
-            <View className="desc-list">
               <ProtocolListItem protocol={requireData.protocol} />
 
               <SecurityListItem

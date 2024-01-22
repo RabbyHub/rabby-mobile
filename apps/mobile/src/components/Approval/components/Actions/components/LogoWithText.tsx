@@ -23,16 +23,6 @@ const getStyle = (colors: AppColorsVariants) =>
       height: 16,
       marginRight: 6,
     },
-    text: {
-      fontWeight: '500',
-      fontSize: 15,
-      lineHeight: 18,
-      color: colors['neutral-title-1'],
-      marginRight: 4,
-      overflow: 'hidden',
-      // textOverflow: 'ellipsis',
-      // whiteSpace: 'nowrap',
-    },
   });
 
 const LogoWithText = ({
@@ -86,13 +76,16 @@ const LogoWithText = ({
         />
       )}
       {textNode}
-      <Text
-        style={{
-          ...styles.text,
-          ...textStyle,
-        }}>
-        {text}
-      </Text>
+      {typeof text === 'string' ? (
+        <Text style={textStyle}>{text}</Text>
+      ) : (
+        <View
+          style={{
+            ...textStyle,
+          }}>
+          {text}
+        </View>
+      )}
       {icon || null}
     </View>
   );
