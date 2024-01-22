@@ -5,11 +5,12 @@ project_dir=$(dirname "$script_dir")
 
 os_name=$(uname -s)
 
+image_godfile_dir=$script_dir/bundles;
+
 mk_ios_icons() {
-  ios_godfile_dir=$script_dir/bundles;
 
   if [ "$os_name" != "Darwin" ]; then
-    echo "[mk_icons] not on macOS, skip."
+    echo "[mk_ios_icons] not on macOS, skip."
     return ;
   fi
 
@@ -51,15 +52,54 @@ mk_ios_icons() {
       local godfile=${ios_sizes[i+3]}
       local targetdir=${ios_sizes[i+4]}
 
-      sips -z $h $w $ios_godfile_dir/$godfile --out $targetdir/icon_${w}x${h}@${scale}.png
+      sips -z $h $w $image_godfile_dir/$godfile --out $targetdir/icon_${w}x${h}@${scale}.png
   done
 }
 
 mk_android_icons() {
+  # launch screen
   $project_dir/node_modules/.bin/s2v \
     -t "#FFF" \
     -i $script_dir/bundles/splash-logo.svg \
     -o $project_dir/android/app/src/main/res/drawable/ic_brand_logo.xml
+
+  local android_icons_dir=$project_dir/android/app/src/main/res;
+
+  echo "[mk_android_icons] generate app's logo by Image Assets in Android Studio."
+
+  # if [ "$os_name" == "Darwin" ]; then
+  #   # app logos
+  #   local android_sizes=(
+  #     # mdpi
+  #     48 logo-1024w.png $android_icons_dir/mipmap-mdpi/ic_launcher.png
+  #     48 logo-1024w-r.png $android_icons_dir/mipmap-mdpi/ic_launcher_round.png
+  #     # hdpi
+  #     72 logo-1024w.png $android_icons_dir/mipmap-hdpi/ic_launcher.png
+  #     72 logo-1024w-r.png $android_icons_dir/mipmap-hdpi/ic_launcher_round.png
+  #     # xhdpi
+  #     96 logo-1024w.png $android_icons_dir/mipmap-xhdpi/ic_launcher.png
+  #     96 logo-1024w-r.png $android_icons_dir/mipmap-xhdpi/ic_launcher_round.png
+  #     # xxhdpi
+  #     144 logo-1024w.png $android_icons_dir/mipmap-xxhdpi/ic_launcher.png
+  #     144 logo-1024w-r.png $android_icons_dir/mipmap-xxhdpi/ic_launcher_round.png
+  #     # xxxhdpi
+  #     192 logo-1024w.png $android_icons_dir/mipmap-xxxhdpi/ic_launcher.png
+  #     192 logo-1024w-r.png $android_icons_dir/mipmap-xxxhdpi/ic_launcher_round.png
+  #   )
+
+  #   for ((i=0;i<${#android_sizes[@]};i+=3))
+  #   do
+  #       local w=${android_sizes[i]}
+  #       local h=${android_sizes[i]}
+  #       local godfile=${android_sizes[i+1]}
+  #       local targetfile=${android_sizes[i+2]}
+
+  #       sips -z $h $w $image_godfile_dir/$godfile --out $targetfile
+  #   done
+  # else
+  #   echo "[mk_android_icons] not on macOS, skip."
+  #   return ;
+  # fi
 }
 
 mk_ios_icons;
