@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
@@ -7,7 +7,7 @@ import TouchableItem from '@/components/Touchable/TouchableItem';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
 import { DappCardList } from './components/DappCardList';
 // import { useRequest } from 'ahooks';

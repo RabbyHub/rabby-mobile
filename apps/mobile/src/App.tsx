@@ -18,6 +18,12 @@ import AppErrorBoundary from '@/components/ErrorBoundary';
 import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
 import { ThemeProvider } from '@rneui/themed';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
+import { useMemoizedFn } from 'ahooks';
+import { preferenceService } from './core/services/shared';
+import { navigate } from './utils/navigation';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import { RootNames } from './constant/layout';
+import { keyringService } from './core/services';
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -26,9 +32,19 @@ function MainScreen() {
 
   useSetupServiceStub();
 
-  useEffect(() => {
+  const init = useMemoizedFn(async () => {
+    const accounts = await keyringService.getAllVisibleAccounts();
+    if (!accounts?.length) {
+      navigate(RootNames.StackGetStarted);
+    }
     SplashScreen.hide();
-  }, []);
+  });
+
+  useEffect(() => {
+    if (couldRender) {
+      init();
+    }
+  }, [couldRender, init]);
 
   return (
     <BottomSheetModalProvider>

@@ -143,8 +143,7 @@ export default function AppNavigation({
             ...RootStackOptions,
             navigationBarColor: 'transparent',
           }}
-          // initialRouteName={'Root'}
-          initialRouteName={RootNames.StackGetStarted}>
+          initialRouteName={'Root'}>
           <RootStack.Screen
             name={RootNames.StackRoot}
             component={BottomTabNavigator}
