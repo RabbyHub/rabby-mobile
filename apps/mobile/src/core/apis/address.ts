@@ -13,10 +13,14 @@ export async function addWatchAddress(address: string) {
 }
 
 export async function removeAddress(account: KeyringAccountWithAlias) {
+  const isRemoveEmptyKeyring =
+    account.type !== KEYRING_TYPE.WalletConnectKeyring;
+
   return keyringService.removeAccount(
     account.address,
     account.type as string,
     account.brandName,
+    isRemoveEmptyKeyring,
   );
 }
 
