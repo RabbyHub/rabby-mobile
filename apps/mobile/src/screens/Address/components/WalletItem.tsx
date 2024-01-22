@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
   keyringIcon: {
     width: 28,
     height: 28,
+    flex: 1,
   },
   entryTitle: {
     fontSize: 16,
@@ -82,7 +83,9 @@ export const WalletItem: React.FC<Props> = ({
         onPress();
       }}>
       <View style={styles.flexBox}>
-        <Icon style={[styles.keyringIcon]} />
+        <View style={[styles.keyringIcon]}>
+          <Icon width={'100%'} height={'100%'} />
+        </View>
       </View>
       <View style={styles.titleWrap}>
         <Text style={[styles.entryTitle, { color: colors['neutral-title-1'] }]}>
