@@ -149,6 +149,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     touchBox: {
       maxWidth: width - 20 - 107,
       paddingHorizontal: 8,
+      height: 48,
       paddingVertical: 10,
       flexDirection: 'row',
       justifyContent: 'center',

@@ -96,7 +96,7 @@ export const HomeTopArea = () => {
         resizeMode="contain"
         style={styles.image}>
         <View style={styles.container}>
-          <View style={styles.textBox}>
+          <View className="mt-2" style={styles.textBox}>
             {
               <Text style={styles.usdText}>
                 {(balanceLoading && !balanceFromCache) ||
@@ -212,6 +212,7 @@ const getStyles = createGetStyles(colors => ({
 
   list: {
     gap: 12,
+    paddingTop: 16,
     paddingHorizontal: 20,
   },
 

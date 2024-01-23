@@ -295,7 +295,7 @@ const getStyle = (colors: AppColorsVariants) =>
       marginLeft: 12,
     },
     separator: {
-      height: StyleSheet.hairlineWidth,
+      height: 0.2,
       backgroundColor: colors['neutral-line'],
       marginRight: 20,
       marginLeft: 68,
