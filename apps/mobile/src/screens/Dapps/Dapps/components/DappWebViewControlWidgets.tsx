@@ -66,7 +66,7 @@ const getStyle = createGetStyles(colors => ({
   container: {
     paddingVertical: 16,
     borderTopColor: colors['neutral-line'],
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
   button: {

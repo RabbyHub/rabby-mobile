@@ -1,8 +1,13 @@
 import * as React from 'react';
-import { TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import {
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+  GestureResponderEvent,
+} from 'react-native';
 
 type Props = React.ComponentProps<typeof TouchableOpacity> & {
-  onPress: () => void;
+  onPress: (event?: GestureResponderEvent) => void;
   onLongPress?: () => void;
   delayPressIn?: number;
   borderless?: boolean;

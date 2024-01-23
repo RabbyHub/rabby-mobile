@@ -1,12 +1,13 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+
+const NUM_OF_LINES = 3;
 
 export const DappCardInWebViewNav = ({
   data,
@@ -67,9 +68,31 @@ export const DappCardInWebViewNav = ({
       </View>
       {data.info.description ? (
         <View style={styles.footer}>
-          <View style={styles.dappDesc}>
-            <RcIconTriangle style={styles.triangle} />
-            <Text style={styles.dappDescText}>{data.info.description}</Text>
+          <View
+            className="relative"
+            style={[styles.dappDescWrapper, styles.scrollableDesc]}>
+            <Text
+              style={styles.dappDescText}
+              numberOfLines={NUM_OF_LINES}
+              ellipsizeMode="tail">
+              {data.info.description}
+            </Text>
+          </View>
+          <View style={[styles.dappDescRightArea]}>
+            {/* <TouchableView
+              onPress={() => {
+
+              }}
+            >
+              <Text
+                style={{
+                  color: colors['blue-default'],
+                  fontSize: 13,
+                }}
+              >
+                Expand
+              </Text>
+            </TouchableView> */}
           </View>
         </View>
       ) : null}
@@ -80,8 +103,8 @@ export const DappCardInWebViewNav = ({
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     dappCard: {
-      borderRadius: 8,
       backgroundColor: colors['neutral-card-1'],
+      // backgroundColor: 'blue',
       borderWidth: 1,
       borderColor: 'transparent',
     },
@@ -103,7 +126,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       flexDirection: 'row',
       gap: 6,
       alignItems: 'center',
-      // flexWrap: 'wrap',
       overflow: 'hidden',
     },
 
@@ -132,33 +154,47 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       flexDirection: 'row',
       gap: 12,
       alignItems: 'center',
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
       paddingTop: 14,
       paddingBottom: 12,
     },
     footer: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
       paddingBottom: 16,
+      flexDirection: 'row',
+      maxWidth: '100%',
     },
-    dappDesc: {
+    scrollableDesc: {
+      // 3 lines
+      maxHeight: NUM_OF_LINES * 26,
+      overflow: 'visible',
+    },
+    dappDescWrapper: {
+      flexShrink: 1,
       position: 'relative',
       color: colors['neutral-body'],
       backgroundColor: colors['neutral-card-3'],
       padding: 8,
       borderRadius: 4,
+      overflow: 'visible',
     },
     dappDescText: {
       fontSize: 14,
       lineHeight: 20,
     },
-    triangle: {
-      position: 'absolute',
-      left: 8,
-      top: -8,
-    },
     dappIcon: {
       width: 32,
       height: 32,
       borderRadius: 16,
+    },
+
+    dappDescRightArea: {
+      flexShrink: 0,
+      width: 32,
+      height: '100%',
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'flex-start',
+      flexWrap: 'nowrap',
     },
   });

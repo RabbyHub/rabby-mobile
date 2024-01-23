@@ -25,13 +25,15 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import { WebViewState, useWebViewControl } from './hooks';
+import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  DappNavCardBottomSheetModal,
+} from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 
 function errorLog(...info: any) {
@@ -66,18 +68,23 @@ function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
   return <>{children}</>;
 }
 
-function useBottomSheetMoreLayout(bottomNavH: number) {
-  const { safeTop, safeOffHeader } = useSafeSizes();
-
-  return {
-    // topSnapPoint: Platform.OS === 'ios' ? bottomNavH + safeOffHeader : bottomNavH + safeTop
-    topSnapPoint: bottomNavH + safeOffHeader,
-  };
-}
-
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-);
+const renderBackdrop = (props: BottomSheetBackdropProps) => {
+  return (
+    <BottomSheetBackdrop
+      {...props}
+      // leave here for debug
+      style={[
+        props.style,
+        {
+          borderWidth: 1,
+          borderColor: 'red',
+        },
+      ]}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+    />
+  );
+};
 
 type DappWebViewControlProps = {
   dappOrigin: string;
@@ -154,6 +161,7 @@ function useDefaultNodes({
 
 export type DappWebViewControlType = {
   closeWebViewNavModal: () => void;
+  getWebViewActions: () => WebViewActions;
 };
 const DappWebViewControl = React.forwardRef<
   DappWebViewControlType,
@@ -189,11 +197,16 @@ const DappWebViewControl = React.forwardRef<
       webviewActions,
     } = useWebViewControl();
 
-    React.useImperativeHandle(ref, () => ({
-      closeWebViewNavModal: () => {
-        webviewNavRef?.current?.close();
-      },
-    }));
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        closeWebViewNavModal: () => {
+          webviewNavRef?.current?.close();
+        },
+        getWebViewActions: () => webviewActions,
+      }),
+      [webviewActions],
+    );
 
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
@@ -277,8 +290,6 @@ const DappWebViewControl = React.forwardRef<
       handlePressMore,
       subTitle,
     ]);
-
-    const { topSnapPoint } = useBottomSheetMoreLayout(bottomNavH);
 
     const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
       dappOrigin,
@@ -367,15 +378,7 @@ const DappWebViewControl = React.forwardRef<
     ]);
 
     return (
-      <View
-        style={[
-          style,
-          styles.dappWebViewControl,
-          {
-            position: 'relative',
-            backgroundColor: colors['neutral-bg-1'],
-          },
-        ]}>
+      <View style={[style, styles.dappWebViewControl]}>
         {renderedHeaderNode}
 
         {/* webvbiew */}
@@ -393,18 +396,11 @@ const DappWebViewControl = React.forwardRef<
 
         <BottomSheetMoreLayout>
           <BottomSheetModalProvider>
-            <AppBottomSheetModal
-              index={0}
-              backdropComponent={renderBackdrop}
-              enableContentPanningGesture={true}
-              name="webviewNavRef"
-              handleHeight={28}
-              ref={webviewNavRef}
-              snapPoints={[topSnapPoint]}>
-              <BottomSheetView className="px-[20] items-center justify-center">
-                {bottomSheetContentNode}
-              </BottomSheetView>
-            </AppBottomSheetModal>
+            <DappNavCardBottomSheetModal
+              bottomNavH={bottomNavH}
+              ref={webviewNavRef}>
+              {bottomSheetContentNode}
+            </DappNavCardBottomSheetModal>
           </BottomSheetModalProvider>
         </BottomSheetMoreLayout>
       </View>
@@ -414,6 +410,9 @@ const DappWebViewControl = React.forwardRef<
 
 const styles = StyleSheet.create({
   dappWebViewControl: {
+    position: 'relative',
+    // don't put backgroundColor here to avoid cover the background on BottomSheetModal
+    backgroundColor: 'transparent',
     width: '100%',
     paddingVertical: 10,
   },

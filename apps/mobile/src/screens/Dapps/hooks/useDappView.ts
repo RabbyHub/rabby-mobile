@@ -20,12 +20,18 @@ export type OpenedDappItem = {
 const openedDappRecordsAtom = atom<OpenedDappItem[]>([]);
 
 const activeWebViewSheetModalRefs = atom({
-  dappWebviewContainerRef: createRef<BottomSheetModal>(),
+  openedDappWebviewSheetModalRef: createRef<BottomSheetModal>(),
   urlWebviewContainerRef: createRef<BottomSheetModal>(),
 });
 
 export function useActiveViewSheetModalRefs() {
   return useSheetModals(useAtomValue(activeWebViewSheetModalRefs));
+}
+
+export function useHasActiveOpenedDapp() {
+  const [activeDappOrigin] = useAtom(activeDappOriginAtom);
+
+  return !!activeDappOrigin;
 }
 
 export function useOpenDappView() {
@@ -115,7 +121,7 @@ export function useOpenDappView() {
   );
 
   const showDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal('dappWebviewContainerRef', true);
+    toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
   }, [toggleShowSheetModal]);
 
   const { openedDappItems, activeDapp } = useMemo(() => {

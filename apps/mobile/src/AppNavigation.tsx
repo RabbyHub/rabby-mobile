@@ -37,6 +37,8 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
+import { useDapps } from './hooks/useDapps';
+import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
 
 const RootStack = createNativeStackNavigator();
 
@@ -54,7 +56,17 @@ function AppStatusBar() {
   const isLight = useGetAppThemeMode() === 'light';
   const colors = useThemeColors();
 
+  // maybe we need more smooth transition on toggle active dapp
+  const hasActiveOpenedDapp = useHasActiveOpenedDapp();
+
   const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
+    if (hasActiveOpenedDapp) {
+      return {
+        statusBarStyle: 'light-content' as const,
+        statusBarBackgroundColor: 'rgba(0, 0, 0, 1)',
+      };
+    }
+
     const specConfig = currentRouteName
       ? getRootSpecConfig(colors)[currentRouteName as any as AppRootName]
       : undefined;
@@ -66,7 +78,7 @@ function AppStatusBar() {
         specConfig?.statusBarStyle ||
         (isLight ? ('dark-content' as const) : ('light-content' as const)),
     };
-  }, [isLight, colors, currentRouteName]);
+  }, [isLight, colors, currentRouteName, hasActiveOpenedDapp]);
 
   return (
     <StatusBar

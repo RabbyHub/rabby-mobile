@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { BackHandler } from 'react-native';
-import { AppBottomSheetModal, Button } from '@/components';
+import { AppBottomSheetHandle, OpenedDappBottomSheetModal } from '@/components';
 import {
   useOpenUrlView,
   useOpenDappView,
@@ -14,6 +14,7 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView,
+  useBottomSheet,
   useBottomSheetGestureHandlers,
 } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
@@ -40,6 +41,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => (
  * @description make sure put this Component under BottomSheetView
  */
 function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
+  const { animatedIndex, animatedPosition } = useBottomSheet();
   const { handlePanGestureHandler } = useBottomSheetGestureHandlers();
 
   const panGesture = useMemo(() => {
@@ -62,13 +64,26 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View
-        key="DappAppControlBottomSheetHandleContainer"
-        accessible={true}
-        accessibilityRole="adjustable"
-        accessibilityLabel="Bottom Sheet handle"
-        accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet">
-        {headerNode}
+      <Animated.View>
+        <Animated.View
+          key="BottomSheetHandleContainer"
+          accessible={true}
+          accessibilityRole="adjustable"
+          accessibilityLabel="Bottom Sheet handle"
+          accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet">
+          <AppBottomSheetHandle
+            animatedIndex={animatedIndex}
+            animatedPosition={animatedPosition}
+          />
+        </Animated.View>
+        <Animated.View
+          key="DappAppControlBottomSheetHandleContainer"
+          accessible={true}
+          accessibilityRole="adjustable"
+          accessibilityLabel="Bottom Sheet handle"
+          accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet">
+          {headerNode}
+        </Animated.View>
       </Animated.View>
     </GestureDetector>
   );
@@ -79,11 +94,11 @@ export function OpenedDappWebViewStub() {
     useOpenDappView();
 
   const {
-    sheetModalRefs: { dappWebviewContainerRef },
+    sheetModalRefs: { openedDappWebviewSheetModalRef },
     toggleShowSheetModal,
   } = useActiveViewSheetModalRefs();
 
-  const dappWebViewControlRef = useRef<DappWebViewControlType>(null);
+  const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
 
   const { safeOffScreenTop } = useSafeSizes();
   const { snapPoints, indexAsExpanded, indexAsCollapsed } = useMemo(() => {
@@ -98,8 +113,8 @@ export function OpenedDappWebViewStub() {
   const { isDappConnected, disconnectDapp } = useDapps();
 
   const hideDappSheetModal = useCallback(() => {
-    dappWebviewContainerRef?.current?.snapToIndex(0);
-  }, [dappWebviewContainerRef]);
+    openedDappWebviewSheetModalRef?.current?.snapToIndex(0);
+  }, [openedDappWebviewSheetModalRef]);
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
@@ -118,7 +133,7 @@ export function OpenedDappWebViewStub() {
 
   useEffect(() => {
     if (activeDapp) {
-      toggleShowSheetModal('dappWebviewContainerRef', 1);
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', 1);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
@@ -145,23 +160,17 @@ export function OpenedDappWebViewStub() {
   useFocusEffect(onFocusBackHandler);
 
   return (
-    <AppBottomSheetModal
+    <OpenedDappBottomSheetModal
       index={indexAsExpanded}
       // detached={true}
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
-      enableContentPanningGesture={false}
-      enableHandlePanningGesture
-      name="dappWebviewContainerRef"
-      ref={dappWebviewContainerRef}
+      name="openedDappWebviewSheetModalRef"
+      ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleBottomSheetChanges}>
-      <BottomSheetView
-        className="items-center justify-center"
-        style={{
-          height: '100%',
-        }}>
+      <BottomSheetView className="items-center justify-center h-[100%]">
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
@@ -172,7 +181,7 @@ export function OpenedDappWebViewStub() {
           return (
             <DappWebViewControl
               key={key}
-              ref={dappWebViewControlRef}
+              ref={activeDappWebViewControlRef}
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
               initialUrl={dappInfo.$openParams?.initialUrl}
@@ -223,7 +232,8 @@ export function OpenedDappWebViewStub() {
                   <BottomSheetContent
                     dappInfo={dappInfo}
                     onPressCloseDapp={() => {
-                      dappWebViewControlRef.current?.closeWebViewNavModal();
+                      activeDappWebViewControlRef.current?.closeWebViewNavModal();
+
                       hideDappSheetModal();
                       closeActiveDapp();
                     }}
@@ -237,6 +247,20 @@ export function OpenedDappWebViewStub() {
                           webviewActions.go(
                             canoicalizeDappUrl(activeDapp.origin).httpOrigin,
                           );
+                        }}
+                        onPressButton={ctx => {
+                          ctx.defaultAction(ctx);
+
+                          switch (ctx.type) {
+                            case 'back':
+                            case 'forward':
+                            case 'reload':
+                            case 'home':
+                              activeDappWebViewControlRef.current?.closeWebViewNavModal();
+                              break;
+                            default:
+                              break;
+                          }
                         }}
                         afterNode={
                           <BottomNavControl.TouchableItem
@@ -263,7 +287,7 @@ export function OpenedDappWebViewStub() {
           );
         })}
       </BottomSheetView>
-    </AppBottomSheetModal>
+    </OpenedDappBottomSheetModal>
   );
 }
 

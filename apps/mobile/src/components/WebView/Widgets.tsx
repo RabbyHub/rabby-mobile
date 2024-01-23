@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, GestureResponderEvent } from 'react-native';
 
 import { WebViewState, useWebViewControl } from '@/components/WebView/hooks';
 
@@ -48,11 +48,17 @@ export type BottomNavControlCbCtx = {
   webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 };
 
+type OnPressButtonCtx = {
+  type: 'back' | 'forward' | 'reload' | 'home';
+  event?: GestureResponderEvent;
+};
+
 export function BottomNavControl({
   webviewState,
   webviewActions,
   afterNode,
   onPressHome,
+  onPressButton,
 }: BottomNavControlCbCtx & {
   afterNode?:
     | React.ReactNode
@@ -62,6 +68,15 @@ export function BottomNavControl({
         },
       ) => React.ReactNode);
   onPressHome?: (ctx: BottomNavControlCbCtx) => void;
+  /**
+   * @description customize all button press event
+   */
+  onPressButton?: (
+    ctx: BottomNavControlCbCtx &
+      OnPressButtonCtx & {
+        defaultAction: (ctx: BottomNavControlCbCtx & OnPressButtonCtx) => void;
+      },
+  ) => void;
 }) {
   const onPressNavHome = useCallback(() => {
     onPressHome?.({
@@ -84,6 +99,45 @@ export function BottomNavControl({
     return afterNode || null;
   }, [afterNode, webviewState, webviewActions]);
 
+  const builtInOnPressButton = useCallback(
+    (ctx: OnPressButtonCtx) => {
+      switch (ctx.type) {
+        case 'back':
+          webviewActions.handleGoBack();
+          break;
+        case 'forward':
+          webviewActions.handleGoForward();
+          break;
+        case 'reload':
+          webviewActions.handleReload();
+          break;
+        case 'home':
+          onPressNavHome();
+          break;
+        default:
+          break;
+      }
+    },
+    [webviewActions, onPressNavHome],
+  );
+
+  const onPressButtonInternal = useCallback(
+    (ctx: OnPressButtonCtx) => {
+      if (typeof onPressButton === 'function') {
+        onPressButton({
+          ...ctx,
+          webviewState,
+          webviewActions,
+          defaultAction: builtInOnPressButton,
+        });
+        return;
+      }
+
+      builtInOnPressButton(ctx);
+    },
+    [webviewState, webviewActions, onPressButton, builtInOnPressButton],
+  );
+
   return (
     <View style={[bottomNavStyles.navControls]}>
       <TouchableView
@@ -92,7 +146,7 @@ export function BottomNavControl({
           bottomNavStyles.navControlItem,
           !webviewState?.canGoBack && bottomNavStyles.disabledStyle,
         ]}
-        onPress={webviewActions.handleGoBack}>
+        onPress={event => onPressButtonInternal({ type: 'back', event })}>
         <RcIconNavBack width={26} height={26} />
       </TouchableView>
       <TouchableView
@@ -101,19 +155,19 @@ export function BottomNavControl({
           bottomNavStyles.navControlItem,
           !webviewState?.canGoForward && bottomNavStyles.disabledStyle,
         ]}
-        onPress={webviewActions.handleGoForward}>
+        onPress={event => onPressButtonInternal({ type: 'forward', event })}>
         <RcIconNavForward width={26} height={26} />
       </TouchableView>
       <TouchableView
         pressOpacity={BOTTOM_NAV_CONTROL_PRESS_OPACITY}
         style={[bottomNavStyles.navControlItem]}
-        onPress={webviewActions.handleReload}>
+        onPress={event => onPressButtonInternal({ type: 'reload', event })}>
         <RcIconNavReload width={26} height={26} />
       </TouchableView>
       <TouchableView
         pressOpacity={BOTTOM_NAV_CONTROL_PRESS_OPACITY}
         style={[bottomNavStyles.navControlItem]}
-        onPress={onPressNavHome}>
+        onPress={event => onPressButtonInternal({ type: 'home', event })}>
         <RcIconNavHome width={26} height={26} />
       </TouchableView>
       {renderedAfterNode || null}
