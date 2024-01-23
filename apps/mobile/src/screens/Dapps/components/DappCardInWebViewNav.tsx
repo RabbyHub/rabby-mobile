@@ -1,16 +1,21 @@
+import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
+import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 export const DappCardInWebViewNav = ({
   data,
   style,
+  onFavoritePress,
 }: {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
+  onFavoritePress?: (dapp: DappInfo) => void;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -51,6 +56,14 @@ export const DappCardInWebViewNav = ({
             ) : null}
           </View>
         </View>
+        <TouchableWithoutFeedback
+          style={styles.dappAction}
+          disallowInterruption={true}
+          onPress={() => {
+            onFavoritePress?.(data);
+          }}>
+          {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
+        </TouchableWithoutFeedback>
       </View>
       {data.info.description ? (
         <View style={styles.footer}>

@@ -99,6 +99,14 @@ export function useOpenDappView() {
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 
+  const closeActiveDapp = useCallback(() => {
+    if (activeDappOrigin) {
+      removeOpenedDapp(activeDappOrigin);
+    }
+
+    hideActiveDapp();
+  }, [hideActiveDapp, removeOpenedDapp, activeDappOrigin]);
+
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
       removeOpenedDapp(dappOrigin);
@@ -141,8 +149,10 @@ export function useOpenDappView() {
     showDappWebViewModal,
     openUrlAsDapp,
     removeOpenedDapp,
-    hideActiveDapp,
     closeOpenedDapp,
+
+    hideActiveDapp,
+    closeActiveDapp,
   };
 }
 

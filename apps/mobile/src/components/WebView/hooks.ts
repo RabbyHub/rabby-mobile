@@ -1,4 +1,5 @@
 import { devLog } from '@/utils/logger';
+import { urlUtils } from '@rabby-wallet/base-utils';
 import { useCallback, useRef, useState } from 'react';
 import { GestureResponderEvent } from 'react-native';
 import WebView, { WebViewNavigation } from 'react-native-webview';
@@ -58,6 +59,14 @@ export function useWebViewControl() {
     webviewRef?.current?.reload();
   }, []);
 
+  const go = useCallback((urlToGo: string) => {
+    webviewRef?.current?.injectJavaScript(
+      `(function(){window.location.href = '${urlUtils.sanitizeUrlInput(
+        urlToGo,
+      )}' })()`,
+    );
+  }, []);
+
   return {
     webviewState,
     webviewRef,
@@ -72,6 +81,7 @@ export function useWebViewControl() {
       handleGoBack,
       handleGoForward,
       handleReload,
+      go,
     },
   };
 }

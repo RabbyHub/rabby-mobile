@@ -18,13 +18,19 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useFocusEffect } from '@react-navigation/native';
 
-import DappWebViewControl from '@/components/WebView/DappWebViewControl';
+import DappWebViewControl, {
+  DappWebViewControlType,
+} from '@/components/WebView/DappWebViewControl';
 import { useDapps } from '@/hooks/useDapps';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
+import { BottomNavControl } from '@/components/WebView/Widgets';
+import { RcIconDisconnect } from '@/assets/icons/dapp';
+import { toast } from '@/components/Toast';
+import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -69,12 +75,15 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 }
 
 export function OpenedDappWebViewStub() {
-  const { openedDappItems, activeDapp, hideActiveDapp } = useOpenDappView();
+  const { openedDappItems, activeDapp, hideActiveDapp, closeActiveDapp } =
+    useOpenDappView();
 
   const {
     sheetModalRefs: { dappWebviewContainerRef },
     toggleShowSheetModal,
   } = useActiveViewSheetModalRefs();
+
+  const dappWebViewControlRef = useRef<DappWebViewControlType>(null);
 
   const { safeOffScreenTop } = useSafeSizes();
   const { snapPoints, indexAsExpanded, indexAsCollapsed } = useMemo(() => {
@@ -86,7 +95,7 @@ export function OpenedDappWebViewStub() {
     };
   }, [safeOffScreenTop]);
 
-  const { isDappConnected } = useDapps();
+  const { isDappConnected, disconnectDapp } = useDapps();
 
   const hideDappSheetModal = useCallback(() => {
     dappWebviewContainerRef?.current?.snapToIndex(0);
@@ -163,6 +172,7 @@ export function OpenedDappWebViewStub() {
           return (
             <DappWebViewControl
               key={key}
+              ref={dappWebViewControlRef}
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
               initialUrl={dappInfo.$openParams?.initialUrl}
@@ -208,11 +218,44 @@ export function OpenedDappWebViewStub() {
               headerNode={({ header }) => {
                 return <WebViewControlHeader headerNode={header} />;
               }}
-              bottomSheetContent={({ bottomNavBar }) => {
+              bottomSheetContent={({ webviewState, webviewActions }) => {
                 return (
                   <BottomSheetContent
                     dappInfo={dappInfo}
-                    bottomNavBar={bottomNavBar}
+                    onPressCloseDapp={() => {
+                      dappWebViewControlRef.current?.closeWebViewNavModal();
+                      hideDappSheetModal();
+                      closeActiveDapp();
+                    }}
+                    bottomNavBar={
+                      <BottomNavControl
+                        webviewState={webviewState}
+                        webviewActions={webviewActions}
+                        onPressHome={() => {
+                          if (!activeDapp) return;
+
+                          webviewActions.go(
+                            canoicalizeDappUrl(activeDapp.origin).httpOrigin,
+                          );
+                        }}
+                        afterNode={
+                          <BottomNavControl.TouchableItem
+                            disabled={!isConnected}
+                            onPress={() => {
+                              if (!isConnected) return;
+
+                              disconnectDapp(dappInfo.origin);
+                              toast.success('Disconnected');
+                            }}>
+                            <RcIconDisconnect
+                              isActive={isConnected}
+                              width={26}
+                              height={26}
+                            />
+                          </BottomNavControl.TouchableItem>
+                        }
+                      />
+                    }
                   />
                 );
               }}
