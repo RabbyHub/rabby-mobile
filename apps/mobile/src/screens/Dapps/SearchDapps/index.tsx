@@ -155,7 +155,7 @@ export function SearchDappsScreen(): JSX.Element {
             onPress={generalUrl => {
               // TODO: should we validate the url?
               openUrlAsDapp(generalUrl);
-              toggleShowSheetModal('dappWebviewContainerRef', true);
+              toggleShowSheetModal('dappWebviewBottomSheetModalRef', true);
             }}
           />
           <SearchDappCardList
@@ -168,7 +168,7 @@ export function SearchDappsScreen(): JSX.Element {
             total={data?.page?.total}
             onPress={dapp => {
               openUrlAsDapp(dapp.origin);
-              toggleShowSheetModal('dappWebviewContainerRef', true);
+              toggleShowSheetModal('dappWebviewBottomSheetModalRef', true);
               console.log('press dapp', dapp.origin);
             }}
             onFavoritePress={dapp => {

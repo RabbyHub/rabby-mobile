@@ -9,6 +9,8 @@ export type WebViewState = Pick<
   'canGoBack' | 'canGoForward' | 'loading' | 'title' | 'url'
 >;
 
+export type WebviewActions = ReturnType<typeof useWebViewControl>['webviewActions'];
+
 export function useWebViewControl() {
   const webviewRef = useRef<WebView>(null);
   const urlRef = useRef<string>('about:blank');

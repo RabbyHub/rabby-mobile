@@ -20,7 +20,8 @@ export type OpenedDappItem = {
 const openedDappRecordsAtom = atom<OpenedDappItem[]>([]);
 
 const activeWebViewSheetModalRefs = atom({
-  dappWebviewContainerRef: createRef<BottomSheetModal>(),
+  dappWebviewBottomSheetModalRef: createRef<BottomSheetModal>(),
+  dappWebViewMoreCardRef: createRef<BottomSheetModal>(),
   urlWebviewContainerRef: createRef<BottomSheetModal>(),
 });
 
@@ -115,10 +116,10 @@ export function useOpenDappView() {
   );
 
   const showDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal('dappWebviewContainerRef', true);
+    toggleShowSheetModal('dappWebviewBottomSheetModalRef', true);
   }, [toggleShowSheetModal]);
 
-  const { openedDappItems, activeDapp } = useMemo(() => {
+  const { openedDappItems, activeOpenedDappItem, activeDapp } = useMemo(() => {
     const retOpenedDapps = [] as OpenedDappItem[];
     openedDappRecords.forEach(item => {
       retOpenedDapps.push({
@@ -136,14 +137,24 @@ export function useOpenDappView() {
         })
       : null;
 
+    const activeOpenedDappItem: OpenedDappItem | null = !retActiveDapp ? null : {
+      origin: activeDappOrigin!,
+      $openParams: {
+        initialUrl: retActiveDapp.origin,
+      },
+      maybeDappInfo: retActiveDapp,
+    };
+
     return {
       openedDappItems: retOpenedDapps,
+      activeOpenedDappItem,
       activeDapp: retActiveDapp,
     };
   }, [dapps, activeDappOrigin, openedDappRecords]);
 
   return {
     activeDapp,
+    activeOpenedDappItem,
     openedDappItems,
 
     showDappWebViewModal,

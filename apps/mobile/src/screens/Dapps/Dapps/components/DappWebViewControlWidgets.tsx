@@ -12,11 +12,11 @@ import { useDapps } from '@/hooks/useDapps';
 import { createGetStyles } from '@/utils/styles';
 
 export function BottomSheetContent({
-  dappInfo,
+  openedDappItem,
   bottomNavBar,
   onPressCloseDapp,
 }: {
-  dappInfo?: OpenedDappItem | null;
+  openedDappItem?: OpenedDappItem | null;
   bottomNavBar: React.ReactNode;
   onPressCloseDapp?: () => void;
 }) {
@@ -28,14 +28,14 @@ export function BottomSheetContent({
     return getStyle(colors);
   }, [colors]);
 
-  if (!dappInfo) return null;
+  if (!openedDappItem) return null;
 
   return (
     <View>
-      {dappInfo?.maybeDappInfo && (
+      {openedDappItem?.maybeDappInfo && (
         <BottomSheetScrollView style={{ minHeight: 108 }}>
           <DappCardInWebViewNav
-            data={dappInfo.maybeDappInfo}
+            data={openedDappItem.maybeDappInfo}
             onFavoritePress={dapp => {
               updateFavorite(dapp.origin, !dapp.isFavorite);
             }}

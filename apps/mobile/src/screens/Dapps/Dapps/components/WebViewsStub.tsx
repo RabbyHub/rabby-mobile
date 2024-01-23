@@ -74,12 +74,43 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
   );
 }
 
-export function OpenedDappWebViewStub() {
-  const { openedDappItems, activeDapp, hideActiveDapp, closeActiveDapp } =
+const renderMoreCardBackdrop = (props: BottomSheetBackdropProps) => (
+  <BottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={-1}
+    appearsOnIndex={0}
+  />
+);
+
+function useSizes (dappOrigin?: string) {
+  const { isDappConnected } = useDapps();
+  const { safeOffHeader } = useSafeSizes();
+
+  const bottomNavH = dappOrigin && isDappConnected(dappOrigin)
+  ? ScreenLayouts.dappWebViewNavBottomSheetHeight
+  : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight;
+
+  return {
+    bottomNavH,
+    bottomMoreSheetModalSnapShots: [bottomNavH + safeOffHeader],
+  }
+}
+
+function GlobalOpenedDappWebViews() {
+  const {
+    openedDappItems,
+    activeOpenedDappItem,
+    activeDapp,
+    hideActiveDapp,
+    closeActiveDapp
+  } =
     useOpenDappView();
 
   const {
-    sheetModalRefs: { dappWebviewContainerRef },
+    sheetModalRefs: {
+      dappWebviewBottomSheetModalRef,
+      dappWebViewMoreCardRef,
+    },
     toggleShowSheetModal,
   } = useActiveViewSheetModalRefs();
 
@@ -98,8 +129,8 @@ export function OpenedDappWebViewStub() {
   const { isDappConnected, disconnectDapp } = useDapps();
 
   const hideDappSheetModal = useCallback(() => {
-    dappWebviewContainerRef?.current?.snapToIndex(0);
-  }, [dappWebviewContainerRef]);
+    dappWebviewBottomSheetModalRef?.current?.snapToIndex(0);
+  }, [dappWebviewBottomSheetModalRef]);
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
@@ -118,7 +149,7 @@ export function OpenedDappWebViewStub() {
 
   useEffect(() => {
     if (activeDapp) {
-      toggleShowSheetModal('dappWebviewContainerRef', 1);
+      toggleShowSheetModal('dappWebviewBottomSheetModalRef', 1);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
@@ -144,127 +175,169 @@ export function OpenedDappWebViewStub() {
 
   useFocusEffect(onFocusBackHandler);
 
+  const { bottomMoreSheetModalSnapShots } = useSizes();
+
+  const {
+    activeDappWebviewState,
+    activeDappWebviewActions,
+  } = useMemo(() => {
+    const webviewState = dappWebViewControlRef.current?.getWebViewState();
+    const webviewActions = dappWebViewControlRef.current?.getWebViewActions();
+
+    return {
+      activeDappWebviewState: webviewState,
+      activeDappWebviewActions: webviewActions,
+    }
+  }, [ activeOpenedDappItem?.origin, dappWebViewControlRef.current ]);
+
+  console.log('[feat] activeOpenedDappItem', activeOpenedDappItem);
+  console.log('[feat] activeDappWebviewState', activeDappWebviewState);
+
   return (
-    <AppBottomSheetModal
-      index={indexAsExpanded}
-      // detached={true}
-      // bottomInset={safeOffBottom}
-      backdropComponent={renderBackdrop}
-      enablePanDownToClose={false}
-      enableContentPanningGesture={false}
-      enableHandlePanningGesture
-      name="dappWebviewContainerRef"
-      ref={dappWebviewContainerRef}
-      snapPoints={snapPoints}
-      onChange={handleBottomSheetChanges}>
-      <BottomSheetView
-        className="items-center justify-center"
-        style={{
-          height: '100%',
-        }}>
-        {openedDappItems.map((dappInfo, idx) => {
-          const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
-          const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${
-            dappInfo.maybeDappInfo?.chainId || 'ETH'
-          }`;
+    <>
+      <AppBottomSheetModal
+        index={indexAsExpanded}
+        // detached={true}
+        // bottomInset={safeOffBottom}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose={false}
+        enableContentPanningGesture={false}
+        enableHandlePanningGesture
+        name="dappWebviewBottomSheetModalRef"
+        ref={dappWebviewBottomSheetModalRef}
+        snapPoints={snapPoints}
+        onChange={handleBottomSheetChanges}>
+        <BottomSheetView
+          className="items-center justify-center"
+          style={{
+            height: '100%',
+          }}>
+          {openedDappItems.map((dappInfo, idx) => {
+            const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
+            const isActiveDapp = activeDapp?.origin === dappInfo.origin;
+            const key = `${dappInfo.origin}-${
+              dappInfo.maybeDappInfo?.chainId || 'ETH'
+            }`;
 
-          return (
-            <DappWebViewControl
-              key={key}
-              ref={dappWebViewControlRef}
-              style={[!isActiveDapp && { display: 'none' }]}
-              dappOrigin={dappInfo.origin}
-              initialUrl={dappInfo.$openParams?.initialUrl}
-              webviewProps={{
-                /**
-                 * @platform ios
-                 */
-                contentMode: 'mobile',
-                /**
-                 * set nestedScrollEnabled to true will cause custom animated gesture not working,
-                 * but whatever, we CAN'T apply any type meaningful gesture to RNW
-                 * @platform android
-                 */
-                nestedScrollEnabled: false,
-              }}
-              bottomNavH={
-                isConnected
-                  ? ScreenLayouts.dappWebViewNavBottomSheetHeight
-                  : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
-              }
-              headerLeft={() => {
-                if (!isConnected) return null;
-                if (!dappInfo.maybeDappInfo?.chainId) return null;
+            return (
+              <DappWebViewControl
+                key={key}
+                ref={dappWebViewControlRef}
+                style={[!isActiveDapp && { display: 'none' }]}
+                dappOrigin={dappInfo.origin}
+                initialUrl={dappInfo.$openParams?.initialUrl}
+                isCustomMoreSheetModal
+                onPressMore={() => {
+                  toggleShowSheetModal('dappWebViewMoreCardRef', true);
+                }}
+                webviewProps={{
+                  /**
+                   * @platform ios
+                   */
+                  contentMode: 'mobile',
+                  /**
+                   * set nestedScrollEnabled to true will cause custom animated gesture not working,
+                   * but whatever, we CAN'T apply any type meaningful gesture to RNW
+                   * @platform android
+                   */
+                  nestedScrollEnabled: false,
+                }}
+                bottomNavH={
+                  isConnected
+                    ? ScreenLayouts.dappWebViewNavBottomSheetHeight
+                    : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
+                }
+                headerLeft={() => {
+                  if (!isConnected) return null;
+                  if (!dappInfo.maybeDappInfo?.chainId) return null;
 
-                return (
-                  <TouchableView
-                    style={[
-                      {
-                        height: ScreenLayouts.dappWebViewControlHeaderHeight,
-                        justifyContent: 'center',
-                      },
-                    ]}
-                    onPress={() => {}}>
-                    <ChainIconImage
-                      chainEnum={dappInfo.maybeDappInfo?.chainId}
-                      size={24}
-                      width={24}
-                      height={24}
-                    />
-                  </TouchableView>
-                );
-              }}
-              headerNode={({ header }) => {
-                return <WebViewControlHeader headerNode={header} />;
-              }}
-              bottomSheetContent={({ webviewState, webviewActions }) => {
-                return (
-                  <BottomSheetContent
-                    dappInfo={dappInfo}
-                    onPressCloseDapp={() => {
-                      dappWebViewControlRef.current?.closeWebViewNavModal();
-                      hideDappSheetModal();
-                      closeActiveDapp();
-                    }}
-                    bottomNavBar={
-                      <BottomNavControl
-                        webviewState={webviewState}
-                        webviewActions={webviewActions}
-                        onPressHome={() => {
-                          if (!activeDapp) return;
-
-                          webviewActions.go(
-                            canoicalizeDappUrl(activeDapp.origin).httpOrigin,
-                          );
-                        }}
-                        afterNode={
-                          <BottomNavControl.TouchableItem
-                            disabled={!isConnected}
-                            onPress={() => {
-                              if (!isConnected) return;
-
-                              disconnectDapp(dappInfo.origin);
-                              toast.success('Disconnected');
-                            }}>
-                            <RcIconDisconnect
-                              isActive={isConnected}
-                              width={26}
-                              height={26}
-                            />
-                          </BottomNavControl.TouchableItem>
-                        }
+                  return (
+                    <TouchableView
+                      style={[
+                        {
+                          height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                          justifyContent: 'center',
+                        },
+                      ]}
+                      onPress={() => {}}>
+                      <ChainIconImage
+                        chainEnum={dappInfo.maybeDappInfo?.chainId}
+                        size={24}
+                        width={24}
+                        height={24}
                       />
-                    }
-                  />
-                );
-              }}
-            />
-          );
-        })}
-      </BottomSheetView>
-    </AppBottomSheetModal>
+                    </TouchableView>
+                  );
+                }}
+                headerNode={({ header }) => {
+                  return <WebViewControlHeader headerNode={header} />;
+                }}
+              />
+            );
+          })}
+        </BottomSheetView>
+      </AppBottomSheetModal>
+
+      <AppBottomSheetModal
+        index={0}
+        backdropComponent={renderMoreCardBackdrop}
+        enableContentPanningGesture={true}
+        name="webviewNavRef"
+        ref={dappWebViewMoreCardRef}
+        handleHeight={28}
+        snapPoints={bottomMoreSheetModalSnapShots}>
+        <BottomSheetView className="px-[20] items-center justify-center">
+          <BottomSheetContent
+            openedDappItem={activeOpenedDappItem}
+            onPressCloseDapp={() => {
+              dappWebViewControlRef.current?.closeWebViewNavModal();
+              hideDappSheetModal();
+              closeActiveDapp();
+            }}
+            bottomNavBar={
+              (activeDappWebviewState && activeDappWebviewActions && (
+                <BottomNavControl
+                  webviewState={activeDappWebviewState}
+                  webviewActions={activeDappWebviewActions}
+                  // onPressHome={() => {
+                  //   if (!activeDapp) return;
+
+                  //   webviewActions.go(
+                  //     canoicalizeDappUrl(activeDapp.origin).httpOrigin,
+                  //   );
+                  // }}
+                  // afterNode={
+                  //   <BottomNavControl.TouchableItem
+                  //     disabled={!isConnected}
+                  //     onPress={() => {
+                  //       if (!isConnected) return;
+
+                  //       disconnectDapp(dappInfo.origin);
+                  //       toast.success('Disconnected');
+                  //     }}>
+                  //     <RcIconDisconnect
+                  //       isActive={isConnected}
+                  //       width={26}
+                  //       height={26}
+                  //     />
+                  //   </BottomNavControl.TouchableItem>
+                  // }
+                />
+              ))
+            }
+          />
+        </BottomSheetView>
+      </AppBottomSheetModal>
+    </>
   );
+}
+
+export function OpenedDappWebViewStub() {
+  return (
+    <>
+      <GlobalOpenedDappWebViews />
+    </>
+  )
 }
 
 /**

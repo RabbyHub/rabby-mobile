@@ -25,7 +25,7 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import { WebViewState, useWebViewControl } from './hooks';
+import { WebViewState, WebviewActions, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
@@ -48,40 +48,26 @@ function convertToWebviewUrl(dappOrigin: string) {
   return stringUtils.ensurePrefix(dappOrigin, 'https://');
 }
 
-function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
-  // if (Platform.OS !== 'ios') {
-  //   return (
-  //     <View
-  //       className={clsx('absolute left-[0] h-[100%] w-[100%]')}
-  //       style={{
-  //         // BottomSheetModalProvider is provided isolated from the main app below, the start point on vertical axis is
-  //         // the parent of this component
-  //         top: -ScreenLayouts.headerAreaHeight,
-  //       }}>
-  //       {children}
-  //     </View>
-  //   )
-  // }
-
-  return <>{children}</>;
-}
-
 function useBottomSheetMoreLayout(bottomNavH: number) {
-  const { safeTop, safeOffHeader } = useSafeSizes();
+  const { safeOffHeader } = useSafeSizes();
 
   return {
-    // topSnapPoint: Platform.OS === 'ios' ? bottomNavH + safeOffHeader : bottomNavH + safeTop
     topSnapPoint: bottomNavH + safeOffHeader,
   };
 }
 
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+const renderMoreCardBackdrop = (props: BottomSheetBackdropProps) => (
+  <BottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={-1}
+    appearsOnIndex={0}
+  />
 );
 
 type DappWebViewControlProps = {
   dappOrigin: string;
   initialUrl?: string;
+  isCustomMoreSheetModal?: boolean;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
 
   bottomNavH?: number;
@@ -110,7 +96,7 @@ function useDefaultNodes({
   headerLeft?: DappWebViewControlProps['headerLeft'];
   bottomSheetContent?: DappWebViewControlProps['bottomSheetContent'];
   webviewState: WebViewState;
-  webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
+  webviewActions: WebviewActions;
 }) {
   const defaultHeaderLeft = useMemo(() => {
     return (
@@ -154,6 +140,8 @@ function useDefaultNodes({
 
 export type DappWebViewControlType = {
   closeWebViewNavModal: () => void;
+  getWebViewState: () => WebViewState;
+  getWebViewActions: () => WebviewActions;
 };
 const DappWebViewControl = React.forwardRef<
   DappWebViewControlType,
@@ -163,6 +151,7 @@ const DappWebViewControl = React.forwardRef<
     {
       dappOrigin,
       initialUrl: _initialUrl,
+      isCustomMoreSheetModal = false,
       onPressMore,
 
       bottomNavH = ScreenLayouts.defaultWebViewNavBottomSheetHeight,
@@ -193,6 +182,8 @@ const DappWebViewControl = React.forwardRef<
       closeWebViewNavModal: () => {
         webviewNavRef?.current?.close();
       },
+      getWebViewState: () => webviewState,
+      getWebViewActions: () => webviewActions,
     }));
 
     const { entryScriptWeb3Loaded, fullScript } =
@@ -214,8 +205,13 @@ const DappWebViewControl = React.forwardRef<
     });
 
     const handlePressMoreDefault = useCallback(() => {
+      if (isCustomMoreSheetModal) {
+        console.warn(`[DappWebViewControl::handlePressMoreDefault] isCustomMoreSheetModal set to true, this callback should not be called`)
+        return ;
+      }
+
       toggleShowSheetModal('webviewNavRef', true);
-    }, [toggleShowSheetModal]);
+    }, [toggleShowSheetModal, isCustomMoreSheetModal]);
 
     const handlePressMore = useCallback(() => {
       if (typeof onPressMore === 'function') {
@@ -391,11 +387,11 @@ const DappWebViewControl = React.forwardRef<
           {renderedWebviewNode}
         </View>
 
-        <BottomSheetMoreLayout>
+        {!isCustomMoreSheetModal && (
           <BottomSheetModalProvider>
             <AppBottomSheetModal
               index={0}
-              backdropComponent={renderBackdrop}
+              backdropComponent={renderMoreCardBackdrop}
               enableContentPanningGesture={true}
               name="webviewNavRef"
               handleHeight={28}
@@ -406,7 +402,7 @@ const DappWebViewControl = React.forwardRef<
               </BottomSheetView>
             </AppBottomSheetModal>
           </BottomSheetModalProvider>
-        </BottomSheetMoreLayout>
+        )}
       </View>
     );
   },
