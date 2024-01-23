@@ -4,16 +4,20 @@
  *
  * @format
  */
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
 import HeaderArea from './HeaderArea';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useThemeColors } from '@/hooks/theme';
 import { AssetContainer } from './AssetContainer';
 
 import { HomeTopArea } from './components/HomeTopArea';
+import { useMemoizedFn } from 'ahooks';
+import { keyringService } from '@/core/services';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -27,6 +31,19 @@ function HomeScreen(): JSX.Element {
       },
     });
   }, [navigation]);
+
+  const init = useMemoizedFn(async () => {
+    const accounts = await keyringService.getAllVisibleAccounts();
+    if (!accounts?.length) {
+      navigate(RootNames.StackGetStarted);
+    }
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      init();
+    }, [init]),
+  );
 
   return (
     <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
