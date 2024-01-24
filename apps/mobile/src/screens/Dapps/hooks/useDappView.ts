@@ -71,8 +71,8 @@ export function useOpenDappView() {
         prev[itemIdx] = {
           ...prev[itemIdx],
           $openParams: {
-            ...item.$openParams,
             ...prev[itemIdx].$openParams,
+            ...item.$openParams,
           },
         };
 
