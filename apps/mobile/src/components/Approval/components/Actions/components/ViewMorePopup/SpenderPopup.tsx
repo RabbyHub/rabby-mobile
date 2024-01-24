@@ -8,6 +8,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
 import { getStyle } from '../ViewMore';
 import { useThemeColors } from '@/hooks/theme';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 const { isSameAddress } = addressUtils;
 
@@ -41,6 +42,7 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
   const { contractBlacklist, contractWhitelist } = userData;
   const colors = useThemeColors();
   const styles = getStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const { isInBlackList, isInWhiteList } = useMemo(() => {
     return {
@@ -75,52 +77,71 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.protocolTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.protocolTitle')}
+            </Text>
           </Row>
           <Row>
-            <Values.Protocol value={data.protocol} />
+            <Values.Protocol
+              value={data.protocol}
+              textStyle={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.addressTypeTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.addressTypeTitle')}
+            </Text>
           </Row>
           <Row>
-            <Text>{data.isEOA ? 'EOA' : 'Contract'}</Text>
+            <Text style={commonStyle.primaryText}>
+              {data.isEOA ? 'EOA' : 'Contract'}
+            </Text>
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>
+            <Text style={commonStyle.rowTitleText}>
               {data.isEOA
                 ? t('page.signTx.firstOnChain')
                 : t('page.signTx.deployTimeTitle')}
             </Text>
           </Row>
           <Row>
-            <Values.TimeSpan value={data.bornAt} />
+            <Values.TimeSpan
+              value={data.bornAt}
+              style={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row
             style={styles.firstRow}
             tip={t('page.signTx.tokenApprove.contractTrustValueTip')}>
-            <Text>{t('page.signTx.trustValue')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.trustValue')}
+            </Text>
           </Row>
           <Row>
             {data.riskExposure === null ? (
-              <Text>-</Text>
+              <Text style={commonStyle.primaryText}>-</Text>
             ) : (
-              <Values.USDValue value={data.riskExposure} />
+              <Values.USDValue
+                value={data.riskExposure}
+                style={commonStyle.primaryText}
+              />
             )}
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.popularity')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.popularity')}
+            </Text>
           </Row>
           <Row>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {data.rank
                 ? t('page.signTx.contractPopularity', [
                     data.rank,
@@ -132,33 +153,50 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.interacted')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interacted')}
+            </Text>
           </Row>
           <Row>
-            <Values.Boolean value={data.hasInteraction} />
+            <Values.Boolean
+              value={data.hasInteraction}
+              style={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.addressNote')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.addressNote')}
+            </Text>
           </Row>
           <Row>
-            <Values.AddressMemo address={data.spender} />
+            <Values.AddressMemo
+              address={data.spender}
+              textStyle={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         {data.isDanger && (
           <Col>
             <Row style={styles.firstRow}>
-              <Text>{t('page.signTx.tokenApprove.flagByRabby')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.tokenApprove.flagByRabby')}
+              </Text>
             </Row>
             <Row>
-              <Values.Boolean value={!!data.isDanger} />
+              <Values.Boolean
+                value={!!data.isDanger}
+                style={commonStyle.primaryText}
+              />
             </Row>
           </Col>
         )}
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.myMark')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.myMark')}
+            </Text>
           </Row>
           <Row>
             <Values.AddressMark
@@ -168,6 +206,7 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
               onBlacklist={isInBlackList}
               onWhitelist={isInWhiteList}
               onChange={() => null}
+              textStyle={commonStyle.primaryText}
             />
           </Row>
         </Col>

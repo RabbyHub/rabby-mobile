@@ -46,6 +46,8 @@ export const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       flexDirection: 'row',
       marginBottom: 14,
+      display: 'flex',
+      alignItems: 'center',
     },
     valueAddress: {
       fontWeight: '500',

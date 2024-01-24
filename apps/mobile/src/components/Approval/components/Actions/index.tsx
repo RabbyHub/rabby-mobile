@@ -83,7 +83,6 @@ const getStyle = (colors: AppColorsVariants) =>
       backgroundColor: colors['blue-default'],
       padding: 13,
       alignItems: 'center',
-      color: '#fff',
       borderTopLeftRadius: 8,
       borderTopRightRadius: 8,
     },
@@ -91,6 +90,7 @@ const getStyle = (colors: AppColorsVariants) =>
       fontWeight: '500',
       fontSize: 16,
       lineHeight: 19,
+      color: '#fff',
     },
     right: {
       fontSize: 14,

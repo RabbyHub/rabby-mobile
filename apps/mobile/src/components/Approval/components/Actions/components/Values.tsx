@@ -44,8 +44,8 @@ import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEng
 
 const { isSameAddress } = addressUtils;
 
-const Boolean = ({ value }: { value: boolean }) => {
-  return <Text>{value ? 'Yes' : 'No'}</Text>;
+const Boolean = ({ value, style }: { value: boolean; style?: TextStyle }) => {
+  return <Text style={style}>{value ? 'Yes' : 'No'}</Text>;
 };
 
 const styles = StyleSheet.create({
@@ -88,16 +88,24 @@ const Percentage = ({ value, style }: { value: number; style?: TextStyle }) => {
   return <Text style={style}>{(value * 100).toFixed(2)}%</Text>;
 };
 
-const USDValue = ({ value }: { value: number | string }) => {
-  return <Text>{formatUsdValue(value)}</Text>;
+const USDValue = ({
+  value,
+  style,
+}: {
+  value: number | string;
+  style?: TextStyle;
+}) => {
+  return <Text style={style}>{formatUsdValue(value)}</Text>;
 };
 
 const TimeSpan = ({
   value,
   to = Date.now(),
+  style,
 }: {
   value: number | null;
   to?: number;
+  style?: TextStyle;
 }) => {
   const timeSpan = useMemo(() => {
     const from = value;
@@ -114,7 +122,7 @@ const TimeSpan = ({
     }
     return '1 minute ago';
   }, [value, to]);
-  return <Text>{timeSpan}</Text>;
+  return <Text style={style}>{timeSpan}</Text>;
 };
 
 const TimeSpanFuture = ({
@@ -147,6 +155,7 @@ const AddressMark = ({
   address,
   chain,
   isContract = false,
+  textStyle,
   onChange,
 }: {
   onWhitelist: boolean;
@@ -154,6 +163,7 @@ const AddressMark = ({
   address: string;
   chain: Chain;
   isContract?: boolean;
+  textStyle?: TextStyle;
   onChange(): void;
 }) => {
   const chainId = chain.serverId;
@@ -216,7 +226,7 @@ const AddressMark = ({
     <View>
       <TouchableOpacity onPress={handleEditMark}>
         <View style={styles.addressMarkWrapper}>
-          <Text className="mr-6">
+          <Text className="mr-[6]" style={textStyle}>
             {onWhitelist && t('page.signTx.trusted')}
             {onBlacklist && t('page.signTx.blocked')}
             {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}

@@ -8,6 +8,7 @@ import { CollectionWithFloorPrice } from '@rabby-wallet/rabby-api/dist/types';
 import { formatAmount } from '@/utils/number';
 import { getStyle } from '../ViewMore';
 import { useThemeColors } from '@/hooks/theme';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 interface CollectionData {
   collection: CollectionWithFloorPrice;
@@ -47,6 +48,8 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const viewMoreStyles = getStyle(colors);
+  const commonStyle = useCommonStyle();
+
   return (
     <div>
       <View style={styles.title}>
@@ -56,10 +59,12 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
       <Table style={viewMoreStyles.viewMoreTable}>
         <Col>
           <Row style={viewMoreStyles.firstRow}>
-            <Text>{t('page.signTx.floorPrice')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.floorPrice')}
+            </Text>
           </Row>
           <Row>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {data.collection.floor_price !== null
                 ? `${formatAmount(data.collection.floor_price)} ETH`
                 : '-'}
@@ -68,7 +73,9 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={viewMoreStyles.firstRow}>
-            <Text>{t('page.signTx.contractAddress')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.contractAddress')}
+            </Text>
           </Row>
           <Row>
             <Values.Address address={data.collection.id} chain={data.chain} />

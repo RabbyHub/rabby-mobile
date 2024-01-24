@@ -18,48 +18,38 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
+    origin: {
+      display: 'flex',
+      marginBottom: 80,
+      fontWeight: 500,
+      fontSize: 22,
+      lineHeight: 26,
+      color: colors['neutral-title-1'],
+      flexDirection: 'row',
+    },
+    logo: {
+      width: 24,
+      height: 24,
+      marginRight: 8,
+    },
+    text: {
+      flex: 1,
+      overflow: 'hidden',
+    },
     footer: {
-      backgroundColor: '#f5f6fa',
+      backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
     },
-    item: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+    footerItem: {
+      display: 'flex',
+      justifyContent: 'flex-end',
       alignItems: 'center',
-      padding: 15,
-      fontWeight: '500',
+      fontWeight: 500,
       fontSize: 13,
       lineHeight: 15,
-      color: '#13141a',
+      color: colors['neutral-title-1'],
       position: 'relative',
-      borderBottomWidth: 1,
-      borderBottomColor: '#e5e9ef',
-    },
-    checkboxWrapper: {
-      borderWidth: 1,
-      borderColor: colors['neutral-line'], // Default color if --r-neutral-line is not available
-      backgroundColor: colors['neutral-foot'], // Default color if --r-neutral-foot is not available
-    },
-    checked: {
-      backgroundColor: colors['blue-default'], // Default color if --r-blue-default is not available
-      borderWidth: 0,
-    },
-    afterLine: {
-      position: 'absolute',
-      bottom: 0,
-      left: 18,
-      width: 328,
-      height: 1,
-      backgroundColor: '#e5e9ef',
-    },
-    hover: {
-      backgroundColor: colors['blue-light-1'], // Default color if --r-blue-light-1 is not available
-      borderWidth: 1,
-      borderColor: colors['blue-default'], // Default color if --r-blue-default is not available
-      borderRadius: 6,
-    },
-    lastChild: {
-      borderBottomWidth: 0,
+      flexDirection: 'row',
     },
   });
 
@@ -103,7 +93,7 @@ const UserListDrawer = ({
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={onClose}
-      snapPoints={['45%']}>
+      snapPoints={['30%']}>
       <BottomSheetView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.signTx.myMarkWithContract', {
@@ -112,66 +102,60 @@ const UserListDrawer = ({
         />
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.item}
+            style={styles.footerItem}
             onPress={() =>
               onChange({ onBlacklist: false, onWhitelist: false })
             }>
-            <View>
-              <Radio
-                // eslint-disable-next-line react-native/no-inline-styles
-                textStyle={{
-                  color: colors['neutral-title-1'],
-                  flex: 1,
-                }}
-                right
-                iconRight
-                title={t('page.signTx.noMark')}
-                checked={!onWhitelist && !onBlacklist}
-                onPress={() =>
-                  onChange({ onBlacklist: false, onWhitelist: false })
-                }
-              />
-            </View>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['neutral-title-1'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.signTx.noMark')}
+              checked={!onWhitelist && !onBlacklist}
+              onPress={() =>
+                onChange({ onBlacklist: false, onWhitelist: false })
+              }
+            />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.item}
+            style={styles.footerItem}
             onPress={() => onChange({ onBlacklist: false, onWhitelist: true })}>
-            <View>
-              <Radio
-                // eslint-disable-next-line react-native/no-inline-styles
-                textStyle={{
-                  color: colors['green-default'],
-                  flex: 1,
-                }}
-                right
-                iconRight
-                title={t('page.signTx.trusted')}
-                checked={!onWhitelist && !onBlacklist}
-                onPress={() =>
-                  onChange({ onBlacklist: false, onWhitelist: true })
-                }
-              />
-            </View>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['green-default'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.signTx.trusted')}
+              checked={onWhitelist && !onBlacklist}
+              onPress={() =>
+                onChange({ onBlacklist: false, onWhitelist: true })
+              }
+            />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.item}
+            style={styles.footerItem}
             onPress={() => onChange({ onBlacklist: true, onWhitelist: false })}>
-            <View>
-              <Radio
-                // eslint-disable-next-line react-native/no-inline-styles
-                textStyle={{
-                  color: colors['red-default'],
-                  flex: 1,
-                }}
-                right
-                iconRight
-                title={t('page.signTx.blocked')}
-                checked={!onWhitelist && !onBlacklist}
-                onPress={() =>
-                  onChange({ onBlacklist: true, onWhitelist: false })
-                }
-              />
-            </View>
+            <Radio
+              // eslint-disable-next-line react-native/no-inline-styles
+              textStyle={{
+                color: colors['red-default'],
+                flex: 1,
+              }}
+              right
+              iconRight
+              title={t('page.signTx.blocked')}
+              checked={!onWhitelist && onBlacklist}
+              onPress={() =>
+                onChange({ onBlacklist: true, onWhitelist: false })
+              }
+            />
           </TouchableOpacity>
         </View>
       </BottomSheetView>
