@@ -1,6 +1,5 @@
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
-import { ContactBookService } from '@rabby-wallet/service-address';
 import {
   EncryptorAdapter,
   KeyringService,
@@ -11,10 +10,6 @@ import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { appStorage } from './shared';
 
 export * from './shared';
-
-export const contactService = new ContactBookService({
-  storageAdapter: appStorage,
-});
 
 const rnEncryptor = new RNEncryptor();
 const encryptor: EncryptorAdapter = {
