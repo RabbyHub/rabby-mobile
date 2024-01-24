@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "link-assets": "react-native-asset",
-    "postinstall": "yarn build-inpage"
+    "postinstall": "yarn build-inpage",
+    "postversion": "react-native-version --never-amend"
   },
   "lint-staged": {
     "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
@@ -151,6 +152,7 @@
     "react-devtools": "^4.28.5",
     "react-native-asset": "^2.1.1",
     "react-native-svg-transformer": "^1.1.0",
+    "react-native-version": "^4.0.0",
     "react-test-renderer": "18.2.0",
     "reactotron-react-native": "^5.0.4",
     "reflect-metadata": "0.1.13",
