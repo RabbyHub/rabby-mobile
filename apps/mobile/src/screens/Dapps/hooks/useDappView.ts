@@ -105,7 +105,7 @@ export function useOpenDappView() {
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 
-  const closeActiveDapp = useCallback(() => {
+  const closeActiveOpenedDapp = useCallback(() => {
     if (activeDappOrigin) {
       removeOpenedDapp(activeDappOrigin);
     }
@@ -158,7 +158,7 @@ export function useOpenDappView() {
     closeOpenedDapp,
 
     hideActiveDapp,
-    closeActiveDapp,
+    closeActiveOpenedDapp,
   };
 }
 

@@ -117,6 +117,8 @@ export const AppBottomSheetHandle = (
         props.style,
         styles.handleStyles,
         {
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
           flexDirection: 'row',
           alignItems: 'flex-start',
           justifyContent: 'center',

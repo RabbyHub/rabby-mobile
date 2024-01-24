@@ -24,7 +24,7 @@ import DappWebViewControl, {
 } from '@/components/WebView/DappWebViewControl';
 import { useDapps } from '@/hooks/useDapps';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { ScreenLayouts } from '@/constant/layout';
+import { RootNames, ScreenLayouts } from '@/constant/layout';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
@@ -32,6 +32,8 @@ import { BottomNavControl } from '@/components/WebView/Widgets';
 import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { toast } from '@/components/Toast';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
+import { navigate } from '@/utils/navigation';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -90,7 +92,7 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 }
 
 export function OpenedDappWebViewStub() {
-  const { openedDappItems, activeDapp, hideActiveDapp, closeActiveDapp } =
+  const { openedDappItems, activeDapp, hideActiveDapp, closeActiveOpenedDapp } =
     useOpenDappView();
 
   const {
@@ -114,7 +116,8 @@ export function OpenedDappWebViewStub() {
 
   const hideDappSheetModal = useCallback(() => {
     openedDappWebviewSheetModalRef?.current?.snapToIndex(0);
-  }, [openedDappWebviewSheetModalRef]);
+    hideActiveDapp();
+  }, [openedDappWebviewSheetModalRef, hideActiveDapp]);
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
@@ -125,10 +128,9 @@ export function OpenedDappWebViewStub() {
          * it will umount children component of BottomSheetModal
          */
         hideDappSheetModal();
-        hideActiveDapp();
       }
     },
-    [hideActiveDapp, hideDappSheetModal, indexAsCollapsed],
+    [hideDappSheetModal, indexAsCollapsed],
   );
 
   useEffect(() => {
@@ -158,6 +160,9 @@ export function OpenedDappWebViewStub() {
   }, [activeDapp]);
 
   useFocusEffect(onFocusBackHandler);
+
+  const { currentAccount } = useCurrentAccount();
+  const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
   return (
     <OpenedDappBottomSheetModal
@@ -203,8 +208,7 @@ export function OpenedDappWebViewStub() {
                   : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
               }
               headerLeft={() => {
-                if (!isConnected) return null;
-                if (!dappInfo.maybeDappInfo?.chainId) return null;
+                if (!RcWalletIcon) return null;
 
                 return (
                   <TouchableView
@@ -214,15 +218,45 @@ export function OpenedDappWebViewStub() {
                         justifyContent: 'center',
                       },
                     ]}
-                    onPress={() => {}}>
-                    <ChainIconImage
-                      chainEnum={dappInfo.maybeDappInfo?.chainId}
-                      size={24}
+                    onPress={() => {
+                      navigate(RootNames.StackAddress, {
+                        screen: RootNames.CurrentAddress,
+                        params: {
+                          backToDappOnClose: activeDapp?.origin,
+                        },
+                      });
+
+                      hideDappSheetModal();
+                    }}>
+                    <RcWalletIcon
                       width={24}
                       height={24}
+                      className="rounded-[24px]"
                     />
                   </TouchableView>
                 );
+
+                // what: render for connected chain icon
+                // if (!isConnected) return null;
+                // if (!dappInfo.maybeDappInfo?.chainId) return null;
+
+                // return (
+                //   <TouchableView
+                //     style={[
+                //       {
+                //         height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                //         justifyContent: 'center',
+                //       },
+                //     ]}
+                //     onPress={() => {}}>
+                //     <ChainIconImage
+                //       chainEnum={dappInfo.maybeDappInfo?.chainId}
+                //       size={24}
+                //       width={24}
+                //       height={24}
+                //     />
+                //   </TouchableView>
+                // );
               }}
               headerNode={({ header }) => {
                 return <WebViewControlHeader headerNode={header} />;
@@ -235,7 +269,7 @@ export function OpenedDappWebViewStub() {
                       activeDappWebViewControlRef.current?.closeWebViewNavModal();
 
                       hideDappSheetModal();
-                      closeActiveDapp();
+                      closeActiveOpenedDapp();
                     }}
                     bottomNavBar={
                       <BottomNavControl
