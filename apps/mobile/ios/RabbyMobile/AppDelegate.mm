@@ -4,8 +4,11 @@
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
+#import <React/RCTHTTPRequestHandler.h>
 // Import RNSplashScreen
 #import "RNSplashScreen.h"
+
+#import "RNDeviceInfo/RNDeviceInfo.h"
 
 #ifdef FB_SONARKIT_ENABLED
 #import <FlipperKit/FlipperClient.h>
@@ -26,6 +29,43 @@ static void InitializeFlipper(UIApplication *application) {
 #endif
 
 @implementation AppDelegate
+- (NSString *)_getDarwinVersion
+{
+    struct utsname u;
+    (void) uname(&u);
+    return [NSString stringWithUTF8String:u.release];
+}
+// make userAgent
+- (NSString *)makeUserAgent
+{
+  NSDictionary * cfnInfo = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"].infoDictionary;
+  NSLog(@"[app] cfnInfo: %@", cfnInfo);
+
+  NSString * cfnVersion = cfnInfo[@"CFBundleVersion"];
+  // NSString * cfnShortVersion = cfnInfo[@"CFBundleShortVersionString"];
+  RNDeviceInfo* rnDeviveInfo = [self.bridge moduleForClass:[RNDeviceInfo class]];
+  // we don't expect logic here triggered, if it does, we need check codebase
+  if (rnDeviveInfo == nil) {
+    NSLog(@"[app] device-info module not found!");
+    rnDeviveInfo = [[RNDeviceInfo alloc] init];
+  }
+  NSDictionary * deviceInfo = [rnDeviveInfo constantsToExport];
+  NSString * userAgent =
+    [NSString stringWithFormat:@"%@/%@.%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
+      self.moduleName,
+      deviceInfo[@"appVersion"],
+      deviceInfo[@"buildNumber"],
+      cfnVersion,
+      [self _getDarwinVersion],
+      deviceInfo[@"model"],
+      deviceInfo[@"systemName"],
+      deviceInfo[@"systemVersion"]
+    ];
+
+  NSLog(@"[app] userAgent: %@; deviceInfo: %@", userAgent, deviceInfo);
+
+  return userAgent;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -51,7 +91,18 @@ static void InitializeFlipper(UIApplication *application) {
   // rootViewController.view = rootView;
   // self.window.rootViewController = rootViewController;
   // [self.window makeKeyAndVisible];
+
   [super application:application didFinishLaunchingWithOptions:launchOptions];
+  NSString * userAgent = [self makeUserAgent];
+
+  // set RCTSetCustomNSURLSessionConfigurationProvider
+  RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    configuration.HTTPAdditionalHeaders = @{ @"User-Agent": userAgent };
+
+    // configure the session
+    return configuration;
+  });
 
   [RNSplashScreen show]; // react-native-splash-screen
 
