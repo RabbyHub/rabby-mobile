@@ -11,6 +11,7 @@ import com.facebook.soloader.SoLoader;
 import java.util.List;
 
 import com.facebook.react.views.text.ReactFontManager;
+import com.facebook.react.modules.network.OkHttpClientProvider;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -52,6 +53,7 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
+    OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory());
     ReactFontManager.getInstance().addCustomFont(this, "Roboto", R.font.roboto);
     // ReactFontManager.getInstance().addCustomFont(this, "SF Pro", R.font.sfpro);
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
