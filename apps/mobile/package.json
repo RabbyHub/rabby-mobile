@@ -152,6 +152,7 @@
     "react-native-asset": "^2.1.1",
     "react-native-svg-transformer": "^1.1.0",
     "react-test-renderer": "18.2.0",
+    "reactotron-react-native": "^5.0.4",
     "reflect-metadata": "0.1.13",
     "styled-components": "^6.1.1",
     "svg2vectordrawable": "^2.9.1",
