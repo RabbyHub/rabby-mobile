@@ -8,7 +8,9 @@ import {
   ContractAddress,
 } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import Engine from '@rabby-wallet/rabby-security-engine';
-import createPersistStore from '@rabby-wallet/persist-store';
+import createPersistStore, {
+  StorageAdapaterOptions,
+} from '@rabby-wallet/persist-store';
 import { openapi } from '../request';
 import { isSameAddress } from '@rabby-wallet/base-utils/src/isomorphic/address';
 
@@ -63,21 +65,30 @@ export class SecurityEngineService {
 
   engine: Engine | null = null;
 
-  init = async () => {
-    const storage = await createPersistStore<SecurityEngineStore>({
-      name: 'securityEngine',
-      template: {
-        userData: {
-          originBlacklist: [],
-          originWhitelist: [],
-          contractBlacklist: [],
-          contractWhitelist: [],
-          addressBlacklist: [],
-          addressWhitelist: [],
+  constructor(options?: StorageAdapaterOptions) {
+    this.init(options);
+  }
+
+  init = async (options?: StorageAdapaterOptions) => {
+    const storage = await createPersistStore<SecurityEngineStore>(
+      {
+        name: 'securityEngine',
+        template: {
+          userData: {
+            originBlacklist: [],
+            originWhitelist: [],
+            contractBlacklist: [],
+            contractWhitelist: [],
+            addressBlacklist: [],
+            addressWhitelist: [],
+          },
+          rules: getRuleConfigFromRules(defaultRules),
         },
-        rules: getRuleConfigFromRules(defaultRules),
       },
-    });
+      {
+        storage: options?.storageAdapter,
+      },
+    );
     this.rules = mergeRules(defaultRules, storage.rules);
     this.store = storage || this.store;
     this.store.rules = this.rules;
