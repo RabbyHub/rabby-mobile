@@ -161,10 +161,9 @@ export const DappNavCardBottomSheetModal = forwardRef<
     children?: React.ReactNode;
   }
 >(({ children, bottomNavH, ...props }, ref) => {
-  const { safeOffHeader } = useSafeSizes();
+  const { safeTop } = useSafeSizes();
 
-  const topSnapPoint =
-    bottomNavH + safeOffHeader + 60; /* for cancelling customHandle */
+  const topSnapPoint = bottomNavH + safeTop;
 
   return (
     <AppBottomSheetModal

@@ -414,6 +414,7 @@ const styles = StyleSheet.create({
     // don't put backgroundColor here to avoid cover the background on BottomSheetModal
     backgroundColor: 'transparent',
     width: '100%',
+    height: '100%',
     paddingVertical: 10,
   },
   dappWebViewHeadContainer: {

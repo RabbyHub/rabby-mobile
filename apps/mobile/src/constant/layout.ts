@@ -8,8 +8,8 @@ export const ScreenLayouts = {
   dappWebViewControlHeaderHeight: 44,
 
   defaultWebViewNavBottomSheetHeight: 52 + 40,
-  dappWebViewNavBottomSheetHeight: 342,
-  inConnectedDappWebViewNavBottomSheetHeight: 342 /*  - 120 */,
+  dappWebViewNavBottomSheetHeight: 302,
+  inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
 
 export const ScreenColors = {
