@@ -10,6 +10,17 @@
 
 #import "RNDeviceInfo/RNDeviceInfo.h"
 
+#if DEBUG
+void devLog(NSString *format, ...) {
+  va_list args;
+  va_start(args, format);
+  NSLogv(format, args);
+  va_end(args);
+}
+#else
+void devLog(NSString *format, ...) {}
+#endif
+
 #ifdef FB_SONARKIT_ENABLED
 #import <FlipperKit/FlipperClient.h>
 #import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
@@ -39,7 +50,7 @@ static void InitializeFlipper(UIApplication *application) {
 - (NSString *)makeUserAgent
 {
   NSDictionary * cfnInfo = [NSBundle bundleWithIdentifier:@"com.apple.CFNetwork"].infoDictionary;
-  NSLog(@"[app] cfnInfo: %@", cfnInfo);
+  // devLog(@"[app] cfnInfo: %@", cfnInfo);
 
   NSString * cfnVersion = cfnInfo[@"CFBundleVersion"];
   // NSString * cfnShortVersion = cfnInfo[@"CFBundleShortVersionString"];
@@ -62,7 +73,7 @@ static void InitializeFlipper(UIApplication *application) {
       deviceInfo[@"systemVersion"]
     ];
 
-  NSLog(@"[app] userAgent: %@; deviceInfo: %@", userAgent, deviceInfo);
+  devLog(@"[app] userAgent: %@; deviceInfo: %@", userAgent, deviceInfo);
 
   return userAgent;
 }
