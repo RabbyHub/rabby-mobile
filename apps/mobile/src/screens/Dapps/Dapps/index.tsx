@@ -60,7 +60,7 @@ export function DappsScreen(): JSX.Element {
           sections={dappSections}
           onPress={dapp => {
             openUrlAsDapp(dapp.origin);
-            toggleShowSheetModal('dappWebviewContainerRef', true);
+            toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
           }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.origin, !dapp.isFavorite);

@@ -248,3 +248,6 @@ export function parseDomainMeta(
 
   return retCache[parsed.secondaryDomain];
 }
+
+export const sanitizeUrlInput = (url: string) =>
+  url.replace(/'/g, '%27').replace(/[\r\n]/g, '');
