@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
 import { KeyringAccount } from '@rabby-wallet/keyring-utils';
@@ -10,6 +10,8 @@ import {
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { WALLET_INFO } from '@/utils/walletInfo';
+import { RcIconWatchAddress } from '@/assets/icons/address';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -196,4 +198,22 @@ export function useRemoveAccount() {
     },
     [fetchAccounts],
   );
+}
+
+export function useWalletBrandLogo(brandName?: string) {
+  const RcWalletIcon = useMemo(() => {
+    if (!brandName) return null;
+
+    if (brandName === 'Watch Address') {
+      return RcIconWatchAddress;
+    }
+    return (
+      WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
+      WALLET_INFO.UnknownWallet
+    );
+  }, [brandName]);
+
+  return {
+    RcWalletIcon,
+  };
 }

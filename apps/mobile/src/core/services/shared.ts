@@ -44,4 +44,6 @@ export const transactionBroadcastWatcherService =
     storageAdapter: appStorage,
   });
 
-export const securityEngineService = new SecurityEngineService();
+export const securityEngineService = new SecurityEngineService({
+  storageAdapter: appStorage,
+});

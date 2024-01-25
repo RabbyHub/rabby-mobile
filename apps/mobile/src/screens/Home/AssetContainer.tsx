@@ -6,10 +6,13 @@ import {
   Tabs,
   CollapsibleProps,
   MaterialTabBar,
+  MaterialTabItem,
 } from 'react-native-collapsible-tab-view';
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
+// build bug
+import './hooks/token';
 
 interface Props {
   renderHeader: CollapsibleProps['renderHeader'];
@@ -37,7 +40,6 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
           fontSize: 16,
           fontWeight: '500',
           textTransform: 'none',
-          color: colors['neutral-body'],
         },
         indicator: {
           backgroundColor: colors['blue-default'],
@@ -52,6 +54,11 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
     [colors],
   );
 
+  const renderTabItem = React.useCallback(
+    (props: any) => <MaterialTabItem {...props} inactiveOpacity={1} />,
+    [],
+  );
+
   const renderTabBar = React.useCallback(
     (props: any) => (
       <MaterialTabBar
@@ -59,13 +66,21 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
         scrollEnabled={false}
         indicatorStyle={styles.indicator}
         tabStyle={styles.tabBar}
+        TabItemComponent={renderTabItem}
         activeColor={colors['blue-default']}
         inactiveColor={colors['neutral-body']}
         labelStyle={styles.label}
         indicatorContainerStyle={styles.tabBarIndicator}
       />
     ),
-    [colors, styles],
+    [
+      colors,
+      renderTabItem,
+      styles.indicator,
+      styles.label,
+      styles.tabBar,
+      styles.tabBarIndicator,
+    ],
   );
 
   if (!currentAccount?.address) {
@@ -76,7 +91,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
     <Tabs.Container
       lazy
       containerStyle={styles.container}
-      minHeaderHeight={10}
+      minHeaderHeight={90}
       renderTabBar={renderTabBar}
       headerContainerStyle={styles.tabBarWrap}
       renderHeader={renderHeader}>

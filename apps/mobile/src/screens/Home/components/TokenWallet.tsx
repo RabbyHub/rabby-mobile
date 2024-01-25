@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
+import { useTranslation } from 'react-i18next';
 
 import { AbstractPortfolioToken } from '../types';
 import { useThemeColors } from '@/hooks/theme';
@@ -119,6 +120,7 @@ export const TokenWallet = ({
 }: TokenWalletProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
+  const { t } = useTranslation();
 
   const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenSmallToken = React.useCallback(() => {
@@ -182,6 +184,15 @@ export const TokenWallet = ({
       <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['50%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
+          ListHeaderComponent={
+            <View className="flex-row justify-center mt-1 mb-2">
+              <Text className="text-r-neutral-title-1 text-[20px] font-semibold">
+                {t('page.dashboard.assets.table.lowValueAssets', {
+                  count: smallTokens?.length || 0,
+                })}
+              </Text>
+            </View>
+          }
           keyExtractor={keyExtractor}
           data={smallTokens}
           style={styles.scrollView}
@@ -286,7 +297,6 @@ const getStyle = (colors: AppColorsVariants) =>
     // modal
     scrollView: {
       height: 150,
-      marginTop: 15,
       marginBottom: 15,
     },
   });

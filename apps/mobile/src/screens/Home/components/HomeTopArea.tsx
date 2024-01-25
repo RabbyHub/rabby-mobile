@@ -9,43 +9,14 @@ import {
 } from '@/assets/icons/home';
 import { BSheetModal } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
-import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { useCurve } from '@/hooks/useCurve';
-import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Skeleton } from '@rneui/themed';
 import React, { useMemo } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
-
+import { ImageBackground, Text, View } from 'react-native';
 export const HomeTopArea = () => {
-  const { currentAccount } = useCurrentAccount();
-  const { balance, balanceLoading, balanceFromCache } = useCurrentBalance(
-    currentAccount?.address,
-    true,
-    false,
-  );
-  const { result: curveData, isLoading } = useCurve(
-    currentAccount?.address,
-    0,
-    balance,
-  );
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const usd = useMemo(
-    () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
-    [balance],
-  );
-  const percent = useMemo(
-    () =>
-      !curveData?.changePercent
-        ? ''
-        : (curveData?.isLoss ? '-' : '+') + curveData?.changePercent,
-    [curveData?.changePercent, curveData?.isLoss],
-  );
-  const isDecrease = !!curveData?.isLoss;
 
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => [436], []);
@@ -96,30 +67,6 @@ export const HomeTopArea = () => {
         resizeMode="contain"
         style={styles.image}>
         <View style={styles.container}>
-          <View style={styles.textBox}>
-            {
-              <Text style={styles.usdText}>
-                {(balanceLoading && !balanceFromCache) ||
-                balance === null ||
-                (balanceFromCache && balance === 0) ? (
-                  <Skeleton width={140} height={38} />
-                ) : (
-                  usd
-                )}
-                {!isLoading && (
-                  <Text
-                    style={StyleSheet.compose(
-                      styles.percent,
-                      isDecrease && styles.decrease,
-                    )}>
-                    {' '}
-                    {percent}
-                  </Text>
-                )}
-              </Text>
-            }
-          </View>
-
           <View style={styles.group}>
             {actions.map(item => (
               <TouchableView
@@ -161,28 +108,8 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     justifyContent: 'center',
   },
-  textBox: {
-    flexDirection: 'row',
-  },
-
-  usdText: {
-    color: colors['neutral-title-1'],
-    fontSize: 38,
-    fontWeight: '700',
-  },
-  percent: {
-    paddingLeft: 8,
-    color: colors['green-default'],
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  decrease: {
-    color: colors['red-default'],
-  },
-
   group: {
-    marginTop: 38,
-    marginBottom: 20,
+    marginTop: 88,
     justifyContent: 'space-between',
     flexDirection: 'row',
   },
@@ -212,6 +139,7 @@ const getStyles = createGetStyles(colors => ({
 
   list: {
     gap: 12,
+    paddingTop: 16,
     paddingHorizontal: 20,
   },
 

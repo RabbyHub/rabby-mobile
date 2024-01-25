@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   SectionList,
 } from 'react-native';
+import { useNavigationState } from '@react-navigation/native';
 import {
   useAccounts,
   useCurrentAccount,
@@ -24,11 +25,30 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import groupBy from 'lodash/groupBy';
 import { sortAccountsByBalance } from '@/utils/account';
+import { useOpenDappView } from '../Dapps/hooks/useDappView';
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
   const { currentAccount } = useCurrentAccount();
   const { pinAddresses: highlightedAddresses } = usePinAddresses();
+
+  const { openUrlAsDapp } = useOpenDappView();
+
+  const navState = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.CurrentAddress)?.params,
+  ) as
+    | {
+        backToDappOnClose?: string | undefined;
+      }
+    | undefined;
+
+  React.useEffect(() => {
+    return () => {
+      if (navState?.backToDappOnClose) {
+        openUrlAsDapp(navState?.backToDappOnClose);
+      }
+    };
+  }, [navState, openUrlAsDapp]);
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
