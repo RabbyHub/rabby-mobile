@@ -13,7 +13,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useMemo } from 'react';
-import { ImageBackground, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -62,26 +62,26 @@ export const HomeTopArea = () => {
 
   return (
     <>
-      <ImageBackground
+      {/* <ImageBackground
         source={require('@/assets/icons/home/bg.png')}
         resizeMode="contain"
-        style={styles.image}>
-        <View style={styles.container}>
-          <View style={styles.group}>
-            {actions.map(item => (
-              <TouchableView
-                style={styles.action}
-                onPress={item.onPress}
-                key={item.title}>
-                <View style={styles.actionIconWrapper}>
-                  <item.Icon style={styles.actionIcon} />
-                </View>
-                <Text style={styles.actionText}>{item.title}</Text>
-              </TouchableView>
-            ))}
-          </View>
+        style={styles.image}> */}
+      <View style={styles.container}>
+        <View style={styles.group}>
+          {actions.map(item => (
+            <TouchableView
+              style={styles.action}
+              onPress={item.onPress}
+              key={item.title}>
+              <View style={styles.actionIconWrapper}>
+                <item.Icon style={styles.actionIcon} />
+              </View>
+              <Text style={styles.actionText}>{item.title}</Text>
+            </TouchableView>
+          ))}
         </View>
-      </ImageBackground>
+      </View>
+      {/* </ImageBackground> */}
 
       <BSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
         <BottomSheetView style={styles.list}>
