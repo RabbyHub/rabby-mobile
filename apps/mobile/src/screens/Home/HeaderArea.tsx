@@ -243,11 +243,12 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       height: 24,
     },
     textBox: {
-      height: 80,
+      height: 90,
       flexDirection: 'row',
       paddingHorizontal: 20,
       marginTop: 0,
-      paddingVertical: 18,
+      paddingTop: 28,
+      paddingBottom: 18,
       backgroundColor: colors['neutral-bg-1'],
     },
 

@@ -109,7 +109,7 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
   },
   group: {
-    marginTop: 88,
+    marginTop: 98,
     justifyContent: 'space-between',
     flexDirection: 'row',
   },
