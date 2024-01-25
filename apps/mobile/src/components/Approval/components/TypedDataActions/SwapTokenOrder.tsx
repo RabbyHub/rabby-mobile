@@ -16,6 +16,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 const { isSameAddress } = addressUtils;
 
 const SwapTokenOrder = ({
@@ -44,6 +45,7 @@ const SwapTokenOrder = ({
     userData: { contractWhitelist },
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
@@ -51,7 +53,7 @@ const SwapTokenOrder = ({
         item.chainId === chain.serverId &&
         isSameAddress(item.address ?? '', requireData.id ?? ''),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const hasReceiver = useMemo(() => {
     return !isSameAddress(receiver ?? '', requireData.sender ?? '');
@@ -78,8 +80,6 @@ const SwapTokenOrder = ({
   };
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     apiApprovalSecurityEngine.init();
   }, []);
 
@@ -88,18 +88,33 @@ const SwapTokenOrder = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.swap.payToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.payToken')}
+            </Text>
           </Row>
           <Row>
             <LogoWithText
               logo={payToken.logo_url}
-              textNode={
-                <View className="flex-row flex-1">
-                  <Text>{formatAmount(payToken.amount)}</Text>
-                  <Values.TokenSymbol token={payToken} />
+              text={
+                <View
+                  style={{
+                    ...commonStyle.rowFlexCenterItem,
+                    flex: 1,
+                  }}>
+                  <Values.TokenAmount
+                    value={payToken.amount}
+                    style={commonStyle.primaryText}
+                  />
+                  <Values.TokenSymbol
+                    token={payToken}
+                    style={commonStyle.primaryText}
+                  />
                 </View>
               }
               logoRadius={16}
+              textStyle={{
+                flex: 1,
+              }}
             />
             <View className="desc-list">
               <DescItem>
@@ -117,7 +132,9 @@ const SwapTokenOrder = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.swap.minReceive')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.minReceive')}
+            </Text>
           </Row>
           <Row>
             <View className="flex relative pr-10 flex-row">
@@ -125,9 +142,19 @@ const SwapTokenOrder = ({
                 logo={receiveToken.logo_url}
                 logoRadius={16}
                 text={
-                  <View className="flex-row">
-                    <Text>{formatAmount(receiveToken.amount)} </Text>
-                    <Values.TokenSymbol token={receiveToken} />
+                  <View
+                    style={{
+                      ...commonStyle.rowFlexCenterItem,
+                      flex: 1,
+                    }}>
+                    <Values.TokenAmount
+                      value={receiveToken.amount}
+                      style={commonStyle.primaryText}
+                    />
+                    <Values.TokenSymbol
+                      token={receiveToken}
+                      style={commonStyle.primaryText}
+                    />
                   </View>
                 }
                 icon={
@@ -163,9 +190,9 @@ const SwapTokenOrder = ({
                 />
               )}
             </View>
-            <View className="relative desc-list">
+            <View className="relative">
               <DescItem>
-                <Text>
+                <Text style={commonStyle.secondaryText}>
                   ≈
                   {formatUsdValue(
                     new BigNumber(receiveToken.amount)
@@ -179,17 +206,41 @@ const SwapTokenOrder = ({
                   engineResult={engineResultMap['1095']}
                   id="1095"
                   dangerText={
-                    <View className="flex-row flex-wrap">
-                      <Text>{t('page.signTx.swap.valueDiff')} </Text>
-                      <Values.Percentage value={usdValuePercentage!} />
-                      <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                    <View
+                      style={{
+                        ...commonStyle.rowFlexCenterItem,
+                        flexWrap: 'wrap',
+                      }}>
+                      <Text style={commonStyle.secondaryText}>
+                        {t('page.signTx.swap.valueDiff')}{' '}
+                      </Text>
+                      <Values.Percentage
+                        value={usdValuePercentage!}
+                        style={commonStyle.secondaryText}
+                      />
+                      <Text style={commonStyle.secondaryText}>
+                        {' '}
+                        ({formatUsdValue(usdValueDiff || '')})
+                      </Text>
                     </View>
                   }
                   warningText={
-                    <View className="flex-row flex-wrap">
-                      <Text>{t('page.signTx.swap.valueDiff')} </Text>
-                      <Values.Percentage value={usdValuePercentage!} />
-                      <Text> ({formatUsdValue(usdValueDiff || '')})</Text>
+                    <View
+                      style={{
+                        ...commonStyle.rowFlexCenterItem,
+                        flexWrap: 'wrap',
+                      }}>
+                      <Text style={commonStyle.secondaryText}>
+                        {t('page.signTx.swap.valueDiff')}{' '}
+                      </Text>
+                      <Values.Percentage
+                        value={usdValuePercentage!}
+                        style={commonStyle.secondaryText}
+                      />
+                      <Text style={commonStyle.secondaryText}>
+                        {' '}
+                        ({formatUsdValue(usdValueDiff || '')})
+                      </Text>
                     </View>
                   }
                 />
@@ -200,21 +251,28 @@ const SwapTokenOrder = ({
         {expireAt && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTypedData.buyNFT.expireTime')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTypedData.buyNFT.expireTime')}
+              </Text>
             </Row>
             <Row>
-              <Values.TimeSpanFuture to={expireAt} />
+              <Values.TimeSpanFuture
+                to={expireAt}
+                style={commonStyle.primaryText}
+              />
             </Row>
           </Col>
         )}
         {hasReceiver && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTx.swap.receiver')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.swap.receiver')}
+              </Text>
             </Row>
             <Row>
               <Values.Address address={receiver} chain={chain} />
-              <View className="desc-list">
+              <View>
                 <SecurityListItem
                   engineResult={engineResultMap['1094']}
                   id="1094"
@@ -222,12 +280,15 @@ const SwapTokenOrder = ({
                 />
                 {!engineResultMap['1094'] && (
                   <View>
-                    <View>
+                    <DescItem>
                       <Values.AccountAlias address={receiver} />
-                    </View>
-                    <View>
-                      <Values.KnownAddress address={receiver} />
-                    </View>
+                    </DescItem>
+                    <DescItem>
+                      <Values.KnownAddress
+                        address={receiver}
+                        textStyle={commonStyle.secondaryText}
+                      />
+                    </DescItem>
                   </View>
                 )}
               </View>
@@ -236,23 +297,35 @@ const SwapTokenOrder = ({
         )}
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.buyNFT.listOn')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.buyNFT.listOn')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
               <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
-              </DescItem>
-              <DescItem>
-                <Values.Interacted value={requireData.hasInteraction} />
+                <Values.Interacted
+                  value={requireData.hasInteraction}
+                  textStyle={commonStyle.secondaryText}
+                />
               </DescItem>
 
               {isInWhitelist && (
                 <DescItem>
-                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsTrust')}
+                  </Text>
                 </DescItem>
               )}
 

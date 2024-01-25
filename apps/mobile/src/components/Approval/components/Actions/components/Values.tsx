@@ -41,6 +41,8 @@ import {
 import { useWhitelist } from '@/hooks/whitelist';
 import { keyringService } from '@/core/services';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { useThemeColors } from '@/hooks/theme';
 
 const { isSameAddress } = addressUtils;
 
@@ -60,7 +62,9 @@ const styles = StyleSheet.create({
     height: 13,
   },
   tokenAmountWrapper: {
-    flex: 1,
+    flex: 0,
+    flexShrink: 0,
+    maxWidth: '80%',
   },
 });
 
@@ -128,9 +132,11 @@ const TimeSpan = ({
 const TimeSpanFuture = ({
   from = Math.floor(Date.now() / 1000),
   to,
+  style,
 }: {
   from?: number;
   to: number;
+  style?: TextStyle;
 }) => {
   const timeSpan = useMemo(() => {
     if (!to) return '-';
@@ -146,7 +152,7 @@ const TimeSpanFuture = ({
     }
     return '1 minute';
   }, [from, to]);
-  return <Text>{timeSpan}</Text>;
+  return <Text style={style}>{timeSpan}</Text>;
 };
 
 const AddressMark = ({
@@ -280,10 +286,26 @@ const TokenLabel = ({
   isScam: boolean;
   isFake: boolean;
 }) => {
+  const commonStyle = useCommonStyle();
+
   return (
-    <View className="flex gap-4 shrink-0 relative">
-      {isFake && <IconFake className="w-12" />}
-      {isScam && <IconScam className="w-14" />}
+    <View style={commonStyle.rowFlexCenterItem}>
+      {isFake && (
+        <IconFake
+          style={{
+            width: 12,
+            marginLeft: 4,
+          }}
+        />
+      )}
+      {isScam && (
+        <IconScam
+          style={{
+            width: 14,
+            marginLeft: 4,
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -292,12 +314,15 @@ const Address = ({
   address,
   chain,
   iconWidth = '12px',
+  style,
 }: {
   address: string;
   chain?: Chain;
   iconWidth?: string;
+  style?: TextStyle;
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const handleClickContractId = () => {
     if (!chain) return;
     // openInTab(chain.scanLink.replace(/tx\/_s_/, `address/${address}`), false);
@@ -314,8 +339,13 @@ const Address = ({
         alignItems: 'center',
       }}>
       <Text
-        className="mr-[6] text-r-neutral-title1 font-medium"
-        style={{ fontSize: 15 }}>
+        style={{
+          fontSize: 15,
+          marginRight: 6,
+          fontWeight: '500',
+          color: colors['neutral-title1'],
+          ...style,
+        }}>
         {ellipsis(address)}
       </Text>
       {chain && (
@@ -391,7 +421,12 @@ const Interacted = ({
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-[4] w-[14]" />
+          <IconNotInteracted
+            style={{
+              marginRight: 4,
+              width: 14,
+            }}
+          />
           <Text style={textStyle}>{t('page.signTx.neverInteracted')}</Text>
         </>
       )}

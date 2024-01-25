@@ -61,8 +61,12 @@ export const SpenderPopup: React.FC<Props> = ({ data }) => {
 
   return (
     <View>
-      <View className="title">
-        <Text>
+      <View style={styles.title}>
+        <Text
+          style={{
+            ...commonStyle.primaryText,
+            marginRight: 7,
+          }}>
           {data.isRevoke
             ? t('page.signTx.revokeTokenApprove.revokeFrom')
             : t('page.signTx.tokenApprove.approveTo')}

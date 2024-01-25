@@ -4,6 +4,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import React from 'react';
 import { SecurityListItemTag } from './SecurityListItemTag';
 import DescItem from './DescItem';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 export interface Props {
   id: string;
@@ -45,33 +46,35 @@ export const SecurityListItem: React.FC<Props> = ({
     return null;
   }
 
+  const commonStyle = useCommonStyle();
+
   return (
     <View style={styles.wrapper}>
       <DescItem>
         {engineResult.level === Level.DANGER ? (
           typeof dangerText === 'string' ? (
-            <Text>{dangerText}</Text>
+            <Text style={commonStyle.secondaryText}>{dangerText}</Text>
           ) : (
             dangerText
           )
         ) : null}
         {engineResult.level === Level.WARNING ? (
           typeof warningText === 'string' ? (
-            <Text>{warningText}</Text>
+            <Text style={commonStyle.secondaryText}>{warningText}</Text>
           ) : (
             warningText
           )
         ) : null}
         {engineResult.level === Level.SAFE ? (
           typeof safeText === 'string' ? (
-            <Text>{safeText}</Text>
+            <Text style={commonStyle.secondaryText}>{safeText}</Text>
           ) : (
             safeText
           )
         ) : null}
         {engineResult.level === Level.FORBIDDEN ? (
           typeof forbiddenText === 'string' ? (
-            <Text>{forbiddenText}</Text>
+            <Text style={commonStyle.secondaryText}>{forbiddenText}</Text>
           ) : (
             forbiddenText
           )

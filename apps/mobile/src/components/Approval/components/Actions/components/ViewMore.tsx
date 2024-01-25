@@ -23,6 +23,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 type Props =
   | SpenderPopupProps
@@ -75,6 +76,7 @@ const ViewMore = (props: Props) => {
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   const colors = useThemeColors();
   const styles = getStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const handleClickViewMore = () => {
     setPopupVisible(true);
@@ -108,7 +110,12 @@ const ViewMore = (props: Props) => {
 
   return (
     <>
-      <Text className="underline cursor-pointer" onPress={handleClickViewMore}>
+      <Text
+        style={{
+          ...commonStyle.secondaryText,
+          textDecorationLine: 'underline',
+        }}
+        onPress={handleClickViewMore}>
         {t('page.approvals.component.ViewMore.text')}
       </Text>
       <AppBottomSheetModal
