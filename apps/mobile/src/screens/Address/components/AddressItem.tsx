@@ -206,18 +206,18 @@ export const AddressItem = (props: AddressItemProps) => {
             <View>
               <View style={styles.titleView}>
                 <Text
-                  style={StyleSheet.compose(
+                  style={StyleSheet.flatten([
                     styles.title,
                     isCurrentAddress && styles.currentAddressText,
-                  )}>
+                  ])}>
                   {walletName}
                 </Text>
                 {!!walletNameIndex && !isCurrentAddress && (
                   <Text
-                    style={StyleSheet.compose(
+                    style={StyleSheet.flatten([
                       styles.walletIndexText,
                       isCurrentAddress && styles.currentAddressText,
-                    )}>
+                    ])}>
                     #{walletNameIndex}
                   </Text>
                 )}
@@ -238,10 +238,10 @@ export const AddressItem = (props: AddressItemProps) => {
 
             <View style={styles.addressBox}>
               <Text
-                style={StyleSheet.compose(
+                style={StyleSheet.flatten([
                   styles.text,
                   isCurrentAddress && styles.currentAddressText,
-                )}>
+                ])}>
                 {address}
               </Text>
               <RcIconCopyCC
@@ -255,10 +255,10 @@ export const AddressItem = (props: AddressItemProps) => {
               />
               {!isCurrentAddress && (
                 <Text
-                  style={StyleSheet.compose(
+                  style={StyleSheet.flatten([
                     styles.text,
                     isCurrentAddress && styles.currentAddressText,
-                  )}>
+                  ])}>
                   {usdValue}
                 </Text>
               )}
@@ -275,7 +275,7 @@ export const AddressItem = (props: AddressItemProps) => {
               <Text
                 style={{
                   color: themeColors['neutral-title-2'],
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: '500',
                 }}>
                 {usdValue}
@@ -289,7 +289,7 @@ export const AddressItem = (props: AddressItemProps) => {
             </View>
           ) : (
             <TouchableOpacity
-              style={styles.infoIcon}
+              style={styles.infoIconWrapper}
               onPress={gotoAddressDetail}>
               <RcIconInfoCC
                 style={styles.infoIcon}
@@ -351,8 +351,14 @@ const getStyles = (colors: AppColorsVariants) => {
       width: 14,
       height: 14,
     },
-    infoIcon: {
+    infoIconWrapper: {
       marginLeft: 'auto',
+      width: 32,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    infoIcon: {
       width: 20,
       height: 20,
       borderRadius: 20,
@@ -368,9 +374,9 @@ const getStyles = (colors: AppColorsVariants) => {
       gap: 2,
     },
     title: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '600',
+      color: colors['neutral-title-1'],
     },
     walletIndexText: {
       color: colors['neutral-foot'],
@@ -382,10 +388,11 @@ const getStyles = (colors: AppColorsVariants) => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      marginTop: 4,
     },
     text: {
       color: colors['neutral-body'],
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '400',
     },
     actionText: {

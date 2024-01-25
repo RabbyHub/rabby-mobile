@@ -15,6 +15,7 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
 import { toast } from '@/components/Toast';
 import { WalletInfo } from '@/utils/walletInfo';
+import { EmptyMobileWallet } from './EmptyMobileWallet';
 
 export const WalletSVG = makeThemeIconFromCC(WalletCC, {
   onLight: ThemeColors.light['neutral-body'],
@@ -88,6 +89,7 @@ export const WalletConnectList = () => {
           onPress={() => handlePress(service)}
         />
       ))}
+      {!validServices && !isLoading && <EmptyMobileWallet />}
     </View>
   );
 };
