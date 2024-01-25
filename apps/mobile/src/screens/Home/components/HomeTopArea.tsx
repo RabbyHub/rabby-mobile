@@ -12,8 +12,10 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
+import { toast } from '@/components/Toast';
+
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -35,16 +37,22 @@ export const HomeTopArea = () => {
     {
       title: 'Swap',
       Icon: RcIconSwap,
+      disabled: true,
       onPress: () => {},
     },
     {
       title: 'More',
       Icon: RcIconMore,
+      disabled: true,
       onPress: () => {
         bottomSheetModalRef.current?.present();
       },
     },
   ];
+
+  const toastDisabledAction = useCallback(() => {
+    toast.show('Coming Soon :)');
+  }, []);
 
   const moreItems = [
     ...actions.slice(0, -1),
@@ -70,8 +78,8 @@ export const HomeTopArea = () => {
         <View style={styles.group}>
           {actions.map(item => (
             <TouchableView
-              style={styles.action}
-              onPress={item.onPress}
+              style={[styles.action, item.disabled && styles.disabledAction]}
+              onPress={item.disabled ? toastDisabledAction : item.onPress}
               key={item.title}>
               <View style={styles.actionIconWrapper}>
                 <item.Icon style={styles.actionIcon} />
@@ -117,6 +125,9 @@ const getStyles = createGetStyles(colors => ({
     gap: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledAction: {
+    opacity: 0.6,
   },
   actionIconWrapper: {
     width: 44,
