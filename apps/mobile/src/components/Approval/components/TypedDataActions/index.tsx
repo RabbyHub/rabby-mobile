@@ -99,6 +99,8 @@ const getStyles = (colors: AppColorsVariants) =>
     tipContent: {
       maxWidth: 358,
       padding: 12,
+      alignItems: 'center',
+      flexDirection: 'row',
     },
     tipContentIcon: {
       width: 12,
@@ -241,6 +243,7 @@ const Actions = ({
           <View style={styles.actionHeaderRight}>
             <Tip
               placement="bottom"
+              isLight
               content={
                 !data?.actionType || data?.contractCall ? (
                   <NoActionAlert
@@ -250,10 +253,10 @@ const Actions = ({
                     }}
                   />
                 ) : (
-                  <Text style={styles.tipContent}>
+                  <View style={styles.tipContent}>
                     <RcIconCheck style={styles.tipContentIcon} />
                     <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </Text>
+                  </View>
                 )
               }>
               {!data?.actionType || data?.contractCall ? (

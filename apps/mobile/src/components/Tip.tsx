@@ -10,6 +10,7 @@ import { AppColorsVariants } from '@/constant/theme';
 type TipProps = Omit<TooltipProps, 'content'> & {
   content: string | TooltipProps['content'];
   hideArrow?: boolean;
+  isLight?: boolean;
 };
 
 export const Tip = ({
@@ -18,6 +19,7 @@ export const Tip = ({
   contentStyle,
   hideArrow,
   arrowSize,
+  isLight,
   ...rest
 }: TipProps) => {
   const colors = useThemeColors();
@@ -57,7 +59,13 @@ export const Tip = ({
       }
       onClose={turnOff}
       content={_content}
-      contentStyle={StyleSheet.flatten([styles.tooltipContent, contentStyle])}
+      contentStyle={StyleSheet.flatten([
+        styles.tooltipContent,
+        contentStyle,
+        isLight && {
+          backgroundColor: colors['neutral-bg-1'],
+        },
+      ])}
       tooltipStyle={StyleSheet.flatten([styles.tooltip, tooltipStyle])}
       showChildInTooltip={false}
       arrowSize={_arrowSize}
