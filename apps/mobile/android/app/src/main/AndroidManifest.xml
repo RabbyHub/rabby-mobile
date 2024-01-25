@@ -22,4 +22,17 @@
         </intent-filter>
       </activity>
     </application>
+    <queries>
+      <package android:name="vip.mytokenpocket" />
+      <package android:name="im.token.app" />
+      <package android:name="me.rainbow" />
+      <package android:name="com.bitget.exchange" />
+      <package android:name="io.metamask" />
+      <package android:name="im.argent.contractwalletclient" />
+      <package android:name="com.wallet.crypto.trustapp" />
+      <package android:name="com.mathwallet.android" />
+      <package android:name="io.zerion.android" />
+      <package android:name="org.toshi" />
+  </queries>
+  <uses-permission android:name="android.permission.CAMERA" />
 </manifest>

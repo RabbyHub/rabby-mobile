@@ -6,21 +6,12 @@ export const navigationRef =
     Record<string, Record<string, string | object> | undefined>
   >();
 
-const currentRouteNameAtom = atom<string | undefined>(undefined);
-export function useCurrentRouteNameInAppStatusBar() {
-  return useAtomValue(currentRouteNameAtom);
-}
-
-export function useSetCurrentRouteName() {
-  return useSetAtom(currentRouteNameAtom);
-}
-
 /**
  * navigate in pure function
  *
  * https://reactnavigation.org/docs/navigating-without-navigation-prop
  */
-export function navigate(name: string, params?: Record<string, string>) {
+export function navigate(name: string, params?: Record<string, any>) {
   if (navigationRef.isReady()) {
     // Perform navigation if the react navigation is ready to handle actions
     navigationRef.navigate(name, params);

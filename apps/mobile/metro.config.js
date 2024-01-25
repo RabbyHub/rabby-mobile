@@ -1,5 +1,5 @@
 const path = require('path');
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
 /**
  * Metro configuration
@@ -10,7 +10,7 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 const getAppConfig = function () {
   const config = getDefaultConfig(__dirname);
 
-  const {resolver, transformer} = config;
+  const { resolver, transformer } = config;
 
   config.transformer = {
     ...transformer,
@@ -30,6 +30,7 @@ const getAppConfig = function () {
   };
   config.watchFolders = [
     path.resolve(__dirname, '../../node_modules'),
+    path.resolve(__dirname, 'node_modules'),
     path.resolve(__dirname, '../../packages'),
   ];
 

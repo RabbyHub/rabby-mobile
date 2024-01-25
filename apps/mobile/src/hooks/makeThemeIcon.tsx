@@ -4,40 +4,36 @@ import { Image, ImageSourcePropType, ImageProps } from 'react-native';
 import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { SvgProps } from 'react-native-svg';
-import { useColorScheme } from '@/hooks/theme';
+import { useGetAppThemeMode } from '@/hooks/theme';
+import { ColorOrVariant, pickColorVariants } from '@/core/theme';
 
 export const makeThemeIcon = (
   LightIcon: React.FC<SvgProps>,
   DarkIcon: React.FC<SvgProps>,
 ) =>
-  memo((props: any) => {
-    const isLight = useColorScheme() === 'light';
+  memo((props: SvgProps) => {
+    const isLight = useGetAppThemeMode() === 'light';
 
     return isLight ? <LightIcon {...props} /> : <DarkIcon {...props} />;
   });
 
-export function makeThemeIconByCC(
+export function makeThemeIconFromCC(
   IconCC: React.FC<SvgProps>,
-  {
-    onLight,
-    onDark,
-  }: {
-    onLight: ColorValue;
-    onDark: ColorValue;
-  },
+  input:
+    | ColorOrVariant
+    | {
+        onLight: ColorOrVariant;
+        onDark?: ColorOrVariant;
+      },
 ) {
-  return memo((props: any) => {
-    const isLight = useColorScheme() === 'light';
+  return memo((props: SvgProps) => {
+    const isLight = useGetAppThemeMode() === 'light';
 
-    return isLight ? (
-      <IconCC {...props} color={onLight} />
-    ) : (
-      <IconCC {...props} color={onDark} />
-    );
+    return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
   });
 }
 
-export function makeActiveIconByCC(
+export function makeActiveIconFromCC(
   IconCC: React.FC<SvgProps>,
   {
     activeColor,
@@ -61,7 +57,7 @@ export const makePngIcon = (
   darkPath: ImageSourcePropType,
 ) =>
   memo((props: any) => {
-    const isLight = useColorScheme() === 'light';
+    const isLight = useGetAppThemeMode() === 'light';
 
     return <Image source={isLight ? lightPath : darkPath} {...props} />;
   });

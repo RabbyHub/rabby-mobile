@@ -1,20 +1,17 @@
 import * as React from 'react';
 import {
-  TouchableNativeFeedback,
   TouchableOpacity,
-  Platform,
-  View,
   StyleProp,
   ViewStyle,
-  ViewProps,
+  GestureResponderEvent,
 } from 'react-native';
 
-type Props = ViewProps & {
-  onPress: () => void;
+type Props = React.ComponentProps<typeof TouchableOpacity> & {
+  onPress: (event?: GestureResponderEvent) => void;
   onLongPress?: () => void;
   delayPressIn?: number;
   borderless?: boolean;
-  pressColor: string;
+  pressColor?: string;
   pressOpacity?: number;
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -28,11 +25,11 @@ export default class TouchableView extends React.Component<Props> {
   };
 
   render() {
-    const { style, pressOpacity, pressColor, borderless, children, ...rest } =
+    const { pressOpacity, pressColor, borderless, children, ...rest } =
       this.props;
 
     return (
-      <TouchableOpacity {...rest} style={style} activeOpacity={pressOpacity}>
+      <TouchableOpacity {...rest} activeOpacity={pressOpacity}>
         {children}
       </TouchableOpacity>
     );

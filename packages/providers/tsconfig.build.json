@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.packages.build.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "inlineSources": true,
+    "noEmit": false,
+    "sourceMap": true
+  },
+  "references": [
+    {
+      "path": "../object-multiplex/tsconfig.build.json"
+    }
+  ],
+  "include": ["../../types", "./src"],
+  "exclude": ["./src/**/*.test.ts"]
+}

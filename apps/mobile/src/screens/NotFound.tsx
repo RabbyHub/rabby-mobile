@@ -5,7 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Icon404 } from '@/assets/icons/404';
 import { Text } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
-import { Colors } from '@/constant/theme';
+import { AppColorsVariants } from '@/constant/theme';
 
 export default function NotFoundScreen({
   navigation,
@@ -24,7 +24,7 @@ export default function NotFoundScreen({
   );
 }
 
-const getStyles = (colors: Colors) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -36,7 +36,7 @@ const getStyles = (colors: Colors) =>
       marginTop: 4,
       fontSize: 15,
       fontWeight: '600',
-      color: colors.lightBlue,
+      color: colors['blue-light-1'],
       textAlign: 'center',
     },
     link: {
@@ -44,6 +44,6 @@ const getStyles = (colors: Colors) =>
     },
     linkText: {
       fontSize: 14,
-      color: colors.pureBlue,
+      color: colors['blue-default'],
     },
   });

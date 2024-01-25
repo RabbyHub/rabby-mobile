@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { colord } from 'colord';
 
-import { useThemeColors, useColorScheme } from '@/hooks/theme';
+import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 
 export type ButtonProps = TouchableOpacityProps &
@@ -66,7 +66,7 @@ export const Button = ({
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
-  const isLight = useColorScheme() === 'light';
+  const isLight = useGetAppThemeMode() === 'light';
   const colors = useThemeColors();
   const isClearType = useMemo(() => type === 'clear', [type]);
 
@@ -99,8 +99,7 @@ export const Button = ({
   const TouchableComponentInternal =
     TouchableComponent ||
     Platform.select({
-      android: TouchableOpacity,
-      // android: linearGradientProps ? TouchableOpacity : TouchableNativeFeedback,
+      android: linearGradientProps ? TouchableOpacity : TouchableNativeFeedback,
       default: TouchableOpacity,
     });
 
@@ -159,9 +158,6 @@ export const Button = ({
             styles.button,
             styles.buttonOrientation,
             isClearType && styles.clearButtonStyle,
-            {
-              flexDirection: 'row',
-            },
             {
               backgroundColor: bgColor,
               borderColor: colors['blue-default'],
@@ -250,6 +246,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     paddingHorizontal: 0,
+    width: '100%',
+    height: '100%',
   },
   buttonOrientation: {},
   clearButtonStyle: {

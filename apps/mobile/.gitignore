@@ -66,3 +66,15 @@ yarn-error.log
 /coverage
 
 .env.local
+.env.production
+
+tmp.iconset
+
+ios/Package
+
+scripts/deployments/ios/manifest.plist
+scripts/deployments/ios/version.json
+
+**/InpageBridgeWeb3.js
+/android/app/src/main/assets/custom/vconsole.min.js
+/src/**/vconsole.min.js

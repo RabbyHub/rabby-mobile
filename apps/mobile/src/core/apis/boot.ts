@@ -1,5 +1,5 @@
-import { RABBY_MOBILE_KR_PWD } from "@/constant/encryptor";
-import { keyringService } from "../services";
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import { keyringService } from '../services';
 
 const enum PasswordStatus {
   Unknown = -1,
@@ -9,7 +9,7 @@ const enum PasswordStatus {
 
 type RabbyUnlockResult = {
   pwdStatus: PasswordStatus;
-}
+};
 
 function getLockInfo() {
   const info: RabbyUnlockResult = {
@@ -18,7 +18,7 @@ function getLockInfo() {
 
   try {
     keyringService.verifyPassword(RABBY_MOBILE_KR_PWD);
-    info.pwdStatus = PasswordStatus.UseBuiltIn
+    info.pwdStatus = PasswordStatus.UseBuiltIn;
   } catch (e) {
     info.pwdStatus = PasswordStatus.Custom;
   }
@@ -29,7 +29,10 @@ function getLockInfo() {
 export async function tryAutoUnlockRabbyMobile() {
   const isBooted = keyringService.isBooted();
   // // leave here for debugging
-  // console.debug('tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD', RABBY_MOBILE_KR_PWD);
+  console.debug(
+    'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
+    RABBY_MOBILE_KR_PWD,
+  );
 
   if (!isBooted) {
     await keyringService.boot(RABBY_MOBILE_KR_PWD);
@@ -42,7 +45,7 @@ export async function tryAutoUnlockRabbyMobile() {
     if (useBuiltInPwd) {
       const isUnlocked = keyringService.isUnlocked();
       if (!isUnlocked) {
-        keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
       }
     }
   } catch (e) {

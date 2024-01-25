@@ -1,7 +1,8 @@
 import { ScreenLayouts } from '@/constant/layout';
+import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 
-import { View } from 'react-native';
+import { View, ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NormalScreenContainer({
@@ -9,11 +10,13 @@ export default function NormalScreenContainer({
   style,
   fitStatuBar,
 }: React.PropsWithChildren<{
+  className?: ViewProps['className'];
   fitStatuBar?: boolean;
   style?: React.ComponentProps<typeof View>['style'];
   hideBottomBar?: boolean;
 }>) {
   const { top } = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
     <View
@@ -25,6 +28,7 @@ export default function NormalScreenContainer({
           flexDirection: 'column',
           width: '100%',
           height: '100%',
+          backgroundColor: colors['neutral-bg-2'],
         },
       ]}>
       {children}

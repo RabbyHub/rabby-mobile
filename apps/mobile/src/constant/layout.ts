@@ -1,8 +1,15 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { AppColorsVariants } from './theme';
 
 export const ScreenLayouts = {
-  headerAreaHeight: 44,
+  headerAreaHeight: 48,
   bottomBarHeight: 84,
+
+  dappWebViewControlHeaderHeight: 44,
+
+  defaultWebViewNavBottomSheetHeight: 52 + 40,
+  dappWebViewNavBottomSheetHeight: 302,
+  inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
 };
 
 export const ScreenColors = {
@@ -10,14 +17,26 @@ export const ScreenColors = {
 };
 
 export const RootNames = {
-  Login: 'Login',
+  StackLogin: 'StackLogin',
+  StackGetStarted: 'StackGetStarted',
   NotFound: 'NotFound',
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',
   Home: 'Home',
+
   Dapps: 'Dapps',
+  StackFavoritePopularDapps: 'StackFavoritePopularDapps',
+  FavoritePopularDapps: 'FavoritePopularDapps',
+  StackSearchDapps: 'StackSearchDapps',
+  SearchDapps: 'SearchDapps',
+
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  GetStarted: 'GetStarted',
+  /* warning: dev only ------ start */
+  ProviderControllerTester: 'ProviderControllerTester',
+  /* warning: dev only ------ end */
+
   StackTransaction: 'StackTransaction',
   History: 'History',
 
@@ -27,20 +46,34 @@ export const RootNames = {
   StackAddress: 'StackAddress',
   CurrentAddress: 'CurrentAddress',
   ImportNewAddress: 'ImportNewAddress',
+  ImportSuccess: 'ImportSuccess',
+  ImportWatchAddress: 'ImportWatchAddress',
+  AddressDetail: 'AddressDetail',
+  NftDetail: 'NftDetail',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
 
-export const RootSpecConfig: {
-  [P in AppRootName]?: {
-    statusBarStyle?: 'light-content' | 'dark-content';
-    statusbarBackgroundColor?: string;
+export const getRootSpecConfig = (colors: AppColorsVariants) => {
+  return {
+    Home: {
+      statusBarStyle: 'dark-content',
+      statusbarBackgroundColor: colors['neutral-bg-1'],
+    },
+    ImportWatchAddress: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
+    },
+    ImportSuccess: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
+    },
+  } as {
+    [P in AppRootName]?: {
+      statusBarStyle?: 'light-content' | 'dark-content';
+      statusbarBackgroundColor?: string;
+    };
   };
-} = {
-  Home: {
-    statusbarBackgroundColor: ScreenColors.homeHeaderBlue,
-    statusBarStyle: 'light-content',
-  },
 };
 
 export const NavigationHeadersPresets = {

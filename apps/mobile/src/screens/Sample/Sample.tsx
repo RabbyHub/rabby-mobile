@@ -13,9 +13,9 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
+import { useGetAppThemeMode } from '@/hooks/theme';
 
 import {
   Colors,
@@ -30,7 +30,7 @@ type SectionProps = PropsWithChildren<{
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const isDarkMode = useGetAppThemeMode() === 'dark';
 
   return (
     <View style={styles.sectionContainer}>
@@ -57,7 +57,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
 }
 
 function SampleScreen(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const isDarkMode = useGetAppThemeMode() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
