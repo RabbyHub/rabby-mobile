@@ -147,17 +147,6 @@ const _ProtocolList = ({
     [expandedSections, handleToggle],
   );
 
-  const renderSeparatorComponent = useCallback(
-    (props: any) => {
-      const isExpanded = expandedSections.has(props?.section?.key!);
-      if (isExpanded) {
-        return null;
-      }
-      return <View style={styles.separator} />;
-    },
-    [styles, expandedSections],
-  );
-
   const ListEmptyComponent = useMemo(() => {
     return isPortfoliosLoading ? (
       <PositionLoader space={8} />
@@ -182,7 +171,6 @@ const _ProtocolList = ({
       ListEmptyComponent={ListEmptyComponent}
       contentContainerStyle={styles.list}
       ListFooterComponent={ListFooterComponent}
-      SectionSeparatorComponent={renderSeparatorComponent}
       stickySectionHeadersEnabled={false}
     />
   );
@@ -203,32 +191,35 @@ const ProjectTitle = ({
   const styles = useMemo(() => getStyle(colors), [colors]);
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.projectHeader}>
-      <View style={styles.projectHeaderName}>
-        <AssetAvatar
-          logo={data?.logo}
-          size={36}
-          chain={data?.chain}
-          chainSize={16}
-        />
-        <Text style={styles.projectName} numberOfLines={1}>
-          {data?.name}
-        </Text>
-      </View>
-      <View style={styles.projectHeaderUsd}>
-        <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
-        <ArrowDownCC
-          style={[
-            styles.arrowButton,
-            {
-              transform: isExpanded
-                ? [{ rotate: '180deg' }]
-                : [{ rotate: '0deg' }],
-            },
-          ]}
-        />
-      </View>
-    </TouchableOpacity>
+    <View>
+      <TouchableOpacity onPress={onPress} style={[styles.projectHeader]}>
+        <View style={styles.projectHeaderName}>
+          <AssetAvatar
+            logo={data?.logo}
+            size={36}
+            chain={data?.chain}
+            chainSize={16}
+          />
+          <Text style={styles.projectName} numberOfLines={1}>
+            {data?.name}
+          </Text>
+        </View>
+        <View style={styles.projectHeaderUsd}>
+          <Text style={styles.projectHeaderNetWorth}>{data._netWorth}</Text>
+          <ArrowDownCC
+            style={[
+              styles.arrowButton,
+              {
+                transform: isExpanded
+                  ? [{ rotate: '180deg' }]
+                  : [{ rotate: '0deg' }],
+              },
+            ]}
+          />
+        </View>
+      </TouchableOpacity>
+      {isExpanded ? null : <View style={styles.separator} />}
+    </View>
   );
 };
 
@@ -295,7 +286,7 @@ const getStyle = (colors: AppColorsVariants) =>
       marginLeft: 12,
     },
     separator: {
-      height: 0.2,
+      height: StyleSheet.hairlineWidth,
       backgroundColor: colors['neutral-line'],
       marginRight: 20,
       marginLeft: 68,
