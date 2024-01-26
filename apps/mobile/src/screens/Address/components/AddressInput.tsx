@@ -41,12 +41,12 @@ export const AddressInput: React.FC<Props> = ({
           paddingHorizontal: 6,
           marginRight: 80,
           height: 40,
+          color: colors['neutral-title-1'],
         },
         address: {
           color: colors['neutral-body'],
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: '400',
-          marginRight: 4,
         },
         addressContainer: {
           display: 'flex',
@@ -54,10 +54,19 @@ export const AddressInput: React.FC<Props> = ({
           alignItems: 'center',
           paddingTop: 10,
           paddingBottom: 12,
-          flexWrap: 'wrap',
+        },
+        iconWrapper: {
+          width: 18,
+          height: 14,
+          position: 'relative',
         },
         icon: {
+          width: 14,
+          height: 14,
           color: colors['neutral-foot'],
+          position: 'absolute',
+          left: 4,
+          top: 2,
         },
       }),
 
@@ -98,10 +107,16 @@ export const AddressInput: React.FC<Props> = ({
         }}
       />
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
-        <Text style={styles.address}>{address}</Text>
-        <Text>
-          {/* @ts-ignore */}
-          <RcIconCopyCC style={styles.icon} />
+        <Text style={styles.address} textBreakStrategy="simple">
+          {address}
+          <View style={styles.iconWrapper}>
+            <RcIconCopyCC
+              color={colors['neutral-foot']}
+              height={14}
+              width={14}
+              style={styles.icon}
+            />
+          </View>
         </Text>
       </TouchableOpacity>
     </View>

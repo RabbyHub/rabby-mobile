@@ -33,7 +33,7 @@ function BottomBlockArea() {
 
 function ImportNewAddressScreen(): JSX.Element {
   return (
-    <NormalScreenContainer style={{ padding: 20 }}>
+    <NormalScreenContainer style={{ padding: 20, paddingTop: 8 }}>
       <View style={[{ flex: 1 }]}>
         <BottomBlockArea />
       </View>
