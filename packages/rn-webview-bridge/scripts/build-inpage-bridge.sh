@@ -33,7 +33,7 @@ $repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_m
 # copy dist to targets
 for dir in "${inpage_files_targets[@]}"
 do
-  mkdir -p $(dirname $dir)
+  mkdir -p $dir
   cp $script_dir/inpage-bridge/dist/index.js $dir/InpageBridgeWeb3.js
   cp $repo_dir/apps/mobile/assets/custom/vconsole.min.js $dir/vconsole.min.js
 done

@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  TextStyle,
+} from 'react-native';
 import { ButtonSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -12,6 +18,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -22,7 +29,13 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-const AddressMemo = ({ address }: { address: string }) => {
+const AddressMemo = ({
+  address,
+  textStyle,
+}: {
+  address: string;
+  textStyle?: TextStyle;
+}) => {
   const [addressAlias, updateAlias] = useAlias(address);
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState(addressAlias || '');
@@ -32,6 +45,7 @@ const AddressMemo = ({ address }: { address: string }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const modalRef = React.useRef<AppBottomSheetModal>(null);
+  const commonStyle = useCommonStyle();
 
   const handleConfirm = () => {
     if (!inputText) {
@@ -72,14 +86,17 @@ const AddressMemo = ({ address }: { address: string }) => {
   return (
     <View>
       <TouchableOpacity onPress={handleEditMemo}>
-        <View className="flex flex-row items-center">
-          <Text className="mr-2">{addressAlias || '-'}</Text>
+        <View style={commonStyle.rowFlexCenterItem}>
+          <Text className="mr-[2]" style={textStyle}>
+            {addressAlias || '-'}
+          </Text>
           <IconEdit className="w-[13px]" />
         </View>
       </TouchableOpacity>
       <AppBottomSheetModal
         ref={modalRef}
         onDismiss={() => setVisible(false)}
+        keyboardBlurBehavior="restore"
         snapPoints={['30%']}>
         <BottomSheetView style={styles.mainView}>
           <AppBottomSheetModalTitle
@@ -93,8 +110,8 @@ const AddressMemo = ({ address }: { address: string }) => {
               value={inputText}
               placeholder="Please input address note"
             />
-            <Text className="mt-10 text-r-red-default">{errorMessage}</Text>
-            <View className="flex flex-row justify-center mt-40">
+            <Text className="mt-[10] text-r-red-default">{errorMessage}</Text>
+            <View className="flex flex-row justify-center mt-[40]">
               <Button
                 buttonStyle={{
                   width: 200,

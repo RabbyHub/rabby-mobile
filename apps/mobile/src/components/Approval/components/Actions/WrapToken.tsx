@@ -88,12 +88,12 @@ const WrapToken = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
+                <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
                   <Values.TokenSymbol token={payToken} />
-                </>
+                </View>
               }
               logoRadius={16}
             />
@@ -109,12 +109,12 @@ const WrapToken = ({
             <LogoWithText
               logo={receiveToken.logo_url}
               text={
-                <>
+                <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(receiveToken.min_amount)}{' '}
                   </Text>
                   <Values.TokenSymbol token={receiveToken} />
-                </>
+                </View>
               }
               logoRadius={16}
             />
@@ -174,10 +174,12 @@ const WrapToken = ({
                 </DescItem>
               )}
               <DescItem>
-                <Values.Interacted
-                  value={requireData.hasInteraction}
-                  textStyle={commonStyle.secondaryText}
-                />
+                <View>
+                  <Values.Interacted
+                    value={requireData.hasInteraction}
+                    textStyle={commonStyle.secondaryText}
+                  />
+                </View>
               </DescItem>
 
               {isInWhitelist && (

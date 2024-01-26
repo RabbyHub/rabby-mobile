@@ -20,7 +20,7 @@
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "link-assets": "react-native-asset",
-    "postinstall": "yarn build-inpage",
+    "postinstall": "yarn build:deps && yarn build-inpage",
     "postversion": "react-native-version --never-amend"
   },
   "lint-staged": {

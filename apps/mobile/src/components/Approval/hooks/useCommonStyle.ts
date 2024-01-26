@@ -23,6 +23,11 @@ const useCommonStyle = () => {
         lineHeight: 18,
         color: colors['neutral-title-1'],
       },
+      rowFlexCenterItem: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
     });
   }, [colors]);
 
