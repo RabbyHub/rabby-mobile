@@ -41,11 +41,13 @@ import {
 import { useWhitelist } from '@/hooks/whitelist';
 import { keyringService } from '@/core/services';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { useThemeColors } from '@/hooks/theme';
 
 const { isSameAddress } = addressUtils;
 
-const Boolean = ({ value }: { value: boolean }) => {
-  return <Text>{value ? 'Yes' : 'No'}</Text>;
+const Boolean = ({ value, style }: { value: boolean; style?: TextStyle }) => {
+  return <Text style={style}>{value ? 'Yes' : 'No'}</Text>;
 };
 
 const styles = StyleSheet.create({
@@ -60,7 +62,9 @@ const styles = StyleSheet.create({
     height: 13,
   },
   tokenAmountWrapper: {
-    flex: 1,
+    flex: 0,
+    flexShrink: 0,
+    maxWidth: '80%',
   },
 });
 
@@ -88,16 +92,24 @@ const Percentage = ({ value, style }: { value: number; style?: TextStyle }) => {
   return <Text style={style}>{(value * 100).toFixed(2)}%</Text>;
 };
 
-const USDValue = ({ value }: { value: number | string }) => {
-  return <Text>{formatUsdValue(value)}</Text>;
+const USDValue = ({
+  value,
+  style,
+}: {
+  value: number | string;
+  style?: TextStyle;
+}) => {
+  return <Text style={style}>{formatUsdValue(value)}</Text>;
 };
 
 const TimeSpan = ({
   value,
   to = Date.now(),
+  style,
 }: {
   value: number | null;
   to?: number;
+  style?: TextStyle;
 }) => {
   const timeSpan = useMemo(() => {
     const from = value;
@@ -114,15 +126,17 @@ const TimeSpan = ({
     }
     return '1 minute ago';
   }, [value, to]);
-  return <Text>{timeSpan}</Text>;
+  return <Text style={style}>{timeSpan}</Text>;
 };
 
 const TimeSpanFuture = ({
   from = Math.floor(Date.now() / 1000),
   to,
+  style,
 }: {
   from?: number;
   to: number;
+  style?: TextStyle;
 }) => {
   const timeSpan = useMemo(() => {
     if (!to) return '-';
@@ -138,7 +152,7 @@ const TimeSpanFuture = ({
     }
     return '1 minute';
   }, [from, to]);
-  return <Text>{timeSpan}</Text>;
+  return <Text style={style}>{timeSpan}</Text>;
 };
 
 const AddressMark = ({
@@ -147,6 +161,7 @@ const AddressMark = ({
   address,
   chain,
   isContract = false,
+  textStyle,
   onChange,
 }: {
   onWhitelist: boolean;
@@ -154,6 +169,7 @@ const AddressMark = ({
   address: string;
   chain: Chain;
   isContract?: boolean;
+  textStyle?: TextStyle;
   onChange(): void;
 }) => {
   const chainId = chain.serverId;
@@ -216,7 +232,7 @@ const AddressMark = ({
     <View>
       <TouchableOpacity onPress={handleEditMark}>
         <View style={styles.addressMarkWrapper}>
-          <Text className="mr-6">
+          <Text className="mr-[6]" style={textStyle}>
             {onWhitelist && t('page.signTx.trusted')}
             {onBlacklist && t('page.signTx.blocked')}
             {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
@@ -270,10 +286,26 @@ const TokenLabel = ({
   isScam: boolean;
   isFake: boolean;
 }) => {
+  const commonStyle = useCommonStyle();
+
   return (
-    <View className="flex gap-4 shrink-0 relative">
-      {isFake && <IconFake className="w-12" />}
-      {isScam && <IconScam className="w-14" />}
+    <View style={commonStyle.rowFlexCenterItem}>
+      {isFake && (
+        <IconFake
+          style={{
+            width: 12,
+            marginLeft: 4,
+          }}
+        />
+      )}
+      {isScam && (
+        <IconScam
+          style={{
+            width: 14,
+            marginLeft: 4,
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -282,12 +314,15 @@ const Address = ({
   address,
   chain,
   iconWidth = '12px',
+  style,
 }: {
   address: string;
   chain?: Chain;
   iconWidth?: string;
+  style?: TextStyle;
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const handleClickContractId = () => {
     if (!chain) return;
     // openInTab(chain.scanLink.replace(/tx\/_s_/, `address/${address}`), false);
@@ -304,8 +339,13 @@ const Address = ({
         alignItems: 'center',
       }}>
       <Text
-        className="mr-[6] text-r-neutral-title1 font-medium"
-        style={{ fontSize: 15 }}>
+        style={{
+          fontSize: 15,
+          marginRight: 6,
+          fontWeight: '500',
+          color: colors['neutral-title1'],
+          ...style,
+        }}>
         {ellipsis(address)}
       </Text>
       {chain && (
@@ -381,7 +421,12 @@ const Interacted = ({
         </>
       ) : (
         <>
-          <IconNotInteracted className="mr-[4] w-[14]" />
+          <IconNotInteracted
+            style={{
+              marginRight: 4,
+              width: 14,
+            }}
+          />
           <Text style={textStyle}>{t('page.signTx.neverInteracted')}</Text>
         </>
       )}

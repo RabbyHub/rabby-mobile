@@ -8,6 +8,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
 import { getStyle } from '../ViewMore';
 import { useThemeColors } from '@/hooks/theme';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 const { isSameAddress } = addressUtils;
 
@@ -36,6 +37,7 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
   const { t } = useTranslation();
   const { userData } = useApprovalSecurityEngine();
   const { contractBlacklist, contractWhitelist } = userData;
+  const commonStyle = useCommonStyle();
   const colors = useThemeColors();
   const styles = getStyle(colors);
 
@@ -56,7 +58,9 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text>{data.title || t('page.signTx.interactContract')}</Text>
+        <Text style={{ ...commonStyle.primaryText, marginRight: 7 }}>
+          {data.title || t('page.signTx.interactContract')}
+        </Text>
         <Values.Address
           address={data.address}
           chain={data.chain}
@@ -66,34 +70,51 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.protocolTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.protocolTitle')}
+            </Text>
           </Row>
           <Row>
-            <Values.Protocol value={data.protocol} />
+            <Values.Protocol
+              value={data.protocol}
+              textStyle={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.interacted')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interacted')}
+            </Text>
           </Row>
           <Row>
-            <Values.Boolean value={data.hasInteraction} />
+            <Values.Boolean
+              value={data.hasInteraction}
+              style={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.deployTimeTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.deployTimeTitle')}
+            </Text>
           </Row>
           <Row>
-            <Values.TimeSpan value={data.bornAt} />
+            <Values.TimeSpan
+              value={data.bornAt}
+              style={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.popularity')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.popularity')}
+            </Text>
           </Row>
           <Row>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {data.rank
                 ? t('page.signTx.contractPopularity', [
                     data.rank,
@@ -105,18 +126,26 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.addressNote')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.addressNote')}
+            </Text>
           </Row>
           <Row>
-            <Values.AddressMemo address={data.address} />
+            <Values.AddressMemo
+              address={data.address}
+              textStyle={commonStyle.primaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text>{t('page.signTx.myMark')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.myMark')}
+            </Text>
           </Row>
           <Row>
             <Values.AddressMark
+              textStyle={commonStyle.primaryText}
               isContract
               address={data.address}
               chain={data.chain}

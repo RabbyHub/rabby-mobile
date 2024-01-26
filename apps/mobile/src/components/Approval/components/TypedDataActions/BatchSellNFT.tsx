@@ -18,6 +18,7 @@ import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 const { isSameAddress } = addressUtils;
 
 const BatchSellNFT = ({
@@ -35,6 +36,7 @@ const BatchSellNFT = ({
 }) => {
   const actionData = data!;
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   const {
     rules,
     currentTx: { processedRules },
@@ -48,7 +50,7 @@ const BatchSellNFT = ({
         item.chainId === chain.serverId &&
         isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -83,13 +85,15 @@ const BatchSellNFT = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.sellNFT.listNFT')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.sellNFT.listNFT')}
+            </Text>
           </Row>
           <View className="flex-1 overflow-hidden">
             {actionData.pay_nft_list.map(nft => (
               <Row key={nft.id}>
-                <NFTWithName nft={nft} />
-                <View className="desc-list">
+                <NFTWithName nft={nft} textStyle={commonStyle.primaryText} />
+                <View>
                   <ViewMore
                     type="nft"
                     data={{
@@ -104,17 +108,29 @@ const BatchSellNFT = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.sellNFT.receiveToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.sellNFT.receiveToken')}
+            </Text>
           </Row>
           <Row>
             <View className="relative">
               <LogoWithText
                 logo={actionData.receive_token.logo_url}
-                text={`${formatAmount(
-                  actionData.receive_token.amount,
-                )} ${ellipsisTokenSymbol(
-                  getTokenSymbol(actionData.receive_token),
-                )}`}
+                text={
+                  <View style={commonStyle.rowFlexCenterItem}>
+                    <Values.TokenAmount
+                      value={actionData.receive_token.amount}
+                      style={commonStyle.primaryText}
+                    />
+                    <Values.TokenSymbol
+                      token={actionData.receive_token}
+                      style={{
+                        ...commonStyle.primaryText,
+                        marginLeft: 2,
+                      }}
+                    />
+                  </View>
+                }
                 logoRadius={16}
                 icon={
                   <Values.TokenLabel
@@ -149,9 +165,9 @@ const BatchSellNFT = ({
                 />
               )}
             </View>
-            <View className="desc-list">
+            <View>
               <DescItem>
-                <Text>
+                <Text style={commonStyle.secondaryText}>
                   ≈
                   {formatUsdValue(
                     new BigNumber(actionData.receive_token.amount)
@@ -165,20 +181,27 @@ const BatchSellNFT = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.buyNFT.expireTime')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.buyNFT.expireTime')}
+            </Text>
           </Row>
           <Row>
             {actionData.expire_at ? (
-              <Values.TimeSpanFuture to={Number(actionData.expire_at)} />
+              <Values.TimeSpanFuture
+                to={Number(actionData.expire_at)}
+                style={commonStyle.primaryText}
+              />
             ) : (
-              <Text>-</Text>
+              <Text style={commonStyle.primaryText}>-</Text>
             )}
           </Row>
         </Col>
         {actionData.takers.length > 0 && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTypedData.sellNFT.specificBuyer')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTypedData.sellNFT.specificBuyer')}
+              </Text>
             </Row>
             <Row>
               <Values.Address address={actionData.takers[0]} chain={chain} />
@@ -199,11 +222,13 @@ const BatchSellNFT = ({
         {hasReceiver && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTx.swap.receiver')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.swap.receiver')}
+              </Text>
             </Row>
             <Row>
               <Values.Address address={actionData.receiver} chain={chain} />
-              <View className="desc-list">
+              <View>
                 <SecurityListItem
                   id="1115"
                   engineResult={engineResultMap['1115']}
@@ -215,20 +240,29 @@ const BatchSellNFT = ({
         )}
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.buyNFT.listOn')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.buyNFT.listOn')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={requireData.id} chain={chain} />
             </View>
-            <View className="desc-list">
-              <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
-              </DescItem>
+            <View>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
 
               {isInWhitelist && (
                 <DescItem>
-                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsTrust')}
+                  </Text>
                 </DescItem>
               )}
 

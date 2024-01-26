@@ -14,6 +14,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
 import { Tip } from '@/components/Tip';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 const { isSameAddress } = addressUtils;
 
 const ContractCall = ({
@@ -39,6 +40,7 @@ const ContractCall = ({
     userData: { contractWhitelist },
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
@@ -46,7 +48,7 @@ const ContractCall = ({
         item.chainId === chain.serverId &&
         isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -65,23 +67,33 @@ const ContractCall = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.interactContract')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.interactContract')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={requireData.id} chain={chain} />
             </View>
-            <View className="desc-list">
+            <View>
               <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
+                <ProtocolListItem
+                  protocol={requireData.protocol}
+                  style={commonStyle.secondaryText}
+                />
               </DescItem>
               <DescItem>
-                <Values.Interacted value={requireData.hasInteraction} />
+                <Values.Interacted
+                  value={requireData.hasInteraction}
+                  textStyle={commonStyle.secondaryText}
+                />
               </DescItem>
 
               {isInWhitelist && (
                 <DescItem>
-                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsTrust')}
+                  </Text>
                 </DescItem>
               )}
 
@@ -114,18 +126,24 @@ const ContractCall = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.contractCall.operation')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.contractCall.operation')}
+            </Text>
           </Row>
           <Row>
-            <View className="relative flex items-center">
-              <Text>{operation || '-'}</Text>
+            <View
+              style={{
+                position: 'relative',
+                ...commonStyle.rowFlexCenterItem,
+              }}>
+              <Text style={commonStyle.primaryText}>{operation || '-'}</Text>
               <Tip
                 content={
                   operation
                     ? t('page.signTypedData.contractCall.operationDecoded')
                     : t('page.signTx.contractCall.operationCantDecode')
                 }>
-                <IconQuestionMark className="w-12 ml-6" />
+                <IconQuestionMark className="w-[12] ml-[6]" />
               </Tip>
             </View>
           </Row>

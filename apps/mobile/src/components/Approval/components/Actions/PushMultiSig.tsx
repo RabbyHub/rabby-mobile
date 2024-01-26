@@ -40,7 +40,7 @@ const PushMultiSig = ({
           <Row>
             <View>
               <Values.Address address={data.multisig_id} chain={chain} />
-              <View className="desc-list">
+              <View>
                 <DescItem>
                   <Values.AddressMemo address={data.multisig_id} />
                 </DescItem>

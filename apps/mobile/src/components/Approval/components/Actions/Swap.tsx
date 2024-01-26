@@ -353,12 +353,14 @@ const Swap = ({
           <Row>
             <Values.Address address={requireData.id} chain={chain} />
             <View>
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
 
               <DescItem>
                 <Values.Interacted

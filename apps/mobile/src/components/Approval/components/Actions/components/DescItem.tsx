@@ -29,6 +29,7 @@ const getStyle = (colors: AppColorsVariants) =>
 const DescItem = ({ children }: { children: ReactNode }) => {
   const colors = useThemeColors();
   const styles = getStyle(colors);
+
   return (
     <View style={styles.descItem}>
       <View style={styles.ball} />

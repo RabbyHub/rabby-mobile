@@ -13,6 +13,7 @@ import { WalletSVG } from '@/assets/icons/address';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast } from '@/components/Toast';
 import { WalletInfo } from '@/utils/walletInfo';
+import { EmptyMobileWallet } from './EmptyMobileWallet';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -81,6 +82,7 @@ export const WalletConnectList = () => {
           onPress={() => handlePress(service)}
         />
       ))}
+      {!validServices && !isLoading && <EmptyMobileWallet />}
     </View>
   );
 };

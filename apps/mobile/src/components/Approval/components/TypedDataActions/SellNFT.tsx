@@ -18,6 +18,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 const { isSameAddress } = addressUtils;
 
 const ApproveNFT = ({
@@ -41,6 +42,7 @@ const ApproveNFT = ({
     userData: { contractWhitelist },
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
 
   const isInWhitelist = useMemo(() => {
     return contractWhitelist.some(
@@ -48,7 +50,7 @@ const ApproveNFT = ({
         item.chainId === chain.serverId &&
         isSameAddress(item.address, requireData.id),
     );
-  }, [contractWhitelist, requireData]);
+  }, [contractWhitelist, requireData, chain]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -83,7 +85,9 @@ const ApproveNFT = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.sellNFT.listNFT')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.sellNFT.listNFT')}
+            </Text>
           </Row>
           <Row>
             <NFTWithName nft={actionData.pay_nft} />
@@ -102,17 +106,21 @@ const ApproveNFT = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.sellNFT.receiveToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.sellNFT.receiveToken')}
+            </Text>
           </Row>
           <Row>
             <View className="relative">
               <LogoWithText
                 logo={actionData.receive_token.logo_url}
-                text={`${formatAmount(
-                  actionData.receive_token.amount,
-                )} ${ellipsisTokenSymbol(
-                  getTokenSymbol(actionData.receive_token),
-                )}`}
+                text={
+                  <Text style={commonStyle.primaryText}>{`${formatAmount(
+                    actionData.receive_token.amount,
+                  )} ${ellipsisTokenSymbol(
+                    getTokenSymbol(actionData.receive_token),
+                  )}`}</Text>
+                }
                 logoRadius={16}
                 icon={
                   <Values.TokenLabel
@@ -149,7 +157,7 @@ const ApproveNFT = ({
             </View>
             <View className="desc-list">
               <DescItem>
-                <Text>
+                <Text style={commonStyle.secondaryText}>
                   ≈
                   {formatUsdValue(
                     new BigNumber(actionData.receive_token.amount)
@@ -163,10 +171,12 @@ const ApproveNFT = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.buyNFT.expireTime')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.buyNFT.expireTime')}
+            </Text>
           </Row>
           <Row>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {actionData.expire_at ? (
                 <Values.TimeSpanFuture to={Number(actionData.expire_at)} />
               ) : (
@@ -178,28 +188,34 @@ const ApproveNFT = ({
         {actionData.takers.length > 0 && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTypedData.sellNFT.specificBuyer')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTypedData.sellNFT.specificBuyer')}
+              </Text>
             </Row>
             <Row>
-              <Values.Address address={actionData.takers[0]} chain={chain} />
-              {engineResultMap['1081'] && (
-                <SecurityLevelTagNoText
-                  enable={engineResultMap['1081'].enable}
-                  level={
-                    processedRules.includes('1081')
-                      ? 'proceed'
-                      : engineResultMap['1081'].level
-                  }
-                  onClick={() => handleClickRule('1081')}
-                />
-              )}
+              <View className="relative">
+                <Values.Address address={actionData.takers[0]} chain={chain} />
+                {engineResultMap['1081'] && (
+                  <SecurityLevelTagNoText
+                    enable={engineResultMap['1081'].enable}
+                    level={
+                      processedRules.includes('1081')
+                        ? 'proceed'
+                        : engineResultMap['1081'].level
+                    }
+                    onClick={() => handleClickRule('1081')}
+                  />
+                )}
+              </View>
             </Row>
           </Col>
         )}
         {hasReceiver && (
           <Col>
             <Row isTitle>
-              <Text>{t('page.signTx.swap.receiver')}</Text>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.swap.receiver')}
+              </Text>
             </Row>
             <Row>
               <Values.Address address={actionData.receiver} chain={chain} />
@@ -213,20 +229,29 @@ const ApproveNFT = ({
         )}
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTypedData.buyNFT.listOn')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.buyNFT.listOn')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={requireData.id} chain={chain} />
             </View>
-            <View className="desc-list">
-              <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
-              </DescItem>
+            <View>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
 
               {isInWhitelist && (
                 <DescItem>
-                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.markAsTrust')}
+                  </Text>
                 </DescItem>
               )}
 

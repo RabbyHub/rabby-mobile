@@ -24,3 +24,4 @@ export const HardwareSVG = makeThemeIconFromCC(HardwareCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });
+export { default as RcIconMobileWallet } from './mobile-wallet.svg';

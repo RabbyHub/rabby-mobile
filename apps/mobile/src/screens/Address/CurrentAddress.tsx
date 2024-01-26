@@ -179,7 +179,7 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['blue-default'],
     },
     container: {
-      paddingTop: 20,
+      paddingTop: 8,
       paddingHorizontal: 20,
     },
 

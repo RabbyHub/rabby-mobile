@@ -12,8 +12,10 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useMemo } from 'react';
-import { ImageBackground, Text, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Text, View } from 'react-native';
+import { toast } from '@/components/Toast';
+
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -35,16 +37,22 @@ export const HomeTopArea = () => {
     {
       title: 'Swap',
       Icon: RcIconSwap,
+      disabled: true,
       onPress: () => {},
     },
     {
       title: 'More',
       Icon: RcIconMore,
+      disabled: true,
       onPress: () => {
         bottomSheetModalRef.current?.present();
       },
     },
   ];
+
+  const toastDisabledAction = useCallback(() => {
+    toast.show('Coming Soon :)');
+  }, []);
 
   const moreItems = [
     ...actions.slice(0, -1),
@@ -62,26 +70,26 @@ export const HomeTopArea = () => {
 
   return (
     <>
-      <ImageBackground
+      {/* <ImageBackground
         source={require('@/assets/icons/home/bg.png')}
         resizeMode="contain"
-        style={styles.image}>
-        <View style={styles.container}>
-          <View style={styles.group}>
-            {actions.map(item => (
-              <TouchableView
-                style={styles.action}
-                onPress={item.onPress}
-                key={item.title}>
-                <View style={styles.actionIconWrapper}>
-                  <item.Icon style={styles.actionIcon} />
-                </View>
-                <Text style={styles.actionText}>{item.title}</Text>
-              </TouchableView>
-            ))}
-          </View>
+        style={styles.image}> */}
+      <View style={styles.container}>
+        <View style={styles.group}>
+          {actions.map(item => (
+            <TouchableView
+              style={[styles.action, item.disabled && styles.disabledAction]}
+              onPress={item.disabled ? toastDisabledAction : item.onPress}
+              key={item.title}>
+              <View style={styles.actionIconWrapper}>
+                <item.Icon style={styles.actionIcon} />
+              </View>
+              <Text style={styles.actionText}>{item.title}</Text>
+            </TouchableView>
+          ))}
         </View>
-      </ImageBackground>
+      </View>
+      {/* </ImageBackground> */}
 
       <BSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
         <BottomSheetView style={styles.list}>
@@ -109,7 +117,7 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
   },
   group: {
-    marginTop: 88,
+    marginTop: 98,
     justifyContent: 'space-between',
     flexDirection: 'row',
   },
@@ -117,6 +125,9 @@ const getStyles = createGetStyles(colors => ({
     gap: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledAction: {
+    opacity: 0.6,
   },
   actionIconWrapper: {
     width: 44,
