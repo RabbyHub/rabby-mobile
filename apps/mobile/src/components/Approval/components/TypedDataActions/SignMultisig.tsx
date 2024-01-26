@@ -10,6 +10,7 @@ import { Chain } from '@debank/common';
 import { CHAINS } from '@/constant/chains';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const PushMultiSig = ({
   data,
@@ -22,6 +23,7 @@ const PushMultiSig = ({
   engineResults: Result[];
 }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
 
   const multiSigInfo = useMemo(() => {
     if (!chain) {
@@ -48,7 +50,9 @@ const PushMultiSig = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.submitMultisig.multisigAddress')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.submitMultisig.multisigAddress')}
+            </Text>
           </Row>
           <Row>
             <View>
@@ -56,9 +60,12 @@ const PushMultiSig = ({
                 address={data.multisig_id}
                 chain={multiSigInfo?.chain}
               />
-              <View className="desc-list">
+              <View>
                 <DescItem>
-                  <Values.AddressMemo address={data.multisig_id} />
+                  <Values.AddressMemo
+                    address={data.multisig_id}
+                    textStyle={commonStyle.secondaryText}
+                  />
                 </DescItem>
                 {multiSigInfo && (
                   <DescItem>
@@ -67,13 +74,7 @@ const PushMultiSig = ({
                       text={multiSigInfo.name}
                       logoSize={14}
                       logoRadius={16}
-                      // eslint-disable-next-line react-native/no-inline-styles
-                      textStyle={{
-                        fontWeight: 'normal',
-                        fontSize: 13,
-                        lineHeight: 15,
-                        color: '#4B4D59',
-                      }}
+                      textStyle={commonStyle.secondaryText}
                     />
                   </DescItem>
                 )}

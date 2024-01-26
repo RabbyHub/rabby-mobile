@@ -14,6 +14,7 @@ import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import DescItem from './components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const Send = ({
   data,
@@ -29,6 +30,7 @@ const Send = ({
   const actionData = data!;
   const { init } = useApprovalSecurityEngine();
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -47,21 +49,28 @@ const Send = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.send.sendToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.send.sendToken')}
+            </Text>
           </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
               text={
-                <>
-                  <Text>{formatTokenAmount(actionData.token.amount)} </Text>
-                  <Values.TokenSymbol token={actionData.token} />
-                </>
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text style={commonStyle.primaryText}>
+                    {formatTokenAmount(actionData.token.amount)}{' '}
+                  </Text>
+                  <Values.TokenSymbol
+                    token={actionData.token}
+                    style={commonStyle.primaryText}
+                  />
+                </View>
               }
               logoRadius={16}
             />
             <DescItem>
-              <Text>
+              <Text style={commonStyle.secondaryText}>
                 ≈
                 {formatUsdValue(
                   new BigNumber(actionData.token.price)
@@ -74,18 +83,25 @@ const Send = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.send.sendTo')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.send.sendTo')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={actionData.to} chain={chain} />
               <View>
                 <DescItem>
-                  <Values.AddressMemo address={actionData.to} />
+                  <Values.AddressMemo
+                    address={actionData.to}
+                    textStyle={commonStyle.secondaryText}
+                  />
                 </DescItem>
                 {requireData.name && (
                   <DescItem>
-                    <Text>{requireData.name}</Text>
+                    <Text style={commonStyle.secondaryText}>
+                      {requireData.name}
+                    </Text>
                   </DescItem>
                 )}
                 <SecurityListItem

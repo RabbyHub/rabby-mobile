@@ -15,6 +15,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { formatAmount } from '@/utils/number';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const Permit = ({
   data,
@@ -30,6 +31,7 @@ const Permit = ({
   const actionData = data!;
   const { t } = useTranslation();
   const { init } = useApprovalSecurityEngine();
+  const commonStyle = useCommonStyle();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -54,27 +56,43 @@ const Permit = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.tokenApprove.approveToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.tokenApprove.approveToken')}
+            </Text>
           </Row>
           <Row>
             <LogoWithText
               logo={actionData.token.logo_url}
               text={
-                <View className="overflow-hidden overflow-ellipsis flex">
-                  <Values.TokenAmount value={actionData.token.amount} />
-                  <View className="mr-2">
-                    <Values.TokenSymbol token={actionData.token} />
-                  </View>
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Values.TokenAmount
+                    value={actionData.token.amount}
+                    style={commonStyle.primaryText}
+                  />
+                  <Values.TokenSymbol
+                    token={requireData.token}
+                    style={{
+                      marginLeft: 2,
+                      ...commonStyle.primaryText,
+                    }}
+                  />
                 </View>
               }
+              textStyle={{
+                flex: 1,
+              }}
               logoRadius={16}
             />
             <View className="desc-list">
               <DescItem>
-                <View className="flex-row">
-                  <Text>{t('page.signTx.tokenApprove.myBalance')} </Text>
-                  <Text>{formatAmount(tokenBalance)} </Text>
-                  <Text>
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text style={commonStyle.secondaryText}>
+                    {t('page.signTx.tokenApprove.myBalance')}{' '}
+                  </Text>
+                  <Text style={commonStyle.secondaryText}>
+                    {formatAmount(tokenBalance)}{' '}
+                  </Text>
+                  <Text style={commonStyle.secondaryText}>
                     {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
                   </Text>
                 </View>
@@ -84,10 +102,12 @@ const Permit = ({
         </Col>
         <Col>
           <Row isTitle tip={t('page.signTypedData.permit2.sigExpireTimeTip')}>
-            <Text>{t('page.signTypedData.permit2.sigExpireTime')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTypedData.permit2.sigExpireTime')}
+            </Text>
           </Row>
           <Row>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {actionData.expire_at ? (
                 <Values.TimeSpanFuture to={actionData.expire_at} />
               ) : (
@@ -98,16 +118,23 @@ const Permit = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.tokenApprove.approveTo')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.tokenApprove.approveTo')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={actionData.spender} chain={chain} />
             </View>
-            <View className="desc-list">
-              <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
-              </DescItem>
+            <View>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
               <SecurityListItem
                 id="1077"
                 engineResult={engineResultMap['1077']}
@@ -117,9 +144,17 @@ const Permit = ({
               <SecurityListItem
                 id="1080"
                 engineResult={engineResultMap['1080']}
-                warningText={<Values.Interacted value={false} />}
+                warningText={
+                  <Values.Interacted
+                    value={false}
+                    textStyle={commonStyle.secondaryText}
+                  />
+                }
                 defaultText={
-                  <Values.Interacted value={requireData.hasInteraction} />
+                  <Values.Interacted
+                    value={requireData.hasInteraction}
+                    textStyle={commonStyle.secondaryText}
+                  />
                 }
               />
 

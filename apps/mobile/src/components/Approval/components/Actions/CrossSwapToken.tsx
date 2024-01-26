@@ -89,10 +89,15 @@ const CrossSwapToken = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
-                  <Text>{formatAmount(payToken.amount)} </Text>
-                  <Values.TokenSymbol token={payToken} />
-                </>
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text style={commonStyle.primaryText}>
+                    {formatAmount(payToken.amount)}{' '}
+                  </Text>
+                  <Values.TokenSymbol
+                    token={payToken}
+                    style={commonStyle.primaryText}
+                  />
+                </View>
               }
               logoRadius={16}
             />
@@ -128,7 +133,7 @@ const CrossSwapToken = ({
                 logo={receiveToken.logo_url}
                 logoRadius={16}
                 text={
-                  <>
+                  <View style={commonStyle.rowFlexCenterItem}>
                     <Text style={commonStyle.primaryText}>
                       {formatAmount(receiveToken.min_amount)}{' '}
                     </Text>
@@ -136,7 +141,7 @@ const CrossSwapToken = ({
                       token={receiveToken}
                       style={commonStyle.primaryText}
                     />
-                  </>
+                  </View>
                 }
                 icon={
                   <Values.TokenLabel
@@ -192,7 +197,7 @@ const CrossSwapToken = ({
                 engineResult={engineResultMap['1104']}
                 id="1104"
                 dangerText={
-                  <>
+                  <View style={commonStyle.rowFlexCenterItem}>
                     <Text style={commonStyle.secondaryText}>
                       {t('page.signTx.swap.valueDiff')}{' '}
                     </Text>
@@ -203,7 +208,7 @@ const CrossSwapToken = ({
                     <Text style={commonStyle.secondaryText}>
                       ({formatUsdValue(usdValueDiff || '')})
                     </Text>
-                  </>
+                  </View>
                 }
                 warningText={
                   <>
@@ -261,12 +266,14 @@ const CrossSwapToken = ({
           <Row>
             <Values.Address address={requireData.id} chain={chain} />
             <View>
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
               <DescItem>
                 <Values.Interacted
                   value={requireData.hasInteraction}
@@ -275,7 +282,9 @@ const CrossSwapToken = ({
               </DescItem>
 
               {isInWhitelist && (
-                <DescItem>{t('page.signTx.markAsTrust')}</DescItem>
+                <DescItem>
+                  <Text>{t('page.signTx.markAsTrust')}</Text>
+                </DescItem>
               )}
 
               <SecurityListItem

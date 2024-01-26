@@ -19,6 +19,11 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       width: '100%',
     },
+    hasTip: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     firstChild: {
       borderTopLeftRadius: 8,
     },
@@ -143,11 +148,17 @@ const Row = ({
         ...(isTitle ? styles.title : styles.notTitle),
         ...styles.rowWrapper,
         ...(hasBottomBorder ? styles.hasBottomBorder : {}),
+        ...(tip ? styles.hasTip : {}),
         ...style,
-      }}
-      className="relative">
+      }}>
       {children}
-      {tip && <IconQuestionMark className="icon icon-tip ml-6 inline" />}
+      {tip && (
+        <IconQuestionMark
+          style={{
+            marginLeft: 6,
+          }}
+        />
+      )}
     </View>
   );
 };
