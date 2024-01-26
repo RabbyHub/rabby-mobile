@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TextInput,
   TextInputSubmitEditingEventData,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
@@ -20,7 +21,6 @@ import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import { CameraPopup } from './components/CameraPopup';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
@@ -162,14 +162,13 @@ export const ImportWatchAddressScreen = () => {
           )}
 
           {!error && ensResult && input !== ensResult.addr && (
-            <View style={styles.ensResultBox}>
-              <TouchableItem
-                onPress={() => {
-                  setInput(ensResult.addr);
-                }}>
-                <Text style={styles.ensResult}>{ensResult.addr}</Text>
-              </TouchableItem>
-            </View>
+            <TouchableOpacity
+              style={styles.ensResultBox}
+              onPress={() => {
+                setInput(ensResult.addr);
+              }}>
+              <Text style={styles.ensResult}>{ensResult.addr}</Text>
+            </TouchableOpacity>
           )}
 
           {error && (
@@ -280,10 +279,14 @@ const getStyles = function (colors: AppColorsVariants, inset: EdgeInsets) {
     ensResult: {
       padding: 12,
       backgroundColor: colors['blue-light-1'],
+      color: colors['neutral-title-1'],
       height: '100%',
+      width: '100%',
+      justifyContent: 'center',
       alignItems: 'center',
       fontSize: 13,
-      borderRadius: 6,
+      borderRadius: 4,
+      overflow: 'hidden',
     },
     ensText: {
       fontSize: 13,
