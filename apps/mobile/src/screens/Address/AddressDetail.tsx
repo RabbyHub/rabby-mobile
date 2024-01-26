@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconCopyCC, RcIconRightCC } from '@/assets/icons/common';
@@ -36,6 +42,7 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Pressable } from 'react-native';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -82,6 +89,7 @@ interface AddressInfoProps {
 const AddressInfo = (props: AddressInfoProps) => {
   const { account } = props;
   const navigation = useNavigation();
+  // const { width, height } = useWindowDimensions();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [aliasName, setAliasName] = useAlias(account.address);
@@ -180,7 +188,7 @@ const AddressInfo = (props: AddressInfoProps) => {
   );
 
   return (
-    <View style={{ gap: 20, paddingHorizontal: 20, paddingTop: 20 }}>
+    <View style={{ gap: 20, paddingHorizontal: 20, paddingTop: 8 }}>
       <View style={styles.view}>
         <View
           style={[
@@ -198,13 +206,16 @@ const AddressInfo = (props: AddressInfoProps) => {
               Clipboard.setString(account.address);
             }}
             style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-            <Text style={styles.valueText}>{account.address}</Text>
-
-            <RcIconCopyCC
-              color={colors['neutral-foot']}
-              height={14}
-              width={14}
-            />
+            <Text style={styles.valueText} textBreakStrategy="simple">
+              {account.address}
+              <Text>
+                <RcIconCopyCC
+                  color={colors['neutral-foot']}
+                  height={14}
+                  width={14}
+                />
+              </Text>
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -601,10 +612,12 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     btnCancelTitle: {
       color: colors['blue-default'],
+      flex: 1,
     },
     btnConfirmContainer: {},
     btnConfirmTitle: {
       color: colors['neutral-title-2'],
+      flex: 1,
     },
   });
 

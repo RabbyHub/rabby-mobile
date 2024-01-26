@@ -91,7 +91,7 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
     <Tabs.Container
       lazy
       containerStyle={styles.container}
-      minHeaderHeight={90}
+      minHeaderHeight={100}
       renderTabBar={renderTabBar}
       headerContainerStyle={styles.tabBarWrap}
       renderHeader={renderHeader}>
