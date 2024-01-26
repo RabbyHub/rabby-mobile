@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Dimensions,
   Modal,
   StyleSheet,
   Text,
@@ -93,36 +94,33 @@ function GetStartedScreen(): JSX.Element {
   }, [isShowModal]);
 
   return (
-    <>
-      <View>
-        <View className="bg-r-blue-default h-full flex-col">
-          <View
-            style={{
-              paddingTop: safeTop,
-              paddingBottom: safeOffBottom,
-            }}>
-            <View className="flex-col px-[20] h-full items-center pt-[180]">
-              <RcIconLogo />
-              <Text style={styles.appName}>Rabby Wallet</Text>
-              <Text style={styles.appDesc}>
-                The game-changing wallet
-                {'\n'}
-                for Ethereum and all EVM chains
-              </Text>
+    <View style={styles.screen}>
+      <View style={styles.centerWrapper}>
+        {/* top area */}
+        <View style={styles.topArea}>
+          <RcIconLogo />
+          <Text style={styles.appName}>Rabby Wallet</Text>
+          <Text style={styles.appDesc}>
+            The game-changing wallet
+            {'\n'}
+            for Ethereum and all EVM chains
+          </Text>
+        </View>
 
-              <Button
-                buttonStyle={styles.buttonStyle}
-                titleStyle={styles.buttonTitleStyle}
-                title="Get Started"
-                onPress={handleGetStarted}
-              />
-            </View>
-          </View>
+        {/* button area */}
+        <View style={styles.buttonArea}>
+          <Button
+            buttonStyle={styles.buttonStyle}
+            titleStyle={styles.buttonTitleStyle}
+            title="Get Started"
+            onPress={handleGetStarted}
+          />
         </View>
       </View>
+
       <Modal
         visible={isShowModal}
-        className="w-[353] max-w-[100%] "
+        className="w-[353] max-w-[100%]"
         onRequestClose={() => {
           setIsShowModal(false);
         }}
@@ -186,26 +184,46 @@ function GetStartedScreen(): JSX.Element {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </>
+    </View>
   );
 }
 
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
+    screen: {
+      backgroundColor: colors['blue-default'],
+      flexDirection: 'column',
+      justifyContent: 'center',
+      height: '100%',
+    },
+    centerWrapper: {
+      paddingHorizontal: 20,
+      minHeight: '80%',
+      height: 350 + 56 + 84,
+      maxHeight: '100%',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      // // leave here for debug
+      // borderWidth: 1,
+      // borderColor: 'black',
+      paddingBottom: 20,
+    },
+    topArea: { flexDirection: 'column', alignItems: 'center' },
     appName: {
       color: colors['neutral-title-2'],
       fontSize: 24,
       lineHeight: 28,
-      marginBottom: 32,
       fontWeight: '500',
+      marginTop: 18,
     },
     appDesc: {
-      marginBottom: 220,
       color: colors['neutral-title-2'],
       fontSize: 17,
       lineHeight: 24,
       textAlign: 'center',
       fontWeight: '500',
+      marginTop: 32,
     },
     modalTitle: {
       color: colors['neutral-title-1'],
@@ -229,6 +247,9 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       color: colors['red-default'],
       fontSize: 13,
       lineHeight: 16,
+    },
+    buttonArea: {
+      flexDirection: 'column',
     },
     buttonStyle: {
       width: 268,
