@@ -30,7 +30,15 @@ export const Tip = ({
   const _content = useMemo(() => {
     return typeof content === 'string' ? (
       <View style={styles.content}>
-        <Text style={styles.contentText}>{content}</Text>
+        <Text
+          style={StyleSheet.flatten([
+            styles.contentText,
+            isLight && {
+              color: colors['neutral-black'],
+            },
+          ])}>
+          {content}
+        </Text>
       </View>
     ) : (
       content

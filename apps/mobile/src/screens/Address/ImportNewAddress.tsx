@@ -37,8 +37,8 @@ function BottomBlockArea() {
 
 function ImportNewAddressScreen(): JSX.Element {
   return (
-    <NormalScreenContainer style={{ padding: 20 }}>
-      <ScrollView>
+    <NormalScreenContainer>
+      <ScrollView style={styles.scrollView}>
         <BottomBlockArea />
       </ScrollView>
     </NormalScreenContainer>
@@ -48,6 +48,10 @@ function ImportNewAddressScreen(): JSX.Element {
 const styles = StyleSheet.create({
   blockView: { width: '100%', marginTop: 20 },
   section: {
+    marginBottom: 20,
+  },
+  scrollView: {
+    paddingHorizontal: 20,
     marginBottom: 20,
   },
 });
