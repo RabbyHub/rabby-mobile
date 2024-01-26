@@ -194,7 +194,11 @@ export const AddressItem = (props: AddressItemProps) => {
                 flexShrink: 0,
               },
           )}>
-          <View className="relative mr-[12px]">
+          <View
+            style={{
+              position: 'relative',
+              marginRight: 12,
+            }}>
             <WalletIcon style={styles.walletLogo} />
             <CommonSignal
               address={wallet.address}
