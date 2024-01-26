@@ -46,6 +46,10 @@ import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
 import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 import ViewRawModal from '../TxComponents/ViewRawModal';
+import { CommonAction } from '../CommonAction';
+import { Tip } from '@/components/Tip';
+import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
+import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -125,6 +129,32 @@ const getStyle = (colors: AppColorsVariants) =>
       lineHeight: 16,
       color: '#999999',
     },
+    viewRawText: {
+      fontSize: 12,
+      lineHeight: 16,
+      color: colors['neutral-foot'],
+    },
+    signTitleRight: {
+      flexDirection: 'row',
+    },
+    tipContent: {
+      maxWidth: 358,
+      padding: 12,
+    },
+    tipContentIcon: {
+      width: 12,
+      height: 12,
+      marginRight: 4,
+    },
+    actionHeaderRight: {
+      fontSize: 14,
+      lineHeight: 16,
+      position: 'relative',
+    },
+    icon: {
+      width: 24,
+      height: 24,
+    },
   });
 
 const Actions = ({
@@ -160,6 +190,8 @@ const Actions = ({
     });
   };
 
+  const isUnknown = data?.contractCall;
+
   return (
     <>
       <View style={styles.signTitle}>
@@ -169,28 +201,50 @@ const Actions = ({
             {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleViewRawClick}>
-          <View className="float-right text-12 cursor-pointer flex flex-row items-center view-raw">
-            <Text>{t('page.signTx.viewRaw')}</Text>
-            <RcIconArrowRight />
-          </View>
+        <TouchableOpacity
+          style={styles.signTitleRight}
+          onPress={handleViewRawClick}>
+          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
+          <RcIconArrowRight />
         </TouchableOpacity>
       </View>
       <View style={styles.actionWrapper}>
         <View
           style={{
             ...styles.actionHeader,
-            ...(data.contractCall ? styles.isUnknown : {}),
+            ...(isUnknown ? styles.isUnknown : {}),
           }}>
           <View>
             <Text style={styles.left}>{actionName}</Text>
           </View>
-          <View>
-            {data.contractCall ? (
-              <IconQuestionMark className="w-24" />
-            ) : (
-              <IconRabbyDecoded className="w-24" />
-            )}
+          <View style={styles.actionHeaderRight}>
+            <Tip
+              placement="bottom"
+              content={
+                isUnknown ? (
+                  <NoActionAlert
+                    data={{
+                      chainId: chain.serverId,
+                      contractAddress:
+                        requireData && 'id' in requireData
+                          ? requireData.id
+                          : txDetail.type_call?.contract,
+                      selector: raw.data.toString(),
+                    }}
+                  />
+                ) : (
+                  <Text style={styles.tipContent}>
+                    <RcIconCheck style={styles.tipContentIcon} />
+                    <Text>{t('page.signTx.decodedTooltip')}</Text>
+                  </Text>
+                )
+              }>
+              {isUnknown ? (
+                <IconQuestionMark style={styles.icon} />
+              ) : (
+                <IconRabbyDecoded style={styles.icon} />
+              )}
+            </Tip>
           </View>
         </View>
         <View style={styles.container}>
@@ -341,6 +395,14 @@ const Actions = ({
               engineResults={engineResults}
               onChange={onChange}
               raw={raw}
+            />
+          )}
+          {data.common && (
+            <CommonAction
+              data={data.common}
+              requireData={requireData as SwapRequireData}
+              chain={chain}
+              engineResults={engineResults}
             />
           )}
         </View>
