@@ -78,8 +78,8 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [wallet.brandName]);
 
   const copyAddress = useCallback(() => {
-    Clipboard.setString(address);
-  }, [address]);
+    Clipboard.setString(wallet.address);
+  }, [wallet.address]);
 
   const gotoAddressDetail = useCallback(() => {
     navigation.push(RootNames.StackAddress, {
