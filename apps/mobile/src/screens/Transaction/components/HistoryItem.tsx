@@ -2,30 +2,62 @@ import { StyleSheet, Text, View } from 'react-native';
 import { TxId } from './TxId';
 import { TxInterAddressExplain } from './TxInterAddressExplain';
 import { TxChange } from './TokenChange';
+import {
+  TxDisplayItem,
+  TxHistoryItem,
+} from '@rabby-wallet/rabby-api/dist/types';
+import { sinceTime } from '@/utils/time';
+import { getChain } from '@/utils/chain';
+import { numberWithCommasIsLtOne } from '@/utils/number';
 
-export const HistoryItem = () => {
+type HistoryItemProps = {
+  data: TxDisplayItem;
+} & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
+
+export const HistoryItem = ({
+  data,
+  cateDict,
+  projectDict,
+  tokenDict,
+}: HistoryItemProps) => {
+  const isFailed = data.tx?.status === 0;
+  const isScam = data.is_scam;
+  const chainItem = getChain(data.chain);
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.spam}>Scam tx</Text>
+        {isScam ? <Text style={styles.spam}>Scam tx</Text> : null}
         <View style={styles.cardHeaderInner}>
           <Text style={styles.time} numberOfLines={1}>
-            2021
+            {sinceTime(data.time_at)}
           </Text>
-          <TxId />
+          <TxId chain={data.chain} id={data.id} />
         </View>
       </View>
       <View style={styles.cardBody}>
-        <TxInterAddressExplain />
-        <TxChange />
+        <TxInterAddressExplain
+          data={data}
+          projectDict={projectDict}
+          tokenDict={tokenDict}
+          cateDict={cateDict}
+        />
+        <TxChange data={data} tokenDict={tokenDict} />
       </View>
       <View style={styles.dividerContainer}>
         <View style={styles.divider} />
       </View>
-      <View style={styles.cardFooter}>
-        <Text style={styles.gas}>Gas: 0.0034 AVAX ($0.3653)</Text>
-        <Text style={styles.failed}>Failed</Text>
-      </View>
+      {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
+        <View style={styles.cardFooter}>
+          {data.tx && data.tx?.eth_gas_fee ? (
+            <Text style={styles.gas}>
+              Gas: {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
+              {chainItem?.nativeTokenSymbol} ($
+              {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
+            </Text>
+          ) : null}
+          {isFailed ? <Text style={styles.failed}>Failed</Text> : null}
+        </View>
+      ) : null}
     </View>
   );
 };

@@ -1,14 +1,22 @@
+import { ellipsisAddress } from '@/utils/address';
+import { getChain } from '@/utils/chain';
+import { useMemo } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 
 export const TxId = ({
   style,
+  chain,
+  id,
 }: {
   style?: React.ComponentProps<typeof View>['style'];
+  id: string;
+  chain: string;
 }) => {
+  const info = useMemo(() => getChain(chain), [chain]);
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.chain}>Avalanche</Text>
-      <Text style={styles.txId}>0x097a…3e9c</Text>
+      <Text style={styles.chain}>{info?.name || 'Unknown'}</Text>
+      <Text style={styles.txId}>{ellipsisAddress(id)}</Text>
     </View>
   );
 };
