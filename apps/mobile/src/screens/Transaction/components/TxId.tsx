@@ -1,7 +1,9 @@
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { getChain } from '@/utils/chain';
 import { useMemo } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export const TxId = ({
   style,
@@ -13,6 +15,8 @@ export const TxId = ({
   chain: string;
 }) => {
   const info = useMemo(() => getChain(chain), [chain]);
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.chain}>{info?.name || 'Unknown'}</Text>
@@ -21,20 +25,21 @@ export const TxId = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  chain: {
-    fontSize: 12,
-    lineHeight: 14,
-    color: '#3E495E',
-  },
-  txId: {
-    fontSize: 12,
-    lineHeight: 14,
-    color: '#6A7587',
-  },
-});
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    chain: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-body'],
+    },
+    txId: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+    },
+  });

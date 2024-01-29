@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
 import { numberWithCommasIsLtOne } from '@/utils/number';
+import { useThemeColors } from '@/hooks/theme';
+import { AppColorsVariants } from '@/constant/theme';
 
 const TxChangeItem = ({
   item,
@@ -23,6 +25,8 @@ const TxChangeItem = ({
   isSend?: boolean;
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
   const tokenId = item.token_id;
   const tokenUUID = `${data.chain}_token:${tokenId}`;
   const token = tokenDict[tokenId] || tokenDict[tokenUUID];
@@ -40,9 +44,9 @@ const TxChangeItem = ({
           type={token?.content_type}
           src={token?.content?.endsWith('.svg') ? '' : token?.content}
           thumbnail={token?.content?.endsWith('.svg') ? '' : token?.content}
-          playIconSize={18}
-          // mediaStyle={styles.media}
-          // style={styles.media}
+          playIconSize={14}
+          mediaStyle={styles.media}
+          style={styles.media}
         />
       ) : token?.logo_url ? (
         <Image
@@ -53,7 +57,9 @@ const TxChangeItem = ({
       ) : (
         <RcIconUnknown />
       )}
-      <Text style={styles.text}>
+      <Text
+        style={[styles.text, isSend && styles.textNegative]}
+        numberOfLines={1}>
         {isSend ? '-' : '+'}{' '}
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)} {name}
       </Text>
@@ -67,6 +73,8 @@ export const TxChange = ({
   data: TxDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
 }) => {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
   return (
     <View style={styles.container}>
       {data?.sends?.map(item => (
@@ -90,24 +98,35 @@ export const TxChange = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'column',
-    gap: 3,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  image: {
-    width: 14,
-    height: 14,
-    borderRadius: 14,
-  },
-  text: {
-    fontSize: 13,
-    lineHeight: 15,
-    color: '#2ABB7F',
-  },
-});
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'column',
+      gap: 3,
+      minWidth: 0,
+      flexShrink: 1,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    image: {
+      width: 14,
+      height: 14,
+      borderRadius: 14,
+    },
+    text: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['green-default'],
+    },
+    textNegative: {
+      color: colors['neutral-body'],
+    },
+    media: {
+      width: 14,
+      height: 14,
+      borderRadius: 2,
+    },
+  });

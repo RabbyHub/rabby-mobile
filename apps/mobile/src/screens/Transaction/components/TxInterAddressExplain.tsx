@@ -1,10 +1,12 @@
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { ellipsisAddress } from '@/utils/address';
+import { getTokenSymbol } from '@/utils/token';
+import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
-import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useTransition } from 'react';
-import { getTokenSymbol } from '@/utils/token';
-import { useTranslation } from 'react-i18next';
-import { ellipsisAddress } from '@/utils/address';
 
 type TxInterAddressExplainProps = {
   data: TxDisplayItem;
@@ -24,6 +26,8 @@ export const TxInterAddressExplain = ({
   const isApprove = data.cate_id === 'approve';
   const project = data.project_id ? projectDict[data.project_id] : null;
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
 
   const projectName = (
     <>
@@ -38,7 +42,11 @@ export const TxInterAddressExplain = ({
   let interAddressExplain;
 
   if (isCancel) {
-    interAddressExplain = <Text>{t('page.transactions.explain.cancel')}</Text>;
+    interAddressExplain = (
+      <Text style={styles.actionTitle}>
+        {t('page.transactions.explain.cancel')}
+      </Text>
+    );
   } else if (isApprove) {
     const tokenId = data.token_approve?.token_id || '';
     const tokenUUID = `${data.chain}_token:${tokenId}`;
@@ -48,7 +56,7 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <Text className="tx-explain-title">
+      <Text style={styles.actionTitle} numberOfLines={1}>
         Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
         {`${getTokenSymbol(approveToken)} for `}
         {projectName}
@@ -57,11 +65,11 @@ export const TxInterAddressExplain = ({
   } else {
     interAddressExplain = (
       <>
-        <Text className="tx-explain-title">
+        <Text style={styles.actionTitle} numberOfLines={1}>
           {cateDict[data.cate_id || '']?.name ??
             (data.tx?.name || t('page.transactions.explain.unknown'))}
         </Text>
-        <Text className="tx-explain-desc">{projectName}</Text>
+        <Text style={styles.actionDesc}>{projectName}</Text>
       </>
     );
   }
@@ -71,25 +79,30 @@ export const TxInterAddressExplain = ({
         src={projectDict[data.project_id as string]?.logo_url}
         cateId={data.cate_id}
       />
-      <View>{interAddressExplain}</View>
+      <View style={styles.explain}>{interAddressExplain}</View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  action: {
-    fontSize: 15,
-    lineHeight: 18,
-    color: '#192945',
-  },
-  text: {
-    fontSize: 12,
-    lineHeight: 14,
-    color: '#6A7587',
-  },
-});
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+      marginRight: 'auto',
+    },
+    explain: {
+      flexShrink: 1,
+    },
+    actionTitle: {
+      fontSize: 15,
+      lineHeight: 18,
+      color: colors['neutral-title1'],
+    },
+    actionDesc: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+    },
+  });

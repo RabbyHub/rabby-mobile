@@ -1,17 +1,99 @@
-import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
+import RcIconRight from '@/assets/icons/history/icon-right.svg';
+import { RootNames } from '@/constant/layout';
+import { AppColorsVariants } from '@/constant/theme';
+import { openapi } from '@/core/request';
+import { preferenceService } from '@/core/services';
+import { useThemeColors } from '@/hooks/theme';
+import { navigate } from '@/utils/navigation';
+import { useInfiniteScroll } from 'ahooks';
+import { last } from 'lodash';
+import { StyleSheet, Text } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { HistoryList } from './components/HistoryList';
+const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+
+  const fetchData = async (startTime = 0) => {
+    const account = preferenceService.getCurrentAccount();
+    const address = account?.address;
+    if (!address) {
+      throw new Error('no account');
+    }
+
+    const getHistory = openapi.listTxHisotry;
+
+    const res = await getHistory({
+      id: address,
+      start_time: startTime,
+      page_count: PAGE_COUNT,
+    });
+
+    const { project_dict, cate_dict, token_dict, history_list: list } = res;
+    const displayList = list
+      .map(item => ({
+        ...item,
+        projectDict: project_dict,
+        cateDict: cate_dict,
+        tokenDict: token_dict,
+      }))
+      .sort((v1, v2) => v2.time_at - v1.time_at);
+    return {
+      last: last(displayList)?.time_at,
+      list: displayList,
+    };
+  };
+
+  const { data, loading, loadingMore, loadMore } = useInfiniteScroll(
+    d => fetchData(d?.last),
+    {
+      isNoMore: d => {
+        return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
+      },
+    },
+  );
+
   return (
     <NormalScreenContainer>
-      <HistoryList />
+      <TouchableOpacity
+        onPress={() => navigate(RootNames.HistoryFilterScam)}
+        style={styles.link}>
+        <Text style={styles.linkText}>Hide scam transactions</Text>
+        <RcIconRight />
+      </TouchableOpacity>
+      <HistoryList
+        list={data?.list}
+        loading={loading}
+        loadingMore={loadingMore}
+        loadMore={loadMore}
+      />
     </NormalScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({});
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    link: {
+      marginHorizontal: 20,
+      marginBottom: 12,
+      backgroundColor: colors['neutral-card1'],
+      borderRadius: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    linkText: {
+      fontSize: 14,
+      lineHeight: 17,
+      color: colors['neutral-body'],
+    },
+  });
 
 export default HistoryScreen;
