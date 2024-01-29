@@ -26,7 +26,8 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isIOS } from '@rneui/base';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -43,8 +44,7 @@ const ERROR_MESSAGE = {
 };
 
 export const ImportWatchAddressScreen = () => {
-  const insets = useSafeAreaInsets();
-  console.log('insets top', insets.top);
+  const { safeOffHeader } = useSafeSizes();
   const codeRef = useRef<BottomSheetModal>(null);
   const colors = useThemeColors();
   const [input, setInput] = React.useState('');
@@ -54,8 +54,8 @@ export const ImportWatchAddressScreen = () => {
     name: string;
   }>(null);
   const styles = React.useMemo(
-    () => getStyles(colors, insets),
-    [colors, insets],
+    () => getStyles(colors, safeOffHeader),
+    [colors, safeOffHeader],
   );
 
   const handleDone = async () => {
@@ -142,6 +142,7 @@ export const ImportWatchAddressScreen = () => {
         <View style={styles.inputContainer}>
           <TextInput
             numberOfLines={2}
+            multiline
             value={input}
             onChange={handleSubmit}
             style={[
@@ -152,9 +153,11 @@ export const ImportWatchAddressScreen = () => {
                   : colors['neutral-line'],
               },
             ]}
+            blurOnSubmit
             onSubmitEditing={onSubmitEditing}
+            autoFocus
             placeholder="Address / ENS"
-            placeholderTextColor={colors['neutral-title-1']}
+            placeholderTextColor={colors['neutral-foot']}
           />
 
           {!error && ensResult && input === ensResult.addr && (
@@ -198,7 +201,7 @@ export const ImportWatchAddressScreen = () => {
   );
 };
 
-const getStyles = function (colors: AppColorsVariants, inset: EdgeInsets) {
+const getStyles = function (colors: AppColorsVariants, topInset: number) {
   return StyleSheet.create({
     rootContainer: {
       display: 'flex',
@@ -210,7 +213,7 @@ const getStyles = function (colors: AppColorsVariants, inset: EdgeInsets) {
     },
     titleContainer: {
       width: '100%',
-      height: 320 - inset.top - (StatusBar?.currentHeight || 0),
+      height: 320 - topInset,
       flexShrink: 0,
       backgroundColor: colors['blue-default'],
       color: colors['neutral-title-2'],
@@ -257,12 +260,12 @@ const getStyles = function (colors: AppColorsVariants, inset: EdgeInsets) {
       borderRadius: 8,
       paddingHorizontal: 12,
       paddingVertical: 0,
-      fontSize: 14,
+      fontSize: 15,
       height: 64,
       color: colors['neutral-title-1'],
       borderWidth: 1,
       textAlignVertical: 'center',
-      paddingEnd: 'auto',
+      paddingTop: isIOS ? 12 : 0,
     },
 
     ensResultBox: {

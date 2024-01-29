@@ -12,10 +12,12 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
 import { useAccounts } from '@/hooks/account';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
   const { fetchAccounts } = useAccounts();
+  const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
     () =>
@@ -26,7 +28,7 @@ export const ImportSuccessScreen = () => {
         },
         titleContainer: {
           width: '100%',
-          height: 320,
+          height: 320 - safeOffHeader,
           flexShrink: 0,
           backgroundColor: colors['blue-default'],
           color: colors['neutral-title-2'],
@@ -55,7 +57,7 @@ export const ImportSuccessScreen = () => {
         },
       }),
 
-    [colors],
+    [colors, safeOffHeader],
   );
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
@@ -77,8 +79,6 @@ export const ImportSuccessScreen = () => {
   React.useEffect(() => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
-
-  console.log('import success screen', contactService.listAlias());
 
   React.useEffect(() => {
     fetchAccounts();

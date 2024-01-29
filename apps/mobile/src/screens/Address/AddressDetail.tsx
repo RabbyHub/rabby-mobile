@@ -354,6 +354,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                 }}
                 value={aliasPendingName}
                 onChangeText={setAliasPendingName}
+                autoFocus
               />
             </View>
             <View

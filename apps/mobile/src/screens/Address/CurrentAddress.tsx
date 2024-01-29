@@ -26,7 +26,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import groupBy from 'lodash/groupBy';
 import { sortAccountsByBalance } from '@/utils/account';
 import { useOpenDappView } from '../Dapps/hooks/useDappView';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
@@ -114,11 +113,9 @@ export default function CurrentAddressScreen(): JSX.Element {
     ];
   }, [accounts, highlightedAddresses]);
 
-  const { safeOffBottom } = useSafeSizes();
-
   return (
-    <NormalScreenContainer style={{ backgroundColor: colors['neutral-bg-2'] }}>
-      <View style={styles.container}>
+    <NormalScreenContainer style={styles.screenContainer}>
+      <View style={styles.headerContainer}>
         {!!currentAccount && (
           <AddressItem wallet={currentAccount} isCurrentAddress />
         )}
@@ -129,84 +126,92 @@ export default function CurrentAddressScreen(): JSX.Element {
             <RcIconAddressRight />
           </TouchableOpacity>
         </View>
-        <SectionList
-          initialNumToRender={15}
-          sections={sectionData}
-          keyExtractor={React.useCallback(
-            item => `${item.address}-${item.type}-${item.brandName}`,
-            [],
-          )}
-          style={{
-            marginBottom: safeOffBottom,
-          }}
-          renderItem={React.useCallback(
-            ({ item, index, section }) => (
-              <View
-                key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-                style={
-                  index < section.data.length - 1 ? styles.itemGap : undefined
-                }>
-                <AddressItem wallet={item} />
-              </View>
-            ),
-            [styles.itemGap],
-          )}
-          renderSectionHeader={React.useCallback(
-            ({ section }) => {
-              if (section.title === 'address') {
-                return null;
-              }
-              return (
-                <View
-                  style={
-                    sectionData?.[0]?.data.length ? styles.watchMargin : {}
-                  }
-                />
-              );
-            },
-            [sectionData, styles.watchMargin],
-          )}
-          renderSectionFooter={React.useCallback(
-            ({ section }) => {
-              if (section.title === 'address') {
-                return null;
-              }
-              return (
-                <View style={{ paddingBottom: 100 }}>
-                  <TouchableOpacity
-                    style={styles.importView}
-                    onPress={gotoAddAddress}>
-                    <RcIconButtonAddAccount style={styles.addAddressIcon} />
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: '600',
-                        color: colors['blue-default'],
-                      }}>
-                      Import New Address
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            },
-            [colors, gotoAddAddress, styles.addAddressIcon, styles.importView],
-          )}
-        />
       </View>
+      <SectionList
+        initialNumToRender={15}
+        sections={sectionData}
+        keyExtractor={React.useCallback(
+          item => `${item.address}-${item.type}-${item.brandName}`,
+          [],
+        )}
+        style={styles.listContainer}
+        renderItem={React.useCallback(
+          ({ item, index, section }) => (
+            <View
+              key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+              style={
+                index < section.data.length - 1 ? styles.itemGap : undefined
+              }>
+              <AddressItem wallet={item} />
+            </View>
+          ),
+          [styles.itemGap],
+        )}
+        renderSectionHeader={React.useCallback(
+          ({ section }) => {
+            if (section.title === 'address') {
+              return null;
+            }
+            return (
+              <View
+                style={sectionData?.[0]?.data.length ? styles.watchMargin : {}}
+              />
+            );
+          },
+          [sectionData, styles.watchMargin],
+        )}
+        renderSectionFooter={React.useCallback(
+          ({ section }) => {
+            if (section.title === 'address') {
+              return null;
+            }
+            return (
+              <View style={styles.footer}>
+                <TouchableOpacity
+                  style={styles.importView}
+                  onPress={gotoAddAddress}>
+                  <RcIconButtonAddAccount style={styles.addAddressIcon} />
+                  <Text style={styles.importText}>Import New Address</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          },
+          [
+            gotoAddAddress,
+            styles.addAddressIcon,
+            styles.footer,
+            styles.importText,
+            styles.importView,
+          ],
+        )}
+      />
     </NormalScreenContainer>
   );
 }
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    headline: {
+    screenContainer: {
+      backgroundColor: colors['neutral-bg-2'],
+      flex: 1,
+    },
+    headerContainer: {
+      paddingTop: 8,
+      paddingHorizontal: 20,
+    },
+    listContainer: {
+      flex: 1,
+      paddingHorizontal: 20,
+    },
+
+    footer: {
+      paddingBottom: 30,
+    },
+
+    importText: {
       fontSize: 15,
       fontWeight: '600',
       color: colors['blue-default'],
-    },
-    container: {
-      paddingTop: 8,
-      paddingHorizontal: 20,
     },
 
     switchTitleBox: {

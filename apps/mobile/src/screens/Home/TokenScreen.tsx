@@ -8,7 +8,7 @@ import useSortToken from './hooks/useSortTokens';
 export const TokenScreen = () => {
   const { currentAccount } = useCurrentAccount();
   const { tokens, isTokensLoading, hasTokens } = useQueryProjects(
-    currentAccount!.address,
+    currentAccount?.address,
     false,
     true,
   );
