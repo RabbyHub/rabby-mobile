@@ -248,9 +248,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       isGnosis && params.account ? params.account.type : currentAccount?.type;
     if (accountType === KEYRING_TYPE.WatchAddressKeyring) {
       setIsWatch(true);
-      setCantProcessReason(
-        <Text>You can only use imported addresses to sign</Text>,
-      );
+      setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
     }
   };
 

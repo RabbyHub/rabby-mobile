@@ -1,7 +1,7 @@
 import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
 import { WalletConnectList } from './components/WalletConnectList';
@@ -9,10 +9,14 @@ import { WalletItem } from './components/WalletItem';
 import { WalletHeadline } from './components/WalletHeadline';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { HardwareDeviceList } from './components/HardwareDeviceList';
 
 function BottomBlockArea() {
   return (
     <View style={[styles.blockView]}>
+      <View style={styles.section}>
+        <HardwareDeviceList />
+      </View>
       <View style={styles.section}>
         <WalletConnectList />
       </View>
@@ -33,10 +37,10 @@ function BottomBlockArea() {
 
 function ImportNewAddressScreen(): JSX.Element {
   return (
-    <NormalScreenContainer style={{ padding: 20, paddingTop: 8 }}>
-      <View style={[{ flex: 1 }]}>
+    <NormalScreenContainer>
+      <ScrollView style={styles.scrollView}>
         <BottomBlockArea />
-      </View>
+      </ScrollView>
     </NormalScreenContainer>
   );
 }
@@ -44,6 +48,10 @@ function ImportNewAddressScreen(): JSX.Element {
 const styles = StyleSheet.create({
   blockView: { width: '100%', marginTop: 20 },
   section: {
+    marginBottom: 20,
+  },
+  scrollView: {
+    paddingHorizontal: 20,
     marginBottom: 20,
   },
 });
