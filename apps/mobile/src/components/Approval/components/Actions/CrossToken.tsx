@@ -92,12 +92,12 @@ const Swap = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
+                <View style={commonStyle.rowFlexCenterItem}>
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
                   <Values.TokenSymbol token={payToken} />
-                </>
+                </View>
               }
               logoRadius={16}
             />
@@ -133,12 +133,12 @@ const Swap = ({
                 logo={receiveToken.logo_url}
                 logoRadius={16}
                 text={
-                  <>
+                  <View style={commonStyle.rowFlexCenterItem}>
                     <Text style={commonStyle.primaryText}>
                       {formatAmount(receiveToken.min_amount)}{' '}
                     </Text>
                     <Values.TokenSymbol token={receiveToken} />
-                  </>
+                  </View>
                 }
                 icon={
                   <Values.TokenLabel
@@ -264,7 +264,11 @@ const Swap = ({
           <Row>
             <Values.Address address={requireData.id} chain={chain} />
             <View>
-              <ProtocolListItem protocol={requireData.protocol} />
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem protocol={requireData.protocol} />
+                </DescItem>
+              )}
               <DescItem>
                 <Values.Interacted value={requireData.hasInteraction} />
               </DescItem>

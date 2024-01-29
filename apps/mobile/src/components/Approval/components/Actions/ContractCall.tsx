@@ -69,7 +69,11 @@ const ContractCall = ({
           <Row>
             <Values.Address address={requireData.id} chain={chain} />
 
-            <ProtocolListItem protocol={requireData.protocol} />
+            {requireData.protocol && (
+              <DescItem>
+                <ProtocolListItem protocol={requireData.protocol} />
+              </DescItem>
+            )}
             <DescItem>
               <Values.Interacted
                 value={requireData.hasInteraction}

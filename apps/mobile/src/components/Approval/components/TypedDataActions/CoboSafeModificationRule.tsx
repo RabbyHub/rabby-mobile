@@ -6,6 +6,7 @@ import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const CoboSafeModificationRule = ({
   data,
@@ -13,6 +14,7 @@ const CoboSafeModificationRule = ({
   data: TypedDataActionData['coboSafeModificationRole'];
 }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   const actionData = data!;
 
   return (
@@ -20,7 +22,7 @@ const CoboSafeModificationRule = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>
+            <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.coboSafeModificationRole.safeWalletTitle')}
             </Text>
           </Row>
@@ -28,9 +30,12 @@ const CoboSafeModificationRule = ({
             <View>
               <Values.Address address={actionData.multisig_id} />
             </View>
-            <View className="desc-list">
+            <View>
               <DescItem>
-                <Values.AddressMemo address={actionData.multisig_id} />
+                <Values.AddressMemo
+                  address={actionData.multisig_id}
+                  textStyle={commonStyle.secondaryText}
+                />
               </DescItem>
               <DescItem>
                 <LogoWithText
@@ -38,13 +43,7 @@ const CoboSafeModificationRule = ({
                   text="Safe"
                   logoSize={14}
                   logoRadius={16}
-                  // eslint-disable-next-line react-native/no-inline-styles
-                  textStyle={{
-                    fontWeight: 'normal',
-                    fontSize: 13,
-                    lineHeight: 15,
-                    color: '#4B4D59',
-                  }}
+                  textStyle={commonStyle.secondaryText}
                 />
               </DescItem>
             </View>
@@ -57,7 +56,7 @@ const CoboSafeModificationRule = ({
             </Text>
           </Row>
           <Row>
-            <Text>{actionData.desc}</Text>
+            <Text style={commonStyle.primaryText}>{actionData.desc}</Text>
           </Row>
         </Col>
       </Table>

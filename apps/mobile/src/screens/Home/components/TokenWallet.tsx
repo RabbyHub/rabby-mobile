@@ -127,9 +127,9 @@ export const TokenWallet = ({
     smallTokenModalRef.current?.present();
   }, []);
 
-  const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
+  // const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenTokenDetail = React.useCallback(() => {
-    tokenDetailModalRef.current?.present();
+    // tokenDetailModalRef.current?.present();
   }, []);
 
   const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);
@@ -199,7 +199,7 @@ export const TokenWallet = ({
         />
       </AppBottomSheetModal>
 
-      <AppBottomSheetModal
+      {/* <AppBottomSheetModal
         ref={tokenDetailModalRef}
         backgroundStyle={{
           backgroundColor: colors['neutral-bg-1'],
@@ -230,7 +230,7 @@ export const TokenWallet = ({
             Coming soon
           </Text>
         </BottomSheetView>
-      </AppBottomSheetModal>
+      </AppBottomSheetModal> */}
     </>
   );
 };

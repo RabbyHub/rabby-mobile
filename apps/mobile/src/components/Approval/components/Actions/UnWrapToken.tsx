@@ -88,12 +88,12 @@ const UnWrapToken = ({
             <LogoWithText
               logo={payToken.logo_url}
               text={
-                <>
+                <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
                   <Values.TokenSymbol token={payToken} />
-                </>
+                </View>
               }
               logoRadius={16}
             />
@@ -109,12 +109,12 @@ const UnWrapToken = ({
             <LogoWithText
               logo={receiveToken.logo_url}
               text={
-                <>
+                <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(receiveToken.min_amount)}{' '}
                   </Text>
                   <Values.TokenSymbol token={receiveToken} />
-                </>
+                </View>
               }
               logoRadius={16}
             />

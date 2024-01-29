@@ -289,14 +289,14 @@ const BalanceChange = ({
                     <LogoWithText
                       logo={token.logo_url}
                       text={
-                        <>
+                        <View className="flex flex-row">
                           <Text className="text-r-red-default">
-                            - {formatAmount(token.amount)}
+                            - {formatAmount(token.amount)}{' '}
                           </Text>
                           <Text onPress={() => handleClickToken(token)}>
                             {getTokenSymbol(token)}
                           </Text>
-                        </>
+                        </View>
                       }
                       key={token.id}
                       logoRadius={16}
@@ -345,14 +345,14 @@ const BalanceChange = ({
                     <LogoWithText
                       logo={token.logo_url}
                       text={
-                        <>
+                        <View className="flex flex-row">
                           <Text className="text-r-green-default">
-                            + {formatAmount(token.amount)}
+                            + {formatAmount(token.amount)}{' '}
                           </Text>
                           <Text onPress={() => handleClickToken(token)}>
                             {getTokenSymbol(token)}
                           </Text>
-                        </>
+                        </View>
                       }
                       key={token.id}
                       logoRadius={16}

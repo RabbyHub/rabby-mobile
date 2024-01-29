@@ -6,6 +6,7 @@ import LogoWithText from '../Actions/components/LogoWithText';
 import { TypedDataActionData } from './utils';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const CoboSafeCreate = ({
   data,
@@ -13,6 +14,7 @@ const CoboSafeCreate = ({
   data: TypedDataActionData['coboSafeCreate'];
 }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   const actionData = data!;
 
   return (
@@ -20,15 +22,20 @@ const CoboSafeCreate = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.coboSafeCreate.safeWalletTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.coboSafeCreate.safeWalletTitle')}
+            </Text>
           </Row>
           <Row>
             <View>
               <Values.Address address={actionData.multisig_id} />
             </View>
-            <View className="desc-list">
+            <View>
               <DescItem>
-                <Values.AddressMemo address={actionData.multisig_id} />
+                <Values.AddressMemo
+                  address={actionData.multisig_id}
+                  textStyle={commonStyle.secondaryText}
+                />
               </DescItem>
 
               <DescItem>
@@ -37,13 +44,7 @@ const CoboSafeCreate = ({
                   text="Safe"
                   logoSize={14}
                   logoRadius={16}
-                  // eslint-disable-next-line react-native/no-inline-styles
-                  textStyle={{
-                    fontWeight: 'normal',
-                    fontSize: 13,
-                    lineHeight: 15,
-                    color: '#4B4D59',
-                  }}
+                  textStyle={commonStyle.secondaryText}
                 />
               </DescItem>
             </View>
@@ -51,10 +52,12 @@ const CoboSafeCreate = ({
         </Col>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.coboSafeCreate.descriptionTitle')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.coboSafeCreate.descriptionTitle')}
+            </Text>
           </Row>
           <Row>
-            <Text>{actionData.desc}</Text>
+            <Text style={commonStyle.primaryText}>{actionData.desc}</Text>
           </Row>
         </Col>
       </Table>

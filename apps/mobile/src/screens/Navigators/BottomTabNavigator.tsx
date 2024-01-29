@@ -1,6 +1,6 @@
 import { isValidElementType } from 'react-is';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
+import { StyleSheet } from 'react-native';
 import {
   RcIconNavigationHomeLight,
   RcIconNavigationDappsLight,
@@ -99,7 +99,7 @@ export default function BottomTabNavigator() {
             // height: Platform.OS === 'ios' ? 90 : 70,
             height: ScreenLayouts.bottomBarHeight,
             borderTopColor: colors['neutral-line'],
-            borderTopWidth: 1,
+            borderTopWidth: StyleSheet.hairlineWidth,
             backgroundColor: colors['neutral-bg-1'],
           },
           tabBarLabelStyle: { ...tabBarLabelStyle },

@@ -53,7 +53,7 @@ const ApproveNFT = ({
           </Row>
           <Row>
             <NFTWithName nft={actionData?.nft} />
-            <View className="desc-list">
+            <View>
               <DescItem>
                 <ViewMore
                   type="nft"
@@ -75,12 +75,14 @@ const ApproveNFT = ({
           <Row>
             <Values.Address address={actionData.spender} chain={chain} />
             <View>
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1043"
