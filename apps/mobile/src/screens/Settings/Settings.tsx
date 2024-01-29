@@ -11,6 +11,8 @@ import {
   RcCustomRpc,
   RcFollowUs,
   RcInfo,
+  RcPrivacyPolicy,
+  RcLock,
   RcManageAddress,
   RcSignatureRecord,
   RcConnectedDapp,
@@ -35,6 +37,8 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import Toast from 'react-native-root-toast';
 import { checkVersion } from '@/utils/version';
+import { APP_URLS, APP_VERSION } from '@/core/services/constant';
+import { openExternalUrl } from '@/core/utils/linking';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -160,8 +164,20 @@ function SettingsScreen(): JSX.Element {
               checkVersion();
             },
           },
-          // TODO: only show in non-production mode
-          // BUILD_CHANNEL === 'production' && {
+          {
+            label: 'Feedback',
+            icon: RcFollowUs,
+            onPress: () => {
+              Linking.openURL('https://discord.com/invite/seFBCWmUre');
+            },
+          },
+          {
+            label: 'Privacy Policy',
+            icon: RcPrivacyPolicy,
+            onPress: async () => {
+              openExternalUrl(APP_URLS.PRIVACY_POLICY);
+            },
+          },
           {
             label: 'Build Hash',
             icon: RcInfo,
@@ -171,13 +187,20 @@ function SettingsScreen(): JSX.Element {
                 {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
               </Text>
             ),
-            visible: !!__DEV__,
+            // TODO: only show in non-production mode
+            visible: BUILD_CHANNEL !== 'production' && !!__DEV__,
           },
+          // TODO: in the future
+          // {
+          //   label: 'Support Chains',
+          //   icon: RcSupportChains,
+          //   onPress: () => {},
+          // },
           {
-            label: 'Feedback',
+            label: 'Follow Us',
             icon: RcFollowUs,
             onPress: () => {
-              Linking.openURL('https://discord.com/invite/seFBCWmUre');
+              openExternalUrl(APP_URLS.TWITTER);
             },
           },
         ].filter(Boolean),

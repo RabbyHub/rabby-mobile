@@ -15,6 +15,12 @@ export const RcFollowUs = makeThemeIconFromCC(RcFollowUsCC, 'neutral-body');
 import { default as RcInfoCC } from './info-cc.svg';
 export const RcInfo = makeThemeIconFromCC(RcInfoCC, 'neutral-body');
 
+import { default as RcPrivacyPolicyCC } from './privacy-policy-cc.svg';
+export const RcPrivacyPolicy = makeThemeIconFromCC(
+  RcPrivacyPolicyCC,
+  'neutral-body',
+);
+
 import { default as RcLockCC } from './lock-cc.svg';
 export const RcLock = makeThemeIconFromCC(RcLockCC, 'neutral-body');
 
