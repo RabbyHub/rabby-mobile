@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, Dimensions } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import { View, Text, ScrollView, Dimensions, Linking } from 'react-native';
 import clsx from 'clsx';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -11,9 +11,9 @@ import {
   RcCustomRpc,
   RcFollowUs,
   RcInfo,
-  RcLock,
   RcManageAddress,
-  RcSupportChains,
+  RcSignatureRecord,
+  RcConnectedDapp,
   RcThemeMode,
   RcWhitelist,
   RcEarth,
@@ -29,6 +29,12 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
+import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { toast } from '@/components/Toast';
+import Toast from 'react-native-root-toast';
+import { checkVersion } from '@/utils/version';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -45,22 +51,50 @@ function SettingsScreen(): JSX.Element {
 
   const navigation = useNavigation();
 
+  const clearPendingRef = useRef<BottomSheetModal>(null);
+
+  const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
+
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
         items: [
-          // {
-          //   label: 'Lock Wallet',
-          //   icon: RcLock,
-          //   onPress: () => {},
-          // },
+          {
+            label: 'Signature Record',
+            icon: RcSignatureRecord,
+
+            disabled: true,
+            onDisabledPress: () => {
+              toast.show('Coming Soon :)', {
+                position: Toast.positions.BOTTOM,
+              });
+            },
+          },
           {
             label: 'Manage Address',
             icon: RcManageAddress,
             onPress: () => {},
+            disabled: true,
+            onDisabledPress: () => {
+              toast.show('Coming Soon :)', {
+                position: Toast.positions.BOTTOM,
+              });
+            },
           },
           {
+            label: 'Connect Address',
+            icon: RcConnectedDapp,
+            onPress: () => {},
+            disabled: true,
+            onDisabledPress: () => {
+              toast.show('Coming Soon :)', {
+                position: Toast.positions.BOTTOM,
+              });
+            },
+          },
+          {
+            visible: !!__DEV__,
             label: 'Switch Theme',
             icon: RcThemeMode,
             onPress: () => {
@@ -84,17 +118,23 @@ function SettingsScreen(): JSX.Element {
           {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
-            onPress: () => {},
+            rightNode: SwitchWhitelistEnable,
+            onPress: () => {
+              presentWhitelistModal?.();
+            },
           },
           {
             label: 'Custom RPC',
             icon: RcCustomRpc,
             onPress: () => {},
+            visible: !!__DEV__,
           },
           {
             label: 'Clear Pending',
             icon: RcClearPending,
-            onPress: () => {},
+            onPress: () => {
+              clearPendingRef.current?.present();
+            },
           },
         ],
       },
@@ -104,7 +144,21 @@ function SettingsScreen(): JSX.Element {
           {
             label: 'Current Version',
             icon: RcInfo,
-            onPress: () => {},
+            rightTextNode: () => {
+              return (
+                <Text
+                  style={{
+                    color: colors['neutral-title-1'],
+                    fontSize: 14,
+                    fontWeight: '400',
+                  }}>
+                  {process.env.APP_VERSION}
+                </Text>
+              );
+            },
+            onPress: () => {
+              checkVersion();
+            },
           },
           // TODO: only show in non-production mode
           // BUILD_CHANNEL === 'production' && {
@@ -117,16 +171,14 @@ function SettingsScreen(): JSX.Element {
                 {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
               </Text>
             ),
+            visible: !!__DEV__,
           },
           {
-            label: 'Support Chains',
-            icon: RcSupportChains,
-            onPress: () => {},
-          },
-          {
-            label: 'Follow Us',
+            label: 'Feedback',
             icon: RcFollowUs,
-            onPress: () => {},
+            onPress: () => {
+              Linking.openURL('https://discord.com/invite/seFBCWmUre');
+            },
           },
         ].filter(Boolean),
       },
@@ -192,11 +244,7 @@ function SettingsScreen(): JSX.Element {
                   return (
                     <Block.Item
                       key={`${l1key}-${item.label}-${idx_l2}`}
-                      label={item.label}
-                      icon={item.icon}
-                      onPress={item.onPress}
-                      rightTextNode={item.rightTextNode}
-                      rightNode={item.rightNode}
+                      {...item}
                     />
                   );
                 })}
@@ -213,6 +261,30 @@ function SettingsScreen(): JSX.Element {
         )}>
         <RcFooterLogo />
       </View>
+
+      <ConfirmBottomSheetModal
+        ref={clearPendingRef}
+        height={422}
+        title={'Clear Pedning'}
+        onConfirm={() => {}}
+        desc={
+          <Text
+            style={{
+              fontSize: 16,
+              lineHeight: 22,
+              textAlign: 'left',
+            }}>
+            This will clear all your pending transactions. This can help you
+            solve the problem that in some cases the state of the transaction in
+            Rabby does not match the state on-chain.
+            {'\n'}
+            {'\n'}
+            This will not change the balances in your accounts or require you to
+            re-enter your seed phrase. All your assets and accounts information
+            will remain secure.
+          </Text>
+        }
+      />
 
       <SheetWebViewTester />
     </Container>
