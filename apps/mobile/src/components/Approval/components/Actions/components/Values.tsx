@@ -473,7 +473,11 @@ const TokenSymbol = ({
     // dispatch.sign.openTokenDetailPopup(token);
   };
   return (
-    <Text onPress={handleClickTokenSymbol} style={style}>
+    <Text
+      onPress={handleClickTokenSymbol}
+      style={style}
+      numberOfLines={1}
+      ellipsizeMode="tail">
       {ellipsisTokenSymbol(getTokenSymbol(token))}
     </Text>
   );

@@ -42,7 +42,7 @@ const Input = ({ customStyle, ...props }: InputProps) => {
   );
 };
 
-export const ButtonSheetInput = ({ customStyle, ...props }: InputProps) => {
+export const BottomSheetInput = ({ customStyle, ...props }: InputProps) => {
   const colors = useThemeColors();
   const styles = getStyle(colors);
   return (

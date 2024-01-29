@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@debank/common';
@@ -19,112 +19,180 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import DescItem from './components/DescItem';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '@/components/customized/BottomSheet';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { BottomSheetInput } from '@/components/Input';
+import { Button } from '@/components/Button';
 
 interface ApproveAmountModalProps {
   amount: number | string;
   balance: string | undefined | null;
   token: TokenItem;
   onChange(value: string): void;
+  onCancel(): void;
   visible: boolean;
 }
-// TODO
-// const ApproveAmountModal = ({
-//   balance,
-//   amount,
-//   token,
-//   visible,
-//   onChange,
-// }: ApproveAmountModalProps) => {
-//   const inputRef = useRef<Input>(null);
-//   const { t } = useTranslation();
-//   const [customAmount, setCustomAmount] = useState(
-//     new BigNumber(amount).toFixed(),
-//   );
-//   const [tokenPrice, setTokenPrice] = useState(
-//     new BigNumber(amount).times(token.price).toNumber(),
-//   );
-//   const [canSubmit, setCanSubmit] = useState(false);
-//   const handleSubmit = () => {
-//     onChange(customAmount);
-//   };
-//   const handleChange = (value: string) => {
-//     if (/^\d*(\.\d*)?$/.test(value)) {
-//       setCustomAmount(value);
-//     }
-//   };
 
-//   useEffect(() => {
-//     if (
-//       !customAmount ||
-//       Number(customAmount) <= 0 ||
-//       Number.isNaN(Number(customAmount))
-//     ) {
-//       setCanSubmit(false);
-//     } else {
-//       setCanSubmit(true);
-//     }
-//     setTokenPrice(Number(customAmount || 0) * token.price);
-//   }, [customAmount]);
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    mainView: {
+      paddingHorizontal: 20,
+      backgroundColor: colors['neutral-bg-1'],
+      height: '100%',
+    },
+    approveAmountFooter: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 12,
+    },
+    approveAmountFooterLeft: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+    },
+    approveAmountFooterBalance: {
+      fontSize: 12,
+      lineHeight: 14,
+      textAlign: 'right',
+      textDecorationLine: 'underline',
+      color: colors['neutral-foot'],
+    },
+    approveAmountButton: {
+      display: 'flex',
+      flexDirection: 'row',
+      marginTop: 32,
+      justifyContent: 'center',
+    },
+    editButton: {
+      fontSize: 12,
+      fontWeight: '500',
+      marginLeft: 4,
+      color: colors['blue-default'],
+    },
+  });
 
-//   useEffect(() => {
-//     if (visible) {
-//       setTimeout(() => {
-//         inputRef.current?.focus();
-//       }, 0);
-//     }
-//   }, [visible]);
+const ApproveAmountModal = ({
+  balance,
+  amount,
+  token,
+  visible,
+  onChange,
+  onCancel,
+}: ApproveAmountModalProps) => {
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
 
-//   return (
-//     <Form onFinish={handleSubmit}>
-//       <Form.Item>
-//         <Input
-//           value={customAmount}
-//           onChange={e => handleChange(e.target.value)}
-//           bordered={false}
-//           addonAfter={
-//             <span title={getTokenSymbol(token)}>
-//               {ellipsisTokenSymbol(getTokenSymbol(token), 4)}
-//             </span>
-//           }
-//           ref={inputRef}
-//         />
-//       </Form.Item>
-//       <div className="approve-amount-footer overflow-hidden gap-[8px]">
-//         <span
-//           className="est-approve-price truncate"
-//           title={formatUsdValue(new BigNumber(tokenPrice).toFixed(2))}>
-//           ≈
-//           {ellipsisOverflowedText(
-//             formatUsdValue(new BigNumber(tokenPrice).toFixed()),
-//             18,
-//             true,
-//           )}
-//         </span>
-//         {balance && (
-//           <span
-//             className="token-approve-balance truncate"
-//             title={formatAmount(balance)}
-//             onClick={() => {
-//               setCustomAmount(balance);
-//             }}>
-//             {t('global.Balance')}:{' '}
-//             {formatAmount(new BigNumber(balance).toFixed(4))}
-//           </span>
-//         )}
-//       </div>
-//       <div className="flex justify-center mt-32 popup-footer">
-//         <Button
-//           type="primary"
-//           className="w-[200px]"
-//           size="large"
-//           htmlType="submit"
-//           disabled={!canSubmit}>
-//           {t('global.confirmButton')}
-//         </Button>
-//       </div>
-//     </Form>
-//   );
-// };
+  React.useEffect(() => {
+    if (!visible) {
+      modalRef.current?.close();
+    } else {
+      modalRef.current?.present();
+    }
+  }, [visible]);
+
+  const { t } = useTranslation();
+  const [customAmount, setCustomAmount] = useState(
+    new BigNumber(amount).toFixed(),
+  );
+  const [tokenPrice, setTokenPrice] = useState(
+    new BigNumber(amount).times(token.price).toNumber(),
+  );
+  const [canSubmit, setCanSubmit] = useState(false);
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
+
+  const handleSubmit = () => {
+    onChange(customAmount);
+  };
+  const handleChange = (value: string) => {
+    if (/^\d*(\.\d*)?$/.test(value)) {
+      setCustomAmount(value);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      !customAmount ||
+      Number(customAmount) <= 0 ||
+      Number.isNaN(Number(customAmount))
+    ) {
+      setCanSubmit(false);
+    } else {
+      setCanSubmit(true);
+    }
+    setTokenPrice(Number(customAmount || 0) * token.price);
+  }, [customAmount, token]);
+
+  return (
+    <AppBottomSheetModal
+      ref={modalRef}
+      keyboardBlurBehavior="restore"
+      onDismiss={onCancel}
+      snapPoints={['30%']}>
+      <BottomSheetView style={styles.mainView}>
+        <AppBottomSheetModalTitle
+          title={t('page.signTx.tokenApprove.amountPopupTitle')}
+        />
+        <View>
+          <View>
+            <BottomSheetInput
+              value={customAmount}
+              onChange={e => handleChange(e.nativeEvent.text)}
+              autoFocus
+              // addonAfter={
+              //   <span title={getTokenSymbol(token)}>
+              //     {ellipsisTokenSymbol(getTokenSymbol(token), 4)}
+              //   </span>
+              // }
+            />
+            <View style={styles.approveAmountFooter}>
+              <Text style={styles.approveAmountFooterLeft}>
+                ≈
+                {ellipsisOverflowedText(
+                  formatUsdValue(new BigNumber(tokenPrice).toFixed()),
+                  18,
+                  true,
+                )}
+              </Text>
+              {balance && (
+                <Text
+                  style={styles.approveAmountFooterBalance}
+                  onPress={() => {
+                    setCustomAmount(balance);
+                  }}>
+                  {t('global.Balance')}:{' '}
+                  {formatAmount(new BigNumber(balance).toFixed(4))}
+                </Text>
+              )}
+            </View>
+            <View style={styles.approveAmountButton}>
+              <Button
+                buttonStyle={{
+                  width: 200,
+                  backgroundColor: colors['blue-default'],
+                  height: 44,
+                  padding: 10,
+                }}
+                titleStyle={{
+                  color: '#fff',
+                  fontSize: 15,
+                }}
+                onPress={handleSubmit}
+                title={t('global.confirmButton')}
+                disabled={!canSubmit}
+              />
+            </View>
+          </View>
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+};
 
 const TokenApprove = ({
   data,
@@ -145,6 +213,8 @@ const TokenApprove = ({
   const [editApproveModalVisible, setEditApproveModalVisible] = useState(false);
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
+  const colors = useThemeColors();
+  const styles = getStyle(colors);
   const { init } = useApprovalSecurityEngine();
 
   const engineResultMap = useMemo(() => {
@@ -214,24 +284,30 @@ const TokenApprove = ({
                       flex: 1,
                       display: 'flex',
                       flexDirection: 'row',
+                      overflow: 'hidden',
                     }}>
                     <Values.TokenAmount
                       value={actionData.token.amount}
-                      style={commonStyle.primaryText}
+                      style={{ ...commonStyle.primaryText, maxWidth: '60%' }}
                     />
                     <Values.TokenSymbol
                       token={requireData.token}
                       style={{
                         marginLeft: 2,
+                        flex: 0,
+                        flexShrink: 0,
+                        maxWidth: '40%',
                         ...commonStyle.primaryText,
                       }}
                     />
                   </View>
-                  <Text
-                    className="text-blue-light text-[12] font-medium ml-[4]"
-                    onPress={() => setEditApproveModalVisible(true)}>
-                    {t('global.editButton')}
-                  </Text>
+                  <View style={commonStyle.rowFlexCenterItem}>
+                    <Text
+                      style={styles.editButton}
+                      onPress={() => setEditApproveModalVisible(true)}>
+                      {t('global.editButton')}
+                    </Text>
+                  </View>
                 </View>
               }
               logoRadius={16}
@@ -348,21 +424,14 @@ const TokenApprove = ({
           </Row>
         </Col>
       </Table>
-      {/* <Popup
-        visible={editApproveModalVisible}
-        className="edit-approve-amount-modal"
-        height={280}
-        title={t('page.signTx.tokenApprove.amountPopupTitle')}
+      <ApproveAmountModal
+        balance={tokenBalance}
+        amount={approveAmount}
+        token={actionData.token}
+        onChange={handleApproveAmountChange}
         onCancel={() => setEditApproveModalVisible(false)}
-        destroyOnClose>
-        <ApproveAmountModal
-          balance={tokenBalance}
-          amount={approveAmount}
-          token={actionData.token}
-          onChange={handleApproveAmountChange}
-          visible={editApproveModalVisible}
-        />
-      </Popup> */}
+        visible={editApproveModalVisible}
+      />
     </View>
   );
 };

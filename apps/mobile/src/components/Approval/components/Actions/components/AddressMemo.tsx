@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   TextStyle,
 } from 'react-native';
-import { ButtonSheetInput } from '@/components/Input';
+import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { Button } from '@/components/Button';
@@ -103,7 +103,7 @@ const AddressMemo = ({
             title={t('component.Contact.EditModal.title')}
           />
           <View className="pt-[4px]">
-            <ButtonSheetInput
+            <BottomSheetInput
               onChangeText={handleTextChange}
               maxLength={50}
               autoFocus
