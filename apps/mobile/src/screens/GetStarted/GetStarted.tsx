@@ -46,7 +46,7 @@ function GetStartedScreen(): JSX.Element {
 
   const handleGetStarted = async () => {
     if (preferenceService.getPreference('isInvited')) {
-      navigate(RootNames.StackAddress);
+      navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     } else {
       setIsShowModal(true);
     }
@@ -62,7 +62,9 @@ function GetStartedScreen(): JSX.Element {
         preferenceService.setPreference({
           isInvited: true,
         });
-        navigate(RootNames.StackAddress);
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportNewAddress,
+        });
         setIsShowModal(false);
       } else {
         setErrMessage('Invalid invitation code');

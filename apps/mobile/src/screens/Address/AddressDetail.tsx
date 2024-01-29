@@ -1,13 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
-import {
-  Dimensions,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconCopyCC, RcIconRightCC } from '@/assets/icons/common';
@@ -42,7 +36,8 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Pressable } from 'react-native';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -89,7 +84,6 @@ interface AddressInfoProps {
 const AddressInfo = (props: AddressInfoProps) => {
   const { account } = props;
   const navigation = useNavigation();
-  // const { width, height } = useWindowDimensions();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [aliasName, setAliasName] = useAlias(account.address);
@@ -166,10 +160,14 @@ const AddressInfo = (props: AddressInfoProps) => {
   const removeAccount = useRemoveAccount();
 
   const handleDelete = useCallback(async () => {
-    await removeAccount(account);
-    handleCloseDeleteModalPress();
-    navigation.goBack();
-  }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
+    try {
+      await removeAccount(account);
+      handleCloseDeleteModalPress();
+      navigation.goBack();
+    } catch (error) {
+      console.log('handleDelete', error);
+    }
+  }, [account, handleCloseDeleteModalPress, removeAccount]);
 
   const changeAddressNote = useCallback(() => {
     setAliasName(aliasPendingName);

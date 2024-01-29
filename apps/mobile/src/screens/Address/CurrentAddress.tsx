@@ -26,6 +26,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import groupBy from 'lodash/groupBy';
 import { sortAccountsByBalance } from '@/utils/account';
 import { useOpenDappView } from '../Dapps/hooks/useDappView';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
@@ -113,6 +114,8 @@ export default function CurrentAddressScreen(): JSX.Element {
     ];
   }, [accounts, highlightedAddresses]);
 
+  const { safeOffBottom } = useSafeSizes();
+
   return (
     <NormalScreenContainer style={{ backgroundColor: colors['neutral-bg-2'] }}>
       <View style={styles.container}>
@@ -127,44 +130,67 @@ export default function CurrentAddressScreen(): JSX.Element {
           </TouchableOpacity>
         </View>
         <SectionList
+          initialNumToRender={15}
           sections={sectionData}
-          keyExtractor={item =>
-            `${item.address}-${item.type}-${item.brandName}`
-          }
-          renderItem={({ item, index, section }) => (
-            <View
-              key={`${item.address}-${item.type}-${item.brandName}-${index}`}
-              style={
-                index < section.data.length - 1 ? styles.itemGap : undefined
-              }>
-              <AddressItem wallet={item} />
-            </View>
+          keyExtractor={React.useCallback(
+            item => `${item.address}-${item.type}-${item.brandName}`,
+            [],
           )}
-          renderSectionHeader={({ section }) => {
-            if (section.title === 'address') {
-              return null;
-            }
-            return (
+          style={{
+            marginBottom: safeOffBottom,
+          }}
+          renderItem={React.useCallback(
+            ({ item, index, section }) => (
               <View
-                style={sectionData?.[0]?.data.length ? styles.watchMargin : {}}
-              />
-            );
-          }}
-          renderSectionFooter={({ section }) => {
-            if (section.title === 'address') {
-              return null;
-            }
-            return (
-              <View style={{ paddingBottom: 100 }}>
-                <TouchableOpacity
-                  style={styles.importView}
-                  onPress={gotoAddAddress}>
-                  <RcIconButtonAddAccount style={styles.addAddressIcon} />
-                  <Text style={styles.headline}>Import New Address</Text>
-                </TouchableOpacity>
+                key={`${item.address}-${item.type}-${item.brandName}-${index}`}
+                style={
+                  index < section.data.length - 1 ? styles.itemGap : undefined
+                }>
+                <AddressItem wallet={item} />
               </View>
-            );
-          }}
+            ),
+            [styles.itemGap],
+          )}
+          renderSectionHeader={React.useCallback(
+            ({ section }) => {
+              if (section.title === 'address') {
+                return null;
+              }
+              return (
+                <View
+                  style={
+                    sectionData?.[0]?.data.length ? styles.watchMargin : {}
+                  }
+                />
+              );
+            },
+            [sectionData, styles.watchMargin],
+          )}
+          renderSectionFooter={React.useCallback(
+            ({ section }) => {
+              if (section.title === 'address') {
+                return null;
+              }
+              return (
+                <View style={{ paddingBottom: 100 }}>
+                  <TouchableOpacity
+                    style={styles.importView}
+                    onPress={gotoAddAddress}>
+                    <RcIconButtonAddAccount style={styles.addAddressIcon} />
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: colors['blue-default'],
+                      }}>
+                      Import New Address
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            },
+            [colors, gotoAddAddress, styles.addAddressIcon, styles.importView],
+          )}
         />
       </View>
     </NormalScreenContainer>
