@@ -12,6 +12,7 @@ export { default as RcIconAddressDetailEdit } from './edit.svg';
 export { default as RcIconAddressWhitelistCC } from './whitelist.svg';
 export { default as RcIconScannerCC } from './scanner-cc.svg';
 export { default as RcIconScannerDownArrowCC } from './scan-down-arrow-cc.svg';
+export { default as RcIconSAddressRisk } from './address-risk.svg';
 import WalletCC from '@/assets/icons/address/wallet-cc.svg';
 import HardwareCC from '@/assets/icons/address/hardware-cc.svg';
 

@@ -50,6 +50,8 @@ export const RootNames = {
   ImportWatchAddress: 'ImportWatchAddress',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
+
+  Receive: 'Receive',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -65,6 +67,10 @@ export const getRootSpecConfig = (colors: AppColorsVariants) => {
       statusbarBackgroundColor: colors['blue-default'],
     },
     ImportSuccess: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
+    },
+    Receive: {
       statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
     },

@@ -5,3 +5,5 @@ export { default as IconCommonInfo } from './info.svg';
 export { default as IconTick } from './tick.svg';
 export { default as IconToastSuccess } from './toast-success.svg';
 export { default as RcIconLogo } from './logo.svg';
+export { default as IconCheckCC } from './check-cc.svg';
+export { default as IconRabbyWalletLogo } from './rabby-wallet-logo.svg';
