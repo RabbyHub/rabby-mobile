@@ -144,11 +144,9 @@ const ApproveAmountModal = ({
               value={customAmount}
               onChange={e => handleChange(e.nativeEvent.text)}
               autoFocus
-              // addonAfter={
-              //   <span title={getTokenSymbol(token)}>
-              //     {ellipsisTokenSymbol(getTokenSymbol(token), 4)}
-              //   </span>
-              // }
+              addonAfter={
+                <Text>{ellipsisTokenSymbol(getTokenSymbol(token), 4)}</Text>
+              }
             />
             <View style={styles.approveAmountFooter}>
               <Text style={styles.approveAmountFooterLeft}>
