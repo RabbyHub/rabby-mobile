@@ -78,8 +78,6 @@ export const ImportSuccessScreen = () => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
 
-  console.log('import success screen', contactService.listAlias());
-
   React.useEffect(() => {
     fetchAccounts();
   }, [fetchAccounts]);

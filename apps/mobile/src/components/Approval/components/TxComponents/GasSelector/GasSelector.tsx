@@ -412,7 +412,6 @@ const GasSelector = ({
       base_fee: gasList[0].base_fee,
       priority_price: null,
     };
-    console.log('eee');
     setSelectedGas({
       ...gas,
       price: Number(gas.price),

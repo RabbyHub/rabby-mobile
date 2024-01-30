@@ -35,10 +35,11 @@ const show = (message: any, extraConfig?: ToastOptions) => {
     msg = ' ';
   }
 
-  Toast.show(msg, { ...config, ...extraConfig });
+  const _toast = Toast.show(msg, { ...config, ...extraConfig });
+  return () => Toast.hide(_toast);
 };
 
-const toastWithIcon =
+export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (message: string, _config?: Partial<ToastOptions>) => {
     let msg = message;
@@ -47,7 +48,7 @@ const toastWithIcon =
       msg = ' ';
     }
 
-    Toast.show(
+    const _toast = Toast.show(
       (
         <View style={styles.container}>
           <Icon style={styles.icon} />
@@ -57,16 +58,19 @@ const toastWithIcon =
       Object.assign(
         {},
         config,
-        Platform.select({
-          ios: {
-            containerStyle: {
-              paddingBottom: 5,
-            },
-          },
-        }),
         _config,
+        Platform.OS === 'ios'
+          ? {
+              containerStyle: {
+                ...(config.containerStyle as any),
+                ...(_config?.containerStyle as any),
+                paddingBottom: 5,
+              },
+            }
+          : {},
       ),
     );
+    return () => Toast.hide(_toast);
   };
 
 const info = toastWithIcon(IconCommonInfo);
@@ -77,6 +81,7 @@ export const toast = {
   show,
   info,
   success,
+  positions: Toast.positions,
 };
 
 export const toastLoading = (msg?: string) => {
