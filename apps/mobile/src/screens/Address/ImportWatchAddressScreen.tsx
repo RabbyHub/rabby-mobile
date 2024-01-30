@@ -5,9 +5,11 @@ import { useThemeColors } from '@/hooks/theme';
 import React, { useEffect, useRef } from 'react';
 import {
   NativeSyntheticEvent,
+  StatusBar,
   StyleSheet,
   TextInput,
   TextInputSubmitEditingEventData,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
@@ -19,12 +21,12 @@ import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { RcIconScannerCC } from '@/assets/icons/address';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import { CameraPopup } from './components/CameraPopup';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { EdgeInsets, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -41,6 +43,8 @@ const ERROR_MESSAGE = {
 };
 
 export const ImportWatchAddressScreen = () => {
+  const insets = useSafeAreaInsets();
+  console.log('insets top', insets.top);
   const codeRef = useRef<BottomSheetModal>(null);
   const colors = useThemeColors();
   const [input, setInput] = React.useState('');
@@ -49,7 +53,10 @@ export const ImportWatchAddressScreen = () => {
     addr: string;
     name: string;
   }>(null);
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const styles = React.useMemo(
+    () => getStyles(colors, insets),
+    [colors, insets],
+  );
 
   const handleDone = async () => {
     if (!input) {
@@ -134,6 +141,7 @@ export const ImportWatchAddressScreen = () => {
         </View>
         <View style={styles.inputContainer}>
           <TextInput
+            numberOfLines={2}
             value={input}
             onChange={handleSubmit}
             style={[
@@ -154,14 +162,13 @@ export const ImportWatchAddressScreen = () => {
           )}
 
           {!error && ensResult && input !== ensResult.addr && (
-            <View style={styles.ensResultBox}>
-              <TouchableItem
-                onPress={() => {
-                  setInput(ensResult.addr);
-                }}>
-                <Text style={styles.ensResult}>{ensResult.addr}</Text>
-              </TouchableItem>
-            </View>
+            <TouchableOpacity
+              style={styles.ensResultBox}
+              onPress={() => {
+                setInput(ensResult.addr);
+              }}>
+              <Text style={styles.ensResult}>{ensResult.addr}</Text>
+            </TouchableOpacity>
           )}
 
           {error && (
@@ -191,7 +198,7 @@ export const ImportWatchAddressScreen = () => {
   );
 };
 
-const getStyles = function (colors: AppColorsVariants) {
+const getStyles = function (colors: AppColorsVariants, inset: EdgeInsets) {
   return StyleSheet.create({
     rootContainer: {
       display: 'flex',
@@ -203,7 +210,7 @@ const getStyles = function (colors: AppColorsVariants) {
     },
     titleContainer: {
       width: '100%',
-      height: 320,
+      height: 320 - inset.top - (StatusBar?.currentHeight || 0),
       flexShrink: 0,
       backgroundColor: colors['blue-default'],
       color: colors['neutral-title-2'],
@@ -229,7 +236,7 @@ const getStyles = function (colors: AppColorsVariants) {
       paddingHorizontal: 20,
       flex: 1,
       position: 'relative',
-      minHeight: 80,
+      // minHeight: 80,
     },
     keyboardView: {
       height: '100%',
@@ -249,30 +256,37 @@ const getStyles = function (colors: AppColorsVariants) {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       paddingHorizontal: 12,
+      paddingVertical: 0,
       fontSize: 14,
-      height: 52,
+      height: 64,
       color: colors['neutral-title-1'],
       borderWidth: 1,
+      textAlignVertical: 'center',
+      paddingEnd: 'auto',
     },
 
     ensResultBox: {
-      height: 48,
       padding: 4,
       borderRadius: 6,
       backgroundColor: colors['neutral-bg-1'],
       position: 'absolute',
-      top: 24 + 52 + 6,
+      top: 24 + 64 + 6,
       left: 20,
       width: '100%',
       zIndex: 2,
     },
 
     ensResult: {
+      padding: 12,
       backgroundColor: colors['blue-light-1'],
+      color: colors['neutral-title-1'],
       height: '100%',
+      width: '100%',
+      justifyContent: 'center',
       alignItems: 'center',
       fontSize: 13,
-      borderRadius: 6,
+      borderRadius: 4,
+      overflow: 'hidden',
     },
     ensText: {
       fontSize: 13,

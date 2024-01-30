@@ -12,12 +12,20 @@ import React from 'react';
 import { ThemeColors } from '@/constant/theme';
 
 const config: ToastOptions = {
-  position: 400,
+  position: Toast.positions.BOTTOM - 80,
   shadow: false,
   animation: true,
   hideOnPress: true,
   delay: 0,
-  opacity: 0.9,
+  textStyle: {
+    fontSize: 15,
+  },
+  containerStyle: {
+    borderRadius: 100,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backgroundColor: ThemeColors.light['neutral-black'],
 };
 
 const show = (message: any, extraConfig?: ToastOptions) => {

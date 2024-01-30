@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Dimensions,
   Modal,
   StyleSheet,
   Text,
@@ -10,13 +11,13 @@ import {
 
 import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
+import { preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@rneui/themed';
 import { useRequest } from 'ahooks';
 import axios from 'axios';
-import { preferenceService } from '@/core/services';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -30,11 +31,15 @@ function GetStartedScreen(): JSX.Element {
 
   const { runAsync: invite, loading: isInviteLoading } = useRequest(
     (id: string) => {
-      return axios.get<{ is_valid: boolean }>(
+      return axios.get<{ is_valid: boolean; code: number }>(
         'https://app-api.rabby.io/promotion/invitation',
         {
           params: {
             id,
+          },
+          headers: {
+            'X-Client': 'rabbymobile',
+            'X-Version': process.env.APP_VERSION!,
           },
         },
       );
@@ -55,6 +60,13 @@ function GetStartedScreen(): JSX.Element {
   const handleInvite = async () => {
     setErrMessage('');
 
+    const INVALID_CODE = 'Invalid invitation code';
+    const INVALID_VERSION = 'Invalid code, Please update to the latest version';
+
+    if (!code?.trim()) {
+      setErrMessage(INVALID_CODE);
+      return;
+    }
     try {
       const { data } = await invite(code?.trim());
 
@@ -64,53 +76,51 @@ function GetStartedScreen(): JSX.Element {
         });
         navigate(RootNames.StackAddress);
         setIsShowModal(false);
+      } else if (+data?.code === 2) {
+        setErrMessage(INVALID_VERSION);
       } else {
-        setErrMessage('Invalid invitation code');
+        setErrMessage(INVALID_CODE);
       }
     } catch (e) {
-      setErrMessage('Invalid invitation code');
+      setErrMessage(INVALID_CODE);
     }
   };
 
   useEffect(() => {
     if (isShowModal) {
       setCode('');
+      setErrMessage('');
     }
   }, [isShowModal]);
 
   return (
-    <>
-      <View>
-        <View className="bg-r-blue-default h-full flex-col">
-          <View
-            style={{
-              paddingTop: safeTop,
-              paddingBottom: safeOffBottom,
-            }}>
-            <View className="flex-col px-[20] h-full items-center pt-[180]">
-              <RcIconLogo />
-              <Text className="text-r-neutral-title2 text-[24] leading-[28] font-semibold mb-[32]">
-                Rabby Wallet
-              </Text>
-              <Text className="text-r-neutral-title2 text-[17] text-center leading-[24] font-medium mb-[220]">
-                The game-changing wallet
-                {'\n'}
-                for Ethereum and all EVM chains
-              </Text>
+    <View style={styles.screen}>
+      <View style={styles.centerWrapper}>
+        {/* top area */}
+        <View style={styles.topArea}>
+          <RcIconLogo />
+          <Text style={styles.appName}>Rabby Wallet</Text>
+          <Text style={styles.appDesc}>
+            The game-changing wallet
+            {'\n'}
+            for Ethereum and all EVM chains
+          </Text>
+        </View>
 
-              <Button
-                buttonStyle={styles.buttonStyle}
-                titleStyle={styles.buttonTitleStyle}
-                title="Get Started"
-                onPress={handleGetStarted}
-              />
-            </View>
-          </View>
+        {/* button area */}
+        <View style={styles.buttonArea}>
+          <Button
+            buttonStyle={styles.buttonStyle}
+            titleStyle={styles.buttonTitleStyle}
+            title="Get Started"
+            onPress={handleGetStarted}
+          />
         </View>
       </View>
+
       <Modal
         visible={isShowModal}
-        className="w-[353] max-w-[100%] "
+        className="w-[353] max-w-[100%]"
         onRequestClose={() => {
           setIsShowModal(false);
         }}
@@ -124,7 +134,7 @@ function GetStartedScreen(): JSX.Element {
             <View
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}>
-              <Text className="text-r-neutral-title1 text-[20] leading-[24] font-medium text-center mb-[20]">
+              <Text style={styles.modalTitle}>
                 Enter Invite Code to get started
               </Text>
               <TextInput
@@ -146,13 +156,11 @@ function GetStartedScreen(): JSX.Element {
               />
               <View className="h-[16] mt-[10]">
                 {errMessage ? (
-                  <Text className="text-r-red-default text-[13] leading-[16]">
-                    {errMessage}
-                  </Text>
+                  <Text style={styles.errorMsg}>{errMessage}</Text>
                 ) : null}
               </View>
-              <View className="flex-row items-center justify-center w-full mt-[26]">
-                <View className="flex-1 pr-[5]">
+              <View style={styles.modalFooter}>
+                <View style={styles.flex1}>
                   <Button
                     title="Cancel"
                     buttonStyle={styles.cancelStyle}
@@ -162,7 +170,7 @@ function GetStartedScreen(): JSX.Element {
                     }}
                   />
                 </View>
-                <View className="flex-1 pl-[5]">
+                <View style={styles.flex1}>
                   <Button
                     title="Next"
                     buttonStyle={styles.confirmStyle}
@@ -176,12 +184,73 @@ function GetStartedScreen(): JSX.Element {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </>
+    </View>
   );
 }
 
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
+    screen: {
+      backgroundColor: colors['blue-default'],
+      flexDirection: 'column',
+      justifyContent: 'center',
+      height: '100%',
+    },
+    centerWrapper: {
+      paddingHorizontal: 20,
+      minHeight: '80%',
+      height: 350 + 56 + 84,
+      maxHeight: '100%',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      // // leave here for debug
+      // borderWidth: 1,
+      // borderColor: 'black',
+      paddingBottom: 20,
+    },
+    topArea: { flexDirection: 'column', alignItems: 'center' },
+    appName: {
+      color: colors['neutral-title-2'],
+      fontSize: 24,
+      lineHeight: 28,
+      fontWeight: '500',
+      marginTop: 18,
+    },
+    appDesc: {
+      color: colors['neutral-title-2'],
+      fontSize: 17,
+      lineHeight: 24,
+      textAlign: 'center',
+      fontWeight: '500',
+      marginTop: 32,
+    },
+    modalTitle: {
+      color: colors['neutral-title-1'],
+      fontSize: 20,
+      lineHeight: 24,
+      fontWeight: '500',
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    modalFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 26,
+      width: '100%',
+      gap: 10,
+    },
+    flex1: {
+      flex: 1,
+    },
+    errorMsg: {
+      color: colors['red-default'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+    buttonArea: {
+      flexDirection: 'column',
+    },
     buttonStyle: {
       width: 268,
       height: 56,

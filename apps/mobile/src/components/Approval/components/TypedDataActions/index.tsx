@@ -37,6 +37,7 @@ import CoboSafeCreate from './CoboSafeCreate';
 import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegatedAddress';
 import CoboSafeModificationRule from './CoboSafeModificationRule';
 import CoboSafeModificationTokenApproval from './CoboSafeModificationTokenApproval';
+import { CommonAction } from '../CommonAction';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -99,6 +100,8 @@ const getStyles = (colors: AppColorsVariants) =>
     tipContent: {
       maxWidth: 358,
       padding: 12,
+      alignItems: 'center',
+      flexDirection: 'row',
     },
     tipContentIcon: {
       width: 12,
@@ -207,6 +210,9 @@ const Actions = ({
       raw,
     });
   };
+
+  const isUnknown = (!data?.actionType && !data?.common) || data?.contractCall;
+
   return (
     <View>
       <View style={styles.signTitle}>
@@ -227,7 +233,7 @@ const Actions = ({
         <View
           style={StyleSheet.flatten([
             styles.actionHeader,
-            !data?.actionType || data.contractCall ? styles.isUnknown : {},
+            isUnknown ? styles.isUnknown : {},
           ])}>
           <View className="left flex items-center">
             {data?.brand ? (
@@ -241,8 +247,9 @@ const Actions = ({
           <View style={styles.actionHeaderRight}>
             <Tip
               placement="bottom"
+              isLight
               content={
-                !data?.actionType || data?.contractCall ? (
+                isUnknown ? (
                   <NoActionAlert
                     data={{
                       origin,
@@ -250,13 +257,13 @@ const Actions = ({
                     }}
                   />
                 ) : (
-                  <Text style={styles.tipContent}>
+                  <View style={styles.tipContent}>
                     <RcIconCheck style={styles.tipContentIcon} />
                     <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </Text>
+                  </View>
                 )
               }>
-              {!data?.actionType || data?.contractCall ? (
+              {isUnknown ? (
                 <IconQuestionMark style={styles.icon} />
               ) : (
                 <IconRabbyDecoded style={styles.icon} />
@@ -264,7 +271,7 @@ const Actions = ({
             </Tip>
           </View>
         </View>
-        {data?.actionType && (
+        {(data?.actionType || data?.actionType === null) && (
           <View style={styles.container}>
             {data.permit && chain && (
               <Permit
@@ -365,6 +372,14 @@ const Actions = ({
             {data.coboSafeModificationTokenApproval && (
               <CoboSafeModificationTokenApproval
                 data={data.coboSafeModificationTokenApproval}
+              />
+            )}
+            {data.common && (
+              <CommonAction
+                data={data.common}
+                requireData={requireData as ContractRequireData}
+                chain={chain}
+                engineResults={engineResults}
               />
             )}
           </View>

@@ -10,6 +10,7 @@ import { AppColorsVariants } from '@/constant/theme';
 type TipProps = Omit<TooltipProps, 'content'> & {
   content: string | TooltipProps['content'];
   hideArrow?: boolean;
+  isLight?: boolean;
 };
 
 export const Tip = ({
@@ -18,6 +19,7 @@ export const Tip = ({
   contentStyle,
   hideArrow,
   arrowSize,
+  isLight,
   ...rest
 }: TipProps) => {
   const colors = useThemeColors();
@@ -28,7 +30,15 @@ export const Tip = ({
   const _content = useMemo(() => {
     return typeof content === 'string' ? (
       <View style={styles.content}>
-        <Text style={styles.contentText}>{content}</Text>
+        <Text
+          style={StyleSheet.flatten([
+            styles.contentText,
+            isLight && {
+              color: colors['neutral-black'],
+            },
+          ])}>
+          {content}
+        </Text>
       </View>
     ) : (
       content
@@ -57,7 +67,13 @@ export const Tip = ({
       }
       onClose={turnOff}
       content={_content}
-      contentStyle={StyleSheet.flatten([styles.tooltipContent, contentStyle])}
+      contentStyle={StyleSheet.flatten([
+        styles.tooltipContent,
+        contentStyle,
+        isLight && {
+          backgroundColor: colors['neutral-bg-1'],
+        },
+      ])}
       tooltipStyle={StyleSheet.flatten([styles.tooltip, tooltipStyle])}
       showChildInTooltip={false}
       arrowSize={_arrowSize}
@@ -85,9 +101,7 @@ const getStyle = (colors: AppColorsVariants) =>
       shadowRadius: 8,
     },
     tooltipContent: {
-      backgroundColor: colord(colors['neutral-title-2'])
-        .alpha(0.96)
-        .toHslString(),
+      backgroundColor: colors['neutral-black'],
       elevation: 10,
       borderRadius: 8,
       padding: 0,
@@ -99,8 +113,7 @@ const getStyle = (colors: AppColorsVariants) =>
       padding: 8,
     },
     contentText: {
-      fontWeight: '700',
       fontSize: 12,
-      color: colors['blue-default'],
+      color: colors['neutral-title-2'],
     },
   });

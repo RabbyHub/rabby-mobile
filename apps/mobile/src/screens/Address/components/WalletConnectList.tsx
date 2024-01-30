@@ -9,17 +9,11 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
-import WalletCC from '@/assets/icons/address/wallet-cc.svg';
+import { WalletSVG } from '@/assets/icons/address';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { ThemeColors } from '@/constant/theme';
 import { toast } from '@/components/Toast';
 import { WalletInfo } from '@/utils/walletInfo';
-
-export const WalletSVG = makeThemeIconFromCC(WalletCC, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
-});
+import { EmptyMobileWallet } from './EmptyMobileWallet';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -88,6 +82,7 @@ export const WalletConnectList = () => {
           onPress={() => handlePress(service)}
         />
       ))}
+      {!validServices && !isLoading && <EmptyMobileWallet />}
     </View>
   );
 };

@@ -20,6 +20,7 @@ import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import ViewRawModal from '../TxComponents/ViewRawModal';
+import { CommonAction } from '../CommonAction';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -83,6 +84,8 @@ const getStyles = (colors: AppColorsVariants) =>
     tipContent: {
       maxWidth: 358,
       padding: 12,
+      alignItems: 'center',
+      flexDirection: 'row',
     },
     tipContentIcon: {
       width: 12,
@@ -188,6 +191,7 @@ const Actions = ({
     });
   };
 
+  const isUnknown = !data;
   return (
     <View>
       <View style={styles.signTitle}>
@@ -203,14 +207,15 @@ const Actions = ({
         <View
           style={StyleSheet.flatten([
             styles.actionHeader,
-            data ? {} : styles.isUnknown,
+            isUnknown ? styles.isUnknown : {},
           ])}>
           <Text style={styles.actionHeaderLeft}>{actionName}</Text>
           <View style={styles.actionHeaderRight}>
             <Tip
               placement="bottom"
+              isLight
               content={
-                !data ? (
+                isUnknown ? (
                   <NoActionAlert
                     data={{
                       origin,
@@ -224,7 +229,7 @@ const Actions = ({
                   </View>
                 )
               }>
-              {!data ? (
+              {isUnknown ? (
                 <IconQuestionMark style={styles.icon} />
               ) : (
                 <IconRabbyDecoded style={styles.icon} />
@@ -242,6 +247,9 @@ const Actions = ({
                 data={data.verifyAddress}
                 engineResults={engineResults}
               />
+            )}
+            {data.common && (
+              <CommonAction data={data.common} engineResults={engineResults} />
             )}
           </View>
         )}

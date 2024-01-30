@@ -47,9 +47,9 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-RabbyMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RabbyMobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
-		EBD58466511C4944B2260062 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
+		EBD58466511C4944B2260062 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		FE58486C036C49939FBB09A4 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
+		FE58486C036C49939FBB09A4 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -512,13 +512,13 @@
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Rabby;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -550,13 +550,13 @@
 				DEVELOPMENT_TEAM = ZPNP2SF27Q;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ZPNP2SF27Q;
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Rabby;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

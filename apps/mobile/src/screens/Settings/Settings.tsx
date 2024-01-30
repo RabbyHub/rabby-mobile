@@ -11,6 +11,7 @@ import {
   RcCustomRpc,
   RcFollowUs,
   RcInfo,
+  RcPrivacyPolicy,
   RcLock,
   RcManageAddress,
   RcSupportChains,
@@ -29,6 +30,8 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { APP_URLS, APP_VERSION } from '@/core/services/constant';
+import { openExternalUrl } from '@/core/utils/linking';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -50,16 +53,18 @@ function SettingsScreen(): JSX.Element {
       features: {
         label: 'Features',
         items: [
+          // TODO: in the future
           // {
           //   label: 'Lock Wallet',
           //   icon: RcLock,
           //   onPress: () => {},
           // },
-          {
-            label: 'Manage Address',
-            icon: RcManageAddress,
-            onPress: () => {},
-          },
+          // TODO: in the future
+          // {
+          //   label: 'Manage Address',
+          //   icon: RcManageAddress,
+          //   onPress: () => {},
+          // },
           {
             label: 'Switch Theme',
             icon: RcThemeMode,
@@ -78,55 +83,73 @@ function SettingsScreen(): JSX.Element {
           },
         ],
       },
-      settings: {
-        label: 'Settings',
-        items: [
-          {
-            label: 'Enable whitelist for sending assets',
-            icon: RcWhitelist,
-            onPress: () => {},
-          },
-          {
-            label: 'Custom RPC',
-            icon: RcCustomRpc,
-            onPress: () => {},
-          },
-          {
-            label: 'Clear Pending',
-            icon: RcClearPending,
-            onPress: () => {},
-          },
-        ],
-      },
+      // settings: {
+      //   label: 'Settings',
+      //   items: [
+      //     // TODO: in the future
+      //     // {
+      //     //   label: 'Enable whitelist for sending assets',
+      //     //   icon: RcWhitelist,
+      //     //   onPress: () => {},
+      //     // },
+      //     // TODO: in the future
+      //     // {
+      //     //   label: 'Custom RPC',
+      //     //   icon: RcCustomRpc,
+      //     //   onPress: () => {},
+      //     // },
+      //     // TODO: in the future
+      //     // {
+      //     //   label: 'Clear Pending',
+      //     //   icon: RcClearPending,
+      //     //   onPress: () => {},
+      //     // },
+      //   ],
+      // },
       aboutus: {
         label: 'About Us',
         items: [
           {
             label: 'Current Version',
             icon: RcInfo,
-            onPress: () => {},
-          },
-          // TODO: only show in non-production mode
-          // BUILD_CHANNEL === 'production' && {
-          {
-            label: 'Build Hash',
-            icon: RcInfo,
-            onPress: () => {},
             rightNode: (
               <Text style={{ color: colors['neutral-body'] }}>
-                {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                {APP_VERSION}
               </Text>
             ),
-          },
-          {
-            label: 'Support Chains',
-            icon: RcSupportChains,
             onPress: () => {},
           },
+          {
+            label: 'Privacy Policy',
+            icon: RcPrivacyPolicy,
+            onPress: async () => {
+              openExternalUrl(APP_URLS.PRIVACY_POLICY);
+            },
+          },
+          // TODO: only show in non-production mode
+          BUILD_CHANNEL !== 'production' &&
+            ({
+              label: 'Build Hash',
+              icon: RcInfo,
+              onPress: () => {},
+              rightNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                </Text>
+              ),
+            } as any),
+          // TODO: in the future
+          // {
+          //   label: 'Support Chains',
+          //   icon: RcSupportChains,
+          //   onPress: () => {},
+          // },
           {
             label: 'Follow Us',
             icon: RcFollowUs,
-            onPress: () => {},
+            onPress: () => {
+              openExternalUrl(APP_URLS.TWITTER);
+            },
           },
         ].filter(Boolean),
       },

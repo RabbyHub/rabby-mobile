@@ -160,14 +160,7 @@ export default function CurrentAddressScreen(): JSX.Element {
                   style={styles.importView}
                   onPress={gotoAddAddress}>
                   <RcIconButtonAddAccount style={styles.addAddressIcon} />
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: '600',
-                      color: colors['blue-default'],
-                    }}>
-                    Import New Address
-                  </Text>
+                  <Text style={styles.headline}>Import New Address</Text>
                 </TouchableOpacity>
               </View>
             );
@@ -180,8 +173,13 @@ export default function CurrentAddressScreen(): JSX.Element {
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    headline: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors['blue-default'],
+    },
     container: {
-      paddingTop: 20,
+      paddingTop: 8,
       paddingHorizontal: 20,
     },
 
