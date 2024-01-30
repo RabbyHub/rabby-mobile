@@ -59,9 +59,9 @@ const rowStyles = StyleSheet.create({
 
 const RowLoading: React.FC<{
   itemCount?: number;
-}> = ({ itemCount = 1 }) => {
+}> = ({ itemCount = 1, ...props }) => {
   return (
-    <Col>
+    <Col {...props}>
       <Row isTitle>
         <Skeleton style={rowStyles.title} />
       </Row>
