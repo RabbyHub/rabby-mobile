@@ -25,6 +25,7 @@ import NotFoundScreen from './screens/NotFound';
 
 // import DappsScreen from './screens/Dapps/Dapps';
 import HistoryScreen from './screens/Transaction/History';
+import ReceiveScreen from './screens/Receive/Receive';
 import MyBundleScreen from './screens/Assets/MyBundle';
 
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
@@ -177,6 +178,17 @@ export default function AppNavigation({
               headerStyle: {
                 backgroundColor: '#fff',
               },
+            }}
+          />
+          <RootStack.Screen
+            name={RootNames.Receive}
+            component={ReceiveScreen}
+            options={{
+              ...screenOptions,
+              title: '',
+              headerShadowVisible: false,
+              headerShown: true,
+              headerTransparent: true,
             }}
           />
           <RootStack.Screen

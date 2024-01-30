@@ -15,11 +15,19 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { toast } from '@/components/Toast';
+import { useNavigation } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal/utils';
+import { CHAINS_ENUM } from '@debank/common';
 
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-
+  const navigation = useNavigation();
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => [436], []);
 
@@ -32,7 +40,21 @@ export const HomeTopArea = () => {
     {
       title: 'Receive',
       Icon: RcIconReceive,
-      onPress: () => {},
+      onPress: () => {
+        const id = createGlobalBottomSheetModal({
+          name: MODAL_NAMES.SELECT_CHAIN,
+          value: CHAINS_ENUM.ETH,
+          onChange: (v: CHAINS_ENUM) => {
+            navigation.push(RootNames.Receive, {
+              screen: RootNames.Receive,
+              params: {
+                chain: v,
+              },
+            });
+            removeGlobalBottomSheetModal(id);
+          },
+        });
+      },
     },
     {
       title: 'Swap',
