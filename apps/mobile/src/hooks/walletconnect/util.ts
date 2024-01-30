@@ -57,7 +57,7 @@ export const openWallet = (walletInfo: WalletInfo, wcLink = '') => {
           }${maybeRedirectUrl}`
         : walletInfo.useDeepLink
         ? deepLink
-        : universal || deepLink; // trust wallet 不支持 `${deepLink}/`
+        : universal || deepLink;
 
       return scheme
         ? Linking.openURL(link)

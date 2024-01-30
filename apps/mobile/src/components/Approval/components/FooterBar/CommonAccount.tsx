@@ -60,8 +60,6 @@ export const CommonAccount: React.FC<Props> = ({
 
   const Icon = icon;
 
-  console.log(Icon);
-
   return (
     <View>
       <View style={styles.wrapper}>

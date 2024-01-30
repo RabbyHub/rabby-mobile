@@ -35,13 +35,6 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
         address,
         alias,
       });
-
-      console.log(
-        'contactService.setAlias',
-        address,
-        alias,
-        contactService.listAlias(),
-      );
     } else {
       contactService.setAlias({
         address,
