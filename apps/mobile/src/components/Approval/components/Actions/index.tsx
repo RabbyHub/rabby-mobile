@@ -51,7 +51,7 @@ import { Tip } from '@/components/Tip';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 
-const getStyle = (colors: AppColorsVariants) =>
+export const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     signTitle: {
       flexDirection: 'row',
