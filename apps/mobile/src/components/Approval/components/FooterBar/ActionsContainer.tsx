@@ -21,6 +21,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['blue-default'],
+      fontSize: 16,
     },
     wrapper: {
       position: 'relative',

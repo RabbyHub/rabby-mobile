@@ -18,6 +18,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['neutral-title-2'],
+      fontSize: 16,
     },
     buttonDisabled: {
       borderColor: colors['blue-light-1'],

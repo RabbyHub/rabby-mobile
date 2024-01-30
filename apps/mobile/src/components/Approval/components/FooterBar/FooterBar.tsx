@@ -231,21 +231,19 @@ export const FooterBar: React.FC<Props> = ({
         })}>
         {origin && (
           <View style={styles.requestOrigin}>
-            {originLogo && (
-              <View className="relative mr-8">
-                <DappIcon
-                  source={{ uri: originLogo }}
-                  origin={origin}
-                  style={styles.dappIcon}
+            <View className="relative mr-8">
+              <DappIcon
+                source={{ uri: originLogo }}
+                origin={origin}
+                style={styles.dappIcon}
+              />
+              <Tip content={currentChain.name}>
+                <Image
+                  source={{ uri: currentChain.logo }}
+                  style={styles.chainLogo}
                 />
-                <Tip content={currentChain.name}>
-                  <Image
-                    source={{ uri: currentChain.logo }}
-                    style={styles.chainLogo}
-                  />
-                </Tip>
-              </View>
-            )}
+              </Tip>
+            </View>
             <Text style={styles.origin}>{displayOrigin}</Text>
             <Text style={styles.right}>
               {t('page.signFooterBar.requestFrom')}

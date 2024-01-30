@@ -9,7 +9,6 @@ import {
   NativeSyntheticEvent,
   StyleSheet,
   Text,
-  TextInput,
   TextInputChangeEventData,
   TouchableOpacity,
   View,
@@ -35,9 +34,10 @@ import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import clsx from 'clsx';
 import IconAlertCC from '@/assets/icons/sign/alert-currentcolor-cc.svg';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { TextInput } from 'react-native-gesture-handler';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -762,7 +762,7 @@ const GasSelector = ({
                       disabled: disabled,
                     })}
                     validateStatus={validateStatus.gasLimit.status}> */}
-                  <TextInput
+                  <BottomSheetTextInput
                     keyboardType="number-pad"
                     style={styles.gasLimitInput}
                     value={afterGasLimit.toString()}
@@ -814,7 +814,7 @@ const GasSelector = ({
                   <Text style={styles.gasLimitLabelText}>
                     {t('page.signTx.nonceTitle')}
                   </Text>
-                  <TextInput
+                  <BottomSheetTextInput
                     keyboardType="number-pad"
                     style={styles.gasLimitInput}
                     value={customNonce.toString()}

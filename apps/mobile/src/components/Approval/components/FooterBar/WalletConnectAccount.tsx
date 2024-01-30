@@ -41,6 +41,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['neutral-title-2'],
+      fontSize: 16,
     },
   });
 
