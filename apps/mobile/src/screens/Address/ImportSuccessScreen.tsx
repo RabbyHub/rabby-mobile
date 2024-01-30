@@ -1,11 +1,11 @@
-import { Text } from '@/components';
+import { FocusAwareStatusBar, Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { contactService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
@@ -47,11 +47,8 @@ export const ImportSuccessScreen = () => {
           paddingVertical: 24,
           paddingHorizontal: 20,
         },
-        logo: {
-          width: 240,
-          height: 240,
-        },
         keyboardView: {
+          flex: 1,
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
@@ -73,6 +70,7 @@ export const ImportSuccessScreen = () => {
       address: state.address,
       alias: aliasName || '',
     });
+    Keyboard.dismiss();
     navigate(RootNames.Home);
   };
 
@@ -86,9 +84,14 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <KeyboardAwareScrollView style={styles.keyboardView}>
+      <KeyboardAwareScrollView
+        style={styles.keyboardView}
+        enableOnAndroid
+        extraHeight={150}
+        scrollEnabled={false}
+        keyboardOpeningTime={0}>
         <View style={styles.titleContainer}>
-          <ImportSuccessSVG style={styles.logo} />
+          <ImportSuccessSVG />
           <Text style={styles.title}>Added successfully</Text>
         </View>
         <View style={styles.inputContainer}>
@@ -100,6 +103,7 @@ export const ImportSuccessScreen = () => {
         </View>
       </KeyboardAwareScrollView>
       <FooterButton title="Done" onPress={handleDone} />
+      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };

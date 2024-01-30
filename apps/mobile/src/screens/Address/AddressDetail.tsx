@@ -167,7 +167,7 @@ const AddressInfo = (props: AddressInfoProps) => {
     } catch (error) {
       console.log('handleDelete', error);
     }
-  }, [account, handleCloseDeleteModalPress, removeAccount]);
+  }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
 
   const changeAddressNote = useCallback(() => {
     setAliasName(aliasPendingName);
@@ -492,7 +492,7 @@ const AddressInfo = (props: AddressInfoProps) => {
 
       <View style={styles.view}>
         <View
-          style={StyleSheet.compose(styles.itemView, styles.noBOrderBottom)}>
+          style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}>
           <Text style={styles.labelText}>Pin in list</Text>
           <View style={styles.valueView}>
             <AppSwitch onValueChange={setPinned} value={pinned} />

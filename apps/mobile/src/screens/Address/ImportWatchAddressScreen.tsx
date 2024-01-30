@@ -1,11 +1,11 @@
-import { Text } from '@/components';
+import { FocusAwareStatusBar, Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useEffect, useRef } from 'react';
 import {
+  Keyboard,
   NativeSyntheticEvent,
-  StatusBar,
   StyleSheet,
   TextInput,
   TextInputSubmitEditingEventData,
@@ -28,6 +28,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { isIOS } from '@rneui/base';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -45,6 +46,8 @@ const ERROR_MESSAGE = {
 
 export const ImportWatchAddressScreen = () => {
   const { safeOffHeader } = useSafeSizes();
+  const headerHeight = useHeaderHeight();
+
   const codeRef = useRef<BottomSheetModal>(null);
   const colors = useThemeColors();
   const [input, setInput] = React.useState('');
@@ -68,6 +71,7 @@ export const ImportWatchAddressScreen = () => {
       return;
     }
     try {
+      Keyboard.dismiss();
       await apisAddress.addWatchAddress(input);
       navigate(RootNames.ImportSuccess, {
         address: input,
@@ -131,9 +135,14 @@ export const ImportWatchAddressScreen = () => {
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <KeyboardAwareScrollView style={styles.keyboardView}>
+      <KeyboardAwareScrollView
+        style={styles.keyboardView}
+        enableOnAndroid
+        extraHeight={150}
+        scrollEnabled={false}
+        keyboardOpeningTime={0}>
         <View style={styles.titleContainer}>
-          <WatchLogoSVG style={styles.logo} />
+          <WatchLogoSVG />
           <Text style={styles.title}>Add Contacts</Text>
           <Text style={styles.description}>
             You can also use it as a watch-only address
@@ -197,6 +206,7 @@ export const ImportWatchAddressScreen = () => {
         onPress={handleDone}
       />
       <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
+      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };
@@ -218,20 +228,21 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       backgroundColor: colors['blue-default'],
       color: colors['neutral-title-2'],
       display: 'flex',
-      justifyContent: 'center',
+      justifyContent: 'flex-end',
       alignItems: 'center',
     },
     title: {
       fontSize: 24,
       fontWeight: '700',
       color: colors['neutral-title-2'],
-      marginTop: 25,
+      marginTop: 4,
     },
     description: {
       fontSize: 15,
       fontWeight: '500',
       color: colors['neutral-title-2'],
       marginTop: 8,
+      marginBottom: 36,
     },
     inputContainer: {
       backgroundColor: colors['neutral-bg-2'],
@@ -242,12 +253,9 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       // minHeight: 80,
     },
     keyboardView: {
+      flex: 1,
       height: '100%',
       backgroundColor: colors['neutral-bg-2'],
-    },
-    logo: {
-      width: 240,
-      height: 240,
     },
     errorMessage: {
       color: colors['red-default'],
