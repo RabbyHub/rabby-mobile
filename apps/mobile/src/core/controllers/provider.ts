@@ -1,4 +1,4 @@
-import Common, { Hardfork } from '@ethereumjs/common';
+import { Common, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
@@ -14,7 +14,13 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
-import { preferenceService, dappService } from '@/core/services/shared';
+import {
+  preferenceService,
+  dappService,
+  transactionHistoryService,
+  transactionWatcherService,
+  transactionBroadcastWatcherService,
+} from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
 //   transactionWatchService,
@@ -461,15 +467,15 @@ class ProviderController extends BaseController {
           .enum
       : dappService.getConnectedDapp(origin)!.chainId;
 
-    // const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
-    // if (!approvingTx?.rawTx || !approvingTx?.explain) {
-    //   throw new Error(`approvingTx not found: ${signingTxId}`);
-    // }
-    // transactionHistoryService.updateSigningTx(signingTxId!, {
-    //   isSubmitted: true,
-    // });
+    const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
+    if (!approvingTx?.rawTx || !approvingTx?.explain) {
+      throw new Error(`approvingTx not found: ${signingTxId}`);
+    }
+    transactionHistoryService.updateSigningTx(signingTxId!, {
+      isSubmitted: true,
+    });
 
-    // const { explain: cacheExplain, rawTx, action } = approvingTx;
+    const { explain: cacheExplain, rawTx, action } = approvingTx;
 
     const chainItem = findChainByEnum(chain);
 
@@ -513,6 +519,7 @@ class ProviderController extends BaseController {
         pushType?: TxPushType;
       }) => {
         const { hash, reqId, pushType = 'default' } = info;
+        console.log('onTransactionCreated');
         // if (
         //   options?.data?.$ctx?.stats?.afterSign?.length &&
         //   Array.isArray(options?.data?.$ctx?.stats?.afterSign)
@@ -536,46 +543,45 @@ class ProviderController extends BaseController {
         //   pageStateCacheService.clear();
         // }
         // TODO: transactionHistory
-        // transactionHistoryService.addTx({
-        //   tx: {
-        //     rawTx: {
-        //       ...rawTx,
-        //       ...approvalRes,
-        //       r: bufferToHex(signedTx.r),
-        //       s: bufferToHex(signedTx.s),
-        //       v: bufferToHex(signedTx.v),
-        //     },
-        //     createdAt: Date.now(),
-        //     isCompleted: false,
-        //     hash,
-        //     failed: false,
-        //     reqId,
-        //     pushType,
-        //   },
-        //   explain: cacheExplain,
-        //   actionData: action,
-        //   origin,
-        //   $ctx: options?.data?.$ctx,
-        //   isDropFailed: true,
-        // });
-        // transactionHistoryService.removeSigningTx(signingTxId!);
+        transactionHistoryService.addTx({
+          address: txParams.from,
+          nonce: +approvalRes.nonce,
+          chainId: approvalRes.chainId,
+
+          rawTx: {
+            ...rawTx,
+            ...approvalRes,
+            r: bufferToHex(signedTx.r),
+            s: bufferToHex(signedTx.s),
+            v: bufferToHex(signedTx.v),
+          },
+          createdAt: Date.now(),
+          hash,
+          reqId,
+          pushType,
+          explain: cacheExplain,
+          action: action,
+          site: dappService.getDapp(origin),
+          isPending: true,
+        });
+        transactionHistoryService.removeSigningTx(signingTxId!);
         if (hash) {
-          // transactionWatchService.addTx(
-          //   `${txParams.from}_${approvalRes.nonce}_${chain}`,
-          //   {
-          //     nonce: approvalRes.nonce,
-          //     hash,
-          //     chain,
-          //   },
-          // );
+          transactionWatcherService.addTx(
+            `${txParams.from}_${approvalRes.nonce}_${chain}`,
+            {
+              nonce: approvalRes.nonce,
+              hash,
+              chain,
+            },
+          );
         }
         if (reqId && !hash) {
-          // transactionBroadcastWatchService.addTx(reqId, {
-          //   reqId,
-          //   address: txParams.from,
-          //   chainId: CHAINS[chain].id,
-          //   nonce: approvalRes.nonce,
-          // });
+          transactionBroadcastWatcherService.addTx(reqId, {
+            reqId,
+            address: txParams.from,
+            chainId: CHAINS[chain].id,
+            nonce: approvalRes.nonce,
+          });
         }
 
         // if (isCoboSafe) {
@@ -700,18 +706,49 @@ class ProviderController extends BaseController {
           // );
           // onTransactionCreated({ hash, reqId, pushType });
         } else {
-          const res = await openapi.submitTx({
-            tx: {
-              ...approvalRes,
-              r: bufferToHex(signedTx.r),
-              s: bufferToHex(signedTx.s),
-              v: bufferToHex(signedTx.v),
-              value: approvalRes.value || '0x0',
+          // const res = await openapi.submitTx({
+          //   tx: {
+          //     ...approvalRes,
+          //     r: bufferToHex(signedTx.r),
+          //     s: bufferToHex(signedTx.s),
+          //     v: bufferToHex(signedTx.v),
+          //     value: approvalRes.value || '0x0',
+          //   },
+          //   push_type: pushType,
+          //   low_gas_deadline: lowGasDeadline,
+          //   req_id: preReqId || '',
+          //   origin,
+          // });
+          const res = await Promise.resolve({
+            req: {
+              id: 'de9baec0b2ea4cfe9dc76c2fe7230348',
+              chain_id: 'bsc',
+              user_addr: '0x341a1fbd51825e5a107db54ccb3166deba145479',
+              nonce: 23,
+              signed_tx: {
+                from: '0x341a1fbd51825e5a107db54ccb3166deba145479',
+                to: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
+                data: '0xa9059cbb0000000000000000000000005853ed4f26a3fcea565b3fbc698bb19cdf6deb850000000000000000000000000000000000000000000000000de0b6b3a7640000',
+                nonce: '0x17',
+                value: '0x0',
+                chainId: 56,
+                gas: '0x15b7f',
+                gasPrice: '0xb2d05e00',
+                r: '0xa6dc5daf9ea7b590a35e120ee27e2ac593524eb838c0af0ea0f3c94aa6f8a25d',
+                s: '0x1c18b49306959a2601f14e76df297ec09d5c627fc6abd531bdb88b8b4f492a1f',
+                v: '0x93',
+              },
+              tx_id:
+                '0x690d611cc3440d8b49924f8e2e26fcbd36d6c311a82bc8007e218b621e629732',
+              push_type: 'default',
+              push_status: 'success',
+              push_at: 1706598971.5374181,
+              push_at_list: [1706598971.5374181],
+              is_withdraw: false,
+              create_at: 1706598971.5288906,
+              low_gas_deadline: 0,
+              is_finished: false,
             },
-            push_type: pushType,
-            low_gas_deadline: lowGasDeadline,
-            req_id: preReqId || '',
-            origin,
           });
           hash = res.req.tx_id || undefined;
           reqId = res.req.id || undefined;

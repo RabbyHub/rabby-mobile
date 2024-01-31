@@ -4,6 +4,8 @@ import React from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
+import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
+import { TransactionGroup } from '@/core/services/transactionHistory';
 
 export const HistoryList = ({
   loading,
@@ -11,20 +13,24 @@ export const HistoryList = ({
   loadMore,
   list,
 }: {
-  list?: TxDisplayItem[];
+  list?: (TxDisplayItem | TransactionGroup)[];
   loading?: boolean;
   loadingMore?: boolean;
   loadMore?: () => void;
 }) => {
-  const renderItem = ({ item }: { item: TxDisplayItem }) => {
-    return (
-      <HistoryItem
-        data={item}
-        projectDict={item.projectDict}
-        cateDict={item.cateDict}
-        tokenDict={item.tokenDict || {}}
-      />
-    );
+  const renderItem = ({ item }: { item: TxDisplayItem | TransactionGroup }) => {
+    if ('projectDict' in item) {
+      return (
+        <HistoryItem
+          data={item}
+          projectDict={item.projectDict}
+          cateDict={item.cateDict}
+          tokenDict={item.tokenDict || {}}
+        />
+      );
+    } else {
+      return <TransactionItem data={item} />;
+    }
   };
 
   if (loading) {

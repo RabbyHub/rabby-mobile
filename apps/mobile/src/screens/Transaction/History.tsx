@@ -5,10 +5,10 @@ import RcIconRight from '@/assets/icons/history/icon-right.svg';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
-import { preferenceService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { useInfiniteScroll } from 'ahooks';
+import { useInfiniteScroll, useRequest } from 'ahooks';
 import { last } from 'lodash';
 import { StyleSheet, Text } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -18,9 +18,9 @@ const PAGE_COUNT = 10;
 function HistoryScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  const account = preferenceService.getCurrentAccount();
 
   const fetchData = async (startTime = 0) => {
-    const account = preferenceService.getCurrentAccount();
     const address = account?.address;
     if (!address) {
       throw new Error('no account');
@@ -58,6 +58,16 @@ function HistoryScreen(): JSX.Element {
     },
   );
 
+  const { data: groups } = useRequest(async () => {
+    return account?.address
+      ? transactionHistoryService.getTransactionGroups({
+          address: account?.address,
+        })
+      : [];
+  });
+
+  console.log(JSON.stringify(groups));
+
   return (
     <NormalScreenContainer>
       <TouchableOpacity
@@ -67,7 +77,7 @@ function HistoryScreen(): JSX.Element {
         <RcIconRight />
       </TouchableOpacity>
       <HistoryList
-        list={data?.list}
+        list={[...(groups || []), ...(data?.list || [])]}
         loading={loading}
         loadingMore={loadingMore}
         loadMore={loadMore}

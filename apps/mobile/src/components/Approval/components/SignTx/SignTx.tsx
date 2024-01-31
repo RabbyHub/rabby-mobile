@@ -525,7 +525,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           setActionRequireData(requiredData);
           const approval = (await getApproval())!;
 
-          approval.signingTxId &&
+          approval?.signingTxId &&
             (await transactionHistoryService.updateSigningTx(
               approval.signingTxId,
               {
@@ -611,8 +611,8 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     const approval = (await getApproval())!;
     // gaEvent('allow');
 
-    approval.signingTxId &&
-      (await transactionHistoryService.updateSigningTx(approval.signingTxId, {
+    approval?.signingTxId &&
+      (await transactionHistoryService.updateSigningTx(approval?.signingTxId, {
         rawTx: {
           nonce: realNonce || tx.nonce,
         },
@@ -641,7 +641,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           brandName: currentAccount.brandName,
         },
         $ctx: params.$ctx,
-        signingTxId: approval.signingTxId,
+        signingTxId: approval?.signingTxId,
         pushType: pushInfo.type,
         lowGasDeadline: pushInfo.lowGasDeadline,
         reqId,
@@ -672,7 +672,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       gas: gasLimit,
       isSend,
       traceId: txDetail?.trace_id,
-      signingTxId: approval.signingTxId,
+      signingTxId: approval?.signingTxId,
       pushType: pushInfo.type,
       lowGasDeadline: pushInfo.lowGasDeadline,
       reqId,
