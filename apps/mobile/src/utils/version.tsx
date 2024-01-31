@@ -4,6 +4,7 @@ import { getVersion } from 'react-native-device-info';
 import semver from 'semver';
 import { toast } from '@/components/Toast';
 import Toast from 'react-native-root-toast';
+import { devLog } from './logger';
 
 export function sleep(ms = 0) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -21,11 +22,10 @@ export async function checkVersion() {
     ]);
 
     const localVersion = getVersion();
-    console.log('latestVersion', latestVersion);
-    console.log(
-      'await VersionCheck.getStoreUrl()',
-      await VersionCheck.getStoreUrl(),
-    );
+
+    devLog('latestVersion', latestVersion);
+    devLog('getStoreUrl()', await VersionCheck.getStoreUrl());
+
     if (
       latestVersion &&
       localVersion &&
