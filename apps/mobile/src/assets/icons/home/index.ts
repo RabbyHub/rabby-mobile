@@ -8,6 +8,8 @@ import { default as RcIconReceiveCC } from './receive-cc.svg';
 import { default as RcIconMoreCC } from './more-cc.svg';
 import { default as RcIconApprovalCC } from './approvals-cc.svg';
 import { default as RcIconGasTopUpCC } from './gas-top-up-cc.svg';
+import { default as RcIconHeaderEyeCC } from './header-eye-cc.svg';
+import { default as RcIconHeaderEyeCloseCC } from './header-eye-close-cc.svg';
 
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
@@ -78,3 +80,15 @@ export const RcIconGasTopUp = makeThemeIconFromCC(RcIconGasTopUpCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });
+
+export const RcIconHeaderEye = makeThemeIconFromCC(RcIconHeaderEyeCC, {
+  onLight: ThemeColors.light['neutral-title-2'],
+  onDark: ThemeColors.dark['neutral-title-2'],
+});
+export const RcIconHeaderEyeClose = makeThemeIconFromCC(
+  RcIconHeaderEyeCloseCC,
+  {
+    onLight: ThemeColors.light['neutral-title-2'],
+    onDark: ThemeColors.dark['neutral-title-2'],
+  },
+);

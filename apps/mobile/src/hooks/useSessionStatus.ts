@@ -39,7 +39,6 @@ export const useSessionStatus = (
       status: Status;
     }) => {
       let updated: Status | undefined;
-      console.log('data.status', data.status);
       if (
         !account?.address &&
         data.address &&

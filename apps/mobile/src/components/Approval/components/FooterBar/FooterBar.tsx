@@ -43,6 +43,16 @@ const getStyles = (colors: AppColorsVariants) =>
       borderTopRightRadius: 16,
       backgroundColor: colors['neutral-bg-1'],
       position: 'relative',
+      // shadow
+      shadowColor: colors['neutral-line'],
+      shadowOffset: {
+        width: 0,
+        height: 6,
+      },
+      shadowOpacity: 0.5,
+      shadowRadius: 16,
+
+      elevation: 12,
     },
     dappIcon: {
       width: 24,
@@ -231,21 +241,19 @@ export const FooterBar: React.FC<Props> = ({
         })}>
         {origin && (
           <View style={styles.requestOrigin}>
-            {originLogo && (
-              <View className="relative mr-8">
-                <DappIcon
-                  source={{ uri: originLogo }}
-                  origin={origin}
-                  style={styles.dappIcon}
+            <View className="relative mr-8">
+              <DappIcon
+                source={{ uri: originLogo }}
+                origin={origin}
+                style={styles.dappIcon}
+              />
+              <Tip content={currentChain.name}>
+                <Image
+                  source={{ uri: currentChain.logo }}
+                  style={styles.chainLogo}
                 />
-                <Tip content={currentChain.name}>
-                  <Image
-                    source={{ uri: currentChain.logo }}
-                    style={styles.chainLogo}
-                  />
-                </Tip>
-              </View>
-            )}
+              </Tip>
+            </View>
             <Text style={styles.origin}>{displayOrigin}</Text>
             <Text style={styles.right}>
               {t('page.signFooterBar.requestFrom')}

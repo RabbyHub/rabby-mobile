@@ -1,21 +1,23 @@
-import { Text } from '@/components';
+import { FocusAwareStatusBar, Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
 import { contactService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigationState } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
 import { useAccounts } from '@/hooks/account';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
   const { fetchAccounts } = useAccounts();
+  const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
     () =>
@@ -26,7 +28,7 @@ export const ImportSuccessScreen = () => {
         },
         titleContainer: {
           width: '100%',
-          height: 320,
+          height: 320 - safeOffHeader,
           flexShrink: 0,
           backgroundColor: colors['blue-default'],
           color: colors['neutral-title-2'],
@@ -45,17 +47,14 @@ export const ImportSuccessScreen = () => {
           paddingVertical: 24,
           paddingHorizontal: 20,
         },
-        logo: {
-          width: 240,
-          height: 240,
-        },
         keyboardView: {
+          flex: 1,
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
       }),
 
-    [colors],
+    [colors, safeOffHeader],
   );
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
@@ -71,6 +70,7 @@ export const ImportSuccessScreen = () => {
       address: state.address,
       alias: aliasName || '',
     });
+    Keyboard.dismiss();
     navigate(RootNames.Home);
   };
 
@@ -78,17 +78,20 @@ export const ImportSuccessScreen = () => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
 
-  console.log('import success screen', contactService.listAlias());
-
   React.useEffect(() => {
     fetchAccounts();
   }, [fetchAccounts]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <KeyboardAwareScrollView style={styles.keyboardView}>
+      <KeyboardAwareScrollView
+        style={styles.keyboardView}
+        enableOnAndroid
+        extraHeight={150}
+        scrollEnabled={false}
+        keyboardOpeningTime={0}>
         <View style={styles.titleContainer}>
-          <ImportSuccessSVG style={styles.logo} />
+          <ImportSuccessSVG />
           <Text style={styles.title}>Added successfully</Text>
         </View>
         <View style={styles.inputContainer}>
@@ -100,6 +103,7 @@ export const ImportSuccessScreen = () => {
         </View>
       </KeyboardAwareScrollView>
       <FooterButton title="Done" onPress={handleDone} />
+      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
   );
 };

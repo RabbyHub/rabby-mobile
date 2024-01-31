@@ -2,10 +2,11 @@ import { killWalletConnectConnector } from '@/core/apis/walletconnect';
 import { useSessionStatus } from '@/hooks/useSessionStatus';
 import React, { useMemo } from 'react';
 import { SessionSignal } from './SessionSignal';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDisplayBrandName } from '@/hooks/walletconnect/useDisplayBrandName';
 import { useThemeColors } from '@/hooks/theme';
 import { useConnectWallet } from '@/hooks/walletconnect/useConnectWallet';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface Props {
   address: string;
@@ -79,10 +80,11 @@ export const SessionStatusBar: React.FC<Props> = ({
 
   const handleButton = async () => {
     if (tipStatus === 'CONNECTED') {
-      killWalletConnectConnector(address, brandName, true);
+      killWalletConnectConnector(address, brandName, false);
     } else if (tipStatus === 'DISCONNECTED') {
       connectWallet({ address, brandName });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
+      connectWallet({ address, brandName });
     }
   };
 

@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",
     "link-assets": "react-native-asset",
-    "postinstall": "yarn build:deps && yarn build-inpage"
+    "postinstall": "yarn build:deps && yarn build-inpage",
+    "postversion": "react-native-version --never-amend"
   },
   "lint-staged": {
     "*.{,js,jsx,ts,tsx}": "eslint --fix --quiet",
@@ -38,7 +39,7 @@
     "@metamask/eth-sig-util": "5.1.0",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.13",
+    "@rabby-wallet/eth-walletconnect-keyring": "2.1.0-beta.14",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-api": "0.7.0-alpha.7",
@@ -113,12 +114,14 @@
     "react-native-svg": "^14.0.0",
     "react-native-switch": "^1.5.1",
     "react-native-vector-icons": "^10.0.2",
+    "react-native-version-check": "^3.4.7",
     "react-native-video": "^5.2.1",
     "react-native-vision-camera": "^3.6.17",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "^13.6.3",
     "react-use": "^17.4.2",
     "readable-stream": "3.6.2",
+    "semver": "^7.5.4",
     "styled-components": "^6.1.1",
     "web3": "^4.3.0"
   },
@@ -135,6 +138,7 @@
     "@types/lodash": "^4.14.202",
     "@types/react": "^18.0.24",
     "@types/react-is": "^18.2.4",
+    "@types/react-native-version-check": "^3.4.8",
     "@types/react-test-renderer": "^18.0.0",
     "@types/uuid": "^9.0.7",
     "babel-jest": "^27.5.1",
@@ -151,6 +155,7 @@
     "react-devtools": "^4.28.5",
     "react-native-asset": "^2.1.1",
     "react-native-svg-transformer": "^1.1.0",
+    "react-native-version": "^4.0.0",
     "react-test-renderer": "18.2.0",
     "reactotron-react-native": "^5.0.4",
     "reflect-metadata": "0.1.13",

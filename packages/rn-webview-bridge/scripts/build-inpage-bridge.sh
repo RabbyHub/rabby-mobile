@@ -31,6 +31,8 @@ cat dist/inpage-bundle.js content-script/index.js > dist/index-raw.js
 $repo_dir/node_modules/.bin/webpack --config webpack.config.js --mode $webpack_mode
 
 # copy dist to targets
+cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/assets/custom/InpageBridgeWeb3.js
+
 for dir in "${inpage_files_targets[@]}"
 do
   mkdir -p $dir

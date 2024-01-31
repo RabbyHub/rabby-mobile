@@ -6,25 +6,22 @@ import { openWallet } from '@/hooks/walletconnect/util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { navigate } from '@/utils/navigation';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
-import WalletCC from '@/assets/icons/address/wallet-cc.svg';
+import { WalletSVG } from '@/assets/icons/address';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { ThemeColors } from '@/constant/theme';
-import { toast } from '@/components/Toast';
-import { WalletInfo } from '@/utils/walletInfo';
+import { toast, toastWithIcon } from '@/components/Toast';
+import { WalletInfo, WALLET_INFO } from '@/utils/walletInfo';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
-
-export const WalletSVG = makeThemeIconFromCC(WalletCC, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
-});
+import { WALLET_BRAND_NAME_KEY } from '@/hooks/walletconnect/useDisplayBrandName';
 
 const styles = StyleSheet.create({
   walletItem: {
     marginBottom: 8,
+  },
+  toastIcon: {
+    marginRight: 6,
   },
 });
 
@@ -34,15 +31,26 @@ export const WalletConnectList = () => {
   const deepLinkRef = React.useRef<string>('');
   const handlePress = React.useCallback(async (service: WalletInfo) => {
     setUriLoading(true);
+    const toastHide = toastWithIcon(() => (
+      <ActivityIndicator style={styles.toastIcon} />
+    ))(`Opening ${service.displayName}`, {
+      duration: 100000,
+      position: toast.positions.CENTER,
+      hideOnPress: false,
+    });
     const uri = await apisWalletConnect.getUri(service.brand);
     if (uri) {
       openWallet(service, uri);
       deepLinkRef.current = uri;
     }
     setUriLoading(false);
+    toastHide();
   }, []);
 
   const handleConnected = React.useCallback((data: any) => {
+    // replace realBrandName with build-in brandName
+    data.realBrandName = data.brandName;
+
     if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
       apisWalletConnect
         .importAddress(data)

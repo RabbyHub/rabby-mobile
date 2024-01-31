@@ -1,25 +1,79 @@
+import { Skeleton } from '@rneui/themed';
 import React from 'react';
-import { Skeleton } from 'antd';
-import { ActionWrapper, SignTitle } from '../Actions';
+import { StyleSheet, View } from 'react-native';
 import { Col, Row, Table } from '../Actions/components/Table';
+import { getStyle } from '../Actions';
+import { useThemeColors } from '@/hooks/theme';
+
+const rowStyles = StyleSheet.create({
+  title: {
+    width: 60,
+    height: 15,
+    borderRadius: 6,
+  },
+  row: {
+    gap: 8,
+  },
+  rowLine: {
+    gap: 4,
+    flexDirection: 'row',
+  },
+  item1: {
+    width: 16,
+    height: 16,
+  },
+  item2: {
+    width: 113,
+    height: 15,
+    borderRadius: 6,
+  },
+  titleItem: {
+    width: 220,
+    height: 22,
+    borderRadius: 6,
+  },
+  titleRightItem: {
+    width: 73,
+    height: 22,
+    borderRadius: 6,
+  },
+  leftItem: {
+    width: 60,
+    height: 22,
+    borderRadius: 6,
+  },
+  headerRightItem: {
+    width: 70,
+    height: 22,
+    borderRadius: 6,
+  },
+  tableItem: {
+    width: 125,
+    height: 15,
+    borderRadius: 6,
+  },
+  tokenBalanceChange: {
+    marginTop: 14,
+  },
+});
 
 const RowLoading: React.FC<{
   itemCount?: number;
-}> = ({ itemCount = 1 }) => {
+}> = ({ itemCount = 1, ...props }) => {
   return (
-    <Col>
+    <Col {...props}>
       <Row isTitle>
-        <Skeleton.Input active className="w-[60px] h-[15px] rounded" />
+        <Skeleton style={rowStyles.title} />
       </Row>
-      <Row className="space-y-[8px]">
-        <div className="space-x-[4px]">
-          <Skeleton.Avatar active className="w-[16px] h-[16px]" />
-          <Skeleton.Input active className="w-[113px] h-[15px] rounded" />
-        </div>
+      <Row style={rowStyles.row}>
+        <View style={rowStyles.rowLine}>
+          <Skeleton style={rowStyles.item1} />
+          <Skeleton style={rowStyles.item2} />
+        </View>
         {Array.from({ length: itemCount }).map((_, index) => (
-          <div key={index}>
-            <Skeleton.Input active className="w-[113px] h-[15px] rounded" />
-          </div>
+          <View key={index}>
+            <Skeleton style={rowStyles.item2} />
+          </View>
         ))}
       </Row>
     </Col>
@@ -27,41 +81,44 @@ const RowLoading: React.FC<{
 };
 
 const Loading = () => {
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyle(colors), [colors]);
+
   return (
     <>
-      <SignTitle>
-        <div className="left relative">
-          <Skeleton.Input active className="w-[220px] h-[22px] rounded" />
-        </div>
-        <div className="float-right view-raw">
-          <Skeleton.Input active className="w-[73px] h-[22px] rounded" />
-        </div>
-      </SignTitle>
-      <ActionWrapper>
-        <div className="action-header">
-          <div className="left">
-            <Skeleton.Input active className="w-[60px] h-[22px] rounded" />
-          </div>
-          <div className="right">
-            <Skeleton.Input active className="w-[70px] h-[22px] rounded" />
-          </div>
-        </div>
-        <div className="container space-y-[13px]">
+      <View style={styles.signTitle}>
+        <View>
+          <Skeleton style={rowStyles.titleItem} />
+        </View>
+        <View style={styles.signTitleRight}>
+          <Skeleton style={rowStyles.titleRightItem} />
+        </View>
+      </View>
+      <View style={styles.actionWrapper}>
+        <View style={styles.actionHeader}>
+          <View>
+            <Skeleton style={rowStyles.leftItem} />
+          </View>
+          <View style={styles.actionHeaderRight}>
+            <Skeleton style={rowStyles.headerRightItem} />
+          </View>
+        </View>
+        <View style={styles.container}>
           <Table>
             <RowLoading itemCount={1} />
             <RowLoading itemCount={2} />
           </Table>
 
-          <Table>
+          <Table style={rowStyles.tokenBalanceChange}>
             <Col>
               <Row>
-                <Skeleton.Input active className="w-[125px] h-[15px] rounded" />
+                <Skeleton style={rowStyles.tableItem} />
               </Row>
             </Col>
             <RowLoading itemCount={0} />
           </Table>
-        </div>
-      </ActionWrapper>
+        </View>
+      </View>
     </>
   );
 };

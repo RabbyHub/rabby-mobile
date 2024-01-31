@@ -223,9 +223,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       currentAccount.type === KEYRING_TYPE.WatchAddressKeyring
     ) {
       setIsWatch(true);
-      setCantProcessReason(
-        <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>,
-      );
+      setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
     }
   };
 

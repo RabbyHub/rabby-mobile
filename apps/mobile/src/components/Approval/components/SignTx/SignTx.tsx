@@ -776,9 +776,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
       setCanProcess(false);
-      setCantProcessReason(
-        <Text>{t('page.signTx.canOnlyUseImportedAddress')}</Text>,
-      );
+      setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
     }
   };
 

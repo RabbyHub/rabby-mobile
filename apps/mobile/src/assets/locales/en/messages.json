@@ -513,9 +513,8 @@
       }
     },
     "receive": {
-      "title": "Receive {{token}} on {{chain}}",
-      "watchModeAlert1": "This is a Watch Mode address.",
-      "watchModeAlert2": "Are you sure to use it to receive assets?"
+      "title": "Receive assets on {{chain}}",
+      "watchModeAlert": "This is a watch-only address. Are you sure to use it to receive?"
     },
     "sendToken": {
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",

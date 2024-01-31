@@ -104,25 +104,67 @@ const Table = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  return <View style={{ ...styles.tableWrapper, ...style }}>{children}</View>;
+
+  if (!Array.isArray(children)) {
+    return <>{children}</>;
+  }
+
+  const firstChild = children[0];
+  const lastChild = children[children.length - 1];
+
+  const modifiedFirstChild = React.cloneElement(firstChild, {
+    first: true,
+  });
+  const modifiedLastChild = React.cloneElement(lastChild, {
+    last: true,
+  });
+
+  const newChildren = [
+    modifiedFirstChild,
+    ...children.slice(1, children.length - 1),
+    modifiedLastChild,
+  ];
+
+  return (
+    <View style={{ ...styles.tableWrapper, ...style }}>{newChildren}</View>
+  );
 };
 
 const Col = ({
   children,
   style,
+  last,
+  first,
 }: {
   children: ReactNode;
   style?: ViewStyle;
+  last?: boolean;
+  first?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
+
+  if (!Array.isArray(children)) {
+    return <>{children}</>;
+  }
+
+  const firstChild = children[0];
+
+  const modifiedFirstChild = React.cloneElement(firstChild, {
+    first,
+    last,
+  });
+
+  const newChildren = [modifiedFirstChild, ...children.slice(1)];
+
   return (
     <View
       style={{
         ...styles.colWrapper,
+        ...(last ? styles.lastChildNoBorder : {}),
         ...(style || {}),
       }}>
-      {children}
+      {newChildren}
     </View>
   );
 };
@@ -133,12 +175,16 @@ const Row = ({
   hasBottomBorder = false,
   tip,
   style,
+  first,
+  last,
 }: {
   children: ReactNode;
   hasBottomBorder?: Boolean;
   isTitle?: boolean;
   tip?: string;
   style?: ViewStyle;
+  last?: boolean;
+  first?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -149,6 +195,8 @@ const Row = ({
         ...styles.rowWrapper,
         ...(hasBottomBorder ? styles.hasBottomBorder : {}),
         ...(tip ? styles.hasTip : {}),
+        ...(first ? styles.firstChild : {}),
+        ...(last ? styles.lastChild : {}),
         ...style,
       }}>
       {children}
