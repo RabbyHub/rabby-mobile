@@ -75,7 +75,11 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
         style={styles.backButtonStyle}
         hitSlop={hitSlop}
         onPress={navBack}>
-        <LeftBackIcon width={24} height={24} color={tintColor} />
+        <RcIconHeaderBack
+          width={24}
+          height={24}
+          color={tintColor || colors['neutral-body']}
+        />
       </CustomTouchableOpacity>
     ),
   };

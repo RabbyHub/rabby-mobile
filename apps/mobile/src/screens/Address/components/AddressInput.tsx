@@ -1,7 +1,8 @@
 import { useThemeColors } from '@/hooks/theme';
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   NativeSyntheticEvent,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -42,10 +43,12 @@ export const AddressInput: React.FC<Props> = ({
           marginRight: 80,
           height: 40,
           color: colors['neutral-title-1'],
+          fontSize: 16,
+          fontWeight: '500',
         },
         address: {
           color: colors['neutral-body'],
-          fontSize: 13,
+          fontSize: Platform.OS === 'ios' ? 15 : 14,
           fontWeight: '400',
         },
         addressContainer: {
@@ -91,13 +94,18 @@ export const AddressInput: React.FC<Props> = ({
   const [editingAliasName, setEditingAliasName] = React.useState<string>(
     aliasName || '',
   );
+
+  const inputRef = useRef<TextInput>(null);
+
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
+    inputRef.current?.focus();
   }, [aliasName]);
 
   return (
     <View style={styles.container}>
       <TextInput
+        ref={inputRef}
         onSubmitEditing={handleSubmit}
         value={editingAliasName}
         style={styles.input}
@@ -105,6 +113,7 @@ export const AddressInput: React.FC<Props> = ({
           setEditingAliasName(nativeEvent.nativeEvent.text);
           onChange?.(nativeEvent.nativeEvent.text);
         }}
+        blurOnSubmit
       />
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
         <Text style={styles.address} textBreakStrategy="simple">

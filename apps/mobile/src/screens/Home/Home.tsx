@@ -30,12 +30,12 @@ function HomeScreen(): JSX.Element {
         backgroundColor: colors['neutral-bg-1'],
       },
     });
-  }, [navigation]);
+  }, [colors, navigation]);
 
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccounts();
     if (!accounts?.length) {
-      navigate(RootNames.StackGetStarted);
+      navigate(RootNames.ImportNewAddress);
     }
   });
 

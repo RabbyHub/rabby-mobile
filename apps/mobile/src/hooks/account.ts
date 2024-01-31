@@ -129,16 +129,17 @@ export function useCurrentAccount() {
   };
 }
 
-export const usePinAddresses = () => {
+export const usePinAddresses = (opts?: { disableAutoFetch?: boolean }) => {
+  const { disableAutoFetch = false } = opts || {};
   const [pinAddresses, setPinAddresses] = useAtom(pinAddressesAtom);
 
-  const getPinAddressesAsync = useCallback(async () => {
-    const addresses = await preferenceService.getPinAddresses();
+  const getPinAddressesAsync = useCallback(() => {
+    const addresses = preferenceService.getPinAddresses();
     setPinAddresses(addresses);
   }, [setPinAddresses]);
 
   const togglePinAddressAsync = useCallback(
-    async (payload: {
+    (payload: {
       brandName: Account['brandName'];
       address: Account['address'];
       nextPinned?: boolean;
@@ -158,7 +159,7 @@ export const usePinAddresses = () => {
       };
       if (nextPinned) {
         addresses.unshift(newItem);
-        await preferenceService.updatePinAddresses(addresses);
+        preferenceService.updatePinAddresses(addresses);
       } else {
         const toggleIdx = addresses.findIndex(
           addr =>
@@ -168,19 +169,18 @@ export const usePinAddresses = () => {
         if (toggleIdx > -1) {
           addresses.splice(toggleIdx, 1);
         }
-        await preferenceService.updatePinAddresses(addresses);
+        preferenceService.updatePinAddresses(addresses);
       }
-
       setPinAddresses(addresses);
-      getPinAddressesAsync();
     },
-    [getPinAddressesAsync, pinAddresses, setPinAddresses],
+    [pinAddresses, setPinAddresses],
   );
 
   useEffect(() => {
-    getPinAddressesAsync();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!disableAutoFetch) {
+      getPinAddressesAsync();
+    }
+  }, [disableAutoFetch, getPinAddressesAsync]);
 
   return {
     pinAddresses,

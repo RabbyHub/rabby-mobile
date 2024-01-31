@@ -54,13 +54,14 @@ type GenerateNodeCtx = {
   rightIconNode: React.ReactNode;
 };
 
-const BlockContainer = styled(TouchableView)`
+const BlockContainer = styled(TouchableView)<{ disableStyle?: boolean }>`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   height: 52px;
   padding: 16px;
+  opacity: ${props => (props.disableStyle ? 0.6 : 1)};
 `;
 
 function BlockItem({
@@ -70,12 +71,18 @@ function BlockItem({
   rightNode,
   children,
   onPress,
+  onDisabledPress,
+  visible = true,
+  disabled = false,
 }: React.PropsWithChildren<{
   label?: string;
   icon?: React.ReactNode | React.FC<SvgProps>;
   rightTextNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
+  onDisabledPress?: React.ComponentProps<typeof TouchableView>['onPress'];
+  visible?: boolean;
+  disabled?: boolean;
 }>) {
   const colors = useThemeColors();
 
@@ -121,15 +128,22 @@ function BlockItem({
     );
   }
 
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <BlockContainer disabled={!onPress} onPress={() => onPress?.()}>
+    <BlockContainer
+      disableStyle={disabled}
+      disabled={disabled ? !onDisabledPress : !onPress}
+      onPress={() => (disabled ? onDisabledPress?.() : onPress?.())}>
       {/* left area */}
       <WindView className="flex-row flex-shrink-1 items-center">
         <View>{iconNode || null}</View>
         <View>{children}</View>
       </WindView>
       {/* right area */}
-      <WindView className="flex-row flex-shrink-0">
+      <WindView className="flex-row flex-shrink-0 items-center">
         {rightNode || null}
       </WindView>
     </BlockContainer>

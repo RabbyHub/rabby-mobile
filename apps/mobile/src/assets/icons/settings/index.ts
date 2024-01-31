@@ -44,3 +44,15 @@ export const RcWhitelist = makeThemeIconFromCC(RcWhitelistCC, 'neutral-body');
 
 import { default as RcEarthCC } from './earth-cc.svg';
 export const RcEarth = makeThemeIconFromCC(RcEarthCC, 'neutral-body');
+
+import { default as RcConnectedDappCC } from './connected-dapp-cc.svg';
+export const RcConnectedDapp = makeThemeIconFromCC(
+  RcConnectedDappCC,
+  'neutral-body',
+);
+
+import { default as RcSignatureRecordCC } from './connected-dapp-cc.svg';
+export const RcSignatureRecord = makeThemeIconFromCC(
+  RcSignatureRecordCC,
+  'neutral-body',
+);

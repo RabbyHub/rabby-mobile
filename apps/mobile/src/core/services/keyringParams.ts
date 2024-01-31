@@ -8,9 +8,7 @@ import { contactService } from './shared';
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
   async (keyring, account) => {
     const { address, brandName } = account;
-    const existAlias = contactService.getContactByAddress(address);
-
-    console.log('onSetAddressAlias', address, brandName);
+    const existAlias = contactService.getAliasByAddress(address);
 
     if (!existAlias) {
       const accounts = await keyring.getAccounts();
@@ -38,7 +36,7 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
     } else {
       contactService.setAlias({
         address,
-        alias: existAlias.name,
+        alias: existAlias.alias,
       });
     }
   };

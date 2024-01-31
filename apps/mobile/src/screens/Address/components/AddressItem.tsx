@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { RectButton } from 'react-native-gesture-handler';
+import { RectButton, TouchableOpacity } from 'react-native-gesture-handler';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 import {
@@ -58,7 +58,9 @@ export const AddressItem = (props: AddressItemProps) => {
     [isAddrOnWhitelist, wallet.address],
   );
   const removeAccount = useRemoveAccount();
-  const { pinAddresses, togglePinAddressAsync } = usePinAddresses();
+  const { pinAddresses, togglePinAddressAsync } = usePinAddresses({
+    disableAutoFetch: false,
+  });
   const pinned = useMemo(
     () =>
       pinAddresses.some(e =>
@@ -104,42 +106,52 @@ export const AddressItem = (props: AddressItemProps) => {
 
   const swipeRef = useRef<Swipeable>(null);
 
-  const renderRightAction = (
-    type: 'pin' | 'delete',
-    color: string,
-    x: number,
-    progress: Animated.AnimatedInterpolation<number>,
-  ) => {
-    const trans = progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: [x, 0],
-    });
-    const pressHandler = () => {
-      if (type === 'delete') {
-        removeAccount(wallet);
-      }
-      if (type === 'pin') {
-        togglePinAddressAsync({
-          address: wallet.address,
-          brandName: wallet.brandName,
-        });
-      }
-      swipeRef.current?.close();
-    };
+  const renderRightAction = useCallback(
+    (
+      type: 'pin' | 'delete',
+      color: string,
+      x: number,
+      progress: Animated.AnimatedInterpolation<number>,
+    ) => {
+      const trans = progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [x, 0],
+      });
+      const pressHandler = () => {
+        if (type === 'delete') {
+          removeAccount(wallet);
+        }
+        if (type === 'pin') {
+          togglePinAddressAsync({
+            address: wallet.address,
+            brandName: wallet.brandName,
+          });
+        }
+        swipeRef.current?.close();
+      };
 
-    return (
-      <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
-        <RectButton
-          style={[styles.rightAction, { backgroundColor: color }]}
-          onPress={pressHandler}>
-          {type === 'pin' && <RcIconAddressPin style={styles.actionIcon} />}
-          {type === 'delete' && (
-            <RcIconAddressDelete style={styles.actionIcon} />
-          )}
-        </RectButton>
-      </Animated.View>
-    );
-  };
+      return (
+        <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
+          <RectButton
+            style={[styles.rightAction, { backgroundColor: color }]}
+            onPress={pressHandler}>
+            {type === 'pin' && <RcIconAddressPin style={styles.actionIcon} />}
+            {type === 'delete' && (
+              <RcIconAddressDelete style={styles.actionIcon} />
+            )}
+          </RectButton>
+        </Animated.View>
+      );
+    },
+    [
+      styles.rightAction,
+      styles.actionIcon,
+      removeAccount,
+      wallet,
+      togglePinAddressAsync,
+    ],
+  );
+
   return (
     <Swipeable
       ref={swipeRef}
@@ -147,36 +159,37 @@ export const AddressItem = (props: AddressItemProps) => {
         styles.swipeContainer,
         isCurrentAddress && styles.currentAddressView,
       )}
-      enableTrackpadTwoFingerGesture
       rightThreshold={40}
       overshootRight={false}
-      renderRightActions={
-        isCurrentAddress
-          ? () => null
-          : (
-              progress: Animated.AnimatedInterpolation<number>,
-              _dragAnimatedValue: Animated.AnimatedInterpolation<number>,
-            ) => (
-              <View
-                style={{
-                  width: 112,
-                  flexDirection: 'row',
-                }}>
-                {renderRightAction(
-                  'pin',
-                  themeColors['blue-default'],
-                  112,
-                  progress,
-                )}
-                {renderRightAction(
-                  'delete',
-                  themeColors['red-default'],
-                  56,
-                  progress,
-                )}
-              </View>
-            )
-      }>
+      renderRightActions={useMemo(
+        () =>
+          isCurrentAddress
+            ? () => null
+            : (
+                progress: Animated.AnimatedInterpolation<number>,
+                _dragAnimatedValue: Animated.AnimatedInterpolation<number>,
+              ) => (
+                <View
+                  style={{
+                    width: 112,
+                    flexDirection: 'row',
+                  }}>
+                  {renderRightAction(
+                    'pin',
+                    themeColors['blue-default'],
+                    112,
+                    progress,
+                  )}
+                  {renderRightAction(
+                    'delete',
+                    themeColors['red-default'],
+                    56,
+                    progress,
+                  )}
+                </View>
+              ),
+        [isCurrentAddress, renderRightAction, themeColors],
+      )}>
       <TouchableOpacity
         onPress={handleSwitch}
         style={StyleSheet.compose(
@@ -292,14 +305,16 @@ export const AddressItem = (props: AddressItemProps) => {
               />
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.infoIconWrapper}
-              onPress={gotoAddressDetail}>
-              <RcIconInfoCC
-                style={styles.infoIcon}
-                color={themeColors['neutral-foot']}
-              />
-            </TouchableOpacity>
+            <View style={styles.infoIconWrapper}>
+              <TouchableOpacity
+                style={styles.infoIconWrapper}
+                onPress={gotoAddressDetail}>
+                <RcIconInfoCC
+                  style={styles.infoIcon}
+                  color={themeColors['neutral-foot']}
+                />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -322,6 +337,7 @@ const getStyles = (colors: AppColorsVariants) => {
       opacity: 1,
     },
     box: {
+      width: '100%',
       paddingLeft: 16,
       paddingRight: 16,
       minHeight: 64,
@@ -358,7 +374,7 @@ const getStyles = (colors: AppColorsVariants) => {
     infoIconWrapper: {
       marginLeft: 'auto',
       width: 32,
-      height: 32,
+      height: 64,
       justifyContent: 'center',
       alignItems: 'center',
     },
