@@ -823,12 +823,7 @@ export class KeyringService extends RNEventEmitter {
     return keyrings.filter(keyring => keyring.accounts.length > 0);
   }
 
-  /** @deprecated just for compability on ctrl C-V, use getAllVisibleAccounts as possible */
-  get getAllVisibleAccountsArray() {
-    return this.getAllVisibleAccounts;
-  }
-
-  async getAllVisibleAccounts() {
+  async getAllVisibleAccountsArray() {
     const typedAccounts = await this.getAllTypedVisibleAccounts();
     const result: KeyringAccount[] = [];
     typedAccounts.forEach(accountGroup => {

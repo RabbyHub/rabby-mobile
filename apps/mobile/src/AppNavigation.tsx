@@ -1,5 +1,4 @@
-import { ColorSchemeName, View, StatusBar } from 'react-native';
-import { isValidElementType } from 'react-is';
+import { ColorSchemeName, StatusBar, View } from 'react-native';
 import {
   NavigationContainer,
   DefaultTheme,
@@ -10,21 +9,17 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
-import { navigate, navigationRef } from '@/utils/navigation';
+import { navigationRef } from '@/utils/navigation';
 import {
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { Text } from './components';
 import { AppRootName, getRootSpecConfig, RootNames } from './constant/layout';
 // import {analytics} from './utils/analytics';
 
-// import { LoginNavigator } from './screens';
 import NotFoundScreen from './screens/NotFound';
 
-// import DappsScreen from './screens/Dapps/Dapps';
-import HistoryScreen from './screens/Transaction/History';
 import ReceiveScreen from './screens/Receive/Receive';
 import MyBundleScreen from './screens/Assets/MyBundle';
 
@@ -38,9 +33,8 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
-import { useDapps } from './hooks/useDapps';
 import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
-import HistoryFilterScamScreen from './screens/Transaction/HistoryFilterScamScreen';
+
 import {
   AccountNavigatorParamList,
   FavoritePopularDappsNavigatorParamList,
@@ -48,12 +42,11 @@ import {
   SearchDappsNavigatorParamList,
   TransactionNavigatorParamList,
 } from './navigation-type';
+import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
-const TransactionStack =
-  createNativeStackNavigator<TransactionNavigatorParamList>();
 
 const FavoritePopularDappsStack =
   createNativeStackNavigator<FavoritePopularDappsNavigatorParamList>();
@@ -84,7 +77,9 @@ function AppStatusBar() {
     }
 
     const specConfig = currentRouteName
-      ? getRootSpecConfig(colors)[currentRouteName as any as AppRootName]
+      ? getRootSpecConfig(colors, { isDarkTheme: !isLight })[
+          currentRouteName as any as AppRootName
+        ]
       : undefined;
 
     return {
@@ -98,7 +93,8 @@ function AppStatusBar() {
 
   return (
     <StatusBar
-      // translucent
+      animated
+      translucent
       backgroundColor={statusBarBackgroundColor}
       barStyle={statusBarStyle}
     />
@@ -281,47 +277,6 @@ function AccountNavigator() {
         }}
       />
     </AccountStack.Navigator>
-  );
-}
-
-function TransactionNavigator() {
-  const screenOptions = useStackScreenConfig();
-  const colors = useThemeColors();
-  // console.log('============== TransactionNavigator Render =========');
-
-  return (
-    <TransactionStack.Navigator
-      screenOptions={{
-        ...screenOptions,
-        gestureEnabled: false,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerTitleStyle: {
-          color: colors['neutral-title-1'],
-          fontWeight: '500',
-          fontSize: 20,
-        },
-        headerTintColor: colors['neutral-title-1'],
-      }}>
-      <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
-        options={{
-          headerTitle: 'Transactions',
-          title: 'Transactions',
-        }}
-      />
-      <TransactionStack.Screen
-        name={RootNames.HistoryFilterScam}
-        component={HistoryFilterScamScreen}
-        options={{
-          headerTitle: 'Hide scam transactions',
-          title: 'Hide scam transactions',
-        }}
-      />
-    </TransactionStack.Navigator>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
-import { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { DisplayedKeyring, KeyringAccount } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
   keyringService,
@@ -12,6 +12,16 @@ import { Account, IPinAddress } from '@/core/services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { WALLET_INFO } from '@/utils/walletInfo';
 import { RcIconWatchAddress } from '@/assets/icons/address';
+import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  DisplayChainWithWhiteLogo,
+  formatChainToDisplay,
+  varyAndSortChainItems,
+} from '@/utils/chain';
+import { CHAINS_ENUM, Chain } from '@debank/common';
+import { coerceFloat } from '@/utils/number';
+import { requestOpenApiMultipleNets } from '@/utils/openapi';
+import { apiBalance } from '@/core/apis';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -33,16 +43,18 @@ const pinAddressesAtom = atom<IPinAddress[]>([]);
 async function fetchAllAccounts() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
-    nextAccounts = await keyringService.getAllVisibleAccounts().then(list => {
-      return list.map(account => {
-        const balance = preferenceService.getAddressBalance(account.address);
-        return {
-          ...account,
-          aliasName: '',
-          balance: balance?.total_usd_value || 0,
-        };
+    nextAccounts = await keyringService
+      .getAllVisibleAccountsArray()
+      .then(list => {
+        return list.map(account => {
+          const balance = preferenceService.getAddressBalance(account.address);
+          return {
+            ...account,
+            aliasName: '',
+            balance: balance?.total_usd_value || 0,
+          };
+        });
       });
-    });
 
     await Promise.allSettled(
       nextAccounts.map(async (account, idx) => {
@@ -90,7 +102,7 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
-export function useCurrentAccount() {
+export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
   const fetchCurrentAccount = useCallback(async () => {
@@ -118,9 +130,13 @@ export function useCurrentAccount() {
     [fetchCurrentAccount],
   );
 
+  const { disableAutoFetch = false } = options || {};
+
   useEffect(() => {
-    fetchCurrentAccount();
-  }, [fetchCurrentAccount]);
+    if (!disableAutoFetch) {
+      fetchCurrentAccount();
+    }
+  }, [disableAutoFetch, fetchCurrentAccount]);
 
   return {
     switchAccount,
@@ -200,7 +216,7 @@ export function useRemoveAccount() {
   );
 }
 
-export function useWalletBrandLogo(brandName?: string) {
+export function useWalletBrandLogo<T extends string>(brandName?: T) {
   const RcWalletIcon = useMemo(() => {
     if (!brandName) return null;
 
@@ -208,12 +224,211 @@ export function useWalletBrandLogo(brandName?: string) {
       return RcIconWatchAddress;
     }
     return (
-      WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
-      WALLET_INFO.UnknownWallet
+      WALLET_INFO[brandName as keyof typeof WALLET_INFO]?.icon ||
+      WALLET_INFO[WALLET_INFO.UnknownWallet as any].icon
     );
-  }, [brandName]);
+  }, [brandName]) as T extends void
+    ? null
+    : React.FC<import('react-native-svg').SvgProps>;
 
   return {
     RcWalletIcon,
   };
 }
+
+const balanceMapAtom = atom<{
+  [address: string]: TotalBalanceResponse;
+}>({});
+type MatteredChainBalances = {
+  [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
+};
+const matteredChainBalancesAtom = atom<MatteredChainBalances>({});
+const testnetMatteredChainBalancesAtom = atom<MatteredChainBalances>({});
+
+export function useLoadMatteredChainBalances() {
+  const [matteredChainBalances, setMattredChainBalances] = useAtom(
+    matteredChainBalancesAtom,
+  );
+  const [testnetMatteredChainBalances, setTestMattredChainBalances] = useAtom(
+    testnetMatteredChainBalancesAtom,
+  );
+  const { currentAccount } = useCurrentAccount();
+  const currentAccountAddr = currentAccount?.address;
+
+  const isShowTestnet = false;
+
+  const fetchMatteredChainBalance = useCallback(
+    async (options?: {
+      isTestnet?: boolean;
+    }): Promise<{
+      matteredChainBalances: MatteredChainBalances;
+      testnetMatteredChainBalances: MatteredChainBalances;
+    }> => {
+      const result = await requestOpenApiMultipleNets<
+        TotalBalanceResponse | null,
+        {
+          mainnet: TotalBalanceResponse | null;
+          testnet: TotalBalanceResponse | null;
+        }
+      >(
+        ctx => {
+          if (!isShowTestnet && ctx.isTestnetTask) return null;
+
+          return apiBalance.getAddressCacheBalance(
+            currentAccountAddr,
+            ctx.isTestnetTask,
+          );
+        },
+        {
+          needTestnetResult: isShowTestnet,
+          processResults: ({ mainnet, testnet }) => {
+            return {
+              mainnet: mainnet,
+              testnet: testnet,
+            };
+          },
+          fallbackValues: {
+            mainnet: null,
+            testnet: null,
+          },
+        },
+      );
+
+      const mainnetTotalUsdValue = (result.mainnet?.chain_list || []).reduce(
+        (accu, cur) => accu + coerceFloat(cur.usd_value),
+        0,
+      );
+      const matteredChainBalances = (result.mainnet?.chain_list || []).reduce(
+        (accu, cur) => {
+          const curUsdValue = coerceFloat(cur.usd_value);
+          // TODO: only leave chain with blance greater than $1 and has percentage 1%
+          if (curUsdValue > 1 && curUsdValue / mainnetTotalUsdValue > 0.01) {
+            accu[cur.id] = formatChainToDisplay(cur);
+          }
+          return accu;
+        },
+        {} as MatteredChainBalances,
+      );
+
+      const testnetTotalUsdValue = (result.testnet?.chain_list || []).reduce(
+        (accu, cur) => accu + coerceFloat(cur.usd_value),
+        0,
+      );
+      const testnetMatteredChainBalances = (
+        result.testnet?.chain_list || []
+      ).reduce((accu, cur) => {
+        const curUsdValue = coerceFloat(cur.usd_value);
+
+        if (curUsdValue > 1 && curUsdValue / testnetTotalUsdValue > 0.01) {
+          accu[cur.id] = formatChainToDisplay(cur);
+        }
+        return accu;
+      }, {} as MatteredChainBalances);
+
+      setMattredChainBalances(matteredChainBalances);
+      setTestMattredChainBalances(testnetMatteredChainBalances);
+
+      return {
+        matteredChainBalances,
+        testnetMatteredChainBalances,
+      };
+    },
+    [
+      currentAccountAddr,
+      isShowTestnet,
+      setMattredChainBalances,
+      setTestMattredChainBalances,
+    ],
+  );
+
+  const fetchOrderedChainList = useCallback(
+    async (opts: { supportChains?: CHAINS_ENUM[] }) => {
+      const { supportChains } = opts || {};
+      const { pinned, matteredChainBalances } = await Promise.allSettled([
+        preferenceService.getPreference('pinnedChain'),
+        fetchMatteredChainBalance(),
+      ]).then(([pinnedChain, balance]) => {
+        return {
+          pinned: (pinnedChain.status === 'fulfilled'
+            ? pinnedChain.value
+            : []) as CHAINS_ENUM[],
+          matteredChainBalances: (balance.status === 'fulfilled'
+            ? // only SUPPORT mainnet now
+              balance.value.matteredChainBalances
+            : {}) as MatteredChainBalances,
+        };
+      });
+
+      const { matteredList, unmatteredList } = varyAndSortChainItems({
+        supportChains,
+        pinned,
+        matteredChainBalances,
+      });
+
+      return {
+        matteredList,
+        unmatteredList,
+        firstChain: matteredList[0],
+      };
+    },
+    [fetchMatteredChainBalance],
+  );
+
+  const allMatteredChainBalances = useMemo(() => {
+    return {
+      ...testnetMatteredChainBalances,
+      ...matteredChainBalances,
+    };
+  }, [testnetMatteredChainBalances, matteredChainBalances]);
+
+  return {
+    allMatteredChainBalances,
+
+    fetchMatteredChainBalance,
+    /** @deprecated */
+    getMatteredChainBalance: fetchMatteredChainBalance,
+
+    fetchOrderedChainList,
+    /** @deprecated */
+    getOrderedChainList: fetchOrderedChainList,
+  };
+}
+
+// interface AccountState {
+//   /**
+//    * @description useless now
+//    */
+//   // visibleAccounts: DisplayedKeyring[];
+//   /**
+//    * @description useless now
+//    */
+//   // hiddenAccounts: Account[];
+//   // keyrings: DisplayedKeyring[];
+//   // balanceMap: {
+//   //   [address: string]: TotalBalanceResponse;
+//   // };
+//   // matteredChainBalances: {
+//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
+//   // };
+//   // testnetMatteredChainBalances: {
+//   //   [P in Chain['serverId']]?: DisplayChainWithWhiteLogo;
+//   // };
+//   /**
+//    * @description maybe repeated hooks in Home
+//    */
+//   // tokens: {
+//   //   list: AbstractPortfolioToken[];
+//   //   customize: AbstractPortfolioToken[];
+//   //   blocked: AbstractPortfolioToken[];
+//   // };
+//   // testnetTokens: {
+//   //   list: AbstractPortfolioToken[];
+//   //   customize: AbstractPortfolioToken[];
+//   //   blocked: AbstractPortfolioToken[];
+//   // };
+
+//   /**
+//    * @description useless now
+//    */
+//   // mnemonicAccounts: DisplayedKeyring[];
+// }

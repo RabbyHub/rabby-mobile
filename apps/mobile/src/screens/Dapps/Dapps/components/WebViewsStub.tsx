@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { BackHandler } from 'react-native';
-import { AppBottomSheetHandle, OpenedDappBottomSheetModal } from '@/components';
 import {
   useOpenUrlView,
   useOpenDappView,
@@ -34,6 +33,8 @@ import { toast } from '@/components/Toast';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
+import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
+import { OpenedDappBottomSheetModal } from '@/components';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />

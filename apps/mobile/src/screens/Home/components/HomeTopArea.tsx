@@ -35,7 +35,14 @@ export const HomeTopArea = () => {
     {
       title: 'Send',
       Icon: RcIconSend,
-      onPress: () => {},
+      onPress: () => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Send,
+          params: {
+            // chain: v,
+          },
+        });
+      },
     },
     {
       title: 'Receive',

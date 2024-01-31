@@ -578,8 +578,8 @@
         "contract": "Contract Address"
       },
       "tokenInfoPrice": "Price",
-      "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
-      "whitelistAlert__notWhitelisted": "The address is not whitelisted. <1 /> I agree to grant temporary permission to transfer.",
+      "whitelistAlert__disabled": "Whitelist disabled. \n You can transfer to any address.",
+      "whitelistAlert__notWhitelisted": "The address is not whitelisted. \n I agree to grant temporary permission to transfer.",
       "whitelistAlert__temporaryGranted": "Temporary permission granted",
       "whitelistAlert__whitelisted": "The address is whitelisted",
       "balanceWarn": {
@@ -628,10 +628,10 @@
         "sendAmount": "Send Amount"
       },
       "sendButton": "Send",
-      "whitelistAlert__disabled": "Whitelist disabled. You can transfer to any address.",
+      "whitelistAlert__disabled": "Whitelist disabled. \n You can transfer to any address.",
       "whitelistAlert__whitelisted": "The address is whitelisted",
       "whitelistAlert__temporaryGranted": "Temporary permission granted",
-      "whitelistAlert__notWhitelisted": "The address is not whitelisted. <1 /> I agree to grant temporary permission to transfer.",
+      "whitelistAlert__notWhitelisted": "The address is not whitelisted. \n I agree to grant temporary permission to transfer.",
       "tipNotOnAddressList": "Not on address list.",
       "tipAddToContacts": "Add to contacts",
       "confirmModal": {

@@ -12,7 +12,7 @@ import { StyleSheet, Text } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
-const getStyles = (colors: AppColorsVariants) => {
+export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
     handleStyles: {
       height: 20,
@@ -41,7 +41,7 @@ export const AppBottomSheetModalTitle: React.FC<{
   title: string;
 }> = ({ title }) => {
   const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
 
   return <Text style={styles.title}>{title}</Text>;
 };
@@ -51,7 +51,7 @@ export const AppBottomSheetModal = forwardRef<
   React.ComponentProps<typeof BottomSheetModal>
 >((props, ref) => {
   const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
   const renderBackdrop = useCallback<
     React.ComponentProps<typeof BottomSheetModal>['backdropComponent'] &
       Function
@@ -103,40 +103,6 @@ export const OpenedDappBottomSheetModal = forwardRef<
 });
 
 export type OpenedDappBottomSheetModal = BottomSheetModal;
-
-export const AppBottomSheetHandle = (
-  props: React.ComponentProps<typeof BottomSheetHandle>,
-) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
-
-  return (
-    <BottomSheetHandle
-      {...props}
-      style={[
-        props.style,
-        styles.handleStyles,
-        {
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-          // leave here for debug
-          // borderWidth: 1,
-          // borderColor: colors['neutral-line'],
-        },
-      ]}
-      indicatorStyle={[
-        props.indicatorStyle,
-        styles.handleIndicatorStyle,
-        {
-          top: -6,
-        },
-      ]}
-    />
-  );
-};
 
 const renderOpenedDappNavCardBackdrop = (props: BottomSheetBackdropProps) => {
   return (

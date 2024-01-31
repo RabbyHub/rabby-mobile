@@ -38,6 +38,7 @@ export const RootNames = {
   /* warning: dev only ------ end */
 
   StackTransaction: 'StackTransaction',
+  Send: 'Send',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
 
@@ -57,22 +58,35 @@ export const RootNames = {
 
 export type AppRootName = keyof typeof RootNames;
 
-export const getRootSpecConfig = (colors: AppColorsVariants) => {
+export const getRootSpecConfig = (
+  colors: AppColorsVariants,
+  options?: {
+    isDarkTheme?: boolean;
+  },
+) => {
+  const { isDarkTheme } = options || {};
+
+  const defaultStatusBarStyle = isDarkTheme ? 'light-content' : 'dark-content';
+
   return {
     Home: {
-      statusBarStyle: 'dark-content',
+      statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['neutral-bg-1'],
     },
     ImportWatchAddress: {
-      statusBarStyle: 'light-content',
+      statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
     },
     ImportSuccess: {
-      statusBarStyle: 'light-content',
+      statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
     },
+    Send: {
+      statusBarStyle: defaultStatusBarStyle,
+      statusbarBackgroundColor: colors['neutral-card2'],
+    },
     Receive: {
-      statusBarStyle: 'light-content',
+      statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
     },
   } as {

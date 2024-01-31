@@ -42,7 +42,7 @@ function MainScreen() {
   useSetupServiceStub();
 
   const init = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccounts();
+    const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,

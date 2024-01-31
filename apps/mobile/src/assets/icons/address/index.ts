@@ -26,3 +26,9 @@ export const HardwareSVG = makeThemeIconFromCC(HardwareCC, {
   onDark: ThemeColors.dark['neutral-body'],
 });
 export { default as RcIconMobileWallet } from './mobile-wallet.svg';
+
+import WhitelistCC from '@/assets/icons/address/whitelist-cc.svg';
+export const RcWhiteList = makeThemeIconFromCC(WhitelistCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});

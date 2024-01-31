@@ -52,6 +52,7 @@ export const ConfirmBottomSheetModal = forwardRef<
           <Button
             onPress={cancel}
             title={'Cancel'}
+            type="clear"
             buttonStyle={[styles.buttonStyle]}
             titleStyle={styles.btnCancelTitle}
             containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>

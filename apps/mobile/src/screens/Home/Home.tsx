@@ -37,7 +37,7 @@ function HomeScreen(): JSX.Element {
   }, [colors, navigation]);
 
   const init = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccounts();
+    const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       navigation.dispatch(
         StackActions.replace(RootNames.StackGetStarted, {

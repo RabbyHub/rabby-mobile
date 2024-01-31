@@ -69,6 +69,11 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
       // backgroundColor: colors.bgChat,
     },
     ...NavigationHeadersPresets.onlyTitle,
+    headerTitleStyle: {
+      ...(NavigationHeadersPresets.onlyTitle.headerTitleStyle as object),
+      color: colors['neutral-title-1'],
+      fontWeight: 'normal',
+    },
     headerTintColor: colors['neutral-bg-1'],
     headerLeft: ({ tintColor }) => (
       <CustomTouchableOpacity

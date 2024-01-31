@@ -5,3 +5,7 @@ export * as apisWalletConnect from './walletconnect';
 export * as apiBalance from './balance';
 export * as apiSecurityEngine from './securityEngine';
 export * as apiProvider from './provider';
+export * as apiContact from './contact';
+export * as apiAccount from './account';
+export * as apiKeyring from './keyring';
+export * as apiPageStateCache from './pageStateCache';

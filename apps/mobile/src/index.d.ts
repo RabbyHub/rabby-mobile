@@ -21,3 +21,8 @@ declare module 'eth-json-rpc-filters/subscriptionManager';
 // https://github.com/MetaMask/eth-json-rpc-middleware
 declare module 'eth-json-rpc-middleware';
 declare module 'eth-json-rpc-middleware/providerAsMiddleware';
+
+type RNViewProps = {
+  style?: ViewStyle;
+  className?: string;
+};

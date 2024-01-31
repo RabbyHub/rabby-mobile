@@ -36,7 +36,7 @@ import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import { checkVersion } from '@/utils/version';
-import { APP_URLS, APP_VERSION } from '@/constant';
+import { APP_URLS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 
 const Container = styled(NormalScreenContainer)`
@@ -281,7 +281,7 @@ function SettingsScreen(): JSX.Element {
       <ConfirmBottomSheetModal
         ref={clearPendingRef}
         height={422}
-        title={'Clear Pedning'}
+        title={'Clear Pending'}
         onConfirm={() => {}}
         desc={
           <Text

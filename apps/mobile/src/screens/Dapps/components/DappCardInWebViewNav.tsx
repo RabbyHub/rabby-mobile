@@ -6,7 +6,7 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { makeTriangleStyle } from '@/utils/style';
+import { makeTriangleStyle } from '@/utils/styles';
 
 const NUM_OF_LINES = 3;
 
