@@ -63,7 +63,9 @@ export default function CurrentAddressScreen(): JSX.Element {
   }, [navigation]);
   const gotoAddAddress = React.useCallback(() => {
     //@ts-ignore
-    navigation.push(RootNames.ImportNewAddress);
+    navigation.push(RootNames.StackAddress, {
+      screen: RootNames.ImportNewAddress,
+    });
   }, [navigation]);
 
   const sectionData = useMemo(() => {
