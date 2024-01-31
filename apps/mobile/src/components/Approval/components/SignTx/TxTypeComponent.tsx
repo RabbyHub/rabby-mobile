@@ -5,7 +5,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import React from 'react';
 import { ActionRequireData, ParsedActionData } from '../Actions/utils';
 import Actions from '../Actions';
-// import Loading from '../TxComponents/Loading';
+import Loading from '../TxComponents/Loading';
 
 export const TxTypeComponent = ({
   actionRequireData,
@@ -29,9 +29,9 @@ export const TxTypeComponent = ({
   engineResults: Result[];
 }) => {
   if (!isReady) {
-    // return <Loading />;
-    return null;
+    return <Loading />;
   }
+
   if (actionData && actionRequireData) {
     return (
       <Actions

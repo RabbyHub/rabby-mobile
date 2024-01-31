@@ -18,6 +18,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['blue-default'],
+      fontSize: 16,
     },
     disabled: {
       opacity: 0.5,

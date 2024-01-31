@@ -7,7 +7,6 @@ import {
   NativeSyntheticEvent,
   StyleSheet,
   Text,
-  TextInput,
   TextInputChangeEventData,
   TextInputSubmitEditingEventData,
   TouchableOpacity,
@@ -15,6 +14,8 @@ import {
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { TextInput } from 'react-native-gesture-handler';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -117,8 +118,8 @@ export const GasSelectContainer = ({
           </Text>
           <View style={styles.cardItem}>
             {item.level === 'custom' ? (
-              <TextInput
-                keyboardType="number-pad"
+              <BottomSheetTextInput
+                keyboardType="numeric"
                 style={StyleSheet.flatten([
                   styles.cardItemText,
                   selectedGas?.level === item.level &&

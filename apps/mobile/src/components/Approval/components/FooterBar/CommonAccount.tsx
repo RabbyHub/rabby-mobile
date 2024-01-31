@@ -65,7 +65,7 @@ export const CommonAccount: React.FC<Props> = ({
       <View style={styles.wrapper}>
         <View style={styles.iconWrapper}>
           <View style={styles.icon}>
-            <Icon />
+            <Icon width={'100%'} height={'100%'} />
           </View>
           <View>{customSignal}</View>
           {signal && <Signal isBadge color={bgColor} />}
