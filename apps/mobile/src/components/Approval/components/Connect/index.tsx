@@ -118,16 +118,21 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     connectButtonText: {
       color: colors['neutral-title-2'],
+      fontSize: 16,
     },
     lastButton: {
       marginTop: 20,
     },
-    cancelButtonText: {
+    cancelButtonTextView: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 2,
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      color: colors['blue-default'],
     },
     titleWrapper: {
       flexDirection: 'row',
@@ -695,11 +700,8 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
                 displayBlockedRequestApproval ? activeCancelPopup : handleCancel
               }
               title={
-                <View style={styles.cancelButtonText}>
-                  <Text
-                    style={{
-                      color: colors['blue-default'],
-                    }}>
+                <View style={styles.cancelButtonTextView}>
+                  <Text style={styles.cancelButtonText}>
                     {connectBtnStatus.cancelBtnText}
                   </Text>
                   {displayBlockedRequestApproval && (

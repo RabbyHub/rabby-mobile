@@ -22,7 +22,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { StyleSheet } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
@@ -30,6 +30,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { Radio } from '@/components/Radio';
 import { Button } from '@/components';
 import { Switch } from '@rneui/themed';
+import { ScreenLayouts } from '@/constant/layout';
 
 const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -258,7 +259,6 @@ const getStyles = (colors: AppColorsVariants) =>
     mainView: {
       paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
-      height: '100%',
     },
     ruleFooter: {
       backgroundColor: colors['neutral-card-2'],
@@ -289,6 +289,9 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 16,
       height: 16,
       marginLeft: 4,
+    },
+    placeholder: {
+      height: 30,
     },
   });
 
@@ -664,7 +667,7 @@ const RuleDrawer = ({
       ref={modalRef}
       onDismiss={handleClose}
       snapPoints={['60%']}>
-      <BottomSheetView style={styles.mainView}>
+      <BottomSheetScrollView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.securityEngine.ruleDetailTitle')}
         />
@@ -709,7 +712,8 @@ const RuleDrawer = ({
             onCancel={() => setRuleDetailDrawerVisible(false)}
           />
         )}
-      </BottomSheetView>
+        <View style={styles.placeholder} />
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 };

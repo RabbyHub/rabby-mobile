@@ -35,7 +35,6 @@ import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
-import Toast from 'react-native-root-toast';
 import { checkVersion } from '@/utils/version';
 import { APP_URLS, APP_VERSION } from '@/core/services/constant';
 import { openExternalUrl } from '@/core/utils/linking';
@@ -70,9 +69,7 @@ function SettingsScreen(): JSX.Element {
 
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)', {
-                position: Toast.positions.BOTTOM,
-              });
+              toast.show('Coming Soon :)');
             },
           },
           {
@@ -81,9 +78,7 @@ function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)', {
-                position: Toast.positions.BOTTOM,
-              });
+              toast.show('Coming Soon :)');
             },
           },
           {
@@ -92,9 +87,7 @@ function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)', {
-                position: Toast.positions.BOTTOM,
-              });
+              toast.show('Coming Soon :)');
             },
           },
           {

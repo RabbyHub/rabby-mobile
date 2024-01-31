@@ -110,12 +110,12 @@ const Loading = () => {
           </Table>
 
           <Table style={rowStyles.tokenBalanceChange}>
-            <Col>
+            <Col key="1">
               <Row>
                 <Skeleton style={rowStyles.tableItem} />
               </Row>
             </Col>
-            <RowLoading itemCount={0} />
+            <RowLoading key="2" itemCount={0} />
           </Table>
         </View>
       </View>
