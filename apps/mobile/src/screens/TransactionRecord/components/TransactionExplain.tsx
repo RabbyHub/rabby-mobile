@@ -43,7 +43,15 @@ const ImageWraper = ({
 
 export const TransactionExplain = ({
   explain,
+  isFailed,
+  isSubmitFailed,
+  isCanceled,
+  isWithdrawed,
 }: {
+  isFailed: boolean;
+  isSubmitFailed: boolean;
+  isCanceled: boolean;
+  isWithdrawed: boolean;
   explain?: ExplainTxResponse;
 }) => {
   const colors = useThemeColors();
@@ -202,14 +210,19 @@ export const TransactionExplain = ({
       <Text style={styles.title}>
         {content || t('page.activities.signedTx.explain.unknown')}
       </Text>
-      <View>
-        {/* {isCancel && t('page.activities.signedTx.status.canceled')}
-          {isFailed && t('page.activities.signedTx.status.failed')}
-          {isSubmitFailed &&
-            !isWithdrawed &&
-            t('page.activities.signedTx.status.submitFailed')}
-          {isWithdrawed && t('page.activities.signedTx.status.withdrawed')} */}
-      </View>
+      {isCanceled || isFailed || isSubmitFailed || isWithdrawed ? (
+        <Text style={styles.status}>
+          {isCanceled
+            ? t('page.activities.signedTx.status.canceled')
+            : isFailed
+            ? t('page.activities.signedTx.status.failed')
+            : isSubmitFailed
+            ? t('page.activities.signedTx.status.submitFailed')
+            : isWithdrawed
+            ? t('page.activities.signedTx.status.withdrawed')
+            : ''}
+        </Text>
+      ) : null}
     </View>
   );
 };
@@ -220,6 +233,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+      flex: 1,
     },
     logo: {
       width: 20,
@@ -230,5 +244,11 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 18,
       color: colors['neutral-title1'],
+    },
+    status: {
+      color: colors['red-default'],
+      fontSize: 12,
+      lineHeight: 14,
+      marginLeft: 'auto',
     },
   });

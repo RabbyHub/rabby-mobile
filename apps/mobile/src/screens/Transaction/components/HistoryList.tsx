@@ -1,5 +1,5 @@
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import { range } from 'lodash';
+import { minBy, range } from 'lodash';
 import React from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { HistoryItem } from './HistoryItem';
@@ -12,7 +12,9 @@ export const HistoryList = ({
   loadingMore,
   loadMore,
   list,
+  localTxList,
 }: {
+  localTxList?: TransactionGroup[];
   list?: (TxDisplayItem | TransactionGroup)[];
   loading?: boolean;
   loadingMore?: boolean;
@@ -29,7 +31,12 @@ export const HistoryList = ({
         />
       );
     } else {
-      return <TransactionItem data={item} />;
+      const canCancel =
+        minBy(
+          localTxList?.filter(i => i.chainId === item.chainId) || [],
+          i => i.nonce,
+        )?.nonce === item.nonce;
+      return <TransactionItem data={item} canCancel={canCancel} />;
     }
   };
 

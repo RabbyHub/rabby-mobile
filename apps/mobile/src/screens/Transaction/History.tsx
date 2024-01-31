@@ -8,11 +8,18 @@ import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { useInfiniteScroll, useRequest } from 'ahooks';
+import {
+  useInfiniteScroll,
+  useInterval,
+  useMemoizedFn,
+  useRequest,
+} from 'ahooks';
 import { last } from 'lodash';
 import { StyleSheet, Text } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { HistoryList } from './components/HistoryList';
+import { Empty } from './components/Empty';
+import { findChainByServerID } from '@/utils/chain';
 const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
@@ -58,15 +65,37 @@ function HistoryScreen(): JSX.Element {
     },
   );
 
-  const { data: groups } = useRequest(async () => {
-    return account?.address
-      ? transactionHistoryService.getTransactionGroups({
-          address: account?.address,
-        })
-      : [];
+  const fetchLocalTx = useMemoizedFn(async () => {
+    if (!account?.address) {
+      return [];
+    }
+    const { pendings, completeds } = transactionHistoryService.getList(
+      account.address,
+    );
+    return [
+      ...pendings,
+      ...completeds.filter(
+        item =>
+          item.createdAt >= Date.now() - 3600000 ||
+          !item.isSubmitFailed ||
+          !data?.list?.find(
+            tx =>
+              tx.hash === item.maxGasTx.hash &&
+              findChainByServerID(tx.chain)?.id === tx.chain,
+          ),
+      ),
+    ];
   });
 
-  console.log(JSON.stringify(groups));
+  const { data: groups, runAsync: runFetchLocalTx } = useRequest(async () => {
+    return fetchLocalTx();
+  });
+
+  useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
+
+  if (!loading && !groups?.length && !data?.list?.length) {
+    return <Empty />;
+  }
 
   return (
     <NormalScreenContainer>
@@ -78,6 +107,7 @@ function HistoryScreen(): JSX.Element {
       </TouchableOpacity>
       <HistoryList
         list={[...(groups || []), ...(data?.list || [])]}
+        pendingList={groups}
         loading={loading}
         loadingMore={loadingMore}
         loadMore={loadMore}

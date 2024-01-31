@@ -2,6 +2,7 @@ import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
+import { INTERNAL_REQUEST_ORIGIN } from './constant';
 
 export interface DappInfo {
   origin: string;
@@ -107,11 +108,13 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
   }
 
   hasPermission(origin: string) {
+    if (origin === INTERNAL_REQUEST_ORIGIN) {
+      return true;
+    }
     return !!this.store.dapps[origin]?.isConnected;
   }
 
   isInternalDapp(origin: string) {
-    // TODO: use real condition
-    return false;
+    return origin === INTERNAL_REQUEST_ORIGIN;
   }
 }

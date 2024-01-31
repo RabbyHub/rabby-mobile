@@ -122,7 +122,7 @@ const flowContext = flow
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check connect');
     if (!Reflect.getMetadata('SAFE', providerController, mapMethod)) {
-      if (!dappService.getDapp(origin)?.isConnected) {
+      if (!dappService.hasPermission(origin)) {
         if (connectOrigins.has(origin)) {
           throw ethErrors.rpc.resourceNotFound(
             'Already processing connect. Please wait.',

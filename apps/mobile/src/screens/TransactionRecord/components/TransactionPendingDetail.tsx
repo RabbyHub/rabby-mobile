@@ -9,6 +9,7 @@ import { sortBy } from 'lodash';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import RcIconQuestionCC from '@/assets/icons/transaction-record/icon-question-cc.svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Tip } from '@/components';
 
 export const TransactionPendingDetail = ({
   data,
@@ -29,10 +30,14 @@ export const TransactionPendingDetail = ({
     <View style={styles.container}>
       <View style={styles.detail}>
         <View style={styles.header}>
-          <Text style={styles.title}>Pending detail</Text>
-          <TouchableOpacity>
-            <RcIconQuestionCC color={colors['neutral-foot']} />
-          </TouchableOpacity>
+          <Text style={styles.title}>
+            {t('page.activities.signedTx.common.pendingDetail')}
+          </Text>
+          <Tip content={t('page.activities.signedTx.tips.pendingDetail')}>
+            <TouchableOpacity>
+              <RcIconQuestionCC color={colors['neutral-foot']} />
+            </TouchableOpacity>
+          </Tip>
         </View>
         <View style={styles.list}>
           {txs.map((tx, index) => {
