@@ -71,7 +71,9 @@ export const ImportSuccessScreen = () => {
       alias: aliasName || '',
     });
     Keyboard.dismiss();
-    navigate(RootNames.Home);
+    navigate(RootNames.StackRoot, {
+      screen: RootNames.Home,
+    });
   };
 
   React.useEffect(() => {

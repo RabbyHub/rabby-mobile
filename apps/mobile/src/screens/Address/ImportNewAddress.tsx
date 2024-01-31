@@ -7,11 +7,18 @@ import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
 import { WalletConnectList } from './components/WalletConnectList';
 import { WalletItem } from './components/WalletItem';
 import { WalletHeadline } from './components/WalletHeadline';
-import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { HardwareDeviceList } from './components/HardwareDeviceList';
+import { RootStackParamsList } from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 
+type AddressStackProps = NativeStackScreenProps<
+  RootStackParamsList,
+  'StackAddress'
+>;
 function BottomBlockArea() {
+  const navigation = useNavigation<AddressStackProps['navigation']>();
   return (
     <View style={[styles.blockView]}>
       <View style={styles.section}>
@@ -27,7 +34,7 @@ function BottomBlockArea() {
           Icon={RcWatchAddress}
           subTitle="You can also use it as a watch-only address"
           onPress={() => {
-            navigate(RootNames.StackAddress, {
+            navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportWatchAddress,
             });
           }}
