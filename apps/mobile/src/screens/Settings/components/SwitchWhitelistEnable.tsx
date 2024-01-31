@@ -34,7 +34,7 @@ export const SwitchWhitelistEnable = () => {
       }
       return pre;
     });
-    () => {
+    return () => {
       setRefAtom(null);
     };
   });
