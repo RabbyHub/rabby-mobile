@@ -28,7 +28,6 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { isIOS } from '@rneui/base';
 import { useSafeSizes } from '@/hooks/useAppLayout';
-import { useHeaderHeight } from '@react-navigation/elements';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -46,7 +45,6 @@ const ERROR_MESSAGE = {
 
 export const ImportWatchAddressScreen = () => {
   const { safeOffHeader } = useSafeSizes();
-  const headerHeight = useHeaderHeight();
 
   const codeRef = useRef<BottomSheetModal>(null);
   const colors = useThemeColors();
@@ -73,9 +71,12 @@ export const ImportWatchAddressScreen = () => {
     try {
       Keyboard.dismiss();
       await apisAddress.addWatchAddress(input);
-      navigate(RootNames.ImportSuccess, {
-        address: input,
-        brandName: KEYRING_CLASS.WATCH,
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess,
+        params: {
+          address: input,
+          brandName: KEYRING_CLASS.WATCH,
+        },
       });
     } catch (e) {
       setError(INPUT_ERROR.ADDRESS_EXIST);

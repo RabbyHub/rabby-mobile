@@ -5,7 +5,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
-import { navigate } from '@/utils/navigation';
 import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
 import { RootNames } from '@/constant/layout';
 import { RcIconHeaderAddAccount } from '@/assets/icons/home';
@@ -46,14 +45,14 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.CurrentAddress}
         component={CurrentAddressScreen}
-        options={{
+        options={({ navigation }) => ({
           headerTitle: 'Current Address',
           title: 'Current Address',
           headerRight: ({ tintColor }) => (
             <CustomTouchableOpacity
               hitSlop={hitSlop}
               onPress={() => {
-                navigate(RootNames.StackAddress, {
+                navigation.push(RootNames.StackAddress, {
                   screen: RootNames.ImportNewAddress,
                 });
               }}>
@@ -64,7 +63,7 @@ export function AddressNavigator() {
               />
             </CustomTouchableOpacity>
           ),
-        }}
+        })}
       />
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
@@ -91,7 +90,6 @@ export function AddressNavigator() {
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}
-        //@ts-ignore
         component={AddressDetailScreen}
         options={{
           headerTitle: 'Address detail',
