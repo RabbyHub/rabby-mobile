@@ -53,7 +53,9 @@ export function AddressNavigator() {
             <CustomTouchableOpacity
               hitSlop={hitSlop}
               onPress={() => {
-                navigate(RootNames.ImportNewAddress);
+                navigate(RootNames.StackAddress, {
+                  screen: RootNames.ImportNewAddress,
+                });
               }}>
               <RcIconHeaderAddAccount
                 width={24}
