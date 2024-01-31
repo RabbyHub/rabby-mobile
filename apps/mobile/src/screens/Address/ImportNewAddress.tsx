@@ -27,7 +27,9 @@ function BottomBlockArea() {
           Icon={RcWatchAddress}
           subTitle="You can also use it as a watch-only address"
           onPress={() => {
-            navigate(RootNames.ImportWatchAddress);
+            navigate(RootNames.StackAddress, {
+              screen: RootNames.ImportWatchAddress,
+            });
           }}
         />
       </View>

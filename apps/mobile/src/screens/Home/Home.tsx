@@ -35,7 +35,9 @@ function HomeScreen(): JSX.Element {
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccounts();
     if (!accounts?.length) {
-      navigate(RootNames.ImportNewAddress);
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportNewAddress,
+      });
     }
   });
 
