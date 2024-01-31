@@ -378,7 +378,8 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       alignItems: 'center',
       marginTop: 146,
       borderRadius: 16,
-      padding: 20,
+      paddingVertical: 40,
+      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
     },
     qrCardHeader: {
