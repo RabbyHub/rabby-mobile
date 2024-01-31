@@ -21,11 +21,9 @@ const getStyles = (colors: AppColorsVariants) =>
     origin: {
       display: 'flex',
       marginBottom: 80,
-      fontWeight: 500,
-      fontSize: 22,
-      lineHeight: 26,
-      color: colors['neutral-title-1'],
+
       flexDirection: 'row',
+      alignItems: 'center',
     },
     logo: {
       width: 24,
@@ -35,21 +33,29 @@ const getStyles = (colors: AppColorsVariants) =>
     text: {
       flex: 1,
       overflow: 'hidden',
+      fontWeight: '500',
+      fontSize: 22,
+      lineHeight: 26,
+      color: colors['neutral-title-1'],
     },
     footer: {
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 6,
     },
     footerItem: {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      fontWeight: 500,
+      flexDirection: 'row',
+    },
+    radioText: {
+      flex: 1,
+      fontWeight: '500',
       fontSize: 13,
       lineHeight: 15,
-      color: colors['neutral-title-1'],
-      position: 'relative',
-      flexDirection: 'row',
+    },
+    radioContainer: {
+      flex: 1,
+      backgroundColor: 'transparent',
+      borderBottomColor: colors['neutral-line'],
+      borderBottomWidth: StyleSheet.hairlineWidth,
     },
   });
 
@@ -105,9 +111,11 @@ const UserListDrawer = ({
             <DappIcon
               origin={origin}
               source={{ uri: logo }}
-              style={{ width: 40, height: 40 }}
+              style={styles.logo}
             />
-            <Text style={styles.text}>{origin}</Text>
+            <Text style={styles.text} numberOfLines={1}>
+              {origin}
+            </Text>
           </View>
         </View>
         <View style={styles.footer}>
@@ -117,11 +125,13 @@ const UserListDrawer = ({
               onChange({ onBlacklist: false, onWhitelist: false })
             }>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['neutral-title-1'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                styles.radioText,
+                {
+                  color: colors['neutral-title-1'],
+                },
+              ])}
+              containerStyle={styles.radioContainer}
               right
               iconRight
               title={t('page.connect.noMark')}
@@ -135,13 +145,15 @@ const UserListDrawer = ({
             style={styles.footerItem}
             onPress={() => onChange({ onBlacklist: false, onWhitelist: true })}>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['green-default'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                styles.radioText,
+                {
+                  color: colors['green-default'],
+                },
+              ])}
               right
               iconRight
+              containerStyle={styles.radioContainer}
               title={t('page.connect.trusted')}
               checked={onWhitelist}
               onPress={() =>
@@ -150,14 +162,20 @@ const UserListDrawer = ({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.footerItem}
+            style={StyleSheet.flatten([
+              styles.footerItem,
+              {
+                borderBottomWidth: 0,
+              },
+            ])}
             onPress={() => onChange({ onBlacklist: true, onWhitelist: false })}>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['red-default'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                styles.radioText,
+                {
+                  color: colors['red-default'],
+                },
+              ])}
               right
               iconRight
               title={t('page.connect.blocked')}

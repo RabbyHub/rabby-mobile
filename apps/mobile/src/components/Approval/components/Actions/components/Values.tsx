@@ -348,7 +348,7 @@ const Address = ({
         }}>
         {ellipsis(address)}
       </Text>
-      {chain && (
+      {/* {chain && (
         <IconExternal
           onPress={handleClickContractId}
           width={iconWidth}
@@ -357,7 +357,7 @@ const Address = ({
             marginRight: 6,
           }}
         />
-      )}
+      )} */}
       <IconAddressCopy
         onPress={handleCopyContractAddress}
         width={iconWidth}
