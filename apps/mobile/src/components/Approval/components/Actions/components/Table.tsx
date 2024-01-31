@@ -104,26 +104,29 @@ const Table = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  let newChildren = children as any;
 
-  if (!Array.isArray(children)) {
-    return <>{children}</>;
+  if (Array.isArray(children)) {
+    const firstChild = children[0];
+    const lastChild = children[children.length - 1];
+
+    const modifiedFirstChild = firstChild
+      ? React.cloneElement(firstChild, {
+          first: true,
+        })
+      : firstChild;
+    const modifiedLastChild = lastChild
+      ? React.cloneElement(lastChild, {
+          last: true,
+        })
+      : lastChild;
+
+    newChildren = [
+      modifiedFirstChild,
+      ...children.slice(1, children.length - 1),
+      modifiedLastChild,
+    ];
   }
-
-  const firstChild = children[0];
-  const lastChild = children[children.length - 1];
-
-  const modifiedFirstChild = React.cloneElement(firstChild, {
-    first: true,
-  });
-  const modifiedLastChild = React.cloneElement(lastChild, {
-    last: true,
-  });
-
-  const newChildren = [
-    modifiedFirstChild,
-    ...children.slice(1, children.length - 1),
-    modifiedLastChild,
-  ];
 
   return (
     <View style={{ ...styles.tableWrapper, ...style }}>{newChildren}</View>
@@ -143,19 +146,20 @@ const Col = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  let newChildren = children as any;
 
-  if (!Array.isArray(children)) {
-    return <>{children}</>;
+  if (Array.isArray(children)) {
+    const firstChild = children[0];
+
+    const modifiedFirstChild = firstChild
+      ? React.cloneElement(firstChild, {
+          first,
+          last,
+        })
+      : firstChild;
+
+    newChildren = [modifiedFirstChild, ...children.slice(1)];
   }
-
-  const firstChild = children[0];
-
-  const modifiedFirstChild = React.cloneElement(firstChild, {
-    first,
-    last,
-  });
-
-  const newChildren = [modifiedFirstChild, ...children.slice(1)];
 
   return (
     <View
