@@ -36,7 +36,6 @@ cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/assets/custom/I
 for dir in "${inpage_files_targets[@]}"
 do
   mkdir -p $dir
-  cp $script_dir/inpage-bridge/dist/index.js $repo_dir/apps/mobile/assets/custom/InpageBridgeWeb3.js
   cp $script_dir/inpage-bridge/dist/index.js $dir/InpageBridgeWeb3.js
   cp $repo_dir/apps/mobile/assets/custom/vconsole.min.js $dir/vconsole.min.js
 done
