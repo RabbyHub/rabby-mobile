@@ -18,6 +18,7 @@ import { getTokenSymbol } from '@/utils/token';
 import DescItem from '../Actions/components/DescItem';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -26,6 +27,24 @@ const getStyle = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       padding: 15,
+    },
+    titleText: {
+      fontSize: 15,
+      color: colors['neutral-title-1'],
+      fontWeight: '500',
+    },
+    usdValueDiff: {
+      flex: 1,
+      color: colors['neutral-body'],
+      textAlign: 'right',
+      fontSize: 13,
+    },
+    iconAlert: {
+      width: 15,
+      marginRight: 6,
+      color: colors['neutral-body'],
+      top: 2,
+      position: 'relative',
     },
   });
 
@@ -37,6 +56,8 @@ const NFTBalanceChange = ({
   type: 'receive' | 'send';
 }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
+  const colors = useThemeColors();
   const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
     React.useMemo(() => {
       const sendNftList = data.send_nft_list.slice(0);
@@ -66,22 +87,19 @@ const NFTBalanceChange = ({
   if (type === 'receive' && hasReceives) {
     return (
       <Col>
-        <Row isTitle>{t('page.signTx.nftIn')}</Row>
+        <Row isTitle>
+          <Text style={commonStyle.rowTitleText}>{t('page.signTx.nftIn')}</Text>
+        </Row>
         <View className="flex-1 overflow-hidden">
           {receiveNftList.map((item, index) => (
             <Row
-              hasBottomBorder
-              key={`${item.id}-${item.inner_id}`}
-              style={
-                index === receiveNftList.length - 1
-                  ? {
-                      borderBottomWidth: 0,
-                    }
-                  : {}
-              }>
-              <View className="flex flex-row">
-                <View className="flex-1">
-                  <Text className="text-r-green-default">+ {item.amount}</Text>
+              hasBottomBorder={index < receiveNftList.length - 1}
+              key={`${item.id}-${item.inner_id}`}>
+              <View style={commonStyle.rowFlexCenterItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors['green-default'] }}>
+                    + {item.amount}
+                  </Text>
                   <Text>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
@@ -103,22 +121,21 @@ const NFTBalanceChange = ({
   if (type === 'send' && hasTransferedOut) {
     return (
       <Col>
-        <Row isTitle>{t('page.signTx.balanceChange.nftOut')}</Row>
-        <View className="flex-1 overflow-hidden">
+        <Row isTitle>
+          <Text style={commonStyle.rowTitleText}>
+            {t('page.signTx.balanceChange.nftOut')}
+          </Text>
+        </Row>
+        <View style={{ flex: 1 }}>
           {sendNftList.map((item, index) => (
             <Row
-              hasBottomBorder
-              key={`${item.id}-${item.inner_id}`}
-              style={
-                index === sendNftList.length - 1
-                  ? {
-                      borderBottomWidth: 0,
-                    }
-                  : {}
-              }>
-              <View className="flex">
-                <View className="flex-1">
-                  <Text className="text-r-red-default">- {item.amount}</Text>
+              hasBottomBorder={index < sendNftList.length - 1}
+              key={`${item.id}-${item.inner_id}`}>
+              <View style={commonStyle.rowFlexCenterItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors['red-default'] }}>
+                    - {item.amount}
+                  </Text>
                   <Text>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
@@ -154,6 +171,7 @@ const BalanceChange = ({
   const isSuccess = data.success;
   const colors = useThemeColors();
   const styles = getStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const { hasTokenChange, hasNFTChange } = useBalanceChange({
     balance_change: data,
@@ -188,7 +206,7 @@ const BalanceChange = ({
           <Table>
             <Col>
               <Row>
-                <Text className="text-[15px] text-r-neutral-title-1 font-medium">
+                <Text style={styles.titleText}>
                   {t('page.signTx.balanceChange.notSupport')}
                 </Text>
               </Row>
@@ -206,7 +224,7 @@ const BalanceChange = ({
           <Table>
             <Col>
               <Row>
-                <Text className="text-[15px] text-r-neutral-title-1 font-medium">
+                <Text style={styles.titleText}>
                   {isSuccess
                     ? t('page.signTx.balanceChange.successTitle')
                     : t('page.signTx.balanceChange.failedTitle')}
@@ -228,14 +246,14 @@ const BalanceChange = ({
 
   return (
     <View style={styles.tokenBalanceChange}>
-      <View className="mb-[12] flex flex-row items-center">
-        <Text className="text-[16px] font-medium text-r-neutral-title-1">
+      <View style={{ ...commonStyle.rowFlexCenterItem, marginBottom: 12 }}>
+        <Text style={styles.titleText}>
           {isSuccess
             ? t('page.signTx.balanceChange.successTitle')
             : t('page.signTx.balanceChange.failedTitle')}
         </Text>
         {showUsdValueDiff && (
-          <Text className="flex-1 text-r-neutral-body text-right text-[13px]">
+          <Text style={styles.usdValueDiff}>
             {`${data.usd_value_change >= 0 ? '+' : '-'} $${formatNumber(
               Math.abs(data.usd_value_change),
             )}`}
@@ -247,17 +265,20 @@ const BalanceChange = ({
           {!hasChange && isSuccess && (
             <Col>
               <Row>
-                <Text className="text-[15px] font-medium text-r-neutral-title-1">
+                <Text style={styles.titleText}>
                   {t('page.signTx.balanceChange.noBalanceChange')}
                 </Text>
               </Row>
             </Col>
           )}
           {data.error && (
-            <Col>
+            <Col
+              style={{
+                borderBottomWidth: 0,
+              }}>
               <Row>
-                <View className="flex flex-row">
-                  <RcIconAlert className="w-[15px] mr-[6] text-r-neutral-body top-[2px] relative" />
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <RcIconAlert style={styles.iconAlert} />
                   <Text
                     style={{
                       fontSize: 14,
@@ -270,30 +291,31 @@ const BalanceChange = ({
             </Col>
           )}
           {sendTokenList && sendTokenList.length > 0 && (
-            <Col>
+            <Col first>
               <Row isTitle>
-                <Text>{t('page.signTx.balanceChange.tokenOut')}</Text>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.balanceChange.tokenOut')}
+                </Text>
               </Row>
               <View className="flex-1 overflow-hidden">
                 {sendTokenList.map((token, index) => (
                   <Row
-                    hasBottomBorder
-                    key={token.id}
-                    style={
-                      index === sendTokenList.length - 1
-                        ? {
-                            borderBottomWidth: 0,
-                          }
-                        : {}
-                    }>
+                    hasBottomBorder={index < sendTokenList.length - 1}
+                    key={token.id}>
                     <LogoWithText
                       logo={token.logo_url}
                       text={
-                        <View className="flex flex-row">
-                          <Text className="text-r-red-default">
+                        <View style={commonStyle.rowFlexCenterItem}>
+                          <Text
+                            style={{
+                              ...commonStyle.primaryText,
+                              color: colors['red-default'],
+                            }}>
                             - {formatAmount(token.amount)}{' '}
                           </Text>
-                          <Text onPress={() => handleClickToken(token)}>
+                          <Text
+                            onPress={() => handleClickToken(token)}
+                            style={commonStyle.primaryText}>
                             {getTokenSymbol(token)}
                           </Text>
                         </View>
@@ -326,30 +348,36 @@ const BalanceChange = ({
             </Col>
           )}
           {receiveTokenList && receiveTokenList.length > 0 && (
-            <Col>
+            <Col
+              last={
+                data.receive_nft_list.length <= 0 &&
+                data.send_nft_list.length <= 0
+              }
+              first={sendTokenList.length <= 0}>
               <Row isTitle>
-                <Text>{t('page.signTx.balanceChange.tokenIn')}</Text>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.balanceChange.tokenIn')}
+                </Text>
               </Row>
               <View className="flex-1 overflow-hidden">
                 {receiveTokenList.map((token, index) => (
                   <Row
-                    hasBottomBorder
-                    key={token.id}
-                    style={
-                      index === receiveTokenList.length - 1
-                        ? {
-                            borderBottomWidth: 0,
-                          }
-                        : {}
-                    }>
+                    hasBottomBorder={index < receiveTokenList.length - 1}
+                    key={token.id}>
                     <LogoWithText
                       logo={token.logo_url}
                       text={
-                        <View className="flex flex-row">
-                          <Text className="text-r-green-default">
+                        <View style={commonStyle.rowFlexCenterItem}>
+                          <Text
+                            style={{
+                              ...commonStyle.primaryText,
+                              color: colors['green-default'],
+                            }}>
                             + {formatAmount(token.amount)}{' '}
                           </Text>
-                          <Text onPress={() => handleClickToken(token)}>
+                          <Text
+                            style={commonStyle.primaryText}
+                            onPress={() => handleClickToken(token)}>
                             {getTokenSymbol(token)}
                           </Text>
                         </View>
