@@ -203,8 +203,10 @@ function ReceiveScreen(): JSX.Element {
           <View style={styles.qrCard}>
             <Text style={styles.qrCardHeader}>{receiveTitle}</Text>
             <View style={styles.qrCardCode}>
-              {account?.address && (
+              {account?.address && !isShowWatchModeModal ? (
                 <QRCode value={account.address} size={190} />
+              ) : (
+                <View style={styles.qrCodePlaceholder} />
               )}
             </View>
             <Text style={styles.qrCardAddress}>{account?.address}</Text>
@@ -405,6 +407,10 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       padding: 10,
       marginBottom: 20,
       backgroundColor: 'white',
+    },
+    qrCodePlaceholder: {
+      width: 190,
+      height: 190,
     },
     qrCardAddress: {
       fontSize: 15,
