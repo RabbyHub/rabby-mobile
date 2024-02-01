@@ -58,35 +58,47 @@ const NFTBalanceChange = ({
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   const colors = useThemeColors();
-  const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
-    React.useMemo(() => {
-      const sendNftList = data.send_nft_list.slice(0);
-      const countSendNft = sendNftList.reduce(
-        (accu, item) => accu + (item.amount || 0),
-        0,
-      );
-      const hasTransferedOut = sendNftList.length > 0;
+  const {
+    hasReceives,
+    receiveNftList,
+    hasTransferedOut,
+    sendNftList,
+    hasSendToken,
+    hasReceiveToken,
+  } = React.useMemo(() => {
+    const sendNftList = data.send_nft_list.slice(0);
+    const countSendNft = sendNftList.reduce(
+      (accu, item) => accu + (item.amount || 0),
+      0,
+    );
+    const hasTransferedOut = sendNftList.length > 0;
 
-      const receiveNftList = data.receive_nft_list.slice(0);
-      const countReceives = receiveNftList.reduce(
-        (accu, item) => accu + (item.amount || 0),
-        0,
-      );
-      const hasReceives = receiveNftList.length > 0;
+    const receiveNftList = data.receive_nft_list.slice(0);
+    const countReceives = receiveNftList.reduce(
+      (accu, item) => accu + (item.amount || 0),
+      0,
+    );
+    const hasReceives = receiveNftList.length > 0;
+    const hasReceiveToken = data.receive_token_list.length > 0;
+    const hasSendToken = data.send_token_list.length > 0;
 
-      return {
-        hasReceives,
-        countReceives,
-        receiveNftList,
-        hasTransferedOut,
-        countSendNft,
-        sendNftList,
-      };
-    }, [data]);
+    return {
+      hasReceives,
+      countReceives,
+      receiveNftList,
+      hasTransferedOut,
+      countSendNft,
+      sendNftList,
+      hasReceiveToken,
+      hasSendToken,
+    };
+  }, [data]);
 
   if (type === 'receive' && hasReceives) {
     return (
-      <Col>
+      <Col
+        first={!hasSendToken && !hasReceiveToken}
+        last={sendNftList.length <= 0}>
         <Row isTitle>
           <Text style={commonStyle.rowTitleText}>{t('page.signTx.nftIn')}</Text>
         </Row>
@@ -96,11 +108,15 @@ const NFTBalanceChange = ({
               hasBottomBorder={index < receiveNftList.length - 1}
               key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors['green-default'] }}>
-                    + {item.amount}
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['green-default'],
+                    }}>
+                    + {item.amount}{' '}
                   </Text>
-                  <Text>
+                  <Text style={commonStyle.primaryText}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
@@ -120,7 +136,7 @@ const NFTBalanceChange = ({
   }
   if (type === 'send' && hasTransferedOut) {
     return (
-      <Col>
+      <Col last first={!hasReceives && !hasSendToken && !hasReceiveToken}>
         <Row isTitle>
           <Text style={commonStyle.rowTitleText}>
             {t('page.signTx.balanceChange.nftOut')}
@@ -132,11 +148,15 @@ const NFTBalanceChange = ({
               hasBottomBorder={index < sendNftList.length - 1}
               key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors['red-default'] }}>
-                    - {item.amount}
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['red-default'],
+                    }}>
+                    - {item.amount}{' '}
                   </Text>
-                  <Text>
+                  <Text style={commonStyle.primaryText}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
