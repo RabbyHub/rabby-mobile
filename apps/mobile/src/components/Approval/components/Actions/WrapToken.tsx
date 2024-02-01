@@ -82,7 +82,9 @@ const WrapToken = ({
       <Table>
         <Col>
           <Row isTitle>
-            <Text>{t('page.signTx.swap.payToken')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.swap.payToken')}
+            </Text>
           </Row>
           <Row>
             <LogoWithText
@@ -92,7 +94,10 @@ const WrapToken = ({
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(payToken.amount)}{' '}
                   </Text>
-                  <Values.TokenSymbol token={payToken} />
+                  <Values.TokenSymbol
+                    token={payToken}
+                    style={commonStyle.primaryText}
+                  />
                 </View>
               }
               logoRadius={16}
@@ -113,7 +118,10 @@ const WrapToken = ({
                   <Text style={commonStyle.primaryText}>
                     {formatAmount(receiveToken.min_amount)}{' '}
                   </Text>
-                  <Values.TokenSymbol token={receiveToken} />
+                  <Values.TokenSymbol
+                    token={receiveToken}
+                    style={commonStyle.primaryText}
+                  />
                 </View>
               }
               logoRadius={16}
@@ -174,12 +182,10 @@ const WrapToken = ({
                 </DescItem>
               )}
               <DescItem>
-                <View>
-                  <Values.Interacted
-                    value={requireData.hasInteraction}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                </View>
+                <Values.Interacted
+                  value={requireData.hasInteraction}
+                  textStyle={commonStyle.secondaryText}
+                />
               </DescItem>
 
               {isInWhitelist && (

@@ -21,6 +21,7 @@ const useCommonStyle = () => {
       rowTitleText: {
         fontSize: 15,
         lineHeight: 18,
+        fontWeight: '500',
         color: colors['neutral-title-1'],
       },
       rowFlexCenterItem: {
