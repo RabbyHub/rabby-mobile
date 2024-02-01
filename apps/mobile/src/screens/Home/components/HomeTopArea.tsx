@@ -46,7 +46,6 @@ export const HomeTopArea = () => {
           value: CHAINS_ENUM.ETH,
           onChange: (v: CHAINS_ENUM) => {
             navigation.push(RootNames.Receive, {
-              screen: RootNames.Receive,
               params: {
                 chain: v,
               },

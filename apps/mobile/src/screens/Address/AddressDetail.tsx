@@ -25,7 +25,11 @@ import {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import { ScrollView } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import {
+  CompositeScreenProps,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
@@ -36,26 +40,23 @@ import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import {
+  AddressNavigatorParamList,
+  RootStackParamsList,
+} from '@/navigation-type';
 
 const BottomInput = BottomSheetTextInput;
 
-export type AddressDetailScreenProps = NativeStackScreenProps<
-  {
-    AddressDetail: {
-      address: string;
-      type: string;
-      brandName: string;
-      byImport?: string;
-    };
-  },
-  'AddressDetail'
+type AddressDetailProps = CompositeScreenProps<
+  NativeStackScreenProps<AddressNavigatorParamList, 'AddressDetail'>,
+  NativeStackScreenProps<RootStackParamsList>
 >;
 
-function AddressDetailScreen(props: AddressDetailScreenProps): JSX.Element {
+function AddressDetailScreen(): JSX.Element {
   const colors = useThemeColors();
-  const { address, type, brandName } = props.route.params;
+  const { params } = useRoute<AddressDetailProps['route']>();
+
+  const { address, type, brandName } = params;
   const { accounts } = useAccounts();
   const account = useMemo(
     () =>
@@ -83,7 +84,7 @@ interface AddressInfoProps {
 
 const AddressInfo = (props: AddressInfoProps) => {
   const { account } = props;
-  const navigation = useNavigation();
+  const navigation = useNavigation<AddressDetailProps['navigation']>();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [aliasName, setAliasName] = useAlias(account.address);

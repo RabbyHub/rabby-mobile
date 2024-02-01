@@ -100,7 +100,7 @@ export const AddressItem = (props: AddressItemProps) => {
       gotoAddressDetail();
     } else {
       switchAccount(wallet);
-      navigate(RootNames.Home);
+      navigate(RootNames.StackRoot, { screen: RootNames.Home });
     }
   }, [isCurrentAddress, gotoAddressDetail, switchAccount, wallet]);
 

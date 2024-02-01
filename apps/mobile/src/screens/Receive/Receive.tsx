@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
 import { StyleSheet, View, Modal, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -29,7 +28,6 @@ import { findChainByEnum } from '@/utils/chain';
 import { Button } from '@/components/Button';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-title-2'],
@@ -56,7 +54,7 @@ function ReceiveScreen(): JSX.Element {
   const navigation = useNavigation();
 
   const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
-  const { on: clickedCopy, toggle: toggleClickedCopy } = useSwitch(false);
+  const [clickedCopy, setClickedCopy] = useState(false);
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -98,11 +96,13 @@ function ReceiveScreen(): JSX.Element {
   const clickCopyHandler = useCallback(() => {
     if (!clickedCopy) {
       toast.success(`${t('global.copied')} ${account?.address}`);
-      copyAddress();
+      setTimeout(() => {
+        setClickedCopy(false);
+      }, 3000);
     }
-
-    toggleClickedCopy();
-  }, [account?.address, clickedCopy, copyAddress, t, toggleClickedCopy]);
+    copyAddress();
+    setClickedCopy(true);
+  }, [account?.address, clickedCopy, copyAddress, setClickedCopy, t]);
 
   const WalletIcon = useMemo(
     () => (account ? getWalletIcon(account) : () => null),
@@ -197,103 +197,92 @@ function ReceiveScreen(): JSX.Element {
     toggleShowAccount,
   ]);
   return (
-    <NormalScreenContainer>
-      <View style={styles.container}>
-        <View style={styles.receiveContainer}>
-          <View style={styles.qrCard}>
-            <Text style={styles.qrCardHeader}>{receiveTitle}</Text>
-            <View style={styles.qrCardCode}>
-              {account?.address && !isShowWatchModeModal ? (
-                <QRCode value={account.address} size={190} />
-              ) : (
-                <View style={styles.qrCodePlaceholder} />
-              )}
-            </View>
-            <Text style={styles.qrCardAddress}>{account?.address}</Text>
-            {clickedCopy ? (
-              <Button
-                buttonStyle={[styles.copyButton, styles.copyButtonSuccess]}
-                titleStyle={[
-                  styles.copyButtonText,
-                  styles.copyButtonTextSuccess,
-                ]}
-                title={t('global.copied')}
-                icon={
-                  <IconCheck
-                    width={16}
-                    height={16}
-                    style={styles.successIcon}
-                  />
-                }
-                onPress={clickCopyHandler}>
-                {/* {t('global.copyAddress')} */}
-              </Button>
+    <View style={styles.container}>
+      <View style={styles.receiveContainer}>
+        <View style={styles.qrCard}>
+          <Text style={styles.qrCardHeader}>{receiveTitle}</Text>
+          <View style={styles.qrCardCode}>
+            {account?.address && !isShowWatchModeModal ? (
+              <QRCode value={account.address} size={190} />
             ) : (
-              <Button
-                buttonStyle={styles.copyButton}
-                titleStyle={styles.copyButtonText}
-                icon={
-                  <RcIconCopy width={16} height={16} style={styles.copyIcon} />
-                }
-                title={t('global.copyAddress')}
-                onPress={clickCopyHandler}></Button>
+              <View style={styles.qrCodePlaceholder} />
             )}
           </View>
+          <Text style={styles.qrCardAddress}>{account?.address}</Text>
+          {clickedCopy ? (
+            <Button
+              buttonStyle={[styles.copyButton, styles.copyButtonSuccess]}
+              titleStyle={[styles.copyButtonText, styles.copyButtonTextSuccess]}
+              title={t('global.copied')}
+              icon={
+                <IconCheck width={16} height={16} style={styles.successIcon} />
+              }
+              onPress={clickCopyHandler}></Button>
+          ) : (
+            <Button
+              buttonStyle={styles.copyButton}
+              titleStyle={styles.copyButtonText}
+              icon={
+                <RcIconCopy width={16} height={16} style={styles.copyIcon} />
+              }
+              title={t('global.copyAddress')}
+              onPress={clickCopyHandler}></Button>
+          )}
         </View>
-        <View style={styles.footer}>
-          <IconRabbyWalletLogo />
-        </View>
+      </View>
+      <View style={styles.footer}>
+        <IconRabbyWalletLogo />
       </View>
 
       <Modal
         visible={isShowWatchModeModal}
-        className="w-[353] max-w-[100%] "
+        className="w-[353] max-w-[100%]"
         onRequestClose={() => {
           setIsShowWatchModeModal(false);
         }}
         transparent
         animationType="fade">
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setIsShowWatchModeModal(false);
-          }}>
-          <View style={styles.overlay}>
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}>
-              <View className="items-center mb-[16]">
-                <RcIconSAddressRisk height={52} width={52} />
-              </View>
+        <View style={styles.overlay}>
+          <View
+            style={styles.modalContent}
+            onStartShouldSetResponder={() => true}>
+            <View className="items-center mb-[16]">
+              <RcIconSAddressRisk height={52} width={52} />
+            </View>
 
-              <Text className="text-r-neutral-title1 text-[17] leading-[22] font-medium text-center mb-[40] mx-[20]">
-                {t('page.receive.watchModeAlert')}
-              </Text>
-              <View className="w-full h-[1] bg-r-neutral-line" />
-              <View className="flex-row items-center justify-center w-full mt-[20] px-[20]">
-                <View className="flex-1 pr-[5]">
-                  <Button
-                    title="Cancel"
-                    buttonStyle={styles.cancelStyle}
-                    titleStyle={styles.cancelTitleStyle}
-                    onPress={navBack}
-                  />
-                </View>
-                <View className="flex-1 pl-[5]">
-                  <Button
-                    title="Confirm"
-                    buttonStyle={styles.confirmStyle}
-                    titleStyle={styles.confirmTitleStyle}
-                    onPress={() => {
-                      setIsShowWatchModeModal(false);
-                    }}
-                  />
-                </View>
+            <Text
+              className="text-r-neutral-title1 leading-[22] font-medium text-center mb-[40] mx-[20]"
+              style={styles.alertModalText}>
+              {t('page.receive.watchModeAlert')}
+            </Text>
+            <View
+              className="w-full bg-r-neutral-line"
+              style={styles.modalSplitLine}
+            />
+            <View className="flex-row items-center justify-center w-full mt-[20] px-[20]">
+              <View className="flex-1 pr-[5]">
+                <Button
+                  title="Cancel"
+                  buttonStyle={styles.cancelStyle}
+                  titleStyle={styles.cancelTitleStyle}
+                  onPress={navBack}
+                />
+              </View>
+              <View className="flex-1 pl-[5]">
+                <Button
+                  title="Confirm"
+                  buttonStyle={styles.confirmStyle}
+                  titleStyle={styles.confirmTitleStyle}
+                  onPress={() => {
+                    setIsShowWatchModeModal(false);
+                  }}
+                />
               </View>
             </View>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </Modal>
-    </NormalScreenContainer>
+    </View>
   );
 }
 
@@ -311,7 +300,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       backgroundOpacity: 0.12,
       marginLeft: -20,
       marginRight: -20,
-      // height: '100%',
       flexDirection: 'row',
       backgroundColor: 'rgba(255, 255, 255, 0.12)',
       borderRadius: 6,
@@ -388,9 +376,10 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     qrCard: {
       alignItems: 'center',
-      marginTop: 88,
+      marginTop: 146,
       borderRadius: 16,
-      padding: 20,
+      paddingVertical: 40,
+      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
     },
     qrCardHeader: {
@@ -401,9 +390,9 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       textAlign: 'center',
     },
     qrCardCode: {
-      borderColor: colors['neutral-card-3'],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors['neutral-line'],
       borderRadius: 10,
-      borderWidth: 1,
       padding: 10,
       marginBottom: 20,
       backgroundColor: 'white',
@@ -471,7 +460,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       justifyContent: 'center',
     },
     modalContent: {
-      borderRadius: 8,
+      borderRadius: 16,
       backgroundColor: colors['neutral-bg1'],
       boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
       marginHorizontal: 20,
@@ -481,6 +470,12 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     footer: {
       position: 'absolute',
       bottom: 50,
+    },
+    alertModalText: {
+      fontSize: 17,
+    },
+    modalSplitLine: {
+      height: StyleSheet.hairlineWidth,
     },
   });
 

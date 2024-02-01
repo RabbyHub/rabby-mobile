@@ -12,7 +12,7 @@ import React from 'react';
 import { ThemeColors } from '@/constant/theme';
 
 const config: ToastOptions = {
-  position: Toast.positions.BOTTOM - 80,
+  position: Toast.positions.TOP + 80,
   shadow: false,
   animation: true,
   hideOnPress: true,

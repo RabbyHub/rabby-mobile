@@ -55,11 +55,14 @@ export const WalletConnectList = () => {
       apisWalletConnect
         .importAddress(data)
         .then(() => {
-          navigate(RootNames.ImportSuccess, {
-            address: data.address,
-            brandName: data.brandName,
-            realBrandName: data.realBrandName,
-            deepLink: deepLinkRef.current,
+          navigate(RootNames.StackAddress, {
+            screen: RootNames.ImportSuccess,
+            params: {
+              address: data.address,
+              brandName: data.brandName,
+              realBrandName: data.realBrandName,
+              deepLink: deepLinkRef.current,
+            },
           });
         })
         .catch((err: any) => {

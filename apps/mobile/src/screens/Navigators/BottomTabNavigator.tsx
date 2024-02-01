@@ -21,8 +21,9 @@ import {
   OpenedDappWebViewStub,
   // OpenedWebViewsStub,
 } from '../Dapps/Dapps/components/WebViewsStub';
+import { BottomTabParamsList } from '@/navigation-type';
 
-const BottomTab = createBottomTabNavigator();
+const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
 const BottomTabIcon = ({
   icon: Icon,

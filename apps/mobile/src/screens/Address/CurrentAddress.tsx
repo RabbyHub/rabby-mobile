@@ -26,6 +26,13 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import groupBy from 'lodash/groupBy';
 import { sortAccountsByBalance } from '@/utils/account';
 import { useOpenDappView } from '../Dapps/hooks/useDappView';
+import { RootStackParamsList } from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+type CurrentAddressProps = NativeStackScreenProps<
+  RootStackParamsList,
+  'StackAddress'
+>;
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
@@ -52,17 +59,15 @@ export default function CurrentAddressScreen(): JSX.Element {
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const navigation = useNavigation();
+  const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const gotoBundles = React.useCallback(() => {
-    //@ts-ignore
     navigation.push(RootNames.AccountTransaction, {
       screen: RootNames.MyBundle,
       params: {},
     });
   }, [navigation]);
   const gotoAddAddress = React.useCallback(() => {
-    //@ts-ignore
     navigation.push(RootNames.StackAddress, {
       screen: RootNames.ImportNewAddress,
     });

@@ -50,6 +50,16 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 20,
       borderRadius: 10,
     },
+    icon: {
+      marginLeft: 6,
+    },
+    markButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    tag: {
+      marginTop: 2,
+    },
   });
 
 const RuleResult = ({
@@ -107,13 +117,13 @@ const RuleResult = ({
 
   const ruleDesc = () => {
     if (rule.id === '1004') {
-      return <>{t('page.connect.listedBy')}</>;
+      return t('page.connect.listedBy');
     }
     if (rule.id === '1005') {
-      return <>{t('page.connect.sitePopularity')}</>;
+      return t('page.connect.sitePopularity');
     }
     if (rule.id === '1006' || rule.id === '1007') {
-      return <>{t('page.connect.markRuleText')}</>;
+      return t('page.connect.markRuleText');
     }
     if (rule.result) {
       if (
@@ -170,9 +180,7 @@ const RuleResult = ({
           </Text>
         )}
         {(rule.id === '1006' || rule.id === '1007') && (
-          <TouchableOpacity
-            className="flex flex-row items-center"
-            onPress={onEditUserList}>
+          <TouchableOpacity style={styles.markButton} onPress={onEditUserList}>
             <Text>
               {!userListResult && t('page.connect.noMark')}
               {userListResult &&
@@ -182,7 +190,7 @@ const RuleResult = ({
                 userListResult.id === '1007' &&
                 t('page.connect.trusted')}
             </Text>
-            <View className="ml-6">
+            <View style={styles.icon}>
               <IconEdit />
             </View>
           </TouchableOpacity>
@@ -202,6 +210,7 @@ const RuleResult = ({
           onClick={handleClick}
           translucent={translucent}
           right={-12}
+          style={styles.tag}
         />
       )}
       {rule.result && !rule.result.enable && (
@@ -210,6 +219,7 @@ const RuleResult = ({
           level="proceed"
           onClick={handleClick}
           right={-12}
+          style={styles.tag}
         />
       )}
       {rule.result && ignored && (
@@ -218,6 +228,7 @@ const RuleResult = ({
           level="proceed"
           onClick={handleClick}
           right={-12}
+          style={styles.tag}
         />
       )}
     </View>

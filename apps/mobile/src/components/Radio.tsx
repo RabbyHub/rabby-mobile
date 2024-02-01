@@ -44,10 +44,13 @@ export const Radio: React.FC<CheckBoxProps> = ({ children, ...props }) => {
 
   return (
     <CheckBox
-      containerStyle={styles.container}
+      {...props}
+      containerStyle={StyleSheet.flatten([
+        styles.container,
+        props.containerStyle,
+      ])}
       checkedIcon={getIcon(colors['blue-default'])}
       uncheckedIcon={getIcon(colors['neutral-line'])}
-      {...props}
     />
   );
 };

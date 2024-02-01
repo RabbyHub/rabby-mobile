@@ -41,11 +41,25 @@ import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 import { useDapps } from './hooks/useDapps';
 import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
 import HistoryFilterScamScreen from './screens/Transaction/HistoryFilterScamScreen';
+import {
+  AccountNavigatorParamList,
+  FavoritePopularDappsNavigatorParamList,
+  RootStackParamsList,
+  SearchDappsNavigatorParamList,
+  TransactionNavigatorParamList,
+} from './navigation-type';
 
-const RootStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
-const AccountStack = createNativeStackNavigator();
-const TransactionStack = createNativeStackNavigator();
+const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
+const TransactionStack =
+  createNativeStackNavigator<TransactionNavigatorParamList>();
+
+const FavoritePopularDappsStack =
+  createNativeStackNavigator<FavoritePopularDappsNavigatorParamList>();
+
+const SearchDappsStack =
+  createNativeStackNavigator<SearchDappsNavigatorParamList>();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
@@ -312,7 +326,7 @@ function FavoritePopularDappsNavigator() {
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (
-    <TransactionStack.Navigator
+    <FavoritePopularDappsStack.Navigator
       screenOptions={{
         ...screenOptions,
         gestureEnabled: false,
@@ -325,14 +339,14 @@ function FavoritePopularDappsNavigator() {
           fontWeight: 'normal',
         },
       }}>
-      <TransactionStack.Screen
+      <FavoritePopularDappsStack.Screen
         name={RootNames.FavoritePopularDapps}
         component={FavoritePopularDappsScreen}
         options={{
           title: 'Favorite Popular Dapp',
         }}
       />
-    </TransactionStack.Navigator>
+    </FavoritePopularDappsStack.Navigator>
   );
 }
 
@@ -342,7 +356,7 @@ function SearchDappsNavigator() {
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (
-    <TransactionStack.Navigator
+    <SearchDappsStack.Navigator
       screenOptions={{
         ...screenOptions,
         gestureEnabled: false,
@@ -355,13 +369,13 @@ function SearchDappsNavigator() {
           fontWeight: 'normal',
         },
       }}>
-      <TransactionStack.Screen
+      <SearchDappsStack.Screen
         name={RootNames.SearchDapps}
         component={SearchDappsScreen}
         // options={{
         //   title: 'Favorite Popular Dapp',
         // }}
       />
-    </TransactionStack.Navigator>
+    </SearchDappsStack.Navigator>
   );
 }
