@@ -61,7 +61,7 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text>
+        <Text style={styles.titleText}>
           {data.isRevoke
             ? t('page.signTx.revokeTokenApprove.revokeFrom')
             : t('page.signTx.tokenApprove.approveTo')}

@@ -58,7 +58,7 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text style={{ ...commonStyle.primaryText, marginRight: 7 }}>
+        <Text style={styles.titleText}>
           {data.title || t('page.signTx.interactContract')}
         </Text>
         <Values.Address
