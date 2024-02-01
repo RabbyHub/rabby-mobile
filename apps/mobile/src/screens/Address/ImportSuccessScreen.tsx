@@ -3,20 +3,21 @@ import RootScreenContainer from '@/components/ScreenContainer/RootScreenContaine
 import { RootNames } from '@/constant/layout';
 import { contactService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { useNavigationState } from '@react-navigation/native';
+import { useIsFocused, useNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { navigate } from '@/utils/navigation';
-import { useAccounts } from '@/hooks/account';
+import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
-  const { fetchAccounts } = useAccounts();
+  const { accounts } = useAccounts();
   const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
@@ -65,6 +66,8 @@ export const ImportSuccessScreen = () => {
   };
   const [aliasName, setAliasName] = React.useState<string>('');
 
+  const { switchAccount, currentAccount } = useCurrentAccount();
+
   const handleDone = () => {
     contactService.setAlias({
       address: state.address,
@@ -76,13 +79,30 @@ export const ImportSuccessScreen = () => {
     });
   };
 
+  const isFocus = useIsFocused();
+
   React.useEffect(() => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
 
   React.useEffect(() => {
-    fetchAccounts();
-  }, [fetchAccounts]);
+    if (isFocus) {
+      const targetAccount = accounts.find(
+        a =>
+          a.brandName === state.brandName &&
+          addressUtils.isSameAddress(a.address, state.address),
+      );
+      if (targetAccount) {
+        if (
+          !currentAccount ||
+          targetAccount.brandName !== currentAccount.brandName ||
+          !addressUtils.isSameAddress(currentAccount.address, state.address)
+        ) {
+          switchAccount(targetAccount);
+        }
+      }
+    }
+  }, [isFocus, state, accounts, currentAccount, switchAccount]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>

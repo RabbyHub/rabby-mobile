@@ -26,6 +26,7 @@ export function SettingNavigator() {
           fontWeight: 'normal',
         },
         headerTitle: 'Settings',
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <SettingsStack.Screen
         name={RootNames.Settings}

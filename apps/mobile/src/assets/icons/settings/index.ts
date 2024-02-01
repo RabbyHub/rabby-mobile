@@ -9,6 +9,9 @@ export const RcClearPending = makeThemeIconFromCC(
 import { default as RcCustomRpcCC } from './custom-rpc-cc.svg';
 export const RcCustomRpc = makeThemeIconFromCC(RcCustomRpcCC, 'neutral-body');
 
+import { default as RcFeedbackCC } from './feedback-cc.svg';
+export const RcFeedback = makeThemeIconFromCC(RcFeedbackCC, 'neutral-body');
+
 import { default as RcFollowUsCC } from './follow-us-cc.svg';
 export const RcFollowUs = makeThemeIconFromCC(RcFollowUsCC, 'neutral-body');
 
