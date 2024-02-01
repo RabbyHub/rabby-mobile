@@ -94,7 +94,7 @@ export const AssetAvatar = memo(
       <View style={containerStyle}>
         <View style={tokenStyle}>
           {!logo || on ? (
-            <DefaultToken size={size} />
+            <DefaultToken size={size} style={avatarStyle} />
           ) : (
             <FastImage source={source} style={avatarStyle} onError={turnOn} />
           )}
@@ -113,6 +113,8 @@ const getStyles = (colors: AppColorsVariants) =>
     iconStyle: {
       backgroundColor: colors['neutral-bg-1'],
       overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     imageBadge: {
       width: 12,
