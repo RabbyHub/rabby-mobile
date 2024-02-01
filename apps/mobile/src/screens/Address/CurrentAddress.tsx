@@ -28,6 +28,7 @@ import { sortAccountsByBalance } from '@/utils/account';
 import { useOpenDappView } from '../Dapps/hooks/useDappView';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { toast } from '@/components/Toast';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -62,11 +63,12 @@ export default function CurrentAddressScreen(): JSX.Element {
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const gotoBundles = React.useCallback(() => {
-    navigation.push(RootNames.AccountTransaction, {
-      screen: RootNames.MyBundle,
-      params: {},
-    });
-  }, [navigation]);
+    // navigation.push(RootNames.AccountTransaction, {
+    //   screen: RootNames.MyBundle,
+    //   params: {},
+    // });
+    toast.show('Coming Soon :)');
+  }, []);
   const gotoAddAddress = React.useCallback(() => {
     navigation.push(RootNames.StackAddress, {
       screen: RootNames.ImportNewAddress,

@@ -141,7 +141,8 @@ export const ImportWatchAddressScreen = () => {
         enableOnAndroid
         extraHeight={150}
         scrollEnabled={false}
-        keyboardOpeningTime={0}>
+        keyboardOpeningTime={0}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.titleContainer}>
           <WatchLogoSVG />
           <Text style={styles.title}>Add Contacts</Text>
@@ -165,7 +166,7 @@ export const ImportWatchAddressScreen = () => {
             ]}
             blurOnSubmit
             onSubmitEditing={onSubmitEditing}
-            autoFocus
+            // autoFocus
             placeholder="Address / ENS"
             placeholderTextColor={colors['neutral-foot']}
           />
@@ -178,6 +179,7 @@ export const ImportWatchAddressScreen = () => {
             <TouchableOpacity
               style={styles.ensResultBox}
               onPress={() => {
+                Keyboard.dismiss();
                 setInput(ensResult.addr);
               }}>
               <Text style={styles.ensResult}>{ensResult.addr}</Text>
@@ -194,7 +196,7 @@ export const ImportWatchAddressScreen = () => {
               !error && ensResult && input === ensResult.addr && styles.ensMt,
             ]}>
             <RcIconScannerCC
-              color={colors['neutral-line']}
+              color={colors['neutral-foot']}
               style={styles.scanIcon}
             />
             <Text style={styles.scanButtonTitle}>Scan via camera</Text>
