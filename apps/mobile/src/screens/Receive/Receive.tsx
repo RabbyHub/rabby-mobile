@@ -307,6 +307,8 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       paddingVertical: 6,
     },
     walletIcon: {
+      maxWidth: 20,
+      maxHeight: 20,
       width: 20,
       height: 20,
       marginRight: 8,
@@ -316,7 +318,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingTop: 5,
+      paddingTop: 1,
     },
     accountInfoName: {
       fontSize: 15,
@@ -345,7 +347,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       marginTop: HEADER_OFFSET,
     },
     watchButtonStyle: {
-      marginTop: HEADER_OFFSET,
+      marginTop: HEADER_OFFSET + 2,
       alignItems: 'center',
       flexDirection: 'row',
       marginRight: -16,
@@ -404,7 +406,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     qrCardAddress: {
       fontSize: 15,
       lineHeight: 20,
-      fontWeight: '400',
+      fontWeight: '500',
       color: colors['neutral-title-1'],
       marginBottom: 24,
       textAlign: 'center',
