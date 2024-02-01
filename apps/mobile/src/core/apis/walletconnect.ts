@@ -8,12 +8,15 @@ import { getKeyring } from './keyring';
 
 export function bindWalletConnectEvents(keyring: KeyringInstance) {
   keyring.on('statusChange', (data: any) => {
+    console.log('statusChange', data);
     eventBus.emit(EVENTS.WALLETCONNECT.STATUS_CHANGED, data);
   });
   keyring.on('sessionStatusChange', (data: any) => {
+    console.log('sessionStatusChange', data);
     eventBus.emit(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, data);
   });
   keyring.on('sessionAccountChange', (data: any) => {
+    console.log('sessionAccountChange', data);
     eventBus.emit(EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED, data);
   });
 }
@@ -162,9 +165,15 @@ export async function walletConnectSwitchChain(
     KEYRING_TYPE.WalletConnectKeyring,
   );
 
-  if (keyring) {
-    return keyring.switchEthereumChain(account.brandName, chainId);
+  try {
+    if (keyring) {
+      await keyring.switchEthereumChain(account.brandName, chainId);
+    }
+  } catch (e) {
+    console.log('walletconnect error', e);
+    await killWalletConnectConnector(account.address, account.brandName, false);
   }
+
   return;
 }
 

@@ -163,7 +163,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       chainId: chain?.id,
     });
     if (tipStatus === 'DISCONNECTED') {
-      connectWallet({ address, brandName });
+      connectWallet({ address, brandName, chainId: chain?.id });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
       activePopup('SWITCH_ADDRESS');
     } else if (tipStatus === 'CHAIN_ERROR') {
