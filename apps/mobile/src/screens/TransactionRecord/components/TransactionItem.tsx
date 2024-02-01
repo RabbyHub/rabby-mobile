@@ -168,7 +168,7 @@ export const TransactionItem = ({
             isFailed={data.isFailed}
             isSubmitFailed={data.isSubmitFailed}
             isWithdrawed={data.isWithdrawed}
-            explain={data.maxGasTx?.explain}
+            explain={data.originTx?.explain}
           />
           {data?.isPending ? (
             <TransactionAction

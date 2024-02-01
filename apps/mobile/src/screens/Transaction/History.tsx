@@ -72,12 +72,13 @@ function HistoryScreen(): JSX.Element {
     const { pendings, completeds } = transactionHistoryService.getList(
       account.address,
     );
+
     return [
       ...pendings,
       ...completeds.filter(
         item =>
-          item.createdAt >= Date.now() - 3600000 ||
-          !item.isSubmitFailed ||
+          item.createdAt >= Date.now() - 3600000 &&
+          !item.isSubmitFailed &&
           !data?.list?.find(
             tx =>
               tx.hash === item.maxGasTx.hash &&
@@ -107,7 +108,7 @@ function HistoryScreen(): JSX.Element {
       </TouchableOpacity>
       <HistoryList
         list={[...(groups || []), ...(data?.list || [])]}
-        pendingList={groups}
+        localTxList={groups}
         loading={loading}
         loadingMore={loadingMore}
         loadMore={loadMore}

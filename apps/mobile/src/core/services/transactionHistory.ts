@@ -180,11 +180,13 @@ export class TransactionHistoryService {
     return {
       pendings: sortBy(
         groups.filter(item => item.isPending),
-        'createdAt',
+        item => {
+          return -item.createdAt;
+        },
       ),
       completeds: sortBy(
         groups.filter(item => !item.isPending),
-        'createdAt',
+        item => -item.createdAt,
       ),
     };
   }

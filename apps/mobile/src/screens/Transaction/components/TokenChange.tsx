@@ -58,7 +58,7 @@ const TxChangeItem = ({
         <RcIconUnknown />
       )}
       <Text
-        style={[styles.text, isSend && styles.textNegative]}
+        style={[styles.text, isSend ? styles.textNegative : null]}
         numberOfLines={1}>
         {isSend ? '-' : '+'}{' '}
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)} {name}
@@ -102,8 +102,10 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       flexDirection: 'column',
+      // alignItems: 'flex-end',
       gap: 3,
       minWidth: 0,
+      // maxWidth: '50%',
       flexShrink: 1,
     },
     item: {
@@ -120,6 +122,9 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 13,
       lineHeight: 15,
       color: colors['green-default'],
+      // flex: 1,
+      minWidth: 0,
+      flexGrow: 1,
     },
     textNegative: {
       color: colors['neutral-body'],

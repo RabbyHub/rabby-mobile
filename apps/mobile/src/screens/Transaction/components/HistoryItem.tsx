@@ -91,13 +91,11 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-foot'],
     },
     cardHeaderInner: {
-      flex: 1,
-      flexShrink: 1,
+      flexGrow: 1,
+      flexShrink: 0,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      minWidth: 0,
-      flexWrap: 'wrap',
       gap: 6,
     },
     cardBody: {
@@ -105,6 +103,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 12,
     },
     cardFooter: {
       padding: 12,

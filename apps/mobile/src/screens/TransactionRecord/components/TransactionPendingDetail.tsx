@@ -44,7 +44,7 @@ export const TransactionPendingDetail = ({
             return (
               <View
                 style={[styles.row, index !== 0 && styles.rowGray]}
-                key={tx.hash || tx.reqId || index}>
+                key={index}>
                 <Text style={styles.txType}>
                   {tx === data.originTx
                     ? 'Initial tx'
