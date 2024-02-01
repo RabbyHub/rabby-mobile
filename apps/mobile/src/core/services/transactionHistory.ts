@@ -43,6 +43,8 @@ export interface TransactionHistoryItem {
   isSubmitFailed?: boolean;
   isCompleted?: boolean;
 
+  isSynced?: boolean;
+
   explain?: ObjectType.Merge<
     ExplainTxResponse,
     { approvalId: string; calcSuccess: boolean }
@@ -89,6 +91,12 @@ export class TransactionHistoryService {
   ) => {
     this.store.transactions = produce(this.store.transactions, recipe);
   };
+
+  getPendingCount(address: string) {
+    return this.getTransactionGroups({
+      address,
+    }).filter(item => item.isPending).length;
+  }
 
   getPendingTxsByNonce(address: string, chainId: number, nonce: number) {
     return this.getTransactionGroups({
@@ -296,6 +304,7 @@ export class TransactionHistoryService {
     success?: boolean;
     gasUsed?: number;
   }) {
+    // todo 没有用到 hash 和 reqId 可能有坑
     const target = this.getTransactionGroups({
       address,
       chainId,
@@ -307,6 +316,7 @@ export class TransactionHistoryService {
 
     target.isPending = false;
     target.isFailed = !success;
+    target.maxGasTx.isCompleted = true;
     if (gasUsed) {
       target.maxGasTx.gasUsed = gasUsed;
     }
@@ -535,6 +545,14 @@ export class TransactionGroup {
 
   get isCompleted() {
     return !!this.maxGasTx.isCompleted;
+  }
+
+  get isSynced() {
+    return !!this.maxGasTx.isSynced;
+  }
+
+  set isSynced(v: boolean) {
+    this.maxGasTx.isSynced = v;
   }
 
   set isPending(v: boolean) {

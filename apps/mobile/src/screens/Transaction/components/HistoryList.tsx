@@ -13,12 +13,14 @@ export const HistoryList = ({
   loadMore,
   list,
   localTxList,
+  onRefresh,
 }: {
   localTxList?: TransactionGroup[];
   list?: (TxDisplayItem | TransactionGroup)[];
   loading?: boolean;
   loadingMore?: boolean;
   loadMore?: () => void;
+  onRefresh?: () => void;
 }) => {
   const renderItem = ({ item }: { item: TxDisplayItem | TransactionGroup }) => {
     if ('projectDict' in item) {
@@ -33,10 +35,17 @@ export const HistoryList = ({
     } else {
       const canCancel =
         minBy(
-          localTxList?.filter(i => i.chainId === item.chainId) || [],
+          localTxList?.filter(i => i.chainId === item.chainId && i.isPending) ||
+            [],
           i => i.nonce,
         )?.nonce === item.nonce;
-      return <TransactionItem data={item} canCancel={canCancel} />;
+      return (
+        <TransactionItem
+          data={item}
+          canCancel={canCancel}
+          onRefresh={onRefresh}
+        />
+      );
     }
   };
 

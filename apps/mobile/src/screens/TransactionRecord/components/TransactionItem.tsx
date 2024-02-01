@@ -27,13 +27,16 @@ import {
 import { toast } from '@/components/Toast';
 import { useTranslation } from 'react-i18next';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { TransactionCompleteTag } from './TransactionCompleteTag';
 
 export const TransactionItem = ({
   data,
   canCancel,
+  onRefresh,
 }: {
   data: TransactionGroup;
   canCancel?: boolean;
+  onRefresh?: () => void;
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -79,6 +82,7 @@ export const TransactionItem = ({
       },
       INTERNAL_REQUEST_SESSION,
     );
+    onRefresh?.();
   });
 
   const handleTxCancel = useMemoizedFn(() => {
@@ -145,6 +149,7 @@ export const TransactionItem = ({
       },
       INTERNAL_REQUEST_SESSION,
     );
+    onRefresh?.();
   };
 
   return (
@@ -157,6 +162,7 @@ export const TransactionItem = ({
       ]}>
       <View style={styles.header}>
         <TransactionPendingTag data={data} />
+        {data.isCompleted ? <TransactionCompleteTag /> : null}
         <Text style={styles.nonce}>
           {chain?.name || 'Unknown'} #{data?.nonce}
         </Text>

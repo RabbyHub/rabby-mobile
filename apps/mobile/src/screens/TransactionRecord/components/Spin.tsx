@@ -46,11 +46,9 @@ export const Spin = React.memo(
         ]}>
         <RcIconSpinCC
           color={color}
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            width: '100%',
-            height: '100%',
-          }}
+          viewBox="0 0 14 14"
+          width={'100%'}
+          height={'100%'}
         />
       </Animated.View>
     );

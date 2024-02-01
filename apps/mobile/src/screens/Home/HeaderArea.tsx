@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   RcIconHeaderSettings,
-  RcIconHistory,
   RcIconHeaderRightArrow,
 } from '@/assets/icons/home';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -20,6 +19,7 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { PendingTxCount } from './components/PendingTxCount';
 
 export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
@@ -135,7 +135,7 @@ export default function HomeHeaderArea() {
         </TouchableView>
         <View style={styles.rightActionsBox}>
           <TouchableView onPress={() => handlePressIcon('history')}>
-            <RcIconHistory style={styles.actionIcon} />
+            <PendingTxCount />
           </TouchableView>
           <TouchableView onPress={() => handlePressIcon('settings')}>
             <RcIconHeaderSettings style={styles.actionIcon} />

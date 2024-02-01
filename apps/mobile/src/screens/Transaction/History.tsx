@@ -20,12 +20,14 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { HistoryList } from './components/HistoryList';
 import { Empty } from './components/Empty';
 import { findChainByServerID } from '@/utils/chain';
+import { useNavigation } from '@react-navigation/native';
 const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
+  const navigation = useNavigation();
 
   const fetchData = async (startTime = 0) => {
     const address = account?.address;
@@ -56,14 +58,12 @@ function HistoryScreen(): JSX.Element {
     };
   };
 
-  const { data, loading, loadingMore, loadMore } = useInfiniteScroll(
-    d => fetchData(d?.last),
-    {
+  const { data, loading, loadingMore, loadMore, reloadAsync } =
+    useInfiniteScroll(d => fetchData(d?.last), {
       isNoMore: d => {
         return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
       },
-    },
-  );
+    });
 
   const fetchLocalTx = useMemoizedFn(async () => {
     if (!account?.address) {
@@ -75,16 +75,25 @@ function HistoryScreen(): JSX.Element {
 
     return [
       ...pendings,
-      ...completeds.filter(
-        item =>
-          item.createdAt >= Date.now() - 3600000 &&
-          !item.isSubmitFailed &&
+      ...completeds.filter(item => {
+        const isSynced =
           !data?.list?.find(
             tx =>
               tx.hash === item.maxGasTx.hash &&
               findChainByServerID(tx.chain)?.id === tx.chain,
-          ),
-      ),
+          ) || item.isSynced;
+        if (isSynced && !item.isSynced) {
+          item.isSynced = true;
+          transactionHistoryService.updateTx({
+            ...item.maxGasTx,
+          });
+        }
+        return (
+          item.createdAt >= Date.now() - 3600000 &&
+          !item.isSubmitFailed &&
+          !isSynced
+        );
+      }),
     ];
   });
 
@@ -101,7 +110,12 @@ function HistoryScreen(): JSX.Element {
   return (
     <NormalScreenContainer>
       <TouchableOpacity
-        onPress={() => navigate(RootNames.HistoryFilterScam)}
+        onPress={() => {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.HistoryFilterScam,
+            params: {},
+          });
+        }}
         style={styles.link}>
         <Text style={styles.linkText}>Hide scam transactions</Text>
         <RcIconRight />
@@ -112,6 +126,10 @@ function HistoryScreen(): JSX.Element {
         loading={loading}
         loadingMore={loadingMore}
         loadMore={loadMore}
+        onRefresh={() => {
+          runFetchLocalTx();
+          reloadAsync();
+        }}
       />
     </NormalScreenContainer>
   );
