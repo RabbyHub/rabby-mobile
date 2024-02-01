@@ -11,3 +11,8 @@ export const INTERNAL_REQUEST_SESSION = {
   origin: INTERNAL_REQUEST_ORIGIN,
   icon: './images/rabby-site-logo.png',
 };
+
+export enum CANCEL_TX_TYPE {
+  QUICK_CANCEL = 'QUICK_CANCEL',
+  ON_CHAIN_CANCEL = 'ON_CHAIN_CANCEL',
+}

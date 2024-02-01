@@ -232,12 +232,12 @@ const AddressMark = ({
     <View>
       <TouchableOpacity onPress={handleEditMark}>
         <View style={styles.addressMarkWrapper}>
-          <Text className="mr-[6]" style={textStyle}>
+          <Text style={{ marginRight: 6, ...textStyle }}>
             {onWhitelist && t('page.signTx.trusted')}
             {onBlacklist && t('page.signTx.blocked')}
             {!onBlacklist && !onWhitelist && t('page.signTx.noMark')}
           </Text>
-          <IconEdit className="icon-edit-alias icon" />
+          <IconEdit />
         </View>
       </TouchableOpacity>
       <UserListDrawer
@@ -385,15 +385,20 @@ const DisplayChain = ({
   const chain = useMemo(() => {
     return Object.values(CHAINS).find(item => item.serverId === chainServerId);
   }, [chainServerId]);
+  const commonStyle = useCommonStyle();
   if (!chain) return null;
   return (
-    <View className="flex flex-row items-center">
+    <View style={commonStyle.rowFlexCenterItem}>
       <Text style={textStyle}>on {chain.name} </Text>
       <Image
         source={{
           uri: chain.logo,
         }}
-        className="ml-[4] w-[14] h-[14]"
+        style={{
+          marginLeft: 4,
+          width: 14,
+          height: 14,
+        }}
       />
     </View>
   );
@@ -407,8 +412,9 @@ const Interacted = ({
   textStyle?: TextStyle;
 }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   return (
-    <View className="flex flex-row items-center">
+    <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
         <>
           <IconInteracted
@@ -436,8 +442,9 @@ const Interacted = ({
 
 const Transacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   return (
-    <View className="flex flex-row items-center w-full">
+    <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
         <>
           <IconInteracted

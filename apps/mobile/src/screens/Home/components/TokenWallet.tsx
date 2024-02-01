@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@/components/Toast';
 
 import { AbstractPortfolioToken } from '../types';
 import { useThemeColors } from '@/hooks/theme';
@@ -129,6 +130,7 @@ export const TokenWallet = ({
 
   // const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenTokenDetail = React.useCallback(() => {
+    toast.show('Coming Soon :)');
     // tokenDetailModalRef.current?.present();
   }, []);
 
@@ -181,7 +183,7 @@ export const TokenWallet = ({
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
       />
-      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['50%']}>
+      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['70%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
           ListHeaderComponent={
@@ -263,6 +265,7 @@ const getStyle = (colors: AppColorsVariants) =>
       justifyContent: 'center',
     },
     tokenRowPrice: {
+      marginTop: 2,
       color: colors['neutral-foot'],
       fontSize: 13,
       fontWeight: '400',
@@ -277,6 +280,7 @@ const getStyle = (colors: AppColorsVariants) =>
       alignItems: 'flex-end',
     },
     tokenRowAmount: {
+      marginBottom: 2,
       textAlign: 'right',
       color: colors['neutral-title-1'],
       fontSize: 16,

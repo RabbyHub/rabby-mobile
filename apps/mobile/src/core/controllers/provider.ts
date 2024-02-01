@@ -1,4 +1,4 @@
-import Common, { Hardfork } from '@ethereumjs/common';
+import { Common, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import {
   bufferToHex,
@@ -14,7 +14,13 @@ import {
 } from '@metamask/eth-sig-util';
 import cloneDeep from 'lodash/cloneDeep';
 import { openapi } from '../request';
-import { preferenceService, dappService } from '@/core/services/shared';
+import {
+  preferenceService,
+  dappService,
+  transactionHistoryService,
+  transactionWatcherService,
+  transactionBroadcastWatcherService,
+} from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
 //   transactionWatchService,
@@ -461,15 +467,15 @@ class ProviderController extends BaseController {
           .enum
       : dappService.getConnectedDapp(origin)!.chainId;
 
-    // const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
-    // if (!approvingTx?.rawTx || !approvingTx?.explain) {
-    //   throw new Error(`approvingTx not found: ${signingTxId}`);
-    // }
-    // transactionHistoryService.updateSigningTx(signingTxId!, {
-    //   isSubmitted: true,
-    // });
+    const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
+    if (!approvingTx?.rawTx || !approvingTx?.explain) {
+      throw new Error(`approvingTx not found: ${signingTxId}`);
+    }
+    transactionHistoryService.updateSigningTx(signingTxId!, {
+      isSubmitted: true,
+    });
 
-    // const { explain: cacheExplain, rawTx, action } = approvingTx;
+    const { explain: cacheExplain, rawTx, action } = approvingTx;
 
     const chainItem = findChainByEnum(chain);
 
@@ -513,6 +519,7 @@ class ProviderController extends BaseController {
         pushType?: TxPushType;
       }) => {
         const { hash, reqId, pushType = 'default' } = info;
+        console.log('onTransactionCreated');
         // if (
         //   options?.data?.$ctx?.stats?.afterSign?.length &&
         //   Array.isArray(options?.data?.$ctx?.stats?.afterSign)
@@ -536,46 +543,45 @@ class ProviderController extends BaseController {
         //   pageStateCacheService.clear();
         // }
         // TODO: transactionHistory
-        // transactionHistoryService.addTx({
-        //   tx: {
-        //     rawTx: {
-        //       ...rawTx,
-        //       ...approvalRes,
-        //       r: bufferToHex(signedTx.r),
-        //       s: bufferToHex(signedTx.s),
-        //       v: bufferToHex(signedTx.v),
-        //     },
-        //     createdAt: Date.now(),
-        //     isCompleted: false,
-        //     hash,
-        //     failed: false,
-        //     reqId,
-        //     pushType,
-        //   },
-        //   explain: cacheExplain,
-        //   actionData: action,
-        //   origin,
-        //   $ctx: options?.data?.$ctx,
-        //   isDropFailed: true,
-        // });
-        // transactionHistoryService.removeSigningTx(signingTxId!);
+        transactionHistoryService.addTx({
+          address: txParams.from,
+          nonce: +approvalRes.nonce,
+          chainId: approvalRes.chainId,
+
+          rawTx: {
+            ...rawTx,
+            ...approvalRes,
+            r: bufferToHex(signedTx.r),
+            s: bufferToHex(signedTx.s),
+            v: bufferToHex(signedTx.v),
+          },
+          createdAt: Date.now(),
+          hash,
+          reqId,
+          pushType,
+          explain: cacheExplain,
+          action: action,
+          site: dappService.getDapp(origin),
+          isPending: true,
+        });
+        transactionHistoryService.removeSigningTx(signingTxId!);
         if (hash) {
-          // transactionWatchService.addTx(
-          //   `${txParams.from}_${approvalRes.nonce}_${chain}`,
-          //   {
-          //     nonce: approvalRes.nonce,
-          //     hash,
-          //     chain,
-          //   },
-          // );
+          transactionWatcherService.addTx(
+            `${txParams.from}_${approvalRes.nonce}_${chain}`,
+            {
+              nonce: approvalRes.nonce,
+              hash,
+              chain,
+            },
+          );
         }
         if (reqId && !hash) {
-          // transactionBroadcastWatchService.addTx(reqId, {
-          //   reqId,
-          //   address: txParams.from,
-          //   chainId: CHAINS[chain].id,
-          //   nonce: approvalRes.nonce,
-          // });
+          transactionBroadcastWatcherService.addTx(reqId, {
+            reqId,
+            address: txParams.from,
+            chainId: CHAINS[chain].id,
+            nonce: approvalRes.nonce,
+          });
         }
 
         // if (isCoboSafe) {
@@ -713,6 +719,7 @@ class ProviderController extends BaseController {
             req_id: preReqId || '',
             origin,
           });
+
           hash = res.req.tx_id || undefined;
           reqId = res.req.id || undefined;
           if (res.req.push_status === 'failed') {

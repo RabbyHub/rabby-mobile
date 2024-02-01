@@ -378,6 +378,26 @@ function ProviderControllerTester(): JSX.Element {
     );
   };
 
+  const handleSendNFT = () => {
+    const tx = {
+      chainId: 1,
+      from: '0x341a1fbd51825e5a107db54ccb3166deba145479',
+      to: '0xbba4115ecb1f811061ecb5a8dc8fcdee2748ceba',
+      data: '0x42842e0e000000000000000000000000341a1fbd51825e5a107db54ccb3166deba145479000000000000000000000000f5d5b661f9c3d8b5244f00ef25cf25b61f5a1f7d000000000000000000000000000000000000000000000000000000000000010e',
+      gas: '0x26a75',
+      maxFeePerGas: '0x737be7600',
+      maxPriorityFeePerGas: '0x737be7600',
+      nonce: '0x74',
+    };
+    sendRequest(
+      {
+        method: 'eth_sendTransaction',
+        params: [tx],
+      },
+      TEST_SESSION,
+    );
+  };
+
   React.useEffect(() => {
     addDapp({
       info: TEST_DAPP_INFO,
@@ -460,6 +480,11 @@ function ProviderControllerTester(): JSX.Element {
               disabled={!account || !isClientCreated}
               onPress={handleApproveCollection}
               title="Approve Collection"
+            />
+            <StyledButton
+              disabled={!account || !isClientCreated}
+              title="Send NFT(前端测试账号)"
+              onPress={handleSendNFT}
             />
           </Section>
           <Section title="Cross Chain">

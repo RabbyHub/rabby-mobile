@@ -24,6 +24,7 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { toast } from '@/components/Toast';
 
 type ItemProps = {
   item: NFTItem;
@@ -50,7 +51,8 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
     //   token: item,
     //   collectionName,
     // });
-  }, [item, collectionName]);
+    toast.show('Coming Soon :)');
+  }, []);
 
   const numberDisplay = useMemo(() => {
     let v = abbreviateNumber(item.amount || 0);

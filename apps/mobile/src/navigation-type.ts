@@ -55,6 +55,7 @@ export type AccountNavigatorParamList = {
 
 export type TransactionNavigatorParamList = {
   [RootNames.History]?: {};
+  [RootNames.HistoryFilterScam]?: {};
 };
 
 export type SettingNavigatorParamList = {

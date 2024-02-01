@@ -16,6 +16,11 @@ import { sortBy, minBy, maxBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { CHAINS } from '@debank/common';
 import { EVENTS, eventBus } from '@/utils/events';
+import {
+  ActionRequireData,
+  ParsedActionData,
+} from '@/components/Approval/components/Actions/utils';
+import { DappInfo } from './dappService';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -27,7 +32,7 @@ export interface TransactionHistoryItem {
   hash?: string;
   gasUsed?: number;
   // site?: ConnectedSite;
-  site?: any;
+  site?: DappInfo;
 
   pushType?: TxPushType;
   reqId?: string;
@@ -36,9 +41,18 @@ export interface TransactionHistoryItem {
   isWithdrawed?: boolean;
   isFailed?: boolean;
   isSubmitFailed?: boolean;
+  isCompleted?: boolean;
 
-  // explain?: TransactionGroup['explain'];
-  // action?: TransactionGroup['action'];
+  isSynced?: boolean;
+
+  explain?: ObjectType.Merge<
+    ExplainTxResponse,
+    { approvalId: string; calcSuccess: boolean }
+  >;
+  action?: {
+    actionData: ParsedActionData;
+    requiredData: ActionRequireData;
+  };
 }
 
 export interface TransactionSigningItem {
@@ -77,6 +91,12 @@ export class TransactionHistoryService {
   ) => {
     this.store.transactions = produce(this.store.transactions, recipe);
   };
+
+  getPendingCount(address: string) {
+    return this.getTransactionGroups({
+      address,
+    }).filter(item => item.isPending).length;
+  }
 
   getPendingTxsByNonce(address: string, chainId: number, nonce: number) {
     return this.getTransactionGroups({
@@ -157,9 +177,10 @@ export class TransactionHistoryService {
     return maxLocalOrProcessingNonce + 1;
   }
 
-  async getList(
-    address: string,
-  ): Promise<{ pendings: TransactionGroup[]; completeds: TransactionGroup[] }> {
+  getList(address: string): {
+    pendings: TransactionGroup[];
+    completeds: TransactionGroup[];
+  } {
     const groups = this.getTransactionGroups({
       address,
     });
@@ -167,11 +188,13 @@ export class TransactionHistoryService {
     return {
       pendings: sortBy(
         groups.filter(item => item.isPending),
-        'createdAt',
+        item => {
+          return -item.createdAt;
+        },
       ),
       completeds: sortBy(
         groups.filter(item => !item.isPending),
-        'createdAt',
+        item => -item.createdAt,
       ),
     };
   }
@@ -281,6 +304,7 @@ export class TransactionHistoryService {
     success?: boolean;
     gasUsed?: number;
   }) {
+    // todo 没有用到 hash 和 reqId 可能有坑
     const target = this.getTransactionGroups({
       address,
       chainId,
@@ -292,6 +316,7 @@ export class TransactionHistoryService {
 
     target.isPending = false;
     target.isFailed = !success;
+    target.maxGasTx.isCompleted = true;
     if (gasUsed) {
       target.maxGasTx.gasUsed = gasUsed;
     }
@@ -510,8 +535,24 @@ export class TransactionGroup {
     return findMaxGasTx(this.txs);
   }
 
+  get originTx() {
+    return minBy(this.txs, 'createdAt');
+  }
+
   get isPending() {
     return !!this.maxGasTx.isPending;
+  }
+
+  get isCompleted() {
+    return !!this.maxGasTx.isCompleted;
+  }
+
+  get isSynced() {
+    return !!this.maxGasTx.isSynced;
+  }
+
+  set isSynced(v: boolean) {
+    this.maxGasTx.isSynced = v;
   }
 
   set isPending(v: boolean) {

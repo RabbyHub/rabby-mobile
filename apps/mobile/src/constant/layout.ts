@@ -39,6 +39,7 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   History: 'History',
+  HistoryFilterScam: 'HistoryFilterScam',
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',

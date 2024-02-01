@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   RcIconHeaderSettings,
-  RcIconHistory,
   RcIconHeaderRightArrow,
 } from '@/assets/icons/home';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
@@ -20,6 +19,7 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { PendingTxCount } from './components/PendingTxCount';
 
 export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
@@ -135,7 +135,7 @@ export default function HomeHeaderArea() {
         </TouchableView>
         <View style={styles.rightActionsBox}>
           <TouchableView onPress={() => handlePressIcon('history')}>
-            <RcIconHistory style={styles.actionIcon} />
+            <PendingTxCount />
           </TouchableView>
           <TouchableView onPress={() => handlePressIcon('settings')}>
             <RcIconHeaderSettings style={styles.actionIcon} />
@@ -154,14 +154,15 @@ export default function HomeHeaderArea() {
               usd
             )}
             {!isLoading && (
-              <Text
-                style={StyleSheet.compose(
-                  styles.percent,
-                  isDecrease && styles.decrease,
-                )}>
-                {' '}
-                {percent}
-              </Text>
+              <View style={styles.percentBox}>
+                <Text
+                  style={StyleSheet.compose(
+                    styles.percent,
+                    isDecrease && styles.decrease,
+                  )}>
+                  {percent}
+                </Text>
+              </View>
             )}
           </Text>
         }
@@ -212,7 +213,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       flexShrink: 1,
       color: colors['neutral-title-1'],
       fontFamily: 'SF Pro',
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '500',
       flexWrap: 'nowrap',
     },
@@ -227,8 +228,10 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       height: 16,
     },
     walletIcon: {
-      width: 28,
-      height: 28,
+      maxWidth: 24,
+      maxHeight: 24,
+      width: 24,
+      height: 24,
     },
 
     rightActionsBox: {
@@ -248,7 +251,6 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       paddingHorizontal: 20,
       marginTop: 0,
       paddingTop: 28,
-      paddingBottom: 18,
       backgroundColor: colors['neutral-bg-1'],
     },
 
@@ -256,12 +258,17 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       color: colors['neutral-title-1'],
       fontSize: 38,
       fontWeight: '700',
+      textAlign: 'center',
+    },
+    percentBox: {
+      paddingLeft: 8,
+      marginBottom: 3,
     },
     percent: {
-      paddingLeft: 8,
       color: colors['green-default'],
-      fontSize: 16,
-      fontWeight: '500',
+      fontSize: 18,
+      fontWeight: '400',
+      fontStyle: 'normal',
     },
     decrease: {
       color: colors['red-default'],

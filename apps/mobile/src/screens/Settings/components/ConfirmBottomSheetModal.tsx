@@ -4,7 +4,7 @@ import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const ConfirmBottomSheetModal = forwardRef<
@@ -13,11 +13,12 @@ export const ConfirmBottomSheetModal = forwardRef<
     height: number;
     title: React.ReactNode;
     desc: React.ReactNode;
+    descStyle?: StyleProp<TextStyle>;
     onConfirm?: () => void;
     onCancel?: () => void;
   }
 >((props, ref) => {
-  const { height = 0, title, desc, onConfirm, onCancel } = props;
+  const { height = 0, title, desc, onConfirm, onCancel, descStyle } = props;
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
@@ -45,7 +46,7 @@ export const ConfirmBottomSheetModal = forwardRef<
       <BottomSheetView
         style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.desc}>{desc}</Text>
+        <Text style={[styles.desc, descStyle]}>{desc}</Text>
         <View style={styles.btnGroup}>
           <View style={styles.border} />
           <Button
@@ -56,12 +57,15 @@ export const ConfirmBottomSheetModal = forwardRef<
             containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>
             Cancel
           </Button>
+          <View style={styles.btnGap} />
           <Button
             onPress={confirm}
             title={'Confirm'}
             buttonStyle={[
               styles.buttonStyle,
-              { backgroundColor: colors['red-default'] },
+              {
+                backgroundColor: colors['red-default'],
+              },
             ]}
             titleStyle={styles.btnConfirmTitle}
             containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
@@ -108,7 +112,6 @@ const getStyles = createGetStyles(colors => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
     borderTopColor: colors['neutral-line'],
     borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: 'auto',
@@ -133,6 +136,9 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 8,
     flex: 1,
     maxWidth: 170,
+  },
+  btnGap: {
+    width: 18,
   },
 
   buttonStyle: {

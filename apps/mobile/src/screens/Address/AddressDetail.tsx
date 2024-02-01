@@ -44,6 +44,7 @@ import {
   AddressNavigatorParamList,
   RootStackParamsList,
 } from '@/navigation-type';
+import { toast } from '@/components/Toast';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -201,19 +202,21 @@ const AddressInfo = (props: AddressInfoProps) => {
           ]}>
           <Text style={styles.labelText}>Address</Text>
           <TouchableOpacity
-            onPress={() => {
+            onPress={useCallback(() => {
               Clipboard.setString(account.address);
-            }}
+              toast.success('Copied');
+            }, [account?.address])}
             style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-            <Text style={styles.valueText} textBreakStrategy="simple">
+            <Text style={styles.addrText} textBreakStrategy="simple">
               {account.address}
-              <Text>
+              <View style={styles.textIconWrapper}>
                 <RcIconCopyCC
                   color={colors['neutral-foot']}
                   height={14}
                   width={14}
+                  style={styles.textCopyIcon}
                 />
-              </Text>
+              </View>
             </Text>
           </TouchableOpacity>
         </View>
@@ -556,7 +559,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 2,
+      gap: 6,
     },
     labelText: {
       fontSize: 16,
@@ -564,6 +567,10 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
     },
     valueText: {
+      fontSize: 16,
+      color: colors['neutral-body'],
+    },
+    addrText: {
       fontSize: 14,
       color: colors['neutral-body'],
     },
@@ -618,6 +625,18 @@ const getStyles = (colors: AppColorsVariants) =>
     btnConfirmTitle: {
       color: colors['neutral-title-2'],
       flex: 1,
+    },
+    textIconWrapper: {
+      width: 18,
+      height: 14,
+      position: 'relative',
+    },
+    textCopyIcon: {
+      position: 'absolute',
+      width: 14,
+      height: 14,
+      left: 4,
+      top: 1,
     },
   });
 

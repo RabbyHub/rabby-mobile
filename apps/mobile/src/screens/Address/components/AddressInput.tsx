@@ -95,17 +95,13 @@ export const AddressInput: React.FC<Props> = ({
     aliasName || '',
   );
 
-  const inputRef = useRef<TextInput>(null);
-
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
-    inputRef.current?.focus();
   }, [aliasName]);
 
   return (
     <View style={styles.container}>
       <TextInput
-        ref={inputRef}
         onSubmitEditing={handleSubmit}
         value={editingAliasName}
         style={styles.input}

@@ -60,8 +60,8 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     hasBottomBorder: {
       flex: 1,
-      borderBottomWidth: 1,
-      borderBottomColor: '#e5e9ef',
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors['neutral-line'],
     },
     lastChildNoBorder: {
       borderBottomWidth: 0,

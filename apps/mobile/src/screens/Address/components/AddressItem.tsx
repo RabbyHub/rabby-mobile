@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import {
+  Animated,
+  GestureResponderEvent,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton, TouchableOpacity } from 'react-native-gesture-handler';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -33,6 +38,7 @@ import { navigate } from '@/utils/navigation';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
+import { toast } from '@/components/Toast';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
@@ -79,9 +85,14 @@ export const AddressItem = (props: AddressItemProps) => {
     );
   }, [wallet.brandName]);
 
-  const copyAddress = useCallback(() => {
-    Clipboard.setString(wallet.address);
-  }, [wallet.address]);
+  const copyAddress = useCallback(
+    (e?: GestureResponderEvent) => {
+      e?.stopPropagation();
+      Clipboard.setString(wallet.address);
+      toast.success('Copied');
+    },
+    [wallet.address],
+  );
 
   const gotoAddressDetail = useCallback(() => {
     navigation.push(RootNames.StackAddress, {
@@ -254,22 +265,26 @@ export const AddressItem = (props: AddressItemProps) => {
             </View>
 
             <View style={styles.addressBox}>
-              <Text
-                style={StyleSheet.flatten([
-                  styles.text,
-                  isCurrentAddress && styles.currentAddressText,
-                ])}>
-                {address}
-              </Text>
-              <RcIconCopyCC
-                style={styles.copyIcon}
-                onPress={copyAddress}
-                color={
-                  isCurrentAddress
-                    ? themeColors['neutral-title-2']
-                    : themeColors['neutral-foot']
-                }
-              />
+              <TouchableOpacity onPress={copyAddress}>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.text,
+                    isCurrentAddress && styles.currentAddressText,
+                  ])}>
+                  {address}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={copyAddress}>
+                <RcIconCopyCC
+                  style={styles.copyIcon}
+                  color={
+                    isCurrentAddress
+                      ? themeColors['neutral-title-2']
+                      : themeColors['neutral-foot']
+                  }
+                />
+              </TouchableOpacity>
               {!isCurrentAddress && (
                 <Text
                   style={StyleSheet.flatten([
