@@ -227,6 +227,7 @@ export default function AppNavigation({
           />
           <RootStack.Screen
             name={RootNames.StackSearchDapps}
+            options={{ headerShown: false }}
             component={SearchDappsNavigator}
           />
           <RootStack.Screen
@@ -351,6 +352,7 @@ function SearchDappsNavigator() {
     <SearchDappsStack.Navigator
       screenOptions={{
         ...screenOptions,
+        headerShown: false,
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {

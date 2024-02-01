@@ -1,10 +1,7 @@
-import { RootNames } from '@/constant/layout';
-import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
-import { Button } from '@rneui/themed';
-import React from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import RcDappEmpty from '@/assets/icons/dapp/dapp-empty.svg';
+import { useThemeColors } from '@/hooks/theme';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 export const EmptyDapps = () => {
   const colors = useThemeColors();
@@ -18,14 +15,6 @@ export const EmptyDapps = () => {
           <RcDappEmpty width={'100%'} />
         </View>
         <Text style={styles.text}>No Favorite Dapp</Text>
-        <Button
-          buttonStyle={styles.buttonStyle}
-          titleStyle={styles.buttonTitleStyle}
-          title="Explore Popular Dapps"
-          onPress={() => {
-            navigate(RootNames.StackFavoritePopularDapps);
-          }}
-        />
       </View>
     </View>
   );
@@ -33,20 +22,21 @@ export const EmptyDapps = () => {
 
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
-    container: {},
+    container: {
+      marginTop: 50,
+    },
     title: {
       fontSize: 14,
       lineHeight: 17,
       color: colors['neutral-foot'],
-      marginBottom: 20,
-      marginTop: 20,
+      marginBottom: 16,
     },
 
     card: {
       backgroundColor: colors['neutral-card1'],
       paddingHorizontal: 32,
-      paddingTop: 50,
-      paddingBottom: 36,
+      paddingTop: 18,
+      paddingBottom: 18,
       borderColor: colors['neutral-line'],
       borderWidth: 0.5,
       borderRadius: 6,
@@ -58,28 +48,12 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     image: {
       width: 262,
       maxWidth: '100%',
-      marginBottom: 28,
+      marginBottom: 20,
     },
 
     text: {
       color: colors['neutral-foot'],
       fontSize: 14,
       lineHeight: 18,
-      marginBottom: 57,
-    },
-
-    buttonStyle: {
-      width: 289,
-      maxWidth: '100%',
-      height: 52,
-      borderRadius: 6,
-      backgroundColor: colors['blue-default'],
-      boxShadow: '0px 8px 16px 0px rgba(112, 132, 255, 0.25)',
-    },
-    buttonTitleStyle: {
-      fontSize: 15,
-      lineHeight: 18,
-      fontWeight: '500',
-      color: colors['neutral-title-2'],
     },
   });

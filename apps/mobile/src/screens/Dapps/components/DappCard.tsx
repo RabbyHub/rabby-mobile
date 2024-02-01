@@ -3,7 +3,7 @@ import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   StyleProp,
@@ -20,6 +20,8 @@ import { DappIcon } from './DappIcon';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { CHAINS } from '@/constant/chains';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
+import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
+import { Tip } from '@/components';
 
 export const DappCard = ({
   isActive,
@@ -36,6 +38,7 @@ export const DappCard = ({
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [isShowTooltip, setIsShowTooltip] = useState(false);
 
   const chain = CHAINS[data.chainId];
 
@@ -85,13 +88,61 @@ export const DappCard = ({
                 {data.info.name}
               </Text>
             ) : null}
-            {data.info.name && data.info.user_range ? (
+            {data.info.name && data.info.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            {data.info.user_range ? (
-              <Text style={styles.dappInfoText} numberOfLines={1}>
-                {data.info.user_range}
-              </Text>
+            {data.info.collected_list?.length ? (
+              <Tip
+                isVisible={isShowTooltip}
+                onClose={() => {
+                  setIsShowTooltip(false);
+                }}
+                content={
+                  <View style={styles.tooltip}>
+                    <Text style={styles.tooltipTitle}>
+                      Dapps has been list by
+                    </Text>
+                    <View style={styles.tooltipList}>
+                      {data.info.collected_list.map(item => {
+                        return (
+                          <View
+                            style={styles.tooltipListItem}
+                            key={item.logo_url}>
+                            <Image
+                              style={styles.tooltipListItemIcon}
+                              source={{ uri: item.logo_url }}
+                            />
+                            <Text style={styles.tooltipListItemText}>
+                              {item.name}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                }>
+                <TouchableWithoutFeedback
+                  disallowInterruption={true}
+                  hitSlop={{ left: 30, right: 30, top: 50, bottom: 50 }}
+                  onPress={() => {
+                    setIsShowTooltip(true);
+                  }}>
+                  <View style={styles.listBy}>
+                    {data.info.collected_list.slice(0, 6).map(item => {
+                      return (
+                        <Image
+                          style={styles.listByIcon}
+                          source={{ uri: item.logo_url }}
+                          key={item.logo_url}
+                        />
+                      );
+                    })}
+                    {data.info.collected_list?.length > 6 ? (
+                      <RcIconMore />
+                    ) : null}
+                  </View>
+                </TouchableWithoutFeedback>
+              </Tip>
             ) : null}
           </View>
         </View>
@@ -104,11 +155,11 @@ export const DappCard = ({
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
         </TouchableWithoutFeedback>
       </View>
-      {data.info.description ? (
+      {data.info.description && !isActive ? (
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
             <RcIconTriangle style={styles.triangle} />
-            <Text style={styles.dappDescText} numberOfLines={2}>
+            <Text style={styles.dappDescText} numberOfLines={3}>
               {data.info.description}
             </Text>
           </View>
@@ -223,5 +274,45 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       position: 'absolute',
       right: -2,
       bottom: -2,
+    },
+    listBy: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    listByIcon: {
+      width: 12,
+      height: 12,
+      borderRadius: 12,
+    },
+    tooltip: {
+      padding: 12,
+    },
+    tooltipTitle: {
+      color: colors['neutral-title2'],
+      marginBottom: 6,
+      fontSize: 12,
+      lineHeight: 14,
+    },
+    tooltipList: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    tooltipListItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    tooltipListItemIcon: {
+      width: 12,
+      height: 12,
+      borderRadius: 12,
+      flexShrink: 0,
+    },
+    tooltipListItemText: {
+      color: colors['neutral-title2'],
+      fontSize: 12,
+      lineHeight: 14,
     },
   });
