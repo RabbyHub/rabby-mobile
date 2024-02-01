@@ -40,6 +40,7 @@ import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 import { useDapps } from './hooks/useDapps';
 import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
+import HistoryFilterScamScreen from './screens/Transaction/HistoryFilterScamScreen';
 import {
   AccountNavigatorParamList,
   FavoritePopularDappsNavigatorParamList,
@@ -305,7 +306,14 @@ function TransactionNavigator() {
         name={RootNames.History}
         component={HistoryScreen}
         options={{
-          title: 'History',
+          title: 'Transactions',
+        }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.HistoryFilterScam}
+        component={HistoryFilterScamScreen}
+        options={{
+          title: 'Hide scam transactions',
         }}
       />
     </TransactionStack.Navigator>
