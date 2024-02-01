@@ -1,4 +1,5 @@
 import { eventBus, EVENTS } from '@/utils/events';
+import { CHAINS_LIST } from '@debank/common';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
@@ -21,6 +22,10 @@ export function bindWalletConnectEvents(keyring: KeyringInstance) {
   });
 }
 
+const _chainIds = CHAINS_LIST.map(chain => !chain.isTestnet && chain.id).filter(
+  Boolean,
+) as number[];
+
 export async function initWalletConnectKeyring() {
   return getKeyring<WalletConnectKeyring>(
     KEYRING_TYPE.WalletConnectKeyring,
@@ -32,7 +37,7 @@ export async function initWalletConnectKeyring() {
 
 export async function getUri(
   brandName: string,
-  chainId?: number,
+  chainIds?: number[],
   account?: {
     address: string;
     brandName: string;
@@ -45,7 +50,8 @@ export async function getUri(
       KEYRING_TYPE.WalletConnectKeyring,
     );
 
-    const res = await keyring.initConnector(brandName, chainId, account);
+    console.log('chainIds ?? [1]', _chainIds);
+    const res = await keyring.initConnector(brandName, _chainIds, account);
     uri = res.uri;
   } catch (e) {
     console.error(e);
@@ -171,7 +177,7 @@ export async function walletConnectSwitchChain(
     }
   } catch (e) {
     console.log('walletconnect error', e);
-    await killWalletConnectConnector(account.address, account.brandName, false);
+    // await killWalletConnectConnector(account.address, account.brandName, false);
   }
 
   return;

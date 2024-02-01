@@ -44,7 +44,7 @@ export const WalletConnectProcessActions: React.FC<Props> = props => {
       disabledProcess={
         // @ts-expect-error
         (status !== 'CONNECTED' && status !== 'CHAIN_CHANGED') ||
-        chainError ||
+        // chainError ||
         disabledProcess
       }
     />
