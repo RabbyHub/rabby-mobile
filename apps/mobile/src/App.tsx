@@ -4,24 +4,24 @@
  *
  * @format
  */
-import React, { Suspense, useEffect } from 'react';
-import { withExpoSnack } from 'nativewind';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import SplashScreen from 'react-native-splash-screen';
-import { RootSiblingParent } from 'react-native-root-siblings';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useAppTheme } from '@/hooks/theme';
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
-import { createTheme, ThemeProvider } from '@rneui/themed';
-import { useSetupServiceStub } from './core/storage/serviceStoreStub';
+import { useAppTheme } from '@/hooks/theme';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
-import { navigate } from './utils/navigation';
+import { withExpoSnack } from 'nativewind';
+import React, { Suspense, useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { RootSiblingParent } from 'react-native-root-siblings';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import SplashScreen from 'react-native-splash-screen';
 import { RootNames } from './constant/layout';
-import { keyringService } from './core/services';
 import { ThemeColors } from './constant/theme';
+import { keyringService } from './core/services';
+import { useSetupServiceStub } from './core/storage/serviceStoreStub';
+import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
+import { replace } from './utils/navigation';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -44,7 +44,9 @@ function MainScreen() {
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccounts();
     if (!accounts?.length) {
-      navigate(RootNames.StackGetStarted);
+      replace(RootNames.StackGetStarted, {
+        screen: RootNames.GetStarted,
+      });
     }
     SplashScreen.hide();
   });

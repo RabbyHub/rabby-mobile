@@ -53,9 +53,10 @@ const TxChangeItem = ({
           source={{
             uri: token.logo_url,
           }}
+          style={styles.media}
         />
       ) : (
-        <RcIconUnknown />
+        <RcIconUnknown width={14} height={14} />
       )}
       <Text
         style={[styles.text, isSend ? styles.textNegative : null]}

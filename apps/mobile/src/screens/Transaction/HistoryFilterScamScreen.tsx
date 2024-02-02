@@ -9,10 +9,13 @@ import { last } from 'lodash';
 import { useRequest } from 'ahooks';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { Empty } from './components/Empty';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function HistoryFilterScamScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
+  const { bottom } = useSafeAreaInsets();
   const fetchData = async (startTime = 0) => {
     const account = preferenceService.getCurrentAccount();
     const address = account?.address;
@@ -49,8 +52,16 @@ function HistoryFilterScamScreen(): JSX.Element {
   };
 
   const { data, loading } = useRequest(() => fetchData());
+
+  if (!loading && !data?.list?.length) {
+    return <Empty />;
+  }
+
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      style={{
+        paddingBottom: bottom,
+      }}>
       {loading ? (
         <Text style={styles.loadingText}>
           Loading may take a moment, and data delays are possible

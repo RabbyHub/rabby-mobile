@@ -9,7 +9,11 @@ import { SafeAreaView, StyleSheet } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
 import HeaderArea from './HeaderArea';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import { useThemeColors } from '@/hooks/theme';
 import { AssetContainer } from './AssetContainer';
 
@@ -35,9 +39,14 @@ function HomeScreen(): JSX.Element {
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccounts();
     if (!accounts?.length) {
-      navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportNewAddress,
-      });
+      navigation.dispatch(
+        StackActions.replace(RootNames.StackGetStarted, {
+          screen: RootNames.GetStarted,
+        }),
+      );
+      // navigate(RootNames.StackAddress, {
+      //   screen: RootNames.ImportNewAddress,
+      // });
     }
   });
 

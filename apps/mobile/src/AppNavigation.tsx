@@ -300,13 +300,16 @@ function TransactionNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '500',
+          fontSize: 20,
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <TransactionStack.Screen
         name={RootNames.History}
         component={HistoryScreen}
         options={{
+          headerTitle: 'Transactions',
           title: 'Transactions',
         }}
       />
@@ -314,6 +317,7 @@ function TransactionNavigator() {
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
         options={{
+          headerTitle: 'Hide scam transactions',
           title: 'Hide scam transactions',
         }}
       />
@@ -339,6 +343,7 @@ function FavoritePopularDappsNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <FavoritePopularDappsStack.Screen
         name={RootNames.FavoritePopularDapps}
@@ -370,6 +375,7 @@ function SearchDappsNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <SearchDappsStack.Screen
         name={RootNames.SearchDapps}

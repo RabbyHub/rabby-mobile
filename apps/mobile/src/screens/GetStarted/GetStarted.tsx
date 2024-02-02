@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   Modal,
+  Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -97,6 +99,7 @@ function GetStartedScreen(): JSX.Element {
 
   return (
     <View style={styles.screen}>
+      <StatusBar barStyle="light-content" />
       <View style={styles.centerWrapper}>
         {/* top area */}
         <View style={styles.topArea}>
@@ -108,16 +111,16 @@ function GetStartedScreen(): JSX.Element {
             for Ethereum and all EVM chains
           </Text>
         </View>
+      </View>
 
-        {/* button area */}
-        <View style={styles.buttonArea}>
-          <Button
-            buttonStyle={styles.buttonStyle}
-            titleStyle={styles.buttonTitleStyle}
-            title="Get Started"
-            onPress={handleGetStarted}
-          />
-        </View>
+      {/* button area */}
+      <View style={styles.buttonArea}>
+        <Button
+          buttonStyle={styles.buttonStyle}
+          titleStyle={styles.buttonTitleStyle}
+          title="Get Started"
+          onPress={handleGetStarted}
+        />
       </View>
 
       <Modal
@@ -205,19 +208,24 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       maxHeight: '100%',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
+      flex: 1,
       // // leave here for debug
       // borderWidth: 1,
       // borderColor: 'black',
-      paddingBottom: 20,
     },
-    topArea: { flexDirection: 'column', alignItems: 'center' },
+    topArea: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      flex: 0,
+    },
     appName: {
       color: colors['neutral-title-2'],
       fontSize: 24,
       lineHeight: 28,
       fontWeight: '500',
-      marginTop: 18,
+      marginTop: -14,
     },
     appDesc: {
       color: colors['neutral-title-2'],
@@ -252,13 +260,25 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     buttonArea: {
       flexDirection: 'column',
+      alignItems: 'center',
+      paddingBottom: 80,
     },
     buttonStyle: {
       width: 268,
       height: 56,
       borderRadius: 8,
       backgroundColor: colors['neutral-title2'],
-      boxShadow: '0 8 24 0 rgba(0, 0, 0, 0.11)',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.11,
+          shadowRadius: 24,
+        },
+        android: {
+          elevation: 24,
+        },
+      }),
     },
     buttonTitleStyle: {
       fontSize: 17,

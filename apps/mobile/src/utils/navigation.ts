@@ -1,5 +1,8 @@
 import { RootStackParamsList } from '@/navigation-type';
-import { createNavigationContainerRef } from '@react-navigation/native';
+import {
+  StackActions,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 
 export const navigationRef =
   createNavigationContainerRef<RootStackParamsList>();
@@ -13,6 +16,16 @@ export const navigate = ((...arg: any) => {
   if (navigationRef.isReady()) {
     // Perform navigation if the react navigation is ready to handle actions
     navigationRef.navigate(...arg);
+  } else {
+    // You can decide what to do if react navigation is not ready
+    // You can ignore this, or add these actions to a queue you can call later
+  }
+}) as typeof navigationRef.navigate;
+
+export const replace = ((name: any, pramas?: object) => {
+  if (navigationRef.isReady()) {
+    // Perform navigation if the react navigation is ready to handle actions
+    navigationRef.dispatch(StackActions.replace(name, pramas));
   } else {
     // You can decide what to do if react navigation is not ready
     // You can ignore this, or add these actions to a queue you can call later
