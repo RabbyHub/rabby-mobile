@@ -62,11 +62,11 @@ export const SearchDappCardList = ({
     <>
       <View style={styles.listHeader}>
         <Text style={styles.listHeaderText}>
-          Found about{' '}
+          Found{' '}
           <Text style={styles.listHeaderTextStrong}>
             {total != null ? total : '-'}
           </Text>{' '}
-          results.
+          Dapps
         </Text>
         <TouchableOpacity
           onPress={() => {

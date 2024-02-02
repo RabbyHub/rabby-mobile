@@ -3,8 +3,14 @@ import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@rneui/themed';
 import React from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import RcDappEmpty from '@/assets/icons/dapp/dapp-empty.svg';
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 export const EmptyDapps = () => {
   const colors = useThemeColors();
@@ -15,7 +21,13 @@ export const EmptyDapps = () => {
       <Text style={styles.title}>Favorites</Text>
       <View style={styles.card}>
         <View style={styles.image}>
-          <RcDappEmpty width={'100%'} />
+          <Image
+            style={{
+              width: 262,
+              height: 89,
+            }}
+            source={require('@/assets/icons/dapp/dapp-empty.png')}
+          />
         </View>
         <Text style={styles.text}>No Favorite Dapp</Text>
         <Button
