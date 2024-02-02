@@ -37,18 +37,22 @@ export const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
       paddingHorizontal: 20,
+      paddingTop: 20,
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
     popupContainer: {},
     title: {
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-1'],
       flexDirection: 'row',
       marginBottom: 14,
       display: 'flex',
       alignItems: 'center',
+    },
+    titleText: {
+      fontSize: 16,
+      lineHeight: 19,
+      color: colors['neutral-title-1'],
+      marginRight: 6,
     },
     valueAddress: {
       fontWeight: '500',
@@ -90,13 +94,13 @@ const ViewMore = (props: Props) => {
       case 'nftSpender':
         return 475;
       case 'receiver':
-        return 400;
+        return 450;
       case 'nft':
-        return 230;
+        return 250;
       case 'collection':
-        return 180;
+        return 200;
       default:
-        return 400;
+        return 420;
     }
   }, [props.type]);
 

@@ -18,6 +18,14 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
+    title: {
+      color: colors['neutral-title-1'],
+      fontWeight: '700',
+      fontSize: 15,
+      marginBottom: 20,
+      marginTop: 20,
+      lineHeight: 18,
+    },
     origin: {
       display: 'flex',
       marginBottom: 80,
@@ -29,6 +37,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 24,
       height: 24,
       marginRight: 8,
+      borderRadius: 4,
     },
     text: {
       flex: 1,
@@ -55,7 +64,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       backgroundColor: 'transparent',
       borderBottomColor: colors['neutral-line'],
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: 1,
     },
   });
 
@@ -103,9 +112,9 @@ const UserListDrawer = ({
       onDismiss={onClose}
       snapPoints={['45%']}>
       <BottomSheetView style={styles.mainView}>
-        <AppBottomSheetModalTitle
-          title={t('page.connect.manageWhiteBlackList')}
-        />
+        <Text style={styles.title}>
+          {t('page.connect.manageWhiteBlackList')}
+        </Text>
         <View>
           <View style={styles.origin}>
             <DappIcon

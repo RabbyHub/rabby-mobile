@@ -83,13 +83,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text
-          style={{
-            ...commonStyle.primaryText,
-            marginRight: 7,
-          }}>
-          {t('page.signTx.send.sendTo')}
-        </Text>
+        <Text style={styles.titleText}>{t('page.signTx.send.sendTo')}</Text>
         <Values.Address
           address={data.address}
           chain={data.chain}
