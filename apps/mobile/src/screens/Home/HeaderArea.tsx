@@ -20,6 +20,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { PendingTxCount } from './components/PendingTxCount';
+import { isIOS } from '@rneui/base';
 
 export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
@@ -220,12 +221,15 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     addressText: {
       color: colors['neutral-foot'],
       fontFamily: 'SF Pro',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '400',
+      marginBottom: -2,
     },
     accountRightArrow: {
       width: 16,
       height: 16,
+      marginBottom: -3,
+      opacity: 0.7,
     },
     walletIcon: {
       maxWidth: 24,
@@ -262,7 +266,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     },
     percentBox: {
       paddingLeft: 8,
-      marginBottom: 3,
+      marginBottom: isIOS ? 3 : 0,
     },
     percent: {
       color: colors['green-default'],
