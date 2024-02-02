@@ -29,7 +29,7 @@ export function FavoritePopularDappsScreen(): JSX.Element {
   }, [navigation, getHeaderTitle]);
 
   const { data } = useRequest(async () => {
-    return openapi.getHotDapps();
+    return openapi.getHotDapps({ limit: 50 });
   });
 
   const [selectDapps, setSelectDapps] = React.useState<string[]>([]);

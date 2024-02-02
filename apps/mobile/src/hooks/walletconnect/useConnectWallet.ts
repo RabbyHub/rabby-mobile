@@ -9,16 +9,14 @@ export const useConnectWallet = () => {
   const connectWallet = async ({
     address,
     brandName,
-    chainId = 1,
   }: {
     address: string;
     brandName: string;
-    chainId?: number;
   }) => {
     killWalletConnectConnector(address, brandName, true);
     const service = findWalletServiceByBrandName(brandName);
     if (service) {
-      const uri = await apisWalletConnect.getUri(service?.brand, chainId, {
+      const uri = await apisWalletConnect.getUri(service?.brand, {
         address,
         brandName,
       });

@@ -8,6 +8,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 import { apisDapp } from '@/core/apis';
+import { useMount } from 'react-use';
+import { syncBasicDappInfo } from '@/core/apis/dapp';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -90,10 +92,15 @@ export const useDappsHome = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('[useDapps] useFocusEffect');
       getDapps();
     }, [getDapps]),
   );
+
+  useMount(async () => {
+    const res = getDapps();
+    await syncBasicDappInfo(Object.keys(res));
+    getDapps();
+  });
 
   return {
     dapps,

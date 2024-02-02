@@ -12,9 +12,8 @@ import { WalletItem } from './WalletItem';
 import { WalletSVG } from '@/assets/icons/address';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast, toastWithIcon } from '@/components/Toast';
-import { WalletInfo, WALLET_INFO } from '@/utils/walletInfo';
+import { WalletInfo } from '@/utils/walletInfo';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
-import { WALLET_BRAND_NAME_KEY } from '@/hooks/walletconnect/useDisplayBrandName';
 
 const styles = StyleSheet.create({
   walletItem: {
