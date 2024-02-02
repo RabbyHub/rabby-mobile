@@ -40,8 +40,8 @@ export default function ToAddressControl({
     formValues,
     screenState: { showListContactModal },
     computed: { toAddressIsValid, toAddressInContactBook, toAliasName },
-    fns: { handleFieldChange, putScreenState },
-    callbacks: {},
+    fns: { putScreenState },
+    callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
   const colors = useThemeColors();
   const styles = getStyles(colors);

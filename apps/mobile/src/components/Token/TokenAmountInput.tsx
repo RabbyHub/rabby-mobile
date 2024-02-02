@@ -2,6 +2,7 @@ import React, {
   useRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
@@ -14,7 +15,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { uniqBy } from 'lodash';
@@ -25,6 +26,8 @@ import {
 import { AssetAvatar } from '../AssetAvatar';
 import { useSortTokenPure } from '@/screens/Home/hooks/useSortTokens';
 import { devLog } from '@/utils/logger';
+import { splitNumberByStep } from '@/utils/number';
+import { NumericInput } from '../Form/NumbericInput';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -128,6 +131,7 @@ function useLoadTokenList({
     searchedTokenByQuery,
     isSearchLoading,
 
+    tokenInputRef,
     tokenSelectorVisible,
     setTokenSelectorVisible,
 
@@ -145,6 +149,10 @@ interface TokenAmountInputProps {
   value?: string;
   onChange?(amount: string): void;
   onTokenChange(token: TokenItem): void;
+  /**
+   * @deprecated allow amountFocus = true to trigger focus,
+   * just for compability
+   */
   amountFocus?: boolean;
   inlinePrize?: boolean;
   excludeTokens?: TokenItem['id'][];
@@ -178,6 +186,8 @@ export function TokenAmountInput({
     isListLoading,
     displayTokenList,
 
+    tokenInputRef,
+
     tokenSelectorVisible,
     setTokenSelectorVisible,
 
@@ -190,6 +200,25 @@ export function TokenAmountInput({
     excludeTokens,
     onTokenChange,
   });
+
+  useLayoutEffect(() => {
+    if (amountFocus && !tokenSelectorVisible) {
+      tokenInputRef.current?.focus();
+    }
+  }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
+
+  const { valueText } = useMemo(() => {
+    const num = Number(value);
+
+    const valueText = num
+      ? `≈$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
+      : '';
+
+    return {
+      valueNum: num,
+      valueText,
+    };
+  }, [value, token.price]);
 
   return (
     <>
@@ -216,13 +245,33 @@ export function TokenAmountInput({
             </View>
           </View>
         </TouchableView>
-        <View style={styles.rightInput}>
-          <TextInput
+        <View
+          style={[
+            styles.rightInputContainer,
+            inlinePrize && !!valueText && styles.containerHasInlinePrize,
+          ]}>
+          <NumericInput
+            style={[
+              inlinePrize && !!valueText && styles.inputHasInlinePrize,
+              styles.input,
+            ]}
+            value={value}
+            onChangeText={onChange}
+            ref={tokenInputRef}
             placeholder="0"
             placeholderTextColor={colors['neutral-foot']}
             keyboardType="numeric"
-            onChangeText={onChange}
           />
+          {inlinePrize && (
+            <View style={styles.inlinePrizeContainer}>
+              <Text
+                style={styles.inlinePrizeText}
+                ellipsizeMode="tail"
+                numberOfLines={1}>
+                {valueText}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -241,11 +290,14 @@ export function TokenAmountInput({
   );
 }
 
+const PADDING = 12;
+
 const getStyles = createGetStyles(colors => {
   return {
     container: {
       borderRadius: 4,
-      padding: 12,
+      padding: PADDING,
+      paddingRight: 0,
       backgroundColor: colors['neutral-card2'],
 
       width: '100%',
@@ -271,15 +323,6 @@ const getStyles = createGetStyles(colors => {
       borderRightWidth: StyleSheet.hairlineWidth,
       borderRightStyle: 'solid',
     },
-    rightInput: {},
-    // tokenTriggerSeprator: {
-    //   position: 'absolute',
-    //   color: colors['neutral-line'],
-    //   width: StyleSheet.hairlineWidth,
-    //   height: 32,
-    //   top: (52 - 32) / 2,
-    //   right: 0,
-    // },
     leftTokenSymbol: {
       color: colors['neutral-title1'],
       fontSize: 16,
@@ -289,8 +332,44 @@ const getStyles = createGetStyles(colors => {
     },
 
     rightInputContainer: {
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      flexShrink: 1,
       width: '100%',
-      flexShrink: 0,
+      height: '100%',
+      paddingRight: PADDING,
+      // ...makeDebugBorder('red')
+    },
+    containerHasInlinePrize: {
+      position: 'relative',
+    },
+    input: {
+      fontSize: 18,
+    },
+    inputHasInlinePrize: {
+      position: 'absolute',
+      top: -6,
+      right: PADDING / 2,
+      fontWeight: '500',
+      // ...makeDebugBorder()
+    },
+    inlinePrizeContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+
+      position: 'absolute',
+      bottom: 0,
+      right: PADDING / 2,
+    },
+    // 'text-r-neutral-foot text-12 text-right max-w-full truncate'
+    inlinePrizeText: {
+      color: colors['neutral-foot'],
+      fontSize: 13,
+      textAlign: 'right',
+      fontWeight: '500',
+      maxWidth: '100%',
     },
   };
 });

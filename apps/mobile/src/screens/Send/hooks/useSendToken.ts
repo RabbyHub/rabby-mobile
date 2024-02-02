@@ -24,11 +24,16 @@ import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
 import { formatTxInputDataOnERC20 } from '@/utils/transaction';
-import { ARB_LIKE_L2_CHAINS } from '@/constant/gas';
+import {
+  ARB_LIKE_L2_CHAINS,
+  CAN_ESTIMATE_L1_FEE_CHAINS,
+  MINIMUM_GAS_LIMIT,
+} from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { Alert } from 'react-native';
 import { devLog } from '@/utils/logger';
+import { zeroAddress } from '@ethereumjs/util';
 
 function makeDefaultToken(): TokenItem {
   return {
@@ -82,7 +87,7 @@ export function useSendTokenScreenChainToken() {
   const { chainItem, isNativeToken } = useMemo(() => {
     const item = findChainByEnum(chainEnum);
     const isNativeToken =
-      !!chainItem && currentToken?.id === chainItem.nativeTokenAddress;
+      !!item && currentToken?.id === item.nativeTokenAddress;
 
     return {
       chainItem: item,
@@ -156,6 +161,7 @@ export type SendScreenState = {
 
   editBtnDisabled: boolean;
   cacheAmount: string;
+  tokenAmountForGas: string;
   showWhitelistAlert: boolean;
   showGasReserved: boolean;
   balanceError: string | null;
@@ -186,6 +192,7 @@ const DFLT_SEND_STATE = {
 
   editBtnDisabled: false,
   cacheAmount: '0',
+  tokenAmountForGas: '0',
   showWhitelistAlert: false,
   showGasReserved: false,
   balanceError: null,
@@ -248,6 +255,10 @@ export function makeSendTokenValidationSchema(options: {
   return SendTokenSchema;
 }
 
+const fetchGasList = async (chainItem: Chain | null) => {
+  const list: GasLevel[] = await openapi.gasMarket(chainItem?.serverId || '');
+  return list;
+};
 function calcGasCost({
   chainEnum,
   gasPriceMap,
@@ -500,7 +511,6 @@ export function useSendTokenForm() {
         currentPartials?: Partial<FormSendToken>;
         token?: TokenItem;
         isInitFromCache?: boolean;
-        isInUpdate?: boolean;
       },
     ) => {
       let { currentPartials } = opts || {};
@@ -509,10 +519,9 @@ export function useSendTokenForm() {
         ...currentPartials,
       };
 
-      const sendScreenStatePatch = {} as Partial<SendScreenState>;
       const { token, isInitFromCache } = opts || {};
       if (changedValues && changedValues.to) {
-        sendScreenStatePatch.temporaryGrant = false;
+        putScreenState({ temporaryGrant: false });
       }
 
       if (
@@ -531,11 +540,9 @@ export function useSendTokenForm() {
       //   currentTokenRef.current === targetToken,
       // );
       if (!currentValues.to || !isValidAddress(currentValues.to)) {
-        sendScreenStatePatch.editBtnDisabled = true;
-        sendScreenStatePatch.showWhitelistAlert = false;
+        putScreenState({ editBtnDisabled: true, showWhitelistAlert: false });
       } else {
-        sendScreenStatePatch.showWhitelistAlert = true;
-        sendScreenStatePatch.editBtnDisabled = false;
+        putScreenState({ editBtnDisabled: false, showWhitelistAlert: true });
       }
       let resultAmount = currentValues.amount;
       if (!/^\d*(\.\d*)?$/.test(currentValues.amount)) {
@@ -544,7 +551,7 @@ export function useSendTokenForm() {
 
       if (currentValues.amount !== screenState.cacheAmount) {
         if (screenState.showGasReserved && Number(resultAmount) > 0) {
-          sendScreenStatePatch.showGasReserved = false;
+          putScreenState({ showGasReserved: false });
         } else if (isNativeToken && !screenState.isGnosisSafe) {
           const gasCostTokenAmount = calcGasCost({ chainEnum, gasPriceMap });
           if (
@@ -554,11 +561,11 @@ export function useSendTokenForm() {
               .minus(gasCostTokenAmount)
               .lt(0)
           ) {
-            sendScreenStatePatch.balanceWarn = t(
-              'page.sendToken.balanceWarn.gasFeeReservation',
-            );
+            putScreenState({
+              balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
+            });
           } else {
-            sendScreenStatePatch.balanceWarn = null;
+            putScreenState({ balanceWarn: null });
           }
         }
       }
@@ -571,11 +578,11 @@ export function useSendTokenForm() {
         )
       ) {
         // Insufficient balance
-        sendScreenStatePatch.balanceError = t(
-          'page.sendToken.balanceError.insufficientBalance',
-        );
+        putScreenState({
+          balanceError: t('page.sendToken.balanceError.insufficientBalance'),
+        });
       } else {
-        sendScreenStatePatch.balanceError = null;
+        putScreenState({ balanceError: null });
       }
       const nextFormValues = {
         ...currentValues,
@@ -587,24 +594,21 @@ export function useSendTokenForm() {
       //   values: nextFormValues,
       //   currentToken: targetToken,
       // });
-
-      sendScreenStatePatch.cacheAmount = resultAmount;
+      formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
+      patchFormValues(nextFormValues);
+      putScreenState({ cacheAmount: resultAmount });
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
-        sendScreenStatePatch.contactInfo = {
-          address: currentValues.to,
-          name: aliasName,
-        };
-        sendScreenStatePatch.showContactInfo = true;
+        putScreenState({
+          showContactInfo: true,
+          contactInfo: { address: currentValues.to, name: aliasName },
+        });
       } else if (screenState.contactInfo) {
-        sendScreenStatePatch.contactInfo = null;
+        putScreenState({ contactInfo: null });
       }
-
-      putScreenState(sendScreenStatePatch);
-
-      return nextFormValues;
     },
     [
+      patchFormValues,
       chainEnum,
       screenState.cacheAmount,
       screenState.contactInfo,
@@ -620,12 +624,23 @@ export function useSendTokenForm() {
   );
 
   const handleFieldChange = useCallback(
-    <T extends keyof FormSendToken>(f: T, value: FormSendToken[T]) => {
+    <T extends keyof FormSendToken>(
+      f: T,
+      value: FormSendToken[T],
+      options?: {
+        /** @description maybe bad practice? */
+        __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__?: boolean;
+      },
+    ) => {
       formik.setFieldValue(f, value);
       setFormValues(prev => ({ ...prev, [f]: value }));
 
       const nextVal = { ...formik.values, [f]: value };
-      handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
+      const { __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__ = false } =
+        options || {};
+      if (!__NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__) {
+        handleFormValuesChange({ [f]: value }, { currentPartials: nextVal });
+      }
     },
     [formik, setFormValues, handleFormValuesChange],
   );
@@ -673,11 +688,132 @@ export function useSendTokenForm() {
     ],
   );
 
+  const handleGasChange = useCallback(
+    (gas: GasLevel, updateTokenAmount = true, gasLimit = MINIMUM_GAS_LIMIT) => {
+      const nextPartials = {} as Partial<SendScreenState>;
+      nextPartials.selectedGasLevel = gas;
+      const gasTokenAmount = new BigNumber(gas.price).times(gasLimit).div(1e18);
+      nextPartials.tokenAmountForGas = gasTokenAmount.toFixed();
+      putScreenState(nextPartials);
+
+      if (updateTokenAmount && currentToken) {
+        const diffValue = new BigNumber(currentToken.raw_amount_hex_str || 0)
+          .div(10 ** currentToken.decimals)
+          .minus(gasTokenAmount);
+
+        if (diffValue.lt(0)) {
+          putScreenState({ showGasReserved: false });
+        }
+        const amount = diffValue.gt(0) ? diffValue.toFixed() : '0';
+        handleFieldChange('amount', amount, {
+          __NO_TRIGGER_FORM_VALUESCHANGE_CALLBACK__: true,
+        });
+      }
+
+      return gasTokenAmount;
+    },
+    [currentToken, handleFieldChange, putScreenState],
+  );
+
+  const handleClickTokenBalance = useCallback(async () => {
+    if (!currentAccount) return;
+    if (screenState.isLoading || screenState.showGasReserved) return;
+
+    const tokenBalance = new BigNumber(
+      currentToken.raw_amount_hex_str || 0,
+    ).div(10 ** currentToken.decimals);
+    let amount = tokenBalance.toFixed();
+    // const to = form.getFieldValue('to');
+    const to = formik.values.to;
+
+    if (isNativeToken && !screenState.isGnosisSafe) {
+      putScreenState({ showGasReserved: true });
+      try {
+        const list = await fetchGasList(chainItem);
+        putScreenState({ gasList: list });
+        let instant = list[0];
+        for (let i = 1; i < list.length; i++) {
+          if (list[i].price > instant.price) {
+            instant = list[i];
+          }
+        }
+        const gasUsed = await apiProvider.requestETHRpc(
+          {
+            method: 'eth_estimateGas',
+            params: [
+              {
+                from: currentAccount.address,
+                to: to && isValidAddress(to) ? to : zeroAddress(),
+                value: currentToken.raw_amount_hex_str,
+              },
+            ],
+          },
+          findChainByEnum(chainEnum, { fallback: true })!.serverId,
+        );
+        putScreenState({ estimateGas: Number(gasUsed) });
+        let gasTokenAmount = handleGasChange(instant, false, Number(gasUsed));
+        if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
+          const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+            {
+              txParams: {
+                chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
+                from: currentAccount.address,
+                to: to && isValidAddress(to) ? to : zeroAddress(),
+                value: currentToken.raw_amount_hex_str,
+                gas: intToHex(21000),
+                gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
+                data: '0x',
+              },
+            },
+            chainEnum,
+          );
+          gasTokenAmount = gasTokenAmount
+            .plus(new BigNumber(l1GasFee).div(1e18))
+            .times(1.1);
+        }
+        const tokenForSend = tokenBalance.minus(gasTokenAmount);
+        amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+        if (tokenForSend.lt(0)) {
+          putScreenState({ showGasReserved: false });
+        }
+      } catch (e) {
+        if (!screenState.isGnosisSafe) {
+          // Gas fee reservation required
+          putScreenState({
+            showGasReserved: false,
+            balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
+          });
+        }
+      }
+    }
+
+    const values = formik.values;
+    const newValues = {
+      ...values,
+      amount,
+    };
+    formik.setFormikState(prev => ({ ...prev, values: newValues }));
+    handleFormValuesChange(null, { currentPartials: newValues });
+  }, [
+    chainEnum,
+    chainItem,
+    currentAccount,
+    currentToken.decimals,
+    currentToken.raw_amount_hex_str,
+    formik,
+    handleFormValuesChange,
+    handleGasChange,
+    isNativeToken,
+    putScreenState,
+    screenState,
+    t,
+  ]);
+
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
       const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
-      const chain = findChainByEnum(val) || findChainByEnum(CHAINS_ENUM.ETH)!;
+      const chain = findChainByEnum(val, { fallback: true })!;
 
       putChainToken({
         chainEnum: val,
@@ -713,6 +849,7 @@ export function useSendTokenForm() {
       patchFormValues({
         amount: '',
       });
+      console.warn('handleChainChanged:: will close gas reserved!');
       putScreenState({ showGasReserved: false });
       handleFormValuesChange(
         { amount: '' },
@@ -773,6 +910,9 @@ export function useSendTokenForm() {
     currentToken,
     handleCurrentTokenChange,
 
+    handleGasChange,
+    handleClickTokenBalance,
+
     formik,
     formValues,
     handleFieldChange,
@@ -814,13 +954,19 @@ type InternalContext = {
   formik: ReturnType<typeof useSendTokenFormikContext>;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
+  };
+  callbacks: {
+    handleCurrentTokenChange: (token: TokenItem) => void;
     handleFieldChange: <T extends keyof FormSendToken>(
       f: T,
       value: FormSendToken[T],
     ) => void;
-  };
-  callbacks: {
-    handleCurrentTokenChange: (token: TokenItem) => void;
+    handleClickTokenBalance: () => Promise<void> | void;
+    handleGasChange: (
+      gas: GasLevel,
+      updateTokenAmount?: boolean,
+      gasLimit?: number,
+    ) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
   };
 };
@@ -843,10 +989,12 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   formik: null as any,
   fns: {
     putScreenState: () => {},
-    handleFieldChange: () => {},
   },
   callbacks: {
     handleCurrentTokenChange: () => {},
+    handleFieldChange: () => {},
+    handleClickTokenBalance: () => {},
+    handleGasChange: () => {},
     // onFormValuesChange: () => {},
   },
 });

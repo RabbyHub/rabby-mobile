@@ -67,6 +67,8 @@ function SendScreen(): JSX.Element {
     formik,
     formValues,
     handleFieldChange,
+    handleClickTokenBalance,
+    handleGasChange,
 
     chainEnum,
     handleChainChanged,
@@ -221,11 +223,13 @@ function SendScreen(): JSX.Element {
             formik,
             fns: {
               putScreenState: putScreenState,
-              handleFieldChange,
             },
 
             callbacks: {
               handleCurrentTokenChange,
+              handleFieldChange,
+              handleClickTokenBalance,
+              handleGasChange,
             },
           }}>
           <>
@@ -252,7 +256,7 @@ function SendScreen(): JSX.Element {
                 <ToAddressControl className="mt-[20]" />
               </Section>
               {/* balance info */}
-              <BalanceSection />
+              <BalanceSection style={{ marginTop: 20 }} />
             </View>
 
             <BottomArea />

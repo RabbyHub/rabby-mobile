@@ -6,12 +6,12 @@ import RcMaxButton from './icons/max-button.svg';
 import { TokenAmountInput } from '@/components/Token';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
-import {
-  useSendTokenFormik,
-  useSendTokenInternalContext,
-} from './hooks/useSendToken';
+import { useSendTokenInternalContext } from './hooks/useSendToken';
 import { useCurrentAccount } from '@/hooks/account';
 import { devLog } from '@/utils/logger';
+import GasReserved from './components/GasReserved';
+import GasSelectorBottomSheetModal from './components/GasSelector';
+import { CHAINS } from '@debank/common';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -34,7 +34,7 @@ export function Section({
   return <View style={[styles.sectionPanel, style]}>{children}</View>;
 }
 
-export function BalanceSection() {
+export function BalanceSection({ style }: RNViewProps) {
   const { styles } = useThemeStyles(getBalanceStyles);
 
   const { currentAccount } = useCurrentAccount();
@@ -45,6 +45,9 @@ export function BalanceSection() {
       balanceWarn,
       showGasReserved,
       selectedGasLevel,
+      tokenAmountForGas,
+      gasSelectorVisible,
+      gasList,
     },
 
     formValues,
@@ -55,44 +58,58 @@ export function BalanceSection() {
       currentTokenPrice,
     },
 
-    fns: { handleFieldChange },
-    callbacks: { handleCurrentTokenChange },
+    fns: { putScreenState },
+    callbacks: {
+      handleCurrentTokenChange,
+      handleClickTokenBalance,
+      handleFieldChange,
+      handleGasChange,
+    },
   } = useSendTokenInternalContext();
 
-  devLog('[feat] balanceError', balanceError);
+  devLog('BalanceSection:: balanceError', balanceError);
+  devLog('BalanceSection:: formValues.amount', formValues.amount);
+  // devLog('BalanceSection:: showGasReserved', showGasReserved);
+  // devLog('BalanceSection:: selectedGasLevel', selectedGasLevel);
 
   if (!currentToken) return null;
 
   return (
-    <Section>
+    <Section style={style}>
       <View className="mt-[0]" style={styles.titleSection}>
-        {isLoading ? (
-          <Skeleton style={{ width: 100, height: 16 }} />
-        ) : (
-          <View style={styles.balanceArea}>
-            <Text style={styles.balanceText}>
-              Balance: {currentTokenBalance}
-            </Text>
-            {/* max button */}
-            <TouchableView
-              className="h-[100%] ml-[4]"
-              style={styles.maxButtonWrapper}
-              onPress={() => {}}>
-              <RcMaxButton />
-            </TouchableView>
-          </View>
-        )}
+        <View style={styles.balanceArea}>
+          {isLoading ? (
+            <Skeleton style={{ width: 100, height: 16 }} />
+          ) : (
+            <>
+              <Text style={styles.balanceText}>
+                Balance: {currentTokenBalance}
+              </Text>
+              {/* max button */}
+              {currentToken.amount > 0 && (
+                <TouchableView
+                  className="h-[100%] ml-[4]"
+                  style={styles.maxButtonWrapper}
+                  onPress={handleClickTokenBalance}>
+                  <RcMaxButton />
+                </TouchableView>
+              )}
+            </>
+          )}
+        </View>
 
         {/* right area */}
         <View style={styles.issueBlock}>
           {showGasReserved &&
             (selectedGasLevel ? (
-              // <GasReserved
-              //   token={currentToken}
-              //   amount={tokenAmountForGas}
-              //   onClickAmount={handleClickGasReserved}
-              // />
-              <View />
+              <GasReserved
+                token={currentToken}
+                amount={tokenAmountForGas}
+                onClickAmount={() => {
+                  putScreenState({ gasSelectorVisible: true });
+                }}
+                trigger="whole"
+              />
             ) : (
               <Skeleton style={{ width: 180 }} />
             ))}
@@ -108,7 +125,6 @@ export function BalanceSection() {
         {currentAccount && chainItem && (
           <TokenAmountInput
             value={formValues.amount}
-            // value={config.values.amount}
             onChange={value => {
               handleFieldChange?.('amount', value);
             }}
@@ -116,7 +132,7 @@ export function BalanceSection() {
             chainServerId={chainItem.serverId}
             onTokenChange={handleCurrentTokenChange}
             // excludeTokens={[]}
-            // inlinePrize
+            inlinePrize
           />
         )}
       </View>
@@ -137,6 +153,21 @@ export function BalanceSection() {
           </View>
         </View>
       </View>
+
+      <GasSelectorBottomSheetModal
+        visible={gasSelectorVisible}
+        onClose={() => {
+          putScreenState({ gasSelectorVisible: false });
+        }}
+        chainId={chainItem?.id || CHAINS.ETH.id}
+        onChange={val => {
+          putScreenState({ gasSelectorVisible: false });
+          handleGasChange(val);
+        }}
+        gasList={gasList}
+        gas={selectedGasLevel}
+        token={currentToken}
+      />
     </Section>
   );
 }
