@@ -14,6 +14,7 @@ export const DappCardList = ({
   onRemovePress,
   onClosePress,
   onDisconnectPress,
+  ListEmptyComponent,
 }: {
   sections: { title: string; data: DappInfo[]; type?: string }[];
   onPress?: (dapp: DappInfo) => void;
@@ -21,6 +22,11 @@ export const DappCardList = ({
   onRemovePress?: (dapp: DappInfo) => void;
   onClosePress?: (dapp: DappInfo) => void;
   onDisconnectPress?: (dapp: DappInfo) => void;
+  ListEmptyComponent?:
+    | React.ComponentType<any>
+    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+    | null
+    | undefined;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -57,7 +63,7 @@ export const DappCardList = ({
         renderSectionHeader={({ section: { title } }) => {
           return title ? <Text style={styles.listHeader}>{title}</Text> : null;
         }}
-        ListEmptyComponent={EmptyDapps}
+        ListEmptyComponent={ListEmptyComponent}
       />
     </TouchableWithoutFeedback>
   );

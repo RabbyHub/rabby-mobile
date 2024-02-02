@@ -18,6 +18,7 @@ import {
   useActiveViewSheetModalRefs,
   useOpenDappView,
 } from '../hooks/useDappView';
+import { EmptyDapps } from './components/EmptyDapps';
 
 export const DappsScreen = () => {
   return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
@@ -80,6 +81,7 @@ export function DappsScreenRaw(): JSX.Element {
           onDisconnectPress={dapp => {
             disconnectDapp(dapp.origin);
           }}
+          ListEmptyComponent={EmptyDapps}
         />
       </View>
     </NormalScreenContainer>

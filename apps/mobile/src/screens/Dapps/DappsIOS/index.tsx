@@ -28,6 +28,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { DappInfo } from '@/core/services/dappService';
 import { isPossibleDomain } from '@/utils/url';
 import { DappCardList } from '../Dapps/components/DappCardList';
+import { EmptyDapps } from './components/EmptyDapps';
 
 export function DappsIOSScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -192,6 +193,7 @@ export function DappsIOSScreen(): JSX.Element {
               onDisconnectPress={dapp => {
                 disconnectDapp(dapp.origin);
               }}
+              ListEmptyComponent={EmptyDapps}
             />
           </View>
         ) : (
