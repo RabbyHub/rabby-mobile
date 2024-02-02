@@ -74,7 +74,9 @@ const getStyles = (colors: AppColorsVariants) =>
       opacity: 0.5,
     },
     cardHeader: {
-      padding: 12,
+      paddingHorizontal: 12,
+      paddingTop: 12,
+      paddingBottom: 0,
       flexDirection: 'row',
       alignItems: 'center',
       flexWrap: 'wrap',
@@ -99,7 +101,8 @@ const getStyles = (colors: AppColorsVariants) =>
       gap: 6,
     },
     cardBody: {
-      padding: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 20,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',

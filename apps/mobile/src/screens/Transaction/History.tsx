@@ -148,14 +148,15 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card1'],
       borderRadius: 6,
       paddingHorizontal: 12,
-      paddingVertical: 11,
+      paddingVertical: 15,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
     linkText: {
-      fontSize: 14,
-      lineHeight: 17,
+      fontSize: 15,
+      lineHeight: 18,
+      fontWeight: '500',
       color: colors['neutral-body'],
     },
   });

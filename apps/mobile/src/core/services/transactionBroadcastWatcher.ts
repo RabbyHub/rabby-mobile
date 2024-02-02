@@ -37,6 +37,8 @@ export class TransactionBroadcastWatcherService {
         storage: options?.storageAdapter,
       },
     );
+
+    this.roll();
   }
 
   addTx = (reqId: string, data: WatcherItem) => {

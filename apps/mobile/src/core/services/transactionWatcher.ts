@@ -47,8 +47,11 @@ export class TransactionWatcherService {
     }
 
     // this._populateAvailableTxs();
+
+    this.roll();
   }
 
+  // 可能有坑 在加速取消这种场景下
   addTx = (
     id: string,
     { hash, chain, nonce }: { hash: string; chain: CHAINS_ENUM; nonce: string },
@@ -77,7 +80,7 @@ export class TransactionWatcherService {
     }
     const { hash, chain } = this.store.pendingTx[id];
     const chainItem = findChainByEnum(chain);
-    if (!chainItem) {
+    if (!chainItem || !hash) {
       return;
     }
 

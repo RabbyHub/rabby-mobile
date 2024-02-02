@@ -96,6 +96,8 @@ export const SwipeableDappCard = ({
 
   return (
     <Swipeable
+      activeOffsetX={[-30, 30]}
+      failOffsetY={[-30, 30]}
       renderRightActions={renderRightActions}
       rightThreshold={40}
       overshootRight={false}

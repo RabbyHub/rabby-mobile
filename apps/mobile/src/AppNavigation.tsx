@@ -299,7 +299,8 @@ function TransactionNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
+          fontWeight: '500',
+          fontSize: 20,
         },
         headerTintColor: colors['neutral-title-1'],
       }}>
@@ -307,6 +308,7 @@ function TransactionNavigator() {
         name={RootNames.History}
         component={HistoryScreen}
         options={{
+          headerTitle: 'Transactions',
           title: 'Transactions',
         }}
       />
@@ -314,6 +316,7 @@ function TransactionNavigator() {
         name={RootNames.HistoryFilterScam}
         component={HistoryFilterScamScreen}
         options={{
+          headerTitle: 'Hide scam transactions',
           title: 'Hide scam transactions',
         }}
       />
