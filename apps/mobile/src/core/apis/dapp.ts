@@ -95,11 +95,22 @@ export const createDappBySession = ({
   };
 };
 
-export const syncBasicDappInfo = async (origin: string) => {
-  const info = await fetchDappInfo(origin);
-  if (info) {
-    dappService.patchDapp(origin, {
-      info,
-    });
+export const syncBasicDappInfo = async (origin: string | string[]) => {
+  const input = Array.isArray(origin) ? origin : [origin];
+  const ids = input
+    .filter(item => !!item)
+    .map(item => item.replace(/^https?:\/\//, ''));
+
+  if (!ids.length) {
+    return;
   }
+
+  const res = await openapi.getDappsInfo({
+    ids: ids,
+  });
+  res.forEach(item => {
+    dappService.patchDapp(`https://${item.id}`, {
+      info: item,
+    });
+  });
 };

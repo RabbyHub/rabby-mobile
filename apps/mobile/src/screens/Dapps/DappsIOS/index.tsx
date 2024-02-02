@@ -1,51 +1,65 @@
-import React, { useMemo, useState } from 'react';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import React, { useMemo } from 'react';
 
-import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
-import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { ScreenLayouts } from '@/constant/layout';
-import { openapi } from '@/core/request';
-import { DappInfo } from '@/core/services/dappService';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors } from '@/hooks/theme';
-import { useDapps } from '@/hooks/useDapps';
-import { findChainByEnum } from '@/utils/chain';
-import { isPossibleDomain } from '@/utils/url';
-import { CHAINS_ENUM } from '@debank/common';
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { useNavigation } from '@react-navigation/native';
+import { Keyboard, StyleSheet, View } from 'react-native';
+// import { useRequest } from 'ahooks';
+import { AppColorsVariants } from '@/constant/theme';
+import { useDappsHome } from '@/hooks/useDapps';
 import { SearchBar } from '@rneui/themed';
-import { useDebounce, useInfiniteScroll } from 'ahooks';
-import {
-  Keyboard,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
 import {
   useActiveViewSheetModalRefs,
   useOpenDappView,
-  useOpenUrlView,
 } from '../hooks/useDappView';
-import { LinkCard } from './components/LinkCard';
-import { SearchDappCardList } from './components/SearchDappCardList';
-import { SearchEmpty } from './components/SearchEmpty';
-import { SearchSuggest } from './components/SearchSuggest';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
+import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
+import { findChainByEnum } from '@/utils/chain';
+import { openapi } from '@/core/request';
+import { CHAINS_ENUM } from '@debank/common';
+import { useDebounce, useInfiniteScroll } from 'ahooks';
+import { LinkCard } from '../SearchDapps/components/LinkCard';
+import { SearchDappCardList } from '../SearchDapps/components/SearchDappCardList';
+import { SearchEmpty } from '../SearchDapps/components/SearchEmpty';
+import { SearchSuggest } from '../SearchDapps/components/SearchSuggest';
+import { stringUtils } from '@rabby-wallet/base-utils';
+import { DappInfo } from '@/core/services/dappService';
+import { isPossibleDomain } from '@/utils/url';
+import { DappCardList } from '../Dapps/components/DappCardList';
+import { EmptyDapps } from './components/EmptyDapps';
 
-export function SearchDappsScreen(): JSX.Element {
+export function DappsIOSScreen(): JSX.Element {
   const navigation = useNavigation();
   const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  const getHeaderTitle = React.useCallback(() => {
+    return <HeaderTitleText>Dapps</HeaderTitleText>;
+  }, []);
 
   React.useEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: getHeaderTitle,
     });
-  }, [navigation]);
+  }, [navigation, getHeaderTitle]);
 
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-
-  const [searchText, setSearchText] = React.useState('');
+  const {
+    dappSections,
+    updateFavorite,
+    removeDapp,
+    disconnectDapp,
+    dapps,
+    addDapp,
+  } = useDappsHome();
+  const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
+  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 
   const ref = React.useRef<any>(null);
   const [chain, setChain] = React.useState<CHAINS_ENUM>();
+  const [searchText, setSearchText] = React.useState('');
+  const [isFocus, setIsFoucs] = React.useState(false);
 
   const debouncedSearchValue = useDebounce(searchText, {
     wait: 500,
@@ -88,9 +102,6 @@ export function SearchDappsScreen(): JSX.Element {
       },
     },
   );
-
-  const { dapps, addDapp } = useDapps();
-
   const list = useMemo(() => {
     return (data?.list || []).map(info => {
       const origin = stringUtils.ensurePrefix(info.id, 'https://');
@@ -104,18 +115,14 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
-  const { openUrlAsDapp } = useOpenDappView();
-  const { setOpenedUrl } = useOpenUrlView();
-  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
   const isDomain = isPossibleDomain(debouncedSearchValue);
-  const [isFocus, setIsFocus] = useState(false);
 
   return (
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <View style={styles.page}>
+      <NormalScreenContainer style={styles.page}>
         <View style={styles.header}>
           <SearchBar
             ref={ref}
@@ -145,7 +152,7 @@ export function SearchDappsScreen(): JSX.Element {
               setChain(undefined);
               // runSearch(v);
             }}
-            showCancel
+            // showCancel
             showLoading={loading}
             cancelButtonProps={{
               buttonTextStyle: styles.cancelButton,
@@ -154,77 +161,103 @@ export function SearchDappsScreen(): JSX.Element {
             //   setSearchText('');
             // }}
             onCancel={() => {
-              navigation.goBack();
+              // navigation.goBack();
             }}
-            autoFocus
             onFocus={() => {
-              setIsFocus(true);
+              setIsFoucs(true);
             }}
             onBlur={() => {
-              setIsFocus(false);
+              setIsFoucs(false);
             }}
           />
         </View>
-        {debouncedSearchValue ? (
-          <>
-            <LinkCard
-              url={debouncedSearchValue}
-              onPress={generalUrl => {
-                // TODO: should we validate the url?
-                openUrlAsDapp(generalUrl);
-                toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-                Keyboard.dismiss();
-              }}
-            />
-            <SearchDappCardList
-              chain={chain}
-              onChainChange={setChain}
-              onEndReached={loadMore}
-              data={list}
-              loading={loading}
-              empty={<SearchEmpty isDomain={isDomain} />}
-              total={data?.page?.total}
+        {!isFocus && !searchText ? (
+          <View style={styles.container}>
+            <DappCardList
+              sections={dappSections}
               onPress={dapp => {
                 openUrlAsDapp(dapp.origin);
                 toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
               }}
               onFavoritePress={dapp => {
-                addDapp({
-                  ...dapp,
-                  isFavorite: !dapp.isFavorite,
-                });
+                updateFavorite(dapp.origin, !dapp.isFavorite);
               }}
+              onClosePress={dapp => {
+                // for 'inUse' section, close it rather than remove it.
+                closeOpenedDapp(dapp.origin);
+              }}
+              onRemovePress={dapp => {
+                // for 'favorites' section, close it rather than remove it.
+                removeDapp(dapp.origin);
+              }}
+              onDisconnectPress={dapp => {
+                disconnectDapp(dapp.origin);
+              }}
+              ListEmptyComponent={EmptyDapps}
             />
-          </>
+          </View>
         ) : (
-          <SearchSuggest
-            onPress={v => {
-              // runSearch(v);
-              setSearchText(v);
-            }}
-          />
+          <View style={styles.container}>
+            {debouncedSearchValue ? (
+              <>
+                <LinkCard
+                  url={debouncedSearchValue}
+                  onPress={generalUrl => {
+                    // TODO: should we validate the url?
+                    openUrlAsDapp(generalUrl);
+                    toggleShowSheetModal(
+                      'openedDappWebviewSheetModalRef',
+                      true,
+                    );
+                  }}
+                />
+                <SearchDappCardList
+                  chain={chain}
+                  onChainChange={setChain}
+                  onEndReached={loadMore}
+                  data={list}
+                  loading={loading}
+                  empty={<SearchEmpty isDomain={isDomain} />}
+                  total={data?.page?.total}
+                  onPress={dapp => {
+                    openUrlAsDapp(dapp.origin);
+                    toggleShowSheetModal(
+                      'openedDappWebviewSheetModalRef',
+                      true,
+                    );
+                    Keyboard.dismiss();
+                  }}
+                  onFavoritePress={dapp => {
+                    addDapp({
+                      ...dapp,
+                      isFavorite: !dapp.isFavorite,
+                    });
+                  }}
+                />
+              </>
+            ) : null}
+          </View>
         )}
-      </View>
+      </NormalScreenContainer>
     </TouchableWithoutFeedback>
   );
 }
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     page: {
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
       backgroundColor: colors['neutral-bg-2'],
-      paddingTop: ScreenLayouts.headerAreaHeight,
     },
     container: {
-      padding: 20,
+      flex: 1,
+      paddingBottom: 80,
     },
+
     searchContainer: {
       backgroundColor: 'transparent',
       paddingVertical: 6,
       paddingHorizontal: 0,
+      marginRight: 0,
     },
     searchInputContainer: {
       backgroundColor: colors['neutral-card-1'],
@@ -234,9 +267,12 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       borderColor: colors['neutral-line'],
       height: 50,
       marginLeft: 0,
+      paddingRight: 0,
+      marginRight: 0,
     },
     searchInputContainerFocus: {
       borderColor: colors['blue-default'],
+      marginRight: 58,
     },
     searchInput: {
       color: colors['neutral-title-1'],
@@ -259,5 +295,3 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       paddingHorizontal: 20,
     },
   });
-
-export default SearchDappsScreen;

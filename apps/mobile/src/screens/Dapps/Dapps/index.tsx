@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import React from 'react';
 
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
@@ -7,19 +7,24 @@ import TouchableItem from '@/components/Touchable/TouchableItem';
 import { RootNames } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { DappCardList } from './components/DappCardList';
 // import { useRequest } from 'ahooks';
-import { useDappsHome } from '@/hooks/useDapps';
 import { AppColorsVariants } from '@/constant/theme';
-import { useDapps } from '@/hooks/useDapps';
+import { useDappsHome } from '@/hooks/useDapps';
+import { DappsIOSScreen } from '../DappsIOS';
 import {
   useActiveViewSheetModalRefs,
   useOpenDappView,
 } from '../hooks/useDappView';
+import { EmptyDapps } from './components/EmptyDapps';
 
-export function DappsScreen(): JSX.Element {
+export const DappsScreen = () => {
+  return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
+};
+
+export function DappsScreenRaw(): JSX.Element {
   const navigation = useNavigation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -76,6 +81,7 @@ export function DappsScreen(): JSX.Element {
           onDisconnectPress={dapp => {
             disconnectDapp(dapp.origin);
           }}
+          ListEmptyComponent={EmptyDapps}
         />
       </View>
     </NormalScreenContainer>
