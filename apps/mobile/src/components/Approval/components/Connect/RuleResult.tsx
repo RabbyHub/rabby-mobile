@@ -48,7 +48,6 @@ const getStyles = (colors: AppColorsVariants) =>
       flexWrap: 'wrap',
       flexDirection: 'row',
       gap: 8,
-      flex: 1,
     },
     collectListItemImage: {
       width: 20,
