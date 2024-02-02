@@ -36,7 +36,7 @@ import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import { checkVersion } from '@/utils/version';
-import { APP_URLS, APP_VERSION } from '@/core/services/constant';
+import { APP_URLS, APP_VERSION } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 
 const Container = styled(NormalScreenContainer)`

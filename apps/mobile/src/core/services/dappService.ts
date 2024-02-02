@@ -2,7 +2,7 @@ import type { CHAINS_ENUM } from '@debank/common';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
-import { INTERNAL_REQUEST_ORIGIN } from './constant';
+import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 
 export interface DappInfo {
   origin: string;
