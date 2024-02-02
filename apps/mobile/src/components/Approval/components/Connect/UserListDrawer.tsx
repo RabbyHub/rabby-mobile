@@ -53,18 +53,28 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     footerItem: {
       flexDirection: 'row',
+      position: 'relative',
     },
     radioText: {
       flex: 1,
       fontWeight: '500',
       fontSize: 13,
       lineHeight: 15,
+      fontFamily: 'Roboto',
     },
     radioContainer: {
       flex: 1,
-      backgroundColor: 'transparent',
-      borderBottomColor: colors['neutral-line'],
-      borderBottomWidth: 1,
+      // backgroundColor: 'transparent',
+      // borderBottomColor: colors['neutral-line'],
+      // borderBottomWidth: 0.5,
+    },
+    line: {
+      height: 0.5,
+      backgroundColor: colors['neutral-line'],
+      width: 328,
+      position: 'absolute',
+      left: 18,
+      bottom: 0,
     },
   });
 
@@ -149,6 +159,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: false })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerItem}
@@ -169,6 +180,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: true })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={StyleSheet.flatten([
