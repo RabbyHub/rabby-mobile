@@ -301,6 +301,7 @@ function TransactionNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <TransactionStack.Screen
         name={RootNames.History}
@@ -338,6 +339,7 @@ function FavoritePopularDappsNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <FavoritePopularDappsStack.Screen
         name={RootNames.FavoritePopularDapps}
@@ -368,6 +370,7 @@ function SearchDappsNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
+        headerTintColor: colors['neutral-title-1'],
       }}>
       <SearchDappsStack.Screen
         name={RootNames.SearchDapps}

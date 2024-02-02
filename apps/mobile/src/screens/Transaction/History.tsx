@@ -21,6 +21,7 @@ import { HistoryList } from './components/HistoryList';
 import { Empty } from './components/Empty';
 import { findChainByServerID } from '@/utils/chain';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
@@ -28,6 +29,7 @@ function HistoryScreen(): JSX.Element {
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
   const navigation = useNavigation();
+  const { bottom } = useSafeAreaInsets();
 
   const fetchData = async (startTime = 0) => {
     const address = account?.address;
@@ -108,7 +110,10 @@ function HistoryScreen(): JSX.Element {
   }
 
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      style={{
+        paddingBottom: bottom,
+      }}>
       <TouchableOpacity
         onPress={() => {
           navigation.push(RootNames.StackTransaction, {
