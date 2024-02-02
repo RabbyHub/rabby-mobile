@@ -573,9 +573,13 @@ const GasSelector = ({
                     </Text>
                     {L2_ENUMS.includes(chain.enum) &&
                       !CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum) && (
-                        <View className="relative ml-6">
+                        <View
+                          style={{
+                            position: 'relative',
+                            marginLeft: 6,
+                          }}>
                           <Tip content={t('page.signTx.l2GasEstimateTooltip')}>
-                            <IconQuestionMark className="w-14" />
+                            <IconQuestionMark style={{ width: 14 }} />
                           </Tip>
                         </View>
                       )}
@@ -815,8 +819,11 @@ const GasSelector = ({
                     <Text>.</Text>
                   </View>
                 )}
-                <View className={clsx({ 'opacity-50': disableNonce })}>
-                  <Text style={styles.gasLimitLabelText}>
+                <View
+                  style={{
+                    opacity: disableNonce ? 0.5 : 1,
+                  }}>
+                  <Text style={styles.nonceTitle}>
                     {t('page.signTx.nonceTitle')}
                   </Text>
                   <BottomSheetTextInput

@@ -36,6 +36,7 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-3'],
       borderRadius: 4,
       borderColor: 'transparent',
+      borderWidth: 1,
     },
     cardActive: {
       backgroundColor: colors['blue-light-1'],
@@ -43,6 +44,13 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     cardItem: {
       marginTop: 4,
+    },
+    cardItemTitle: {
+      color: colors['neutral-body'],
+      fontSize: 12,
+      marginTop: 8,
+      textAlign: 'center',
+      lineHeight: 14,
     },
     cardItemText: {
       color: colors['neutral-title-1'],
@@ -54,7 +62,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 18,
     },
     cardItemTextActive: {
-      color: colors['blue-default'],
+      // color: colors['blue-default'],
     },
     cardBodyDisabled: {},
   });
@@ -113,7 +121,7 @@ export const GasSelectContainer = ({
               customerInputRef.current?.blur();
             }
           }}>
-          <Text style={[styles.cardItem, styles.cardItemText]}>
+          <Text style={[styles.cardItem, styles.cardItemTitle]}>
             {t(getGasLevelI18nKey(item.level))}
           </Text>
           <View style={styles.cardItem}>

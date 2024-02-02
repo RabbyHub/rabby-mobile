@@ -18,6 +18,14 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
+    title: {
+      color: colors['neutral-title-1'],
+      fontWeight: '700',
+      fontSize: 15,
+      marginBottom: 20,
+      marginTop: 20,
+      lineHeight: 18,
+    },
     origin: {
       display: 'flex',
       marginBottom: 30,
@@ -29,7 +37,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 24,
       height: 24,
       marginRight: 8,
-      borderRadius: 100,
+      borderRadius: 4,
     },
     text: {
       flex: 1,
@@ -45,6 +53,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     footerItem: {
       flexDirection: 'row',
+      position: 'relative',
     },
     radioText: {
       flex: 1,
@@ -106,9 +115,9 @@ const UserListDrawer = ({
   return (
     <AppBottomSheetModal ref={modalRef} onDismiss={onClose} snapPoints={[320]}>
       <BottomSheetView style={styles.mainView}>
-        <AppBottomSheetModalTitle
-          title={t('page.connect.manageWhiteBlackList')}
-        />
+        <Text style={styles.title}>
+          {t('page.connect.manageWhiteBlackList')}
+        </Text>
         <View>
           <View style={styles.origin}>
             <DappIcon
@@ -143,6 +152,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: false })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerItem}
@@ -163,6 +173,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: true })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={StyleSheet.flatten([

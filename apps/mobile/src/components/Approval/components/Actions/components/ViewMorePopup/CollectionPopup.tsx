@@ -51,10 +51,14 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
   const commonStyle = useCommonStyle();
 
   return (
-    <div>
-      <View style={styles.title}>
-        <Text style={styles.left}>{t('page.signTx.nftCollection')}</Text>
-        <Text style={styles.right}>{data.collection.name}</Text>
+    <View>
+      <View style={viewMoreStyles.title}>
+        <Text style={viewMoreStyles.titleText}>
+          {t('page.signTx.nftCollection')}
+        </Text>
+        <Text style={{ ...styles.right, ...commonStyle.primaryText }}>
+          {data.collection.name}
+        </Text>
       </View>
       <Table style={viewMoreStyles.viewMoreTable}>
         <Col>
@@ -82,6 +86,6 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
           </Row>
         </Col>
       </Table>
-    </div>
+    </View>
   );
 };

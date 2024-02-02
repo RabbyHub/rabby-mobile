@@ -54,18 +54,22 @@ const getStyles = (colors: AppColorsVariants) =>
 
       elevation: 12,
     },
+    dappIconWrapper: {
+      position: 'relative',
+      marginRight: 8,
+    },
     dappIcon: {
       width: 24,
       height: 24,
-      borderRadius: 100,
+      borderRadius: 4,
     },
     chainLogo: {
       width: 14,
       height: 14,
       borderRadius: 100,
       position: 'absolute',
-      top: -4,
-      right: -4,
+      top: -5,
+      right: -5,
     },
     requestOrigin: {
       height: 30,
