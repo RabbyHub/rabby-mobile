@@ -9,8 +9,8 @@ const getStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
     icon: {
       backgroundColor: colors['blue-default'],
-      width: 24,
-      height: 24,
+      width: 16,
+      height: 16,
       borderRadius: 12,
       justifyContent: 'center',
       alignItems: 'center',

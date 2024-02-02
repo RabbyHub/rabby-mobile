@@ -136,6 +136,7 @@ export const getStyle = (colors: AppColorsVariants) =>
     },
     signTitleRight: {
       flexDirection: 'row',
+      alignItems: 'center',
     },
     tipContent: {
       maxWidth: 358,

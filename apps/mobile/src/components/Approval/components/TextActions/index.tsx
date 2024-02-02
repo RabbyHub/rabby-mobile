@@ -6,6 +6,7 @@ import CreateKey from './CreateKey';
 import VerifyAddress from './VerifyAddress';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import {
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -257,7 +258,16 @@ const Actions = ({
       <View>
         <View style={styles.messageTitleWrapper}>
           <Text style={styles.messageTitle}>{t('page.signText.message')}</Text>
-          <View style={styles.messageTitleLine} />
+          <View
+            style={StyleSheet.flatten([
+              styles.messageTitleLine,
+              Platform.select({
+                ios: {
+                  borderStyle: 'solid',
+                },
+              }),
+            ])}
+          />
         </View>
         <ScrollView
           style={StyleSheet.flatten([

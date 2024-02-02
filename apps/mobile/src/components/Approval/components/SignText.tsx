@@ -25,7 +25,7 @@ import { hex2Text } from '@/constant/tx';
 import { openapi, testOpenapi } from '@/core/request';
 import { apiSecurityEngine } from '@/core/apis';
 import { useAsync } from 'react-use';
-import { Skeleton } from '@rneui/base';
+import { Skeleton } from '@rneui/themed';
 import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TextActions';
 import { useThemeColors } from '@/hooks/theme';

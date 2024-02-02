@@ -30,7 +30,14 @@ import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { Chain } from '@debank/common';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import CoboSafeCreate from './CoboSafeCreate';
@@ -388,7 +395,16 @@ const Actions = ({
       <View>
         <View style={styles.messageTitleWrapper}>
           <Text style={styles.messageTitle}>{t('page.signText.message')}</Text>
-          <View style={styles.messageTitleLine} />
+          <View
+            style={StyleSheet.flatten([
+              styles.messageTitleLine,
+              Platform.select({
+                ios: {
+                  borderStyle: 'solid',
+                },
+              }),
+            ])}
+          />
         </View>
         <View
           style={StyleSheet.flatten([

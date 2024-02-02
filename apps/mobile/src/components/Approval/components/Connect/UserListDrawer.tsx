@@ -28,7 +28,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     origin: {
       display: 'flex',
-      marginBottom: 80,
+      marginBottom: 30,
 
       flexDirection: 'row',
       alignItems: 'center',
@@ -58,23 +58,19 @@ const getStyles = (colors: AppColorsVariants) =>
     radioText: {
       flex: 1,
       fontWeight: '500',
-      fontSize: 13,
+      fontSize: 15,
       lineHeight: 15,
-      fontFamily: 'Roboto',
+      marginLeft: 0,
     },
     radioContainer: {
       flex: 1,
-      // backgroundColor: 'transparent',
-      // borderBottomColor: colors['neutral-line'],
-      // borderBottomWidth: 0.5,
+      backgroundColor: 'transparent',
+      borderBottomColor: colors['neutral-line'],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingHorizontal: 0,
     },
-    line: {
-      height: 0.5,
-      backgroundColor: colors['neutral-line'],
-      width: 328,
-      position: 'absolute',
-      left: 18,
-      bottom: 0,
+    radioContainerLast: {
+      borderBottomWidth: 0,
     },
   });
 
@@ -117,10 +113,7 @@ const UserListDrawer = ({
   }, [visible]);
 
   return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      onDismiss={onClose}
-      snapPoints={['45%']}>
+    <AppBottomSheetModal ref={modalRef} onDismiss={onClose} snapPoints={[320]}>
       <BottomSheetView style={styles.mainView}>
         <Text style={styles.title}>
           {t('page.connect.manageWhiteBlackList')}
@@ -196,6 +189,10 @@ const UserListDrawer = ({
                 {
                   color: colors['red-default'],
                 },
+              ])}
+              containerStyle={StyleSheet.flatten([
+                styles.radioContainer,
+                styles.radioContainerLast,
               ])}
               right
               iconRight

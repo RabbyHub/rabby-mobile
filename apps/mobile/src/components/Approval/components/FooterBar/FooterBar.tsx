@@ -84,6 +84,14 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       flexDirection: 'row',
     },
+    requestOriginBorder: {
+      position: 'absolute',
+      bottom: 0,
+      left: -20,
+      right: -20,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors['neutral-line'],
+    },
     origin: {
       color: colors['neutral-title-1'],
       flex: 1,
@@ -122,6 +130,10 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     container: {
       position: 'relative',
+    },
+    dappIconWrapper: {
+      position: 'relative',
+      marginRight: 8,
     },
   });
 
@@ -246,19 +258,20 @@ export const FooterBar: React.FC<Props> = ({
         })}>
         {origin && (
           <View style={styles.requestOrigin}>
-            <View style={styles.dappIconWrapper}>
-              <DappIcon
-                source={{ uri: originLogo }}
-                origin={origin}
-                style={styles.dappIcon}
-              />
-              {/* <Tip content={currentChain.name}> */}
-              <Image
-                source={{ uri: currentChain.logo }}
-                style={styles.chainLogo}
-              />
-              {/* </Tip> */}
-            </View>
+            <Tip content={currentChain.name}>
+              <View style={styles.dappIconWrapper}>
+                <DappIcon
+                  source={{ uri: originLogo }}
+                  origin={origin}
+                  style={styles.dappIcon}
+                />
+                <Image
+                  source={{ uri: currentChain.logo }}
+                  style={styles.chainLogo}
+                />
+              </View>
+            </Tip>
+
             <Text style={styles.origin}>{displayOrigin}</Text>
             <Text style={styles.right}>
               {t('page.signFooterBar.requestFrom')}
@@ -288,6 +301,7 @@ export const FooterBar: React.FC<Props> = ({
                 style={styles.securityLevelTag}
               />
             )}
+            <View style={styles.requestOriginBorder} />
           </View>
         )}
         <AccountInfo
