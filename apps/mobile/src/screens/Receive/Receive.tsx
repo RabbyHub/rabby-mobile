@@ -28,6 +28,7 @@ import { findChainByEnum } from '@/utils/chain';
 import { Button } from '@/components/Button';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-title-2'],
@@ -61,6 +62,8 @@ function ReceiveScreen(): JSX.Element {
 
   const { on: isShowAccount, toggle: toggleShowAccount } = useSwitch(true);
   const { currentAccount: account } = useCurrentAccount();
+
+  const { balance } = useCurrentBalance(account?.address, true, false);
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
@@ -140,7 +143,7 @@ function ReceiveScreen(): JSX.Element {
                   </Text>
 
                   <Text style={styles.accountBalance}>
-                    ${splitNumberByStep((account.balance || 0).toFixed(2))}
+                    ${splitNumberByStep((balance || 0).toFixed(2))}
                   </Text>
                 </View>
                 {account.type === KEYRING_CLASS.WATCH && (
