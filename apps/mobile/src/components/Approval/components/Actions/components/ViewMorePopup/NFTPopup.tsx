@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import { Chain } from '@debank/common';
-// import NFTWithName from '../NFTWithName';
+import NFTWithName from '../NFTWithName';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { formatAmount } from '@/utils/number';
 import { getStyle } from '../ViewMore';
@@ -32,15 +32,9 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
 
   return (
     <View>
-      <View style={styles.title} className="title flex">
-        <Text className="mr-16 text-15 text-r-neutral-body">NFT</Text>
-        {/* <NFTWithName
-          nft={data.nft}
-          textStyle={{
-            fontSize: '15px',
-            lineHeight: '18px',
-          }}
-        /> */}
+      <View style={styles.title}>
+        <Text style={styles.titleText}>NFT</Text>
+        <NFTWithName nft={data.nft} textStyle={commonStyle.primaryText} />
       </View>
       <Table style={styles.viewMoreTable}>
         <Col>

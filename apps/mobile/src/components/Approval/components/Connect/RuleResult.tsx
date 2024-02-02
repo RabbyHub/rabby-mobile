@@ -8,6 +8,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { Tip } from '@/components/Tip';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -35,6 +36,8 @@ const getStyles = (colors: AppColorsVariants) =>
     ruleValue: {
       display: 'flex',
       justifyContent: 'flex-end',
+      flexDirection: 'row',
+      flex: 1,
       fontWeight: '500',
       fontSize: 15,
       lineHeight: 18,
@@ -43,7 +46,9 @@ const getStyles = (colors: AppColorsVariants) =>
     collectList: {
       display: 'flex',
       flexWrap: 'wrap',
+      flexDirection: 'row',
       gap: 8,
+      flex: 1,
     },
     collectListItemImage: {
       width: 20,
@@ -86,6 +91,7 @@ const RuleResult = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const commonStyle = useCommonStyle();
   const handleClick = () => {
     if (!rule.result) return;
     onSelect({
@@ -146,8 +152,12 @@ const RuleResult = ({
       </Text>
       <View style={styles.ruleValue}>
         {rule.id === '1004' && (
-          <Text style={styles.collectList}>
-            {collectList.length <= 0 && t('page.connect.noWebsite')}
+          <View style={styles.collectList}>
+            {collectList.length <= 0 && (
+              <Text style={commonStyle.primaryText}>
+                {t('page.connect.noWebsite')}
+              </Text>
+            )}
             {collectList.length > 0 &&
               collectList.slice(0, 10).map((item, idx) => (
                 <View
@@ -161,10 +171,10 @@ const RuleResult = ({
                   </Tip>
                 </View>
               ))}
-          </Text>
+          </View>
         )}
         {rule.id === '1005' && (
-          <Text>
+          <Text style={commonStyle.primaryText}>
             {popularLevel === 'high' && t('page.connect.popularLevelHigh')}
             {popularLevel === 'medium' && t('page.connect.popularLevelMedium')}
             {popularLevel === 'low' && t('page.connect.popularLevelLow')}
@@ -181,7 +191,7 @@ const RuleResult = ({
         )}
         {(rule.id === '1006' || rule.id === '1007') && (
           <TouchableOpacity style={styles.markButton} onPress={onEditUserList}>
-            <Text>
+            <Text style={commonStyle.primaryText}>
               {!userListResult && t('page.connect.noMark')}
               {userListResult &&
                 userListResult.id === '1006' &&
@@ -196,7 +206,7 @@ const RuleResult = ({
           </TouchableOpacity>
         )}
         {rule.id === '1070' && rule.result && (
-          <Text>
+          <Text style={commonStyle.primaryText}>
             {rule.result.value
               ? t('page.securityEngine.yes')
               : t('page.securityEngine.no')}

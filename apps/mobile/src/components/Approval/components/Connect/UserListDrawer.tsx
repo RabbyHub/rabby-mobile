@@ -18,9 +18,17 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
+    title: {
+      color: colors['neutral-title-1'],
+      fontWeight: '700',
+      fontSize: 15,
+      marginBottom: 20,
+      marginTop: 20,
+      lineHeight: 18,
+    },
     origin: {
       display: 'flex',
-      marginBottom: 80,
+      marginBottom: 30,
 
       flexDirection: 'row',
       alignItems: 'center',
@@ -29,6 +37,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: 24,
       height: 24,
       marginRight: 8,
+      borderRadius: 4,
     },
     text: {
       flex: 1,
@@ -44,18 +53,24 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     footerItem: {
       flexDirection: 'row',
+      position: 'relative',
     },
     radioText: {
       flex: 1,
       fontWeight: '500',
-      fontSize: 13,
+      fontSize: 15,
       lineHeight: 15,
+      marginLeft: 0,
     },
     radioContainer: {
       flex: 1,
       backgroundColor: 'transparent',
       borderBottomColor: colors['neutral-line'],
       borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingHorizontal: 0,
+    },
+    radioContainerLast: {
+      borderBottomWidth: 0,
     },
   });
 
@@ -98,14 +113,11 @@ const UserListDrawer = ({
   }, [visible]);
 
   return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      onDismiss={onClose}
-      snapPoints={['45%']}>
+    <AppBottomSheetModal ref={modalRef} onDismiss={onClose} snapPoints={[320]}>
       <BottomSheetView style={styles.mainView}>
-        <AppBottomSheetModalTitle
-          title={t('page.connect.manageWhiteBlackList')}
-        />
+        <Text style={styles.title}>
+          {t('page.connect.manageWhiteBlackList')}
+        </Text>
         <View>
           <View style={styles.origin}>
             <DappIcon
@@ -140,6 +152,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: false })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerItem}
@@ -160,6 +173,7 @@ const UserListDrawer = ({
                 onChange({ onBlacklist: false, onWhitelist: true })
               }
             />
+            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={StyleSheet.flatten([
@@ -175,6 +189,10 @@ const UserListDrawer = ({
                 {
                   color: colors['red-default'],
                 },
+              ])}
+              containerStyle={StyleSheet.flatten([
+                styles.radioContainer,
+                styles.radioContainerLast,
               ])}
               right
               iconRight

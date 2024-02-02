@@ -25,6 +25,7 @@ const getStyles = (colors: AppColorsVariants) =>
     wrapper: {
       flexDirection: 'row',
       alignItems: 'center',
+      display: 'flex',
     },
     media: {
       width: 18,
@@ -58,7 +59,7 @@ const NFTWithName = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <View>
+    <>
       <View style={styles.wrapper}>
         <TouchableOpacity onPress={() => setFocusingNFT(nft)}>
           <Media
@@ -82,7 +83,10 @@ const NFTWithName = ({
             : nft?.name || '-'}
         </Text>
         {showTokenLabel && (
-          <View className="ml-4">
+          <View
+            style={{
+              marginLeft: 4,
+            }}>
             <TokenLabel
               isFake={nft.collection?.is_verified === false}
               isScam={
@@ -102,7 +106,7 @@ const NFTWithName = ({
           snapPoints={['80%']}
         />
       )}
-    </View>
+    </>
   );
 };
 

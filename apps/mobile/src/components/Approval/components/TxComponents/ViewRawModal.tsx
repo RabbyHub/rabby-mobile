@@ -4,7 +4,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Tab, TabView } from '@rneui/base';
+import { Tab, TabView } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 

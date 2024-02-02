@@ -9,7 +9,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import React, { ReactNode } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Keyboard, StyleSheet, Text, View } from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -71,6 +71,7 @@ export const SearchDappCardList = ({
         <TouchableOpacity
           onPress={() => {
             activeSelectChainPopup();
+            Keyboard.dismiss();
           }}>
           {chainInfo ? (
             <View
@@ -96,9 +97,7 @@ export const SearchDappCardList = ({
             </View>
           ) : (
             <View className="flex-row items-center gap-[2]">
-              <Text className="text-r-neutral-body text-[13] leading-[16] font-medium">
-                Select Chain
-              </Text>
+              <Text style={styles.selectChainText}>Select Chain</Text>
               <RcIconDropdown />
             </View>
           )}
@@ -134,6 +133,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
       paddingHorizontal: 20,
+      flex: 1,
     },
     listHeader: {
       alignItems: 'center',
@@ -156,5 +156,11 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     listItem: {
       marginBottom: 12,
+    },
+    selectChainText: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+      fontWeight: '500',
     },
   });

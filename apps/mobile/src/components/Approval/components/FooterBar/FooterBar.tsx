@@ -54,17 +54,22 @@ const getStyles = (colors: AppColorsVariants) =>
 
       elevation: 12,
     },
+    dappIconWrapper: {
+      position: 'relative',
+      marginRight: 8,
+    },
     dappIcon: {
       width: 24,
       height: 24,
+      borderRadius: 4,
     },
     chainLogo: {
       width: 14,
       height: 14,
       borderRadius: 100,
       position: 'absolute',
-      top: -4,
-      right: -4,
+      top: -5,
+      right: -5,
     },
     requestOrigin: {
       height: 30,
@@ -78,6 +83,14 @@ const getStyles = (colors: AppColorsVariants) =>
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'row',
+    },
+    requestOriginBorder: {
+      position: 'absolute',
+      bottom: 0,
+      left: -20,
+      right: -20,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors['neutral-line'],
     },
     origin: {
       color: colors['neutral-title-1'],
@@ -117,6 +130,10 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     container: {
       position: 'relative',
+    },
+    dappIconWrapper: {
+      position: 'relative',
+      marginRight: 8,
     },
   });
 
@@ -241,19 +258,20 @@ export const FooterBar: React.FC<Props> = ({
         })}>
         {origin && (
           <View style={styles.requestOrigin}>
-            <View className="relative mr-8">
-              <DappIcon
-                source={{ uri: originLogo }}
-                origin={origin}
-                style={styles.dappIcon}
-              />
-              <Tip content={currentChain.name}>
+            <Tip content={currentChain.name}>
+              <View style={styles.dappIconWrapper}>
+                <DappIcon
+                  source={{ uri: originLogo }}
+                  origin={origin}
+                  style={styles.dappIcon}
+                />
                 <Image
                   source={{ uri: currentChain.logo }}
                   style={styles.chainLogo}
                 />
-              </Tip>
-            </View>
+              </View>
+            </Tip>
+
             <Text style={styles.origin}>{displayOrigin}</Text>
             <Text style={styles.right}>
               {t('page.signFooterBar.requestFrom')}
@@ -283,6 +301,7 @@ export const FooterBar: React.FC<Props> = ({
                 style={styles.securityLevelTag}
               />
             )}
+            <View style={styles.requestOriginBorder} />
           </View>
         )}
         <AccountInfo

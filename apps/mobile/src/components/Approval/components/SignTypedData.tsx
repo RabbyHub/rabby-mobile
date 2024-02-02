@@ -22,7 +22,7 @@ import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Skeleton } from '@rneui/base';
+import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';

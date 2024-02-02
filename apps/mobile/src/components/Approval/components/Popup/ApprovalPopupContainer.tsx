@@ -187,7 +187,11 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
     <View style={styles.wrapper}>
       {SendSVG ? (
         <View style={styles.mainContainer}>
-          {BrandIcon && <BrandIcon style={styles.brandIcon} />}
+          {BrandIcon && (
+            <View style={styles.brandIcon}>
+              <BrandIcon width={'100%'} height={'100%'} />
+            </View>
+          )}
           <SendSVG style={styles.mainImage} />
         </View>
       ) : null}

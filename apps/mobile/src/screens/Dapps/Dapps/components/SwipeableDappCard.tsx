@@ -2,13 +2,14 @@ import RcIconDelete from '@/assets/icons/dapp/icon-delete.svg';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
-import React from 'react';
+import React, { LegacyRef, useRef } from 'react';
 import { Animated, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import Swipeable, {
   SwipeableProps,
 } from 'react-native-gesture-handler/Swipeable';
 import { DappCard } from '../../components/DappCard';
+import { EventEmitter } from 'ahooks/lib/useEventEmitter';
 
 export const SwipeableDappCard = ({
   data,
@@ -18,6 +19,7 @@ export const SwipeableDappCard = ({
   onDisconnectPress,
   style,
   isActive,
+  close$,
 }: {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
@@ -26,9 +28,15 @@ export const SwipeableDappCard = ({
   onRemovePress?: (dapp: DappInfo) => void;
   onDisconnectPress?: (dapp: DappInfo) => void;
   isActive?: boolean;
+  close$?: EventEmitter<void>;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const swipeRef = useRef<any>(null);
+
+  close$?.useSubscription(() => {
+    swipeRef.current?.close();
+  });
 
   const isConnected = !!data?.isConnected;
 
@@ -98,6 +106,7 @@ export const SwipeableDappCard = ({
     <Swipeable
       activeOffsetX={[-30, 30]}
       failOffsetY={[-30, 30]}
+      ref={swipeRef}
       renderRightActions={renderRightActions}
       rightThreshold={40}
       overshootRight={false}

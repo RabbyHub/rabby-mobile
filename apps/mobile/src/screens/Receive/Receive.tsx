@@ -28,6 +28,7 @@ import { findChainByEnum } from '@/utils/chain';
 import { Button } from '@/components/Button';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-title-2'],
@@ -61,6 +62,8 @@ function ReceiveScreen(): JSX.Element {
 
   const { on: isShowAccount, toggle: toggleShowAccount } = useSwitch(true);
   const { currentAccount: account } = useCurrentAccount();
+
+  const { balance } = useCurrentBalance(account?.address, true, false);
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
@@ -140,7 +143,7 @@ function ReceiveScreen(): JSX.Element {
                   </Text>
 
                   <Text style={styles.accountBalance}>
-                    ${splitNumberByStep((account.balance || 0).toFixed(2))}
+                    ${splitNumberByStep((balance || 0).toFixed(2))}
                   </Text>
                 </View>
                 {account.type === KEYRING_CLASS.WATCH && (
@@ -307,6 +310,8 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       paddingVertical: 6,
     },
     walletIcon: {
+      maxWidth: 20,
+      maxHeight: 20,
       width: 20,
       height: 20,
       marginRight: 8,
@@ -316,7 +321,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingTop: 5,
+      paddingTop: 1,
     },
     accountInfoName: {
       fontSize: 15,
@@ -345,7 +350,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       marginTop: HEADER_OFFSET,
     },
     watchButtonStyle: {
-      marginTop: HEADER_OFFSET,
+      marginTop: HEADER_OFFSET + 2,
       alignItems: 'center',
       flexDirection: 'row',
       marginRight: -16,
@@ -404,7 +409,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     qrCardAddress: {
       fontSize: 15,
       lineHeight: 20,
-      fontWeight: '400',
+      fontWeight: '500',
       color: colors['neutral-title-1'],
       marginBottom: 24,
       textAlign: 'center',

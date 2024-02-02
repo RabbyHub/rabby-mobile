@@ -1,24 +1,16 @@
-import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
-import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
-import { DappInfo } from '@/core/services/dappService';
+import { Image } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import {
-  Image,
+  // Image,
   ImageStyle,
   ImageURISource,
   StyleProp,
   StyleSheet,
   Text,
   View,
-  ViewStyle,
 } from 'react-native';
-import {
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
 
 const bgColorList = [
   '#F69373',
@@ -52,11 +44,7 @@ export const DappIcon = ({
     return [bgColorList[bgIndex].toLowerCase(), getOriginName(origin || '')];
   }, [origin]);
 
-  if (source?.uri) {
-    return <Image source={source} style={style} />;
-  }
-
-  return (
+  const Placeholder = (
     <View
       style={[
         styles.dappIcon,
@@ -68,6 +56,14 @@ export const DappIcon = ({
       <Text style={styles.dappIconText}>{originName[0].toUpperCase()}</Text>
     </View>
   );
+
+  if (source?.uri) {
+    return (
+      <Image source={source} style={style} PlaceholderContent={Placeholder} />
+    );
+  }
+
+  return Placeholder;
 };
 
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>

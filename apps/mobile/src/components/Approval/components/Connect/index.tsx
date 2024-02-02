@@ -39,6 +39,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { ChainSelector } from '@/components/ChainSelector';
 import { Spin } from '@/components/Spin';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -137,8 +138,10 @@ const getStyles = (colors: AppColorsVariants) =>
     titleWrapper: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
       marginBottom: 20,
     },
+    dappIcon: { width: 40, height: 40, borderRadius: 4 },
   });
 
 const RuleDesc = [
@@ -231,6 +234,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
   } | null>(null);
 
   const [signPermission, setSignPermission] = useState<SIGN_PERMISSION_TYPES>();
+  const commonStyle = useCommonStyle();
 
   const userListResult = useMemo(() => {
     const originBlacklist = engineResults.find(result => result.id === '1006');
@@ -590,7 +594,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
             <DappIcon
               origin={origin}
               source={icon ? { uri: icon } : undefined}
-              style={{ width: 40, height: 40 }}
+              style={styles.dappIcon}
             />
             <Text style={styles.connectOrigin}>{origin}</Text>
           </View>

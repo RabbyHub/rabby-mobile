@@ -560,11 +560,21 @@ const RuleDrawer = ({
           ])}>
           <View style={ruleDrawerWrapperStyles.valueDesc}>
             <Text style={ruleDrawerWrapperStyles.descTitle}>Description:</Text>
-            <View className="flex-1 relative">
-              <Text> {selectRule.ruleConfig.valueDescription}</Text>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                flex: 1,
+                position: 'relative',
+              }}>
+              <Text>{selectRule.ruleConfig.valueDescription}</Text>
               {valueTooltip ? (
                 <Tip content={valueTooltip}>
-                  <IconQuestionMark className="inline-block ml-[3px]" />
+                  <IconQuestionMark
+                    style={{
+                      marginLeft: 3,
+                    }}
+                  />
                 </Tip>
               ) : null}
             </View>

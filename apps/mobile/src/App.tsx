@@ -4,26 +4,35 @@
  *
  * @format
  */
-import React, { Suspense, useEffect } from 'react';
-import { withExpoSnack } from 'nativewind';
+import AppNavigation from '@/AppNavigation';
+import AppErrorBoundary from '@/components/ErrorBoundary';
+import { useAppTheme } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { ThemeProvider, createTheme } from '@rneui/themed';
+import { useMemoizedFn } from 'ahooks';
+import { withExpoSnack } from 'nativewind';
+import React, { Suspense, useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
-import { RootSiblingParent } from 'react-native-root-siblings';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useAppTheme } from '@/hooks/theme';
-import AppNavigation from '@/AppNavigation';
-// import JotaiNexus from '@/components/JotaiNexus';
-import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useInitializeAppOnTop, useBootstrapApp } from './hooks/useBootstrap';
-import { ThemeProvider } from '@rneui/themed';
-import { useSetupServiceStub } from './core/storage/serviceStoreStub';
-import { useMemoizedFn } from 'ahooks';
-import { preferenceService } from './core/services/shared';
-import { navigate, replace } from './utils/navigation';
-import { StackActions, useNavigation } from '@react-navigation/native';
 import { RootNames } from './constant/layout';
+import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
+import { useSetupServiceStub } from './core/storage/serviceStoreStub';
+import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
+import { replace } from './utils/navigation';
+
+const rneuiTheme = createTheme({
+  lightColors: {
+    grey4: ThemeColors.light['neutral-card-2'],
+    grey5: ThemeColors.light['neutral-card-3'],
+  },
+  darkColors: {
+    grey4: ThemeColors.dark['neutral-card-2'],
+    grey5: ThemeColors.dark['neutral-card-3'],
+  },
+});
 
 function MainScreen() {
   useInitializeAppOnTop();
@@ -59,7 +68,7 @@ function MainScreen() {
 function App(): JSX.Element {
   return (
     <AppErrorBoundary>
-      <ThemeProvider>
+      <ThemeProvider theme={rneuiTheme}>
         <RootSiblingParent>
           <SafeAreaProvider>
             <Suspense fallback={null}>

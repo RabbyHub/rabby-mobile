@@ -19,6 +19,14 @@ export const getStyles = (colors: AppColorsVariants) =>
     gasSelectorCard: {
       flexDirection: 'row',
       alignItems: 'center',
+      marginBottom: 12,
+    },
+    gasSuccess: {
+      alignItems: 'flex-start',
+      marginBottom: 12,
+    },
+    gasSuccessFalse: {
+      marginBottom: 12,
     },
     gasSelectorCardMain: {
       flexDirection: 'row',
@@ -130,7 +138,6 @@ export const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-body'],
     },
     cardContainer: {
-      marginBottom: 24,
       paddingHorizontal: 20,
     },
     formContainer: {
@@ -155,10 +162,15 @@ export const getStyles = (colors: AppColorsVariants) =>
     gasLimitLabelText: {
       lineHeight: 16,
       color: colors['neutral-body'],
-      flex: 1,
+      marginTop: 24,
     },
     gasLimitLabelTextDisabled: {
       opacity: 0.5,
+    },
+    nonceTitle: {
+      lineHeight: 16,
+      color: colors['neutral-body'],
+      marginTop: 20,
     },
     tip: {
       color: colors['neutral-foot'],
