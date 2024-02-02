@@ -139,6 +139,7 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       marginBottom: 20,
     },
+    dappIcon: { width: 40, height: 40, borderRadius: 100 },
   });
 
 const RuleDesc = [
@@ -590,7 +591,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
             <DappIcon
               origin={origin}
               source={icon ? { uri: icon } : undefined}
-              style={{ width: 40, height: 40 }}
+              style={styles.dappIcon}
             />
             <Text style={styles.connectOrigin}>{origin}</Text>
           </View>

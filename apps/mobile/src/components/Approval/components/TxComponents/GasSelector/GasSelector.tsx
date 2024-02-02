@@ -535,10 +535,12 @@ const GasSelector = ({
     <View>
       <View style={styles.gasSelector}>
         <View
-          style={styles.gasSelectorCard}
-          className={clsx(
-            gas.error || !gas.success ? 'items-start mb-12' : 'mb-12',
-          )}>
+          style={StyleSheet.flatten([
+            styles.gasSelectorCard,
+            gas.error || !gas.success
+              ? styles.gasSuccess
+              : styles.gasSuccessFalse,
+          ])}>
           <View style={styles.gasSelectorCardMain}>
             <Text style={styles.gasSelectorCardTitle}>
               {t('page.signTx.gasSelectorTitle')}
@@ -595,7 +597,11 @@ const GasSelector = ({
               />
             )}
           </View>
-          <View className="flex-1" />
+          <View
+            style={{
+              flex: 1,
+            }}
+          />
           <TouchableOpacity
             style={styles.gasMore}
             role="button"

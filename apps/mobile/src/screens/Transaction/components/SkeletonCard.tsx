@@ -1,6 +1,6 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { Skeleton } from '@rneui/base';
+import { Skeleton } from '@rneui/themed';
 import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 

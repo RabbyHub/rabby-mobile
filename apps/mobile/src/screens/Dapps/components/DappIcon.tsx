@@ -1,6 +1,6 @@
 import { useThemeColors } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
-import { Image } from '@rneui/base';
+import { Image } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import {
   // Image,
