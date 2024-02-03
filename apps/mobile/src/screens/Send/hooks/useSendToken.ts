@@ -849,7 +849,6 @@ export function useSendTokenForm() {
       patchFormValues({
         amount: '',
       });
-      console.warn('handleChainChanged:: will close gas reserved!');
       putScreenState({ showGasReserved: false });
       handleFormValuesChange(
         { amount: '' },

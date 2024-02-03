@@ -1,3 +1,5 @@
+import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
+
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
   // 'WALLET_CONNECT' = 'WALLET_CONNECT',
@@ -21,6 +23,8 @@ export enum APPROVAL_MODAL_NAMES {
 export type CreateParams = {
   name: MODAL_NAMES;
   approvalComponent?: APPROVAL_MODAL_NAMES;
+  onCancel?: () => void;
+  bottomSheetModalProps?: Partial<BottomSheetModalProps>;
   [key: string]: any;
 };
 

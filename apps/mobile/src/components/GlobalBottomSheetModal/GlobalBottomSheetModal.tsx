@@ -75,7 +75,7 @@ export const GlobalBottomSheetModal = () => {
         handlePresent(id);
       }, 0);
     },
-    [handlePresent],
+    [getApproval, handlePresent],
   );
 
   const handleRemove = React.useCallback((key: string) => {
@@ -114,12 +114,16 @@ export const GlobalBottomSheetModal = () => {
     <View>
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
-
+        const bottomSheetModalProps = modal.params.bottomSheetModalProps;
         return (
           <AppBottomSheetModal
             topInset={height.top}
             enableContentPanningGesture={false}
-            onDismiss={() => handleDismiss(modal.id)}
+            {...bottomSheetModalProps}
+            onDismiss={() => {
+              handleDismiss(modal.id);
+              bottomSheetModalProps?.onDismiss?.();
+            }}
             key={modal.id}
             ref={modal.ref}
             name={modal.id}

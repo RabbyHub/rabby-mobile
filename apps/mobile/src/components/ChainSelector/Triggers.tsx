@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Text, View } from 'react-native';
 
 import { CHAINS_ENUM } from '@debank/common';
@@ -61,14 +61,27 @@ export function ChainSelectorTrigger({
     return findChainByEnum(chainEnum) || findChainByEnum(CHAINS_ENUM.ETH)!;
   }, [chainEnum]);
 
+  const openedIdRef = useRef<string | null>(null);
+
   const handleOpenSwitchChain = useCallback(
     (value?: CHAINS_ENUM | null) => {
-      const id = createGlobalBottomSheetModal({
+      if (openedIdRef.current) return;
+
+      const clear = () => {
+        removeGlobalBottomSheetModal(openedIdRef.current);
+        openedIdRef.current = null;
+      };
+
+      openedIdRef.current = createGlobalBottomSheetModal({
         name: MODAL_NAMES.SELECT_CHAIN,
         value: value,
+        bottomSheetModalProps: {
+          enableDismissOnClose: true,
+          onDismiss: () => clear(),
+        },
         onChange: (v: CHAINS_ENUM) => {
           onChange?.(v);
-          removeGlobalBottomSheetModal(id);
+          clear();
         },
       });
     },
