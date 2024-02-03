@@ -40,6 +40,7 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: colors['neutral-card2'],
           },
+          headerTintColor: colors['neutral-title-1'],
           headerShadowVisible: false,
           headerShown: true,
         }}

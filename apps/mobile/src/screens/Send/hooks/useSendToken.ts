@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 
@@ -181,7 +181,7 @@ export type SendScreenState = {
     nonce: number;
   } | null;
 };
-const DFLT_SEND_STATE = {
+const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
 
   showContactInfo: false,
@@ -209,11 +209,10 @@ const DFLT_SEND_STATE = {
 
   safeInfo: null,
 };
-const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
-  const [sendTokenScreenState, setSendScreenState] = useAtom(
-    sendTokenScreenStateAtom,
-  );
+  const [sendTokenScreenState, setSendScreenState] = useState({
+    ...DFLT_SEND_STATE,
+  });
 
   const putScreenState = useCallback(
     (patch: Partial<SendScreenState>) => {
