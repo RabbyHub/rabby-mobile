@@ -105,17 +105,17 @@ export function SelectAddressSheetModal({
       )}
       enableContentPanningGesture={false}>
       <BottomSheetView style={[styles.container]}>
-        <View style={[styles.titleArea, styles.innerBlock]}>
+        <BottomSheetHandlableView style={[styles.titleArea, styles.innerBlock]}>
           <Text style={[styles.modalTitle, styles.modalMainTitle]}>
             Select Address
           </Text>
-          <BottomSheetHandlableView>
+          <View>
             <Text style={[styles.modalTitle, styles.modalSubTitle]}>
               You can only send to the addresses in the whitelist within Rabby
               once enabled. You can disable it in "Settings".
             </Text>
-          </BottomSheetHandlableView>
-        </View>
+          </View>
+        </BottomSheetHandlableView>
 
         <BottomSheetScrollView style={[styles.scrollableBlock]}>
           <View style={[styles.accountList, styles.innerBlock]}>

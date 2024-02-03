@@ -105,8 +105,8 @@ const Loading = () => {
         </View>
         <View style={styles.container}>
           <Table>
-            <RowLoading itemCount={1} />
-            <RowLoading itemCount={2} />
+            <RowLoading key={'1-1'} itemCount={1} />
+            <RowLoading key={'1-2'} itemCount={2} />
           </Table>
 
           <Table style={rowStyles.tokenBalanceChange}>

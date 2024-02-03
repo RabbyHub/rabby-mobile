@@ -49,6 +49,7 @@ export const AppBottomSheetHandle = (
  */
 export function BottomSheetHandlableView({
   children,
+  ...props
 }: React.PropsWithChildren<React.ComponentProps<typeof Animated.View>>) {
   const { animatedIndex, animatedPosition } = useBottomSheet();
   const { handlePanGestureHandler } = useBottomSheetGestureHandlers();
@@ -77,7 +78,8 @@ export function BottomSheetHandlableView({
         accessible={true}
         accessibilityRole="adjustable"
         accessibilityLabel="Bottom Sheet handle"
-        accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet">
+        accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet"
+        {...props}>
         {children}
       </Animated.View>
     </GestureDetector>
