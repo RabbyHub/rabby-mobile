@@ -82,7 +82,6 @@ export function SelectAddressSheetModal({
       index={0}
       snapPoints={['70%']}
       onDismiss={onCancel}
-      enableContentPanningGesture={false}
       footerComponent={() => (
         <View style={[styles.footerContainer, styles.innerBlock]}>
           <Button
@@ -103,7 +102,8 @@ export function SelectAddressSheetModal({
             }}
           />
         </View>
-      )}>
+      )}
+      enableContentPanningGesture={false}>
       <BottomSheetView style={[styles.container]}>
         <View style={[styles.titleArea, styles.innerBlock]}>
           <Text style={[styles.modalTitle, styles.modalMainTitle]}>
@@ -119,7 +119,7 @@ export function SelectAddressSheetModal({
 
         <BottomSheetScrollView style={[styles.scrollableBlock]}>
           <View style={[styles.accountList, styles.innerBlock]}>
-            {sortedAccountsList.map((account, idx) => {
+            {sortedAccountsList.map((account, idx, arr) => {
               const key = `${account.address}-${account.brandName}-${account.aliasName}`;
               const inWhitelistPersisted = !!whitelist.find(wa =>
                 addressUtils.isSameAddress(wa, account.address),
@@ -136,7 +136,10 @@ export function SelectAddressSheetModal({
                   account={account}
                   inWhitelist={inWhitelistLocal || !whitelistEnabled}
                   isEditing={isEditing}
-                  style={idx > 0 && { marginTop: 16 }}
+                  style={[
+                    idx > 0 && { marginTop: 16 },
+                    idx === arr.length - 1 && { marginBottom: 16 },
+                  ]}
                   onPress={() => {
                     if (isEditing) {
                       setLocalWhiteList(wl => {
@@ -177,6 +180,7 @@ const getStyles = createGetStyles(colors => {
       paddingVertical: 20,
       flexDirection: 'column',
       position: 'relative',
+      height: '100%',
 
       paddingBottom:
         FOOTER_SIZES.buttonHeight + FOOTER_SIZES.paddingVertical * 2,
@@ -206,11 +210,12 @@ const getStyles = createGetStyles(colors => {
 
     scrollableBlock: {
       flexShrink: 1,
+      height: '100%',
     },
     accountList: {
       marginTop: 16,
       height: '100%',
-      maxHeight: 300,
+      // maxHeight: 300,
     },
 
     footerContainer: {
