@@ -67,8 +67,8 @@ export function BalanceSection({ style }: RNViewProps) {
     },
   } = useSendTokenInternalContext();
 
-  devLog('BalanceSection:: balanceError', balanceError);
-  devLog('BalanceSection:: formValues.amount', formValues.amount);
+  // devLog('BalanceSection:: balanceError', balanceError);
+  // devLog('BalanceSection:: formValues.amount', formValues.amount);
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
   // devLog('BalanceSection:: selectedGasLevel', selectedGasLevel);
 

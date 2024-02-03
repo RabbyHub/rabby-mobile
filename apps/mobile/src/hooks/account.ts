@@ -245,13 +245,32 @@ type MatteredChainBalances = {
 const matteredChainBalancesAtom = atom<MatteredChainBalances>({});
 const testnetMatteredChainBalancesAtom = atom<MatteredChainBalances>({});
 
-export function useLoadMatteredChainBalances() {
+export function useChainBalances() {
   const [matteredChainBalances, setMattredChainBalances] = useAtom(
     matteredChainBalancesAtom,
   );
   const [testnetMatteredChainBalances, setTestMattredChainBalances] = useAtom(
     testnetMatteredChainBalancesAtom,
   );
+
+  return {
+    matteredChainBalances,
+    setMattredChainBalances,
+
+    testnetMatteredChainBalances,
+    setTestMattredChainBalances,
+  };
+}
+
+export function useLoadMatteredChainBalances() {
+  const {
+    matteredChainBalances,
+    setMattredChainBalances,
+
+    testnetMatteredChainBalances,
+    setTestMattredChainBalances,
+  } = useChainBalances();
+
   const { currentAccount } = useCurrentAccount();
   const currentAccountAddr = currentAccount?.address;
 
@@ -382,6 +401,8 @@ export function useLoadMatteredChainBalances() {
   }, [testnetMatteredChainBalances, matteredChainBalances]);
 
   return {
+    matteredChainBalances,
+    testnetMatteredChainBalances,
     allMatteredChainBalances,
 
     fetchMatteredChainBalance,

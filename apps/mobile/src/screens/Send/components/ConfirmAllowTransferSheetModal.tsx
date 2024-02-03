@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text } from 'react-native';
 
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { ConfirmBottomSheetModal } from '@/components/GlobalBottomSheetModal/ConfirmBottomSheetModal';
+import { BottomSheetModalConfirmContainer } from '@/components/customized/BottomSheetModalConfirmContainer';
 
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSheetModals } from '@/hooks/useSheetModal';
@@ -38,7 +38,7 @@ export function ModalConfirmAllowTransfer({
 
   return (
     <>
-      <ConfirmBottomSheetModal
+      <BottomSheetModalConfirmContainer
         ref={modalRef}
         onConfirm={() => {
           onFinished?.({ confirmed: isAllowed });
@@ -66,7 +66,7 @@ export function ModalConfirmAllowTransfer({
             <Text>Add to whitelist</Text>
           </TouchableView>
         </View>
-      </ConfirmBottomSheetModal>
+      </BottomSheetModalConfirmContainer>
     </>
   );
 }

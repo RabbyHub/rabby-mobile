@@ -16,6 +16,7 @@ import type { ThemeColors } from '@/constant/theme';
 import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '../SelectChain';
 import { CancelTxPopup } from '../CancelTxPopup';
+import { SelectSortedChain } from '../SelectSortedChain';
 
 export const events = new EventEmitter();
 
@@ -24,6 +25,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.CANCEL_APPROVAL]: [288],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['80%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['80%'],
+  [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
@@ -48,6 +50,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SWITCH_CHAIN]: SwitchChain,
   [MODAL_NAMES.CANCEL_CONNECT]: CancelConnect,
   [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
+  [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
 };

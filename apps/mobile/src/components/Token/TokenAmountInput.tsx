@@ -104,8 +104,7 @@ function useLoadTokenList({
     chainServerId,
   ]);
 
-  const { sortedList: displayTokenList, triggerResort } =
-    useSortTokenPure(availableToken);
+  const { sortedList: displayTokenList } = useSortTokenPure(availableToken);
 
   const isListLoading = keyword ? isSearchLoading : isLoadingAllTokens;
 

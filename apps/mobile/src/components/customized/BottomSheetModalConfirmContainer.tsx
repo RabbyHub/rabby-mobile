@@ -11,7 +11,7 @@ import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const ConfirmBottomSheetModal = forwardRef<
+export const BottomSheetModalConfirmContainer = forwardRef<
   BottomSheetModal,
   React.PropsWithChildren<{
     height: number;

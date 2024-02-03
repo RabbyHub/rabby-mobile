@@ -22,7 +22,7 @@ import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
 import { BalanceSection, Section } from './Section';
-import { ChainSelectorTrigger } from '@/components/ChainSelector/Triggers';
+import { ChainInfo } from './components/ChainInfo';
 import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
@@ -55,7 +55,6 @@ function SendScreen(): JSX.Element {
     loadCurrentToken,
     setCurrentToken,
     setChainEnum,
-    isNativeToken,
     currentTokenBalance,
     currentTokenPrice,
   } = useSendTokenScreenChainToken();
@@ -173,19 +172,16 @@ function SendScreen(): JSX.Element {
     // dispatch.whitelist.getWhitelist();
     // dispatch.contactBook.getContactBookAsync();
     if (!account) {
-      // TODO: go back to Home Screen
       // history.replace('/');
       redirectBackErrorHandler(navigation);
       return;
     }
     // setCurrentAccount(account);
 
-    const screenStatePatch: Partial<SendScreenState> = {};
     // if (account.type === KEYRING_CLASS.GNOSIS) {
     //   screenStatePatch.isGnosisSafe = false;
     // }
-    screenStatePatch.inited = true;
-    putScreenState(screenStatePatch);
+    putScreenState({ inited: true });
   };
 
   useEffect(() => {
@@ -239,7 +235,7 @@ function SendScreen(): JSX.Element {
                 {/* ChainInfo */}
                 <View className="mt-[0]">
                   <Text style={styles.sectionTitle}>Chain</Text>
-                  <ChainSelectorTrigger
+                  <ChainInfo
                     className="mt-[8]"
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}

@@ -118,7 +118,7 @@ export function useSendTokenScreenChainToken() {
 
   const setCurrentToken = useCallback(
     (token: TokenItem) => {
-      putChainToken({ currentToken: token });
+      putChainToken({ currentToken: token /* chainEnum: token.chain */ });
     },
     [putChainToken],
   );
@@ -439,7 +439,10 @@ export function useSendTokenForm() {
         }
       }
       try {
-        // await preferenceService.setLastTimeSendToken(currentAccount!.address, currentToken);
+        await preferenceService.setLastTimeSendToken(
+          currentAccount!.address,
+          currentToken,
+        );
         // await persistPageStateCache();
 
         apiProvider.sendRequest(
@@ -464,9 +467,7 @@ export function useSendTokenForm() {
     },
     [
       currentAccount,
-      currentToken.chain,
-      currentToken.decimals,
-      currentToken.id,
+      currentToken,
       isNativeToken,
       isShowMessageDataForContract,
       isShowMessageDataForToken,

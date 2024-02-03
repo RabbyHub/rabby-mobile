@@ -12,3 +12,5 @@ export { default as RcSearchCC } from './search-cc.svg';
 
 export { default as RcIconCheckedFilledCC } from './icon-checked-filled-cc.svg';
 export { default as RcIconUncheckCC } from './icon-uncheck-cc.svg';
+
+export { default as RcWalletCC } from './wallet-cc.svg';

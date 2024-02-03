@@ -109,10 +109,6 @@ export function useSortTokenPure<T extends TokenItem | AbstractPortfolioToken>(
           currentAccount.address,
         );
         setBalanceCache(cache);
-        devLog(
-          'useSortTokenPure::getAddressCacheBalance cache?.chain_list.length',
-          cache?.chain_list.length,
-        );
       } catch (error) {
         // setSpinner(prev => !prev);
         devLog('useSortTokenPure::getAddressCacheBalance error', error);
