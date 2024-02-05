@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     position: 'absolute',
     top: '50%',
-    marginTop: -12,
+    marginTop: -10,
     right: -6,
     paddingLeft: 6,
     borderRadius: 3,

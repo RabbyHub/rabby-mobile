@@ -558,9 +558,7 @@ const GasSelector = ({
                 </>
               ) : (
                 <View style={styles.gasSelectorCardContentItem}>
-                  <View
-                    style={styles.gasSelectorCardAmount}
-                    className="flex items-center">
+                  <View style={styles.gasSelectorCardAmount}>
                     <Text style={styles.gasSelectorCardAmountLabel}>
                       {formatTokenAmount(
                         new BigNumber(gas.gasCostAmount).toString(10),
