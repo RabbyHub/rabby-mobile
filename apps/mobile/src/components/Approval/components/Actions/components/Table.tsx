@@ -113,11 +113,13 @@ const Table = ({
     const modifiedFirstChild = firstChild
       ? React.cloneElement(firstChild, {
           first: true,
+          key: 'col-clone-first',
         })
       : firstChild;
     const modifiedLastChild = lastChild
       ? React.cloneElement(lastChild, {
           last: true,
+          key: 'col-clone-last',
         })
       : lastChild;
 
@@ -155,6 +157,7 @@ const Col = ({
       ? React.cloneElement(firstChild, {
           first,
           last,
+          key: 'row-clone',
         })
       : firstChild;
 
