@@ -12,7 +12,7 @@ import {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { useDebounce } from 'react-use';
+import useDebounce from 'react-use/lib/useDebounce';
 import { CHAINS_ENUM, Chain } from '@debank/common';
 
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';

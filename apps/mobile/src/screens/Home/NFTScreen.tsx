@@ -137,16 +137,19 @@ export const NFTScreen = () => {
   const renderItem: Exclude<
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
     void
-  > = useCallback(({ item, section: { collection } }) => {
-    return (
-      <PureItem
-        style={styles.imageContainer}
-        items={item}
-        collection={collection!}
-        key={collection!.name}
-      />
-    );
-  }, []);
+  > = useCallback(
+    ({ item, section: { collection } }) => {
+      return (
+        <PureItem
+          style={styles.imageContainer}
+          items={item}
+          collection={collection!}
+          key={collection!.name}
+        />
+      );
+    },
+    [styles.imageContainer],
+  );
 
   const renderSectionHeader: Exclude<
     SectionListProps<

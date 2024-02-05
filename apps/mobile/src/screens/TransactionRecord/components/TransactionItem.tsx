@@ -17,7 +17,7 @@ import { intToHex } from '@ethereumjs/util';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
+} from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   CANCEL_TX_TYPE,

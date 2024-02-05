@@ -6,7 +6,7 @@ import * as Values from '../Values';
 import { Chain } from '@debank/common';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
-import { getStyle } from '../ViewMore';
+import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 

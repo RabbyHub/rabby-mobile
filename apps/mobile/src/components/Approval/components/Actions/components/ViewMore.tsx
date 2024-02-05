@@ -21,7 +21,7 @@ import {
   NFTSpenderPopupProps,
 } from './ViewMorePopup/NFTSpenderPopup';
 import { useTranslation } from 'react-i18next';
-import { AppColorsVariants } from '@/constant/theme';
+import { getStyle } from './getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
@@ -32,47 +32,6 @@ type Props =
   | ReceiverPopupProps
   | NFTPopupProps
   | CollectionPopupProps;
-
-export const getStyle = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    mainView: {
-      paddingHorizontal: 20,
-      paddingTop: 20,
-      backgroundColor: colors['neutral-bg-1'],
-      height: '100%',
-    },
-    popupContainer: {},
-    title: {
-      flexDirection: 'row',
-      marginBottom: 14,
-      display: 'flex',
-      alignItems: 'center',
-    },
-    titleText: {
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-1'],
-      marginRight: 6,
-    },
-    valueAddress: {
-      fontWeight: '500',
-      marginLeft: 7,
-    },
-    viewMoreTable: {},
-    row: {
-      minHeight: 48,
-      flexDirection: 'row',
-      alignItems: 'center',
-      fontSize: 15,
-    },
-    firstRow: {
-      maxWidth: 140,
-      borderRightWidth: 0.5,
-      borderRightColor: colors['neutral-line'],
-      backgroundColor: colors['neutral-card-3'],
-      flexShrink: 0,
-    },
-  });
 
 const ViewMore = (props: Props) => {
   const [popupVisible, setPopupVisible] = useState(false);

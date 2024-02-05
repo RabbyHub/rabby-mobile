@@ -14,6 +14,9 @@
     },
     {
       "path": "../eth-keyring-watch/tsconfig.build.json"
+    },
+    {
+      "path": "../service-address/tsconfig.build.json"
     }
   ],
   "include": ["../../types", "./src"]

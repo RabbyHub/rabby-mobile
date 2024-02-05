@@ -1,12 +1,10 @@
+import { GET_WALLETCONNECT_CONFIG, bindWalletConnectEvents } from '@/utils/wc';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
-import { GET_WALLETCONNECT_CONFIG } from '../apis/keyring';
-import { bindWalletConnectEvents } from '../apis/walletconnect';
-import { contactService } from './shared';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
-  async (keyring, account) => {
+  async (keyring, account, contactService) => {
     const { address, brandName } = account;
     const existAlias = contactService.getAliasByAddress(address);
 

@@ -29,7 +29,7 @@ import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTyped
 import { dappService, preferenceService } from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
 import { ScrollView, Text, View } from 'react-native';
-import { useAsync } from 'react-use';
+import useAsync from 'react-use/lib/useAsync';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 

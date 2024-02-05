@@ -14,7 +14,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { ellipsisAddress } from '@/utils/address';
 import { formatNumber } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 
 interface User {
   id: string;
@@ -89,8 +89,7 @@ export const TopUserItem = (props: User) => {
   const gotoDebank = React.useCallback(() => {
     openExternalUrl(`https://debank.com/profile/${props.id}`);
   }, [props.id]);
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), []);
+  const { styles } = useThemeStyles(getStyles);
 
   return (
     <View

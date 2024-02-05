@@ -11,8 +11,6 @@ import {
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
-// build bug
-import './hooks/token';
 
 interface Props {
   renderHeader: CollapsibleProps['renderHeader'];

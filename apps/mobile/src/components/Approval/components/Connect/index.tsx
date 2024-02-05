@@ -336,7 +336,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
       cancelBtnText,
       level,
     };
-  }, [resultsWithoutDisable, processedRules]);
+  }, [t, resultsWithoutDisable, processedRules]);
 
   const hasForbidden = useMemo(() => {
     return resultsWithoutDisable.some(item => item.level === Level.FORBIDDEN);
@@ -517,6 +517,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCancel = () => {

@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Keyboard, StatusBar, StyleSheet, View } from 'react-native';
 // import { useRequest } from 'ahooks';
 import { AppColorsVariants } from '@/constant/theme';
-import { useDappsHome } from '@/hooks/useDapps';
+import { useDappsHome } from '@/hooks/useDappsHome';
 import { SearchBar } from '@rneui/themed';
 import {
   useActiveViewSheetModalRefs,
