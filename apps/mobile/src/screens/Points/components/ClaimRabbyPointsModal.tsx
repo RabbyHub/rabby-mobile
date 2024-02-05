@@ -24,7 +24,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { GradientPoint } from './GradientPoint';
 import { Skeleton, SkeletonProps } from '@rneui/base';
 import LinearGradient from 'react-native-linear-gradient';
-import { useInterval } from 'react-use';
+import useInterval from 'react-use/lib/useInterval';
 import { Animated, Easing } from 'react-native';
 
 dayjs.extend(utc);
