@@ -7,8 +7,8 @@ import { ThemeColors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
+  onLight: ThemeColors.light['neutral-title1'],
+  onDark: ThemeColors.dark['neutral-title1'],
 });
 
 export default function CommonScreenHeader({
@@ -16,12 +16,12 @@ export default function CommonScreenHeader({
   title,
   children = title,
   leftIcon,
-  leftIconStyle,
+  leftIconContainerStyle,
   rigthIcon,
   rightIconStyle,
 }: React.PropsWithChildren<{
   leftIcon?: React.ReactNode;
-  leftIconStyle?: React.ComponentProps<typeof View>['style'];
+  leftIconContainerStyle?: React.ComponentProps<typeof View>['style'];
   rigthIcon?: React.ReactNode;
   rightIconStyle?: React.ComponentProps<typeof View>['style'];
   title?: string;
@@ -58,7 +58,9 @@ export default function CommonScreenHeader({
 
   return (
     <View style={[style, styles.title]}>
-      <View style={[leftIconStyle, styles.leftIcon]}>{leftIconNode}</View>
+      <View style={[leftIconContainerStyle, styles.leftIcon]}>
+        {leftIconNode}
+      </View>
       <View style={{ flexShrink: 1 }}>{childrenNode}</View>
       <View style={[rightIconStyle, styles.rightIcon]}>
         {rigthIcon || leftIconNode}

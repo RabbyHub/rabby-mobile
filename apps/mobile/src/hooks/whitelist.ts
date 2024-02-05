@@ -79,6 +79,7 @@ export const useWhitelist = () => {
     init,
     whitelist,
     enable,
+    whitelistEnabled: enable,
     addWhitelist,
     removeWhitelist,
     setWhitelist,

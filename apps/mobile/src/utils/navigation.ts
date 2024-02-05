@@ -34,7 +34,7 @@ export const replace = ((name: any, pramas?: object) => {
 
 export const redirectBackErrorHandler = (
   navigation: any,
-  defaultRouteName: string = 'Hi',
+  defaultRouteName: string = 'Home',
 ) => {
   if (navigation.canGoBack()) {
     navigation.goBack();

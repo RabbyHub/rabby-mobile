@@ -8,7 +8,7 @@ export * from './intf';
 export class DisplayKeyring {
   type: KeyringTypeName | string = '';
 
-  constructor(keyring: KeyringIntf) {
+  constructor(keyring: DisplayKeyring | (Partial<KeyringIntf> & { type: KeyringTypeName })) {
     if (keyring instanceof DisplayKeyring) {
       // eslint-disable-next-line no-constructor-return
       return keyring;
@@ -42,7 +42,9 @@ export type DisplayedKeyring = {
     brandName: string & KeyringTypeName;
     type?: string & KeyringTypeName;
     keyring?: DisplayKeyring;
-    alianName?: string;
+    // /** @deprecated use aliasName! this field is pointless */
+    // alianName?: string;
+    aliasName?: string;
   }[];
   keyring: DisplayKeyring;
   byImport?: boolean;

@@ -10,6 +10,7 @@ import {
 } from '@/constant/theme';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import { useColorScheme } from 'nativewind';
+import { createGetStyles } from '@/utils/styles';
 
 function coerceColorSchemeName(
   appTheme: AppThemeScheme,
@@ -79,3 +80,16 @@ export const useThemeColors = (): AppColorsVariants => {
 
   return ThemeColors[binaryTheme];
 };
+
+export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
+  getStyle: T,
+) {
+  const colors = useThemeColors();
+
+  return React.useMemo(() => {
+    return {
+      colors,
+      styles: getStyle(colors) as ReturnType<T>,
+    };
+  }, [colors, getStyle]);
+}

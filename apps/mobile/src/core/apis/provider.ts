@@ -7,10 +7,12 @@ import { CHAINS_ENUM } from '@debank/common';
 import { addresses, abis } from '@eth-optimism/contracts-ts';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
-import { preferenceService } from '@/core/services';
+import { preferenceService, transactionHistoryService } from '@/core/services';
 import { OP_STACK_ENUMS } from '@/constant/gas';
 import { CHAINS } from '@/constant/chains';
 import { openapi } from '@/core/request';
+import BigNumber from 'bignumber.js';
+import { t } from 'i18next';
 
 function buildTxParams(txMeta) {
   return {
@@ -39,6 +41,8 @@ export default function buildUnserializedTransaction(txMeta) {
   const common = buildTransactionCommon(txMeta);
   return TransactionFactory.fromTxData(txParams, { common });
 }
+
+export { sendRequest } from './sendRequest';
 
 export const requestETHRpc = (
   data: { method: string; params: any },
@@ -128,4 +132,27 @@ export const fetchEstimatedL1Fee = async (
     return scrollL1FeeEstimate(txParams);
   }
   return Promise.resolve('0x0');
+};
+
+export const getRecommendNonce = async ({
+  from,
+  chainId,
+}: {
+  from: string;
+  chainId: number;
+}) => {
+  const chain = Object.values(CHAINS).find(item => item.id === chainId);
+  if (!chain) {
+    throw new Error(t('background.error.invalidChainId'));
+  }
+  const onChainNonce = await requestETHRpc(
+    {
+      method: 'eth_getTransactionCount',
+      params: [from, 'latest'],
+    },
+    chain.serverId,
+  );
+  const localNonce =
+    (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
+  return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
 };

@@ -1,12 +1,17 @@
 import { CHAINS_ENUM } from '@debank/common';
 import abi from 'human-standard-token-abi';
 import { CHAINS } from '@/constant/chains';
-import type { GasLevel, Tx } from '@rabby-wallet/rabby-api/dist/types';
+import type {
+  ExplainTxResponse,
+  GasLevel,
+  Tx,
+} from '@rabby-wallet/rabby-api/dist/types';
 import { isHexString } from 'ethereumjs-util';
 import BigNumber from 'bignumber.js';
 import { minBy } from 'lodash';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { ethers } from 'ethers';
+import { isHex, hexToString, stringToHex } from 'web3-utils';
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -228,4 +233,134 @@ export function getCustomTxParamsData(
     const customTxParamsData = `${signature}${spender}${customPermissionValue}`;
     return customTxParamsData;
   }
+}
+
+export function varyTxSignType(txDetail: ExplainTxResponse | null) {
+  let isNFT = false;
+  let isToken = false;
+  let gaCategory: 'Security' | 'Send' = 'Send';
+  let gaAction:
+    | 'signTx'
+    | 'signDeclineTokenApproval'
+    | 'signDeclineNFTApproval'
+    | 'signDeclineTokenAndNFTApproval' = 'signTx';
+
+  if (
+    txDetail?.type_deploy_contract ||
+    txDetail?.type_cancel_tx ||
+    txDetail?.type_call
+  ) {
+    // nothing to do
+  }
+  if (
+    txDetail?.type_cancel_token_approval ||
+    txDetail?.type_cancel_single_nft_approval ||
+    txDetail?.type_cancel_nft_collection_approval
+  ) {
+    gaCategory = 'Security';
+  } else {
+    gaCategory = 'Send';
+  }
+
+  if (
+    txDetail?.type_send ||
+    txDetail?.type_cancel_token_approval ||
+    txDetail?.type_token_approval
+  ) {
+    isToken = true;
+  }
+
+  if (
+    txDetail?.type_cancel_single_nft_approval ||
+    txDetail?.type_cancel_nft_collection_approval ||
+    txDetail?.type_single_nft_approval ||
+    txDetail?.type_nft_collection_approval ||
+    txDetail?.type_nft_send
+  ) {
+    isNFT = true;
+  }
+
+  if (gaCategory === 'Security') {
+    if (isToken && !isNFT) {
+      gaAction = 'signDeclineTokenApproval';
+    } else if (!isToken && isNFT) {
+      gaAction = 'signDeclineNFTApproval';
+    } else if (isToken && isNFT) {
+      gaAction = 'signDeclineTokenAndNFTApproval';
+    }
+  }
+
+  return {
+    gaCategory,
+    gaAction,
+    isNFT,
+    isToken,
+  };
+}
+
+/**
+ * @description accept input data as hex or string, and return the formatted result
+ */
+export function formatTxInputDataOnERC20(maybeHex: string) {
+  const result = {
+    withInputData: false,
+    currentIsHex: false,
+    currentData: '',
+    hexData: '',
+    utf8Data: '',
+  };
+
+  if (!maybeHex) return result;
+
+  result.currentIsHex = maybeHex.startsWith('0x') && isHex(maybeHex);
+
+  if (result.currentIsHex) {
+    try {
+      result.currentData = hexToString(maybeHex);
+      result.withInputData = true;
+      result.hexData = maybeHex;
+      result.utf8Data = result.currentData;
+    } catch (err) {
+      result.currentData = '';
+    }
+  } else {
+    result.currentData = maybeHex;
+    result.hexData = stringToHex(maybeHex);
+    result.utf8Data = maybeHex;
+    result.withInputData = true;
+  }
+
+  return result;
+}
+
+function formatNumberArg(arg: string | number, opt = {} as BigNumber.Format) {
+  const bn = new BigNumber(arg);
+  const format = {
+    prefix: '',
+    decimalSeparator: '.',
+    groupSeparator: '',
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    fractionGroupSeparator: ' ',
+    fractionGroupSize: 0,
+    suffix: '',
+    ...opt,
+  };
+
+  return bn.toFormat(0, format);
+}
+
+export function formatTxExplainAbiData(abi?: ExplainTxResponse['abi'] | null) {
+  return [
+    abi?.func,
+    '(',
+    (abi?.params || [])
+      ?.map((argValue, idx) => {
+        const argValueText =
+          typeof argValue === 'number' ? formatNumberArg(argValue) : argValue;
+        return `arg${idx}=${argValueText}`;
+      })
+      .join(', '),
+    ')',
+  ].join('');
 }

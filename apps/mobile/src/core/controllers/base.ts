@@ -42,7 +42,7 @@ class BaseController {
 
   @Reflect.metadata('PRIVATE', true)
   getAccounts = () => {
-    return keyringService.getAllVisibleAccounts();
+    return keyringService.getAllVisibleAccountsArray();
   };
 }
 

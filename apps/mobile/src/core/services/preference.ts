@@ -65,6 +65,7 @@ export interface PreferenceStore {
   pinAddresses: IPinAddress[];
   gasCache: GasCache;
   currentVersion: string;
+  pinnedChain: string[];
 
   sendLogTime?: number;
   lastSelectedGasTopUpChain?: Record<string, CHAINS_ENUM>;
@@ -112,6 +113,7 @@ export class PreferenceService {
           pinAddresses: [],
           gasCache: {},
           currentVersion: '0',
+          pinnedChain: [],
           sendLogTime: 0,
           sendEnableTime: 0,
           customizedToken: [],
@@ -184,7 +186,7 @@ export class PreferenceService {
    * to the first address in address list
    */
   resetCurrentAccount = async () => {
-    const [account] = await keyringService.getAllVisibleAccounts();
+    const [account] = await keyringService.getAllVisibleAccountsArray();
     this.setCurrentAccount(account);
   };
 

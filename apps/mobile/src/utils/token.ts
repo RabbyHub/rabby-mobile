@@ -1,5 +1,8 @@
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
 import { hexToString } from 'web3-utils';
+
+import { AbstractPortfolioToken } from '@/screens/Home/types';
 
 export const geTokenDecimals = async (
   id: string,
@@ -146,3 +149,28 @@ export function getTokenSymbol(token?: {
     token?.optimized_symbol || token?.display_symbol || token?.symbol || ''
   );
 }
+
+export const abstractTokenToTokenItem = (
+  token: AbstractPortfolioToken,
+): TokenItem => {
+  return {
+    id: token._tokenId,
+    chain: token.chain,
+    amount: token.amount,
+    raw_amount: token.raw_amount,
+    decimals: token.decimals,
+    display_symbol: token.display_symbol,
+    is_core: token.is_core,
+    is_verified: token.is_verified,
+    is_wallet: token.is_wallet,
+    is_scam: token.is_scam,
+    is_suspicious: token.is_suspicious,
+    logo_url: token.logo_url,
+    name: token.name,
+    optimized_symbol: token.optimized_symbol,
+    price: token.price,
+    symbol: token.symbol,
+    time_at: token.time_at,
+    price_24h_change: token.price_24h_change,
+  };
+};

@@ -6,6 +6,7 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { makeTriangleStyle } from '@/utils/styles';
 
 const NUM_OF_LINES = 3;
 
@@ -71,28 +72,13 @@ export const DappCardInWebViewNav = ({
           <View
             className="relative"
             style={[styles.dappDescWrapper, styles.scrollableDesc]}>
+            <View style={styles.triangle} />
             <Text
               style={styles.dappDescText}
               numberOfLines={NUM_OF_LINES}
               ellipsizeMode="tail">
               {data.info.description}
             </Text>
-          </View>
-          <View style={[styles.dappDescRightArea]}>
-            {/* <TouchableView
-              onPress={() => {
-
-              }}
-            >
-              <Text
-                style={{
-                  color: colors['blue-default'],
-                  fontSize: 13,
-                }}
-              >
-                Expand
-              </Text>
-            </TouchableView> */}
           </View>
         </View>
       ) : null}
@@ -171,6 +157,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     dappDescWrapper: {
       flexShrink: 1,
+      width: '100%',
       position: 'relative',
       color: colors['neutral-body'],
       backgroundColor: colors['neutral-card-3'],
@@ -182,19 +169,22 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       fontSize: 14,
       lineHeight: 20,
     },
+    triangle: {
+      position: 'absolute',
+      left: 8,
+      top: -8 * 2,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 12,
+        color: colors['neutral-card-3'],
+      }),
+      borderTopWidth: 8,
+      borderLeftWidth: 10,
+      borderRightWidth: 10,
+    },
     dappIcon: {
       width: 32,
       height: 32,
       borderRadius: 16,
-    },
-
-    dappDescRightArea: {
-      flexShrink: 0,
-      width: 32,
-      height: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'flex-start',
-      flexWrap: 'nowrap',
     },
   });

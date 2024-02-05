@@ -1,14 +1,14 @@
 import { removeGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
 import { notificationService } from '@/core/services';
 import { Approval } from '@/core/services/notification';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 
 export const useApproval = () => {
-  const getApproval: () => Promise<Approval | null> = async () => {
+  const getApproval: () => Promise<Approval | null> = useCallback(async () => {
     const approval = notificationService.getApproval();
     return approval;
-  };
+  }, []);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
 
   const resolveApproval = async (

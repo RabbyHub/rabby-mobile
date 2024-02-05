@@ -1,12 +1,5 @@
-import { Alert } from 'react-native';
-import { getVersion } from 'react-native-device-info';
-import {
-  createAsyncMiddleware,
-  JsonRpcEngineCallbackError,
-} from 'json-rpc-engine';
-import { ethErrors } from 'eth-rpc-errors';
+import { createAsyncMiddleware } from 'json-rpc-engine';
 
-import { recoverPersonalSignature } from '@metamask/eth-sig-util';
 import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';

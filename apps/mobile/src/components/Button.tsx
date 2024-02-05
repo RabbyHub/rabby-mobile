@@ -26,7 +26,7 @@ export type ButtonProps = TouchableOpacityProps &
     titleStyle?: StyleProp<TextStyle>;
     titleProps?: TextProps;
     buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-    type?: 'primary' | 'white' | 'clear';
+    type?: 'primary' | 'white' | 'clear' | 'danger';
     loading?: boolean;
     loadingStyle?: StyleProp<ViewStyle>;
     loadingProps?: ActivityIndicatorProps;
@@ -70,13 +70,27 @@ export const Button = ({
   const colors = useThemeColors();
   const isClearType = useMemo(() => type === 'clear', [type]);
 
-  const [currentColor, bgColor] = useMemo(
-    () => [
-      colors['neutral-title-1'],
-      isClearType ? 'transparent' : colors['neutral-bg-1'],
-    ],
-    [type, colors, ghost, passedTitleStyle, isClearType],
-  );
+  const { currentColor, bgColor } = useMemo(() => {
+    const colorMap = {
+      primary: {
+        bg: !ghost ? colors['blue-default'] : colors['neutral-bg1'],
+        currentColor: colors['neutral-title2'],
+      },
+      white: {
+        currentColor: colors['blue-default'],
+        bg: colors['neutral-bg1'],
+      },
+      clear: { currentColor: 'black', bg: 'transparent' },
+      danger: {
+        currentColor: colors['neutral-title2'],
+        bg: colors['red-default'],
+      },
+    };
+    return {
+      currentColor: colorMap[type].currentColor || colors['neutral-title2'],
+      bgColor: colorMap[type].bg || colors['blue-default'],
+    };
+  }, [type, colors , ghost/* , passedTitleStyle, isClearType */]);
 
   useEffect(() => {
     if (linearGradientProps && !ViewComponent) {
@@ -122,6 +136,7 @@ export const Button = ({
     disabledTitleStyle,
     passedTitleStyle,
     ghost,
+    isLight,
     isClearType,
   ]);
 
@@ -144,7 +159,7 @@ export const Button = ({
   return (
     <View
       style={[styles.container, containerStyle]}
-      testID="DBK_BUTTON_WRAPPER">
+      testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
         delayPressIn={0}
@@ -247,7 +262,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 0,
     width: '100%',
-    height: '100%',
+    // height: '100%',
+    height: 52,
   },
   buttonOrientation: {},
   clearButtonStyle: {
