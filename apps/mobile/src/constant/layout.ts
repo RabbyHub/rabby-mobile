@@ -97,17 +97,32 @@ export const getRootSpecConfig = (
   };
 };
 
-export const NavigationHeadersPresets = {
-  onlyTitle: {
-    headerTitleAlign: 'center',
-    headerStyle: {
-      backgroundColor: 'transparent',
+export function makeHeadersPresets({
+  colors,
+}: { colors?: AppColorsVariants } = {}) {
+  return {
+    onlyTitle: {
+      headerTitleAlign: 'center',
+      headerStyle: {
+        backgroundColor: 'transparent',
+      },
+      headerTransparent: true,
+      headerBackVisible: false,
+      headerTitleStyle: {
+        fontWeight: '600',
+        fontSize: 17,
+      },
+    } as NativeStackNavigationOptions,
+    withBgCard2: {
+      headerStyle: {
+        backgroundColor: colors?.['neutral-card2'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '500' as const,
+        fontSize: 20,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
     },
-    headerTransparent: true,
-    headerBackVisible: false,
-    headerTitleStyle: {
-      fontWeight: '600',
-      fontSize: 17,
-    },
-  } as NativeStackNavigationOptions,
-};
+  };
+}

@@ -3,7 +3,7 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 
 import HistoryScreen from '@/screens/Transaction/History';
@@ -17,12 +17,17 @@ export default function TransactionNavigator() {
 
   const colors = useThemeColors();
 
+  const headerPresets = makeHeadersPresets({ colors });
+
   return (
     <TransactionStack.Navigator
       screenOptions={{
         ...screenOptions,
         gestureEnabled: false,
         headerTitleAlign: 'center',
+        ...headerPresets.withBgCard2,
+        headerShadowVisible: false,
+        headerShown: true,
       }}>
       <TransactionStack.Screen
         name={RootNames.History}
@@ -37,12 +42,6 @@ export default function TransactionNavigator() {
         options={{
           ...screenOptions,
           title: 'Send',
-          headerStyle: {
-            backgroundColor: colors['neutral-card2'],
-          },
-          headerTintColor: colors['neutral-title-1'],
-          headerShadowVisible: false,
-          headerShown: true,
         }}
       />
       <TransactionStack.Screen

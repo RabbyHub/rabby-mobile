@@ -8,7 +8,7 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { NavigationHeadersPresets } from '@/constant/layout';
+import { makeHeadersPresets } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/native';
 
 import { makeThemeIconFromCC } from './makeThemeIcon';
@@ -63,14 +63,16 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
     }
   }, []);
 
+  const headerPresets = makeHeadersPresets({ colors });
+
   return {
     animation: 'slide_from_right',
     contentStyle: {
       // backgroundColor: colors.bgChat,
     },
-    ...NavigationHeadersPresets.onlyTitle,
+    ...headerPresets.onlyTitle,
     headerTitleStyle: {
-      ...(NavigationHeadersPresets.onlyTitle.headerTitleStyle as object),
+      ...(headerPresets.onlyTitle.headerTitleStyle as object),
       color: colors['neutral-title-1'],
       fontWeight: 'normal',
     },
