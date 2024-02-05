@@ -106,12 +106,13 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <KeyboardAwareScrollView
+      <View
         style={styles.keyboardView}
-        enableOnAndroid
-        extraHeight={150}
-        scrollEnabled={false}
-        keyboardOpeningTime={0}>
+        // enableOnAndroid
+        // extraHeight={150}
+        // scrollEnabled={false}
+        // keyboardOpeningTime={0}
+      >
         <View style={styles.titleContainer}>
           <ImportSuccessSVG />
           <Text style={styles.title}>Added successfully</Text>
@@ -123,7 +124,7 @@ export const ImportSuccessScreen = () => {
             onChange={setAliasName}
           />
         </View>
-      </KeyboardAwareScrollView>
+      </View>
       <FooterButton title="Done" onPress={handleDone} />
       <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>

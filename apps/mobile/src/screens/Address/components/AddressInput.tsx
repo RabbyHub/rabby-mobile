@@ -14,6 +14,13 @@ import { RcIconCopyCC } from '@/assets/icons/common';
 import { contactService } from '@/core/services';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
+import { SearchBar } from '@rneui/base';
+import RcIconClose from '@/assets/icons/import-success/clear.svg';
+// import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import {
+  TouchableWithoutFeedback,
+  // TextInput,
+} from 'react-native-gesture-handler';
 
 interface Props {
   address: string;
@@ -31,20 +38,33 @@ export const AddressInput: React.FC<Props> = ({
     () =>
       StyleSheet.create({
         container: {
+          height: 'auto',
           backgroundColor: colors['neutral-card-1'],
           borderRadius: 8,
           paddingHorizontal: 10,
           paddingTop: 12,
+          position: 'relative',
+        },
+        searchContainer: {
+          backgroundColor: 'transparent',
+          flex: 1,
+          width: '100%',
+          padding: 0,
+          // padding: 0,
+          margin: 0,
         },
         input: {
+          width: '100%',
+          flex: 1,
           backgroundColor: colors['neutral-card-2'],
           borderRadius: 4,
           paddingHorizontal: 6,
-          marginRight: 80,
-          height: 40,
+          // marginRight: 80,
+          minHeight: 48,
           color: colors['neutral-title-1'],
           fontSize: 16,
           fontWeight: '500',
+          paddingRight: 38,
         },
         address: {
           color: colors['neutral-body'],
@@ -71,6 +91,37 @@ export const AddressInput: React.FC<Props> = ({
           left: 4,
           top: 2,
         },
+        searchBarStyle: {
+          margin: 0,
+          padding: 0,
+        },
+        containerStyle: {
+          borderTopWidth: 0,
+          borderBottomWidth: 0,
+          backgroundColor: colors['neutral-card-2'],
+          borderRadius: 4,
+          padding: 0,
+        },
+        inputContainerStyle: {
+          backgroundColor: 'transparent',
+          paddingHorizontal: 0,
+          marginLeft: 0,
+        },
+        inputStyle: {
+          color: colors['neutral-title-1'],
+          fontSize: 16,
+          fontWeight: '500',
+        },
+        leftIconContainerStyle: {
+          width: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          marginLeft: 0,
+          marginRight: 0,
+        },
+        clearIconContainer: {
+          padding: 4,
+        },
       }),
 
     [colors],
@@ -94,6 +145,7 @@ export const AddressInput: React.FC<Props> = ({
   const [editingAliasName, setEditingAliasName] = React.useState<string>(
     aliasName || '',
   );
+  const ref = React.useRef<any>(null);
 
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
@@ -101,7 +153,8 @@ export const AddressInput: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <TextInput
+      {/* <TextInput
+        ref={ref}
         onSubmitEditing={handleSubmit}
         value={editingAliasName}
         style={styles.input}
@@ -110,7 +163,51 @@ export const AddressInput: React.FC<Props> = ({
           onChange?.(nativeEvent.nativeEvent.text);
         }}
         blurOnSubmit
+        clearButtonMode="always"
+        focusable={true}
       />
+      {!!editingAliasName && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            right: 20,
+            top: 28,
+            width: 20,
+            height: 20,
+          }}
+          onPress={() => {
+            // setEditingAliasName('');
+            // onChange?.('');
+            ref.current?.clear();
+          }}>
+          <RcIconClose width={20} height={20} />
+        </TouchableOpacity>
+      )} */}
+
+      <SearchBar
+        ref={ref}
+        style={styles.searchBarStyle}
+        containerStyle={styles.containerStyle}
+        inputContainerStyle={styles.inputContainerStyle}
+        inputStyle={styles.inputStyle}
+        leftIconContainerStyle={styles.leftIconContainerStyle}
+        value={editingAliasName}
+        onChangeText={v => {
+          setEditingAliasName(v);
+          onChange?.(v);
+        }}
+        clearIcon={
+          <TouchableWithoutFeedback
+            style={styles.clearIconContainer}
+            onPress={() => {
+              ref?.current?.clear();
+            }}>
+            <RcIconClose />
+          </TouchableWithoutFeedback>
+        }
+        blurOnSubmit
+      />
+
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
         <Text style={styles.address} textBreakStrategy="simple">
           {address}
@@ -127,3 +224,6 @@ export const AddressInput: React.FC<Props> = ({
     </View>
   );
 };
+function SearchIcon() {
+  return null as React.ReactNode;
+}
