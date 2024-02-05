@@ -4,7 +4,8 @@ import { openapi } from '@/core/request';
 import { preferenceService, rabbyPointsService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCallback } from 'react';
-import { useAsync, useAsyncRetry } from 'react-use';
+import useAsync from 'react-use/lib/useAsync';
+import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 
 export const useRabbyPoints = () => {
   const { currentAccount: account } = useCurrentAccount();
