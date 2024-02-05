@@ -120,6 +120,13 @@ export const TokenWallet = ({
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const { t } = useTranslation();
+  const refreshing = useMemo(() => {
+    if ((tokens?.length || 0) > 0) {
+      return isPortfoliosLoading;
+    } else {
+      return false;
+    }
+  }, [isPortfoliosLoading, tokens]);
 
   const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenSmallToken = React.useCallback(() => {
@@ -183,7 +190,7 @@ export const TokenWallet = ({
         refreshControl={
           <RefreshControl
             onRefresh={refreshPositions}
-            refreshing={isPortfoliosLoading}
+            refreshing={refreshing}
           />
         }
       />

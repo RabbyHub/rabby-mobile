@@ -170,7 +170,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         console.error(error);
       }
       if (chainId) {
-        return CHAINS_LIST.find(e => e.id + '' === chainId + '');
+        return CHAINS_LIST.find(e => e.id === Number(chainId));
       }
     }
 

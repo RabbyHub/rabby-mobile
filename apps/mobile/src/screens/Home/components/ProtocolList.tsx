@@ -95,6 +95,13 @@ const _ProtocolList = ({
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const ref = useRef(null);
+  const refreshing = useMemo(() => {
+    if ((portfolios?.length || 0) > 0) {
+      return !!isPortfoliosLoading;
+    } else {
+      return false;
+    }
+  }, [isPortfoliosLoading, portfolios]);
 
   const sectionList = useMemo(
     () =>
@@ -183,10 +190,7 @@ const _ProtocolList = ({
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
       refreshControl={
-        <RefreshControl
-          refreshing={!!isPortfoliosLoading}
-          onRefresh={refreshPositions}
-        />
+        <RefreshControl refreshing={refreshing} onRefresh={refreshPositions} />
       }
     />
   );
