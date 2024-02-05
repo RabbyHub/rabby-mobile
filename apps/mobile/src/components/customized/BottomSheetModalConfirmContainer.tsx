@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { AppBottomSheetModal, Button } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -18,8 +19,14 @@ export const BottomSheetModalConfirmContainer = forwardRef<
     onConfirm?: () => void;
     onCancel?: () => void;
     centerGap?: number;
+    noCancel?: boolean;
+    cancelText?: string;
     cancelButtonProps?: React.ComponentProps<typeof Button>;
+    confirmText?: string;
     confirmButtonProps?: React.ComponentProps<typeof Button>;
+    bottomSheetModalProps?: Partial<
+      React.ComponentProps<typeof BottomSheetModal>
+    >;
   }>
 >((props, ref) => {
   const {
@@ -28,77 +35,102 @@ export const BottomSheetModalConfirmContainer = forwardRef<
     onConfirm,
     onCancel,
     centerGap = 13,
+    noCancel = false,
+    cancelText = 'Cancel',
     cancelButtonProps,
+    confirmText = 'Confirm',
     confirmButtonProps,
+    bottomSheetModalProps,
   } = props;
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const cancel = () => {
+
+  const cancel = useCallback(() => {
     onCancel?.();
     sheetModalRef.current?.dismiss();
-  };
-  const confirm = () => {
+  }, [onCancel]);
+  const confirm = useCallback(() => {
     onConfirm?.();
     sheetModalRef.current?.dismiss();
-  };
+  }, [onConfirm]);
 
   useImperativeHandle(
     ref,
     () => sheetModalRef?.current || ({} as BottomSheetModalMethods),
   );
+
+  const cancelNode = useMemo(() => {
+    if (noCancel) return null;
+
+    return (
+      <Button
+        onPress={cancel}
+        title={cancelText}
+        type="clear"
+        {...cancelButtonProps}
+        buttonStyle={[styles.buttonStyle, cancelButtonProps?.buttonStyle]}
+        titleStyle={[styles.btnCancelTitle, cancelButtonProps?.titleStyle]}
+        containerStyle={[
+          styles.btnContainer,
+          styles.btnCancelContainer,
+          cancelButtonProps?.containerStyle,
+        ]}>
+        {cancelText}
+      </Button>
+    );
+  }, [styles, cancelText, noCancel, cancel, cancelButtonProps]);
+
+  const confirmNode = useMemo(() => {
+    return (
+      <Button
+        onPress={confirm}
+        title={confirmText}
+        type="danger"
+        {...confirmButtonProps}
+        buttonStyle={[styles.buttonStyle, confirmButtonProps?.style]}
+        titleStyle={[styles.btnConfirmTitle, confirmButtonProps?.titleStyle]}
+        containerStyle={[
+          styles.btnContainer,
+          styles.btnConfirmContainer,
+          confirmButtonProps?.containerStyle,
+        ]}>
+        {confirmText}
+      </Button>
+    );
+  }, [styles, confirmText, confirm, confirmButtonProps]);
+
+  const btnNodesCount = [cancelNode, confirmNode].filter(Boolean).length;
+
   return (
     <AppBottomSheetModal
-      backgroundStyle={styles.sheet}
+      {...bottomSheetModalProps}
+      backgroundStyle={[bottomSheetModalProps?.backgroundStyle, styles.sheet]}
       index={0}
+      onChange={idx => {
+        if (idx < 0) {
+          onCancel?.();
+        }
+      }}
       ref={sheetModalRef}
       enableDismissOnClose
+      onDismiss={() => {
+        onCancel?.();
+        bottomSheetModalProps?.onDismiss?.();
+      }}
       snapPoints={[height + insets.bottom]}
       bottomInset={1}
       footerComponent={() => {
         return (
           <View style={styles.footerWrapper}>
             <View style={[styles.btnGroup]}>
-              <Button
-                onPress={cancel}
-                title={'Cancel'}
-                type="clear"
-                {...cancelButtonProps}
-                buttonStyle={[
-                  styles.buttonStyle,
-                  cancelButtonProps?.buttonStyle,
-                ]}
-                titleStyle={[
-                  styles.btnCancelTitle,
-                  cancelButtonProps?.titleStyle,
-                ]}
-                containerStyle={[
-                  styles.btnContainer,
-                  styles.btnCancelContainer,
-                  cancelButtonProps?.containerStyle,
-                ]}>
-                Cancel
-              </Button>
-              <View style={{ width: centerGap, flexShrink: 1 }} />
-              <Button
-                onPress={confirm}
-                title={'Confirm'}
-                type="danger"
-                {...confirmButtonProps}
-                buttonStyle={[styles.buttonStyle, confirmButtonProps?.style]}
-                titleStyle={[
-                  styles.btnConfirmTitle,
-                  confirmButtonProps?.titleStyle,
-                ]}
-                containerStyle={[
-                  styles.btnContainer,
-                  styles.btnConfirmContainer,
-                  confirmButtonProps?.containerStyle,
-                ]}>
-                Confirm
-              </Button>
+              {cancelNode}
+              {btnNodesCount > 1 && (
+                <View style={{ width: centerGap, flexShrink: 1 }} />
+              )}
+              {confirmNode}
             </View>
           </View>
         );

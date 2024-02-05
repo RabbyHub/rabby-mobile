@@ -17,7 +17,7 @@ import { CHAINS_ENUM, Chain } from '@debank/common';
 
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { useSheetModals } from '@/hooks/useSheetModal';
+import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { SearchInput } from '../Form/SearchInput';
@@ -79,13 +79,11 @@ export const TokenSelectorSheetModal = React.forwardRef<
     },
     ref,
   ) => {
-    const modalRef = useRef<AppBottomSheetModal>(null);
-    const { toggleShowSheetModal } = useSheetModals({
-      tokenSelectorModal: modalRef,
-    });
+    const { sheetModalRef: tokenSelectorModal, toggleShowSheetModal } =
+      useSheetModal();
 
     useEffect(() => {
-      toggleShowSheetModal('tokenSelectorModal', visible ? true : false);
+      toggleShowSheetModal(visible ? true : false);
     }, [visible, toggleShowSheetModal]);
 
     const colors = useThemeColors();
@@ -209,7 +207,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
     return (
       <AppBottomSheetModal
-        ref={modalRef}
+        ref={tokenSelectorModal}
         snapPoints={['80%']}
         enableContentPanningGesture={false}
         enableDismissOnClose={true}
@@ -269,7 +267,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   key={token_key}
                   onPress={() => {
                     onConfirm(token.$origin);
-                    toggleShowSheetModal('tokenSelectorModal', 'collapse');
+                    toggleShowSheetModal('collapse');
                   }}
                   style={[styles.tokenItem]}>
                   <View style={styles.tokenLeft}>

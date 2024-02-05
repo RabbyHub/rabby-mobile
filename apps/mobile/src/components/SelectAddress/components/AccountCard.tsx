@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -13,6 +13,9 @@ import {
 import { RcIconAddressWhitelistCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { WalletBrandImage } from '@/components/WalletBrandImage';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { toast } from '@/components/Toast';
+import { useCallback } from 'react';
 
 export default function AccountCard({
   account,
@@ -28,6 +31,17 @@ export default function AccountCard({
   onPress?: (account: IDisplayedAccountWithBalance) => void;
 }) {
   const { styles, colors } = useThemeStyles(getStyles);
+
+  const handleCopyAddress = useCallback<
+    React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
+  >(
+    evt => {
+      evt.stopPropagation();
+      Clipboard.setString(account.address);
+      toast.success('Copied');
+    },
+    [account?.address],
+  );
 
   if (!account) {
     console.warn('AccountCard: account is null');
@@ -66,10 +80,13 @@ export default function AccountCard({
               <Text style={styles.addressText}>
                 {formatAddressToShow(account.address)}
               </Text>
-              <RcIconCopyCC
-                color={colors['neutral-foot']}
-                style={{ marginLeft: 4 }}
-              />
+
+              <TouchableOpacity onPress={handleCopyAddress}>
+                <RcIconCopyCC
+                  color={colors['neutral-foot']}
+                  style={{ marginLeft: 4 }}
+                />
+              </TouchableOpacity>
             </View>
           </View>
         </View>

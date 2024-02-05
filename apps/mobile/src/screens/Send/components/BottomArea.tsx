@@ -24,10 +24,12 @@ export default function BottomArea() {
   const { handleSubmit } = useSendTokenFormik();
 
   const {
-    screenState: { temporaryGrant, isSubmitLoading, showWhitelistAlert },
+    screenState,
     computed: { whitelistEnabled, canSubmit, toAddressInWhitelist },
     fns: { putScreenState },
   } = useSendTokenInternalContext();
+
+  const { temporaryGrant, isSubmitLoading, showWhitelistAlert } = screenState;
 
   const whitelistAlertContent = useMemo(() => {
     if (!whitelistEnabled) {
@@ -54,7 +56,7 @@ export default function BottomArea() {
     return {
       success: false,
       content: t('page.sendToken.whitelistAlert__notWhitelisted'),
-      inlineIconColor: colors['neutral-foot'],
+      inlineIconColor: colors['red-dark'],
     };
   }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
 
@@ -85,7 +87,11 @@ export default function BottomArea() {
                 color={whitelistAlertContent.prevIconColor}
               />
             )}
-            <Text style={styles.whitelistAlertContentText}>
+            <Text
+              style={[
+                styles.whitelistAlertContentText,
+                !whitelistAlertContent.success && styles.errorText,
+              ]}>
               {whitelistAlertContent.inlineIconColor && (
                 <ThemeIcon
                   src={
@@ -160,6 +166,9 @@ const getStyles = createGetStyles(colors => {
       textAlign: 'center',
       justifyContent: 'center',
       lineHeight: 18,
+    },
+    errorText: {
+      color: colors['red-dark'],
     },
   };
 });

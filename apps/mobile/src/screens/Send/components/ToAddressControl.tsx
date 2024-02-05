@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { SendInput } from '@/components/Form/Input';
+import { FormInput } from '@/components/Form/Input';
 import { RcWhiteList } from '@/assets/icons/address';
 
 import RcEditPenCC from '../icons/edit-pen-cc.svg';
@@ -25,7 +25,7 @@ export default function ToAddressControl({
   style,
 }: React.PropsWithChildren<
   RNViewProps & {
-    inputProps?: React.ComponentProps<typeof SendInput>['inputProps'];
+    inputProps?: React.ComponentProps<typeof FormInput>['inputProps'];
     onSelectedAddress?: React.ComponentProps<
       typeof SelectAddressSheetModal
     >['onConfirm'];
@@ -77,7 +77,7 @@ export default function ToAddressControl({
           </TouchableView>
         </View>
       </View>
-      <SendInput
+      <FormInput
         className="mt-[8]"
         containerStyle={styles.inputContainer}
         inputStyle={styles.input}

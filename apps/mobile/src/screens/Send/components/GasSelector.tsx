@@ -208,7 +208,7 @@ export default function GasSelectorBottomSheetModal({
                           value={customGas + ''}
                           defaultValue={customGas + ''}
                           onChange={handleCustomGasChange}
-                          keyboardType="numeric"
+                          keyboardType="number-pad"
                           // onKeyPress={customGasConfirm}
                           ref={customerInputRef as any}
                           autoFocus={selectedGas?.level === item.level}

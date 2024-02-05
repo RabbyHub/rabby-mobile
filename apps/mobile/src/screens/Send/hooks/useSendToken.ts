@@ -209,10 +209,11 @@ const DFLT_SEND_STATE: SendScreenState = {
 
   safeInfo: null,
 };
+const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
-  const [sendTokenScreenState, setSendScreenState] = useState({
-    ...DFLT_SEND_STATE,
-  });
+  const [sendTokenScreenState, setSendScreenState] = useAtom(
+    sendTokenScreenStateAtom,
+  );
 
   const putScreenState = useCallback(
     (patch: Partial<SendScreenState>) => {
@@ -540,7 +541,7 @@ export function useSendTokenForm() {
       //   currentTokenRef.current === targetToken,
       // );
       if (!currentValues.to || !isValidAddress(currentValues.to)) {
-        putScreenState({ editBtnDisabled: true, showWhitelistAlert: false });
+        putScreenState({ editBtnDisabled: true, showWhitelistAlert: true });
       } else {
         putScreenState({ editBtnDisabled: false, showWhitelistAlert: true });
       }
@@ -879,9 +880,6 @@ export function useSendTokenForm() {
       toAddressInWhitelist,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
 
-      isSubmitLoading: screenState.isSubmitLoading,
-      showWhitelistAlert: screenState.showWhitelistAlert,
-      temporaryGrant: screenState.temporaryGrant,
       canSubmit:
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&

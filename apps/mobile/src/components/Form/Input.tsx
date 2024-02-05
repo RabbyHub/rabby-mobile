@@ -1,5 +1,8 @@
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInputProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetTextInput';
+import { useMemo } from 'react';
 import { TextInputProps } from 'react-native';
 import { View, TextInput } from 'react-native';
 
@@ -11,6 +14,7 @@ const getSendInputStyles = createGetStyles(colors => {
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],
       overflow: 'hidden',
+      width: '100%',
     },
     errorInputContainer: {
       borderColor: colors['red-default'],
@@ -18,11 +22,14 @@ const getSendInputStyles = createGetStyles(colors => {
     input: {
       fontSize: 15,
       paddingHorizontal: 12,
+      width: '100%',
+      height: '100%',
     },
   };
 });
 
-export function SendInput({
+export function FormInput<AS extends 'TextInput' | 'BottomSheetTextInput'>({
+  as,
   containerStyle,
   inputStyle,
   inputProps,
@@ -30,14 +37,27 @@ export function SendInput({
   ...viewProps
 }: React.PropsWithoutRef<
   RNViewProps & {
+    as?: AS;
+    inputProps?: AS extends 'TextInput'
+      ? TextInputProps
+      : BottomSheetTextInputProps;
     containerStyle?: React.ComponentProps<typeof View>['style'];
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
-    inputProps?: TextInputProps;
     hasError?: boolean;
   }
 >) {
   const colors = useThemeColors();
   const styles = getSendInputStyles(colors);
+
+  const JSXComponent = useMemo(() => {
+    switch (as) {
+      default:
+      case 'TextInput':
+        return TextInput;
+      case 'BottomSheetTextInput':
+        return BottomSheetTextInput;
+    }
+  }, [as]);
 
   return (
     <View
@@ -48,7 +68,7 @@ export function SendInput({
         containerStyle,
         viewProps?.style,
       ]}>
-      <TextInput {...inputProps} style={[styles.input, inputStyle]} />
+      <JSXComponent {...inputProps} style={[styles.input, inputStyle]} />
     </View>
   );
 }
