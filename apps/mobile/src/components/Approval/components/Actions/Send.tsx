@@ -153,7 +153,7 @@ const Send = ({
                   safeText={t('page.signTx.send.onMyWhitelist')}
                   id="1033"
                 />
-                <View>
+                <DescItem>
                   <ViewMore
                     type="receiver"
                     data={{
@@ -170,7 +170,7 @@ const Send = ({
                       onTransferWhitelist: requireData.onTransferWhitelist,
                     }}
                   />
-                </View>
+                </DescItem>
               </View>
             </View>
           </Row>
