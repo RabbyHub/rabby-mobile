@@ -846,8 +846,10 @@ class ProviderController extends BaseController {
         _data = JSON.parse(data);
       }
     }
+    const keyring = await this._checkAddress(from);
 
     return keyringService.signTypedMessage(
+      keyring,
       {
         from,
         data: _data,
