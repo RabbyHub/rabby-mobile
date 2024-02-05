@@ -3,6 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
 import {
   RcIconNavigationHomeLight,
+  RcIconNavigationHomeFocusLight,
+  RcIconNavigationDappsFocusLight,
   RcIconNavigationDappsLight,
 } from '@/assets/icons/bottom-bar';
 
@@ -129,7 +131,13 @@ export default function BottomTabNavigator() {
             ),
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
-                icon={<RcIconNavigationHomeLight isActive={focused} />}
+                icon={
+                  focused ? (
+                    <RcIconNavigationHomeFocusLight />
+                  ) : (
+                    <RcIconNavigationHomeLight isActive={focused} />
+                  )
+                }
               />
             ),
           }}
@@ -151,7 +159,13 @@ export default function BottomTabNavigator() {
             ),
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
-                icon={<RcIconNavigationDappsLight isActive={focused} />}
+                icon={
+                  focused ? (
+                    <RcIconNavigationDappsFocusLight />
+                  ) : (
+                    <RcIconNavigationDappsLight isActive={focused} />
+                  )
+                }
               />
             ),
           }}
