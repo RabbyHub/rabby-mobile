@@ -23,6 +23,7 @@ export const RootNames = {
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',
   Home: 'Home',
+  Points: 'Points',
 
   Dapps: 'Dapps',
   StackFavoritePopularDapps: 'StackFavoritePopularDapps',

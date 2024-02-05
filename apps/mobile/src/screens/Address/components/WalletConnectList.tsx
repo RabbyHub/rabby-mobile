@@ -99,7 +99,7 @@ export const WalletConnectList = () => {
           onPress={() => handlePress(service)}
         />
       ))}
-      {!validServices && !isLoading && <EmptyMobileWallet />}
+      {!validServices?.length && !isLoading && <EmptyMobileWallet />}
     </View>
   );
 };

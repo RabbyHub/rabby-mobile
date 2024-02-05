@@ -10,6 +10,7 @@ import { SecurityEngineService } from './securityEngine';
 import { TransactionWatcherService } from './transactionWatcher';
 import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
 import { DappService } from './dappService';
+import { RabbyPointsService } from './rabbyPoints';
 
 export const appStorage = makeAppStorage();
 
@@ -45,5 +46,9 @@ export const transactionBroadcastWatcherService =
   });
 
 export const securityEngineService = new SecurityEngineService({
+  storageAdapter: appStorage,
+});
+
+export const rabbyPointsService = new RabbyPointsService({
   storageAdapter: appStorage,
 });
