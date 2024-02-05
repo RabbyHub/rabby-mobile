@@ -7,18 +7,21 @@ import useSortToken from './hooks/useSortTokens';
 // render it need currentAccount is not null
 export const TokenScreen = () => {
   const { currentAccount } = useCurrentAccount();
-  const { tokens, isTokensLoading, hasTokens } = useQueryProjects(
-    currentAccount?.address,
-    false,
-    true,
-  );
+  const {
+    tokens,
+    isTokensLoading,
+    hasTokens,
+    refreshPositions,
+    isPortfoliosLoading,
+  } = useQueryProjects(currentAccount?.address, false, true);
   const sortTokens = useSortToken(tokens);
-
   return (
     <TokenWallet
       tokens={sortTokens}
       isTokensLoading={isTokensLoading}
       hasTokens={hasTokens && sortTokens.length > 0}
+      refreshPositions={refreshPositions}
+      isPortfoliosLoading={!!isPortfoliosLoading}
     />
   );
 };
