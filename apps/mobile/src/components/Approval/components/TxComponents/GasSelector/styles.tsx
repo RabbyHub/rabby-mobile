@@ -31,6 +31,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     gasSelectorCardMain: {
       flexDirection: 'row',
       position: 'relative',
+      alignItems: 'center',
     },
     gasSelectorCardTitle: {
       fontWeight: '500',
@@ -40,6 +41,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     gasSelectorCardContent: {
       marginHorizontal: 4,
+      alignItems: 'center',
     },
     gasSelectorCardContentText: {
       color: colors['neutral-title-1'],
@@ -57,6 +59,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     gasSelectorCardAmount: {
       flexDirection: 'row',
+      alignItems: 'center',
     },
     gasSelectorCardAmountText: {
       fontSize: 14,
