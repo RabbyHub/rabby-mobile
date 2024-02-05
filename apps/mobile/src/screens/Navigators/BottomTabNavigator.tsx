@@ -6,6 +6,9 @@ import {
   RcIconNavigationDappsLight,
 } from '@/assets/icons/bottom-bar';
 
+import { default as RcIconPoints } from '@/assets/icons/bottom-bar/nav-points-light.svg';
+import { default as RcIconPointsFocus } from '@/assets/icons/bottom-bar/nav-points-focus-light.svg';
+
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
 import { Text } from '@/components';
@@ -22,6 +25,8 @@ import {
   // OpenedWebViewsStub,
 } from '../Dapps/Dapps/components/WebViewsStub';
 import { BottomTabParamsList } from '@/navigation-type';
+import React, { useMemo } from 'react';
+import { PointScreen } from '../Points';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -150,6 +155,24 @@ export default function BottomTabNavigator() {
               />
             ),
           }}
+        />
+        <BottomTab.Screen
+          name={RootNames.Points}
+          component={PointScreen}
+          options={useMemo(
+            () => ({
+              headerShown: false,
+              tabBarLabel: ({ focused }) => (
+                <BottomTabLabel focused={focused} label={'Points'} />
+              ),
+              tabBarIcon: ({ focused }) => (
+                <BottomTabIcon
+                  icon={focused ? <RcIconPointsFocus /> : <RcIconPoints />}
+                />
+              ),
+            }),
+            [],
+          )}
         />
       </BottomTab.Navigator>
 
