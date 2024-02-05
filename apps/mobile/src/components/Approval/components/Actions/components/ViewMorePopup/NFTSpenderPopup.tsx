@@ -7,7 +7,7 @@ import { Chain } from '@debank/common';
 import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useThemeColors } from '@/hooks/theme';
-import { getStyle } from '../ViewMore';
+import { getStyle } from '../getStyle';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 const { isSameAddress } = addressUtils;

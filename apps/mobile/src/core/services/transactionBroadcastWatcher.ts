@@ -5,7 +5,6 @@ import createPersistStore, {
 import { TxRequest } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi, testOpenapi } from '../request';
 import { flatten } from 'lodash';
-import { transactionHistoryService, transactionWatcherService } from './shared';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -25,7 +24,17 @@ export class TransactionBroadcastWatcherService {
   store!: TransactionBroadcastWatcherStore;
   timers = {};
 
-  constructor(options?: StorageAdapaterOptions) {
+  transactionHistoryService: any;
+  transactionWatcherService: any;
+
+  constructor(
+    options: StorageAdapaterOptions & {
+      transactionHistoryService: any;
+      transactionWatcherService: any;
+    },
+  ) {
+    this.transactionHistoryService = options?.transactionHistoryService;
+    this.transactionWatcherService = options?.transactionWatcherService;
     this.store = createPersistStore<TransactionBroadcastWatcherStore>(
       {
         name: 'transactionBroadcastWatcher',
@@ -102,7 +111,7 @@ export class TransactionBroadcastWatcherService {
         item.tx_id
       ) {
         this.removeTx(item.id);
-        transactionHistoryService.updateTxByTxRequest(item);
+        this.transactionHistoryService.updateTxByTxRequest(item);
         addressList.push(item.signed_tx.from);
         if (item.tx_id) {
           const chain = findChainByID(item.signed_tx.chainId);
@@ -117,7 +126,7 @@ export class TransactionBroadcastWatcherService {
           console.error('chain not found');
           return;
         }
-        transactionWatcherService.addTx(
+        this.transactionWatcherService.addTx(
           `${item.signed_tx.from}_${item.signed_tx.nonce}_${chain.enum}`,
           {
             nonce: item.signed_tx.nonce,

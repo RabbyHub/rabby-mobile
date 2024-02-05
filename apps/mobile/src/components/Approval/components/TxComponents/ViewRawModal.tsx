@@ -1,5 +1,5 @@
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
+import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetView } from '@gorhom/bottom-sheet';

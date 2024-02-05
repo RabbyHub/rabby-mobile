@@ -10,10 +10,9 @@ import { CHAINS_ENUM } from '@debank/common';
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
-import { keyringService } from '.';
 import { KeyringAccountWithAlias } from '@/hooks/account';
-import { sessionService } from './session';
 import { BroadcastEvent } from '@/constant/event';
+import KeyringService from '@rabby-wallet/service-keyring';
 
 const { isSameAddress } = addressUtils;
 
@@ -98,9 +97,18 @@ const defaultAddressSortStore: AddressSortStore = {
 
 export class PreferenceService {
   store!: PreferenceStore;
+  keyringService: KeyringService;
+  sessionService: any;
 
-  constructor(options?: StorageAdapaterOptions) {
+  constructor(
+    options: StorageAdapaterOptions & {
+      keyringService: KeyringService;
+      sessionService;
+    },
+  ) {
     const defaultLang = 'en';
+    this.keyringService = options.keyringService;
+    this.sessionService = options.sessionService;
     this.store = createPersistStore<PreferenceStore>(
       {
         name: 'preference',
@@ -186,7 +194,7 @@ export class PreferenceService {
    * to the first address in address list
    */
   resetCurrentAccount = async () => {
-    const [account] = await keyringService.getAllVisibleAccountsArray();
+    const [account] = await this.keyringService.getAllVisibleAccountsArray();
     this.setCurrentAccount(account);
   };
 
@@ -204,7 +212,7 @@ export class PreferenceService {
   setCurrentAccount = (account: Account | null) => {
     this.store.currentAccount = account;
     if (account) {
-      sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
+      this.sessionService.broadcastEvent(BroadcastEvent.accountsChanged, [
         account.address.toLowerCase(),
       ]);
       // syncStateToUI(BROADCAST_TO_UI_EVENTS.accountsChanged, account);

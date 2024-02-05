@@ -4,7 +4,7 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
+} from '@/components/GlobalBottomSheetModal';
 import { useThemeColors } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';

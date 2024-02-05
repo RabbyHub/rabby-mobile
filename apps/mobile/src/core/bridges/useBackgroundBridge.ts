@@ -3,7 +3,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { sessionService } from '../services/session';
+import { sessionService } from '../services/shared';
 
 export function useBackgroundBridges() {
   const [, setSpinner] = useState(false);

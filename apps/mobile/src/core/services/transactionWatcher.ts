@@ -8,7 +8,6 @@ import i18n from '@/utils/i18n';
 import { EVENTS, eventBus } from '@/utils/events';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { transactionHistoryService } from './shared';
 
 class Transaction {
   createdTime = 0;
@@ -29,8 +28,12 @@ interface TransactionWatcherStore {
 export class TransactionWatcherService {
   store!: TransactionWatcherStore;
   timers = {};
+  transactionHistoryService: any;
 
-  constructor(options?: StorageAdapaterOptions) {
+  constructor(
+    options?: StorageAdapaterOptions & { transactionHistoryService: any },
+  ) {
+    this.transactionHistoryService = options?.transactionHistoryService;
     this.store = createPersistStore<TransactionWatcherStore>(
       {
         name: 'transactions',
@@ -107,7 +110,7 @@ export class TransactionWatcherService {
     const [address] = id.split('_');
 
     if (txReceipt) {
-      await transactionHistoryService.reloadTx({
+      await this.transactionHistoryService.reloadTx({
         address,
         nonce: Number(nonce),
         chainId: chainItem.id,

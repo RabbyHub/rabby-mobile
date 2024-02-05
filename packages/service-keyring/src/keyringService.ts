@@ -33,6 +33,7 @@ type MemStoreState = {
 type OnSetAddressAlias = (
   keyring: KeyringInstance | KeyringIntf,
   account: AccountItemWithBrandQueryResult,
+  contactService: any,
 ) => Promise<void>;
 
 type OnCreateKeyring = (
@@ -58,7 +59,8 @@ export class KeyringService extends RNEventEmitter {
 
   onCreateKeyring!: OnCreateKeyring;
 
-  /** @deprecated just for compatibility on COPY codes from extension, use keyringClasses as possible */
+  contactService: any;
+
   get keyringTypes() {
     return this.keyringClasses;
   }
@@ -75,8 +77,14 @@ export class KeyringService extends RNEventEmitter {
 
   private readonly encryptor: EncryptorAdapter;
 
-  constructor(options: KeyringServiceOptions) {
+  constructor(
+    options: KeyringServiceOptions & {
+      contactService: any;
+    },
+  ) {
     super();
+
+    this.contactService = options.contactService;
 
     const {
       encryptor: inputEncryptor = nodeEncryptor,
@@ -359,7 +367,11 @@ export class KeyringService extends RNEventEmitter {
         return Promise.all(
           allAccounts.map(async account => {
             this.emit('newAccount', account.address);
-            return this.onSetAddressAlias(selectedKeyring, account);
+            return this.onSetAddressAlias(
+              selectedKeyring,
+              account,
+              this.contactService,
+            );
           }),
         );
       })

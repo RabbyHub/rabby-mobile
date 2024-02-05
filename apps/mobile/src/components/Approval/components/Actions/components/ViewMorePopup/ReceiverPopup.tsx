@@ -7,7 +7,7 @@ import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import LogoWithText from '../LogoWithText';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
-import { getStyle } from '../ViewMore';
+import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DescItem from '../DescItem';

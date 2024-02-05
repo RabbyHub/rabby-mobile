@@ -6,7 +6,7 @@ import * as Values from '../Values';
 import { Chain } from '@debank/common';
 import { CollectionWithFloorPrice } from '@rabby-wallet/rabby-api/dist/types';
 import { formatAmount } from '@/utils/number';
-import { getStyle } from '../ViewMore';
+import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
