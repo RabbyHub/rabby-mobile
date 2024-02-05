@@ -120,9 +120,15 @@ export const NFTScreen = () => {
   const isLight = useColorScheme() === 'light';
   const styles = getStyle(colors, isLight);
   const { currentAccount } = useCurrentAccount();
-  const [refreshing, setRefreshing] = useState(false);
 
   const { list, isLoading, reload } = useQueryNft(currentAccount!.address);
+  const refreshing = useMemo(() => {
+    if (list.length > 0) {
+      return isLoading;
+    } else {
+      return false;
+    }
+  }, [isLoading, list]);
 
   const sectionList = useMemo(
     () =>
@@ -220,10 +226,6 @@ export const NFTScreen = () => {
     ) : (
       <EmptyHolder text="No NFTs" type="card" />
     );
-  }, [isLoading]);
-
-  useEffect(() => {
-    setRefreshing(isLoading);
   }, [isLoading]);
 
   return (

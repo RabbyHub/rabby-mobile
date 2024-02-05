@@ -12,7 +12,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { DappCardList } from './components/DappCardList';
 // import { useRequest } from 'ahooks';
 import { AppColorsVariants } from '@/constant/theme';
-import { useDappsHome } from '@/hooks/useDapps';
+import { useDappsHome } from '@/hooks/useDappsHome';
 import { DappsIOSScreen } from '../DappsIOS';
 import {
   useActiveViewSheetModalRefs,
