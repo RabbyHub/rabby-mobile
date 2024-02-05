@@ -11,6 +11,7 @@ import {
   TextInputSubmitEditingEventData,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
@@ -26,7 +27,6 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { isIOS } from '@rneui/themed';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 
 enum INPUT_ERROR {
@@ -276,7 +276,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       color: colors['neutral-title-1'],
       borderWidth: 1,
       textAlignVertical: 'center',
-      paddingTop: isIOS ? 12 : 0,
+      paddingTop: Platform.OS === 'ios' ? 12 : 0,
     },
 
     ensResultBox: {
