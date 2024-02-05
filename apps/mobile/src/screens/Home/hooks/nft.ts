@@ -22,6 +22,12 @@ export const useQueryNft = (addr: string) => {
     }
   }, []);
 
+  const reload = () => {
+    if (addr) {
+      fetchData(addr);
+    }
+  };
+
   useEffect(() => {
     if (addr) {
       fetchData(addr);
@@ -31,5 +37,6 @@ export const useQueryNft = (addr: string) => {
   return {
     isLoading,
     list,
+    reload,
   };
 };
