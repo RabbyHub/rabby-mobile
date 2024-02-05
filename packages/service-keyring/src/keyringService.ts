@@ -17,6 +17,7 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
+import { ContactBookService } from '@rabby-wallet/service-address';
 
 type KeyringState = {
   booted?: string;
@@ -59,7 +60,7 @@ export class KeyringService extends RNEventEmitter {
 
   onCreateKeyring!: OnCreateKeyring;
 
-  contactService: any;
+  contactService: ContactBookService;
 
   get keyringTypes() {
     return this.keyringClasses;
@@ -79,7 +80,7 @@ export class KeyringService extends RNEventEmitter {
 
   constructor(
     options: KeyringServiceOptions & {
-      contactService: any;
+      contactService: ContactBookService;
     },
   ) {
     super();

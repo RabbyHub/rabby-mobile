@@ -12,6 +12,9 @@
     },
     {
       "path": "../eth-keyring-watch/tsconfig.json"
+    },
+    {
+      "path": "../service-address/tsconfig.json"
     }
   ],
   "include": ["../../types", "./src", "test"]

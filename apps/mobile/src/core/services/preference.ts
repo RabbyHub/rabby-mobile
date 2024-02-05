@@ -98,12 +98,12 @@ const defaultAddressSortStore: AddressSortStore = {
 export class PreferenceService {
   store!: PreferenceStore;
   keyringService: KeyringService;
-  sessionService: any;
+  sessionService: import('./session').SessionService;
 
   constructor(
     options: StorageAdapaterOptions & {
       keyringService: KeyringService;
-      sessionService;
+      sessionService: import('./session').SessionService;
     },
   ) {
     const defaultLang = 'en';

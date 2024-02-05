@@ -8,6 +8,7 @@ import i18n from '@/utils/i18n';
 import { EVENTS, eventBus } from '@/utils/events';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import type { TransactionHistoryService } from './transactionHistory';
 
 class Transaction {
   createdTime = 0;
@@ -28,12 +29,14 @@ interface TransactionWatcherStore {
 export class TransactionWatcherService {
   store!: TransactionWatcherStore;
   timers = {};
-  transactionHistoryService: any;
+  transactionHistoryService: TransactionHistoryService;
 
   constructor(
-    options?: StorageAdapaterOptions & { transactionHistoryService: any },
+    options: StorageAdapaterOptions & {
+      transactionHistoryService: TransactionHistoryService;
+    },
   ) {
-    this.transactionHistoryService = options?.transactionHistoryService;
+    this.transactionHistoryService = options.transactionHistoryService;
     this.store = createPersistStore<TransactionWatcherStore>(
       {
         name: 'transactions',

@@ -72,7 +72,7 @@ const createSession = (key: SessionKey, data?: null | SessionProp) => {
 };
 
 export class SessionService {
-  dappService: any;
+  dappService: import('./dappService').DappService;
 
   constructor({ dappService }: { dappService: any }) {
     this.dappService = dappService;

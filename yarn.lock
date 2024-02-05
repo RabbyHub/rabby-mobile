@@ -5020,6 +5020,7 @@ __metadata:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
     "@rabby-wallet/keyring-utils": "workspace:^"
+    "@rabby-wallet/service-address": "workspace:^"
     "@types/jest": ^27.4.1
     "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10

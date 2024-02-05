@@ -8,6 +8,8 @@ import { flatten } from 'lodash';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { EVENTS, eventBus } from '@/utils/events';
+import type { TransactionHistoryService } from './transactionHistory';
+import type { TransactionWatcherService } from './transactionWatcher';
 
 interface WatcherItem {
   address: string;
@@ -24,13 +26,13 @@ export class TransactionBroadcastWatcherService {
   store!: TransactionBroadcastWatcherStore;
   timers = {};
 
-  transactionHistoryService: any;
-  transactionWatcherService: any;
+  transactionHistoryService: TransactionHistoryService;
+  transactionWatcherService: TransactionWatcherService;
 
   constructor(
     options: StorageAdapaterOptions & {
-      transactionHistoryService: any;
-      transactionWatcherService: any;
+      transactionHistoryService: TransactionHistoryService;
+      transactionWatcherService: TransactionWatcherService;
     },
   ) {
     this.transactionHistoryService = options?.transactionHistoryService;

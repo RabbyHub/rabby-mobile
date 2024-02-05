@@ -74,8 +74,8 @@ export class NotificationService extends Events {
   isLocked = false;
   currentRequestDeferFn?: () => void;
   statsData: StatsData | undefined;
-  preferenceService: any;
-  transactionHistoryService: any;
+  preferenceService: import('./preference').PreferenceService;
+  transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
   get approvals() {
     return this._approvals;
