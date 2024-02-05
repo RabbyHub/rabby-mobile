@@ -51,6 +51,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
   const [isClickDone, setIsClickDone] = useState(false);
   const { status: sessionStatus } = useSessionStatus(currentAccount!);
   const { t } = useTranslation();
+  const { openWalletByAccount } = useValidWalletServices();
 
   const initWalletConnect = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
@@ -90,7 +91,8 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
     setConnectStatus(WALLETCONNECT_STATUS_MAP.PENDING);
     setConnectError(null);
-    apisWalletConnect.resendWalletConnect(account);
+    await apisWalletConnect.resendWalletConnect(account);
+    openWalletByAccount(account);
     toast.success(t('page.signFooterBar.walletConnect.requestSuccessToast'));
   };
 
@@ -216,7 +218,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
     }
   }, [sessionStatus]);
 
-  const { openWalletByAccount } = useValidWalletServices();
   useEffect(() => {
     if (currentAccount) {
       openWalletByAccount(currentAccount);

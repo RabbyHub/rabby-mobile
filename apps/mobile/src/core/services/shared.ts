@@ -19,6 +19,7 @@ import {
 } from '@rabby-wallet/service-keyring';
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
+import { RabbyPointsService } from './rabbyPoints';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -87,5 +88,9 @@ export const transactionBroadcastWatcherService =
   });
 
 export const securityEngineService = new SecurityEngineService({
+  storageAdapter: appStorage,
+});
+
+export const rabbyPointsService = new RabbyPointsService({
   storageAdapter: appStorage,
 });

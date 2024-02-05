@@ -4741,9 +4741,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.15":
-  version: 2.1.0-beta.15
-  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.15"
+"@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.16":
+  version: 2.1.0-beta.16
+  resolution: "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.0-beta.16"
   dependencies:
     "@ethereumjs/tx": ^3.5.2
     "@rabby-wallet/wc-client": ^1.8.10
@@ -4752,7 +4752,7 @@ __metadata:
     ethereumjs-util: ^7.1.3
     events: ^3.3.0
     web3-utils: ^1.6.0
-  checksum: 10ad1b5425607f8b4222247c17e481cd145c1711c3268042ff88f5d6e2a0bb9a40f98dd515f62609ca73a93ae171c8c671096c4fdaeb929997a09b3fc4de5a00
+  checksum: d19d939726ff9612a1ec6ed3bbba1b4a017ab927aaecbf62c44e897ac13f2793e2cc716d7453be93970450860d4569b74086725f05d287332ab169b00510e74f
   languageName: node
   linkType: hard
 
@@ -5448,6 +5448,16 @@ __metadata:
   peerDependencies:
     react-native: ">=0.59"
   checksum: d54b75c6dc6d7a8cbb054d84ed9326e1715259137e333f26cd801c6b820996cacceb5a1cf3ee94b91866361c040b7a12eb78db3695b076e8f30c3403985f98d5
+  languageName: node
+  linkType: hard
+
+"@react-native-masked-view/masked-view@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@react-native-masked-view/masked-view@npm:0.3.1"
+  peerDependencies:
+    react: ">=16"
+    react-native: ">=0.57"
+  checksum: 880059020709ce856c448657c2d67a905f2ebcd3f42c1c4d344d732761cb2de98efb600172df5591d943f562393dbca42802e8a903b974aa2b038b441c5718fb
   languageName: node
   linkType: hard
 
@@ -24906,7 +24916,7 @@ __metadata:
     "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-watch": "*"
-    "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.15
+    "@rabby-wallet/eth-walletconnect-keyring": 2.1.0-beta.16
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.2
@@ -24919,6 +24929,7 @@ __metadata:
     "@react-native-community/eslint-config": ^3.2.0
     "@react-native-community/hooks": ^3.0.0
     "@react-native-community/netinfo": ^11.2.0
+    "@react-native-masked-view/masked-view": ^0.3.1
     "@react-native/eslint-config": ^0.72.2
     "@react-native/metro-config": ^0.72.11
     "@react-navigation/bottom-tabs": ^6.5.11
@@ -25025,6 +25036,7 @@ __metadata:
     tinycolor2: ^1.6.0
     ts-toolbelt: ^9.6.0
     typescript: 4.8.4
+    use-count-up: ^3.0.1
     web3: ^4.3.0
     web3-eth-abi: 1.7.0
     web3-utils: 1.7.0
@@ -30389,6 +30401,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"use-count-up@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "use-count-up@npm:3.0.1"
+  dependencies:
+    use-elapsed-time: 3.0.2
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 0e5b659acd52bdf401d943605d19c425bc7acdce5f4486b3bd6dfd6b70dadcb68f279df09140976b3038d6de34f3eb5fe47136af04e3789861dfecd943906ea3
+  languageName: node
+  linkType: hard
+
 "use-deep-compare@npm:^1.1.0":
   version: 1.2.1
   resolution: "use-deep-compare@npm:1.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fuse-deep-compare%2F-%2Fuse-deep-compare-1.2.1.tgz"
@@ -30397,6 +30420,15 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0"
   checksum: f65a880d0cf126484f5a5772c665f7d05ea7834e73d2a76a26c1c6a4101604f9f75fb836903a191ddca9eeafe5f8faa648cc712079046147affa1ea6b4b84d2f
+  languageName: node
+  linkType: hard
+
+"use-elapsed-time@npm:3.0.2":
+  version: 3.0.2
+  resolution: "use-elapsed-time@npm:3.0.2"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 9ba8ef6d05b8137fd715ace7303edc2fdc412f372f158bfa659926b0cb356654be84664f912d016f99deb2f3951236443feb84b78318755d5984c340dcb418a6
   languageName: node
   linkType: hard
 

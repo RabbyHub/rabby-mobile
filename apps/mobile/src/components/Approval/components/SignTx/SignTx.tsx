@@ -1092,7 +1092,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             />
           </View>
         )}
-        <BroadcastMode
+        {/* <BroadcastMode
           // eslint-disable-next-line react-native/no-inline-styles
           style={{
             marginTop: 12,
@@ -1105,7 +1105,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onChange={value => {
             setPushInfo(value);
           }}
-        />
+        /> */}
 
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}

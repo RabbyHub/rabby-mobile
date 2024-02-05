@@ -32,6 +32,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 15,
       color: colors['neutral-body'],
       width: '49%',
+      alignContent: 'center',
     },
     ruleValue: {
       display: 'flex',
@@ -48,6 +49,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexWrap: 'wrap',
       flexDirection: 'row',
       gap: 8,
+      marginRight: -8,
     },
     collectListItemImage: {
       width: 20,
@@ -146,9 +148,7 @@ const RuleResult = ({
 
   return (
     <View style={styles.ruleResultWrapper}>
-      <Text style={styles.ruleDesc} className="flex items-center">
-        {ruleDesc()}
-      </Text>
+      <Text style={styles.ruleDesc}>{ruleDesc()}</Text>
       <View style={styles.ruleValue}>
         {rule.id === '1004' && (
           <View style={styles.collectList}>
