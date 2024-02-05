@@ -10,11 +10,11 @@ import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { createGetStyles } from '@/utils/styles';
-import { ModalConfirmAllowTransfer } from './ConfirmAllowTransferSheetModal';
+import { ModalConfirmAllowTransfer } from './SheetModalConfirmAllowTransfer';
 
 import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
 import RcIconChecked from '../icons/icon-checked-cc.svg';
-import { ModalAddToContacts } from './ContactsSheetModal';
+import { ModalAddToContacts } from './SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
 
 export default function BottomArea() {
