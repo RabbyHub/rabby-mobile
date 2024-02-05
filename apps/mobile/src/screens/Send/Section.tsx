@@ -86,14 +86,14 @@ export function BalanceSection({ style }: RNViewProps) {
                 Balance: {currentTokenBalance}
               </Text>
               {/* max button */}
-              {currentToken.amount > 0 && (
+              {/* {currentToken.amount > 0 && (
                 <TouchableView
                   className="h-[100%] ml-[4]"
                   style={styles.maxButtonWrapper}
                   onPress={handleClickTokenBalance}>
                   <RcMaxButton />
                 </TouchableView>
-              )}
+              )} */}
             </>
           )}
         </View>
