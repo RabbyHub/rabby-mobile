@@ -1,5 +1,5 @@
+import { useEffect } from 'react';
 import { apiContact } from '@/core/apis';
-import { Account } from '@/core/services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { ContactBookItem } from '@rabby-wallet/service-address';
 import { atom, useAtom } from 'jotai';
@@ -8,7 +8,9 @@ import { useAccountsToDisplay } from './accountToDisplay';
 
 const contactsByAddrAtom = atom<Record<string, ContactBookItem>>({});
 
-export function useContactAccounts() {
+export function useContactAccounts({
+  autoFetch = false,
+}: { autoFetch?: boolean } = {}) {
   const [contactsByAddr, setContactsByAddr] = useAtom(contactsByAddrAtom);
   const { accountsList, fetchAllAccountsToDisplay } = useAccountsToDisplay();
 
@@ -39,6 +41,12 @@ export function useContactAccounts() {
     fetchContactsByAddress();
     fetchAllAccountsToDisplay();
   }, [fetchContactsByAddress, fetchAllAccountsToDisplay]);
+
+  useEffect(() => {
+    if (autoFetch) {
+      fetchContactAccounts();
+    }
+  }, [autoFetch, fetchContactAccounts]);
 
   return {
     getAddressNote,

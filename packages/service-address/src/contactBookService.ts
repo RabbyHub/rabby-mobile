@@ -2,6 +2,7 @@ import { createPersistStore } from '@rabby-wallet/persist-store';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 
 export type ContactBookItem = {
+  /** @deprecated useless, migrated to AddressAliasItem.address. NEVER use it! */
   name: string;
   address: string;
 };

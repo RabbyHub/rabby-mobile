@@ -17,8 +17,13 @@ const getTestnetTotalBalanceCached = cached(async address => {
 
 export const getAddressBalance = async (
   address: string,
-  force = false,
-  isTestnet = false,
+  {
+    force = false,
+    isTestnet = false,
+  }: {
+    force?: boolean;
+    isTestnet?: boolean;
+  } = {},
 ) => {
   if (isTestnet) {
     return getTestnetTotalBalanceCached([address], address, force);

@@ -18,8 +18,7 @@ const getAppConfig = function () {
     getTransformOptions: async () => ({
       transform: {
         experimentalImportSupport: false,
-        // disable inline required on dev, avoid cycle require
-        inlineRequires: process.env.NODE_ENV === 'production',
+        inlineRequires: false,
       },
     }),
   };

@@ -29,10 +29,14 @@ export default function useCurrentBalance(
     DisplayChainWithWhiteLogo[]
   >([]);
 
-  const getAddressBalance = async (address: string, force: boolean) => {
+  const getAddressBalance = async (
+    address: string,
+    options?: { force?: boolean },
+  ) => {
+    const { force } = options || {};
     try {
       const { total_usd_value: totalUsdValue, chain_list: chainList } =
-        await apiBalance.getAddressBalance(address, force);
+        await apiBalance.getAddressBalance(address, { force });
       if (isCanceled) {
         return;
       }
@@ -47,10 +51,14 @@ export default function useCurrentBalance(
     }
   };
 
-  const getTestnetBalance = async (address: string, force: boolean) => {
+  const getTestnetBalance = async (
+    address: string,
+    options?: { force?: boolean },
+  ) => {
+    const { force } = options || {};
     try {
       const { total_usd_value: totalUsdValue, chain_list: chainList } =
-        await apiBalance.getAddressBalance(address, force);
+        await apiBalance.getAddressBalance(address, { force });
       if (isCanceled) {
         return;
       }
@@ -78,17 +86,17 @@ export default function useCurrentBalance(
       setBalance(cacheData.total_usd_value);
       if (update) {
         setBalanceLoading(true);
-        getAddressBalance(account.toLowerCase(), force);
+        getAddressBalance(account.toLowerCase(), { force });
         if (includeTestnet) {
-          getTestnetBalance(account.toLowerCase(), force);
+          getTestnetBalance(account.toLowerCase(), { force });
         }
       } else {
         setBalanceLoading(false);
       }
     } else {
-      getAddressBalance(account.toLowerCase(), force);
+      getAddressBalance(account.toLowerCase(), { force });
       if (includeTestnet) {
-        getTestnetBalance(account.toLowerCase(), force);
+        getTestnetBalance(account.toLowerCase(), { force });
       }
       setBalanceLoading(false);
       setBalanceFromCache(false);

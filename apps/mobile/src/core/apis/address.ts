@@ -13,6 +13,11 @@ export async function addWatchAddress(address: string) {
   return result;
 }
 
+/**
+ * @deprecated just for migration, use `addWatchAddress` instead
+ */
+export const addWatchAddressOnly = addWatchAddress;
+
 export function getCurrentAccount() {
   return preferenceService.getCurrentAccount();
 }
