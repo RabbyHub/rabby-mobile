@@ -26,6 +26,7 @@ import { ChainInfo } from './components/ChainInfo';
 import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
+import { useContactAccounts } from '@/hooks/contact';
 
 function SendScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -74,6 +75,7 @@ function SendScreen(): JSX.Element {
     handleCurrentTokenChange,
 
     whitelistEnabled,
+    toAliasName,
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
@@ -197,6 +199,8 @@ function SendScreen(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navState, screenState.inited]);
 
+  const { fetchContactAccounts } = useContactAccounts();
+
   return (
     <NormalScreenContainer>
       <View style={styles.container}>
@@ -215,10 +219,12 @@ function SendScreen(): JSX.Element {
               currentToken,
               currentTokenBalance,
               currentTokenPrice,
+              toAliasName,
             },
             formik,
             fns: {
-              putScreenState: putScreenState,
+              putScreenState,
+              fetchContactAccounts,
             },
 
             callbacks: {

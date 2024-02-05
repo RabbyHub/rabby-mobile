@@ -8,7 +8,7 @@ const { isSameAddress } = addressUtils;
 const whitelistAtom = atom<string[]>([]);
 const enableAtom = atom<boolean>(false);
 
-export const useWhitelist = () => {
+export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   const [whitelist, setWL] = useAtom(whitelistAtom);
   const [enable, setEnable] = useAtom(enableAtom);
 
@@ -71,12 +71,17 @@ export const useWhitelist = () => {
     getWhitelistEnabled();
   }, [getWhitelist, getWhitelistEnabled]);
 
+  const { disableAutoFetch } = options || {};
+
   useEffect(() => {
-    init();
-  }, [init]);
+    if (!disableAutoFetch) {
+      init();
+    }
+  }, [disableAutoFetch, init]);
 
   return {
     init,
+    fetchWhitelist: init,
     whitelist,
     enable,
     whitelistEnabled: enable,

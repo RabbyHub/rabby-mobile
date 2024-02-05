@@ -19,20 +19,10 @@ const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
 export default function ToAddressControl({
   inputProps,
-  onSelectedAddress,
-  onCancelSelectAddress,
-  onStartSelectAddress,
   style,
 }: React.PropsWithChildren<
   RNViewProps & {
     inputProps?: React.ComponentProps<typeof FormInput>['inputProps'];
-    onSelectedAddress?: React.ComponentProps<
-      typeof SelectAddressSheetModal
-    >['onConfirm'];
-    onCancelSelectAddress?: React.ComponentProps<
-      typeof SelectAddressSheetModal
-    >['onCancel'];
-    onStartSelectAddress?: () => void;
   }
 >) {
   const {
@@ -103,7 +93,11 @@ export default function ToAddressControl({
             <Text style={styles.tipNoContact}>
               <Trans i18nKey="page.sendToken.addressNotInContract" t={t}>
                 Not on address list.{' '}
-                <Text onPress={() => {}} style={styles.textAddToContact}>
+                <Text
+                  onPress={() => {
+                    putScreenState({ addressToAddAsContacts: formValues.to });
+                  }}
+                  style={styles.textAddToContact}>
                   Add to contacts
                 </Text>
               </Trans>

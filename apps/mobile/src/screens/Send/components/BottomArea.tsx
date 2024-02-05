@@ -14,6 +14,8 @@ import { ModalConfirmAllowTransfer } from './ConfirmAllowTransferSheetModal';
 
 import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
 import RcIconChecked from '../icons/icon-checked-cc.svg';
+import { ModalAddToContacts } from './ContactsSheetModal';
+import { apiBalance } from '@/core/apis';
 
 export default function BottomArea() {
   const { t } = useTranslation();
@@ -24,12 +26,23 @@ export default function BottomArea() {
   const { handleSubmit } = useSendTokenFormik();
 
   const {
+    formValues,
     screenState,
-    computed: { whitelistEnabled, canSubmit, toAddressInWhitelist },
-    fns: { putScreenState },
+    computed: {
+      whitelistEnabled,
+      canSubmit,
+      toAddressInWhitelist,
+      toAddressInContactBook,
+    },
+    fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
 
-  const { temporaryGrant, isSubmitLoading, showWhitelistAlert } = screenState;
+  const {
+    temporaryGrant,
+    isSubmitLoading,
+    showWhitelistAlert,
+    addressToAddAsContacts,
+  } = screenState;
 
   const whitelistAlertContent = useMemo(() => {
     if (!whitelistEnabled) {
@@ -118,15 +131,31 @@ export default function BottomArea() {
       />
 
       <ModalConfirmAllowTransfer
+        toAddr={formValues.to}
         visible={isAllowTransferModalVisible}
+        showAddToWhitelist={toAddressInContactBook}
         onFinished={result => {
-          if (result.confirmed) {
-            putScreenState?.({ temporaryGrant: true });
-          }
+          putScreenState?.({ temporaryGrant: true });
           setIsAllowTransferModalVisible(false);
         }}
         onCancel={() => {
           setIsAllowTransferModalVisible(false);
+        }}
+      />
+
+      <ModalAddToContacts
+        addrToAdd={addressToAddAsContacts || ''}
+        onFinished={async result => {
+          putScreenState({ addressToAddAsContacts: null });
+          fetchContactAccounts();
+
+          // trigger get balance of address
+          apiBalance.getAddressBalance(result.contactAddrAdded, {
+            force: true,
+          });
+        }}
+        onCancel={() => {
+          putScreenState({ addressToAddAsContacts: null });
         }}
       />
     </View>

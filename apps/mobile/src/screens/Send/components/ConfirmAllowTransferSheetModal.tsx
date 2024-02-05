@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text } from 'react-native';
 
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -15,12 +15,16 @@ import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/Form/Input';
 
 interface ConfirmAllowTransferModalProps {
-  onFinished: (result: { confirmed: boolean }) => void;
+  toAddr: string;
+  showAddToWhitelist?: boolean;
+  onFinished: (result: { isAddToWhitelist: boolean }) => void;
   onCancel(): void;
 }
 
 export function ModalConfirmAllowTransfer({
+  toAddr,
   visible,
+  showAddToWhitelist = false,
   onFinished,
   onCancel,
 }: ConfirmAllowTransferModalProps & {
@@ -32,21 +36,31 @@ export function ModalConfirmAllowTransfer({
   const styles = getStyles(colors);
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
-  const [isAllowed, setIsAllowed] = useState(false);
+  const [confirmToAddToWhitelist, setConfirmToAddToWhitelist] = useState(false);
 
   useEffect(() => {
     toggleShowSheetModal(visible || 'destroy');
 
-    setIsAllowed(false);
+    setConfirmToAddToWhitelist(false);
   }, [toggleShowSheetModal, visible]);
+
+  const { addWhitelist } = useWhitelist({
+    disableAutoFetch: true,
+  });
+
+  const handleConfirm = useCallback(async () => {
+    if (toAddr && confirmToAddToWhitelist) {
+      await addWhitelist(toAddr);
+    }
+
+    onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
+  }, [toAddr, confirmToAddToWhitelist, addWhitelist, onFinished]);
 
   return (
     <>
       <BottomSheetModalConfirmContainer
         ref={sheetModalRef}
-        onConfirm={() => {
-          onFinished?.({ confirmed: isAllowed });
-        }}
+        onConfirm={handleConfirm}
         onCancel={onCancel}
         height={279}
         confirmButtonProps={{
@@ -58,7 +72,7 @@ export function ModalConfirmAllowTransfer({
         }}>
         <View style={styles.mainContainer}>
           {/* <Text style={styles.title}>{t('page.sendToken.allowTransferModal.title')}</Text> */}
-          <Text style={styles.title}>Confirm to Allow Sending</Text>
+          <Text style={styles.title}>Confirm to allow sending</Text>
 
           <View style={styles.contentContainer}>
             {/* now we have no password, just  */}
@@ -74,20 +88,30 @@ export function ModalConfirmAllowTransfer({
                 secureTextEntry: true,
               }}
             /> */}
-            <TouchableView
-              style={styles.confirmTextBtn}
-              onPress={() => {
-                setIsAllowed(prev => !prev);
-              }}>
-              <ThemeIcon
-                src={isAllowed ? RcIconCheckedFilledCC : RcIconUnCheckCC}
-                style={styles.checkboxIcon}
-                color={
-                  isAllowed ? colors['blue-default'] : colors['neutral-title1']
-                }
-              />
-              <Text>{t('page.sendToken.allowTransferModal.addWhitelist')}</Text>
-            </TouchableView>
+            {showAddToWhitelist && (
+              <TouchableView
+                style={styles.confirmTextBtn}
+                onPress={() => {
+                  setConfirmToAddToWhitelist(prev => !prev);
+                }}>
+                <ThemeIcon
+                  src={
+                    confirmToAddToWhitelist
+                      ? RcIconCheckedFilledCC
+                      : RcIconUnCheckCC
+                  }
+                  style={styles.checkboxIcon}
+                  color={
+                    confirmToAddToWhitelist
+                      ? colors['blue-default']
+                      : colors['neutral-title1']
+                  }
+                />
+                <Text>
+                  {t('page.sendToken.allowTransferModal.addWhitelist')}
+                </Text>
+              </TouchableView>
+            )}
           </View>
         </View>
       </BottomSheetModalConfirmContainer>

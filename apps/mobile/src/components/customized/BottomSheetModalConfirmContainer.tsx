@@ -16,10 +16,15 @@ export const BottomSheetModalConfirmContainer = forwardRef<
   BottomSheetModal,
   React.PropsWithChildren<{
     height: number;
-    onConfirm?: () => void;
+    bodyStyle?: React.ComponentProps<typeof BottomSheetView>['style'];
+    /**
+     * @description strict `false` value means not confirmed
+     * @returns
+     */
+    onConfirm?: () => Promise<boolean | void> | boolean | void;
     onCancel?: () => void;
     centerGap?: number;
-    noCancel?: boolean;
+    noCancelButton?: boolean;
     cancelText?: string;
     cancelButtonProps?: React.ComponentProps<typeof Button>;
     confirmText?: string;
@@ -32,10 +37,11 @@ export const BottomSheetModalConfirmContainer = forwardRef<
   const {
     height = 0,
     children,
+    bodyStyle,
     onConfirm,
     onCancel,
     centerGap = 13,
-    noCancel = false,
+    noCancelButton = false,
     cancelText = 'Cancel',
     cancelButtonProps,
     confirmText = 'Confirm',
@@ -52,9 +58,11 @@ export const BottomSheetModalConfirmContainer = forwardRef<
     onCancel?.();
     sheetModalRef.current?.dismiss();
   }, [onCancel]);
-  const confirm = useCallback(() => {
-    onConfirm?.();
-    sheetModalRef.current?.dismiss();
+  const confirm = useCallback(async () => {
+    const confirmeResult = await onConfirm?.();
+    if (confirmeResult !== false) {
+      sheetModalRef.current?.dismiss();
+    }
   }, [onConfirm]);
 
   useImperativeHandle(
@@ -63,7 +71,7 @@ export const BottomSheetModalConfirmContainer = forwardRef<
   );
 
   const cancelNode = useMemo(() => {
-    if (noCancel) return null;
+    if (noCancelButton) return null;
 
     return (
       <Button
@@ -81,7 +89,7 @@ export const BottomSheetModalConfirmContainer = forwardRef<
         {cancelText}
       </Button>
     );
-  }, [styles, cancelText, noCancel, cancel, cancelButtonProps]);
+  }, [styles, cancelText, noCancelButton, cancel, cancelButtonProps]);
 
   const confirmNode = useMemo(() => {
     return (
@@ -135,7 +143,9 @@ export const BottomSheetModalConfirmContainer = forwardRef<
           </View>
         );
       }}>
-      <BottomSheetView style={[styles.container]}>{children}</BottomSheetView>
+      <BottomSheetView style={[styles.container, bodyStyle]}>
+        {children}
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 });

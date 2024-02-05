@@ -180,6 +180,8 @@ export type SendScreenState = {
     chainId: number;
     nonce: number;
   } | null;
+
+  addressToAddAsContacts: string | null;
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -208,6 +210,8 @@ const DFLT_SEND_STATE: SendScreenState = {
   isGnosisSafe: false,
 
   safeInfo: null,
+
+  addressToAddAsContacts: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
@@ -868,7 +872,7 @@ export function useSendTokenForm() {
     ],
   );
 
-  const { isAddrOnContactBook } = useContactAccounts();
+  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
   const computed = useMemo(() => {
@@ -893,8 +897,9 @@ export function useSendTokenForm() {
     whitelist,
     whitelistEnabled,
     isAddrOnContactBook,
-    formValues,
+    formValues.to,
     screenState,
+    formValues.amount,
   ]);
 
   const [toAliasName] = useAlias(formValues.to || '');
@@ -916,7 +921,7 @@ export function useSendTokenForm() {
     patchFormValues,
     handleFormValuesChange,
 
-    toAliasName,
+    toAliasName: toAliasName ?? '',
     whitelist,
     whitelistEnabled,
     computed,
@@ -945,12 +950,13 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
-    toAliasName?: string;
+    toAliasName: string;
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
+    fetchContactAccounts: () => void;
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
@@ -986,6 +992,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   formik: null as any,
   fns: {
     putScreenState: () => {},
+    fetchContactAccounts: () => {},
   },
   callbacks: {
     handleCurrentTokenChange: () => {},
