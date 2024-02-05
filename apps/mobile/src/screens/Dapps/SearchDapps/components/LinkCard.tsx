@@ -2,15 +2,10 @@ import { Colors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { isPossibleDomain } from '@/utils/url';
 import React from 'react';
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
 import RcIconGlobe from '@/assets/icons/dapp/icon-globe.svg';
 import RcIconJump from '@/assets/icons/dapp/icon-jump.svg';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export const LinkCard = ({
   url,

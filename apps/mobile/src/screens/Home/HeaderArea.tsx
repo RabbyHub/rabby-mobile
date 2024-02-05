@@ -20,7 +20,6 @@ import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { PendingTxCount } from './components/PendingTxCount';
-import { isIOS } from '@rneui/base';
 
 export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
@@ -145,7 +144,7 @@ export default function HomeHeaderArea() {
       </View>
 
       <View className="" style={styles.textBox}>
-        {
+        <Text>
           <Text style={styles.usdText}>
             {(balanceLoading && !balanceFromCache) ||
             balance === null ||
@@ -154,19 +153,19 @@ export default function HomeHeaderArea() {
             ) : (
               usd
             )}
-            {!isLoading && (
-              <View style={styles.percentBox}>
-                <Text
-                  style={StyleSheet.compose(
-                    styles.percent,
-                    isDecrease && styles.decrease,
-                  )}>
-                  {percent}
-                </Text>
-              </View>
-            )}
           </Text>
-        }
+
+          {!isLoading && (
+            <Text
+              style={StyleSheet.compose(
+                styles.percent,
+                isDecrease && styles.decrease,
+              )}>
+              {'  '}
+              {percent}
+            </Text>
+          )}
+        </Text>
       </View>
     </View>
   );
@@ -228,7 +227,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     accountRightArrow: {
       width: 16,
       height: 16,
-      marginBottom: -3,
+      marginBottom: -2,
       opacity: 0.7,
     },
     walletIcon: {
@@ -251,22 +250,16 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     },
     textBox: {
       height: 90,
-      flexDirection: 'row',
       paddingHorizontal: 20,
       marginTop: 0,
       paddingTop: 28,
       backgroundColor: colors['neutral-bg-1'],
     },
-
     usdText: {
       color: colors['neutral-title-1'],
       fontSize: 38,
       fontWeight: '700',
       textAlign: 'center',
-    },
-    percentBox: {
-      paddingLeft: 8,
-      marginBottom: isIOS ? 3 : 0,
     },
     percent: {
       color: colors['green-default'],
