@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
@@ -9,27 +9,33 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/Form/Input';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { useFormik } from 'formik';
-import { apisAddress } from '@/core/apis';
-import { useAlias } from '@/hooks/alias';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { useAlias2 } from '@/hooks/alias';
 
-interface AddToContactsModalProps {
-  onFinished: (result: {
-    addressAlias: string;
-    contactAddrAdded: string;
-  }) => void;
+const strLength = (str: string) => {
+  let len = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if ((c >= 0x0001 && c <= 0x007e) || (0xff60 <= c && c <= 0xff9f)) {
+      len++;
+    } else {
+      len += 2;
+    }
+  }
+  return len;
+};
+
+interface EditContactModalProps {
+  onOk: (result: { address: string; name: string }) => void;
   onCancel(): void;
+  address: string;
 }
 
-export function ModalAddToContacts({
-  addrToAdd,
-  onFinished,
+export function ModalEditContact({
+  address,
+  onOk,
   onCancel,
-}: AddToContactsModalProps & {
-  addrToAdd: string;
-}) {
+}: EditContactModalProps & {}) {
   const { t } = useTranslation();
 
   const colors = useThemeColors();
@@ -38,60 +44,42 @@ export function ModalAddToContacts({
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const inputRef = useRef<TextInput>(null);
 
+  const { adderssAlias, updateAlias, fetchAlias } = useAlias2(address, {
+    autoFetch: true,
+  });
+
   const yupSchema = useMemo(() => {
     return Yup.object({
-      addressAlias: Yup.string().required(
-        t('page.sendToken.AddToContactsModal.editAddr.validator__empty'),
-      ),
+      addressAlias: Yup.string().required('Please enter address note'),
     });
-  }, [t]);
-
-  const [aliasName, updateAlias] = useAlias(addrToAdd);
+  }, []);
 
   const formik = useFormik({
-    initialValues: { addressAlias: aliasName || '' },
+    initialValues: { addressAlias: adderssAlias || '' },
     validationSchema: yupSchema,
     validateOnMount: true,
     validateOnBlur: true,
     onSubmit: async values => {
-      const toastHide = toastWithIcon(() => (
-        <ActivityIndicator style={{ marginRight: 6 }} />
-      ))(`Adding contact`, {
-        duration: 1e6,
-        position: toast.positions.CENTER,
-        hideOnPress: false,
+      updateAlias(values.addressAlias);
+      const latestVal = fetchAlias() || values.addressAlias;
+      onOk?.({
+        address,
+        name: latestVal,
       });
-
-      try {
-        await apisAddress.addWatchAddress(addrToAdd);
-        toast.success(t('page.sendToken.AddToContactsModal.addedAsContacts'));
-
-        updateAlias(values.addressAlias);
-
-        onFinished?.({
-          addressAlias: values.addressAlias,
-          contactAddrAdded: addrToAdd,
-        });
-      } catch (err) {
-        toast.show('Error occured on adding address to contacts');
-      } finally {
-        toastHide();
-      }
     },
   });
 
-  const { setFieldValue, resetForm, errors, validateForm, handleSubmit } =
-    formik;
+  const { setFieldValue, errors, validateForm, handleSubmit } = formik;
 
   useEffect(() => {
-    toggleShowSheetModal(!!addrToAdd || 'destroy');
-  }, [toggleShowSheetModal, addrToAdd]);
+    toggleShowSheetModal(!!address || 'destroy');
+  }, [toggleShowSheetModal, address]);
 
   useEffect(() => {
-    if (addrToAdd) {
-      setFieldValue('addressAlias', aliasName || '');
+    if (address) {
+      setFieldValue('addressAlias', adderssAlias || '');
     }
-  }, [addrToAdd, resetForm, aliasName, setFieldValue]);
+  }, [address, adderssAlias, setFieldValue]);
 
   const canConfirm = useMemo(() => {
     return Object.keys(errors).length === 0;
@@ -117,8 +105,7 @@ export function ModalAddToContacts({
         handleComponent: null,
       }}
       onCancel={onCancel}
-      noCancelButton
-      height={310}
+      height={250}
       confirmButtonProps={{
         type: 'primary',
         disabled: !canConfirm,
@@ -126,13 +113,10 @@ export function ModalAddToContacts({
       onConfirm={onConfirm}>
       <View style={styles.mainContainer}>
         <Text style={styles.title}>
-          {t('page.sendToken.modalConfirmAddToContacts.title')}
+          {t('component.Contact.EditModal.title')}
         </Text>
 
         <View style={styles.formWrapper}>
-          <Text style={styles.formFieldLabel}>
-            {t('page.sendToken.AddToContactsModal.editAddressNote')}
-          </Text>
           <View style={styles.inputWrapper}>
             <FormInput
               ref={inputRef}
@@ -145,11 +129,14 @@ export function ModalAddToContacts({
               inputProps={{
                 autoFocus: true,
                 value: formik.values.addressAlias,
-                onChangeText: formik.handleChange('addressAlias'),
+                onChangeText: value => {
+                  if (strLength(value) > 24) {
+                    return;
+                  }
+                  formik.setFieldValue('addressAlias', value);
+                },
                 onBlur: formik.handleBlur('addressAlias'),
-                placeholder: t(
-                  'page.sendToken.AddToContactsModal.editAddr.placeholder',
-                ),
+                placeholder: 'Enter Address Note',
                 placeholderTextColor: colors['neutral-foot'],
               }}
             />
@@ -158,10 +145,6 @@ export function ModalAddToContacts({
                 {formik.errors.addressAlias}
               </Text>
             )}
-          </View>
-          <View style={styles.addressLine}>
-            <Text style={styles.address}>{addrToAdd}</Text>
-            <CopyAddressIcon address={addrToAdd} style={styles.copyIcon} />
           </View>
         </View>
       </View>

@@ -75,7 +75,6 @@ function SendScreen(): JSX.Element {
     handleCurrentTokenChange,
 
     whitelistEnabled,
-    toAliasName,
     computed: {
       toAddressInContactBook,
       toAddressIsValid,
@@ -219,7 +218,6 @@ function SendScreen(): JSX.Element {
               currentToken,
               currentTokenBalance,
               currentTokenPrice,
-              toAliasName,
             },
             formik,
             fns: {

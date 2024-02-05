@@ -14,7 +14,7 @@ import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
-import { useAlias } from '@/hooks/alias';
+import { useAlias2 } from '@/hooks/alias';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { useTranslation } from 'react-i18next';
@@ -156,6 +156,7 @@ export type SendScreenState = {
   showContactInfo: boolean;
   contactInfo: null | UIContactBookItem;
 
+  /** @deprecated pointless now, see addressToEditAlias */
   showEditContactModal: boolean;
   showListContactModal: boolean;
 
@@ -182,6 +183,7 @@ export type SendScreenState = {
   } | null;
 
   addressToAddAsContacts: string | null;
+  addressToEditAlias: string | null;
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -212,6 +214,7 @@ const DFLT_SEND_STATE: SendScreenState = {
   safeInfo: null,
 
   addressToAddAsContacts: null,
+  addressToEditAlias: null,
 };
 const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
@@ -902,8 +905,6 @@ export function useSendTokenForm() {
     formValues.amount,
   ]);
 
-  const [toAliasName] = useAlias(formValues.to || '');
-
   return {
     chainEnum,
     chainItem,
@@ -921,7 +922,6 @@ export function useSendTokenForm() {
     patchFormValues,
     handleFormValuesChange,
 
-    toAliasName: toAliasName ?? '',
     whitelist,
     whitelistEnabled,
     computed,
@@ -950,7 +950,6 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
-    toAliasName: string;
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
@@ -964,6 +963,7 @@ type InternalContext = {
       f: T,
       value: FormSendToken[T],
     ) => void;
+    // handleToAddressAliasUpdated: (alias: string) => void;
     handleClickTokenBalance: () => Promise<void> | void;
     handleGasChange: (
       gas: GasLevel,
@@ -986,7 +986,6 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
-    toAliasName: '',
   },
 
   formik: null as any,
@@ -997,6 +996,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   callbacks: {
     handleCurrentTokenChange: () => {},
     handleFieldChange: () => {},
+    // handleToAddressAliasUpdated: () => {},
     handleClickTokenBalance: () => {},
     handleGasChange: () => {},
     // onFormValuesChange: () => {},

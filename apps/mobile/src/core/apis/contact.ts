@@ -1,7 +1,4 @@
-import {
-  AddressAliasItem,
-  ContactBookItem,
-} from '@rabby-wallet/service-address';
+import { ContactBookItem } from '@rabby-wallet/service-address';
 import { contactService } from '../services';
 
 export interface UIContactBookItem {
@@ -10,9 +7,13 @@ export interface UIContactBookItem {
 }
 
 export function getAliasName(address: string) {
-  const contact = contactService.getContactByAddress(address);
+  // const contact = contactService.getContactByAddress(address);
 
-  return contact?.name || undefined;
+  // return contact?.name || undefined;
+
+  const aliasItem = contactService.getAliasByAddress(address);
+
+  return aliasItem?.alias || undefined;
 }
 
 /** @deprected just for migration convenience, use `getAliasName` directly! */
