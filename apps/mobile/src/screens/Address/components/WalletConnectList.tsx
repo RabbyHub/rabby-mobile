@@ -47,6 +47,11 @@ export const WalletConnectList = () => {
   }, []);
 
   const handleConnected = React.useCallback((data: any) => {
+    // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
+    if (!data.realBrandName) {
+      return;
+    }
+
     // replace realBrandName with build-in brandName
     data.realBrandName = data.brandName;
 
