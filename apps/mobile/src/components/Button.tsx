@@ -166,7 +166,8 @@ export const Button = ({
         activeOpacity={0.3}
         accessibilityRole="button"
         accessibilityState={accessibilityState}
-        {...rest}>
+        {...rest}
+        style={rest.style}>
         <ViewComponent
           {...linearGradientProps}
           style={StyleSheet.flatten([

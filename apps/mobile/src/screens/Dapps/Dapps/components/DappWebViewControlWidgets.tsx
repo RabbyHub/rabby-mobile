@@ -8,7 +8,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { useDapps } from '@/hooks/useDapps';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 export function BottomSheetContent({
   dappInfo,
@@ -54,6 +54,7 @@ export function BottomSheetContent({
                 <Text style={styles.textDisconnect}>Close Dapp</Text>
               </View>
             }
+            style={styles.buttonInner}
             buttonStyle={styles.button}
             containerStyle={styles.buttonContainer}
           />
@@ -71,10 +72,20 @@ const getStyle = createGetStyles(colors => ({
     justifyContent: 'center',
   },
   buttonWrapper: {
+    width: '100%',
     flexShrink: 1,
     marginTop: 18,
     paddingHorizontal: 20,
   },
+  buttonContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonInner: { width: '100%', height: '100%' },
   button: {
     width: '100%',
     height: '100%',
@@ -83,13 +94,6 @@ const getStyle = createGetStyles(colors => ({
     borderRadius: 6,
     borderColor: colors['neutral-line'],
     borderWidth: 1,
-  },
-  buttonContainer: {
-    flexGrow: 1,
-    display: 'flex',
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   titleWrapper: {
     flexDirection: 'row',
