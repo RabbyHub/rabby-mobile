@@ -142,7 +142,6 @@ export default function AppNavigation({
     setCurrentRouteName(currentRouteName);
 
     if (previousRouteName !== currentRouteName) {
-      console.log('logScreenView', currentRouteName);
       await analytics.logScreenView({
         screen_name: currentRouteName,
         screen_class: currentRouteName,
