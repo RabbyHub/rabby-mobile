@@ -23,7 +23,7 @@ import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
-import { useSheetModals } from '@/hooks/useSheetModal';
+import { useSheetModal, useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
 import { useSafeSizes } from '@/hooks/useAppLayout';
@@ -35,6 +35,7 @@ import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
+import { formatDappOriginToShow } from '@/utils/url';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
@@ -161,6 +162,7 @@ function useDefaultNodes({
 
 export type DappWebViewControlType = {
   closeWebViewNavModal: () => void;
+  getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
 };
 const DappWebViewControl = React.forwardRef<
@@ -197,37 +199,32 @@ const DappWebViewControl = React.forwardRef<
       webviewActions,
     } = useWebViewControl();
 
+    const { entryScriptWeb3Loaded, fullScript } =
+      useJavaScriptBeforeContentLoaded({ isTop: false });
+
+    const { formattedCurrentUrl } = useMemo(() => {
+      return {
+        formattedCurrentUrl: latestUrl || convertToWebviewUrl(dappOrigin),
+      };
+    }, [dappOrigin, latestUrl]);
+
+    const { sheetModalRef: webviewNavRef, toggleShowSheetModal } =
+      useSheetModal();
+
     React.useImperativeHandle(
       ref,
       () => ({
         closeWebViewNavModal: () => {
           webviewNavRef?.current?.close();
         },
+        getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewActions],
+      [webviewNavRef, webviewState, webviewActions],
     );
 
-    const { entryScriptWeb3Loaded, fullScript } =
-      useJavaScriptBeforeContentLoaded({ isTop: false });
-
-    const { subTitle } = useMemo(() => {
-      return {
-        subTitle: latestUrl
-          ? urlUtils.canoicalizeDappUrl(latestUrl).httpOrigin
-          : convertToWebviewUrl(dappOrigin),
-      };
-    }, [dappOrigin, latestUrl]);
-
-    const {
-      sheetModalRefs: { webviewNavRef },
-      toggleShowSheetModal,
-    } = useSheetModals({
-      webviewNavRef: useRef<AppBottomSheetModal>(null),
-    });
-
     const handlePressMoreDefault = useCallback(() => {
-      toggleShowSheetModal('webviewNavRef', true);
+      toggleShowSheetModal(true);
     }, [toggleShowSheetModal]);
 
     const handlePressMore = useCallback(() => {
@@ -256,16 +253,20 @@ const DappWebViewControl = React.forwardRef<
               style={{
                 ...styles.HeadTitleOrigin,
                 color: colors['neutral-title-1'],
-              }}>
-              {dappOrigin}
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {formatDappOriginToShow(dappOrigin)}
             </Text>
 
             <Text
               style={{
                 ...styles.HeadTitleMainDomain,
                 color: colors['neutral-foot'],
-              }}>
-              {subTitle}
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail">
+              {formattedCurrentUrl}
             </Text>
           </View>
           <View style={[styles.touchableHeadWrapper]}>
@@ -288,7 +289,7 @@ const DappWebViewControl = React.forwardRef<
       colors,
       dappOrigin,
       handlePressMore,
-      subTitle,
+      formattedCurrentUrl,
     ]);
 
     const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({

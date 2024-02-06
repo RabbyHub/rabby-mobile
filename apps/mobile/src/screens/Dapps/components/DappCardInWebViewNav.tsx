@@ -7,6 +7,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { makeTriangleStyle } from '@/utils/styles';
+import { formatDappOriginToShow } from '@/utils/url';
 
 const NUM_OF_LINES = 3;
 
@@ -38,7 +39,7 @@ export const DappCardInWebViewNav = ({
         />
         <View style={styles.dappContent}>
           <Text style={styles.dappOrigin} numberOfLines={1}>
-            {data.origin}
+            {formatDappOriginToShow(data.origin)}
           </Text>
           <View style={styles.dappInfo}>
             {data.info.name ? (

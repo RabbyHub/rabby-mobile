@@ -16,7 +16,6 @@ import {
   useBottomSheet,
   useBottomSheetGestureHandlers,
 } from '@gorhom/bottom-sheet';
-import { useFocusEffect } from '@react-navigation/native';
 
 import DappWebViewControl, {
   DappWebViewControlType,
@@ -35,6 +34,7 @@ import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
 import { OpenedDappBottomSheetModal } from '@/components';
+import { useHandleBackPress } from '@/hooks/useAppGesture';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -140,27 +140,17 @@ export function OpenedDappWebViewStub() {
     }
   }, [toggleShowSheetModal, activeDapp]);
 
-  const onFocusBackHandler = useCallback(() => {
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        /**
-         * @see https://reactnavigation.org/docs/custom-android-back-button-handling/
-         *
-         * Returning true from onBackPress denotes that we have handled the event,
-         * and react-navigation's listener will not get called, thus not popping the screen.
-         *
-         * Returning false will cause the event to bubble up and react-navigation's listener
-         * will pop the screen.
-         */
-        return !!activeDapp;
-      },
-    );
-
-    return () => subscription.remove();
-  }, [activeDapp]);
-
-  useFocusEffect(onFocusBackHandler);
+  useHandleBackPress(
+    useCallback(() => {
+      const control = activeDappWebViewControlRef.current;
+      if (control?.getWebViewState().canGoBack) {
+        control?.getWebViewActions().handleGoBack();
+      } else {
+        // hideDappSheetModal();
+      }
+      return !!activeDapp;
+    }, [activeDapp]),
+  );
 
   const { currentAccount } = useCurrentAccount();
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
