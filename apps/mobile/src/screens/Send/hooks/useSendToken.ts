@@ -1,4 +1,6 @@
 import React, { useMemo, useCallback, useRef, useState } from 'react';
+import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 
@@ -14,10 +16,8 @@ import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
-import { useAlias2 } from '@/hooks/alias';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
-import { useTranslation } from 'react-i18next';
 import { apiContact, apiProvider } from '@/core/apis';
 import { formatUsdValue } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
@@ -31,8 +31,7 @@ import {
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
-import { Alert } from 'react-native';
-import { devLog } from '@/utils/logger';
+import { toast } from '@/components/Toast';
 import { zeroAddress } from '@ethereumjs/util';
 
 function makeDefaultToken(): TokenItem {
@@ -452,24 +451,29 @@ export function useSendTokenForm() {
         );
         // await persistPageStateCache();
 
-        apiProvider.sendRequest(
-          {
-            method: 'eth_sendTransaction',
-            params: [params],
-            $ctx: {
-              // ga: {
-              //   category: 'Send',
-              //   source: 'sendToken',
-              //   trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-              // },
+        await apiProvider
+          .sendRequest(
+            {
+              method: 'eth_sendTransaction',
+              params: [params],
+              $ctx: {
+                // ga: {
+                //   category: 'Send',
+                //   source: 'sendToken',
+                //   trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                // },
+              },
             },
-          },
-          INTERNAL_REQUEST_SESSION,
-        );
-        // window.close();
+            INTERNAL_REQUEST_SESSION,
+          )
+          .catch(err => {
+            toast.info(err.message);
+          });
       } catch (e: any) {
         Alert.alert(e.message);
         console.error(e);
+      } finally {
+        putScreenState({ isSubmitLoading: false });
       }
     },
     [
