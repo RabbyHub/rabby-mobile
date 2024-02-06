@@ -4,7 +4,6 @@ import { ContactBookService } from '@rabby-wallet/service-address';
 
 import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
-<<<<<<< HEAD
 import { NotificationService } from './notification';
 import { PreferenceService } from './preference';
 import { SecurityEngineService } from './securityEngine';
@@ -12,7 +11,6 @@ import { TransactionBroadcastWatcherService } from './transactionBroadcastWatche
 import { TransactionHistoryService } from './transactionHistory';
 import { TransactionWatcherService } from './transactionWatcher';
 import { WhitelistService } from './whitelist';
-=======
 import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
@@ -23,7 +21,6 @@ import {
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { RabbyPointsService } from './rabbyPoints';
->>>>>>> develop
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -95,7 +92,6 @@ export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
 
-<<<<<<< HEAD
 transactionWatcherService.roll();
 
 const syncPendingTxs = () => {
@@ -122,8 +118,6 @@ const syncPendingTxs = () => {
   });
 };
 syncPendingTxs();
-=======
 export const rabbyPointsService = new RabbyPointsService({
   storageAdapter: appStorage,
 });
->>>>>>> develop
