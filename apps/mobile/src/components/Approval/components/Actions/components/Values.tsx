@@ -452,7 +452,9 @@ const Transacted = ({ value }: { value: boolean }) => {
               marginRight: 6,
             }}
           />
-          <Text>{t('page.signTx.transacted')}</Text>
+          <Text style={commonStyle.secondaryText}>
+            {t('page.signTx.transacted')}
+          </Text>
         </>
       ) : (
         <>
@@ -461,7 +463,9 @@ const Transacted = ({ value }: { value: boolean }) => {
               marginRight: 6,
             }}
           />
-          <Text>{t('page.signTx.neverTransacted')}</Text>
+          <Text style={commonStyle.secondaryText}>
+            {t('page.signTx.neverTransacted')}
+          </Text>
         </>
       )}
     </View>
