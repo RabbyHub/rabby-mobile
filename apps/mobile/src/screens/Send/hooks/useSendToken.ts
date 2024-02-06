@@ -243,9 +243,14 @@ export function useSendTokenScreenState() {
     [setSendScreenState],
   );
 
+  const resetScreenState = useCallback(() => {
+    setSendScreenState({ ...DFLT_SEND_STATE });
+  }, [setSendScreenState]);
+
   return {
     sendTokenScreenState,
     putScreenState,
+    resetScreenState,
   };
 }
 
@@ -329,7 +334,7 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForSendToEoa: '',
   messageDataForContractCall: '',
 };
-const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
+// const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 export function useSendTokenForm() {
   const { t } = useTranslation();
 
@@ -349,8 +354,10 @@ export function useSendTokenForm() {
     useSendTokenScreenState();
   const { gasPriceMap } = screenState;
 
-  const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
-  // const [ formValues, setFormValues ] = React.useState<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
+  // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
+  const [formValues, setFormValues] = React.useState<FormSendToken>({
+    ...DF_SEND_TOKEN_FORM,
+  });
 
   const { validationSchema } = useMemo(() => {
     return {
@@ -506,6 +513,7 @@ export function useSendTokenForm() {
     ],
   );
 
+  /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
   const formik = useFormik({
     initialValues: formValues,
     validationSchema,
@@ -925,6 +933,11 @@ export function useSendTokenForm() {
     formValues.amount,
   ]);
 
+  const resetFormValues = useCallback(() => {
+    setFormValues({ ...DF_SEND_TOKEN_FORM });
+    formik.resetForm();
+  }, [setFormValues, formik]);
+
   return {
     chainEnum,
     chainItem,
@@ -939,6 +952,7 @@ export function useSendTokenForm() {
     sendTokenEvents: sendTokenEventsRef.current,
     formik,
     formValues,
+    resetFormValues,
     handleFieldChange,
     patchFormValues,
     handleFormValuesChange,
