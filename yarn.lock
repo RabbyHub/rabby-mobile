@@ -2007,10 +2007,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:^0.3.48":
-  version: 0.3.49
-  resolution: "@debank/common@npm:0.3.49::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Fcommon%2F-%2Fcommon-0.3.49.tgz"
-  checksum: 57f145524b11eceed57e8470ba61bbe88e3e9617862b4f840a947ee82ae23fce67c0d28400842367961a8b6143475b34f47eaaa9026331647284f77e2a5dfba8
+"@debank/common@npm:^0.3.54":
+  version: 0.3.54
+  resolution: "@debank/common@npm:0.3.54"
+  checksum: 2da91bb870b33a18785b4f83c2f3020543317a7a946a60162b362b7dc94bea3e0884909a6a0f38b78fbb1faca08f9dd4a190813a5059acba237852bbab748dec
   languageName: node
   linkType: hard
 
@@ -4779,7 +4779,7 @@ __metadata:
   resolution: "@rabby-wallet/mobile-monorepo@workspace:."
   dependencies:
     "@babel/runtime": ^7.20.0
-    "@debank/common": ^0.3.48
+    "@debank/common": ^0.3.54
     "@lavamoat/allow-scripts": ^2.3.1
     "@metamask/create-release-branch": ^1.1.0
     "@metamask/eslint-config": ^12.2.0
@@ -25000,7 +25000,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@debank/common": ^0.3.48
+    "@debank/common": ^0.3.54
     "@debank/rabby-rn-security": ^0.1.1
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.1.0

@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
-    "@debank/common": "^0.3.48",
+    "@debank/common": "^0.3.54",
     "human-standard-token-abi": "^2.0.0"
   },
   "devDependencies": {
