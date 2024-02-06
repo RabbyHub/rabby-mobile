@@ -68,7 +68,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 14,
       borderRadius: 100,
       position: 'absolute',
-      top: -5,
+      bottom: -5,
       right: -5,
     },
     requestOrigin: {
@@ -130,10 +130,6 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     container: {
       position: 'relative',
-    },
-    dappIconWrapper: {
-      position: 'relative',
-      marginRight: 8,
     },
   });
 
@@ -239,12 +235,12 @@ export const FooterBar: React.FC<Props> = ({
 
   React.useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!account) {
     return null;
   }
-
   const Icon = securityLevel
     ? SecurityLevelTipColor[securityLevel].icon
     : undefined;

@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import BalanceChange from '../TxComponents/BalanceChange';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-// import ViewRawModal from '../TxComponents/ViewRawModal';
 import ApproveNFT from './ApproveNFT';
 import ApproveNFTCollection from './ApproveNFTCollection';
 import CancelTx from './CancelTx';

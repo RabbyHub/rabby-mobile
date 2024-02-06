@@ -14,17 +14,19 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     wrapper: {
       flexDirection: 'row',
-      gap: 16,
+      gap: 8,
     },
     buttonStyle: {
-      backgroundColor: colors['blue-default'],
+      backgroundColor: 'white',
       borderColor: colors['blue-default'],
-      height: 40,
-      width: 148,
+      borderWidth: 1,
+      height: 48,
+      width: 173,
       borderRadius: 8,
     },
     buttonTitleStyle: {
-      color: colors['neutral-title-2'],
+      color: colors['blue-default'],
+      fontSize: 15,
     },
   });
 

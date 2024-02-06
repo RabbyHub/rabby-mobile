@@ -187,6 +187,7 @@ export function SearchDappsScreen(): JSX.Element {
               onPress={dapp => {
                 openUrlAsDapp(dapp.origin);
                 toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+                Keyboard.dismiss();
               }}
               onFavoritePress={dapp => {
                 addDapp({

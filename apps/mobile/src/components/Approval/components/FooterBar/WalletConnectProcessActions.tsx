@@ -35,15 +35,22 @@ export const WalletConnectProcessActions: React.FC<Props> = props => {
     }
 
     return enableTooltip ? tooltipContent : undefined;
-  }, [enableTooltip, tooltipContent, status, chainError, displayBrandName]);
+  }, [
+    enableTooltip,
+    tooltipContent,
+    status,
+    chainError,
+    displayBrandName,
+    chain?.name,
+    t,
+  ]);
 
   return (
     <ProcessActions
       {...props}
       tooltipContent={content}
       disabledProcess={
-        // @ts-expect-error
-        (status !== 'CONNECTED' && status !== 'CHAIN_CHANGED') ||
+        (status !== 'CONNECTED' && status !== 'ACCOUNT_ERROR') ||
         // chainError ||
         disabledProcess
       }

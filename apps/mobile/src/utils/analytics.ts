@@ -1,3 +1,3 @@
-// import firebaseAnalytics from '@react-native-firebase/analytics';
+import firebaseAnalytics from '@react-native-firebase/analytics';
 
-// export const analytics = firebaseAnalytics();
+export const analytics = firebaseAnalytics();

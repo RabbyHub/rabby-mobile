@@ -5,17 +5,24 @@ import { apiBalance } from '@/core/apis';
 
 const balanceAtom = atom<number | null>(null);
 const testnetBalanceAtom = atom<string | null>(null);
+const balanceUpdateNonceAtom = atom<number>(0);
+
+export const useUpdateNonce = () => {
+  const [nonce, setNonce] = useAtom(balanceUpdateNonceAtom);
+  return [nonce, setNonce] as const;
+};
 
 export default function useCurrentBalance(
   account: string | undefined,
   update = false,
   noNeedBalance = false,
-  nonce = 0,
   includeTestnet = false,
 ) {
   const [balance, setBalance] = useAtom(balanceAtom);
   const [success, setSuccess] = useState(true);
+  const [nonce] = useUpdateNonce();
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceUpdating, setBalanceUpdating] = useState(false);
   const [balanceFromCache, setBalanceFromCache] = useState(false);
   let isCanceled = false;
   const [chainBalances, setChainBalances] = useState<
@@ -45,6 +52,7 @@ export default function useCurrentBalance(
       setChainBalances(chainList.filter(i => i.usd_value > 0).map(formatChain));
       setBalanceLoading(false);
       setBalanceFromCache(false);
+      setBalanceUpdating(false);
     } catch (e) {
       setSuccess(false);
       setBalanceLoading(false);
@@ -104,6 +112,12 @@ export default function useCurrentBalance(
   };
 
   useEffect(() => {
+    if (nonce > 0) {
+      setBalanceUpdating(true);
+    }
+  }, [nonce]);
+
+  useEffect(() => {
     getCurrentBalance();
     if (!noNeedBalance && account) {
       apiBalance.getAddressCacheBalance(account).then(cache => {
@@ -133,5 +147,6 @@ export default function useCurrentBalance(
     testnetBalanceLoading,
     testnetBalanceFromCache,
     testnetChainBalances,
+    balanceUpdating,
   };
 }

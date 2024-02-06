@@ -452,7 +452,9 @@ const Transacted = ({ value }: { value: boolean }) => {
               marginRight: 6,
             }}
           />
-          <Text>{t('page.signTx.transacted')}</Text>
+          <Text style={commonStyle.secondaryText}>
+            {t('page.signTx.transacted')}
+          </Text>
         </>
       ) : (
         <>
@@ -461,7 +463,9 @@ const Transacted = ({ value }: { value: boolean }) => {
               marginRight: 6,
             }}
           />
-          <Text>{t('page.signTx.neverTransacted')}</Text>
+          <Text style={commonStyle.secondaryText}>
+            {t('page.signTx.neverTransacted')}
+          </Text>
         </>
       )}
     </View>
@@ -510,6 +514,7 @@ const KnownAddress = ({
 
   useEffect(() => {
     handleAddressChange(address);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   if (!hasAddress) return null;

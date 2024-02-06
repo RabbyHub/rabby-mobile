@@ -96,17 +96,29 @@ export const GlobalBottomSheetModal = () => {
     [handleRemove],
   );
 
+  const handleSnapToIndex = React.useCallback((key: string, index: number) => {
+    const currentModal = modalRefs.current[key];
+
+    if (!currentModal) {
+      return;
+    }
+
+    currentModal.current?.snapToIndex(index);
+  }, []);
+
   React.useEffect(() => {
     events.on(EVENT_NAMES.CREATE, handleCreate);
     events.on(EVENT_NAMES.REMOVE, handleRemove);
     events.on(EVENT_NAMES.PRESENT, handlePresent);
+    events.on(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
 
     return () => {
       events.off(EVENT_NAMES.CREATE, handleCreate);
       events.off(EVENT_NAMES.REMOVE, handleRemove);
       events.off(EVENT_NAMES.PRESENT, handlePresent);
+      events.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
     };
-  }, [handleCreate, handlePresent, handleRemove]);
+  }, [handleCreate, handlePresent, handleRemove, handleSnapToIndex]);
 
   const height = useSafeAreaInsets();
 

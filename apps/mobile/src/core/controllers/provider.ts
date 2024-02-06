@@ -48,6 +48,8 @@ import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
+import { createDappBySession } from '../apis/dapp';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -519,7 +521,11 @@ class ProviderController extends BaseController {
         pushType?: TxPushType;
       }) => {
         const { hash, reqId, pushType = 'default' } = info;
-        console.log('onTransactionCreated');
+        console.log('onTransactionCreated', {
+          hash,
+          reqId,
+          pushType,
+        });
         // if (
         //   options?.data?.$ctx?.stats?.afterSign?.length &&
         //   Array.isArray(options?.data?.$ctx?.stats?.afterSign)
@@ -561,7 +567,9 @@ class ProviderController extends BaseController {
           pushType,
           explain: cacheExplain,
           action: action,
-          site: dappService.getDapp(origin),
+          site: dappService.isInternalDapp(origin)
+            ? createDappBySession(INTERNAL_REQUEST_SESSION)
+            : dappService.getDapp(origin),
           isPending: true,
         });
         transactionHistoryService.removeSigningTx(signingTxId!);

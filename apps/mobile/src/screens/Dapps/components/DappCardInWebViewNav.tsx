@@ -8,6 +8,7 @@ import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { makeTriangleStyle } from '@/utils/styles';
 import { formatDappOriginToShow } from '@/utils/url';
+import { DappCardListBy } from './DappCard';
 
 const NUM_OF_LINES = 3;
 
@@ -49,14 +50,10 @@ export const DappCardInWebViewNav = ({
                 {data.info.name}
               </Text>
             ) : null}
-            {data.info.name && data.info.user_range ? (
+            {data.info.name && data.info.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            {data.info.user_range ? (
-              <Text style={styles.dappInfoText} numberOfLines={1}>
-                {data.info.user_range}
-              </Text>
-            ) : null}
+            <DappCardListBy data={data.info.collected_list} />
           </View>
         </View>
         <TouchableWithoutFeedback

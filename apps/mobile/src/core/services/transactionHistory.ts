@@ -12,7 +12,7 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
 import { CHAINS } from '@debank/common';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -84,6 +84,35 @@ export class TransactionHistoryService {
 
   private _signingTxList: TransactionSigningItem[] = [];
 
+  constructor(options?: StorageAdapaterOptions) {
+    this.store = createPersistStore<TxHistoryStore>(
+      {
+        name: 'txHistory',
+        template: {
+          transactions: [],
+        },
+      },
+      {
+        storage: options?.storageAdapter,
+      },
+    );
+    if (!Array.isArray(this.store.transactions)) {
+      this.store.transactions = [];
+    }
+
+    this.init();
+
+    // this._populateAvailableTxs();
+  }
+
+  init() {
+    this.setStore(draft => {
+      return uniqBy(draft, item => {
+        return `${item.address}_${item.nonce}_${item.chainId}_${item.hash}_${item.reqId}`;
+      });
+    });
+  }
+
   setStore = (
     recipe: (
       draft: TransactionHistoryItem[],
@@ -106,19 +135,16 @@ export class TransactionHistoryService {
     });
   }
 
-  getTransactionGroups({
-    address,
-    chainId,
-    nonce,
-  }: {
-    address: string;
+  getTransactionGroups(args?: {
+    address?: string;
     chainId?: number;
     nonce?: number;
   }) {
+    const { address, chainId, nonce } = args || {};
     const groups: TransactionGroup[] = [];
 
     this.store.transactions?.forEach(tx => {
-      if (!isSameAddress(address, tx.address)) {
+      if (address != null && !isSameAddress(address, tx.address)) {
         return;
       }
       if (chainId != null && tx.chainId !== chainId) {
@@ -139,6 +165,7 @@ export class TransactionHistoryService {
         groups.push(new TransactionGroup({ txs: [tx] }));
       }
     });
+
     return groups;
   }
 
@@ -200,6 +227,18 @@ export class TransactionHistoryService {
   }
 
   addTx(tx: TransactionHistoryItem) {
+    if (
+      this.store.transactions.find(
+        item =>
+          isSameAddress(item.address, tx.address) &&
+          item.chainId === tx.chainId &&
+          item.nonce === tx.nonce &&
+          ((item.hash && item.hash === tx.hash) ||
+            (item.reqId && item.reqId === tx.reqId)),
+      )
+    ) {
+      return;
+    }
     this.setStore(draft => {
       draft.push(tx);
     });
@@ -257,29 +296,13 @@ export class TransactionHistoryService {
     }
   }
 
-  constructor(options?: StorageAdapaterOptions) {
-    this.store = createPersistStore<TxHistoryStore>(
-      {
-        name: 'txHistory',
-        template: {
-          transactions: [],
-        },
-      },
-      {
-        storage: options?.storageAdapter,
-      },
-    );
-    if (!Array.isArray(this.store.transactions)) {
-      this.store.transactions = [];
-    }
-
-    // this._populateAvailableTxs();
-  }
-
   updateTx(tx: TransactionHistoryItem) {
     this.setStore(draft => {
       const index = draft.findIndex(
-        item => item.hash === tx.hash || item.reqId === tx.reqId,
+        item =>
+          item.chainId === tx.chainId &&
+          ((item.hash && item.hash === tx.hash) ||
+            (item.reqId && item.reqId === tx.reqId)),
       );
       if (index !== -1) {
         draft[index] = { ...tx };
@@ -304,24 +327,23 @@ export class TransactionHistoryService {
     success?: boolean;
     gasUsed?: number;
   }) {
-    // todo 没有用到 hash 和 reqId 可能有坑
     const target = this.getTransactionGroups({
       address,
       chainId,
       nonce,
     })?.[0];
-    if (!target.isPending) {
-      return;
-    }
 
-    target.isPending = false;
-    target.isFailed = !success;
-    target.maxGasTx.isCompleted = true;
-    if (gasUsed) {
-      target.maxGasTx.gasUsed = gasUsed;
-    }
-
-    this.updateTx(target.maxGasTx);
+    target?.txs?.forEach(tx => {
+      if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
+        this.updateTx({
+          ...tx,
+          isPending: false,
+          isFailed: !success,
+          isCompleted: true,
+          gasUsed,
+        });
+      }
+    });
 
     // this._setStoreTransaction({
     //   ...this.store.transactions,
@@ -402,11 +424,7 @@ export class TransactionHistoryService {
         return;
       }
       const completedTx = txs.find(tx => tx.hash === completed.hash)!;
-      this.updateTx({
-        ...completedTx,
-        gasUsed: completed.gas_used,
-      });
-      // TOFIX
+
       this.completeTx({
         address,
         chainId,
@@ -414,12 +432,10 @@ export class TransactionHistoryService {
         hash: completedTx.hash,
         success: completed.status === 1,
         reqId: completedTx.reqId,
+        gasUsed: completed.gas_used,
       });
-      eventBus.emit(EVENTS.broadcastToUI, {
-        method: EVENTS.RELOAD_TX,
-        params: {
-          addressList: [address],
-        },
+      eventBus.emit(EVENTS.RELOAD_TX, {
+        addressList: [address],
       });
     } catch (e) {
       if (
@@ -512,6 +528,14 @@ export class TransactionHistoryService {
         .catch(e => console.error(e));
     }
   };
+
+  clearPendingTransactions(address: string) {
+    this.setStore(draft => {
+      return draft.filter(item => {
+        return isSameAddress(address, item.address) && !item.isPending;
+      });
+    });
+  }
 }
 
 export class TransactionGroup {

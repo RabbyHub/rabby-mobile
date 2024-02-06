@@ -23,6 +23,61 @@ import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
 import { Tip } from '@/components';
 
+export const DappCardListBy = ({
+  data,
+}: {
+  data: DappInfo['info']['collected_list'];
+}) => {
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [isShowTooltip, setIsShowTooltip] = useState(false);
+  return data?.length ? (
+    <Tip
+      isVisible={isShowTooltip}
+      onClose={() => {
+        setIsShowTooltip(false);
+      }}
+      content={
+        <View style={styles.tooltip}>
+          <Text style={styles.tooltipTitle}>Dapps has been list by</Text>
+          <View style={styles.tooltipList}>
+            {data.map(item => {
+              return (
+                <View style={styles.tooltipListItem} key={item.logo_url}>
+                  <Image
+                    style={styles.tooltipListItemIcon}
+                    source={{ uri: item.logo_url }}
+                  />
+                  <Text style={styles.tooltipListItemText}>{item.name}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      }>
+      <TouchableWithoutFeedback
+        disallowInterruption={true}
+        hitSlop={{ left: 30, right: 30, top: 50, bottom: 50 }}
+        onPress={() => {
+          setIsShowTooltip(true);
+        }}>
+        <View style={styles.listBy}>
+          {data.slice(0, 6).map(item => {
+            return (
+              <Image
+                style={styles.listByIcon}
+                source={{ uri: item.logo_url }}
+                key={item.logo_url}
+              />
+            );
+          })}
+          {data.length > 6 ? <RcIconMore /> : null}
+        </View>
+      </TouchableWithoutFeedback>
+    </Tip>
+  ) : null;
+};
+
 export const DappCard = ({
   isActive,
   data,
@@ -38,7 +93,6 @@ export const DappCard = ({
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [isShowTooltip, setIsShowTooltip] = useState(false);
 
   const chain = CHAINS[data.chainId];
 
@@ -91,59 +145,7 @@ export const DappCard = ({
             {data.info.name && data.info.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            {data.info.collected_list?.length ? (
-              <Tip
-                isVisible={isShowTooltip}
-                onClose={() => {
-                  setIsShowTooltip(false);
-                }}
-                content={
-                  <View style={styles.tooltip}>
-                    <Text style={styles.tooltipTitle}>
-                      Dapps has been list by
-                    </Text>
-                    <View style={styles.tooltipList}>
-                      {data.info.collected_list.map(item => {
-                        return (
-                          <View
-                            style={styles.tooltipListItem}
-                            key={item.logo_url}>
-                            <Image
-                              style={styles.tooltipListItemIcon}
-                              source={{ uri: item.logo_url }}
-                            />
-                            <Text style={styles.tooltipListItemText}>
-                              {item.name}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                }>
-                <TouchableWithoutFeedback
-                  disallowInterruption={true}
-                  hitSlop={{ left: 30, right: 30, top: 50, bottom: 50 }}
-                  onPress={() => {
-                    setIsShowTooltip(true);
-                  }}>
-                  <View style={styles.listBy}>
-                    {data.info.collected_list.slice(0, 6).map(item => {
-                      return (
-                        <Image
-                          style={styles.listByIcon}
-                          source={{ uri: item.logo_url }}
-                          key={item.logo_url}
-                        />
-                      );
-                    })}
-                    {data.info.collected_list?.length > 6 ? (
-                      <RcIconMore />
-                    ) : null}
-                  </View>
-                </TouchableWithoutFeedback>
-              </Tip>
-            ) : null}
+            <DappCardListBy data={data.info.collected_list} />
           </View>
         </View>
         <TouchableWithoutFeedback
@@ -284,6 +286,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       width: 12,
       height: 12,
       borderRadius: 12,
+      opacity: 0.7,
     },
     tooltip: {
       padding: 12,

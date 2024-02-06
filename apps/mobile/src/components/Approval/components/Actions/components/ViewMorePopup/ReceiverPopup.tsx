@@ -78,7 +78,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
     if (data.cex) return data.cex.bornAt;
     if (data.eoa) return data.eoa.bornAt;
     return null;
-  }, [data]);
+  }, [data, contractOnCurrentChain]);
 
   return (
     <View>

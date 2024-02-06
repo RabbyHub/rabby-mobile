@@ -16,7 +16,7 @@ import {
   useStackScreenConfig,
 } from './hooks/navigation';
 import { AppRootName, getRootSpecConfig, RootNames } from './constant/layout';
-// import {analytics} from './utils/analytics';
+import { analytics } from './utils/analytics';
 
 import NotFoundScreen from './screens/NotFound';
 
@@ -128,11 +128,11 @@ export default function AppNavigation({
   const onReady = useCallback(() => {
     routeNameRef.current = navigationRef?.getCurrentRoute()?.name;
     setCurrentRouteName(routeNameRef.current);
-
-    // analytics.logScreenView({
-    //   screen_name: routeNameRef.current,
-    //   screen_class: routeNameRef.current,
-    // });
+    console.log('routeNameRef', routeNameRef.current);
+    analytics.logScreenView({
+      screen_name: routeNameRef.current,
+      screen_class: routeNameRef.current,
+    });
   }, [setCurrentRouteName]);
 
   const onStateChange = useCallback(async () => {
@@ -141,11 +141,12 @@ export default function AppNavigation({
 
     setCurrentRouteName(currentRouteName);
 
-    if (!__DEV__ && previousRouteName !== currentRouteName) {
-      // await analytics.logScreenView({
-      //   screen_name: currentRouteName,
-      //   screen_class: currentRouteName,
-      // });
+    if (previousRouteName !== currentRouteName) {
+      console.log('logScreenView', currentRouteName);
+      await analytics.logScreenView({
+        screen_name: currentRouteName,
+        screen_class: currentRouteName,
+      });
     }
     routeNameRef.current = currentRouteName;
   }, [setCurrentRouteName]);

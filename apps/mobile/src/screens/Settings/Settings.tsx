@@ -45,6 +45,8 @@ import { toast } from '@/components/Toast';
 import { checkVersion } from '@/utils/version';
 import { APP_URLS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
+import { clearPendingTxs } from '@/core/apis/transactions';
+import { useCurrentAccount } from '@/hooks/account';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -64,6 +66,7 @@ function SettingsScreen(): JSX.Element {
   const clearPendingRef = useRef<BottomSheetModal>(null);
 
   const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
+  const { currentAccount } = useCurrentAccount();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -291,6 +294,9 @@ function SettingsScreen(): JSX.Element {
         height={422}
         title={'Clear Pending'}
         onConfirm={() => {
+          if (currentAccount?.address) {
+            clearPendingTxs(currentAccount.address);
+          }
           toast.success('Pending transaction cleared');
         }}
         descStyle={{

@@ -47,13 +47,26 @@ export const WalletConnectList = () => {
   }, []);
 
   const handleConnected = React.useCallback((data: any) => {
+    // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
+    if (!data.realBrandName) {
+      return;
+    }
+
     // replace realBrandName with build-in brandName
     data.realBrandName = data.brandName;
 
     if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={styles.toastIcon} />
+      ))('Importing', {
+        duration: 100000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
       apisWalletConnect
         .importAddress(data)
         .then(() => {
+          toastHide();
           navigate(RootNames.StackAddress, {
             screen: RootNames.ImportSuccess,
             params: {
@@ -67,6 +80,9 @@ export const WalletConnectList = () => {
         .catch((err: any) => {
           console.error(err);
           toast.show(err.message);
+        })
+        .finally(() => {
+          toastHide();
         });
     }
   }, []);

@@ -5,7 +5,7 @@ import { useQueryProjects } from './hooks';
 import useSortToken from './hooks/useSortTokens';
 
 // render it need currentAccount is not null
-export const TokenScreen = () => {
+export const TokenScreen = ({ onRefresh }: { onRefresh(): void }) => {
   const { currentAccount } = useCurrentAccount();
   const {
     tokens,
@@ -22,6 +22,7 @@ export const TokenScreen = () => {
       hasTokens={hasTokens && sortTokens.length > 0}
       refreshPositions={refreshPositions}
       isPortfoliosLoading={!!isPortfoliosLoading}
+      onRefresh={onRefresh}
     />
   );
 };

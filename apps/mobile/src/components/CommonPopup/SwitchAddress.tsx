@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { WALLET_NAME } from '@rabby-wallet/keyring-utils/src/types';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { Image, View } from 'react-native';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 export const SwitchAddress: React.FC = () => {
   const { setTitle, account, setHeight } = useCommonPopupView();
@@ -11,7 +12,7 @@ export const SwitchAddress: React.FC = () => {
   React.useEffect(() => {
     setTitle(t('page.dashboard.hd.howToSwitch'));
     setHeight(420);
-  }, []);
+  }, [t, setTitle, setHeight]);
 
   const url = React.useMemo(() => {
     switch (account?.brandName) {
@@ -29,8 +30,15 @@ export const SwitchAddress: React.FC = () => {
   }, [account?.brandName]);
 
   return (
-    <View className="p-[10px]">
-      <Image source={url} className="w-full" />
-    </View>
+    <BottomSheetView>
+      <Image
+        source={url}
+        resizeMode="contain"
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </BottomSheetView>
   );
 };

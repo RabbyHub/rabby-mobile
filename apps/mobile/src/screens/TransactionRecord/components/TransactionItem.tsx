@@ -1,19 +1,3 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
-import { StyleSheet, Text, View } from 'react-native';
-import { TransactionExplain } from './TransactionExplain';
-import { TransactionAction } from './TransactionAction';
-import { TransactionPendingTag } from './TransactionPendingTag';
-import { TransactionGroup } from '@/core/services/transactionHistory';
-import { useMemo } from 'react';
-import { findChainByID } from '@/utils/chain';
-import { TransactionPendingDetail } from './TransactionPendingDetail';
-import { useMemoizedFn } from 'ahooks';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
-import { openapi } from '@/core/request';
-import { maxBy } from 'lodash';
-import { sendRequest } from '@/core/apis/sendRequest';
-import { intToHex } from '@ethereumjs/util';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
@@ -24,10 +8,25 @@ import {
   INTERNAL_REQUEST_ORIGIN,
   INTERNAL_REQUEST_SESSION,
 } from '@/constant';
-import { toast } from '@/components/Toast';
-import { useTranslation } from 'react-i18next';
+import { AppColorsVariants } from '@/constant/theme';
+import { sendRequest } from '@/core/apis/sendRequest';
+import { openapi } from '@/core/request';
+import { TransactionGroup } from '@/core/services/transactionHistory';
+import { useThemeColors } from '@/hooks/theme';
+import { findChainByID } from '@/utils/chain';
+import { intToHex } from '@ethereumjs/util';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
+import { useMemoizedFn } from 'ahooks';
+import { maxBy } from 'lodash';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 import { TransactionCompleteTag } from './TransactionCompleteTag';
+import { TransactionExplain } from './TransactionExplain';
+import { TransactionPendingDetail } from './TransactionPendingDetail';
+import { TransactionPendingTag } from './TransactionPendingTag';
+import { toast } from '@/components/Toast';
 
 export const TransactionItem = ({
   data,
@@ -176,17 +175,21 @@ export const TransactionItem = ({
             isWithdrawed={data.isWithdrawed}
             explain={data.originTx?.explain}
           />
-          {data?.isPending ? (
+          {/* {data?.isPending ? (
             <TransactionAction
               canCancel={canCancel}
               onTxCancel={handleTxCancel}
               onTxSpeedUp={handleTxSpeedUp}
             />
-          ) : null}
+          ) : null} */}
         </View>
         <View style={styles.footer}>
           {data?.originTx?.site ? (
-            <Text style={styles.origin}>{data?.originTx?.site?.origin}</Text>
+            <Text style={styles.origin}>
+              {data?.originTx?.site?.origin === INTERNAL_REQUEST_ORIGIN
+                ? 'Rabby Wallet'
+                : data?.originTx?.site?.origin}
+            </Text>
           ) : null}
           {!(data.isWithdrawed || data.isSubmitFailed) ? (
             <Text style={styles.gas}>

@@ -1,4 +1,5 @@
 import { Button } from '@/components';
+import { toast, toastWithIcon } from '@/components/Toast';
 import { SessionSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRINGS_LOGOS } from '@/constant/icon';
 import { AppColorsVariants } from '@/constant/theme';
@@ -15,7 +16,13 @@ import { WALLET_INFO } from '@/utils/walletInfo';
 import { Chain } from '@debank/common';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { CommonAccount } from './CommonAccount';
 
 export interface Props {
@@ -43,6 +50,30 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-2'],
       fontSize: 16,
     },
+    accountErrorText: {
+      marginTop: 6,
+      color: colors['orange-default'],
+      fontSize: 13,
+      lineHeight: 15,
+    },
+    accountErrorText2: {
+      marginTop: 8,
+      flexWrap: 'wrap',
+    },
+    disconnectText: {
+      color: colors['red-default'],
+      fontSize: 13,
+      lineHeight: 20,
+    },
+    connectText: {
+      color: colors['neutral-foot'],
+      fontSize: 13,
+      lineHeight: 20,
+    },
+    tipConnect: {
+      width: '100%',
+      paddingHorizontal: 5,
+    },
   });
 
 const TipContent = ({
@@ -55,35 +86,28 @@ const TipContent = ({
   displayBrandName: string;
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   switch (tipStatus) {
     case 'ACCOUNT_ERROR':
       return (
-        <View className="text-orange">
-          <Text>
+        <View style={styles.tipConnect}>
+          <Text style={styles.accountErrorText}>
             {t('page.signFooterBar.walletConnect.connectedButCantSign')}
           </Text>
-          <Text className="whitespace-nowrap mt-8">
+          <Text
+            style={StyleSheet.flatten([
+              styles.accountErrorText,
+              styles.accountErrorText2,
+            ])}>
             {t('page.signFooterBar.walletConnect.switchToCorrectAddress')}
-          </Text>
-        </View>
-      );
-    case 'CHAIN_ERROR':
-      return (
-        <View className="text-orange">
-          <Text>
-            {t('page.signFooterBar.walletConnect.connectedButCantSign')}
-          </Text>
-          <Text className="mt-8">
-            {t('page.signFooterBar.walletConnect.switchChainAlert', {
-              chain: chain?.name,
-            })}
           </Text>
         </View>
       );
     case 'DISCONNECTED':
       return (
-        <Text className="text-red-forbidden">
+        <Text style={styles.disconnectText}>
           {t('page.signFooterBar.walletConnect.notConnectToMobile', {
             brand: displayBrandName,
           })}
@@ -92,7 +116,7 @@ const TipContent = ({
 
     default:
       return (
-        <Text className="text-black">
+        <Text style={styles.connectText}>
           {t('page.signFooterBar.walletConnect.connected')}
         </Text>
       );
@@ -142,15 +166,16 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       default:
         return 'CONNECTED';
     }
-  }, [status, sessionChainId, chain]);
+  }, [status]);
 
   React.useEffect(() => {
     if (chain && sessionChainId && chain.id !== sessionChainId) {
       apisWalletConnect.walletConnectSwitchChain(account, chain.id);
     }
-  }, [sessionChainId, chain]);
+  }, [sessionChainId, chain, account]);
 
   const connectWallet = useConnectWallet();
+  const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
 
   const handleButton = () => {
     setAccount({
@@ -161,6 +186,17 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     });
     if (tipStatus === 'DISCONNECTED') {
       connectWallet({ address, brandName });
+      toastHiddenRef.current = toastWithIcon(() => (
+        <ActivityIndicator
+          style={{
+            marginRight: 6,
+          }}
+        />
+      ))('Connecting', {
+        duration: 100000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
       activePopup('SWITCH_ADDRESS');
     }
@@ -169,11 +205,19 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   React.useEffect(() => {
     if (tipStatus === 'ACCOUNT_ERROR') {
       setVisible(false);
+    } else if (tipStatus === 'CONNECTED') {
+      toastHiddenRef.current?.();
     }
-  }, [tipStatus]);
+  }, [tipStatus, setVisible]);
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  React.useEffect(() => {
+    return () => {
+      toastHiddenRef.current?.();
+    };
+  }, []);
 
   return (
     <CommonAccount

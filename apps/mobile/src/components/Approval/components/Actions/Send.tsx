@@ -42,6 +42,7 @@ const Send = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -116,19 +117,17 @@ const Send = ({
                 />
                 {requireData.cex && (
                   <>
-                    <View>
+                    <DescItem>
                       <LogoWithText
                         logo={requireData.cex.logo}
-                        text={requireData.cex.name}
+                        text={
+                          <Text style={commonStyle.secondaryText}>
+                            {requireData.cex.name}
+                          </Text>
+                        }
                         logoSize={14}
-                        textStyle={{
-                          fontSize: 13,
-                          lineHeight: 15,
-                          color: '#4B4D59',
-                          fontWeight: 'normal',
-                        }}
                       />
-                    </View>
+                    </DescItem>
                     <SecurityListItem
                       engineResult={engineResultMap['1021']}
                       dangerText={t('page.signTx.send.notTopupAddress')}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dimensions,
   Modal,
@@ -13,13 +13,18 @@ import {
 
 import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
-import { preferenceService } from '@/core/services';
+import { keyringService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@rneui/themed';
-import { useRequest } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import axios from 'axios';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -52,11 +57,12 @@ function GetStartedScreen(): JSX.Element {
   );
 
   const handleGetStarted = async () => {
-    if (preferenceService.getPreference('isInvited')) {
-      navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
-    } else {
-      setIsShowModal(true);
-    }
+    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    // if (preferenceService.getPreference('isInvited')) {
+    //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    // } else {
+    //   setIsShowModal(true);
+    // }
   };
 
   const handleInvite = async () => {
@@ -97,9 +103,27 @@ function GetStartedScreen(): JSX.Element {
     }
   }, [isShowModal]);
 
+  const navigation = useNavigation();
+
+  const init = useMemoizedFn(async () => {
+    const accounts = await keyringService.getAllVisibleAccountsArray();
+    if (accounts?.length) {
+      navigation.dispatch(
+        StackActions.replace(RootNames.StackRoot, {
+          screen: RootNames.Home,
+        }),
+      );
+    }
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      init();
+    }, [init]),
+  );
+
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle="light-content" />
       <View style={styles.centerWrapper}>
         {/* top area */}
         <View style={styles.topArea}>
