@@ -18,7 +18,7 @@ import {
   SNAP_POINTS,
 } from './utils';
 import { events } from './event';
-import { useHandleBackPress } from '@/hooks/useAppGesture';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 
 type ModalData = {
   snapPoints: (string | number)[];
@@ -128,9 +128,9 @@ export const GlobalBottomSheetModal = () => {
     return modals.map(modal => !modal.params.allowAndroidHarewareBack);
   }, [modals]);
 
-  const { onHardwareBackHandler } = useHandleBackPress(
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
     React.useCallback(() => {
-      return !!modalsToPreventBack.length;
+      return !modalsToPreventBack.length;
     }, [modalsToPreventBack]),
   );
 

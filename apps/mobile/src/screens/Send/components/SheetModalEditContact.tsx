@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/Form/Input';
 import { useFormik } from 'formik';
 import { useAlias2 } from '@/hooks/alias';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 const strLength = (str: string) => {
   let len = 0;
@@ -94,6 +96,13 @@ export function ModalEditContact({
 
     handleSubmit();
   }, [validateForm, handleSubmit]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      return !address;
+    }, [address]),
+  );
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <BottomSheetModalConfirmContainer
