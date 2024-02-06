@@ -1,7 +1,7 @@
 #import "AppDelegate.h"
 
 #import <Firebase.h>
-#import <React/RCTBundleURLProvider.h>
+// #import <React/RCTAppSetupUtils.h>
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
@@ -22,23 +22,23 @@ void devLog(NSString *format, ...) {
 void devLog(NSString *format, ...) {}
 #endif
 
-#ifdef FB_SONARKIT_ENABLED
-#import <FlipperKit/FlipperClient.h>
-#import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
-#import <FlipperKitUserDefaultsPlugin/FKUserDefaultsPlugin.h>
-#import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
-#import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
-#import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
-static void InitializeFlipper(UIApplication *application) {
-  FlipperClient *client = [FlipperClient sharedClient];
-  SKDescriptorMapper *layoutDescriptorMapper = [[SKDescriptorMapper alloc] initWithDefaults];
-  [client addPlugin:[[FlipperKitLayoutPlugin alloc] initWithRootNode:application withDescriptorMapper:layoutDescriptorMapper]];
-  [client addPlugin:[[FKUserDefaultsPlugin alloc] initWithSuiteName:nil]];
-  [client addPlugin:[FlipperKitReactPlugin new]];
-  [client addPlugin:[[FlipperKitNetworkPlugin alloc] initWithNetworkAdapter:[SKIOSNetworkAdapter new]]];
-  [client start];
-}
-#endif
+// #ifdef FB_SONARKIT_ENABLED
+// #import <FlipperKit/FlipperClient.h>
+// #import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
+// #import <FlipperKitUserDefaultsPlugin/FKUserDefaultsPlugin.h>
+// #import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
+// #import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
+// #import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
+// static void InitializeFlipper(UIApplication *application) {
+//   FlipperClient *client = [FlipperClient sharedClient];
+//   SKDescriptorMapper *layoutDescriptorMapper = [[SKDescriptorMapper alloc] initWithDefaults];
+//   [client addPlugin:[[FlipperKitLayoutPlugin alloc] initWithRootNode:application withDescriptorMapper:layoutDescriptorMapper]];
+//   [client addPlugin:[[FKUserDefaultsPlugin alloc] initWithSuiteName:nil]];
+//   [client addPlugin:[FlipperKitReactPlugin new]];
+//   [client addPlugin:[[FlipperKitNetworkPlugin alloc] initWithNetworkAdapter:[SKIOSNetworkAdapter new]]];
+//   [client start];
+// }
+// #endif
 
 @implementation AppDelegate
 - (NSString *)_getDarwinVersion
@@ -81,10 +81,10 @@ static void InitializeFlipper(UIApplication *application) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-[FIRApp configure];
-#ifdef FB_SONARKIT_ENABLED
-  InitializeFlipper(application);
-#endif
+// #ifdef FB_SONARKIT_ENABLED
+//   InitializeFlipper(application);
+// #endif
+  [FIRApp configure];
   self.moduleName = @"RabbyMobile";
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.
