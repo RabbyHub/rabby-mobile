@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
+import { Platform, View, Text } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
-import { View, Text } from 'react-native';
 import { Button } from '@/components';
 import {
   useSendTokenFormik,
@@ -9,13 +9,15 @@ import {
 import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { ModalConfirmAllowTransfer } from './SheetModalConfirmAllowTransfer';
 
 import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
 import RcIconChecked from '../icons/icon-checked-cc.svg';
 import { ModalAddToContacts } from './SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
+
+const isAndroid = Platform.OS === 'android';
 
 export default function BottomArea() {
   const { t } = useTranslation();
@@ -57,6 +59,7 @@ export default function BottomArea() {
         content: t('page.sendToken.whitelistAlert__whitelisted'),
         success: true,
         prevIconColor: colors['neutral-foot'],
+        inlineIconColor: null,
       };
     }
     if (temporaryGrant) {
@@ -64,12 +67,26 @@ export default function BottomArea() {
         content: t('page.sendToken.whitelistAlert__temporaryGranted'),
         success: true,
         prevIconColor: colors['neutral-foot'],
+        inlineIconColor: null,
       };
     }
+
     return {
       success: false,
       content: t('page.sendToken.whitelistAlert__notWhitelisted'),
       inlineIconColor: colors['red-dark'],
+      ...!isAndroid && {
+        content: (
+          <>
+            <Text>
+              <RcIconUnCheck color={colors['red-dark']} style={{ marginRight: 6 }} />
+              The address is not whitelisted. {'\n'}
+            </Text>
+            <Text>I agree to grant temporary permission to transfer.</Text>
+          </>
+        ),
+        inlineIconColor: ''
+      }
     };
   }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
 
@@ -123,7 +140,6 @@ export default function BottomArea() {
       <Button
         disabled={!canSubmit}
         containerStyle={styles.buttonContainer}
-        style={styles.button}
         type="primary"
         title={'Send'}
         loading={isSubmitLoading}
@@ -178,17 +194,15 @@ const getStyles = createGetStyles(colors => {
     buttonContainer: {
       width: '100%',
       height: 52,
-    },
-    button: {
-      backgroundColor: colors['blue-default'],
+      borderRadius: 6,
     },
 
     whitelistAlertContentContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
+      // flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 25,
+      paddingHorizontal: 0,
       marginBottom: 16,
     },
     whitelistAlertContentText: {
