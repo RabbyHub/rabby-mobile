@@ -68,7 +68,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 14,
       borderRadius: 100,
       position: 'absolute',
-      top: -5,
+      bottom: -5,
       right: -5,
     },
     requestOrigin: {
@@ -244,7 +244,6 @@ export const FooterBar: React.FC<Props> = ({
   if (!account) {
     return null;
   }
-
   const Icon = securityLevel
     ? SecurityLevelTipColor[securityLevel].icon
     : undefined;

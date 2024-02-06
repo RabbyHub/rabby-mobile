@@ -17,14 +17,16 @@ const getStyles = (colors: AppColorsVariants) =>
       gap: 16,
     },
     buttonStyle: {
-      backgroundColor: colors['blue-default'],
+      backgroundColor: 'white',
       borderColor: colors['blue-default'],
-      height: 40,
+      borderWidth: 1,
+      height: 48,
       width: 148,
       borderRadius: 8,
     },
     buttonTitleStyle: {
-      color: colors['neutral-title-2'],
+      color: colors['blue-default'],
+      fontSize: 15,
     },
   });
 

@@ -38,6 +38,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     signTitleRight: {
       flexDirection: 'row',
+      alignItems: 'center',
     },
     iconSpeedup: {
       width: 10,
