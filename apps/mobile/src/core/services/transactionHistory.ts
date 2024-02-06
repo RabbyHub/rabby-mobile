@@ -212,8 +212,6 @@ export class TransactionHistoryService {
       address,
     });
 
-    console.log('getList', JSON.stringify(groups));
-
     return {
       pendings: sortBy(
         groups.filter(item => item.isPending),
@@ -328,8 +326,6 @@ export class TransactionHistoryService {
     success?: boolean;
     gasUsed?: number;
   }) {
-    console.log('compelteTx');
-    // todo 没有用到 hash 和 reqId 可能有坑
     const target = this.getTransactionGroups({
       address,
       chainId,
@@ -387,7 +383,6 @@ export class TransactionHistoryService {
     },
     duration: number | boolean = 0,
   ) {
-    console.log('reloadTx');
     const target = this.getTransactionGroups({
       address,
       chainId,
@@ -396,7 +391,6 @@ export class TransactionHistoryService {
     if (!target) {
       return;
     }
-    console.log('target');
 
     const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
     const { txs } = target;
@@ -418,7 +412,6 @@ export class TransactionHistoryService {
       const completed = results.find(
         result => result.code === 0 && result.status !== 0,
       );
-      console.log('results', results, completed);
       if (!completed) {
         if (
           duration !== false &&

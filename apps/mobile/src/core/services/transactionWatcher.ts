@@ -49,28 +49,8 @@ export class TransactionWatcherService {
     // this._populateAvailableTxs();
   }
 
-  sync() {
-    const pendings = transactionHistoryService
-      .getTransactionGroups()
-      .filter(item => item.isPending);
-
-    pendings.forEach(item => {
-      const chain = findChainByID(item.chainId);
-      if (!chain || !item.maxGasTx.hash) {
-        return;
-      }
-      const key = `${item.address}_${item.nonce}_${chain?.enum}`;
-
-      if (this.store.pendingTx[key]) {
-        return;
-      }
-
-      this.addTx(key, {
-        nonce: item.nonce + '',
-        hash: item.maxGasTx.hash,
-        chain: chain.enum,
-      });
-    });
+  hasTx(id: string) {
+    return !!this.store.pendingTx[id];
   }
 
   // 可能有坑 在加速取消这种场景下
@@ -162,7 +142,6 @@ export class TransactionWatcherService {
 
   // fetch pending txs status every 5s
   roll = () => {
-    this.sync();
     interval(async () => {
       const list = Object.keys(this.store.pendingTx);
 
