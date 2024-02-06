@@ -1,8 +1,9 @@
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { WALLET_NAME } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, View } from 'react-native';
+import { Image } from 'react-native';
 
 export const SwitchChain: React.FC = () => {
   const { setTitle, account, setHeight } = useCommonPopupView();
@@ -28,8 +29,15 @@ export const SwitchChain: React.FC = () => {
     }
   }, [account?.brandName]);
   return (
-    <View className="p-[10px]">
-      <Image source={url} className="w-full" />
-    </View>
+    <BottomSheetView>
+      <Image
+        source={url}
+        resizeMode="contain"
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </BottomSheetView>
   );
 };

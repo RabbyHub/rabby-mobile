@@ -70,7 +70,7 @@ export const CommonAccount: React.FC<Props> = ({
           <View>{customSignal}</View>
           {signal && <Signal isBadge color={bgColor} />}
         </View>
-        <Text style={styles.text}>{tip}</Text>
+        {typeof tip === 'string' ? <Text style={styles.text}>{tip}</Text> : tip}
         {children}
       </View>
       {footer}
