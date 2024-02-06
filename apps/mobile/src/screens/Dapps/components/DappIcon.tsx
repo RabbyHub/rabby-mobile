@@ -53,7 +53,7 @@ export const DappIcon = ({
           backgroundColor: bgColor,
         },
       ]}>
-      <Text style={styles.dappIconText}>{originName[0].toUpperCase()}</Text>
+      <Text style={styles.dappIconText}>{originName[0]?.toUpperCase()}</Text>
     </View>
   );
 

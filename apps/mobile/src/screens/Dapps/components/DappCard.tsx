@@ -108,7 +108,7 @@ export const DappCard = ({
             source={
               data?.info?.logo_url
                 ? {
-                    uri: data.info.logo_url,
+                    uri: data.info?.logo_url,
                   }
                 : undefined
             }
@@ -135,17 +135,17 @@ export const DappCard = ({
             {stringUtils.unPrefix(data.origin, 'https://')}
           </Text>
           <View style={styles.dappInfo}>
-            {data.info.name ? (
+            {data.info?.name ? (
               <Text
                 style={[styles.dappInfoText, styles.dappName]}
                 numberOfLines={1}>
-                {data.info.name}
+                {data.info?.name}
               </Text>
             ) : null}
-            {data.info.name && data.info.collected_list?.length ? (
+            {data.info?.name && data.info?.collected_list?.length ? (
               <View style={styles.divider} />
             ) : null}
-            <DappCardListBy data={data.info.collected_list} />
+            <DappCardListBy data={data.info?.collected_list} />
           </View>
         </View>
         <TouchableWithoutFeedback
@@ -157,7 +157,7 @@ export const DappCard = ({
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
         </TouchableWithoutFeedback>
       </View>
-      {data.info.description && !isActive ? (
+      {data.info?.description && !isActive ? (
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
             <RcIconTriangle style={styles.triangle} />
