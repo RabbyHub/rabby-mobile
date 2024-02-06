@@ -43,6 +43,30 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-2'],
       fontSize: 16,
     },
+    accountErrorText: {
+      marginTop: 6,
+      color: colors['orange-default'],
+      fontSize: 13,
+      lineHeight: 15,
+    },
+    accountErrorText2: {
+      marginTop: 8,
+      flexWrap: 'wrap',
+    },
+    disconnectText: {
+      color: colors['red-default'],
+      fontSize: 13,
+      lineHeight: 20,
+    },
+    connectText: {
+      color: colors['neutral-foot'],
+      fontSize: 13,
+      lineHeight: 20,
+    },
+    tipConnect: {
+      width: '100%',
+      paddingHorizontal: 5,
+    },
   });
 
 const TipContent = ({
@@ -55,35 +79,28 @@ const TipContent = ({
   displayBrandName: string;
 }) => {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   switch (tipStatus) {
     case 'ACCOUNT_ERROR':
       return (
-        <View className="text-orange">
-          <Text>
+        <View style={styles.tipConnect}>
+          <Text style={styles.accountErrorText}>
             {t('page.signFooterBar.walletConnect.connectedButCantSign')}
           </Text>
-          <Text className="whitespace-nowrap mt-8">
+          <Text
+            style={StyleSheet.flatten([
+              styles.accountErrorText,
+              styles.accountErrorText2,
+            ])}>
             {t('page.signFooterBar.walletConnect.switchToCorrectAddress')}
-          </Text>
-        </View>
-      );
-    case 'CHAIN_ERROR':
-      return (
-        <View className="text-orange">
-          <Text>
-            {t('page.signFooterBar.walletConnect.connectedButCantSign')}
-          </Text>
-          <Text className="mt-8">
-            {t('page.signFooterBar.walletConnect.switchChainAlert', {
-              chain: chain?.name,
-            })}
           </Text>
         </View>
       );
     case 'DISCONNECTED':
       return (
-        <Text className="text-red-forbidden">
+        <Text style={styles.disconnectText}>
           {t('page.signFooterBar.walletConnect.notConnectToMobile', {
             brand: displayBrandName,
           })}
@@ -92,7 +109,7 @@ const TipContent = ({
 
     default:
       return (
-        <Text className="text-black">
+        <Text style={styles.connectText}>
           {t('page.signFooterBar.walletConnect.connected')}
         </Text>
       );

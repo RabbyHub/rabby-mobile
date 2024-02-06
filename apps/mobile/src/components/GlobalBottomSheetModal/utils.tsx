@@ -14,7 +14,7 @@ import type { ThemeColors } from '@/constant/theme';
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
   [MODAL_NAMES.CANCEL_APPROVAL]: [288],
-  [MODAL_NAMES.SWITCH_ADDRESS]: ['80%'],
+  [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
   [MODAL_NAMES.SWITCH_CHAIN]: ['80%'],
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
@@ -31,7 +31,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
-  [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360],
+  [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400, 217],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
