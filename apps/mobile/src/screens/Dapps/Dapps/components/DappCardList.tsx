@@ -1,11 +1,10 @@
-import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
+import { useThemeColors } from '@/hooks/theme';
+import { useEventEmitter } from 'ahooks';
 import React from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
-import { EmptyDapps } from './EmptyDapps';
-import { SwipeableDappCard } from './SwipeableDappCard';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { useEventEmitter } from 'ahooks';
+import { SwipeableDappCard } from './SwipeableDappCard';
 
 export const DappCardList = ({
   sections,
