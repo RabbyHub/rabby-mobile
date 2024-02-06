@@ -49,7 +49,7 @@ export const HomeTopArea = () => {
       Icon: RcIconReceive,
       onPress: () => {
         const id = createGlobalBottomSheetModal({
-          name: MODAL_NAMES.SELECT_CHAIN,
+          name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           value: CHAINS_ENUM.ETH,
           onChange: (v: CHAINS_ENUM) => {
             navigation.push(RootNames.Receive, {

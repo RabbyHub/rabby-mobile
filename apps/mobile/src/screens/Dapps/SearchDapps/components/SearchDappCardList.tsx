@@ -49,7 +49,7 @@ export const SearchDappCardList = ({
 
   const activeSelectChainPopup = () => {
     const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.SELECT_CHAIN,
+      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       value: chain,
       onChange: (v: CHAINS_ENUM) => {
         onChainChange?.(v);

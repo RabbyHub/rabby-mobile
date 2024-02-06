@@ -47,3 +47,5 @@ export const transactionBroadcastWatcherService =
 export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
+
+transactionWatcherService.roll();

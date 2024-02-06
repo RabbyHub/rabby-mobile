@@ -25,7 +25,11 @@ export const HistoryItem = React.memo(
     return (
       <View style={[styles.card, isFailed || isScam ? styles.cardGray : null]}>
         <View style={styles.cardHeader}>
-          {isScam ? <Text style={styles.spam}>Scam tx</Text> : null}
+          {isScam ? (
+            <View style={styles.scamContainer}>
+              <Text style={styles.scam}>Scam tx</Text>
+            </View>
+          ) : null}
           <View style={styles.cardHeaderInner}>
             <Text style={styles.time} numberOfLines={1}>
               {sinceTime(data.time_at)}
@@ -82,12 +86,13 @@ const getStyles = (colors: AppColorsVariants) =>
       flexWrap: 'wrap',
       gap: 8,
     },
-    spam: {
+    scamContainer: {
       borderRadius: 2,
       backgroundColor: colors['neutral-line'],
       paddingHorizontal: 6,
       paddingVertical: 3,
-
+    },
+    scam: {
       fontSize: 12,
       lineHeight: 14,
       color: colors['neutral-foot'],

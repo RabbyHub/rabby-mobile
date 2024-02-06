@@ -1,16 +1,12 @@
+import { RcIconHistory } from '@/assets/icons/home';
 import { AppColorsVariants } from '@/constant/theme';
+import { transactionHistoryService } from '@/core/services';
+import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { Spin } from '@/screens/TransactionRecord/components/Spin';
+import { useInterval, useRequest } from 'ahooks';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import {
-  RcIconHeaderSettings,
-  RcIconHistory,
-  RcIconHeaderRightArrow,
-} from '@/assets/icons/home';
-import { useCurrentAccount } from '@/hooks/account';
-import { useInterval, useRequest } from 'ahooks';
-import { transactionHistoryService } from '@/core/services';
 
 export const PendingTxCount = () => {
   const colors = useThemeColors();
@@ -52,8 +48,8 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'center',
     },
     spin: {
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
     },
     count: {
       position: 'absolute',

@@ -210,6 +210,7 @@ export function DappsIOSScreen(): JSX.Element {
                       'openedDappWebviewSheetModalRef',
                       true,
                     );
+                    Keyboard.dismiss();
                   }}
                 />
                 <SearchDappCardList

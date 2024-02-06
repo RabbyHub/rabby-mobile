@@ -1,4 +1,4 @@
-import { findChainByEnum } from '@/utils/chain';
+import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -47,8 +47,30 @@ export class TransactionWatcherService {
     }
 
     // this._populateAvailableTxs();
+  }
 
-    this.roll();
+  sync() {
+    const pendings = transactionHistoryService
+      .getTransactionGroups()
+      .filter(item => item.isPending);
+
+    pendings.forEach(item => {
+      const chain = findChainByID(item.chainId);
+      if (!chain || !item.maxGasTx.hash) {
+        return;
+      }
+      const key = `${item.address}_${item.nonce}_${chain?.enum}`;
+
+      if (this.store.pendingTx[key]) {
+        return;
+      }
+
+      this.addTx(key, {
+        nonce: item.nonce + '',
+        hash: item.maxGasTx.hash,
+        chain: chain.enum,
+      });
+    });
   }
 
   // 可能有坑 在加速取消这种场景下
@@ -140,8 +162,10 @@ export class TransactionWatcherService {
 
   // fetch pending txs status every 5s
   roll = () => {
+    this.sync();
     interval(async () => {
       const list = Object.keys(this.store.pendingTx);
+
       // order by address, chain, nonce
       const idQueue = list.sort((a, b) => {
         const [aAddress, aNonceStr, aChain] = a.split('_');

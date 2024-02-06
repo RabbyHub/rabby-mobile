@@ -12,6 +12,7 @@ import {
   useInfiniteScroll,
   useInterval,
   useMemoizedFn,
+  useMount,
   useRequest,
 } from 'ahooks';
 import { last } from 'lodash';
@@ -22,6 +23,7 @@ import { Empty } from './components/Empty';
 import { findChainByServerID } from '@/utils/chain';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { EVENTS, eventBus } from '@/utils/events';
 const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
@@ -65,6 +67,9 @@ function HistoryScreen(): JSX.Element {
       isNoMore: d => {
         return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
       },
+      onSuccess() {
+        runFetchLocalTx();
+      },
     });
 
   const fetchLocalTx = useMemoizedFn(async () => {
@@ -79,17 +84,20 @@ function HistoryScreen(): JSX.Element {
       ...pendings,
       ...completeds.filter(item => {
         const isSynced =
-          !data?.list?.find(
-            tx =>
-              tx.hash === item.maxGasTx.hash &&
-              findChainByServerID(tx.chain)?.id === tx.chain,
-          ) || item.isSynced;
+          !!data?.list?.find(tx => {
+            return (
+              tx.id === item.maxGasTx.hash &&
+              findChainByServerID(tx.chain)?.id === item.chainId
+            );
+          }) || item.isSynced;
+
         if (isSynced && !item.isSynced) {
-          item.isSynced = true;
           transactionHistoryService.updateTx({
             ...item.maxGasTx,
+            isSynced: true,
           });
         }
+
         return (
           item.createdAt >= Date.now() - 3600000 &&
           !item.isSubmitFailed &&
@@ -104,6 +112,20 @@ function HistoryScreen(): JSX.Element {
   });
 
   useInterval(() => runFetchLocalTx(), groups?.length ? 5000 : 60 * 1000);
+
+  const refresh = useMemoizedFn(() => {
+    runFetchLocalTx();
+    reloadAsync();
+  });
+
+  useMount(() => {
+    eventBus.addListener(EVENTS.RELOAD_TX, refresh);
+    return () => {
+      eventBus.removeListener(EVENTS.RELOAD_TX, refresh);
+    };
+  });
+
+  const isFirstLoading = loading && !data?.list?.length;
 
   if (!loading && !groups?.length && !data?.list?.length) {
     return <Empty />;
@@ -128,13 +150,10 @@ function HistoryScreen(): JSX.Element {
       <HistoryList
         list={[...(groups || []), ...(data?.list || [])]}
         localTxList={groups}
-        loading={loading}
+        loading={isFirstLoading}
         loadingMore={loadingMore}
         loadMore={loadMore}
-        onRefresh={() => {
-          runFetchLocalTx();
-          reloadAsync();
-        }}
+        onRefresh={refresh}
       />
     </NormalScreenContainer>
   );

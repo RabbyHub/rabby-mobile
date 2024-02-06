@@ -78,7 +78,7 @@ export const ChainSelector = ({
 
   const activeSelectChainPopup = () => {
     const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.SELECT_CHAIN,
+      name: MODAL_NAMES.SELECT_SORTED_CHAIN,
       value: value,
       onChange: (v: CHAINS_ENUM) => {
         onChange?.(v);
