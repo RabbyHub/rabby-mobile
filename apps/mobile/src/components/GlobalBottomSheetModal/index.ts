@@ -26,3 +26,10 @@ export const globalBottomSheetModalAddListener = (
 export const presentGlobalBottomSheetModal = (key: string) => {
   events.emit(EVENT_NAMES.PRESENT, key);
 };
+
+export const snapToIndexGlobalBottomSheetModal = (
+  key: string,
+  index: number,
+) => {
+  events.emit(EVENT_NAMES.SNAP_TO_INDEX, key, index);
+};

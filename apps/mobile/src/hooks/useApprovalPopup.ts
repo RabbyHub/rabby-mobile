@@ -2,8 +2,10 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
+  snapToIndexGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { atom, useAtom } from 'jotai';
+import React from 'react';
 
 const idAtom = atom<string | null>(null);
 
@@ -32,9 +34,19 @@ export const useApprovalPopup = () => {
     removeGlobalBottomSheetModal(id);
   };
 
+  const snapToIndexPopup = React.useCallback(
+    (index: number) => {
+      if (id) {
+        snapToIndexGlobalBottomSheetModal(id, index);
+      }
+    },
+    [id],
+  );
+
   return {
     closePopup,
     showPopup,
     enablePopup,
+    snapToIndexPopup,
   };
 };

@@ -17,6 +17,7 @@ import { SvgProps } from 'react-native-svg';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 
 const PRIVATE_KEY_ERROR_HEIGHT = 217;
 const OTHER_ERROR_HEIGHT = 392;
@@ -53,11 +54,15 @@ const getStyles = (colors: AppColorsVariants) =>
       marginRight: 6,
     },
     descriptionText: {
-      fontSize: 15,
+      fontSize: 14,
+      lineHeight: 16,
       fontWeight: '400',
-      marginTop: 12,
     },
     footer: {},
+    description: { marginTop: 12, marginBottom: 10, height: 46 },
+    noDescription: {
+      height: 20,
+    },
   });
 
 export interface Props {
@@ -98,7 +103,6 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
   const { t } = useTranslation();
-  const { setHeight, height } = useCommonPopupView();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
@@ -158,30 +162,19 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return;
     }
   }, [status]);
-
-  const lastNormalHeight = React.useRef(0);
-
-  React.useEffect(() => {
-    if (
-      height !== lastNormalHeight.current &&
-      height !== OTHER_ERROR_HEIGHT &&
-      height !== PRIVATE_KEY_ERROR_HEIGHT
-    ) {
-      lastNormalHeight.current = height;
-    }
-  }, [height]);
+  const { snapToIndexPopup } = useApprovalPopup();
 
   React.useEffect(() => {
-    if (status === 'FAILED' || status === 'REJECTED') {
+    if ((status === 'FAILED' || status === 'REJECTED') && description) {
       if (hdType === 'privatekey') {
-        setHeight(PRIVATE_KEY_ERROR_HEIGHT);
+        snapToIndexPopup(2);
       } else {
-        setHeight(OTHER_ERROR_HEIGHT);
+        snapToIndexPopup(1);
       }
     } else {
-      setHeight(lastNormalHeight.current);
+      snapToIndexPopup(0);
     }
-  }, [setHeight, hdType, status]);
+  }, [snapToIndexPopup, hdType, status, description]);
 
   return (
     <View style={styles.wrapper}>
@@ -202,7 +195,11 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           <Dots color={contentColor} />
         ) : null}
       </View>
-      <ScrollView style={{ height: 36 }}>
+      <ScrollView
+        style={StyleSheet.flatten([
+          styles.description,
+          !description && styles.noDescription,
+        ])}>
         <Text
           style={[
             styles.descriptionText,
