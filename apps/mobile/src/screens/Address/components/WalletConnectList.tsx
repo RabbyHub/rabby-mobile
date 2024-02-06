@@ -34,6 +34,7 @@ export const WalletConnectList = () => {
   const isOpenWcRef = useRef(false);
 
   const hideImportLoadingTipRef = useRef<(() => void) | null>(null);
+  const importingRef = useRef(false);
 
   const handlePress = React.useCallback(async (service: WalletInfo) => {
     setUriLoading(true);
@@ -49,6 +50,7 @@ export const WalletConnectList = () => {
       hideImportLoadingTipRef.current?.();
       openWallet(service, uri).then(() => {
         isOpenWcRef.current = true;
+        importingRef.current = true;
       });
       deepLinkRef.current = uri;
     }
@@ -88,12 +90,13 @@ export const WalletConnectList = () => {
   const handleConnected = React.useCallback(
     (data: any) => {
       // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
-      if (!data.realBrandName) {
+      if (!data.realBrandName || !importingRef.current) {
         return;
       }
 
       // replace realBrandName with build-in brandName
       data.realBrandName = data.brandName;
+      importingRef.current = false;
       hideImportLoadingTipRef.current?.();
       const hideToast = toastImportTip();
 
@@ -118,6 +121,10 @@ export const WalletConnectList = () => {
           })
           .finally(() => {
             hideToast();
+            eventBus.removeListener(
+              EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+              handleConnected,
+            );
           });
       }
     },
