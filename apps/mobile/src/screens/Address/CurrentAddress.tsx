@@ -37,8 +37,10 @@ type CurrentAddressProps = NativeStackScreenProps<
 
 export default function CurrentAddressScreen(): JSX.Element {
   const { accounts } = useAccounts();
-  const { currentAccount } = useCurrentAccount();
-  const { pinAddresses: highlightedAddresses } = usePinAddresses();
+  const { currentAccount } = useCurrentAccount({ disableAutoFetch: true });
+  const { pinAddresses: highlightedAddresses } = usePinAddresses({
+    disableAutoFetch: true,
+  });
 
   const { openUrlAsDapp } = useOpenDappView();
 

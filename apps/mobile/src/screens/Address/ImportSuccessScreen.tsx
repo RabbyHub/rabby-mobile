@@ -1,7 +1,7 @@
 import { FocusAwareStatusBar, Text } from '@/components';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { RootNames } from '@/constant/layout';
-import { contactService } from '@/core/services';
+import { contactService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useIsFocused, useNavigationState } from '@react-navigation/native';
 import React from 'react';
@@ -17,7 +17,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts({ disableAutoFetch: true });
   const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
@@ -66,9 +66,11 @@ export const ImportSuccessScreen = () => {
   };
   const [aliasName, setAliasName] = React.useState<string>('');
 
-  const { switchAccount, currentAccount } = useCurrentAccount();
+  const { switchAccount } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
 
-  const handleDone = () => {
+  const handleDone = React.useCallback(() => {
     contactService.setAlias({
       address: state.address,
       alias: aliasName || '',
@@ -77,7 +79,7 @@ export const ImportSuccessScreen = () => {
     navigate(RootNames.StackRoot, {
       screen: RootNames.Home,
     });
-  };
+  }, [aliasName, state.address]);
 
   const isFocus = useIsFocused();
 
@@ -92,6 +94,7 @@ export const ImportSuccessScreen = () => {
           a.brandName === state.brandName &&
           addressUtils.isSameAddress(a.address, state.address),
       );
+      const currentAccount = preferenceService.getCurrentAccount();
       if (targetAccount) {
         if (
           !currentAccount ||
@@ -102,7 +105,7 @@ export const ImportSuccessScreen = () => {
         }
       }
     }
-  }, [isFocus, state, accounts, currentAccount, switchAccount]);
+  }, [isFocus, state, accounts, switchAccount]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>

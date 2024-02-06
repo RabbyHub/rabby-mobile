@@ -16,11 +16,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
 import { SearchBar } from '@rneui/base';
 import RcIconClose from '@/assets/icons/import-success/clear.svg';
-// import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import {
-  TouchableWithoutFeedback,
-  // TextInput,
-} from 'react-native-gesture-handler';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface Props {
   address: string;
@@ -45,27 +41,7 @@ export const AddressInput: React.FC<Props> = ({
           paddingTop: 12,
           position: 'relative',
         },
-        searchContainer: {
-          backgroundColor: 'transparent',
-          flex: 1,
-          width: '100%',
-          padding: 0,
-          // padding: 0,
-          margin: 0,
-        },
-        input: {
-          width: '100%',
-          flex: 1,
-          backgroundColor: colors['neutral-card-2'],
-          borderRadius: 4,
-          paddingHorizontal: 6,
-          // marginRight: 80,
-          minHeight: 48,
-          color: colors['neutral-title-1'],
-          fontSize: 16,
-          fontWeight: '500',
-          paddingRight: 38,
-        },
+
         address: {
           color: colors['neutral-body'],
           fontSize: Platform.OS === 'ios' ? 15 : 14,
@@ -146,44 +122,28 @@ export const AddressInput: React.FC<Props> = ({
     aliasName || '',
   );
   const ref = React.useRef<any>(null);
+  console.log('date start', Date.now());
 
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
+    console.log('date end', Date.now(), aliasName);
   }, [aliasName]);
+
+  const clearIcon = React.useMemo(
+    () => (
+      <TouchableWithoutFeedback
+        style={styles.clearIconContainer}
+        onPress={() => {
+          ref?.current?.clear();
+        }}>
+        <RcIconClose />
+      </TouchableWithoutFeedback>
+    ),
+    [styles.clearIconContainer],
+  );
 
   return (
     <View style={styles.container}>
-      {/* <TextInput
-        ref={ref}
-        onSubmitEditing={handleSubmit}
-        value={editingAliasName}
-        style={styles.input}
-        onChange={nativeEvent => {
-          setEditingAliasName(nativeEvent.nativeEvent.text);
-          onChange?.(nativeEvent.nativeEvent.text);
-        }}
-        blurOnSubmit
-        clearButtonMode="always"
-        focusable={true}
-      />
-      {!!editingAliasName && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            right: 20,
-            top: 28,
-            width: 20,
-            height: 20,
-          }}
-          onPress={() => {
-            // setEditingAliasName('');
-            // onChange?.('');
-            ref.current?.clear();
-          }}>
-          <RcIconClose width={20} height={20} />
-        </TouchableOpacity>
-      )} */}
-
       <SearchBar
         ref={ref}
         style={styles.searchBarStyle}
@@ -192,20 +152,16 @@ export const AddressInput: React.FC<Props> = ({
         inputStyle={styles.inputStyle}
         leftIconContainerStyle={styles.leftIconContainerStyle}
         value={editingAliasName}
-        onChangeText={v => {
-          setEditingAliasName(v);
-          onChange?.(v);
-        }}
-        clearIcon={
-          <TouchableWithoutFeedback
-            style={styles.clearIconContainer}
-            onPress={() => {
-              ref?.current?.clear();
-            }}>
-            <RcIconClose />
-          </TouchableWithoutFeedback>
-        }
+        onChangeText={React.useCallback(
+          v => {
+            setEditingAliasName(v);
+            onChange?.(v);
+          },
+          [onChange],
+        )}
+        clearIcon={clearIcon}
         blurOnSubmit
+        onSubmitEditing={handleSubmit}
       />
 
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
@@ -224,6 +180,3 @@ export const AddressInput: React.FC<Props> = ({
     </View>
   );
 };
-function SearchIcon() {
-  return null as React.ReactNode;
-}
