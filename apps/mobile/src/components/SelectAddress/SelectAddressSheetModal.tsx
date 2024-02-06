@@ -75,7 +75,6 @@ export function SelectAddressSheetModal({
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
-      console.log('[feat] onHardwareBackHandler:: I am here now');
       return !visible;
     }, [visible]),
   );
