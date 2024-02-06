@@ -133,14 +133,12 @@ export const WalletConnectList = () => {
   );
 
   React.useEffect(() => {
-    console.log('111');
     eventBus.addListener(
       EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
       handleConnected,
     );
 
     return () => {
-      console.log('4444');
       eventBus.removeListener(
         EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
         handleConnected,
