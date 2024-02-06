@@ -26,7 +26,7 @@
       <package android:name="vip.mytokenpocket" />
       <package android:name="im.token.app" />
       <package android:name="me.rainbow" />
-      <package android:name="com.bitget.exchange" />
+      <package android:name="com.bitkeep.wallet" />
       <package android:name="io.metamask" />
       <package android:name="im.argent.contractwalletclient" />
       <package android:name="com.wallet.crypto.trustapp" />

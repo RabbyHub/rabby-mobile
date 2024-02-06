@@ -94,7 +94,6 @@ export default function HomeHeaderArea() {
     },
     [navigation],
   );
-  console.log('balanceUpdating', balanceUpdating);
   return (
     <View
       style={StyleSheet.compose(styles.container, {

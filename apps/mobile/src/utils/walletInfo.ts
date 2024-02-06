@@ -21,7 +21,7 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     brand: WALLET_NAME.Bitget,
     id: '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662',
     deepLink: 'bitkeep:',
-    androidPackageName: 'com.bitget.exchange',
+    androidPackageName: 'com.bitkeep.wallet',
     universal: 'https://bkapp.vip',
     displayName: BRAND_ALIAS_TYPE_TEXT.Bitget,
   },
