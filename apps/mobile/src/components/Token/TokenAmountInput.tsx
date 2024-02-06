@@ -10,7 +10,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import RcArrowDownCC from './icons/token-selector-trigger-down-cc.svg';
-import TouchableView from '@/components/Touchable/TouchableView';
+import TouchableView, { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
@@ -25,7 +25,6 @@ import {
 } from './TokenSelectorSheetModal';
 import { AssetAvatar } from '../AssetAvatar';
 import { useSortTokenPure } from '@/screens/Home/hooks/useSortTokens';
-import { devLog } from '@/utils/logger';
 import { splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 
@@ -244,11 +243,15 @@ export function TokenAmountInput({
             </View>
           </View>
         </TouchableView>
-        <View
-          style={[
+        <SilentTouchableView
+          viewStyle={[
             styles.rightInputContainer,
             inlinePrize && !!valueText && styles.containerHasInlinePrize,
-          ]}>
+          ]}
+          onPress={() => {
+            tokenInputRef.current?.focus();
+          }}
+        >
           <NumericInput
             style={[
               inlinePrize && !!valueText && styles.inputHasInlinePrize,
@@ -259,7 +262,8 @@ export function TokenAmountInput({
             ref={tokenInputRef}
             placeholder="0"
             placeholderTextColor={colors['neutral-foot']}
-            keyboardType="number-pad"
+            inputMode="decimal"
+            keyboardType='numeric'
           />
           {inlinePrize && (
             <View style={styles.inlinePrizeContainer}>
@@ -271,7 +275,7 @@ export function TokenAmountInput({
               </Text>
             </View>
           )}
-        </View>
+        </SilentTouchableView>
       </View>
 
       <TokenSelectorSheetModal
@@ -345,12 +349,14 @@ const getStyles = createGetStyles(colors => {
     },
     input: {
       fontSize: 18,
+      height: '100%',
     },
     inputHasInlinePrize: {
       position: 'absolute',
       top: -6,
       right: PADDING / 2,
       fontWeight: '500',
+      height: '50%',
       // ...makeDebugBorder()
     },
     inlinePrizeContainer: {
@@ -359,7 +365,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
 
       position: 'absolute',
-      bottom: 0,
+      bottom: 2,
       right: PADDING / 2,
     },
     // 'text-r-neutral-foot text-12 text-right max-w-full truncate'
