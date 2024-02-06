@@ -247,7 +247,7 @@ const DappWebViewControl = React.forwardRef<
     const renderedHeaderNode = useMemo(() => {
       const node = (
         <View style={[styles.dappWebViewHeadContainer]}>
-          <View style={[styles.touchableHeadWrapper]}>{headerLeftNode}</View>
+          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>{headerLeftNode}</View>
           <View style={styles.DappWebViewHeadTitleWrapper}>
             <Text
               style={{
@@ -269,7 +269,7 @@ const DappWebViewControl = React.forwardRef<
               {formattedCurrentUrl}
             </Text>
           </View>
-          <View style={[styles.touchableHeadWrapper]}>
+          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
             <TouchableView
               onPress={handlePressMore}
               style={[styles.touchableHeadWrapper]}>
@@ -430,13 +430,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 0,
   },
+  flexShrink0: {
+    flexShrink: 0,
+  },
   touchableHeadWrapper: {
     height: ScreenLayouts.dappWebViewControlHeaderHeight,
     justifyContent: 'center',
     flexShrink: 0,
   },
   DappWebViewHeadTitleWrapper: {
+    flexShrink: 1,
     flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   HeadTitleOrigin: {
     fontSize: 16,
@@ -447,6 +453,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '400',
     textAlign: 'center',
+    maxWidth: '90%',
   },
 
   dappWebViewContainer: {
