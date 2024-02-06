@@ -52,11 +52,12 @@ function GetStartedScreen(): JSX.Element {
   );
 
   const handleGetStarted = async () => {
-    if (preferenceService.getPreference('isInvited')) {
-      navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
-    } else {
-      setIsShowModal(true);
-    }
+    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    // if (preferenceService.getPreference('isInvited')) {
+    //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    // } else {
+    //   setIsShowModal(true);
+    // }
   };
 
   const handleInvite = async () => {
@@ -99,7 +100,6 @@ function GetStartedScreen(): JSX.Element {
 
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle="light-content" />
       <View style={styles.centerWrapper}>
         {/* top area */}
         <View style={styles.topArea}>
