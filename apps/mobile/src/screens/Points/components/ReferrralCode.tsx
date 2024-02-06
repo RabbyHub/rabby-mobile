@@ -98,7 +98,6 @@ export const SetReferralCode: React.FC<{
     try {
       await onSetCode(input);
       closePopup();
-      Keyboard.dismiss();
     } catch (error) {
       devLog('submitReferralCode error', error);
       toast.info(String((error as any)?.message || error));
