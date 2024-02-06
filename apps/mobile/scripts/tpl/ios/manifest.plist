@@ -37,7 +37,7 @@
 				<key>platform-identifier</key>
 				<string>com.apple.platform.iphoneos</string>
 				<key>title</key>
-				<string>Rabby</string>
+				<string>{{ APP_DISPLAY_NAME }}</string>
 			</dict>
 		</dict>
 	</array>
