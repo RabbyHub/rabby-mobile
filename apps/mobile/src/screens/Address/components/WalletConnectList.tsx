@@ -5,7 +5,7 @@ import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServ
 import { openWallet } from '@/hooks/walletconnect/util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { navigate } from '@/utils/navigation';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -14,8 +14,6 @@ import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnec
 import { toast, toastWithIcon } from '@/components/Toast';
 import { WalletInfo } from '@/utils/walletInfo';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
-import { useAppState } from '@react-native-community/hooks';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -30,11 +28,6 @@ export const WalletConnectList = () => {
   const { isLoading, validServices } = useValidWalletServices();
   const [uriLoading, setUriLoading] = React.useState(false);
   const deepLinkRef = React.useRef<string>('');
-
-  const isOpenWcRef = useRef(false);
-
-  const hideImportLoadingTipRef = useRef<(() => void) | null>(null);
-
   const handlePress = React.useCallback(async (service: WalletInfo) => {
     setUriLoading(true);
     const toastHide = toastWithIcon(() => (
@@ -46,83 +39,53 @@ export const WalletConnectList = () => {
     });
     const uri = await apisWalletConnect.getUri(service.brand);
     if (uri) {
-      hideImportLoadingTipRef.current?.();
-      openWallet(service, uri).then(() => {
-        isOpenWcRef.current = true;
-      });
+      openWallet(service, uri);
       deepLinkRef.current = uri;
     }
     setUriLoading(false);
     toastHide();
   }, []);
 
-  const appState = useAppState();
-  const isFocus = useIsFocused();
-
-  const toastImportTip = React.useCallback(
-    () =>
-      toastWithIcon(() => <ActivityIndicator style={styles.toastIcon} />)(
-        'Importing',
-        {
-          duration: 6000,
-          position: toast.positions.CENTER,
-          hideOnPress: false,
-        },
-      ),
-    [],
-  );
-
-  useEffect(() => {
-    if (isOpenWcRef.current && appState === 'active' && isFocus) {
-      isOpenWcRef.current = false;
-      hideImportLoadingTipRef.current = toastImportTip();
+  const handleConnected = React.useCallback((data: any) => {
+    // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
+    if (!data.realBrandName) {
+      return;
     }
-  }, [appState, isFocus, toastImportTip]);
 
-  useFocusEffect(() => {
-    return () => {
-      hideImportLoadingTipRef.current?.();
-    };
-  });
+    // replace realBrandName with build-in brandName
+    data.realBrandName = data.brandName;
 
-  const handleConnected = React.useCallback(
-    (data: any) => {
-      // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
-      if (!data.realBrandName) {
-        return;
-      }
-
-      // replace realBrandName with build-in brandName
-      data.realBrandName = data.brandName;
-      hideImportLoadingTipRef.current?.();
-      const hideToast = toastImportTip();
-
-      if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
-        apisWalletConnect
-          .importAddress(data)
-          .then(() => {
-            hideToast();
-            navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportSuccess,
-              params: {
-                address: data.address,
-                brandName: data.brandName,
-                realBrandName: data.realBrandName,
-                deepLink: deepLinkRef.current,
-              },
-            });
-          })
-          .catch((err: any) => {
-            console.error(err);
-            toast.show(err.message);
-          })
-          .finally(() => {
-            hideToast();
+    if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={styles.toastIcon} />
+      ))('Importing', {
+        duration: 100000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
+      apisWalletConnect
+        .importAddress(data)
+        .then(() => {
+          toastHide();
+          navigate(RootNames.StackAddress, {
+            screen: RootNames.ImportSuccess,
+            params: {
+              address: data.address,
+              brandName: data.brandName,
+              realBrandName: data.realBrandName,
+              deepLink: deepLinkRef.current,
+            },
           });
-      }
-    },
-    [toastImportTip],
-  );
+        })
+        .catch((err: any) => {
+          console.error(err);
+          toast.show(err.message);
+        })
+        .finally(() => {
+          toastHide();
+        });
+    }
+  }, []);
 
   React.useEffect(() => {
     eventBus.addListener(

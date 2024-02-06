@@ -17,7 +17,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
-  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const { accounts } = useAccounts({ disableAutoFetch: true });
   const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
@@ -86,10 +86,6 @@ export const ImportSuccessScreen = () => {
   React.useEffect(() => {
     setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
   }, [state]);
-
-  React.useEffect(() => {
-    setTimeout(() => fetchAccounts(), 0);
-  }, [fetchAccounts]);
 
   React.useEffect(() => {
     if (isFocus) {

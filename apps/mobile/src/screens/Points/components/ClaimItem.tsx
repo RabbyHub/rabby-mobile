@@ -2,11 +2,20 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
+import styled from 'styled-components/native';
 import { useThemeColors } from '@/hooks/theme';
-import { Button, Tip } from '@/components';
+import { Button } from '@/components';
 import LinearGradient from 'react-native-linear-gradient';
 import { Skeleton } from '@rneui/base';
 import { createGetStyles } from '@/utils/styles';
+
+const Wrapper = styled.View`
+  position: relative;
+  border: 0.5px solid #d3d8e0;
+  border-radius: 8px;
+  padding: 12px 0;
+  padding-top: 14px;
+`;
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -127,30 +136,27 @@ const ClaimItem: React.FC<ClaimItemProps> = props => {
       ])}>
       <View style={styles.topContainer}>
         <Text style={styles.titleText}>{props.title}</Text>
-        <Tip content={'No points to be claimed now'}>
-          <Button
-            title={`${t('page.rabbyPoints.claimItem.claim')} ${
-              props.claimable_points <= 0 || !props.claimable
-                ? ''
-                : props.claimable_points
-            }`}
-            linearGradientProps={{
-              colors: props.claimable
-                ? ['#5CEBFF', '#5C42FF']
-                : [colors['neutral-card2'], colors['neutral-card2']],
-              start: { x: 0.04, y: 0.16 },
-              end: { x: 0.92, y: 1 },
-            }}
-            ViewComponent={props.claimable ? LinearGradient : undefined}
-            buttonStyle={styles.claimButton}
-            onPress={claim}
-            titleStyle={styles.titleStyle}
-            loading={props.claimLoading}
-            disabled={!props.claimable}
-            disabledStyle={styles.disabledBtn}
-            disabledTitleStyle={styles.disabledTitleStyle}
-          />
-        </Tip>
+
+        <Button
+          title={`${t('page.rabbyPoints.claimItem.claim')} ${
+            props.claimable_points <= 0 || !props.claimable
+              ? ''
+              : props.claimable_points
+          }`}
+          linearGradientProps={{
+            colors: props.claimable
+              ? ['#5CEBFF', '#5C42FF']
+              : [colors['neutral-card2'], colors['neutral-card2']],
+            start: { x: 0.04, y: 0.16 },
+            end: { x: 0.92, y: 1 },
+          }}
+          ViewComponent={props.claimable ? LinearGradient : undefined}
+          buttonStyle={StyleSheet.flatten([
+            disabled ? styles.disabledBtn : styles.claimButton,
+          ])}
+          onPress={claim}
+          titleStyle={disabled ? styles.disabledTitleStyle : styles.titleStyle}
+        />
       </View>
       <Text style={styles.descriptionText}>{props.description}</Text>
     </View>

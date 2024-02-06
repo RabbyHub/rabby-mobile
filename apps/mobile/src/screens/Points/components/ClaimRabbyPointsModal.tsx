@@ -389,7 +389,7 @@ const getStyles = createGetStyles(colors => ({
     paddingBottom: 16,
   },
   infoText: {
-    color: '#7c86c8',
+    color: '#7c86c8;',
     fontSize: 10,
     textAlign: 'center',
     marginBottom: 12,

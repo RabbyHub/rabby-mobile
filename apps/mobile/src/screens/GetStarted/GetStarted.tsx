@@ -128,15 +128,7 @@ function GetStartedScreen(): JSX.Element {
         {/* top area */}
         <View style={styles.topArea}>
           <RcIconLogo />
-          <View style={styles.titleContainer}>
-            <View>
-              <Text style={styles.appName}>Rabby Wallet</Text>
-            </View>
-            <View style={styles.beta}>
-              <Text style={styles.betaText}>Beta</Text>
-            </View>
-          </View>
-
+          <Text style={styles.appName}>Rabby Wallet</Text>
           <Text style={styles.appDesc}>
             The game-changing wallet
             {'\n'}
@@ -252,37 +244,12 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       justifyContent: 'flex-start',
       flex: 0,
     },
-    titleContainer: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 8,
-      marginTop: -14,
-    },
     appName: {
       color: colors['neutral-title-2'],
       fontSize: 24,
       lineHeight: 28,
       fontWeight: '500',
-    },
-    beta: {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRadius: 90,
-      paddingVertical: 2,
-      paddingHorizontal: 8,
-      color: 'white',
-      fontSize: 12,
-      fontWeight: '400',
-      marginTop: 3,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    betaText: {
-      display: 'flex',
-      color: colors['neutral-title-2'],
-      fontSize: 12,
-      fontWeight: '400',
+      marginTop: -14,
     },
     appDesc: {
       color: colors['neutral-title-2'],
