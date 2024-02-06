@@ -9,7 +9,9 @@ import { useThemeColors } from '@/hooks/theme';
 import HistoryScreen from '@/screens/Transaction/History';
 import SendScreen from '../Send/Send';
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
-const TransactionStack = createNativeStackNavigator();
+import { TransactionNavigatorParamList } from '@/navigation-type';
+const TransactionStack =
+  createNativeStackNavigator<TransactionNavigatorParamList>();
 
 export default function TransactionNavigator() {
   const screenOptions = useStackScreenConfig();

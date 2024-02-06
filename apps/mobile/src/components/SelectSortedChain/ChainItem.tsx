@@ -94,7 +94,7 @@ const getStyles = createGetStyles(colors => {
       fontSize: 16,
       lineHeight: 19,
       color: colors['neutral-title1'],
-      fontWeight: 'bold',
+      fontWeight: '600',
     },
     selectChainItemBalance: {
       flexDirection: 'row',
