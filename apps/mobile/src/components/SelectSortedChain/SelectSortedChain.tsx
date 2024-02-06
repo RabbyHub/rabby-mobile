@@ -9,12 +9,11 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { CHAINS_ENUM, Chain } from '@debank/common';
 import { Input } from '@rneui/themed';
 
-import ChainList from './ChainList';
 import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { varyAndSortChainItems } from '@/utils/chain';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import MixedFlatChainList from './MixedFlatChainList';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -119,16 +118,13 @@ export default function SelectSortedChain({
           <Text style={styles.emptyText}>No Chains</Text>
         </View>
       ) : (
-        <BottomSheetScrollView
-          style={[styles.chainListWrapper, styles.innerBlock]}>
-          <ChainList data={matteredList} value={value} onChange={onChange} />
-          <ChainList
-            style={{ marginTop: 12 }}
-            data={unmatteredList}
-            value={value}
-            onChange={onChange}
+        <View style={[styles.chainListWrapper]}>
+          <MixedFlatChainList
+            style={styles.innerBlock}
+            matteredList={matteredList}
+            unmatteredList={unmatteredList}
           />
-        </BottomSheetScrollView>
+        </View>
       )}
     </View>
   );

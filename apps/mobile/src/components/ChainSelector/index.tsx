@@ -30,6 +30,7 @@ interface ChainSelectorProps {
   showRPCStatus?: boolean;
   modalHeight?: number;
   style?: StyleProp<ViewStyle>;
+  useSortedChain?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -69,6 +70,7 @@ export const ChainSelector = ({
   style = {},
   onAfterOpen,
   showRPCStatus = false,
+  useSortedChain = true,
 }: ChainSelectorProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -78,7 +80,9 @@ export const ChainSelector = ({
 
   const activeSelectChainPopup = () => {
     const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.SELECT_CHAIN,
+      name: useSortedChain
+        ? MODAL_NAMES.SELECT_SORTED_CHAIN
+        : MODAL_NAMES.SELECT_CHAIN,
       value: value,
       onChange: (v: CHAINS_ENUM) => {
         onChange?.(v);
