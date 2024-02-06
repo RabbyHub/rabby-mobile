@@ -122,11 +122,9 @@ export const AddressInput: React.FC<Props> = ({
     aliasName || '',
   );
   const ref = React.useRef<any>(null);
-  console.log('date start', Date.now());
 
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
-    console.log('date end', Date.now(), aliasName);
   }, [aliasName]);
 
   const clearIcon = React.useMemo(
