@@ -29,6 +29,7 @@ import {
 import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import { PointScreen } from '../Points';
+import { GlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -192,6 +193,8 @@ export default function BottomTabNavigator() {
 
       <OpenedDappWebViewStub />
       {/* <OpenedWebViewsStub /> */}
+
+      <GlobalBottomSheetModal />
     </>
   );
 }

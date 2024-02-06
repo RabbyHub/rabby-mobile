@@ -35,6 +35,7 @@ import { navigate } from '@/utils/navigation';
 import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
 import { OpenedDappBottomSheetModal } from '@/components';
 import { useHandleBackPress } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -140,7 +141,7 @@ export function OpenedDappWebViewStub() {
     }
   }, [toggleShowSheetModal, activeDapp]);
 
-  useHandleBackPress(
+  const { onHardwareBackHandler } = useHandleBackPress(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
       if (control?.getWebViewState().canGoBack) {
@@ -151,6 +152,7 @@ export function OpenedDappWebViewStub() {
       return !!activeDapp;
     }, [activeDapp]),
   );
+  useFocusEffect(onHardwareBackHandler);
 
   const { currentAccount } = useCurrentAccount();
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);

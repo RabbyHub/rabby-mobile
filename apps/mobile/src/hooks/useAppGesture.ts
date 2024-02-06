@@ -1,4 +1,3 @@
-import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
 
@@ -16,7 +15,7 @@ export function useHandleBackPress(
     return checkCondition.current;
   }, [checkCondition]);
 
-  const onFocusBackHandler = useCallback(() => {
+  const onHardwareBackHandler = useCallback(() => {
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
@@ -36,5 +35,7 @@ export function useHandleBackPress(
     return () => subscription.remove();
   }, [checkFn]);
 
-  useFocusEffect(onFocusBackHandler);
+  return {
+    onHardwareBackHandler,
+  };
 }

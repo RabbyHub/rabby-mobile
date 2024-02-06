@@ -153,7 +153,6 @@ export default function AppNavigation({
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar />
-      <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}
         // key={userId}
