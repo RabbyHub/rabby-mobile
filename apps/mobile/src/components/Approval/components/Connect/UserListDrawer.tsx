@@ -1,7 +1,4 @@
-import {
-  AppBottomSheetModal,
-  AppBottomSheetModalTitle,
-} from '@/components/customized/BottomSheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { Radio } from '@/components/Radio';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
