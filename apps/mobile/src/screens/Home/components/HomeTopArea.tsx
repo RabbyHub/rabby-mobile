@@ -21,7 +21,7 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
+} from '@/components/GlobalBottomSheetModal';
 import { CHAINS_ENUM } from '@debank/common';
 
 export const HomeTopArea = () => {
@@ -57,6 +57,9 @@ export const HomeTopArea = () => {
                 chain: v,
               },
             });
+            removeGlobalBottomSheetModal(id);
+          },
+          onCancel: () => {
             removeGlobalBottomSheetModal(id);
           },
         });

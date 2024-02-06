@@ -1,9 +1,8 @@
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
-import { toast } from '@/components/Toast';
+} from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   CANCEL_TX_TYPE,
   INTERNAL_REQUEST_ORIGIN,
@@ -23,11 +22,11 @@ import { maxBy } from 'lodash';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { TransactionAction } from './TransactionAction';
 import { TransactionCompleteTag } from './TransactionCompleteTag';
 import { TransactionExplain } from './TransactionExplain';
 import { TransactionPendingDetail } from './TransactionPendingDetail';
 import { TransactionPendingTag } from './TransactionPendingTag';
+import { toast } from '@/components/Toast';
 
 export const TransactionItem = ({
   data,

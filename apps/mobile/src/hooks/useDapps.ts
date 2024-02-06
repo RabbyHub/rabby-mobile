@@ -1,15 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { DappInfo } from '@/core/services/dappService';
-import { atom, useAtom } from 'jotai';
+import { useAtom } from 'jotai';
 import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { useFocusEffect } from '@react-navigation/native';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
-import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 import { apisDapp } from '@/core/apis';
-import { useMount } from 'react-use';
-import { syncBasicDappInfo } from '@/core/apis/dapp';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -61,55 +57,3 @@ export function useDapps() {
     isDappConnected,
   };
 }
-
-export const useDappsHome = () => {
-  const [dapps] = useAtom(dappsAtom);
-  const { getDapps, addDapp, updateFavorite, removeDapp, disconnectDapp } =
-    useDapps();
-
-  const { openedDappItems } = useOpenDappView();
-
-  const favoriteApps = useMemo(() => {
-    return Object.values(dapps || {}).filter(item => item.isFavorite);
-  }, [dapps]);
-
-  const dappSections = useMemo(() => {
-    return [
-      {
-        key: 'inUse',
-        title: '',
-        type: 'active',
-        data: openedDappItems.map(item => item.maybeDappInfo!).filter(Boolean),
-      },
-
-      {
-        key: 'favorites',
-        title: 'Favorites',
-        data: favoriteApps,
-      },
-    ].filter(item => item.data.length);
-  }, [openedDappItems, favoriteApps]);
-
-  useFocusEffect(
-    useCallback(() => {
-      getDapps();
-    }, [getDapps]),
-  );
-
-  useMount(async () => {
-    const res = getDapps();
-    await syncBasicDappInfo(Object.keys(res));
-    getDapps();
-  });
-
-  return {
-    dapps,
-    dappSections,
-    favoriteApps,
-    getDapps,
-    addDapp,
-    updateFavorite,
-    removeDapp,
-    disconnectDapp,
-  };
-};

@@ -457,6 +457,7 @@ const GasSelector = ({
 
   useEffect(() => {
     formValidator();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [afterGasLimit, selectedGas, gasList, customNonce]);
 
   useEffect(() => {
@@ -476,10 +477,12 @@ const GasSelector = ({
     if (isReady && isFirstTimeLoad) {
       setIsFirstTimeLoad(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -515,6 +518,7 @@ const GasSelector = ({
     } else if (selectedGas) {
       setMaxPriorityFee(selectedGas.price / 1e9);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gasList, selectedGas, isReady, chainId]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -558,9 +562,7 @@ const GasSelector = ({
                 </>
               ) : (
                 <View style={styles.gasSelectorCardContentItem}>
-                  <View
-                    style={styles.gasSelectorCardAmount}
-                    className="flex items-center">
+                  <View style={styles.gasSelectorCardAmount}>
                     <Text style={styles.gasSelectorCardAmountLabel}>
                       {formatTokenAmount(
                         new BigNumber(gas.gasCostAmount).toString(10),

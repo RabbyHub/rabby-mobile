@@ -47,7 +47,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 100,
       backgroundColor: colors['neutral-body'],
       left: 0,
-      top: 8,
+      top: 6,
     },
   });
 

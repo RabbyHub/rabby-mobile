@@ -2,8 +2,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import { SendInput } from '@/components/Form/Input';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { FormInput } from '@/components/Form/Input';
 import { RcWhiteList } from '@/assets/icons/address';
 
 import RcEditPenCC from '../icons/edit-pen-cc.svg';
@@ -14,32 +14,29 @@ import {
   useSendTokenInternalContext,
 } from '../hooks/useSendToken';
 import { SelectAddressSheetModal } from '@/components/SelectAddress/SelectAddressSheetModal';
+import { ModalEditContact } from './SheetModalEditContact';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
 export default function ToAddressControl({
   inputProps,
-  onSelectedAddress,
-  onCancelSelectAddress,
-  onStartSelectAddress,
   style,
 }: React.PropsWithChildren<
   RNViewProps & {
-    inputProps?: React.ComponentProps<typeof SendInput>['inputProps'];
-    onSelectedAddress?: React.ComponentProps<
-      typeof SelectAddressSheetModal
-    >['onConfirm'];
-    onCancelSelectAddress?: React.ComponentProps<
-      typeof SelectAddressSheetModal
-    >['onCancel'];
-    onStartSelectAddress?: () => void;
+    inputProps?: React.ComponentProps<typeof FormInput>['inputProps'];
   }
 >) {
   const {
     formik,
     formValues,
-    screenState: { showListContactModal },
-    computed: { toAddressIsValid, toAddressInContactBook, toAliasName },
+    screenState: {
+      showListContactModal,
+      addressToEditAlias,
+      editBtnDisabled,
+      showContactInfo,
+      contactInfo,
+    },
+    computed: { toAddressIsValid, toAddressInContactBook },
     fns: { putScreenState },
     callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
@@ -55,29 +52,34 @@ export default function ToAddressControl({
       <View style={styles.titleContainer}>
         <Text style={styles.sectionTitle}>To</Text>
         <View style={styles.titleRight}>
-          {toAliasName && (
+          {showContactInfo && contactInfo?.name && (
             <TouchableView
-              style={styles.commentLabelContainer}
-              /* TODO: impl address note */
-              onPress={() => {}}>
-              <RcEditPen className="w-[14] h-[14] mr-[2]" />
+              style={[
+                styles.aliasLabelContainer,
+                styles.disabledAliasEditButton,
+              ]}
+              disabled={editBtnDisabled}
+              onPress={() => {
+                putScreenState({ addressToEditAlias: formValues.to });
+              }}>
+              <RcEditPen style={styles.aliasEditIcon} />
               {/* ellipse it */}
-              <Text style={styles.commentLabel}>{toAliasName}</Text>
+              <Text style={styles.aliasLabel}>{contactInfo?.name}</Text>
             </TouchableView>
           )}
 
           <TouchableView
-            className="ml-[8] pl-[12]"
+            style={styles.entryWhitelist}
             onPress={() => {
               putScreenState({
                 showListContactModal: true,
               });
             }}>
-            <RcWhiteList className="w-[20] h-[20]" />
+            <RcWhiteList style={styles.entryWhitelistIcon} />
           </TouchableView>
         </View>
       </View>
-      <SendInput
+      <FormInput
         className="mt-[8]"
         containerStyle={styles.inputContainer}
         inputStyle={styles.input}
@@ -103,7 +105,11 @@ export default function ToAddressControl({
             <Text style={styles.tipNoContact}>
               <Trans i18nKey="page.sendToken.addressNotInContract" t={t}>
                 Not on address list.{' '}
-                <Text onPress={() => {}} style={styles.textAddToContact}>
+                <Text
+                  onPress={() => {
+                    putScreenState({ addressToAddAsContacts: formValues.to });
+                  }}
+                  style={styles.textAddToContact}>
                   Add to contacts
                 </Text>
               </Trans>
@@ -111,6 +117,19 @@ export default function ToAddressControl({
           )
         )}
       </View>
+
+      <ModalEditContact
+        address={addressToEditAlias || ''}
+        onOk={result => {
+          putScreenState({
+            addressToEditAlias: null,
+            contactInfo: result,
+          });
+        }}
+        onCancel={() => {
+          putScreenState({ addressToEditAlias: null });
+        }}
+      />
 
       <SelectAddressSheetModal
         visible={showListContactModal}
@@ -144,7 +163,7 @@ const getStyles = createGetStyles(colors => {
     titleRight: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
     },
 
     sectionTitle: {
@@ -153,7 +172,7 @@ const getStyles = createGetStyles(colors => {
       fontWeight: 'normal',
     },
 
-    commentLabelContainer: {
+    aliasLabelContainer: {
       borderRadius: 2,
       // borderWidth: 0.5,
       borderWidth: StyleSheet.hairlineWidth,
@@ -169,10 +188,28 @@ const getStyles = createGetStyles(colors => {
       justifyContent: 'center',
     },
 
-    commentLabel: {
+    disabledAliasEditButton: {},
+
+    aliasEditIcon: {
+      width: 14,
+      height: 14,
+      marginRight: 2,
+    },
+
+    aliasLabel: {
       color: colors['blue-default'],
       fontSize: 12,
       fontWeight: 'normal',
+    },
+
+    entryWhitelist: {
+      marginLeft: 8,
+      paddingLeft: 8,
+    },
+
+    entryWhitelistIcon: {
+      width: 20,
+      height: 20,
     },
 
     inputContainer: {

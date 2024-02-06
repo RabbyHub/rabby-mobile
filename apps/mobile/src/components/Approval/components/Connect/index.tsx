@@ -232,7 +232,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
     level?: Level;
     ignored: boolean;
   } | null>(null);
-
+  const [dappIcon, setDappIcon] = useState<string>(icon);
   const [signPermission, setSignPermission] = useState<SIGN_PERMISSION_TYPES>();
   const commonStyle = useCommonStyle();
 
@@ -336,7 +336,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
       cancelBtnText,
       level,
     };
-  }, [resultsWithoutDisable, processedRules]);
+  }, [t, resultsWithoutDisable, processedRules]);
 
   const hasForbidden = useMemo(() => {
     return resultsWithoutDisable.some(item => item.level === Level.FORBIDDEN);
@@ -503,7 +503,13 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
       if (!isShowTestnet && CHAINS[site.chainId]?.isTestnet) {
         return;
       }
-      setDefaultChain(site.chainId);
+      if (Object.values(CHAINS).find(c => c.enum === site.chainId)) {
+        setDefaultChain(site.chainId);
+      }
+
+      if (site.info.logo_url) {
+        setDappIcon(site.info.logo_url);
+      }
       return;
     }
     setIsLoading(false);
@@ -511,6 +517,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCancel = () => {
@@ -593,7 +600,7 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
           <View style={styles.connectCard}>
             <DappIcon
               origin={origin}
-              source={icon ? { uri: icon } : undefined}
+              source={dappIcon ? { uri: dappIcon } : undefined}
               style={styles.dappIcon}
             />
             <Text style={styles.connectOrigin}>{origin}</Text>

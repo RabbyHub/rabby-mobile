@@ -14,7 +14,7 @@ import BigNumber from 'bignumber.js';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
-import { useAlias } from '@/hooks/alias';
+import { useAlias2 } from '@/hooks/alias';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { useTranslation } from 'react-i18next';
@@ -156,6 +156,7 @@ export type SendScreenState = {
   showContactInfo: boolean;
   contactInfo: null | UIContactBookItem;
 
+  /** @deprecated pointless now, see addressToEditAlias */
   showEditContactModal: boolean;
   showListContactModal: boolean;
 
@@ -180,6 +181,9 @@ export type SendScreenState = {
     chainId: number;
     nonce: number;
   } | null;
+
+  addressToAddAsContacts: string | null;
+  addressToEditAlias: string | null;
 };
 const DFLT_SEND_STATE: SendScreenState = {
   inited: false,
@@ -208,11 +212,15 @@ const DFLT_SEND_STATE: SendScreenState = {
   isGnosisSafe: false,
 
   safeInfo: null,
+
+  addressToAddAsContacts: null,
+  addressToEditAlias: null,
 };
+const sendTokenScreenStateAtom = atom<SendScreenState>({ ...DFLT_SEND_STATE });
 export function useSendTokenScreenState() {
-  const [sendTokenScreenState, setSendScreenState] = useState({
-    ...DFLT_SEND_STATE,
-  });
+  const [sendTokenScreenState, setSendScreenState] = useAtom(
+    sendTokenScreenStateAtom,
+  );
 
   const putScreenState = useCallback(
     (patch: Partial<SendScreenState>) => {
@@ -540,7 +548,7 @@ export function useSendTokenForm() {
       //   currentTokenRef.current === targetToken,
       // );
       if (!currentValues.to || !isValidAddress(currentValues.to)) {
-        putScreenState({ editBtnDisabled: true, showWhitelistAlert: false });
+        putScreenState({ editBtnDisabled: true, showWhitelistAlert: true });
       } else {
         putScreenState({ editBtnDisabled: false, showWhitelistAlert: true });
       }
@@ -867,7 +875,7 @@ export function useSendTokenForm() {
     ],
   );
 
-  const { isAddrOnContactBook } = useContactAccounts();
+  const { isAddrOnContactBook } = useContactAccounts({ autoFetch: true });
 
   const { whitelist, enable: whitelistEnabled } = useWhitelist();
   const computed = useMemo(() => {
@@ -879,9 +887,6 @@ export function useSendTokenForm() {
       toAddressInWhitelist,
       toAddressInContactBook: isAddrOnContactBook(formValues.to),
 
-      isSubmitLoading: screenState.isSubmitLoading,
-      showWhitelistAlert: screenState.showWhitelistAlert,
-      temporaryGrant: screenState.temporaryGrant,
       canSubmit:
         isValidAddress(formValues.to) &&
         !screenState.balanceError &&
@@ -895,11 +900,10 @@ export function useSendTokenForm() {
     whitelist,
     whitelistEnabled,
     isAddrOnContactBook,
-    formValues,
+    formValues.to,
     screenState,
+    formValues.amount,
   ]);
-
-  const [toAliasName] = useAlias(formValues.to || '');
 
   return {
     chainEnum,
@@ -918,7 +922,6 @@ export function useSendTokenForm() {
     patchFormValues,
     handleFormValuesChange,
 
-    toAliasName,
     whitelist,
     whitelistEnabled,
     computed,
@@ -947,12 +950,12 @@ type InternalContext = {
     toAddressInWhitelist: boolean;
     toAddressIsValid: boolean;
     toAddressInContactBook: boolean;
-    toAliasName?: string;
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
+    fetchContactAccounts: () => void;
   };
   callbacks: {
     handleCurrentTokenChange: (token: TokenItem) => void;
@@ -960,6 +963,7 @@ type InternalContext = {
       f: T,
       value: FormSendToken[T],
     ) => void;
+    // handleToAddressAliasUpdated: (alias: string) => void;
     handleClickTokenBalance: () => Promise<void> | void;
     handleGasChange: (
       gas: GasLevel,
@@ -982,16 +986,17 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     toAddressInWhitelist: false,
     toAddressIsValid: false,
     toAddressInContactBook: false,
-    toAliasName: '',
   },
 
   formik: null as any,
   fns: {
     putScreenState: () => {},
+    fetchContactAccounts: () => {},
   },
   callbacks: {
     handleCurrentTokenChange: () => {},
     handleFieldChange: () => {},
+    // handleToAddressAliasUpdated: () => {},
     handleClickTokenBalance: () => {},
     handleGasChange: () => {},
     // onFormValuesChange: () => {},

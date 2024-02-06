@@ -2,7 +2,7 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
+} from '@/components/GlobalBottomSheetModal';
 import { atom, useAtom } from 'jotai';
 
 export type CommonPopupComponentName = keyof typeof MODAL_NAMES;

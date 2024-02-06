@@ -46,7 +46,7 @@ import BigNumber from 'bignumber.js';
 import { findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
-import { sessionService } from '../services/session';
+import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -854,8 +854,10 @@ class ProviderController extends BaseController {
         _data = JSON.parse(data);
       }
     }
+    const keyring = await this._checkAddress(from);
 
     return keyringService.signTypedMessage(
+      keyring,
       {
         from,
         data: _data,

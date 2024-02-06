@@ -10,10 +10,12 @@ import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { createGetStyles } from '@/utils/styles';
-import { ModalConfirmAllowTransfer } from './ConfirmAllowTransferSheetModal';
+import { ModalConfirmAllowTransfer } from './SheetModalConfirmAllowTransfer';
 
 import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
 import RcIconChecked from '../icons/icon-checked-cc.svg';
+import { ModalAddToContacts } from './SheetModalAddToContacts';
+import { apiBalance } from '@/core/apis';
 
 export default function BottomArea() {
   const { t } = useTranslation();
@@ -24,10 +26,23 @@ export default function BottomArea() {
   const { handleSubmit } = useSendTokenFormik();
 
   const {
-    screenState: { temporaryGrant, isSubmitLoading, showWhitelistAlert },
-    computed: { whitelistEnabled, canSubmit, toAddressInWhitelist },
-    fns: { putScreenState },
+    formValues,
+    screenState,
+    computed: {
+      whitelistEnabled,
+      canSubmit,
+      toAddressInWhitelist,
+      toAddressInContactBook,
+    },
+    fns: { putScreenState, fetchContactAccounts },
   } = useSendTokenInternalContext();
+
+  const {
+    temporaryGrant,
+    isSubmitLoading,
+    showWhitelistAlert,
+    addressToAddAsContacts,
+  } = screenState;
 
   const whitelistAlertContent = useMemo(() => {
     if (!whitelistEnabled) {
@@ -54,7 +69,7 @@ export default function BottomArea() {
     return {
       success: false,
       content: t('page.sendToken.whitelistAlert__notWhitelisted'),
-      inlineIconColor: colors['neutral-foot'],
+      inlineIconColor: colors['red-dark'],
     };
   }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
 
@@ -85,7 +100,11 @@ export default function BottomArea() {
                 color={whitelistAlertContent.prevIconColor}
               />
             )}
-            <Text style={styles.whitelistAlertContentText}>
+            <Text
+              style={[
+                styles.whitelistAlertContentText,
+                !whitelistAlertContent.success && styles.errorText,
+              ]}>
               {whitelistAlertContent.inlineIconColor && (
                 <ThemeIcon
                   src={
@@ -112,15 +131,31 @@ export default function BottomArea() {
       />
 
       <ModalConfirmAllowTransfer
+        toAddr={formValues.to}
         visible={isAllowTransferModalVisible}
+        showAddToWhitelist={toAddressInContactBook}
         onFinished={result => {
-          if (result.confirmed) {
-            putScreenState?.({ temporaryGrant: true });
-          }
+          putScreenState?.({ temporaryGrant: true });
           setIsAllowTransferModalVisible(false);
         }}
         onCancel={() => {
           setIsAllowTransferModalVisible(false);
+        }}
+      />
+
+      <ModalAddToContacts
+        addrToAdd={addressToAddAsContacts || ''}
+        onFinished={async result => {
+          putScreenState({ addressToAddAsContacts: null });
+          fetchContactAccounts();
+
+          // trigger get balance of address
+          apiBalance.getAddressBalance(result.contactAddrAdded, {
+            force: true,
+          });
+        }}
+        onCancel={() => {
+          putScreenState({ addressToAddAsContacts: null });
         }}
       />
     </View>
@@ -160,6 +195,9 @@ const getStyles = createGetStyles(colors => {
       textAlign: 'center',
       justifyContent: 'center',
       lineHeight: 18,
+    },
+    errorText: {
+      color: colors['red-dark'],
     },
   };
 });

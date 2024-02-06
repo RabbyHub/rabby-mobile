@@ -2,20 +2,19 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Text } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { Media } from '@/components/Media';
-import { RootNames } from '@/constant/layout';
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
-import { navigate } from '@/utils/navigation';
 import { chunk } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useColorScheme,
   StyleSheet,
   View,
   SectionListProps,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { useQueryNft } from './hooks/nft';
 import FastImage from 'react-native-fast-image';
@@ -122,7 +121,14 @@ export const NFTScreen = () => {
   const styles = getStyle(colors, isLight);
   const { currentAccount } = useCurrentAccount();
 
-  const { list, isLoading } = useQueryNft(currentAccount!.address);
+  const { list, isLoading, reload } = useQueryNft(currentAccount!.address);
+  const refreshing = useMemo(() => {
+    if (list.length > 0) {
+      return isLoading;
+    } else {
+      return false;
+    }
+  }, [isLoading, list]);
 
   const sectionList = useMemo(
     () =>
@@ -137,16 +143,19 @@ export const NFTScreen = () => {
   const renderItem: Exclude<
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
     void
-  > = useCallback(({ item, section: { collection } }) => {
-    return (
-      <PureItem
-        style={styles.imageContainer}
-        items={item}
-        collection={collection!}
-        key={collection!.name}
-      />
-    );
-  }, []);
+  > = useCallback(
+    ({ item, section: { collection } }) => {
+      return (
+        <PureItem
+          style={styles.imageContainer}
+          items={item}
+          collection={collection!}
+          key={collection!.name}
+        />
+      );
+    },
+    [styles.imageContainer],
+  );
 
   const renderSectionHeader: Exclude<
     SectionListProps<
@@ -232,6 +241,9 @@ export const NFTScreen = () => {
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={reload} />
+        }
       />
     </View>
   );

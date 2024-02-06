@@ -5,13 +5,12 @@ import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
 import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
-import { preferenceService, transactionHistoryService } from './shared';
 import {
   createGlobalBottomSheetModal,
   globalBottomSheetModalAddListener,
   presentGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal/utils';
+} from '@/components/GlobalBottomSheetModal';
 
 export interface Approval {
   id: string;
@@ -75,6 +74,8 @@ export class NotificationService extends Events {
   isLocked = false;
   currentRequestDeferFn?: () => void;
   statsData: StatsData | undefined;
+  preferenceService: import('./preference').PreferenceService;
+  transactionHistoryService: import('./transactionHistory').TransactionHistoryService;
 
   get approvals() {
     return this._approvals;
@@ -84,9 +85,11 @@ export class NotificationService extends Events {
     this._approvals = val;
   }
 
-  constructor() {
+  constructor({ preferenceService, transactionHistoryService }) {
     super();
 
+    this.preferenceService = preferenceService;
+    this.transactionHistoryService = transactionHistoryService;
     globalBottomSheetModalAddListener('DISMISS', windId => {
       if (windId === this.notifyWindowId) {
         this.notifyWindowId = null;
@@ -192,7 +195,7 @@ export class NotificationService extends Events {
     }
 
     if (approval?.signingTxId) {
-      transactionHistoryService.removeSigningTx(approval.signingTxId);
+      this.transactionHistoryService.removeSigningTx(approval.signingTxId);
     }
 
     if (approval && this.approvals.length > 1) {
@@ -218,10 +221,10 @@ export class NotificationService extends Events {
         );
       }
     }
-    const currentAccount = preferenceService.getCurrentAccount();
+    const currentAccount = this.preferenceService.getCurrentAccount();
     const reportExplain = (signingTxId?: string) => {
       const signingTx = signingTxId
-        ? transactionHistoryService.getSigningTx(signingTxId)
+        ? this.transactionHistoryService.getSigningTx(signingTxId)
         : null;
       const explain = signingTx?.explain;
 
@@ -242,7 +245,7 @@ export class NotificationService extends Events {
       const uuid = uuidv4();
       let signingTxId;
       if (data.approvalComponent === 'SignTx') {
-        signingTxId = transactionHistoryService.addSigningTx(
+        signingTxId = this.transactionHistoryService.addSigningTx(
           data.params.data[0],
         );
       } else {
@@ -347,7 +350,7 @@ export class NotificationService extends Events {
     });
     this.approvals = [];
     this.currentApproval = null;
-    transactionHistoryService.removeAllSigningTx();
+    this.transactionHistoryService.removeAllSigningTx();
   };
 
   unLock = () => {

@@ -51,6 +51,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
   const [isClickDone, setIsClickDone] = useState(false);
   const { status: sessionStatus } = useSessionStatus(currentAccount!);
   const { t } = useTranslation();
+  const { openWalletByAccount } = useValidWalletServices();
 
   const initWalletConnect = async () => {
     const account = (await preferenceService.getCurrentAccount())!;
@@ -90,7 +91,8 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
     setConnectStatus(WALLETCONNECT_STATUS_MAP.PENDING);
     setConnectError(null);
-    apisWalletConnect.resendWalletConnect(account);
+    await apisWalletConnect.resendWalletConnect(account);
+    openWalletByAccount(account);
     toast.success(t('page.signFooterBar.walletConnect.requestSuccessToast'));
   };
 
@@ -194,6 +196,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -206,6 +209,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
         signFinishedData.approvalId,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
 
   useEffect(() => {
@@ -214,9 +218,9 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       toast.info(t('page.signFooterBar.ledger.notConnected'));
     } else {
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionStatus]);
 
-  const { openWalletByAccount } = useValidWalletServices();
   useEffect(() => {
     if (currentAccount) {
       openWalletByAccount(currentAccount);

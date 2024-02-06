@@ -1,5 +1,12 @@
-import React, { useMemo, useRef } from 'react';
-import { View, Text, ScrollView, Dimensions, Linking } from 'react-native';
+import React, { useRef } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Dimensions,
+  Linking,
+  Platform,
+} from 'react-native';
 import clsx from 'clsx';
 
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -12,13 +19,13 @@ import {
   RcFollowUs,
   RcInfo,
   RcPrivacyPolicy,
-  RcLock,
   RcManageAddress,
   RcSignatureRecord,
   RcConnectedDapp,
   RcThemeMode,
   RcWhitelist,
   RcEarth,
+  RcFeedback,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -151,6 +158,7 @@ function SettingsScreen(): JSX.Element {
                     color: colors['neutral-title-1'],
                     fontSize: 14,
                     fontWeight: '400',
+                    paddingRight: 8,
                   }}>
                   {process.env.APP_VERSION}
                 </Text>
@@ -161,17 +169,17 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
-            label: 'Feedback',
-            icon: RcFollowUs,
-            onPress: () => {
-              Linking.openURL('https://discord.com/invite/seFBCWmUre');
-            },
-          },
-          {
             label: 'Privacy Policy',
             icon: RcPrivacyPolicy,
             onPress: async () => {
               openExternalUrl(APP_URLS.PRIVACY_POLICY);
+            },
+          },
+          {
+            label: 'Feedback',
+            icon: RcFeedback,
+            onPress: () => {
+              Linking.openURL('https://discord.gg/AvYmaTjrBu');
             },
           },
           {
@@ -289,14 +297,16 @@ function SettingsScreen(): JSX.Element {
           if (currentAccount?.address) {
             clearPendingTxs(currentAccount.address);
           }
+          toast.success('Pending transaction cleared');
+        }}
+        descStyle={{
+          textAlign: 'left',
+          fontSize: 16,
+          lineHeight: 22,
+          fontWeight: Platform.OS === 'ios' ? '500' : '400',
         }}
         desc={
-          <Text
-            style={{
-              fontSize: 16,
-              lineHeight: 22,
-              textAlign: 'left',
-            }}>
+          <Text>
             This will clear all your pending transactions. This can help you
             solve the problem that in some cases the state of the transaction in
             Rabby does not match the state on-chain.

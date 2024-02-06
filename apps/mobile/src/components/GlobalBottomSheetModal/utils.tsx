@@ -1,24 +1,15 @@
-import {
-  APPROVAL_MODAL_NAMES,
-  CreateParams,
-  EVENT_NAMES,
-  MODAL_NAMES,
-} from './types';
-import EventEmitter from 'events';
-import { uniqueId } from 'lodash';
+import { APPROVAL_MODAL_NAMES, CreateParams, MODAL_NAMES } from './types';
 import { Approval } from '../Approval';
 import { SwitchAddress } from '../CommonPopup/SwitchAddress';
 import { SwitchChain } from '../CommonPopup/SwitchChain';
 import { CancelConnect } from '../CommonPopup/CancelConnect';
 import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
-import type { ThemeColors } from '@/constant/theme';
 import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
 import { SelectChain } from '../SelectChain';
 import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
-
-export const events = new EventEmitter();
+import { AppBottomSheetModal } from '../customized/BottomSheet';
+import type { ThemeColors } from '@/constant/theme';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -53,31 +44,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
-};
-
-export const createGlobalBottomSheetModal = (params: CreateParams) => {
-  params.name = params.name ?? MODAL_NAMES.APPROVAL;
-  const id = `${params.name}_${uniqueId()}`;
-  events.emit(EVENT_NAMES.CREATE, id, params);
-  return id;
-};
-
-export const removeGlobalBottomSheetModal = (key?: string | null) => {
-  if (typeof key !== 'string') {
-    return;
-  }
-  events.emit(EVENT_NAMES.REMOVE, key);
-};
-
-export const globalBottomSheetModalAddListener = (
-  eventName: 'DISMISS',
-  callback: (key: string) => void,
-) => {
-  events.on(eventName, callback);
-};
-
-export const presentGlobalBottomSheetModal = (key: string) => {
-  events.emit(EVENT_NAMES.PRESENT, key);
 };
 
 export function makeBottomSheetProps(ctx: {

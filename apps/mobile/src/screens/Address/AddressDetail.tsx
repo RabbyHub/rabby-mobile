@@ -612,6 +612,7 @@ const getStyles = (colors: AppColorsVariants) =>
     buttonStyle: {
       width: '100%',
       height: '100%',
+      backgroundColor: 'transparent',
     },
     btnCancelContainer: {
       borderColor: colors['blue-default'],

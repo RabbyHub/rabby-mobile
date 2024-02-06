@@ -13,11 +13,11 @@ import {
 
 import {
   APPROVAL_SNAP_POINTS,
-  events,
   makeBottomSheetProps,
   MODAL_VIEWS,
   SNAP_POINTS,
 } from './utils';
+import { events } from './event';
 
 type ModalData = {
   snapPoints: (string | number)[];

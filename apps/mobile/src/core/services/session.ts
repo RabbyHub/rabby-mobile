@@ -1,6 +1,5 @@
 import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
-import { dappService } from './shared';
 
 // import { permissionService } from 'background/service';
 // import PortMessage from '@/utils/message/portMessage';
@@ -64,22 +63,6 @@ export class Session {
 // for each tab
 const sessionMap = new Map<BackgroundBridge, Session | null>();
 
-const getSessionMap = () => {
-  return sessionMap;
-};
-
-const getSession = (key: SessionKey) => {
-  return sessionMap.get(key);
-};
-
-const getOrCreateSession = (key: SessionKey) => {
-  if (sessionMap.has(key)) {
-    return getSession(key);
-  }
-
-  return createSession(key, null);
-};
-
 const createSession = (key: SessionKey, data?: null | SessionProp) => {
   const session = new Session(data);
   sessionMap.set(key, session);
@@ -88,41 +71,56 @@ const createSession = (key: SessionKey, data?: null | SessionProp) => {
   return session;
 };
 
-const deleteSession = (key: SessionKey) => {
-  sessionMap.delete(key);
-};
+export class SessionService {
+  dappService: import('./dappService').DappService;
 
-const broadcastEvent = (ev: BroadcastEvent, data?: any, origin?: string) => {
-  let sessions: { key: SessionKey; data: Session }[] = [];
-  sessionMap.forEach((session, key) => {
-    if (session && dappService.hasPermission(session.origin)) {
-      sessions.push({
-        key,
-        data: session,
-      });
-    }
-  });
-
-  // same origin
-  if (origin) {
-    sessions = sessions.filter(session => session.data.origin === origin);
+  constructor({ dappService }: { dappService: any }) {
+    this.dappService = dappService;
   }
 
-  sessions.forEach(session => {
-    try {
-      session.data.pushMessage?.(ev, data);
-    } catch (e) {
-      if (sessionMap.has(session.key)) {
-        deleteSession(session.key);
-      }
-    }
-  });
-};
+  getSessionMap = () => {
+    return sessionMap;
+  };
+  getSession = (key: SessionKey) => {
+    return sessionMap.get(key);
+  };
 
-export const sessionService = {
-  getSessionMap,
-  getSession,
-  getOrCreateSession,
-  deleteSession,
-  broadcastEvent,
-};
+  getOrCreateSession = (key: SessionKey) => {
+    if (sessionMap.has(key)) {
+      return this.getSession(key);
+    }
+
+    return createSession(key, null);
+  };
+
+  deleteSession = (key: SessionKey) => {
+    sessionMap.delete(key);
+  };
+
+  broadcastEvent = (ev: BroadcastEvent, data?: any, origin?: string) => {
+    let sessions: { key: SessionKey; data: Session }[] = [];
+    sessionMap.forEach((session, key) => {
+      if (session && this.dappService.hasPermission(session.origin)) {
+        sessions.push({
+          key,
+          data: session,
+        });
+      }
+    });
+
+    // same origin
+    if (origin) {
+      sessions = sessions.filter(session => session.data.origin === origin);
+    }
+
+    sessions.forEach(session => {
+      try {
+        session.data.pushMessage?.(ev, data);
+      } catch (e) {
+        if (sessionMap.has(session.key)) {
+          this.deleteSession(session.key);
+        }
+      }
+    });
+  };
+}

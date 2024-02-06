@@ -993,6 +993,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // useEffect(() => {
@@ -1006,10 +1007,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   useEffect(() => {
     if (!inited) return;
     explain();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inited, updateId]);
 
   useEffect(() => {
     executeSecurityEngine();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData, rules]);
 
   // TODO
@@ -1092,7 +1095,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             />
           </View>
         )}
-        <BroadcastMode
+        {/* <BroadcastMode
           // eslint-disable-next-line react-native/no-inline-styles
           style={{
             marginTop: 12,
@@ -1105,7 +1108,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onChange={value => {
             setPushInfo(value);
           }}
-        />
+        /> */}
 
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}

@@ -35,6 +35,7 @@
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "^0.1.0",
     "@rabby-wallet/keyring-utils": "workspace:^",
+    "@rabby-wallet/service-address": "workspace:^",
     "@types/readable-stream": "^4.0.10",
     "ethereumjs-util": "^7.1.5",
     "loglevel": "^1.8.1"

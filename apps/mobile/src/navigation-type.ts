@@ -25,6 +25,7 @@ export type RootStackParamsList = {
 export type BottomTabParamsList = {
   [RootNames.Home]?: {};
   [RootNames.Dapps]?: {};
+  [RootNames.Points]?: {};
 };
 
 type GetStartedNavigatorParamsList = {

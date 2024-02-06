@@ -2,7 +2,7 @@ import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { AppColorsVariants } from './theme';
 
 export const ScreenLayouts = {
-  headerAreaHeight: 48,
+  headerAreaHeight: 56,
   bottomBarHeight: 84,
 
   dappWebViewControlHeaderHeight: 44,
@@ -23,6 +23,7 @@ export const RootNames = {
   StackRoot: 'StackRoot',
   StackBottom: 'StackBottom',
   Home: 'Home',
+  Points: 'Points',
 
   Dapps: 'Dapps',
   StackFavoritePopularDapps: 'StackFavoritePopularDapps',

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
@@ -122,6 +122,22 @@ export default function CurrentAddressScreen(): JSX.Element {
     ];
   }, [accounts, highlightedAddresses]);
 
+  useEffect(() => {
+    if (!accounts?.length) {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackAddress,
+            params: {
+              screen: RootNames.ImportNewAddress,
+            },
+          },
+        ],
+      });
+    }
+  }, [accounts, navigation]);
+
   return (
     <NormalScreenContainer style={styles.screenContainer}>
       <View style={styles.headerContainer}>
@@ -232,7 +248,7 @@ const getStyles = (colors: AppColorsVariants) =>
       marginBottom: 8,
     },
     bundlesView: {
-      display: 'flex',
+      display: 'none',
       flexDirection: 'row',
       alignItems: 'center',
     },

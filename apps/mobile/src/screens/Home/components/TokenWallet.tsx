@@ -1,4 +1,4 @@
-import React, { useMemo, memo, useCallback } from 'react';
+import React, { useMemo, memo, useCallback, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -19,17 +19,11 @@ import {
   SMALL_TOKEN_ID,
   useMergeSmallTokens,
 } from '../hooks/useMergeSmallTokens';
-import { formatAmount } from '@/utils/number';
-import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetFlatList,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { PositionLoader } from './Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 const ITEM_HEIGHT = 68;
 
@@ -38,6 +32,8 @@ type TokenWalletProps = {
   showHistory?: boolean;
   isTokensLoading?: boolean;
   hasTokens?: boolean;
+  refreshPositions(): void;
+  isPortfoliosLoading: boolean;
 };
 
 const TokenRow = memo(
@@ -118,10 +114,19 @@ export const TokenWallet = ({
   showHistory,
   isTokensLoading,
   hasTokens,
+  refreshPositions,
+  isPortfoliosLoading,
 }: TokenWalletProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const { t } = useTranslation();
+  const refreshing = useMemo(() => {
+    if ((tokens?.length || 0) > 0) {
+      return isPortfoliosLoading;
+    } else {
+      return false;
+    }
+  }, [isPortfoliosLoading, tokens]);
 
   const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenSmallToken = React.useCallback(() => {
@@ -182,6 +187,12 @@ export const TokenWallet = ({
         getItemLayout={getItemLayout}
         ListEmptyComponent={ListEmptyComponent}
         windowSize={2}
+        refreshControl={
+          <RefreshControl
+            onRefresh={refreshPositions}
+            refreshing={refreshing}
+          />
+        }
       />
       <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['70%']}>
         <BottomSheetFlatList

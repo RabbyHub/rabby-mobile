@@ -259,7 +259,7 @@ export function TokenAmountInput({
             ref={tokenInputRef}
             placeholder="0"
             placeholderTextColor={colors['neutral-foot']}
-            keyboardType="numeric"
+            keyboardType="number-pad"
           />
           {inlinePrize && (
             <View style={styles.inlinePrizeContainer}>

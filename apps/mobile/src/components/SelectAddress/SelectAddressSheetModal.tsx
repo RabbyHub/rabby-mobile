@@ -3,7 +3,7 @@ import { Dimensions, View, Text } from 'react-native';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { AppBottomSheetModal } from '../customized/BottomSheet';
-import { useSheetModals } from '@/hooks/useSheetModal';
+import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { Button } from '../Button';
@@ -13,7 +13,6 @@ import { useAccountsToDisplay } from '@/hooks/accountToDisplay';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import AccountCard from './components/AccountCard';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSwitch } from '@/hooks/useSwitch';
 
 export interface SelectAddressProps {
@@ -29,14 +28,10 @@ export function SelectAddressSheetModal({
   onConfirm,
   onCancel,
 }: React.PropsWithoutRef<RNViewProps & SelectAddressProps>) {
-  const insets = useSafeAreaInsets();
-  const modalRef = useRef<AppBottomSheetModal>(null);
-  const { toggleShowSheetModal } = useSheetModals({
-    selectAddress: modalRef,
-  });
+  const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
 
   useEffect(() => {
-    toggleShowSheetModal('selectAddress', visible || 'destroy');
+    toggleShowSheetModal(visible || 'destroy');
   }, [visible, toggleShowSheetModal]);
 
   const colors = useThemeColors();
@@ -78,7 +73,7 @@ export function SelectAddressSheetModal({
 
   return (
     <AppBottomSheetModal
-      ref={modalRef}
+      ref={sheetModalRef}
       index={0}
       snapPoints={['70%']}
       onDismiss={onCancel}

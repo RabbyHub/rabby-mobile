@@ -3,8 +3,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
 import {
   RcIconNavigationHomeLight,
+  RcIconNavigationHomeFocusLight,
+  RcIconNavigationDappsFocusLight,
   RcIconNavigationDappsLight,
 } from '@/assets/icons/bottom-bar';
+
+import { default as RcIconPoints } from '@/assets/icons/bottom-bar/nav-points-light.svg';
+import { default as RcIconPointsFocus } from '@/assets/icons/bottom-bar/nav-points-focus-light.svg';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
@@ -22,6 +27,8 @@ import {
   // OpenedWebViewsStub,
 } from '../Dapps/Dapps/components/WebViewsStub';
 import { BottomTabParamsList } from '@/navigation-type';
+import React, { useMemo } from 'react';
+import { PointScreen } from '../Points';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -124,7 +131,13 @@ export default function BottomTabNavigator() {
             ),
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
-                icon={<RcIconNavigationHomeLight isActive={focused} />}
+                icon={
+                  focused ? (
+                    <RcIconNavigationHomeFocusLight />
+                  ) : (
+                    <RcIconNavigationHomeLight isActive={focused} />
+                  )
+                }
               />
             ),
           }}
@@ -146,10 +159,34 @@ export default function BottomTabNavigator() {
             ),
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
-                icon={<RcIconNavigationDappsLight isActive={focused} />}
+                icon={
+                  focused ? (
+                    <RcIconNavigationDappsFocusLight />
+                  ) : (
+                    <RcIconNavigationDappsLight isActive={focused} />
+                  )
+                }
               />
             ),
           }}
+        />
+        <BottomTab.Screen
+          name={RootNames.Points}
+          component={PointScreen}
+          options={useMemo(
+            () => ({
+              headerShown: false,
+              tabBarLabel: ({ focused }) => (
+                <BottomTabLabel focused={focused} label={'Points'} />
+              ),
+              tabBarIcon: ({ focused }) => (
+                <BottomTabIcon
+                  icon={focused ? <RcIconPointsFocus /> : <RcIconPoints />}
+                />
+              ),
+            }),
+            [],
+          )}
         />
       </BottomTab.Navigator>
 

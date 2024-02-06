@@ -17,6 +17,7 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
+import { ContactBookService } from '@rabby-wallet/service-address';
 
 type KeyringState = {
   booted?: string;
@@ -33,6 +34,7 @@ type MemStoreState = {
 type OnSetAddressAlias = (
   keyring: KeyringInstance | KeyringIntf,
   account: AccountItemWithBrandQueryResult,
+  contactService: any,
 ) => Promise<void>;
 
 type OnCreateKeyring = (
@@ -58,7 +60,8 @@ export class KeyringService extends RNEventEmitter {
 
   onCreateKeyring!: OnCreateKeyring;
 
-  /** @deprecated just for compatibility on COPY codes from extension, use keyringClasses as possible */
+  contactService: ContactBookService;
+
   get keyringTypes() {
     return this.keyringClasses;
   }
@@ -75,8 +78,14 @@ export class KeyringService extends RNEventEmitter {
 
   private readonly encryptor: EncryptorAdapter;
 
-  constructor(options: KeyringServiceOptions) {
+  constructor(
+    options: KeyringServiceOptions & {
+      contactService: ContactBookService;
+    },
+  ) {
     super();
+
+    this.contactService = options.contactService;
 
     const {
       encryptor: inputEncryptor = nodeEncryptor,
@@ -359,7 +368,11 @@ export class KeyringService extends RNEventEmitter {
         return Promise.all(
           allAccounts.map(async account => {
             this.emit('newAccount', account.address);
-            return this.onSetAddressAlias(selectedKeyring, account);
+            return this.onSetAddressAlias(
+              selectedKeyring,
+              account,
+              this.contactService,
+            );
           }),
         );
       })

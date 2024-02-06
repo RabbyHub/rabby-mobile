@@ -1,4 +1,4 @@
-import { removeGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/utils';
+import { removeGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
 import { notificationService } from '@/core/services';
 import { Approval } from '@/core/services/notification';
 import React, { useCallback } from 'react';

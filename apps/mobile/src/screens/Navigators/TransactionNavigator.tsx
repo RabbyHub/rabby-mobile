@@ -34,6 +34,7 @@ export default function TransactionNavigator() {
         component={HistoryScreen}
         options={{
           title: 'History',
+          ...headerPresets.withBgCard2,
         }}
       />
       <TransactionStack.Screen
@@ -42,6 +43,7 @@ export default function TransactionNavigator() {
         options={{
           ...screenOptions,
           title: 'Send',
+          ...headerPresets.withBgCard2,
         }}
       />
       <TransactionStack.Screen

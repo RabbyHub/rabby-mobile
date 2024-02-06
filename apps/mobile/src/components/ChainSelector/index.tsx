@@ -17,7 +17,7 @@ import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
-} from '../GlobalBottomSheetModal/utils';
+} from '../GlobalBottomSheetModal';
 
 interface ChainSelectorProps {
   value: CHAINS_ENUM;

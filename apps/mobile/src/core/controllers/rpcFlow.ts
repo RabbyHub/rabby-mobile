@@ -15,7 +15,7 @@ import { ProviderRequest } from './type';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { CHAINS_ENUM } from '@debank/common';
-import { apisAddress, apisDapp } from '../apis';
+import * as apisDapp from '../apis/dapp';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());

@@ -1,4 +1,11 @@
-import React, { useMemo, useCallback, memo, useRef } from 'react';
+import React, {
+  useMemo,
+  useCallback,
+  memo,
+  useRef,
+  useState,
+  useEffect,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +13,7 @@ import {
   SectionListData,
   TouchableOpacity,
   LayoutAnimation,
+  RefreshControl,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 
@@ -51,6 +59,7 @@ type ProtocolListProps = {
   portfolios?: AbstractProject[];
   isPortfoliosLoading?: boolean;
   tokenNetWorth: number;
+  refreshPositions(): void;
 };
 
 const MemoItem = memo(
@@ -80,11 +89,19 @@ const _ProtocolList = ({
   hasPortfolios,
   portfolios,
   isPortfoliosLoading,
+  refreshPositions,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const ref = useRef(null);
+  const refreshing = useMemo(() => {
+    if ((portfolios?.length || 0) > 0) {
+      return !!isPortfoliosLoading;
+    } else {
+      return false;
+    }
+  }, [isPortfoliosLoading, portfolios]);
 
   const sectionList = useMemo(
     () =>
@@ -172,6 +189,9 @@ const _ProtocolList = ({
       contentContainerStyle={styles.list}
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={refreshPositions} />
+      }
     />
   );
 };

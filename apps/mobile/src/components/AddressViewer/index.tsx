@@ -38,12 +38,15 @@ export const AddressViewer = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <TouchableOpacity className="flex items-center" onPress={onClick}>
+    <TouchableOpacity onPress={onClick}>
       <View style={StyleSheet.flatten([styles[className], style])}>
         {showIndex && index >= 0 && (
           <Text className="number-index">{index}</Text>
         )}
-        <Text>
+        <Text
+          style={{
+            lineHeight: 20,
+          }}>
           {ellipsis
             ? `${address?.toLowerCase().slice(0, 6)}...${address
                 ?.toLowerCase()

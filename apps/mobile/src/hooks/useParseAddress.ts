@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAsync } from 'react-use';
+import useAsync from 'react-use/lib/useAsync';
 import { Chain } from '@debank/common';
 import { isValidAddress } from 'ethereumjs-util';
 import { AddressType } from '../utils/address';
