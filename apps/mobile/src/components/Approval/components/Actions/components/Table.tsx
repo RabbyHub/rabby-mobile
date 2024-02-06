@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
+import { Tip } from '@/components/Tip';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -208,11 +209,13 @@ const Row = ({
       }}>
       {children}
       {tip && (
-        <IconQuestionMark
-          style={{
-            marginLeft: 6,
-          }}
-        />
+        <Tip placement="top" content={tip}>
+          <IconQuestionMark
+            style={{
+              marginLeft: 6,
+            }}
+          />
+        </Tip>
       )}
     </View>
   );
