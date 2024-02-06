@@ -68,9 +68,14 @@ const getStyles = (colors: AppColorsVariants) =>
       borderBottomColor: colors['neutral-line'],
       borderBottomWidth: StyleSheet.hairlineWidth,
       paddingHorizontal: 0,
+      margin: 0,
     },
     radioContainerLast: {
       borderBottomWidth: 0,
+    },
+    radioIcon: {
+      width: 20,
+      height: 20,
     },
   });
 
@@ -146,13 +151,13 @@ const UserListDrawer = ({
               containerStyle={styles.radioContainer}
               right
               iconRight
+              iconStyle={styles.radioIcon}
               title={t('page.connect.noMark')}
               checked={!onWhitelist && !onBlacklist}
               onPress={() =>
                 onChange({ onBlacklist: false, onWhitelist: false })
               }
             />
-            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerItem}
@@ -167,13 +172,13 @@ const UserListDrawer = ({
               right
               iconRight
               containerStyle={styles.radioContainer}
+              iconStyle={styles.radioIcon}
               title={t('page.connect.trusted')}
               checked={onWhitelist}
               onPress={() =>
                 onChange({ onBlacklist: false, onWhitelist: true })
               }
             />
-            <View style={styles.line} />
           </TouchableOpacity>
           <TouchableOpacity
             style={StyleSheet.flatten([
@@ -196,6 +201,7 @@ const UserListDrawer = ({
               ])}
               right
               iconRight
+              iconStyle={styles.radioIcon}
               title={t('page.connect.blocked')}
               checked={onBlacklist}
               onPress={() =>
