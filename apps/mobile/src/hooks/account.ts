@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
-import { DisplayedKeyring, KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KeyringAccount } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
   keyringService,
@@ -130,9 +130,9 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
   const switchAccount = useCallback(
     (account: Account) => {
       preferenceService.setCurrentAccount(account);
-      fetchCurrentAccount();
+      setCurrentAccount(account);
     },
-    [fetchCurrentAccount],
+    [setCurrentAccount],
   );
 
   const { disableAutoFetch = false } = options || {};
