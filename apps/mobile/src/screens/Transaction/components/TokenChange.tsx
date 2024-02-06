@@ -126,6 +126,7 @@ const getStyles = (colors: AppColorsVariants) =>
       // flex: 1,
       minWidth: 0,
       flexGrow: 1,
+      flexShrink: 1,
     },
     textNegative: {
       color: colors['neutral-body'],

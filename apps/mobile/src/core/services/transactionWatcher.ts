@@ -1,4 +1,4 @@
-import { findChainByEnum } from '@/utils/chain';
+import { findChainByEnum, findChainByID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -53,8 +53,10 @@ export class TransactionWatcherService {
     }
 
     // this._populateAvailableTxs();
+  }
 
-    this.roll();
+  hasTx(id: string) {
+    return !!this.store.pendingTx[id];
   }
 
   // 可能有坑 在加速取消这种场景下
@@ -148,6 +150,7 @@ export class TransactionWatcherService {
   roll = () => {
     interval(async () => {
       const list = Object.keys(this.store.pendingTx);
+
       // order by address, chain, nonce
       const idQueue = list.sort((a, b) => {
         const [aAddress, aNonceStr, aChain] = a.split('_');

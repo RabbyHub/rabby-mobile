@@ -2,14 +2,15 @@ import { makeAppStorage } from '../storage/mmkv';
 
 import { ContactBookService } from '@rabby-wallet/service-address';
 
-import { PreferenceService } from './preference';
-import { WhitelistService } from './whitelist';
-import { NotificationService } from './notification';
-import { TransactionHistoryService } from './transactionHistory';
-import { SecurityEngineService } from './securityEngine';
-import { TransactionWatcherService } from './transactionWatcher';
-import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
+import { findChainByID } from '@/utils/chain';
 import { DappService } from './dappService';
+import { NotificationService } from './notification';
+import { PreferenceService } from './preference';
+import { SecurityEngineService } from './securityEngine';
+import { TransactionBroadcastWatcherService } from './transactionBroadcastWatcher';
+import { TransactionHistoryService } from './transactionHistory';
+import { TransactionWatcherService } from './transactionWatcher';
+import { WhitelistService } from './whitelist';
 import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
@@ -91,6 +92,32 @@ export const securityEngineService = new SecurityEngineService({
   storageAdapter: appStorage,
 });
 
+transactionWatcherService.roll();
+
+const syncPendingTxs = () => {
+  const pendings = transactionHistoryService
+    .getTransactionGroups()
+    .filter(item => item.isPending);
+
+  pendings.forEach(item => {
+    const chain = findChainByID(item.chainId);
+    if (!chain || !item.maxGasTx.hash) {
+      return;
+    }
+    const key = `${item.address}_${item.nonce}_${chain?.enum}`;
+
+    if (transactionWatcherService.hasTx(key)) {
+      return;
+    }
+
+    transactionWatcherService.addTx(key, {
+      nonce: item.nonce + '',
+      hash: item.maxGasTx.hash,
+      chain: chain.enum,
+    });
+  });
+};
+syncPendingTxs();
 export const rabbyPointsService = new RabbyPointsService({
   storageAdapter: appStorage,
 });
