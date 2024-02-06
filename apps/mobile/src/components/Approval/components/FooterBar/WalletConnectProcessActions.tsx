@@ -42,8 +42,7 @@ export const WalletConnectProcessActions: React.FC<Props> = props => {
       {...props}
       tooltipContent={content}
       disabledProcess={
-        // @ts-expect-error
-        (status !== 'CONNECTED' && status !== 'CHAIN_CHANGED') ||
+        (status !== 'CONNECTED' && status !== 'ACCOUNT_ERROR') ||
         // chainError ||
         disabledProcess
       }

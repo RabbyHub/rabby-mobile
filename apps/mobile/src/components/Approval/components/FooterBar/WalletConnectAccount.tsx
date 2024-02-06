@@ -1,4 +1,5 @@
 import { Button } from '@/components';
+import { toast, toastWithIcon } from '@/components/Toast';
 import { SessionSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRINGS_LOGOS } from '@/constant/icon';
 import { AppColorsVariants } from '@/constant/theme';
@@ -15,7 +16,13 @@ import { WALLET_INFO } from '@/utils/walletInfo';
 import { Chain } from '@debank/common';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { CommonAccount } from './CommonAccount';
 
 export interface Props {
@@ -168,6 +175,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   }, [sessionChainId, chain]);
 
   const connectWallet = useConnectWallet();
+  const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
 
   const handleButton = () => {
     setAccount({
@@ -178,6 +186,17 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     });
     if (tipStatus === 'DISCONNECTED') {
       connectWallet({ address, brandName });
+      toastHiddenRef.current = toastWithIcon(() => (
+        <ActivityIndicator
+          style={{
+            marginRight: 6,
+          }}
+        />
+      ))('Connecting', {
+        duration: 100000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
       activePopup('SWITCH_ADDRESS');
     }
@@ -186,11 +205,19 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   React.useEffect(() => {
     if (tipStatus === 'ACCOUNT_ERROR') {
       setVisible(false);
+    } else if (tipStatus === 'CONNECTED') {
+      toastHiddenRef.current?.();
     }
   }, [tipStatus]);
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  React.useEffect(() => {
+    return () => {
+      toastHiddenRef.current?.();
+    };
+  }, []);
 
   return (
     <CommonAccount
