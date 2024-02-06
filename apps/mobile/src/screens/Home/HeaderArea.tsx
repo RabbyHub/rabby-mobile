@@ -27,11 +27,8 @@ export default function HomeHeaderArea() {
   const styles = useMemo(() => getStyles(colors, width), [colors, width]);
   const navigation = useNavigation();
   const { currentAccount } = useCurrentAccount();
-  const { balance, balanceLoading, balanceFromCache } = useCurrentBalance(
-    currentAccount?.address,
-    true,
-    false,
-  );
+  const { balance, balanceLoading, balanceFromCache, balanceUpdating } =
+    useCurrentBalance(currentAccount?.address, true, false);
   const WalletIcon = useMemo(
     () => (currentAccount ? getWalletIcon(currentAccount) : () => null),
     [currentAccount],
@@ -97,7 +94,7 @@ export default function HomeHeaderArea() {
     },
     [navigation],
   );
-
+  console.log('balanceUpdating', balanceUpdating);
   return (
     <View
       style={StyleSheet.compose(styles.container, {
@@ -148,7 +145,8 @@ export default function HomeHeaderArea() {
           <Text style={styles.usdText}>
             {(balanceLoading && !balanceFromCache) ||
             balance === null ||
-            (balanceFromCache && balance === 0) ? (
+            (balanceFromCache && balance === 0) ||
+            balanceUpdating ? (
               <Skeleton width={140} height={38} />
             ) : (
               usd
@@ -259,7 +257,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       color: colors['neutral-title-1'],
       fontSize: 38,
       fontWeight: '700',
-      textAlign: 'center',
+      textAlign: 'left',
     },
     percent: {
       color: colors['green-default'],

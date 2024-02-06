@@ -14,9 +14,13 @@ import { TokenScreen } from './TokenScreen';
 
 interface Props {
   renderHeader: CollapsibleProps['renderHeader'];
+  onRefresh(): void;
 }
 
-export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
+export const AssetContainer: React.FC<Props> = ({
+  renderHeader,
+  onRefresh,
+}) => {
   const { currentAccount } = useCurrentAccount();
   const colors = useThemeColors();
   const styles = React.useMemo(
@@ -94,13 +98,13 @@ export const AssetContainer: React.FC<Props> = ({ renderHeader }) => {
       headerContainerStyle={styles.tabBarWrap}
       renderHeader={renderHeader}>
       <Tabs.Tab label="Token" name="token">
-        <TokenScreen />
+        <TokenScreen onRefresh={onRefresh} />
       </Tabs.Tab>
       <Tabs.Tab label="DeFi" name="defi">
-        <DefiScreen />
+        <DefiScreen onRefresh={onRefresh} />
       </Tabs.Tab>
       <Tabs.Tab label="NFT" name="nft">
-        <NFTScreen />
+        <NFTScreen onRefresh={onRefresh} />
       </Tabs.Tab>
     </Tabs.Container>
   );
