@@ -525,7 +525,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           setActionRequireData(requiredData);
           const approval = (await getApproval())!;
 
-          approval.signingTxId &&
+          approval?.signingTxId &&
             (await transactionHistoryService.updateSigningTx(
               approval.signingTxId,
               {
