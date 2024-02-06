@@ -20,7 +20,6 @@ export const getStyles = (colors: AppColorsVariants) => ({
     color: '#000000',
   },
   numberIndex: {
-    fontWeight: 'normal',
     fontSize: 12,
     color: '#b4bdcc',
     marginRight: 22,
