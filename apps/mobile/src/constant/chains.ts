@@ -2395,7 +2395,7 @@ export const CHAINS_LIST: Chain[] = [
 export const CHAINS = CHAINS_LIST.reduce((res, chain) => {
   return {
     ...res,
-    chain,
+    [chain.enum]: chain,
   };
 }, {} as Record<CHAINS_ENUM, Chain>);
 
