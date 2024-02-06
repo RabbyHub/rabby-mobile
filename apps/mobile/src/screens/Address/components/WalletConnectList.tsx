@@ -96,11 +96,12 @@ export const WalletConnectList = () => {
 
       // replace realBrandName with build-in brandName
       data.realBrandName = data.brandName;
-      importingRef.current = false;
       hideImportLoadingTipRef.current?.();
       const hideToast = toastImportTip();
 
       if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
+        importingRef.current = false;
+
         apisWalletConnect
           .importAddress(data)
           .then(() => {
@@ -132,12 +133,14 @@ export const WalletConnectList = () => {
   );
 
   React.useEffect(() => {
+    console.log('111');
     eventBus.addListener(
       EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
       handleConnected,
     );
 
     return () => {
+      console.log('4444');
       eventBus.removeListener(
         EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
         handleConnected,
