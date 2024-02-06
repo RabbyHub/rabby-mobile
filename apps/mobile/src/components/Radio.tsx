@@ -2,7 +2,7 @@ import { CheckBox, CheckBoxProps } from '@rneui/themed';
 import React from 'react';
 import CheckSVG from '@/assets/icons/assets/check.svg';
 import { useThemeColors } from '@/hooks/theme';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 
 const getStyles = (colors: AppColorsVariants) => {
@@ -22,24 +22,29 @@ const getStyles = (colors: AppColorsVariants) => {
   });
 };
 
-export const Radio: React.FC<CheckBoxProps> = ({ children, ...props }) => {
+export const Radio: React.FC<
+  CheckBoxProps & {
+    iconStyle?: StyleProp<ViewStyle>;
+  }
+> = ({ children, iconStyle, ...props }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const getIcon = React.useCallback(
     (bgColor: string) => {
       return (
         <View
-          style={[
+          style={StyleSheet.flatten([
             styles.icon,
+            iconStyle,
             {
               backgroundColor: bgColor,
             },
-          ]}>
+          ])}>
           <CheckSVG />
         </View>
       );
     },
-    [styles],
+    [iconStyle, styles.icon],
   );
 
   return (

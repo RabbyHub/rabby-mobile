@@ -51,6 +51,10 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'relative',
       flexDirection: 'row',
     },
+    radioIcon: {
+      width: 20,
+      height: 20,
+    },
   });
 
 interface Props {
@@ -112,6 +116,7 @@ const UserListDrawer = ({
                 color: colors['neutral-title-1'],
                 flex: 1,
               }}
+              iconStyle={styles.radioIcon}
               right
               iconRight
               title={t('page.signTx.noMark')}
@@ -130,6 +135,7 @@ const UserListDrawer = ({
                 color: colors['green-default'],
                 flex: 1,
               }}
+              iconStyle={styles.radioIcon}
               right
               iconRight
               title={t('page.signTx.trusted')}
@@ -148,6 +154,7 @@ const UserListDrawer = ({
                 color: colors['red-default'],
                 flex: 1,
               }}
+              iconStyle={styles.radioIcon}
               right
               iconRight
               title={t('page.signTx.blocked')}
