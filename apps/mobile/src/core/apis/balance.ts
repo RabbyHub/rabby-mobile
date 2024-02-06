@@ -6,14 +6,13 @@ const getTotalBalanceCached = cached(async address => {
   const data = await openapi.getTotalBalance(address);
   preferenceService.updateAddressBalance(address, data);
   return data;
-  // 3 mins
-});
+}, 5000);
 
 const getTestnetTotalBalanceCached = cached(async address => {
   const testnetData = await testOpenapi.getTotalBalance(address);
   preferenceService.updateTestnetAddressBalance(address, testnetData);
   return testnetData;
-});
+}, 5000);
 
 export const getAddressBalance = async (
   address: string,

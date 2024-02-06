@@ -34,6 +34,7 @@ type TokenWalletProps = {
   hasTokens?: boolean;
   refreshPositions(): void;
   isPortfoliosLoading: boolean;
+  onRefresh(): void;
 };
 
 const TokenRow = memo(
@@ -116,6 +117,7 @@ export const TokenWallet = ({
   hasTokens,
   refreshPositions,
   isPortfoliosLoading,
+  onRefresh,
 }: TokenWalletProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
@@ -189,7 +191,10 @@ export const TokenWallet = ({
         windowSize={2}
         refreshControl={
           <RefreshControl
-            onRefresh={refreshPositions}
+            onRefresh={() => {
+              refreshPositions();
+              onRefresh();
+            }}
             refreshing={refreshing}
           />
         }

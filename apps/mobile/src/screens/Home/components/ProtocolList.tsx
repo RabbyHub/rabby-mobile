@@ -60,6 +60,7 @@ type ProtocolListProps = {
   isPortfoliosLoading?: boolean;
   tokenNetWorth: number;
   refreshPositions(): void;
+  onRefresh(): void;
 };
 
 const MemoItem = memo(
@@ -90,6 +91,7 @@ const _ProtocolList = ({
   portfolios,
   isPortfoliosLoading,
   refreshPositions,
+  onRefresh,
   ...rest
 }: ProtocolListProps & Partial<SectionListProps<AbstractPortfolio>>) => {
   const colors = useThemeColors();
@@ -190,7 +192,13 @@ const _ProtocolList = ({
       ListFooterComponent={ListFooterComponent}
       stickySectionHeadersEnabled={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={refreshPositions} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            refreshPositions();
+            onRefresh();
+          }}
+        />
       }
     />
   );

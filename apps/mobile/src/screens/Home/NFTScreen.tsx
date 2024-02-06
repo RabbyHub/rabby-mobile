@@ -115,7 +115,7 @@ class PureItem extends React.PureComponent<{
   }
 }
 
-export const NFTScreen = () => {
+export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   const colors = useThemeColors();
   const isLight = useColorScheme() === 'light';
   const styles = getStyle(colors, isLight);
@@ -242,7 +242,13 @@ export const NFTScreen = () => {
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={reload} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              reload();
+              onRefresh();
+            }}
+          />
         }
       />
     </View>

@@ -22,10 +22,12 @@ import { useMemoizedFn } from 'ahooks';
 import { keyringService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useUpdateNonce } from '@/hooks/useCurrentBalance';
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
   const colors = useThemeColors();
+  const [nonce, setNonce] = useUpdateNonce();
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -50,6 +52,10 @@ function HomeScreen(): JSX.Element {
     }
   });
 
+  const handleRefresh = () => {
+    setNonce(nonce + 1);
+  };
+
   useFocusEffect(
     useCallback(() => {
       init();
@@ -60,7 +66,10 @@ function HomeScreen(): JSX.Element {
     <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeView}>
-        <AssetContainer renderHeader={() => <HomeTopArea />} />
+        <AssetContainer
+          renderHeader={() => <HomeTopArea />}
+          onRefresh={handleRefresh}
+        />
       </SafeAreaView>
     </RootScreenContainer>
   );
