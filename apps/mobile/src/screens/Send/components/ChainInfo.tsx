@@ -35,7 +35,7 @@ const getStyles = createGetStyles(colors => {
     chainName: {
       color: colors['neutral-title1'],
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: '600',
 
       marginLeft: 8,
     },
