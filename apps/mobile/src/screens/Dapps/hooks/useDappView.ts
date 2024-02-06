@@ -129,7 +129,13 @@ export function useOpenDappView() {
     openedDappRecords.forEach(item => {
       retOpenedDapps.push({
         ...item,
-        maybeDappInfo: dapps[item.origin],
+        maybeDappInfo: dapps[item.origin]
+          ? dapps[item.origin]
+          : createDappBySession({
+              origin: item.origin,
+              name: '',
+              icon: '',
+            }),
       });
     });
 

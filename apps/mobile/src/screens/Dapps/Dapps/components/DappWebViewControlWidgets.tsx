@@ -22,7 +22,7 @@ export function BottomSheetContent({
 }) {
   const colors = useThemeColors();
 
-  const { updateFavorite } = useDapps();
+  const { updateFavorite, addDapp } = useDapps();
 
   const styles = React.useMemo(() => {
     return getStyle(colors);
@@ -37,7 +37,10 @@ export function BottomSheetContent({
           <DappCardInWebViewNav
             data={dappInfo.maybeDappInfo}
             onFavoritePress={dapp => {
-              updateFavorite(dapp.origin, !dapp.isFavorite);
+              addDapp({
+                ...dapp,
+                isFavorite: !dapp.isFavorite,
+              });
             }}
           />
         </BottomSheetScrollView>
