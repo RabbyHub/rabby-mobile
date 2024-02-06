@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { ModalConfirmAllowTransfer } from './SheetModalConfirmAllowTransfer';
 
 import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
@@ -199,10 +199,10 @@ const getStyles = createGetStyles(colors => {
 
     whitelistAlertContentContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
+      // flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 25,
+      paddingHorizontal: 0,
       marginBottom: 16,
     },
     whitelistAlertContentText: {
