@@ -138,7 +138,7 @@ export const GasSelectContainer = ({
                 // onSubmitEditing={customGasConfirm}
                 onFocus={e => handlePanelSelection(e, item)}
                 ref={customerInputRef}
-                autoFocus={selectedGas?.level === item.level}
+                // autoFocus={selectedGas?.level === item.level}
                 // disabled={disabled}
                 placeholder="0"
               />
