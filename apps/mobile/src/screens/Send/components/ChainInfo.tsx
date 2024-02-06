@@ -69,7 +69,7 @@ export function ChainInfo({
         }}>
         <View style={styles.left}>
           <ChainIconImage size={24} chainEnum={chainEnum} />
-          <Text style={styles.chainName}>{chainItem.name}</Text>
+          <Text style={styles.chainName}>{chainItem?.name}</Text>
         </View>
 
         <View>

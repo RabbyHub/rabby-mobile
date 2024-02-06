@@ -48,7 +48,7 @@ export default function GasSelectorBottomSheetModal({
   const customerInputRef = useRef<TextInput>(null);
   const [customGas, setCustomGas] = useState<string | number>('1');
   const [selectedGas, setSelectedGas] = useState(gas);
-  const chain = findChainByID(chainId)!;
+  const chain = findChainByID(chainId);
 
   const handleConfirmGas = useCallback(() => {
     if (!selectedGas) return;
@@ -177,7 +177,7 @@ export default function GasSelectorBottomSheetModal({
                     .times(MINIMUM_GAS_LIMIT)
                     .div(1e18)
                     .toFixed(),
-                )} ${chain.nativeTokenSymbol}`}
+                )} ${chain?.nativeTokenSymbol || ''}`}
               </Text>
             </View>
             <View style={styles.selectionContainer}>
