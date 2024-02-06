@@ -39,16 +39,17 @@ export const WalletConnectList = () => {
     });
     const uri = await apisWalletConnect.getUri(service.brand);
     if (uri) {
+      listenStatusChange(uri);
       openWallet(service, uri);
       deepLinkRef.current = uri;
     }
     setUriLoading(false);
     toastHide();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleConnected = React.useCallback((data: any) => {
-    // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
-    if (!data.realBrandName) {
+  const handleConnected = React.useCallback((data: any, uri: string) => {
+    if (uri !== deepLinkRef.current) {
       return;
     }
 
@@ -87,12 +88,13 @@ export const WalletConnectList = () => {
     }
   }, []);
 
-  React.useEffect(() => {
-    eventBus.addListener(
-      EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
-      handleConnected,
-    );
+  const listenStatusChange = (uri: string) => {
+    eventBus.once(EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED, res => {
+      handleConnected(res, uri);
+    });
+  };
 
+  React.useEffect(() => {
     return () => {
       eventBus.removeListener(
         EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
