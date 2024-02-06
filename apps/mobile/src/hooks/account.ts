@@ -40,6 +40,11 @@ const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
 
 const pinAddressesAtom = atom<IPinAddress[]>([]);
 
+pinAddressesAtom.onMount = setAtom => {
+  const addresses = preferenceService.getPinAddresses();
+  setAtom(addresses);
+};
+
 async function fetchAllAccounts() {
   let nextAccounts: KeyringAccountWithAlias[] = [];
   try {
@@ -105,8 +110,8 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
 export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
-  const fetchCurrentAccount = useCallback(async () => {
-    const account = await preferenceService.getCurrentAccount();
+  const fetchCurrentAccount = useCallback(() => {
+    const account = preferenceService.getCurrentAccount();
     const index = accounts.findIndex(
       e =>
         addressUtils.isSameAddress(e.address, account?.address || '') &&
@@ -123,9 +128,9 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
   }, [accounts, setCurrentAccount]);
 
   const switchAccount = useCallback(
-    async (account: Account) => {
-      await preferenceService.setCurrentAccount(account);
-      await fetchCurrentAccount();
+    (account: Account) => {
+      preferenceService.setCurrentAccount(account);
+      fetchCurrentAccount();
     },
     [fetchCurrentAccount],
   );

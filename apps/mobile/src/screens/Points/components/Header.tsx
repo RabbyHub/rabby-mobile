@@ -55,11 +55,11 @@ export const PointsHeader = ({
               />
             </Text>
 
-            {showDiffPoints && (
+            {/* {showDiffPoints && (
               <View style={styles.diffPointsContainer}>
                 <Text style={styles.diffPoints}>+{diffPoints}</Text>
               </View>
-            )}
+            )} */}
           </View>
         </View>
         <View style={styles.totalPointsContainer}>

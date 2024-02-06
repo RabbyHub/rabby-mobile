@@ -56,9 +56,17 @@ export const WalletConnectList = () => {
     data.realBrandName = data.brandName;
 
     if (data.status === WALLETCONNECT_SESSION_STATUS_MAP.CONNECTED) {
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={styles.toastIcon} />
+      ))('Importing', {
+        duration: 100000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
       apisWalletConnect
         .importAddress(data)
         .then(() => {
+          toastHide();
           navigate(RootNames.StackAddress, {
             screen: RootNames.ImportSuccess,
             params: {
@@ -72,6 +80,9 @@ export const WalletConnectList = () => {
         .catch((err: any) => {
           console.error(err);
           toast.show(err.message);
+        })
+        .finally(() => {
+          toastHide();
         });
     }
   }, []);
