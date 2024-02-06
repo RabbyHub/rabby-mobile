@@ -301,7 +301,8 @@ export class TransactionHistoryService {
       const index = draft.findIndex(
         item =>
           item.chainId === tx.chainId &&
-          (item.hash === tx.hash || item.reqId === tx.reqId),
+          ((item.hash && item.hash === tx.hash) ||
+            (item.reqId && item.reqId === tx.reqId)),
       );
       if (index !== -1) {
         draft[index] = { ...tx };
@@ -332,19 +333,16 @@ export class TransactionHistoryService {
       nonce,
     })?.[0];
 
-    const current = target?.txs?.find(
-      tx => (tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId),
-    );
-    if (!current) {
-      return;
-    }
-
-    this.updateTx({
-      ...current,
-      isPending: false,
-      isFailed: !success,
-      isCompleted: true,
-      gasUsed,
+    target?.txs?.forEach(tx => {
+      if ((tx.hash && tx.hash === hash) || (tx.reqId && tx.reqId === reqId)) {
+        this.updateTx({
+          ...tx,
+          isPending: false,
+          isFailed: !success,
+          isCompleted: true,
+          gasUsed,
+        });
+      }
     });
 
     // this._setStoreTransaction({
