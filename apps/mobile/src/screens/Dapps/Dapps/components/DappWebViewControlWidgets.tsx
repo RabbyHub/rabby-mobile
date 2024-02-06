@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 import { View, Text, StyleSheet } from 'react-native';
 
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -44,16 +43,18 @@ export function BottomSheetContent({
       )}
 
       <View style={styles.container}>
-        <View className="flex-shrink-0">{bottomNavBar}</View>
-        <View className={clsx('flex-shrink-1 mt-[18] px-[20]')}>
+        <View style={{ flexShrink: 0 }}>{bottomNavBar}</View>
+        <View style={styles.buttonWrapper}>
           <Button
             onPress={onPressCloseDapp}
+            type="primary"
+            ghost
             title={
-              <View className="flex-row items-center justify-center">
+              <View style={styles.titleWrapper}>
                 <Text style={styles.textDisconnect}>Close Dapp</Text>
               </View>
             }
-            style={styles.button}
+            buttonStyle={styles.button}
             containerStyle={styles.buttonContainer}
           />
         </View>
@@ -69,11 +70,19 @@ const getStyle = createGetStyles(colors => ({
     borderTopWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
+  buttonWrapper: {
+    flexShrink: 1,
+    marginTop: 18,
+    paddingHorizontal: 20,
+  },
   button: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 6,
+    borderColor: colors['neutral-line'],
+    borderWidth: 1,
   },
   buttonContainer: {
     flexGrow: 1,
@@ -81,9 +90,11 @@ const getStyle = createGetStyles(colors => ({
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: colors['neutral-line'],
-    borderWidth: 1,
-    borderRadius: 6,
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   textDisconnect: {
     color: colors['neutral-body'],
