@@ -1,15 +1,18 @@
+import { Image } from 'react-native';
+
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
 
 export const INITIAL_TESTNET_OPENAPI_URL = 'https://api.testnet.rabby.io';
 
-export const INTERNAL_REQUEST_ORIGIN = 'chrome-extension://acmacodkjbdgmoleebolmdjonilkdbch';
+export const INTERNAL_REQUEST_ORIGIN =
+  'chrome-extension://acmacodkjbdgmoleebolmdjonilkdbch';
 
 export const INTERNAL_REQUEST_SESSION = {
   name: 'Rabby',
   origin: INTERNAL_REQUEST_ORIGIN,
-  // icon: require('@/assets/images/rabby-site-logo.png'),
-  icon: 'https://rabby.io/assets/images/favicon.png'
+  icon: Image.resolveAssetSource(require('@/assets/images/rabby-site-logo.png'))
+    .uri,
 };
 
 export enum CANCEL_TX_TYPE {

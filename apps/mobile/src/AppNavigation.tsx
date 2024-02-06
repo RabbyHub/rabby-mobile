@@ -29,7 +29,6 @@ import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { NFTDetailScreen } from './screens/NftDetail';
-import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
@@ -40,7 +39,6 @@ import {
   FavoritePopularDappsNavigatorParamList,
   RootStackParamsList,
   SearchDappsNavigatorParamList,
-  TransactionNavigatorParamList,
 } from './navigation-type';
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 
@@ -153,7 +151,6 @@ export default function AppNavigation({
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar />
-      <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}
         // key={userId}

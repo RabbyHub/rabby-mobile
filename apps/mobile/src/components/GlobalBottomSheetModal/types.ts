@@ -27,6 +27,11 @@ export type CreateParams = {
   approvalComponent?: APPROVAL_MODAL_NAMES;
   onCancel?: () => void;
   bottomSheetModalProps?: Partial<BottomSheetModalProps>;
+  /**
+   * @description by default, every global modal instance will prevent the hardware back button on android,
+   * @default false
+   */
+  allowAndroidHarewareBack?: boolean;
   [key: string]: any;
 };
 

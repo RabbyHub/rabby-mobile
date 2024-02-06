@@ -1,22 +1,22 @@
-import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
 
 /**
  * @description make sure call this hook under the context of react-navigation
+ * @platform android
  */
-export function useHandleBackPress(
-  checkCondition: (() => boolean) | React.RefObject<boolean>,
+export function useHandleBackPressClosable(
+  shouldClose: (() => boolean) | React.RefObject<boolean>,
 ) {
-  const checkFn = useCallback(() => {
-    if (typeof checkCondition === 'function') {
-      return checkCondition();
+  const shouldPreventFn = useCallback(() => {
+    if (typeof shouldClose === 'function') {
+      return !shouldClose();
     }
 
-    return checkCondition.current;
-  }, [checkCondition]);
+    return !shouldClose.current;
+  }, [shouldClose]);
 
-  const onFocusBackHandler = useCallback(() => {
+  const onHardwareBackHandler = useCallback(() => {
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
@@ -29,12 +29,14 @@ export function useHandleBackPress(
          * Returning false will cause the event to bubble up and react-navigation's listener
          * will pop the screen.
          */
-        return !!checkFn();
+        return shouldPreventFn();
       },
     );
 
     return () => subscription.remove();
-  }, [checkFn]);
+  }, [shouldPreventFn]);
 
-  useFocusEffect(onFocusBackHandler);
+  return {
+    onHardwareBackHandler,
+  };
 }

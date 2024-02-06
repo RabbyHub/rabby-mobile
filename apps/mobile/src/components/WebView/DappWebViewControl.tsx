@@ -5,6 +5,7 @@ import {
   Dimensions,
   StyleProp,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import WebView from 'react-native-webview';
 
@@ -247,7 +248,9 @@ const DappWebViewControl = React.forwardRef<
     const renderedHeaderNode = useMemo(() => {
       const node = (
         <View style={[styles.dappWebViewHeadContainer]}>
-          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>{headerLeftNode}</View>
+          <View style={[styles.touchableHeadWrapper, styles.flexShrink0]}>
+            {headerLeftNode}
+          </View>
           <View style={styles.DappWebViewHeadTitleWrapper}>
             <Text
               style={{
@@ -443,6 +446,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'android' && {
+      width: '100%',
+    }),
   },
   HeadTitleOrigin: {
     fontSize: 16,

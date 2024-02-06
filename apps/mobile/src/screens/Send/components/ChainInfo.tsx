@@ -35,7 +35,7 @@ const getStyles = createGetStyles(colors => {
     chainName: {
       color: colors['neutral-title1'],
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: '600',
 
       marginLeft: 8,
     },
@@ -69,7 +69,7 @@ export function ChainInfo({
         }}>
         <View style={styles.left}>
           <ChainIconImage size={24} chainEnum={chainEnum} />
-          <Text style={styles.chainName}>{chainItem.name}</Text>
+          <Text style={styles.chainName}>{chainItem?.name}</Text>
         </View>
 
         <View>

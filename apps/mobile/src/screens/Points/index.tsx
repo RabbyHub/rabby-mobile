@@ -259,7 +259,11 @@ export const PointScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FocusAwareStatusBar backgroundColor={'transparent'} />
+      <FocusAwareStatusBar
+        barStyle="light-content"
+        backgroundColor={'transparent'}
+        translucent
+      />
       <ImageBackground
         source={require('@/assets/icons/points/bg.png')}
         resizeMode="cover"

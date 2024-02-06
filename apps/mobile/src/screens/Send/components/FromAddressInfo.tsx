@@ -29,12 +29,12 @@ const getStyles = createGetStyles(colors => {
     brandName: {
       color: colors['blue-default'],
       fontSize: 14,
-      fontWeight: 'bold',
+      fontWeight: '600',
     },
     addressText: {
       color: colors['blue-default'],
       fontSize: 12,
-      fontWeight: 'normal',
+      fontWeight: '400',
     },
 
     priceText: {

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dimensions, View, Text } from 'react-native';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
@@ -14,6 +14,8 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import AccountCard from './components/AccountCard';
 import { useSwitch } from '@/hooks/useSwitch';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 export interface SelectAddressProps {
   visible: boolean;
@@ -70,6 +72,14 @@ export function SelectAddressSheetModal({
       return bn - an;
     });
   }, [whitelistEnabled, accountsList, whitelist]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      return !visible;
+    }, [visible]),
+  );
+
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <AppBottomSheetModal

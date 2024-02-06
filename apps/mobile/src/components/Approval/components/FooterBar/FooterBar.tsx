@@ -1,5 +1,5 @@
 import { Tip } from '@/components/Tip';
-import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
+import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { CHAINS } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
@@ -244,6 +244,9 @@ export const FooterBar: React.FC<Props> = ({
   const Icon = securityLevel
     ? SecurityLevelTipColor[securityLevel].icon
     : undefined;
+
+  const isInternalRequest = origin === INTERNAL_REQUEST_SESSION.origin;
+
   return (
     <View style={styles.container}>
       {/* {!isDarkTheme && hasShadow && <Shadow />} */}
@@ -257,7 +260,16 @@ export const FooterBar: React.FC<Props> = ({
             <Tip content={currentChain.name}>
               <View style={styles.dappIconWrapper}>
                 <DappIcon
-                  source={{ uri: originLogo }}
+                  /**
+                   * @why though the originLogo equals to INTERNAL_REQUEST_SESSION.icon now,
+                   * we may change the INTERNAL_REQUEST_SESSION.icon and get originLogo from persisted storage
+                   * in the future (maybe? we don't know)
+                   */
+                  source={{
+                    uri: isInternalRequest
+                      ? INTERNAL_REQUEST_SESSION.icon
+                      : originLogo,
+                  }}
                   origin={origin}
                   style={styles.dappIcon}
                 />

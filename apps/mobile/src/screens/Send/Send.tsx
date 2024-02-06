@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -68,8 +68,11 @@ function SendScreen(): JSX.Element {
     currentTokenPrice,
   } = useSendTokenScreenChainToken();
 
-  const { sendTokenScreenState: screenState, putScreenState } =
-    useSendTokenScreenState();
+  const {
+    sendTokenScreenState: screenState,
+    putScreenState,
+    resetScreenState,
+  } = useSendTokenScreenState();
 
   const {
     sendTokenEvents,
@@ -208,6 +211,12 @@ function SendScreen(): JSX.Element {
   }, [navState, screenState.inited]);
 
   const { fetchContactAccounts } = useContactAccounts();
+
+  useLayoutEffect(() => {
+    return () => {
+      resetScreenState();
+    };
+  }, [resetScreenState]);
 
   return (
     <SendTokenInternalContextProvider

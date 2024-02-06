@@ -14,6 +14,8 @@ import { useFormik } from 'formik';
 import { apisAddress } from '@/core/apis';
 import { useAlias } from '@/hooks/alias';
 import { toast, toastWithIcon } from '@/components/Toast';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface AddToContactsModalProps {
   onFinished: (result: {
@@ -106,6 +108,13 @@ export function ModalAddToContacts({
 
     handleSubmit();
   }, [validateForm, handleSubmit]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      return !addrToAdd;
+    }, [addrToAdd]),
+  );
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <BottomSheetModalConfirmContainer

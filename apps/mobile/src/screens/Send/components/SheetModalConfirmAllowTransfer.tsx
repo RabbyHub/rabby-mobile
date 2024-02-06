@@ -13,6 +13,8 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/Form/Input';
+import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface ConfirmAllowTransferModalProps {
   toAddr: string;
@@ -55,6 +57,13 @@ export function ModalConfirmAllowTransfer({
 
     onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
   }, [toAddr, confirmToAddToWhitelist, addWhitelist, onFinished]);
+
+  const { onHardwareBackHandler } = useHandleBackPressClosable(
+    useCallback(() => {
+      return !visible;
+    }, [visible]),
+  );
+  useFocusEffect(onHardwareBackHandler);
 
   return (
     <>
