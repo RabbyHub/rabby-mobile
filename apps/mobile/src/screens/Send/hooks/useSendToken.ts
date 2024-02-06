@@ -482,7 +482,8 @@ export function useSendTokenForm() {
             INTERNAL_REQUEST_SESSION,
           )
           .catch(err => {
-            toast.info(err.message);
+            console.error(err);
+            // toast.info(err.message);
           });
       } catch (e: any) {
         Alert.alert(e.message);
