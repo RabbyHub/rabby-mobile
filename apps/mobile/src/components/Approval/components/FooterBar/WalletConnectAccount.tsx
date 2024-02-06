@@ -186,6 +186,9 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     });
     if (tipStatus === 'DISCONNECTED') {
       connectWallet({ address, brandName });
+      if (toastHiddenRef.current) {
+        toastHiddenRef.current();
+      }
       toastHiddenRef.current = toastWithIcon(() => (
         <ActivityIndicator
           style={{
