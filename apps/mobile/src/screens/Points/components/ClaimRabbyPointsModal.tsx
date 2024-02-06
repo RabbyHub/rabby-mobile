@@ -22,8 +22,7 @@ import { Button } from '@/components';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { GradientPoint } from './GradientPoint';
-import { Skeleton, SkeletonProps } from '@rneui/base';
-import LinearGradient from 'react-native-linear-gradient';
+import { Skeleton } from '@rneui/base';
 import useInterval from 'react-use/lib/useInterval';
 import { Animated, Easing } from 'react-native';
 
@@ -105,7 +104,7 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
   const { currentAccount: account } = useCurrentAccount();
   const [focused, setFocused] = useState(false);
 
-  const avatar = logo || '';
+  const avatar = logo;
   const name = web3Id || ellipsisAddress(account?.address || '');
   const snapshotTime = snapshot?.snapshot_at
     ? dayjs
@@ -222,11 +221,11 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
     onClaimed?.(invitedCode);
   }, [onClaimed, invitedCode]);
 
-  const LinearGradientComponent: SkeletonProps['LinearGradientComponent'] =
-    useCallback(
-      props => <LinearGradient {...props} colors={['#5CEBFF', '#5C42FF']} />,
-      [],
-    );
+  // const LinearGradientComponent: SkeletonProps['LinearGradientComponent'] =
+  //   useCallback(
+  //     props => <LinearGradient {...props} colors={['#5CEBFF', '#5C42FF']} />,
+  //     [],
+  //   );
 
   return (
     <View style={styles.container}>
@@ -368,6 +367,7 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     marginBottom: 10,
     marginTop: 12,
+    gap: 6,
   },
   avatar: {
     width: 20,
