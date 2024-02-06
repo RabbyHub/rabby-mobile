@@ -12,7 +12,7 @@ export const SwitchAddress: React.FC = () => {
   React.useEffect(() => {
     setTitle(t('page.dashboard.hd.howToSwitch'));
     setHeight(420);
-  }, []);
+  }, [t, setTitle, setHeight]);
 
   const url = React.useMemo(() => {
     switch (account?.brandName) {

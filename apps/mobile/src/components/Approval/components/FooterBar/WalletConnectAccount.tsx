@@ -186,13 +186,13 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       default:
         return 'CONNECTED';
     }
-  }, [status, sessionChainId, chain]);
+  }, [status]);
 
   React.useEffect(() => {
     if (chain && sessionChainId && chain.id !== sessionChainId) {
       apisWalletConnect.walletConnectSwitchChain(account, chain.id);
     }
-  }, [sessionChainId, chain]);
+  }, [sessionChainId, chain, account]);
 
   const connectWallet = useConnectWallet();
   const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
@@ -230,7 +230,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     } else if (tipStatus === 'CONNECTED') {
       toastHiddenRef.current?.();
     }
-  }, [tipStatus]);
+  }, [tipStatus, setVisible]);
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);

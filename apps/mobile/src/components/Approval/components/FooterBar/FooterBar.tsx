@@ -131,10 +131,6 @@ const getStyles = (colors: AppColorsVariants) =>
     container: {
       position: 'relative',
     },
-    dappIconWrapper: {
-      position: 'relative',
-      marginRight: 8,
-    },
   });
 
 const getSecurityLevelTipColor = (colors: AppColorsVariants) => ({
@@ -239,6 +235,7 @@ export const FooterBar: React.FC<Props> = ({
 
   React.useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!account) {

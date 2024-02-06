@@ -1,12 +1,14 @@
-import { View, Text } from 'react-native';
+import { useRef } from 'react';
+import { View, Text, TextInput } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
-import TouchableView from '@/components/Touchable/TouchableView';
-import RcMaxButton from './icons/max-button.svg';
 import { TokenAmountInput } from '@/components/Token';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
-import { useSendTokenInternalContext } from './hooks/useSendToken';
+import {
+  useInputBlurOnEvents,
+  useSendTokenInternalContext,
+} from './hooks/useSendToken';
 import { useCurrentAccount } from '@/hooks/account';
 import { devLog } from '@/utils/logger';
 import GasReserved from './components/GasReserved';
@@ -50,6 +52,7 @@ export function BalanceSection({ style }: RNViewProps) {
       gasList,
     },
 
+    events,
     formValues,
     computed: {
       chainItem,
@@ -66,6 +69,9 @@ export function BalanceSection({ style }: RNViewProps) {
       handleGasChange,
     },
   } = useSendTokenInternalContext();
+
+  const amountInputRef = useRef<TextInput>(null);
+  useInputBlurOnEvents(amountInputRef);
 
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);
@@ -124,6 +130,7 @@ export function BalanceSection({ style }: RNViewProps) {
       <View className="mt-[10]">
         {currentAccount && chainItem && (
           <TokenAmountInput
+            ref={amountInputRef}
             value={formValues.amount}
             onChange={value => {
               handleFieldChange?.('amount', value);

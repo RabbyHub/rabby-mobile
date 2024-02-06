@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 import { View, Text, StyleSheet } from 'react-native';
 
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -9,7 +8,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { useDapps } from '@/hooks/useDapps';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 export function BottomSheetContent({
   dappInfo,
@@ -44,16 +43,19 @@ export function BottomSheetContent({
       )}
 
       <View style={styles.container}>
-        <View className="flex-shrink-0">{bottomNavBar}</View>
-        <View className={clsx('flex-shrink-1 mt-[18] px-[20]')}>
+        <View style={{ flexShrink: 0 }}>{bottomNavBar}</View>
+        <View style={styles.buttonWrapper}>
           <Button
             onPress={onPressCloseDapp}
+            type="primary"
+            ghost
             title={
-              <View className="flex-row items-center justify-center">
+              <View style={styles.titleWrapper}>
                 <Text style={styles.textDisconnect}>Close Dapp</Text>
               </View>
             }
-            style={styles.button}
+            style={styles.buttonInner}
+            buttonStyle={styles.button}
             containerStyle={styles.buttonContainer}
           />
         </View>
@@ -69,21 +71,34 @@ const getStyle = createGetStyles(colors => ({
     borderTopWidth: StyleSheet.hairlineWidth,
     justifyContent: 'center',
   },
+  buttonWrapper: {
+    width: '100%',
+    flexShrink: 1,
+    marginTop: 18,
+    paddingHorizontal: 20,
+  },
+  buttonContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  buttonInner: { width: '100%', height: '100%' },
   button: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  buttonContainer: {
-    flexGrow: 1,
-    display: 'flex',
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 6,
     borderColor: colors['neutral-line'],
     borderWidth: 1,
-    borderRadius: 6,
+  },
+  titleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   textDisconnect: {
     color: colors['neutral-body'],

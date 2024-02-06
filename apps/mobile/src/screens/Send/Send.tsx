@@ -1,5 +1,11 @@
-import React, { useMemo, useEffect } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
@@ -8,7 +14,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
 import {
-  SendScreenState,
+  SendTokenEvents,
   SendTokenInternalContextProvider,
   useSendTokenForm,
   useSendTokenScreenChainToken,
@@ -27,6 +33,8 @@ import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 function SendScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -64,6 +72,7 @@ function SendScreen(): JSX.Element {
     useSendTokenScreenState();
 
   const {
+    sendTokenEvents,
     formik,
     formValues,
     handleFieldChange,
@@ -201,39 +210,44 @@ function SendScreen(): JSX.Element {
   const { fetchContactAccounts } = useContactAccounts();
 
   return (
-    <NormalScreenContainer>
-      <View style={styles.container}>
-        <SendTokenInternalContextProvider
-          value={{
-            screenState,
-            formValues,
-            computed: {
-              canSubmit,
-              toAddressInWhitelist,
-              whitelistEnabled,
-              toAddressIsValid,
-              toAddressInContactBook,
+    <SendTokenInternalContextProvider
+      value={{
+        screenState,
+        formValues,
+        computed: {
+          canSubmit,
+          toAddressInWhitelist,
+          whitelistEnabled,
+          toAddressIsValid,
+          toAddressInContactBook,
 
-              chainItem,
-              currentToken,
-              currentTokenBalance,
-              currentTokenPrice,
-            },
-            formik,
-            fns: {
-              putScreenState,
-              fetchContactAccounts,
-            },
+          chainItem,
+          currentToken,
+          currentTokenBalance,
+          currentTokenPrice,
+        },
+        events: sendTokenEvents,
+        formik,
+        fns: {
+          putScreenState,
+          fetchContactAccounts,
+        },
 
-            callbacks: {
-              handleCurrentTokenChange,
-              handleFieldChange,
-              handleClickTokenBalance,
-              handleGasChange,
-            },
+        callbacks: {
+          handleCurrentTokenChange,
+          handleFieldChange,
+          handleClickTokenBalance,
+          handleGasChange,
+        },
+      }}>
+      <NormalScreenContainer style={styles.container}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
+            Keyboard.dismiss();
           }}>
-          <>
-            <View style={styles.SendContainer}>
+          <View style={styles.sendScreen}>
+            <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
               <Section>
                 {/* ChainInfo */}
@@ -257,13 +271,12 @@ function SendScreen(): JSX.Element {
               </Section>
               {/* balance info */}
               <BalanceSection style={{ marginTop: 20 }} />
-            </View>
-
+            </KeyboardAwareScrollView>
             <BottomArea />
-          </>
-        </SendTokenInternalContextProvider>
-      </View>
-    </NormalScreenContainer>
+          </View>
+        </TouchableWithoutFeedback>
+      </NormalScreenContainer>
+    </SendTokenInternalContextProvider>
   );
 }
 
@@ -275,10 +288,18 @@ const getStyles = createGetStyles(colors =>
       backgroundColor: colors['neutral-card2'],
       position: 'relative',
     },
-    SendContainer: {
+    sendScreen: {
       width: '100%',
+      height: '100%',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    },
+    mainContent: {
+      width: '100%',
+      // height: '100%',
       alignItems: 'center',
       padding: 20,
+      paddingTop: 0,
     },
 
     sectionTitle: {

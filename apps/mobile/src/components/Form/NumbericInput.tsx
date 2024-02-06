@@ -67,9 +67,9 @@ export const NumericInput = React.forwardRef<TextInput, NumericInputProps>(
 
     return (
       <TextInput
+        keyboardType="number-pad"
         {...props}
         ref={ref}
-        keyboardType="number-pad"
         style={style}
         value={internalValue}
         onChangeText={handleChange}

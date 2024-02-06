@@ -514,6 +514,7 @@ const KnownAddress = ({
 
   useEffect(() => {
     handleAddressChange(address);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   if (!hasAddress) return null;
