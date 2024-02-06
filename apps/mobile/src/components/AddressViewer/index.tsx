@@ -41,11 +41,12 @@ export const AddressViewer = ({
     <TouchableOpacity onPress={onClick}>
       <View style={StyleSheet.flatten([styles[className], style])}>
         {showIndex && index >= 0 && (
-          <Text className="number-index">{index}</Text>
+          <Text style={styles.numberIndex}>{index}</Text>
         )}
         <Text
           style={{
             lineHeight: 20,
+            color: colors['neutral-foot'],
           }}>
           {ellipsis
             ? `${address?.toLowerCase().slice(0, 6)}...${address
