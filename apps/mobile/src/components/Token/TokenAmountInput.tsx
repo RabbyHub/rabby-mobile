@@ -10,7 +10,9 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import RcArrowDownCC from './icons/token-selector-trigger-down-cc.svg';
-import TouchableView, { SilentTouchableView } from '@/components/Touchable/TouchableView';
+import TouchableView, {
+  SilentTouchableView,
+} from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { useTokens } from '@/hooks/chainAndToken/useToken';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
@@ -35,17 +37,20 @@ function useLoadTokenList({
   excludeTokens = [],
   onTokenChange,
   onChange,
+  ref,
 }: {
   externalChainServerId?: string;
   excludeTokens?: TokenItem['id'][];
   onTokenChange?: TokenAmountInputProps['onTokenChange'];
   onChange?: TokenAmountInputProps['onChange'];
+  ref?: React.RefObject<TextInput> | null;
 } = {}) {
   const { currentAccount } = useCurrentAccount();
   const [keyword, setKeyword] = useState('');
   const [chainServerId, setChainServerId] = useState(externalChainServerId);
 
-  const tokenInputRef = useRef<TextInput>(null);
+  const internalInputRef = useRef<TextInput>(null);
+  const tokenInputRef = ref || internalInputRef;
   const [updateNonce, setUpdateNonce] = useState(0);
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
@@ -57,7 +62,7 @@ function useLoadTokenList({
       tokenInputRef.current?.focus();
       setChainServerId(token.chain);
     },
-    [onTokenChange, onChange],
+    [onTokenChange, onChange, tokenInputRef],
   );
 
   const handleTokenSelectorClose = useCallback(() => {
@@ -162,136 +167,145 @@ interface TokenAmountInputProps {
 /**
  * @description like TokenAmountInput on Rabby
  */
-export function TokenAmountInput({
-  token,
-  value,
-  onChange,
-  onTokenChange,
-  chainServerId: externalChainServerId,
-  amountFocus,
-  inlinePrize,
-  excludeTokens = [],
-  style,
-  type = 'default',
-  placeholder,
-}: React.PropsWithChildren<RNViewProps & TokenAmountInputProps>) {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+export const TokenAmountInput = React.forwardRef<
+  TextInput,
+  React.PropsWithChildren<RNViewProps & TokenAmountInputProps>
+>(
+  (
+    {
+      token,
+      value,
+      onChange,
+      onTokenChange,
+      chainServerId: externalChainServerId,
+      amountFocus,
+      inlinePrize,
+      excludeTokens = [],
+      style,
+      type = 'default',
+      placeholder,
+    },
+    ref,
+  ) => {
+    const colors = useThemeColors();
+    const styles = getStyles(colors);
 
-  // devLog('Render TokenAmountInput');
+    // devLog('Render TokenAmountInput');
 
-  const {
-    isListLoading,
-    displayTokenList,
+    const {
+      isListLoading,
+      displayTokenList,
 
-    tokenInputRef,
+      tokenInputRef,
 
-    tokenSelectorVisible,
-    setTokenSelectorVisible,
+      tokenSelectorVisible,
+      setTokenSelectorVisible,
 
-    handleCurrentTokenChange,
-    handleTokenSelectorClose,
-    handleSearchTokens,
-    chainServerId,
-  } = useLoadTokenList({
-    externalChainServerId,
-    excludeTokens,
-    onTokenChange,
-  });
+      handleCurrentTokenChange,
+      handleTokenSelectorClose,
+      handleSearchTokens,
+      chainServerId,
+    } = useLoadTokenList({
+      externalChainServerId,
+      excludeTokens,
+      onTokenChange,
+      ref: ref as React.RefObject<TextInput>,
+    });
 
-  useLayoutEffect(() => {
-    if (amountFocus && !tokenSelectorVisible) {
-      tokenInputRef.current?.focus();
-    }
-  }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
+    useLayoutEffect(() => {
+      if (amountFocus && !tokenSelectorVisible) {
+        tokenInputRef.current?.focus();
+      }
+    }, [amountFocus, tokenSelectorVisible, tokenInputRef]);
 
-  const { valueText } = useMemo(() => {
-    const num = Number(value);
+    const { valueText } = useMemo(() => {
+      const num = Number(value);
 
-    const valueText = num
-      ? `≈$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
-      : '';
+      const valueText = num
+        ? `≈$${splitNumberByStep(((num || 0) * token.price || 0).toFixed(2))}`
+        : '';
 
-    return {
-      valueNum: num,
-      valueText,
-    };
-  }, [value, token.price]);
+      return {
+        valueNum: num,
+        valueText,
+      };
+    }, [value, token.price]);
 
-  return (
-    <>
-      <View style={[styles.container, style]}>
-        <TouchableView
-          style={styles.leftToken}
-          onPress={() => {
-            setTokenSelectorVisible(true);
-          }}>
-          <View style={styles.leftInner}>
-            <AssetAvatar
-              logo={token.logo_url}
-              logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-              size={24}
-            />
-            <Text
-              style={[styles.leftTokenSymbol]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {getTokenSymbol(token)}
-            </Text>
-            <View>
-              <RcArrowDown />
-            </View>
-          </View>
-        </TouchableView>
-        <SilentTouchableView
-          viewStyle={[
-            styles.rightInputContainer,
-            inlinePrize && !!valueText && styles.containerHasInlinePrize,
-          ]}
-          onPress={() => {
-            tokenInputRef.current?.focus();
-          }}
-        >
-          <NumericInput
-            style={[
-              inlinePrize && !!valueText && styles.inputHasInlinePrize,
-              styles.input,
-            ]}
-            value={value}
-            onChangeText={onChange}
-            ref={tokenInputRef}
-            placeholder="0"
-            placeholderTextColor={colors['neutral-foot']}
-            inputMode="decimal"
-            keyboardType='numeric'
-          />
-          {inlinePrize && (
-            <View style={styles.inlinePrizeContainer}>
+    return (
+      <>
+        <View style={[styles.container, style]}>
+          <TouchableView
+            style={styles.leftToken}
+            onPress={() => {
+              setTokenSelectorVisible(true);
+            }}>
+            <View style={styles.leftInner}>
+              <AssetAvatar
+                logo={token.logo_url}
+                logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+                size={24}
+              />
               <Text
-                style={styles.inlinePrizeText}
+                style={[styles.leftTokenSymbol]}
                 ellipsizeMode="tail"
                 numberOfLines={1}>
-                {valueText}
+                {getTokenSymbol(token)}
               </Text>
+              <View>
+                <RcArrowDown />
+              </View>
             </View>
-          )}
-        </SilentTouchableView>
-      </View>
+          </TouchableView>
+          <SilentTouchableView
+            viewStyle={[
+              styles.rightInputContainer,
+              inlinePrize && !!valueText && styles.containerHasInlinePrize,
+            ]}
+            onPress={evt => {
+              evt.stopPropagation();
+              tokenInputRef.current?.focus();
+            }}>
+            <NumericInput
+              style={[
+                inlinePrize && !!valueText && styles.inputHasInlinePrize,
+                styles.input,
+              ]}
+              value={value}
+              onChangeText={onChange}
+              ref={tokenInputRef}
+              placeholder="0"
+              placeholderTextColor={colors['neutral-foot']}
+              inputMode="decimal"
+              keyboardType="numeric"
+            />
+            {inlinePrize && (
+              <View style={styles.inlinePrizeContainer}>
+                <Text
+                  style={styles.inlinePrizeText}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}>
+                  {valueText}
+                </Text>
+              </View>
+            )}
+          </SilentTouchableView>
+        </View>
 
-      <TokenSelectorSheetModal
-        visible={tokenSelectorVisible}
-        list={displayTokenList}
-        onConfirm={handleCurrentTokenChange}
-        onCancel={handleTokenSelectorClose}
-        onSearch={handleSearchTokens}
-        isLoading={isListLoading}
-        type={type}
-        placeholder={placeholder}
-        chainServerId={chainServerId}
-      />
-    </>
-  );
-}
+        <TokenSelectorSheetModal
+          visible={tokenSelectorVisible}
+          list={displayTokenList}
+          onConfirm={handleCurrentTokenChange}
+          onCancel={handleTokenSelectorClose}
+          onSearch={handleSearchTokens}
+          isLoading={isListLoading}
+          type={type}
+          placeholder={placeholder}
+          chainServerId={chainServerId}
+        />
+      </>
+    );
+  },
+);
 
 const PADDING = 12;
 

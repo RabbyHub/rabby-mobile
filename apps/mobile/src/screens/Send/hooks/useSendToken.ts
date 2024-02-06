@@ -1,8 +1,15 @@
-import React, { useMemo, useCallback, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import React, {
+  useMemo,
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+} from 'react';
+import { Alert, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
+import { EventEmitter } from 'events';
 
 import { preferenceService } from '@/core/services';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
@@ -52,6 +59,11 @@ function makeDefaultToken(): TokenItem {
     time_at: 0,
     amount: 0,
   };
+}
+
+export const enum SendTokenEvents {
+  'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
+  'ON_SEND' = 'ON_SEND',
 }
 
 const sendTokenScreenChainTokenAtom = atom({
@@ -321,6 +333,7 @@ const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
 export function useSendTokenForm() {
   const { t } = useTranslation();
 
+  const sendTokenEventsRef = useRef(new EventEmitter());
   const { currentAccount } = useCurrentAccount();
 
   const {
@@ -363,6 +376,8 @@ export function useSendTokenForm() {
       messageDataForSendToEoa,
       messageDataForContractCall,
     }: FormSendToken) => {
+      sendTokenEventsRef.current.emit(SendTokenEvents.ON_SEND);
+
       putScreenState({ isSubmitLoading: true });
       const chain = findChainByServerID(currentToken.chain)!;
       const sendValue = new BigNumber(amount)
@@ -920,6 +935,7 @@ export function useSendTokenForm() {
     handleGasChange,
     handleClickTokenBalance,
 
+    sendTokenEvents: sendTokenEventsRef.current,
     formik,
     formValues,
     handleFieldChange,
@@ -957,6 +973,7 @@ type InternalContext = {
   };
 
   formik: ReturnType<typeof useSendTokenFormikContext>;
+  events: EventEmitter;
   fns: {
     putScreenState: (patch: Partial<SendScreenState>) => void;
     fetchContactAccounts: () => void;
@@ -967,7 +984,6 @@ type InternalContext = {
       f: T,
       value: FormSendToken[T],
     ) => void;
-    // handleToAddressAliasUpdated: (alias: string) => void;
     handleClickTokenBalance: () => Promise<void> | void;
     handleGasChange: (
       gas: GasLevel,
@@ -993,6 +1009,7 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   },
 
   formik: null as any,
+  events: null as any,
   fns: {
     putScreenState: () => {},
     fetchContactAccounts: () => {},
@@ -1000,7 +1017,6 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
   callbacks: {
     handleCurrentTokenChange: () => {},
     handleFieldChange: () => {},
-    // handleToAddressAliasUpdated: () => {},
     handleClickTokenBalance: () => {},
     handleGasChange: () => {},
     // onFormValuesChange: () => {},
@@ -1012,4 +1028,51 @@ export const SendTokenInternalContextProvider =
 
 export function useSendTokenInternalContext() {
   return React.useContext(SendTokenInternalContext);
+}
+
+function subscribeEvent<T extends SendTokenEvents>(
+  events: EventEmitter,
+  type: T,
+  cb: (payload: any) => void,
+  options?: { disposeRets?: Function[] },
+) {
+  const { disposeRets } = options || {};
+  const dispose = () => {
+    events.off(type, cb);
+  };
+
+  if (disposeRets) {
+    disposeRets.push(dispose);
+  }
+
+  events.on(type, cb);
+
+  return dispose;
+}
+export function useInputBlurOnEvents(inputRef: React.RefObject<TextInput>) {
+  const { events } = useSendTokenInternalContext();
+  useEffect(() => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      events,
+      SendTokenEvents.ON_PRESS_DISMISS,
+      () => {
+        inputRef.current?.blur();
+      },
+      { disposeRets },
+    );
+
+    subscribeEvent(
+      events,
+      SendTokenEvents.ON_SEND,
+      () => {
+        inputRef.current?.blur();
+      },
+      { disposeRets },
+    );
+
+    return () => {
+      disposeRets.forEach(dispose => dispose());
+    };
+  }, [events, inputRef]);
 }

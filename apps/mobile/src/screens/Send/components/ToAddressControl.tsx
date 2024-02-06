@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
@@ -10,6 +11,7 @@ import RcEditPenCC from '../icons/edit-pen-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Trans, useTranslation } from 'react-i18next';
 import {
+  useInputBlurOnEvents,
   useSendTokenFormik,
   useSendTokenInternalContext,
 } from '../hooks/useSendToken';
@@ -27,6 +29,7 @@ export default function ToAddressControl({
   }
 >) {
   const {
+    events,
     formik,
     formValues,
     screenState: {
@@ -46,6 +49,9 @@ export default function ToAddressControl({
   const { t } = useTranslation();
 
   const { errors } = useSendTokenFormik();
+
+  const formInputRef = useRef<TextInput>(null);
+  useInputBlurOnEvents(formInputRef);
 
   return (
     <View style={[styles.control, style]}>
@@ -82,6 +88,7 @@ export default function ToAddressControl({
       <FormInput
         className="mt-[8]"
         containerStyle={styles.inputContainer}
+        ref={formInputRef}
         inputStyle={styles.input}
         hasError={!!errors.to}
         inputProps={{

@@ -14,7 +14,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
 import {
-  SendScreenState,
+  SendTokenEvents,
   SendTokenInternalContextProvider,
   useSendTokenForm,
   useSendTokenScreenChainToken,
@@ -72,6 +72,7 @@ function SendScreen(): JSX.Element {
     useSendTokenScreenState();
 
   const {
+    sendTokenEvents,
     formik,
     formValues,
     handleFieldChange,
@@ -225,6 +226,7 @@ function SendScreen(): JSX.Element {
           currentTokenBalance,
           currentTokenPrice,
         },
+        events: sendTokenEvents,
         formik,
         fns: {
           putScreenState,
@@ -239,7 +241,11 @@ function SendScreen(): JSX.Element {
         },
       }}>
       <NormalScreenContainer style={styles.container}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            sendTokenEvents.emit(SendTokenEvents.ON_PRESS_DISMISS);
+            Keyboard.dismiss();
+          }}>
           <View style={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
