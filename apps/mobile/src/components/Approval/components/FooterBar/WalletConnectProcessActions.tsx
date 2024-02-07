@@ -22,7 +22,7 @@ export const WalletConnectProcessActions: React.FC<Props> = props => {
       return t('page.signFooterBar.walletConnect.wrongAddressAlert');
     }
 
-    if (status === 'DISCONNECTED') {
+    if (!status || status === 'DISCONNECTED') {
       // @ts-expect-error
       return t('page.signFooterBar.walletConnect.connectBeforeSign', [
         displayBrandName,
@@ -50,7 +50,7 @@ export const WalletConnectProcessActions: React.FC<Props> = props => {
       {...props}
       tooltipContent={content}
       disabledProcess={
-        status === 'DISCONNECTED' ||
+        (status !== 'CONNECTED' && status !== 'ACCOUNT_ERROR') ||
         // chainError ||
         disabledProcess
       }
