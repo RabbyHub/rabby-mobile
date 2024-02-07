@@ -147,7 +147,7 @@ export default function ToAddressControl({
             showListContactModal: false,
           });
         }}
-        onCancel={() => {
+        onClose={() => {
           putScreenState({
             showListContactModal: false,
           });

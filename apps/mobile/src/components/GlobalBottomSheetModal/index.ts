@@ -2,7 +2,11 @@ import { CreateParams, EVENT_NAMES, MODAL_NAMES } from './types';
 import { uniqueId } from 'lodash';
 import { events } from './event';
 
-export const createGlobalBottomSheetModal = (params: CreateParams) => {
+export const createGlobalBottomSheetModal = <
+  T extends MODAL_NAMES = MODAL_NAMES,
+>(
+  params: CreateParams<T>,
+) => {
   params.name = params.name ?? MODAL_NAMES.APPROVAL;
   const id = `${params.name}_${uniqueId()}`;
   events.emit(EVENT_NAMES.CREATE, id, params);
