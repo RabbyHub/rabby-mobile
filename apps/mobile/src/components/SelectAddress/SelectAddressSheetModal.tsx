@@ -112,7 +112,7 @@ export function SelectAddressSheetModal({
                   try {
                     await setWhitelist(localWhiteList);
                     setEditing(!isEditing);
-                    onClose?.({ behavior: 'confirmed' });
+                    // onClose?.({ behavior: 'confirmed' });
                   } finally {
                     clearConfirm();
                   }
@@ -128,7 +128,7 @@ export function SelectAddressSheetModal({
     } else {
       setEditing(!isEditing);
     }
-  }, [t, isEditing, setEditing, setWhitelist, localWhiteList, onClose]);
+  }, [t, isEditing, setEditing, setWhitelist, localWhiteList]);
 
   const onModalDismiss = useCallback(() => {
     if (isEditing) {
