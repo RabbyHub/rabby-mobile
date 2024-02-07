@@ -32,6 +32,8 @@ import { ScrollView, Text, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { getKRCategoryByType } from '@/utils/transaction';
 
 interface SignTypedDataProps {
   method: string;
@@ -235,24 +237,24 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       | 'completeSignText',
     extra?: Record<string, any>,
   ) => {
-    //       const currentAccount = await preferenceService.getCurrentAccount();
-    // if (currentAccount) {
-    //   matomoRequestEvent({
-    //     category: 'SignText',
-    //     action: action,
-    //     label: [
-    //       getKRCategoryByType(currentAccount.type),
-    //       currentAccount.brandName,
-    //     ].join('|'),
-    //     transport: 'beacon',
-    //   });
-    //   await wallet.reportStats(action, {
-    //     type: currentAccount.brandName,
-    //     category: getKRCategoryByType(currentAccount.type),
-    //     method: underline2Camelcase(params.method),
-    //     ...extra,
-    //   });
-    // }
+    const currentAccount = preferenceService.getCurrentAccount();
+    if (currentAccount) {
+      matomoRequestEvent({
+        category: 'SignText',
+        action: action,
+        label: [
+          getKRCategoryByType(currentAccount.type),
+          currentAccount.brandName,
+        ].join('|'),
+        transport: 'beacon',
+      });
+      // await wallet.reportStats(action, {
+      //   type: currentAccount.brandName,
+      //   category: getKRCategoryByType(currentAccount.type),
+      //   method: underline2Camelcase(params.method),
+      //   ...extra,
+      // });
+    }
   };
 
   const handleCancel = () => {

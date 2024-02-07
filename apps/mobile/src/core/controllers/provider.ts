@@ -32,7 +32,10 @@ import { keyringService } from '../services';
 //   notificationService,
 // } from 'background/service';
 // import { Session } from 'background/service/session';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  KEYRING_CATEGORY_MAP,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../services/rpcCache';
 // import Wallet from '../wallet';
@@ -50,6 +53,7 @@ import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { matomoRequestEvent } from '@/utils/analytics';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -58,16 +62,16 @@ const reportSignText = (params: {
   account: Account;
   success: boolean;
 }) => {
-  // const { method, account, success } = params;
-  // matomoRequestEvent({
-  //   category: 'SignText',
-  //   action: 'completeSignText',
-  //   label: [
-  //     KEYRING_CATEGORY_MAP[account.type],
-  //     account.brandName,
-  //     success,
-  //   ].join('|'),
-  // });
+  const { method, account, success } = params;
+  matomoRequestEvent({
+    category: 'SignText',
+    action: 'completeSignText',
+    label: [
+      KEYRING_CATEGORY_MAP[account.type],
+      account.brandName,
+      success,
+    ].join('|'),
+  });
   // stats.report('completeSignText', {
   //   type: account.brandName,
   //   category: KEYRING_CATEGORY_MAP[account.type],
