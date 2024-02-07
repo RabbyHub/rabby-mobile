@@ -97,6 +97,9 @@ export default function ToAddressControl({
         hasError={!!errors.to}
         inputProps={{
           ...inputProps,
+          style: [styles.inputComp, inputProps?.style],
+          numberOfLines: 2,
+          multiline: true,
           value: formValues.to,
           onChangeText: value => {
             handleFieldChange('to', value);
@@ -230,12 +233,19 @@ const getStyles = createGetStyles(colors => {
       borderRadius: 4,
 
       width: '100%',
-      height: 52,
+      height: 64,
+    },
+
+    inputComp: {
+      // paddingTop: Platform.OS === 'ios' ? 12 : 12,
+      paddingHorizontal: 12,
+      // ...makeDebugBorder(),
     },
 
     input: {
       backgroundColor: colors['neutral-card2'],
       width: '100%',
+      paddingRight: 8,
     },
 
     extraView: {
