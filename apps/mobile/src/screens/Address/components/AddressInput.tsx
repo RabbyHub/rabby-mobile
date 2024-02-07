@@ -1,5 +1,5 @@
 import { useThemeColors } from '@/hooks/theme';
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   NativeSyntheticEvent,
   Platform,
@@ -14,9 +14,7 @@ import { RcIconCopyCC } from '@/assets/icons/common';
 import { contactService } from '@/core/services';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
-import { SearchBar } from '@rneui/base';
 import RcIconClose from '@/assets/icons/import-success/clear.svg';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface Props {
   address: string;
@@ -41,7 +39,17 @@ export const AddressInput: React.FC<Props> = ({
           paddingTop: 12,
           position: 'relative',
         },
-
+        input: {
+          width: '100%',
+          backgroundColor: colors['neutral-card-2'],
+          borderRadius: 4,
+          paddingHorizontal: 6,
+          minHeight: 48,
+          color: colors['neutral-title-1'],
+          fontSize: 16,
+          fontWeight: '500',
+          paddingRight: 38,
+        },
         address: {
           color: colors['neutral-body'],
           fontSize: Platform.OS === 'ios' ? 15 : 14,
@@ -67,6 +75,13 @@ export const AddressInput: React.FC<Props> = ({
           left: 4,
           top: 2,
         },
+        clearIcon: {
+          position: 'absolute',
+          right: 20,
+          top: 28,
+          width: 20,
+          height: 20,
+        },
         searchBarStyle: {
           margin: 0,
           padding: 0,
@@ -77,23 +92,6 @@ export const AddressInput: React.FC<Props> = ({
           backgroundColor: colors['neutral-card-2'],
           borderRadius: 4,
           padding: 0,
-        },
-        inputContainerStyle: {
-          backgroundColor: 'transparent',
-          paddingHorizontal: 0,
-          marginLeft: 0,
-        },
-        inputStyle: {
-          color: colors['neutral-title-1'],
-          fontSize: 16,
-          fontWeight: '500',
-        },
-        leftIconContainerStyle: {
-          width: 0,
-          paddingLeft: 0,
-          paddingRight: 0,
-          marginLeft: 0,
-          marginRight: 0,
         },
         clearIconContainer: {
           padding: 4,
@@ -121,46 +119,35 @@ export const AddressInput: React.FC<Props> = ({
   const [editingAliasName, setEditingAliasName] = React.useState<string>(
     aliasName || '',
   );
-  const ref = React.useRef<any>(null);
 
   React.useEffect(() => {
     setEditingAliasName(aliasName || '');
   }, [aliasName]);
 
-  const clearIcon = React.useMemo(
-    () => (
-      <TouchableWithoutFeedback
-        style={styles.clearIconContainer}
-        onPress={() => {
-          ref?.current?.clear();
-        }}>
-        <RcIconClose />
-      </TouchableWithoutFeedback>
-    ),
-    [styles.clearIconContainer],
-  );
-
   return (
     <View style={styles.container}>
-      <SearchBar
-        ref={ref}
-        style={styles.searchBarStyle}
-        containerStyle={styles.containerStyle}
-        inputContainerStyle={styles.inputContainerStyle}
-        inputStyle={styles.inputStyle}
-        leftIconContainerStyle={styles.leftIconContainerStyle}
-        value={editingAliasName}
-        onChangeText={React.useCallback(
-          v => {
-            setEditingAliasName(v);
-            onChange?.(v);
-          },
-          [onChange],
-        )}
-        clearIcon={clearIcon}
-        blurOnSubmit
+      <TextInput
         onSubmitEditing={handleSubmit}
+        value={editingAliasName}
+        style={styles.input}
+        onChange={nativeEvent => {
+          setEditingAliasName(nativeEvent.nativeEvent.text);
+          onChange?.(nativeEvent.nativeEvent.text);
+        }}
+        blurOnSubmit
+        focusable={true}
       />
+      {!!editingAliasName && (
+        <TouchableOpacity
+          style={styles.clearIcon}
+          onPress={e => {
+            e.stopPropagation();
+            setEditingAliasName('');
+            onChange?.('');
+          }}>
+          <RcIconClose width={20} height={20} />
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity onPress={onCopy} style={styles.addressContainer}>
         <Text style={styles.address} textBreakStrategy="simple">
