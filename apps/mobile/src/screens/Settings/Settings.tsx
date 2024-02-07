@@ -169,13 +169,6 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
-            label: 'Privacy Policy',
-            icon: RcPrivacyPolicy,
-            onPress: async () => {
-              openExternalUrl(APP_URLS.PRIVACY_POLICY);
-            },
-          },
-          {
             label: 'Feedback',
             icon: RcFeedback,
             onPress: () => {
@@ -205,6 +198,13 @@ function SettingsScreen(): JSX.Element {
             icon: RcFollowUs,
             onPress: () => {
               openExternalUrl(APP_URLS.TWITTER);
+            },
+          },
+          {
+            label: 'Privacy Policy',
+            icon: RcPrivacyPolicy,
+            onPress: async () => {
+              openExternalUrl(APP_URLS.PRIVACY_POLICY);
             },
           },
         ].filter(Boolean),
