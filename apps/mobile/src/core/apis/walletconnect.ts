@@ -155,7 +155,7 @@ export async function walletConnectSwitchChain(
 
   try {
     if (keyring) {
-      await keyring.switchEthereumChain(account.brandName, chainId);
+      // await keyring.switchEthereumChain(account.brandName, chainId);
     }
   } catch (e) {
     console.log('walletconnect error', e);
