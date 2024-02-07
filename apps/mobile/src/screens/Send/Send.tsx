@@ -16,6 +16,7 @@ import { CHAINS_ENUM } from '@debank/common';
 import {
   SendTokenEvents,
   SendTokenInternalContextProvider,
+  subscribeEvent,
   useSendTokenForm,
   useSendTokenScreenChainToken,
   useSendTokenScreenState,
@@ -211,6 +212,24 @@ function SendScreen(): JSX.Element {
   }, [navState, screenState.inited]);
 
   const { fetchContactAccounts } = useContactAccounts();
+
+  useEffect(() => {
+    const disposeRets = [] as Function[];
+    subscribeEvent(
+      sendTokenEvents,
+      SendTokenEvents.ON_SIGNED_SUCCESS,
+      () => {
+        navigation.push(RootNames.StackRoot, {
+          screen: RootNames.Home,
+        });
+      },
+      { disposeRets },
+    );
+
+    return () => {
+      disposeRets.forEach(dispose => dispose());
+    };
+  }, [sendTokenEvents, navigation]);
 
   useLayoutEffect(() => {
     return () => {
