@@ -30,6 +30,8 @@ import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TextActions';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
+import { getKRCategoryByType } from '@/utils/transaction';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface SignTextProps {
   data: string[];
@@ -152,15 +154,15 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     if (!currentAccount) {
       return;
     }
-    // matomoRequestEvent({
-    //   category: 'SignText',
-    //   action: action,
-    //   label: [
-    //     getKRCategoryByType(currentAccount.type),
-    //     currentAccount.brandName,
-    //   ].join('|'),
-    //   transport: 'beacon',
-    // });
+    matomoRequestEvent({
+      category: 'SignText',
+      action: action,
+      label: [
+        getKRCategoryByType(currentAccount.type),
+        currentAccount.brandName,
+      ].join('|'),
+      transport: 'beacon',
+    });
     // await wallet.reportStats(action, {
     //   type: currentAccount.brandName,
     //   category: getKRCategoryByType(currentAccount.type),

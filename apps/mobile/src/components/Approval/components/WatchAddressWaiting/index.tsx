@@ -14,6 +14,7 @@ import { apisWalletConnect } from '@/core/apis';
 import { View } from 'react-native';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface ApprovalParams {
   address: string;
@@ -147,11 +148,11 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
               //   trigger: params?.$ctx?.ga?.trigger || '',
               // });
             }
-            // matomoRequestEvent({
-            //   category: 'Transaction',
-            //   action: 'Submit',
-            //   label: account.brandName,
-            // });
+            matomoRequestEvent({
+              category: 'Transaction',
+              action: 'Submit',
+              label: account.brandName,
+            });
             isSignTriggered = true;
           }
           if (isText && !isSignTriggered) {

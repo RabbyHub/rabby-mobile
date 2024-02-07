@@ -70,6 +70,7 @@ import { TxTypeComponent } from './TxTypeComponent';
 import { normalizeTxParams } from './util';
 import { getStyles } from './style';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -661,11 +662,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     //   trigger: params?.$ctx?.ga?.trigger || '',
     // });
 
-    // matomoRequestEvent({
-    //   category: 'Transaction',
-    //   action: 'Submit',
-    //   label: currentAccount.brandName,
-    // });
+    matomoRequestEvent({
+      category: 'Transaction',
+      action: 'Submit',
+      label: currentAccount.brandName,
+    });
     resolveApproval({
       ...transaction,
       nonce: realNonce || tx.nonce,
@@ -840,11 +841,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       //   trigger: params?.$ctx?.ga?.trigger || '',
       // });
 
-      // matomoRequestEvent({
-      //   category: 'Transaction',
-      //   action: 'init',
-      //   label: currentAccount.brandName,
-      // });
+      matomoRequestEvent({
+        category: 'Transaction',
+        action: 'init',
+        label: currentAccount.brandName,
+      });
 
       checkCanProcess();
       const lastTimeGas: ChainGas | null =

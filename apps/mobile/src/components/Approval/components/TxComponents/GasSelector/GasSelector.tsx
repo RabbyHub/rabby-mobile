@@ -38,6 +38,7 @@ import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -302,11 +303,11 @@ const GasSelector = ({
     setSelectedGas(rawSelectedGas);
     setGasLimit(Number(gasLimit));
     setCustomNonce(Number(nonce));
-    // matomoRequestEvent({
-    //   category: 'Transaction',
-    //   action: 'EditGas',
-    //   label: chain?.serverId,
-    // });
+    matomoRequestEvent({
+      category: 'Transaction',
+      action: 'EditGas',
+      label: chain?.serverId,
+    });
   };
 
   const panelSelection = (e, gas: GasLevel) => {
