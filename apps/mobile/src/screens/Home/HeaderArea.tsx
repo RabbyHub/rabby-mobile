@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, Platform } from 'react-native';
 import {
   RcIconHeaderSettings,
   RcIconHeaderRightArrow,
@@ -249,7 +249,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       height: 90,
       paddingHorizontal: 20,
       marginTop: 0,
-      paddingTop: 28,
+      paddingTop: Platform.OS === 'android' ? 20 : 28,
       backgroundColor: colors['neutral-bg-1'],
     },
     usdText: {
