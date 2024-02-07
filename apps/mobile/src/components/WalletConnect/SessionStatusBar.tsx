@@ -106,7 +106,7 @@ export const SessionStatusBar: React.FC<Props> = ({
       </View>
       <TouchableOpacity onPress={handleButton}>
         <Text style={[styles.text, styles.underline]}>
-          {tipStatus === 'CONNECTED' ? 'Disconnect' : 'Connect'}
+          {tipStatus === 'DISCONNECTED' ? 'Connect' : 'Disconnect'}
         </Text>
       </TouchableOpacity>
     </View>

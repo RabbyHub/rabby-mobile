@@ -5,6 +5,23 @@ import React from 'react';
 
 const { isSameAddress } = addressUtils;
 
+const listeners = new Map<string, (data: any) => void>();
+
+const handleGlobalSessionChange = (data: {
+  chainId?: number;
+  address: string;
+  brandName: string;
+}) => {
+  listeners.forEach(listener => {
+    listener(data);
+  });
+};
+
+eventBus.addListener(
+  EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
+  handleGlobalSessionChange,
+);
+
 /**
  * @param account
  */
@@ -28,16 +45,13 @@ export const useSessionChainId = (
       }
     };
 
-    eventBus.addListener(
-      EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
+    listeners.set(
+      `${account?.address}|${account?.brandName}`,
       handleSessionChange,
     );
 
     return () => {
-      eventBus.removeListener(
-        EVENTS.WALLETCONNECT.SESSION_ACCOUNT_CHANGED,
-        handleSessionChange,
-      );
+      listeners.delete(`${account?.address}|${account?.brandName}`);
     };
   }, [account, pendingConnect]);
 
