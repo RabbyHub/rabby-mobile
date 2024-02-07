@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
@@ -97,7 +97,6 @@ export default function ToAddressControl({
         hasError={!!errors.to}
         inputProps={{
           ...inputProps,
-          style: [styles.inputComp, inputProps?.style],
           numberOfLines: 2,
           multiline: true,
           value: formValues.to,
@@ -236,16 +235,15 @@ const getStyles = createGetStyles(colors => {
       height: 64,
     },
 
-    inputComp: {
-      // paddingTop: Platform.OS === 'ios' ? 12 : 12,
-      paddingHorizontal: 12,
-      // ...makeDebugBorder(),
-    },
-
     input: {
       backgroundColor: colors['neutral-card2'],
       width: '100%',
       paddingRight: 8,
+      // ...makeDebugBorder('red'),
+      paddingTop: Platform.OS === 'ios' ? 12 : 0,
+      paddingHorizontal: 12,
+      // flexDirection: 'row',
+      // alignItems: 'center',
     },
 
     extraView: {
