@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { formatAddressToShow } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import { splitNumberByStep } from '@/utils/number';
+import useCurrentBalance from '@/hooks/useCurrentBalance';
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -52,11 +53,12 @@ export default function FromAddressInfo({
   const styles = getStyles(colors);
 
   const { currentAccount } = useCurrentAccount();
+  const { balance } = useCurrentBalance(currentAccount?.address);
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
   const usdValue = useMemo(() => {
-    return `$${splitNumberByStep(currentAccount?.balance?.toFixed(2) || 0)}`;
-  }, [currentAccount]);
+    return `$${splitNumberByStep(balance?.toFixed(2) || 0)}`;
+  }, [balance]);
 
   if (!RcWalletIcon) {
     console.warn('[FromAddressInfo] RcWalletIcon should not be null');
