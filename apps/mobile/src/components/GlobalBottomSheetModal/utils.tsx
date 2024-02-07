@@ -11,6 +11,7 @@ import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
+import SelectAccountInner from '../CommonPopup/SelectAccount';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -20,6 +21,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: ['80%'],
   [MODAL_NAMES.CANCEL_CONNECT]: [244],
   [MODAL_NAMES.SELECT_CHAIN]: ['80%'],
+  [MODAL_NAMES.SWITCH_ACCOUNT]: ['60%'],
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
@@ -43,6 +45,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SWITCH_CHAIN]: SwitchChain,
   [MODAL_NAMES.CANCEL_CONNECT]: CancelConnect,
   [MODAL_NAMES.SELECT_CHAIN]: SelectChain,
+  [MODAL_NAMES.SWITCH_ACCOUNT]: SelectAccountInner,
   [MODAL_NAMES.SIMPLE_CONFIRM]: SimpleConfirmInner,
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,

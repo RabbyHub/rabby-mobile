@@ -36,6 +36,8 @@ import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle'
 import { OpenedDappBottomSheetModal } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -212,12 +214,18 @@ export function OpenedDappWebViewStub() {
                       },
                     ]}
                     onPress={() => {
-                      navigate(RootNames.StackAddress, {
-                        screen: RootNames.CurrentAddress,
-                        params: {
-                          backToDappOnClose: activeDapp?.origin,
+                      // navigate(RootNames.StackAddress, {
+                      //   screen: RootNames.CurrentAddress,
+                      //   params: {
+                      //     backToDappOnClose: activeDapp?.origin,
+                      //   },
+                      // });
+                      createGlobalBottomSheetModal({
+                        name: MODAL_NAMES.SWITCH_ACCOUNT,
+                        onConfirm: () => {
+                          toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
                         },
-                      });
+                      })
 
                       hideDappSheetModal();
                     }}>
