@@ -44,7 +44,7 @@ export const PortfolioHeader = ({
             : colors['blue-default'],
         },
       ]),
-    [data, colors],
+    [data, colors, styles.tokenRowChange],
   );
 
   return (
@@ -343,14 +343,14 @@ const getStyle = (colors: AppColorsVariants) =>
       marginTop: 18,
     },
     tokenListHeader: {
-      flexBasis: '40%',
+      flexBasis: '35%',
       flexGrow: 1,
       fontSize: 12,
       fontWeight: '400',
       color: colors['neutral-foot'],
     },
     tokenListCol: {
-      flexBasis: '40%',
+      flexBasis: '35%',
       flexGrow: 1,
       fontSize: 13,
       fontWeight: '500',
@@ -370,7 +370,7 @@ const getStyle = (colors: AppColorsVariants) =>
       flexShrink: 1,
     },
     alignRight: {
-      flexBasis: '20%',
+      flexBasis: '30%',
       textAlign: 'right',
     },
     flexCenter: {
