@@ -3,11 +3,14 @@ import RootScreenContainer from '@/components/ScreenContainer/RootScreenContaine
 import { RootNames } from '@/constant/layout';
 import { contactService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { useIsFocused, useNavigationState } from '@react-navigation/native';
-import React, { useRef } from 'react';
+import {
+  useIsFocused,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
+import React from 'react';
 import {
   Keyboard,
-  ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -15,16 +18,19 @@ import {
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { navigate } from '@/utils/navigation';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { RootStackParamsList } from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { safeOffHeader } = useSafeSizes();
+  const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
 
   const styles = React.useMemo(
     () =>
@@ -82,10 +88,19 @@ export const ImportSuccessScreen = () => {
       alias: aliasName || '',
     });
     Keyboard.dismiss();
-    navigate(RootNames.StackRoot, {
-      screen: RootNames.Home,
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: RootNames.StackRoot,
+          params: {
+            screen: RootNames.Home,
+          },
+        },
+      ],
     });
-  }, [aliasName, state.address]);
+  }, [aliasName, navigation, state.address]);
 
   const isFocus = useIsFocused();
 
