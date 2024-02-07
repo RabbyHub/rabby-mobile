@@ -104,27 +104,27 @@ export default function ToAddressControl({
         }}
       />
       {/* extra info area */}
-      <View style={styles.extraView}>
-        {errors.to ? (
+      {errors.to ? (
+        <View style={styles.extraView}>
           <Text style={styles.tipError}>{errors.to}</Text>
-        ) : (
-          toAddressIsValid &&
-          !toAddressInContactBook && (
+        </View>
+      ) : (
+        toAddressIsValid &&
+        !toAddressInContactBook && (
+          <TouchableView
+            onPress={() => {
+              putScreenState({ addressToAddAsContacts: formValues.to });
+            }}
+            style={styles.extraView}>
             <Text style={styles.tipNoContact}>
               <Trans i18nKey="page.sendToken.addressNotInContract" t={t}>
                 Not on address list.{' '}
-                <Text
-                  onPress={() => {
-                    putScreenState({ addressToAddAsContacts: formValues.to });
-                  }}
-                  style={styles.textAddToContact}>
-                  Add to contacts
-                </Text>
+                <Text style={styles.textAddToContact}>Add to contacts</Text>
               </Trans>
             </Text>
-          )
-        )}
-      </View>
+          </TouchableView>
+        )
+      )}
 
       <ModalEditContact
         address={addressToEditAlias || ''}
