@@ -4,8 +4,9 @@ import { transactionHistoryService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { Spin } from '@/screens/TransactionRecord/components/Spin';
+import { useFocusEffect } from '@react-navigation/native';
 import { useInterval, useRequest } from 'ahooks';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export const PendingTxCount = () => {
@@ -26,6 +27,12 @@ export const PendingTxCount = () => {
   useInterval(() => {
     runGetPendingCount();
   }, 5000);
+
+  useFocusEffect(
+    useCallback(() => {
+      runGetPendingCount();
+    }, [runGetPendingCount]),
+  );
 
   return count ? (
     <View style={styles.container}>
