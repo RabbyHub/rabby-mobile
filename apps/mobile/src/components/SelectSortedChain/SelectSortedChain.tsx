@@ -123,6 +123,8 @@ export default function SelectSortedChain({
             style={styles.innerBlock}
             matteredList={matteredList}
             unmatteredList={unmatteredList}
+            value={value}
+            onChange={onChange}
           />
         </View>
       )}
