@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '@/hooks/theme';
@@ -119,6 +119,8 @@ const ClaimItem: React.FC<ClaimItemProps> = props => {
     }
   }, [disabled, props]);
 
+  const [visible, setVisible] = useState(false);
+
   return (
     <View
       style={StyleSheet.flatten([
@@ -127,29 +129,41 @@ const ClaimItem: React.FC<ClaimItemProps> = props => {
       ])}>
       <View style={styles.topContainer}>
         <Text style={styles.titleText}>{props.title}</Text>
-        <Tip content={'No points to be claimed now'}>
-          <Button
-            title={`${t('page.rabbyPoints.claimItem.claim')} ${
-              props.claimable_points <= 0 || !props.claimable
-                ? ''
-                : props.claimable_points
-            }`}
-            linearGradientProps={{
-              colors: props.claimable
-                ? ['#5CEBFF', '#5C42FF']
-                : [colors['neutral-card2'], colors['neutral-card2']],
-              start: { x: 0.04, y: 0.16 },
-              end: { x: 0.92, y: 1 },
-            }}
-            ViewComponent={props.claimable ? LinearGradient : undefined}
-            buttonStyle={styles.claimButton}
-            onPress={claim}
-            titleStyle={styles.titleStyle}
-            loading={props.claimLoading}
-            disabled={!props.claimable}
-            disabledStyle={styles.disabledBtn}
-            disabledTitleStyle={styles.disabledTitleStyle}
-          />
+        <Tip
+          content={'No points to be claimed now'}
+          isVisible={visible}
+          onClose={React.useCallback(() => {
+            setVisible(false);
+          }, [])}>
+          <Pressable
+            onPress={React.useCallback(() => {
+              if (disabled) {
+                setVisible(true);
+              }
+            }, [disabled])}>
+            <Button
+              title={`${t('page.rabbyPoints.claimItem.claim')} ${
+                props.claimable_points <= 0 || !props.claimable
+                  ? ''
+                  : props.claimable_points
+              }`}
+              linearGradientProps={{
+                colors: props.claimable
+                  ? ['#5CEBFF', '#5C42FF']
+                  : [colors['neutral-card2'], colors['neutral-card2']],
+                start: { x: 0.04, y: 0.16 },
+                end: { x: 0.92, y: 1 },
+              }}
+              ViewComponent={props.claimable ? LinearGradient : undefined}
+              buttonStyle={styles.claimButton}
+              onPress={claim}
+              titleStyle={styles.titleStyle}
+              loading={props.claimLoading}
+              disabled={!props.claimable}
+              disabledStyle={styles.disabledBtn}
+              disabledTitleStyle={styles.disabledTitleStyle}
+            />
+          </Pressable>
         </Tip>
       </View>
       <Text style={styles.descriptionText}>{props.description}</Text>

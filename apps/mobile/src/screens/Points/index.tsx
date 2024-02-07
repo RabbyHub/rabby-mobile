@@ -41,6 +41,10 @@ export const PointScreen = () => {
   >({});
 
   const { currentAccount: account } = useCurrentAccount();
+  const resetState = React.useCallback(() => {
+    setClaimedIds([]);
+    setCurrentUserCode(undefined);
+  }, []);
 
   const {
     signature,
@@ -151,6 +155,7 @@ export const PointScreen = () => {
             return e + points;
           });
           refreshUserPoints();
+          refreshActivities();
           setClaimedIds(e =>
             e.includes(campaign_id) ? e : [...e, campaign_id],
           );
@@ -161,7 +166,13 @@ export const PointScreen = () => {
         }
       }
     },
-    [account?.address, signature, claimItemLoading, refreshUserPoints],
+    [
+      account?.address,
+      signature,
+      claimItemLoading,
+      refreshUserPoints,
+      refreshActivities,
+    ],
   );
 
   const setReferralCode = React.useCallback(
@@ -195,6 +206,12 @@ export const PointScreen = () => {
   const focused = useIsFocused();
 
   const refreshInitRef = useRef(false);
+
+  useEffect(() => {
+    if (!focused) {
+      resetState();
+    }
+  }, [focused, resetState]);
 
   useEffect(() => {
     if (!focused) {
