@@ -1,16 +1,16 @@
+import React from 'react';
+
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
-import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { DappIcon } from './DappIcon';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { makeTriangleStyle } from '@/utils/styles';
+import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
 import { formatDappOriginToShow } from '@/utils/url';
 import { DappCardListBy } from './DappCard';
 import { useDapps } from '@/hooks/useDapps';
-import { dappService } from '@/core/services';
 import { apisDapp } from '@/core/apis';
 
 const NUM_OF_LINES = 3;
@@ -111,7 +111,7 @@ export const DappCardInWebViewNav = ({
   );
 };
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const getStyles = createGetStyles(colors =>
   StyleSheet.create({
     dappCard: {
       backgroundColor: colors['neutral-card-1'],
@@ -212,4 +212,5 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       height: 32,
       borderRadius: 16,
     },
-  });
+  }),
+);
