@@ -4,8 +4,14 @@ import { RootNames } from '@/constant/layout';
 import { contactService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
 import { useIsFocused, useNavigationState } from '@react-navigation/native';
-import React from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import React, { useRef } from 'react';
+import {
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { AddressInput } from './components/AddressInput';
 import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
@@ -113,25 +119,24 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <View
-        style={styles.keyboardView}
-        // enableOnAndroid
-        // extraHeight={150}
-        // scrollEnabled={false}
-        // keyboardOpeningTime={0}
-      >
-        <View style={styles.titleContainer}>
-          <ImportSuccessSVG />
-          <Text style={styles.title}>Added successfully</Text>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+        }}>
+        <View style={styles.keyboardView}>
+          <View style={styles.titleContainer}>
+            <ImportSuccessSVG />
+            <Text style={styles.title}>Added successfully</Text>
+          </View>
+          <View style={styles.inputContainer}>
+            <AddressInput
+              aliasName={aliasName}
+              address={state.address}
+              onChange={setAliasName}
+            />
+          </View>
         </View>
-        <View style={styles.inputContainer}>
-          <AddressInput
-            aliasName={aliasName}
-            address={state.address}
-            onChange={setAliasName}
-          />
-        </View>
-      </View>
+      </TouchableWithoutFeedback>
       <FooterButton title="Done" onPress={handleDone} />
       <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
