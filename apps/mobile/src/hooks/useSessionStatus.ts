@@ -8,6 +8,23 @@ const { isSameAddress } = addressUtils;
 
 type Status = keyof typeof WALLETCONNECT_SESSION_STATUS_MAP;
 
+const listeners = new Map<string, (data: any) => void>();
+
+const handleGlobalStatusChange = (data: {
+  address: string;
+  brandName: string;
+  status: Status;
+}) => {
+  listeners.forEach(listener => {
+    listener(data);
+  });
+};
+
+eventBus.addListener(
+  EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+  handleGlobalStatusChange,
+);
+
 /**
  * WalletConnect connect status
  * if account is not provided, it will return the status no matter which account is connected
@@ -68,16 +85,13 @@ export const useSessionStatus = (
       setCurrAccount(data);
     };
 
-    eventBus.addListener(
-      EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
+    listeners.set(
+      `${account?.address}|${account?.brandName}`,
       handleSessionChange,
     );
 
     return () => {
-      eventBus.removeListener(
-        EVENTS.WALLETCONNECT.SESSION_STATUS_CHANGED,
-        handleSessionChange,
-      );
+      listeners.delete(`${account?.address}|${account?.brandName}`);
     };
   }, [account, pendingConnect]);
 
