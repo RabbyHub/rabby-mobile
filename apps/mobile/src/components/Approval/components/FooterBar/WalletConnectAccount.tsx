@@ -105,23 +105,23 @@ const TipContent = ({
           </Text>
         </View>
       );
-    case 'CHAIN_ERROR':
-      return (
-        <View style={styles.tipConnect}>
-          <Text style={styles.accountErrorText}>
-            {t('page.signFooterBar.walletConnect.connectedButCantSign')}
-          </Text>
-          <Text
-            style={StyleSheet.flatten([
-              styles.accountErrorText,
-              styles.accountErrorText2,
-            ])}>
-            {t('page.signFooterBar.walletConnect.switchChainAlert', {
-              chain: chain?.name,
-            })}
-          </Text>
-        </View>
-      );
+    // case 'CHAIN_ERROR':
+    //   return (
+    //     <View style={styles.tipConnect}>
+    //       <Text style={styles.accountErrorText}>
+    //         {t('page.signFooterBar.walletConnect.connectedButCantSign')}
+    //       </Text>
+    //       <Text
+    //         style={StyleSheet.flatten([
+    //           styles.accountErrorText,
+    //           styles.accountErrorText2,
+    //         ])}>
+    //         {t('page.signFooterBar.walletConnect.switchChainAlert', {
+    //           chain: chain?.name,
+    //         })}
+    //       </Text>
+    //     </View>
+    //   );
     case 'DISCONNECTED':
       return (
         <Text style={styles.disconnectText}>
@@ -170,9 +170,9 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   });
 
   const tipStatus = React.useMemo(() => {
-    if (chain && chain.id !== sessionChainId && status === 'CONNECTED') {
-      return 'CHAIN_ERROR';
-    }
+    // if (chain && chain.id !== sessionChainId && status === 'CONNECTED') {
+    //   return 'CHAIN_ERROR';
+    // }
     switch (status) {
       case 'ACCOUNT_ERROR':
         return 'ACCOUNT_ERROR';
@@ -222,13 +222,17 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
       // });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
       activePopup('SWITCH_ADDRESS');
-    } else if (tipStatus === 'CHAIN_ERROR') {
-      activePopup('SWITCH_CHAIN');
     }
+    // else if (tipStatus === 'CHAIN_ERROR') {
+    //   activePopup('SWITCH_CHAIN');
+    // }
   };
 
   React.useEffect(() => {
-    if (tipStatus === 'ACCOUNT_ERROR' || tipStatus === 'CHAIN_ERROR') {
+    if (
+      tipStatus === 'ACCOUNT_ERROR'
+      // || tipStatus === 'CHAIN_ERROR'
+    ) {
       setVisible(false);
     } else if (tipStatus === 'CONNECTED') {
       // toastHiddenRef.current?.();
@@ -278,8 +282,8 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
         <Text style={styles.text}>
           {tipStatus === 'ACCOUNT_ERROR' &&
             t('page.signFooterBar.walletConnect.howToSwitch')}
-          {tipStatus === 'CHAIN_ERROR' &&
-            t('page.signFooterBar.walletConnect.howToSwitch')}
+          {/* {tipStatus === 'CHAIN_ERROR' &&
+            t('page.signFooterBar.walletConnect.howToSwitch')} */}
         </Text>
       </TouchableOpacity>
     </CommonAccount>
