@@ -75,18 +75,21 @@ export default function BottomArea() {
       success: false,
       content: t('page.sendToken.whitelistAlert__notWhitelisted'),
       inlineIconColor: colors['red-dark'],
-      ...!isAndroid && {
+      ...(!isAndroid && {
         content: (
           <>
             <Text>
-              <RcIconUnCheck color={colors['red-dark']} style={{ marginRight: 6 }} />
+              <RcIconUnCheck
+                color={colors['red-dark']}
+                style={{ marginRight: 6 }}
+              />
               The address is not whitelisted. {'\n'}
             </Text>
             <Text>I agree to grant temporary permission to transfer.</Text>
           </>
         ),
-        inlineIconColor: ''
-      }
+        inlineIconColor: '',
+      }),
     };
   }, [temporaryGrant, toAddressInWhitelist, whitelistEnabled, t, colors]);
 
@@ -195,6 +198,9 @@ const getStyles = createGetStyles(colors => {
       width: '100%',
       height: 52,
       borderRadius: 6,
+      ...(!isAndroid && {
+        marginBottom: 16,
+      }),
     },
 
     whitelistAlertContentContainer: {

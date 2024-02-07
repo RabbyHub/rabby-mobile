@@ -19,7 +19,6 @@ import { useAccountsToDisplay } from '@/hooks/accountToDisplay';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import AccountCard from './components/AccountCard';
-import { useSwitch } from '@/hooks/useSwitch';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -34,13 +33,13 @@ import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 export interface SelectAddressProps {
   visible: boolean;
   onConfirm?(account: UIContactBookItem): void;
-  onCancel?(): void;
+  onClose?(options: { behavior: 'canceled' | 'confirmed' }): void;
 }
 
 export function SelectAddressSheetModal({
   visible,
   onConfirm,
-  onCancel,
+  onClose,
 }: React.PropsWithoutRef<RNViewProps & SelectAddressProps>) {
   const { t } = useTranslation();
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
@@ -113,6 +112,7 @@ export function SelectAddressSheetModal({
                   try {
                     await setWhitelist(localWhiteList);
                     setEditing(!isEditing);
+                    onClose?.({ behavior: 'confirmed' });
                   } finally {
                     clearConfirm();
                   }
@@ -128,15 +128,15 @@ export function SelectAddressSheetModal({
     } else {
       setEditing(!isEditing);
     }
-  }, [t, isEditing, setEditing, setWhitelist, localWhiteList]);
+  }, [t, isEditing, setEditing, setWhitelist, localWhiteList, onClose]);
 
   const onModalDismiss = useCallback(() => {
     if (isEditing) {
       setIsConfirmDiscard(true);
     } else {
-      onCancel?.();
+      onClose?.({ behavior: 'canceled' });
     }
-  }, [isEditing, onCancel]);
+  }, [isEditing, onClose]);
   const onCancelDiscard = useCallback(() => {
     setIsConfirmDiscard(false);
   }, []);
@@ -144,8 +144,8 @@ export function SelectAddressSheetModal({
     setIsConfirmDiscard(false);
     setEditing(false);
 
-    onCancel?.();
-  }, [setEditing, onCancel]);
+    onClose?.({ behavior: 'canceled' });
+  }, [setEditing, onClose]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
