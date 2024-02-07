@@ -176,6 +176,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
+      maxWidth: '70%',
     },
 
     sectionTitle: {
@@ -191,7 +192,7 @@ const getStyles = createGetStyles(colors => {
       borderStyle: 'solid',
       borderColor: colors['blue-default'],
 
-      paddingHorizontal: 0,
+      paddingHorizontal: 8,
       height: '100%',
       minHeight: 20,
 
@@ -212,7 +213,7 @@ const getStyles = createGetStyles(colors => {
       color: colors['blue-default'],
       fontSize: 12,
       fontWeight: 'normal',
-      maxWidth: '70%',
+      maxWidth: '100%',
     },
 
     entryWhitelist: {
