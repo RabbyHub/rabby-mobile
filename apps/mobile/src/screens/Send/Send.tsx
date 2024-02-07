@@ -34,7 +34,6 @@ import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 function SendScreen(): JSX.Element {
@@ -219,6 +218,7 @@ function SendScreen(): JSX.Element {
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
+        resetScreenState();
         navigation.push(RootNames.StackRoot, {
           screen: RootNames.Home,
         });
@@ -229,7 +229,7 @@ function SendScreen(): JSX.Element {
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, navigation]);
+  }, [sendTokenEvents, resetScreenState, navigation]);
 
   useLayoutEffect(() => {
     return () => {
