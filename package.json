@@ -24,6 +24,7 @@
   },
   "scripts": {
     "prepare": "husky install",
+    "install-hook": "husky install",
     "build": "tsc --build tsconfig.build.json --verbose",
     "build:clean": "rimraf dist '**/*.tsbuildinfo' && yarn build",
     "build:docs": "yarn workspaces foreach --parallel --interlaced --verbose run build:docs",
@@ -39,7 +40,7 @@
     "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
     "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
     "postinstall": "yarn build && yarn apps/mobile postinstall",
-    "setup": "yarn install",
+    "setup": "yarn install-hook && yarn install",
     "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
     "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
     "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
