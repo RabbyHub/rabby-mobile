@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { AppBottomSheetModal } from '../customized/BottomSheet';
@@ -16,6 +17,12 @@ import AccountCard from './components/AccountCard';
 import { useSwitch } from '@/hooks/useSwitch';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '../GlobalBottomSheetModal';
+import FooterComponentForConfirm from '../customized/FooterComponentForConfirm';
+import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 
 export interface SelectAddressProps {
   visible: boolean;
@@ -30,6 +37,7 @@ export function SelectAddressSheetModal({
   onConfirm,
   onCancel,
 }: React.PropsWithoutRef<RNViewProps & SelectAddressProps>) {
+  const { t } = useTranslation();
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
 
   useEffect(() => {
@@ -73,6 +81,49 @@ export function SelectAddressSheetModal({
     });
   }, [whitelistEnabled, accountsList, whitelist]);
 
+  const confirmIdRef = useRef<string | null>(null);
+  const onPressButton = useCallback(async () => {
+    if (isEditing) {
+      if (confirmIdRef.current) return;
+
+      const clearConfirm = () => {
+        if (confirmIdRef.current) {
+          removeGlobalBottomSheetModal(confirmIdRef.current);
+          confirmIdRef.current = null;
+        }
+      };
+
+      confirmIdRef.current = createGlobalBottomSheetModal({
+        name: MODAL_NAMES.SIMPLE_CONFIRM,
+        title: t('component.Contact.ListModal.authModal.title'),
+        bottomSheetModalProps: {
+          footerComponent: () => {
+            return (
+              <FooterComponentForConfirm
+                confirmButtonProps={{
+                  type: 'primary',
+                }}
+                onConfirm={async () => {
+                  try {
+                    await setWhitelist(localWhiteList);
+                    toggleEditing(!isEditing);
+                  } finally {
+                    clearConfirm();
+                  }
+                }}
+                onCancel={() => {
+                  clearConfirm();
+                }}
+              />
+            );
+          },
+        },
+      });
+    } else {
+      toggleEditing(!isEditing);
+    }
+  }, [t, isEditing, toggleEditing, setWhitelist, localWhiteList]);
+
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
       return !visible;
@@ -96,15 +147,7 @@ export function SelectAddressSheetModal({
                 ? `Save to Whitelist (${localWhiteList.length})`
                 : 'Edit Whitelist'
             }
-            onPress={async () => {
-              if (isEditing) {
-                try {
-                  await setWhitelist(localWhiteList);
-                } finally {
-                }
-              }
-              toggleEditing(!isEditing);
-            }}
+            onPress={onPressButton}
           />
         </View>
       )}
@@ -112,12 +155,13 @@ export function SelectAddressSheetModal({
       <BottomSheetView style={[styles.container]}>
         <BottomSheetHandlableView style={[styles.titleArea, styles.innerBlock]}>
           <Text style={[styles.modalTitle, styles.modalMainTitle]}>
-            Select Address
+            {t('component.Contact.ListModal.title')}
           </Text>
           <View>
             <Text style={[styles.modalTitle, styles.modalSubTitle]}>
-              You can only send to the addresses in the whitelist within Rabby
-              once enabled. You can disable it in "Settings".
+              {whitelistEnabled
+                ? t('component.Contact.ListModal.whitelistEnabled')
+                : t('component.Contact.ListModal.whitelistDisabled')}
             </Text>
           </View>
         </BottomSheetHandlableView>
