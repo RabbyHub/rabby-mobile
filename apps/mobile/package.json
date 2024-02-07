@@ -124,7 +124,7 @@
     "react-native-vision-camera": "^3.6.17",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "^13.6.3",
-    "react-use": "^17.4.2",
+    "react-use": "17.4.2",
     "readable-stream": "3.6.2",
     "semver": "^7.5.4",
     "styled-components": "^6.1.1",
