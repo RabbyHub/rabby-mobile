@@ -64,6 +64,7 @@ function makeDefaultToken(): TokenItem {
 export const enum SendTokenEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
   'ON_SEND' = 'ON_SEND',
+  'ON_SIGNED_SUCCESS' = 'ON_SIGNED_SUCCESS',
 }
 
 const sendTokenScreenChainTokenAtom = atom({
@@ -488,6 +489,9 @@ export function useSendTokenForm() {
             },
             INTERNAL_REQUEST_SESSION,
           )
+          .then(() => {
+            sendTokenEventsRef.current.emit(SendTokenEvents.ON_SIGNED_SUCCESS);
+          })
           .catch(err => {
             console.error(err);
             // toast.info(err.message);
@@ -1045,7 +1049,7 @@ export function useSendTokenInternalContext() {
   return React.useContext(SendTokenInternalContext);
 }
 
-function subscribeEvent<T extends SendTokenEvents>(
+export function subscribeEvent<T extends SendTokenEvents>(
   events: EventEmitter,
   type: T,
   cb: (payload: any) => void,
