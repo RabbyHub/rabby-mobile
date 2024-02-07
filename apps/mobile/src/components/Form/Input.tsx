@@ -68,7 +68,7 @@ export const FormInput = React.forwardRef<
         <JSXComponent
           {...inputProps}
           ref={ref as any}
-          style={[styles.input, inputStyle]}
+          style={[styles.input, inputStyle, inputProps?.style]}
         />
       </View>
     );

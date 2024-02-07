@@ -9,7 +9,7 @@ import {
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
@@ -34,7 +34,6 @@ import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 function SendScreen(): JSX.Element {
@@ -219,9 +218,15 @@ function SendScreen(): JSX.Element {
       sendTokenEvents,
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
-        navigation.push(RootNames.StackRoot, {
-          screen: RootNames.Home,
-        });
+        resetScreenState();
+        // navigation.push(RootNames.StackRoot, {
+        //   screen: RootNames.Home,
+        // });
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
       },
       { disposeRets },
     );
@@ -229,7 +234,7 @@ function SendScreen(): JSX.Element {
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [sendTokenEvents, navigation]);
+  }, [sendTokenEvents, resetScreenState, navigation]);
 
   useLayoutEffect(() => {
     return () => {
