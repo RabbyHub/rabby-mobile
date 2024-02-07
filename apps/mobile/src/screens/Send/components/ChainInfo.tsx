@@ -31,6 +31,7 @@ const getStyles = createGetStyles(colors => {
 
     left: {
       flexDirection: 'row',
+      alignItems: 'center',
     },
     chainName: {
       color: colors['neutral-title1'],
