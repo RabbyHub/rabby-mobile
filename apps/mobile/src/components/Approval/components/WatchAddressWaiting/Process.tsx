@@ -18,7 +18,7 @@ import {
 } from '../Popup/ApprovalPopupContainer';
 
 type Valueof<T> = T[keyof T];
-const INIT_SENDING_COUNTER = 60;
+const INIT_SENDING_COUNTER = 120;
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
