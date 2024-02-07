@@ -69,8 +69,12 @@ export default function ToAddressControl({
                 putScreenState({ addressToEditAlias: formValues.to });
               }}>
               <RcEditPen style={styles.aliasEditIcon} />
-              {/* ellipse it */}
-              <Text style={styles.aliasLabel}>{contactInfo?.name}</Text>
+              <Text
+                style={styles.aliasLabel}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {contactInfo?.name}
+              </Text>
             </TouchableView>
           )}
 
@@ -187,7 +191,7 @@ const getStyles = createGetStyles(colors => {
       borderStyle: 'solid',
       borderColor: colors['blue-default'],
 
-      paddingHorizontal: 8,
+      paddingHorizontal: 0,
       height: '100%',
       minHeight: 20,
 
@@ -208,6 +212,7 @@ const getStyles = createGetStyles(colors => {
       color: colors['blue-default'],
       fontSize: 12,
       fontWeight: 'normal',
+      maxWidth: '70%',
     },
 
     entryWhitelist: {
