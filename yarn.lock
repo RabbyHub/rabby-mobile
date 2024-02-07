@@ -8148,9 +8148,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@walletconnect/jsonrpc-utils@npm:1.0.8, @walletconnect/jsonrpc-utils@npm:^1.0.6, @walletconnect/jsonrpc-utils@npm:^1.0.8":
+"@walletconnect/jsonrpc-utils@npm:1.0.8, @walletconnect/jsonrpc-utils@npm:^1.0.3":
   version: 1.0.8
-  resolution: "@walletconnect/jsonrpc-utils@npm:1.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40walletconnect%2Fjsonrpc-utils%2F-%2Fjsonrpc-utils-1.0.8.tgz"
+  resolution: "@walletconnect/jsonrpc-utils@npm:1.0.8"
   dependencies:
     "@walletconnect/environment": ^1.0.1
     "@walletconnect/jsonrpc-types": ^1.0.3
@@ -8159,9 +8159,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@walletconnect/jsonrpc-utils@npm:^1.0.3":
+"@walletconnect/jsonrpc-utils@npm:^1.0.6, @walletconnect/jsonrpc-utils@npm:^1.0.8":
   version: 1.0.8
-  resolution: "@walletconnect/jsonrpc-utils@npm:1.0.8"
+  resolution: "@walletconnect/jsonrpc-utils@npm:1.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40walletconnect%2Fjsonrpc-utils%2F-%2Fjsonrpc-utils-1.0.8.tgz"
   dependencies:
     "@walletconnect/environment": ^1.0.1
     "@walletconnect/jsonrpc-types": ^1.0.3
