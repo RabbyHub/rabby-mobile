@@ -6,6 +6,7 @@ import { BroadcastEvent } from '@/constant/event';
 import { CHAINS_ENUM } from '@debank/common';
 import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
+import { cached } from '@/utils/cache';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -69,6 +70,9 @@ export const fetchDappInfo = async (origin: string) => {
 
   return res?.[0];
 };
+
+// cache 1 minute
+export const cachedFetchDappInfo = cached(fetchDappInfo, 60 * 1e3);
 
 export const createDappBySession = ({
   origin,

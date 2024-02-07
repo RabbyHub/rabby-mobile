@@ -34,7 +34,11 @@ export const DappCardInWebViewNav = ({
   React.useEffect(() => {
     (async () => {
       if (data.origin && !data.info?.description) {
-        const dappInfo = await apisDapp.fetchDappInfo(data.origin);
+        const dappInfo = await apisDapp.cachedFetchDappInfo(
+          [data.origin],
+          data.origin,
+          false,
+        );
 
         setDescription(dappInfo?.description);
       }
