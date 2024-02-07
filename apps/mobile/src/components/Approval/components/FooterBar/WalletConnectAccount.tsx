@@ -195,7 +195,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   }, [sessionChainId, chain, account]);
 
   const connectWallet = useConnectWallet();
-  const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
+  // const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
 
   const handleButton = () => {
     setAccount({
@@ -206,20 +206,20 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     });
     if (tipStatus === 'DISCONNECTED') {
       connectWallet({ address, brandName });
-      if (toastHiddenRef.current) {
-        toastHiddenRef.current();
-      }
-      toastHiddenRef.current = toastWithIcon(() => (
-        <ActivityIndicator
-          style={{
-            marginRight: 6,
-          }}
-        />
-      ))('Connecting', {
-        duration: 100000,
-        position: toast.positions.CENTER,
-        hideOnPress: false,
-      });
+      // if (toastHiddenRef.current) {
+      //   toastHiddenRef.current();
+      // }
+      // toastHiddenRef.current = toastWithIcon(() => (
+      //   <ActivityIndicator
+      //     style={{
+      //       marginRight: 6,
+      //     }}
+      //   />
+      // ))('Connecting', {
+      //   duration: 100000,
+      //   position: toast.positions.CENTER,
+      //   hideOnPress: false,
+      // });
     } else if (tipStatus === 'ACCOUNT_ERROR') {
       activePopup('SWITCH_ADDRESS');
     } else if (tipStatus === 'CHAIN_ERROR') {
@@ -231,7 +231,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
     if (tipStatus === 'ACCOUNT_ERROR' || tipStatus === 'CHAIN_ERROR') {
       setVisible(false);
     } else if (tipStatus === 'CONNECTED') {
-      toastHiddenRef.current?.();
+      // toastHiddenRef.current?.();
     }
   }, [tipStatus, setVisible]);
 
@@ -240,7 +240,7 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
 
   React.useEffect(() => {
     return () => {
-      toastHiddenRef.current?.();
+      // toastHiddenRef.current?.();
     };
   }, []);
 
