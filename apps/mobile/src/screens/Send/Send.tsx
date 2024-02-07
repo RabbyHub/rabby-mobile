@@ -9,7 +9,7 @@ import {
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
@@ -219,9 +219,14 @@ function SendScreen(): JSX.Element {
       SendTokenEvents.ON_SIGNED_SUCCESS,
       () => {
         resetScreenState();
-        navigation.push(RootNames.StackRoot, {
-          screen: RootNames.Home,
-        });
+        // navigation.push(RootNames.StackRoot, {
+        //   screen: RootNames.Home,
+        // });
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
       },
       { disposeRets },
     );
