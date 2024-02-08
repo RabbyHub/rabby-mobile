@@ -62,7 +62,7 @@ checkout_s3_pub_deployment_params() {
   fi
 }
 
-replace_variables() {
+unix_replace_variables() {
     local input_file="$1"
     local output_file="$2"
     shift 2
