@@ -30,6 +30,7 @@ import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import { PointScreen } from '../Points';
 import { GlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -195,6 +196,8 @@ export default function BottomTabNavigator() {
       {/* <OpenedWebViewsStub /> */}
 
       <GlobalBottomSheetModal />
+
+      <WebViewControlPreload />
     </>
   );
 }

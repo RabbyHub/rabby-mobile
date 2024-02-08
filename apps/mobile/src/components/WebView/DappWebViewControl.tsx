@@ -27,11 +27,7 @@ import { devLog } from '@/utils/logger';
 import { useSheetModal, useSheetModals } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
-import { useSafeSizes } from '@/hooks/useAppLayout';
-import {
-  AppBottomSheetModal,
-  DappNavCardBottomSheetModal,
-} from '../customized/BottomSheet';
+import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
@@ -90,6 +86,10 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => {
 
 type DappWebViewControlProps = {
   dappOrigin: string;
+  /**
+   * @description if embedHtml provided, dappOrigin would be ignored
+   */
+  embedHtml?: string;
   initialUrl?: string;
   onPressMore?: (ctx: { defaultAction: () => void }) => void;
 
@@ -173,6 +173,7 @@ const DappWebViewControl = React.forwardRef<
   (
     {
       dappOrigin,
+      embedHtml,
       initialUrl: _initialUrl,
       onPressMore,
 
@@ -330,6 +331,10 @@ const DappWebViewControl = React.forwardRef<
           ref={webviewRef}
           source={{
             uri: initialUrl,
+            ...(embedHtml && {
+              uri: undefined,
+              html: embedHtml,
+            }),
             // TODO: cusotmize userAgent here
             // 'User-Agent': ''
           }}
@@ -370,6 +375,7 @@ const DappWebViewControl = React.forwardRef<
 
       return webviewNode || node;
     }, [
+      embedHtml,
       webviewProps,
       entryScriptWeb3Loaded,
       fullScript,
