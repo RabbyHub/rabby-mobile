@@ -83,3 +83,6 @@ scripts/deployments/**/*.aab
 **/InpageBridgeWeb3.js
 /android/app/src/main/assets/custom/vconsole.min.js
 /src/**/vconsole.min.js
+
+android/sentry.properties
+ios/sentry.properties

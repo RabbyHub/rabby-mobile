@@ -69,6 +69,7 @@
     "@rematch/core": "^2.2.0",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
+    "@sentry/react-native": "^5.18.0",
     "@types/lodash.debounce": "^4.0.9",
     "@types/pump": "^1.1.3",
     "@types/through2": "^2.0.41",

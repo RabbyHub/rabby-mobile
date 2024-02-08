@@ -6190,6 +6190,216 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sentry-internal/tracing@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry-internal/tracing@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry-internal%2Ftracing%2F-%2Ftracing-7.81.1.tgz"
+  dependencies:
+    "@sentry/core": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  checksum: 7a92250ff6216b9c4ad15f5b2e21f5acc9ced71f704bfabfec76d05e8787ab69fa4ee46805eb7bcbb3ee0288cdb98a0489877f7ab65cc491b47fccbe76248681
+  languageName: node
+  linkType: hard
+
+"@sentry/browser@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/browser@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fbrowser%2F-%2Fbrowser-7.81.1.tgz"
+  dependencies:
+    "@sentry-internal/tracing": 7.81.1
+    "@sentry/core": 7.81.1
+    "@sentry/replay": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  checksum: 5f7ae47f35c9e5cc7e8e6cd97f96adb40612f146024b83465930ce1f31c9a27f63d0735a014b73d4febfb4215736cb98583d5caa440d80754c5701634d905eee
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-darwin@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-darwin@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-darwin%2F-%2Fcli-darwin-2.25.2.tgz"
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-linux-arm64@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-linux-arm64@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-linux-arm64%2F-%2Fcli-linux-arm64-2.25.2.tgz"
+  conditions: (os=linux | os=freebsd) & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-linux-arm@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-linux-arm@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-linux-arm%2F-%2Fcli-linux-arm-2.25.2.tgz"
+  conditions: (os=linux | os=freebsd) & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-linux-i686@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-linux-i686@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-linux-i686%2F-%2Fcli-linux-i686-2.25.2.tgz"
+  conditions: (os=linux | os=freebsd) & (cpu=x86 | cpu=ia32)
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-linux-x64@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-linux-x64@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-linux-x64%2F-%2Fcli-linux-x64-2.25.2.tgz"
+  conditions: (os=linux | os=freebsd) & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-win32-i686@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-win32-i686@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-win32-i686%2F-%2Fcli-win32-i686-2.25.2.tgz"
+  conditions: os=win32 & (cpu=x86 | cpu=ia32)
+  languageName: node
+  linkType: hard
+
+"@sentry/cli-win32-x64@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli-win32-x64@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli-win32-x64%2F-%2Fcli-win32-x64-2.25.2.tgz"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@sentry/cli@npm:2.25.2":
+  version: 2.25.2
+  resolution: "@sentry/cli@npm:2.25.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcli%2F-%2Fcli-2.25.2.tgz"
+  dependencies:
+    "@sentry/cli-darwin": 2.25.2
+    "@sentry/cli-linux-arm": 2.25.2
+    "@sentry/cli-linux-arm64": 2.25.2
+    "@sentry/cli-linux-i686": 2.25.2
+    "@sentry/cli-linux-x64": 2.25.2
+    "@sentry/cli-win32-i686": 2.25.2
+    "@sentry/cli-win32-x64": 2.25.2
+    https-proxy-agent: ^5.0.0
+    node-fetch: ^2.6.7
+    progress: ^2.0.3
+    proxy-from-env: ^1.1.0
+    which: ^2.0.2
+  dependenciesMeta:
+    "@sentry/cli-darwin":
+      optional: true
+    "@sentry/cli-linux-arm":
+      optional: true
+    "@sentry/cli-linux-arm64":
+      optional: true
+    "@sentry/cli-linux-i686":
+      optional: true
+    "@sentry/cli-linux-x64":
+      optional: true
+    "@sentry/cli-win32-i686":
+      optional: true
+    "@sentry/cli-win32-x64":
+      optional: true
+  bin:
+    sentry-cli: bin/sentry-cli
+  checksum: ee3955ae03aeae0efcae9babc5d10cb130f5748865e5d24e51ffd91739287710654017a62326fe2ff1df880d0cc8842af9c1f7e584f0c99a427e893a3311ab48
+  languageName: node
+  linkType: hard
+
+"@sentry/core@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/core@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fcore%2F-%2Fcore-7.81.1.tgz"
+  dependencies:
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  checksum: 9f78797fc612b28b438a3fa72a9cd3c34c90094f322d7a3a0dcb6cb6aea0c222bc4a09a3c444dd399f53601e9d22ee695dfb383be196a18b5168b76312960a25
+  languageName: node
+  linkType: hard
+
+"@sentry/hub@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/hub@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fhub%2F-%2Fhub-7.81.1.tgz"
+  dependencies:
+    "@sentry/core": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  checksum: f05ff0e68c32f509a402aaa1153a56646daf843bf25f64e8da9875cb730ca45cf6abbe97599d3fff1f033f4bf3420b0599881372eec84b6f458963a32c66a2dc
+  languageName: node
+  linkType: hard
+
+"@sentry/integrations@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/integrations@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Fintegrations%2F-%2Fintegrations-7.81.1.tgz"
+  dependencies:
+    "@sentry/core": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+    localforage: ^1.8.1
+  checksum: d59c477890909760ea186a0b2b616f1aa31df9235ae3892afa949e777cbd635a72f9a1f5d4b9b73420d2d9974978fa0e35cc699c69d60e90350b23cde0e1f7eb
+  languageName: node
+  linkType: hard
+
+"@sentry/react-native@npm:^5.18.0":
+  version: 5.18.0
+  resolution: "@sentry/react-native@npm:5.18.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Freact-native%2F-%2Freact-native-5.18.0.tgz"
+  dependencies:
+    "@sentry/browser": 7.81.1
+    "@sentry/cli": 2.25.2
+    "@sentry/core": 7.81.1
+    "@sentry/hub": 7.81.1
+    "@sentry/integrations": 7.81.1
+    "@sentry/react": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  peerDependencies:
+    expo: ">=49.0.0"
+    react: ">=17.0.0"
+    react-native: ">=0.65.0"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  bin:
+    sentry-expo-upload-sourcemaps: scripts/expo-upload-sourcemaps.js
+  checksum: b1e258f091710b2f41c1559731e77b456bdfbe72d846de62744b51ed7b57b302a6a6509b18f6809f3b64a72e1bf72ea82d27ccbc1e3a3c733255106b845ca5a1
+  languageName: node
+  linkType: hard
+
+"@sentry/react@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/react@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Freact%2F-%2Freact-7.81.1.tgz"
+  dependencies:
+    "@sentry/browser": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+    hoist-non-react-statics: ^3.3.2
+  peerDependencies:
+    react: 15.x || 16.x || 17.x || 18.x
+  checksum: a24b33975f6531c1f9eef7b4e32097c1a0e40dc41cc1e8b97f3ca3d485d9d7f7b4e95cf3156ed03490d059d75ca79091fadc904a0b867361abb0e39eca3df531
+  languageName: node
+  linkType: hard
+
+"@sentry/replay@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/replay@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Freplay%2F-%2Freplay-7.81.1.tgz"
+  dependencies:
+    "@sentry-internal/tracing": 7.81.1
+    "@sentry/core": 7.81.1
+    "@sentry/types": 7.81.1
+    "@sentry/utils": 7.81.1
+  checksum: ae8eb01844d0fb636cb614eb66ffcb738624f67f661c4f23efcec1af47f9627bf4a84c26d74c978a447002b2fd57bd8a56f8d0e8c2d70bd08179b12dbfab6fdd
+  languageName: node
+  linkType: hard
+
+"@sentry/types@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/types@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Ftypes%2F-%2Ftypes-7.81.1.tgz"
+  checksum: a3e07ee66a6e75b24837d540a7ec46ac0207f0b948f008d950d5f2619821623ddf1a904d2c2bc59a458b117183ab82e51702fab2ae79f7edb96b6c490f89a731
+  languageName: node
+  linkType: hard
+
+"@sentry/utils@npm:7.81.1":
+  version: 7.81.1
+  resolution: "@sentry/utils@npm:7.81.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sentry%2Futils%2F-%2Futils-7.81.1.tgz"
+  dependencies:
+    "@sentry/types": 7.81.1
+  checksum: c22256122f01147facd7b7728e5ab969f1ec24e207ba59fd9a59cf98fc12b6ffea90a70071b20b54858473cb4f66c9aa5eafa2a6fbfcb82a0f0a0e653a2b3548
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.3":
   version: 4.1.4
   resolution: "@sideway/address@npm:4.1.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40sideway%2Faddress%2F-%2Faddress-4.1.4.tgz"
@@ -17472,6 +17682,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immediate@npm:~3.0.5":
+  version: 3.0.6
+  resolution: "immediate@npm:3.0.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmediate%2F-%2Fimmediate-3.0.6.tgz"
+  checksum: f9b3486477555997657f70318cc8d3416159f208bec4cca3ff3442fd266bc23f50f0c9bd8547e1371a6b5e82b821ec9a7044a4f7b944798b25aa3cc6d5e63e62
+  languageName: node
+  linkType: hard
+
 "immer@npm:^10.0.3":
   version: 10.0.3
   resolution: "immer@npm:10.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmer%2F-%2Fimmer-10.0.3.tgz"
@@ -20854,6 +21071,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lie@npm:3.1.1":
+  version: 3.1.1
+  resolution: "lie@npm:3.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flie%2F-%2Flie-3.1.1.tgz"
+  dependencies:
+    immediate: ~3.0.5
+  checksum: 6da9f2121d2dbd15f1eca44c0c7e211e66a99c7b326ec8312645f3648935bc3a658cf0e9fa7b5f10144d9e2641500b4f55bd32754607c3de945b5f443e50ddd1
+  languageName: node
+  linkType: hard
+
 "lilconfig@npm:3.0.0, lilconfig@npm:^3.0.0":
   version: 3.0.0
   resolution: "lilconfig@npm:3.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flilconfig%2F-%2Flilconfig-3.0.0.tgz"
@@ -20968,6 +21194,15 @@ __metadata:
   version: 3.2.1
   resolution: "loader-utils@npm:3.2.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Floader-utils%2F-%2Floader-utils-3.2.1.tgz"
   checksum: 4e3ea054cdc8be1ab1f1238f49f42fdf0483039eff920fb1d442039f3f0ad4ebd11fb8e584ccdf2cb7e3c56b3d40c1832416e6408a55651b843da288960cc792
+  languageName: node
+  linkType: hard
+
+"localforage@npm:^1.8.1":
+  version: 1.10.0
+  resolution: "localforage@npm:1.10.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flocalforage%2F-%2Flocalforage-1.10.0.tgz"
+  dependencies:
+    lie: 3.1.1
+  checksum: f2978b434dafff9bcb0d9498de57d97eba165402419939c944412e179cab1854782830b5ec196212560b22712d1dd03918939f59cf1d4fc1d756fca7950086cf
   languageName: node
   linkType: hard
 
@@ -25303,6 +25538,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"proxy-from-env@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "proxy-from-env@npm:1.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fproxy-from-env%2F-%2Fproxy-from-env-1.1.0.tgz"
+  checksum: ed7fcc2ba0a33404958e34d95d18638249a68c430e30fcb6c478497d72739ba64ce9810a24f53a7d921d0c065e5b78e3822759800698167256b04659366ca4d4
+  languageName: node
+  linkType: hard
+
 "prr@npm:~1.0.1":
   version: 1.0.1
   resolution: "prr@npm:1.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fprr%2F-%2Fprr-1.0.1.tgz"
@@ -25548,6 +25790,7 @@ __metadata:
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
+    "@sentry/react-native": ^5.18.0
     "@tsconfig/react-native": ^3.0.0
     "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
