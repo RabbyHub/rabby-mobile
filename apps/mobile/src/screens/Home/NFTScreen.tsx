@@ -15,6 +15,7 @@ import {
   SectionListProps,
   Dimensions,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useQueryNft } from './hooks/nft';
 import FastImage from 'react-native-fast-image';
@@ -50,7 +51,9 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
     //   token: item,
     //   collectionName,
     // });
-    toast.show('Coming Soon :)');
+    if (Platform.OS !== 'ios') {
+      toast.show('Coming Soon :)');
+    }
   }, []);
 
   const numberDisplay = useMemo(() => {

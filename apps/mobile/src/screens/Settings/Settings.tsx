@@ -79,7 +79,9 @@ function SettingsScreen(): JSX.Element {
 
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)');
+              if (Platform.OS !== 'ios') {
+                toast.show('Coming Soon :)');
+              }
             },
           },
           {
@@ -88,7 +90,9 @@ function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)');
+              if (Platform.OS !== 'ios') {
+                toast.show('Coming Soon :)');
+              }
             },
           },
           {
@@ -97,7 +101,9 @@ function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             onDisabledPress: () => {
-              toast.show('Coming Soon :)');
+              if (Platform.OS !== 'ios') {
+                toast.show('Coming Soon :)');
+              }
             },
           },
           {

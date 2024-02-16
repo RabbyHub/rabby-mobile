@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Platform } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
@@ -17,7 +17,9 @@ const styles = StyleSheet.create({
 
 export const HardwareDeviceList = () => {
   const handleComingSoon = React.useCallback(() => {
-    toast.show('Coming Soon :)');
+    if (Platform.OS !== 'ios') {
+      toast.show('Coming Soon :)');
+    }
   }, []);
 
   return (

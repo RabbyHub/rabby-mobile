@@ -6,6 +6,7 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { useTranslation } from 'react-i18next';
@@ -137,7 +138,9 @@ export const TokenWallet = ({
 
   // const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenTokenDetail = React.useCallback(() => {
-    toast.show('Coming Soon :)');
+    if (Platform.OS !== 'ios') {
+      toast.show('Coming Soon :)');
+    }
     // tokenDetailModalRef.current?.present();
   }, []);
 
