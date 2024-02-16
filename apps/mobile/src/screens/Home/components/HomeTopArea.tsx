@@ -13,7 +13,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import { toast } from '@/components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -82,7 +82,9 @@ export const HomeTopArea = () => {
   ];
 
   const toastDisabledAction = useCallback(() => {
-    toast.show('Coming Soon :)');
+    if (Platform.OS !== 'ios') {
+      toast.show('Coming Soon :)');
+    }
   }, []);
 
   const moreItems = [

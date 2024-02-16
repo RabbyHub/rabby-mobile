@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   SectionList,
+  Platform,
 } from 'react-native';
 import { useNavigationState } from '@react-navigation/native';
 import {
@@ -69,7 +70,9 @@ export default function CurrentAddressScreen(): JSX.Element {
     //   screen: RootNames.MyBundle,
     //   params: {},
     // });
-    toast.show('Coming Soon :)');
+    if (Platform.OS !== 'ios') {
+      toast.show('Coming Soon :)');
+    }
   }, []);
   const gotoAddAddress = React.useCallback(() => {
     navigation.push(RootNames.StackAddress, {

@@ -132,9 +132,11 @@ function GetStartedScreen(): JSX.Element {
             <View>
               <Text style={styles.appName}>Rabby Wallet</Text>
             </View>
-            <View style={styles.beta}>
-              <Text style={styles.betaText}>Beta</Text>
-            </View>
+            {Platform.OS !== 'ios' && (
+              <View style={styles.beta}>
+                <Text style={styles.betaText}>Beta</Text>
+              </View>
+            )}
           </View>
 
           <Text style={styles.appDesc}>
