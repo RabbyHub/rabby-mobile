@@ -1,7 +1,9 @@
-import { GET_WALLETCONNECT_CONFIG, bindWalletConnectEvents } from '@/utils/wc';
+import { bindLedgerEvents } from '@/utils/ledger';
+import { bindWalletConnectEvents } from '@/utils/wc';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KeyringServiceOptions } from '@rabby-wallet/service-keyring/src/keyringService';
+import { getKeyringParams } from '../utils/getKeyringParams';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
   async (keyring, account, contactService) => {
@@ -41,13 +43,14 @@ export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] =
 
 export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] =
   Keyring => {
-    const keyring =
-      Keyring?.type === KEYRING_CLASS.WALLETCONNECT
-        ? new Keyring(GET_WALLETCONNECT_CONFIG())
-        : new Keyring();
+    const keyring = new Keyring(getKeyringParams(Keyring.type as any));
 
     if (Keyring.type === KEYRING_CLASS.WALLETCONNECT) {
       bindWalletConnectEvents(keyring);
+    }
+
+    if (Keyring.type === KEYRING_CLASS.HARDWARE.LEDGER) {
+      bindLedgerEvents(keyring);
     }
 
     return keyring;

@@ -10,6 +10,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   SignHelper,
   SIGN_HELPER_EVENTS as EVENTS,
+  eventBus,
 } from '@rabby-wallet/keyring-utils';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
@@ -77,7 +78,11 @@ class LedgerBridgeKeyring {
     errorEventName: EVENTS.LEDGER.REJECTED,
   });
 
-  getTransport: () => Promise<Transport>;
+  events = eventBus;
+
+  deviceId: string | null = null;
+
+  getTransport: (deviceId: string) => Promise<Transport>;
 
   constructor(opts: { getTransport: () => Promise<Transport> } & any = {}) {
     this.accountDetails = {};
@@ -111,7 +116,6 @@ class LedgerBridgeKeyring {
       this.hasHIDPermission = opts.hasHIDPermission;
     }
 
-    this.makeApp();
     if (!opts.accountDetails) {
       this._migrateAccountDetails(opts);
     }
@@ -128,6 +132,10 @@ class LedgerBridgeKeyring {
     );
 
     return Promise.resolve();
+  }
+
+  setDeviceId(deviceId: string) {
+    this.deviceId = deviceId;
   }
 
   _migrateAccountDetails(opts: { accountIndexes: { [x: string]: any } }) {
@@ -155,7 +163,7 @@ class LedgerBridgeKeyring {
   async makeApp(_signing = false) {
     if (!this.app) {
       try {
-        this.transport = await this.getTransport();
+        this.transport = await this.getTransport(this.deviceId!);
         this.app = new LedgerEth(this.transport);
       } catch (e: any) {
         if (!e.message?.includes('The device is already open')) {

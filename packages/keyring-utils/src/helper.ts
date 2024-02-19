@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-const eventBus = new EventEmitter();
+export const eventBus = new EventEmitter();
 
 export const SIGN_HELPER_EVENTS = {
   broadcastToUI: 'broadcastToUI',

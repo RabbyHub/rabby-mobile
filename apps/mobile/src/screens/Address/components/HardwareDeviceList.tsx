@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
@@ -21,6 +21,15 @@ export const HardwareDeviceList = () => {
       toast.show('Coming Soon :)');
     }
   }, []);
+
+  // useLedgerImport({
+  //   successCallback: a => {
+  //     console.log(a);
+  //   },
+  //   errorCallback: () => {
+  //     toast.show('Ledger connection failed');
+  //   },
+  // });
 
   return (
     <View>

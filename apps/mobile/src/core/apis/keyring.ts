@@ -1,8 +1,8 @@
-import { KeyringTypeName, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
-import { GET_WALLETCONNECT_CONFIG } from '../../utils/wc';
+import { getKeyringParams } from '../utils/getKeyringParams';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -13,11 +13,7 @@ export async function getKeyring<T = KeyringInstance>(
 
   if (!keyring) {
     const Keyring = keyringService.getKeyringClassForType(type);
-    keyring = new Keyring(
-      type === KEYRING_TYPE.WalletConnectKeyring
-        ? GET_WALLETCONNECT_CONFIG()
-        : undefined,
-    );
+    keyring = new Keyring(getKeyringParams(type));
     isNewKey = true;
   }
 
@@ -55,7 +51,7 @@ export function requestKeyring(
       keyring = _getKeyringByType(type);
     } catch {
       const Keyring = keyringService.getKeyringClassForType(type);
-      keyring = new Keyring();
+      keyring = new Keyring(getKeyringParams(type));
     }
   }
   if (keyring[methodName]) {

@@ -10,7 +10,7 @@
       "path": "../keyring-utils/tsconfig.build.json"
     },
     {
-      "path": "../base-utils/tsconfig.json"
+      "path": "../base-utils/tsconfig.build.json"
     }
   ],
   "include": ["../../types", "./src"]

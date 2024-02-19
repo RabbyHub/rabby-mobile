@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@ethereumjs/tx": "3.3.2",
-    "@ledgerhq/hw-app-eth": "^6.35.4",
+    "@ledgerhq/hw-app-eth": "6.29.9",
     "@ledgerhq/hw-transport": "^6.30.3",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
