@@ -1,0 +1,69 @@
+{
+  "name": "@rabby-wallet/eth-keyring-ledger",
+  "version": "0.1.0",
+  "description": "A Ethereum key management library designed for handling Watch Addresses",
+  "keywords": [
+    "RabbyHub",
+    "Ethereum"
+  ],
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/eth-keyring-watch#readme",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mono/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mono.git"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build:docs": "typedoc",
+    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/eth-keyring-ledger",
+    "cov:report": "open ./coverage/index.html",
+    "publish:preview": "yarn npm publish --tag preview",
+    "test": "jest --reporters=jest-silent-reporter",
+    "test:clean": "jest --clearCache",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@ethereumjs/tx": "3.3.2",
+    "@ledgerhq/hw-app-eth": "^6.35.4",
+    "@ledgerhq/hw-transport": "^6.30.3",
+    "@rabby-wallet/base-utils": "workspace:^",
+    "@rabby-wallet/keyring-utils": "workspace:^",
+    "eth-sig-util": "^3.0.1",
+    "ethereumjs-util": "^7.1.2"
+  },
+  "devDependencies": {
+    "@ledgerhq/devices": "^8.2.0",
+    "@ledgerhq/types-cryptoassets": "^7.9.0",
+    "@ledgerhq/types-devices": "^6.23.0",
+    "@metamask/auto-changelog": "^3.4.3",
+    "@types/jest": "^27.4.1",
+    "@types/sinon": "^9.0.10",
+    "@types/w3c-web-hid": "^1.0.6",
+    "deepmerge": "^4.2.2",
+    "jest": "^27.5.1",
+    "sinon": "^9.2.4",
+    "ts-jest": "^27.1.4",
+    "typedoc": "^0.24.8",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "~4.8.4"
+  },
+  "peerDependencies": {
+    "@rabby-wallet/base-utils": "*",
+    "@rabby-wallet/keyring-utils": "*"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
