@@ -37,3 +37,22 @@ export async function cleanUp() {
 
   return keyring.cleanUp();
 }
+
+export async function isConnected(address: string) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+  const detail = keyring.getAccountInfo(address);
+
+  if (!detail?.deviceId) {
+    return false;
+  }
+
+  keyring.setDeviceId(detail.deviceId);
+  try {
+    await TransportBLE.open(detail.deviceId);
+    console.log('isConnected', true);
+    return true;
+  } catch (e) {
+    console.log('e', e);
+    return false;
+  }
+}

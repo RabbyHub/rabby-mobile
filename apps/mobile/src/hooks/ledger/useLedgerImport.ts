@@ -1,3 +1,5 @@
+// Forked from: https://github.com/rainbow-me/rainbow/blob/5ae2fba13376609907fa823e27e5d3ee8dfa4664/src/hooks/useLedgerImport.ts
+
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Subscription } from '@ledgerhq/hw-transport';

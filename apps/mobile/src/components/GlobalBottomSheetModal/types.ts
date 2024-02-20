@@ -23,6 +23,7 @@ export enum APPROVAL_MODAL_NAMES {
   'SignTypedData' = 'SignTypedData',
   'SignTx' = 'SignTx',
   'WatchAddressWaiting' = 'WatchAddressWaiting',
+  'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
 }
 
 export type MODAL_CREATE_PARMAS = {

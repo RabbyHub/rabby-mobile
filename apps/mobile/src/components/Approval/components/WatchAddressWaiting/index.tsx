@@ -235,20 +235,18 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
   return (
     <View>
-      <View>
-        {currentAccount && (
-          <Process
-            chain={chain}
-            result={result}
-            status={connectStatus}
-            error={connectError}
-            onRetry={handleRetry}
-            onCancel={handleCancel}
-            account={currentAccount}
-            onDone={() => setIsClickDone(true)}
-          />
-        )}
-      </View>
+      {currentAccount && (
+        <Process
+          chain={chain}
+          result={result}
+          status={connectStatus}
+          error={connectError}
+          onRetry={handleRetry}
+          onCancel={handleCancel}
+          account={currentAccount}
+          onDone={() => setIsClickDone(true)}
+        />
+      )}
     </View>
   );
 };

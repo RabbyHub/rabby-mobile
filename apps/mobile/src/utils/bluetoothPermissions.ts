@@ -1,3 +1,5 @@
+// Forked from: https://github.com/rainbow-me/rainbow/blob/5ae2fba13376609907fa823e27e5d3ee8dfa4664/src/utils/bluetoothPermissions.ts
+
 import { Alert, Linking, Platform } from 'react-native';
 import {
   checkMultiple as checkForMultiplePermissions,
