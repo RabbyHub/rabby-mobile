@@ -1,38 +1,38 @@
-import { ColorSchemeName, StatusBar, View } from 'react-native';
-import {
-  NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
-} from '@react-navigation/native';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { ColorSchemeName, StatusBar, View } from 'react-native';
 
-import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
+import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 
 import { navigationRef } from '@/utils/navigation';
+import { AppRootName, RootNames, getRootSpecConfig } from './constant/layout';
 import {
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { AppRootName, getRootSpecConfig, RootNames } from './constant/layout';
-import { analytics } from './utils/analytics';
+import { matomoLogScreenView } from './utils/analytics';
 
 import NotFoundScreen from './screens/NotFound';
 
-import ReceiveScreen from './screens/Receive/Receive';
 import MyBundleScreen from './screens/Assets/MyBundle';
+import ReceiveScreen from './screens/Receive/Receive';
 
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
 import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
-import { NFTDetailScreen } from './screens/NftDetail';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
+import { NFTDetailScreen } from './screens/NftDetail';
 
-import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
+import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
 import {
   AccountNavigatorParamList,
@@ -127,10 +127,8 @@ export default function AppNavigation({
     routeNameRef.current = navigationRef?.getCurrentRoute()?.name;
     setCurrentRouteName(routeNameRef.current);
     console.log('routeNameRef', routeNameRef.current);
-    analytics.logScreenView({
-      screen_name: routeNameRef.current,
-      screen_class: routeNameRef.current,
-    });
+
+    matomoLogScreenView({ name: routeNameRef.current! });
   }, [setCurrentRouteName]);
 
   const onStateChange = useCallback(async () => {
@@ -140,10 +138,7 @@ export default function AppNavigation({
     setCurrentRouteName(currentRouteName);
 
     if (previousRouteName !== currentRouteName) {
-      await analytics.logScreenView({
-        screen_name: currentRouteName,
-        screen_class: currentRouteName,
-      });
+      matomoLogScreenView({ name: currentRouteName! });
     }
     routeNameRef.current = currentRouteName;
   }, [setCurrentRouteName]);
