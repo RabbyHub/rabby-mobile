@@ -10,9 +10,11 @@ import WalletConnectSVG from '@/assets/icons/wallet/walletconnect.svg';
 import { SvgProps } from 'react-native-svg';
 import {
   BRAND_ALIAS_TYPE_TEXT,
+  KEYRING_CLASS,
   WALLET_NAME,
 } from '@rabby-wallet/keyring-utils';
 import { RcIconWatchAddress } from '@/assets/icons/address';
+import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 
 export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
   [WALLET_NAME.Bitget]: {
@@ -118,12 +120,16 @@ export type WalletInfo = {
   displayName: string;
 };
 
-export const getWalletIcon = <T extends { brandName: string }>(account: T) => {
-  if (account.brandName === 'Watch Address') {
+export const getWalletIcon = (brandName: string | undefined) => {
+  if (brandName === KEYRING_CLASS.WATCH) {
     return RcIconWatchAddress;
   }
+  if (brandName === KEYRING_CLASS.HARDWARE.LEDGER) {
+    return LedgerSVG;
+  }
+
   return (
-    WALLET_INFO?.[account.brandName as keyof typeof WALLET_INFO].icon ||
+    WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
     WALLET_INFO.UnknownWallet
   );
 };

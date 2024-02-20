@@ -2,20 +2,38 @@ import { bindLedgerEvents } from '@/utils/ledger';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
-import BleTransport from '@ledgerhq/react-native-hw-transport-ble';
+import { keyringService } from '../services';
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+
 export async function initLedgerKeyring() {
   return getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring, keyring => {
     bindLedgerEvents(keyring);
   });
 }
 
-export async function connectLedger() {
-  try {
-    // const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+export async function importAddress(index: number) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
-    const res = BleTransport.create();
-    console.log(res);
-  } catch (e) {
-    console.error(e);
-  }
+  keyring.setAccountToUnlock(index);
+  const result = await keyringService.addNewAccount(keyring as any);
+
+  return result;
+}
+
+export async function getAddresses(start: number, end: number) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  return keyring.getAddresses(start, end);
+}
+
+export async function setDeviceId(deviceId: string) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  return keyring.setDeviceId(deviceId);
+}
+
+export async function cleanUp() {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  return keyring.cleanUp();
 }

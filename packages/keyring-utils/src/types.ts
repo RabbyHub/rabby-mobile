@@ -137,4 +137,5 @@ export const BRAND_ALIAS_TYPE_TEXT = {
   [WALLET_NAME.TRUSTWALLET]: 'Trust Wallet',
   [WALLET_NAME.Rainbow]: 'Rainbow',
   [WALLET_NAME.UnknownWallet]: 'UnknownWallet',
+  [KEYRING_CLASS.HARDWARE.LEDGER]: 'Ledger',
 };

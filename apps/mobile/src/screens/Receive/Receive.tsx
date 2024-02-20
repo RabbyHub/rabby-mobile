@@ -108,7 +108,7 @@ function ReceiveScreen(): JSX.Element {
   }, [account?.address, clickedCopy, copyAddress, setClickedCopy, t]);
 
   const WalletIcon = useMemo(
-    () => (account ? getWalletIcon(account) : () => null),
+    () => (account ? getWalletIcon(account.brandName) : () => null),
     [account],
   );
 
@@ -180,6 +180,7 @@ function ReceiveScreen(): JSX.Element {
         </CustomTouchableOpacity>
       ),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     WalletIcon,
     account,

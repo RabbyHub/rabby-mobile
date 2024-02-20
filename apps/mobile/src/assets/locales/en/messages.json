@@ -1994,5 +1994,19 @@
       "TESTNET": "Only Testnets"
     },
     "IMPORTED_HD_KEYRING_NEED_PASSPHRASE": "Imported by Seed Phrase (Passphrase)"
+  },
+  "bluetooth": {
+    "powered_off_alert": {
+      "title": "Bluetooth is off",
+      "message": "Please turn on Bluetooth to use this feature",
+      "open_settings": "Open Settings",
+      "cancel": "Cancel"
+    },
+    "permissions_alert": {
+      "title": "Bluetooth Permissions",
+      "message": "Please enable Bluetooth permissions in your settings to use this feature",
+      "open_settings": "Open Settings",
+      "cancel": "Cancel"
+    }
   }
 }

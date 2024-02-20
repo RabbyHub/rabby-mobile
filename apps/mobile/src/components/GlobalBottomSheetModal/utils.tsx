@@ -11,6 +11,8 @@ import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
+import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
+import { ImportLedger } from '../ImportLedger/ImportLedger';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -23,6 +25,8 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
+  [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
+  [MODAL_NAMES.IMPORT_LEDGER]: ['100%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -47,6 +51,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
+  [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
+  [MODAL_NAMES.IMPORT_LEDGER]: ImportLedger,
 };
 
 export function makeBottomSheetProps(ctx: {

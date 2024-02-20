@@ -30,7 +30,8 @@ export default function HomeHeaderArea() {
   const { balance, balanceLoading, balanceFromCache, balanceUpdating } =
     useCurrentBalance(currentAccount?.address, true, false);
   const WalletIcon = useMemo(
-    () => (currentAccount ? getWalletIcon(currentAccount) : () => null),
+    () =>
+      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
     [currentAccount],
   );
   const { result: curveData, isLoading } = useCurve(

@@ -45,9 +45,10 @@ type AccountDetail = {
   hdPath: string;
   hdPathBasePublicKey?: string;
   hdPathType?: HDPathType;
+  deviceId?: string;
 };
 
-class LedgerBridgeKeyring {
+class LedgerKeyring {
   accountDetails: Record<string, AccountDetail>;
 
   static type = type;
@@ -80,11 +81,18 @@ class LedgerBridgeKeyring {
 
   events = eventBus;
 
-  deviceId: string | null = null;
+  deviceId?: string;
 
   getTransport: (deviceId: string) => Promise<Transport>;
 
-  constructor(opts: { getTransport: () => Promise<Transport> } & any = {}) {
+  transportType: 'ble' | 'hid' = 'hid';
+
+  constructor(
+    opts: {
+      getTransport: () => Promise<Transport>;
+      transportType: 'ble' | 'hid';
+    } & any = {},
+  ) {
     this.accountDetails = {};
     this.page = 0;
     this.perPage = 5;
@@ -95,6 +103,7 @@ class LedgerBridgeKeyring {
     this.app = null;
     this.usedHDPathTypeList = {};
     this.getTransport = opts.getTransport;
+    this.transportType = opts.transportType || 'hid';
     this.deserialize(opts);
   }
 
@@ -152,8 +161,9 @@ class LedgerBridgeKeyring {
     return Boolean(this.app);
   }
 
-  setAccountToUnlock(index: string) {
-    this.unlockedAccount = parseInt(index, 10);
+  setAccountToUnlock(index: number) {
+    this.unlockedAccount =
+      typeof index === 'number' ? index : parseInt(index, 10);
   }
 
   setHdPath(hdPath: string) {
@@ -161,7 +171,7 @@ class LedgerBridgeKeyring {
   }
 
   async makeApp(_signing = false) {
-    if (!this.app) {
+    if (!this.app || this.transportType === 'ble') {
       try {
         this.transport = await this.getTransport(this.deviceId!);
         this.app = new LedgerEth(this.transport);
@@ -213,12 +223,17 @@ class LedgerBridgeKeyring {
               hdPath: path,
               hdPathBasePublicKey: await this.getPathBasePublicKey(hdPathType),
               hdPathType,
+              deviceId: this.deviceId,
             };
 
             address = address.toLowerCase();
 
             if (!this.accounts.includes(address)) {
               this.accounts.push(address);
+            } else {
+              throw new Error(
+                "The address you're are trying to import is invalid",
+              );
             }
             this.page = 0;
           }
@@ -823,5 +838,5 @@ class LedgerBridgeKeyring {
   }
 }
 
-export default LedgerBridgeKeyring;
+export default LedgerKeyring;
 /* eslint-enable @typescript-eslint/no-non-null-assertion */

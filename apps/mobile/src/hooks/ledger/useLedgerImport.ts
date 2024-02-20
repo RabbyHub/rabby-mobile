@@ -1,23 +1,24 @@
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Subscription } from '@ledgerhq/hw-transport';
-import { checkAndRequestAndroidBluetooth } from '../../utils/bluetoothPermissions';
+import {
+  checkAndRequestAndroidBluetooth,
+  showBluetoothPermissionsAlert,
+  showBluetoothPoweredOffAlert,
+} from '../../utils/bluetoothPermissions';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from './error';
 import { Platform } from 'react-native';
+import { Device } from 'react-native-ble-plx';
+import { apiLedger } from '@/core/apis';
 
 /**
  * React hook used for checking connecting to a ledger device for the first time
  */
-export function useLedgerImport({
-  errorCallback,
-  successCallback,
-}: {
-  successCallback?: (deviceId: string) => void;
-  errorCallback?: (errorType: LEDGER_ERROR_CODES) => void;
-}) {
+export function useLedgerImport() {
   const observer = useRef<Subscription | undefined>(undefined);
   const listener = useRef<Subscription | undefined>(undefined);
-
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [errorCode, setErrorCode] = useState<LEDGER_ERROR_CODES>();
   const handleCleanUp = () => {
     observer?.current?.unsubscribe();
     listener?.current?.unsubscribe();
@@ -25,27 +26,20 @@ export function useLedgerImport({
   /**
    * Handles local error handling for useLedgerStatusCheck
    */
-  const handlePairError = useCallback(
-    (error: Error) => {
-      console.error(new Error('[LedgerImport] - Pairing Error'), {
-        error,
-      });
-      errorCallback?.(ledgerErrorHandler(error));
-    },
-    [errorCallback],
-  );
+  const handlePairError = useCallback((error: Error) => {
+    console.error(new Error('[LedgerImport] - Pairing Error'), {
+      error,
+    });
+    setErrorCode?.(ledgerErrorHandler(error));
+  }, []);
 
   /**
    * Handles successful ledger connection events after opening transport
    */
-  const handlePairSuccess = useCallback(
-    (deviceId: string) => {
-      console.log('[LedgerImport] - Pairing Success');
-      successCallback?.(deviceId);
-      handleCleanUp();
-    },
-    [successCallback],
-  );
+  const handlePairSuccess = useCallback((device: Device) => {
+    console.log('[LedgerImport] - Pairing Success');
+    setDevices(prev => [...prev, device]);
+  }, []);
 
   /**
    * searches & pairs to the first found ledger device
@@ -66,18 +60,17 @@ export function useLedgerImport({
         // App is not authorized to use Bluetooth
         if (e.type === 'Unauthorized') {
           console.log('[LedgerImport] - Bluetooth Unauthorized', {});
-          // TODO
-          // if (IS_IOS) {
-          //   await showBluetoothPermissionsAlert();
-          // } else {
-          //   await checkAndRequestAndroidBluetooth();
-          // }
+          if (Platform.OS === 'ios') {
+            await showBluetoothPermissionsAlert();
+          } else {
+            await checkAndRequestAndroidBluetooth();
+          }
         }
         // Bluetooth is turned off
         if (e.type === 'PoweredOff') {
           console.log('[LedgerImport] - Bluetooth Powered Off');
-          // TODO
-          // await showBluetoothPoweredOffAlert();
+          apiLedger.cleanUp();
+          await showBluetoothPoweredOffAlert();
         }
         if (e.available) {
           const newListener = TransportBLE.listen({
@@ -98,8 +91,7 @@ export function useLedgerImport({
                 currentDeviceId = device.id;
 
                 try {
-                  const transport = await TransportBLE.open(device.id);
-                  handlePairSuccess(device.id);
+                  handlePairSuccess(device);
                 } catch (e) {
                   handlePairError(e as Error);
                   currentDeviceId === '';
@@ -111,7 +103,6 @@ export function useLedgerImport({
         }
       },
     });
-    console.log('newObserver', newObserver);
 
     observer.current = newObserver;
   }, [handlePairError, handlePairSuccess]);
@@ -125,16 +116,13 @@ export function useLedgerImport({
     const asyncFn = async () => {
       console.log('[LedgerImport] - init device polling', {});
 
-      // const isBluetoothEnabled =
-      //   Platform.OS === 'android'
-      //     ? await checkAndRequestAndroidBluetooth()
-      //     : true;
-      // console.log('[LedgerImport] - bluetooth enabled? ', {
-      //   isBluetoothEnabled,
-      // });
-      // if (isBluetoothEnabled) {
-      searchAndPair();
-      // }
+      const isBluetoothEnabled =
+        Platform.OS === 'android'
+          ? await checkAndRequestAndroidBluetooth()
+          : true;
+      console.log('[LedgerImport] - bluetooth enabled? ', {
+        isBluetoothEnabled,
+      });
     };
 
     asyncFn();
@@ -145,4 +133,10 @@ export function useLedgerImport({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  return {
+    searchAndPair,
+    devices,
+    errorCode,
+  };
 }

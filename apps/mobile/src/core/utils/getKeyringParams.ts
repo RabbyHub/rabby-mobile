@@ -8,6 +8,7 @@ export function getKeyringParams(type: KeyringTypeName) {
   } else if (type === KEYRING_TYPE.LedgerKeyring) {
     return {
       getTransport: deviceId => TransportBLE.open(deviceId),
+      transportType: 'ble',
     };
   }
 

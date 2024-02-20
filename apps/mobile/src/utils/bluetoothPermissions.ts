@@ -1,3 +1,4 @@
+import { Alert, Linking, Platform } from 'react-native';
 import {
   checkMultiple as checkForMultiplePermissions,
   PERMISSIONS,
@@ -6,6 +7,55 @@ import {
   AndroidPermission,
   requestMultiple as requestMultiplePermissions,
 } from 'react-native-permissions';
+import i18n from './i18n';
+
+/**
+ * Shows an alert if device's bluetooth is powered off
+ */
+export const showBluetoothPoweredOffAlert = async () => {
+  Alert.alert(
+    i18n.t('bluetooth.powered_off_alert.title'),
+    i18n.t('bluetooth.powered_off_alert.message'),
+    [
+      {
+        onPress: () => {
+          Platform.OS === 'ios'
+            ? Linking.openURL('App-Prefs:Bluetooth')
+            : Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS');
+        },
+        text: i18n.t('bluetooth.powered_off_alert.open_settings'),
+      },
+      {
+        onPress: () => null,
+        style: 'cancel',
+        text: i18n.t('bluetooth.powered_off_alert.cancel'),
+      },
+    ],
+  );
+};
+
+/**
+ * Shows an alert w/ deeplink to settings to enable bluetooth permissions for iOS
+ */
+export const showBluetoothPermissionsAlert = async () => {
+  Alert.alert(
+    i18n.t('bluetooth.permissions_alert.title'),
+    i18n.t('bluetooth.permissions_alert.message'),
+    [
+      {
+        onPress: () => {
+          Linking.openSettings();
+        },
+        text: i18n.t('bluetooth.permissions_alert.open_settings'),
+      },
+      {
+        onPress: () => null,
+        style: 'cancel',
+        text: i18n.t('bluetooth.permissions_alert.cancel'),
+      },
+    ],
+  );
+};
 
 /**
  * Checks and requests bluetooth permissions for Android
@@ -43,8 +93,7 @@ export const checkAndRequestAndroidBluetooth = async (): Promise<boolean> => {
       return true;
       // user denied request
     } else if (askResult === RESULTS.DENIED) {
-      // TODO
-      // await showBluetoothPermissionsAlert();
+      await showBluetoothPermissionsAlert();
 
       // should try to deeplink the user at this point or show a fun error :)
       return false;
@@ -74,8 +123,7 @@ export const checkAndRequestAndroidBluetooth = async (): Promise<boolean> => {
     } else {
       // user denied request
       // could recurse here but I think it's better to show the user an alert
-      // TODO
-      // await showBluetoothPermissionsAlert();
+      await showBluetoothPermissionsAlert();
     }
   }
   return false;

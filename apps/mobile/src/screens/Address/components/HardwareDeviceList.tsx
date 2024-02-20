@@ -7,6 +7,11 @@ import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import { HardwareSVG } from '@/assets/icons/address';
 import { toast } from '@/components/Toast';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -22,14 +27,16 @@ export const HardwareDeviceList = () => {
     }
   }, []);
 
-  // useLedgerImport({
-  //   successCallback: a => {
-  //     console.log(a);
-  //   },
-  //   errorCallback: () => {
-  //     toast.show('Ledger connection failed');
-  //   },
-  // });
+  const handleLedger = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.CONNECT_LEDGER,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
+      },
+    });
+  }, []);
 
   return (
     <View>
@@ -38,7 +45,7 @@ export const HardwareDeviceList = () => {
         style={styles.walletItem}
         Icon={LedgerSVG}
         title="Ledger"
-        onPress={handleComingSoon}
+        onPress={handleLedger}
       />
       <WalletItem
         style={styles.walletItem}

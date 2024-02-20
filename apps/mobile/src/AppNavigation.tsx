@@ -5,7 +5,7 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
@@ -41,6 +41,7 @@ import {
   SearchDappsNavigatorParamList,
 } from './navigation-type';
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
+import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -151,6 +152,7 @@ export default function AppNavigation({
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar />
+      <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}
         // key={userId}
