@@ -49,7 +49,6 @@ export async function isConnected(address: string) {
   keyring.setDeviceId(detail.deviceId);
   try {
     await TransportBLE.open(detail.deviceId);
-    console.log('isConnected', true);
     return true;
   } catch (e) {
     console.log('e', e);
