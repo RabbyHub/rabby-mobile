@@ -24,7 +24,15 @@ export async function importAddress(index: number) {
 export async function getAddresses(start: number, end: number) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
-  return keyring.getAddresses(start, end);
+  try {
+    return keyring.getAddresses(start, end);
+  } catch (e) {
+    const deviceId = await keyring.getDeviceId();
+    if (deviceId) {
+      TransportBLE.disconnectDevice(deviceId);
+    }
+    throw e;
+  }
 }
 
 export async function setDeviceId(deviceId: string) {
@@ -60,12 +68,18 @@ export async function isConnected(address: string) {
 
 export async function getCurrentUsedHDPathType() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-
-  return keyring.getCurrentUsedHDPathType();
+  try {
+    await keyring.unlock();
+    return keyring.getCurrentUsedHDPathType();
+  } catch (e) {
+    const deviceId = await keyring.getDeviceId();
+    if (deviceId) {
+      TransportBLE.disconnectDevice(deviceId);
+    }
+  }
 }
 
 export async function setHDPathType(hdPathType: LedgerHDPathType) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-
   return keyring.setHDPathType(hdPathType);
 }

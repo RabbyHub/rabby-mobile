@@ -94,7 +94,6 @@ export function useLedgerImport() {
 
                 try {
                   handlePairSuccess(device);
-                  TransportBLE.open(device.id);
                 } catch (e) {
                   handlePairError(e as Error);
                   currentDeviceId === '';

@@ -147,6 +147,10 @@ class LedgerKeyring {
     this.deviceId = deviceId;
   }
 
+  getDeviceId() {
+    return this.deviceId;
+  }
+
   _migrateAccountDetails(opts: { accountIndexes: { [x: string]: any } }) {
     if (opts.accountIndexes) {
       for (const account of Object.keys(opts.accountIndexes)) {
@@ -178,6 +182,8 @@ class LedgerKeyring {
       } catch (e: any) {
         if (!e.message?.includes('The device is already open')) {
           console.error(e);
+        } else if (e.name === 'BleError') {
+          throw e;
         }
       }
     }

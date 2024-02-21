@@ -55,7 +55,7 @@ export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   >([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
   const [selectedHdPathTypeIndex, setSelectedHdPathTypeIndex] =
     React.useState(0);
   const [hdPathType, setHdPathType] = React.useState<LedgerHDPathType>();
@@ -121,13 +121,15 @@ export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   );
 
   React.useEffect(() => {
-    handleLoadAddress();
-    apiLedger.getCurrentUsedHDPathType().then(setHdPathType);
+    apiLedger
+      .getCurrentUsedHDPathType()
+      .then(setHdPathType)
+      .then(handleLoadAddress);
   }, [handleLoadAddress]);
 
   return (
     <BottomSheetView style={styles.root}>
-      <AppBottomSheetModalTitle title="Import Ledger" />
+      <AppBottomSheetModalTitle title="Import more address" />
       <View style={styles.main}>
         <ButtonGroup
           buttons={[
