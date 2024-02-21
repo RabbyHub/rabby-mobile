@@ -16,6 +16,8 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 const styles = StyleSheet.create({
   walletItem: {
     marginBottom: 8,
+  },
+  walletItemDisabled: {
     opacity: 0.6,
   },
 });
@@ -48,13 +50,19 @@ export const HardwareDeviceList = () => {
         onPress={handleLedger}
       />
       <WalletItem
-        style={styles.walletItem}
+        style={StyleSheet.flatten([
+          styles.walletItem,
+          styles.walletItemDisabled,
+        ])}
         Icon={OneKeySVG}
         title="OneKey"
         onPress={handleComingSoon}
       />
       <WalletItem
-        style={styles.walletItem}
+        style={StyleSheet.flatten([
+          styles.walletItem,
+          styles.walletItemDisabled,
+        ])}
         Icon={KeystoneSVG}
         title="Keystone"
         onPress={handleComingSoon}
