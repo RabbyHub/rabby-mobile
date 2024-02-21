@@ -32,7 +32,8 @@ export const useLedgerStatus = (address: string) => {
           await TransportBLE.open(d.id);
           setStatus('CONNECTED');
         } catch (e) {
-          console.log('e', e);
+          console.log('ledger connect error', e);
+          await TransportBLE.disconnectDevice(d.id);
           setStatus('DISCONNECTED');
         }
       },

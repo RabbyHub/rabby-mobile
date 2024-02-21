@@ -51,7 +51,8 @@ export async function isConnected(address: string) {
     await TransportBLE.open(detail.deviceId);
     return true;
   } catch (e) {
-    console.log('e', e);
+    TransportBLE.disconnectDevice(detail.deviceId);
+    console.log('ledger is disconnect', e);
     return false;
   }
 }
