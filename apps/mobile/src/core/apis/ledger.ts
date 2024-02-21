@@ -4,6 +4,7 @@ import { getKeyring } from './keyring';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { keyringService } from '../services';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 
 export async function initLedgerKeyring() {
   return getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring, keyring => {
@@ -55,4 +56,16 @@ export async function isConnected(address: string) {
     console.log('ledger is disconnect', e);
     return false;
   }
+}
+
+export async function getCurrentUsedHDPathType() {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  return keyring.getCurrentUsedHDPathType();
+}
+
+export async function setHDPathType(hdPathType: LedgerHDPathType) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+
+  return keyring.setHDPathType(hdPathType);
 }

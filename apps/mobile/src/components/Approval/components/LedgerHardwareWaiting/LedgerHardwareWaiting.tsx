@@ -249,14 +249,14 @@ export const LedgerHardwareWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const currentDescription = React.useMemo(() => {
-    if (description.includes('0x5515') || description.includes('0x6b0c')) {
+    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
       return t('page.signFooterBar.ledger.unlockAlert');
     } else if (
-      description.includes('0x6e00') ||
-      description.includes('0x6b00')
+      description?.includes('0x6e00') ||
+      description?.includes('0x6b00')
     ) {
       return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description.includes('0x6985')) {
+    } else if (description?.includes('0x6985')) {
       return t('page.signFooterBar.ledger.txRejectedByLedger');
     }
 
@@ -292,7 +292,7 @@ export const LedgerHardwareWaiting = ({
 
       <ApprovalPopupContainer
         showAnimation
-        hdType="wired"
+        hdType="ble"
         status={statusProp}
         onRetry={() => handleRetry()}
         onDone={() => setIsClickDone(true)}

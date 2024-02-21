@@ -7,6 +7,8 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
+import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
+import { RcIconRightCC } from '@/assets/icons/common';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -17,11 +19,32 @@ const getStyles = (colors: AppColorsVariants) =>
     main: {
       flex: 1,
       paddingHorizontal: 20,
+      alignItems: 'center',
+    },
+    text: {
+      fontSize: 16,
+      color: colors['neutral-body'],
+      lineHeight: 20,
     },
     item: {
-      padding: 15,
+      paddingHorizontal: 15,
+      paddingVertical: 20,
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 8,
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    list: {
+      marginTop: 24,
+      width: '100%',
+      rowGap: 12,
+    },
+    textWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      columnGap: 12,
     },
   });
 
@@ -38,16 +61,23 @@ export const SelectDeviceScreen: React.FC<{
     <View style={styles.root}>
       <AppBottomSheetModalTitle title={t('查找到以下设备')} />
       <View style={styles.main}>
-        {devices.map((device, index) => (
-          <TouchableOpacity
-            key={device.id}
-            onPress={() => {
-              onSelect(device);
-            }}
-            style={styles.item}>
-            <Text key={index}>{device.name}</Text>
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.text}>请选择当前使用的Ledger</Text>
+        <View style={styles.list}>
+          {devices.map((device, index) => (
+            <TouchableOpacity
+              key={device.id}
+              onPress={() => {
+                onSelect(device);
+              }}
+              style={styles.item}>
+              <View style={styles.textWrapper}>
+                <LedgerSVG width={28} height={28} />
+                <Text key={index}>{device.name}</Text>
+              </View>
+              <RcIconRightCC />
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );

@@ -4,9 +4,9 @@ import { KeyringInstance } from '@rabby-wallet/service-keyring';
 
 export function bindLedgerEvents(keyring: KeyringInstance) {
   (keyring as unknown as LedgerKeyring).events.on(
-    EVENTS.LEDGER.REJECTED,
+    EVENTS.broadcastToUI,
     (data: any) => {
-      eventBus.emit(EVENTS.LEDGER.REJECTED, data);
+      eventBus.emit(data.method, data.params);
     },
   );
 }

@@ -6,21 +6,18 @@ import { FooterResendCancelGroup } from './FooterResendCancelGroup';
 import TxFailedSVG from '@/assets/icons/approval/tx-failed.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
+import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
 import ConnectWirelessSVG from '@/assets/icons/approval/connect-wireless.svg';
 import ConnectQRCodeSVG from '@/assets/icons/approval/connect-qrcode.svg';
 import ConnectWalletConnectSVG from '@/assets/icons/approval/connect-walletconnect.svg';
 import { FooterDoneButton } from './FooterDoneButton';
 import { Dots } from './Dots';
-import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { noop } from 'lodash';
 import { SvgProps } from 'react-native-svg';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
-
-const PRIVATE_KEY_ERROR_HEIGHT = 217;
-const OTHER_ERROR_HEIGHT = 392;
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -66,7 +63,13 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 export interface Props {
-  hdType: 'wired' | 'wireless' | 'qrcode' | 'privatekey' | 'walletconnect';
+  hdType:
+    | 'wired'
+    | 'wireless'
+    | 'qrcode'
+    | 'privatekey'
+    | 'walletconnect'
+    | 'ble';
   status:
     | 'SENDING'
     | 'WAITING'
@@ -116,6 +119,8 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return;
       case 'walletconnect':
         return ConnectWalletConnectSVG;
+      case 'ble':
+        return ConnectBleSVG;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;

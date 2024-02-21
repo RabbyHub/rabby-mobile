@@ -80,6 +80,13 @@ const reportSignText = (params: {
   // });
 };
 
+const covertToHex = (data: Buffer | bigint) => {
+  if (typeof data === 'bigint') {
+    return `0x${data.toString(16)}`;
+  }
+  return bufferToHex(data);
+};
+
 export interface AddEthereumChainParams {
   chainId: string;
   chainName: string;
@@ -561,9 +568,9 @@ class ProviderController extends BaseController {
           rawTx: {
             ...rawTx,
             ...approvalRes,
-            r: bufferToHex(signedTx.r),
-            s: bufferToHex(signedTx.s),
-            v: bufferToHex(signedTx.v),
+            r: covertToHex(signedTx.r),
+            s: covertToHex(signedTx.s),
+            v: covertToHex(signedTx.v),
           },
           createdAt: Date.now(),
           hash,
@@ -710,7 +717,7 @@ class ProviderController extends BaseController {
           //   txData.type = '0x2';
           // }
           // const tx = TransactionFactory.fromTxData(txData);
-          // const rawTx = bufferToHex(tx.serialize());
+          // const rawTx = covertToHex(tx.serialize());
           // hash = await RPCService.requestCustomRPC(
           //   chain,
           //   'eth_sendRawTransaction',
@@ -721,9 +728,9 @@ class ProviderController extends BaseController {
           const res = await openapi.submitTx({
             tx: {
               ...approvalRes,
-              r: bufferToHex(signedTx.r),
-              s: bufferToHex(signedTx.s),
-              v: bufferToHex(signedTx.v),
+              r: covertToHex(signedTx.r),
+              s: covertToHex(signedTx.s),
+              v: covertToHex(signedTx.v),
               value: approvalRes.value || '0x0',
             },
             push_type: pushType,
