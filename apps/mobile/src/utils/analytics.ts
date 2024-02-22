@@ -25,12 +25,12 @@ if (!extensionId) {
 const getParams = async () => {
   const gaParams = new URLSearchParams();
 
-  const url = `https://${location.host}.com/${pathname}`;
+  // const url = `https://${location.host}.com/${pathname}`;
 
   // gaParams.append('action_name', pathname);
   gaParams.append('idsite', '5');
   gaParams.append('rec', '1');
-  gaParams.append('url', encodeURI(url));
+  // gaParams.append('url', encodeURI(url));
   gaParams.append('_id', extensionId);
   gaParams.append('rand', nanoid());
   gaParams.append('ca', '1');

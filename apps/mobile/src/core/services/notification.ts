@@ -238,7 +238,7 @@ export class NotificationService extends Events {
           success: explain.calcSuccess && explain.pre_exec.success,
           createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
           source: data?.params.$ctx?.ga?.source || '',
-          trigger: data?.params.$ctx?.ga.trigger || '',
+          trigger: data?.params.$ctx?.ga?.trigger || '',
         });
       }
     };
