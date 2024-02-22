@@ -16,6 +16,7 @@ import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
 import { CHAINS_ENUM } from '@debank/common';
 import * as apisDapp from '../apis/dapp';
+import { stats } from '@/utils/stats';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -231,10 +232,12 @@ const flowContext = flow
       );
       if (isSignApproval(approvalType)) {
         const dapp = dappService.getDapp(origin);
-        dappService.updateDapp({
-          ...dapp,
-          isSigned: true,
-        });
+        if (dapp) {
+          dappService.updateDapp({
+            ...dapp,
+            isSigned: true,
+          });
+        }
       }
     }
 
@@ -314,38 +317,38 @@ const flowContext = flow
 
 function reportStatsData() {
   // TODO
-  // const statsData = notificationService.getStatsData();
-  // if (!statsData || statsData.reported) return;
-  // if (statsData?.signed) {
-  //   const sData: any = {
-  //     type: statsData?.type,
-  //     chainId: statsData?.chainId,
-  //     category: statsData?.category,
-  //     success: statsData?.signedSuccess,
-  //     preExecSuccess: statsData?.preExecSuccess,
-  //     createBy: statsData?.createBy,
-  //     source: statsData?.source,
-  //     trigger: statsData?.trigger,
-  //   };
-  //   if (statsData.signMethod) {
-  //     sData.signMethod = statsData.signMethod;
-  //   }
-  //   stats.report('signedTransaction', sData);
-  // }
-  // if (statsData?.submit) {
-  //   stats.report('submitTransaction', {
-  //     type: statsData?.type,
-  //     chainId: statsData?.chainId,
-  //     category: statsData?.category,
-  //     success: statsData?.submitSuccess,
-  //     preExecSuccess: statsData?.preExecSuccess,
-  //     createBy: statsData?.createBy,
-  //     source: statsData?.source,
-  //     trigger: statsData?.trigger,
-  //   });
-  // }
-  // statsData.reported = true;
-  // notificationService.setStatsData(statsData);
+  const statsData = notificationService.getStatsData();
+  if (!statsData || statsData.reported) return;
+  if (statsData?.signed) {
+    const sData: any = {
+      type: statsData?.type,
+      chainId: statsData?.chainId,
+      category: statsData?.category,
+      success: statsData?.signedSuccess,
+      preExecSuccess: statsData?.preExecSuccess,
+      createBy: statsData?.createBy,
+      source: statsData?.source,
+      trigger: statsData?.trigger,
+    };
+    if (statsData.signMethod) {
+      sData.signMethod = statsData.signMethod;
+    }
+    stats.report('signedTransaction', sData);
+  }
+  if (statsData?.submit) {
+    stats.report('submitTransaction', {
+      type: statsData?.type,
+      chainId: statsData?.chainId,
+      category: statsData?.category,
+      success: statsData?.submitSuccess,
+      preExecSuccess: statsData?.preExecSuccess,
+      createBy: statsData?.createBy,
+      source: statsData?.source,
+      trigger: statsData?.trigger,
+    });
+  }
+  statsData.reported = true;
+  notificationService.setStatsData(statsData);
 }
 
 export default async (request: ProviderRequest) => {
