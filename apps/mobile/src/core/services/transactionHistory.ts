@@ -21,6 +21,7 @@ import {
   ParsedActionData,
 } from '@/components/Approval/components/Actions/utils';
 import { DappInfo } from './dappService';
+import { stats } from '@/utils/stats';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -355,17 +356,20 @@ export class TransactionHistoryService {
     const chain = Object.values(CHAINS).find(
       item => item.id === Number(target.chainId),
     );
-    // if (chain) {
-    //   stats.report('completeTransaction', {
-    //     chainId: chain.serverId,
-    //     success,
-    //     preExecSuccess:
-    //       target.explain.pre_exec.success && target.explain.calcSuccess,
-    //     createBy: target?.$ctx?.ga ? 'rabby' : 'dapp',
-    //     source: target?.$ctx?.ga?.source || '',
-    //     trigger: target?.$ctx?.ga?.trigger || '',
-    //   });
-    // }
+    if (chain) {
+      // TODO $ctx
+      stats.report('completeTransaction', {
+        chainId: chain.serverId,
+        success,
+        preExecSuccess: Boolean(
+          target.maxGasTx?.explain?.pre_exec.success &&
+            target.maxGasTx?.explain?.calcSuccess,
+        ),
+        // createBy: target?.$ctx?.ga ? 'rabby' : 'dapp',
+        // source: target?.$ctx?.ga?.source || '',
+        // trigger: target?.$ctx?.ga?.trigger || '',
+      });
+    }
     // this.clearBefore({ address, chainId, nonce });
   }
 

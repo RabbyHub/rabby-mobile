@@ -11,7 +11,10 @@ import {
 } from '@/utils/transaction';
 import { Chain } from '@debank/common';
 import { CHAINS } from '@/constant/chains';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  KEYRING_CATEGORY_MAP,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import {
   ExplainTxResponse,
   GasLevel,
@@ -71,6 +74,7 @@ import { normalizeTxParams } from './util';
 import { getStyles } from './style';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { stats } from '@/utils/stats';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -651,16 +655,16 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    // await wallet.reportStats('signTransaction', {
-    //   type: currentAccount.brandName,
-    //   chainId: chain.serverId,
-    //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    //   preExecSuccess:
-    //     checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-    //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-    //   source: params?.$ctx?.ga?.source || '',
-    //   trigger: params?.$ctx?.ga?.trigger || '',
-    // });
+    await stats.report('signTransaction', {
+      type: currentAccount.brandName,
+      chainId: chain.serverId,
+      category: KEYRING_CATEGORY_MAP[currentAccount.type],
+      preExecSuccess:
+        checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
+      createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      source: params?.$ctx?.ga?.source || '',
+      trigger: params?.$ctx?.ga?.trigger || '',
+    });
 
     matomoRequestEvent({
       category: 'Transaction',
@@ -832,14 +836,14 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
       setNativeTokenBalance(balance);
 
-      // wallet.reportStats('createTransaction', {
-      //   type: currentAccount.brandName,
-      //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-      //   chainId: chain.serverId,
-      //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-      //   source: params?.$ctx?.ga?.source || '',
-      //   trigger: params?.$ctx?.ga?.trigger || '',
-      // });
+      stats.report('createTransaction', {
+        type: currentAccount.brandName,
+        category: KEYRING_CATEGORY_MAP[currentAccount.type],
+        chainId: chain.serverId,
+        createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        source: params?.$ctx?.ga?.source || '',
+        trigger: params?.$ctx?.ga?.trigger || '',
+      });
 
       matomoRequestEvent({
         category: 'Transaction',

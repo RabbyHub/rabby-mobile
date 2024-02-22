@@ -15,6 +15,9 @@ import { View } from 'react-native';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { findChainByEnum } from '@/utils/chain';
+import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { stats } from '@/utils/stats';
 
 interface ApprovalParams {
   address: string;
@@ -135,18 +138,17 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
             const explain = explainRef.current;
 
             if (explain) {
-              // TODO
-              // wallet.reportStats('signTransaction', {
-              //   type: account.brandName,
-              //   chainId: findChainByEnum(chain)?.serverId || '',
-              //   category: KEYRING_CATEGORY_MAP[account.type],
-              //   preExecSuccess: explain
-              //     ? explain?.calcSuccess && explain?.pre_exec.success
-              //     : true,
-              //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-              //   source: params?.$ctx?.ga?.source || '',
-              //   trigger: params?.$ctx?.ga?.trigger || '',
-              // });
+              stats.report('signTransaction', {
+                type: account.brandName,
+                chainId: findChainByEnum(chain)?.serverId || '',
+                category: KEYRING_CATEGORY_MAP[account.type],
+                preExecSuccess: explain
+                  ? explain?.calcSuccess && explain?.pre_exec.success
+                  : true,
+                createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+                source: params?.$ctx?.ga?.source || '',
+                trigger: params?.$ctx?.ga?.trigger || '',
+              });
             }
             matomoRequestEvent({
               category: 'Transaction',
@@ -156,12 +158,11 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
             isSignTriggered = true;
           }
           if (isText && !isSignTriggered) {
-            // TODO
-            // wallet.reportStats('startSignText', {
-            //   type: account.brandName,
-            //   category: KEYRING_CATEGORY_MAP[account.type],
-            //   method: params?.extra?.signTextMethod,
-            // });
+            stats.report('startSignText', {
+              type: account.brandName,
+              category: KEYRING_CATEGORY_MAP[account.type],
+              method: params?.extra?.signTextMethod,
+            });
             isSignTriggered = true;
           }
         }

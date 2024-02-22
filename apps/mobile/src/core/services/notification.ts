@@ -11,6 +11,8 @@ import {
   presentGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
+import { stats } from '@/utils/stats';
+import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 
 export interface Approval {
   id: string;
@@ -229,16 +231,15 @@ export class NotificationService extends Events {
       const explain = signingTx?.explain;
 
       if (explain && currentAccount) {
-        // TODO 还没有
-        // stats.report('preExecTransaction', {
-        //   type: currentAccount.brandName,
-        //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-        //   chainId: explain.native_token.chain,
-        //   success: explain.calcSuccess && explain.pre_exec.success,
-        //   createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
-        //   source: data?.params.$ctx?.ga?.source || '',
-        //   trigger: data?.params.$ctx?.ga.trigger || '',
-        // });
+        stats.report('preExecTransaction', {
+          type: currentAccount.brandName,
+          category: KEYRING_CATEGORY_MAP[currentAccount.type],
+          chainId: explain.native_token.chain,
+          success: explain.calcSuccess && explain.pre_exec.success,
+          createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
+          source: data?.params.$ctx?.ga?.source || '',
+          trigger: data?.params.$ctx?.ga.trigger || '',
+        });
       }
     };
     return new Promise((resolve, reject) => {

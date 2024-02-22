@@ -54,6 +54,7 @@ import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { stats } from '@/utils/stats';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -72,12 +73,12 @@ const reportSignText = (params: {
       success,
     ].join('|'),
   });
-  // stats.report('completeSignText', {
-  //   type: account.brandName,
-  //   category: KEYRING_CATEGORY_MAP[account.type],
-  //   method,
-  //   success,
-  // });
+  stats.report('completeSignText', {
+    type: account.brandName,
+    category: KEYRING_CATEGORY_MAP[account.type],
+    method,
+    success,
+  });
 };
 
 export interface AddEthereumChainParams {
