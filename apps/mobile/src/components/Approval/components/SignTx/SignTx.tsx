@@ -655,7 +655,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    await stats.report('signTransaction', {
+    stats.report('signTransaction', {
       type: currentAccount.brandName,
       chainId: chain.serverId,
       category: KEYRING_CATEGORY_MAP[currentAccount.type],
