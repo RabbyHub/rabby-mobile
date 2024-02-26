@@ -15,14 +15,14 @@ app_display_name=$(node --eval="process.stdout.write(require('./app.json').displ
 cd $script_dir;
 
 replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios/manifest.plist \
-  --var-IPA_DOWNLOAD_URL="$cdn_deployment_urlbase/ios/rabbymobile.ipa" \
-  --var-URL_DISPLAY_IMAGE="$cdn_deployment_urlbase/ios/icon_57x57@57w.png" \
-  --var-URL_FULL_SIZE_IMAGE="$cdn_deployment_urlbase/ios/icon_512x512@512w.png" \
+  --var-IPA_DOWNLOAD_URL="$cdn_deployment_urlbase_reg/ios/rabbymobile.ipa" \
+  --var-URL_DISPLAY_IMAGE="$cdn_deployment_urlbase_reg/ios/icon_57x57@57w.png" \
+  --var-URL_FULL_SIZE_IMAGE="$cdn_deployment_urlbase_reg/ios/icon_512x512@512w.png" \
   --var-APP_VERSION="$proj_version" \
   --var-APP_DISPLAY_NAME="$app_display_name"
 
 replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
-  --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
+  --var-DOWNLOAD_URL=$cdn_deployment_urlbase_reg/ios/ \
   --var-APP_VER_CDOE=100 \
   --var-APP_VER="$proj_version"
 
@@ -39,11 +39,11 @@ echo ""
 if [ ! -z $REALLY_UPLOAD ]; then
   if [ ! -z $ipa_name ]; then
     echo "[deploy-ios-reg] backup..."
-    aws s3 cp $export_ipa_path/$ipa_name.ipa $RABBY_MOBILE_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
+    aws s3 cp $export_ipa_path/$ipa_name.ipa $RABBY_MOBILE_REG_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
   fi
 
   echo "[deploy-ios-reg] start sync..."
-  aws s3 sync $script_dir/deployments/ios $RABBY_MOBILE_PUB_DEPLOYMENT/ios --acl public-read --profile debankbuild
+  aws s3 sync $script_dir/deployments/ios $RABBY_MOBILE_REG_PUB_DEPLOYMENT/ios --acl public-read --profile debankbuild
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
