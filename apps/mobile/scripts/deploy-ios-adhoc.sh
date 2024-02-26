@@ -23,7 +23,7 @@ replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios
 
 replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
   --var-DOWNLOAD_URL=$cdn_deployment_urlbase_reg/ios/ \
-  --var-APP_VER_CDOE=100 \
+  --var-APP_VER_CODE=100 \
   --var-APP_VER="$proj_version"
 
 if [ ! -z $REALLY_BUILD ]; then
@@ -38,21 +38,21 @@ fi
 echo ""
 if [ ! -z $REALLY_UPLOAD ]; then
   if [ ! -z $ipa_name ]; then
-    echo "[deploy-ios-reg] backup..."
+    echo "[deploy-ios-adhoc] backup..."
     aws s3 cp $export_ipa_path/$ipa_name.ipa $RABBY_MOBILE_REG_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
   fi
 
-  echo "[deploy-ios-reg] start sync..."
+  echo "[deploy-ios-adhoc] start sync..."
   aws s3 sync $script_dir/deployments/ios $RABBY_MOBILE_REG_PUB_DEPLOYMENT/ios --acl public-read --profile debankbuild
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
 
 if [ -z $CI ]; then
-  echo "[deploy-ios-reg] force fresh CDN:"
-  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
+  echo "[deploy-ios-adhoc] force fresh CDN:"
+  echo "[deploy-ios-adhoc] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
   echo ""
 fi
 
-echo "[deploy-ios-reg] finish sync."
+echo "[deploy-ios-adhoc] finish sync."
 

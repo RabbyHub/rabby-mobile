@@ -1,0 +1,6 @@
+{
+  "downloadUrl": "https://download.rabby.io/downloads/wallet-mobile/android/rabby-mobile.apk",
+  "version": "{{ APP_VER }}",
+  "versionCode": "{{ APP_VER_CODE }}",
+  "versionDesc": ""
+}

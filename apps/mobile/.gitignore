@@ -73,7 +73,11 @@ tmp.iconset
 ios/Package
 
 scripts/deployments/ios/manifest.plist
-scripts/deployments/ios/version.json
+
+scripts/deployments/**/version.json
+scripts/deployments/**/*.md
+scripts/deployments/**/*.ipa
+scripts/deployments/**/*.apk
 
 **/InpageBridgeWeb3.js
 /android/app/src/main/assets/custom/vconsole.min.js

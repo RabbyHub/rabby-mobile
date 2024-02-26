@@ -52,7 +52,7 @@ replace_variables() {
         exit 1
     fi
 
-    rm "$output_file";
+    [ -f $output_file ] && rm "$output_file";
     cp "$input_file" "$output_file"
 
     UNIX_TYPE=$(uname -s)
