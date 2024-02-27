@@ -37,11 +37,11 @@ export default function WebViewControlPreload() {
     isTop: false,
   });
 
-  console.log(
-    '[feat] entryScriptWeb3Loaded, firstTouched',
-    entryScriptWeb3Loaded,
-    firstTouched,
-  );
+  // devLog(
+  //   '[debug] entryScriptWeb3Loaded, firstTouched',
+  //   entryScriptWeb3Loaded,
+  //   firstTouched,
+  // );
 
   const onWebViewLoadEnd = useCallback<
     WebViewProps['onLoadEnd'] & object

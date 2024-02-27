@@ -1,4 +1,5 @@
 import { Image } from 'react-native';
+import { getVersion } from 'react-native-device-info';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
@@ -20,9 +21,17 @@ export enum CANCEL_TX_TYPE {
   ON_CHAIN_CANCEL = 'ON_CHAIN_CANCEL',
 }
 
-export const APP_VERSION = process.env.APP_VERSION;
+const fromJs = process.env.APP_VERSION!;
+const fromNative = getVersion();
+export const APP_VERSIONS = {
+  fromJs,
+  fromNative,
+  forCheckUpgrade: __DEV__ ? fromJs : fromNative,
+};
 
 export const APP_URLS = {
   PRIVACY_POLICY: 'https://rabby.io/docs/privacy',
   TWITTER: 'https://twitter.com/rabby_io',
+
+  DOWNLOAD_PAGE: 'https://rabby.io/?platform=mobile',
 };

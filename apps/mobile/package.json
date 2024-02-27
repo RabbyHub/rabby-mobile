@@ -17,6 +17,7 @@
     "restart": "yarn start --reset-cache",
     "build:deps": "yarn ../../ build",
     "ensure-git-hooks": "yarn ../../ install-husky",
+    "syncrnversoin": "./node_modules/.bin/react-native-version --never-amend --never-increment-build",
     "start": "yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && react-native start",
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",

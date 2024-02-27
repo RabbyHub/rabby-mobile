@@ -22,6 +22,7 @@ import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
 import { replace } from './utils/navigation';
+import JotaiNexus from './components/JotaiNexus';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -60,7 +61,6 @@ function MainScreen() {
   return (
     <BottomSheetModalProvider>
       {couldRender && <AppNavigation colorScheme={binaryTheme} />}
-      {/* <JotaiNexus /> */}
     </BottomSheetModalProvider>
   );
 }
@@ -77,6 +77,7 @@ function App(): JSX.Element {
                 <MainScreen />
               </GestureHandlerRootView>
               {/* <MainScreen /> */}
+              <JotaiNexus />
             </Suspense>
           </SafeAreaProvider>
         </RootSiblingParent>

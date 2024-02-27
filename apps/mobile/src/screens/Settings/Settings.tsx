@@ -43,7 +43,7 @@ import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import { checkVersion } from '@/utils/version';
-import { APP_URLS } from '@/constant';
+import { APP_URLS, APP_VERSIONS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
@@ -166,7 +166,7 @@ function SettingsScreen(): JSX.Element {
                     fontWeight: '400',
                     paddingRight: 8,
                   }}>
-                  {process.env.APP_VERSION}
+                  {APP_VERSIONS.fromJs}
                 </Text>
               );
             },
@@ -191,7 +191,7 @@ function SettingsScreen(): JSX.Element {
               </Text>
             ),
             // TODO: only show in non-production mode
-            visible: BUILD_CHANNEL !== 'production' && !!__DEV__,
+            visible: BUILD_CHANNEL === 'selfhost-reg' && !!__DEV__,
           },
           // TODO: in the future
           // {

@@ -1,5 +1,5 @@
 {
-  "downloadUrl": "{{ DOWNLOAD_URL }}",
+  "downloadUrl": "https://rabby.io/?platform=mobile",
   "version": "{{ APP_VER }}",
   "versionCode": "{{ APP_VER_CODE }}",
   "versionDesc": ""
