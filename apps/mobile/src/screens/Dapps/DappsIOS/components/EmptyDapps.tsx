@@ -20,7 +20,7 @@ export const EmptyDapps = () => {
             source={require('@/assets/icons/dapp/dapp-empty.png')}
           />
         </View>
-        <Text style={styles.text}>No Favorite Dapp</Text>
+        <Text style={styles.text}>No Favorite Website</Text>
       </View>
     </View>
   );
