@@ -42,9 +42,8 @@ export const SELF_HOST_BASE = `https://download.rabby.io/downloads/${
     : `wallet-mobile-pretest`
 }`;
 
-const VERSION_JSON_URL = isAndroid
-  ? `${SELF_HOST_BASE}/android/version.json`
-  : `${SELF_HOST_BASE}/ios/version.json`;
+const RES_BASE_URL = `${SELF_HOST_BASE}/${isAndroid ? 'android' : 'ios'}`;
+const VERSION_JSON_URL = `${RES_BASE_URL}/version.json`;
 
 // const ANDROID_DOWNLOAD_LINK = `${SELF_HOST_BASE}/android/rabby-mobile.apk`;
 
@@ -106,6 +105,23 @@ export async function getUpgradeInfo() {
     finalRemoteInfo.version,
     localVersion,
   );
+
+  try {
+    finalRemoteInfo.changelog = await fetch(
+      `${RES_BASE_URL}/${finalRemoteInfo.version}.md`,
+    )
+      .then(res => {
+        if (res.status === 200) {
+          return res.text();
+        }
+
+        return '';
+      })
+      .catch(() => '');
+  } catch (error) {
+    console.error('fetch changelog failed', error);
+    finalRemoteInfo.changelog = '';
+  }
 
   return {
     localVersion,

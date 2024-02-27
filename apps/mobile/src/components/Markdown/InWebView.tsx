@@ -41,6 +41,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
     padding-top: 0;
     use-select: none;
     overflow: hidden;
+    padding-left: 20px;
   }
 
   ul li, ol li
@@ -56,6 +57,8 @@ const getMarkdownPageStyle = createGetStyles(colors => {
   h1, h2, h3, h4, h5, h6 {
     font-style: normal;
     font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   h1:first-child, h2:first-child, h3:first-child, h4:first-child, h5:first-child, h6:first-child {
