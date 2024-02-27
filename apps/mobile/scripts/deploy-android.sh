@@ -35,12 +35,12 @@ replace_variables $script_dir/tpl/android/version.json $android_deployments_dir/
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
   version_bundle_suffix=".aab"
-  [ ! -z $REALLY_BUILD ] && sh $project_dir/android/build.sh buildAppStore
+  [ -z $SKIP_BUILD ] && sh $project_dir/android/build.sh buildAppStore
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
 else
   version_bundle_suffix=".apk"
   public_release_name="rabby-mobile.apk"
-  [ ! -z $REALLY_BUILD ] && sh $project_dir/android/build.sh buildApk
+  [ -z $SKIP_BUILD ] && sh $project_dir/android/build.sh buildApk
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
 fi
 

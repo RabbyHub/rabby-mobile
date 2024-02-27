@@ -88,6 +88,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
       entryScripts.inPageWeb3,
       __DEV__ ? entryScripts.vConsole : '',
       JS_LOG_ON_MESSAGE,
+      ';true;',
     ]
       .filter(Boolean)
       .join('\n');

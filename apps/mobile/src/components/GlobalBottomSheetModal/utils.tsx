@@ -11,6 +11,7 @@ import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
+import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -23,6 +24,8 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
+
+  [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -47,6 +50,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
+
+  [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
 };
 
 export function makeBottomSheetProps(ctx: {

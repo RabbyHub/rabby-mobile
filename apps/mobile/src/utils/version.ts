@@ -4,9 +4,25 @@ import semver from 'semver';
 import { toast } from '@/components/Toast';
 import Toast from 'react-native-root-toast';
 import { devLog } from './logger';
-import { RemoteVersionRes, setRemoteVersion } from '@/hooks/version';
-import { BUILD_CHANNEL } from '@/constant/env';
+
+import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS, APP_VERSIONS } from '@/constant';
+
+export type RemoteVersionRes = {
+  version?: string;
+  downloadUrl?: string;
+  versionDesc?: string;
+  forceUpdate?: boolean;
+};
+
+export type MergedRemoteVersion = {
+  version: string;
+  downloadUrl: string;
+  storeUrl: string | null;
+  changelog: string;
+  source: AppBuildChannel;
+  couldUpgrade: boolean;
+};
 
 export function sleep(ms = 0) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -30,11 +46,11 @@ const VERSION_JSON_URL = isAndroid
   ? `${SELF_HOST_BASE}/android/version.json`
   : `${SELF_HOST_BASE}/ios/version.json`;
 
-async function getUpgradeInfo() {
+// const ANDROID_DOWNLOAD_LINK = `${SELF_HOST_BASE}/android/rabby-mobile.apk`;
+
+export async function getUpgradeInfo() {
   // use version from package.json on devlopment
   const localVersion = APP_VERSIONS.forCheckUpgrade;
-  // const defaultDownloadUrl = isAndroid ? `${SELF_HOST_BASE}/android/rabby-mobile.apk` : APP_URLS.DOWNLOAD_PAGE;
-  const defaultDownloadUrl = APP_URLS.DOWNLOAD_PAGE;
 
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
@@ -58,42 +74,38 @@ async function getUpgradeInfo() {
     () => DEFAULT_STORE_URL,
   );
 
-  const finalRemoteInfo = {
+  const finalRemoteInfo: MergedRemoteVersion = {
     version: localVersion,
-    downloadUrl: defaultDownloadUrl,
+    downloadUrl: APP_URLS.DOWNLOAD_PAGE,
     storeUrl,
     source: BUILD_CHANNEL,
-    needUpgrade: false,
+    couldUpgrade: false,
+    changelog: '',
   };
 
-  if (storeVersion && selfHostUpgrade?.version) {
-    if (semver.gte(storeVersion, selfHostUpgrade?.version)) {
-      finalRemoteInfo.version = storeVersion;
-      finalRemoteInfo.downloadUrl = await VersionCheck.getStoreUrl();
-      finalRemoteInfo.source = 'appstore';
-    } else if (isAndroid) {
-      finalRemoteInfo.version = selfHostUpgrade.version;
-      finalRemoteInfo.downloadUrl =
-        selfHostUpgrade.downloadUrl || defaultDownloadUrl;
-      finalRemoteInfo.source = BUILD_CHANNEL;
-    }
+  switch (BUILD_CHANNEL) {
+    case 'selfhost':
+    case 'selfhost-reg':
+      if (selfHostUpgrade?.version) {
+        if (!isAndroid) {
+          finalRemoteInfo.version = storeVersion || localVersion;
+          finalRemoteInfo.downloadUrl = storeUrl;
+        } else if (semver.gt(selfHostUpgrade.version, localVersion)) {
+          finalRemoteInfo.version = selfHostUpgrade.version;
+          finalRemoteInfo.downloadUrl = APP_URLS.DOWNLOAD_PAGE;
+        }
+      }
+      break;
+    case 'appstore':
+      finalRemoteInfo.version = storeVersion || localVersion;
+      finalRemoteInfo.downloadUrl = storeUrl;
+      break;
   }
 
-  finalRemoteInfo.needUpgrade = semver.gt(
+  finalRemoteInfo.couldUpgrade = semver.gt(
     finalRemoteInfo.version,
     localVersion,
   );
-
-  if (
-    finalRemoteInfo?.version &&
-    semver.gt(finalRemoteInfo.version, localVersion)
-  ) {
-    setRemoteVersion({
-      ...selfHostUpgrade,
-      version: finalRemoteInfo.version,
-      downloadUrl: finalRemoteInfo.downloadUrl,
-    });
-  }
 
   return {
     localVersion,
@@ -109,13 +121,18 @@ export async function checkVersion() {
 
     devLog('finalRemoteInfo', finalRemoteInfo);
 
-    if (finalRemoteInfo.needUpgrade) {
-      Linking.openURL(finalRemoteInfo.downloadUrl || finalRemoteInfo.storeUrl);
+    if (finalRemoteInfo.couldUpgrade) {
+      const targetUrl =
+        finalRemoteInfo.downloadUrl ||
+        finalRemoteInfo.storeUrl ||
+        APP_URLS.DOWNLOAD_PAGE;
+      Linking.openURL(targetUrl);
     } else {
       toast.success('You are using the latest version', {
         position: Toast.positions.BOTTOM,
       });
     }
+    return finalRemoteInfo;
   } catch (error) {
     console.error('checkVersion', error);
     toast.info('Check version failed', {
