@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
@@ -54,7 +54,9 @@ export function BottomSheetContent({
             ghost
             title={
               <View style={styles.titleWrapper}>
-                <Text style={styles.textDisconnect}>Close Dapp</Text>
+                <Text style={styles.textDisconnect}>
+                  Close {Platform.OS === 'ios' ? 'Website' : 'Dapp'}
+                </Text>
               </View>
             }
             style={styles.buttonInner}

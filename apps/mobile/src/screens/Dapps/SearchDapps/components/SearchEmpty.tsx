@@ -1,7 +1,7 @@
 import RcIconFind from '@/assets/icons/dapp/icon-find.svg';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 export const SearchEmpty = ({ isDomain }: { isDomain?: boolean }) => {
   const colors = useThemeColors();
@@ -11,10 +11,13 @@ export const SearchEmpty = ({ isDomain }: { isDomain?: boolean }) => {
     <View style={styles.container}>
       <RcIconFind />
       <View style={styles.content}>
-        <Text style={styles.text}>No Dapp found</Text>
+        <Text style={styles.text}>
+          No {Platform.OS === 'ios' ? 'Website' : 'Dapp'} found
+        </Text>
         {isDomain ? null : (
           <Text style={styles.text}>
-            Please review your input or try searching the Dapp URL.
+            Please review your input or try searching the{' '}
+            {Platform.OS === 'ios' ? 'Website' : 'Dapp'} URL.
           </Text>
         )}
       </View>
