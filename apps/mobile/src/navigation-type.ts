@@ -20,6 +20,7 @@ export type RootStackParamsList = {
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};
+  [RootNames.ImportLedger]?: {};
 };
 
 export type BottomTabParamsList = {

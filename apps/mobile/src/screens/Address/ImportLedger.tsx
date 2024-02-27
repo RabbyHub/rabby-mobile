@@ -3,22 +3,23 @@ import { AppColorsVariants } from '@/constant/theme';
 import { apiLedger } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { ButtonGroup } from '@rneui/themed';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
-import { Text } from '../Text';
-import { toast } from '../Toast';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { toast } from '@/components/Toast';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
-const STEP_COUNT = 5;
-
-export const LedgerHDPathTypeLabel = {
-  [LedgerHDPathType.LedgerLive]: 'Ledger Live',
-  [LedgerHDPathType.BIP44]: 'BIP44',
-  [LedgerHDPathType.Legacy]: 'Ledger Legacy',
+type LedgerAccount = {
+  address: string;
+  index: number;
 };
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -29,7 +30,6 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     main: {
       flex: 1,
-      alignItems: 'center',
     },
     item: {
       padding: 15,
@@ -45,14 +45,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+export const ImportLedgerScreen: React.FC = () => {
   const [startNo, setStartNo] = React.useState(0);
-  const [accounts, setAccounts] = React.useState<
-    {
-      address: string;
-      index: number;
-    }[]
-  >([]);
+  const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [loading, setLoading] = React.useState(true);
@@ -60,42 +55,50 @@ export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     React.useState(0);
   const [hdPathType, setHdPathType] = React.useState<LedgerHDPathType>();
 
-  const handleLoadAddress = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiLedger.getAddresses(startNo, startNo + STEP_COUNT);
-      setAccounts(
-        res.map(addr => ({
-          address: addr.address,
-          index: addr.index,
-        })),
-      );
-    } catch (e: any) {
-      toast.show(e.message);
-    }
+  const loadAddress = React.useCallback(async (index: number) => {
+    const res = await apiLedger.getAddresses(index, index + 1);
+    setAccounts(prev => {
+      return [
+        ...prev,
+        {
+          address: res[0].address,
+          index: res[0].index,
+        },
+      ];
+    });
+  }, []);
 
-    setLoading(false);
-  }, [startNo]);
-
-  const handleSelectIndex = React.useCallback(
-    async (address, index) => {
+  const handleLoadAddress = React.useCallback(
+    async (start: number) => {
+      setLoading(true);
       try {
-        await apiLedger.importAddress(index - 1);
-        onDone();
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
-          params: {
-            address: address,
-            brandName: KEYRING_CLASS.HARDWARE.LEDGER,
-          },
-        });
-      } catch (err: any) {
-        console.error(err);
-        toast.show(err.message);
+        for (let i = start; i < start + 50; i++) {
+          await loadAddress(i);
+        }
+      } catch (e: any) {
+        toast.show(e.message);
       }
+
+      setLoading(false);
     },
-    [onDone],
+    [loadAddress],
   );
+
+  const handleSelectIndex = React.useCallback(async (address, index) => {
+    try {
+      await apiLedger.importAddress(index - 1);
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess,
+        params: {
+          address: address,
+          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+        },
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast.show(err.message);
+    }
+  }, []);
 
   const handleSelectHdPathType = React.useCallback(
     async (index: number) => {
@@ -115,31 +118,21 @@ export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       }
       setSelectedHdPathTypeIndex(index);
       setAccounts([]);
-      handleLoadAddress();
+      handleLoadAddress(startNo);
     },
-    [handleLoadAddress],
+    [handleLoadAddress, startNo],
   );
 
   React.useEffect(() => {
     apiLedger
       .getCurrentUsedHDPathType()
       .then(setHdPathType)
-      .then(handleLoadAddress);
+      .then(() => handleLoadAddress(0));
   }, [handleLoadAddress]);
 
   return (
-    <BottomSheetView style={styles.root}>
-      <AppBottomSheetModalTitle title="Import more address" />
-      <View style={styles.main}>
-        <ButtonGroup
-          buttons={[
-            LedgerHDPathTypeLabel.BIP44,
-            LedgerHDPathTypeLabel.LedgerLive,
-            LedgerHDPathTypeLabel.Legacy,
-          ]}
-          selectedIndex={selectedHdPathTypeIndex}
-          onPress={handleSelectHdPathType}
-        />
+    <RootScreenContainer hideBottomBar style={styles.root}>
+      <ScrollView style={styles.main}>
         <View style={styles.list}>
           {accounts.map(({ address, index }) => (
             <TouchableOpacity
@@ -151,7 +144,7 @@ export const ImportLedger: React.FC<{ onDone: () => void }> = ({ onDone }) => {
           ))}
         </View>
         <Text>{loading ? 'Loading...' : ''}</Text>
-      </View>
-    </BottomSheetView>
+      </ScrollView>
+    </RootScreenContainer>
   );
 };

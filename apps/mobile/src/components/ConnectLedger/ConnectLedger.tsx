@@ -1,13 +1,10 @@
+import { RootNames } from '@/constant/layout';
 import { apiLedger } from '@/core/apis';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
+import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '../GlobalBottomSheetModal';
-import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
@@ -37,13 +34,8 @@ export const ConnectLedger: React.FC<{
       if (onSelectDevice) {
         onSelectDevice(device);
       } else {
-        const id = createGlobalBottomSheetModal({
-          name: MODAL_NAMES.IMPORT_LEDGER,
-          onDone: () => {
-            removeGlobalBottomSheetModal(id);
-            onDone?.();
-          },
-        });
+        navigate(RootNames.ImportLedger, {});
+        onDone?.();
       }
     },
 
