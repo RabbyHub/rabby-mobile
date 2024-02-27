@@ -16,7 +16,7 @@ import {
   useSetCurrentRouteName,
   useStackScreenConfig,
 } from './hooks/navigation';
-import { matomoLogScreenView } from './utils/analytics';
+import { analytics, matomoLogScreenView } from './utils/analytics';
 
 import NotFoundScreen from './screens/NotFound';
 
@@ -128,6 +128,10 @@ export default function AppNavigation({
     setCurrentRouteName(routeNameRef.current);
     console.log('routeNameRef', routeNameRef.current);
 
+    analytics.logScreenView({
+      screen_name: routeNameRef.current,
+      screen_class: routeNameRef.current,
+    });
     matomoLogScreenView({ name: routeNameRef.current! });
   }, [setCurrentRouteName]);
 
@@ -138,6 +142,10 @@ export default function AppNavigation({
     setCurrentRouteName(currentRouteName);
 
     if (previousRouteName !== currentRouteName) {
+      analytics.logScreenView({
+        screen_name: routeNameRef.current,
+        screen_class: routeNameRef.current,
+      });
       matomoLogScreenView({ name: currentRouteName! });
     }
     routeNameRef.current = currentRouteName;

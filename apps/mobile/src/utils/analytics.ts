@@ -79,6 +79,11 @@ export const matomoRequestEvent = async (data: {
   } catch (e) {
     // ignore
   }
+  try {
+    await analytics.logEvent(data.category, data);
+  } catch (e) {
+    console.error('gaEvent Error', e);
+  }
 };
 
 export const matomoLogScreenView = async ({ name }: { name: string }) => {
