@@ -13,6 +13,8 @@ import { toast } from '../Toast';
 
 const isAndroid = Platform.OS === 'android';
 
+const UPDATE_IN_APP_ON_ANDROID = false;
+
 type FooterComponentProps = RNViewProps;
 
 export default function FooterComponentForUpgrade(props: FooterComponentProps) {
@@ -34,15 +36,17 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
       return;
     }
 
+    if (UPDATE_IN_APP_ON_ANDROID) {
+      return startDownload();
+    }
+
     try {
       await openInAppBrowser(APP_URLS.DOWNLOAD_PAGE);
     } catch (error) {
       openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
       toast.info('failed to open link');
     }
-
-    // return startDownload();
-  }, []);
+  }, [startDownload]);
 
   const startDownloadButton = useMemo(() => {
     return (
