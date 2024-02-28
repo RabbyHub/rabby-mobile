@@ -2,16 +2,14 @@ import { useMemo, useCallback } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import ApkInstaller from '@isudaji/react-native-install-apk';
 
-import { Button } from '../Button';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { openExternalUrl } from '@/core/utils/linking';
+import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
-import {
-  DownloadStage,
-  useDownloadLatestApk,
-  useRemoteUpgradeInfo,
-} from '@/hooks/version';
+import { DownloadStage, useDownloadLatestApk } from '@/hooks/version';
+
+import { Button } from '../Button';
+import { toast } from '../Toast';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -36,8 +34,15 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
       return;
     }
 
-    return startDownload();
-  }, [startDownload]);
+    try {
+      await openInAppBrowser(APP_URLS.DOWNLOAD_PAGE);
+    } catch (error) {
+      openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
+      toast.info('failed to open link');
+    }
+
+    // return startDownload();
+  }, []);
 
   const startDownloadButton = useMemo(() => {
     return (

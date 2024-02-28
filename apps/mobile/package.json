@@ -110,6 +110,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.14.0",
     "react-native-get-random-values": "^1.10.0",
+    "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^2.11.0",
