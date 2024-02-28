@@ -8,7 +8,7 @@ cd $project_dir
 
 ./gradlew clean -q
 
-if [ ! -z $CI ];
+if [ ! -z $CI ]; then
   RM_BUILD_FLAGS="-q --refresh-dependencies"
 else
   RM_BUILD_FLAGS=""

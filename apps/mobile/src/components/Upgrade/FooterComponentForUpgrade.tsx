@@ -9,6 +9,7 @@ import { APP_URLS } from '@/constant';
 import { DownloadStage, useDownloadLatestApk } from '@/hooks/version';
 
 import { Button } from '../Button';
+import { toast } from '../Toast';
 
 const isAndroid = Platform.OS === 'android';
 
