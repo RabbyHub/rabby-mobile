@@ -43,6 +43,7 @@ export const ConnectLedger: React.FC<{
         await apiLedger
           .getCurrentUsedHDPathType()
           .then(res => {
+            apiLedger.setHDPathType(res ?? LedgerHDPathType.LedgerLive);
             setSetting(prev => ({
               ...prev,
               hdPath: res ?? LedgerHDPathType.LedgerLive,

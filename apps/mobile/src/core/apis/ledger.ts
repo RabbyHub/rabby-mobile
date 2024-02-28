@@ -75,7 +75,8 @@ export async function getCurrentUsedHDPathType() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   try {
     await queue.add(() => keyring.unlock());
-    return queue.add(() => keyring.getCurrentUsedHDPathType());
+    const res = await queue.add(() => keyring.getCurrentUsedHDPathType());
+    return res;
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
@@ -98,4 +99,9 @@ export async function setHDPathType(hdPathType: LedgerHDPathType) {
 export async function getInitialAccounts() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   return queue.add(() => keyring.getInitialAccounts());
+}
+
+export async function getCurrentAccounts() {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+  return queue.add(() => keyring.getCurrentAccounts());
 }

@@ -15,6 +15,7 @@ export const SettingLedger: React.FC<{
   onDone: () => void;
 }> = ({ onDone }) => {
   const { t } = useTranslation();
+  const [loading, setLoading] = React.useState(false);
   const hdPathOptions = React.useMemo(
     () => [
       {
@@ -50,8 +51,9 @@ export const SettingLedger: React.FC<{
   const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
     value => {
-      setSetting(value);
-      apiLedger.setCurrentUsedHDPathType(value.hdPath);
+      apiLedger
+        .setCurrentUsedHDPathType(value.hdPath)
+        .then(() => setSetting(value));
       onDone?.();
     },
     [onDone, setSetting],
@@ -62,14 +64,17 @@ export const SettingLedger: React.FC<{
       return;
     }
 
+    setLoading(true);
     apiLedger
       .getInitialAccounts()
-      .then(res => setInitAccounts(res as InitAccounts));
+      .then(res => setInitAccounts(res as InitAccounts))
+      .finally(() => setLoading(false));
     setIsLoaded(true);
   }, [isLoaded, setInitAccounts, setIsLoaded, setSetting]);
 
   return (
     <MainContainer
+      loading={loading}
       initAccounts={initAccounts}
       hdPathOptions={hdPathOptions}
       onConfirm={handleConfirm}

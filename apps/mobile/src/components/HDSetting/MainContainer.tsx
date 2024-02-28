@@ -13,6 +13,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { FooterButton } from '../FooterButton/FooterButton';
 import { Radio } from '../Radio';
+import { Spin } from '../Spin';
 import { Text } from '../Text';
 import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
@@ -22,7 +23,7 @@ export const isLoadedAtom = atom<boolean>(false);
 export const initAccountsAtom = atom<InitAccounts | undefined>(undefined);
 export const settingAtom = atom<Setting>({
   hdPath: LedgerHDPathType.LedgerLive,
-  startNumber: 0,
+  startNumber: 1,
 });
 
 export interface Setting {
@@ -41,6 +42,7 @@ interface Props {
   onConfirm: (setting: Setting) => void;
   initAccounts?: InitAccounts;
   setting: Setting;
+  loading?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -56,6 +58,7 @@ const getStyles = (colors: AppColorsVariants) =>
       padding: 16,
       borderRadius: 8,
       overflow: 'hidden',
+      position: 'relative',
     },
     list: {
       flex: 1,
@@ -103,6 +106,15 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 16,
       color: colors['neutral-title-1'],
     },
+    dot: {
+      width: 8,
+      height: 8,
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      backgroundColor: colors['green-default'],
+      borderRadius: 10,
+    },
   });
 
 export const MainContainer: React.FC<Props> = ({
@@ -110,7 +122,9 @@ export const MainContainer: React.FC<Props> = ({
   initAccounts,
   setting,
   onConfirm,
+  loading,
 }) => {
+  const [fetching, setFetching] = React.useState(false);
   const { t } = useTranslation();
   const [currentInitAccounts, setCurrentInitAccounts] =
     React.useState<InitAccounts>();
@@ -119,8 +133,10 @@ export const MainContainer: React.FC<Props> = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [isPressing, setIsPressing] = React.useState(false);
+  const currentLoading = loading || fetching;
 
   React.useEffect(() => {
+    setFetching(true);
     const run = async () => {
       const newInitAccounts = { ...initAccounts };
       if (initAccounts) {
@@ -129,6 +145,7 @@ export const MainContainer: React.FC<Props> = ({
           newInitAccounts[key] = await fetchAccountsInfo(items);
         }
         setCurrentInitAccounts(newInitAccounts as InitAccounts);
+        setFetching(false);
       }
     };
 
@@ -140,7 +157,11 @@ export const MainContainer: React.FC<Props> = ({
       const newOption = { ...option };
       if (currentInitAccounts) {
         const accounts = currentInitAccounts[option.value];
-        if (!accounts || accounts.length === 0) {
+        if (
+          !accounts ||
+          accounts.length === 0 ||
+          accounts.every(a => !a.balance)
+        ) {
           newOption.description = option.noChainDescription || '';
         } else {
           newOption.isOnChain = true;
@@ -151,67 +172,70 @@ export const MainContainer: React.FC<Props> = ({
   }, [currentInitAccounts, hdPathOptions]);
 
   return (
-    <BottomSheetView style={styles.root}>
-      <AppBottomSheetModalTitle
-        title={t('page.newAddress.hd.customAddressHdPath')}
-      />
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.list}>
-          {currentHdPathOptions.map(option => (
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => {
-                setHdPath(option.value);
+    <Spin spinning={currentLoading}>
+      <BottomSheetView style={styles.root}>
+        <AppBottomSheetModalTitle
+          title={t('page.newAddress.hd.customAddressHdPath')}
+        />
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.list}>
+            {currentHdPathOptions.map(option => (
+              <TouchableOpacity
+                style={styles.item}
+                onPress={() => {
+                  setHdPath(option.value);
+                }}
+                key={option.value}>
+                <View>
+                  <Radio
+                    containerStyle={styles.radio}
+                    checked={hdPath === option.value}
+                  />
+                </View>
+                <View style={styles.itemText}>
+                  <Text style={styles.itemTitle}>{option.title}</Text>
+                  <Text style={styles.itemDesc}>{option.description}</Text>
+                </View>
+                {option.isOnChain && <View style={styles.dot} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.selectIndex}>
+            <Text style={styles.selectIndexText}>
+              {t('page.newAddress.hd.selectIndexTip')}
+            </Text>
+            <BottomSheetTextInput
+              style={styles.input}
+              keyboardType="number-pad"
+              defaultValue={startNumber.toString()}
+              onChangeText={text => {
+                const number = parseInt(text, 10);
+                if (number > 0) {
+                  setStartNumber(number);
+                }
               }}
-              key={option.value}>
-              <View>
-                <Radio
-                  containerStyle={styles.radio}
-                  checked={hdPath === option.value}
-                />
-              </View>
-              <View style={styles.itemText}>
-                <Text style={styles.itemTitle}>{option.title}</Text>
-                <Text style={styles.itemDesc}>{option.description}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.selectIndex}>
-          <Text style={styles.selectIndexText}>
-            {t('page.newAddress.hd.selectIndexTip')}
-          </Text>
-          <BottomSheetTextInput
-            style={styles.input}
-            keyboardType="number-pad"
-            defaultValue={startNumber.toString()}
-            onChangeText={text => {
-              const number = parseInt(text, 10);
-              if (number > 0) {
-                setStartNumber(number);
-              }
-            }}
-          />
-          <Text style={styles.selectIndexFoot}>
-            {/* @ts-ignore */}
-            {t('page.newAddress.hd.manageAddressFrom', [
+            />
+            <Text style={styles.selectIndexFoot}>
+              {/* @ts-ignore */}
+              {t('page.newAddress.hd.manageAddressFrom', [
+                startNumber,
+                startNumber + MAX_ACCOUNT_COUNT - 1,
+              ])}
+            </Text>
+          </View>
+        </ScrollView>
+        <FooterButton
+          title="Confirm"
+          disabled={isPressing}
+          onPress={async () => {
+            setIsPressing(true);
+            onConfirm({
+              hdPath,
               startNumber,
-              startNumber + MAX_ACCOUNT_COUNT - 1,
-            ])}
-          </Text>
-        </View>
-      </ScrollView>
-      <FooterButton
-        title="Confirm"
-        disabled={isPressing}
-        onPress={async () => {
-          setIsPressing(true);
-          onConfirm({
-            hdPath,
-            startNumber,
-          });
-        }}
-      />
-    </BottomSheetView>
+            });
+          }}
+        />
+      </BottomSheetView>
+    </Spin>
   );
 };
