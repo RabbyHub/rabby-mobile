@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
 } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { atom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -17,6 +18,12 @@ import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
 
 export const MAX_ACCOUNT_COUNT = 50;
+export const isLoadedAtom = atom<boolean>(false);
+export const initAccountsAtom = atom<InitAccounts | undefined>(undefined);
+export const settingAtom = atom<Setting>({
+  hdPath: LedgerHDPathType.LedgerLive,
+  startNumber: 0,
+});
 
 export interface Setting {
   hdPath: LedgerHDPathType;
@@ -111,6 +118,7 @@ export const MainContainer: React.FC<Props> = ({
   const [startNumber, setStartNumber] = React.useState(setting.startNumber);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [isPressing, setIsPressing] = React.useState(false);
 
   React.useEffect(() => {
     const run = async () => {
@@ -195,12 +203,14 @@ export const MainContainer: React.FC<Props> = ({
       </ScrollView>
       <FooterButton
         title="Confirm"
-        onPress={() =>
+        disabled={isPressing}
+        onPress={async () => {
+          setIsPressing(true);
           onConfirm({
             hdPath,
             startNumber,
-          })
-        }
+          });
+        }}
       />
     </BottomSheetView>
   );

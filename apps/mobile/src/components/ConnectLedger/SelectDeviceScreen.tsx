@@ -9,6 +9,7 @@ import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { RcIconRightCC } from '@/assets/icons/common';
+import { toast } from '../Toast';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -56,6 +57,19 @@ export const SelectDeviceScreen: React.FC<{
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [locked, setLocked] = React.useState(false);
+
+  const handlePress = React.useCallback(
+    async device => {
+      const toastHidden = toast.show('Connecting...', {
+        duration: 100000,
+      });
+      setLocked(true);
+      await onSelect(device);
+      toastHidden();
+    },
+    [onSelect],
+  );
 
   return (
     <View style={styles.root}>
@@ -66,9 +80,8 @@ export const SelectDeviceScreen: React.FC<{
           {devices.map((device, index) => (
             <TouchableOpacity
               key={device.id}
-              onPress={() => {
-                onSelect(device);
-              }}
+              disabled={locked}
+              onPress={() => handlePress(device)}
               style={styles.item}>
               <View style={styles.textWrapper}>
                 <LedgerSVG width={28} height={28} />

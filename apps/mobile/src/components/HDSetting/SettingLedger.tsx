@@ -1,8 +1,14 @@
 import { apiLedger } from '@/core/apis';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MainContainer, Setting } from './MainContainer';
+import {
+  initAccountsAtom,
+  isLoadedAtom,
+  MainContainer,
+  settingAtom,
+} from './MainContainer';
 import { InitAccounts } from './type';
 
 export const SettingLedger: React.FC<{
@@ -39,30 +45,28 @@ export const SettingLedger: React.FC<{
     [t],
   );
 
-  const [initAccounts, setInitAccounts] = React.useState<InitAccounts>();
-  const [setting, setSetting] = React.useState<Setting>({
-    hdPath: LedgerHDPathType.LedgerLive,
-    startNumber: 1,
-  });
+  const [initAccounts, setInitAccounts] = useAtom(initAccountsAtom);
+  const [setting, setSetting] = useAtom(settingAtom);
+  const [isLoaded, setIsLoaded] = useAtom(isLoadedAtom);
   const handleConfirm = React.useCallback(
     value => {
-      console.log('confirm', value);
+      setSetting(value);
+      apiLedger.setCurrentUsedHDPathType(value.hdPath);
       onDone?.();
     },
-    [onDone],
+    [onDone, setSetting],
   );
 
   React.useEffect(() => {
-    apiLedger.getCurrentUsedHDPathType().then(res => {
-      setSetting(prev => ({
-        ...prev,
-        hdPath: res ?? LedgerHDPathType.LedgerLive,
-      }));
-    });
+    if (isLoaded) {
+      return;
+    }
+
     apiLedger
       .getInitialAccounts()
       .then(res => setInitAccounts(res as InitAccounts));
-  }, []);
+    setIsLoaded(true);
+  }, [isLoaded, setInitAccounts, setIsLoaded, setSetting]);
 
   return (
     <MainContainer

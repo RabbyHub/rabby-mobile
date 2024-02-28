@@ -3,8 +3,11 @@ import { apiLedger } from '@/core/apis';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
+import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
@@ -14,6 +17,8 @@ export const ConnectLedger: React.FC<{
   onSelectDevice?: (d: Device) => void;
 }> = ({ onDone, onSelectDevice }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
+  const [_1, setIsLoaded] = useAtom(isLoadedAtom);
+  const [_2, setSetting] = useAtom(settingAtom);
 
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble'
@@ -29,17 +34,28 @@ export const ConnectLedger: React.FC<{
   }, []);
 
   const handleSelectDevice = React.useCallback(
-    device => {
+    async device => {
       apiLedger.setDeviceId(device.id);
       if (onSelectDevice) {
         onSelectDevice(device);
       } else {
-        navigate(RootNames.ImportLedger, {});
-        onDone?.();
+        setIsLoaded(false);
+        await apiLedger
+          .getCurrentUsedHDPathType()
+          .then(res => {
+            setSetting(prev => ({
+              ...prev,
+              hdPath: res ?? LedgerHDPathType.LedgerLive,
+            }));
+          })
+          .then(() => {
+            navigate(RootNames.ImportLedger, {});
+            onDone?.();
+          });
       }
     },
 
-    [onDone, onSelectDevice],
+    [onDone, onSelectDevice, setIsLoaded, setSetting],
   );
 
   React.useEffect(() => {

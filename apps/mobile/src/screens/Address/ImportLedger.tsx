@@ -3,9 +3,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { apiLedger } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { ButtonGroup } from '@rneui/themed';
 import React from 'react';
 import {
   ScrollView,
@@ -16,6 +14,10 @@ import {
 } from 'react-native';
 import { toast } from '@/components/Toast';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { useAtom } from 'jotai';
+import { settingAtom } from '@/components/HDSetting/MainContainer';
+
+export const MAX_ACCOUNT_COUNT = 50;
 
 type LedgerAccount = {
   address: string;
@@ -45,18 +47,19 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const ImportLedgerScreen: React.FC = () => {
-  const [startNo, setStartNo] = React.useState(0);
+export const ImportLedgerScreen = () => {
   const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [loading, setLoading] = React.useState(true);
-  const [selectedHdPathTypeIndex, setSelectedHdPathTypeIndex] =
-    React.useState(0);
-  const [hdPathType, setHdPathType] = React.useState<LedgerHDPathType>();
+  const [setting] = useAtom(settingAtom);
+  const stoppedRef = React.useRef(true);
 
   const loadAddress = React.useCallback(async (index: number) => {
     const res = await apiLedger.getAddresses(index, index + 1);
+    if (stoppedRef.current) {
+      return;
+    }
     setAccounts(prev => {
       return [
         ...prev,
@@ -70,13 +73,24 @@ export const ImportLedgerScreen: React.FC = () => {
 
   const handleLoadAddress = React.useCallback(
     async (start: number) => {
+      stoppedRef.current = false;
       setLoading(true);
+      let i = start;
       try {
-        for (let i = start; i < start + 50; i++) {
+        for (; i < start + MAX_ACCOUNT_COUNT; ) {
+          if (stoppedRef.current) {
+            break;
+          }
           await loadAddress(i);
+          i++;
         }
       } catch (e: any) {
         toast.show(e.message);
+      }
+      stoppedRef.current = true;
+
+      if (i !== start + MAX_ACCOUNT_COUNT) {
+        handleLoadAddress(start);
       }
 
       setLoading(false);
@@ -100,35 +114,20 @@ export const ImportLedgerScreen: React.FC = () => {
     }
   }, []);
 
-  const handleSelectHdPathType = React.useCallback(
-    async (index: number) => {
-      switch (index) {
-        case 0:
-          setHdPathType(LedgerHDPathType.BIP44);
-          apiLedger.setHDPathType(LedgerHDPathType.BIP44);
-          break;
-        case 1:
-          setHdPathType(LedgerHDPathType.LedgerLive);
-          apiLedger.setHDPathType(LedgerHDPathType.LedgerLive);
-          break;
-        default:
-          setHdPathType(LedgerHDPathType.Legacy);
-          apiLedger.setHDPathType(LedgerHDPathType.Legacy);
-          break;
-      }
-      setSelectedHdPathTypeIndex(index);
-      setAccounts([]);
-      handleLoadAddress(startNo);
-    },
-    [handleLoadAddress, startNo],
-  );
+  React.useEffect(() => {
+    setAccounts([]);
+    if (stoppedRef.current) {
+      handleLoadAddress(setting?.startNumber || 0);
+    } else {
+      stoppedRef.current = true;
+    }
+  }, [handleLoadAddress, setting]);
 
   React.useEffect(() => {
-    apiLedger
-      .getCurrentUsedHDPathType()
-      .then(setHdPathType)
-      .then(() => handleLoadAddress(0));
-  }, [handleLoadAddress]);
+    return () => {
+      stoppedRef.current = true;
+    };
+  }, []);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.root}>
@@ -139,7 +138,9 @@ export const ImportLedgerScreen: React.FC = () => {
               onPress={() => handleSelectIndex(address, index)}
               style={styles.item}
               key={address}>
-              <Text style={styles.itemText}>{address}</Text>
+              <Text style={styles.itemText}>
+                {index}.{address}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

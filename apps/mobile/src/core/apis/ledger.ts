@@ -5,7 +5,12 @@ import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { keyringService } from '../services';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import PQueue from 'p-queue';
 
+let queue: PQueue;
+setTimeout(() => {
+  queue = new (require('p-queue/dist').default)({ concurrency: 1 });
+}, 0);
 export async function initLedgerKeyring() {
   return getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring, keyring => {
     bindLedgerEvents(keyring);
@@ -25,7 +30,7 @@ export async function getAddresses(start: number, end: number) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   try {
-    return keyring.getAddresses(start, end);
+    return queue.add(() => keyring.getAddresses(start, end));
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
@@ -69,14 +74,20 @@ export async function isConnected(address: string) {
 export async function getCurrentUsedHDPathType() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   try {
-    await keyring.unlock();
-    return keyring.getCurrentUsedHDPathType();
+    await queue.add(() => keyring.unlock());
+    return queue.add(() => keyring.getCurrentUsedHDPathType());
   } catch (e) {
     const deviceId = await keyring.getDeviceId();
     if (deviceId) {
       TransportBLE.disconnectDevice(deviceId);
     }
   }
+}
+
+export async function setCurrentUsedHDPathType(hdPathType: LedgerHDPathType) {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+  await keyring.setHDPathType(hdPathType);
+  return queue.add(() => keyring.setCurrentUsedHDPathType());
 }
 
 export async function setHDPathType(hdPathType: LedgerHDPathType) {
@@ -86,5 +97,5 @@ export async function setHDPathType(hdPathType: LedgerHDPathType) {
 
 export async function getInitialAccounts() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
-  return keyring.getInitialAccounts();
+  return queue.add(() => keyring.getInitialAccounts());
 }
