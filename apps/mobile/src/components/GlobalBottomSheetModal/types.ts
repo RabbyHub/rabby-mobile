@@ -13,6 +13,8 @@ export enum MODAL_NAMES {
   'SELECT_SORTED_CHAIN' = 'SELECT_SORTED_CHAIN',
   'VIEW_RAW_DETAILS' = 'VIEW_RAW_DETAILS',
   'CANCEL_TX_POPUP' = 'CANCEL_TX_POPUP',
+
+  'TIP_UPGRADE' = 'TIP_UPGRADE',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -36,11 +38,13 @@ export type MODAL_CREATE_PARMAS = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: {};
   [MODAL_NAMES.VIEW_RAW_DETAILS]: {};
   [MODAL_NAMES.CANCEL_TX_POPUP]: {};
+  [MODAL_NAMES.TIP_UPGRADE]: {};
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
+  /** @deprecated use bottomSheetModalProps.onDismiss directly */
   onCancel?: () => void;
   bottomSheetModalProps?: Partial<BottomSheetModalProps>;
   /**

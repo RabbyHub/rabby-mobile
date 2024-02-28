@@ -5,6 +5,8 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 
+export buildchannel="selfhost-reg";
+export targetplatform="ios";
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
@@ -23,7 +25,8 @@ replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios
 
 replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
   --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
-  --var-APP_VER_CDOE=100 \
+  # TODO: read from xcode project
+  --var-APP_VER_CODE=100 \
   --var-APP_VER="$proj_version"
 
 if [ ! -z $REALLY_BUILD ]; then
@@ -38,21 +41,24 @@ fi
 echo ""
 if [ ! -z $REALLY_UPLOAD ]; then
   if [ ! -z $ipa_name ]; then
-    echo "[deploy-ios-reg] backup..."
-    aws s3 cp $export_ipa_path/$ipa_name.ipa $RABBY_MOBILE_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
+    echo "[deploy-ios-adhoc] backup..."
+    aws s3 cp $export_ipa_path/$ipa_name.ipa $IOS_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
   fi
 
-  echo "[deploy-ios-reg] start sync..."
-  aws s3 sync $script_dir/deployments/ios $RABBY_MOBILE_PUB_DEPLOYMENT/ios --acl public-read --profile debankbuild
+  echo "[deploy-ios-adhoc] start sync..."
+  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.plist" --acl public-read --profile debankbuild --content-type application/x-plist
+  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.png" --acl public-read --profile debankbuild --content-type image/png
+  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.json" --acl public-read --profile debankbuild --content-type application/json
+  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.ipa" --acl public-read --profile debankbuild --content-type application/octet-stream
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
 
 if [ -z $CI ]; then
-  echo "[deploy-ios-reg] force fresh CDN:"
-  echo "[deploy-ios-reg] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
+  echo "[deploy-ios-adhoc] force fresh CDN:"
+  echo "[deploy-ios-adhoc] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
   echo ""
 fi
 
-echo "[deploy-ios-reg] finish sync."
+echo "[deploy-ios-adhoc] finish sync."
 

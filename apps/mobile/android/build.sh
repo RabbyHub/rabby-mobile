@@ -2,23 +2,33 @@
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$script_dir
-export_path="$project_dir/app/build/outputs/apk/release"
+export android_export_dir="$project_dir/app/build/outputs/"
 
 cd $project_dir
 
 ./gradlew clean -q
 
-# apk
-./gradlew assembleRelease -q --refresh-dependencies
-
-# aar
-if [[ "$1" == "bundleRelease" ]]; then
-    ./gradlew bundleRelease
+if [ ! -z $CI ]; then
+  RM_BUILD_FLAGS="-q --refresh-dependencies"
+else
+  RM_BUILD_FLAGS=""
 fi
 
-if [ -f "$export_path/app-release.apk" ] ; then
+if [[ "$1" == "buildAppStore" ]]; then
+  echo "[android-build] build aab"
+  # aab
+  ./gradlew bundleRelease $RM_BUILD_FLAGS --parallel
+  export android_export_target="$project_dir/app/build/outputs/bundle/release/app-release.aab"
+elif [[ "$1" == "buildApk" ]]; then
+  echo "[android-build] build apk"
+  # apk
+  ./gradlew assembleRelease $RM_BUILD_FLAGS --parallel
+  export android_export_target="$project_dir/app/build/outputs/apk/release/app-release.apk"
+fi
+
+if [ -f "$android_export_target" ] ; then
     echo "\033[32;1mexport android success 🎉  🎉  🎉   \033[0m"
-    open $export_path
+    open $(dirname $android_export_target)
 else
     echo "\033[31;1mexport android failed 😢 😢 😢     \033[0m"
     exit 1

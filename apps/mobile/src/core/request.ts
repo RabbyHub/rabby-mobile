@@ -2,6 +2,7 @@ import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
 import * as Sign from '@debank/rabby-rn-security/es/sign-rn-rabby';
+import { APP_VERSIONS } from '@/constant';
 
 const SIGN_HDS = [
   'x-api-ts',
@@ -30,7 +31,7 @@ export const openapi = new OpenApiService({
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
-  clientVersion: process.env.APP_VERSION,
+  clientVersion: APP_VERSIONS.fromJs,
 });
 openapi.initSync();
 
@@ -40,7 +41,7 @@ export const testOpenapi = new OpenApiService({
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
-  clientVersion: process.env.APP_VERSION,
+  clientVersion: APP_VERSIONS.fromJs,
 });
 testOpenapi.initSync();
 
