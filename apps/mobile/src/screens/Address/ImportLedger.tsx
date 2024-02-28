@@ -98,6 +98,7 @@ export const ImportLedgerScreen = () => {
   const [setting] = useAtom(settingAtom);
   const stoppedRef = React.useRef(true);
   const exitRef = React.useRef(false);
+  const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
   const [currentAccounts, setCurrentAccounts] = React.useState<LedgerAccount[]>(
     [],
   );
@@ -120,33 +121,31 @@ export const ImportLedgerScreen = () => {
     });
   }, []);
 
-  const handleLoadAddress = React.useCallback(
-    async (start: number) => {
-      stoppedRef.current = false;
-      let i = start;
-      try {
-        for (; i < start + MAX_ACCOUNT_COUNT; ) {
-          if (stoppedRef.current) {
-            break;
-          }
-          await loadAddress(i);
-          i++;
+  const handleLoadAddress = React.useCallback(async () => {
+    stoppedRef.current = false;
+    const start = startNumberRef.current;
+    let i = start;
+    try {
+      for (; i < start + MAX_ACCOUNT_COUNT; ) {
+        if (stoppedRef.current) {
+          break;
         }
-      } catch (e: any) {
-        toast.show(e.message);
+        await loadAddress(i);
+        i++;
       }
-      stoppedRef.current = true;
+    } catch (e: any) {
+      toast.show(e.message);
+    }
+    stoppedRef.current = true;
 
-      if (exitRef.current) {
-        return;
-      }
+    if (exitRef.current) {
+      return;
+    }
 
-      if (i !== start + MAX_ACCOUNT_COUNT) {
-        handleLoadAddress(start);
-      }
-    },
-    [loadAddress],
-  );
+    if (i !== start + MAX_ACCOUNT_COUNT) {
+      handleLoadAddress();
+    }
+  }, [loadAddress]);
 
   const handleSelectIndex = React.useCallback(async (address, index) => {
     try {
@@ -167,11 +166,15 @@ export const ImportLedgerScreen = () => {
   React.useEffect(() => {
     setAccounts([]);
     if (stoppedRef.current) {
-      handleLoadAddress((setting?.startNumber || 1) - 1);
+      handleLoadAddress();
     } else {
       stoppedRef.current = true;
     }
   }, [handleLoadAddress, setting]);
+
+  React.useEffect(() => {
+    startNumberRef.current = (setting?.startNumber || 1) - 1;
+  }, [setting?.startNumber]);
 
   React.useEffect(() => {
     apiLedger.getCurrentAccounts().then(res => {

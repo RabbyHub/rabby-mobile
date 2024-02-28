@@ -82,7 +82,12 @@ export const SelectDeviceScreen: React.FC<{
               key={device.id}
               disabled={locked}
               onPress={() => handlePress(device)}
-              style={styles.item}>
+              style={StyleSheet.flatten([
+                styles.item,
+                {
+                  opacity: locked ? 0.6 : 1,
+                },
+              ])}>
               <View style={styles.textWrapper}>
                 <LedgerSVG width={28} height={28} />
                 <Text key={index}>{device.name}</Text>

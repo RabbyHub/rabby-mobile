@@ -19,6 +19,7 @@ import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
 
 export const MAX_ACCOUNT_COUNT = 50;
+const HARDENED_OFFSET = 0x80000000 - 50;
 export const isLoadedAtom = atom<boolean>(false);
 export const initAccountsAtom = atom<InitAccounts | undefined>(undefined);
 export const settingAtom = atom<Setting>({
@@ -210,7 +211,7 @@ export const MainContainer: React.FC<Props> = ({
               defaultValue={startNumber.toString()}
               onChangeText={text => {
                 const number = parseInt(text, 10);
-                if (number > 0) {
+                if (number > 0 && number < HARDENED_OFFSET) {
                   setStartNumber(number);
                 }
               }}
