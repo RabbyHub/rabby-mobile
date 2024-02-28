@@ -80,7 +80,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4
-        versionName "0.1.0"
+        versionName "0.0.9"
     }
     splits {
         abi {
@@ -139,6 +139,7 @@ dependencies {
     }
 
     implementation project(':react-native-splash-screen')
+    implementation project(':isudaji_react-native-install-apk')
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

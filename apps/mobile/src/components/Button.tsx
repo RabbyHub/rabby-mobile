@@ -26,8 +26,9 @@ export type ButtonProps = TouchableOpacityProps &
     titleStyle?: StyleProp<TextStyle>;
     titleProps?: TextProps;
     buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-    type?: 'primary' | 'white' | 'clear' | 'danger';
+    type?: 'primary' | 'white' | 'clear' | 'danger' | 'success';
     loading?: boolean;
+    showTitleOnLoading?: boolean;
     loadingStyle?: StyleProp<ViewStyle>;
     loadingProps?: ActivityIndicatorProps;
     containerStyle?: StyleProp<ViewStyle>;
@@ -54,6 +55,7 @@ export const Button = ({
   type = 'primary',
   ghost,
   loading = false,
+  showTitleOnLoading = false,
   loadingStyle,
   loadingProps: passedLoadingProps,
   icon,
@@ -85,12 +87,16 @@ export const Button = ({
         currentColor: colors['neutral-title2'],
         bg: colors['red-default'],
       },
+      success: {
+        currentColor: colors['neutral-title2'],
+        bg: colors['green-default'],
+      },
     };
     return {
       currentColor: colorMap[type].currentColor || colors['neutral-title2'],
       bgColor: colorMap[type].bg || colors['blue-default'],
     };
-  }, [type, colors , ghost/* , passedTitleStyle, isClearType */]);
+  }, [type, colors, ghost /* , passedTitleStyle, isClearType */]);
 
   useEffect(() => {
     if (linearGradientProps && !ViewComponent) {
@@ -206,30 +212,33 @@ export const Button = ({
               {...loadingProps}
             />
           )}
-          {!loading && icon && !iconRight && (
-            <View
-              style={StyleSheet.flatten([
-                styles.iconContainer,
-                iconContainerStyle,
-              ])}>
-              {icon}
-            </View>
-          )}
-          {/* Title for Button, hide while loading */}
-          {!loading &&
-            !!title &&
-            renderText(title, {
-              style: titleStyle,
-              ...titleProps,
-            })}
-          {!loading && icon && iconRight && (
-            <View
-              style={StyleSheet.flatten([
-                styles.iconContainer,
-                iconContainerStyle,
-              ])}>
-              {icon}
-            </View>
+          {(!loading || showTitleOnLoading) && (
+            <>
+              {icon && !iconRight && (
+                <View
+                  style={StyleSheet.flatten([
+                    styles.iconContainer,
+                    iconContainerStyle,
+                  ])}>
+                  {icon}
+                </View>
+              )}
+              {/* Title for Button */}
+              {!!title &&
+                renderText(title, {
+                  style: titleStyle,
+                  ...titleProps,
+                })}
+              {icon && iconRight && (
+                <View
+                  style={StyleSheet.flatten([
+                    styles.iconContainer,
+                    iconContainerStyle,
+                  ])}>
+                  {icon}
+                </View>
+              )}
+            </>
           )}
         </ViewComponent>
       </TouchableComponentInternal>

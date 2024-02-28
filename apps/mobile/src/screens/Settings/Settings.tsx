@@ -47,13 +47,6 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
 import { useRemoteUpgradeInfo } from '@/hooks/version';
-import Toast from 'react-native-root-toast';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import FooterComponentForUpgrade from '@/components/Upgrade/FooterComponentForUpgrade';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -75,7 +68,7 @@ function SettingsScreen(): JSX.Element {
   const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
   const { currentAccount } = useCurrentAccount();
 
-  const { remoteVersion, loadRemoteVersion } = useRemoteUpgradeInfo();
+  const { remoteVersion, triggerCheckVersion } = useRemoteUpgradeInfo();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -193,30 +186,7 @@ function SettingsScreen(): JSX.Element {
                 </View>
               );
             },
-            onPress: () => {
-              loadRemoteVersion()
-                .then(result => {
-                  if (!result.finalRemoteInfo.couldUpgrade) {
-                    toast.success('You are using the latest version', {
-                      position: Toast.positions.BOTTOM,
-                    });
-                  } else {
-                    const modalId = createGlobalBottomSheetModal({
-                      name: MODAL_NAMES.TIP_UPGRADE,
-                      title: 'New Version',
-                      onCancel: () => {
-                        removeGlobalBottomSheetModal(modalId);
-                      },
-                    });
-                  }
-                })
-                .catch(error => {
-                  console.error('Check version failed', error);
-                  toast.info('Check version failed', {
-                    position: Toast.positions.BOTTOM,
-                  });
-                });
-            },
+            onPress: triggerCheckVersion,
           },
           {
             label: 'Feedback',

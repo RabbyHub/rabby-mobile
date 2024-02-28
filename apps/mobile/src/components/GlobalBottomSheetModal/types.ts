@@ -44,6 +44,7 @@ export type MODAL_CREATE_PARMAS = {
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
+  /** @deprecated use bottomSheetModalProps.onDismiss directly */
   onCancel?: () => void;
   bottomSheetModalProps?: Partial<BottomSheetModalProps>;
   /**

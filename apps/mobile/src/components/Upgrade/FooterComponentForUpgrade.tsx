@@ -1,12 +1,17 @@
 import { useMemo, useCallback } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
+import ApkInstaller from '@isudaji/react-native-install-apk';
 
 import { Button } from '../Button';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { openExternalUrl } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
-import { useRemoteUpgradeInfo } from '@/hooks/version';
+import {
+  DownloadStage,
+  useDownloadLatestApk,
+  useRemoteUpgradeInfo,
+} from '@/hooks/version';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -17,33 +22,92 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
 
   const { styles } = useThemeStyles(getStyles);
 
-  const { remoteVersion } = useRemoteUpgradeInfo();
+  const {
+    downloadStage,
+    progressPercentText,
+    progressInfo: { downloadResult, downloadedApkPath },
+    startDownload,
+    resetProgress,
+  } = useDownloadLatestApk();
 
-  const onStartDown = useCallback(() => {
+  const onStartDownload = useCallback(async () => {
     if (!isAndroid) {
       openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
       return;
     }
 
-    openExternalUrl(remoteVersion.downloadUrl);
-  }, [remoteVersion]);
+    return startDownload();
+  }, [startDownload]);
 
   const startDownloadNode = useMemo(() => {
     return (
       <Button
-        onPress={onStartDown}
+        onPress={onStartDownload}
         title={'Update'}
         type="primary"
         buttonStyle={[styles.buttonStyle]}
         titleStyle={[styles.btnConfirmTitle]}
-        containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+        containerStyle={[styles.btnContainer]}
       />
     );
-  }, [styles, onStartDown]);
+  }, [styles, onStartDownload]);
+
+  const downloadingNode = useMemo(() => {
+    const isConnecting = downloadStage === DownloadStage.connecting;
+
+    return (
+      <Button
+        onPress={() => {}}
+        loading
+        showTitleOnLoading
+        title={
+          isConnecting ? 'Connecting' : `Downloading ${progressPercentText}`
+        }
+        type="primary"
+        loadingStyle={{ marginRight: 6 }}
+        buttonStyle={[styles.buttonStyle]}
+        titleStyle={[styles.btnConfirmTitle]}
+        containerStyle={[styles.btnContainer]}
+      />
+    );
+  }, [styles, progressPercentText, downloadStage]);
+
+  const downloadedNode = useMemo(() => {
+    return (
+      <Button
+        onPress={() => {
+          if (downloadResult?.statusCode === 200) {
+            ApkInstaller.install(downloadedApkPath);
+            // openExternalUrl(result.targetFilepath);
+          }
+          setTimeout(() => resetProgress(), 200);
+        }}
+        title="Install and Restart"
+        type="success"
+        loadingStyle={{ marginRight: 6 }}
+        buttonStyle={[styles.buttonStyle]}
+        titleStyle={[styles.btnConfirmTitle]}
+        containerStyle={[styles.btnContainer]}
+      />
+    );
+  }, [styles, resetProgress, downloadResult, downloadedApkPath]);
 
   return (
     <View style={[styles.footerWrapper, style]}>
-      <View style={[styles.btnGroup]}>{startDownloadNode}</View>
+      <View style={[styles.btnGroup]}>
+        {isAndroid ? (
+          <>
+            {downloadStage === DownloadStage.none && startDownloadNode}
+            {[DownloadStage.connecting, DownloadStage.downloading].includes(
+              downloadStage,
+            ) && downloadingNode}
+
+            {downloadStage === DownloadStage.downloaded && downloadedNode}
+          </>
+        ) : (
+          startDownloadNode
+        )}
+      </View>
     </View>
   );
 }
@@ -87,6 +151,9 @@ const getStyles = createGetStyles(colors => ({
   buttonStyle: {
     width: '100%',
     height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   btnCancelContainer: {
     borderColor: colors['blue-default'],
@@ -99,6 +166,6 @@ const getStyles = createGetStyles(colors => ({
   btnConfirmContainer: {},
   btnConfirmTitle: {
     color: colors['neutral-title-2'],
-    flex: 1,
+    fontSize: 16,
   },
 }));

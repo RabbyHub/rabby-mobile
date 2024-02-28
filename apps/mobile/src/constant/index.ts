@@ -1,4 +1,4 @@
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 import { getVersion } from 'react-native-device-info';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
@@ -35,3 +35,11 @@ export const APP_URLS = {
 
   DOWNLOAD_PAGE: 'https://rabby.io/?platform=mobile',
 };
+
+// TODO: add native method to get bundler id
+export const APPLICATION_ID =
+  Platform.OS == 'android'
+    ? 'com.debank.rabbymobile'
+    : __DEV__
+    ? 'com.debank.rabby-mobile-debug'
+    : 'com.debank.rabby-mobile';

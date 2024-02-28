@@ -16,7 +16,7 @@ if [[ "$1" == "buildAppStore" ]]; then
 elif [[ "$1" == "buildApk" ]]; then
   echo "[android-build] build apk"
   # apk
-  ./gradlew assembleRelease --refresh-dependencies --parallel
+  ./gradlew assembleRelease --parallel
   export android_export_target="$project_dir/app/build/outputs/apk/release/app-release.apk"
 fi
 

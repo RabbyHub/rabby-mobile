@@ -1,12 +1,14 @@
 import { Linking, Platform } from 'react-native';
 import VersionCheck from 'react-native-version-check';
-import semver from 'semver';
-import { toast } from '@/components/Toast';
 import Toast from 'react-native-root-toast';
+import semver from 'semver';
+import RNFS from 'react-native-fs';
+
+import { toast } from '@/components/Toast';
 import { devLog } from './logger';
 
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
-import { APP_URLS, APP_VERSIONS } from '@/constant';
+import { APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
 
 export type RemoteVersionRes = {
   version?: string;
@@ -45,7 +47,56 @@ export const SELF_HOST_BASE = `https://download.rabby.io/downloads/${
 const RES_BASE_URL = `${SELF_HOST_BASE}/${isAndroid ? 'android' : 'ios'}`;
 const VERSION_JSON_URL = `${RES_BASE_URL}/version.json`;
 
-// const ANDROID_DOWNLOAD_LINK = `${SELF_HOST_BASE}/android/rabby-mobile.apk`;
+const ANDROID_DOWNLOAD_LINK = `${SELF_HOST_BASE}/android/rabby-mobile.apk`;
+function getLatestApkPath() {
+  // const targetBase = `${RNFS.DocumentDirectoryPath}/install`
+  const targetBase = `${RNFS.CachesDirectoryPath}/install`;
+  RNFS.mkdir(targetBase);
+
+  return `${targetBase}/${APPLICATION_ID}.apk`;
+}
+export type DownloadLatestApkResult = {
+  downloadResult: RNFS.DownloadResult;
+  downloadedApkPath: string;
+  targetUrl: string;
+};
+export async function downloadLatestApk(options?: {
+  onProgress?: (ctx: {
+    progressPercent: number;
+    downloadCallbackRes: RNFS.DownloadProgressCallbackResult;
+    localApkPath: string | null;
+  }) => void;
+}) {
+  const localApkPath = getLatestApkPath();
+  const { onProgress } = options || {};
+
+  const download = RNFS.downloadFile({
+    fromUrl: ANDROID_DOWNLOAD_LINK,
+    toFile: localApkPath,
+    progress: res => {
+      const progressPercent = Number(
+        (res.bytesWritten / res.contentLength).toFixed(2),
+      );
+      console.log('progressPercent', progressPercent);
+
+      onProgress?.({
+        progressPercent,
+        downloadCallbackRes: res,
+        localApkPath: progressPercent >= 1 ? localApkPath : null,
+      });
+    },
+    readTimeout: 60 * 1e3,
+    progressDivider: 1,
+  });
+
+  return download.promise.then(downloadResult => {
+    return {
+      downloadResult,
+      downloadedApkPath: localApkPath,
+      targetUrl: ANDROID_DOWNLOAD_LINK,
+    } as DownloadLatestApkResult;
+  });
+}
 
 export async function getUpgradeInfo() {
   // use version from package.json on devlopment
