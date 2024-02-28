@@ -39,20 +39,20 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
     return startDownload();
   }, [startDownload]);
 
-  const startDownloadNode = useMemo(() => {
+  const startDownloadButton = useMemo(() => {
     return (
       <Button
         onPress={onStartDownload}
         title={'Update'}
         type="primary"
         buttonStyle={[styles.buttonStyle]}
-        titleStyle={[styles.btnConfirmTitle]}
+        titleStyle={[styles.btnActionTitle]}
         containerStyle={[styles.btnContainer]}
       />
     );
   }, [styles, onStartDownload]);
 
-  const downloadingNode = useMemo(() => {
+  const downloadingButton = useMemo(() => {
     const isConnecting = downloadStage === DownloadStage.connecting;
 
     return (
@@ -66,13 +66,13 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
         type="primary"
         loadingStyle={{ marginRight: 6 }}
         buttonStyle={[styles.buttonStyle]}
-        titleStyle={[styles.btnConfirmTitle]}
+        titleStyle={[styles.btnActionTitle]}
         containerStyle={[styles.btnContainer]}
       />
     );
   }, [styles, progressPercentText, downloadStage]);
 
-  const downloadedNode = useMemo(() => {
+  const downloadedButton = useMemo(() => {
     return (
       <Button
         onPress={() => {
@@ -86,7 +86,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
         type="success"
         loadingStyle={{ marginRight: 6 }}
         buttonStyle={[styles.buttonStyle]}
-        titleStyle={[styles.btnConfirmTitle]}
+        titleStyle={[styles.btnActionTitle]}
         containerStyle={[styles.btnContainer]}
       />
     );
@@ -97,15 +97,34 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
       <View style={[styles.btnGroup]}>
         {isAndroid ? (
           <>
-            {downloadStage === DownloadStage.none && startDownloadNode}
+            {downloadStage === DownloadStage.none && (
+              <>
+                {startDownloadButton}
+                {/* <Button
+                  onPress={() => {
+                    openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
+                  }}
+                  title="Homesite"
+                  type="primary"
+                  ghost
+                  buttonStyle={[styles.buttonStyle]}
+                  titleStyle={[styles.btnActionTitle, styles.btnGhostColor]}
+                  containerStyle={[
+                    styles.btnContainer,
+                    styles.btnGhostContainer,
+                    { marginLeft: 6 },
+                  ]}
+                /> */}
+              </>
+            )}
             {[DownloadStage.connecting, DownloadStage.downloading].includes(
               downloadStage,
-            ) && downloadingNode}
+            ) && downloadingButton}
 
-            {downloadStage === DownloadStage.downloaded && downloadedNode}
+            {downloadStage === DownloadStage.downloaded && downloadedButton}
           </>
         ) : (
-          startDownloadNode
+          startDownloadButton
         )}
       </View>
     </View>
@@ -148,6 +167,15 @@ const getStyles = createGetStyles(colors => ({
     maxWidth: '100%',
   },
 
+  btnGhostContainer: {
+    width: 80,
+    flexShrink: 1,
+    maxWidth: '30%',
+  },
+  btnGhostColor: {
+    color: colors['blue-default'],
+  },
+
   buttonStyle: {
     width: '100%',
     height: '100%',
@@ -155,16 +183,8 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  btnCancelContainer: {
-    borderColor: colors['blue-default'],
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnCancelTitle: {
-    color: colors['blue-default'],
-    flex: 1,
-  },
   btnConfirmContainer: {},
-  btnConfirmTitle: {
+  btnActionTitle: {
     color: colors['neutral-title-2'],
     fontSize: 16,
   },
