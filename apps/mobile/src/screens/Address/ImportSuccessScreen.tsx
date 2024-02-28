@@ -11,6 +11,7 @@ import {
 import React from 'react';
 import {
   Keyboard,
+  ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -25,58 +26,6 @@ import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
-
-interface ItemProps {
-  address: string;
-  aliasName: string;
-  setAliasName: (aliasName: string) => void;
-}
-const Item: React.FC<ItemProps> = ({ address, aliasName, setAliasName }) => {
-  const colors = useThemeColors();
-  const { safeOffHeader } = useSafeSizes();
-
-  const styles = React.useMemo(
-    () =>
-      StyleSheet.create({
-        titleContainer: {
-          width: '100%',
-          height: 320 - safeOffHeader,
-          flexShrink: 0,
-          backgroundColor: colors['blue-default'],
-          color: colors['neutral-title-2'],
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        title: {
-          fontSize: 24,
-          fontWeight: '700',
-          color: colors['neutral-title-2'],
-          marginTop: 25,
-        },
-        inputContainer: {
-          backgroundColor: colors['neutral-bg-2'],
-          paddingVertical: 24,
-          paddingHorizontal: 20,
-        },
-        keyboardView: {
-          flex: 1,
-          height: '100%',
-          backgroundColor: colors['neutral-bg-2'],
-        },
-      }),
-
-    [colors, safeOffHeader],
-  );
-
-  return (
-    <AddressInput
-      aliasName={aliasName}
-      address={address}
-      onChange={setAliasName}
-    />
-  );
-};
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
@@ -220,23 +169,25 @@ export const ImportSuccessScreen = () => {
             <ImportSuccessSVG />
             <Text style={styles.title}>Added successfully</Text>
           </View>
-          <View style={styles.inputContainer}>
-            {importAddresses.map((item, index) => (
-              <Item
-                key={item.address}
-                address={item.address}
-                aliasName={item.aliasName}
-                setAliasName={_aliasName => {
-                  const newImportAddresses = [...importAddresses];
-                  newImportAddresses[index] = {
-                    address: item.address,
-                    aliasName: _aliasName,
-                  };
-                  setImportAddresses(newImportAddresses);
-                }}
-              />
-            ))}
-          </View>
+          <ScrollView automaticallyAdjustKeyboardInsets>
+            <View style={styles.inputContainer}>
+              {importAddresses.map((item, index) => (
+                <AddressInput
+                  key={item.address}
+                  address={item.address}
+                  aliasName={item.aliasName}
+                  onChange={_aliasName => {
+                    const newImportAddresses = [...importAddresses];
+                    newImportAddresses[index] = {
+                      address: item.address,
+                      aliasName: _aliasName,
+                    };
+                    setImportAddresses(newImportAddresses);
+                  }}
+                />
+              ))}
+            </View>
+          </ScrollView>
         </View>
       </TouchableWithoutFeedback>
       <FooterButton title="Done" onPress={handleDone} />

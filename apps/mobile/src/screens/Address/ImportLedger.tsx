@@ -26,6 +26,7 @@ import { formatUsdValue } from '@/utils/number';
 import { isNumber } from 'lodash';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useTranslation } from 'react-i18next';
+import { Spin } from '@/components/Spin';
 
 const { isSameAddress } = addressUtils;
 
@@ -233,71 +234,73 @@ export const ImportLedgerScreen = () => {
   }, [selectedAccounts]);
 
   return (
-    <RootScreenContainer hideBottomBar style={styles.root}>
-      <ScrollView style={styles.main}>
-        <View style={styles.list}>
-          {accounts.map(({ address, index, balance }) => {
-            const isImported = currentAccounts.some(a =>
-              isSameAddress(a.address, address),
-            );
-            const isSelected = selectedAccounts.some(a =>
-              isSameAddress(a.address, address),
-            );
+    <Spin spinning={!accounts.length}>
+      <RootScreenContainer hideBottomBar style={styles.root}>
+        <ScrollView style={styles.main}>
+          <View style={styles.list}>
+            {accounts.map(({ address, index, balance }) => {
+              const isImported = currentAccounts.some(a =>
+                isSameAddress(a.address, address),
+              );
+              const isSelected = selectedAccounts.some(a =>
+                isSameAddress(a.address, address),
+              );
 
-            return (
-              <TouchableOpacity
-                onPress={() => handleSelectIndex(address, index)}
-                style={StyleSheet.flatten([
-                  styles.item,
-                  {
-                    opacity: isImported ? 0.5 : 1,
-                  },
-                ])}
-                disabled={isImported}
-                key={address}>
-                <View style={styles.itemLeft}>
-                  <Text style={styles.itemIndex}>{index}</Text>
-                  <View style={styles.itemAddressWrap}>
-                    <Text style={styles.itemAddress}>
-                      {formatAddressToShow(address, {
-                        ellipsis: true,
-                      })}
-                    </Text>
-                    <TouchableOpacity onPress={() => onCopy(address)}>
-                      <RcIconCopyCC
-                        color={colors['neutral-foot']}
-                        width={14}
-                        height={14}
+              return (
+                <TouchableOpacity
+                  onPress={() => handleSelectIndex(address, index)}
+                  style={StyleSheet.flatten([
+                    styles.item,
+                    {
+                      opacity: isImported ? 0.5 : 1,
+                    },
+                  ])}
+                  disabled={isImported}
+                  key={address}>
+                  <View style={styles.itemLeft}>
+                    <Text style={styles.itemIndex}>{index}</Text>
+                    <View style={styles.itemAddressWrap}>
+                      <Text style={styles.itemAddress}>
+                        {formatAddressToShow(address, {
+                          ellipsis: true,
+                        })}
+                      </Text>
+                      <TouchableOpacity onPress={() => onCopy(address)}>
+                        <RcIconCopyCC
+                          color={colors['neutral-foot']}
+                          width={14}
+                          height={14}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.itemRight}>
+                    {isNumber(balance) && (
+                      <Text style={styles.itemBalance}>
+                        {formatUsdValue(balance)}
+                      </Text>
+                    )}
+                    <View>
+                      <Radio
+                        containerStyle={styles.radio}
+                        checked={isImported || isSelected}
                       />
-                    </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-                <View style={styles.itemRight}>
-                  {isNumber(balance) && (
-                    <Text style={styles.itemBalance}>
-                      {formatUsdValue(balance)}
-                    </Text>
-                  )}
-                  <View>
-                    <Radio
-                      containerStyle={styles.radio}
-                      checked={isImported || isSelected}
-                    />
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
-      <FooterButton
-        disabled={importing}
-        titleStyle={styles.footerButtonTitle}
-        title={`${t('global.Confirm')}${
-          selectedAccounts.length ? ` (${selectedAccounts.length})` : ''
-        }`}
-        onPress={handleConfirm}
-      />
-    </RootScreenContainer>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+        <FooterButton
+          disabled={importing}
+          titleStyle={styles.footerButtonTitle}
+          title={`${t('global.Confirm')}${
+            selectedAccounts.length ? ` (${selectedAccounts.length})` : ''
+          }`}
+          onPress={handleConfirm}
+        />
+      </RootScreenContainer>
+    </Spin>
   );
 };
