@@ -37,7 +37,7 @@ export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportSuccess]?: {
-    address: string;
+    address: string | string[];
     brandName: string;
     deepLink?: string;
     realBrandName?: string;

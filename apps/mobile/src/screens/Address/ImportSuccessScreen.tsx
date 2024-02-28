@@ -26,19 +26,18 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
-export const ImportSuccessScreen = () => {
+interface ItemProps {
+  address: string;
+  aliasName: string;
+  setAliasName: (aliasName: string) => void;
+}
+const Item: React.FC<ItemProps> = ({ address, aliasName, setAliasName }) => {
   const colors = useThemeColors();
-  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const { safeOffHeader } = useSafeSizes();
-  const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
 
   const styles = React.useMemo(
     () =>
       StyleSheet.create({
-        rootContainer: {
-          display: 'flex',
-          backgroundColor: colors['blue-default'],
-        },
         titleContainer: {
           width: '100%',
           height: 320 - safeOffHeader,
@@ -69,23 +68,88 @@ export const ImportSuccessScreen = () => {
 
     [colors, safeOffHeader],
   );
+
+  return (
+    <AddressInput
+      aliasName={aliasName}
+      address={address}
+      onChange={setAliasName}
+    />
+  );
+};
+
+export const ImportSuccessScreen = () => {
+  const colors = useThemeColors();
+  const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
+  const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
+  const { safeOffHeader } = useSafeSizes();
+
+  const styles = React.useMemo(
+    () =>
+      StyleSheet.create({
+        rootContainer: {
+          display: 'flex',
+          backgroundColor: colors['blue-default'],
+        },
+        list: {
+          rowGap: 14,
+          flex: 1,
+        },
+        titleContainer: {
+          width: '100%',
+          height: 320 - safeOffHeader,
+          flexShrink: 0,
+          backgroundColor: colors['blue-default'],
+          color: colors['neutral-title-2'],
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        title: {
+          fontSize: 24,
+          fontWeight: '700',
+          color: colors['neutral-title-2'],
+          marginTop: 25,
+        },
+        inputContainer: {
+          backgroundColor: colors['neutral-bg-2'],
+          paddingVertical: 24,
+          paddingHorizontal: 20,
+          rowGap: 16,
+        },
+        keyboardView: {
+          flex: 1,
+          height: '100%',
+          backgroundColor: colors['neutral-bg-2'],
+        },
+      }),
+
+    [colors, safeOffHeader],
+  );
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
   ) as {
-    address: string;
+    address: string | string[];
     brandName: string;
     deepLink: string;
   };
-  const [aliasName, setAliasName] = React.useState<string>('');
+  const [importAddresses, setImportAddresses] = React.useState<
+    {
+      address: string;
+      aliasName: string;
+    }[]
+  >([]);
 
   const { switchAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
 
   const handleDone = React.useCallback(() => {
-    contactService.setAlias({
-      address: state.address,
-      alias: aliasName || '',
+    importAddresses.forEach(item => {
+      contactService.setAlias({
+        address: item.address,
+        alias: item.aliasName,
+      });
     });
     Keyboard.dismiss();
 
@@ -100,12 +164,21 @@ export const ImportSuccessScreen = () => {
         },
       ],
     });
-  }, [aliasName, navigation, state.address]);
+  }, [importAddresses, navigation]);
 
   const isFocus = useIsFocused();
 
   React.useEffect(() => {
-    setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+
+    setImportAddresses(
+      addresses.map(address => ({
+        address,
+        aliasName: contactService.getAliasByAddress(address)?.alias || '',
+      })),
+    );
   }, [state]);
 
   React.useEffect(() => {
@@ -113,24 +186,28 @@ export const ImportSuccessScreen = () => {
   }, [fetchAccounts]);
 
   React.useEffect(() => {
+    if (!importAddresses.length) {
+      return;
+    }
+    const lastAddress = importAddresses[importAddresses.length - 1].address;
     if (isFocus) {
       const targetAccount = accounts.find(
         a =>
           a.brandName === state.brandName &&
-          addressUtils.isSameAddress(a.address, state.address),
+          addressUtils.isSameAddress(a.address, lastAddress),
       );
       const currentAccount = preferenceService.getCurrentAccount();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
-          !addressUtils.isSameAddress(currentAccount.address, state.address)
+          !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
           switchAccount(targetAccount);
         }
       }
     }
-  }, [isFocus, state, accounts, switchAccount]);
+  }, [isFocus, state, accounts, switchAccount, importAddresses]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
@@ -144,11 +221,21 @@ export const ImportSuccessScreen = () => {
             <Text style={styles.title}>Added successfully</Text>
           </View>
           <View style={styles.inputContainer}>
-            <AddressInput
-              aliasName={aliasName}
-              address={state.address}
-              onChange={setAliasName}
-            />
+            {importAddresses.map((item, index) => (
+              <Item
+                key={item.address}
+                address={item.address}
+                aliasName={item.aliasName}
+                setAliasName={_aliasName => {
+                  const newImportAddresses = [...importAddresses];
+                  newImportAddresses[index] = {
+                    address: item.address,
+                    aliasName: _aliasName,
+                  };
+                  setImportAddresses(newImportAddresses);
+                }}
+              />
+            ))}
           </View>
         </View>
       </TouchableWithoutFeedback>

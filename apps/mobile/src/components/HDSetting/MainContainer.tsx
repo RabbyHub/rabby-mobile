@@ -116,6 +116,10 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['green-default'],
       borderRadius: 10,
     },
+    footerButtonTitle: {
+      fontWeight: '600',
+      fontSize: 16,
+    },
   });
 
 export const MainContainer: React.FC<Props> = ({
@@ -226,7 +230,8 @@ export const MainContainer: React.FC<Props> = ({
           </View>
         </ScrollView>
         <FooterButton
-          title="Confirm"
+          title={t('global.Confirm')}
+          titleStyle={styles.footerButtonTitle}
           disabled={isPressing}
           onPress={async () => {
             setIsPressing(true);

@@ -21,8 +21,10 @@ export async function importAddress(index: number) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
   keyring.setAccountToUnlock(index);
-  const result = await keyringService.addNewAccount(keyring as any);
-
+  await queue.clear();
+  const result = await queue.add(() =>
+    keyringService.addNewAccount(keyring as any),
+  );
   return result;
 }
 

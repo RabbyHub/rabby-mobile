@@ -23,6 +23,9 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { formatUsdValue } from '@/utils/number';
+import { isNumber } from 'lodash';
+import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { useTranslation } from 'react-i18next';
 
 const { isSameAddress } = addressUtils;
 
@@ -39,10 +42,10 @@ const getStyles = (colors: AppColorsVariants) =>
     root: {
       height: '100%',
       position: 'relative',
-      paddingHorizontal: 20,
     },
     main: {
       flex: 1,
+      paddingHorizontal: 20,
     },
     item: {
       backgroundColor: colors['neutral-card-1'],
@@ -89,6 +92,10 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       columnGap: 4,
     },
+    footerButtonTitle: {
+      fontWeight: '600',
+      fontSize: 16,
+    },
   });
 
 export const ImportLedgerScreen = () => {
@@ -102,6 +109,11 @@ export const ImportLedgerScreen = () => {
   const [currentAccounts, setCurrentAccounts] = React.useState<LedgerAccount[]>(
     [],
   );
+  const { t } = useTranslation();
+  const [selectedAccounts, setSelectedAccounts] = React.useState<
+    LedgerAccount[]
+  >([]);
+  const [importing, setImporting] = React.useState(false);
 
   const loadAddress = React.useCallback(async (index: number) => {
     const res = await apiLedger.getAddresses(index, index + 1);
@@ -148,19 +160,18 @@ export const ImportLedgerScreen = () => {
   }, [loadAddress]);
 
   const handleSelectIndex = React.useCallback(async (address, index) => {
-    try {
-      await apiLedger.importAddress(index - 1);
-      navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess,
-        params: {
-          address: address,
-          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+    setSelectedAccounts(prev => {
+      if (prev.some(a => isSameAddress(a.address, address))) {
+        return prev.filter(a => !isSameAddress(a.address, address));
+      }
+      return [
+        ...prev,
+        {
+          address,
+          index,
         },
-      });
-    } catch (err: any) {
-      console.error(err);
-      toast.show(err.message);
-    }
+      ];
+    });
   }, []);
 
   React.useEffect(() => {
@@ -196,20 +207,53 @@ export const ImportLedgerScreen = () => {
     toast.success('Copied');
   }, []);
 
+  const handleConfirm = React.useCallback(async () => {
+    setImporting(true);
+    const importToastHidden = toast.show('Importing...', {
+      duration: 100000,
+    });
+    try {
+      for (const acc of selectedAccounts) {
+        await apiLedger.importAddress(acc.index - 1);
+      }
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess,
+        params: {
+          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+          address: selectedAccounts.map(a => a.address),
+        },
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast.show(err.message);
+    } finally {
+      importToastHidden();
+    }
+    setImporting(false);
+  }, [selectedAccounts]);
+
   return (
     <RootScreenContainer hideBottomBar style={styles.root}>
       <ScrollView style={styles.main}>
         <View style={styles.list}>
           {accounts.map(({ address, index, balance }) => {
-            const isSelected = currentAccounts.some(a =>
+            const isImported = currentAccounts.some(a =>
+              isSameAddress(a.address, address),
+            );
+            const isSelected = selectedAccounts.some(a =>
               isSameAddress(a.address, address),
             );
 
             return (
               <TouchableOpacity
                 onPress={() => handleSelectIndex(address, index)}
-                style={styles.item}
-                disabled={isSelected}
+                style={StyleSheet.flatten([
+                  styles.item,
+                  {
+                    opacity: isImported ? 0.5 : 1,
+                  },
+                ])}
+                disabled={isImported}
                 key={address}>
                 <View style={styles.itemLeft}>
                   <Text style={styles.itemIndex}>{index}</Text>
@@ -229,11 +273,16 @@ export const ImportLedgerScreen = () => {
                   </View>
                 </View>
                 <View style={styles.itemRight}>
-                  <Text style={styles.itemBalance}>
-                    {formatUsdValue(balance)}
-                  </Text>
+                  {isNumber(balance) && (
+                    <Text style={styles.itemBalance}>
+                      {formatUsdValue(balance)}
+                    </Text>
+                  )}
                   <View>
-                    <Radio containerStyle={styles.radio} checked={isSelected} />
+                    <Radio
+                      containerStyle={styles.radio}
+                      checked={isImported || isSelected}
+                    />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -241,6 +290,14 @@ export const ImportLedgerScreen = () => {
           })}
         </View>
       </ScrollView>
+      <FooterButton
+        disabled={importing}
+        titleStyle={styles.footerButtonTitle}
+        title={`${t('global.Confirm')}${
+          selectedAccounts.length ? ` (${selectedAccounts.length})` : ''
+        }`}
+        onPress={handleConfirm}
+      />
     </RootScreenContainer>
   );
 };
