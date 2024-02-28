@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import ApkInstaller from '@isudaji/react-native-install-apk';
 
@@ -9,7 +9,6 @@ import { APP_URLS } from '@/constant';
 import { DownloadStage, useDownloadLatestApk } from '@/hooks/version';
 
 import { Button } from '../Button';
-import { toast } from '../Toast';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -63,6 +62,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
     return (
       <Button
         onPress={() => {}}
+        disabled
         loading
         showTitleOnLoading
         title={

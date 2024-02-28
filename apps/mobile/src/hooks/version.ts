@@ -1,5 +1,5 @@
-import { useMemo, useRef, useCallback } from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useState, useMemo, useRef, useCallback } from 'react';
+import { atom, useAtom } from 'jotai';
 import { getVersion } from 'react-native-device-info';
 
 import Toast from 'react-native-root-toast';
@@ -21,6 +21,7 @@ import {
 import { BUILD_CHANNEL } from '@/constant/env';
 import { APP_URLS } from '@/constant';
 import { toast } from '@/components/Toast';
+import { useUnmountedRef } from './common/useMount';
 
 const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>('RemoteVersionMMKV', {
   version: getVersion(),
@@ -101,22 +102,25 @@ export const enum DownloadStage {
   'downloading',
   'connecting',
 }
-const downloadProgressAtom = atom<{
-  percent: number;
-  downloadResult: DownloadLatestApkResult['downloadResult'] | null;
-  downloadedApkPath: string | null;
-}>({ ...DEFAULT_PROGRESS });
 export function useDownloadLatestApk() {
-  const [progressInfo, setProgressInfo] = useAtom(downloadProgressAtom);
+  const [progressInfo, setProgressInfo] = useState<{
+    percent: number;
+    downloadResult: DownloadLatestApkResult['downloadResult'] | null;
+    downloadedApkPath: string | null;
+  }>({ ...DEFAULT_PROGRESS });
   const downloadingPromiseRef = useRef<ReturnType<
     typeof downloadLatestApk
   > | null>(null);
+
+  const unmountedRef = useUnmountedRef();
 
   const startDownload = useCallback(async () => {
     if (downloadingPromiseRef.current) return downloadingPromiseRef.current;
 
     downloadingPromiseRef.current = downloadLatestApk({
       onProgress: ctx => {
+        if (unmountedRef.current) return;
+
         setProgressInfo(prev => ({
           ...prev,
           percent: ctx.progressPercent,
@@ -125,6 +129,8 @@ export function useDownloadLatestApk() {
       },
     })
       .then(res => {
+        if (unmountedRef.current) return res;
+
         setProgressInfo(prev => ({
           ...prev,
           downloadResult: res.downloadResult,
@@ -137,10 +143,11 @@ export function useDownloadLatestApk() {
       });
 
     return downloadingPromiseRef.current;
-  }, [setProgressInfo]);
+  }, [setProgressInfo, unmountedRef]);
 
   const resetProgress = useCallback(() => {
     setProgressInfo({ ...DEFAULT_PROGRESS });
+    downloadingPromiseRef.current = null;
   }, [setProgressInfo]);
 
   const downloadStage = useMemo(() => {
