@@ -89,6 +89,7 @@ function BlockItem({
   children = children || (
     <Text
       className="font-normal text-[14] "
+      numberOfLines={1}
       style={{
         color: colors['neutral-title-1'],
       }}>
@@ -138,9 +139,19 @@ function BlockItem({
       disabled={disabled ? !onDisabledPress : !onPress}
       onPress={() => (disabled ? onDisabledPress?.() : onPress?.())}>
       {/* left area */}
-      <WindView className="flex-row flex-shrink-1 items-center">
+      <WindView
+        className="flex-row flex-shrink-1 items-center"
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+        }}>
         <View>{iconNode || null}</View>
-        <View>{children}</View>
+        <View
+          style={{
+            flex: 1,
+          }}>
+          {children}
+        </View>
       </WindView>
       {/* right area */}
       <WindView className="flex-row flex-shrink-0 items-center">
