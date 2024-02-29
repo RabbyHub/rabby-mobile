@@ -3290,13 +3290,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@isudaji/react-native-install-apk@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "@isudaji/react-native-install-apk@npm:1.0.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40isudaji%2Freact-native-install-apk%2F-%2Freact-native-install-apk-1.0.5.tgz"
-  checksum: 4209fbbcfe083e191331c548db88d849ca3bc526688d1b64a644da8963a3bc02f0666d17e7868c48fded919647bca5ebe3930854d31814dde2e8577aaad6bada
-  languageName: node
-  linkType: hard
-
 "@jest/console@npm:^26.6.2":
   version: 26.6.2
   resolution: "@jest/console@npm:26.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40jest%2Fconsole%2F-%2Fconsole-26.6.2.tgz"
@@ -25469,7 +25462,6 @@ __metadata:
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
-    "@isudaji/react-native-install-apk": ^1.0.5
     "@ledgerhq/react-native-hw-transport-ble": ^6.32.2
     "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
