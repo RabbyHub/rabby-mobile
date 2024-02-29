@@ -25,11 +25,13 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 20,
     },
     imageWrapper: {
-      marginTop: 74,
+      marginTop: 55,
       position: 'relative',
     },
     progress: {
       position: 'absolute',
+      top: -15,
+      left: -15,
     },
   });
 
@@ -40,10 +42,12 @@ export const ScanDeviceScreen: React.FC<{}> = () => {
 
   return (
     <View style={styles.root}>
-      <AppBottomSheetModalTitle title={t('正在查找设备')} />
+      <AppBottomSheetModalTitle
+        title={t('page.newAddress.ledger.scan.title')}
+      />
       <View style={styles.main}>
         <Text style={styles.text}>
-          确保您已启用蓝牙且已解锁您的Ledger Nano X
+          {t('page.newAddress.ledger.scan.description')}
         </Text>
         <View style={styles.imageWrapper}>
           <ScanLedgerSVG />

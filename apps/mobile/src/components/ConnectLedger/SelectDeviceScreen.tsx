@@ -3,7 +3,7 @@ import { LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Device } from 'react-native-ble-plx';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
@@ -28,8 +28,7 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 20,
     },
     item: {
-      paddingHorizontal: 15,
-      paddingVertical: 20,
+      padding: 16,
       backgroundColor: colors['neutral-card-2'],
       borderRadius: 8,
       width: '100%',
@@ -40,12 +39,19 @@ const getStyles = (colors: AppColorsVariants) =>
     list: {
       marginTop: 24,
       width: '100%',
+    },
+    listWrapper: {
       rowGap: 12,
     },
     textWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
       columnGap: 12,
+    },
+    itemText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
     },
   });
 
@@ -73,29 +79,39 @@ export const SelectDeviceScreen: React.FC<{
 
   return (
     <View style={styles.root}>
-      <AppBottomSheetModalTitle title={t('查找到以下设备')} />
+      <AppBottomSheetModalTitle
+        title={t('page.newAddress.ledger.select.title')}
+      />
       <View style={styles.main}>
-        <Text style={styles.text}>请选择当前使用的Ledger</Text>
-        <View style={styles.list}>
-          {devices.map((device, index) => (
-            <TouchableOpacity
-              key={device.id}
-              disabled={locked}
-              onPress={() => handlePress(device)}
-              style={StyleSheet.flatten([
-                styles.item,
-                {
-                  opacity: locked ? 0.6 : 1,
-                },
-              ])}>
-              <View style={styles.textWrapper}>
-                <LedgerSVG width={28} height={28} />
-                <Text key={index}>{device.name}</Text>
-              </View>
-              <RcIconRightCC />
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={styles.text}>
+          {t('page.newAddress.ledger.select.description')}
+        </Text>
+        <ScrollView style={styles.list}>
+          <View style={styles.listWrapper}>
+            {devices.map(device => (
+              <TouchableOpacity
+                key={device.id}
+                disabled={locked}
+                onPress={() => handlePress(device)}
+                style={StyleSheet.flatten([
+                  styles.item,
+                  {
+                    opacity: locked ? 0.6 : 1,
+                  },
+                ])}>
+                <View style={styles.textWrapper}>
+                  <LedgerSVG width={28} height={28} />
+                  <Text style={styles.itemText}>{device.name}</Text>
+                </View>
+                <RcIconRightCC
+                  color={colors['neutral-foot']}
+                  width={20}
+                  height={20}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
       </View>
     </View>
   );

@@ -1216,7 +1216,6 @@
       },
       "importedSuccessfully": "Imported Successfully",
       "ledger": {
-        "title": "Connect Ledger",
         "cameraPermissionTitle": "Allow Rabby to access the camera",
         "cameraPermission1": "Allow Rabby to access the camera in the browser pop-up",
         "allowRabbyPermissionsTitle": "Allow Rabby permissions to:",
@@ -1224,7 +1223,19 @@
         "ledgerPermissionTip": "Please click \"Allow\" below and authorize access to your Ledger in the following pop-up window.",
         "permissionsAuthorized": "Permissions Authorized",
         "nowYouCanReInitiateYourTransaction": "Now you can re-initiate your transaction.",
-        "allow": "Allow"
+        "allow": "Allow",
+        "ble": {
+          "title": "Connect Ledger",
+          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+        },
+        "scan": {
+          "title": "Searching for Device",
+          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+        },
+        "select": {
+          "title": "Available Devices",
+          "description": "Please select a Ledger to connect"
+        }
       },
       "keystone": {
         "title": "Connect Keystone",
@@ -1999,14 +2010,14 @@
     "powered_off_alert": {
       "title": "Bluetooth is off",
       "message": "Please turn on Bluetooth to use this feature",
-      "open_settings": "Open Settings",
-      "cancel": "Cancel"
+      "open_settings": "OK",
+      "cancel": "Don't Allow"
     },
     "permissions_alert": {
-      "title": "Bluetooth Permissions",
-      "message": "Please enable Bluetooth permissions in your settings to use this feature",
-      "open_settings": "Open Settings",
-      "cancel": "Cancel"
+      "title": "\"Rabby Wallet\" Would Like to Use Bluetooth",
+      "message": "Rabby Wallet uses bluetooth access to connect Ledger",
+      "open_settings": "OK",
+      "cancel": "Don't Allow"
     }
   }
 }

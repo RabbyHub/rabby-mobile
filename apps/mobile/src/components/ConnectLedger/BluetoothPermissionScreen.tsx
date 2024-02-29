@@ -26,6 +26,9 @@ const getStyles = (colors: AppColorsVariants) =>
     list: {
       marginBottom: 24,
     },
+    logo: {
+      marginTop: 55,
+    },
   });
 
 export const BluetoothPermissionScreen: React.FC<{
@@ -37,14 +40,12 @@ export const BluetoothPermissionScreen: React.FC<{
 
   return (
     <View style={styles.root}>
-      <AppBottomSheetModalTitle title={t('page.newAddress.ledger.title')} />
+      <AppBottomSheetModalTitle title={t('page.newAddress.ledger.ble.title')} />
       <View style={styles.main}>
-        <View style={styles.list}>
-          <Text style={styles.text}>1. Plug in a single Ledger</Text>
-          <Text style={styles.text}>2. Enter pin to unlock</Text>
-          <Text style={styles.text}>3. Open Ethereum App</Text>
-        </View>
-        <ScanLedgerSVG />
+        <Text style={styles.text}>
+          {t('page.newAddress.ledger.ble.description')}
+        </Text>
+        <ScanLedgerSVG style={styles.logo} />
       </View>
       <FooterButton type="primary" onPress={onNext} title={t('global.next')} />
     </View>
