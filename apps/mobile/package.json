@@ -23,7 +23,7 @@
     "start": "yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && react-native start",
     "test": "jest",
     "build-inpage": "sh ./scripts/postinstall.sh",
-    "create-patch": "sh ./scripts/apply-patch.sh",
+    "create-patch": "sh ./scripts/create-patch.sh",
     "link-assets": "react-native-asset",
     "postinstall": "yarn build:deps && yarn build-inpage && patch-package",
     "postversion": "react-native-version --never-amend"
