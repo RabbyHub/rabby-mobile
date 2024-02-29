@@ -480,11 +480,12 @@ export function useSendTokenForm() {
               method: 'eth_sendTransaction',
               params: [params],
               $ctx: {
-                // ga: {
-                //   category: 'Send',
-                //   source: 'sendToken',
-                //   trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
-                // },
+                ga: {
+                  category: 'Send',
+                  source: 'sendToken',
+                  // trigger: filterRbiSource('sendToken', rbisource) && rbisource, // mark source module of `sendToken`
+                  trigger: 'sendToken',
+                },
               },
             },
             INTERNAL_REQUEST_SESSION,

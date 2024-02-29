@@ -2014,6 +2014,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/festats@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@debank/festats@npm:1.0.4"
+  checksum: c65764eb81a02030aa8ec92cd3d9bb7c73a024cadc6ee6953aa020822c7f2e7accc41b441ac6f1ba4af3a609f943d11b0d445ca9e2dc20598beefb6f33f3a08a
+  languageName: node
+  linkType: hard
+
 "@debank/rabby-rn-security@npm:^0.1.1":
   version: 0.1.1
   resolution: "@debank/rabby-rn-security@npm:0.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Frabby-rn-security%2F-%2Frabby-rn-security-0.1.1.tgz"
@@ -25073,6 +25080,7 @@ __metadata:
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@debank/common": ^0.3.54
+    "@debank/festats": 1.0.4
     "@debank/rabby-rn-security": ^0.1.1
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.1.0

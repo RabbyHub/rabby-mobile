@@ -32,6 +32,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { stats } from '@/utils/stats';
 
 interface SignTextProps {
   data: string[];
@@ -163,12 +164,12 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       ].join('|'),
       transport: 'beacon',
     });
-    // await wallet.reportStats(action, {
-    //   type: currentAccount.brandName,
-    //   category: getKRCategoryByType(currentAccount.type),
-    //   method: 'personalSign',
-    //   ...extra,
-    // });
+    await stats.report(action, {
+      type: currentAccount.brandName,
+      category: getKRCategoryByType(currentAccount.type),
+      method: 'personalSign',
+      ...extra,
+    });
   };
 
   const handleCancel = () => {
@@ -278,6 +279,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
         setIsLoading(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, signText, textActionData, params, from]);
 
   // useEffect(() => {
@@ -294,10 +296,12 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
 
   useEffect(() => {
     executeSecurityEngine();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
 
   useEffect(() => {
     checkWachMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

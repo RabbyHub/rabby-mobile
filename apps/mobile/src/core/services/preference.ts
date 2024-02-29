@@ -81,6 +81,10 @@ export interface PreferenceStore {
   // themeMode?: DARK_MODE_TYPE;
   addressSortStore: AddressSortStore;
   isInvited?: boolean;
+  /**
+   *  The unique visitor ID
+   */
+  extensionId?: string;
 }
 
 export interface AddressSortStore {
