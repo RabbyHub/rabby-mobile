@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import ApkInstaller from '@isudaji/react-native-install-apk';
+// import ApkInstaller from '@isudaji/react-native-install-apk';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -87,7 +87,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
       <Button
         onPress={() => {
           if (downloadResult?.statusCode === 200) {
-            ApkInstaller.install(downloadedApkPath);
+            // ApkInstaller.install(downloadedApkPath);
             // openExternalUrl(result.targetFilepath);
           }
           setTimeout(() => resetProgress(), 200);
@@ -100,7 +100,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
         containerStyle={[styles.btnContainer]}
       />
     );
-  }, [styles, resetProgress, downloadResult, downloadedApkPath]);
+  }, [styles, resetProgress, downloadResult]);
 
   return (
     <View style={[styles.footerWrapper, style]}>
