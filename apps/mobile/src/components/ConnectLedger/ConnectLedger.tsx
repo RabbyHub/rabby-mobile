@@ -15,7 +15,8 @@ import { SelectDeviceScreen } from './SelectDeviceScreen';
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
   onSelectDevice?: (d: Device) => void;
-}> = ({ onDone, onSelectDevice }) => {
+  deviceId?: string;
+}> = ({ onDone, onSelectDevice, deviceId }) => {
   const { searchAndPair, devices, errorCode } = useLedgerImport();
   const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
@@ -77,6 +78,7 @@ export const ConnectLedger: React.FC<{
           onSelect={handleSelectDevice}
           devices={devices}
           errorCode={errorCode}
+          currentDeviceId={deviceId}
         />
       )}
     </BottomSheetView>

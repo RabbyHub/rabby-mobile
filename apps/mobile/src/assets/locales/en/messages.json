@@ -313,6 +313,7 @@
         "requestFailedToSend": "Signing request failed to send"
       },
       "beginSigning": "Begin signing process",
+      "ledgerSign": "Sign with Ledger",
       "addressTip": {
         "onekey": "OneKey address",
         "trezor": "Trezor address",
@@ -1234,7 +1235,8 @@
         },
         "select": {
           "title": "Available Devices",
-          "description": "Please select a Ledger to connect"
+          "description": "Please select a Ledger to connect",
+          "currentDevice": "current"
         }
       },
       "keystone": {

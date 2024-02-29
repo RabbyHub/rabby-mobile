@@ -7,6 +7,7 @@ import TxFailedSVG from '@/assets/icons/approval/tx-failed.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
 import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
+import ConnectLedgerSVG from '@/assets/icons/approval/connect-ledger.svg';
 import ConnectWirelessSVG from '@/assets/icons/approval/connect-wireless.svg';
 import ConnectQRCodeSVG from '@/assets/icons/approval/connect-qrcode.svg';
 import ConnectWalletConnectSVG from '@/assets/icons/approval/connect-walletconnect.svg';
@@ -69,7 +70,8 @@ export interface Props {
     | 'qrcode'
     | 'privatekey'
     | 'walletconnect'
-    | 'ble';
+    | 'ble'
+    | 'ledger';
   status:
     | 'SENDING'
     | 'WAITING'
@@ -121,6 +123,8 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectWalletConnectSVG;
       case 'ble':
         return ConnectBleSVG;
+      case 'ledger':
+        return ConnectLedgerSVG;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;

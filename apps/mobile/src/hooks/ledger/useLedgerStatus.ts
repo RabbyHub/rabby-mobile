@@ -15,16 +15,21 @@ export const ledgerStatusAtom = atom<'CONNECTED' | 'DISCONNECTED' | undefined>(
 
 export const useLedgerStatus = (address: string) => {
   const [status, setStatus] = useAtom(ledgerStatusAtom);
+  const [deviceId, setDeviceId] = React.useState<string>();
 
   React.useEffect(() => {
-    apiLedger.isConnected(address).then(isConnected => {
+    apiLedger.isConnected(address).then(([isConnected, id]) => {
       setStatus(isConnected ? 'CONNECTED' : 'DISCONNECTED');
+      if (id) {
+        setDeviceId(id);
+      }
     });
   }, [address, setStatus]);
 
   const onClickConnect = React.useCallback(() => {
     const id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.CONNECT_LEDGER,
+      deviceId,
       onSelectDevice: async (d: Device) => {
         console.log('selected device', d.id);
         removeGlobalBottomSheetModal(id);
@@ -38,7 +43,7 @@ export const useLedgerStatus = (address: string) => {
         }
       },
     });
-  }, [setStatus]);
+  }, [deviceId, setStatus]);
 
   return {
     onClickConnect,

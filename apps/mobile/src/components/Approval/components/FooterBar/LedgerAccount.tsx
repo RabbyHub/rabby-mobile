@@ -16,9 +16,8 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 20,
     },
     connectButtonText: {
-      color: colors['neutral-body'],
+      color: colors['blue-default'],
       fontSize: 13,
-      textDecorationLine: 'underline',
     },
     connectText: {
       color: colors['neutral-foot'],

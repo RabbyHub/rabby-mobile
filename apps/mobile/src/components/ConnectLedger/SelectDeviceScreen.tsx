@@ -53,13 +53,27 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '500',
       color: colors['neutral-title-1'],
     },
+    currentDeviceTagText: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['green-default'],
+    },
+    currentDeviceTag: {
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderWidth: 0.5,
+      borderColor: colors['green-default'],
+      borderRadius: 2,
+      marginLeft: -4,
+    },
   });
 
 export const SelectDeviceScreen: React.FC<{
   onSelect: (d: Device) => void;
   devices: Device[];
   errorCode?: LEDGER_ERROR_CODES;
-}> = ({ onSelect, devices, errorCode }) => {
+  currentDeviceId?: string;
+}> = ({ onSelect, devices, currentDeviceId, errorCode }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -102,6 +116,13 @@ export const SelectDeviceScreen: React.FC<{
                 <View style={styles.textWrapper}>
                   <LedgerSVG width={28} height={28} />
                   <Text style={styles.itemText}>{device.name}</Text>
+                  {currentDeviceId === device.id && (
+                    <View style={styles.currentDeviceTag}>
+                      <Text style={styles.currentDeviceTagText}>
+                        {t('page.newAddress.ledger.select.currentDevice')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <RcIconRightCC
                   color={colors['neutral-foot']}

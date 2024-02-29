@@ -41,6 +41,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       marginBottom: 12,
       justifyContent: 'center',
+      marginTop: 15,
     },
     title: {
       fontSize: 16,
@@ -284,7 +285,7 @@ export const LedgerHardwareWaiting = ({
   return (
     <View>
       <View style={styles.titleWrapper}>
-        <LedgerSVG style={styles.brandIcon} />
+        <LedgerSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
           {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
         </Text>
@@ -292,7 +293,7 @@ export const LedgerHardwareWaiting = ({
 
       <ApprovalPopupContainer
         showAnimation
-        hdType="ble"
+        hdType="ledger"
         status={statusProp}
         onRetry={() => handleRetry()}
         onDone={() => setIsClickDone(true)}
