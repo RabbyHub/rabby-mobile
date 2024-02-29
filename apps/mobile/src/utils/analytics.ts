@@ -1,9 +1,11 @@
+import { BUILD_CHANNEL } from '@/constant/env';
 import { preferenceService } from '@/core/services';
 import firebaseAnalytics from '@react-native-firebase/analytics';
 
 export const analytics = firebaseAnalytics();
 
 import { customAlphabet, nanoid } from 'nanoid';
+import { Platform } from 'react-native';
 
 const ANALYTICS_PATH = 'https://matomo.debank.com/matomo.php';
 const genExtensionId = customAlphabet('1234567890abcdef', 16);
@@ -40,6 +42,8 @@ const getParams = async () => {
   gaParams.append('cookie', '0');
   gaParams.append('send_image', '0');
   gaParams.append('dimension1', process.env.APP_VERSION!);
+  gaParams.append('dimension2', BUILD_CHANNEL);
+  gaParams.append('dimension3', Platform.OS);
 
   return gaParams;
 };
