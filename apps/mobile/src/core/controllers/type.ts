@@ -4,7 +4,7 @@ export type ProviderRequest<TMethod extends string = string> = {
     params?: any;
     $ctx?: {
       postMessageToWebView?: (msg: any, origin: string) => void;
-    };
+    } & Record<string, any>;
   };
   session: {
     name: string;

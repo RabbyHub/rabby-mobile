@@ -1,7 +1,7 @@
 import RcDappEmpty from '@/assets/icons/dapp/dapp-empty.svg';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, StyleSheet, Text, View } from 'react-native';
 
 export const EmptyDapps = () => {
   const colors = useThemeColors();
@@ -20,7 +20,9 @@ export const EmptyDapps = () => {
             source={require('@/assets/icons/dapp/dapp-empty.png')}
           />
         </View>
-        <Text style={styles.text}>No Favorite Dapp</Text>
+        <Text style={styles.text}>
+          No Favorite {Platform.OS === 'ios' ? 'Website' : 'Dapp'}
+        </Text>
       </View>
     </View>
   );

@@ -6,6 +6,7 @@ import { DappInfo } from '@/core/services/dappService';
 import React, { useState } from 'react';
 import {
   Image,
+  Platform,
   StyleProp,
   StyleSheet,
   Text,
@@ -39,7 +40,9 @@ export const DappCardListBy = ({
       }}
       content={
         <View style={styles.tooltip}>
-          <Text style={styles.tooltipTitle}>Dapps has been list by</Text>
+          <Text style={styles.tooltipTitle}>
+            {Platform.OS === 'ios' ? 'Website' : 'Dapps'} has been list by
+          </Text>
           <View style={styles.tooltipList}>
             {data.map(item => {
               return (

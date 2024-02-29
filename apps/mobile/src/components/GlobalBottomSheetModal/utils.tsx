@@ -13,6 +13,7 @@ import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
 import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
 import { SettingLedger } from '../HDSetting/SettingLedger';
+import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -27,6 +28,8 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
   [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
   [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
+
+  [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -54,6 +57,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
   [MODAL_NAMES.SETTING_LEDGER]: SettingLedger,
+
+  [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
 };
 
 export function makeBottomSheetProps(ctx: {

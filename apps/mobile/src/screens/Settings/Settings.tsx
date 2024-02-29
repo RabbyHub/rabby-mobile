@@ -42,11 +42,11 @@ import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
-import { checkVersion } from '@/utils/version';
-import { APP_URLS } from '@/constant';
+import { APP_URLS, APP_VERSIONS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
+import { useRemoteUpgradeInfo } from '@/hooks/version';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -67,6 +67,8 @@ function SettingsScreen(): JSX.Element {
 
   const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
   const { currentAccount } = useCurrentAccount();
+
+  const { remoteVersion, triggerCheckVersion } = useRemoteUpgradeInfo();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -157,22 +159,34 @@ function SettingsScreen(): JSX.Element {
           {
             label: 'Current Version',
             icon: RcInfo,
-            rightTextNode: () => {
+            rightNode: ({ rightIconNode }) => {
               return (
-                <Text
-                  style={{
-                    color: colors['neutral-title-1'],
-                    fontSize: 14,
-                    fontWeight: '400',
-                    paddingRight: 8,
-                  }}>
-                  {process.env.APP_VERSION}
-                </Text>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text
+                    style={{
+                      color: colors['neutral-title-1'],
+                      fontSize: 14,
+                      fontWeight: '400',
+                      paddingRight: 8,
+                    }}>
+                    {APP_VERSIONS.fromJs}
+                  </Text>
+                  {remoteVersion.couldUpgrade && (
+                    <Text
+                      style={{
+                        color: colors['red-default'],
+                        fontSize: 14,
+                        fontWeight: '400',
+                        paddingRight: 4,
+                      }}>
+                      (New version)
+                    </Text>
+                  )}
+                  {rightIconNode}
+                </View>
               );
             },
-            onPress: () => {
-              checkVersion();
-            },
+            onPress: triggerCheckVersion,
           },
           {
             label: 'Feedback',
@@ -191,7 +205,7 @@ function SettingsScreen(): JSX.Element {
               </Text>
             ),
             // TODO: only show in non-production mode
-            visible: BUILD_CHANNEL !== 'production' && !!__DEV__,
+            visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
           },
           // TODO: in the future
           // {

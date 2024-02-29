@@ -1,7 +1,7 @@
 import { AppBottomSheetModal, Button } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
 import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
@@ -43,10 +43,16 @@ export const ConfirmBottomSheetModal = forwardRef<
       index={0}
       ref={sheetModalRef}
       snapPoints={[height + insets.bottom]}>
-      <BottomSheetView
-        style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
+      <BottomSheetScrollView
+        scrollEnabled={false}
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: 20 + insets.bottom },
+        ]}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={[styles.desc, descStyle]}>{desc}</Text>
+        <BottomSheetScrollView>
+          <Text style={[styles.desc, descStyle]}>{desc}</Text>
+        </BottomSheetScrollView>
         <View style={styles.btnGroup}>
           <View style={styles.border} />
           <Button
@@ -73,7 +79,7 @@ export const ConfirmBottomSheetModal = forwardRef<
             Confirm
           </Button>
         </View>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </AppBottomSheetModal>
   );
 });
@@ -97,7 +103,6 @@ const getStyles = createGetStyles(colors => ({
   },
 
   desc: {
-    width: '100%',
     color: colors['neutral-body'],
     fontSize: 16,
     fontWeight: '400',

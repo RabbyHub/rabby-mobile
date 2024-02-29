@@ -1,6 +1,6 @@
 import { isValidElementType } from 'react-is';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import {
   RcIconNavigationHomeLight,
   RcIconNavigationHomeFocusLight,
@@ -147,7 +147,7 @@ export default function BottomTabNavigator() {
           name={RootNames.Dapps}
           component={DappsScreen}
           options={{
-            title: 'Dapps',
+            title: Platform.OS === 'ios' ? 'Explore' : 'Dapps',
             headerTitleStyle: {
               fontWeight: '500',
               fontSize: 17,
@@ -156,7 +156,10 @@ export default function BottomTabNavigator() {
             headerTransparent: true,
             headerShown: true,
             tabBarLabel: ({ focused }) => (
-              <BottomTabLabel focused={focused} label={'Dapps'} />
+              <BottomTabLabel
+                focused={focused}
+                label={Platform.OS === 'ios' ? 'Explore' : 'Dapps'}
+              />
             ),
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon

@@ -2014,6 +2014,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/festats@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@debank/festats@npm:1.0.4"
+  checksum: c65764eb81a02030aa8ec92cd3d9bb7c73a024cadc6ee6953aa020822c7f2e7accc41b441ac6f1ba4af3a609f943d11b0d445ca9e2dc20598beefb6f33f3a08a
+  languageName: node
+  linkType: hard
+
 "@debank/rabby-rn-security@npm:^0.1.1":
   version: 0.1.1
   resolution: "@debank/rabby-rn-security@npm:0.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Frabby-rn-security%2F-%2Frabby-rn-security-0.1.1.tgz"
@@ -3280,6 +3287,13 @@ __metadata:
   version: 0.1.3
   resolution: "@istanbuljs/schema@npm:0.1.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40istanbuljs%2Fschema%2F-%2Fschema-0.1.3.tgz"
   checksum: 5282759d961d61350f33d9118d16bcaed914ebf8061a52f4fa474b2cb08720c9c81d165e13b82f2e5a8a212cc5af482f0c6fc1ac27b9e067e5394c9a6ed186c9
+  languageName: node
+  linkType: hard
+
+"@isudaji/react-native-install-apk@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@isudaji/react-native-install-apk@npm:1.0.5::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40isudaji%2Freact-native-install-apk%2F-%2Freact-native-install-apk-1.0.5.tgz"
+  checksum: 4209fbbcfe083e191331c548db88d849ca3bc526688d1b64a644da8963a3bc02f0666d17e7868c48fded919647bca5ebe3930854d31814dde2e8577aaad6bada
   languageName: node
   linkType: hard
 
@@ -20823,6 +20837,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"linkify-it@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "linkify-it@npm:5.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flinkify-it%2F-%2Flinkify-it-5.0.0.tgz"
+  dependencies:
+    uc.micro: ^2.0.0
+  checksum: b0b86cadaf816b64c947a83994ceaad1c15f9fe7e079776ab88699fb71afd7b8fc3fd3d0ae5ebec8c92c1d347be9ba257b8aef338c0ebf81b0d27dcf429a765a
+  languageName: node
+  linkType: hard
+
 "lint-staged@npm:^15.2.0":
   version: 15.2.0
   resolution: "lint-staged@npm:15.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flint-staged%2F-%2Flint-staged-15.2.0.tgz"
@@ -21373,6 +21396,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"markdown-it@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "markdown-it@npm:14.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fmarkdown-it%2F-%2Fmarkdown-it-14.0.0.tgz"
+  dependencies:
+    argparse: ^2.0.1
+    entities: ^4.4.0
+    linkify-it: ^5.0.0
+    mdurl: ^2.0.0
+    punycode.js: ^2.3.1
+    uc.micro: ^2.0.0
+  bin:
+    markdown-it: bin/markdown-it.mjs
+  checksum: f63bd8b39b2232ad686ec49f046bbf51c34253e38295f5d44a8e5dc6ec5401e9a9fbed0bb88cbc1635608e2bb21c5a3c2336a2a9f52548c24be5abd06001bc01
+  languageName: node
+  linkType: hard
+
 "marked@npm:^4.2.12, marked@npm:^4.3.0":
   version: 4.3.0
   resolution: "marked@npm:4.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fmarked%2F-%2Fmarked-4.3.0.tgz"
@@ -21468,6 +21507,13 @@ __metadata:
   version: 2.0.4
   resolution: "mdn-data@npm:2.0.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fmdn-data%2F-%2Fmdn-data-2.0.4.tgz"
   checksum: add3c95e6d03d301b8a8bcfee3de33f4d07e4c5eee5b79f18d6d737de717e22472deadf67c1a8563983c0b603e10d7df40aa8e5fddf18884dfe118ccec7ae329
+  languageName: node
+  linkType: hard
+
+"mdurl@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "mdurl@npm:2.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fmdurl%2F-%2Fmdurl-2.0.0.tgz"
+  checksum: 880bc289ef668df0bb34c5b2b5aaa7b6ea755052108cdaf4a5e5968ad01cf27e74927334acc9ebcc50a8628b65272ae6b1fd51fae1330c130e261c0466e1a3b2
   languageName: node
   linkType: hard
 
@@ -25253,6 +25299,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"punycode.js@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "punycode.js@npm:2.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpunycode.js%2F-%2Fpunycode.js-2.3.1.tgz"
+  checksum: 13466d7ed5e8dacdab8c4cc03837e7dd14218a59a40eb14a837f1f53ca396e18ef2c4ee6d7766b8ed2fc391d6a3ac489eebf2de83b3596f5a54e86df4a251b72
+  languageName: node
+  linkType: hard
+
 "punycode@npm:^1.3.2, punycode@npm:^1.4.1":
   version: 1.4.1
   resolution: "punycode@npm:1.4.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpunycode%2F-%2Fpunycode-1.4.1.tgz"
@@ -25409,12 +25462,14 @@ __metadata:
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@debank/common": ^0.3.54
+    "@debank/festats": 1.0.4
     "@debank/rabby-rn-security": ^0.1.1
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.2.0
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": 5.0.0-alpha.4
+    "@isudaji/react-native-install-apk": ^1.0.5
     "@ledgerhq/react-native-hw-transport-ble": ^6.32.2
     "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
@@ -25482,6 +25537,7 @@ __metadata:
     koa-compose: ^4.1.0
     lint-staged: ^15.2.0
     lodash: ^4.17.21
+    markdown-it: ^14.0.0
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
@@ -25509,6 +25565,7 @@ __metadata:
     react-native-fs: ^2.20.0
     react-native-gesture-handler: ^2.14.0
     react-native-get-random-values: ^1.10.0
+    react-native-inappbrowser-reborn: ^3.7.0
     react-native-keyboard-aware-scroll-view: ^0.9.5
     react-native-linear-gradient: ^2.8.3
     react-native-mmkv: ^2.11.0
@@ -26060,6 +26117,18 @@ __metadata:
   peerDependencies:
     react-native: ">=0.56"
   checksum: 7100682d5096d8b0e208b2698c3a21221b0e26fe181202f09cc9b481a22b01b4d3baf23db313397e673fd244ba0a870e457e0292ef22ce380147c15b6718f0a9
+  languageName: node
+  linkType: hard
+
+"react-native-inappbrowser-reborn@npm:^3.7.0":
+  version: 3.7.0
+  resolution: "react-native-inappbrowser-reborn@npm:3.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-inappbrowser-reborn%2F-%2Freact-native-inappbrowser-reborn-3.7.0.tgz"
+  dependencies:
+    invariant: ^2.2.4
+    opencollective-postinstall: ^2.0.3
+  peerDependencies:
+    react-native: ">=0.56"
+  checksum: b2177addf05cc02a20c5b9b8397c410ccf2fffba6baf1a49fbeb199ceaf4b9d4e959549915c5221f4345f35ec96620ecf25f650a5e268793103d95ffa7e44127
   languageName: node
   linkType: hard
 
@@ -30525,6 +30594,13 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 3d1b04449662193544b81d055479d03b4c5dca95f1a82f8922596f089d894c9fefbe16639d1d9dfe26a7054419645530cef44001bc17aed1fe1eb3c237e9b3c7
+  languageName: node
+  linkType: hard
+
+"uc.micro@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "uc.micro@npm:2.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fuc.micro%2F-%2Fuc.micro-2.0.0.tgz"
+  checksum: 86e142c239ed01360b9d705a9e194cfb55cfee2dbd22ffa52465a6270e3308dfc23347550d46836e60ea97dcf6cf57eef9531e5ac22e418fb994c0f761a74fa0
   languageName: node
   linkType: hard
 

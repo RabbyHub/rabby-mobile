@@ -44,7 +44,6 @@ export const SwitchWhitelistEnable = () => {
         value={!!enable}
         changeValueImmediately={false}
         onValueChange={() => {
-          console.log('onValueChange');
           sheetModalRef?.current?.dismiss();
           sheetModalRef?.current?.present();
         }}

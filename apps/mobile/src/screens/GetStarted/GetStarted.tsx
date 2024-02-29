@@ -25,6 +25,7 @@ import {
   useFocusEffect,
   useNavigation,
 } from '@react-navigation/native';
+import { APP_VERSIONS } from '@/constant';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -46,7 +47,7 @@ function GetStartedScreen(): JSX.Element {
           },
           headers: {
             'X-Client': 'rabbymobile',
-            'X-Version': process.env.APP_VERSION!,
+            'X-Version': APP_VERSIONS.fromJs,
           },
         },
       );

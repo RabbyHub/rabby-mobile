@@ -9,3 +9,11 @@ export const isPossibleDomain = (str: string) => {
 export function formatDappOriginToShow(dappOrigin: string) {
   return stringUtils.unPrefix(dappOrigin, 'https://');
 }
+
+const httpProtocolPattern = /^((http|https|ftp):\/\/)/;
+export function withHttp(url: string, defaultProtocol = 'https') {
+  if (!httpProtocolPattern.test(url)) {
+    url = `${defaultProtocol}://${url}`;
+  }
+  return url;
+}

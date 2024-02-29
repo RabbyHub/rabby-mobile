@@ -54,6 +54,7 @@ import { BroadcastEvent } from '@/constant/event';
 import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { stats } from '@/utils/stats';
 // import eventBus from '@/eventBus';
 // import { StatsData } from '../../service/notification';
 
@@ -72,12 +73,12 @@ const reportSignText = (params: {
       success,
     ].join('|'),
   });
-  // stats.report('completeSignText', {
-  //   type: account.brandName,
-  //   category: KEYRING_CATEGORY_MAP[account.type],
-  //   method,
-  //   success,
-  // });
+  stats.report('completeSignText', {
+    type: account.brandName,
+    category: KEYRING_CATEGORY_MAP[account.type],
+    method,
+    success,
+  });
 };
 
 const covertToHex = (data: Buffer | bigint) => {
@@ -537,16 +538,16 @@ class ProviderController extends BaseController {
           reqId,
           pushType,
         });
-        // if (
-        //   options?.data?.$ctx?.stats?.afterSign?.length &&
-        //   Array.isArray(options?.data?.$ctx?.stats?.afterSign)
-        // ) {
-        //   options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
-        //     if (name && params) {
-        //       stats.report(name, params);
-        //     }
-        //   });
-        // }
+        if (
+          options?.data?.$ctx?.stats?.afterSign?.length &&
+          Array.isArray(options?.data?.$ctx?.stats?.afterSign)
+        ) {
+          options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
+            if (name && params) {
+              stats.report(name, params);
+            }
+          });
+        }
 
         const { r, s, v, ...other } = approvalRes;
         // TODO: swapService
@@ -612,25 +613,25 @@ class ProviderController extends BaseController {
           options?.data?.$ctx?.stats?.afterSign?.length &&
           Array.isArray(options?.data?.$ctx?.stats?.afterSign)
         ) {
-          // options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
-          //   if (name && params) {
-          //     // stats.report(name, params);
-          //   }
-          // });
+          options.data.$ctx.stats.afterSign.forEach(({ name, params }) => {
+            if (name && params) {
+              stats.report(name, params);
+            }
+          });
         }
 
-        // stats.report('submitTransaction', {
-        //   type: currentAccount.brandName,
-        //   chainId: chainItem?.serverId || '',
-        //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-        //   success: false,
-        //   preExecSuccess: cacheExplain
-        //     ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
-        //     : true,
-        //   createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
-        //   source: options?.data?.$ctx?.ga?.source || '',
-        //   trigger: options?.data?.$ctx?.ga?.trigger || '',
-        // });
+        stats.report('submitTransaction', {
+          type: currentAccount.brandName,
+          chainId: chainItem?.serverId || '',
+          category: KEYRING_CATEGORY_MAP[currentAccount.type],
+          success: false,
+          preExecSuccess: cacheExplain
+            ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
+            : true,
+          createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+          source: options?.data?.$ctx?.ga?.source || '',
+          trigger: options?.data?.$ctx?.ga?.trigger || '',
+        });
         if (!isSpeedUp && !isCancel) {
           // transactionHistoryService.addSubmitFailedTransaction(
           //   {

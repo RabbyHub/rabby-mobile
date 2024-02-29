@@ -34,6 +34,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
+import { stats } from '@/utils/stats';
 
 interface SignTypedDataProps {
   method: string;
@@ -177,6 +178,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     }
 
     return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isSignTypedDataV1, signTypedData]);
 
   const getCurrentChainId = async () => {
@@ -193,6 +195,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     getCurrentChainId().then(id => {
       setCurrentChainId(id);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.session.origin]);
 
   const {
@@ -248,12 +251,12 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         ].join('|'),
         transport: 'beacon',
       });
-      // await wallet.reportStats(action, {
-      //   type: currentAccount.brandName,
-      //   category: getKRCategoryByType(currentAccount.type),
-      //   method: underline2Camelcase(params.method),
-      //   ...extra,
-      // });
+      await stats.report(action, {
+        type: currentAccount.brandName,
+        category: getKRCategoryByType(currentAccount.type),
+        method: underline2Camelcase(params.method),
+        ...extra,
+      });
     }
   };
 
@@ -358,6 +361,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
   useEffect(() => {
     executeSecurityEngine();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
 
   useEffect(() => {
@@ -371,6 +375,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         setIsLoading(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, typedDataActionData, signTypedData, params, isSignTypedDataV1]);
 
   // useEffect(() => {
@@ -389,6 +394,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     init();
     checkWachMode();
     report('createSignText');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

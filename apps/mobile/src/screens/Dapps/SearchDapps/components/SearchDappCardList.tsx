@@ -9,7 +9,14 @@ import { useThemeColors } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import React, { ReactNode } from 'react';
-import { Image, Keyboard, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Keyboard,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
@@ -66,7 +73,7 @@ export const SearchDappCardList = ({
           <Text style={styles.listHeaderTextStrong}>
             {total != null ? total : '-'}
           </Text>{' '}
-          Dapps
+          {Platform.OS === 'ios' ? 'Website' : 'Dapps'}
         </Text>
         <TouchableOpacity
           onPress={() => {
