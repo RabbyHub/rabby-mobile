@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Text, View } from 'react-native';
 
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 
 import { RcArrowDownCC } from '@/assets/icons/common';
 import ChainIconImage from '@/components/Chain/ChainIconImage';

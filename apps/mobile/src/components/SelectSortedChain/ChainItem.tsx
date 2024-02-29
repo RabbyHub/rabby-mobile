@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Image, Text, View } from 'react-native';
 
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import RcIconChecked from '@/assets/icons/select-chain/icon-checked.svg';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';

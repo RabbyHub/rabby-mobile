@@ -7,7 +7,7 @@ import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import { ParsedActionData, WrapTokenRequireData } from './utils';
 import { formatAmount } from '@/utils/number';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
@@ -75,6 +75,7 @@ const WrapToken = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

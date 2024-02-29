@@ -9,7 +9,7 @@ import {
   validateGasPriceRange,
   convertLegacyTo1559,
 } from '@/utils/transaction';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,

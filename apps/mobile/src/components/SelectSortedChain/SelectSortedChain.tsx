@@ -6,7 +6,7 @@ import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { Input } from '@rneui/themed';
 
 import { NetSwitchTabsKey } from '@/constant/netType';

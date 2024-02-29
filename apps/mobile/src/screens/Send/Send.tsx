@@ -12,7 +12,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import {
   SendTokenEvents,
   SendTokenInternalContextProvider,

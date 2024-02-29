@@ -10,7 +10,7 @@ import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -81,6 +81,7 @@ const SwapTokenOrder = ({
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

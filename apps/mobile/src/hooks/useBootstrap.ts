@@ -7,6 +7,8 @@ import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
+import { CHAINS_LIST, syncChainList } from '@/constant/chains';
+import { sleep } from '@/utils/version';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -123,6 +125,7 @@ export function useBootstrapApp() {
         }));
         await initServices();
         await initApis();
+        await Promise.race([syncChainList(), sleep(5000)]);
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);

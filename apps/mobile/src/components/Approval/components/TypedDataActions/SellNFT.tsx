@@ -13,7 +13,7 @@ import LogoWithText from '../Actions/components/LogoWithText';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
@@ -78,6 +78,7 @@ const ApproveNFT = ({
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

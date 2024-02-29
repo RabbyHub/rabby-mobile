@@ -14,7 +14,7 @@ import { ProviderRequest } from './type';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
 

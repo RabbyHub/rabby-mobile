@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { maxBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -93,6 +93,7 @@ const CancelTx = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pendingTx = useMemo(() => {
@@ -119,6 +120,7 @@ const CancelTx = ({
       }
     });
     return tx as { type: string; gasPrice: number } | null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requireData]);
 
   const canCancel = useMemo(() => {

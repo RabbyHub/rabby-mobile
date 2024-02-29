@@ -6,7 +6,7 @@ import * as Values from '../Actions/components/Values';
 import { MultiSigRequireData } from './utils';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';

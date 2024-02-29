@@ -1,4 +1,4 @@
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import abi from 'human-standard-token-abi';
 import { CHAINS } from '@/constant/chains';
 import type {

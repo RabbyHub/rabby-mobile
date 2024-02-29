@@ -14,7 +14,7 @@ import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   ActionRequireData,

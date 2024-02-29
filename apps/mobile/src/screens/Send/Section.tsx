@@ -13,7 +13,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { devLog } from '@/utils/logger';
 import GasReserved from './components/GasReserved';
 import GasSelectorBottomSheetModal from './components/GasSelector';
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 
 const getSectionStyles = createGetStyles(colors => {
   return {

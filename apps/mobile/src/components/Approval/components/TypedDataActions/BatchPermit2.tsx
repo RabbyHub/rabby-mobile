@@ -9,7 +9,7 @@ import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
 import { formatAmount } from '@/utils/number';
@@ -54,6 +54,7 @@ const Permit2 = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

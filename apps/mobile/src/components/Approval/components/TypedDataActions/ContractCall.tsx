@@ -8,7 +8,7 @@ import ViewMore from '../Actions/components/ViewMore';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
@@ -60,6 +60,7 @@ const ContractCall = ({
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

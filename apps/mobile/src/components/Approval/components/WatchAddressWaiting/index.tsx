@@ -5,7 +5,7 @@ import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { useSessionStatus } from '@/hooks/useSessionStatus';
 import { eventBus, EVENTS } from '@/utils/events';
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast } from '@/components/Toast';
 import { preferenceService, transactionHistoryService } from '@/core/services';

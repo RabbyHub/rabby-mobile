@@ -12,7 +12,7 @@ import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import LogoWithText from '../Actions/components/LogoWithText';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -48,6 +48,7 @@ const BuyNFT = ({
         item.chainId === chain.serverId &&
         isSameAddress(item.address, requireData.id),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractWhitelist, requireData]);
 
   const engineResultMap = useMemo(() => {
@@ -76,6 +77,7 @@ const BuyNFT = ({
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

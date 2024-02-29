@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ContractCallRequireData, ParsedActionData } from './utils';
 import { formatTokenAmount } from '@/utils/number';
@@ -55,6 +55,7 @@ const ContractCall = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

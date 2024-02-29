@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { findChainByEnum } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import {
   Image,
   StyleProp,

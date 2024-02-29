@@ -4,7 +4,7 @@ import { atom, useAtomValue } from 'jotai';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { useDapps } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
 
 export const sheetModalRefAtom = atom({

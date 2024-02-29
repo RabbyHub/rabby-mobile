@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import React from 'react';
 import { WalletConnectAccount } from './WalletConnectAccount';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useTranslation } from 'react-i18next';
 import { CommonAccount } from './CommonAccount';
 import { Account } from '@/core/services/preference';
@@ -82,6 +82,7 @@ export const AccountInfo: React.FC<Props> = ({
 
   React.useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
   const binaryTheme = useGetAppThemeMode();

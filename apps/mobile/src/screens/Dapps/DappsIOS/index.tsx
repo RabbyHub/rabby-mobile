@@ -18,7 +18,7 @@ import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { findChainByEnum } from '@/utils/chain';
 import { openapi } from '@/core/request';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
 import { LinkCard } from '../SearchDapps/components/LinkCard';
 import { SearchDappCardList } from '../SearchDapps/components/SearchDappCardList';

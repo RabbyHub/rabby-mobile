@@ -7,7 +7,7 @@ import { dappService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { useThemeColors } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { DappInfo } from '@/core/services/dappService';

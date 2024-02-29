@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, SectionList, Text } from 'react-native';
 
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import ChainItem from './ChainItem';

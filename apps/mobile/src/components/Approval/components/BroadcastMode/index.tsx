@@ -1,4 +1,4 @@
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
@@ -153,6 +153,7 @@ export const BroadcastMode = ({
       result.low_gas.tips = t('page.signTx.BroadcastMode.tips.notSupported');
     }
     return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supportedPushType, account?.type]);
 
   useEffect(() => {

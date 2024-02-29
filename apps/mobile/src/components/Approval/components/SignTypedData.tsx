@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CHAINS, CHAINS_LIST } from '@debank/common';
+import { CHAINS, CHAINS_LIST } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { WaitingSignMessageComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';

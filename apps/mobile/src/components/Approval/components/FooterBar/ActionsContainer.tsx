@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Account } from '@/core/services/preference';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { notificationService } from '@/core/services';

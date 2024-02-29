@@ -29,7 +29,7 @@ import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
 import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 import { AppColorsVariants } from '@/constant/theme';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import {
   Image,
   Platform,

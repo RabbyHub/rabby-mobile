@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ApproveTokenRequireData, ParsedActionData } from './utils';
@@ -255,6 +255,7 @@ const TokenApprove = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

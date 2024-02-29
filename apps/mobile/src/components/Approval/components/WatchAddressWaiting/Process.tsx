@@ -6,7 +6,7 @@ import {
   WALLET_BRAND_NAME_KEY,
 } from '@/hooks/walletconnect/useDisplayBrandName';
 import { WALLET_INFO } from '@/utils/walletInfo';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { useInterval } from 'ahooks';
 import React from 'react';
@@ -76,6 +76,7 @@ const Process = ({
       WALLET_INFO[WALLET_BRAND_NAME_KEY[displayBrandName]]?.icon ||
       WALLET_INFO.UnknownWallet.icon
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [sendingCounter, setSendingCounter] =
     React.useState(INIT_SENDING_COUNTER);
@@ -131,6 +132,7 @@ const Process = ({
         setStatusProp('REJECTED');
         break;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mergedStatus, error]);
 
   const renderContent = React.useCallback(
@@ -158,6 +160,7 @@ const Process = ({
         )}
       </View>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [colors, content, mergedStatus, sendingCounter, styles.content],
   );
 
