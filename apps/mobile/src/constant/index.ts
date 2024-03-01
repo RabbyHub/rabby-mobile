@@ -34,6 +34,12 @@ export const APP_URLS = {
   TWITTER: 'https://twitter.com/rabby_io',
 
   DOWNLOAD_PAGE: 'https://rabby.io/?platform=mobile',
+
+  STORE_URL: Platform.select({
+    android:
+      'https://play.google.com/store/apps/details?id=com.debank.rabbymobile',
+    ios: 'https://apps.apple.com/us/app/rabby-wallet-crypto-evm/id6474381673',
+  })!,
 };
 
 // TODO: add native method to get bundler id

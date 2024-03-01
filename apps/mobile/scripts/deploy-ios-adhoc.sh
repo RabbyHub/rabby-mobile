@@ -25,7 +25,6 @@ replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios
 
 replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
   --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
-  # TODO: read from xcode project
   --var-APP_VER_CODE=100 \
   --var-APP_VER="$proj_version"
 

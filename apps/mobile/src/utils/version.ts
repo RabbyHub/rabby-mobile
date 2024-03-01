@@ -32,9 +32,6 @@ export function sleep(ms = 0) {
 
 const isAndroid = Platform.OS === 'android';
 const isSelfHostProd = BUILD_CHANNEL === 'selfhost';
-const DEFAULT_STORE_URL = isAndroid
-  ? 'https://play.google.com/store/apps/details?id=com.debank.rabbymobile'
-  : '';
 
 export const SELF_HOST_BASE = `https://download.rabby.io/downloads/${
   isSelfHostProd
@@ -105,6 +102,13 @@ export async function getUpgradeInfo() {
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
     VersionCheck.getLatestVersion({
+      // ...isAndroid ? {
+      //   provider: 'playStore',
+      //   packageName: 'com.debank.rabbymobile'
+      // } : {
+      //   provider: 'appStore',
+      //   packageName: 'com.debank.rabby-mobile',
+      // },
       country: 'us',
     }).catch(() => null),
     // if the network is not available, it will return null
@@ -121,7 +125,7 @@ export async function getUpgradeInfo() {
   }
 
   const storeUrl = await VersionCheck.getStoreUrl().catch(
-    () => DEFAULT_STORE_URL,
+    () => APP_URLS.STORE_URL,
   );
 
   const finalRemoteInfo: MergedRemoteVersion = {
@@ -136,14 +140,15 @@ export async function getUpgradeInfo() {
   switch (BUILD_CHANNEL) {
     case 'selfhost':
     case 'selfhost-reg':
-      if (selfHostUpgrade?.version) {
-        if (!isAndroid) {
-          finalRemoteInfo.version = storeVersion || localVersion;
-          finalRemoteInfo.downloadUrl = storeUrl;
-        } else if (semver.gt(selfHostUpgrade.version, localVersion)) {
-          finalRemoteInfo.version = selfHostUpgrade.version;
-          finalRemoteInfo.downloadUrl = APP_URLS.DOWNLOAD_PAGE;
-        }
+      if (!isAndroid) {
+        finalRemoteInfo.version = storeVersion || APP_URLS.STORE_URL;
+        finalRemoteInfo.downloadUrl = storeUrl;
+      } else if (
+        selfHostUpgrade?.version &&
+        semver.gt(selfHostUpgrade.version, localVersion)
+      ) {
+        finalRemoteInfo.version = selfHostUpgrade.version;
+        finalRemoteInfo.downloadUrl = APP_URLS.DOWNLOAD_PAGE;
       }
       break;
     case 'appstore':

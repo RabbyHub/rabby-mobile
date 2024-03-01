@@ -160,6 +160,7 @@ const getStyles = createGetStyles(colors => {
       fontSize: 14,
       fontStyle: 'normal',
       fontWeight: '400',
+      color: colors['neutral-body'],
     },
 
     rightCol: {},

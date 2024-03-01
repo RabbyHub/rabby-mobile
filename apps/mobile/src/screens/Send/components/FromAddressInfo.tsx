@@ -27,7 +27,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    brandName: {
+    aliasName: {
       color: colors['blue-default'],
       fontSize: 14,
       fontWeight: '600',
@@ -70,8 +70,8 @@ export default function FromAddressInfo({
       <View style={styles.left}>
         <RcWalletIcon width={24} height={24} className="rounded-[24px]" />
         <View className="ml-[8]">
-          <Text style={styles.brandName}>
-            {currentAccount?.brandName || 'Unknown'}
+          <Text style={styles.aliasName}>
+            {currentAccount?.aliasName || 'Unknown'}
           </Text>
           {/* TODO: format to lowercase */}
           <Text className="mt-[2]" style={styles.addressText}>

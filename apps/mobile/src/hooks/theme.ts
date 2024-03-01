@@ -1,5 +1,5 @@
 import React from 'react';
-import { ColorSchemeName } from 'react-native';
+import { ColorSchemeName, Appearance } from 'react-native';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 import {
@@ -12,11 +12,17 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { useColorScheme } from 'nativewind';
 import { createGetStyles } from '@/utils/styles';
 
+const STATIC_THEME = 'light';
+
 function coerceColorSchemeName(
   appTheme: AppThemeScheme,
   themeBySystem: ColorSchemeName = 'light',
 ): NonNullable<ColorSchemeName> {
-  return appTheme === 'system' ? themeBySystem ?? 'light' : appTheme;
+  if (__DEV__) {
+    return appTheme === 'system' ? themeBySystem ?? 'light' : appTheme;
+  }
+
+  return STATIC_THEME;
 }
 
 const ThemeStoreBase = atomByMMKV('AppTheme', 'light' as AppThemeScheme);
@@ -35,9 +41,13 @@ export function useGetAppThemeMode() {
 
   const { colorScheme } = useColorScheme();
 
-  return (
-    appTheme === 'system' ? colorScheme : appTheme
-  ) as NonNullable<ColorSchemeName>;
+  if (__DEV__) {
+    return (
+      appTheme === 'system' ? colorScheme : appTheme
+    ) as NonNullable<ColorSchemeName>;
+  }
+
+  return STATIC_THEME as NonNullable<ColorSchemeName>;
 }
 
 // The useColorScheme value is always either light or dark, but the built-in
@@ -61,16 +71,18 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     [appTheme, setAppTheme, setColorScheme],
   );
 
+  const binaryTheme = coerceColorSchemeName(appTheme, colorScheme);
+
   React.useEffect(() => {
     if (options?.isAppTop) {
-      setColorScheme(appTheme);
+      setColorScheme(binaryTheme);
+      Appearance.setColorScheme(binaryTheme);
     }
-  }, [options?.isAppTop, appTheme, setColorScheme]);
+  }, [options?.isAppTop, binaryTheme, setColorScheme]);
 
   return {
     appTheme,
-    // it's just colorScheme, we don't need to coerce it
-    binaryTheme: coerceColorSchemeName(appTheme, colorScheme),
+    binaryTheme,
     toggleThemeMode,
   };
 };
