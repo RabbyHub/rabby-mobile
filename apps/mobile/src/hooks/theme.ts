@@ -35,9 +35,13 @@ export function useGetAppThemeMode() {
 
   const { colorScheme } = useColorScheme();
 
-  return (
-    appTheme === 'system' ? colorScheme : appTheme
-  ) as NonNullable<ColorSchemeName>;
+  if (__DEV__) {
+    return (
+      appTheme === 'system' ? colorScheme : appTheme
+    ) as NonNullable<ColorSchemeName>;
+  }
+
+  return 'light' as NonNullable<ColorSchemeName>;
 }
 
 // The useColorScheme value is always either light or dark, but the built-in
