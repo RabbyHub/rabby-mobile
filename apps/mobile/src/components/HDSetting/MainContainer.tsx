@@ -204,6 +204,9 @@ export const MainContainer: React.FC<Props> = ({
                 key={option.value}>
                 <View>
                   <Radio
+                    onPress={() => {
+                      setHdPath(option.value);
+                    }}
                     containerStyle={styles.radio}
                     checked={hdPath === option.value}
                     iconStyle={styles.radioIcon}

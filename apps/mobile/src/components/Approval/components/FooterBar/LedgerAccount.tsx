@@ -20,6 +20,7 @@ const getStyles = (colors: AppColorsVariants) =>
     connectText: {
       color: colors['neutral-foot'],
       fontSize: 13,
+      lineHeight: 20,
     },
     disconnect: {
       flexDirection: 'row',

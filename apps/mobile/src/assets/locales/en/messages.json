@@ -364,7 +364,8 @@
         "txRejectedByLedger": "Transaction is rejected on your Ledger",
         "blindSigTutorial": "Blind Signature Tutorial from Ledger",
         "submitting": "Signed. Creating transaction",
-        "resubmited": "Resubmited"
+        "resubmited": "Resubmited",
+        "lockedOrNoEthApp": "Please keep Ledger unlocked and ETH APP open"
       },
       "common": {
         "notSupport": "{{0}} is not supported"
@@ -1242,7 +1243,7 @@
         },
         "select": {
           "title": "Available Devices",
-          "description": "Please select a Ledger to connect",
+          "description": "Keep ETH APP open and select a Ledger to connect",
           "currentDevice": "current"
         },
         "error": {
