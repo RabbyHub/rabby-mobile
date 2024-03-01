@@ -9,3 +9,4 @@ export * as apiContact from './contact';
 export * as apiAccount from './account';
 export * as apiKeyring from './keyring';
 export * as apiPageStateCache from './pageStateCache';
+export * as apiLedger from './ledger';

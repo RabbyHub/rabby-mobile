@@ -4,6 +4,7 @@ export enum KEYRING_TYPE {
   // HardwareKeyring = 'hardware',
   WatchAddressKeyring = 'Watch Address',
   WalletConnectKeyring = 'WalletConnect',
+  LedgerKeyring = 'Ledger Hardware',
   // GnosisKeyring = 'Gnosis',
   // CoboArgusKeyring = 'CoboArgus',
 }
@@ -15,7 +16,9 @@ export type KeyringTypeName =
   // TrezorKeyring
   // LedgerBridgeKeyring
   // OnekeyKeyring
-  KEYRING_TYPE.WatchAddressKeyring | KEYRING_TYPE.WalletConnectKeyring;
+  | KEYRING_TYPE.WatchAddressKeyring
+  | KEYRING_TYPE.WalletConnectKeyring
+  | KEYRING_TYPE.LedgerKeyring;
 // GnosisKeyring
 // LatticeKeyring
 // KeystoneKeyring
@@ -78,13 +81,13 @@ export type KeyringAccount = {
 export const KEYRING_CLASS = {
   PRIVATE_KEY: KEYRING_TYPE.SimpleKeyring,
   MNEMONIC: KEYRING_TYPE.HdKeyring,
-  // HARDWARE: {
-  //   BITBOX02: BitBox02Keyring.type,
-  //   TREZOR: TrezorKeyring.type,
-  //   LEDGER: LedgerBridgeKeyring.type,
-  //   ONEKEY: OnekeyKeyring.type,
-  //   GRIDPLUS: LatticeKeyring.type,
-  // },
+  HARDWARE: {
+    // BITBOX02: BitBox02Keyring.type,
+    // TREZOR: TrezorKeyring.type,
+    LEDGER: KEYRING_TYPE.LedgerKeyring,
+    // ONEKEY: OnekeyKeyring.type,
+    // GRIDPLUS: LatticeKeyring.type,
+  },
   WATCH: KEYRING_TYPE.WatchAddressKeyring,
   WALLETCONNECT: KEYRING_TYPE.WalletConnectKeyring,
   // GNOSIS: GnosisKeyring.type,
@@ -134,4 +137,5 @@ export const BRAND_ALIAS_TYPE_TEXT = {
   [WALLET_NAME.TRUSTWALLET]: 'Trust Wallet',
   [WALLET_NAME.Rainbow]: 'Rainbow',
   [WALLET_NAME.UnknownWallet]: 'UnknownWallet',
+  [KEYRING_CLASS.HARDWARE.LEDGER]: 'Ledger',
 };

@@ -72,6 +72,8 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false />
+	<false/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This allows Rabby to find and pair a Ledger Nano X</string>
 </dict>
 </plist>

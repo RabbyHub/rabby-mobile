@@ -16,13 +16,7 @@ import { WALLET_INFO } from '@/utils/walletInfo';
 import { Chain } from '@debank/common';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CommonAccount } from './CommonAccount';
 
 export interface Props {

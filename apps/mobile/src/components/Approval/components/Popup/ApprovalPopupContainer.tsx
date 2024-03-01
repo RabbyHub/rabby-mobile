@@ -6,21 +6,19 @@ import { FooterResendCancelGroup } from './FooterResendCancelGroup';
 import TxFailedSVG from '@/assets/icons/approval/tx-failed.svg';
 import TxSucceedSVG from '@/assets/icons/approval/tx-succeed.svg';
 import ConnectWiredSVG from '@/assets/icons/approval/connect-wired.svg';
+import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
+import ConnectLedgerSVG from '@/assets/icons/approval/connect-ledger.svg';
 import ConnectWirelessSVG from '@/assets/icons/approval/connect-wireless.svg';
 import ConnectQRCodeSVG from '@/assets/icons/approval/connect-qrcode.svg';
 import ConnectWalletConnectSVG from '@/assets/icons/approval/connect-walletconnect.svg';
 import { FooterDoneButton } from './FooterDoneButton';
 import { Dots } from './Dots';
-import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { noop } from 'lodash';
 import { SvgProps } from 'react-native-svg';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
-
-const PRIVATE_KEY_ERROR_HEIGHT = 217;
-const OTHER_ERROR_HEIGHT = 392;
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -48,6 +46,9 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
+    hdTitleWrapper: {
+      marginTop: 25,
+    },
     infoIcon: {
       width: 20,
       height: 20,
@@ -66,7 +67,14 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 export interface Props {
-  hdType: 'wired' | 'wireless' | 'qrcode' | 'privatekey' | 'walletconnect';
+  hdType:
+    | 'wired'
+    | 'wireless'
+    | 'qrcode'
+    | 'privatekey'
+    | 'walletconnect'
+    | 'ble'
+    | 'ledger';
   status:
     | 'SENDING'
     | 'WAITING'
@@ -116,6 +124,10 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return;
       case 'walletconnect':
         return ConnectWalletConnectSVG;
+      case 'ble':
+        return ConnectBleSVG;
+      case 'ledger':
+        return ConnectLedgerSVG;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;
@@ -175,7 +187,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
       snapToIndexPopup(0);
     }
   }, [snapToIndexPopup, hdType, status, description]);
-
+  const isHD = hdType === 'ledger';
   return (
     <View style={styles.wrapper}>
       {SendSVG ? (
@@ -188,7 +200,11 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           <SendSVG style={styles.mainImage} />
         </View>
       ) : null}
-      <View style={styles.titleWrapper}>
+      <View
+        style={StyleSheet.flatten([
+          styles.titleWrapper,
+          isHD && styles.hdTitleWrapper,
+        ])}>
         {InfoSVG ? <InfoSVG style={styles.infoIcon} /> : null}
         <View>{content({ contentColor })}</View>
         {(status === 'SENDING' || status === 'WAITING') && showAnimation ? (

@@ -13,6 +13,8 @@ export enum MODAL_NAMES {
   'SELECT_SORTED_CHAIN' = 'SELECT_SORTED_CHAIN',
   'VIEW_RAW_DETAILS' = 'VIEW_RAW_DETAILS',
   'CANCEL_TX_POPUP' = 'CANCEL_TX_POPUP',
+  'CONNECT_LEDGER' = 'CONNECT_LEDGER',
+  'SETTING_LEDGER' = 'SETTING_LEDGER',
 
   'TIP_UPGRADE' = 'TIP_UPGRADE',
 }
@@ -23,6 +25,7 @@ export enum APPROVAL_MODAL_NAMES {
   'SignTypedData' = 'SignTypedData',
   'SignTx' = 'SignTx',
   'WatchAddressWaiting' = 'WatchAddressWaiting',
+  'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
 }
 
 export type MODAL_CREATE_PARMAS = {

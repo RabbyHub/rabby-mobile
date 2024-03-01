@@ -21,6 +21,7 @@ import {
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { RabbyPointsService } from './rabbyPoints';
+import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -31,7 +32,11 @@ const encryptor: EncryptorAdapter = {
   decrypt: rnEncryptor.decrypt,
 };
 // TODO: add other keyring classes
-const keyringClasses = [WalletConnectKeyring, WatchKeyring] as any;
+const keyringClasses = [
+  WalletConnectKeyring,
+  WatchKeyring,
+  LedgerKeyring,
+] as any;
 
 export const contactService = new ContactBookService({
   storageAdapter: appStorage,

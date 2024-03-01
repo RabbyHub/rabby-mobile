@@ -55,6 +55,8 @@ export const RootNames = {
   NftDetail: 'NftDetail',
 
   Receive: 'Receive',
+
+  ImportLedger: 'ImportLedger',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -79,7 +81,7 @@ export const getRootSpecConfig = (
       statusbarBackgroundColor: colors['blue-default'],
     },
     ImportSuccess: {
-      statusBarStyle: defaultStatusBarStyle,
+      statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
     },
     Send: {

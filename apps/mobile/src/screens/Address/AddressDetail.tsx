@@ -130,7 +130,7 @@ const AddressInfo = (props: AddressInfoProps) => {
     [account.balance],
   );
 
-  const WalletIcon = useMemo(() => getWalletIcon(account), [account]);
+  const WalletIcon = useMemo(() => getWalletIcon(account.brandName), [account]);
 
   const codeBottomSheetModalRef = useRef<BottomSheetModal>(null);
 

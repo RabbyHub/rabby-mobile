@@ -48,6 +48,7 @@ export interface Props {
   tooltipContent?: React.ReactNode;
   children?: React.ReactNode;
   chain?: Chain;
+  submitText?: string;
 }
 
 export const ActionsContainer: React.FC<

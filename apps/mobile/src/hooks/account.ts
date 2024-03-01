@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
-import { KeyringAccount } from '@rabby-wallet/keyring-utils';
+import { KeyringAccount, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import {
   contactService,
   keyringService,
@@ -10,7 +10,7 @@ import {
 import { removeAddress } from '@/core/apis/address';
 import { Account, IPinAddress } from '@/core/services/preference';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { WALLET_INFO } from '@/utils/walletInfo';
+import { getWalletIcon, WALLET_INFO } from '@/utils/walletInfo';
 import { RcIconWatchAddress } from '@/assets/icons/address';
 import { TotalBalanceResponse } from '@rabby-wallet/rabby-api/dist/types';
 import {
@@ -223,15 +223,7 @@ export function useRemoveAccount() {
 
 export function useWalletBrandLogo<T extends string>(brandName?: T) {
   const RcWalletIcon = useMemo(() => {
-    if (!brandName) return null;
-
-    if (brandName === 'Watch Address') {
-      return RcIconWatchAddress;
-    }
-    return (
-      WALLET_INFO[brandName as keyof typeof WALLET_INFO]?.icon ||
-      WALLET_INFO[WALLET_INFO.UnknownWallet as any].icon
-    );
+    return getWalletIcon(brandName);
   }, [brandName]) as T extends void
     ? null
     : React.FC<import('react-native-svg').SvgProps>;
