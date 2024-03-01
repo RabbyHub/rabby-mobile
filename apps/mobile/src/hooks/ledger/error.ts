@@ -6,12 +6,17 @@ export enum LEDGER_ERROR_CODES {
   NO_ETH_APP = 'no_eth_app',
   UNKNOWN = 'unknown',
   DISCONNECTED = 'disconnected',
+  LOCKED_OR_NO_ETH_APP = 'locked_or_no_eth_app',
 }
 
 /**
  * Parses ledger errors based on common issues
  */
 export const ledgerErrorHandler = (error: Error) => {
+  if (error.message.includes('0x650f')) {
+    return LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP;
+  }
+
   if (error.message.includes('0x6511')) {
     return LEDGER_ERROR_CODES.NO_ETH_APP;
   }

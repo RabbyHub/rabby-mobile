@@ -28,6 +28,7 @@ import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useTranslation } from 'react-i18next';
 import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
+import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 
 const { isSameAddress } = addressUtils;
 
@@ -168,8 +169,15 @@ export const ImportLedgerScreen = () => {
         await loadAddress(i);
         i++;
       }
-    } catch (e: any) {
-      toast.show(e.message);
+    } catch (err: any) {
+      const errorCode = ledgerErrorHandler(err);
+      let errMessage = err.message;
+      if (errorCode === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+        errMessage = t('page.newAddress.ledger.error.lockedOrNoEthApp');
+      } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
+        errMessage = t('page.newAddress.ledger.error.unknown');
+      }
+      toast.show(errMessage);
     }
     stoppedRef.current = true;
     setLoading(false);
@@ -180,7 +188,7 @@ export const ImportLedgerScreen = () => {
     if (i !== start + MAX_ACCOUNT_COUNT) {
       handleLoadAddress();
     }
-  }, [loadAddress]);
+  }, [loadAddress, t]);
 
   const handleSelectIndex = React.useCallback(async (address, index) => {
     setSelectedAccounts(prev => {

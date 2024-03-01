@@ -81,7 +81,7 @@ export const getRootSpecConfig = (
       statusbarBackgroundColor: colors['blue-default'],
     },
     ImportSuccess: {
-      statusBarStyle: defaultStatusBarStyle,
+      statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
     },
     Send: {

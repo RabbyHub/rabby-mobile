@@ -5,7 +5,7 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, StatusBar, View } from 'react-native';
+import { ColorSchemeName, Platform, StatusBar, View } from 'react-native';
 
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 
@@ -89,6 +89,14 @@ function AppStatusBar() {
         (isLight ? ('dark-content' as const) : ('light-content' as const)),
     };
   }, [isLight, colors, currentRouteName, hasActiveOpenedDapp]);
+
+  React.useEffect(() => {
+    StatusBar.setBarStyle(statusBarStyle, true);
+
+    if (Platform.OS === 'android') {
+      StatusBar.setBackgroundColor(statusBarBackgroundColor, true);
+    }
+  }, [statusBarBackgroundColor, statusBarStyle]);
 
   return (
     <StatusBar

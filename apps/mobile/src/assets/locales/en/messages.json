@@ -1243,6 +1243,10 @@
           "title": "Available Devices",
           "description": "Please select a Ledger to connect",
           "currentDevice": "current"
+        },
+        "error": {
+          "lockedOrNoEthApp": "Please keep Ledger unlocked and ETH APP open",
+          "unknown": "Connection failed, please go back and retry"
         }
       },
       "keystone": {

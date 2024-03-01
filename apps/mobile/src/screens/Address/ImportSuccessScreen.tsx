@@ -12,7 +12,6 @@ import React from 'react';
 import {
   Keyboard,
   ScrollView,
-  StatusBar,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -180,7 +179,6 @@ export const ImportSuccessScreen = () => {
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <StatusBar barStyle="light-content" />
       <TouchableWithoutFeedback
         onPress={() => {
           Keyboard.dismiss();
