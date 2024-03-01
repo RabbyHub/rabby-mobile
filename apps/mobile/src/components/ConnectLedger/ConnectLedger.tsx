@@ -60,7 +60,7 @@ export const ConnectLedger: React.FC<{
           });
           matomoRequestEvent({
             category: 'Import Address',
-            action: `Success_Import_{Wallet Category}_${KEYRING_CATEGORY.Hardware}`,
+            action: `Success_Import_${KEYRING_CATEGORY.Hardware}`,
             label: KEYRING_CLASS.HARDWARE.LEDGER,
           });
           onDone?.();
