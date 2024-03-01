@@ -86,6 +86,7 @@ export const SelectDeviceScreen: React.FC<{
       });
       setLocked(true);
       await onSelect(device);
+      setLocked(false);
       toastHidden();
     },
     [onSelect],

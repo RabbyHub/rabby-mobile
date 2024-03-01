@@ -295,6 +295,7 @@
       "keystoneNotConnected": "Keystone is not connected",
       "keystoneConnected": "Keystone is connected",
       "ledgerConnected": "Ledger is connected",
+      "importedByLedger": "Imported by Ledger",
       "signAndSubmitButton": "Sign and Create",
       "walletConnect": {
         "connectedButCantSign": "Connected but unable to sign.",

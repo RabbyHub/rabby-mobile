@@ -33,7 +33,9 @@ export const useLedgerStatus = (address: string) => {
         deviceId,
         onSelectDevice: async (d: Device) => {
           console.log('selected device', d.id);
-          removeGlobalBottomSheetModal(id);
+          setTimeout(() => {
+            removeGlobalBottomSheetModal(id);
+          }, 0);
           try {
             await TransportBLE.open(d.id);
             setStatus('CONNECTED');
