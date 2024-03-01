@@ -1,17 +1,19 @@
-import React from 'react';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import React from 'react';
 
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
-import { WalletConnectList } from './components/WalletConnectList';
-import { WalletItem } from './components/WalletItem';
-import { WalletHeadline } from './components/WalletHeadline';
 import { RootNames } from '@/constant/layout';
-import { HardwareDeviceList } from './components/HardwareDeviceList';
 import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { HardwareDeviceList } from './components/HardwareDeviceList';
+import { WalletConnectList } from './components/WalletConnectList';
+import { WalletHeadline } from './components/WalletHeadline';
+import { WalletItem } from './components/WalletItem';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -19,6 +21,7 @@ type AddressStackProps = NativeStackScreenProps<
 >;
 function BottomBlockArea() {
   const navigation = useNavigation<AddressStackProps['navigation']>();
+
   return (
     <View style={[styles.blockView]}>
       <View style={styles.section}>
@@ -36,6 +39,11 @@ function BottomBlockArea() {
           onPress={() => {
             navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportWatchAddress,
+            });
+            matomoRequestEvent({
+              category: 'Import Address',
+              action: `Begin_Import_${KEYRING_CATEGORY.WatchMode}`,
+              label: KEYRING_CLASS.WATCH,
             });
           }}
         />

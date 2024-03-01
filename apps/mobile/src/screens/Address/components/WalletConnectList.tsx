@@ -16,6 +16,8 @@ import { WalletInfo } from '@/utils/walletInfo';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useAppState } from '@react-native-community/hooks';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { KEYRING_CATEGORY } from '@rabby-wallet/keyring-utils';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -37,6 +39,12 @@ export const WalletConnectList = () => {
   const importingRef = useRef(false);
 
   const handlePress = React.useCallback(async (service: WalletInfo) => {
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.WalletConnect}`,
+      label: service.brand,
+    });
+
     setUriLoading(true);
     const toastHide = toastWithIcon(() => (
       <ActivityIndicator style={styles.toastIcon} />
@@ -114,6 +122,11 @@ export const WalletConnectList = () => {
                 realBrandName: data.realBrandName,
                 deepLink: deepLinkRef.current,
               },
+            });
+            matomoRequestEvent({
+              category: 'Import Address',
+              action: `Success_Import_${KEYRING_CATEGORY.WalletConnect}`,
+              label: data.brandName,
             });
           })
           .catch((err: any) => {

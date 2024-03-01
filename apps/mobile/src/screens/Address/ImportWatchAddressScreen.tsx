@@ -25,9 +25,10 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { CameraPopup } from './components/CameraPopup';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -77,6 +78,11 @@ export const ImportWatchAddressScreen = () => {
           address: input,
           brandName: KEYRING_CLASS.WATCH,
         },
+      });
+      matomoRequestEvent({
+        category: 'Import Address',
+        action: `Success_Import_${KEYRING_CATEGORY.WatchMode}`,
+        label: KEYRING_CLASS.WATCH,
       });
     } catch (e) {
       setError(INPUT_ERROR.ADDRESS_EXIST);
