@@ -4,7 +4,7 @@ import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
@@ -13,6 +13,7 @@ import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
@@ -56,6 +57,11 @@ export const ConnectLedger: React.FC<{
               address,
               isLedgerFirstImport: true,
             },
+          });
+          matomoRequestEvent({
+            category: 'Import Address',
+            action: `Success_Import_{Wallet Category}_${KEYRING_CATEGORY.Hardware}`,
+            label: KEYRING_CLASS.HARDWARE.LEDGER,
           });
           onDone?.();
         } else {
