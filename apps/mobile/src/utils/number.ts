@@ -165,3 +165,18 @@ export function coerceFloat(input: any, fallbackNum = 0) {
 
   return output;
 }
+
+export const ALLOWED_NUMBIC_INPUT = /^\d*(\.|\,)?\d*$/;
+export const EXTRACT_AMOUNT_REGEX = /^[0-9]+(\.|\,)\d*/;
+export function formatSpeicalAmount(input: number | string) {
+  const inputStr = String(input);
+
+  const matched = inputStr.match(EXTRACT_AMOUNT_REGEX);
+
+  const firstSep = matched?.[1];
+  if (firstSep && firstSep !== '.') {
+    return inputStr.replace(new RegExp(firstSep), '.');
+  }
+
+  return input.toString();
+}

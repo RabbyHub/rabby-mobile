@@ -26,7 +26,11 @@ import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiProvider } from '@/core/apis';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import {
+  formatSpeicalAmount,
+  formatTokenAmount,
+  formatUsdValue,
+} from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';
@@ -523,6 +527,7 @@ export function useSendTokenForm() {
     initialValues: formValues,
     validationSchema,
     onSubmit: values => {
+      values.amount = formatSpeicalAmount(values.amount);
       handleSubmit(values);
     },
   });
