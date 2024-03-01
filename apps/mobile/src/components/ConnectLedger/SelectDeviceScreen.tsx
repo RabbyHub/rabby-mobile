@@ -26,6 +26,8 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 16,
       color: colors['neutral-body'],
       lineHeight: 20,
+      textAlign: 'center',
+      paddingHorizontal: 20,
     },
     item: {
       padding: 16,
@@ -78,19 +80,26 @@ export const SelectDeviceScreen: React.FC<{
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [locked, setLocked] = React.useState(false);
+  let toastHiddenRef = React.useRef<() => void>(() => {});
 
   const handlePress = React.useCallback(
     async device => {
-      const toastHidden = toast.show('Connecting...', {
+      toastHiddenRef.current = toast.show('Connecting...', {
         duration: 100000,
       });
       setLocked(true);
       await onSelect(device);
       setLocked(false);
-      toastHidden();
+      toastHiddenRef.current?.();
     },
     [onSelect],
   );
+
+  React.useEffect(() => {
+    return () => {
+      toastHiddenRef.current?.();
+    };
+  }, []);
 
   return (
     <View style={styles.root}>

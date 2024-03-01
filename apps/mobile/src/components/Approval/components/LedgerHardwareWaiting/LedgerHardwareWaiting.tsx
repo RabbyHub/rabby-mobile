@@ -250,6 +250,9 @@ export const LedgerHardwareWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const currentDescription = React.useMemo(() => {
+    if (description?.includes('0x650f')) {
+      return t('page.signFooterBar.ledger.lockedOrNoEthApp');
+    }
     if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
       return t('page.signFooterBar.ledger.unlockAlert');
     } else if (
