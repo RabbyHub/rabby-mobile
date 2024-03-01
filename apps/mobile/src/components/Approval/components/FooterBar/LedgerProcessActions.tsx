@@ -6,14 +6,25 @@ import { ProcessActions } from './ProcessActions';
 
 export const LedgerProcessActions: React.FC<Props> = props => {
   const { disabledProcess, account } = props;
-  const { status } = useLedgerStatus(account.address);
+  const { status, onClickConnect } = useLedgerStatus(account.address);
   const { t } = useTranslation();
+
+  const handleSubmit = React.useCallback(() => {
+    if (status !== 'CONNECTED') {
+      onClickConnect(() => {
+        props.onSubmit();
+      });
+      return;
+    }
+    props.onSubmit();
+  }, [status, onClickConnect, props]);
 
   return (
     <ProcessActions
       {...props}
+      onSubmit={handleSubmit}
       submitText={t('page.signFooterBar.ledgerSign')}
-      disabledProcess={status !== 'CONNECTED' || disabledProcess}
+      disabledProcess={disabledProcess}
     />
   );
 };

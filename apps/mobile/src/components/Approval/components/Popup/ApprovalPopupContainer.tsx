@@ -46,6 +46,9 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
+    hdTitleWrapper: {
+      marginTop: 25,
+    },
     infoIcon: {
       width: 20,
       height: 20,
@@ -184,7 +187,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
       snapToIndexPopup(0);
     }
   }, [snapToIndexPopup, hdType, status, description]);
-
+  const isHD = hdType === 'ledger';
   return (
     <View style={styles.wrapper}>
       {SendSVG ? (
@@ -197,7 +200,11 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
           <SendSVG style={styles.mainImage} />
         </View>
       ) : null}
-      <View style={styles.titleWrapper}>
+      <View
+        style={StyleSheet.flatten([
+          styles.titleWrapper,
+          isHD && styles.hdTitleWrapper,
+        ])}>
         {InfoSVG ? <InfoSVG style={styles.infoIcon} /> : null}
         <View>{content({ contentColor })}</View>
         {(status === 'SENDING' || status === 'WAITING') && showAnimation ? (

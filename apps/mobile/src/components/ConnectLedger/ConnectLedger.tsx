@@ -10,6 +10,7 @@ import React from 'react';
 import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
+import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
 
@@ -23,12 +24,15 @@ export const ConnectLedger: React.FC<{
   const [_2, setSetting] = useAtom(settingAtom);
 
   const [currentScreen, setCurrentScreen] = React.useState<
-    'scan' | 'select' | 'ble'
+    'scan' | 'select' | 'ble' | 'notfound'
   >('ble');
 
   const handleBleNext = React.useCallback(() => {
     setCurrentScreen('scan');
     searchAndPair();
+    setTimeout(() => {
+      setCurrentScreen('notfound');
+    }, 5000);
   }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {
@@ -96,6 +100,7 @@ export const ConnectLedger: React.FC<{
           currentDeviceId={deviceId}
         />
       )}
+      {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
     </BottomSheetView>
   );
 };

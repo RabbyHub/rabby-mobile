@@ -1234,6 +1234,11 @@
           "title": "Searching for Device",
           "description": "Turn on Bluetooth and unlock Ledger Nano X"
         },
+        "notFound": {
+          "title": "Device Not Found",
+          "description": "Turn on Bluetooth and unlock Ledger Nano X",
+          "buttonText": "View Ledger support tutorial"
+        },
         "select": {
           "title": "Available Devices",
           "description": "Please select a Ledger to connect",

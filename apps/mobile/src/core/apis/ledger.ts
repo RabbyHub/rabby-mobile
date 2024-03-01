@@ -66,7 +66,7 @@ export async function isConnected(
 
   keyring.setDeviceId(detail.deviceId);
   try {
-    await TransportBLE.open(detail.deviceId);
+    await TransportBLE.open(detail.deviceId, 1000);
     return [true, detail.deviceId];
   } catch (e) {
     TransportBLE.disconnectDevice(detail.deviceId);

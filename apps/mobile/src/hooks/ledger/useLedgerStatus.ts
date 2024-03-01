@@ -26,24 +26,28 @@ export const useLedgerStatus = (address: string) => {
     });
   }, [address, setStatus]);
 
-  const onClickConnect = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.CONNECT_LEDGER,
-      deviceId,
-      onSelectDevice: async (d: Device) => {
-        console.log('selected device', d.id);
-        removeGlobalBottomSheetModal(id);
-        try {
-          await TransportBLE.open(d.id);
-          setStatus('CONNECTED');
-        } catch (e) {
-          console.log('ledger connect error', e);
-          await TransportBLE.disconnectDevice(d.id);
-          setStatus('DISCONNECTED');
-        }
-      },
-    });
-  }, [deviceId, setStatus]);
+  const onClickConnect = React.useCallback(
+    (cb?: () => void) => {
+      const id = createGlobalBottomSheetModal({
+        name: MODAL_NAMES.CONNECT_LEDGER,
+        deviceId,
+        onSelectDevice: async (d: Device) => {
+          console.log('selected device', d.id);
+          removeGlobalBottomSheetModal(id);
+          try {
+            await TransportBLE.open(d.id);
+            setStatus('CONNECTED');
+            cb?.();
+          } catch (e) {
+            console.log('ledger connect error', e);
+            await TransportBLE.disconnectDevice(d.id);
+            setStatus('DISCONNECTED');
+          }
+        },
+      });
+    },
+    [deviceId, setStatus],
+  );
 
   return {
     onClickConnect,
