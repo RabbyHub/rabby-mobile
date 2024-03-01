@@ -11,7 +11,9 @@ import {
 import React from 'react';
 import {
   Keyboard,
+  ScrollView,
   StyleSheet,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -23,14 +25,16 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RcIconRightCC } from '@/assets/icons/common';
+import { navigate } from '@/utils/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen = () => {
   const colors = useThemeColors();
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
-  const { safeOffHeader } = useSafeSizes();
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
+  const { safeOffHeader } = useSafeSizes();
 
   const styles = React.useMemo(
     () =>
@@ -38,6 +42,10 @@ export const ImportSuccessScreen = () => {
         rootContainer: {
           display: 'flex',
           backgroundColor: colors['blue-default'],
+        },
+        list: {
+          rowGap: 14,
+          flex: 1,
         },
         titleContainer: {
           width: '100%',
@@ -59,11 +67,23 @@ export const ImportSuccessScreen = () => {
           backgroundColor: colors['neutral-bg-2'],
           paddingVertical: 24,
           paddingHorizontal: 20,
+          rowGap: 16,
         },
         keyboardView: {
           flex: 1,
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
+        },
+        ledgerButton: {
+          backgroundColor: colors['neutral-bg-2'],
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingBottom: 32,
+        },
+        ledgerButtonText: {
+          color: colors['blue-default'],
+          fontSize: 14,
         },
       }),
 
@@ -72,20 +92,28 @@ export const ImportSuccessScreen = () => {
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
   ) as {
-    address: string;
+    address: string | string[];
     brandName: string;
     deepLink: string;
+    isLedgerFirstImport: boolean;
   };
-  const [aliasName, setAliasName] = React.useState<string>('');
+  const [importAddresses, setImportAddresses] = React.useState<
+    {
+      address: string;
+      aliasName: string;
+    }[]
+  >([]);
 
   const { switchAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
 
   const handleDone = React.useCallback(() => {
-    contactService.setAlias({
-      address: state.address,
-      alias: aliasName || '',
+    importAddresses.forEach(item => {
+      contactService.setAlias({
+        address: item.address,
+        alias: item.aliasName,
+      });
     });
     Keyboard.dismiss();
 
@@ -100,12 +128,21 @@ export const ImportSuccessScreen = () => {
         },
       ],
     });
-  }, [aliasName, navigation, state.address]);
+  }, [importAddresses, navigation]);
 
   const isFocus = useIsFocused();
 
   React.useEffect(() => {
-    setAliasName(contactService.getAliasByAddress(state.address)?.alias || '');
+    const addresses = Array.isArray(state.address)
+      ? state.address
+      : [state.address];
+
+    setImportAddresses(
+      addresses.map(address => ({
+        address,
+        aliasName: contactService.getAliasByAddress(address)?.alias || '',
+      })),
+    );
   }, [state]);
 
   React.useEffect(() => {
@@ -113,24 +150,32 @@ export const ImportSuccessScreen = () => {
   }, [fetchAccounts]);
 
   React.useEffect(() => {
+    if (!importAddresses.length) {
+      return;
+    }
+    const lastAddress = importAddresses[importAddresses.length - 1].address;
     if (isFocus) {
       const targetAccount = accounts.find(
         a =>
           a.brandName === state.brandName &&
-          addressUtils.isSameAddress(a.address, state.address),
+          addressUtils.isSameAddress(a.address, lastAddress),
       );
       const currentAccount = preferenceService.getCurrentAccount();
       if (targetAccount) {
         if (
           !currentAccount ||
           targetAccount.brandName !== currentAccount.brandName ||
-          !addressUtils.isSameAddress(currentAccount.address, state.address)
+          !addressUtils.isSameAddress(currentAccount.address, lastAddress)
         ) {
           switchAccount(targetAccount);
         }
       }
     }
-  }, [isFocus, state, accounts, switchAccount]);
+  }, [isFocus, state, accounts, switchAccount, importAddresses]);
+
+  const handleImportLedger = React.useCallback(() => {
+    navigate(RootNames.ImportLedger, {});
+  }, []);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
@@ -143,15 +188,40 @@ export const ImportSuccessScreen = () => {
             <ImportSuccessSVG />
             <Text style={styles.title}>Added successfully</Text>
           </View>
-          <View style={styles.inputContainer}>
-            <AddressInput
-              aliasName={aliasName}
-              address={state.address}
-              onChange={setAliasName}
-            />
-          </View>
+          <ScrollView automaticallyAdjustKeyboardInsets>
+            <View style={styles.inputContainer}>
+              {importAddresses.map((item, index) => (
+                <AddressInput
+                  key={item.address}
+                  address={item.address}
+                  aliasName={item.aliasName}
+                  onChange={_aliasName => {
+                    const newImportAddresses = [...importAddresses];
+                    newImportAddresses[index] = {
+                      address: item.address,
+                      aliasName: _aliasName,
+                    };
+                    setImportAddresses(newImportAddresses);
+                  }}
+                />
+              ))}
+            </View>
+          </ScrollView>
+          {state.isLedgerFirstImport && (
+            <TouchableOpacity
+              onPress={handleImportLedger}
+              style={styles.ledgerButton}>
+              <Text style={styles.ledgerButtonText}>Import more address</Text>
+              <RcIconRightCC
+                width={16}
+                height={16}
+                color={colors['blue-default']}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableWithoutFeedback>
+
       <FooterButton title="Done" onPress={handleDone} />
       <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>

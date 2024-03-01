@@ -1,4 +1,5 @@
 import { ScreenLayouts } from '@/constant/layout';
+import { isNil } from 'lodash';
 import React from 'react';
 
 import { View } from 'react-native';
@@ -9,10 +10,12 @@ export default function RootScreenContainer({
   style,
   fitStatuBar,
   hideBottomBar,
+  top: topProp,
 }: React.PropsWithChildren<{
   fitStatuBar?: boolean;
   style?: React.ComponentProps<typeof View>['style'];
   hideBottomBar?: boolean;
+  top?: number;
 }>) {
   const { top } = useSafeAreaInsets();
 
@@ -22,8 +25,10 @@ export default function RootScreenContainer({
         style,
         fitStatuBar && { marginTop: -1 },
         !hideBottomBar && { paddingBottom: ScreenLayouts.bottomBarHeight },
+        // eslint-disable-next-line react-native/no-inline-styles
         {
-          paddingTop: top + ScreenLayouts.headerAreaHeight,
+          paddingTop:
+            (!isNil(topProp) ? topProp : top) + ScreenLayouts.headerAreaHeight,
           flexDirection: 'column',
           height: '100%',
         },

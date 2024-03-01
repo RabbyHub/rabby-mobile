@@ -20,6 +20,7 @@ export type RootStackParamsList = {
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};
+  [RootNames.ImportLedger]?: {};
 };
 
 export type BottomTabParamsList = {
@@ -36,10 +37,11 @@ export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportSuccess]?: {
-    address: string;
+    address: string | string[];
     brandName: string;
     deepLink?: string;
     realBrandName?: string;
+    isLedgerFirstImport?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.AddressDetail]: {

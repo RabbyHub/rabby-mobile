@@ -30,7 +30,7 @@ import {
 } from '@/hooks/account';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { WALLET_INFO } from '@/utils/walletInfo';
+import { getWalletIcon, WALLET_INFO } from '@/utils/walletInfo';
 import { useWhitelist } from '@/hooks/whitelist';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { splitNumberByStep } from '@/utils/number';
@@ -76,13 +76,7 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 
   const WalletIcon = useMemo(() => {
-    if (wallet.brandName === 'Watch Address') {
-      return RcIconWatchAddress;
-    }
-    return (
-      WALLET_INFO?.[wallet.brandName as keyof typeof WALLET_INFO].icon ||
-      WALLET_INFO.UnknownWallet
-    );
+    return getWalletIcon(wallet.brandName);
   }, [wallet.brandName]);
 
   const copyAddress = useCallback(

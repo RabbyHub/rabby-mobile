@@ -30,6 +30,7 @@ export const ProcessActions: React.FC<Props> = ({
   onCancel,
   disabledProcess,
   tooltipContent,
+  submitText,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -48,7 +49,7 @@ export const ProcessActions: React.FC<Props> = ({
             titleStyle={styles.buttonText}
             disabledStyle={styles.disabled}
             onPress={onSubmit}
-            title={t('page.signFooterBar.beginSigning')}
+            title={submitText ?? t('page.signFooterBar.beginSigning')}
           />
         </View>
       </Tip>

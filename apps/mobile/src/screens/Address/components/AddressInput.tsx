@@ -78,7 +78,7 @@ export const AddressInput: React.FC<Props> = ({
         clearIcon: {
           position: 'absolute',
           right: 20,
-          top: 28,
+          top: 26,
           width: 20,
           height: 20,
         },
@@ -136,8 +136,9 @@ export const AddressInput: React.FC<Props> = ({
         }}
         blurOnSubmit
         focusable={true}
+        clearButtonMode="while-editing"
       />
-      {!!editingAliasName && (
+      {!!editingAliasName && Platform.OS === 'android' && (
         <TouchableOpacity
           style={styles.clearIcon}
           onPress={e => {

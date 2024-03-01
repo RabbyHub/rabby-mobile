@@ -12,7 +12,6 @@ import { preferenceService, transactionHistoryService } from '@/core/services';
 import { Account } from '@/core/services/preference';
 import { apisWalletConnect } from '@/core/apis';
 import { View } from 'react-native';
-import { useApprovalPopup } from '@/hooks/useApprovalPopup';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { findChainByEnum } from '@/utils/chain';
@@ -84,9 +83,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       });
     }
   };
-  const approvalPopup = useApprovalPopup();
   const handleCancel = () => {
-    approvalPopup.closePopup();
     rejectApproval('user cancel');
   };
 
@@ -236,20 +233,18 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
   return (
     <View>
-      <View>
-        {currentAccount && (
-          <Process
-            chain={chain}
-            result={result}
-            status={connectStatus}
-            error={connectError}
-            onRetry={handleRetry}
-            onCancel={handleCancel}
-            account={currentAccount}
-            onDone={() => setIsClickDone(true)}
-          />
-        )}
-      </View>
+      {currentAccount && (
+        <Process
+          chain={chain}
+          result={result}
+          status={connectStatus}
+          error={connectError}
+          onRetry={handleRetry}
+          onCancel={handleCancel}
+          account={currentAccount}
+          onDone={() => setIsClickDone(true)}
+        />
+      )}
     </View>
   );
 };

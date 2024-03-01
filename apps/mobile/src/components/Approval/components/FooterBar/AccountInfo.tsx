@@ -15,6 +15,7 @@ import { Tip } from '@/components/Tip';
 import { StyleSheet, Text, View } from 'react-native';
 import { AddressViewer } from '@/components/AddressViewer';
 import { AppColorsVariants } from '@/constant/theme';
+import { LedgerAccount } from './LedgerAccount';
 
 export interface Props {
   account: Account;
@@ -82,6 +83,7 @@ export const AccountInfo: React.FC<Props> = ({
 
   React.useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
   const binaryTheme = useGetAppThemeMode();
@@ -102,6 +104,9 @@ export const AccountInfo: React.FC<Props> = ({
       </View>
       {account?.type === KEYRING_CLASS.WALLETCONNECT && (
         <WalletConnectAccount chain={chain} account={account} />
+      )}
+      {account?.type === KEYRING_CLASS.HARDWARE.LEDGER && (
+        <LedgerAccount account={account} />
       )}
       {account?.type === KEYRING_CLASS.WATCH && (
         <CommonAccount

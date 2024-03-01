@@ -11,6 +11,8 @@ import { CancelTxPopup } from '../CancelTxPopup';
 import { SelectSortedChain } from '../SelectSortedChain';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
+import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
+import { SettingLedger } from '../HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
@@ -24,6 +26,8 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.SIMPLE_CONFIRM]: [229],
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ['80%'],
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
+  [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
+  [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
 
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
 };
@@ -37,6 +41,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
   [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400],
+  [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -50,6 +55,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SELECT_SORTED_CHAIN]: SelectSortedChain,
   [MODAL_NAMES.VIEW_RAW_DETAILS]: ViewRawDetail,
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
+  [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
+  [MODAL_NAMES.SETTING_LEDGER]: SettingLedger,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
 };
@@ -71,7 +78,10 @@ export function makeBottomSheetProps(ctx: {
   }
 
   if (ctx.params?.name === 'APPROVAL') {
-    if (ctx.params.approvalComponent === 'WatchAddressWaiting') {
+    if (
+      ctx.params.approvalComponent === 'WatchAddressWaiting' ||
+      ctx.params.approvalComponent === 'LedgerHardwareWaiting'
+    ) {
       return {
         handleStyle: {
           backgroundColor: 'transparent',
