@@ -3,7 +3,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { apiLedger } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
   ScrollView,
@@ -250,6 +250,7 @@ export const ImportLedgerScreen = () => {
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
+          type: KEYRING_TYPE.LedgerKeyring,
           brandName: KEYRING_CLASS.HARDWARE.LEDGER,
           address: selectedAccounts.map(a => a.address),
         },

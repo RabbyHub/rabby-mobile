@@ -27,6 +27,13 @@ import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { navigate } from '@/utils/navigation';
+import { matomoRequestEvent } from '@/utils/analytics';
+import {
+  KEYRING_CATEGORY,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
+import { getKRCategoryByType } from '@/utils/transaction';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -96,6 +103,7 @@ export const ImportSuccessScreen = () => {
     brandName: string;
     deepLink: string;
     isLedgerFirstImport: boolean;
+    type: KEYRING_TYPE;
   };
   const [importAddresses, setImportAddresses] = React.useState<
     {
@@ -143,6 +151,12 @@ export const ImportSuccessScreen = () => {
         aliasName: contactService.getAliasByAddress(address)?.alias || '',
       })),
     );
+
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Success_Import_${getKRCategoryByType(state.type)}`,
+      label: state.brandName,
+    });
   }, [state]);
 
   React.useEffect(() => {
