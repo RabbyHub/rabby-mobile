@@ -1225,6 +1225,7 @@
         "permissionsAuthorized": "Permissions Authorized",
         "nowYouCanReInitiateYourTransaction": "Now you can re-initiate your transaction.",
         "allow": "Allow",
+        "imported": "Already imported",
         "ble": {
           "title": "Connect Ledger",
           "description": "Turn on Bluetooth and unlock Ledger Nano X"

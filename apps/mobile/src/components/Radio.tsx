@@ -49,13 +49,13 @@ export const Radio: React.FC<
 
   return (
     <CheckBox
+      checkedIcon={getIcon(colors['blue-default'])}
+      uncheckedIcon={getIcon(colors['neutral-line'])}
       {...props}
       containerStyle={StyleSheet.flatten([
         styles.container,
         props.containerStyle,
       ])}
-      checkedIcon={getIcon(colors['blue-default'])}
-      uncheckedIcon={getIcon(colors['neutral-line'])}
     />
   );
 };

@@ -120,6 +120,17 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '600',
       fontSize: 16,
     },
+    radioIcon: {
+      width: 24,
+      height: 24,
+    },
+    radioIconUncheck: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors['neutral-foot'],
+    },
   });
 
 export const MainContainer: React.FC<Props> = ({
@@ -195,6 +206,8 @@ export const MainContainer: React.FC<Props> = ({
                   <Radio
                     containerStyle={styles.radio}
                     checked={hdPath === option.value}
+                    iconStyle={styles.radioIcon}
+                    uncheckedIcon={<View style={styles.radioIconUncheck} />}
                   />
                 </View>
                 <View style={styles.itemText}>

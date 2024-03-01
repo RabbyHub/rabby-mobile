@@ -109,3 +109,18 @@ export async function getCurrentAccounts() {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
   return queue.add(() => keyring.getCurrentAccounts());
 }
+
+export async function importFirstAddress(): Promise<string | false> {
+  const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
+  let address;
+  try {
+    await keyring.setHDPathType(LedgerHDPathType.LedgerLive);
+    await keyring.setAccountToUnlock(0);
+    address = (await keyringService.addNewAccount(keyring as any))[0];
+  } catch (e) {
+    // TODO Cannot read property 'getAddress' of null 如果是这个错误，报错并提示重新连接
+    console.log('aaa', e);
+    return false;
+  }
+  return address;
+}

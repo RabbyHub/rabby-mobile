@@ -27,6 +27,7 @@ import { isNumber } from 'lodash';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useTranslation } from 'react-i18next';
 import { Spin } from '@/components/Spin';
+import { Skeleton } from '@rneui/themed';
 
 const { isSameAddress } = addressUtils;
 
@@ -43,6 +44,7 @@ const getStyles = (colors: AppColorsVariants) =>
     root: {
       height: '100%',
       position: 'relative',
+      backgroundColor: colors['neutral-bg-2'],
     },
     main: {
       flex: 1,
@@ -51,11 +53,14 @@ const getStyles = (colors: AppColorsVariants) =>
     item: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
-      paddingVertical: 20,
-      paddingHorizontal: 12,
+      paddingVertical: 18,
+      paddingHorizontal: 10,
       justifyContent: 'space-between',
       flexDirection: 'row',
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors['neutral-card-1'],
+      height: 60,
     },
     list: {
       rowGap: 12,
@@ -97,6 +102,21 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '600',
       fontSize: 16,
     },
+    radioIcon: {
+      width: 24,
+      height: 24,
+    },
+    radioIconUncheck: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors['neutral-foot'],
+    },
+    isSelected: {
+      borderColor: colors['blue-default'],
+      backgroundColor: colors['blue-light-1'],
+    },
   });
 
 export const ImportLedgerScreen = () => {
@@ -115,6 +135,7 @@ export const ImportLedgerScreen = () => {
     LedgerAccount[]
   >([]);
   const [importing, setImporting] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const loadAddress = React.useCallback(async (index: number) => {
     const res = await apiLedger.getAddresses(index, index + 1);
@@ -135,6 +156,7 @@ export const ImportLedgerScreen = () => {
   }, []);
 
   const handleLoadAddress = React.useCallback(async () => {
+    setLoading(true);
     stoppedRef.current = false;
     const start = startNumberRef.current;
     let i = start;
@@ -150,7 +172,7 @@ export const ImportLedgerScreen = () => {
       toast.show(e.message);
     }
     stoppedRef.current = true;
-
+    setLoading(false);
     if (exitRef.current) {
       return;
     }
@@ -235,7 +257,7 @@ export const ImportLedgerScreen = () => {
 
   return (
     <Spin spinning={!accounts.length}>
-      <RootScreenContainer hideBottomBar style={styles.root}>
+      <RootScreenContainer hideBottomBar top={24} style={styles.root}>
         <ScrollView style={styles.main}>
           <View style={styles.list}>
             {accounts.map(({ address, index, balance }) => {
@@ -246,16 +268,24 @@ export const ImportLedgerScreen = () => {
                 isSameAddress(a.address, address),
               );
 
+              const onPress = () => {
+                if (isImported) {
+                  toast.success(t('page.newAddress.ledger.imported'));
+                  return;
+                }
+                handleSelectIndex(address, index);
+              };
+
               return (
                 <TouchableOpacity
-                  onPress={() => handleSelectIndex(address, index)}
+                  onPress={onPress}
                   style={StyleSheet.flatten([
                     styles.item,
                     {
                       opacity: isImported ? 0.5 : 1,
                     },
+                    isSelected && styles.isSelected,
                   ])}
-                  disabled={isImported}
                   key={address}>
                   <View style={styles.itemLeft}>
                     <Text style={styles.itemIndex}>{index}</Text>
@@ -265,7 +295,11 @@ export const ImportLedgerScreen = () => {
                           ellipsis: true,
                         })}
                       </Text>
-                      <TouchableOpacity onPress={() => onCopy(address)}>
+                      <TouchableOpacity
+                        onPress={e => {
+                          e.stopPropagation();
+                          onCopy(address);
+                        }}>
                         <RcIconCopyCC
                           color={colors['neutral-foot']}
                           width={14}
@@ -282,18 +316,32 @@ export const ImportLedgerScreen = () => {
                     )}
                     <View>
                       <Radio
+                        onPress={onPress}
                         containerStyle={styles.radio}
                         checked={isImported || isSelected}
+                        iconStyle={styles.radioIcon}
+                        uncheckedIcon={<View style={styles.radioIconUncheck} />}
                       />
                     </View>
                   </View>
                 </TouchableOpacity>
               );
             })}
+            {/* next placeholder */}
+            {loading && (
+              <View style={styles.item}>
+                <View style={styles.itemLeft}>
+                  <Text style={styles.itemIndex}>{accounts.length + 1}</Text>
+                  <Text style={styles.itemAddress}>
+                    <Skeleton width={100} height={20} />
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </ScrollView>
         <FooterButton
-          disabled={importing}
+          disabled={importing || !selectedAccounts.length}
           titleStyle={styles.footerButtonTitle}
           title={`${t('global.Confirm')}${
             selectedAccounts.length ? ` (${selectedAccounts.length})` : ''

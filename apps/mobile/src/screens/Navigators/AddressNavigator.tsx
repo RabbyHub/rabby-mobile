@@ -110,6 +110,9 @@ export function AddressNavigator() {
         component={ImportLedgerScreen}
         options={{
           headerTitle: 'Import more address',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
           title: 'Import more address',
           // eslint-disable-next-line react/no-unstable-nested-components
           headerRight: ({ tintColor }) => (

@@ -41,6 +41,7 @@ export type AddressNavigatorParamList = {
     brandName: string;
     deepLink?: string;
     realBrandName?: string;
+    isLedgerFirstImport?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.AddressDetail]: {

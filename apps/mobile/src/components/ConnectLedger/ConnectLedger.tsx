@@ -4,6 +4,7 @@ import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { Device } from 'react-native-ble-plx';
@@ -41,20 +42,34 @@ export const ConnectLedger: React.FC<{
         onSelectDevice(device);
       } else {
         setIsLoaded(false);
-        await apiLedger
-          .getCurrentUsedHDPathType()
-          .then(res => {
-            const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-            apiLedger.setHDPathType(hdPathType);
-            setSetting({
-              startNumber: 1,
-              hdPath: hdPathType,
-            });
-          })
-          .then(() => {
-            navigate(RootNames.ImportLedger, {});
-            onDone?.();
+        const address = await apiLedger.importFirstAddress();
+
+        if (address) {
+          navigate(RootNames.StackAddress, {
+            screen: RootNames.ImportSuccess,
+            params: {
+              brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+              address,
+              isLedgerFirstImport: true,
+            },
           });
+          onDone?.();
+        } else {
+          await apiLedger
+            .getCurrentUsedHDPathType()
+            .then(res => {
+              const hdPathType = res ?? LedgerHDPathType.LedgerLive;
+              apiLedger.setHDPathType(hdPathType);
+              setSetting({
+                startNumber: 1,
+                hdPath: hdPathType,
+              });
+            })
+            .then(() => {
+              navigate(RootNames.ImportLedger, {});
+              onDone?.();
+            });
+        }
       }
     },
 

@@ -14,6 +14,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -25,6 +26,8 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RcIconRightCC } from '@/assets/icons/common';
+import { navigate } from '@/utils/navigation';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -72,6 +75,17 @@ export const ImportSuccessScreen = () => {
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
+        ledgerButton: {
+          backgroundColor: colors['neutral-bg-2'],
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingBottom: 32,
+        },
+        ledgerButtonText: {
+          color: colors['blue-default'],
+          fontSize: 14,
+        },
       }),
 
     [colors, safeOffHeader],
@@ -82,6 +96,7 @@ export const ImportSuccessScreen = () => {
     address: string | string[];
     brandName: string;
     deepLink: string;
+    isLedgerFirstImport: boolean;
   };
   const [importAddresses, setImportAddresses] = React.useState<
     {
@@ -159,6 +174,10 @@ export const ImportSuccessScreen = () => {
     }
   }, [isFocus, state, accounts, switchAccount, importAddresses]);
 
+  const handleImportLedger = React.useCallback(() => {
+    navigate(RootNames.ImportLedger, {});
+  }, []);
+
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
       <StatusBar barStyle="light-content" />
@@ -190,8 +209,21 @@ export const ImportSuccessScreen = () => {
               ))}
             </View>
           </ScrollView>
+          {state.isLedgerFirstImport && (
+            <TouchableOpacity
+              onPress={handleImportLedger}
+              style={styles.ledgerButton}>
+              <Text style={styles.ledgerButtonText}>Import more address</Text>
+              <RcIconRightCC
+                width={16}
+                height={16}
+                color={colors['blue-default']}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </TouchableWithoutFeedback>
+
       <FooterButton title="Done" onPress={handleDone} />
       <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </RootScreenContainer>
