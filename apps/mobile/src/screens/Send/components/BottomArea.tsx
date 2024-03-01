@@ -222,6 +222,7 @@ const getStyles = createGetStyles(colors => {
       textAlign: 'center',
       justifyContent: 'center',
       lineHeight: 18,
+      color: colors['neutral-foot'],
     },
     errorText: {
       color: colors['red-dark'],

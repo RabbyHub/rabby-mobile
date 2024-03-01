@@ -244,6 +244,7 @@ const getStyles = createGetStyles(colors => {
 
     input: {
       backgroundColor: colors['neutral-card2'],
+      color: colors['neutral-title1'],
       width: '100%',
       paddingRight: 8,
       // ...makeDebugBorder('red'),
