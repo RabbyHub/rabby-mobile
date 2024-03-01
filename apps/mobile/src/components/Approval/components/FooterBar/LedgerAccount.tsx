@@ -36,7 +36,7 @@ const TipContent = () => {
 
   return (
     <Text style={styles.connectText}>
-      {t('page.signFooterBar.ledgerConnected')}
+      {t('page.signFooterBar.importedByLedger')}
     </Text>
   );
 };

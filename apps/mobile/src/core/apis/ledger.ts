@@ -117,7 +117,11 @@ export async function importFirstAddress(): Promise<string | false> {
     await keyring.setHDPathType(LedgerHDPathType.LedgerLive);
     await keyring.setAccountToUnlock(0);
     address = (await keyringService.addNewAccount(keyring as any))[0];
-  } catch (e) {
+  } catch (e: any) {
+    // only catch not `duplicate import` error
+    if (!e.message?.includes('import is invalid')) {
+      throw e;
+    }
     return false;
   }
   return address;

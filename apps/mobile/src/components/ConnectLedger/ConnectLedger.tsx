@@ -1,5 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiLedger } from '@/core/apis';
+import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -7,8 +8,10 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
+import { toast } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
@@ -22,21 +25,23 @@ export const ConnectLedger: React.FC<{
   const { searchAndPair, devices, errorCode } = useLedgerImport();
   const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
-
+  const { t } = useTranslation();
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound'
   >('ble');
+  const notfoundTimerRef = React.useRef<any>(null);
 
   const handleBleNext = React.useCallback(() => {
     setCurrentScreen('scan');
     searchAndPair();
-    setTimeout(() => {
+    notfoundTimerRef.current = setTimeout(() => {
       setCurrentScreen('notfound');
     }, 5000);
   }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {
     setCurrentScreen('select');
+    clearTimeout(notfoundTimerRef.current);
   }, []);
 
   const handleSelectDevice = React.useCallback(
@@ -46,7 +51,19 @@ export const ConnectLedger: React.FC<{
         onSelectDevice(device);
       } else {
         setIsLoaded(false);
-        const address = await apiLedger.importFirstAddress();
+        let address;
+        try {
+          address = await apiLedger.importFirstAddress();
+        } catch (err: any) {
+          const code = ledgerErrorHandler(err);
+          if (code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+            toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
+          }
+          console.error(err);
+          setIsLoaded(true);
+
+          return;
+        }
 
         if (address) {
           navigate(RootNames.StackAddress, {
@@ -78,7 +95,7 @@ export const ConnectLedger: React.FC<{
       }
     },
 
-    [onDone, onSelectDevice, setIsLoaded, setSetting],
+    [onDone, onSelectDevice, setIsLoaded, setSetting, t],
   );
 
   React.useEffect(() => {

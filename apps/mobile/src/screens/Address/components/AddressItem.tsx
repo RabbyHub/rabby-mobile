@@ -217,7 +217,11 @@ export const AddressItem = (props: AddressItemProps) => {
               position: 'relative',
               marginRight: 12,
             }}>
-            <WalletIcon style={styles.walletLogo} />
+            <WalletIcon
+              width={styles.walletLogo.width}
+              height={styles.walletLogo.height}
+              style={styles.walletLogo}
+            />
             <CommonSignal
               address={wallet.address}
               brandName={wallet.brandName}
