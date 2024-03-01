@@ -3,7 +3,11 @@ import { TextInput, TextInputProps } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
-import { coerceFloat } from '@/utils/number';
+import {
+  ALLOWED_NUMBIC_INPUT,
+  coerceFloat,
+  formatSpeicalAmount,
+} from '@/utils/number';
 
 type BottomSheetTextInputProps = React.ComponentProps<
   typeof BottomSheetTextInput
@@ -23,14 +27,17 @@ function correctInputToNumber<T extends number | string>(
 ) {
   const { min, max } = options || {};
 
-  if (min !== undefined && coerceFloat(numericValue) < min) {
+  const formattedValue = formatSpeicalAmount(numericValue);
+
+  if (min !== undefined && coerceFloat(formattedValue) < min) {
     return min;
   }
 
-  if (max !== undefined && coerceFloat(numericValue) > max) {
+  if (max !== undefined && coerceFloat(formattedValue) > max) {
     return max;
   }
 
+  // keep original input tough formattedValue not equal to numericValue
   return numericValue;
 }
 
@@ -52,7 +59,7 @@ export const NumericInput = React.forwardRef<TextInput, NumericInputProps>(
 
     const handleChange = useCallback(
       (newValue: string) => {
-        if (/^\d*(\.\d*)?$/.test(newValue)) {
+        if (ALLOWED_NUMBIC_INPUT.test(newValue)) {
           newValue = correctInputToNumber(newValue, { min, max }).toString();
           setInternalValue(newValue);
           onChangeText?.(newValue);

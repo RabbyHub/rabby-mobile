@@ -5,7 +5,10 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { FormInput } from '@/components/Form/Input';
-import { RcWhiteList } from '@/assets/icons/address';
+import {
+  RcWhiteListEnabled,
+  RcWhiteListDisabled,
+} from '@/assets/icons/address';
 
 import RcEditPenCC from '../icons/edit-pen-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
@@ -39,7 +42,7 @@ export default function ToAddressControl({
       showContactInfo,
       contactInfo,
     },
-    computed: { toAddressIsValid, toAddressInContactBook },
+    computed: { toAddressIsValid, toAddressInContactBook, whitelistEnabled },
     fns: { putScreenState },
     callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
@@ -85,7 +88,11 @@ export default function ToAddressControl({
                 showListContactModal: true,
               });
             }}>
-            <RcWhiteList style={styles.entryWhitelistIcon} />
+            {whitelistEnabled ? (
+              <RcWhiteListEnabled style={styles.entryWhitelistIcon} />
+            ) : (
+              <RcWhiteListDisabled style={styles.entryWhitelistIcon} />
+            )}
           </TouchableView>
         </View>
       </View>

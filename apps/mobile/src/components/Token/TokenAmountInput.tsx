@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import RcArrowDownCC from './icons/token-selector-trigger-down-cc.svg';
@@ -27,10 +27,12 @@ import {
 } from './TokenSelectorSheetModal';
 import { AssetAvatar } from '../AssetAvatar';
 import { useSortTokenPure } from '@/screens/Home/hooks/useSortTokens';
-import { splitNumberByStep } from '@/utils/number';
+import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
+
+const isIOS = Platform.OS === 'ios';
 
 function useLoadTokenList({
   externalChainServerId,
@@ -271,7 +273,9 @@ export const TokenAmountInput = React.forwardRef<
                 styles.input,
               ]}
               value={value}
-              onChangeText={onChange}
+              onChangeText={(value: string) => {
+                onChange(formatSpeicalAmount(value));
+              }}
               ref={tokenInputRef}
               placeholder="0"
               placeholderTextColor={colors['neutral-foot']}

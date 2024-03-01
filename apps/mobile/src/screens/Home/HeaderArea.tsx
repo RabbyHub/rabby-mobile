@@ -20,6 +20,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { PendingTxCount } from './components/PendingTxCount';
+import { useRemoteUpgradeInfo } from '@/hooks/version';
 
 export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
@@ -95,6 +96,9 @@ export default function HomeHeaderArea() {
     },
     [navigation],
   );
+
+  const { remoteVersion } = useRemoteUpgradeInfo();
+
   return (
     <View
       style={StyleSheet.compose(styles.container, {
@@ -134,8 +138,16 @@ export default function HomeHeaderArea() {
           <TouchableView onPress={() => handlePressIcon('history')}>
             <PendingTxCount />
           </TouchableView>
-          <TouchableView onPress={() => handlePressIcon('settings')}>
+          <TouchableView
+            style={styles.settingsWrapper}
+            onPress={() => handlePressIcon('settings')}>
             <RcIconHeaderSettings style={styles.actionIcon} />
+            <View
+              style={[
+                styles.actionIconReddot,
+                !remoteVersion.couldUpgrade && styles.hideReddot,
+              ]}
+            />
           </TouchableView>
         </View>
       </View>
@@ -242,9 +254,25 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       flexShrink: 0,
       gap: 16,
     },
+    settingsWrapper: {
+      position: 'relative',
+    },
     actionIcon: {
       width: 24,
       height: 24,
+    },
+    actionIconReddot: {
+      width: 8,
+      height: 8,
+      position: 'absolute',
+
+      top: 0,
+      right: 0,
+      backgroundColor: colors['red-default'],
+      borderRadius: 8,
+    },
+    hideReddot: {
+      display: 'none',
     },
     textBox: {
       height: 90,

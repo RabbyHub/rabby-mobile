@@ -50,8 +50,8 @@ export default function BottomArea() {
     if (!whitelistEnabled) {
       return {
         content: t('page.sendToken.whitelistAlert__disabled'),
+        inlineIconColor: '',
         success: true,
-        inlineIconColor: colors['neutral-foot'],
       };
     }
     if (toAddressInWhitelist) {
