@@ -2,6 +2,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
 import { RootNames } from './constant/layout';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -42,6 +43,7 @@ export type AddressNavigatorParamList = {
     deepLink?: string;
     realBrandName?: string;
     isLedgerFirstImport?: boolean;
+    type: KEYRING_TYPE;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.AddressDetail]: {

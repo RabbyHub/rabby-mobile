@@ -1,21 +1,23 @@
+import { WalletSVG } from '@/assets/icons/address';
 import { Text } from '@/components';
+import { toast, toastWithIcon } from '@/components/Toast';
 import { RootNames } from '@/constant/layout';
 import { apisWalletConnect } from '@/core/apis';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { openWallet } from '@/hooks/walletconnect/util';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { eventBus, EVENTS } from '@/utils/events';
 import { navigate } from '@/utils/navigation';
+import { WalletInfo } from '@/utils/walletInfo';
+import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
+import { KEYRING_CATEGORY, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useAppState } from '@react-native-community/hooks';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { EmptyMobileWallet } from './EmptyMobileWallet';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
-import { WalletSVG } from '@/assets/icons/address';
-import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
-import { toast, toastWithIcon } from '@/components/Toast';
-import { WalletInfo } from '@/utils/walletInfo';
-import { EmptyMobileWallet } from './EmptyMobileWallet';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
-import { useAppState } from '@react-native-community/hooks';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -37,6 +39,12 @@ export const WalletConnectList = () => {
   const importingRef = useRef(false);
 
   const handlePress = React.useCallback(async (service: WalletInfo) => {
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.WalletConnect}`,
+      label: service.brand,
+    });
+
     setUriLoading(true);
     const toastHide = toastWithIcon(() => (
       <ActivityIndicator style={styles.toastIcon} />
@@ -109,6 +117,7 @@ export const WalletConnectList = () => {
             navigate(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess,
               params: {
+                type: KEYRING_TYPE.WalletConnectKeyring,
                 address: data.address,
                 brandName: data.brandName,
                 realBrandName: data.realBrandName,

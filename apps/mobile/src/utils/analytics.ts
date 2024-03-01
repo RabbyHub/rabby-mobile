@@ -79,12 +79,10 @@ export const matomoRequestEvent = async (data: {
   }
 
   try {
-    return postData(ANALYTICS_PATH, params);
-  } catch (e) {
-    // ignore
-  }
-  try {
-    await analytics.logEvent(data.category, data);
+    await Promise.all([
+      analytics.logEvent(data.category, data),
+      postData(ANALYTICS_PATH, params),
+    ]);
   } catch (e) {
     console.error('gaEvent Error', e);
   }
@@ -95,7 +93,7 @@ export const matomoLogScreenView = async ({ name }: { name: string }) => {
   params.append('action_name', `Screen / ${name}`);
 
   try {
-    return postData(ANALYTICS_PATH, params);
+    await postData(ANALYTICS_PATH, params);
   } catch (e) {
     // ignore
   }

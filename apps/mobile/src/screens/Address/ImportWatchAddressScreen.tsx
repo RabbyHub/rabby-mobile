@@ -1,33 +1,33 @@
+import { RcIconScannerCC } from '@/assets/icons/address';
+import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
 import { FocusAwareStatusBar, Text } from '@/components';
+import { FooterButton } from '@/components/FooterButton/FooterButton';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames } from '@/constant/layout';
+import { AppColorsVariants } from '@/constant/theme';
+import { apisAddress } from '@/core/apis';
+import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { navigate } from '@/utils/navigation';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { isValidHexAddress } from '@metamask/utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect, useRef } from 'react';
 import {
   Keyboard,
   NativeSyntheticEvent,
+  Platform,
   StyleSheet,
   TextInput,
   TextInputSubmitEditingEventData,
   TouchableOpacity,
   View,
-  Platform,
 } from 'react-native';
-import WatchLogoSVG from '@/assets/icons/address/watch-logo.svg';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { navigate } from '@/utils/navigation';
-import { isValidHexAddress } from '@metamask/utils';
-import { apisAddress } from '@/core/apis';
-import { AppColorsVariants } from '@/constant/theme';
-import { openapi } from '@/core/request';
-import { RcIconScannerCC } from '@/assets/icons/address';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { CameraPopup } from './components/CameraPopup';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Code } from 'react-native-vision-camera';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import TouchableView from '@/components/Touchable/TouchableView';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { CameraPopup } from './components/CameraPopup';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -74,6 +74,7 @@ export const ImportWatchAddressScreen = () => {
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
+          type: KEYRING_TYPE.WatchAddressKeyring,
           address: input,
           brandName: KEYRING_CLASS.WATCH,
         },

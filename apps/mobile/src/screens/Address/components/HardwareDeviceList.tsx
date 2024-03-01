@@ -12,6 +12,8 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { matomoRequestEvent } from '@/utils/analytics';
+import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -37,6 +39,11 @@ export const HardwareDeviceList = () => {
           removeGlobalBottomSheetModal(id);
         }, 0);
       },
+    });
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.LEDGER,
     });
   }, []);
 
