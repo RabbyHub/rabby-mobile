@@ -98,7 +98,7 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
-            label: 'Connect Address',
+            label: `Connect ${Platform.OS === 'ios' ? 'Websites' : 'Dapps'}`,
             icon: RcConnectedDapp,
             onPress: () => {},
             disabled: true,
