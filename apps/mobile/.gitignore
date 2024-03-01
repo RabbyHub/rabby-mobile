@@ -78,6 +78,7 @@ scripts/deployments/**/version.json
 scripts/deployments/**/*.md
 scripts/deployments/**/*.ipa
 scripts/deployments/**/*.apk
+scripts/deployments/**/*.aab
 
 **/InpageBridgeWeb3.js
 /android/app/src/main/assets/custom/vconsole.min.js
