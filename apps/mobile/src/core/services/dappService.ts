@@ -1,4 +1,4 @@
-import type { CHAINS_ENUM } from '@debank/common';
+import type { CHAINS_ENUM } from '@/constant/chains';
 import type { StorageAdapaterOptions } from '@rabby-wallet/persist-store';
 import { StoreServiceBase } from '@rabby-wallet/persist-store';
 import type { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';

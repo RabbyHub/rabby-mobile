@@ -8,7 +8,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { isTestnetChainId } from '@/utils/chain';
-import { CHAINS } from '@debank/common';
+import { CHAINS } from '@/constant/chains';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ParseTextResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';

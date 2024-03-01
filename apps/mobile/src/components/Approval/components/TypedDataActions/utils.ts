@@ -28,7 +28,7 @@ import {
 import { isTestnetChainId } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import i18n from '@/utils/i18n';
 import { getTimeSpan } from '@/utils/time';

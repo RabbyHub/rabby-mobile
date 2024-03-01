@@ -7,7 +7,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { useThemeColors } from '@/hooks/theme';
 import { findChainByEnum } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import React, { ReactNode } from 'react';
 import {
   Image,

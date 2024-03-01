@@ -1,24 +1,15 @@
-import { Chain, CHAINS_ENUM } from '@debank/common';
+import {
+  Chain,
+  CHAINS_BY_NET,
+  CHAINS_ENUM,
+  CHAINS_LIST,
+} from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import {
   ChainWithBalance,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { keyBy } from 'lodash';
-
-const ALL_CHAINS = Object.values(CHAINS);
-const ALL_CHAINS_TESTNET = [] as Chain[];
-const ALL_CHAINS_MAINNET = ALL_CHAINS.filter(chain => {
-  if (chain.isTestnet) {
-    ALL_CHAINS_TESTNET.push(chain);
-  }
-  return !chain.isTestnet;
-});
-
-export const CHAINS_BY_NET = {
-  mainnet: ALL_CHAINS_MAINNET,
-  testnet: ALL_CHAINS_TESTNET,
-};
 
 /**
  * @description safe find chain, if not found, return fallback(if provided) or null
@@ -75,7 +66,7 @@ export function ensureChainListValid<T extends CHAINS_ENUM[]>(list: T) {
 export function findChainByID(chainId: Chain['id']): Chain | null {
   return !chainId
     ? null
-    : ALL_CHAINS.find(chain => chain.id === chainId) || null;
+    : CHAINS_LIST.find(chain => chain.id === chainId) || null;
 }
 
 /**
@@ -84,7 +75,7 @@ export function findChainByID(chainId: Chain['id']): Chain | null {
 export function findChainByServerID(chainId: Chain['serverId']): Chain | null {
   return !chainId
     ? null
-    : ALL_CHAINS.find(chain => chain.serverId === chainId) || null;
+    : CHAINS_LIST.find(chain => chain.serverId === chainId) || null;
 }
 
 export function isTestnet(chainServerId?: string) {

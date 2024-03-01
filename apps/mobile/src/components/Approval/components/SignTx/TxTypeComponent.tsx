@@ -1,4 +1,4 @@
-import { Chain, CHAINS_ENUM } from '@debank/common';
+import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';

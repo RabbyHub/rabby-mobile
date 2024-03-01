@@ -12,7 +12,7 @@ import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import LogoWithText from '../Actions/components/LogoWithText';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -78,6 +78,7 @@ const BatchSellNFT = ({
 
   useEffect(() => {
     apiApprovalSecurityEngine.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

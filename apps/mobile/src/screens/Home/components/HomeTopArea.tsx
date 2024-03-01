@@ -22,7 +22,7 @@ import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 
 export const HomeTopArea = () => {
   const colors = useThemeColors();

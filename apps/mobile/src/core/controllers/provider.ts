@@ -39,7 +39,7 @@ import {
 import { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../services/rpcCache';
 // import Wallet from '../wallet';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';

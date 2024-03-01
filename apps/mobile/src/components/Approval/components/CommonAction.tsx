@@ -9,7 +9,7 @@ import ViewMore from './Actions/components/ViewMore';
 import { ContractRequireData } from './TypedDataActions/utils';
 import { Col, Row, Table } from './Actions/components/Table';
 import * as Values from './Actions/components/Values';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import DescItem from './Actions/components/DescItem';
@@ -66,6 +66,7 @@ export const CommonAction = ({
         item.chainId === chain?.serverId &&
         isSameAddress(item.address, requireData?.id ?? ''),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractWhitelist, requireData]);
 
   const engineResultMap = useMemo(() => {
@@ -78,6 +79,7 @@ export const CommonAction = ({
 
   React.useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const descTip = React.useMemo(() => {
@@ -89,6 +91,7 @@ export const CommonAction = ({
       return t('page.signTx.common.descTipWarningPrivacy');
     }
     return t('page.signTx.common.descTipSafe');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

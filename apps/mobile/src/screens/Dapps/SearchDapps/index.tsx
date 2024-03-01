@@ -9,7 +9,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
 import { isPossibleDomain } from '@/utils/url';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '@rneui/themed';

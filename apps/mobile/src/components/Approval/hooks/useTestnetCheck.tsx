@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { SIGN_PERMISSION_TYPES } from '@/constant';
 import { useWallet } from '@/ui/utils';
-import { CHAINS_LIST } from '@debank/common';
+import { CHAINS_LIST } from '@/constant/chains';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { useEffect, useMemo } from 'react';
 import { Button, Modal } from 'antd';
@@ -36,15 +36,15 @@ export const useTestnetCheck = ({
   const chain = useMemo(
     () =>
       chainId
-        ? CHAINS_LIST.find((item) =>
-            new BigNumber(item.network).isEqualTo(chainId)
+        ? CHAINS_LIST.find(item =>
+            new BigNumber(item.network).isEqualTo(chainId),
           )
         : undefined,
-    [chainId]
+    [chainId],
   );
 
   const isShowTestnet = useRabbySelector(
-    (state) => state.preference.isShowTestnet
+    state => state.preference.isShowTestnet,
   );
 
   const handleOk = useMemoizedFn(() => {
@@ -68,8 +68,7 @@ export const useTestnetCheck = ({
               onClick={() => {
                 destroy();
                 handleOk();
-              }}
-            >
+              }}>
               {t('global.ok')}
             </Button>
           </Content>
@@ -79,5 +78,6 @@ export const useTestnetCheck = ({
         destroy();
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isShowTestnet, chain?.isTestnet]);
 };

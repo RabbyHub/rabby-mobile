@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { isValidAddress } from 'ethereumjs-util';
 import { AddressType } from '../utils/address';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';

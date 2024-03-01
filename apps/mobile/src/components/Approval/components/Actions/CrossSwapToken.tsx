@@ -9,7 +9,7 @@ import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { ParsedActionData, SwapRequireData } from './utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { SecurityListItem } from './components/SecurityListItem';
 import { ProtocolListItem } from './components/ProtocolListItem';
@@ -74,6 +74,7 @@ const CrossSwapToken = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

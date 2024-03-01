@@ -1,5 +1,5 @@
 import { bindWalletConnectEvents } from '@/utils/wc';
-import { CHAINS_LIST } from '@debank/common';
+import { CHAINS_LIST } from '@/constant/chains';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { keyringService } from '../services';

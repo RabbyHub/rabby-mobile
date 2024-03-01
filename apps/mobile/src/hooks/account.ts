@@ -18,7 +18,7 @@ import {
   formatChainToDisplay,
   varyAndSortChainItems,
 } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';

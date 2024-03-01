@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View, Text } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '@/components/Approval/hooks/useApprovalSecurityEngine';
 import { getStyle } from '../getStyle';

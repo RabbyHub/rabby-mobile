@@ -6,7 +6,7 @@
 // import { getTokenSymbol } from '@/ui/utils/token';
 // import { findChainByID } from '@/utils/chain';
 // import { getPendingGroupCategory } from '@/utils/tx';
-// import { CHAINS } from '@debank/common';
+// import { CHAINS } from'@/constant/chains';
 // import { TokenItem, TxRequest } from '@rabby-wallet/rabby-api/dist/types';
 // import { useRequest } from 'ahooks';
 // import { flatten, keyBy } from 'lodash';

@@ -2007,6 +2007,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/common@npm:0.3.56":
+  version: 0.3.56
+  resolution: "@debank/common@npm:0.3.56"
+  checksum: 54da620357572259efbe3940ed31af2190ca27c87186b83d1c3ee387efb5226b6c2c6d9756464f966a5ffe9e6b27e59953fefbf3bb6b456b49be1aa65d633532
+  languageName: node
+  linkType: hard
+
 "@debank/common@npm:^0.3.54":
   version: 0.3.54
   resolution: "@debank/common@npm:0.3.54"
@@ -5128,9 +5135,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.2":
-  version: 0.7.2
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.2"
+"@rabby-wallet/rabby-api@npm:0.7.3":
+  version: 0.7.3
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.3"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -5141,7 +5148,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 6e3175162216a208975ef35118d0c73638e8a31dafd9bed09817a9fbee2d125e3b977f24eccbf8fa4aeba714a546277c055868ab3874699b315db41e5690ad91
+  checksum: 0ee90590c6f88c4cee0f1db5cff4efbdc288f18dc9e4f117d580eafc4727cf816598c33698331dd71deb667ea428cf4f22c9d98d2fbb669a4963c9406bcbf74e
   languageName: node
   linkType: hard
 
@@ -25454,7 +25461,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@debank/common": ^0.3.54
+    "@debank/common": 0.3.56
     "@debank/festats": 1.0.4
     "@debank/rabby-rn-security": ^0.1.1
     "@eth-optimism/contracts-ts": ^0.17.0
@@ -25470,7 +25477,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": beta
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.2
+    "@rabby-wallet/rabby-api": 0.7.3
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"

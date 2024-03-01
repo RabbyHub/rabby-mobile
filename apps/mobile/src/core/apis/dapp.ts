@@ -3,7 +3,7 @@ import { DappInfo } from '@/core/services/dappService';
 import { dappService } from '../services';
 import { sessionService } from '../services/shared';
 import { BroadcastEvent } from '@/constant/event';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';

@@ -13,7 +13,7 @@ import { EventEmitter } from 'events';
 
 import { preferenceService } from '@/core/services';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM, Chain, formatTokenAmount } from '@debank/common';
+import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
 import { openapi } from '@/core/request';
@@ -26,7 +26,7 @@ import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
 import { apiContact, apiProvider } from '@/core/apis';
-import { formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { useFormik, useFormikContext } from 'formik';
 import { useCurrentAccount } from '@/hooks/account';
 import { useCheckAddressType } from '@/hooks/useParseAddress';

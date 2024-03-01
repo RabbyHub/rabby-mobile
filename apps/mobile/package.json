@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
-    "@debank/common": "^0.3.54",
+    "@debank/common": "0.3.56",
     "@debank/festats": "1.0.4",
     "@debank/rabby-rn-security": "^0.1.1",
     "@eth-optimism/contracts-ts": "^0.17.0",
@@ -50,7 +50,7 @@
     "@rabby-wallet/eth-walletconnect-keyring": "beta",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
-    "@rabby-wallet/rabby-api": "0.7.2",
+    "@rabby-wallet/rabby-api": "0.7.3",
     "@rabby-wallet/rabby-security-engine": "^1.1.17",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",

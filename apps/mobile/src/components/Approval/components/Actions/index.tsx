@@ -1,7 +1,7 @@
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import BalanceChange from '../TxComponents/BalanceChange';

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import NFTWithName from '../NFTWithName';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { formatAmount } from '@/utils/number';

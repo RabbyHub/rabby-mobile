@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { formatTokenAmount } from '@/utils/number';
 import { getGasLevelI18nKey } from '@/utils/trans';

@@ -13,7 +13,7 @@ import { useDisplayBrandName } from '@/hooks/walletconnect/useDisplayBrandName';
 import { useSessionChainId } from '@/hooks/walletconnect/useSessionChainId';
 import { useWalletConnectIcon } from '@/hooks/walletconnect/useWalletConnectIcon';
 import { WALLET_INFO } from '@/utils/walletInfo';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

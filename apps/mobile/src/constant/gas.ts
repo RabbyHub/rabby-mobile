@@ -1,4 +1,4 @@
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 
 export const SAFE_GAS_LIMIT_RATIO = {
   '1284': 2,

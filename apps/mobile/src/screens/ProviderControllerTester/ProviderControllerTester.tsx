@@ -26,7 +26,7 @@ import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { useCurrentAccount } from '@/hooks/account';
 import { apisWalletConnect } from '@/core/apis';
 
@@ -268,6 +268,7 @@ function ProviderControllerTester(): JSX.Element {
       .catch(e => {
         console.error(e);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
   const handleApproveNFT = () => {

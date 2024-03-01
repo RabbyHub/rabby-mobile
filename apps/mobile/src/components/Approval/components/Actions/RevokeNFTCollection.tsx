@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ApproveNFTRequireData, ParsedActionData } from './utils';
 import { Table, Col, Row } from './components/Table';
@@ -29,6 +29,7 @@ const RevokeNFTCollection = ({
 
   useEffect(() => {
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

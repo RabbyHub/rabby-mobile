@@ -6,7 +6,7 @@ import {
   TokenItem,
   TotalBalanceResponse,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';

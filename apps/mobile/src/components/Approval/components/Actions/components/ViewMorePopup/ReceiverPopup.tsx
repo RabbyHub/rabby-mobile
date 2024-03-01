@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text } from 'react-native';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { ContractDesc, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';

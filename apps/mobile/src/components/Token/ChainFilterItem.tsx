@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';

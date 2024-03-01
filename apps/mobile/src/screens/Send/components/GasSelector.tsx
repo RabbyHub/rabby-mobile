@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { BigNumber } from 'bignumber.js';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';

@@ -23,7 +23,7 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import QRCode from 'react-native-qrcode-svg';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { findChainByEnum } from '@/utils/chain';
 import { Button } from '@/components/Button';
 import Clipboard from '@react-native-clipboard/clipboard';

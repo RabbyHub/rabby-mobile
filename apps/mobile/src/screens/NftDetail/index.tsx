@@ -10,7 +10,7 @@ import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Media } from '@/components/Media';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { IconDefaultNFT, IconNumberNFT } from '@/assets/icons/nft';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { RootNames } from '@/constant/layout';
 import { useNavigationState } from '@react-navigation/native';
 

@@ -2,7 +2,7 @@ import { View, Text } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { Chain } from '@debank/common';
+import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ParsedActionData, SendRequireData } from './utils';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
