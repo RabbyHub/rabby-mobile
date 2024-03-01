@@ -24,9 +24,7 @@ const styles = StyleSheet.create({
 
 export const HardwareDeviceList = () => {
   const handleComingSoon = React.useCallback(() => {
-    if (Platform.OS !== 'ios') {
-      toast.show('Coming Soon :)');
-    }
+    toast.show('Coming Soon :)');
   }, []);
 
   const handleLedger = React.useCallback(() => {

@@ -51,9 +51,7 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
     //   token: item,
     //   collectionName,
     // });
-    if (Platform.OS !== 'ios') {
-      toast.show('Coming Soon :)');
-    }
+    toast.show('Coming Soon :)');
   }, []);
 
   const numberDisplay = useMemo(() => {

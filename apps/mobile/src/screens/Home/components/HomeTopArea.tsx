@@ -82,9 +82,7 @@ export const HomeTopArea = () => {
   ];
 
   const toastDisabledAction = useCallback(() => {
-    if (Platform.OS !== 'ios') {
-      toast.show('Coming Soon :)');
-    }
+    toast.show('Coming Soon :)');
   }, []);
 
   const moreItems = [

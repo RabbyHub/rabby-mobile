@@ -70,9 +70,7 @@ export default function CurrentAddressScreen(): JSX.Element {
     //   screen: RootNames.MyBundle,
     //   params: {},
     // });
-    if (Platform.OS !== 'ios') {
-      toast.show('Coming Soon :)');
-    }
+    toast.show('Coming Soon :)');
   }, []);
   const gotoAddAddress = React.useCallback(() => {
     navigation.push(RootNames.StackAddress, {
