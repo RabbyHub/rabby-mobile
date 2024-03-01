@@ -26,17 +26,19 @@ export const ConnectLedger: React.FC<{
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound'
   >('ble');
+  const notfoundTimerRef = React.useRef<any>(null);
 
   const handleBleNext = React.useCallback(() => {
     setCurrentScreen('scan');
     searchAndPair();
-    setTimeout(() => {
+    notfoundTimerRef.current = setTimeout(() => {
       setCurrentScreen('notfound');
     }, 5000);
   }, [searchAndPair]);
 
   const handleScanDone = React.useCallback(() => {
     setCurrentScreen('select');
+    clearTimeout(notfoundTimerRef.current);
   }, []);
 
   const handleSelectDevice = React.useCallback(
