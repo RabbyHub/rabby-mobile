@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +26,8 @@ import { GradientPoint } from './GradientPoint';
 import { Skeleton } from '@rneui/base';
 import useInterval from 'react-use/lib/useInterval';
 import { Animated, Easing } from 'react-native';
-
+import RcIconClose from '@/assets/icons/points/close-cc.svg';
+import TouchableView from '@/components/Touchable/TouchableView';
 dayjs.extend(utc);
 
 export const ClaimRabbyPointsModal = (
@@ -47,7 +49,7 @@ export const ClaimRabbyPointsModal = (
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}>
-        <ClaimPoints {...other} />
+        <ClaimPoints {...other} onCancel={onCancel} />
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -75,6 +77,7 @@ interface ClaimPointsProps {
   web3Id?: string;
   logo?: string;
   onClaimed?: (code?: string) => void;
+  onCancel?: () => void;
   snapshot?: {
     id: string;
     address_balance: number;
@@ -95,6 +98,7 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
   onClaimed,
   snapshot,
   snapshotLoading,
+  onCancel,
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -229,6 +233,14 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
 
   return (
     <View style={styles.container}>
+      <TouchableView
+        style={styles.closeView}
+        onPress={() => {
+          onCancel?.();
+        }}>
+        <RcIconClose color={colors['neutral-foot']} width={24} height={24} />
+      </TouchableView>
+
       <Text style={styles.title}>{t('page.rabbyPoints.claimModal.title')}</Text>
       <View style={styles.avatarContainer}>
         <ClaimUserAvatar src={avatar} />
@@ -350,6 +362,13 @@ const getStyles = createGetStyles(colors => ({
     padding: 20,
     paddingBottom: 24,
     borderRadius: 8,
+    position: 'relative',
+  },
+  closeView: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
+    zIndex: 10,
   },
   title: {
     color: colors['neutral-title1'],
