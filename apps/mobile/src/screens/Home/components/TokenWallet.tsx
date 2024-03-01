@@ -138,9 +138,7 @@ export const TokenWallet = ({
 
   // const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
   const handleOpenTokenDetail = React.useCallback(() => {
-    if (Platform.OS !== 'ios') {
-      toast.show('Coming Soon :)');
-    }
+    toast.show('Coming Soon :)');
     // tokenDetailModalRef.current?.present();
   }, []);
 
