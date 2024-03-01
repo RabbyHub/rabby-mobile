@@ -93,6 +93,7 @@ const getStyles = (colors: AppColorsVariants) =>
     itemBalance: {
       color: colors['neutral-body'],
       fontSize: 15,
+      lineHeight: 24,
     },
     itemAddressWrap: {
       flexDirection: 'row',
@@ -117,6 +118,9 @@ const getStyles = (colors: AppColorsVariants) =>
     isSelected: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light-1'],
+    },
+    footerButtonDisabled: {
+      backgroundColor: colors['blue-disable'],
     },
   });
 
@@ -238,9 +242,11 @@ export const ImportLedgerScreen = () => {
     toast.success('Copied');
   }, []);
 
+  const importToastHiddenRef = React.useRef<() => void>(() => {});
+
   const handleConfirm = React.useCallback(async () => {
     setImporting(true);
-    const importToastHidden = toast.show('Importing...', {
+    importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,
     });
     try {
@@ -259,10 +265,16 @@ export const ImportLedgerScreen = () => {
       console.error(err);
       toast.show(err.message);
     } finally {
-      importToastHidden();
+      importToastHiddenRef.current?.();
     }
     setImporting(false);
   }, [selectedAccounts]);
+
+  React.useEffect(() => {
+    return () => {
+      importToastHiddenRef.current?.();
+    };
+  }, []);
 
   return (
     <Spin spinning={!accounts.length}>
@@ -352,6 +364,7 @@ export const ImportLedgerScreen = () => {
         <FooterButton
           disabled={importing || !selectedAccounts.length}
           titleStyle={styles.footerButtonTitle}
+          disabledStyle={styles.footerButtonDisabled}
           title={`${t('global.Confirm')}${
             selectedAccounts.length ? ` (${selectedAccounts.length})` : ''
           }`}

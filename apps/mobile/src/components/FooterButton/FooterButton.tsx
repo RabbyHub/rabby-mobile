@@ -67,7 +67,9 @@ export const FooterButton: React.FC<
           : {},
       ]}>
       <View>
-        <View style={[styles.buttonShadow, styles.button]} />
+        {!props.disabled && (
+          <View style={[styles.buttonShadow, styles.button]} />
+        )}
         <Button
           buttonStyle={[styles.button, { width }]}
           titleStyle={styles.buttonText}
