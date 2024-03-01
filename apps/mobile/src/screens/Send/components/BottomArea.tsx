@@ -16,6 +16,7 @@ import RcIconUnCheck from '../icons/icon-uncheck-cc.svg';
 import RcIconChecked from '../icons/icon-checked-cc.svg';
 import { ModalAddToContacts } from './SheetModalAddToContacts';
 import { apiBalance } from '@/core/apis';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -105,8 +106,14 @@ export default function BottomArea() {
     setIsAllowTransferModalVisible(true);
   }, [canSendNow]);
 
+  const { safeOffBottom } = useSafeSizes();
+
   return (
-    <View style={styles.bottomDockArea}>
+    <View
+      style={[
+        styles.bottomDockArea,
+        isAndroid && { paddingBottom: 20 + safeOffBottom },
+      ]}>
       {showWhitelistAlert && (
         <TouchableView
           disabled={canSendNow}
