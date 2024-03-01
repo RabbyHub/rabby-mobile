@@ -22,7 +22,6 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     id: '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662',
     deepLink: 'bitkeep:',
     androidPackageName: 'com.bitkeep.wallet',
-    universal: 'https://bkapp.vip',
     displayName: BRAND_ALIAS_TYPE_TEXT.Bitget,
   },
   [WALLET_NAME.MetaMask]: {
@@ -32,7 +31,6 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     id: 'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
     deepLink: 'metamask:',
     androidPackageName: 'io.metamask',
-    universal: 'https://metamask.app.link',
     displayName: BRAND_ALIAS_TYPE_TEXT.MetaMask,
   },
   [WALLET_NAME.TP]: {
@@ -51,7 +49,6 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     id: '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
     deepLink: 'rainbow:',
     androidPackageName: 'me.rainbow',
-    universal: 'https://rnbwapp.com',
     displayName: BRAND_ALIAS_TYPE_TEXT.Rainbow,
   },
   [WALLET_NAME.imToken]: {
@@ -70,8 +67,6 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     id: 'ecc4036f814562b41a5268adc86270fba1365471402006302e70169465b7ac18',
     deepLink: 'zerion:',
     androidPackageName: 'io.zerion.android',
-    universal: 'https://wallet.zerion.io',
-    useDeepLink: true,
     displayName: BRAND_ALIAS_TYPE_TEXT.Zerion,
   },
   [WALLET_NAME.MathWallet]: {
@@ -81,8 +76,6 @@ export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
     id: '7674bb4e353bf52886768a3ddc2a4562ce2f4191c80831291218ebd90f5f5e26',
     deepLink: 'mathwallet:',
     androidPackageName: 'com.mathwallet.android',
-    universal: 'https://www.mathwallet.org',
-    useDeepLink: true,
     displayName: BRAND_ALIAS_TYPE_TEXT.MATHWALLET,
   },
   [WALLET_NAME.TRUSTWALLET]: {
