@@ -32,7 +32,7 @@ function BottomBlockArea() {
         <WalletItem
           title="Add Contacts"
           Icon={RcWatchAddress}
-          subTitle="You can also use it as a watch-only address"
+          subTitle="You can also use it as watch-only address"
           onPress={() => {
             navigation.push(RootNames.StackAddress, {
               screen: RootNames.ImportWatchAddress,
