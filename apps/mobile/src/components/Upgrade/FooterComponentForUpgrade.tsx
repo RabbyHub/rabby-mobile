@@ -6,7 +6,12 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
-import { DownloadStage, useDownloadLatestApk } from '@/hooks/version';
+import {
+  DownloadStage,
+  useRemoteUpgradeInfo,
+  useDownloadLatestApk,
+} from '@/hooks/version';
+import { makeDebugBorder } from '@/utils/styles';
 
 import { Button } from '../Button';
 import { toast } from '../Toast';
@@ -25,14 +30,16 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
   const {
     downloadStage,
     progressPercentText,
-    progressInfo: { downloadResult, downloadedApkPath },
+    progressInfo: { downloadResult },
     startDownload,
     resetProgress,
   } = useDownloadLatestApk();
 
+  const { remoteVersion } = useRemoteUpgradeInfo();
+
   const onStartDownload = useCallback(async () => {
     if (!isAndroid) {
-      openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
+      openExternalUrl(remoteVersion?.downloadUrl || APP_URLS.STORE_URL);
       return;
     }
 
@@ -46,7 +53,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
       openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
       toast.info('failed to open link');
     }
-  }, [startDownload]);
+  }, [startDownload, remoteVersion]);
 
   const startDownloadButton = useMemo(() => {
     return (
@@ -192,10 +199,15 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    // ...makeDebugBorder('green')
   },
   btnConfirmContainer: {},
   btnActionTitle: {
     color: colors['neutral-title-2'],
     fontSize: 16,
+    ...(!isAndroid && {
+      width: '100%',
+    }),
+    // ...makeDebugBorder('red')
   },
 }));
