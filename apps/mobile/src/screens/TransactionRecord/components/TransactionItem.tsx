@@ -27,6 +27,9 @@ import { TransactionExplain } from './TransactionExplain';
 import { TransactionPendingDetail } from './TransactionPendingDetail';
 import { TransactionPendingTag } from './TransactionPendingTag';
 import { toast } from '@/components/Toast';
+import { useCurrentAccount } from '@/hooks/account';
+import { TransactionAction } from './TransactionAction';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const TransactionItem = ({
   data,
@@ -46,6 +49,8 @@ export const TransactionItem = ({
   const isCanceled =
     data.isCompleted &&
     isSameAddress(data?.maxGasTx?.rawTx?.from, data?.maxGasTx?.rawTx?.to);
+
+  const { currentAccount } = useCurrentAccount();
 
   const handleTxSpeedUp = useMemoizedFn(async () => {
     if (!canCancel) {
@@ -175,13 +180,14 @@ export const TransactionItem = ({
             isWithdrawed={data.isWithdrawed}
             explain={data.originTx?.explain}
           />
-          {/* {data?.isPending ? (
+          {data?.isPending &&
+          [KEYRING_TYPE.LedgerKeyring].includes(currentAccount?.type!) ? (
             <TransactionAction
               canCancel={canCancel}
               onTxCancel={handleTxCancel}
               onTxSpeedUp={handleTxSpeedUp}
             />
-          ) : null} */}
+          ) : null}
         </View>
         <View style={styles.footer}>
           {data?.originTx?.site ? (
