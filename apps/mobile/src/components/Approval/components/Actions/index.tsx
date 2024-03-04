@@ -157,6 +157,10 @@ export const getStyle = (colors: AppColorsVariants) =>
       width: 24,
       height: 24,
     },
+    signTitleLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
   });
 
 const Actions = ({
@@ -197,7 +201,7 @@ const Actions = ({
   return (
     <>
       <View style={styles.signTitle}>
-        <View className="left relative">
+        <View style={styles.signTitleLeft}>
           {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
           <Text>
             {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
