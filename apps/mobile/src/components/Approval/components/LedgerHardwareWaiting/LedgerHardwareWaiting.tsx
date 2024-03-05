@@ -2,6 +2,7 @@ import { toast } from '@/components/Toast';
 import { CHAINS } from '@/constant/chains';
 import {
   notificationService,
+  preferenceService,
   transactionHistoryService,
 } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
@@ -18,6 +19,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { stats } from '@/utils/stats';
+import {
+  KEYRING_CATEGORY_MAP,
+  KEYRING_CLASS,
+} from '@rabby-wallet/keyring-utils';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 interface ApprovalParams {
   address: string;
@@ -108,6 +115,7 @@ export const LedgerHardwareWaiting = ({
   };
 
   const init = async () => {
+    const account = (await preferenceService.getCurrentAccount())!;
     const approval = (await getApproval())!;
 
     const isSignText = params.isGnosis
@@ -134,26 +142,26 @@ export const LedgerHardwareWaiting = ({
           return;
         }
 
-        // const explain = signingTx.explain;
+        const explain = signingTx.explain;
 
-        // stats.report('signTransaction', {
-        //   type: account.brandName,
-        //   chainId: chain.serverId,
-        //   category: KEYRING_CATEGORY_MAP[account.type],
-        //   preExecSuccess: explain
-        //     ? explain?.calcSuccess && explain?.pre_exec.success
-        //     : true,
-        //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-        //   source: params?.$ctx?.ga?.source || '',
-        //   trigger: params?.$ctx?.ga?.trigger || '',
-        // });
+        stats.report('signTransaction', {
+          type: account.brandName,
+          chainId: chain.serverId,
+          category: KEYRING_CATEGORY_MAP[account.type],
+          preExecSuccess: explain
+            ? explain?.calcSuccess && explain?.pre_exec.success
+            : true,
+          createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+          source: params?.$ctx?.ga?.source || '',
+          trigger: params?.$ctx?.ga?.trigger || '',
+        });
       }
     } else {
-      // stats.report('startSignText', {
-      //   type: account.brandName,
-      //   category: KEYRING_CATEGORY_MAP[account.type],
-      //   method: params?.extra?.signTextMethod,
-      // });
+      stats.report('startSignText', {
+        type: account.brandName,
+        category: KEYRING_CATEGORY_MAP[account.type],
+        method: params?.extra?.signTextMethod,
+      });
     }
     eventBus.addListener(EVENTS.LEDGER.REJECT_APPROVAL, data => {
       rejectApproval(data, false, true);
@@ -171,11 +179,11 @@ export const LedgerHardwareWaiting = ({
         setResult(sig);
         setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
 
-        // matomoRequestEvent({
-        //   category: 'Transaction',
-        //   action: 'Submit',
-        //   label: KEYRING_CLASS.HARDWARE.LEDGER,
-        // });
+        matomoRequestEvent({
+          category: 'Transaction',
+          action: 'Submit',
+          label: KEYRING_CLASS.HARDWARE.LEDGER,
+        });
 
         setSignFinishedData({
           data: sig,

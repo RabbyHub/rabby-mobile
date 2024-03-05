@@ -251,7 +251,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         ].join('|'),
         transport: 'beacon',
       });
-      await stats.report(action, {
+      stats.report(action, {
         type: currentAccount.brandName,
         category: getKRCategoryByType(currentAccount.type),
         method: underline2Camelcase(params.method),
