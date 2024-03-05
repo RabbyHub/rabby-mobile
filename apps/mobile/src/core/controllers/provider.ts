@@ -20,6 +20,7 @@ import {
   transactionHistoryService,
   transactionWatcherService,
   transactionBroadcastWatcherService,
+  notificationService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -55,8 +56,8 @@ import { createDappBySession } from '../apis/dapp';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
+import { StatsData } from '../services/notification';
 // import eventBus from '@/eventBus';
-// import { StatsData } from '../../service/notification';
 
 const reportSignText = (params: {
   method: string;
@@ -493,22 +494,22 @@ class ProviderController extends BaseController {
 
     const chainItem = findChainByEnum(chain);
 
-    // const statsData = {
-    //   signed: false,
-    //   signedSuccess: false,
-    //   submit: false,
-    //   submitSuccess: false,
-    //   type: currentAccount.brandName,
-    //   chainId: chainItem?.serverId || '',
-    //   category: KEYRING_CATEGORY_MAP[currentAccount.type],
-    //   preExecSuccess: cacheExplain
-    //     ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
-    //     : true,
-    //   createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
-    //   source: options?.data?.$ctx?.ga?.source || '',
-    //   trigger: options?.data?.$ctx?.ga?.trigger || '',
-    //   reported: false,
-    // };
+    const statsData: StatsData = {
+      signed: false,
+      signedSuccess: false,
+      submit: false,
+      submitSuccess: false,
+      type: currentAccount.brandName,
+      chainId: chainItem?.serverId || '',
+      category: KEYRING_CATEGORY_MAP[currentAccount.type],
+      preExecSuccess: cacheExplain
+        ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
+        : true,
+      createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+      source: options?.data?.$ctx?.ga?.source || '',
+      trigger: options?.data?.$ctx?.ga?.trigger || '',
+      reported: false,
+    };
 
     try {
       const signedTx = await keyringService.signTransaction(
@@ -533,11 +534,6 @@ class ProviderController extends BaseController {
         pushType?: TxPushType;
       }) => {
         const { hash, reqId, pushType = 'default' } = info;
-        console.log('onTransactionCreated', {
-          hash,
-          reqId,
-          pushType,
-        });
         if (
           options?.data?.$ctx?.stats?.afterSign?.length &&
           Array.isArray(options?.data?.$ctx?.stats?.afterSign)
@@ -555,8 +551,8 @@ class ProviderController extends BaseController {
         //   swapService.postSwap(chain, hash, other);
         // }
 
-        // statsData.submit = true;
-        // statsData.submitSuccess = true;
+        statsData.submit = true;
+        statsData.submitSuccess = true;
         // if (isSend) {
         //   pageStateCacheService.clear();
         // }
@@ -647,10 +643,10 @@ class ProviderController extends BaseController {
           // );
         }
         const errMsg = e.message || JSON.stringify(e);
-        // if (notificationService.statsData?.signMethod) {
-        //   statsData.signMethod = notificationService.statsData?.signMethod;
-        // }
-        // notificationService.setStatsData(statsData);
+        if (notificationService.statsData?.signMethod) {
+          statsData.signMethod = notificationService.statsData?.signMethod;
+        }
+        notificationService.setStatsData(statsData);
         throw new Error(errMsg);
       };
 
@@ -663,13 +659,13 @@ class ProviderController extends BaseController {
           currentAccount.type === KEYRING_TYPE.WalletConnectKeyring
           // || currentAccount.type === KEYRING_TYPE.CoinbaseKeyring
         ) {
-          // statsData.signed = true;
-          // statsData.signedSuccess = true;
+          statsData.signed = true;
+          statsData.signedSuccess = true;
         }
-        // if (notificationService.statsData?.signMethod) {
-        //   statsData.signMethod = notificationService.statsData?.signMethod;
-        // }
-        // notificationService.setStatsData(statsData);
+        if (notificationService.statsData?.signMethod) {
+          statsData.signMethod = notificationService.statsData?.signMethod;
+        }
+        notificationService.setStatsData(statsData);
         return signedTx;
       }
 
@@ -697,8 +693,8 @@ class ProviderController extends BaseController {
       //   }
       // }
       signedTransactionSuccess = true;
-      // statsData.signed = true;
-      // statsData.signedSuccess = true;
+      statsData.signed = true;
+      statsData.signedSuccess = true;
       eventBus.emit(EVENTS.TX_SUBMITTING, {});
       try {
         validateGasPriceRange(approvalRes);
@@ -746,10 +742,10 @@ class ProviderController extends BaseController {
             onTransactionSubmitFailed(new Error('Submit tx failed'));
           } else {
             onTransactionCreated({ hash, reqId, pushType });
-            // if (notificationService.statsData?.signMethod) {
-            //   statsData.signMethod = notificationService.statsData?.signMethod;
-            // }
-            // notificationService.setStatsData(statsData);
+            if (notificationService.statsData?.signMethod) {
+              statsData.signMethod = notificationService.statsData?.signMethod;
+            }
+            notificationService.setStatsData(statsData);
           }
         }
 
@@ -760,13 +756,13 @@ class ProviderController extends BaseController {
       }
     } catch (e) {
       if (!signedTransactionSuccess) {
-        // statsData.signed = true;
-        // statsData.signedSuccess = false;
+        statsData.signed = true;
+        statsData.signedSuccess = false;
       }
-      // if (notificationService.statsData?.signMethod) {
-      //   statsData.signMethod = notificationService.statsData?.signMethod;
-      // }
-      // notificationService.setStatsData(statsData);
+      if (notificationService.statsData?.signMethod) {
+        statsData.signMethod = notificationService.statsData?.signMethod;
+      }
+      notificationService.setStatsData(statsData);
       throw typeof e === 'object' ? e : new Error(JSON.stringify(e));
     }
   };
