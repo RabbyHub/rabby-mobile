@@ -26,11 +26,13 @@ const getStyle = (colors: AppColorsVariants) =>
       position: 'absolute',
       textAlign: 'center',
       zIndex: 1,
+      top: -7,
+      left: 10,
+    },
+    internalTransactionText: {
       color: colors['blue-default'], // Assuming a default color if var(--r-blue-default) is not defined
       fontSize: 12,
       lineHeight: 12,
-      top: -7,
-      left: 10,
     },
     bg: {
       position: 'absolute',
@@ -42,10 +44,6 @@ const getStyle = (colors: AppColorsVariants) =>
       zIndex: -1,
     },
     txItem: {
-      paddingBottom: 13,
-      marginBottom: 13,
-      borderBottomWidth: 1,
-      borderBottomColor: '#e0e3f1',
       display: 'flex',
       justifyContent: 'space-between',
       flexDirection: 'row',
@@ -135,7 +133,9 @@ const CancelTx = ({
         <>
           <View style={styles.container}>
             <View style={styles.internalTransaction}>
-              <Text>{t('page.signTx.cancelTx.txToBeCanceled')}</Text>
+              <Text style={styles.internalTransactionText}>
+                {t('page.signTx.cancelTx.txToBeCanceled')}
+              </Text>
               <View style={styles.bg} />
             </View>
             {pendingTx && (
