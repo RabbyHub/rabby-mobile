@@ -2392,7 +2392,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethersproject/abi@npm:^5.5.0":
+"@ethersproject/abi@npm:^5.5.0, @ethersproject/abi@npm:^5.6.3, @ethersproject/abi@npm:^5.7.0":
   version: 5.7.0
   resolution: "@ethersproject/abi@npm:5.7.0"
   dependencies:
@@ -5174,6 +5174,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rabby-wallet/rabby-swap@npm:^0.0.29":
+  version: 0.0.29
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.29"
+  dependencies:
+    "@ethersproject/abi": ^5.7.0
+    axios: ^0.27.2
+    bignumber.js: ^9.1.1
+    web3-eth-abi: ^1.8.1
+  peerDependencies:
+    "@debank/common": ^0.3.21
+    "@rabby-wallet/rabby-api": ^0.6.13
+  checksum: 158a7e35e9675ccce8bf313a31020c7b66717ec9589ad66299e4d16f4a7dc995dbcc4d78057fa79eae54f9dd8fcc8c063f9a67b71ac948df80c4302ffa8e19c3
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/rn-page-provider@workspace:packages/rn-page-provider"
@@ -7661,6 +7676,13 @@ __metadata:
   version: 0.12.0
   resolution: "@types/retry@npm:0.12.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fretry%2F-%2Fretry-0.12.0.tgz"
   checksum: 61a072c7639f6e8126588bf1eb1ce8835f2cb9c2aba795c4491cf6310e013267b0c8488039857c261c387e9728c1b43205099223f160bb6a76b4374f741b5603
+  languageName: node
+  linkType: hard
+
+"@types/retry@npm:0.12.2":
+  version: 0.12.2
+  resolution: "@types/retry@npm:0.12.2"
+  checksum: e5675035717b39ce4f42f339657cae9637cf0c0051cf54314a6a2c44d38d91f6544be9ddc0280587789b6afd056be5d99dbe3e9f4df68c286c36321579b1bf4a
   languageName: node
   linkType: hard
 
@@ -10413,7 +10435,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bignumber.js@npm:^9.0.2":
+"bignumber.js@npm:^9.0.2, bignumber.js@npm:^9.1.1":
   version: 9.1.2
   resolution: "bignumber.js@npm:9.1.2"
   checksum: 582c03af77ec9cb0ebd682a373ee6c66475db94a4325f92299621d544aa4bd45cb45fd60001610e94aef8ae98a0905fa538241d9638d4422d57abbeeac6fadaf
@@ -18089,6 +18111,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-network-error@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "is-network-error@npm:1.0.1"
+  checksum: 165d61500c4186c62db5a3a693d6bfa14ca40fe9b471ef4cd4f27b20ef6760880faf5386dc01ca9867531631782941fedaa94521d09959edf71f046e393c7b91
+  languageName: node
+  linkType: hard
+
 "is-npm@npm:^1.0.0":
   version: 1.0.0
   resolution: "is-npm@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fis-npm%2F-%2Fis-npm-1.0.0.tgz"
@@ -23497,6 +23526,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-retry@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "p-retry@npm:6.2.0"
+  dependencies:
+    "@types/retry": 0.12.2
+    is-network-error: ^1.0.0
+    retry: ^0.13.1
+  checksum: 6003573c559ee812329c9c3ede7ba12a783fdc8dd70602116646e850c920b4597dc502fe001c3f9526fca4e93275045db7a27341c458e51db179c1374a01ac44
+  languageName: node
+  linkType: hard
+
 "p-settle@npm:^3.0.0":
   version: 3.1.0
   resolution: "p-settle@npm:3.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-settle%2F-%2Fp-settle-3.1.0.tgz"
@@ -25488,6 +25528,7 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.3
     "@rabby-wallet/rabby-security-engine": ^1.1.17
+    "@rabby-wallet/rabby-swap": ^0.0.29
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0
@@ -25551,6 +25592,7 @@ __metadata:
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1
     p-queue: 7.3
+    p-retry: ^6.2.0
     patch-package: ^8.0.0
     postinstall-postinstall: ^2.1.0
     prettier: ^2.7.1
@@ -31508,6 +31550,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"web3-eth-abi@npm:^1.8.1":
+  version: 1.10.4
+  resolution: "web3-eth-abi@npm:1.10.4"
+  dependencies:
+    "@ethersproject/abi": ^5.6.3
+    web3-utils: 1.10.4
+  checksum: d7a2781f6d896028c6dfa5c37a412b47c884853769915f42c8006c9390cb44a2105c25dda2d8375990ff2dd4cc3c71112fe857250760f74eaa80464f564600bc
+  languageName: node
+  linkType: hard
+
 "web3-eth-abi@npm:^4.1.4":
   version: 4.1.4
   resolution: "web3-eth-abi@npm:4.1.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fweb3-eth-abi%2F-%2Fweb3-eth-abi-4.1.4.tgz"
@@ -31680,22 +31732,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web3-utils@npm:1.7.0":
-  version: 1.7.0
-  resolution: "web3-utils@npm:1.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fweb3-utils%2F-%2Fweb3-utils-1.7.0.tgz"
-  dependencies:
-    bn.js: ^4.11.9
-    ethereum-bloom-filters: ^1.0.6
-    ethereumjs-util: ^7.1.0
-    ethjs-unit: 0.1.6
-    number-to-bn: 1.7.0
-    randombytes: ^2.1.0
-    utf8: 3.0.0
-  checksum: cd96c8cca5507714bf089eb91d513a3515b6e4a959b9d380ff543b2aa076379a4fb613a64c03a4d4332a8d7e78e5e22bb41ed0092ee634bbd336d12d80a73dc0
-  languageName: node
-  linkType: hard
-
-"web3-utils@npm:^1.6.0":
+"web3-utils@npm:1.10.4, web3-utils@npm:^1.6.0":
   version: 1.10.4
   resolution: "web3-utils@npm:1.10.4"
   dependencies:
@@ -31708,6 +31745,21 @@ __metadata:
     randombytes: ^2.1.0
     utf8: 3.0.0
   checksum: a1535817a4653f1b5cc868aa19305158122379078a41e13642e1ba64803f6f8e5dd2fb8c45c033612b8f52dde42d8008afce85296c0608276fe1513dece66a49
+  languageName: node
+  linkType: hard
+
+"web3-utils@npm:1.7.0":
+  version: 1.7.0
+  resolution: "web3-utils@npm:1.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fweb3-utils%2F-%2Fweb3-utils-1.7.0.tgz"
+  dependencies:
+    bn.js: ^4.11.9
+    ethereum-bloom-filters: ^1.0.6
+    ethereumjs-util: ^7.1.0
+    ethjs-unit: 0.1.6
+    number-to-bn: 1.7.0
+    randombytes: ^2.1.0
+    utf8: 3.0.0
+  checksum: cd96c8cca5507714bf089eb91d513a3515b6e4a959b9d380ff543b2aa076379a4fb613a64c03a4d4332a8d7e78e5e22bb41ed0092ee634bbd336d12d80a73dc0
   languageName: node
   linkType: hard
 

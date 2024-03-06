@@ -22,6 +22,7 @@ import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { RabbyPointsService } from './rabbyPoints';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
+import { SwapService } from './swap';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -122,7 +123,13 @@ const syncPendingTxs = () => {
     });
   });
 };
+
 syncPendingTxs();
+
 export const rabbyPointsService = new RabbyPointsService({
+  storageAdapter: appStorage,
+});
+
+export const swapService = new SwapService({
   storageAdapter: appStorage,
 });

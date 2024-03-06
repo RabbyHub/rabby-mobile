@@ -13,6 +13,7 @@ import { CHAINS } from '@/constant/chains';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
+import abiCoder, { AbiCoder } from 'web3-eth-abi';
 
 function buildTxParams(txMeta) {
   return {
@@ -155,4 +156,102 @@ export const getRecommendNonce = async ({
   const localNonce =
     (await transactionHistoryService.getNonceByChain(from, chainId)) || 0;
   return `0x${BigNumber.max(onChainNonce, localNonce).toString(16)}`;
+};
+
+export const getERC20Allowance = async (
+  chainServerId,
+  erc20Address: string,
+  contractAddress: string,
+): Promise<string> => {
+  const account = await preferenceService.getCurrentAccount();
+  if (!account) throw new Error(t('background.error.noCurrentAccount'));
+  const chainId = Object.values(CHAINS)
+    .find(chain => chain.serverId === chainServerId)
+    ?.id.toString();
+
+  if (!chainId) throw new Error(t('background.error.invalidChainId'));
+
+  const data = (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+    {
+      constant: true,
+      inputs: [
+        {
+          name: '_owner',
+          type: 'address',
+        },
+        {
+          name: '_spender',
+          type: 'address',
+        },
+      ],
+      name: 'allowance',
+      outputs: [
+        {
+          name: '',
+          type: 'uint256',
+        },
+      ],
+      payable: false,
+      stateMutability: 'view',
+      type: 'function',
+    },
+    [account.address, contractAddress],
+  );
+
+  const allowance = await requestETHRpc(
+    {
+      method: 'eth_call',
+      params: [{ to: erc20Address, data }, 'latest'],
+    },
+    chainServerId,
+  );
+
+  return allowance?.toString();
+};
+
+export const generateApproveTokenTx = ({
+  from,
+  to,
+  chainId,
+  spender,
+  amount,
+}: {
+  from: string;
+  to: string;
+  chainId: number;
+  spender: string;
+  amount: string;
+}) => {
+  return {
+    from,
+    to,
+    chainId: chainId,
+    value: '0x',
+    data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+      {
+        constant: false,
+        inputs: [
+          {
+            name: '_spender',
+            type: 'address',
+          },
+          {
+            name: '_value',
+            type: 'uint256',
+          },
+        ],
+        name: 'approve',
+        outputs: [
+          {
+            name: '',
+            type: 'bool',
+          },
+        ],
+        payable: false,
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      [spender, amount] as any,
+    ),
+  };
 };
