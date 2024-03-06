@@ -316,7 +316,6 @@ const flowContext = flow
   .callback();
 
 function reportStatsData() {
-  // TODO
   const statsData = notificationService.getStatsData();
   if (!statsData || statsData.reported) return;
   if (statsData?.signed) {
@@ -353,7 +352,7 @@ function reportStatsData() {
 
 export default async (request: ProviderRequest) => {
   const ctx: any = { request: { ...request, requestedApproval: false } };
-  // notificationService.setStatsData();
+  notificationService.setStatsData();
   return flowContext(ctx).finally(() => {
     reportStatsData();
 
