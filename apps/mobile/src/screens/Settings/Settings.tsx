@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,9 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
 import { useRemoteUpgradeInfo } from '@/hooks/version';
+import ThemeSelectorModal, {
+  useThemeSelectorModalVisible,
+} from './sheetModals/ThemeSelector';
 
 const Container = styled(NormalScreenContainer)`
   flex: 1;
@@ -55,7 +58,7 @@ const Container = styled(NormalScreenContainer)`
 `;
 
 function SettingsScreen(): JSX.Element {
-  const { appTheme, toggleThemeMode } = useAppTheme();
+  const { appThemeText, toggleThemeMode } = useAppTheme();
 
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
 
@@ -69,6 +72,8 @@ function SettingsScreen(): JSX.Element {
   const { currentAccount } = useCurrentAccount();
 
   const { remoteVersion, triggerCheckVersion } = useRemoteUpgradeInfo();
+
+  const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -103,18 +108,21 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
-            visible: !!__DEV__,
             label: 'Switch Theme',
             icon: RcThemeMode,
             onPress: () => {
-              // TODO: show modal
-
-              toggleThemeMode();
+              setThemeSelectorModalVisible(true);
             },
-            rightTextNode: () => {
+            rightTextNode: ctx => {
               return (
-                <Text className="font-normal text-14 text-light-neutral-title-1 dark:text-dark-neutral-title-1 mr-[6]">
-                  {stringUtils.ucfirst(appTheme)} Mode
+                <Text
+                  style={{
+                    fontWeight: '400',
+                    fontSize: 14,
+                    color: colors['neutral-title-1'],
+                    marginRight: 6,
+                  }}>
+                  {appThemeText} Mode
                 </Text>
               );
             },
@@ -302,6 +310,8 @@ function SettingsScreen(): JSX.Element {
         )}>
         <RcFooterLogo />
       </View>
+
+      <ThemeSelectorModal />
 
       <ConfirmBottomSheetModal
         ref={clearPendingRef}

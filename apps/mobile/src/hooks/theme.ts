@@ -1,5 +1,10 @@
 import React from 'react';
-import { ColorSchemeName, Appearance } from 'react-native';
+import {
+  ColorSchemeName,
+  Appearance,
+  useColorScheme,
+  AppState,
+} from 'react-native';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 import {
@@ -9,20 +14,23 @@ import {
   AppColorSchemes,
 } from '@/constant/theme';
 import { atomByMMKV } from '@/core/storage/mmkv';
-import { useColorScheme } from 'nativewind';
 import { createGetStyles } from '@/utils/styles';
+import { stringUtils } from '@rabby-wallet/base-utils';
+import { devLog } from '@/utils/logger';
 
-const STATIC_THEME = 'light';
-
-function coerceColorSchemeName(
+function coerceBinaryTheme(
   appTheme: AppThemeScheme,
-  themeBySystem: ColorSchemeName = 'light',
-): NonNullable<ColorSchemeName> {
-  if (__DEV__) {
-    return appTheme === 'system' ? themeBySystem ?? 'light' : appTheme;
-  }
+  rnColorScheme: ColorSchemeName = 'light',
+): ColorSchemeName {
+  return appTheme === 'system' ? rnColorScheme ?? 'light' : appTheme;
+}
 
-  return STATIC_THEME;
+function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
+  return appTheme === 'system'
+    ? null
+    : appTheme === 'dark'
+    ? appTheme
+    : 'light';
 }
 
 const ThemeStoreBase = atomByMMKV('AppTheme', 'light' as AppThemeScheme);
@@ -38,16 +46,9 @@ const ThemeModeStore = atom(
 
 export function useGetAppThemeMode() {
   const appTheme = useAtomValue(ThemeModeStore);
+  const colorScheme = useColorScheme();
 
-  const { colorScheme } = useColorScheme();
-
-  if (__DEV__) {
-    return (
-      appTheme === 'system' ? colorScheme : appTheme
-    ) as NonNullable<ColorSchemeName>;
-  }
-
-  return STATIC_THEME as NonNullable<ColorSchemeName>;
+  return coerceBinaryTheme(appTheme, colorScheme);
 }
 
 // The useColorScheme value is always either light or dark, but the built-in
@@ -55,10 +56,12 @@ export function useGetAppThemeMode() {
 // makes it a bit easier to work with.
 export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   const [appTheme, setAppTheme] = useAtom(ThemeModeStore);
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const colorScheme = useColorScheme();
 
   const toggleThemeMode = React.useCallback(
     (nextTheme?: AppThemeScheme) => {
+      // throw new Error(`cannot specify theme node!`);
+
       if (!nextTheme) {
         nextTheme =
           AppColorSchemes[
@@ -66,22 +69,41 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
           ];
       }
       setAppTheme(nextTheme);
-      setColorScheme(nextTheme);
+      Appearance.setColorScheme(appThemeToColorScheme(nextTheme));
     },
-    [appTheme, setAppTheme, setColorScheme],
+    [appTheme, setAppTheme],
   );
 
-  const binaryTheme = coerceColorSchemeName(appTheme, colorScheme);
+  const binaryTheme = React.useMemo(
+    () => coerceBinaryTheme(appTheme, colorScheme),
+    [appTheme, colorScheme],
+  );
 
+  // use system now always
   React.useEffect(() => {
     if (options?.isAppTop) {
-      setColorScheme(binaryTheme);
-      Appearance.setColorScheme(binaryTheme);
+      // will only triggered on `useColorScheme()`/`Appearance.getColorScheme()` equals to null (means 'system')
+      const subp = Appearance.addChangeListener(
+        (pref: Appearance.AppearancePreferences) => {
+          devLog('system preference changed', pref);
+          setAppTheme(pref.colorScheme);
+        },
+      );
+
+      return () => {
+        subp.remove();
+      };
     }
-  }, [options?.isAppTop, binaryTheme, setColorScheme]);
+  }, [options?.isAppTop, setAppTheme]);
+
+  const appThemeText = React.useMemo(
+    () => stringUtils.ucfirst(appTheme),
+    [appTheme],
+  );
 
   return {
     appTheme,
+    appThemeText,
     binaryTheme,
     toggleThemeMode,
   };
