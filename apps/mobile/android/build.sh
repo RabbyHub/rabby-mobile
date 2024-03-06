@@ -8,18 +8,20 @@ cd $project_dir
 
 ./gradlew clean -q
 
-if [ ! -z $CI ]; then
+BUILD_TYPE=$1
+
+if [ ! -z $CI || "$BUILD_TYPE" == "buildAppStore" ]; then
   RM_BUILD_FLAGS="-q --refresh-dependencies"
 else
   RM_BUILD_FLAGS=""
 fi
 
-if [[ "$1" == "buildAppStore" ]]; then
+if [[ "$BUILD_TYPE" == "buildAppStore" ]]; then
   echo "[android-build] build aab"
   # aab
   ./gradlew bundleRelease $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/bundle/release/app-release.aab"
-elif [[ "$1" == "buildApk" ]]; then
+elif [[ "$BUILD_TYPE" == "buildApk" ]]; then
   echo "[android-build] build apk"
   # apk
   ./gradlew assembleRelease $RM_BUILD_FLAGS --parallel

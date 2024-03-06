@@ -12,6 +12,9 @@ export const GET_WALLETCONNECT_CONFIG = () => {
         'https://static-assets.rabby.io/files/122da969-da58-42e9-ab39-0a8dd38d94b8.png',
       ],
       name: 'Rabby',
+      redirect: {
+        native: 'rabbymobile://',
+      },
     },
     projectId: 'ed21a1293590bdc995404dff7e033f04',
     v2Whitelist: [

@@ -15,15 +15,6 @@ const getStyles = (colors: AppColorsVariants) =>
     spin: {
       position: 'relative',
     },
-    indicator: {
-      position: 'absolute',
-      left: '50%',
-      top: '50%',
-      marginLeft: -12,
-      marginTop: -12,
-      zIndex: 2,
-      color: colors['blue-default'],
-    },
     mask: {
       position: 'absolute',
       left: 0,
@@ -33,6 +24,16 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       opacity: 0.8,
       zIndex: 1,
+    },
+    indicatorWrapper: {
+      position: 'absolute',
+      zIndex: 2,
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });
 
@@ -74,27 +75,20 @@ export const Spin = ({ children, size, spinning = true }: SpinProps) => {
     <View style={StyleSheet.flatten([styles.spin])}>
       {spinning && <View style={styles.mask} />}
       {spinning && (
-        <Animated.View
-          style={StyleSheet.flatten([
-            styles.indicator,
-            {
+        <View style={styles.indicatorWrapper}>
+          <Animated.View
+            style={{
               transform: [
                 {
                   rotate,
                 },
               ],
-            },
-          ])}>
-          <SvgIconSpin
-            style={StyleSheet.flatten([
-              styles.indicator,
-              {
-                width: indicatorSize,
-                height: indicatorSize,
-              },
-            ])}
-          />
-        </Animated.View>
+            }}>
+            <SvgIconSpin
+              style={{ width: indicatorSize, height: indicatorSize }}
+            />
+          </Animated.View>
+        </View>
       )}
 
       {children}
