@@ -530,6 +530,7 @@ const getStyles = createGetStyles(colors => ({
     height: 52,
     borderRadius: 4,
     borderWidth: 1,
+    borderColor: colors['neutral-line'],
     paddingHorizontal: 12,
     alignItems: 'center',
   },
