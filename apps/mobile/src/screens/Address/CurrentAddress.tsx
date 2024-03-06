@@ -277,7 +277,7 @@ const getStyles = (colors: AppColorsVariants) =>
     importView: {
       marginTop: 32,
       borderRadius: 8,
-      backgroundColor: '#fff',
+      backgroundColor: colors['neutral-card-1'],
       flex: 1,
       width: '100%',
       height: 56,

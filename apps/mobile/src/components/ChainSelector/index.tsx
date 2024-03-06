@@ -84,6 +84,11 @@ export const ChainSelector = ({
         onChange?.(v);
         removeGlobalBottomSheetModal(id);
       },
+      bottomSheetModalProps: {
+        backgroundStyle: {
+          backgroundColor: colors['neutral-bg-1'],
+        },
+      },
     });
   };
 

@@ -98,5 +98,9 @@ export function makeBottomSheetProps(ctx: {
     };
   }
 
-  return {};
+  return {
+    backgroundStyle: {
+      backgroundColor: ctx.colors['neutral-bg-1'],
+    },
+  };
 }
