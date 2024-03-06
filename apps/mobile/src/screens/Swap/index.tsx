@@ -308,6 +308,7 @@ const Swap = () => {
               placeholder="0"
               numberOfLines={1}
               style={styles.input}
+              placeholderTextColor={colors['neutral-foot']}
             />
             <Text style={styles.inputUsdValue}>
               {payAmount
@@ -527,12 +528,10 @@ const getStyles = createGetStyles(colors => ({
   inputContainer: {
     flexDirection: 'row',
     height: 52,
-    backgroundColor: colors['neutral-card-2'],
     borderRadius: 4,
-    borderColor: colors['neutral-line'],
     borderWidth: 1,
-    paddingVertical: 16,
     paddingHorizontal: 12,
+    alignItems: 'center',
   },
   input: {
     paddingRight: 10,
@@ -540,6 +539,8 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '600',
     position: 'relative',
     flex: 1,
+    color: colors['neutral-title-1'],
+    backgroundColor: 'transparent',
   },
   inputUsdValue: {
     fontSize: 12,

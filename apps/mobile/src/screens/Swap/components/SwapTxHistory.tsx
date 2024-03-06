@@ -52,6 +52,13 @@ const getStyles = createGetStyles(colors => ({
     textAlign: 'center',
     paddingVertical: 20,
     backgroundColor: colors['neutral-bg-1'],
+    color: colors['neutral-title-1'],
+  },
+  skeletonBlock: {
+    width: '100%',
+    height: 210,
+    padding: 0,
+    borderRadius: 6,
   },
   emptyView: {
     flex: 1,
@@ -143,6 +150,7 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     flexDirection: 'row',
     overflow: 'hidden',
+    alignItems: 'center',
   },
   tokenRow: {
     flexDirection: 'row',
@@ -163,6 +171,7 @@ const getStyles = createGetStyles(colors => ({
   skeleton: {
     flex: 1,
     height: 16,
+    width: 80,
   },
 }));
 const TokenCost = ({
@@ -305,7 +314,7 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
             </TouchableWithoutFeedback>
           </Tip>
         )}
-        <Text>{!isPending && sinceTime(time)}</Text>
+        <Text style={styles.text}>{!isPending && sinceTime(time)}</Text>
         {!!targetDex && <Text style={styles.text}>{targetDex}</Text>}
       </View>
       <View style={styles.topBorder} />
@@ -344,9 +353,7 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
         <View style={styles.itemContainer}>
           <Text style={styles.text}>{t('page.swap.actual-slippage')}</Text>
           {loading ? (
-            <Skeleton
-            // style={[styles.text, { width: 52, height: 18 }]}
-            />
+            <Skeleton style={{ width: 52, height: 18 }} />
           ) : (
             <Text style={styles.text}>{actualSlippagePercent}</Text>
           )}
@@ -381,14 +388,19 @@ const HistoryList = () => {
   const renderItem = useCallback(({ item }) => <Transaction data={item} />, []);
 
   const ListHeaderComponent = useCallback(() => {
-    return <Text style={styles.headerTitle}>Swap history</Text>;
+    return (
+      <View>
+        <Text style={styles.headerTitle}>Swap history</Text>
+      </View>
+    );
   }, [styles.headerTitle]);
 
   const ListEndLoader = useCallback(() => {
     if (noMore) {
       return null;
     }
-  }, [noMore]);
+    return <Skeleton style={styles.skeletonBlock} />;
+  }, [noMore, styles.skeletonBlock]);
   const { bottom } = useSafeAreaInsets();
 
   if (!loading && (!txList || !txList?.list?.length)) {
@@ -421,27 +433,9 @@ const HistoryList = () => {
       keyExtractor={item => item.tx_id + item.chain}
       onEndReached={loadMore}
       onEndReachedThreshold={0.7}
+      ListFooterComponent={ListEndLoader}
       ListEmptyComponent={ListEndLoader}
     />
-    // <ScrollView style={{ overflowY: 'auto', maxHeight: 434, padding: 12 }}>
-    //   {txList?.list?.map((swap, idx) => (
-    //     <Transaction
-    //       // ref={idx === txList.list.length - 1 ? ref : undefined}
-    //       key={`${swap.tx_id}-${swap.chain}`}
-    //       data={swap}
-    //     />
-    //   ))}
-    //   {(loading || loadingMore) && (
-    //     <>
-    //       <Skeleton
-    //       // style={{ width: '100%', height: 168, borderRadius: 6 }}
-    //       />
-    //       <Skeleton
-    //       // style={{ width: '100%', height: 168, borderRadius: 6 }}
-    //       />
-    //     </>
-    //   )}
-    // </ScrollView>
   );
 };
 

@@ -4,11 +4,12 @@ import { CEXQuote } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSwapSettings } from '../hooks';
 import { QuoteLogo } from './QuoteLogo';
 import { formatAmount } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
+import { getQuoteItemStyle } from './QuoteItem';
 
 export const CexQuoteItem = (props: {
   name: string;
@@ -29,6 +30,7 @@ export const CexQuoteItem = (props: {
   } = props;
 
   const colors = useThemeColors();
+  const styles = useMemo(() => getQuoteItemStyle(colors), [colors]);
 
   const { t } = useTranslation();
   const dexInfo = useMemo(() => CEX[name as keyof typeof CEX], [name]);
@@ -40,12 +42,7 @@ export const CexQuoteItem = (props: {
 
     if (!data?.receive_token?.amount) {
       right = (
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '400',
-            color: colors['neutral-body'],
-          }}>
+        <Text style={styles.failedTipText}>
           {t('page.swap.this-token-pair-is-not-supported')}
         </Text>
       );
@@ -81,13 +78,14 @@ export const CexQuoteItem = (props: {
 
       right = (
         <Text
-          style={{
-            color: !isBestQuote
-              ? colors['red-default']
-              : colors['green-default'],
-            fontSize: 13,
-            fontWeight: '500',
-          }}>
+          style={[
+            styles.rightPercentText,
+            {
+              color: !isBestQuote
+                ? colors['red-default']
+                : colors['green-default'],
+            },
+          ]}>
           {isBestQuote
             ? t('page.swap.best')
             : `${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
@@ -98,47 +96,33 @@ export const CexQuoteItem = (props: {
     return [center, right, disable];
   }, [
     data?.receive_token,
+    styles.failedTipText,
+    styles.rightPercentText,
     t,
     bestQuoteAmount,
     sortIncludeGasFee,
     bestQuoteGasUsd,
-    isBestQuote,
     colors,
+    isBestQuote,
   ]);
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        borderColor: colors['neutral-line'],
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        paddingVertical: 14,
-      }}>
+    <View style={styles.cexContainer}>
       <QuoteLogo isCex logo={dexInfo.logo} isLoading={!!isLoading} />
 
       <Text
-        style={{
-          width: 100,
-          fontSize: 13,
-          fontWeight: '500',
-          color: colors['neutral-title-1'],
-          paddingLeft: 8,
-        }}>
+        style={[
+          styles.nameText,
+          {
+            width: 100,
+            paddingLeft: 8,
+          },
+        ]}>
         {dexInfo.name}
       </Text>
 
-      <View
-        style={{
-          flex: 1,
-        }}>
-        <Text
-          numberOfLines={1}
-          style={{
-            fontSize: 15,
-            fontWeight: '500',
-            width: 'auto',
-            color: colors['neutral-title-1'],
-          }}>
+      <View style={styles.flex1}>
+        <Text numberOfLines={1} style={styles.middleDefaultText}>
           {middleContent}
         </Text>
       </View>

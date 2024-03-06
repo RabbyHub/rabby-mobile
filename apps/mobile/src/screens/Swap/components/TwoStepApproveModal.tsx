@@ -4,7 +4,6 @@ import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { Button } from '@/components';
-// import { useTranslation } from 'react-i18next';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 
 type ModalProps = {

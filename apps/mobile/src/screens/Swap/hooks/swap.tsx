@@ -111,10 +111,13 @@ export const dexSwap = async (
   $ctx?: any,
 ) => {
   const account = await preferenceService.getCurrentAccount();
-  if (!account) throw new Error(i18n.t('background.error.noCurrentAccount'));
+  if (!account) {
+    throw new Error(i18n.t('background.error.noCurrentAccount'));
+  }
   const chainObj = findChainByEnum(chain);
-  if (!chainObj)
+  if (!chainObj) {
     throw new Error(i18n.t('background.error.notFindChain', { chain }));
+  }
   try {
     if (shouldTwoStepApprove) {
       // unTriggerTxCounter.increase(3);
@@ -191,13 +194,16 @@ export const dexSwap = async (
       INTERNAL_REQUEST_SESSION,
     )
       .then(() => {
+        console.log('after swap');
         navigationRef.dispatch(
           StackActions.replace(RootNames.StackRoot, {
             screen: RootNames.Home,
           }),
         );
       })
-      .catch(() => {});
+      .catch(() => {
+        console.log('swap error');
+      });
 
     console.log('after sendRequest');
     // unTriggerTxCounter.decrease();

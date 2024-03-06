@@ -383,7 +383,7 @@ export const useTokenPair = (userAddress: string) => {
 
   const {
     value: slippageValidInfo,
-    error: slippageValidError,
+    // error: slippageValidError,
     loading: slippageValidLoading,
   } = useAsync(async () => {
     if (chain && Number(slippage) && payToken?.id && receiveToken?.id) {

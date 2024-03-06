@@ -1,5 +1,3 @@
-// import { CEX, DEX, ETH_USDT_CONTRACT, SWAP_FEE_ADDRESS } from '@/constant';
-// import { formatUsdValue, isSameAddress, useWallet } from '@/ui/utils';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import {
   CEXQuote,

@@ -80,7 +80,9 @@ export const useVerifyCalldata = <
       );
       const chain = Object.values(CHAINS).find(item => item.id === tx.chainId);
 
-      if (!chain) return true;
+      if (!chain) {
+        return true;
+      }
 
       return (
         ((dexId === DEX_ENUM['UNISWAP'] &&

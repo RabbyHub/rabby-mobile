@@ -82,8 +82,7 @@ const TradingSettingsInner = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <BottomSheetScrollView
-      style={[styles.container, { paddingBottom: 20 + bottom }]}>
+    <BottomSheetScrollView style={[styles.container]}>
       <View>
         <Text style={styles.headerTitle}>
           {t('page.swap.enable-exchanges')}
@@ -101,7 +100,7 @@ const TradingSettingsInner = ({ onClose }: { onClose: () => void }) => {
         </Text>
       </View>
 
-      <View>
+      <View style={{ paddingBottom: 20 + bottom }}>
         {list.map(item => (
           <View key={item.name} style={styles.itemContainer}>
             <View style={[styles.item, styles.first]}>

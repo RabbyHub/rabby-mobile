@@ -25,7 +25,7 @@ import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import { getTokenSymbol } from '@/utils/token';
 import { CexQuoteItem } from './CexQuoteItem';
-import { styles } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const exchangeCount = Object.keys(DEX).length + Object.keys(CEX).length;
 
@@ -281,8 +281,6 @@ export const QuoteList = (props: QuotesProps) => {
   const { visible, onClose } = props;
   const bottomRef = useRef<BottomSheetModalMethods>(null);
 
-  // const [] = use
-
   const refresh = useSetAtom(refreshIdAtom);
 
   const refreshQuote = React.useCallback(() => {
@@ -301,8 +299,6 @@ export const QuoteList = (props: QuotesProps) => {
     }
   }, [visible]);
 
-  console.log('visible', visible);
-
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -312,13 +308,8 @@ export const QuoteList = (props: QuotesProps) => {
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
-      style={{}}
-      handleStyle={{
-        backgroundColor: colors['neutral-bg-2'],
-      }}
-      backgroundStyle={{
-        backgroundColor: colors['neutral-bg-2'],
-      }}>
+      handleStyle={styles.bottomBg}
+      backgroundStyle={styles.bottomBg}>
       <BottomSheetScrollView style={styles.flex1}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
@@ -347,6 +338,9 @@ export const QuoteList = (props: QuotesProps) => {
 };
 
 const getStyles = createGetStyles(colors => ({
+  bottomBg: {
+    backgroundColor: colors['neutral-bg-2'],
+  },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -388,6 +382,7 @@ const getStyles = createGetStyles(colors => ({
   foot: {
     paddingTop: 40,
     flexDirection: 'row',
+    paddingBottom: 20,
   },
 
   footText: { color: colors['neutral-foot'], fontSize: 13 },

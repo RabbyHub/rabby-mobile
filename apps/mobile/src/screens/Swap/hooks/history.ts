@@ -39,7 +39,7 @@ export const useSwapHistory = () => {
   const refreshSwapListTx = useSetAtom(refreshIdAtom);
 
   if (!addr) {
-    // throw new Error('no addr');
+    throw new Error('no addr');
   }
 
   const {

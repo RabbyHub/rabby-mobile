@@ -35,7 +35,7 @@ import i18n from '@/utils/i18n';
 import { Tip } from '@/components';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useThemeColors } from '@/hooks/theme';
-import TouchableItem from '@/components/Touchable/TouchableItem';
+import { createGetStyles } from '@/utils/styles';
 
 export interface QuoteItemProps {
   quote: QuoteResult | null;
@@ -77,10 +77,10 @@ export const DexQuoteItem = (
     payAmount,
     chain,
     active,
-    userAddress,
+    // userAddress,
     isBestQuote,
     slippage,
-    fee,
+    // fee,
     inSufficient,
     preExecResult,
     quoteProviderInfo,
@@ -88,6 +88,7 @@ export const DexQuoteItem = (
   } = props;
 
   const colors = useThemeColors();
+  const styles = useMemo(() => getQuoteItemStyle(colors), [colors]);
 
   const { t } = useTranslation();
 
@@ -182,13 +183,14 @@ export const DexQuoteItem = (
 
       right = (
         <Text
-          style={{
-            color: !isBestQuote
-              ? colors['red-default']
-              : colors['green-default'],
-            fontSize: 13,
-            fontWeight: '500',
-          }}>
+          style={[
+            styles.rightPercentText,
+            {
+              color: !isBestQuote
+                ? colors['red-default']
+                : colors['green-default'],
+            },
+          ]}>
           {isBestQuote
             ? t('page.swap.best')
             : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
@@ -198,12 +200,7 @@ export const DexQuoteItem = (
 
     if (!quote?.toTokenAmount) {
       right = (
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '400',
-            color: colors['neutral-body'],
-          }}>
+        <Text style={styles.failedTipText}>
           {t('page.swap.unable-to-fetch-the-price')}
         </Text>
       );
@@ -215,12 +212,7 @@ export const DexQuoteItem = (
       if (!preExecResult && !inSufficient) {
         center = <Text>-</Text>;
         right = (
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '400',
-              color: colors['neutral-body'],
-            }}>
+          <Text style={styles.failedTipText}>
             {t('page.swap.fail-to-simulate-transaction')}
           </Text>
         );
@@ -232,12 +224,7 @@ export const DexQuoteItem = (
       disable = true;
       center = <Text>-</Text>;
       right = (
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '400',
-            color: colors['neutral-body'],
-          }}>
+        <Text style={styles.failedTipText}>
           {t('page.swap.security-verification-failed')}
         </Text>
       );
@@ -256,6 +243,8 @@ export const DexQuoteItem = (
     sortIncludeGasFee,
     bestQuoteGasUsd,
     colors,
+    styles.rightPercentText,
+    styles.failedTipText,
     isBestQuote,
     t,
   ]);
@@ -394,30 +383,17 @@ export const DexQuoteItem = (
   return (
     <TouchableOpacity
       activeOpacity={disabledTrade || inSufficient ? 1 : 0.2}
-      style={{
-        position: 'relative',
-        backgroundColor: !(disabledTrade || disabled || inSufficient)
-          ? colors['neutral-card-1']
-          : 'transparent',
-        borderColor: !(disabledTrade || disabled || inSufficient)
-          ? 'transparent'
-          : colors['neutral-line'],
-        borderWidth: StyleSheet.hairlineWidth,
-        flexDirection: 'row',
-        paddingHorizontal: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        borderRadius: 6,
-        shadowColor: 'rgba(0, 0, 0, 0.08)',
-        shadowOffset: {
-          width: 0,
-          height: 4,
+      style={[
+        styles.dexContainer,
+        {
+          backgroundColor: !(disabledTrade || disabled || inSufficient)
+            ? colors['neutral-card-1']
+            : 'transparent',
+          borderColor: !(disabledTrade || disabled || inSufficient)
+            ? 'transparent'
+            : colors['neutral-line'],
         },
-        shadowOpacity: 1,
-        shadowRadius: 12,
-        elevation: 2,
-        height: 66,
-      }}
+      ]}
       onPress={() => {
         if (disabledTrade && !inSufficient && quote && preExecResult) {
           setDisabledTradeTipsOpen(true);
@@ -440,21 +416,9 @@ export const DexQuoteItem = (
       // )}
     >
       <QuoteLogo loaded logo={quoteProviderInfo.logo} isLoading={isLoading} />
-      <View style={{ gap: 4, width: 94, paddingLeft: 8 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4,
-          }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: '500',
-              color: colors['neutral-title-1'],
-            }}>
-            {quoteProviderInfo.name}
-          </Text>
+      <View style={{ gap: 4, width: 94, paddingLeft: 8, marginRight: 4 }}>
+        <View style={styles.providerNameContainer}>
+          <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
           {!!preExecResult?.shouldApproveToken && (
             <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
               <ImgLock width={14} height={14} />
@@ -462,47 +426,25 @@ export const DexQuoteItem = (
           )}
         </View>
 
-        <View
-          style={{
-            display: disabled && !inSufficient ? 'none' : 'flex',
-            flexDirection: 'row',
-          }}>
-          <ImgGas width={14} height={14} />
-          <Text
-            style={{
-              color: colors['neutral-foot'],
-              fontSize: 12,
-              fontWeight: '400',
-            }}>
-            {preExecResult?.gasUsd}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ gap: 4, flex: 1 }}>
-        <View>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '500',
-              color: colors['neutral-title-1'],
-            }}>
-            {middleContent} <CheckIcon />
-          </Text>
-        </View>
-        {!disabled && (
-          <Text
-            style={{
-              color: colors['neutral-foot'],
-              fontSize: 12,
-              fontWeight: '400',
-            }}>
-            ≈{receivedTokenUsd}
-          </Text>
+        {!(disabled && !inSufficient) && (
+          <View style={styles.flexRow}>
+            <ImgGas width={14} height={14} />
+            <Text style={styles.gasUsd}>{preExecResult?.gasUsd}</Text>
+          </View>
         )}
       </View>
 
-      <View style={{ gap: 4, justifyContent: 'flex-end' }}>
+      <View style={styles.middleContainer}>
+        <View style={styles.middleTop}>
+          <Text numberOfLines={1} style={styles.middleDefaultText}>
+            {middleContent}
+          </Text>
+          <CheckIcon />
+        </View>
+        {!disabled && <Text style={styles.gasUsd}>≈{receivedTokenUsd}</Text>}
+      </View>
+
+      <View style={styles.rightContainer}>
         <Text
           style={{
             textAlign: 'right',
@@ -511,42 +453,27 @@ export const DexQuoteItem = (
         </Text>
         {!disabled && !isBestQuote && (
           <Text
-            style={{
-              textAlign: 'right',
-              fontSize: 12,
-              color: colors['neutral-foot'],
-            }}>
+            style={[
+              styles.gasUsd,
+              {
+                textAlign: 'right',
+              },
+            ]}>
             {diffReceivedTokenUsd}
           </Text>
         )}
       </View>
 
       <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 6,
-          backgroundColor: colors['neutral-black'],
-          justifyContent: 'center',
-          display: disabledTradeTipsOpen ? 'flex' : 'none',
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 4,
-            paddingLeft: 12,
-            alignItems: 'center',
-          }}>
+        style={[
+          styles.disabledContentWrapper,
+          {
+            display: disabledTradeTipsOpen ? 'flex' : 'none',
+          },
+        ]}>
+        <View style={styles.disabledContentView}>
           <ImgWhiteWarning width={12} height={12} />
-          <Text
-            style={{
-              color: colors['neutral-title-2'],
-              fontSize: 14,
-              fontWeight: '500',
-            }}>
+          <Text style={styles.disabledContentText}>
             {t('page.swap.this-exchange-is-not-enabled-to-trade-by-you')}
           </Text>
         </View>
@@ -556,14 +483,7 @@ export const DexQuoteItem = (
             openSwapSettings(true);
             setDisabledTradeTipsOpen(false);
           }}>
-          <Text
-            style={{
-              color: colors['blue-default'],
-              fontSize: 14,
-              fontWeight: '500',
-              textAlign: 'left',
-              paddingLeft: 12 + 12 + 4,
-            }}>
+          <Text style={styles.disabledContentBtnText}>
             {t('page.swap.enable-it')}
           </Text>
         </Pressable>
@@ -596,3 +516,103 @@ export function WarningOrChecked({
     </Tip>
   );
 }
+
+export const getQuoteItemStyle = createGetStyles(colors => ({
+  dexContainer: {
+    position: 'relative',
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 6,
+    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 2,
+    height: 66,
+  },
+  cex: {
+    flexDirection: 'row',
+    borderColor: colors['neutral-line'],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 14,
+  },
+  rightPercentText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  failedTipText: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors['neutral-body'],
+  },
+  providerNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  nameText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
+  flexRow: {
+    flexDirection: 'row',
+  },
+  gasUsd: {
+    color: colors['neutral-foot'],
+    fontSize: 12,
+    fontWeight: '400',
+  },
+  middleContainer: {
+    gap: 4,
+    flex: 1,
+    paddingRight: 4,
+  },
+  middleTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  middleDefaultText: {
+    width: 'auto',
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
+  rightContainer: { gap: 4, justifyContent: 'flex-end' },
+
+  disabledContentWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 6,
+    backgroundColor: colors['neutral-black'],
+    justifyContent: 'center',
+  },
+  disabledContentView: {
+    flexDirection: 'row',
+    gap: 4,
+    paddingLeft: 12,
+    alignItems: 'center',
+  },
+  disabledContentText: {
+    color: colors['neutral-title-2'],
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  disabledContentBtnText: {
+    color: colors['blue-default'],
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'left',
+    paddingLeft: 12 + 12 + 4,
+  },
+}));

@@ -19,6 +19,7 @@ import TouchableItem from '@/components/Touchable/TouchableItem';
 import useToggle from 'react-use/lib/useToggle';
 import { createGetStyles } from '@/utils/styles';
 import { Input } from '@rneui/base';
+import { BottomSheetInput } from '@/components/Input';
 
 const SLIPPAGE = ['0.1', '0.3', '0.5'];
 
