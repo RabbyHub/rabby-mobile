@@ -97,7 +97,7 @@ export const LedgerHardwareWaiting = ({
 
   const handleRetry = async (showToast = true) => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
-      toast.success(t('page.signFooterBar.ledger.resubmited'));
+      toast.success(t('page.signFooterBar.ledger.resubmitted'));
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
@@ -251,7 +251,7 @@ export const LedgerHardwareWaiting = ({
 
   const currentDescription = React.useMemo(() => {
     if (description?.includes('0x650f')) {
-      return t('page.signFooterBar.ledger.lockedOrNoEthApp');
+      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
     }
     if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
       return t('page.signFooterBar.ledger.unlockAlert');

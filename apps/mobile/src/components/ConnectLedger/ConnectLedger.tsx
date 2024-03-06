@@ -14,6 +14,7 @@ import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { toast } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
+import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
 
@@ -27,11 +28,12 @@ export const ConnectLedger: React.FC<{
   const [_2, setSetting] = useAtom(settingAtom);
   const { t } = useTranslation();
   const [currentScreen, setCurrentScreen] = React.useState<
-    'scan' | 'select' | 'ble' | 'notfound'
+    'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
+  let toastHiddenRef = React.useRef<() => void>(() => {});
 
-  const handleBleNext = React.useCallback(() => {
+  const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
     searchAndPair();
     notfoundTimerRef.current = setTimeout(() => {
@@ -44,58 +46,91 @@ export const ConnectLedger: React.FC<{
     clearTimeout(notfoundTimerRef.current);
   }, []);
 
+  const checkEthApp = React.useCallback(async () => {
+    try {
+      return await apiLedger.checkEthApp(result => {
+        if (!result) {
+          setCurrentScreen('openEthApp');
+        }
+      });
+    } catch (err: any) {
+      // maybe session is locked, just try to reconnect
+      toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
+      setCurrentScreen('select');
+      console.error(err);
+      throw err;
+    }
+  }, [t]);
+
+  const importFirstAddress = React.useCallback(
+    async (retryCount: number) => {
+      setIsLoaded(false);
+      let address;
+      try {
+        address = await apiLedger.importFirstAddress({
+          retryCount,
+        });
+      } catch (err: any) {
+        const code = ledgerErrorHandler(err);
+        if (code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
+          toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
+        }
+        setIsLoaded(true);
+
+        return;
+      }
+
+      if (address) {
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportSuccess,
+          params: {
+            type: KEYRING_TYPE.LedgerKeyring,
+            brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+            address,
+            isLedgerFirstImport: true,
+          },
+        });
+        onDone?.();
+      } else {
+        await apiLedger
+          .getCurrentUsedHDPathType()
+          .then(res => {
+            const hdPathType = res ?? LedgerHDPathType.LedgerLive;
+            apiLedger.setHDPathType(hdPathType);
+            setSetting({
+              startNumber: 1,
+              hdPath: hdPathType,
+            });
+          })
+          .then(() => {
+            navigate(RootNames.ImportLedger, {});
+            onDone?.();
+          });
+      }
+    },
+    [onDone, setIsLoaded, setSetting, t],
+  );
+
   const handleSelectDevice = React.useCallback(
     async device => {
       apiLedger.setDeviceId(device.id);
       if (onSelectDevice) {
         onSelectDevice(device);
       } else {
-        setIsLoaded(false);
-        let address;
-        try {
-          address = await apiLedger.importFirstAddress();
-        } catch (err: any) {
-          const code = ledgerErrorHandler(err);
-          if (code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
-            toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
-          }
-          console.error(err);
-          setIsLoaded(true);
-
-          return;
-        }
-
-        if (address) {
-          navigate(RootNames.StackAddress, {
-            screen: RootNames.ImportSuccess,
-            params: {
-              type: KEYRING_TYPE.LedgerKeyring,
-              brandName: KEYRING_CLASS.HARDWARE.LEDGER,
-              address,
-              isLedgerFirstImport: true,
-            },
-          });
-          onDone?.();
+        if (await checkEthApp()) {
+          importFirstAddress(1);
         } else {
-          await apiLedger
-            .getCurrentUsedHDPathType()
-            .then(res => {
-              const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-              apiLedger.setHDPathType(hdPathType);
-              setSetting({
-                startNumber: 1,
-                hdPath: hdPathType,
-              });
-            })
-            .then(() => {
-              navigate(RootNames.ImportLedger, {});
-              onDone?.();
-            });
+          toastHiddenRef.current = toast.show('Connecting...', {
+            duration: 100000,
+          });
+          // maybe need to reconnect device
+          await importFirstAddress(5);
+          toastHiddenRef.current?.();
         }
       }
     },
 
-    [onDone, onSelectDevice, setIsLoaded, setSetting, t],
+    [checkEthApp, importFirstAddress, onSelectDevice],
   );
 
   React.useEffect(() => {
@@ -103,6 +138,12 @@ export const ConnectLedger: React.FC<{
       handleScanDone();
     }
   }, [devices, handleScanDone]);
+
+  React.useEffect(() => {
+    return () => {
+      toastHiddenRef.current?.();
+    };
+  }, []);
 
   return (
     <BottomSheetView>
@@ -119,6 +160,7 @@ export const ConnectLedger: React.FC<{
         />
       )}
       {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
+      {currentScreen === 'openEthApp' && <OpenEthAppScreen />}
     </BottomSheetView>
   );
 };

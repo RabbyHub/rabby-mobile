@@ -88,7 +88,9 @@ export const SelectDeviceScreen: React.FC<{
         duration: 100000,
       });
       setLocked(true);
-      await onSelect(device);
+      try {
+        await onSelect(device);
+      } catch (e) {}
       setLocked(false);
       toastHiddenRef.current?.();
     },
