@@ -176,6 +176,7 @@ export function SelectAddressSheetModal({
         ref={sheetModalRef}
         index={0}
         snapPoints={['70%']}
+        backgroundStyle={styles.sheet}
         enablePanDownToClose={!isEditing}
         enableDismissOnClose={true}
         backdropComponent={renderBackdrop}
@@ -274,6 +275,9 @@ const FOOTER_SIZES = {
 
 const getStyles = createGetStyles(colors => {
   return {
+    sheet: {
+      backgroundColor: colors['neutral-bg-1'],
+    },
     container: {
       paddingVertical: 20,
       flexDirection: 'column',

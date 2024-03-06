@@ -13,7 +13,6 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModalProvider,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
@@ -24,7 +23,7 @@ import { useThemeColors } from '@/hooks/theme';
 
 import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
-import { useSheetModal, useSheetModals } from '@/hooks/useSheetModal';
+import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
 import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
 import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
@@ -121,12 +120,15 @@ function useDefaultNodes({
   webviewState: WebViewState;
   webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
   const defaultHeaderLeft = useMemo(() => {
     return (
       <View style={[styles.touchableHeadWrapper]}>
         <Text> </Text>
       </View>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const headerLeftNode = useMemo(() => {
@@ -188,6 +190,7 @@ const DappWebViewControl = React.forwardRef<
     ref,
   ) => {
     const colors = useThemeColors();
+    const styles = getStyles(colors);
 
     const {
       webviewRef,
@@ -294,6 +297,7 @@ const DappWebViewControl = React.forwardRef<
       dappOrigin,
       handlePressMore,
       formattedCurrentUrl,
+      styles,
     ]);
 
     const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
@@ -385,6 +389,7 @@ const DappWebViewControl = React.forwardRef<
       webviewActions.onNavigationStateChange,
       webviewNode,
       webviewRef,
+      styles,
     ]);
 
     return (
@@ -418,66 +423,68 @@ const DappWebViewControl = React.forwardRef<
   },
 );
 
-const styles = StyleSheet.create({
-  dappWebViewControl: {
-    position: 'relative',
-    // don't put backgroundColor here to avoid cover the background on BottomSheetModal
-    backgroundColor: 'transparent',
-    width: '100%',
-    height: '100%',
-    paddingVertical: 10,
-  },
-  dappWebViewHeadContainer: {
-    flexShrink: 0,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-    maxWidth: Dimensions.get('window').width,
-    minHeight: ScreenLayouts.dappWebViewControlHeaderHeight,
-    paddingHorizontal: 20,
-    paddingVertical: 0,
-  },
-  flexShrink0: {
-    flexShrink: 0,
-  },
-  touchableHeadWrapper: {
-    height: ScreenLayouts.dappWebViewControlHeaderHeight,
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  DappWebViewHeadTitleWrapper: {
-    flexShrink: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...(Platform.OS === 'android' && {
+const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
+  StyleSheet.create({
+    dappWebViewControl: {
+      position: 'relative',
+      // don't put backgroundColor here to avoid cover the background on BottomSheetModal
+      backgroundColor: 'transparent',
       width: '100%',
-    }),
-  },
-  HeadTitleOrigin: {
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  HeadTitleMainDomain: {
-    fontSize: 11,
-    fontWeight: '400',
-    textAlign: 'center',
-    maxWidth: '90%',
-  },
+      height: '100%',
+      paddingVertical: 10,
+    },
+    dappWebViewHeadContainer: {
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      width: '100%',
+      maxWidth: Dimensions.get('window').width,
+      minHeight: ScreenLayouts.dappWebViewControlHeaderHeight,
+      paddingHorizontal: 20,
+      paddingVertical: 0,
+      backgroundColor: colors['neutral-bg-1'],
+    },
+    flexShrink0: {
+      flexShrink: 0,
+    },
+    touchableHeadWrapper: {
+      height: ScreenLayouts.dappWebViewControlHeaderHeight,
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    DappWebViewHeadTitleWrapper: {
+      flexShrink: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...(Platform.OS === 'android' && {
+        width: '100%',
+      }),
+    },
+    HeadTitleOrigin: {
+      fontSize: 16,
+      fontWeight: '500',
+      textAlign: 'center',
+    },
+    HeadTitleMainDomain: {
+      fontSize: 11,
+      fontWeight: '400',
+      textAlign: 'center',
+      maxWidth: '90%',
+    },
 
-  dappWebViewContainer: {
-    flexShrink: 1,
-    height: '100%',
-  },
-  dappWebView: {
-    height: '100%',
-    width: '100%',
-    opacity: 1,
-    overflow: 'hidden',
-  },
-});
+    dappWebViewContainer: {
+      flexShrink: 1,
+      height: '100%',
+    },
+    dappWebView: {
+      height: '100%',
+      width: '100%',
+      opacity: 1,
+      overflow: 'hidden',
+    },
+  });
 
 export default DappWebViewControl;

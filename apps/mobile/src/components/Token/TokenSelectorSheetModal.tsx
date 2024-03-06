@@ -210,6 +210,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         ref={tokenSelectorModal}
         snapPoints={['80%']}
         enableContentPanningGesture={false}
+        backgroundStyle={styles.sheet}
         enableDismissOnClose={true}
         onChange={idx => {
           if (idx < 0) {
@@ -389,6 +390,9 @@ const getStyles = createGetStyles(colors => {
       fontSize: 13,
       fontWeight: '400',
       textAlign: 'right',
+    },
+    sheet: {
+      backgroundColor: colors['neutral-bg-1'],
     },
   };
 });

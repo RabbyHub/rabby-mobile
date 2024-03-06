@@ -150,6 +150,7 @@ export default function BottomArea() {
       <Button
         disabled={!canSubmit}
         containerStyle={styles.buttonContainer}
+        titleStyle={styles.buttonText}
         type="primary"
         title={'Send'}
         loading={isSubmitLoading}
@@ -208,6 +209,10 @@ const getStyles = createGetStyles(colors => {
       ...(!isAndroid && {
         marginBottom: 16,
       }),
+    },
+
+    buttonText: {
+      color: colors['neutral-title-2'],
     },
 
     whitelistAlertContentContainer: {
