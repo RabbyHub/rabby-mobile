@@ -25,13 +25,19 @@ export const useApproval = () => {
     if (stay) {
       return;
     }
+    let currentNotificationId = notificationService.notifyWindowId;
+    // this is a main approval, no child approval
+    if (!data || !enablePopup(data.type)) {
+      notificationService.notifyWindowId = null;
+    }
+
     setTimeout(() => {
       if (data && enablePopup(data.type)) {
         return showPopup();
-      } else {
-        closePopup();
       }
-      removeGlobalBottomSheetModal(notificationService.notifyWindowId);
+
+      closePopup();
+      removeGlobalBottomSheetModal(currentNotificationId);
     }, 0);
   };
 
