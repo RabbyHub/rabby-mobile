@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { View, Text, TextInput } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
@@ -13,7 +13,10 @@ import { useCurrentAccount } from '@/hooks/account';
 import { devLog } from '@/utils/logger';
 import GasReserved from './components/GasReserved';
 import GasSelectorBottomSheetModal from './components/GasSelector';
+import { AddressViewer } from '@/components/AddressViewer';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { CHAINS } from '@/constant/chains';
+import { findChainByServerID } from '@/utils/chain';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -69,6 +72,15 @@ export function BalanceSection({ style }: RNViewProps) {
       handleGasChange,
     },
   } = useSendTokenInternalContext();
+  const tokenChain = useMemo(() => {
+    if (!currentToken) return null;
+    const chain = findChainByServerID(currentToken.chain);
+    return chain;
+  }, [currentToken]);
+  const isNativeToken = useMemo(() => {
+    if (!tokenChain || !currentToken) return true;
+    return tokenChain.nativeTokenAddress === currentToken.id;
+  }, [tokenChain, currentToken]);
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
@@ -146,11 +158,22 @@ export function BalanceSection({ style }: RNViewProps) {
       <View className="mt-[16]">
         <View style={styles.tokenDetailBlock}>
           <View style={styles.tokenDetailTriangle} />
-          <View style={styles.tokenDetailLine}>
+          {!isNativeToken && (
+            <View style={styles.tokenDetailLine}>
+              <Text style={styles.tokenDetailText}>Contract Address</Text>
+              <View style={styles.tokenDetailCopy}>
+                <AddressViewer address={currentToken.id} showArrow={false} />
+                <CopyAddressIcon address={currentToken.id} />
+              </View>
+            </View>
+          )}
+          <View style={[styles.tokenDetailLine, { marginTop: 8 }]}>
             <Text style={styles.tokenDetailText}>Chain</Text>
-            <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
-              {currentToken.name}
-            </Text>
+            {tokenChain && (
+              <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
+                {tokenChain.name}
+              </Text>
+            )}
           </View>
           <View style={[styles.tokenDetailLine, { marginTop: 8 }]}>
             <Text style={styles.tokenDetailText}>Price</Text>
@@ -247,6 +270,11 @@ const getBalanceStyles = createGetStyles(colors => {
     },
     tokenDetailValue: {
       textAlign: 'right',
+    },
+    tokenDetailCopy: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
     },
   };
 });

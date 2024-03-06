@@ -130,6 +130,7 @@ export const DappNavCardBottomSheetModal = forwardRef<
   }
 >(({ children, bottomNavH, ...props }, ref) => {
   const { safeTop } = useSafeSizes();
+  const colors = useThemeColors();
 
   const topSnapPoint = bottomNavH + safeTop;
 
@@ -143,6 +144,9 @@ export const DappNavCardBottomSheetModal = forwardRef<
       name="webviewNavRef"
       handleHeight={28}
       snapPoints={[topSnapPoint]}
+      backgroundStyle={{
+        backgroundColor: colors['neutral-bg-1'],
+      }}
       ref={ref}>
       <BottomSheetView className="px-[20] items-center justify-center">
         {children || null}

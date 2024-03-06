@@ -1,6 +1,5 @@
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import RcIconTriangle from '@/assets/icons/dapp/icon-triangle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import React, { useState } from 'react';
@@ -22,6 +21,7 @@ import { stringUtils } from '@rabby-wallet/base-utils';
 import { CHAINS } from '@/constant/chains';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
+import { makeTriangleStyle } from '@/utils/styles';
 import { Tip } from '@/components';
 
 export const DappCardListBy = ({
@@ -163,7 +163,7 @@ export const DappCard = ({
       {data.info?.description && !isActive ? (
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
-            <RcIconTriangle style={styles.triangle} />
+            <View style={styles.triangle} />
             <Text style={styles.dappDescText} numberOfLines={3}>
               {data.info.description}
             </Text>
@@ -249,11 +249,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       lineHeight: 20,
       color: colors['neutral-body'],
     },
-    triangle: {
-      position: 'absolute',
-      left: 8,
-      top: -8,
-    },
     dappIconWraper: {
       position: 'relative',
     },
@@ -320,5 +315,18 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       color: colors['neutral-title2'],
       fontSize: 12,
       lineHeight: 14,
+    },
+    triangle: {
+      position: 'absolute',
+      left: 8,
+      top: -8,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 7,
+        color: colors['neutral-card-3'],
+      }),
+      borderTopWidth: 1,
+      borderLeftWidth: 7,
+      borderRightWidth: 7,
     },
   });
