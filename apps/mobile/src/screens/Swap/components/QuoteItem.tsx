@@ -536,7 +536,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     elevation: 2,
     height: 66,
   },
-  cex: {
+  cexContainer: {
     flexDirection: 'row',
     borderColor: colors['neutral-line'],
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -614,5 +614,8 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '500',
     textAlign: 'left',
     paddingLeft: 12 + 12 + 4,
+  },
+  flex1: {
+    flex: 1,
   },
 }));
