@@ -1,7 +1,7 @@
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import {
   Tabs,
   CollapsibleProps,
@@ -11,6 +11,8 @@ import {
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
+
+const isAndroid = Platform.OS === 'android';
 
 interface Props {
   renderHeader: CollapsibleProps['renderHeader'];
@@ -57,7 +59,15 @@ export const AssetContainer: React.FC<Props> = ({
   );
 
   const renderTabItem = React.useCallback(
-    (props: any) => <MaterialTabItem {...props} inactiveOpacity={1} />,
+    (props: any) => (
+      <MaterialTabItem
+        {...(isAndroid && {
+          pressColor: 'transparent',
+        })}
+        {...props}
+        inactiveOpacity={1}
+      />
+    ),
     [],
   );
 

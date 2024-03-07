@@ -108,6 +108,7 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
+            visible: __DEV__,
             label: 'Switch Theme',
             icon: RcThemeMode,
             onPress: () => {

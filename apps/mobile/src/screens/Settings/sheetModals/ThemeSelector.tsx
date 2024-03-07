@@ -61,7 +61,7 @@ export default function ThemeSelectorModal({
     <AppBottomSheetModal
       ref={modalRef}
       index={0}
-      snapPoints={[270]}
+      snapPoints={[300]}
       onDismiss={onCancel}
       enableContentPanningGesture={false}>
       <View style={styles.container}>
@@ -98,6 +98,7 @@ const getStyles = createGetStyles(colors => {
   return {
     container: {
       paddingHorizontal: 20,
+      paddingBottom: 12,
       flexDirection: 'column',
       gap: 12,
       height: '100%',
