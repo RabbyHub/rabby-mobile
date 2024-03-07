@@ -84,7 +84,9 @@ export const SelectDeviceScreen: React.FC<{
 
   const handlePress = React.useCallback(
     async device => {
-      toastHiddenRef.current = toastIndicator('Connecting');
+      toastHiddenRef.current = toastIndicator('Connecting', {
+        isTop: true,
+      });
       setLocked(true);
       try {
         await onSelect(device);

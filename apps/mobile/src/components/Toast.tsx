@@ -115,17 +115,25 @@ export const toastLoading = (msg?: string) => {
   return () => Toast.hide(_toast);
 };
 
-export const toastIndicator = (msg: string, options?: ToastOptions) => {
+export const toastIndicator = (
+  msg: string,
+  options?: ToastOptions & {
+    isTop?: boolean;
+  },
+) => {
   return toastWithIcon(() => (
     <ActivityIndicator
       // eslint-disable-next-line react-native/no-inline-styles
       style={{
         marginRight: 6,
       }}
+      color={ThemeColors.light['neutral-title-2']}
     />
   ))(msg, {
     duration: 100000,
-    position: toast.positions.CENTER,
+    position: options?.isTop
+      ? Toast.positions.TOP + 80
+      : toast.positions.CENTER,
     hideOnPress: false,
     ...options,
   });
