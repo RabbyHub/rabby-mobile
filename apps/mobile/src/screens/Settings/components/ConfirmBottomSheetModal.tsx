@@ -68,12 +68,8 @@ export const ConfirmBottomSheetModal = forwardRef<
           <Button
             onPress={confirm}
             title={'Confirm'}
-            buttonStyle={[
-              styles.buttonStyle,
-              {
-                backgroundColor: colors['red-default'],
-              },
-            ]}
+            type="primary"
+            buttonStyle={[styles.buttonStyle]}
             titleStyle={styles.btnConfirmTitle}
             containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
             Confirm
