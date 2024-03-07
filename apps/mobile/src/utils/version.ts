@@ -9,6 +9,7 @@ import { devLog } from './logger';
 
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
 import { APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
+import { sleep } from './async';
 
 export type RemoteVersionRes = {
   version?: string;
@@ -25,10 +26,6 @@ export type MergedRemoteVersion = {
   source: AppBuildChannel;
   couldUpgrade: boolean;
 };
-
-export function sleep(ms = 0) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 const isAndroid = Platform.OS === 'android';
 const isSelfHostProd = BUILD_CHANNEL === 'selfhost';
