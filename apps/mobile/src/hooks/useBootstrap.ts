@@ -8,7 +8,7 @@ import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
 import { CHAINS_LIST, syncChainList } from '@/constant/chains';
-import { sleep } from '@/utils/version';
+import { sleep } from '@/utils/async';
 
 const bootstrapAtom = atom({
   appInitialized: false,

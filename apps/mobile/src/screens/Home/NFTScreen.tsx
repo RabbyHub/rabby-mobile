@@ -15,7 +15,7 @@ import {
   SectionListProps,
   Dimensions,
   RefreshControl,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useQueryNft } from './hooks/nft';
 import FastImage from 'react-native-fast-image';
@@ -25,6 +25,7 @@ import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { toast } from '@/components/Toast';
+import { usePsudoPagination } from '@/hooks/common/usePagination';
 
 type ItemProps = {
   item: NFTItem;
@@ -101,6 +102,7 @@ class PureItem extends React.PureComponent<{
 }> {
   render() {
     const { style, items, collection } = this.props;
+
     return (
       <View style={style}>
         {items.map((token, index) => (
@@ -122,24 +124,38 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   const styles = getStyle(colors, isLight);
   const { currentAccount } = useCurrentAccount();
 
-  const { list, isLoading, reload } = useQueryNft(currentAccount!.address);
+  const {
+    list: nftList,
+    isLoading,
+    reload,
+  } = useQueryNft(currentAccount!.address);
   const refreshing = useMemo(() => {
-    if (list.length > 0) {
+    if (nftList.length > 0) {
       return isLoading;
     } else {
       return false;
     }
-  }, [isLoading, list]);
+  }, [isLoading, nftList]);
 
-  const sectionList = useMemo(
+  const fullSectionList = useMemo(
     () =>
-      list.map(item => ({
-        data: chunk(item.nft_list, 5),
-        collection: item,
-        key: item.id,
+      nftList.map(collection => ({
+        data: chunk(collection.nft_list, 5),
+        collection: collection,
+        key: collection.id,
       })),
-    [list],
+    [nftList],
   );
+
+  const {
+    fallList: sectionList,
+    simulateLoadNext: goToNextSectionList,
+    isFetchingNextPage,
+  } = usePsudoPagination(fullSectionList, { pageSize: 8 });
+
+  const onEndReached = useCallback(() => {
+    goToNextSectionList();
+  }, [goToNextSectionList]);
 
   const renderItem: Exclude<
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
@@ -206,10 +222,19 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
     [styles],
   );
 
-  const keyExtractor = useCallback((x: { id: any }[]) => x[0].id, []);
+  const keyExtractor = useCallback<
+    SectionListProps<
+      NFTItem[],
+      { collection?: CollectionList }
+    >['keyExtractor'] &
+      object
+  >((nftItems, index) => {
+    const allIds = nftItems.map(item => item.id).join('-');
+    return `${allIds}-${index}`;
+  }, []);
 
   const renderHeaderComponent = useCallback(() => {
-    if (!list.length) {
+    if (!nftList.length) {
       return null;
     }
     return (
@@ -219,7 +244,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
         <View style={styles.tipLine} />
       </View>
     );
-  }, [list.length, styles.tip, styles.tipContainer, styles.tipLine]);
+  }, [nftList.length, styles.tip, styles.tipContainer, styles.tipLine]);
 
   const ListEmptyComponent = useMemo(() => {
     return isLoading ? (
@@ -231,8 +256,12 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
 
   return (
     <View style={styles.container}>
-      <Tabs.SectionList
+      <Tabs.SectionList<NFTItem[]>
+        initialNumToRender={4}
+        maxToRenderPerBatch={20}
+        // updateCellsBatchingPeriod={200}
         ListHeaderComponent={renderHeaderComponent}
+        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator /> : null}
         style={styles.list}
         contentContainerStyle={styles.listContainer}
         renderItem={renderItem}
@@ -242,6 +271,8 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
         keyExtractor={keyExtractor}
         ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
