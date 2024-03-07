@@ -29,8 +29,8 @@ import { usePsudoPagination } from '@/hooks/common/usePagination';
 
 type ItemProps = {
   item: NFTItem;
-  index: number;
-  collectionName: string;
+  indexInline: number;
+  lastCountMark: null | number;
 };
 const width = Dimensions.get('window').width;
 /**
@@ -41,7 +41,7 @@ const width = Dimensions.get('window').width;
  */
 const detailWidth = (width - 90) / 5;
 
-const Item = ({ item, index, collectionName }: ItemProps) => {
+const Item = ({ item, lastCountMark }: ItemProps) => {
   const colors = useThemeColors();
   const isLight = useColorScheme() === 'light';
   const styles = getStyle(colors, isLight);
@@ -66,6 +66,8 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
     return v;
   }, [item.amount]);
 
+  const isSvgURL = item?.content?.endsWith('.svg');
+
   return (
     <CustomTouchableOpacity
       style={StyleSheet.flatten([
@@ -75,17 +77,21 @@ const Item = ({ item, index, collectionName }: ItemProps) => {
           height: detailWidth,
         },
       ])}
-      key={item.id}
       onPress={handleNFTPress}>
       <Media
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
         type={item?.content_type}
-        src={item?.content?.endsWith('.svg') ? '' : item?.content}
-        thumbnail={item?.content?.endsWith('.svg') ? '' : item?.content}
+        src={isSvgURL ? '' : item?.content}
+        thumbnail={isSvgURL ? '' : item?.content}
         mediaStyle={styles.images}
         style={styles.images}
         playIconSize={36}
       />
+      {lastCountMark && (
+        <View style={styles.imageCountMarkView}>
+          <Text style={styles.imageCountMarkText}>+{lastCountMark}</Text>
+        </View>
+      )}
       {item?.amount > 1 ? (
         <View style={styles.corner}>
           <Text style={styles.cornerNumber}>{numberDisplay}</Text>
@@ -99,25 +105,41 @@ class PureItem extends React.PureComponent<{
   style: React.ComponentProps<typeof View>['style'];
   items: NFTItem[];
   collection: CollectionList;
+  isLastLine?: boolean;
 }> {
   render() {
-    const { style, items, collection } = this.props;
+    const { style, items, collection, isLastLine } = this.props;
+
+    const collectionNFTCount = collection.nft_list.length;
+    const needLastCountMark =
+      isLastLine && collectionNFTCount > NFT_LIMITED_DISPLAY_COUNT;
 
     return (
       <View style={style}>
-        {items.map((token, index) => (
-          <Item
-            item={token}
-            index={index}
-            key={token.id}
-            collectionName={collection!.name}
-          />
-        ))}
+        {items.map((token, indexInline) => {
+          const lastCountMark = !needLastCountMark
+            ? null
+            : indexInline === NFT_COUNT_PER_LINE - 1
+            ? collectionNFTCount
+            : null;
+
+          return (
+            <Item
+              item={token}
+              indexInline={indexInline}
+              key={`${token.id}-${collection!.name}-${indexInline}`}
+              lastCountMark={lastCountMark}
+            />
+          );
+        })}
       </View>
     );
   }
 }
 
+const NFT_COUNT_PER_LINE = 5;
+const NFT_LIMITED_DISPLAY_COUNT = 50;
+const NFT_LINES_LIMIT = NFT_LIMITED_DISPLAY_COUNT / NFT_COUNT_PER_LINE;
 export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   const colors = useThemeColors();
   const isLight = useColorScheme() === 'light';
@@ -139,11 +161,15 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
 
   const fullSectionList = useMemo(
     () =>
-      nftList.map(collection => ({
-        data: chunk(collection.nft_list, 5),
-        collection: collection,
-        key: collection.id,
-      })),
+      nftList.map((collection, index) => {
+        const renderLines = chunk(collection.nft_list, NFT_COUNT_PER_LINE);
+        return {
+          // data: chunk(collection.nft_list, 5),
+          data: renderLines.slice(0, NFT_LINES_LIMIT),
+          collection: collection,
+          key: `${collection.id}-${index}`,
+        };
+      }),
     [nftList],
   );
 
@@ -161,13 +187,15 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
     SectionListProps<NFTItem[], { collection?: CollectionList }>['renderItem'],
     void
   > = useCallback(
-    ({ item, section: { collection } }) => {
+    ({ item, section: { collection }, index }) => {
+      const isLastLine = index === NFT_LINES_LIMIT - 1;
       return (
         <PureItem
           style={styles.imageContainer}
           items={item}
           collection={collection!}
           key={collection!.name}
+          isLastLine={isLastLine}
         />
       );
     },
@@ -365,6 +393,24 @@ const getStyle = (colors: AppColorsVariants, isLight = true) =>
       alignItems: 'center',
       position: 'relative',
       margin: 5,
+      // ...makeDebugBorder('blue'),
+    },
+    imageCountMarkView: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      borderRadius: 4,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    imageCountMarkText: {
+      color: '#fff',
+      fontSize: 16,
+      fontStyle: 'normal',
+      fontWeight: '600',
     },
     images: {
       width: '100%',
