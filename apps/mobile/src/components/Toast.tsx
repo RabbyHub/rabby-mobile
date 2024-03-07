@@ -115,6 +115,22 @@ export const toastLoading = (msg?: string) => {
   return () => Toast.hide(_toast);
 };
 
+export const toastIndicator = (msg: string, options?: ToastOptions) => {
+  return toastWithIcon(() => (
+    <ActivityIndicator
+      // eslint-disable-next-line react-native/no-inline-styles
+      style={{
+        marginRight: 6,
+      }}
+    />
+  ))(msg, {
+    duration: 100000,
+    position: toast.positions.CENTER,
+    hideOnPress: false,
+    ...options,
+  });
+};
+
 export const toastLoadingSuccess = (msg?: string, options?: ToastOptions) => {
   const _toast = Toast.show(
     // @ts-ignore
