@@ -45,6 +45,7 @@ const getStyles = createGetStyles(colors => ({
   contentContainerStyle: {
     gap: 12,
     paddingHorizontal: 20,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 20,
@@ -64,7 +65,6 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
     gap: 16,
   },
   emptyList: {
@@ -403,20 +403,18 @@ const HistoryList = () => {
   }, [noMore, styles.skeletonBlock]);
   const { bottom } = useSafeAreaInsets();
 
-  if (!loading && (!txList || !txList?.list?.length)) {
-    return (
-      <BottomSheetView style={styles.emptyView}>
-        <View style={styles.emptyList}>
-          <ListHeaderComponent />
+  const ListEmptyComponent = useMemo(
+    () =>
+      !loading && (!txList || !txList?.list?.length) ? (
+        <View style={styles.emptyView}>
+          <RcIconSwapHistoryEmpty width={52} height={52} />
+          <Text style={styles.emptyText}>
+            {t('page.swap.no-transaction-records')}
+          </Text>
         </View>
-
-        <RcIconSwapHistoryEmpty width={52} height={52} />
-        <Text style={styles.emptyText}>
-          {t('page.swap.no-transaction-records')}
-        </Text>
-      </BottomSheetView>
-    );
-  }
+      ) : null,
+    [loading, txList, styles.emptyView, styles.emptyText, t],
+  );
 
   return (
     <BottomSheetFlatList
@@ -432,9 +430,9 @@ const HistoryList = () => {
       renderItem={renderItem}
       keyExtractor={item => item.tx_id + item.chain}
       onEndReached={loadMore}
-      onEndReachedThreshold={0.7}
+      onEndReachedThreshold={0.6}
       ListFooterComponent={ListEndLoader}
-      ListEmptyComponent={ListEndLoader}
+      ListEmptyComponent={ListEmptyComponent}
     />
   );
 };

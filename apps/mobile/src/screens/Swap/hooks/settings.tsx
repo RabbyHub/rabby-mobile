@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 
 const swapUnlimitedAllowanceAtom = atom(false, (get, set, bool: boolean) => {
   swapService.setUnlimitedAllowance(bool);
-  console.log('setUnlimitedAllowance bool', bool);
   set(swapUnlimitedAllowanceAtom, bool);
 });
 

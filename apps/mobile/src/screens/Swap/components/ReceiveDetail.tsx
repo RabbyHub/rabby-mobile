@@ -10,8 +10,6 @@ import {
 import ImgVerified from '@/assets/icons/swap/verified.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
 import ImgInfo from '@/assets/icons/swap/info-outline.svg';
-import ImgSwitch from '@/assets/icons/swap/switch.svg';
-import ImgGas from '@/assets/icons/swap/gas.svg';
 import ImgLock from '@/assets/icons/swap/lock.svg';
 
 import React from 'react';
@@ -26,6 +24,7 @@ import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { DEX } from '@/constant/swap';
+import { RcIconSwapGas, RcIconSwitchQuote } from '@/assets/icons/swap';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
   i18n.t('page.swap.QuoteLessWarning', { receive, diff });
@@ -155,8 +154,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
             </View>
             {!!activeProvider?.gasUsd && (
               <View style={styles.flexRow}>
-                {/* <Image source={ImgGas} style={styles.gasImage} /> */}
-                <ImgGas style={styles.gasImage} />
+                <RcIconSwapGas style={styles.gasImage} />
                 <Text style={styles.diffText}>{activeProvider?.gasUsd}</Text>
               </View>
             )}
@@ -242,7 +240,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
           onPress={() => {
             openQuote(true);
           }}>
-          <ImgSwitch style={styles.switchImage} />
+          <RcIconSwitchQuote style={styles.switchImage} />
         </TouchableOpacity>
       ) : null}
     </View>

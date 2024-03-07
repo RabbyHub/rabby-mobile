@@ -31,6 +31,7 @@ import { QuoteList } from './components/Quotes';
 import { Slippage } from './components/Slippage';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import { dexSwap } from './hooks/swap';
+import { colord } from 'colord';
 
 type SwapProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -218,18 +219,21 @@ const Swap = () => {
     <NormalScreenContainer>
       <KeyboardAwareScrollView
         style={styles.container}
-        contentContainerStyle={styles.container}>
+        contentContainerStyle={styles.container}
+        enableOnAndroid
+        extraHeight={200}
+        keyboardOpeningTime={0}>
         <View style={styles.content}>
           <Text style={styles.label}>{t('page.swap.chain')}</Text>
           <ChainInfo chainEnum={chain} onChange={switchChain} />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
-              <Text>{t('page.swap.swap-from')}</Text>
+              <Text style={styles.label}>{t('page.swap.swap-from')}</Text>
             </View>
             <View style={styles.arrow} />
 
             <View style={styles.flex1}>
-              <Text>{t('page.swap.to')}</Text>
+              <Text style={styles.label}>{t('page.swap.to')}</Text>
             </View>
           </View>
           <View style={styles.rowView}>
@@ -277,7 +281,7 @@ const Swap = () => {
           </View>
 
           <View style={styles.amountInContainer}>
-            <Text>
+            <Text style={styles.label}>
               {t('page.swap.amount-in', {
                 symbol: payToken ? getTokenSymbol(payToken) : '',
               })}
@@ -289,11 +293,12 @@ const Swap = () => {
                 }
               }}>
               <Text
-                style={
+                style={[
+                  styles.label,
                   !payTokenIsNativeToken && {
                     textDecorationLine: 'underline',
-                  }
-                }>
+                  },
+                ]}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
             </TouchableItem>
@@ -439,6 +444,8 @@ const Swap = () => {
             gotoSwap();
           }}
           title={btnText}
+          titleStyle={styles.btnTitle}
+          disabledTitleStyle={styles.btnDisabledTitle}
           disabled={
             !payToken || !receiveToken || !payAmount || Number(payAmount) === 0
           }
@@ -490,6 +497,7 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 13,
     fontWeight: '400',
     marginBottom: 8,
+    color: colors['neutral-body'],
   },
   rowView: {
     flexDirection: 'row',
@@ -604,6 +612,12 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 13,
     fontWeight: '500',
     color: colors['neutral-foot'],
+  },
+  btnTitle: {
+    color: colors['neutral-title-2'],
+  },
+  btnDisabledTitle: {
+    color: colord(colors['neutral-title-2']).alpha(0.5).toHex(),
   },
 }));
 

@@ -1,25 +1,19 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  Image,
   TouchableOpacity,
-  ViewProps,
   TouchableOpacityProps,
   Animated,
   StyleSheet,
 } from 'react-native';
 import BigNumber from 'bignumber.js';
-// import { SlippageItem } from './SlippageItem';
-import ImgArrowUp from '@/assets/icons/swap/arrow-up.svg';
 import { Trans, useTranslation } from 'react-i18next';
 import { useThemeColors } from '@/hooks/theme';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import useToggle from 'react-use/lib/useToggle';
 import { createGetStyles } from '@/utils/styles';
 import { Input } from '@rneui/base';
-import { BottomSheetInput } from '@/components/Input';
+import { RcIconArrowUp } from '@/assets/icons/swap';
 
 const SLIPPAGE = ['0.1', '0.3', '0.5'];
 
@@ -30,11 +24,17 @@ interface SlippageProps {
   recommendValue?: number;
 }
 
-const SlippageItem = (props: TouchableOpacityProps) => {
+const SlippageItem = (props: TouchableOpacityProps & { active?: boolean }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  return <TouchableOpacity {...props} style={[styles.item, props.style]} />;
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      {...props}
+      style={[styles.item, props.active && styles.itemActive, props.style]}
+    />
+  );
 };
 
 export const Slippage = (props: SlippageProps) => {
@@ -42,6 +42,8 @@ export const Slippage = (props: SlippageProps) => {
 
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+
+  const [isCustom, setIsCustom] = useToggle(false);
 
   const { value, displaySlippage, onChange, recommendValue } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
@@ -109,12 +111,14 @@ export const Slippage = (props: SlippageProps) => {
         onPress={() => setSlippageOpen(open => !open)}>
         <Text style={styles.text}>{t('page.swap.slippage-tolerance')}</Text>
         <View style={styles.valueContainer}>
-          <Text style={styles.value}>{displaySlippage}%</Text>
+          <Text style={[styles.value, !!tips && styles.warning]}>
+            {displaySlippage}%
+          </Text>
           <Animated.View
             style={{
               transform: [{ rotate: slippageOpen ? '180deg' : '0deg' }],
             }}>
-            <ImgArrowUp width={14} height={14} />
+            <RcIconArrowUp width={14} height={14} />
           </Animated.View>
         </View>
       </TouchableOpacity>
@@ -124,18 +128,26 @@ export const Slippage = (props: SlippageProps) => {
             {SLIPPAGE.map(e => (
               <SlippageItem
                 key={e}
+                active={!isCustom && e === value}
                 onPress={() => {
+                  setIsCustom(false);
                   onChange(e);
                 }}>
                 <Text style={styles.input}>{e}%</Text>
               </SlippageItem>
             ))}
-            <SlippageItem style={styles.flex1}>
+            <SlippageItem
+              style={[
+                styles.inputItem,
+                isCustom && { borderColor: colors['blue-default'] },
+              ]}
+              active={isCustom}>
               <Input
                 errorStyle={styles.errorStyle}
                 inputContainerStyle={styles.inputContainerStyle}
                 inputStyle={styles.input}
                 value={value}
+                onPressIn={() => setIsCustom(true)}
                 onChangeText={onInputChange}
                 placeholder="0.1"
                 keyboardType="numeric"
@@ -169,6 +181,9 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 13,
     fontWeight: '500',
     color: colors['neutral-title-1'],
+  },
+  warning: {
+    color: colors['orange-default'],
   },
   selectContainer: {
     marginTop: 8,
@@ -206,13 +221,18 @@ const getStyles = createGetStyles(colors => ({
     width: 52,
     borderRadius: 4,
   },
+  itemActive: {
+    backgroundColor: colors['blue-light-1'],
+    borderColor: colors['blue-default'],
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   listContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
   },
-  flex1: {
+  inputItem: {
     flex: 1,
     borderColor: colors['neutral-line'],
     borderWidth: StyleSheet.hairlineWidth,

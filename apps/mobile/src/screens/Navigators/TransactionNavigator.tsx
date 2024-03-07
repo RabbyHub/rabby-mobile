@@ -65,6 +65,9 @@ export default function TransactionNavigator() {
           ...screenOptions,
           title: 'Swap',
           ...headerPresets.withBgCard2,
+          headerStyle: {
+            backgroundColor: colors?.['neutral-bg-2'],
+          },
         }}
       />
     </TransactionStack.Navigator>

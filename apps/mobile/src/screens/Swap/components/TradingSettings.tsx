@@ -24,6 +24,7 @@ import { SwapModal } from './Modal';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { colord } from 'colord';
 
 const list = [...Object.values(DEX), ...Object.values(CEX)] as {
   id: keyof typeof DEX | keyof typeof CEX;
@@ -201,6 +202,7 @@ function EnableTrading({
           containerStyle={styles.btnC}
           buttonStyle={styles.confirmStyle}
           titleStyle={styles.confirmTitleStyle}
+          disabledTitleStyle={styles.confirmTitleDisabledStyle}
           onPress={onConfirm}
         />
       </View>
@@ -222,7 +224,7 @@ const getStyles = createGetStyles(colors => ({
   },
   headerTitle: {
     color: colors['neutral-title-1'],
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: '500',
     textAlign: 'center',
     paddingBottom: 20,
@@ -279,7 +281,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title-1'],
   },
   type: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors['neutral-foot'],
     marginLeft: 8,
     borderWidth: StyleSheet.hairlineWidth * 2,
@@ -307,6 +309,7 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     marginBottom: 16,
     textAlign: 'center',
+    color: colors['neutral-title-1'],
   },
   text: {
     fontSize: 16,
@@ -371,5 +374,8 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     color: colors['neutral-title2'],
     flex: 1,
+  },
+  confirmTitleDisabledStyle: {
+    color: colord(colors['neutral-title2']).alpha(0.5).toHex(),
   },
 }));
