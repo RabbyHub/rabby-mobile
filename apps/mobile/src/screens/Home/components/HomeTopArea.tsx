@@ -23,11 +23,15 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { RootStackParamsList } from '@/navigation-type';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const navigation = useNavigation();
+  const navigation = useNavigation<HomeProps['navigation']>();
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => [436], []);
 
@@ -68,8 +72,11 @@ export const HomeTopArea = () => {
     {
       title: 'Swap',
       Icon: RcIconSwap,
-      disabled: true,
-      onPress: () => {},
+      onPress: () => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Swap,
+        });
+      },
     },
     {
       title: 'More',

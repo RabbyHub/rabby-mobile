@@ -57,6 +57,8 @@ export const RootNames = {
   Receive: 'Receive',
 
   ImportLedger: 'ImportLedger',
+
+  Swap: 'Swap',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

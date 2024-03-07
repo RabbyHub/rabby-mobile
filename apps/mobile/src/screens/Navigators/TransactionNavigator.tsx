@@ -10,6 +10,7 @@ import HistoryScreen from '@/screens/Transaction/History';
 import SendScreen from '../Send/Send';
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
+import Swap from '../Swap';
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -57,6 +58,15 @@ export default function TransactionNavigator() {
       />
       {/* ReceiveScreen */}
       {/* SwapScreen */}
+      <TransactionStack.Screen
+        name={RootNames.Swap}
+        component={Swap}
+        options={{
+          ...screenOptions,
+          title: 'Swap',
+          ...headerPresets.withBgCard2,
+        }}
+      />
     </TransactionStack.Navigator>
   );
 }

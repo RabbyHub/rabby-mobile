@@ -42,6 +42,7 @@ import {
 } from './navigation-type';
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import Swap from './screens/Swap';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 

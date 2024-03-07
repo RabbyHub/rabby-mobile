@@ -21,6 +21,7 @@ import {
   transactionWatcherService,
   transactionBroadcastWatcherService,
   notificationService,
+  swapService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -546,10 +547,9 @@ class ProviderController extends BaseController {
         }
 
         const { r, s, v, ...other } = approvalRes;
-        // TODO: swapService
-        // if (hash) {
-        //   swapService.postSwap(chain, hash, other);
-        // }
+        if (hash) {
+          swapService.postSwap(chain, hash, other);
+        }
 
         statsData.submit = true;
         statsData.submitSuccess = true;

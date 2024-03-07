@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { atom, useAtom } from 'jotai';
 
-import { dappService } from '../services/shared';
+import { dappService, swapService } from '../services/shared';
 import { FieldNilable } from '@rabby-wallet/base-utils';
 
 const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
