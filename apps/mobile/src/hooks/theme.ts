@@ -18,11 +18,16 @@ import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 
+const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
   appTheme: AppThemeScheme,
   rnColorScheme: ColorSchemeName = 'light',
 ): ColorSchemeName {
-  return appTheme === 'system' ? rnColorScheme ?? 'light' : appTheme;
+  if (__DEV__) {
+    return appTheme === 'system' ? rnColorScheme ?? 'light' : appTheme;
+  }
+
+  return FORCE_THEME;
 }
 
 function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {

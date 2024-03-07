@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.facebook.react.views.text.ReactFontManager;
 import com.facebook.react.modules.network.OkHttpClientProvider;
+// import androidx.appcompat.app.AppCompatDelegate;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -55,6 +56,8 @@ public class MainApplication extends Application implements ReactApplication {
     SoLoader.init(this, /* native exopackage */ false);
     OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory());
     ReactFontManager.getInstance().addCustomFont(this, "Roboto", R.font.roboto);
+    // AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+
     // ReactFontManager.getInstance().addCustomFont(this, "SF Pro", R.font.sfpro);
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
