@@ -262,6 +262,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
           )}
 
           <BottomSheetScrollView
+            keyboardShouldPersistTaps="handled"
             style={[styles.scrollView, styles.internalBlock]}>
             {tokens.map(token => {
               const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
