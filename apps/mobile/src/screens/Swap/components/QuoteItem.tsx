@@ -6,7 +6,6 @@ import React, { useMemo, useCallback, useState } from 'react';
 import { QuoteLogo } from './QuoteLogo';
 import BigNumber from 'bignumber.js';
 import ImgLock from '@/assets/icons/swap/lock.svg';
-import ImgGas from '@/assets/icons/swap/gas.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
 import ImgVerified from '@/assets/icons/swap/verified.svg';
 import ImgWhiteWarning from '@/assets/icons/swap/warning-white.svg';
@@ -24,18 +23,14 @@ import {
 import { useTranslation } from 'react-i18next';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import i18n from '@/utils/i18n';
 import { Tip } from '@/components';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { RcIconSwapGas } from '@/assets/icons/swap';
+import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
 
 export interface QuoteItemProps {
   quote: QuoteResult | null;
@@ -427,8 +422,12 @@ export const DexQuoteItem = (
         </View>
 
         {!(disabled && !inSufficient) && (
-          <View style={styles.flexRow}>
-            <ImgGas width={14} height={14} />
+          <View
+            style={
+              (styles.flexRow,
+              { flexDirection: 'row', gap: 2, alignItems: 'center' })
+            }>
+            <RcIconSwapGas width={14} height={14} />
             <Text style={styles.gasUsd}>{preExecResult?.gasUsd}</Text>
           </View>
         )}
@@ -477,16 +476,15 @@ export const DexQuoteItem = (
             {t('page.swap.this-exchange-is-not-enabled-to-trade-by-you')}
           </Text>
         </View>
-        <Pressable
-          onPress={e => {
-            e.stopPropagation();
+        <TouchableOpacityGesture
+          onPress={() => {
             openSwapSettings(true);
             setDisabledTradeTipsOpen(false);
           }}>
           <Text style={styles.disabledContentBtnText}>
             {t('page.swap.enable-it')}
           </Text>
-        </Pressable>
+        </TouchableOpacityGesture>
       </View>
     </TouchableOpacity>
   );
@@ -533,7 +531,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     },
     shadowOpacity: 1,
     shadowRadius: 12,
-    elevation: 2,
+    // elevation: 2,
     height: 66,
   },
   cexContainer: {

@@ -20,12 +20,12 @@ import { RcIconSwapChecked, RcIconSwapUnchecked } from '@/assets/icons/swap';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import TouchableItem from '@/components/Touchable/TouchableItem';
-import RcSwapRefresh from '@/assets/icons/swap/refresh.svg';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import { getTokenSymbol } from '@/utils/token';
 import { CexQuoteItem } from './CexQuoteItem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SwapRefreshBtn } from './SwapRefreshBtn';
 
 const exchangeCount = Object.keys(DEX).length + Object.keys(CEX).length;
 
@@ -315,10 +315,7 @@ export const QuoteList = (props: QuotesProps) => {
           <Text style={styles.headerText}>
             {t('page.swap.the-following-swap-rates-are-found')}
           </Text>
-          {/* <IconRefresh onPress={refreshQuote} /> */}
-          <TouchableItem onPress={refreshQuote}>
-            <RcSwapRefresh width={16} height={16} />
-          </TouchableItem>
+          <SwapRefreshBtn onPress={refreshQuote} />
 
           <Radio
             checked={!!sortIncludeGasFee}
@@ -380,7 +377,7 @@ const getStyles = createGetStyles(colors => ({
   },
 
   foot: {
-    paddingTop: 40,
+    paddingTop: 16,
     flexDirection: 'row',
     paddingBottom: 20,
   },

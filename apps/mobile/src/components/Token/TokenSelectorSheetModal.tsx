@@ -84,6 +84,9 @@ export const TokenSelectorSheetModal = React.forwardRef<
 
     useEffect(() => {
       toggleShowSheetModal(visible ? true : false);
+      if (!visible) {
+        setIsInputActive(false);
+      }
     }, [visible, toggleShowSheetModal]);
 
     const colors = useThemeColors();

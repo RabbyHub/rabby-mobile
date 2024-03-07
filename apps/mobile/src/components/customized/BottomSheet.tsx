@@ -52,6 +52,15 @@ export const AppBottomSheetModal = forwardRef<
 >((props, ref) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
+  const backgroundStyle = useMemo(
+    () => [
+      {
+        backgroundColor: colors['neutral-bg-1'],
+      },
+      props.backgroundStyle,
+    ],
+    [colors, props.backgroundStyle],
+  );
   const renderBackdrop = useCallback<
     React.ComponentProps<typeof BottomSheetModal>['backdropComponent'] &
       Function
@@ -72,6 +81,7 @@ export const AppBottomSheetModal = forwardRef<
       stackBehavior="push"
       enableDynamicSizing={false}
       {...props}
+      backgroundStyle={backgroundStyle}
       ref={ref}
       handleStyle={StyleSheet.flatten([styles.handleStyles, props.handleStyle])}
       handleIndicatorStyle={[
