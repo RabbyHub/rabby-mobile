@@ -41,7 +41,7 @@
     "@ethereumjs/common": "4.2.0",
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
-    "@gorhom/bottom-sheet": "5.0.0-alpha.4",
+    "@gorhom/bottom-sheet": "alpha",
     "@ledgerhq/react-native-hw-transport-ble": "^6.32.2",
     "@metamask/eth-sig-util": "5.1.0",
     "@notifee/react-native": "^7.8.0",

@@ -70,6 +70,7 @@ export const AppBottomSheetModal = forwardRef<
     <BottomSheetModal
       backdropComponent={renderBackdrop}
       stackBehavior="push"
+      enableDynamicSizing={false}
       {...props}
       ref={ref}
       handleStyle={StyleSheet.flatten([styles.handleStyles, props.handleStyle])}
