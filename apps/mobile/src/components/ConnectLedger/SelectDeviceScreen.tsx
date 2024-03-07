@@ -9,7 +9,7 @@ import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { RcIconRightCC } from '@/assets/icons/common';
-import { toast } from '../Toast';
+import { toastIndicator } from '../Toast';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -84,9 +84,7 @@ export const SelectDeviceScreen: React.FC<{
 
   const handlePress = React.useCallback(
     async device => {
-      toastHiddenRef.current = toast.show('Connecting...', {
-        duration: 100000,
-      });
+      toastHiddenRef.current = toastIndicator('Connecting');
       setLocked(true);
       try {
         await onSelect(device);

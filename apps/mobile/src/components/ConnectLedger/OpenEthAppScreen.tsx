@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
-import ScanLedgerSVG from '@/assets/icons/sign/scan-ledger.svg';
+import OpenLedgerSVG from '@/assets/icons/sign/open-ledger.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
+import { CircleSnail } from 'react-native-progress';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -54,7 +55,12 @@ export const OpenEthAppScreen: React.FC<{}> = ({}) => {
           {t('page.newAddress.ledger.openEthApp.description')}
         </Text>
         <View style={styles.imageWrapper}>
-          <ScanLedgerSVG />
+          <OpenLedgerSVG />
+          <CircleSnail
+            color={[colors['blue-default']]}
+            size={240}
+            style={styles.progress}
+          />
         </View>
       </View>
     </View>

@@ -1,6 +1,6 @@
 import { WalletSVG } from '@/assets/icons/address';
 import { Text } from '@/components';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastIndicator } from '@/components/Toast';
 import { RootNames } from '@/constant/layout';
 import { apisWalletConnect } from '@/core/apis';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
@@ -14,7 +14,7 @@ import { KEYRING_CATEGORY, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAppState } from '@react-native-community/hooks';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -22,9 +22,6 @@ import { WalletItem } from './WalletItem';
 const styles = StyleSheet.create({
   walletItem: {
     marginBottom: 8,
-  },
-  toastIcon: {
-    marginRight: 6,
   },
 });
 
@@ -46,13 +43,7 @@ export const WalletConnectList = () => {
     });
 
     setUriLoading(true);
-    const toastHide = toastWithIcon(() => (
-      <ActivityIndicator style={styles.toastIcon} />
-    ))(`Opening ${service.displayName}`, {
-      duration: 100000,
-      position: toast.positions.CENTER,
-      hideOnPress: false,
-    });
+    const toastHide = toastIndicator(`Opening ${service.displayName}`);
     const uri = await apisWalletConnect.getUri(service.brand);
     if (uri) {
       hideImportLoadingTipRef.current?.();
@@ -71,14 +62,11 @@ export const WalletConnectList = () => {
 
   const toastImportTip = React.useCallback(
     () =>
-      toastWithIcon(() => <ActivityIndicator style={styles.toastIcon} />)(
-        'Importing',
-        {
-          duration: 6000,
-          position: toast.positions.CENTER,
-          hideOnPress: false,
-        },
-      ),
+      toastIndicator('Importing', {
+        duration: 6000,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      }),
     [],
   );
 

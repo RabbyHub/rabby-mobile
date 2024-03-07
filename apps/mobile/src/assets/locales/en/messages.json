@@ -1254,8 +1254,8 @@
           "running_app_close_error": "Failed to close the running app on your Ledger device."
         },
         "openEthApp": {
-          "title": "Open Ethereum App",
-          "description": "Press the two buttons on the device to accept the prompt to open the Ethereum app to continue."
+          "title": "Connect Ledger",
+          "description": "Please open Ethereum app on Ledger"
         }
       },
       "keystone": {

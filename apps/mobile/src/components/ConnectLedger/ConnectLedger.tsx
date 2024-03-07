@@ -11,7 +11,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
-import { toast } from '../Toast';
+import { toast, toastIndicator } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { OpenEthAppScreen } from './OpenEthAppScreen';
@@ -31,7 +31,9 @@ export const ConnectLedger: React.FC<{
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
+  const openEthAppExpiredTimerRef = React.useRef<any>(null);
   let toastHiddenRef = React.useRef<() => void>(() => {});
+  let loopCountRef = React.useRef(0);
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
@@ -51,19 +53,29 @@ export const ConnectLedger: React.FC<{
       return await apiLedger.checkEthApp(result => {
         if (!result) {
           setCurrentScreen('openEthApp');
+          clearTimeout(openEthAppExpiredTimerRef.current);
+          openEthAppExpiredTimerRef.current = setTimeout(() => {
+            setCurrentScreen('select');
+          }, 60000);
         }
       });
     } catch (err: any) {
+      if (err.message.includes('isConnected') && loopCountRef.current < 5) {
+        loopCountRef.current++;
+        console.log('checkEthApp isConnected error');
+        return await checkEthApp();
+      }
       // maybe session is locked, just try to reconnect
-      toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
+      toast.show(err.message);
       setCurrentScreen('select');
-      console.error(err);
+      console.error('checkEthApp', err);
       throw err;
     }
-  }, [t]);
+  }, []);
 
   const importFirstAddress = React.useCallback(
     async (retryCount: number) => {
+      loopCountRef.current = 0;
       setIsLoaded(false);
       let address;
       try {
@@ -118,11 +130,9 @@ export const ConnectLedger: React.FC<{
         onSelectDevice(device);
       } else {
         if (await checkEthApp()) {
-          importFirstAddress(1);
+          await importFirstAddress(1);
         } else {
-          toastHiddenRef.current = toast.show('Connecting...', {
-            duration: 100000,
-          });
+          toastHiddenRef.current = toastIndicator('Connecting');
           // maybe need to reconnect device
           await importFirstAddress(5);
           toastHiddenRef.current?.();
