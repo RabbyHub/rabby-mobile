@@ -3125,9 +3125,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gorhom/bottom-sheet@npm:5.0.0-alpha.4":
-  version: 5.0.0-alpha.4
-  resolution: "@gorhom/bottom-sheet@npm:5.0.0-alpha.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40gorhom%2Fbottom-sheet%2F-%2Fbottom-sheet-5.0.0-alpha.4.tgz"
+"@gorhom/bottom-sheet@npm:alpha":
+  version: 5.0.0-alpha.9
+  resolution: "@gorhom/bottom-sheet@npm:5.0.0-alpha.9"
   dependencies:
     "@gorhom/portal": 1.0.14
     invariant: ^2.2.4
@@ -3136,14 +3136,14 @@ __metadata:
     "@types/react-native": "*"
     react: "*"
     react-native: "*"
-    react-native-gesture-handler: ">=2.12.0"
-    react-native-reanimated: ">=3.3.0"
+    react-native-gesture-handler: ">=2.14.0"
+    react-native-reanimated: ">=3.6.0"
   peerDependenciesMeta:
     "@types/react":
       optional: true
     "@types/react-native":
       optional: true
-  checksum: 216cc845db6e8ed46c367819dc80eabc9c627590cfb4839b298eea9aaf572ac513dfccd79582b67c856b88841ed192a458531a0db132a0dbd59b52c028ddd969
+  checksum: edabc33ca86aff35c28030d639ac66f732a9300caebe522a1cb5baf8db8332814e65ffa5fc0ddefeb83d8ec8f4596f052ce53e5b6e43b1b5499f05044218a708
   languageName: node
   linkType: hard
 
@@ -25517,7 +25517,7 @@ __metadata:
     "@ethereumjs/common": 4.2.0
     "@ethereumjs/tx": 5.1.0
     "@ethereumjs/util": ^9.0.1
-    "@gorhom/bottom-sheet": 5.0.0-alpha.4
+    "@gorhom/bottom-sheet": alpha
     "@ledgerhq/react-native-hw-transport-ble": ^6.32.2
     "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
