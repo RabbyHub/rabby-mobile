@@ -180,7 +180,11 @@ class LedgerKeyring {
         this.transport = await this.getTransport(this.deviceId!);
         this.app = new LedgerEth(this.transport);
       } catch (e: any) {
-        if (e.name === 'BleError' || e.message?.includes('isConnected')) {
+        if (
+          e.name === 'BleError' ||
+          e.message?.includes('isConnected') ||
+          e.message?.includes('DisconnectedDevice')
+        ) {
           throw e;
         } else if (!e.message?.includes('The device is already open')) {
           console.error(e);
@@ -847,7 +851,7 @@ class LedgerKeyring {
   openEthApp = (): Promise<Buffer> => {
     if (!this.transport) {
       throw new Error(
-        'Ledger transport is not initialized2. You must call setTransport first.',
+        'Ledger transport is not initialized. You must call setTransport first.',
       );
     }
 
@@ -863,7 +867,7 @@ class LedgerKeyring {
   quitApp = (): Promise<Buffer> => {
     if (!this.transport) {
       throw new Error(
-        'Ledger transport is not initialized1. You must call setTransport first.',
+        'Ledger transport is not initialized. You must call setTransport first.',
       );
     }
 

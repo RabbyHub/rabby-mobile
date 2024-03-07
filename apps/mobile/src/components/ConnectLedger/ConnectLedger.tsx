@@ -60,18 +60,22 @@ export const ConnectLedger: React.FC<{
         }
       });
     } catch (err: any) {
-      if (err.message.includes('isConnected') && loopCountRef.current < 5) {
+      // maybe session is disconnect, just try to reconnect
+      if (
+        (err.message.includes('isConnected') ||
+          err.message.includes('DisconnectedDevice')) &&
+        loopCountRef.current < 5
+      ) {
         loopCountRef.current++;
-        console.log('checkEthApp isConnected error');
+        console.log('checkEthApp isConnected error', err);
         return await checkEthApp();
       }
-      // maybe session is locked, just try to reconnect
-      toast.show(err.message);
+      toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
       setCurrentScreen('select');
       console.error('checkEthApp', err);
       throw err;
     }
-  }, []);
+  }, [t]);
 
   const importFirstAddress = React.useCallback(
     async (retryCount: number) => {
@@ -132,7 +136,9 @@ export const ConnectLedger: React.FC<{
         if (await checkEthApp()) {
           await importFirstAddress(1);
         } else {
-          toastHiddenRef.current = toastIndicator('Connecting');
+          toastHiddenRef.current = toastIndicator('Connecting', {
+            isTop: true,
+          });
           // maybe need to reconnect device
           await importFirstAddress(5);
           toastHiddenRef.current?.();
