@@ -103,37 +103,6 @@ export const useTokenPair = (userAddress: string) => {
     swapService.setSelectedChain(c);
     // resetSwapTokens(c);
   };
-  useAsyncInitializeChainList({
-    // NOTICE: now `useTokenPair` is only used for swap page, so we can use `SWAP_SUPPORT_CHAINS` here
-    supportChains: SWAP_SUPPORT_CHAINS,
-    onChainInitializedAsync: firstEnum => {
-      // only init chain if it's not cached before
-      if (!initialSelectedChain) {
-        handleChain(firstEnum);
-      }
-    },
-  });
-
-  const [payToken, setPayToken] = useTokenInfo({
-    userAddress,
-    chain,
-    defaultToken: defaultSelectedFromToken || getChainDefaultToken(chain),
-  });
-  const [receiveToken, setReceiveToken] = useTokenInfo({
-    userAddress,
-    chain,
-    defaultToken: defaultSelectedToToken,
-  });
-
-  useEffect(() => {
-    // dispatch.swap.setSelectedFromToken(payToken);
-    swapService.setSelectedFromToken(payToken);
-  }, [payToken]);
-
-  useEffect(() => {
-    swapService.setSelectedToToken(receiveToken);
-    // dispatch.swap.setSelectedToToken(receiveToken);
-  }, [receiveToken]);
 
   const [payAmount, setPayAmount] = useState('');
 
@@ -170,6 +139,60 @@ export const useTokenPair = (userAddress: string) => {
     },
     [setSlippageChanged],
   );
+
+  const [payToken, setPayToken] = useTokenInfo({
+    userAddress,
+    chain,
+    defaultToken: defaultSelectedFromToken || getChainDefaultToken(chain),
+  });
+  const [receiveToken, setReceiveToken] = useTokenInfo({
+    userAddress,
+    chain,
+    defaultToken: defaultSelectedToToken,
+  });
+
+  const switchChain = useCallback(
+    (c: CHAINS_ENUM, opts?: { payTokenId?: string; changeTo?: boolean }) => {
+      handleChain(c);
+      if (!opts?.changeTo) {
+        setPayToken({
+          ...getChainDefaultToken(c),
+          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
+        });
+        setReceiveToken(undefined);
+      } else {
+        setReceiveToken({
+          ...getChainDefaultToken(c),
+          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
+        });
+        // setPayToken(undefined);
+      }
+      setPayAmount('');
+      setActiveProvider(undefined);
+    },
+    [setActiveProvider, setPayToken, setReceiveToken],
+  );
+
+  useAsyncInitializeChainList({
+    // NOTICE: now `useTokenPair` is only used for swap page, so we can use `SWAP_SUPPORT_CHAINS` here
+    supportChains: SWAP_SUPPORT_CHAINS,
+    onChainInitializedAsync: firstEnum => {
+      // only init chain if it's not cached before
+      if (!initialSelectedChain) {
+        switchChain(firstEnum);
+      }
+    },
+  });
+
+  useEffect(() => {
+    // dispatch.swap.setSelectedFromToken(payToken);
+    swapService.setSelectedFromToken(payToken);
+  }, [payToken]);
+
+  useEffect(() => {
+    swapService.setSelectedToToken(receiveToken);
+    // dispatch.swap.setSelectedToToken(receiveToken);
+  }, [receiveToken]);
 
   const exchangeToken = useCallback(() => {
     setPayToken(receiveToken);
@@ -238,28 +261,6 @@ export const useTokenPair = (userAddress: string) => {
         ? tokenAmountBn(payToken).lt(payAmount)
         : new BigNumber(0).lt(payAmount),
     [payToken, payAmount],
-  );
-
-  const switchChain = useCallback(
-    (c: CHAINS_ENUM, opts?: { payTokenId?: string; changeTo?: boolean }) => {
-      handleChain(c);
-      if (!opts?.changeTo) {
-        setPayToken({
-          ...getChainDefaultToken(c),
-          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
-        });
-        setReceiveToken(undefined);
-      } else {
-        setReceiveToken({
-          ...getChainDefaultToken(c),
-          ...(opts?.payTokenId ? { id: opts?.payTokenId } : {}),
-        });
-        // setPayToken(undefined);
-      }
-      setPayAmount('');
-      setActiveProvider(undefined);
-    },
-    [setActiveProvider, setPayToken, setReceiveToken],
   );
 
   useEffect(() => {
