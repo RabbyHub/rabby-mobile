@@ -225,7 +225,7 @@ export const TokenList = ({
                 styles.flexRight,
                 styles.alignRight,
               ])}>
-              <Text>{l._netWorthStr}</Text>
+              <Text style={styles.tokenListColText}>{l._netWorthStr}</Text>
               {l.tip ? (
                 <Tip content={l.tip}>
                   <RcIconInfoCC
@@ -352,6 +352,11 @@ const getStyle = (colors: AppColorsVariants) =>
     tokenListCol: {
       flexBasis: '35%',
       flexGrow: 1,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+    },
+    tokenListColText: {
       fontSize: 13,
       fontWeight: '500',
       color: colors['neutral-title-1'],

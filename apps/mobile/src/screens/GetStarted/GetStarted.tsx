@@ -3,7 +3,6 @@ import {
   Dimensions,
   Modal,
   Platform,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,

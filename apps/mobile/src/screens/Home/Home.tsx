@@ -5,7 +5,7 @@
  * @format
  */
 import React, { useCallback, useEffect } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
 import HeaderArea from './HeaderArea';
@@ -64,7 +64,6 @@ function HomeScreen(): JSX.Element {
 
   return (
     <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
-      <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
           renderHeader={() => <HomeTopArea />}

@@ -17,6 +17,7 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
+import { useThemeMode } from '@rneui/themed';
 
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
@@ -79,7 +80,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     [appTheme, setAppTheme],
   );
 
-  const binaryTheme = React.useMemo(
+  const binaryTheme: ColorSchemeName = React.useMemo(
     () => coerceBinaryTheme(appTheme, colorScheme),
     [appTheme, colorScheme],
   );
@@ -105,6 +106,16 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     () => stringUtils.ucfirst(appTheme),
     [appTheme],
   );
+
+  const { setMode } = useThemeMode();
+  React.useEffect(() => {
+    if (binaryTheme === 'dark') {
+      setMode('dark');
+    } else {
+      setMode('light');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [binaryTheme]);
 
   return {
     appTheme,
