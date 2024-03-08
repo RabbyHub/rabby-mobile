@@ -85,6 +85,9 @@ export const Spin = ({ children, size, spinning = true }: SpinProps) => {
               ],
             }}>
             <SvgIconSpin
+              color={colors['blue-default']}
+              width={indicatorSize}
+              height={indicatorSize}
               style={{ width: indicatorSize, height: indicatorSize }}
             />
           </Animated.View>
