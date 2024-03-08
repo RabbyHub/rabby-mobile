@@ -10,7 +10,7 @@ cd $project_dir
 
 BUILD_TYPE=$1
 
-if [ ! -z $CI || "$BUILD_TYPE" == "buildAppStore" ]; then
+if [[ ! -z $CI || "$BUILD_TYPE" == "buildAppStore" ]]; then
   RM_BUILD_FLAGS="-q --refresh-dependencies"
 else
   RM_BUILD_FLAGS=""
@@ -28,7 +28,7 @@ elif [[ "$BUILD_TYPE" == "buildApk" ]]; then
   export android_export_target="$project_dir/app/build/outputs/apk/release/app-release.apk"
 fi
 
-if [ -f "$android_export_target" ] ; then
+if [[ -f "$android_export_target" ]] ; then
     echo "\033[32;1mexport android success 🎉  🎉  🎉   \033[0m"
     open $(dirname $android_export_target)
 else
