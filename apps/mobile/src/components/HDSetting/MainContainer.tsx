@@ -88,13 +88,14 @@ const getStyles = (colors: AppColorsVariants) =>
       margin: 0,
     },
     selectIndexText: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors['neutral-title-1'],
       fontWeight: '500',
     },
     selectIndexFoot: {
-      fontSize: 14,
+      fontSize: 13,
       color: colors['neutral-foot'],
+      marginBottom: 50,
     },
     selectIndex: {
       rowGap: 12,
