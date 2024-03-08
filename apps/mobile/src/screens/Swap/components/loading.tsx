@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { QuoteLogo } from './QuoteLogo';
 import { useSwapSettings } from '../hooks';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { CEX, DEX } from '@/constant/swap';
 import { useThemeColors } from '@/hooks/theme';
@@ -31,7 +31,7 @@ export const QuoteLoading = ({
           styles.container,
           {
             height: isCex ? 48 : 66,
-            borderWidth: isCex ? 0 : 1,
+            borderWidth: isCex ? 0 : StyleSheet.hairlineWidth,
             paddingHorizontal: isCex ? 0 : 12,
           },
         ],
