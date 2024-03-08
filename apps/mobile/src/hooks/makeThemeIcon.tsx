@@ -37,17 +37,17 @@ export function makeActiveIconFromCC(
   IconCC: React.FC<SvgProps>,
   {
     activeColor,
-    inactiveAcolor,
+    inactiveColor,
   }: {
     activeColor: ColorValue;
-    inactiveAcolor: ColorValue;
+    inactiveColor: ColorValue;
   },
 ) {
   return memo((props: SvgProps & { isActive?: boolean }) => {
     const { isActive, ...otherProps } = props;
 
     return (
-      <IconCC {...otherProps} color={isActive ? activeColor : inactiveAcolor} />
+      <IconCC {...otherProps} color={isActive ? activeColor : inactiveColor} />
     );
   });
 }

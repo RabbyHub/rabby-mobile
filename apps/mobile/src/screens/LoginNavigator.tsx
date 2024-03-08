@@ -1,16 +1,10 @@
-import {
-  View,
-  StyleSheet,
-  ImageBackground,
-  Platform,
-  StatusBar,
-} from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { colord } from 'colord';
 
 import { ThemeColors } from '@/constant/theme';
-import { Button, Text, FocusAwareStatusBar } from '@/components';
+import { FocusAwareStatusBar } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { useStackScreenConfig } from '@/hooks/navigation';
 

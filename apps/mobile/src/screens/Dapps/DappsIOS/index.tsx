@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
-import { Keyboard, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 // import { useRequest } from 'ahooks';
 import { AppColorsVariants } from '@/constant/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
@@ -126,7 +126,6 @@ export function DappsIOSScreen(): JSX.Element {
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <StatusBar barStyle="dark-content" />
       <NormalScreenContainer style={styles.page}>
         <View style={styles.header}>
           <SearchBar

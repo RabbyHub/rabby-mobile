@@ -6,10 +6,9 @@ import {
   RcIconNavigationHomeFocusLight,
   RcIconNavigationDappsFocusLight,
   RcIconNavigationDappsLight,
+  RcIconPointsLight,
+  RcIconPointsFocusLight,
 } from '@/assets/icons/bottom-bar';
-
-import { default as RcIconPoints } from '@/assets/icons/bottom-bar/nav-points-light.svg';
-import { default as RcIconPointsFocus } from '@/assets/icons/bottom-bar/nav-points-focus-light.svg';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
@@ -136,7 +135,7 @@ export default function BottomTabNavigator() {
                   focused ? (
                     <RcIconNavigationHomeFocusLight />
                   ) : (
-                    <RcIconNavigationHomeLight isActive={focused} />
+                    <RcIconNavigationHomeLight />
                   )
                 }
               />
@@ -167,7 +166,7 @@ export default function BottomTabNavigator() {
                   focused ? (
                     <RcIconNavigationDappsFocusLight />
                   ) : (
-                    <RcIconNavigationDappsLight isActive={focused} />
+                    <RcIconNavigationDappsLight />
                   )
                 }
               />
@@ -185,7 +184,9 @@ export default function BottomTabNavigator() {
               ),
               tabBarIcon: ({ focused }) => (
                 <BottomTabIcon
-                  icon={focused ? <RcIconPointsFocus /> : <RcIconPoints />}
+                  icon={
+                    focused ? <RcIconPointsFocusLight /> : <RcIconPointsLight />
+                  }
                 />
               ),
             }),
