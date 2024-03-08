@@ -224,7 +224,9 @@ const Swap = () => {
         extraHeight={200}
         keyboardOpeningTime={0}>
         <View style={styles.content}>
-          <Text style={styles.label}>{t('page.swap.chain')}</Text>
+          <Text style={[styles.label, { marginBottom: 8 }]}>
+            {t('page.swap.chain')}
+          </Text>
           <ChainInfo chainEnum={chain} onChange={switchChain} />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
@@ -496,7 +498,6 @@ const getStyles = createGetStyles(colors => ({
   label: {
     fontSize: 13,
     fontWeight: '400',
-    marginBottom: 8,
     color: colors['neutral-body'],
   },
   rowView: {

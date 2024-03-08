@@ -371,7 +371,7 @@ const getStyles = createGetStyles(colors => ({
   },
   cexList: {
     borderRadius: 6,
-    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors['neutral-line'],
     paddingHorizontal: 12,
   },

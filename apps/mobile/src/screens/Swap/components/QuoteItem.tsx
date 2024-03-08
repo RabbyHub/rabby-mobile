@@ -411,7 +411,13 @@ export const DexQuoteItem = (
       // )}
     >
       <QuoteLogo loaded logo={quoteProviderInfo.logo} isLoading={isLoading} />
-      <View style={{ gap: 4, width: 94, paddingLeft: 8, marginRight: 4 }}>
+      <View
+        style={{
+          gap: 6,
+          width: 94,
+          paddingLeft: 8,
+          marginRight: 4,
+        }}>
         <View style={styles.providerNameContainer}>
           <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
           {!!preExecResult?.shouldApproveToken && (
