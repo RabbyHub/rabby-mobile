@@ -61,11 +61,7 @@ export const ConnectLedger: React.FC<{
       });
     } catch (err: any) {
       // maybe session is disconnect, just try to reconnect
-      if (
-        (err.message.includes('isConnected') ||
-          err.message.includes('DisconnectedDevice')) &&
-        loopCountRef.current < 5
-      ) {
+      if (loopCountRef.current < 3) {
         loopCountRef.current++;
         console.log('checkEthApp isConnected error', err);
         return await checkEthApp();
