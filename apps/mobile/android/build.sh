@@ -10,7 +10,7 @@ cd $project_dir
 
 BUILD_TYPE=$1
 
-if [[ ! -z $CI || "$BUILD_TYPE" == "buildAppStore" ]]; then
+if [[ ! -z $CI ]]; then
   RM_BUILD_FLAGS="-q --refresh-dependencies"
 else
   RM_BUILD_FLAGS=""
