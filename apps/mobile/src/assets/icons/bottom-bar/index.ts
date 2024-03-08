@@ -4,36 +4,52 @@ import { default as RcIconNavigationHomeFocusLightCC } from './nav-home-focus-li
 import { default as RcIconNavigationDappsLightCC } from './nav-dapps-light-cc.svg';
 import { default as RcIconNavigationDappsFocusLightCC } from './nav-dapps-focus-light-cc.svg';
 
-import { makeActiveIconFromCC } from '@/hooks/makeThemeIcon';
+import { default as RcIconPointsLightCC } from '@/assets/icons/bottom-bar/nav-points-light-cc.svg';
+import { default as RcIconPointsFocusLightCC } from '@/assets/icons/bottom-bar/nav-points-focus-light-cc.svg';
+
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
 
-export const RcIconNavigationHomeLight = makeActiveIconFromCC(
+export const RcIconNavigationHomeLight = makeThemeIconFromCC(
   RcIconNavigationHomeLightCC,
   {
-    activeColor: ThemeColors.light['blue-default'],
-    inactiveAcolor: ThemeColors.light['neutral-foot'],
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['neutral-foot'],
   },
 );
-export const RcIconNavigationHomeFocusLight = makeActiveIconFromCC(
+export const RcIconNavigationHomeFocusLight = makeThemeIconFromCC(
   RcIconNavigationHomeFocusLightCC,
   {
-    activeColor: ThemeColors.light['blue-default'],
-    inactiveAcolor: ThemeColors.light['blue-default'],
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['blue-default'],
   },
 );
 
-export const RcIconNavigationDappsLight = makeActiveIconFromCC(
+export const RcIconNavigationDappsLight = makeThemeIconFromCC(
   RcIconNavigationDappsLightCC,
   {
-    activeColor: ThemeColors.light['neutral-foot'],
-    inactiveAcolor: ThemeColors.light['neutral-foot'],
+    onLight: ThemeColors.light['neutral-foot'],
+    onDark: ThemeColors.dark['neutral-foot'],
   },
 );
 
-export const RcIconNavigationDappsFocusLight = makeActiveIconFromCC(
+export const RcIconNavigationDappsFocusLight = makeThemeIconFromCC(
   RcIconNavigationDappsFocusLightCC,
   {
-    activeColor: ThemeColors.light['blue-default'],
-    inactiveAcolor: ThemeColors.light['blue-default'],
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['blue-default'],
+  },
+);
+
+export const RcIconPointsLight = makeThemeIconFromCC(RcIconPointsLightCC, {
+  onLight: ThemeColors.light['neutral-foot'],
+  onDark: ThemeColors.dark['neutral-foot'],
+});
+
+export const RcIconPointsFocusLight = makeThemeIconFromCC(
+  RcIconPointsFocusLightCC,
+  {
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['blue-default'],
   },
 );

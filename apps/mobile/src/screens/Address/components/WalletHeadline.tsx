@@ -32,7 +32,7 @@ export const WalletHeadline: React.FC<{
 
   return (
     <View style={styles.view}>
-      {Icon ? <Icon style={styles.icon} /> : null}
+      {Icon ? <Icon width={20} height={20} style={styles.icon} /> : null}
       <Text
         style={[
           styles.headline,
