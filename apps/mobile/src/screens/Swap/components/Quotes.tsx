@@ -304,7 +304,7 @@ export const QuoteList = (props: QuotesProps) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={['80%']}
+      snapPoints={['90%']}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
@@ -380,6 +380,7 @@ const getStyles = createGetStyles(colors => ({
     paddingTop: 16,
     flexDirection: 'row',
     paddingBottom: 20,
+    justifyContent: 'center',
   },
 
   footText: { color: colors['neutral-foot'], fontSize: 13 },
