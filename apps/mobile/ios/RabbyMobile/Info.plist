@@ -90,5 +90,7 @@
 	<false />
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>This allows Rabby to find and pair a Ledger Nano X</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>This allows Rabby to find and pair a Ledger Nano X</string>
 </dict>
 </plist>
