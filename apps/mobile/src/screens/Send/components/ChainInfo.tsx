@@ -11,6 +11,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { findChainByEnum } from '@/utils/chain';
 import SelectSortedChainModal from '@/components/SelectSortedChain/SheetModal';
+import { SelectSortedChainProps } from '@/components/SelectSortedChain';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -47,10 +48,14 @@ export function ChainInfo({
   chainEnum,
   style,
   onChange,
+  supportChains,
+  disabledTips,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
+    supportChains?: SelectSortedChainProps['supportChains'];
+    disabledTips?: SelectSortedChainProps['disabledTips'];
   }
 >) {
   const colors = useThemeColors();
@@ -84,6 +89,8 @@ export function ChainInfo({
         onCancel={() => {
           setShowSelectorModal(false);
         }}
+        supportChains={supportChains}
+        disabledTips={disabledTips}
         onChange={chain => {
           setShowSelectorModal(false);
           onChange?.(chain);

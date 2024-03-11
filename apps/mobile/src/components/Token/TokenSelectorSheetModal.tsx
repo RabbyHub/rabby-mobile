@@ -30,6 +30,7 @@ import { findChainByServerID } from '@/utils/chain';
 
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
+import { toast } from '../Toast';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -76,6 +77,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       onRemoveChainFilter,
       onSearch,
       supportChains,
+      disabledTips,
     },
     ref,
   ) => {
@@ -266,15 +268,27 @@ export const TokenSelectorSheetModal = React.forwardRef<
             style={[styles.scrollView, styles.internalBlock]}>
             {tokens.map(token => {
               const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
+              const currentChainItem = findChainByServerID(token._chain);
+              const disabled =
+                !!supportChains?.length &&
+                currentChainItem &&
+                !supportChains.includes(currentChainItem.enum);
 
               return (
                 <TouchableView
                   key={token_key}
                   onPress={() => {
+                    if (disabled) {
+                      disabledTips && toast.info(disabledTips);
+                      return;
+                    }
                     onConfirm(token.$origin);
                     toggleShowSheetModal('collapse');
                   }}
-                  style={[styles.tokenItem]}>
+                  style={[
+                    styles.tokenItem,
+                    disabled && styles.tokenItemDisabled,
+                  ]}>
                   <View style={styles.tokenLeft}>
                     <AssetAvatar
                       logo={token?._logo}
@@ -359,6 +373,7 @@ const getStyles = createGetStyles(colors => {
       // borderWidth: 1,
       // borderColor: 'blue'
     },
+    tokenItemDisabled: { opacity: 0.5 },
     tokenLeft: {
       flexDirection: 'row',
       alignItems: 'center',

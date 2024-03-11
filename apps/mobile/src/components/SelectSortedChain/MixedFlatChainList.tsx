@@ -12,11 +12,15 @@ export default function MixedFlatChainList({
   onChange,
   matteredList = [],
   unmatteredList = [],
+  supportChains,
+  disabledTips = 'Not supported',
 }: RNViewProps & {
   value?: CHAINS_ENUM;
   onChange?(value: CHAINS_ENUM): void;
   matteredList?: Chain[];
   unmatteredList?: Chain[];
+  supportChains?: CHAINS_ENUM[];
+  disabledTips?: string | ((ctx: { chain: Chain }) => string);
 }) {
   const { styles } = useThemeStyles(getStyles);
 
@@ -42,7 +46,9 @@ export default function MixedFlatChainList({
         const isFirstSection = section === sections[0];
         const isSectionFirst = index === 0;
         const isSectionLast = index === section.data.length - 1;
-
+        const disabled = supportChains
+          ? !supportChains.includes(item.enum)
+          : false;
         return (
           <View
             style={[
@@ -57,7 +63,13 @@ export default function MixedFlatChainList({
                 styles.chainItemInner,
                 isSectionFirst && styles.sectionFirstInner,
               ]}>
-              <ChainItem data={item} value={value} onPress={onChange} />
+              <ChainItem
+                data={item}
+                value={value}
+                onPress={onChange}
+                disabled={disabled}
+                disabledTips={disabledTips}
+              />
             </View>
           </View>
         );

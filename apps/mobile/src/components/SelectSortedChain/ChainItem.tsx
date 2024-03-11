@@ -12,16 +12,21 @@ import {
 } from '@/hooks/account';
 import { RcWalletCC } from '@/assets/icons/common';
 import { formatUsdValue } from '@/utils/number';
+import { toast } from '../Toast';
 
 export default function ChainItem({
   data,
   value,
   style,
   onPress,
+  disabled = false,
+  disabledTips = 'Coming soon',
 }: RNViewProps & {
   data: Chain;
   value?: CHAINS_ENUM;
   onPress?(value: CHAINS_ENUM): void;
+  disabled?: boolean;
+  disabledTips?: string | ((ctx: { chain: Chain }) => string);
 }) {
   const { styles } = useThemeStyles(getStyles);
 
@@ -34,11 +39,23 @@ export default function ChainItem({
       testnetMatteredChainBalances?.[data.serverId]
     );
   }, [data.serverId, matteredChainBalances, testnetMatteredChainBalances]);
+  const finalDisabledTips = useMemo(() => {
+    if (typeof disabledTips === 'function') {
+      return disabledTips({ chain: data });
+    }
+
+    return disabledTips;
+  }, [data, disabledTips]);
 
   return (
     <TouchableView
-      style={[styles.container, style]}
+      activeOpacity={disabled ? 1 : undefined}
+      style={[styles.container, disabled && styles.disable, style]}
       onPress={() => {
+        if (disabled) {
+          finalDisabledTips && toast.info(finalDisabledTips);
+          return;
+        }
         onPress?.(data?.enum);
       }}>
       <Image
@@ -115,5 +132,8 @@ const getStyles = createGetStyles(colors => {
       top: 2,
     },
     rightArea: {},
+    disable: {
+      opacity: 0.5,
+    },
   };
 });
