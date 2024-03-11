@@ -7,7 +7,7 @@ import createPersistStore, {
 } from '@rabby-wallet/persist-store';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { openapi } from '../request';
-import { CEX, DEX } from '@/constant/swap';
+import { CEX, DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
@@ -60,9 +60,31 @@ export class SwapService {
       if (storage.selectedDex && !values.includes(storage.selectedDex)) {
         storage.selectedDex = null;
       }
+
+      if (
+        storage?.selectedChain &&
+        !SWAP_SUPPORT_CHAINS.includes(storage?.selectedChain)
+      ) {
+        storage.selectedChain = null;
+        storage.selectedFromToken = undefined;
+        storage.selectedToToken = undefined;
+      }
     }
     this.store = storage || this.store;
+
+    this.handleUnsupportedChain();
   }
+
+  handleUnsupportedChain = () => {
+    if (
+      this.store.selectedChain &&
+      !SWAP_SUPPORT_CHAINS.includes(this.store.selectedChain)
+    ) {
+      this.store.selectedChain = null;
+      this.store.selectedFromToken = undefined;
+      this.store.selectedToToken = undefined;
+    }
+  };
 
   getSwap = (key?: keyof SwapServiceStore) => {
     return key ? this.store[key] : this.store;

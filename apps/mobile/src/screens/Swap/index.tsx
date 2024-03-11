@@ -20,7 +20,7 @@ import { formatAmount, formatUsdValue } from '@/utils/number';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { AppSwitch, Button } from '@/components';
-import { DEX } from '@/constant/swap';
+import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
@@ -227,7 +227,11 @@ const Swap = () => {
           <Text style={[styles.label, { marginBottom: 8 }]}>
             {t('page.swap.chain')}
           </Text>
-          <ChainInfo chainEnum={chain} onChange={switchChain} />
+          <ChainInfo
+            chainEnum={chain}
+            onChange={switchChain}
+            supportChains={SWAP_SUPPORT_CHAINS}
+          />
           <View style={styles.swapContainer}>
             <View style={styles.flex1}>
               <Text style={styles.label}>{t('page.swap.swap-from')}</Text>

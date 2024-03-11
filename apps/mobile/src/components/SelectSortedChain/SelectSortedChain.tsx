@@ -84,10 +84,14 @@ const useChainSeletorList = ({
 export type SelectSortedChainProps = {
   value?: CHAINS_ENUM;
   onChange?: (value: CHAINS_ENUM) => void;
+  supportChains?: CHAINS_ENUM[];
+  disabledTips?: string | ((ctx: { chain: Chain }) => string);
 };
 export default function SelectSortedChain({
   value,
   onChange,
+  supportChains,
+  disabledTips,
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -95,7 +99,7 @@ export default function SelectSortedChain({
   const { search, setSearch, matteredList, unmatteredList, allSearched } =
     useChainSeletorList({
       // set undefined to allow all main chains
-      supportChains: undefined,
+      supportChains: supportChains,
       netTabKey: 'mainnet',
     });
 
@@ -125,6 +129,8 @@ export default function SelectSortedChain({
             unmatteredList={unmatteredList}
             value={value}
             onChange={onChange}
+            supportChains={supportChains}
+            disabledTips={disabledTips}
           />
         </View>
       )}
