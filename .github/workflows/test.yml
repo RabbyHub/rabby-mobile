@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - dev
+      - feat*
+      # - ci/*
+
+defaults:
+  run:
+    shell: bash -ieo pipefail {0}
+
+jobs:
+  setup:
+    name: Build
+    strategy:
+      matrix:
+        host: [macOS]
+    runs-on:
+      - self-hosted
+      - mobile
+      - ${{ matrix.host }}
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+
+      - name: Env Test
+        id: env-test
+        shell: bash
+        run: |
+          echo "whoami $(whoami)"
+          echo "shell is $(echo $0)"
+          echo "HOME is $HOME"
+          echo "which node $(which node)"
+
+      - name: Install and build
+        shell: bash
+        run: |
+          npm i -g @debank/cli@latest;
+          cd apps/mobile;
+          yarn install;
+          yarn apply-patch;
+          yarn prepare-archive;
+
+          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
+
+        env:
+          KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
+          RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
+          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_DESKTOP_KR_PWD }}
+          RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+          RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
+          RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
+          RABBY_MOBILE_SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
+          LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
+          LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
+          RABBY_REALLY_COPY: ${{ vars.RABBY_REALLY_COPY }}
+          # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+          GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+          GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
+          GITHUB_REF: ${{ github.ref }}

@@ -20,35 +20,36 @@ cd $script_dir;
 
 BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
 
-version_bundle_name="${android_version_name}.${android_version_code}-$BUILD_DATE"
+version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
 version_bundle_suffix=""
-public_release_name=""
-android_deployments_dir="$script_dir/deployments/android"
+apk_name="rabby-mobile.apk"
+deployment_local_dir="$script_dir/deployments"
 
-rm -rf $android_deployments_dir && mkdir -p $android_deployments_dir;
+rm -rf $deployment_local_dir/android && mkdir -p $deployment_local_dir/android;
 
-# preapre version.json
-unix_replace_variables $script_dir/tpl/android/version.json $android_deployments_dir/version.json \
+build_alpha() {
+  if [ -e bundle ]; then
+    bundle exec fastlane android alpha
+  else
+    sh $project_dir/android/build.sh buildApk
+  fi
+}
+
+build_appstore() {
+  if [ -e bundle ]; then
+    bundle exec fastlane android release
+  else
+    sh $project_dir/android/build.sh buildAppStore
+  fi
+}
+
+# ============ prepare version.json :start ============== #
+unix_replace_variables $script_dir/tpl/android/version.json $deployment_local_dir/android/version.json \
   --var-APP_VER_CODE=$android_version_code \
   --var-APP_VER="$android_version_name"
+# ============ prepare version.json :end ============== #
 
-echo "[deploy-android] start build..."
-if [ $buildchannel == "appstore" ]; then
-  version_bundle_suffix=".aab"
-  REALLY_UPLOAD="";
-  unset REALLY_UPLOAD;
-  [ -z $SKIP_BUILD ] && sh $project_dir/android/build.sh buildAppStore
-  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
-else
-  version_bundle_suffix=".apk"
-  public_release_name="rabby-mobile.apk"
-  [ -z $SKIP_BUILD ] && sh $project_dir/android/build.sh buildApk
-  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
-fi
-
-cp $android_export_target $android_deployments_dir/$public_release_name
-echo "[deploy-android] finish build."
-
+# ============ prepare changelogs :start ============== #
 possible_changelogs=(
   "$project_dir/src/changeLogs/$android_version_name.md"
   "$project_dir/src/changeLogs/$android_version_name.$android_version_code.md"
@@ -57,34 +58,77 @@ possible_changelogs=(
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-android] found changelog: $changelog"
-    cp $changelog $android_deployments_dir/
+    cp $changelog $deployment_local_dir/android/
     break
   fi
 done
+# ============ prepare changelogs :end ============== #
+
+echo "[deploy-android] start build..."
+if [ $buildchannel == "appstore" ]; then
+  version_bundle_suffix=".aab"
+  REALLY_UPLOAD="";
+  unset REALLY_UPLOAD;
+  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
+  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore
+else
+  version_bundle_suffix=".apk"
+  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
+  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_alpha
+
+  cp $android_export_target $deployment_local_dir/android/$apk_name
+fi
+
+# # leave here for debug
+# echo "android_export_target: $android_export_target"
+
+echo "[deploy-android] finish build."
 
 if [ ! -f $android_export_target ]; then
   echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
   exit 1
 else
   file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
-  version_bundle_name="${android_version_name}.${android_version_code}-$file_date$version_bundle_suffix"
+  version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
+  version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 fi
+
+if [ $buildchannel == "selfhost-reg" ]; then
+  deployment_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android-$version_bundle_name
+  deployment_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name
+else
+  deployment_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
+  deployment_cdn_baseurl=$cdn_deployment_urlbase/android
+fi
+
+backup_name=$S3_ANDROID_BAK_DEPLOYMENT/android/$version_bundle_filename
+
+if [[ "$version_bundle_suffix" =~ .*\.apk ]]; then
+  apk_url="$deployment_cdn_baseurl/$apk_name"
+else
+  apk_url=""
+fi
+
+echo "[deploy-android] will upload to $deployment_s3_dir"
+echo "[deploy-android] will be served at $deployment_cdn_baseurl"
 
 echo ""
 echo "[deploy-android] start sync..."
 
 if [ ! -z $REALLY_UPLOAD ]; then
-  echo "[deploy-android] backup as $version_bundle_name..."
-  aws s3 cp $android_export_target $ANDROID_BAK_DEPLOYMENT/android/$version_bundle_name --acl authenticated-read --profile debankbuild
+  echo "[deploy-android] backup as $deployment_s3_dir/$apk_name..."
+  aws s3 cp $android_export_target $backup_name --acl authenticated-read
 
   # targets:
   # - https://download.rabby.io/downloads/wallet-mobile/android/version.json
   # - https://download.rabby.io/downloads/wallet-mobile/android/rabby-mobile.apk
-  if [ ! -z $public_release_name ]; then
-    echo "[deploy-android] publish as $public_release_name, with version.json"
-    aws s3 sync $android_deployments_dir $ANDROID_PUB_DEPLOYMENT/android/ --exclude '*' --include "*.json" --acl public-read --profile debankbuild --content-type application/json
-    aws s3 sync $android_deployments_dir $ANDROID_PUB_DEPLOYMENT/android/ --exclude '*' --include "*.md" --acl public-read --profile debankbuild --content-type text/plain
-    aws s3 sync $android_deployments_dir $ANDROID_PUB_DEPLOYMENT/android/ --exclude '*' --include "*.apk" --acl public-read --profile debankbuild --content-type application/vnd.android.package-archive
+  if [ ! -z $apk_url ]; then
+    echo "[deploy-android] publish as $apk_name, with version.json"
+    aws s3 sync $deployment_local_dir/android $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json
+    aws s3 sync $deployment_local_dir/android $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain
+    aws s3 cp $backup_name $deployment_s3_dir/$apk_name --acl public-read --content-type application/vnd.android.package-archive
+
+    node $script_dir/notify-lark.js "$apk_url" android
   fi
 fi
 
@@ -92,7 +136,7 @@ fi
 
 if [ -z $CI ]; then
   echo "[deploy-android] force fresh CDN:"
-  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android/*'\` --profile debankbuild"
+  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android/*'\`"
   echo ""
 fi
 

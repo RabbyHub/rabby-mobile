@@ -1,5 +1,7 @@
 #!/bin/sh
 
+## script deprecated, use fastlane instead
+
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$script_dir
 

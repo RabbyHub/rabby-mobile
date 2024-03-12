@@ -1,0 +1,124 @@
+require 'base64'
+
+platform :ios do
+  private_lane :prepare_apple_sign do |opts|
+    # setup_ci
+
+    # enforce configuration
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      sdk: "iphoneos*",
+      path: './ios/RabbyMobile.xcodeproj',
+      profile_name: opts[:profile_name],
+      bundle_identifier: "com.debank.rabby-mobile",
+    )
+
+    ENV['CONFIGURATION'] = 'release'
+    match(
+      type: opts[:type],
+      readonly: true,
+      shallow_clone: true,
+      verbose: false,
+      force_for_new_devices: true,
+      clone_branch_directly: true)
+  end
+
+  desc "Release for the iOS adhoc"
+  lane :adhoc do
+    prepare_apple_sign(type: 'adhoc', profile_name: "RabbyMobileAdHoc")
+
+    gym(
+      scheme: 'RabbyMobile',
+      workspace: './ios/RabbyMobile.xcworkspace',
+      configuration: 'Release',
+      output_directory: "./ios/Package/latest",
+      build_path: "./ios/Package/latest",
+      destination: "generic/platform=iOS",
+      clean: true,
+      ## if you wanna output log to stdout, uncomment below 2 lines
+      # xcodebuild_formatter: '',
+      # suppress_xcode_output: false,
+      skip_package_pkg: true,
+      export_method: 'ad-hoc',
+      # export_method: 'release-testing',
+      export_options: {
+        method: 'ad-hoc',
+        signingStyle: 'manual',
+        # provisioningProfiles: {
+        #   "com.debank.rabby-mobile": "RabbyMobileAdHoc"
+        # }
+        manifest: {
+          appURL: "https://download.rabby.io/downloads/wallet-mobile/ios/rabbymobile.ipa",
+          displayImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_57x57@57w.png",
+          fullSizeImageURL: "https://download.rabby.io/downloads/wallet-mobile/ios/icon_512x512@512w.png",
+        }
+      })
+
+    # # shell executeb on ./fastlane directory, add `sh "pwd"` below to check it
+    # sh "/usr/libexec/PlistBuddy -c \"Set:items:0:metadata:title Rabby Wallet\" ../ios/Package/latest/manifest.plist"
+  end
+
+  desc "Release for the iOS production"
+  lane :appstore do
+      prepare_apple_sign(type: 'appstore', profile_name: "RabbyMobileAppStore")
+      gym(
+        scheme: 'RabbyMobile',
+        workspace: './ios/RabbyMobile.xcworkspace',
+        configuration: 'Release',
+        output_directory: "./ios/Package",
+        build_path: "./ios/Package",
+        destination: "generic/platform=iOS",
+        skip_profile_detection: true,
+        clean: true,
+        skip_package_pkg: true,
+        export_method: "app-store",
+        verbose: true,
+        export_options: {
+          method: "app-store",
+          signingStyle: 'manual',
+        })
+      pilot(
+        apple_id: '6474381673',
+        username: ENV["RABBY_MOBILE_PILOT_USERNAME"],
+        ipa: "./ios/Package/RabbyMobile.ipa",
+        skip_waiting_for_build_processing: true,
+      )
+  end
+end
+
+platform :android do
+  private_lane :write_key_store do
+    # keystore is stored as base64 from environment variable
+    if !ENV["RABBY_MOBILE_ANDROID_KEY_STORE"].empty?
+      File.open("../android/app/app-upload-key.keystore", 'w') do |file|
+        file.write(Base64.decode64(ENV["RABBY_MOBILE_ANDROID_KEY_STORE"]))
+      end
+    end
+  end
+
+  private_lane :build_rabbymobile_app do |opts|
+    gradle(tasks: opts[:tasks], project_dir: './android', properties: {
+      "MYAPP_UPLOAD_STORE_FILE" => "app-upload-key.keystore",
+      "MYAPP_UPLOAD_STORE_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD'],
+      "MYAPP_UPLOAD_KEY_ALIAS" => ENV['RABBY_MOBILE_ANDROID_KEY_ALIAS'],
+      "MYAPP_UPLOAD_KEY_PASSWORD" => ENV['RABBY_MOBILE_ANDROID_KEY_PASSWORD']
+    })
+
+    android_version_code = android_get_version_code(gradle_file: "./android/app/build.gradle")
+    android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")
+  end
+
+  desc "Release for the Android alpha"
+  lane :alpha do
+    write_key_store
+    gradle(task: 'clean', project_dir: './android')
+    build_rabbymobile_app(tasks: ['assembleRelease'])
+  end
+
+  desc "Release for the Android production"
+  lane :appstore do
+    write_key_store
+    gradle(task: 'clean', project_dir: './android')
+    build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'])
+  end
+end
