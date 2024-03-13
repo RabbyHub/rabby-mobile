@@ -16,7 +16,7 @@ export function shimWeb3(
   let loggedMissingProperty = false;
 
   if (!(window as Record<string, any>).web3) {
-    const SHIM_IDENTIFIER = '__isMetaMaskShim__';
+    const SHIM_IDENTIFIER = '__isRabbyShim__';
 
     let web3Shim = { currentProvider: provider };
     Object.defineProperty(web3Shim, SHIM_IDENTIFIER, {
@@ -43,7 +43,7 @@ export function shimWeb3(
             `Rabby no longer injects web3. For details, see: https://docs.metamask.io/guide/provider-migration.html#replacing-window-web3`,
           );
           provider
-            .request({ method: 'metamask_logWeb3ShimUsage' })
+            .request({ method: 'rabby_logWeb3ShimUsage' })
             .catch((error) => {
               log.debug('Rabby: Failed to log web3 shim usage.', error);
             });

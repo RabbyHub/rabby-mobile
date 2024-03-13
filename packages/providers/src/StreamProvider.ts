@@ -79,7 +79,7 @@ export abstract class AbstractStreamProvider extends BaseProvider {
     // Typecast: The type of `Duplex` is incompatible with the type of
     // `JsonRpcConnection`.
     this._jsonRpcConnection = createStreamMiddleware({
-      retryOnMessage: 'METAMASK_EXTENSION_CONNECT_CAN_RETRY',
+      retryOnMessage: 'RABBY_EXTENSION_CONNECT_CAN_RETRY',
     }) as unknown as JsonRpcConnection;
 
     pipeline(
@@ -106,7 +106,7 @@ export abstract class AbstractStreamProvider extends BaseProvider {
           type: method,
           data: params,
         });
-      } else if (method === 'METAMASK_STREAM_FAILURE') {
+      } else if (method === 'RABBY_STREAM_FAILURE') {
         connectionStream.destroy(
           new Error(messages.errors.permanentlyDisconnected()),
         );
