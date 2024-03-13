@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -25,7 +25,12 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
+import {
+  BLANK_PAGE,
+  WebViewActions,
+  WebViewState,
+  useWebViewControl,
+} from './hooks';
 import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
@@ -38,11 +43,16 @@ function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
 }
 
+const BUILTIN_SPECIAL_URLS = [BLANK_PAGE];
 function convertToWebviewUrl(dappOrigin: string) {
   if (__DEV__) {
     if (dappOrigin.startsWith('http://')) {
       return dappOrigin;
     }
+  }
+
+  if (BUILTIN_SPECIAL_URLS.includes(dappOrigin)) {
+    return dappOrigin;
   }
 
   return stringUtils.ensurePrefix(dappOrigin, 'https://');

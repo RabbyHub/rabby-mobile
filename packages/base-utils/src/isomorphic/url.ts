@@ -36,6 +36,10 @@ export function safeParseURL(url: string): URL | null {
   }
 }
 
+export function safeGetOrigin<T extends string>(url: T): T {
+  return (safeParseURL(url)?.origin || url) as T;
+}
+
 export function parseQueryString(
   input: string = typeof window !== 'undefined'
     ? window.location.search.slice(1)

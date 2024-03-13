@@ -1,3 +1,6 @@
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { RefLikeObject } from './RPCMethodMiddleware';
+
 /**
  * List of rpc errors caused by the user rejecting a certain action.
  * Errors that include these phrases should not be logged to Sentry.
@@ -23,9 +26,11 @@ declare module 'json-rpc-engine' {
 /**
  * Returns a middleware that appends the DApp origin to request
  */
-export function createOriginMiddleware(opts: { origin: string }) {
+export function createOriginMiddleware(opts: {
+  urlRef: RefLikeObject<string>;
+}) {
   return function originMiddleware(req: any, _: any, next: Function) {
-    req.origin = opts.origin;
+    req.origin = urlUtils.safeGetOrigin(opts.urlRef.current);
 
     // web3-provider-engine compatibility
     // TODO:provider delete this after web3-provider-engine deprecation

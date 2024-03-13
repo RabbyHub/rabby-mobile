@@ -64,7 +64,7 @@ export class BackgroundBridge extends EventEmitter {
 
     this.port = new Port(this.#webview, isMainFrame);
 
-    const portStream = new MobilePortStream(this.port, urlRef.current);
+    const portStream = new MobilePortStream(this.port, urlRef);
     // setup multiplexing
     const portMux = setupMultiplex(portStream);
     // connect features
@@ -155,7 +155,7 @@ export class BackgroundBridge extends EventEmitter {
     // );
 
     // metadata
-    engine.push(createOriginMiddleware({ origin }));
+    engine.push(createOriginMiddleware({ urlRef: this.#urlRef }));
     // engine.push(createLoggerMiddleware({ origin }));
 
     // // filter and subscription polyfills

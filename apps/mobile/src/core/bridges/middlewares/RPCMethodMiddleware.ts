@@ -4,6 +4,7 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
+import { urlUtils } from '@rabby-wallet/base-utils';
 
 let appVersion = '';
 
@@ -139,7 +140,9 @@ RPCMethodsMiddleParameters) =>
     };
 
     if (__DEV__) {
-      console.debug(`[getRpcMethodMiddleware] req.method: '${req.method}'`);
+      console.debug(
+        `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id})`,
+      );
     }
     const isWhiteListedMethod = isWhitelistedRPC(req.method);
 
@@ -150,14 +153,14 @@ RPCMethodsMiddleParameters) =>
       if (rpcMethods[req.method]) {
         if (__DEV__) {
           console.debug(
-            `[getRpcMethodMiddleware] req.method: '${req.method}' use customized route`,
+            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
           );
         }
         await rpcMethods[req.method]();
       } else {
         if (__DEV__) {
           console.debug(
-            `[getRpcMethodMiddleware] req.method: '${req.method}' use providerController`,
+            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) use providerController`,
           );
         }
         res.result = await sendRequest(
@@ -171,7 +174,7 @@ RPCMethodsMiddleParameters) =>
       }
       if (__DEV__) {
         console.debug(
-          `[getRpcMethodMiddleware] res.result for method '${req.method}': `,
+          `[getRpcMethodMiddleware] res.result for method '${req.method}'(req.id: ${req.id}): `,
           res.result,
         );
       }
@@ -185,7 +188,7 @@ RPCMethodsMiddleParameters) =>
       }
       if (__DEV__) {
         console.debug(
-          `[getRpcMethodMiddleware] error for method '${req.method}': `,
+          `[getRpcMethodMiddleware] error for method '${req.method}'(req.id: ${req.id}): `,
           e,
         );
       }

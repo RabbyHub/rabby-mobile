@@ -80,7 +80,8 @@ export const JS_POST_MESSAGE_TO_PROVIDER = (message: string, origin: string) => 
   try {
     window.postMessage(${JSON.stringify(message)}, '${origin}');
   } catch (e) {
-    //Nothing to do
+    // Nothing to do
+    console.warn('[rabby-post-message-to-provider]', e);
   }
 })()`;
 
@@ -95,7 +96,8 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (message: string, origin: stri
       try {
         frame.contentWindow.postMessage(${JSON.stringify(message)}, '${origin}');
       } catch (e) {
-        //Nothing to do
+        // Nothing to do
+        console.warn('[rabby-iframe-post-message-to-provider]', e);
       }
 
   }
