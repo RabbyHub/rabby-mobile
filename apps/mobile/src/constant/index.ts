@@ -29,6 +29,18 @@ export const APP_VERSIONS = {
   forCheckUpgrade: __DEV__ ? fromJs : fromNative,
 };
 
+const UA_NAME = 'RabbyMobile' as const;
+const UA_VERSION = APP_VERSIONS.fromNative;
+export const APP_UA_PARIALS = {
+  UA_NAME,
+  UA_VERSION,
+  UA_FULL_NAME: Platform.select({
+    android:
+      `${UA_NAME}/${UA_VERSION} ${UA_NAME}Android/${UA_VERSION}` as const,
+    ios: `${UA_NAME}/${UA_VERSION} ${UA_NAME}IOS/${UA_VERSION}` as const,
+  })!,
+};
+
 export const APP_URLS = {
   PRIVACY_POLICY: 'https://rabby.io/docs/privacy',
   TWITTER: 'https://twitter.com/rabby_io',

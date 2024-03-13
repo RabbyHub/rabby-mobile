@@ -16,7 +16,7 @@ const getWindowInformation = `
   ))
 `;
 
-export const SPA_urlChangeListener = `(function () {
+export const SPA_urlChangeListener = `;(function () {
   var __rabbyHistory = window.history;
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;

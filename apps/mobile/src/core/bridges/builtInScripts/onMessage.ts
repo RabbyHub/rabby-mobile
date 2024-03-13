@@ -1,5 +1,5 @@
 export const JS_LOG_ON_MESSAGE = `
-(function() {
+;(function() {
   // log message from react native
 
   window.addEventListener('message', function(event) {

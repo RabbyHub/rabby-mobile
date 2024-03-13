@@ -1,17 +1,70 @@
 /* global inpageBundle */
 
-if (shouldInject()) {
-  injectScript(inpageBundle);
-  start();
+// const isAndroid = window.navigator.userAgent.includes('Android');
+
+/**
+ * @why on Android, `injectedJavaScriptBeforeContentLoaded` is not reliable.
+ *
+ * I manged to make it work by:
+ * - preload WebView once on App bootstrapped, this MAYBE make this inpage "injected" like what chrome extension's content-script does
+ * - <del>in DappWebViewControl, do not render WebView at first time, instead, trigger its first time render after first source.url/source.html confirmed.</del>
+ * - make sure setup providers at FIRST tick, so we CAN'T wait for `DOMContentLoaded` event. Instead, we should retry it on DOMContentLoaded
+ *
+ *
+ * @see https://github.com/react-native-webview/react-native-webview/blob/master/docs/Reference.md#injectedjavascriptbeforecontentloaded
+ * @see
+ * > Warning On Android, this may work, but it is not 100% reliable (see #1609 and #1099). Consider injectedJavaScriptObject instead.
+ */
+
+const RETRY_LIMIT = 20;
+const injectionState = {
+  // /**
+  //  * @type {'idle' | 'pending' | 'complete' | 'error'}
+  //  */
+  // stage: 'idle',
+  error: null,
+  retry: 0
+};
+async function injectProcess() {
+  do {
+    try {
+      /**
+       * if it really shouln't inject, just quit the process.
+       *
+       * BUT, if it failed by accident, (such as `documentElementCheck()` failed due to `document.documentElement` invalid),
+       * we should retry it.
+       */
+      if (!shouldInject()) return ;
+      injectScript(inpageBundle);
+
+      injectionState.error = null;
+    } catch (err) {
+      injectionState.error = err;
+      await wait(50);
+      injectionState.retry++;
+    }
+  } while (injectionState.error && injectionState.retry < RETRY_LIMIT)
+
+  if (injectionState.error) {
+    console.error(`Rabby script injection failed, total retry count: ${injectionState.retry}`, err);
+  } else if (injectionState.retry) {
+    console.warn(`Rabby script injection succeeded after ${injectionState.retry} retries`);
+  }
+
+  await connectOnDomReady();
 }
+injectProcess();
 
 // Functions
+async function wait(ms = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Sets up the stream communication and submits site metadata
  *
  */
-async function start() {
+async function connectOnDomReady() {
   await domIsReady();
   window._rabbySetupProvider();
 }
@@ -22,20 +75,16 @@ async function start() {
  * @param {string} content - Code to be executed in the current document
  */
 function injectScript(content) {
-  try {
-    const container = document.head || document.documentElement;
+  const container = document.head || document.documentElement;
 
-    // synchronously execute script in page context
-    const scriptTag = document.createElement('script');
-    scriptTag.setAttribute('async', false);
-    scriptTag.textContent = content;
-    container.insertBefore(scriptTag, container.children[0]);
+  // synchronously execute script in page context
+  const scriptTag = document.createElement('script');
+  scriptTag.setAttribute('async', false);
+  scriptTag.textContent = content;
+  container.insertBefore(scriptTag, container.children[0]);
 
-    // script executed; remove script element from DOM
-    container.removeChild(scriptTag);
-  } catch (err) {
-    console.error('MetaMask script injection failed', err);
-  }
+  // script executed; remove script element from DOM
+  container.removeChild(scriptTag);
 }
 
 /**
@@ -90,6 +139,8 @@ function suffixCheck() {
  * Checks the documentElement of the current document
  *
  * @returns {boolean} {@code true} if the documentElement is an html node or if none exists
+ *
+ * @notice on Android, it's executing javascript BEFORE content loaded, so it's possible that we cannot get `document.head`, `document.documentElement`, etc.
  */
 function documentElementCheck() {
   const documentElement = document.documentElement.nodeName;
@@ -118,6 +169,11 @@ function blockedDomainCheck() {
     'sharefile.com',
   ];
   const currentUrl = window.location.href;
+  // leave here for debug
+  // window.alert('currentUrl is ' + currentUrl);
+  // allow loaded as html
+  if (currentUrl === 'about:blank') return false;
+
   let currentRegex;
   for (let i = 0; i < blockedDomains.length; i++) {
     const blockedDomain = blockedDomains[i].replace('.', '\\.');

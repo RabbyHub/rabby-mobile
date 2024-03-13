@@ -13,9 +13,11 @@ export type WebViewActions = ReturnType<
   typeof useWebViewControl
 >['webviewActions'];
 
+export const BLANK_PAGE = 'about:blank';
+
 export function useWebViewControl() {
   const webviewRef = useRef<WebView>(null);
-  const urlRef = useRef<string>('about:blank');
+  const urlRef = useRef<string>(BLANK_PAGE);
   const titleRef = useRef<string>('');
   const iconRef = useRef<string | undefined>();
 

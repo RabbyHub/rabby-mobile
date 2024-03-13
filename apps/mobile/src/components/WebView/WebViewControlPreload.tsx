@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { atom, useAtom } from 'jotai';
 import WebView, { WebViewProps } from 'react-native-webview';
@@ -10,18 +10,31 @@ import DappWebViewControl from './DappWebViewControl';
 
 const isAndroid = Platform.OS === 'android';
 
-const TOUCH_HTML = `
-<html>
-<head>
-</head>
-<body>
-  <div>touche view</div>
-  <script>
-    window.ethereum.request({ method: 'eth_accounts' });
-  </script>
-</body>
-</html>
-`;
+function getTouchHtml(inPageScript: string = '') {
+  return `
+  <html>
+  <head>
+    <!-- touche view -->
+    <title></title>
+  </head>
+  <body>
+    <div style="display: none;">touche view</div>
+    <script>
+      ;(function() {
+        ${inPageScript}
+      })();
+
+      ;(function() {
+        // window.alert('window.ethereum existed? ' + typeof window.ethereum);
+        window.ethereum && window.ethereum.request({ method: 'eth_accounts' });
+      })();
+    </script>
+    <script>
+    </script>
+  </body>
+  </html>
+  `;
+}
 
 const firstTouchedAtom = atom(!isAndroid);
 /**
@@ -33,9 +46,10 @@ const firstTouchedAtom = atom(!isAndroid);
 export default function WebViewControlPreload() {
   const [firstTouched, setFirstTouched] = useAtom(firstTouchedAtom);
 
-  const { entryScriptWeb3Loaded } = useJavaScriptBeforeContentLoaded({
-    isTop: false,
-  });
+  const { entryScriptWeb3Loaded, entryScripts } =
+    useJavaScriptBeforeContentLoaded({
+      isTop: false,
+    });
 
   // devLog(
   //   '[debug] entryScriptWeb3Loaded, firstTouched',
@@ -52,6 +66,10 @@ export default function WebViewControlPreload() {
     }, 500);
   }, [setFirstTouched]);
 
+  const embedHtml = useMemo(() => {
+    return getTouchHtml(entryScripts.inPageWeb3);
+  }, [entryScripts.inPageWeb3]);
+
   // const
   if (!isAndroid) return null;
 
@@ -63,7 +81,7 @@ export default function WebViewControlPreload() {
     <DappWebViewControl
       // would be ignored, just for type checking
       dappOrigin="https://rabby.io/docs/privacy"
-      embedHtml={TOUCH_HTML}
+      embedHtml={embedHtml}
       style={styles.webviewStyle}
       webviewProps={{
         cacheEnabled: false,
