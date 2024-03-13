@@ -1,9 +1,16 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
 import { sessionService } from '../services/shared';
+import {
+  allowLinkOpen,
+  getAlertMessage,
+  protocolAllowList,
+  trustedProtocolToDeeplink,
+} from '@/constant/dappView';
 
 export function useBackgroundBridges() {
   const [, setSpinner] = useState(false);
@@ -159,8 +166,46 @@ export function useSetupWebview({
     initializeBackgroundBridge(formattedDappOrigin, true);
   };
 
+  /**
+   *  Function that allows custom handling of any web view requests.
+   *  Return `true` to continue loading the request and `false` to stop loading.
+   */
+  const onShouldStartLoadWithRequest = useCallback(({ url }) => {
+    // Continue request loading it the protocol is whitelisted
+    const { protocol } = new URL(url);
+    if (protocolAllowList.includes(protocol)) return true;
+
+    // If it is a trusted deeplink protocol, do not show the
+    // warning alert. Allow the OS to deeplink the URL
+    // and stop the webview from loading it.
+    if (trustedProtocolToDeeplink.includes(protocol)) {
+      allowLinkOpen(url);
+      return false;
+    }
+
+    const alertMsg = getAlertMessage(protocol);
+
+    // Pop up an alert dialog box to prompt the user for permission
+    // to execute the request
+    Alert.alert('Warning', alertMsg, [
+      {
+        text: 'Ignore',
+        onPress: () => null,
+        style: 'cancel',
+      },
+      {
+        text: 'Allow',
+        onPress: () => allowLinkOpen(url),
+        style: 'default',
+      },
+    ]);
+
+    return false;
+  }, []);
+
   return {
     onLoadStart,
+    onShouldStartLoadWithRequest,
     onMessage,
   };
 }
