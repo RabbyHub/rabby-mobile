@@ -10,7 +10,6 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { keyBy } from 'lodash';
-
 /**
  * @description safe find chain, if not found, return fallback(if provided) or null
  */
