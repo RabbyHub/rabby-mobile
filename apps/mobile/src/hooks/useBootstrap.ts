@@ -7,8 +7,9 @@ import { initServices } from '@/core/services/init';
 import EntryScriptWeb3 from '@/core/bridges/EntryScriptWeb3';
 import { EntryScriptVConsole } from '@/core/bridges/builtInScripts/loadVConsole';
 import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
-import { CHAINS_LIST, syncChainList } from '@/constant/chains';
+import { syncChainList } from '@/constant/chains';
 import { sleep } from '@/utils/async';
+import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -22,6 +23,30 @@ const lockAtom = atom({
 export function useIfUseBuiltinPwd() {
   return useAtomValue(bootstrapAtom).useBuiltinPwd;
 }
+
+const DEBUG_IN_PAGE_SCRIPTS = {
+  LOAD_BEFORE: __DEV__
+    ? // leave here for debug
+      `window.alert('DEBUG_IN_PAGE_LOAD_BEFORE')`
+    : ``,
+  LOAD_AFTER: __DEV__
+    ? // leave here for debug
+      `
+;(function() {
+    setTimeout(function () {
+      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(
+        {
+          type: 'RabbyContentScript:Debug:LoadLastChunk',
+          payload: {
+            time: Date.now(),
+          }
+        }
+      ));
+    }, 20);
+  })();
+  `
+    : ``,
+};
 
 /**
  * @description only call this hook on the top level component
@@ -87,10 +112,13 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 
   const fullScript = React.useMemo(() => {
     return [
+      // DEBUG_IN_PAGE_SCRIPTS.LOAD_BEFORE,
       entryScripts.inPageWeb3,
+      SPA_urlChangeListener,
       __DEV__ ? entryScripts.vConsole : '',
       JS_LOG_ON_MESSAGE,
       ';true;',
+      // DEBUG_IN_PAGE_SCRIPTS.LOAD_AFTER,
     ]
       .filter(Boolean)
       .join('\n');

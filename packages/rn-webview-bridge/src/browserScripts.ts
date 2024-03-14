@@ -16,7 +16,7 @@ const getWindowInformation = `
   ))
 `;
 
-export const SPA_urlChangeListener = `(function () {
+export const SPA_urlChangeListener = `;(function () {
   var __rabbyHistory = window.history;
   var __rabbyPushState = __rabbyHistory.pushState;
   var __rabbyReplaceState = __rabbyHistory.replaceState;
@@ -80,7 +80,8 @@ export const JS_POST_MESSAGE_TO_PROVIDER = (message: string, origin: string) => 
   try {
     window.postMessage(${JSON.stringify(message)}, '${origin}');
   } catch (e) {
-    //Nothing to do
+    // Nothing to do
+    console.warn('[rabby-post-message-to-provider]', e);
   }
 })()`;
 
@@ -95,7 +96,8 @@ export const JS_IFRAME_POST_MESSAGE_TO_PROVIDER = (message: string, origin: stri
       try {
         frame.contentWindow.postMessage(${JSON.stringify(message)}, '${origin}');
       } catch (e) {
-        //Nothing to do
+        // Nothing to do
+        console.warn('[rabby-iframe-post-message-to-provider]', e);
       }
 
   }

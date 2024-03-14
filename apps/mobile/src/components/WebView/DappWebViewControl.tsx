@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -25,23 +25,34 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
+import {
+  BLANK_PAGE,
+  WebViewActions,
+  WebViewState,
+  useWebViewControl,
+} from './hooks';
 import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
+import { APP_UA_PARIALS } from '@/constant';
 
 function errorLog(...info: any) {
   devLog('[DappWebViewControl::error]', ...info);
 }
 
+const BUILTIN_SPECIAL_URLS = [BLANK_PAGE];
 function convertToWebviewUrl(dappOrigin: string) {
   if (__DEV__) {
     if (dappOrigin.startsWith('http://')) {
       return dappOrigin;
     }
+  }
+
+  if (BUILTIN_SPECIAL_URLS.includes(dappOrigin)) {
+    return dappOrigin;
   }
 
   return stringUtils.ensurePrefix(dappOrigin, 'https://');
@@ -300,7 +311,11 @@ const DappWebViewControl = React.forwardRef<
       styles,
     ]);
 
-    const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
+    const {
+      onLoadStart,
+      onMessage: onBridgeMessage,
+      onShouldStartLoadWithRequest,
+    } = useSetupWebview({
       dappOrigin,
       webviewRef,
       siteInfoRefs: {
@@ -330,6 +345,9 @@ const DappWebViewControl = React.forwardRef<
           // cacheEnabled={false}
           cacheEnabled
           startInLoadingState
+          allowsFullscreenVideo={false}
+          allowsInlineMediaPlayback={false}
+          originWhitelist={['*']}
           {...webviewProps}
           style={[styles.dappWebView, webviewProps?.style]}
           ref={webviewRef}
@@ -342,15 +360,19 @@ const DappWebViewControl = React.forwardRef<
             // TODO: cusotmize userAgent here
             // 'User-Agent': ''
           }}
+          testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
+          applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+          javaScriptEnabled
           injectedJavaScriptBeforeContentLoaded={fullScript}
           injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
-          onError={errorLog}
           webviewDebuggingEnabled={__DEV__}
           onLoadStart={nativeEvent => {
             webviewProps?.onLoadStart?.(nativeEvent);
             onLoadStart(nativeEvent);
           }}
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          onError={errorLog}
           onMessage={event => {
             // // leave here for debug
             // if (__DEV__) {
@@ -386,6 +408,7 @@ const DappWebViewControl = React.forwardRef<
       initialUrl,
       onBridgeMessage,
       onLoadStart,
+      onShouldStartLoadWithRequest,
       webviewActions.onNavigationStateChange,
       webviewNode,
       webviewRef,

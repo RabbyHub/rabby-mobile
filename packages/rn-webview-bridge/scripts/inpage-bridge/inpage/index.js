@@ -40,6 +40,18 @@ Object.defineProperty(window, '_rabbySetupProvider', {
   writable: false,
 });
 
+// notify webview inpage initialization is complete
+window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
+  JSON.stringify(
+    {
+      type: 'RabbyContentScript:InpageLoaded',
+      payload: {
+        time: Date.now(),
+      }
+    }
+  )
+);
+
 // Functions
 
 /**

@@ -1,3 +1,4 @@
+import { urlUtils } from '@rabby-wallet/base-utils';
 import { Buffer } from 'buffer';
 import { Duplex } from 'readable-stream';
 
@@ -5,12 +6,12 @@ import { Duplex } from 'readable-stream';
 const noop = () => {};
 
 export default class PortDuplexStream extends Duplex {
-  constructor(port, url) {
+  constructor(port, urlRef) {
     super({
       objectMode: true,
     });
     this._port = port;
-    this._url = url;
+    this._urlRef = urlRef;
     this._port.addListener('message', this._onMessage.bind(this));
     this._port.addListener('disconnect', this._onDisconnect.bind(this));
   }
@@ -58,12 +59,13 @@ export default class PortDuplexStream extends Duplex {
    */
   _write = function (msg, encoding, cb) {
     try {
+      const targetOrigin = urlUtils.safeGetOrigin(this._urlRef.current).origin;
       if (Buffer.isBuffer(msg)) {
         const data = msg.toJSON();
         data._isBuffer = true;
-        this._port.postMessage(data, this._url);
+        this._port.postMessage(data, targetOrigin);
       } else {
-        this._port.postMessage(msg, this._url);
+        this._port.postMessage(msg, targetOrigin);
       }
     } catch (err) {
       if (__DEV__) {
