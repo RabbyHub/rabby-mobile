@@ -16,6 +16,7 @@ import { TCexQuoteData, TDexQuoteData } from '../utils';
 import { useSwapSettings } from './settings';
 import { QuoteProvider, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
+import { formatSpeicalAmount } from '@/utils/number';
 
 const { isSameAddress } = addressUtils;
 
@@ -207,10 +208,11 @@ export const useTokenPair = (userAddress: string) => {
   }, [chain, payToken]);
 
   const handleAmountChange = useCallback((e: string) => {
-    if (!/^\d*(\.\d*)?$/.test(e)) {
+    const v = formatSpeicalAmount(e);
+    if (!/^\d*(\.\d*)?$/.test(v)) {
       return;
     }
-    setPayAmount(e);
+    setPayAmount(v);
   }, []);
 
   const handleBalance = useCallback(() => {
