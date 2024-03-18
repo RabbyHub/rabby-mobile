@@ -138,6 +138,7 @@
     "react-native-version-check": "^3.4.7",
     "react-native-video": "^5.2.1",
     "react-native-vision-camera": "^3.6.17",
+    "react-native-wagmi-charts": "^2.3.2",
     "react-native-walkthrough-tooltip": "^1.5.0",
     "react-native-webview": "^13.6.3",
     "react-use": "17.4.2",
