@@ -132,11 +132,9 @@ export const useTimeMachineData = () => {
     return undefined;
   }, [currentAccount?.address]);
 
-  const isLoading = loading || !!value?.job || !value?.result;
-
   useEffect(() => {
     let id;
-    if (!isLoading) {
+    if (!loading && !!value?.job) {
       id = setTimeout(() => {
         retry();
       }, 2000);
@@ -146,11 +144,11 @@ export const useTimeMachineData = () => {
         clearTimeout(id);
       }
     };
-  }, [isLoading, retry, value]);
+  }, [loading, retry, value]);
 
   return {
     data: value,
-    loading: isLoading,
+    loading: loading || !!value?.job,
     supportChainList: supportChainList?.supported_chains || [],
     isNoAssets: !loading && value?.result?.data?.usd_value_list?.length === 0,
   };
