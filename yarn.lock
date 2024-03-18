@@ -2007,10 +2007,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/common@npm:0.3.56":
-  version: 0.3.56
-  resolution: "@debank/common@npm:0.3.56"
-  checksum: 54da620357572259efbe3940ed31af2190ca27c87186b83d1c3ee387efb5226b6c2c6d9756464f966a5ffe9e6b27e59953fefbf3bb6b456b49be1aa65d633532
+"@debank/common@npm:0.3.58":
+  version: 0.3.58
+  resolution: "@debank/common@npm:0.3.58::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Fcommon%2F-%2Fcommon-0.3.58.tgz"
+  checksum: ea17e4262b6efd6a3febd0596e6eea9d23b72b7c725e9fbff80bd68dfa90dfe8ec91bb84a16d288ffec182a6545514d01f85108d7752104a66234394d5ab9fb7
   languageName: node
   linkType: hard
 
@@ -5135,9 +5135,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.3":
-  version: 0.7.3
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.3"
+"@rabby-wallet/rabby-api@npm:^0.7.4":
+  version: 0.7.4
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.4.tgz"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -5148,7 +5148,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 0ee90590c6f88c4cee0f1db5cff4efbdc288f18dc9e4f117d580eafc4727cf816598c33698331dd71deb667ea428cf4f22c9d98d2fbb669a4963c9406bcbf74e
+  checksum: 2d25999323302f0cfe6fb31d8d5f74f3a3cb839900886ee98109fc78c0e35aef7d7f76a2450a92c216f1ee0585b768a3c461d825e8b3d1e36b1e12e378da1a75
   languageName: node
   linkType: hard
 
@@ -25510,7 +25510,7 @@ __metadata:
     "@babel/plugin-transform-export-namespace-from": ^7.23.4
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
-    "@debank/common": 0.3.56
+    "@debank/common": 0.3.58
     "@debank/festats": 1.0.4
     "@debank/rabby-rn-security": ^0.1.1
     "@eth-optimism/contracts-ts": ^0.17.0
@@ -25526,7 +25526,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": beta
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.3
+    "@rabby-wallet/rabby-api": ^0.7.4
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/rabby-swap": ^0.0.29
     "@rabby-wallet/service-address": "workspace:^"

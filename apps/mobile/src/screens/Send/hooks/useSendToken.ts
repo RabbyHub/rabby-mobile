@@ -38,6 +38,7 @@ import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
   ARB_LIKE_L2_CHAINS,
   CAN_ESTIMATE_L1_FEE_CHAINS,
+  L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
@@ -438,6 +439,10 @@ export function useSendTokenForm() {
         }
 
         params.value = `0x${sendValue.toString(16)}`;
+        const noEstimateGasRequired =
+          !ARB_LIKE_L2_CHAINS.includes(chain.enum) &&
+          !L2_ENUMS.includes(chain.enum);
+
         try {
           const code = await apiProvider.requestETHRpc(
             {
@@ -446,17 +451,21 @@ export function useSendTokenForm() {
             },
             chain.serverId,
           );
-          if (screenState.estimateGas > 0) {
+          /**
+           * we dont' need always fetch estimateGas, if no `params.gas` set below,
+           * `params.gas` would be filled on Tx Page.
+           */
+          if (chain.needEstimateGas && screenState.estimateGas > 0) {
             params.gas = intToHex(screenState.estimateGas);
           } else if (
             code &&
             (code === '0x' || code === '0x0') &&
-            !ARB_LIKE_L2_CHAINS.includes(chain.enum)
+            noEstimateGasRequired
           ) {
             params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
           }
         } catch (e) {
-          if (!ARB_LIKE_L2_CHAINS.includes(chain.enum)) {
+          if (noEstimateGasRequired) {
             params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
           }
         }
