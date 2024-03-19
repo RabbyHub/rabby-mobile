@@ -1,10 +1,8 @@
-import { toast } from '@/components/Toast';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { Tab } from '@rneui/base';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
-import { View, Pressable, Text } from 'react-native';
 
 export type TabKey = (typeof TIME_TAB_LIST)[number]['key'];
 
@@ -87,19 +85,16 @@ const getStyles = createGetStyles(colors => ({
     padding: 2,
     borderRadius: 6,
     width: '100%',
-    flexDirection: 'row',
     height: 32,
-    zIndex: 9999,
   },
   item: {
-    flex: 1,
+    height: '100%',
+    padding: 0,
+    margin: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'stretch',
     borderRadius: 4,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    marginHorizontal: 0,
-    marginVertical: 0,
   },
   itemText: {
     padding: 0,
