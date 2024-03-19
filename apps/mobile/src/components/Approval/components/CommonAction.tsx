@@ -34,6 +34,7 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 type CommonActions = {
+  title: string;
   desc: string;
   is_asset_changed: boolean;
   is_involving_privacy: boolean;
@@ -79,18 +80,6 @@ export const CommonAction = ({
 
   React.useEffect(() => {
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const descTip = React.useMemo(() => {
-    if (actionData.is_asset_changed && actionData.is_involving_privacy) {
-      return t('page.signTx.common.descTipWarningBoth');
-    } else if (actionData.is_asset_changed) {
-      return t('page.signTx.common.descTipWarningAssets');
-    } else if (actionData.is_involving_privacy) {
-      return t('page.signTx.common.descTipWarningPrivacy');
-    }
-    return t('page.signTx.common.descTipSafe');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -151,15 +140,6 @@ export const CommonAction = ({
         </Row>
         <Row style={styles.description}>
           <Text>{actionData.desc}</Text>
-          <Tip content={descTip}>
-            {actionData.is_asset_changed || actionData.is_involving_privacy ? (
-              <Warning2SVG />
-            ) : null}
-            {!actionData.is_asset_changed &&
-            !actionData.is_involving_privacy ? (
-              <CertifiedSVG />
-            ) : null}
-          </Tip>
         </Row>
       </Col>
     </Table>
