@@ -12,7 +12,8 @@ import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DescItem from '../DescItem';
 
-interface ReceiverData {
+export interface ReceiverData {
+  title?: string;
   address: string;
   chain: Chain;
   eoa: {
@@ -83,7 +84,9 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text style={styles.titleText}>{t('page.signTx.send.sendTo')}</Text>
+        <Text style={styles.titleText}>
+          {data.title || t('page.signTx.send.sendTo')}
+        </Text>
         <Values.Address
           address={data.address}
           chain={data.chain}

@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import Warning2SVG from '@/assets/icons/sign/tx/warning-2.svg';
-import CertifiedSVG from '@/assets/icons/sign/tx/certified.svg';
 import { ProtocolListItem } from './Actions/components/ProtocolListItem';
 import { SecurityListItem } from './Actions/components/SecurityListItem';
 import ViewMore from './Actions/components/ViewMore';
@@ -13,11 +11,11 @@ import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import DescItem from './Actions/components/DescItem';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '../hooks/useCommonStyle';
-import { Tip } from '@/components/Tip';
+import { ContractCallRequireData } from './Actions/utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -136,12 +134,80 @@ export const CommonAction = ({
       ) : null}
       <Col>
         <Row style={styles.rowTitle} isTitle>
-          <Text>{t('page.signTx.common.description')}</Text>
+          <Text style={commonStyle.rowTitleText}>
+            {t('page.signTx.common.description')}
+          </Text>
         </Row>
         <Row style={styles.description}>
           <Text>{actionData.desc}</Text>
         </Row>
       </Col>
+      {(requireData as ContractCallRequireData)?.unexpectedAddr && (
+        <Col>
+          <Row isTitle style={styles.rowTitle}>
+            <Text>{t('page.signTx.contractCall.suspectedReceiver')}</Text>
+          </Row>
+          <Row>
+            <View>
+              <Values.Address
+                address={
+                  (requireData as ContractCallRequireData).unexpectedAddr!
+                    .address
+                }
+                chain={chain}
+              />
+              <DescItem>
+                <Values.AddressMemo
+                  address={
+                    (requireData as ContractCallRequireData).unexpectedAddr!
+                      .address
+                  }
+                />
+              </DescItem>
+              {(requireData as ContractCallRequireData).unexpectedAddr!
+                .name && (
+                <DescItem>
+                  <Text>
+                    {
+                      (requireData as ContractCallRequireData).unexpectedAddr!
+                        .name
+                    }
+                  </Text>
+                </DescItem>
+              )}
+              <DescItem>
+                <ViewMore
+                  type="receiver"
+                  data={{
+                    title: t('page.signTx.contractCall.suspectedReceiver'),
+                    address: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.address,
+                    chain: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.chain,
+                    eoa: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.eoa,
+                    cex: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.cex,
+                    contract: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.contract,
+                    usd_value: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.usd_value,
+                    hasTransfer: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.hasTransfer,
+                    isTokenContract: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.isTokenContract,
+                    name: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.name,
+                    onTransferWhitelist: (
+                      requireData as ContractCallRequireData
+                    ).unexpectedAddr!.onTransferWhitelist,
+                  }}
+                />
+              </DescItem>
+            </View>
+          </Row>
+        </Col>
+      )}
     </Table>
   );
 };
