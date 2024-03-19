@@ -6,7 +6,7 @@ import { numFormat } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import dayjs from 'dayjs';
 import { findLastIndex } from 'lodash';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 
 export const use24hCurveData = () => {
@@ -115,8 +115,10 @@ export const formatTimeMachineCurve = (range: number[], data?: AssetsCurve) => {
   };
 };
 
-export const useTimeMachineData = () => {
+export const useTimeMachineData = (enabled = false) => {
   const { currentAccount } = useCurrentAccount();
+
+  const [cached, setCached] = useState(false);
 
   const { value: supportChainList } = useAsyncRetry(async () => {
     if (currentAccount?.address) {
@@ -126,11 +128,17 @@ export const useTimeMachineData = () => {
   }, [currentAccount?.address]);
 
   const { value, loading, retry } = useAsyncRetry(async () => {
-    if (currentAccount?.address) {
+    if (currentAccount?.address && cached) {
       return openapi.getHistoryCurve(currentAccount?.address);
     }
     return undefined;
-  }, [currentAccount?.address]);
+  }, [currentAccount?.address, cached]);
+
+  useEffect(() => {
+    if (enabled) {
+      setCached(true);
+    }
+  }, [enabled]);
 
   useEffect(() => {
     let id;
@@ -148,7 +156,7 @@ export const useTimeMachineData = () => {
 
   return {
     data: value,
-    loading: loading || !!value?.job,
+    loading: !cached || !value || loading || !!value?.job,
     supportChainList: supportChainList?.supported_chains || [],
     isNoAssets: !loading && value?.result?.data?.usd_value_list?.length === 0,
   };
