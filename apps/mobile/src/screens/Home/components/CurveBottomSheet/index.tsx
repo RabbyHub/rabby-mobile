@@ -3,11 +3,12 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import React, { forwardRef, useDeferredValue, useMemo, useState } from 'react';
-import { Text } from 'react-native';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
+import { Dimensions, Text } from 'react-native';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  CurvePoint,
   formatTimeMachineCurve,
   use24hCurveData,
   useTimeMachineData,
@@ -22,6 +23,12 @@ import * as d3Shape from 'd3-shape';
 import { CurveLoader } from './CurveLoader';
 import { TIME_TAB_LIST, TabKey, TimeTab } from './TimeTab';
 import { DataHeaderInfo } from './DataHeaderInfo';
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 dayjs.extend(utc);
 
@@ -41,13 +48,16 @@ function Inner() {
   } = use24hCurveData();
   const {
     data: historyData,
-    loading,
+    loading: timeMachineLoading,
     supportChainList,
     isNoAssets,
   } = useTimeMachineData();
 
   const timeMachMapping = useMemo(() => {
-    let result: Record<string, ReturnType<typeof formatTimeMachineCurve>> = {};
+    let result = {} as Record<
+      Exclude<TabKey, '24h'>,
+      ReturnType<typeof formatTimeMachineCurve>
+    >;
     TIME_TAB_LIST.forEach(e => {
       if (e.key !== '24h' && historyData?.result?.data) {
         result[e.key] = formatTimeMachineCurve(
@@ -65,9 +75,6 @@ function Inner() {
     }
     return timeMachMapping[activeKey];
   }, [activeKey, curve24hData, timeMachMapping]);
-
-  const isLoading =
-    balanceLoading || (activeKey === '24h' ? curveLoading : loading);
 
   const { isUp, percent } = useMemo(() => {
     if (data?.list?.length) {
@@ -96,78 +103,135 @@ function Inner() {
 
   const pathColor = isUp ? colors['green-default'] : colors['red-default'];
 
-  const hoverDataOrigin = useMemo(() => {
+  const currentInfo = useMemo(() => {
     return {
-      hoverDate: dayjs().format(DATE_FORMATTER),
-      hoverBalance: formatUsdValue(balance || 0),
-      hoverIsLoss: !!data?.isLoss,
-      hoverPercent: isOffline || !hadAssets ? '0%' : percent,
+      date: dayjs().format(DATE_FORMATTER),
+      balance: formatUsdValue(balance || 0),
+      isLoss: !!data?.isLoss,
+      percent: isOffline || !hadAssets ? '0%' : percent,
     };
   }, [balance, data?.isLoss, hadAssets, isOffline, percent]);
-
-  const hoverData = useDeferredValue(hoverDataOrigin);
-
+  const xOffset = useSharedValue(0);
   return (
     <BottomSheetView>
       <View style={styles.timeTabWrapper}>
         <TimeTab activeKey={activeKey} onPress={setActiveKey} />
       </View>
-
-      <LineChart.Provider data={data?.list || []}>
-        <DataHeaderInfo
-          key={activeKey}
-          activeKey={activeKey}
-          currentDate={hoverData.hoverDate}
-          currentPercentChange={hoverData.hoverPercent}
-          currentIsLoss={hoverData.hoverIsLoss}
-          currentBalance={hoverData.hoverBalance}
-          isOffline={isOffline}
-          data={(data?.list || []) as any}
-          supportChainList={supportChainList}
-          isLoading={isLoading}
-          isNoAssets={isNoAssets}
-          showSupportChainList={activeKey !== '24h'}
-        />
-
-        {isOffline || isNoAssets ? null : !isLoading ? (
-          <>
-            <LineChart height={114} shape={d3Shape.curveLinear}>
-              <LineChart.Path
-                showInactivePath={false}
-                color={pathColor}
-                width={2}>
-                <LineChart.Gradient color={pathColor} />
-              </LineChart.Path>
-              <LineChart.CursorLine color={colors['neutral-line']} />
-              <LineChart.CursorCrosshair
-                color={pathColor}
-                outerSize={12}
-                size={8}
-              />
-            </LineChart>
-
-            <View style={styles.xTitle}>
-              <Text style={styles.xText}>
-                {data?.list
-                  ? dayjs
-                      .unix(data?.list?.[0]?.timestamp)
-                      .format('MMM DD YYYY, HH:mm')
-                  : ''}
-              </Text>
-              <Text style={styles.xText}>
-                {data?.list
-                  ? dayjs
-                      .unix(data?.list?.[data?.list.length - 1]?.timestamp)
-                      .format('MMM DD YYYY, HH:mm')
-                  : ''}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <CurveLoader />
-        )}
-      </LineChart.Provider>
+      {TIME_TAB_LIST.map(e => (
+        <View key={e.key} style={activeKey !== e.key && styles.hidden}>
+          <Chart
+            isOffline={isOffline}
+            data={
+              (e.key === '24h'
+                ? curve24hData?.list
+                : timeMachMapping?.[e.key]?.list) || []
+            }
+            activeKey={e.key}
+            currentInfo={currentInfo}
+            supportChainList={supportChainList}
+            loading={
+              balanceLoading ||
+              (e.key === '24h' ? curveLoading : timeMachineLoading)
+            }
+            isNoAssets={isNoAssets}
+            pathColor={pathColor}
+            showSupportChainList={e.key !== '24h'}
+            xOffset={xOffset}
+          />
+        </View>
+      ))}
     </BottomSheetView>
+  );
+}
+
+function Chart({
+  data,
+  activeKey,
+  currentInfo,
+  isOffline,
+  supportChainList,
+  loading,
+  isNoAssets,
+  pathColor,
+  showSupportChainList,
+  xOffset,
+}: {
+  isOffline: boolean;
+  data: CurvePoint[];
+  activeKey: TabKey;
+  currentInfo: {
+    date: string;
+    percent: string;
+    isLoss: boolean;
+    balance: string;
+  };
+  supportChainList: string[];
+  loading: boolean;
+  isNoAssets: boolean;
+  pathColor: string;
+  showSupportChainList: boolean;
+  xOffset: SharedValue<number>;
+}) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
+  return (
+    <LineChart.Provider data={data}>
+      <DataHeaderInfo
+        key={activeKey}
+        activeKey={activeKey}
+        currentDate={currentInfo.date}
+        currentPercentChange={currentInfo.percent}
+        currentIsLoss={currentInfo.isLoss}
+        currentBalance={currentInfo.balance}
+        isOffline={isOffline}
+        data={data}
+        supportChainList={supportChainList}
+        isLoading={loading}
+        isNoAssets={isNoAssets}
+        showSupportChainList={showSupportChainList}
+      />
+
+      {isOffline || isNoAssets ? null : !loading ? (
+        <>
+          <LineChart
+            height={114}
+            shape={d3Shape.curveLinear}
+            style={{ position: 'relative' }}>
+            <LineChart.Path
+              showInactivePath={false}
+              color={pathColor}
+              width={2}>
+              <LineChart.Gradient color={pathColor} />
+            </LineChart.Path>
+            <LineChart.CursorLine color={colors['neutral-line']} />
+            <LineChart.CursorCrosshair
+              color={pathColor}
+              outerSize={12}
+              size={8}
+            />
+            <Mask xOffset={xOffset} />
+          </LineChart>
+
+          <View style={styles.xTitle}>
+            <Text style={styles.xText}>
+              {data?.[0]
+                ? dayjs.unix(data?.[0]?.timestamp).format('MMM DD YYYY, HH:mm')
+                : ''}
+            </Text>
+            <Text style={styles.xText}>
+              {data?.length
+                ? dayjs
+                    .unix(data?.[data.length - 1]?.timestamp)
+                    .format('MMM DD YYYY, HH:mm')
+                : ''}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <CurveLoader />
+      )}
+    </LineChart.Provider>
   );
 }
 
@@ -185,6 +249,32 @@ export const CurveBottomSheetModal = forwardRef<
   );
 });
 
+const Mask = ({ xOffset }: { xOffset: SharedValue<number> }) => {
+  const colors = useThemeColors();
+  const styles = useAnimatedStyle(() => ({
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors['neutral-bg-1'],
+    transform: [
+      {
+        translateX: xOffset.value,
+      },
+    ],
+  }));
+
+  useEffect(() => {
+    const windowWidth = Dimensions.get('window').width;
+    xOffset.value = withTiming(windowWidth, { duration: 500 });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <Animated.View style={styles} />;
+};
+
 const getStyles = createGetStyles(colors => ({
   timeTabWrapper: {
     paddingTop: 22,
@@ -200,5 +290,8 @@ const getStyles = createGetStyles(colors => ({
   xText: {
     fontSize: 13,
     color: colors['neutral-foot'],
+  },
+  hidden: {
+    display: 'none',
   },
 }));

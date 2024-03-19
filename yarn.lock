@@ -5135,9 +5135,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.5":
-  version: 0.7.5
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.5"
+"@rabby-wallet/rabby-api@npm:0.7.6":
+  version: 0.7.6
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.6"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -5148,7 +5148,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: c975b180b6712546049984032613060e331c56b3586cb15cb260fffd3756ff44fc1dcdaa9bfd5b9f2d56e6c7786b37e74da1a3262049d7ab677d1d7c2413c19d
+  checksum: d313cdadf45bcf050642702f492d2c3cbbb9ce72af99b19fcb35f1e14551131bd3ebf5b169b3cc5d1ce1c85fa24e50f1e372548189606a2a010479dc1ce23bad
   languageName: node
   linkType: hard
 
@@ -25641,7 +25641,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": beta
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.5
+    "@rabby-wallet/rabby-api": 0.7.6
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/rabby-swap": ^0.0.29
     "@rabby-wallet/service-address": "workspace:^"
@@ -25720,6 +25720,7 @@ __metadata:
     react-is: 18.2.0
     react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
+    react-native-animateable-text: ^0.11.1
     react-native-asset: ^2.1.1
     react-native-ble-plx: 2.0.3
     react-native-collapsible-tab-view: ^6.2.1
@@ -26139,6 +26140,20 @@ __metadata:
   version: 3.0.1
   resolution: "react-native-aes-crypto@npm:3.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-aes-crypto%2F-%2Freact-native-aes-crypto-3.0.1.tgz"
   checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  languageName: node
+  linkType: hard
+
+"react-native-animateable-text@npm:^0.11.1":
+  version: 0.11.1
+  resolution: "react-native-animateable-text@npm:0.11.1"
+  dependencies:
+    deprecated-react-native-prop-types: ^2.3.0
+    nullthrows: ^1.1.1
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.64.0-rc.3"
+    react-native-reanimated: "*"
+  checksum: b848b150a186ad536400a6b16050a68deb6ad97c9c93c987e3a2f5954643752a2cc855c3cc134a227c2f18af5f2b669ba8c37428673bbfbd2aef21149be1abf3
   languageName: node
   linkType: hard
 

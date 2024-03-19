@@ -1,9 +1,9 @@
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text } from 'react-native';
-import { ReText } from 'react-native-redash';
+import AnimateableText from 'react-native-animateable-text';
 import { useDerivedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
 import { CurvePoint } from '../../hooks/useCurve';
@@ -76,14 +76,18 @@ export const DataHeaderInfo = ({
     };
   }, [currentIsLoss, data, currentIndex, colors, styles]);
 
+  const [tipOpen, setTipOpen] = useState(false);
+
   return (
     <>
       <View style={styles.wrapper}>
         <View style={styles.dateWrapper}>
-          <ReText style={styles.date} text={title} />
+          <AnimateableText style={styles.date} text={title} />
           {showSupportChainList && supportChainList?.length > 0 && (
             <View style={styles.chainTextWrapper}>
               <Tip
+                isVisible={tipOpen}
+                onClose={() => setTipOpen(false)}
                 contentStyle={styles.tipContent}
                 placement="top"
                 content={
@@ -96,20 +100,24 @@ export const DataHeaderInfo = ({
                   </View>
                 }>
                 <RcIconInfoCC
+                  onPress={() => setTipOpen(true)}
                   color={colors['neutral-foot']}
                   width={14}
                   height={14}
                 />
               </Tip>
-              <Text style={styles.tip}>
+
+              <Text style={styles.tip} onPress={() => setTipOpen(true)}>
                 {supportChainList?.length} chains supported
               </Text>
             </View>
           )}
         </View>
         <View style={styles.balanceChangeWrapper}>
-          <ReText style={styles.usdValue} text={usdValue} />
-          {!isLoading && <ReText style={lossStyleProps} text={percentChange} />}
+          <AnimateableText style={styles.usdValue} text={usdValue} />
+          {!isLoading && (
+            <AnimateableText style={lossStyleProps} text={percentChange} />
+          )}
         </View>
         {isOffline && (
           <View style={styles.disconnectWrapper}>
@@ -129,6 +137,7 @@ const getStyles = createGetStyles(colors => ({
   wrapper: {
     paddingHorizontal: 22,
     gap: 8,
+    marginBottom: 10,
   },
   dateWrapper: {
     flexDirection: 'row',
@@ -155,6 +164,7 @@ const getStyles = createGetStyles(colors => ({
   date: {
     color: colors['neutral-foot'],
     fontSize: 13,
+    height: 20,
   },
   balanceChangeWrapper: {
     flexDirection: 'row',

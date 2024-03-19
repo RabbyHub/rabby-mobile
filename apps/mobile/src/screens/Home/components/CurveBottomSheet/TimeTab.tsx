@@ -1,5 +1,7 @@
+import { toast } from '@/components/Toast';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { Tab } from '@rneui/base';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { View, Pressable, Text } from 'react-native';
@@ -54,25 +56,28 @@ export const TimeTab = ({
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+
   return (
-    <View style={styles.listContainer}>
+    <Tab
+      value={TIME_TAB_LIST?.findIndex(e => e.key === activeKey)}
+      onChange={(v: number) => {
+        onPress(TIME_TAB_LIST[v].key);
+      }}
+      disableIndicator
+      dense
+      style={styles.listContainer}>
       {TIME_TAB_LIST.map(item => (
-        <Pressable
-          style={[styles.item, item.key === activeKey && styles.active]}
+        <Tab.Item
           key={item.key}
-          onPress={() => {
-            onPress(item.key);
-          }}>
-          <Text
-            style={[
-              styles.itemText,
-              item.key === activeKey && styles.activeText,
-            ]}>
-            {item.label}
-          </Text>
-        </Pressable>
+          buttonStyle={[styles.item, item.key === activeKey && styles.active]}
+          titleStyle={[
+            styles.itemText,
+            item.key === activeKey && styles.activeText,
+          ]}>
+          {item.label}
+        </Tab.Item>
       ))}
-    </View>
+    </Tab>
   );
 };
 
@@ -83,13 +88,18 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
     width: '100%',
     flexDirection: 'row',
-    height: 28,
+    height: 32,
+    zIndex: 9999,
   },
   item: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    marginHorizontal: 0,
+    marginVertical: 0,
   },
   itemText: {
     fontSize: 13,
@@ -100,6 +110,6 @@ const getStyles = createGetStyles(colors => ({
     color: colors['blue-default'],
   },
   active: {
-    backgroundColor: colors['neutral-card1'],
+    color: colors['neutral-body'],
   },
 }));

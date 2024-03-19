@@ -304,7 +304,7 @@ export const QuoteList = (props: QuotesProps) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={['90%']}
+      snapPoints={['85%']}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
