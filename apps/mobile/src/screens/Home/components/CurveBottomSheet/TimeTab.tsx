@@ -102,6 +102,7 @@ const getStyles = createGetStyles(colors => ({
     marginVertical: 0,
   },
   itemText: {
+    padding: 0,
     fontSize: 13,
     fontWeight: '500',
     color: colors['neutral-body'],
@@ -110,6 +111,6 @@ const getStyles = createGetStyles(colors => ({
     color: colors['blue-default'],
   },
   active: {
-    color: colors['neutral-body'],
+    backgroundColor: colors['neutral-card1'],
   },
 }));
