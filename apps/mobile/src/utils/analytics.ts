@@ -80,7 +80,7 @@ export const matomoRequestEvent = async (data: {
 
   try {
     await Promise.all([
-      analytics.logEvent(data.category, data),
+      analytics.logEvent(data.category.trim().replace(/\s+/g, '_'), data),
       postData(ANALYTICS_PATH, params),
     ]);
   } catch (e) {
