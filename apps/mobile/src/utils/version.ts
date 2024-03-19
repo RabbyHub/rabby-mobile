@@ -28,13 +28,17 @@ export type MergedRemoteVersion = {
 };
 
 const isAndroid = Platform.OS === 'android';
-const isSelfHostProd = BUILD_CHANNEL === 'selfhost';
+const isProductionChannel = [
+  /* must be android when 'selfhost' */
+  'selfhost',
+  'appstore',
+].includes(BUILD_CHANNEL);
 
 export const SELF_HOST_BASE = `https://download.rabby.io/downloads/${
-  isSelfHostProd
-    ? `wallet-mobile`
+  isProductionChannel
+    ? 'wallet-mobile'
     : isAndroid
-    ? `wallet-mobile-reg`
+    ? 'wallet-mobile-reg'
     : `wallet-mobile-pretest`
 }`;
 
