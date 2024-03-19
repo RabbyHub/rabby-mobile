@@ -22,6 +22,7 @@ export type MergedRemoteVersion = {
   version: string;
   downloadUrl: string;
   storeUrl: string | null;
+  externalUrlToOpen?: string;
   changelog: string;
   source: AppBuildChannel;
   couldUpgrade: boolean;
@@ -132,6 +133,7 @@ export async function getUpgradeInfo() {
   const finalRemoteInfo: MergedRemoteVersion = {
     version: localVersion,
     downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+    externalUrlToOpen: '',
     storeUrl,
     source: BUILD_CHANNEL,
     couldUpgrade: false,
@@ -142,8 +144,9 @@ export async function getUpgradeInfo() {
     case 'selfhost':
     case 'selfhost-reg':
       if (!isAndroid) {
-        finalRemoteInfo.version = storeVersion || APP_URLS.STORE_URL;
-        finalRemoteInfo.downloadUrl = storeUrl;
+        finalRemoteInfo.version = storeVersion || localVersion;
+        finalRemoteInfo.downloadUrl = storeUrl || APP_URLS.STORE_URL;
+        finalRemoteInfo.externalUrlToOpen = storeUrl;
       } else if (
         selfHostUpgrade?.version &&
         semver.gt(selfHostUpgrade.version, localVersion)
@@ -155,6 +158,7 @@ export async function getUpgradeInfo() {
     case 'appstore':
       finalRemoteInfo.version = storeVersion || localVersion;
       finalRemoteInfo.downloadUrl = storeUrl;
+      finalRemoteInfo.externalUrlToOpen = storeUrl;
       break;
   }
 

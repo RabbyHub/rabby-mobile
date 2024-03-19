@@ -26,6 +26,7 @@ import { useUnmountedRef } from './common/useMount';
 const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>('RemoteVersionMMKV', {
   version: getVersion(),
   downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+  externalUrlToOpen: '',
   storeUrl: null,
   source: BUILD_CHANNEL,
   couldUpgrade: false,
