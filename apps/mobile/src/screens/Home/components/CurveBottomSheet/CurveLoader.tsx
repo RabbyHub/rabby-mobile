@@ -27,7 +27,7 @@ export const CurveLoader = () => {
   return (
     <View style={styles.wrapper}>
       <Skeleton width={'100%'} height={80} style={styles.skeleton} />
-      <Text style={styles.text}>Date preparing, please wait</Text>
+      <Text style={styles.text}>Data preparing, please wait</Text>
     </View>
   );
 };
