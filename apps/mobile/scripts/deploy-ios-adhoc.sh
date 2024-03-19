@@ -32,6 +32,8 @@ if [ ! -z $REALLY_BUILD ]; then
   BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
   export build_export_path="$script_dir/deployments/ios"
 
+  cd $project_dir/ios;
+  bundle install && bundle exec pod install;
   sh $project_dir/ios/build.sh ad-hoc
 
   rm -rf $export_path
