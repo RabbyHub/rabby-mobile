@@ -1,5 +1,6 @@
 import { openapi } from '@/core/request';
 import { formatUsdValue } from '@/utils/number';
+import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
@@ -25,6 +26,7 @@ const formChartData = (
             ? `${x.usd_value === 0 ? '0' : '100.00'}%`
             : `${(Math.abs(change * 100) / startData.usd_value).toFixed(2)}%`,
         timestamp: x.timestamp,
+        dateString: dayjs.unix(x.timestamp).format('MM DD, HH:mm'),
       };
     }) || [];
 
@@ -46,6 +48,7 @@ const formChartData = (
               2,
             )}%`,
       timestamp: Math.floor(realtimeTimestamp / 1000),
+      dateString: dayjs.unix(realtimeTimestamp / 1000).format('MM DD, HH:mm'),
     });
   }
 

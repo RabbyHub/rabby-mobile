@@ -1,5 +1,11 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions, Platform } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
 import {
   RcIconHeaderSettings,
   RcIconHeaderRightArrow,
@@ -14,22 +20,36 @@ import { splitNumberByStep } from '@/utils/number';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useCurrentAccount } from '@/hooks/account';
 import { ellipsisAddress } from '@/utils/address';
-import { Text } from '@/components';
+import { Text, Tip } from '@/components';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { PendingTxCount } from './components/PendingTxCount';
 import { useRemoteUpgradeInfo } from '@/hooks/version';
+import { useTranslation } from 'react-i18next';
+import RcInfoCC from '@/assets/icons/home/info-cc.svg';
+import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
+import { toast } from '@/components/Toast';
+import { CurveBottomSheetModal } from './components/CurveBottomSheet';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 export default function HomeHeaderArea() {
+  const { t } = useTranslation();
+
   const { width } = useWindowDimensions();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors, width), [colors, width]);
   const navigation = useNavigation();
   const { currentAccount } = useCurrentAccount();
-  const { balance, balanceLoading, balanceFromCache, balanceUpdating } =
-    useCurrentBalance(currentAccount?.address, true, false);
+  const {
+    balance,
+    balanceLoading,
+    balanceFromCache,
+    balanceUpdating,
+    missingList,
+  } = useCurrentBalance(currentAccount?.address, true, false);
   const WalletIcon = useMemo(
     () =>
       currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
@@ -99,6 +119,13 @@ export default function HomeHeaderArea() {
 
   const { remoteVersion } = useRemoteUpgradeInfo();
 
+  const curveBottomSheetModalRef = useRef<BottomSheetModal>();
+
+  const openChart = React.useCallback(() => {
+    curveBottomSheetModalRef.current?.dismiss();
+    curveBottomSheetModalRef.current?.present();
+  }, []);
+
   return (
     <View
       style={StyleSheet.compose(styles.container, {
@@ -152,8 +179,8 @@ export default function HomeHeaderArea() {
         </View>
       </View>
 
-      <View className="" style={styles.textBox}>
-        <Text>
+      <TouchableOpacity style={styles.textBox} onPress={openChart}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
           <Text style={styles.usdText}>
             {(balanceLoading && !balanceFromCache) ||
             balance === null ||
@@ -166,17 +193,48 @@ export default function HomeHeaderArea() {
           </Text>
 
           {!isLoading && (
-            <Text
-              style={StyleSheet.compose(
-                styles.percent,
-                isDecrease && styles.decrease,
-              )}>
-              {'  '}
-              {percent}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+              <Text
+                style={StyleSheet.compose(
+                  styles.percent,
+                  isDecrease && styles.decrease,
+                )}>
+                {'  '}
+                {percent}
+              </Text>
+              <RcArrowRightCC
+                width={16}
+                height={16}
+                color={
+                  isDecrease ? colors['red-default'] : colors['green-default']
+                }
+              />
+              {missingList?.length ? (
+                <Tip
+                  content={t('page.dashboard.home.missingDataTooltip', {
+                    text:
+                      missingList.join(t('page.dashboard.home.chain')) +
+                      t('page.dashboard.home.chainEnd'),
+                  })}>
+                  <RcInfoCC
+                    style={{ marginLeft: 4 }}
+                    color={colors['neutral-foot']}
+                  />
+                </Tip>
+              ) : null}
+            </View>
           )}
-        </Text>
-      </View>
+        </View>
+      </TouchableOpacity>
+      {currentAccount?.address && (
+        <CurveBottomSheetModal
+          key={currentAccount?.address}
+          ref={curveBottomSheetModalRef}
+        />
+      )}
+      {/* <CurveBottomSheetModal
+      // key={currentAccount?.address}
+      /> */}
     </View>
   );
 }
