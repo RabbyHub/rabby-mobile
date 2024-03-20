@@ -131,6 +131,32 @@ export function AddressNavigator() {
           ),
         }}
       />
+      <AddressStack.Screen
+        name={RootNames.ImportKeystone}
+        component={ImportLedgerScreen}
+        options={{
+          headerTitle: 'Import more address',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+          title: 'Import more address',
+          // eslint-disable-next-line react/no-unstable-nested-components
+          headerRight: ({ tintColor }) => (
+            <CustomTouchableOpacity
+              hitSlop={hitSlop}
+              onPress={() => {
+                const id = createGlobalBottomSheetModal({
+                  name: MODAL_NAMES.SETTING_LEDGER,
+                  onDone: () => {
+                    removeGlobalBottomSheetModal(id);
+                  },
+                });
+              }}>
+              <RcIconHeaderSettings width={24} height={24} color={tintColor} />
+            </CustomTouchableOpacity>
+          ),
+        }}
+      />
     </AddressStack.Navigator>
   );
 }

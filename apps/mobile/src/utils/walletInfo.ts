@@ -15,6 +15,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import { RcIconWatchAddress } from '@/assets/icons/address';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
+import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 
 export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
   [WALLET_NAME.Bitget]: {
@@ -121,8 +122,12 @@ export const getWalletIcon = (brandName: string | undefined) => {
     return LedgerSVG;
   }
 
+  if (brandName === KEYRING_CLASS.HARDWARE.KEYSTONE) {
+    return KeystoneSVG;
+  }
+
   return (
     WALLET_INFO?.[brandName as keyof typeof WALLET_INFO]?.icon ||
-    WALLET_INFO.UnknownWallet
+    WALLET_INFO.UnknownWallet.icon
   );
 };

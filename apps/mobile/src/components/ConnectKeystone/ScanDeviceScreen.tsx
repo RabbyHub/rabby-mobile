@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
-import ScanLedgerSVG from '@/assets/icons/sign/scan-ledger.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import { CircleSnail } from 'react-native-progress';
+import { QRCodeScanner } from '../QRCodeScanner/QRCodeScanner';
+import { Code } from 'react-native-vision-camera';
+import { URDecoder } from '@ngraveio/bc-ur';
+import { apiKeystone } from '@/core/apis';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -17,12 +19,13 @@ const getStyles = (colors: AppColorsVariants) =>
     main: {
       flex: 1,
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: 48,
     },
     text: {
       fontSize: 16,
       color: colors['neutral-body'],
       lineHeight: 20,
+      textAlign: 'center',
     },
     imageWrapper: {
       marginTop: 55,
@@ -33,12 +36,66 @@ const getStyles = (colors: AppColorsVariants) =>
       top: -15,
       left: -15,
     },
+    scanner: {
+      width: 240,
+      height: 240,
+    },
   });
 
-export const ScanDeviceScreen: React.FC<{}> = () => {
+export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
+  onScanFinish,
+}) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const decoder = React.useRef(new URDecoder());
+  const [progress, setProgress] = React.useState(0);
+  const [errorMessage, setErrorMessage] = React.useState('');
+  const scannedRef = React.useRef(false);
+
+  const handleCodeScanned = async (codes: Code[]) => {
+    try {
+      const data = codes[0].value!;
+
+      decoder.current.receivePart(data);
+      setProgress(Math.floor(decoder.current.estimatedPercentComplete() * 100));
+      if (decoder.current.isComplete()) {
+        if (scannedRef.current) {
+          return;
+        }
+        scannedRef.current = true;
+        const result = decoder.current.resultUR();
+        // TODO 直接返回
+        if (result.type === 'crypto-hdkey') {
+          await apiKeystone.submitQRHardwareCryptoHDKey(
+            result.cbor.toString('hex'),
+          );
+          console.log('submitQRHardwareCryptoHDKey');
+        } else if (result.type === 'crypto-account') {
+          await apiKeystone.submitQRHardwareCryptoAccount(
+            result.cbor.toString('hex'),
+          );
+        } else {
+          setErrorMessage(
+            t(
+              'Invalid QR code. Please scan the sync QR code of the hardware wallet.',
+            ),
+          );
+          return;
+        }
+
+        onScanFinish();
+      }
+    } catch (e) {
+      console.error(e);
+      scannedRef.current = false;
+      setErrorMessage(
+        t(
+          'Invalid QR code. Please scan the sync QR code of the hardware wallet.',
+        ),
+      );
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -50,11 +107,9 @@ export const ScanDeviceScreen: React.FC<{}> = () => {
           {t('page.newAddress.keystone.scan.description')}
         </Text>
         <View style={styles.imageWrapper}>
-          <ScanLedgerSVG />
-          <CircleSnail
-            color={[colors['blue-default']]}
-            size={240}
-            style={styles.progress}
+          <QRCodeScanner
+            onCodeScanned={handleCodeScanned}
+            containerStyle={styles.scanner}
           />
         </View>
       </View>

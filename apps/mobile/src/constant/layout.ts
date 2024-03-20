@@ -57,6 +57,7 @@ export const RootNames = {
   Receive: 'Receive',
 
   ImportLedger: 'ImportLedger',
+  ImportKeystone: 'ImportKeystone',
 
   Swap: 'Swap',
 } as const;

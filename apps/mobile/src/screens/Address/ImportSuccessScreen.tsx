@@ -103,6 +103,7 @@ export const ImportSuccessScreen = () => {
     brandName: string;
     deepLink: string;
     isLedgerFirstImport: boolean;
+    isKeystoneFirstImport: boolean;
     type: KEYRING_TYPE;
   };
   const [importAddresses, setImportAddresses] = React.useState<
@@ -187,9 +188,13 @@ export const ImportSuccessScreen = () => {
     }
   }, [isFocus, state, accounts, switchAccount, importAddresses]);
 
-  const handleImportLedger = React.useCallback(() => {
-    navigate(RootNames.ImportLedger, {});
-  }, []);
+  const handleImportMore = React.useCallback(() => {
+    if (state.isKeystoneFirstImport) {
+      navigate(RootNames.ImportKeystone, {});
+    } else if (state.isLedgerFirstImport) {
+      navigate(RootNames.ImportLedger, {});
+    }
+  }, [state]);
 
   return (
     <RootScreenContainer hideBottomBar style={styles.rootContainer}>
@@ -221,9 +226,9 @@ export const ImportSuccessScreen = () => {
               ))}
             </View>
           </ScrollView>
-          {state.isLedgerFirstImport && (
+          {(state.isLedgerFirstImport || state.isKeystoneFirstImport) && (
             <TouchableOpacity
-              onPress={handleImportLedger}
+              onPress={handleImportMore}
               style={styles.ledgerButton}>
               <Text style={styles.ledgerButtonText}>Import more address</Text>
               <RcIconRightCC
