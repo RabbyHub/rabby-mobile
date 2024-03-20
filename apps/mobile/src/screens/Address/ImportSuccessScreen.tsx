@@ -190,9 +190,13 @@ export const ImportSuccessScreen = () => {
 
   const handleImportMore = React.useCallback(() => {
     if (state.isKeystoneFirstImport) {
-      navigate(RootNames.ImportKeystone, {});
+      navigate(RootNames.ImportHardware, {
+        type: KEYRING_TYPE.KeystoneKeyring,
+      });
     } else if (state.isLedgerFirstImport) {
-      navigate(RootNames.ImportLedger, {});
+      navigate(RootNames.ImportHardware, {
+        type: KEYRING_TYPE.LedgerKeyring,
+      });
     }
   }, [state]);
 

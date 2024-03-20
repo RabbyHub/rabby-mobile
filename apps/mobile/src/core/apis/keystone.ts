@@ -28,7 +28,8 @@ export async function importAddress(index: number) {
   );
 
   keyring.setAccountToUnlock(index);
-  return keyringService.addNewAccount(keyring as any);
+  return ((await keyringService.addNewAccount(keyring as any))[0] as any)
+    .address;
 }
 
 export async function importFirstAddress({
@@ -36,16 +37,11 @@ export async function importFirstAddress({
 }: {
   retryCount?: number;
 }): Promise<string | false> {
-  const keyring = await getKeyring<KeystoneKeyring>(
-    KEYRING_TYPE.KeystoneKeyring,
-  );
   let address;
 
   const task = async () => {
     try {
-      await keyring.setAccountToUnlock(0);
-      address = ((await keyringService.addNewAccount(keyring as any))[0] as any)
-        .address;
+      address = await importAddress(0);
     } catch (e: any) {
       // only catch not `duplicate import` error
       if (!e.message?.includes('import is invalid')) {
@@ -76,4 +72,28 @@ export async function getCurrentUsedHDPathType() {
   await keyring.readKeyring();
   const res = await keyring.getCurrentUsedHDPathType();
   return res as unknown as LedgerHDPathType;
+}
+
+export async function isReady() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.isReady();
+}
+
+export async function getAddresses(start: number, end: number) {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.getAddresses(start, end);
+}
+
+export async function getCurrentAccounts() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.getCurrentAccounts();
 }

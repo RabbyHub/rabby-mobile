@@ -115,7 +115,9 @@ export const ConnectLedger: React.FC<{
             });
           })
           .then(() => {
-            navigate(RootNames.ImportLedger, {});
+            navigate(RootNames.ImportHardware, {
+              type: KEYRING_TYPE.LedgerKeyring,
+            });
             onDone?.();
           });
       }

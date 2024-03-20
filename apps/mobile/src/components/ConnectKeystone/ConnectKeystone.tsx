@@ -6,35 +6,33 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
-import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
+import { settingAtom } from '../HDSetting/MainContainer';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 
 export const ConnectKeystone: React.FC<{
   onDone?: () => void;
 }> = ({ onDone }) => {
-  const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
   const [currentScreen, setCurrentScreen] = React.useState<'scan' | 'camera'>(
     'camera',
   );
 
-  const handleCameraNext = React.useCallback(() => {
-    setCurrentScreen('scan');
-  }, []);
+  const handleCameraNext = React.useCallback(async () => {
+    if (await apiKeystone.isReady()) {
+      navigate(RootNames.ImportHardware, {
+        type: KEYRING_CLASS.HARDWARE.KEYSTONE,
+      }); // TODO
+      onDone?.();
+    } else {
+      setCurrentScreen('scan');
+    }
+  }, [onDone]);
 
   const handleImportAddress = React.useCallback(async () => {
-    console.log('done');
     const address = await apiKeystone.importFirstAddress({});
-    console.log('address', address);
 
     if (address) {
-      console.log({
-        type: KEYRING_TYPE.KeystoneKeyring,
-        brandName: KEYRING_CLASS.HARDWARE.KEYSTONE,
-        address,
-        isKeystoneFirstImport: true,
-      });
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
@@ -56,7 +54,9 @@ export const ConnectKeystone: React.FC<{
           });
         })
         .then(() => {
-          navigate(RootNames.ImportKeystone, {});
+          navigate(RootNames.ImportHardware, {
+            type: KEYRING_CLASS.HARDWARE.KEYSTONE,
+          });
           onDone?.();
         });
     }

@@ -21,8 +21,9 @@ export type RootStackParamsList = {
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};
-  [RootNames.ImportLedger]?: {};
-  [RootNames.ImportKeystone]?: {};
+  [RootNames.ImportHardware]?: {
+    type: KEYRING_TYPE;
+  };
 };
 
 export type BottomTabParamsList = {

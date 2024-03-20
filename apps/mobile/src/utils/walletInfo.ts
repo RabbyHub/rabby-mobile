@@ -122,7 +122,7 @@ export const getWalletIcon = (brandName: string | undefined) => {
     return LedgerSVG;
   }
 
-  if (brandName === KEYRING_CLASS.HARDWARE.KEYSTONE) {
+  if (brandName === 'Keystone') {
     return KeystoneSVG;
   }
 
