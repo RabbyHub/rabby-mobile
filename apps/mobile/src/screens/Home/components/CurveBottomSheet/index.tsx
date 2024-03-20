@@ -51,7 +51,7 @@ function Inner() {
     loading: timeMachineLoading,
     supportChainList,
     isNoAssets,
-  } = useTimeMachineData();
+  } = useTimeMachineData(activeKey !== '24h');
 
   const timeMachMapping = useMemo(() => {
     let result = {} as Record<
@@ -111,7 +111,9 @@ function Inner() {
       percent: isOffline || !hadAssets ? '0%' : percent,
     };
   }, [balance, data?.isLoss, hadAssets, isOffline, percent]);
-  const xOffset = useSharedValue(0);
+  const curve24hXOffset = useSharedValue(0);
+  const timeMachineXOffset = useSharedValue(0);
+
   return (
     <BottomSheetView>
       <View style={styles.timeTabWrapper}>
@@ -136,7 +138,7 @@ function Inner() {
             isNoAssets={isNoAssets}
             pathColor={pathColor}
             showSupportChainList={e.key !== '24h'}
-            xOffset={xOffset}
+            xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
           />
         </View>
       ))}

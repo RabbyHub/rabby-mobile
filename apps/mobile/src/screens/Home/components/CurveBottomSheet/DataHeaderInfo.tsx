@@ -54,7 +54,7 @@ export const DataHeaderInfo = ({
   }, [data, currentBalance, currentIndex.value]);
 
   const percentChange = useDerivedValue(() => {
-    return data?.[currentIndex?.value]
+    return data?.[currentIndex?.value]?.changePercent !== undefined
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
           data?.[currentIndex.value].changePercent
         }(${data?.[currentIndex.value].change})`
