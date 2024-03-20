@@ -4,6 +4,7 @@ import { createGetStyles } from '@/utils/styles';
 import { Tab } from '@rneui/base';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
+import { TouchableWithoutFeedback } from 'react-native';
 
 export type TabKey = (typeof TIME_TAB_LIST)[number]['key'];
 
@@ -67,6 +68,11 @@ export const TimeTab = ({
       style={styles.listContainer}>
       {TIME_TAB_LIST.map(item => (
         <Tab.Item
+          TouchableComponent={TouchableWithoutFeedback}
+          raised={false}
+          touchSoundDisabled={true}
+          variant="primary"
+          activeOpacity={1}
           key={item.key}
           buttonStyle={[styles.item, item.key === activeKey && styles.active]}
           titleStyle={[

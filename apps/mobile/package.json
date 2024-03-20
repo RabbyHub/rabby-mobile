@@ -50,7 +50,7 @@
     "@rabby-wallet/eth-walletconnect-keyring": "beta",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
-    "@rabby-wallet/rabby-api": "0.7.7-beta.0",
+    "@rabby-wallet/rabby-api": "0.7.7",
     "@rabby-wallet/rabby-security-engine": "^1.1.17",
     "@rabby-wallet/rabby-swap": "^0.0.29",
     "@rabby-wallet/service-address": "workspace:^",

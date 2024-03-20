@@ -2,7 +2,7 @@ import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 import AnimateableText from 'react-native-animateable-text';
 import { useDerivedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { LineChart } from 'react-native-wagmi-charts';
@@ -152,6 +152,9 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    zIndex: 10,
+    position: 'relative',
+    top: Platform.select({ ios: 0, android: -2 }),
   },
   tipContent: {
     paddingHorizontal: 12,
@@ -183,6 +186,8 @@ const getStyles = createGetStyles(colors => ({
   percent: {
     fontSize: 16,
     fontWeight: '500',
+    position: 'relative',
+    top: Platform.select({ ios: 0, android: -2 }),
   },
   green: {
     color: colors['green-default'],
