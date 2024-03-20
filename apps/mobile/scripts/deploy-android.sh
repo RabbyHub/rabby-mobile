@@ -5,7 +5,7 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 
-export targetplatform="android";
+export BUILD_TARGET_PLATFORM="android";
 check_s3_params;
 checkout_s3_pub_deployment_params;
 

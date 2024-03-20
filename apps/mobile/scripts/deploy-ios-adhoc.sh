@@ -5,8 +5,8 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 
-export buildchannel="selfhost-reg";
-export targetplatform="ios";
+[ -z $buildchannel ] && export buildchannel="selfhost-reg";
+export BUILD_TARGET_PLATFORM="ios";
 check_s3_params;
 checkout_s3_pub_deployment_params;
 

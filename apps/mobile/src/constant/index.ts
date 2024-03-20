@@ -1,5 +1,5 @@
 import { Image, Platform } from 'react-native';
-import { getVersion } from 'react-native-device-info';
+import { getVersion, getBuildNumber } from 'react-native-device-info';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
@@ -23,9 +23,12 @@ export enum CANCEL_TX_TYPE {
 
 const fromJs = process.env.APP_VERSION!;
 const fromNative = getVersion();
+const buildNumber = getBuildNumber();
+const fullVersionNumber = `${fromNative}.${buildNumber}`;
 export const APP_VERSIONS = {
   fromJs,
   fromNative,
+  forSentry: fullVersionNumber,
   forCheckUpgrade: __DEV__ ? fromJs : fromNative,
 };
 
