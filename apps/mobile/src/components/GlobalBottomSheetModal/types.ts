@@ -15,6 +15,8 @@ export enum MODAL_NAMES {
   'CANCEL_TX_POPUP' = 'CANCEL_TX_POPUP',
   'CONNECT_LEDGER' = 'CONNECT_LEDGER',
   'SETTING_LEDGER' = 'SETTING_LEDGER',
+  'CONNECT_KEYSTONE' = 'CONNECT_KEYSTONE',
+  'SETTING_KEYSTONE' = 'SETTING_KEYSTONE',
 
   'TIP_UPGRADE' = 'TIP_UPGRADE',
 }
@@ -26,6 +28,7 @@ export enum APPROVAL_MODAL_NAMES {
   'SignTx' = 'SignTx',
   'WatchAddressWaiting' = 'WatchAddressWaiting',
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
+  'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
 }
 
 export type MODAL_CREATE_PARMAS = {

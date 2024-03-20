@@ -45,6 +45,22 @@ export const HardwareDeviceList = () => {
     });
   }, []);
 
+  const handleKeystone = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.CONNECT_KEYSTONE,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
+      },
+    });
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
+    });
+  }, []);
+
   return (
     <View>
       <WalletHeadline Icon={HardwareSVG}>Hardware Wallets</WalletHeadline>
@@ -55,21 +71,18 @@ export const HardwareDeviceList = () => {
         onPress={handleLedger}
       />
       <WalletItem
-        style={StyleSheet.flatten([
-          styles.walletItem,
-          styles.walletItemDisabled,
-        ])}
-        Icon={OneKeySVG}
-        title="OneKey"
-        onPress={handleComingSoon}
+        style={StyleSheet.flatten([styles.walletItem])}
+        Icon={KeystoneSVG}
+        title="Keystone"
+        onPress={handleKeystone}
       />
       <WalletItem
         style={StyleSheet.flatten([
           styles.walletItem,
           styles.walletItemDisabled,
         ])}
-        Icon={KeystoneSVG}
-        title="Keystone"
+        Icon={OneKeySVG}
+        title="OneKey"
         onPress={handleComingSoon}
       />
     </View>

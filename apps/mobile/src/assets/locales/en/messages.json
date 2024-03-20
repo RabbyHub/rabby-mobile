@@ -1269,7 +1269,15 @@
         "deviceRejectedExportAddress": "Approve connection to Rabby",
         "deviceIsBusy": "Device is busy",
         "exportAddressJustAllowedOnHomePage": "Export address just allowed on home page",
-        "unknownError": "Unknown error, please try again"
+        "unknowError": "Unknown error, please try again",
+        "camera": {
+          "title": "Connect Keystone",
+          "description": "请允许Rabby使用相机并扫描你的Keystone"
+        },
+        "scan": {
+          "title": "扫码连接",
+          "description": "Scan the QR code on the Keystone hardware wallet"
+        }
       },
       "walletConnect": {
         "connectYour": "Connect your",

@@ -32,6 +32,9 @@
     },
     {
       "path": "./packages/eth-keyring-ledger/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/eth-keyring-keystone/tsconfig.build.json"
     }
   ],
   "files": [],
