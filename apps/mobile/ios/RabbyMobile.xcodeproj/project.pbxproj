@@ -290,7 +290,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\necho \"[RabbyMobileBuild] customize build environment vars\"\necho \"[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION\"\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n    [ -z $BUILD_ENV ] && export BUILD_ENV=\"production\"\n    [ -z $buildchannel ] && export buildchannel=\"appstore\"\nfi\necho \"[RabbyMobileBuild] buildchannel is $buildchannel\"\n# bundle install && bundle exec pod install;\necho \"[RabbyMobileBuild] customize build environment vars finished.\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT \\\"/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode.sh $REACT_NATIVE_XCODE\\\"\"\n";
+			shellScript = "set -e\n\n# . ./patches/patch-env.sh --source-only\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\nSENTRY_XCODE=\"../node_modules/@sentry/react-native/scripts/sentry-xcode.sh\"\nBUNDLE_REACT_NATIVE=\"/bin/sh $SENTRY_XCODE $REACT_NATIVE_XCODE\"\n\n# you can also run `sudo ln -s $(which node) /usr/local/bin/node` on macOS\nexport NODE_BINARY=$(command -v node);\necho \"[RabbyMobileBuild] NODE_BINARY is $NODE_BINARY\"\n\n# if [ -z $SENTRY_AUTH_TOKEN ]; then\n#    echo \"[RabbyMobileBuild] no SENTRY_AUTH_TOKEN set, abort bundle\"\n#    exit 1;\n# fi\n\necho \"[RabbyMobileBuild] customize build environment vars\"\necho \"[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION\"\nif [[ \"$CONFIGURATION\" == \"Release\" ]]; then\n    [ -z $BUILD_ENV ] && export BUILD_ENV=\"production\"\n    [ -z $buildchannel ] && export buildchannel=\"appstore\"\nfi\necho \"[RabbyMobileBuild] buildchannel is $buildchannel\"\n\n[ -f yarn ] && yarn install;\n[ ! -z $DO_POD_INSTALL ] && bundle install && bundle exec pod install;\necho \"[RabbyMobileBuild] customize build environment vars finished.\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT \\\"$BUNDLE_REACT_NATIVE\\\"\"\n\necho \"[RabbyMobileBuild] finish bundle with sentry build.\"\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -334,7 +334,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh";
+			shellScript = "export NODE_BINARY=$(command -v node);\n\necho \"[RabbyMobileBuild] upload debug symbols to sentry...\"\n\n/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\n\necho \"[RabbyMobileBuild] finish upload symbols to sentry.\"\n";
 		};
 		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
