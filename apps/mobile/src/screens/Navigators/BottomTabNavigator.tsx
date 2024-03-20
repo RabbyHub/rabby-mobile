@@ -29,37 +29,45 @@ import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import { PointScreen } from '../Points';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
+import { useSafeSizes } from '@/hooks/useAppLayout';
+import { makeDebugBorder } from '@/utils/styles';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
+const BOTTOM_TAB_ICON_SIZE = 24;
 const BottomTabIcon = ({
   icon: Icon,
+  size = BOTTOM_TAB_ICON_SIZE,
   ...otherProps
 }: {
   icon: MemoziedAppSvgIcon | React.ReactNode;
+  size?: number;
 } & React.ComponentProps<MemoziedAppSvgIcon>) => {
   if (!isValidElementType(Icon)) {
     return Icon || null;
   }
 
-  return !Icon ? null : <Icon width={24} height={24} {...otherProps} />;
+  return !Icon ? null : <Icon width={size} height={size} {...otherProps} />;
 };
 
 const tabBarLabelStyle = {
   fontSize: 11,
   width: '100%',
-  paddingTop: 6,
   fontWeight: '600',
   textAlign: 'center',
+  height: 14,
+  // ...makeDebugBorder('yellow'),
 } as const;
 
 const BottomTabLabel = ({
   label,
   children = label,
   focused,
-}: React.PropsWithChildren<{
+}: // color,
+React.PropsWithChildren<{
   label?: string;
   focused: boolean;
+  color?: string;
 }>) => {
   const colors = useThemeColors();
 
@@ -74,9 +82,14 @@ const BottomTabLabel = ({
   );
 };
 
+const isIOS = Platform.OS === 'ios';
+
 export default function BottomTabNavigator() {
   const colors = useThemeColors();
   const isDark = useGetAppThemeMode() === 'dark';
+
+  const { systembarOffsetBottom } = useSafeSizes();
+  const tabbarHeight = ScreenLayouts.bottomBarHeight + systembarOffsetBottom;
 
   if (__DEV__) {
     console.debug('[BottomTabNavigator] Render');
@@ -104,19 +117,24 @@ export default function BottomTabNavigator() {
           headerTransparent: true,
           tabBarStyle: {
             position: 'absolute',
-            // height: Platform.OS === 'ios' ? 90 : 70,
-            height: ScreenLayouts.bottomBarHeight,
+            height: tabbarHeight + (isIOS ? 0 : 6),
             borderTopColor: colors['neutral-line'],
             borderTopWidth: StyleSheet.hairlineWidth,
             backgroundColor: colors['neutral-bg-1'],
           },
-          tabBarLabelStyle: { ...tabBarLabelStyle },
+          tabBarIconStyle: {
+            height: BOTTOM_TAB_ICON_SIZE,
+            width: BOTTOM_TAB_ICON_SIZE,
+          },
           tabBarLabelPosition: 'below-icon',
           tabBarItemStyle: {
-            height: ScreenLayouts.bottomBarHeight,
-            paddingTop: 13,
-            paddingBottom: 38,
+            height: tabbarHeight,
+            paddingBottom: systembarOffsetBottom,
             backgroundColor: colors['neutral-bg-1'],
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            // ...makeDebugBorder(),
           },
         }}>
         <BottomTab.Screen
@@ -146,7 +164,7 @@ export default function BottomTabNavigator() {
           name={RootNames.Dapps}
           component={DappsScreen}
           options={{
-            title: Platform.OS === 'ios' ? 'Explore' : 'Dapps',
+            title: isIOS ? 'Explore' : 'Dapps',
             headerTitleStyle: {
               fontWeight: '500',
               fontSize: 17,
@@ -157,7 +175,7 @@ export default function BottomTabNavigator() {
             tabBarLabel: ({ focused }) => (
               <BottomTabLabel
                 focused={focused}
-                label={Platform.OS === 'ios' ? 'Explore' : 'Dapps'}
+                label={isIOS ? 'Explore' : 'Dapps'}
               />
             ),
             tabBarIcon: ({ color, focused }) => (
