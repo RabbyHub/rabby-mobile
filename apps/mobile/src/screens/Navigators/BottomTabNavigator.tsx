@@ -34,10 +34,17 @@ import { makeDebugBorder } from '@/utils/styles';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
-const BOTTOM_TAB_ICON_SIZE = 24;
+const BOTTOM_TAB_SIZES = {
+  icon: 24,
+  labelHeight: 16,
+  get totalHeight() {
+    return this.icon + this.labelHeight;
+  },
+};
+
 const BottomTabIcon = ({
   icon: Icon,
-  size = BOTTOM_TAB_ICON_SIZE,
+  size = BOTTOM_TAB_SIZES.icon,
   ...otherProps
 }: {
   icon: MemoziedAppSvgIcon | React.ReactNode;
@@ -55,8 +62,8 @@ const tabBarLabelStyle = {
   width: '100%',
   fontWeight: '600',
   textAlign: 'center',
-  height: 14,
-  // ...makeDebugBorder('yellow'),
+  height: BOTTOM_TAB_SIZES.labelHeight,
+  // ...makeDebugBorder('pink'),
 } as const;
 
 const BottomTabLabel = ({
@@ -121,20 +128,22 @@ export default function BottomTabNavigator() {
             borderTopColor: colors['neutral-line'],
             borderTopWidth: StyleSheet.hairlineWidth,
             backgroundColor: colors['neutral-bg-1'],
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            // ...makeDebugBorder('blue'),
           },
           tabBarIconStyle: {
-            height: BOTTOM_TAB_ICON_SIZE,
-            width: BOTTOM_TAB_ICON_SIZE,
+            height: BOTTOM_TAB_SIZES.icon,
+            width: BOTTOM_TAB_SIZES.icon,
+            // ...makeDebugBorder('yellow'),
           },
           tabBarLabelPosition: 'below-icon',
           tabBarItemStyle: {
-            height: tabbarHeight,
-            paddingBottom: systembarOffsetBottom,
+            height: BOTTOM_TAB_SIZES.totalHeight,
+            flexDirection: 'column',
             backgroundColor: colors['neutral-bg-1'],
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            // ...makeDebugBorder(),
+            // ...makeDebugBorder('red'),
           },
         }}>
         <BottomTab.Screen
