@@ -1,3 +1,4 @@
+import { toast } from '@/components/Toast';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { Tab } from '@rneui/base';
@@ -86,6 +87,7 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
     width: '100%',
     height: 32,
+    zIndex: 10,
   },
   item: {
     height: '100%',
