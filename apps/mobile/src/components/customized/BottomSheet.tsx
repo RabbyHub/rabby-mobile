@@ -108,7 +108,6 @@ export const OpenedDappBottomSheetModal = forwardRef<
       handleHeight={0}
       // special, allow inner BottomSheetModal's backdrop can override this
       handleComponent={null}
-      detach={false}
       ref={ref}
     />
   );

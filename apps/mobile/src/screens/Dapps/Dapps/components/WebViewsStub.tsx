@@ -99,25 +99,23 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
   );
 }
 
-const notIOS = Platform.OS !== 'ios';
+const isIOS = Platform.OS === 'ios';
 function useForceExpandOnceOnIOS(
   sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
 ) {
-  const [firstTouchedOnIOS, setFirstTouchedOnIOS] = useState(notIOS);
+  const [firstTouchedOnIOS, setFirstTouchedOnIOS] = useState(!isIOS);
   const haventOpenedRef = useRef(true);
   useEffect(() => {
-    if (notIOS) return;
+    if (!isIOS) return;
 
-    if (haventOpenedRef.current) {
-      if (INDEX_AS_EXPANDED > 0) {
-        sheetModalRef?.current?.present();
-        sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
-        setTimeout(() => {
-          sheetModalRef?.current?.close();
-          haventOpenedRef.current = false;
-          setFirstTouchedOnIOS(true);
-        }, 200);
-      }
+    if (haventOpenedRef.current && INDEX_AS_EXPANDED > 0) {
+      sheetModalRef?.current?.present();
+      sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
+      setTimeout(() => {
+        sheetModalRef?.current?.close();
+        haventOpenedRef.current = false;
+        setFirstTouchedOnIOS(true);
+      }, 200);
     }
   }, [sheetModalRef]);
 
@@ -141,23 +139,11 @@ export function OpenedDappWebViewStub() {
   const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
 
   const { safeOffScreenTop } = useSafeSizes();
-  const { snapPoints } = useMemo(() => {
-    const range = [DEFAULT_RANGES[0], safeOffScreenTop];
-    return {
-      snapPoints: range,
-    };
+  const snapPoints = useMemo(() => {
+    return [DEFAULT_RANGES[0], safeOffScreenTop];
   }, [safeOffScreenTop]);
 
   useForceExpandOnceOnIOS(openedDappWebviewSheetModalRef);
-
-  useEffect(() => {
-    if (activeDapp) {
-      // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
-      // openedDappWebviewSheetModalRef?.current?.present();
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-    }
-  }, [toggleShowSheetModal, activeDapp]);
 
   const { isDappConnected, disconnectDapp } = useDapps();
 
@@ -180,6 +166,17 @@ export function OpenedDappWebViewStub() {
     [hideDappSheetModal],
   );
 
+  useEffect(() => {
+    if (activeDapp) {
+      // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
+      // openedDappWebviewSheetModalRef?.current?.present();
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
+      if (isIOS) {
+        toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+      }
+    }
+  }, [toggleShowSheetModal, activeDapp]);
+
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
@@ -199,7 +196,7 @@ export function OpenedDappWebViewStub() {
   return (
     <OpenedDappBottomSheetModal
       index={INDEX_AS_COLLAPSED}
-      // detached={true}
+      {...(isIOS && { detached: false })}
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
@@ -212,7 +209,10 @@ export function OpenedDappWebViewStub() {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          minHeight: 20,
+          /**
+           * @warning if we set minHeight on Android, the bottomSheetModal will not be able to open at first time
+           */
+          ...(isIOS && { minHeight: 20 }),
         }}>
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
