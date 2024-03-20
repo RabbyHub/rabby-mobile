@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { BackHandler } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from 'react';
+import { Platform } from 'react-native';
 import {
   useOpenUrlView,
   useOpenDappView,
@@ -93,6 +99,32 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
   );
 }
 
+const isIOS = Platform.OS === 'ios';
+function useForceExpandOnceOnIOS(
+  sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
+) {
+  const [firstTouched, setFirstTouched] = useState(false);
+  const haventOpenedRef = useRef(true);
+  useEffect(() => {
+    if (haventOpenedRef.current && INDEX_AS_EXPANDED > 0) {
+      sheetModalRef?.current?.present();
+      sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
+      setTimeout(() => {
+        sheetModalRef?.current?.close();
+        haventOpenedRef.current = false;
+        setFirstTouched(true);
+      }, 200);
+    }
+  }, [sheetModalRef]);
+
+  return {
+    firstTouched,
+  };
+}
+
+const DEFAULT_RANGES = ['1%', '100%'];
+const INDEX_AS_EXPANDED = 1;
+const INDEX_AS_COLLAPSED = 0;
 export function OpenedDappWebViewStub() {
   const { openedDappItems, activeDapp, hideActiveDapp, closeActiveOpenedDapp } =
     useOpenDappView();
@@ -105,14 +137,11 @@ export function OpenedDappWebViewStub() {
   const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
 
   const { safeOffScreenTop } = useSafeSizes();
-  const { snapPoints, indexAsExpanded, indexAsCollapsed } = useMemo(() => {
-    const range = ['1%', safeOffScreenTop];
-    return {
-      snapPoints: range,
-      indexAsExpanded: range.length - 1,
-      indexAsCollapsed: 0,
-    };
+  const snapPoints = useMemo(() => {
+    return [DEFAULT_RANGES[0], safeOffScreenTop];
   }, [safeOffScreenTop]);
+
+  useForceExpandOnceOnIOS(openedDappWebviewSheetModalRef);
 
   const { isDappConnected, disconnectDapp } = useDapps();
 
@@ -124,7 +153,7 @@ export function OpenedDappWebViewStub() {
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
-      if (index <= indexAsCollapsed) {
+      if (index <= INDEX_AS_COLLAPSED) {
         /**
          * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
          * it will umount children component of BottomSheetModal
@@ -132,12 +161,15 @@ export function OpenedDappWebViewStub() {
         hideDappSheetModal();
       }
     },
-    [hideDappSheetModal, indexAsCollapsed],
+    [hideDappSheetModal],
   );
 
   useEffect(() => {
     if (activeDapp) {
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', 1);
+      // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
+      // openedDappWebviewSheetModalRef?.current?.present();
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
@@ -159,8 +191,8 @@ export function OpenedDappWebViewStub() {
 
   return (
     <OpenedDappBottomSheetModal
-      index={indexAsExpanded}
-      // detached={true}
+      index={INDEX_AS_COLLAPSED}
+      {...(isIOS && { detached: false })}
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
@@ -168,7 +200,13 @@ export function OpenedDappWebViewStub() {
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleBottomSheetChanges}>
-      <BottomSheetView className="items-center justify-center h-[100%]">
+      <BottomSheetView
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          minHeight: 20,
+        }}>
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
