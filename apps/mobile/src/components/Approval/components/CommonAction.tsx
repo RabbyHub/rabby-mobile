@@ -145,7 +145,9 @@ export const CommonAction = ({
       {(requireData as ContractCallRequireData)?.unexpectedAddr && (
         <Col>
           <Row isTitle style={styles.rowTitle}>
-            <Text>{t('page.signTx.contractCall.suspectedReceiver')}</Text>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.contractCall.suspectedReceiver')}
+            </Text>
           </Row>
           <Row>
             <View>
