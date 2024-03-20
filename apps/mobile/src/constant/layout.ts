@@ -3,7 +3,7 @@ import { AppColorsVariants } from './theme';
 
 export const ScreenLayouts = {
   headerAreaHeight: 56,
-  bottomBarHeight: 84,
+  bottomBarHeight: 60,
 
   dappWebViewControlHeaderHeight: 44,
 
