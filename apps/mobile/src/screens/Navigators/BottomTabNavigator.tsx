@@ -47,8 +47,6 @@ const BottomTabIcon = ({
     return Icon || null;
   }
 
-  console.log('[feat] otherProps', otherProps);
-
   return !Icon ? null : <Icon width={size} height={size} {...otherProps} />;
 };
 
@@ -84,6 +82,8 @@ React.PropsWithChildren<{
   );
 };
 
+const isIOS = Platform.OS === 'ios';
+
 export default function BottomTabNavigator() {
   const colors = useThemeColors();
   const isDark = useGetAppThemeMode() === 'dark';
@@ -117,7 +117,7 @@ export default function BottomTabNavigator() {
           headerTransparent: true,
           tabBarStyle: {
             position: 'absolute',
-            height: tabbarHeight + 6,
+            height: tabbarHeight + (isIOS ? 0 : 6),
             borderTopColor: colors['neutral-line'],
             borderTopWidth: StyleSheet.hairlineWidth,
             backgroundColor: colors['neutral-bg-1'],
@@ -164,7 +164,7 @@ export default function BottomTabNavigator() {
           name={RootNames.Dapps}
           component={DappsScreen}
           options={{
-            title: Platform.OS === 'ios' ? 'Explore' : 'Dapps',
+            title: isIOS ? 'Explore' : 'Dapps',
             headerTitleStyle: {
               fontWeight: '500',
               fontSize: 17,
@@ -175,7 +175,7 @@ export default function BottomTabNavigator() {
             tabBarLabel: ({ focused }) => (
               <BottomTabLabel
                 focused={focused}
-                label={Platform.OS === 'ios' ? 'Explore' : 'Dapps'}
+                label={isIOS ? 'Explore' : 'Dapps'}
               />
             ),
             tabBarIcon: ({ color, focused }) => (
