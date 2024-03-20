@@ -2,6 +2,8 @@ import { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
 import { KeyringAccount, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import * as Sentry from '@sentry/react-native';
+
 import {
   contactService,
   keyringService,
@@ -71,7 +73,7 @@ async function fetchAllAccounts() {
       }),
     );
   } catch (err) {
-    // Sentry.captureException(err);
+    Sentry.captureException(err);
   } finally {
     return nextAccounts;
   }

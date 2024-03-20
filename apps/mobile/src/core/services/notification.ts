@@ -2,6 +2,8 @@ import Events from 'events';
 import { ethErrors } from 'eth-rpc-errors';
 import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
+import * as Sentry from '@sentry/react-native';
+
 import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
@@ -134,9 +136,9 @@ export class NotificationService extends Events {
       this.currentApproval = approval;
       this.openNotification(approval.winProps, true);
     } catch (e) {
-      // Sentry.captureException(
-      //   'activeFirstApproval failed: ' + JSON.stringify(e),
-      // );
+      Sentry.captureException(
+        'activeFirstApproval failed: ' + JSON.stringify(e),
+      );
       console.log('activeFirstApproval failed: ' + JSON.stringify(e));
       this.clear();
     }
