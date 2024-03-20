@@ -58,7 +58,9 @@ export const DataHeaderInfo = ({
       ? `${data?.[currentIndex?.value]?.isLoss ? '-' : '+'}${
           data?.[currentIndex.value].changePercent
         }(${data?.[currentIndex.value].change})`
-      : `${currentIsLoss ? '-' : '+'}${currentPercentChange}`;
+      : currentPercentChange
+      ? `${currentIsLoss ? '-' : '+'}${currentPercentChange}`
+      : '';
   }, [data, currentIsLoss, currentPercentChange, currentIndex]);
 
   const lossStyleProps = useAnimatedStyle(() => {
@@ -127,7 +129,9 @@ export const DataHeaderInfo = ({
             </Text>
           </View>
         )}
-        {isNoAssets && <Text style={styles.noAssetsText}>No assets yet</Text>}
+        {isNoAssets && (
+          <Text style={styles.noAssetsText}>No data returned</Text>
+        )}
       </View>
     </>
   );
@@ -201,5 +205,6 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-body'],
     textAlign: 'center',
     width: '100%',
+    marginTop: 80,
   },
 }));

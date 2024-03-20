@@ -1,9 +1,11 @@
+import { toast } from '@/components/Toast';
 import { openapi } from '@/core/request';
 import { useCurrentAccount } from '@/hooks/account';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { useCurve } from '@/hooks/useCurve';
 import { numFormat } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
+import { CHAINS_LIST } from '@debank/common';
 import dayjs from 'dayjs';
 import { findLastIndex } from 'lodash';
 import { useEffect, useState } from 'react';
@@ -127,18 +129,52 @@ export const useTimeMachineData = (enabled = false) => {
     return undefined;
   }, [currentAccount?.address]);
 
-  const { value, loading, retry } = useAsyncRetry(async () => {
+  const { value: status, retry: retryStatus } = useAsyncRetry(async () => {
     if (currentAccount?.address && cached) {
-      return openapi.getHistoryCurve(currentAccount?.address);
+      const data = await openapi.getHistoryCurveStatus({
+        id: currentAccount?.address,
+      });
+
+      if (data?.status === 'pending') {
+        openapi.initHistoryCurve({ id: currentAccount?.address });
+      }
+
+      if (data?.status === 'failed') {
+        toast.info('Failed to get data, please try again later');
+      }
+
+      return data;
     }
     return undefined;
   }, [currentAccount?.address, cached]);
+
+  const { value, loading, retry } = useAsyncRetry(async () => {
+    if (currentAccount?.address && cached && status?.status === 'finished') {
+      return openapi.getHistoryCurve(currentAccount?.address);
+    }
+    return undefined;
+  }, [currentAccount?.address, cached, status]);
 
   useEffect(() => {
     if (enabled) {
       setCached(true);
     }
   }, [enabled]);
+
+  useEffect(() => {
+    let id;
+
+    if (status && status?.status !== 'finished' && status.status !== 'failed') {
+      id = setTimeout(() => {
+        retryStatus();
+      }, 2000);
+    }
+    return () => {
+      if (id) {
+        clearTimeout(id);
+      }
+    };
+  }, [retryStatus, status]);
 
   useEffect(() => {
     let id;
@@ -157,7 +193,9 @@ export const useTimeMachineData = (enabled = false) => {
   return {
     data: value,
     loading: !cached || !value || loading || !!value?.job,
-    supportChainList: supportChainList?.supported_chains || [],
+    supportChainList: (supportChainList?.supported_chains
+      ?.map(x => CHAINS_LIST.find(e => e.serverId === x)?.name)
+      ?.filter(e => !!e) || []) as string[],
     isNoAssets: !loading && value?.result?.data?.usd_value_list?.length === 0,
   };
 };

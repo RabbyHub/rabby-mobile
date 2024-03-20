@@ -135,7 +135,7 @@ function Inner() {
               balanceLoading ||
               (e.key === '24h' ? curveLoading : timeMachineLoading)
             }
-            isNoAssets={isNoAssets}
+            isNoAssets={e.key !== '24h' ? isNoAssets : false}
             pathColor={pathColor}
             showSupportChainList={e.key !== '24h'}
             xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
