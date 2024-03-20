@@ -283,7 +283,10 @@ const BalanceChange = ({
       <View>
         <Table>
           {!hasChange && isSuccess && (
-            <Col>
+            <Col
+              style={{
+                borderBottomWidth: 0,
+              }}>
               <Row>
                 <Text style={styles.titleText}>
                   {t('page.signTx.balanceChange.noBalanceChange')}

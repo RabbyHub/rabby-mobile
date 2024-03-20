@@ -5135,9 +5135,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:^0.7.4":
-  version: 0.7.4
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.4.tgz"
+"@rabby-wallet/rabby-api@npm:0.7.7":
+  version: 0.7.7
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.7"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -5148,7 +5148,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 2d25999323302f0cfe6fb31d8d5f74f3a3cb839900886ee98109fc78c0e35aef7d7f76a2450a92c216f1ee0585b768a3c461d825e8b3d1e36b1e12e378da1a75
+  checksum: 1eae94f82deec09fff280531fd5426d7bfd1dd5dfb1f901636da8979d301c583b880c8f2ac9baeeb2773f49d9936517587675ee3119df3bffa34fb6cb75ffa1f
   languageName: node
   linkType: hard
 
@@ -12935,6 +12935,105 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-array@npm:^1.2.0":
+  version: 1.2.4
+  resolution: "d3-array@npm:1.2.4"
+  checksum: d0be1fa7d72dbfac8a3bcffbb669d42bcb9128d8818d84d2b1df0c60bbe4c8e54a798be0457c55a219b399e2c2fabcbd581cbb130eb638b5436b0618d7e56000
+  languageName: node
+  linkType: hard
+
+"d3-array@npm:^3.1.6":
+  version: 3.2.4
+  resolution: "d3-array@npm:3.2.4"
+  dependencies:
+    internmap: 1 - 2
+  checksum: a5976a6d6205f69208478bb44920dd7ce3e788c9dceb86b304dbe401a4bfb42ecc8b04c20facde486e9adcb488b5d1800d49393a3f81a23902b68158e12cddd0
+  languageName: node
+  linkType: hard
+
+"d3-collection@npm:1":
+  version: 1.0.7
+  resolution: "d3-collection@npm:1.0.7"
+  checksum: 9c6b910a9da0efb021e294509f98263ca4f62d10b997bb30ccfb6edd582b703da36e176b968b5bac815fbb0f328e49643c38cf93b5edf8572a179ba55cf4a09d
+  languageName: node
+  linkType: hard
+
+"d3-color@npm:1":
+  version: 1.4.1
+  resolution: "d3-color@npm:1.4.1"
+  checksum: a214b61458b5fcb7ad1a84faed0e02918037bab6be37f2d437bf0e2915cbd854d89fbf93754f17b0781c89e39d46704633d05a2bfae77e6209f0f4b140f9894b
+  languageName: node
+  linkType: hard
+
+"d3-format@npm:1":
+  version: 1.4.5
+  resolution: "d3-format@npm:1.4.5"
+  checksum: 1b8b2c0bca182173bccd290a43e8b635a83fc8cfe52ec878c7bdabb997d47daac11f2b175cebbe73f807f782ad655f542bdfe18180ca5eb3498a3a82da1e06ab
+  languageName: node
+  linkType: hard
+
+"d3-interpolate-path@npm:^2.2.3":
+  version: 2.3.0
+  resolution: "d3-interpolate-path@npm:2.3.0"
+  checksum: bcc9923675098fff76f23a37e83cd8fa5ca10422e54e5f09653e3294f7b237b69868187e7becf53e17c3982028231b9bb533e9d9285229409e5c700668824241
+  languageName: node
+  linkType: hard
+
+"d3-interpolate@npm:1":
+  version: 1.4.0
+  resolution: "d3-interpolate@npm:1.4.0"
+  dependencies:
+    d3-color: 1
+  checksum: d98988bd1e2f59d01f100d0a19315ad8f82ef022aa09a65aff76f747a44f9b52f2d64c6578b8f47e01f2b14a8f0ef88f5460d11173c0dd2d58238c217ac0ec03
+  languageName: node
+  linkType: hard
+
+"d3-path@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "d3-path@npm:3.1.0"
+  checksum: 2306f1bd9191e1eac895ec13e3064f732a85f243d6e627d242a313f9777756838a2215ea11562f0c7630c7c3b16a19ec1fe0948b1c82f3317fac55882f6ee5d8
+  languageName: node
+  linkType: hard
+
+"d3-scale@npm:^2":
+  version: 2.2.2
+  resolution: "d3-scale@npm:2.2.2"
+  dependencies:
+    d3-array: ^1.2.0
+    d3-collection: 1
+    d3-format: 1
+    d3-interpolate: 1
+    d3-time: 1
+    d3-time-format: 2
+  checksum: 42086d4b9db9f8492a99dbbdacf546983faef1bb6260fe875c0c1884f1ca9cf5fd233de3702c2f9e24145b1c5383945e929c8682d80fa57ab515ef2c4f2c61f6
+  languageName: node
+  linkType: hard
+
+"d3-shape@npm:^3.0.1":
+  version: 3.2.0
+  resolution: "d3-shape@npm:3.2.0"
+  dependencies:
+    d3-path: ^3.1.0
+  checksum: de2af5fc9a93036a7b68581ca0bfc4aca2d5a328aa7ba7064c11aedd44d24f310c20c40157cb654359d4c15c3ef369f95ee53d71221017276e34172c7b719cfa
+  languageName: node
+  linkType: hard
+
+"d3-time-format@npm:2":
+  version: 2.3.0
+  resolution: "d3-time-format@npm:2.3.0"
+  dependencies:
+    d3-time: 1
+  checksum: 5445eaaf2b3b2095cdc1fa75dfd2f361a61c39b677dcc1c2ba4cb6bc0442953de0fbaaa397d7d7a9325ad99c63d869f162a713e150e826ff8af482615664cb3f
+  languageName: node
+  linkType: hard
+
+"d3-time@npm:1":
+  version: 1.1.0
+  resolution: "d3-time@npm:1.1.0"
+  checksum: 33fcfff94ff093dde2048c190ecca8b39fe0ec8b3c61e9fc39c5f6072ce5b86dd2b91823f086366995422bbbac7f74fd9abdb7efe4f292a73b1c6197c699cc78
+  languageName: node
+  linkType: hard
+
 "damerau-levenshtein@npm:^1.0.8":
   version: 1.0.8
   resolution: "damerau-levenshtein@npm:1.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdamerau-levenshtein%2F-%2Fdamerau-levenshtein-1.0.8.tgz"
@@ -17848,6 +17947,13 @@ __metadata:
     hasown: ^2.0.0
     side-channel: ^1.0.4
   checksum: 7872454888047553ce97a3fa1da7cc054a28ec5400a9c2e9f4dbe4fe7c1d041cb8e8301467614b80d4246d50377aad2fb58860b294ed74d6700cc346b6f89549
+  languageName: node
+  linkType: hard
+
+"internmap@npm:1 - 2":
+  version: 2.0.3
+  resolution: "internmap@npm:2.0.3"
+  checksum: 7ca41ec6aba8f0072fc32fa8a023450a9f44503e2d8e403583c55714b25efd6390c38a87161ec456bf42d7bc83aab62eb28f5aef34876b1ac4e60693d5e1d241
   languageName: node
   linkType: hard
 
@@ -23191,6 +23297,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"normalize-svg-path@npm:^1.0.1":
+  version: 1.1.0
+  resolution: "normalize-svg-path@npm:1.1.0"
+  dependencies:
+    svg-arc-to-cubic-bezier: ^3.0.0
+  checksum: 106e108b2f99e9e222a1c6edfc859523c6c3c2b0a6ba64743ed08af120b23b9bc2c16682bc2ae043a24c011c34c8252376c68525cf11735c6f110b571740eb2e
+  languageName: node
+  linkType: hard
+
 "normalize-url@npm:^6.0.1":
   version: 6.1.0
   resolution: "normalize-url@npm:6.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fnormalize-url%2F-%2Fnormalize-url-6.1.0.tgz"
@@ -25768,7 +25883,7 @@ __metadata:
     "@rabby-wallet/eth-walletconnect-keyring": beta
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": ^0.7.4
+    "@rabby-wallet/rabby-api": 0.7.7
     "@rabby-wallet/rabby-security-engine": ^1.1.17
     "@rabby-wallet/rabby-swap": ^0.0.29
     "@rabby-wallet/service-address": "workspace:^"
@@ -25848,6 +25963,7 @@ __metadata:
     react-is: 18.2.0
     react-native: 0.72.7
     react-native-aes-crypto: ^3.0.1
+    react-native-animateable-text: 0.11.0
     react-native-asset: ^2.1.1
     react-native-ble-plx: 2.0.3
     react-native-collapsible-tab-view: ^6.2.1
@@ -25883,6 +25999,7 @@ __metadata:
     react-native-version-check: ^3.4.7
     react-native-video: ^5.2.1
     react-native-vision-camera: ^3.6.17
+    react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
     react-native-webview: ^13.6.3
     react-test-renderer: 18.2.0
@@ -26230,10 +26347,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-is@npm:^16.8.6":
+  version: 16.13.1
+  resolution: "react-is@npm:16.13.1"
+  checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
+  languageName: node
+  linkType: hard
+
 "react-is@npm:^17.0.1":
   version: 17.0.2
   resolution: "react-is@npm:17.0.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-is%2F-%2Freact-is-17.0.2.tgz"
   checksum: 9d6d111d8990dc98bc5402c1266a808b0459b5d54830bbea24c12d908b536df7883f268a7868cfaedde3dd9d4e0d574db456f84d2e6df9c4526f99bb4b5344d8
+  languageName: node
+  linkType: hard
+
+"react-keyed-flatten-children@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "react-keyed-flatten-children@npm:1.3.0"
+  dependencies:
+    react-is: ^16.8.6
+  peerDependencies:
+    react: ">=15.0.0"
+  checksum: 3bb042bb7cd48909491a5f92b8e7b2fb0417d69ad24bf04dbe1ed7a308cc7dfe6e3c9b5550e7b9016ee6bef61829b92e7f3a355ed1b867affd251bd518bcdd90
   languageName: node
   linkType: hard
 
@@ -26248,6 +26383,20 @@ __metadata:
   version: 3.0.1
   resolution: "react-native-aes-crypto@npm:3.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-aes-crypto%2F-%2Freact-native-aes-crypto-3.0.1.tgz"
   checksum: 7e852a471fe80ddcdba3df9d79dee50b22f82a5a00fb7fda230cd01f6e963dde5fb63929067ca1e604c34a922f24a711bb6874d672f55da0584e59dde6dc3096
+  languageName: node
+  linkType: hard
+
+"react-native-animateable-text@npm:0.11.0":
+  version: 0.11.0
+  resolution: "react-native-animateable-text@npm:0.11.0"
+  dependencies:
+    deprecated-react-native-prop-types: ^2.3.0
+    nullthrows: ^1.1.1
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.64.0-rc.3"
+    react-native-reanimated: "*"
+  checksum: 70295464a94dd07aa8ef994fe4b4b37525381ea03b2282f6b6c196ccec04dbbc894398d3905752dbb8443611f9e636326fd01eefa26856895b3c019d62e6a1c3
   languageName: node
   linkType: hard
 
@@ -26559,6 +26708,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-redash@npm:^16.1.1":
+  version: 16.3.0
+  resolution: "react-native-redash@npm:16.3.0"
+  dependencies:
+    abs-svg-path: ^0.1.1
+    normalize-svg-path: ^1.0.1
+    parse-svg-path: ^0.1.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: "*"
+    react-native-reanimated: ">=2.0.0"
+  checksum: f7e09c4fb21bd0be4013a4f72c1d5f2b4cc003fd11421f58e43c019f3243550ca300786eb3ddc0ccdd3d73067f27df5264caa41489a47be94510feac8f67ddd0
+  languageName: node
+  linkType: hard
+
 "react-native-root-siblings@npm:^4.0.0":
   version: 4.1.1
   resolution: "react-native-root-siblings@npm:4.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-root-siblings%2F-%2Freact-native-root-siblings-4.1.1.tgz"
@@ -26754,6 +26919,26 @@ __metadata:
     react-native-worklets-core:
       optional: true
   checksum: 55d979230a8d07373181976cf87e01c68bc0f84dfa55e24f5f72b8361e3e3fe83603d2e87503cd80258c1f515ecb2211bf334a42768a1e12d61c1480cd742756
+  languageName: node
+  linkType: hard
+
+"react-native-wagmi-charts@npm:^2.3.2":
+  version: 2.3.2
+  resolution: "react-native-wagmi-charts@npm:2.3.2"
+  dependencies:
+    d3-array: ^3.1.6
+    d3-interpolate-path: ^2.2.3
+    d3-scale: ^2
+    d3-shape: ^3.0.1
+    react-keyed-flatten-children: ^1.3.0
+    react-native-redash: ^16.1.1
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: "*"
+    react-native-reanimated: "*"
+    react-native-svg: "*"
+  checksum: 534a273761d12d6abcc08c43f779463472dc9c9d89b1bd14786419c6d128021a36bb0191881ee5952b390177576bf0b9a01c17a3caad7ac8b97b5da54d73bd68
   languageName: node
   linkType: hard
 

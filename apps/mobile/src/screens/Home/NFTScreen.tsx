@@ -120,7 +120,7 @@ class PureItem extends React.PureComponent<{
           const lastCountMark = !needLastCountMark
             ? null
             : indexInline === NFT_COUNT_PER_LINE - 1
-            ? collectionNFTCount
+            ? collectionNFTCount - NFT_LIMITED_DISPLAY_COUNT
             : null;
 
           return (

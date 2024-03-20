@@ -10,6 +10,7 @@ import { JS_LOG_ON_MESSAGE } from '@/core/bridges/builtInScripts/onMessage';
 import { syncChainList } from '@/constant/chains';
 import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
+import { sendUserAddressEvent } from '@/core/apis/analytics';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -57,6 +58,7 @@ export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
       setLock(prev => ({ ...prev, locked: false }));
+      sendUserAddressEvent();
     };
     const onLock = () => {
       setLock(prev => ({ ...prev, locked: true }));

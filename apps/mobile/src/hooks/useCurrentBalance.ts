@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { atom, useAtom } from 'jotai';
-import { DisplayChainWithWhiteLogo, formatChain } from '@/utils/chain';
+import {
+  DisplayChainWithWhiteLogo,
+  findChainByServerID,
+  formatChain,
+} from '@/utils/chain';
 import { apiBalance } from '@/core/apis';
 
 const balanceAtom = atom<number | null>(null);
@@ -28,6 +32,9 @@ export default function useCurrentBalance(
   const [chainBalances, setChainBalances] = useState<
     DisplayChainWithWhiteLogo[]
   >([]);
+  const [hasValueChainBalances, setHasValueChainBalances] = useState<
+    DisplayChainWithWhiteLogo[]
+  >([]);
   const [testnetBalance, setTestnetBalance] = useAtom(testnetBalanceAtom);
   const [testnetSuccess, setTestnetSuccess] = useState(true);
   const [testnetBalanceLoading, setTestnetBalanceLoading] = useState(false);
@@ -35,6 +42,7 @@ export default function useCurrentBalance(
   const [testnetChainBalances, setTestnetChainBalances] = useState<
     DisplayChainWithWhiteLogo[]
   >([]);
+  const [missingList, setMissingList] = useState<string[]>();
 
   const getAddressBalance = async (
     address: string,
@@ -50,12 +58,27 @@ export default function useCurrentBalance(
       setBalance(totalUsdValue);
       setSuccess(true);
       setChainBalances(chainList.filter(i => i.usd_value > 0).map(formatChain));
+      setHasValueChainBalances(chainList.filter(item => item.usd_value > 0));
       setBalanceLoading(false);
       setBalanceFromCache(false);
       setBalanceUpdating(false);
     } catch (e) {
-      setSuccess(false);
       setBalanceLoading(false);
+      try {
+        const { error_code, err_chain_ids } = JSON.parse((e as Error).message);
+        if (error_code === 2) {
+          const chainNames = err_chain_ids.map((serverId: string) => {
+            const chain = findChainByServerID(serverId);
+            return chain?.name;
+          });
+          setMissingList(chainNames);
+          setSuccess(true);
+          return;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      setSuccess(false);
     }
   };
 
@@ -92,6 +115,10 @@ export default function useCurrentBalance(
     if (cacheData) {
       setBalanceFromCache(true);
       setBalance(cacheData.total_usd_value);
+      const chanList = cacheData.chain_list
+        .filter(item => item.born_at !== null)
+        .map(formatChain);
+      setHasValueChainBalances(chanList.filter(item => item.usd_value > 0));
       if (update) {
         setBalanceLoading(true);
         getAddressBalance(account.toLowerCase(), { force });
@@ -148,5 +175,7 @@ export default function useCurrentBalance(
     testnetBalanceFromCache,
     testnetChainBalances,
     balanceUpdating,
+    missingList,
+    hasValueChainBalances,
   };
 }

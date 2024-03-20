@@ -48,7 +48,11 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
     }
 
     try {
-      await openInAppBrowser(APP_URLS.DOWNLOAD_PAGE);
+      if (remoteVersion?.externalUrlToOpen) {
+        openExternalUrl(remoteVersion.externalUrlToOpen);
+      } else {
+        await openInAppBrowser(APP_URLS.DOWNLOAD_PAGE);
+      }
     } catch (error) {
       openExternalUrl(APP_URLS.DOWNLOAD_PAGE);
       toast.info('failed to open link');

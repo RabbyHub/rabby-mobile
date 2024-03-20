@@ -98,6 +98,15 @@ export const SelectDeviceScreen: React.FC<{
   );
 
   React.useEffect(() => {
+    devices.forEach(device => {
+      if (device.id === currentDeviceId) {
+        handlePress(device);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
     return () => {
       toastHiddenRef.current?.();
     };

@@ -29,7 +29,6 @@ import { APP_VERSIONS } from '@/constant';
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
 
-  const { safeTop, safeOffBottom } = useSafeSizes();
   const styles = getStyles(colors);
   const [isShowModal, setIsShowModal] = useState(false);
   const [isFocus, setIsFocus] = useState(false);

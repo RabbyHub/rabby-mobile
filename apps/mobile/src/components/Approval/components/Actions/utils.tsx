@@ -49,6 +49,7 @@ import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { apiSecurityEngine } from '@/core/apis';
 import i18n from '@/utils/i18n';
+import { ReceiverData } from './components/ViewMorePopup/ReceiverPopup';
 
 const { isSameAddress } = addressUtils;
 export interface ReceiveTokenItem extends TokenItem {
@@ -140,6 +141,7 @@ export interface ParsedActionData {
   };
   pushMultiSig?: PushMultiSigAction;
   common?: {
+    title: string;
     desc: string;
     is_asset_changed: boolean;
     is_involving_privacy: boolean;
@@ -518,6 +520,7 @@ export interface ContractCallRequireData {
   call: NonNullable<ParseTxResponse['contract_call']>;
   payNativeTokenAmount: string;
   nativeTokenSymbol: string;
+  unexpectedAddr: ReceiverData | null;
 }
 
 export interface ApproveNFTRequireData {
@@ -694,12 +697,14 @@ export const fetchActionRequiredData = async ({
   chainId,
   address,
   tx,
+  origin,
 }: {
   actionData: ParsedActionData;
   contractCall?: ParseTxResponse['contract_call'] | null;
   chainId: string;
   address: string;
   tx: Tx;
+  origin: string;
 }): Promise<ActionRequireData> => {
   if (actionData.deployContract) {
     return {};
@@ -1041,6 +1046,7 @@ export const fetchActionRequiredData = async ({
       id: contractCall.contract.id,
       payNativeTokenAmount: tx.value || '0x0',
       nativeTokenSymbol: chain?.nativeTokenSymbol || 'ETH',
+      unexpectedAddr: null,
     };
     queue.add(async () => {
       const credit = await apiProvider.getContractCredit(
@@ -1066,6 +1072,71 @@ export const fetchActionRequiredData = async ({
         contractCall.contract.id,
       );
       result.hasInteraction = hasInteraction.has_interaction;
+    });
+    queue.add(async () => {
+      const unexpectedAddrList = await apiProvider.unexpectedAddrList({
+        chainId,
+        tx,
+        origin: origin || '',
+        addr: address,
+      });
+      if (unexpectedAddrList.length > 0) {
+        const addr = unexpectedAddrList[0].id;
+        const receiverData: ReceiverData = {
+          address: addr,
+          chain: chain!,
+          eoa: null,
+          cex: null,
+          contract: null,
+          usd_value: 0,
+          hasTransfer: false,
+          isTokenContract: false,
+          name: null,
+          onTransferWhitelist: false,
+        };
+
+        const { has_transfer } = await apiProvider.hasTransfer(
+          chainId,
+          address,
+          addr,
+        );
+        receiverData.hasTransfer = has_transfer;
+
+        const { desc } = await apiProvider.addrDesc(addr);
+        if (desc.cex?.id) {
+          receiverData.cex = {
+            id: desc.cex.id,
+            logo: desc.cex.logo_url,
+            name: desc.cex.name,
+            bornAt: desc.born_at,
+            isDeposit: desc.cex.is_deposit,
+          };
+        }
+        if (desc.contract && Object.keys(desc.contract).length > 0) {
+          receiverData.contract = desc.contract;
+        }
+        if (!receiverData.cex && !receiverData.contract) {
+          receiverData.eoa = {
+            id: addr,
+            bornAt: desc.born_at,
+          };
+        }
+        receiverData.usd_value = desc.usd_value;
+        if (result.contract) {
+          const { is_token } = await apiProvider.isTokenContract(chainId, addr);
+          receiverData.isTokenContract = is_token;
+        }
+        receiverData.name = desc.name;
+        if (ALIAS_ADDRESS[addr.toLowerCase()]) {
+          receiverData.name = ALIAS_ADDRESS[addr.toLowerCase()];
+        }
+
+        const whitelist = await whitelistService.getWhitelist();
+        receiverData.onTransferWhitelist = whitelist.includes(
+          addr.toLowerCase(),
+        );
+        result.unexpectedAddr = receiverData;
+      }
     });
     await waitQueueFinished(queue);
     return result;
@@ -1330,6 +1401,7 @@ export const useUserData = () => {
       await apiSecurityEngine.updateUserData(userData);
       setUserData(userData);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [userData],
   );
 
@@ -1394,7 +1466,7 @@ export const getActionTypeText = (data: ParsedActionData) => {
     return t('page.signTx.revokePermit2.title');
   }
   if (data?.common) {
-    return data.common.desc;
+    return data.common.title;
   }
   return t('page.signTx.unknownAction');
 };

@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import Warning2SVG from '@/assets/icons/sign/tx/warning-2.svg';
-import CertifiedSVG from '@/assets/icons/sign/tx/certified.svg';
 import { ProtocolListItem } from './Actions/components/ProtocolListItem';
 import { SecurityListItem } from './Actions/components/SecurityListItem';
 import ViewMore from './Actions/components/ViewMore';
@@ -13,11 +11,11 @@ import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import DescItem from './Actions/components/DescItem';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '../hooks/useCommonStyle';
-import { Tip } from '@/components/Tip';
+import { ContractCallRequireData } from './Actions/utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -34,6 +32,7 @@ const getStyles = (colors: AppColorsVariants) =>
   });
 
 type CommonActions = {
+  title: string;
   desc: string;
   is_asset_changed: boolean;
   is_involving_privacy: boolean;
@@ -79,18 +78,6 @@ export const CommonAction = ({
 
   React.useEffect(() => {
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const descTip = React.useMemo(() => {
-    if (actionData.is_asset_changed && actionData.is_involving_privacy) {
-      return t('page.signTx.common.descTipWarningBoth');
-    } else if (actionData.is_asset_changed) {
-      return t('page.signTx.common.descTipWarningAssets');
-    } else if (actionData.is_involving_privacy) {
-      return t('page.signTx.common.descTipWarningPrivacy');
-    }
-    return t('page.signTx.common.descTipSafe');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,21 +134,82 @@ export const CommonAction = ({
       ) : null}
       <Col>
         <Row style={styles.rowTitle} isTitle>
-          <Text>{t('page.signTx.common.description')}</Text>
+          <Text style={commonStyle.rowTitleText}>
+            {t('page.signTx.common.description')}
+          </Text>
         </Row>
         <Row style={styles.description}>
           <Text>{actionData.desc}</Text>
-          <Tip content={descTip}>
-            {actionData.is_asset_changed || actionData.is_involving_privacy ? (
-              <Warning2SVG />
-            ) : null}
-            {!actionData.is_asset_changed &&
-            !actionData.is_involving_privacy ? (
-              <CertifiedSVG />
-            ) : null}
-          </Tip>
         </Row>
       </Col>
+      {(requireData as ContractCallRequireData)?.unexpectedAddr && (
+        <Col>
+          <Row isTitle style={styles.rowTitle}>
+            <Text style={commonStyle.rowTitleText}>
+              {t('page.signTx.contractCall.suspectedReceiver')}
+            </Text>
+          </Row>
+          <Row>
+            <View>
+              <Values.Address
+                address={
+                  (requireData as ContractCallRequireData).unexpectedAddr!
+                    .address
+                }
+                chain={chain}
+              />
+              <DescItem>
+                <Values.AddressMemo
+                  address={
+                    (requireData as ContractCallRequireData).unexpectedAddr!
+                      .address
+                  }
+                />
+              </DescItem>
+              {(requireData as ContractCallRequireData).unexpectedAddr!
+                .name && (
+                <DescItem>
+                  <Text>
+                    {
+                      (requireData as ContractCallRequireData).unexpectedAddr!
+                        .name
+                    }
+                  </Text>
+                </DescItem>
+              )}
+              <DescItem>
+                <ViewMore
+                  type="receiver"
+                  data={{
+                    title: t('page.signTx.contractCall.suspectedReceiver'),
+                    address: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.address,
+                    chain: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.chain,
+                    eoa: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.eoa,
+                    cex: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.cex,
+                    contract: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.contract,
+                    usd_value: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.usd_value,
+                    hasTransfer: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.hasTransfer,
+                    isTokenContract: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.isTokenContract,
+                    name: (requireData as ContractCallRequireData)
+                      .unexpectedAddr!.name,
+                    onTransferWhitelist: (
+                      requireData as ContractCallRequireData
+                    ).unexpectedAddr!.onTransferWhitelist,
+                  }}
+                />
+              </DescItem>
+            </View>
+          </Row>
+        </Col>
+      )}
     </Table>
   );
 };
