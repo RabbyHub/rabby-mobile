@@ -152,6 +152,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    zIndex: 10,
   },
   tipContent: {
     paddingHorizontal: 12,
