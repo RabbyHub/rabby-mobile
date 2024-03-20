@@ -1,6 +1,10 @@
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 
+const {
+  createSentryMetroSerializer,
+} = require('@sentry/react-native/dist/js/tools/sentryMetroSerializer');
+
 /**
  * Metro configuration
  * https://facebook.github.io/metro/docs/configuration
@@ -10,7 +14,12 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const getAppConfig = function () {
   const config = getDefaultConfig(__dirname);
 
-  const { resolver, transformer } = config;
+  const { resolver, transformer, serializer } = config;
+
+  config.serializer = {
+    ...serializer,
+    customSerializer: createSentryMetroSerializer(),
+  };
 
   config.transformer = {
     ...transformer,

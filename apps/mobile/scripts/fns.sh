@@ -15,8 +15,8 @@ check_s3_params() {
 }
 
 checkout_s3_pub_deployment_params() {
-  if [ -z $targetplatform ]; then
-    export targetplatform="android"
+  if [ -z $BUILD_TARGET_PLATFORM ]; then
+    export BUILD_TARGET_PLATFORM="android"
   fi
   if [ -z $buildchannel ]; then
     export buildchannel="selfhost-reg"
@@ -38,7 +38,7 @@ checkout_s3_pub_deployment_params() {
       ;;
   esac
 
-  if [ $targetplatform == 'ios' ]; then
+  if [ $BUILD_TARGET_PLATFORM == 'ios' ]; then
     if [ -z $IOS_PUB_DEPLOYMENT ]; then
       echo "[buildchannel:$buildchannel] IOS_PUB_DEPLOYMENT is not set"
       exit 1;
@@ -52,17 +52,17 @@ checkout_s3_pub_deployment_params() {
     export s3_upload_prefix=$(echo "$IOS_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
     # echo "[debug] s3_upload_prefix is $s3_upload_prefix"
     export cdn_deployment_urlbase="https://download.rabby.io/$s3_upload_prefix"
-  elif [ $targetplatform == 'android' ]; then
+  elif [ $BUILD_TARGET_PLATFORM == 'android' ]; then
     export s3_upload_prefix=$(echo "$ANDROID_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
     # echo "[debug] s3_upload_prefix is $s3_upload_prefix"
     export cdn_deployment_urlbase="https://download.rabby.io/$s3_upload_prefix"
   else
-    echo "Invalid targetplatform: $targetplatform"
+    echo "Invalid BUILD_TARGET_PLATFORM: $BUILD_TARGET_PLATFORM"
     exit 1;
   fi
 }
 
-replace_variables() {
+unix_replace_variables() {
     local input_file="$1"
     local output_file="$2"
     shift 2

@@ -5,8 +5,8 @@ project_dir=$(dirname $script_dir)
 
 . $script_dir/fns.sh --source-only
 
-export buildchannel="selfhost-reg";
-export targetplatform="ios";
+[ -z $buildchannel ] && export buildchannel="selfhost-reg";
+export BUILD_TARGET_PLATFORM="ios";
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
@@ -16,14 +16,14 @@ proj_version=$(node --eval="process.stdout.write(require('./package.json').versi
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 cd $script_dir;
 
-replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios/manifest.plist \
+unix_replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios/manifest.plist \
   --var-IPA_DOWNLOAD_URL="$cdn_deployment_urlbase/ios/rabbymobile.ipa" \
   --var-URL_DISPLAY_IMAGE="$cdn_deployment_urlbase/ios/icon_57x57@57w.png" \
   --var-URL_FULL_SIZE_IMAGE="$cdn_deployment_urlbase/ios/icon_512x512@512w.png" \
   --var-APP_VERSION="$proj_version" \
   --var-APP_DISPLAY_NAME="$app_display_name"
 
-replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
+unix_replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
   --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
   --var-APP_VER_CODE=100 \
   --var-APP_VER="$proj_version"

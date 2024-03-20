@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { intToHex } from '@/utils/number';
 import { addHexPrefix, isHexPrefixed } from 'ethereumjs-util';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -54,9 +55,9 @@ export const normalizeTxParams = tx => {
       }
     }
   } catch (e) {
-    // Sentry.captureException(
-    //   new Error(`normalizeTxParams failed, ${JSON.stringify(e)}`),
-    // );
+    Sentry.captureException(
+      new Error(`normalizeTxParams failed, ${JSON.stringify(e)}`),
+    );
     console.error(`normalizeTxParams failed, ${JSON.stringify(e)}`);
   }
   return copy;

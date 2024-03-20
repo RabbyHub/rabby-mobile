@@ -10,7 +10,7 @@ import { CHAINS } from '@/constant/chains';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
 import { ProviderRequest } from './type';
-// import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/react-native';
 // import stats from '@/stats';
 import { addHexPrefix, stripHexPrefix } from 'ethereumjs-util';
 import { eventBus, EVENTS } from '@/utils/events';
@@ -273,7 +273,7 @@ const flowContext = flow
           })
           .then(resolve)
           .catch((e: any) => {
-            // Sentry.captureException(e);
+            Sentry.captureException(e);
             if (isSignApproval(approvalType)) {
               eventBus.emit(EVENTS.SIGN_FINISHED, {
                 success: false,

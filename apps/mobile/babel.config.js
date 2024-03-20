@@ -22,7 +22,7 @@ module.exports = {
       {
         'process.env.APP_VERSION': version,
         'process.env.BUILD_TIME': new Date().toISOString(),
-        'process.env.BUILD_ENV': process.env.BUILD_ENV,
+        'process.env.BUILD_ENV': process.env.BUILD_ENV || 'production',
         'process.env.buildchannel': process.env.buildchannel || 'selfhost-reg',
         'process.env.BUILD_GIT_HASH': BUILD_GIT_HASH,
       },

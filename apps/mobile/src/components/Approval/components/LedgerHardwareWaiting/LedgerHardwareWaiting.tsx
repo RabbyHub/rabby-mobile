@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components/Toast';
 import { CHAINS } from '@/constant/chains';
 import {
@@ -190,9 +191,9 @@ export const LedgerHardwareWaiting = ({
           approvalId: approval.id,
         });
       } else {
-        // Sentry.captureException(
-        //   new Error('Ledger sign error: ' + JSON.stringify(data)),
-        // );
+        Sentry.captureException(
+          new Error('Ledger sign error: ' + JSON.stringify(data)),
+        );
         setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
         setErrorMessage(data.errorMsg);
       }
