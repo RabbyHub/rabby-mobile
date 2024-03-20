@@ -103,24 +103,22 @@ const isIOS = Platform.OS === 'ios';
 function useForceExpandOnceOnIOS(
   sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
 ) {
-  const [firstTouchedOnIOS, setFirstTouchedOnIOS] = useState(!isIOS);
+  const [firstTouched, setFirstTouched] = useState(false);
   const haventOpenedRef = useRef(true);
   useEffect(() => {
-    if (!isIOS) return;
-
     if (haventOpenedRef.current && INDEX_AS_EXPANDED > 0) {
       sheetModalRef?.current?.present();
       sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
       setTimeout(() => {
         sheetModalRef?.current?.close();
         haventOpenedRef.current = false;
-        setFirstTouchedOnIOS(true);
+        setFirstTouched(true);
       }, 200);
     }
   }, [sheetModalRef]);
 
   return {
-    firstTouchedOnIOS,
+    firstTouched,
   };
 }
 
@@ -171,9 +169,7 @@ export function OpenedDappWebViewStub() {
       // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
       // openedDappWebviewSheetModalRef?.current?.present();
       toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
-      if (isIOS) {
-        toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-      }
+      toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
@@ -209,10 +205,7 @@ export function OpenedDappWebViewStub() {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          /**
-           * @warning if we set minHeight on Android, the bottomSheetModal will not be able to open at first time
-           */
-          ...(isIOS && { minHeight: 20 }),
+          minHeight: 20,
         }}>
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
