@@ -13,7 +13,7 @@ import { ThemeColors } from '@/constant/theme';
 export const RcIconNavigationHomeLight = makeThemeIconFromCC(
   RcIconNavigationHomeLightCC,
   {
-    onLight: ThemeColors.light['blue-default'],
+    onLight: ThemeColors.light['neutral-foot'],
     onDark: ThemeColors.dark['neutral-foot'],
   },
 );
