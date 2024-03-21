@@ -29,6 +29,7 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { navigate } from '@/utils/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import {
+  HARDWARE_KEYRING_TYPES,
   KEYRING_CATEGORY,
   KEYRING_CLASS,
   KEYRING_TYPE,
@@ -191,7 +192,8 @@ export const ImportSuccessScreen = () => {
   const handleImportMore = React.useCallback(() => {
     if (state.isKeystoneFirstImport) {
       navigate(RootNames.ImportHardware, {
-        type: KEYRING_TYPE.KeystoneKeyring,
+        type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+        brand: HARDWARE_KEYRING_TYPES.Keystone.brandName,
       });
     } else if (state.isLedgerFirstImport) {
       navigate(RootNames.ImportHardware, {

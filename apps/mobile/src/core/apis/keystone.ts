@@ -1,6 +1,6 @@
 import { getKeyring } from './keyring';
 import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { keyringService } from '../services/shared';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 
@@ -87,6 +87,8 @@ export async function getAddresses(start: number, end: number) {
     KEYRING_TYPE.KeystoneKeyring,
   );
 
+  await new Promise(resolve => setTimeout(resolve, 1));
+
   return keyring.getAddresses(start, end);
 }
 
@@ -96,4 +98,25 @@ export async function getCurrentAccounts() {
   );
 
   return keyring.getCurrentAccounts();
+}
+export async function removeAddressAndForgetDevice() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+  const accounts = await getCurrentAccounts();
+
+  await Promise.all(
+    accounts.map(
+      async account =>
+        await keyringService.removeAccount(
+          account.address,
+          KEYRING_CLASS.HARDWARE.KEYSTONE,
+          undefined,
+          true,
+        ),
+    ),
+  );
+
+  await keyring.forgetDevice();
+  return;
 }

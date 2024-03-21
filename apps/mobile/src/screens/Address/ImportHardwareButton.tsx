@@ -25,6 +25,7 @@ export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
     s => s.routes.find(r => r.name === RootNames.ImportHardware)?.params,
   ) as {
     type: KEYRING_TYPE;
+    brand: string;
   };
 
   const settingModalName = React.useMemo(() => {
@@ -37,13 +38,13 @@ export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
     }
   }, [state.type]);
 
-  console.log(state);
   return (
     <CustomTouchableOpacity
       hitSlop={hitSlop}
       onPress={() => {
         const id = createGlobalBottomSheetModal({
           name: settingModalName,
+          brand: state.brand,
           onDone: () => {
             removeGlobalBottomSheetModal(id);
           },

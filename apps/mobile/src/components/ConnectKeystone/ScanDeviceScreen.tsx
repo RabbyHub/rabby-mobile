@@ -65,12 +65,10 @@ export const ScanDeviceScreen: React.FC<{ onScanFinish: () => void }> = ({
         }
         scannedRef.current = true;
         const result = decoder.current.resultUR();
-        // TODO 直接返回
         if (result.type === 'crypto-hdkey') {
           await apiKeystone.submitQRHardwareCryptoHDKey(
             result.cbor.toString('hex'),
           );
-          console.log('submitQRHardwareCryptoHDKey');
         } else if (result.type === 'crypto-account') {
           await apiKeystone.submitQRHardwareCryptoAccount(
             result.cbor.toString('hex'),

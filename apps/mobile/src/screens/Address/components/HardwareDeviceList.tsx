@@ -15,8 +15,7 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiKeystone } from '@/core/apis';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -48,6 +47,8 @@ export const HardwareDeviceList = () => {
     });
   }, []);
 
+  const goImport = useImportKeystone();
+
   const handleKeystone = React.useCallback(async () => {
     matomoRequestEvent({
       category: 'Import Address',
@@ -57,9 +58,7 @@ export const HardwareDeviceList = () => {
 
     const isReady = await apiKeystone.isReady();
     if (isReady) {
-      navigate(RootNames.ImportHardware, {
-        type: KEYRING_CLASS.HARDWARE.KEYSTONE,
-      });
+      goImport();
       return;
     }
 
@@ -71,7 +70,7 @@ export const HardwareDeviceList = () => {
         }, 0);
       },
     });
-  }, []);
+  }, [goImport]);
 
   return (
     <View>

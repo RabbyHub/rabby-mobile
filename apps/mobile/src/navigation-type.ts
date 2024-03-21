@@ -23,6 +23,7 @@ export type RootStackParamsList = {
   [RootNames.NftDetail]?: {};
   [RootNames.ImportHardware]?: {
     type: KEYRING_TYPE;
+    brand?: string;
   };
 };
 
