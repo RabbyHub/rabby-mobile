@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
@@ -14,6 +14,9 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { apiKeystone } from '@/core/apis';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -45,7 +48,21 @@ export const HardwareDeviceList = () => {
     });
   }, []);
 
-  const handleKeystone = React.useCallback(() => {
+  const handleKeystone = React.useCallback(async () => {
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
+    });
+
+    const isReady = await apiKeystone.isReady();
+    if (isReady) {
+      navigate(RootNames.ImportHardware, {
+        type: KEYRING_CLASS.HARDWARE.KEYSTONE,
+      });
+      return;
+    }
+
     const id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.CONNECT_KEYSTONE,
       onDone: () => {
@@ -53,11 +70,6 @@ export const HardwareDeviceList = () => {
           removeGlobalBottomSheetModal(id);
         }, 0);
       },
-    });
-    matomoRequestEvent({
-      category: 'Import Address',
-      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
-      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
     });
   }, []);
 

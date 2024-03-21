@@ -10,6 +10,7 @@ import WalletConnectSVG from '@/assets/icons/wallet/walletconnect.svg';
 import { SvgProps } from 'react-native-svg';
 import {
   BRAND_ALIAS_TYPE_TEXT,
+  HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
   WALLET_NAME,
 } from '@rabby-wallet/keyring-utils';
@@ -122,7 +123,7 @@ export const getWalletIcon = (brandName: string | undefined) => {
     return LedgerSVG;
   }
 
-  if (brandName === 'Keystone') {
+  if (brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
     return KeystoneSVG;
   }
 

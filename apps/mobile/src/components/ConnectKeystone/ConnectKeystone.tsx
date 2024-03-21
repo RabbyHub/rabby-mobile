@@ -19,15 +19,8 @@ export const ConnectKeystone: React.FC<{
   );
 
   const handleCameraNext = React.useCallback(async () => {
-    if (await apiKeystone.isReady()) {
-      navigate(RootNames.ImportHardware, {
-        type: KEYRING_CLASS.HARDWARE.KEYSTONE,
-      }); // TODO
-      onDone?.();
-    } else {
-      setCurrentScreen('scan');
-    }
-  }, [onDone]);
+    setCurrentScreen('scan');
+  }, []);
 
   const handleImportAddress = React.useCallback(async () => {
     const address = await apiKeystone.importFirstAddress({});
