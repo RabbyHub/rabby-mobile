@@ -28,7 +28,7 @@ android_deployments_dir="$script_dir/deployments/android"
 rm -rf $android_deployments_dir && mkdir -p $android_deployments_dir;
 
 # preapre version.json
-replace_variables $script_dir/tpl/android/version.json $android_deployments_dir/version.json \
+unix_replace_variables $script_dir/tpl/android/version.json $android_deployments_dir/version.json \
   --var-APP_VER_CODE=$android_version_code \
   --var-APP_VER="$android_version_name"
 
