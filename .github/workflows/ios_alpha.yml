@@ -90,6 +90,8 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
         run: |
           cd apps/mobile;
+          yarn prepare-archive;
+
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
           cd ios && bundle install && bundle exec pod install;
