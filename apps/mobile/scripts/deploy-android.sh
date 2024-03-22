@@ -28,17 +28,19 @@ deployment_local_dir="$script_dir/deployments"
 rm -rf $deployment_local_dir/android && mkdir -p $deployment_local_dir/android;
 
 build_alpha() {
-  if [ -e bundle ]; then
+  if [ -z $USE_SCRIPT_BUILD ]; then
     bundle exec fastlane android alpha
   else
+    echo "[deploy-android] use script directly."
     sh $project_dir/android/build.sh buildApk
   fi
 }
 
 build_appstore() {
-  if [ -e bundle ]; then
+  if [ -z $USE_SCRIPT_BUILD ]; then
     bundle exec fastlane android release
   else
+    echo "[deploy-android] use script directly."
     sh $project_dir/android/build.sh buildAppStore
   fi
 }
