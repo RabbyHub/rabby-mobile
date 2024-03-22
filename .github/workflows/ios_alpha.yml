@@ -6,14 +6,9 @@ on:
     branches:
       - 'ci/ios-alpha-*'
       - ci/*
-  workflow_dispatch:
   workflow_call:
     secrets:
-      MATCH_GIT_PRIVATE_KEY:
-        required: true
-      MATCH_PASSWORD:
-        required: true
-      NPM_AUTH_TOKEN:
+      KEYCHAIN_PASS:
         required: true
 
 # defaults:
@@ -27,9 +22,6 @@ jobs:
   setup:
     name: iOS-alpha-build
     runs-on: [self-hosted, mobile, macOS]
-    # defaults:
-    #   run:
-    #     shell: bash -ieo pipefail {0}
     steps:
       - uses: actions/checkout@v4
       - name: Get Actions Variables
@@ -97,3 +89,13 @@ jobs:
           cd ios && bundle install && bundle exec pod install;
           cd ../;
           REALLY_UPLOAD=true ./scripts/deploy-ios-adhoc.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+          path: |
+            ./apps/mobile/ios/Package/*.ipa
+            ./apps/mobile/ios/Package/manifest.plist
+            ./apps/mobile/ios/Package/*.zip
+          retention-days: 90

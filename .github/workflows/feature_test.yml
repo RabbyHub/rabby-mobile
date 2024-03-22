@@ -1,11 +1,9 @@
-name: Test
+name: Feature Test
 
 on:
   push:
     branches:
-      - dev
-      - feat*
-      # - ci/*
+      - feat/*
 
 defaults:
   run:
@@ -37,30 +35,56 @@ jobs:
           echo "HOME is $HOME"
           echo "which node $(which node)"
 
+      - name: "[Android] Setup Java"
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '17'
+
+      - name: "[Android] Setup Android SDK"
+        uses: android-actions/setup-android@v2
+
+      - name: "[iOS] Setup Xcode"
+        uses: maxim-lobanov/setup-xcode@v1
+        id: setup-xcode
+        with:
+          # use specific version rather than 'latest-stable' if multiple Xcodes installed
+          xcode-version: '15.3'
+
       - name: Install and build
         shell: bash
         run: |
-          npm i -g @debank/cli@latest;
-          cd apps/mobile;
           yarn install;
-          yarn apply-patch;
-          yarn prepare-archive;
+          cd apps/mobile;
+          bundle install;
 
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
+          # build android
+          yarn prepare-archive;
+          buildchannel=selfhost-reg REALLY_UPLOAD=true ./scripts/deploy-android.sh
+
+          # build android
+          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
+          cd ios && bundle install && bundle exec pod install;
+          cd ../;
+          REALLY_UPLOAD=true ./scripts/deploy-ios-adhoc.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
-          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_DESKTOP_KR_PWD }}
-          RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
-          RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
-          RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
+          RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
+          CONFIGURATION: release
+          TYPE: adhoc
+          BUILD_ENV: alpha
           LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
-          RABBY_REALLY_COPY: ${{ vars.RABBY_REALLY_COPY }}
+          RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
+          RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
           GIT_COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
