@@ -16,6 +16,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AddressViewer } from '@/components/AddressViewer';
 import { AppColorsVariants } from '@/constant/theme';
 import { LedgerAccount } from './LedgerAccount';
+import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 
 export interface Props {
   account: Account;
@@ -105,9 +106,7 @@ export const AccountInfo: React.FC<Props> = ({
       {account?.type === KEYRING_CLASS.WALLETCONNECT && (
         <WalletConnectAccount chain={chain} account={account} />
       )}
-      {account?.type === KEYRING_CLASS.HARDWARE.LEDGER && (
-        <LedgerAccount account={account} />
-      )}
+      {account?.type === KEYRING_CLASS.HARDWARE.LEDGER && <LedgerAccount />}
       {account?.type === KEYRING_CLASS.WATCH && (
         <CommonAccount
           icon={
@@ -116,6 +115,12 @@ export const AccountInfo: React.FC<Props> = ({
             ]
           }
           tip={t('page.signFooterBar.addressTip.watchAddress')}
+        />
+      )}
+      {account?.type === KEYRING_CLASS.HARDWARE.KEYSTONE && (
+        <CommonAccount
+          icon={KeystoneSVG}
+          tip={t('page.signFooterBar.addressTip.keystone')}
         />
       )}
     </View>

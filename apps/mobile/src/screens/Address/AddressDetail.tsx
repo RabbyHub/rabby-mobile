@@ -260,7 +260,11 @@ const AddressInfo = (props: AddressInfoProps) => {
               style={StyleSheet.compose(styles.valueView, {
                 alignItems: 'center',
               })}>
-              <WalletIcon style={{ width: 20, height: 20, marginRight: 6 }} />
+              <WalletIcon
+                width={20}
+                height={20}
+                style={{ width: 20, height: 20, marginRight: 6 }}
+              />
               <Text
                 style={{
                   fontSize: 16,
