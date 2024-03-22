@@ -3,6 +3,11 @@ import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { keyringService } from '../services/shared';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import {
+  AcquireMemeStoreData,
+  MemStoreDataReady,
+} from '@rabby-wallet/eth-keyring-keystone/dist/KeystoneKeyring';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export async function submitQRHardwareCryptoHDKey(cbor: string) {
   const keyring = await getKeyring<KeystoneKeyring>(
@@ -119,4 +124,39 @@ export async function removeAddressAndForgetDevice() {
 
   await keyring.forgetDevice();
   return;
+}
+
+export async function exportCurrentSignRequestIdIfExist() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.exportCurrentSignRequestIdIfExist();
+}
+
+export async function acquireKeystoneMemStoreData() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  keyring.getInteraction().on(MemStoreDataReady, request => {
+    eventBus.emit(EVENTS.broadcastToUI, {
+      method: EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED,
+      params: {
+        request,
+      },
+    });
+  });
+  keyring.getInteraction().emit(AcquireMemeStoreData);
+}
+
+export async function submitQRHardwareSignature(
+  requestId: string,
+  cbor: string,
+) {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.submitSignature(requestId, cbor);
 }

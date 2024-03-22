@@ -1,23 +1,40 @@
-import { toast } from '@/components/Toast';
 import { CHAINS } from '@/constant/chains';
-import {
-  notificationService,
-  transactionHistoryService,
-} from '@/core/services/shared';
+import { transactionHistoryService } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
-import { APPROVAL_STATUS_MAP, eventBus, EVENTS } from '@/utils/events';
-import React from 'react';
+import { eventBus, EVENTS } from '@/utils/events';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ApprovalPopupContainer,
-  Props as ApprovalPopupContainerProps,
-} from '../Popup/ApprovalPopupContainer';
+import { ApprovalPopupContainer } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, Text, View } from 'react-native';
-import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
+import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { stats } from '@/utils/stats';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CATEGORY_MAP,
+} from '@rabby-wallet/keyring-utils';
+import { useCurrentAccount } from '@/hooks/account';
+import { apiKeystone } from '@/core/apis';
+import { findChainByEnum } from '@/utils/chain';
+import Player from './Player';
+import Reader from './Reader';
+
+enum QR_HARDWARE_STATUS {
+  SYNC,
+  SIGN,
+  RECEIVED,
+  DONE,
+}
+export type RequestSignPayload = {
+  requestId: string;
+  payload: {
+    type: string;
+    cbor: string;
+  };
+};
 
 interface ApprovalParams {
   address: string;
@@ -63,143 +80,82 @@ export const KeystoneHardwareWaiting = ({
 }: {
   params: ApprovalParams;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { setVisible, visible, closePopup } = useCommonPopupView();
-  const [statusProp, setStatusProp] =
-    React.useState<ApprovalPopupContainerProps['status']>('SENDING');
-  const [content, setContent] = React.useState('');
-  const [description, setDescription] = React.useState('');
-
-  const [connectStatus, setConnectStatus] = React.useState(
-    APPROVAL_STATUS_MAP.WAITING,
+  const { closePopup } = useCommonPopupView();
+  const [status, setStatus] = useState<QR_HARDWARE_STATUS>(
+    QR_HARDWARE_STATUS.SYNC,
   );
+  const [brand, setBrand] = useState<string>('');
+  const [signPayload, setSignPayload] = useState<RequestSignPayload>();
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const chain = Object.values(CHAINS).find(
-    item => item.id === (params.chainId || 1),
-  )!;
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSignText, setIsSignText] = useState(false);
   const { t } = useTranslation();
-  const [isSignText, setIsSignText] = React.useState(false);
-  const [result, setResult] = React.useState('');
-  const [errorMessage, setErrorMessage] = React.useState('');
+  const [content, setContent] = React.useState('');
   const [isClickDone, setIsClickDone] = React.useState(false);
   const [signFinishedData, setSignFinishedData] = React.useState<{
     data: any;
+    stay: boolean;
     approvalId: string;
   }>();
-  const firstConnectRef = React.useRef<boolean>(false);
-  const mountedRef = React.useRef(false);
-  const showDueToStatusChangeRef = React.useRef(false);
+  const { currentAccount: account } = useCurrentAccount();
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const handleCancel = () => {
-    rejectApproval('user cancel');
-  };
-
-  const handleRetry = async (showToast = true) => {
-    if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
-      toast.success(t('page.signFooterBar.ledger.resubmited'));
+  const chain = Object.values(CHAINS).find(
+    item => item.id === (params.chainId || 1),
+  )!.enum;
+  const init = useCallback(async () => {
+    const approval = await getApproval();
+    if (!account) {
       return;
     }
-    setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationService.callCurrentRequestDeferFn();
-    if (showToast) {
-      toast.success(t('page.signFooterBar.ledger.resent'));
+    setBrand(account.brandName);
+    setIsSignText(
+      params.isGnosis ? true : approval?.data.approvalType !== 'SignTx',
+    );
+
+    let currentSignId: string | null = null;
+    if (account.brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
+      currentSignId = await apiKeystone.exportCurrentSignRequestIdIfExist();
     }
-  };
 
-  const init = async () => {
-    const approval = (await getApproval())!;
-
-    const isSignText = params.isGnosis
-      ? true
-      : approval?.data.approvalType !== 'SignTx';
-    setIsSignText(isSignText);
-    if (!isSignText) {
-      const signingTxId = approval.data.params.signingTxId;
-      // const tx = approval.data?.params;
-      if (signingTxId) {
-        // const { nonce, from, chainId } = tx;
-        // const explain = await wallet.getExplainCache({
-        //   nonce: Number(nonce),
-        //   address: from,
-        //   chainId: Number(chainId),
-        // });
-
-        const signingTx = await transactionHistoryService.getSigningTx(
-          signingTxId,
-        );
-
-        if (!signingTx?.explain) {
-          setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
+    eventBus.addListener(
+      EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED,
+      ({ request }) => {
+        if (currentSignId) {
+          if (currentSignId === request.requestId) {
+            setSignPayload(request);
+          }
           return;
+        } else {
+          setSignPayload(request);
         }
-
-        // const explain = signingTx.explain;
-
-        // stats.report('signTransaction', {
-        //   type: account.brandName,
-        //   chainId: chain.serverId,
-        //   category: KEYRING_CATEGORY_MAP[account.type],
-        //   preExecSuccess: explain
-        //     ? explain?.calcSuccess && explain?.pre_exec.success
-        //     : true,
-        //   createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
-        //   source: params?.$ctx?.ga?.source || '',
-        //   trigger: params?.$ctx?.ga?.trigger || '',
-        // });
-      }
-    } else {
-      // stats.report('startSignText', {
-      //   type: account.brandName,
-      //   category: KEYRING_CATEGORY_MAP[account.type],
-      //   method: params?.extra?.signTextMethod,
-      // });
-    }
-    eventBus.addListener(EVENTS.LEDGER.REJECT_APPROVAL, data => {
-      rejectApproval(data, false, true);
-    });
-    eventBus.addListener(EVENTS.LEDGER.REJECTED, async data => {
-      setErrorMessage(data);
-      setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
-    });
-    eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
-      setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
-    });
+      },
+    );
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
       if (data.success) {
         let sig = data.data;
-        setResult(sig);
-        setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
-
-        // matomoRequestEvent({
-        //   category: 'Transaction',
-        //   action: 'Submit',
-        //   label: KEYRING_CLASS.HARDWARE.LEDGER,
-        // });
-
+        setStatus(QR_HARDWARE_STATUS.DONE);
         setSignFinishedData({
           data: sig,
-          approvalId: approval.id,
+          stay: !isSignText,
+          approvalId: approval!.id,
         });
       } else {
-        // Sentry.captureException(
-        //   new Error('Ledger sign error: ' + JSON.stringify(data)),
-        // );
-        setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
         setErrorMessage(data.errorMsg);
       }
     });
-  };
-
-  React.useEffect(() => {
-    firstConnectRef.current = true;
+    await apiKeystone.acquireKeystoneMemStoreData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
     init();
-    mountedRef.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
+      eventBus.removeAllListeners(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED);
+    };
+  }, [init]);
 
   React.useEffect(() => {
     if (signFinishedData && isClickDone) {
@@ -214,59 +170,80 @@ export const KeystoneHardwareWaiting = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
 
-  React.useEffect(() => {
-    setVisible(true);
-    showDueToStatusChangeRef.current = true;
-    switch (connectStatus) {
-      case APPROVAL_STATUS_MAP.WAITING:
-        setStatusProp('SENDING');
-        setContent(t('page.signFooterBar.ledger.siging'));
-        setDescription('');
-        break;
-      case APPROVAL_STATUS_MAP.SUBMITTING:
-        setStatusProp('SENDING');
-        setContent(t('page.signFooterBar.ledger.submitting'));
-        setDescription('');
-        break;
-      case APPROVAL_STATUS_MAP.REJECTED:
-        setStatusProp('REJECTED');
-        setContent(t('page.signFooterBar.ledger.txRejected'));
-        setDescription(errorMessage);
-        break;
-      case APPROVAL_STATUS_MAP.FAILED:
-        setStatusProp('FAILED');
-        setContent(t('page.signFooterBar.qrcode.txFailed'));
-        setDescription(errorMessage);
-        break;
-      case APPROVAL_STATUS_MAP.SUBMITTED:
-        setStatusProp('RESOLVED');
-        setContent(t('page.signFooterBar.qrcode.sigCompleted'));
-        setDescription('');
-        break;
-      default:
-        break;
+  const handleCancel = () => {
+    rejectApproval('User rejected the request.');
+  };
+  const handleRequestSignature = async () => {
+    const approval = (await getApproval())!;
+    if (account) {
+      if (!isSignText) {
+        const signingTxId = approval.data.params.signingTxId;
+        if (signingTxId) {
+          const signingTx = await transactionHistoryService.getSigningTx(
+            signingTxId,
+          );
+
+          if (!signingTx?.explain) {
+            setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
+            return;
+          }
+
+          const explain = signingTx.explain;
+
+          stats.report('signTransaction', {
+            type: account.brandName,
+            chainId: findChainByEnum(chain)?.serverId || '',
+            category: KEYRING_CATEGORY_MAP[account.type],
+            preExecSuccess: explain
+              ? explain?.calcSuccess && explain?.pre_exec.success
+              : true,
+            createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+            source: params?.$ctx?.ga?.source || '',
+            trigger: params?.$ctx?.ga?.trigger || '',
+          });
+        }
+      } else {
+        stats.report('startSignText', {
+          type: account.brandName,
+          category: KEYRING_CATEGORY_MAP[account.type],
+          method: params?.extra?.signTextMethod,
+        });
+      }
+      setErrorMessage('');
+      setStatus(QR_HARDWARE_STATUS.SIGN);
+    }
+  };
+
+  const [scanMessage, setScanMessage] = React.useState();
+  const handleScan = scanMessage => {
+    setScanMessage(scanMessage);
+    setStatus(QR_HARDWARE_STATUS.RECEIVED);
+  };
+
+  const handleSubmit = async () => {
+    apiKeystone.submitQRHardwareSignature(signPayload!.requestId, scanMessage!);
+  };
+
+  const popupStatus = React.useMemo(() => {
+    if (errorMessage) {
+      setContent(t('page.signFooterBar.qrcode.txFailed'));
+      return 'FAILED';
+    }
+
+    if (status === QR_HARDWARE_STATUS.RECEIVED) {
+      setContent(t('page.signFooterBar.qrcode.sigReceived'));
+      return 'SUBMITTING';
+    }
+    if (status === QR_HARDWARE_STATUS.DONE) {
+      setContent(t('page.signFooterBar.qrcode.sigCompleted'));
+      return 'RESOLVED';
+    }
+    if ([QR_HARDWARE_STATUS.SIGN, QR_HARDWARE_STATUS.SYNC].includes(status)) {
+      setContent('');
+      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectStatus, errorMessage]);
-
-  const currentDescription = React.useMemo(() => {
-    if (description?.includes('0x650f')) {
-      return t('page.signFooterBar.ledger.lockedOrNoEthApp');
-    }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
-
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description]);
+  }, [status, errorMessage]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
@@ -288,25 +265,48 @@ export const KeystoneHardwareWaiting = ({
   return (
     <View>
       <View style={styles.titleWrapper}>
-        <LedgerSVG width={20} height={20} style={styles.brandIcon} />
+        <KeystoneSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
+          {t('page.signFooterBar.qrcode.signWith', {
+            brand: params.account?.brandName,
+          })}
         </Text>
       </View>
-
-      <ApprovalPopupContainer
-        showAnimation
-        hdType="ledger"
-        status={statusProp}
-        onRetry={() => handleRetry()}
-        onDone={() => setIsClickDone(true)}
-        onCancel={handleCancel}
-        description={currentDescription}
-        content={renderContent}
-        hasMoreDescription={
-          statusProp === 'REJECTED' || statusProp === 'FAILED'
-        }
-      />
+      {popupStatus ? (
+        <ApprovalPopupContainer
+          showAnimation
+          hdType="qrcode"
+          status={popupStatus}
+          content={renderContent}
+          description={errorMessage}
+          onCancel={handleCancel}
+          onRetry={handleRequestSignature}
+          onDone={() => setIsClickDone(true)}
+          onSubmit={handleSubmit}
+          hasMoreDescription={!!errorMessage}
+        />
+      ) : (
+        <>
+          {status === QR_HARDWARE_STATUS.SYNC && signPayload && (
+            <Player
+              layoutStyle={'compact'}
+              playerSize={180}
+              type={signPayload.payload.type}
+              cbor={signPayload.payload.cbor}
+              onSign={handleRequestSignature}
+              brandName={account?.brandName}
+            />
+          )}
+          {status === QR_HARDWARE_STATUS.SIGN && (
+            <Reader
+              requestId={signPayload?.requestId}
+              setErrorMessage={setErrorMessage}
+              brandName={account?.brandName}
+              onScan={handleScan}
+            />
+          )}
+        </>
+      )}
     </View>
   );
 };
