@@ -7,6 +7,13 @@ prepare_env() {
   export project_dir=$script_dir
 }
 
+check_build_params() {
+  if [ -z $RABBY_MOBILE_KR_PWD ]; then
+    echo "RABBY_MOBILE_KR_PWD is not set"
+    exit 1;
+  fi
+}
+
 check_s3_params() {
   if [ -z $RABBY_MOBILE_BUILD_BUCKET ]; then
     echo "RABBY_MOBILE_BUILD_BUCKET is not set"
