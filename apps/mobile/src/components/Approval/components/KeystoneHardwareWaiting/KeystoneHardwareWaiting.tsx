@@ -48,6 +48,9 @@ interface ApprovalParams {
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    root: {
+      flex: 1,
+    },
     brandIcon: {
       width: 20,
       height: 20,
@@ -263,12 +266,12 @@ export const KeystoneHardwareWaiting = ({
   );
 
   return (
-    <View>
+    <View style={styles.root}>
       <View style={styles.titleWrapper}>
         <KeystoneSVG width={20} height={20} style={styles.brandIcon} />
         <Text style={styles.title}>
           {t('page.signFooterBar.qrcode.signWith', {
-            brand: params.account?.brandName,
+            brand,
           })}
         </Text>
       </View>
@@ -290,21 +293,21 @@ export const KeystoneHardwareWaiting = ({
           {status === QR_HARDWARE_STATUS.SYNC && signPayload && (
             <Player
               layoutStyle={'compact'}
-              playerSize={180}
+              playerSize={165}
               type={signPayload.payload.type}
               cbor={signPayload.payload.cbor}
               onSign={handleRequestSignature}
               brandName={account?.brandName}
             />
           )}
-          {status === QR_HARDWARE_STATUS.SIGN && (
+          {/*   {status === QR_HARDWARE_STATUS.SIGN && (
             <Reader
               requestId={signPayload?.requestId}
               setErrorMessage={setErrorMessage}
               brandName={account?.brandName}
               onScan={handleScan}
             />
-          )}
+          )} */}
         </>
       )}
     </View>

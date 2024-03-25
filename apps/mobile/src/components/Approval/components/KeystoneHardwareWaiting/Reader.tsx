@@ -6,7 +6,6 @@ import QRCodeReader from 'ui/component/QRCodeReader';
 import { URDecoder } from '@ngraveio/bc-ur';
 import { openInternalPageInTab, useWallet } from 'ui/utils';
 import { useHistory } from 'react-router-dom';
-import { Form } from 'antd';
 import Progress from '@/ui/component/Progress';
 
 const Reader = ({ requestId, setErrorMessage, brandName, onScan }) => {

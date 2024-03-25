@@ -45,7 +45,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
   [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400],
   [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
-  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [400, 455],
+  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -85,8 +85,11 @@ export function makeBottomSheetProps(ctx: {
 
   if (ctx.params?.name === 'APPROVAL') {
     if (
-      ctx.params.approvalComponent === 'WatchAddressWaiting' ||
-      ctx.params.approvalComponent === 'LedgerHardwareWaiting'
+      [
+        APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
+        APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
+        APPROVAL_MODAL_NAMES.WatchAddressWaiting,
+      ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)
     ) {
       return {
         handleStyle: {

@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import QRCode from 'qrcode.react';
+import QRCode from 'react-native-qrcode-svg';
 import { UR, UREncoder } from '@ngraveio/bc-ur';
 import { useTranslation, Trans } from 'react-i18next';
-import { Button } from 'antd';
-import clsx from 'clsx';
+import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 interface IProps {
   type: string;
@@ -14,6 +16,26 @@ interface IProps {
   layoutStyle?: 'compact' | 'normal';
 }
 
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    description: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors['neutral-title-1'],
+      fontWeight: '400',
+      textAlign: 'center',
+    },
+    root: {
+      position: 'relative',
+      flex: 1,
+    },
+    qrCode: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+    },
+  });
+
 const Player = ({
   type,
   cbor,
@@ -22,6 +44,8 @@ const Player = ({
   playerSize,
   layoutStyle = 'compact',
 }: IProps) => {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const urEncoder = useMemo(
     // For NGRAVE ZERO support please keep to a maximum fragment size of 200
     () => new UREncoder(new UR(Buffer.from(cbor, 'hex'), type), 200),
@@ -39,33 +63,26 @@ const Player = ({
   }, [urEncoder]);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="p-[5px] border border-gray-divider rounded-[8px] bg-white">
-        <QRCode value={currentQRCode.toUpperCase()} size={playerSize ?? 180} />
-      </div>
-      <p
-        className={clsx(
-          layoutStyle === 'normal' ? 'mt-20' : 'mt-6',
-          'text-13 leading-[18px] mb-0 text-r-neutral-body font-medium text-center whitespace-nowrap',
-        )}>
+    <View style={styles.root}>
+      <Text style={styles.description}>
         <Trans
           i18nKey="page.signFooterBar.qrcode.qrcodeDesc"
           values={{
             brand: brandName,
-          }}></Trans>
-      </p>
+          }}
+        />
+      </Text>
+      <View style={styles.qrCode}>
+        <QRCode value={currentQRCode.toUpperCase()} size={playerSize ?? 165} />
+      </View>
 
-      <Button
-        onClick={onSign}
-        className={clsx(
-          'w-[180px] h-[40px]',
-          'active:before:bg-[#00000033]',
-          layoutStyle === 'normal' ? 'mt-20' : 'mt-6',
-        )}
-        type="primary">
-        {t('page.signFooterBar.qrcode.getSig')}
-      </Button>
-    </div>
+      <FooterButton
+        title={t('page.signFooterBar.qrcode.getSig')}
+        type="primary"
+        onPress={onSign}
+      />
+    </View>
   );
 };
+
 export default Player;

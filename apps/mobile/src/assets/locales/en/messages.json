@@ -337,7 +337,7 @@
         "sigReceived": "Signature received",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
-        "qrcodeDesc": "Scan with your {{brand}} to sign<br></br>After signing, click the button below to receive the signature",
+        "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
         "misMatchSignId": "Incongruent transaction data. Please check the transaction details.",
         "unknownQRCode": "Error: We couldn't identify that QR code",
         "afterSignDesc": "After signing, place the QR code on {{brand}} in front of your PC camera"
@@ -1190,9 +1190,9 @@
         "passphrase": "Passphrase"
       },
       "metamask": {
-        "step1": " Export seed phrase or private key from MetaMask <br /> <1>Click to view tutorial <1/></1>",
+        "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
         "step2": "Import the seed phrase or private key in Rabby",
-        "step3": "Import is completed and all your assets will <br /> appear automatically",
+        "step3": "Import is completed and all your assets will \n appear automatically",
         "how": "How to import my MetaMask Account?",
         "step": "Step",
         "importSeedPhrase": "Import the seed phrase or private key",
