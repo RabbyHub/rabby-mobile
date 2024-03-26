@@ -1,4 +1,4 @@
-import { apiKeystone, apiLedger } from '@/core/apis';
+import { apiKeystone } from '@/core/apis';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { useAtom } from 'jotai';
 import React from 'react';
@@ -117,9 +117,7 @@ export const SettingKeystone: React.FC<{
 
   const handleConfirm = React.useCallback(
     value => {
-      apiLedger
-        .setCurrentUsedHDPathType(value.hdPath)
-        .then(() => setSetting(value));
+      setSetting(value);
       onDone?.();
     },
     [onDone, setSetting],
@@ -145,7 +143,9 @@ export const SettingKeystone: React.FC<{
     await apiKeystone.removeAddressAndForgetDevice();
     setVisible(false);
     onDone();
-    navigate(RootNames.ImportNewAddress);
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportNewAddress,
+    });
   }, [onDone]);
 
   return (
