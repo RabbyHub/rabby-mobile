@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# release targets:
+# - https://download.rabby.io/downloads/wallet-mobile/android/version.json
+# - https://download.rabby.io/downloads/wallet-mobile/android/rabby-mobile.apk
+
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 
@@ -29,19 +33,19 @@ deployment_local_dir="$script_dir/deployments"
 rm -rf $deployment_local_dir/android && mkdir -p $deployment_local_dir/android;
 
 build_alpha() {
-  if [ -z $USE_SCRIPT_BUILD ]; then
+  if [ $RABBY_HOST_OS != "Windows" ]; then
     bundle exec fastlane android alpha
   else
-    echo "[deploy-android] use script directly."
+    echo "[deploy-android] run build.sh script directly."
     sh $project_dir/android/build.sh buildApk
   fi
 }
 
 build_appstore() {
-  if [ -z $USE_SCRIPT_BUILD ]; then
+  if [ $RABBY_HOST_OS != "Windows" ]; then
     bundle exec fastlane android release
   else
-    echo "[deploy-android] use script directly."
+    echo "[deploy-android] run build.sh script directly."
     sh $project_dir/android/build.sh buildAppStore
   fi
 }
@@ -96,40 +100,47 @@ else
   version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 fi
 
-if [ $buildchannel == "selfhost-reg" ]; then
-  deployment_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android-$version_bundle_name
-  deployment_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name
-else
-  deployment_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
-  deployment_cdn_baseurl=$cdn_deployment_urlbase/android
-fi
+staging_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android-$version_bundle_name
+staging_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name
+release_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
+release_cdn_baseurl=$cdn_deployment_urlbase/android
+staging_acl="authenticated-read"
+[ $buildchannel == "selfhost-reg" ] && staging_acl="public-read"
 
 backup_name=$S3_ANDROID_BAK_DEPLOYMENT/android/$version_bundle_filename
 
 if [[ "$version_bundle_suffix" =~ .*\.apk ]]; then
-  apk_url="$deployment_cdn_baseurl/$apk_name"
+  apk_url="$staging_cdn_baseurl/$apk_name"
 else
   apk_url=""
 fi
 
-echo "[deploy-android] will upload to $deployment_s3_dir"
-echo "[deploy-android] will be served at $deployment_cdn_baseurl"
+echo "[deploy-android] will upload to $staging_s3_dir"
+if [ $staging_acl == "public-read" ]; then
+  echo "[deploy-android] will be public at $staging_cdn_baseurl"
+else
+  echo "[deploy-android] will be stored at $staging_cdn_baseurl (not public)"
+fi
 
 echo ""
 echo "[deploy-android] start sync..."
 
 if [ ! -z $REALLY_UPLOAD ]; then
-  echo "[deploy-android] backup as $deployment_s3_dir/$apk_name..."
-  aws s3 cp $android_export_target $backup_name --acl authenticated-read
+  echo "[deploy-android] backup as $staging_s3_dir/$apk_name..."
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.json" --acl $staging_acl --content-type application/json
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.md" --acl $staging_acl --content-type text/plain
+  aws s3 cp $backup_name $staging_s3_dir/$apk_name --acl $staging_acl --content-type application/vnd.android.package-archive
 
-  # targets:
-  # - https://download.rabby.io/downloads/wallet-mobile/android/version.json
-  # - https://download.rabby.io/downloads/wallet-mobile/android/rabby-mobile.apk
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
-    aws s3 sync $deployment_local_dir/android $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json
-    aws s3 sync $deployment_local_dir/android $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain
-    aws s3 cp $backup_name $deployment_s3_dir/$apk_name --acl public-read --content-type application/vnd.android.package-archive
+
+    echo "";
+    if [ $buildchannel != "appstore" ]; then
+      echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
+      echo "[deploy-android] aws s3 sync $staging_s3_dir/ $release_s3_dir/ --acl public-read"
+    else
+      echo "[deploy-android] open directory and upload to google play store "
+    fi
 
     node $script_dir/notify-lark.js "$apk_url" android
   fi
@@ -139,7 +150,7 @@ fi
 
 if [ -z $CI ]; then
   echo "[deploy-android] force fresh CDN:"
-  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android/*'\`"
+  echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
   echo ""
 fi
 

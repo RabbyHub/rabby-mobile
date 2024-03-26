@@ -1,6 +1,19 @@
 #!/bin/sh
 
 UNIX_TYPE=$(uname -s)
+RABBY_HOST_OS=`uname`
+
+case $RABBY_HOST_OS in
+  MINGW*|CYGWIN*|MSYS_NT*)
+    RABBY_HOST_OS="Windows"
+    ;;
+esac
+
+case $OSTYPE in
+  msys*|cygwin*)
+    RABBY_HOST_OS="Windows"
+    ;;
+esac
 
 prepare_env() {
   export script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
