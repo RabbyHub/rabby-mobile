@@ -76,6 +76,9 @@ const getStyles = (colors: AppColorsVariants) =>
     contentWrapper: {
       flexDirection: 'row',
     },
+    container: {
+      marginTop: 30,
+    },
   });
 
 export const KeystoneHardwareWaiting = ({
@@ -278,7 +281,7 @@ export const KeystoneHardwareWaiting = ({
       {popupStatus ? (
         <ApprovalPopupContainer
           showAnimation
-          hdType="qrcode"
+          hdType="keystone"
           status={popupStatus}
           content={renderContent}
           description={errorMessage}
@@ -287,6 +290,7 @@ export const KeystoneHardwareWaiting = ({
           onDone={() => setIsClickDone(true)}
           onSubmit={handleSubmit}
           hasMoreDescription={!!errorMessage}
+          style={styles.container}
         />
       ) : (
         <>
