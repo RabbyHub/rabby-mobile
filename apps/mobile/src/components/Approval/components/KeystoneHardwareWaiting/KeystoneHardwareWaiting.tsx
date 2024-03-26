@@ -300,14 +300,15 @@ export const KeystoneHardwareWaiting = ({
               brandName={account?.brandName}
             />
           )}
-          {/*   {status === QR_HARDWARE_STATUS.SIGN && (
+          {status === QR_HARDWARE_STATUS.SIGN && (
             <Reader
+              onBack={() => setStatus(QR_HARDWARE_STATUS.SYNC)}
               requestId={signPayload?.requestId}
               setErrorMessage={setErrorMessage}
               brandName={account?.brandName}
               onScan={handleScan}
             />
-          )} */}
+          )}
         </>
       )}
     </View>
