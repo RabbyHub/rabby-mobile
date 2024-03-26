@@ -129,7 +129,8 @@ if [ ! -z $REALLY_UPLOAD ]; then
   echo "[deploy-android] backup as $staging_s3_dir/$apk_name..."
   aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.json" --acl $staging_acl --content-type application/json
   aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.md" --acl $staging_acl --content-type text/plain
-  aws s3 cp $backup_name $staging_s3_dir/$apk_name --acl $staging_acl --content-type application/vnd.android.package-archive
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.apk" --acl $staging_acl --content-type application/vnd.android.package-archive
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.aab" --acl $staging_acl --content-type application/x-authorware-bin
 
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
