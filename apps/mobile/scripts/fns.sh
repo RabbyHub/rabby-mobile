@@ -1,10 +1,30 @@
 #!/bin/sh
 
 UNIX_TYPE=$(uname -s)
+RABBY_HOST_OS=`uname`
+
+case $RABBY_HOST_OS in
+  MINGW*|CYGWIN*|MSYS_NT*)
+    RABBY_HOST_OS="Windows"
+    ;;
+esac
+
+case $OSTYPE in
+  msys*|cygwin*)
+    RABBY_HOST_OS="Windows"
+    ;;
+esac
 
 prepare_env() {
   export script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
   export project_dir=$script_dir
+}
+
+check_build_params() {
+  if [ -z $RABBY_MOBILE_KR_PWD ]; then
+    echo "RABBY_MOBILE_KR_PWD is not set"
+    exit 1;
+  fi
 }
 
 check_s3_params() {
@@ -23,14 +43,14 @@ checkout_s3_pub_deployment_params() {
   fi
   case $buildchannel in
     "appstore"|"selfhost")
-      ANDROID_PUB_DEPLOYMENT=$RABBY_MOBILE_PROD_PUB_DEPLOYMENT
-      export ANDROID_BAK_DEPLOYMENT=$RABBY_MOBILE_PROD_BAK_DEPLOYMENT
+      S3_ANDROID_PUB_DEPLOYMENT=$RABBY_MOBILE_PROD_PUB_DEPLOYMENT
+      export S3_ANDROID_BAK_DEPLOYMENT=$RABBY_MOBILE_PROD_BAK_DEPLOYMENT
       ;;
     "selfhost-reg")
-      ANDROID_PUB_DEPLOYMENT=$RABBY_MOBILE_REG_PUB_DEPLOYMENT
-      export ANDROID_BAK_DEPLOYMENT=$RABBY_MOBILE_REG_BAK_DEPLOYMENT
-      IOS_PUB_DEPLOYMENT=$RABBY_MOBILE_PUB_DEPLOYMENT
-      export IOS_BAK_DEPLOYMENT=$RABBY_MOBILE_BAK_DEPLOYMENT
+      S3_ANDROID_PUB_DEPLOYMENT=$RABBY_MOBILE_REG_PUB_DEPLOYMENT
+      export S3_ANDROID_BAK_DEPLOYMENT=$RABBY_MOBILE_REG_BAK_DEPLOYMENT
+      S3_IOS_PUB_DEPLOYMENT=$RABBY_MOBILE_PUB_DEPLOYMENT
+      export S3_IOS_BAK_DEPLOYMENT=$RABBY_MOBILE_BAK_DEPLOYMENT
       ;;
     *)
       echo "Invalid buildchannel: $buildchannel"
@@ -39,21 +59,21 @@ checkout_s3_pub_deployment_params() {
   esac
 
   if [ $BUILD_TARGET_PLATFORM == 'ios' ]; then
-    if [ -z $IOS_PUB_DEPLOYMENT ]; then
-      echo "[buildchannel:$buildchannel] IOS_PUB_DEPLOYMENT is not set"
+    if [ -z $S3_IOS_PUB_DEPLOYMENT ]; then
+      echo "[buildchannel:$buildchannel] S3_IOS_PUB_DEPLOYMENT is not set"
       exit 1;
     fi
 
-    if [ -z $IOS_BAK_DEPLOYMENT ]; then
-      echo "[buildchannel:$buildchannel] IOS_BAK_DEPLOYMENT is not set"
+    if [ -z $S3_IOS_BAK_DEPLOYMENT ]; then
+      echo "[buildchannel:$buildchannel] S3_IOS_BAK_DEPLOYMENT is not set"
       exit 1;
     fi
 
-    export s3_upload_prefix=$(echo "$IOS_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
+    export s3_upload_prefix=$(echo "$S3_IOS_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
     # echo "[debug] s3_upload_prefix is $s3_upload_prefix"
     export cdn_deployment_urlbase="https://download.rabby.io/$s3_upload_prefix"
   elif [ $BUILD_TARGET_PLATFORM == 'android' ]; then
-    export s3_upload_prefix=$(echo "$ANDROID_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
+    export s3_upload_prefix=$(echo "$S3_ANDROID_PUB_DEPLOYMENT" | sed "s#s3://${RABBY_MOBILE_BUILD_BUCKET}/##g" | cut -d'/' -f2-)
     # echo "[debug] s3_upload_prefix is $s3_upload_prefix"
     export cdn_deployment_urlbase="https://download.rabby.io/$s3_upload_prefix"
   else

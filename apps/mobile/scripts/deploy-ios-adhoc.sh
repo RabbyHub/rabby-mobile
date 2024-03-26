@@ -7,6 +7,7 @@ project_dir=$(dirname $script_dir)
 
 [ -z $buildchannel ] && export buildchannel="selfhost-reg";
 export BUILD_TARGET_PLATFORM="ios";
+check_build_params;
 check_s3_params;
 checkout_s3_pub_deployment_params;
 
@@ -16,48 +17,64 @@ proj_version=$(node --eval="process.stdout.write(require('./package.json').versi
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
 cd $script_dir;
 
-unix_replace_variables $script_dir/tpl/ios/manifest.plist $script_dir/deployments/ios/manifest.plist \
-  --var-IPA_DOWNLOAD_URL="$cdn_deployment_urlbase/ios/rabbymobile.ipa" \
-  --var-URL_DISPLAY_IMAGE="$cdn_deployment_urlbase/ios/icon_57x57@57w.png" \
-  --var-URL_FULL_SIZE_IMAGE="$cdn_deployment_urlbase/ios/icon_512x512@512w.png" \
-  --var-APP_VERSION="$proj_version" \
-  --var-APP_DISPLAY_NAME="$app_display_name"
+ouput_dir=$project_dir/ios/Package/latest
+deployment_local_dir="$script_dir/deployments"
+
+tmp_dir="$script_dir/deployments/tmp"
+mkdir -p $tmp_dir
+
+xcodebuild -project $project_dir/ios/RabbyMobile.xcodeproj -target "RabbyMobile" -showBuildSettings -json | plutil -convert xml1 - -o $tmp_dir/RabbyMobileAdHoc.plist
+
+ios_version_name=$(/usr/libexec/PlistBuddy -c "Print:CFBundleShortVersionString" $project_dir/ios/RabbyMobile/Info.plist)
+ios_version_code=$(/usr/libexec/PlistBuddy -c "Print:0:buildSettings:CURRENT_PROJECT_VERSION" $tmp_dir/RabbyMobileAdHoc.plist)
+cd $project_dir/ios;
 
 unix_replace_variables $script_dir/tpl/ios/version.json $script_dir/deployments/ios/version.json \
   --var-DOWNLOAD_URL=$cdn_deployment_urlbase/ios/ \
-  --var-APP_VER_CODE=100 \
+  --var-APP_VER_CODE=$ios_version_code \
   --var-APP_VER="$proj_version"
 
-if [ ! -z $REALLY_BUILD ]; then
-  BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
-  export build_export_path="$script_dir/deployments/ios"
-
+if [[ -z $SKIP_BUILD || ! -f $ouput_dir/RabbyMobile.ipa ]]; then
   cd $project_dir/ios;
   bundle install && bundle exec pod install;
-  sh $project_dir/ios/build.sh ad-hoc
-
-  rm -rf $export_path
+  cd $project_dir;
+  bundle exec fastlane ios adhoc;
 fi
 
-echo ""
-if [ ! -z $REALLY_UPLOAD ]; then
-  if [ ! -z $ipa_name ]; then
-    echo "[deploy-ios-adhoc] backup..."
-    aws s3 cp $export_ipa_path/$ipa_name.ipa $IOS_BAK_DEPLOYMENT/$ipa_name.ipa --acl public-read --profile debankbuild
-  fi
+file_date=$(date -r $ouput_dir/RabbyMobile.ipa '+%Y%m%d_%H%M%S')
+version_bundle_name="${ios_version_name}.${ios_version_code}-$file_date"
+deployment_s3_dir=$S3_IOS_PUB_DEPLOYMENT/ios-$version_bundle_name
+deployment_cdn_baseurl=$cdn_deployment_urlbase/ios-$version_bundle_name
+manifest_plist_url="itms-services://?action=download-manifest&url=$deployment_cdn_baseurl/manifest.plist"
 
-  echo "[deploy-ios-adhoc] start sync..."
-  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.plist" --acl public-read --profile debankbuild --content-type application/x-plist
-  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.png" --acl public-read --profile debankbuild --content-type image/png
-  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.json" --acl public-read --profile debankbuild --content-type application/json
-  aws s3 sync $script_dir/deployments/ios $IOS_PUB_DEPLOYMENT/ios/ --exclude '*' --include "*.ipa" --acl public-read --profile debankbuild --content-type application/octet-stream
+cp $ouput_dir/RabbyMobile.ipa $deployment_local_dir/ios/rabbymobile.ipa
+cp $ouput_dir/manifest.plist $deployment_local_dir/ios/manifest.plist
+
+/usr/libexec/PlistBuddy -c "Set:items:0:metadata:title Rabby Wallet" $deployment_local_dir/ios/manifest.plist
+/usr/libexec/PlistBuddy -c "Set:items:0:assets:0:url $deployment_cdn_baseurl/rabbymobile.ipa" $deployment_local_dir/ios/manifest.plist # appURL
+/usr/libexec/PlistBuddy -c "Set:items:0:assets:1:url $deployment_cdn_baseurl/icon_57x57@57w.png" $deployment_local_dir/ios/manifest.plist # displayImageURL
+/usr/libexec/PlistBuddy -c "Set:items:0:assets:2:url $deployment_cdn_baseurl/icon_512x512@512w.png" $deployment_local_dir/ios/manifest.plist # fullSizeImageURL
+
+echo "[deploy-ios-adhoc] will upload to $deployment_s3_dir"
+echo "[deploy-ios-adhoc] will be served at $deployment_cdn_baseurl"
+
+echo ""
+
+if [ ! -z $REALLY_UPLOAD ]; then
+  echo "[deploy-ios-adhoc] start sync to $deployment_s3_dir..."
+  aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream
+  aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist
+  aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png
+  aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json
+
+  node $script_dir/notify-lark.js "$manifest_plist_url" ios
 fi
 
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
 
 if [ -z $CI ]; then
   echo "[deploy-ios-adhoc] force fresh CDN:"
-  echo "[deploy-ios-adhoc] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\` --profile debankbuild"
+  echo "[deploy-ios-adhoc] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/ios/*'\`"
   echo ""
 fi
 

@@ -25,6 +25,7 @@ ios/.xcode.env.local
 # Android/IntelliJ
 #
 build/
+build4sentry/
 .idea
 .gradle
 local.properties
@@ -72,13 +73,17 @@ tmp.iconset
 
 ios/Package
 
-scripts/deployments/ios/manifest.plist
+/*/deployments/tmp
 
 scripts/deployments/**/version.json
 scripts/deployments/**/*.md
-scripts/deployments/**/*.ipa
-scripts/deployments/**/*.apk
-scripts/deployments/**/*.aab
+
+scripts/deployments/ios/manifest.plist
+scripts/deployments/ios/*.ipa
+scripts/deployments/android/*.apk
+scripts/deployments/android/*.aab
+
+scripts/tmp
 
 **/InpageBridgeWeb3.js
 /android/app/src/main/assets/custom/vconsole.min.js
