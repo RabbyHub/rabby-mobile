@@ -1272,10 +1272,10 @@
         "unknowError": "Unknown error, please try again",
         "camera": {
           "title": "Connect Keystone",
-          "description": "请允许Rabby使用相机并扫描你的Keystone"
+          "description": "Enable camera access and scan your Keystone"
         },
         "scan": {
-          "title": "扫码连接",
+          "title": "Scan Keystone to Connect",
           "description": "Scan the QR code on the Keystone hardware wallet"
         }
       },

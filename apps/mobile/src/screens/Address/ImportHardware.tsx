@@ -293,7 +293,7 @@ export const ImportHardwareScreen = () => {
 
   return (
     <Spin spinning={!accounts.length}>
-      <RootScreenContainer hideBottomBar top={24} style={styles.root}>
+      <RootScreenContainer hideBottomBar style={styles.root}>
         <ScrollView style={styles.main}>
           <View style={styles.list}>
             {accounts.map(({ address, index, balance }) => {
