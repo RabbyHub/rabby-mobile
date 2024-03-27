@@ -60,13 +60,13 @@ jobs:
 
           # build android
           yarn prepare-archive;
-          buildchannel=selfhost-reg REALLY_UPLOAD=true ./scripts/deploy-android.sh
+          buildchannel=selfhost-reg REALLY_UPLOAD=false ./scripts/deploy-android.sh
 
           # build android
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
           cd ios && bundle install && bundle exec pod install;
           cd ../;
-          REALLY_UPLOAD=true ./scripts/deploy-ios-adhoc.sh
+          REALLY_UPLOAD=false ./scripts/deploy-ios-adhoc.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}

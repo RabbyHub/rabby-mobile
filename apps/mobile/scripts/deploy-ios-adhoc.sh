@@ -60,7 +60,7 @@ echo "[deploy-ios-adhoc] will be served at $deployment_cdn_baseurl"
 
 echo ""
 
-if [ ! -z $REALLY_UPLOAD ]; then
+if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-ios-adhoc] start sync to $deployment_s3_dir..."
   aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream
   aws s3 sync $script_dir/deployments/ios $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist
