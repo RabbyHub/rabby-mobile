@@ -4,6 +4,9 @@
       "path": "./packages/base-utils/tsconfig.build.json"
     },
     {
+      "path": "./packages/biz-utils/tsconfig.build.json"
+    },
+    {
       "path": "./packages/eth-keyring-watch/tsconfig.build.json"
     },
     {

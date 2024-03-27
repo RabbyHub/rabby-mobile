@@ -661,6 +661,7 @@
           "ApprovalCount_other": "Approvals"
         },
         "RevokeButton": {
+          "btnText": "Revoke",
           "btnText_zero": "Revoke",
           "btnText_one": "Revoke ({{count}})",
           "btnText_other": "Revoke ({{count}})"

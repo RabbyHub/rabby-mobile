@@ -1,0 +1,177 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { ApprovalsLayouts, ApprovalsTabView } from './components/Layout';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { useThemeStyles } from '@/hooks/theme';
+import { TopSearch } from './components/TopSearch';
+import {
+  type ContractApprovalItem,
+  useApprovalsPage,
+} from './useApprovalsPage';
+import { Tabs } from 'react-native-collapsible-tab-view';
+import { usePsudoPagination } from '@/hooks/common/usePagination';
+import { SectionListProps } from 'react-native';
+import ApprovalContractCard from './components/ApprovalContractCard';
+import { TailedTitle } from '@/components/patches/Simulation';
+import TouchableView from '@/components/Touchable/TouchableView';
+
+export default function ListByContracts() {
+  const { colors, styles } = useThemeStyles(getStyles);
+  const { t } = useTranslation();
+
+  const { isLoading, displaySortedContractList, loadApprovals } =
+    useApprovalsPage();
+  const refreshing = React.useMemo(() => {
+    if (displaySortedContractList.length > 0) {
+      return isLoading;
+    } else {
+      return false;
+    }
+  }, [isLoading, displaySortedContractList]);
+
+  const keyExtractor = React.useCallback<
+    SectionListProps<ContractApprovalItem>['keyExtractor'] & object
+  >((contractItem, index) => {
+    return `${contractItem.id}-${index}`;
+  }, []);
+
+  const renderItem = React.useCallback<
+    SectionListProps<ContractApprovalItem>['renderItem'] & object
+  >(
+    ({ item, section, index }) => {
+      const isFirstItem = index === 0;
+      return (
+        <View
+          style={[
+            styles.itemWrapper,
+            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
+          ]}>
+          <ApprovalContractCard contract={item} listIndex={index} />
+        </View>
+      );
+    },
+    [styles],
+  );
+
+  const {
+    fallList: sectionList,
+    simulateLoadNext,
+    resetPage,
+    isFetchingNextPage,
+    isReachTheEnd,
+  } = usePsudoPagination(displaySortedContractList, { pageSize: 8 });
+
+  const onEndReached = React.useCallback(() => {
+    simulateLoadNext(150);
+  }, [simulateLoadNext]);
+
+  const refresh = React.useCallback(async () => {
+    resetPage();
+
+    try {
+      await loadApprovals();
+    } finally {
+    }
+  }, [resetPage, loadApprovals]);
+
+  return (
+    <ApprovalsTabView
+      style={styles.container}
+      innerStyle={[
+        styles.innerContainer,
+        // makeDebugBorder('red')
+      ]}>
+      {/* Search input area */}
+      <View
+        style={{
+          paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+        }}>
+        <TopSearch filterType={'contract'} />
+      </View>
+      <Tabs.SectionList<ContractApprovalItem>
+        initialNumToRender={4}
+        maxToRenderPerBatch={20}
+        // ListHeaderComponent={renderHeaderComponent}
+        ListFooterComponent={
+          <View style={styles.listFooterContainer}>
+            {isFetchingNextPage ? (
+              <ActivityIndicator />
+            ) : isReachTheEnd ? (
+              <TailedTitle
+                style={{
+                  paddingHorizontal:
+                    ApprovalsLayouts.innerContainerHorizontalOffset,
+                }}
+                text="No more"
+              />
+            ) : null}
+          </View>
+        }
+        style={styles.list}
+        contentContainerStyle={styles.listContainer}
+        renderItem={renderItem}
+        // renderSectionHeader={renderSectionHeader}
+        renderSectionFooter={() => <View style={styles.footContainer} />}
+        sections={[
+          {
+            data: sectionList,
+          },
+        ]}
+        keyExtractor={keyExtractor}
+        // ListEmptyComponent={ListEmptyComponent}
+        stickySectionHeadersEnabled={false}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.3}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              refresh();
+            }}
+          />
+        }
+      />
+    </ApprovalsTabView>
+  );
+}
+
+const getStyles = createGetStyles(colors => {
+  return {
+    container: {
+      flex: 1,
+      flexDirection: 'column',
+    },
+
+    list: {},
+    listContainer: {
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    listFooterContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: ApprovalsLayouts.listFooterComponentHeight,
+      // ...makeDebugBorder('green'),
+    },
+    itemWrapper: {
+      width: '100%',
+      paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+    },
+    footContainer: {},
+
+    innerContainer: {
+      padding: 0,
+      paddingBottom: 0,
+    },
+  };
+});

@@ -28,12 +28,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
+const MORE_SHEET_MODAL_SNAPPOINTS = [220];
+
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const navigation = useNavigation<HomeProps['navigation']>();
-  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => [436], []);
+  const moresheetModalRef = React.useRef<BottomSheetModal>(null);
 
   const actions = [
     {
@@ -81,9 +82,9 @@ export const HomeTopArea = () => {
     {
       title: 'More',
       Icon: RcIconMore,
-      disabled: true,
+      disabled: false,
       onPress: () => {
-        bottomSheetModalRef.current?.present();
+        moresheetModalRef.current?.present();
       },
     },
   ];
@@ -93,15 +94,20 @@ export const HomeTopArea = () => {
   }, []);
 
   const moreItems = [
-    ...actions.slice(0, -1),
     {
       title: 'Approvals',
       Icon: RcIconApproval,
-      onPress: () => {},
+      onPress: () => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Approvals,
+        });
+        moresheetModalRef.current?.dismiss();
+      },
     },
     {
       title: 'Gas Top Up',
       Icon: RcIconGasTopUp,
+      disabled: true,
       onPress: () => {},
     },
   ];
@@ -129,12 +135,14 @@ export const HomeTopArea = () => {
       </View>
       {/* </ImageBackground> */}
 
-      <BSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
+      <BSheetModal
+        ref={moresheetModalRef}
+        snapPoints={MORE_SHEET_MODAL_SNAPPOINTS}>
         <BottomSheetView style={styles.list}>
           {moreItems.map(item => (
             <TouchableView
-              style={styles.item}
-              onPress={item.onPress}
+              style={[styles.item, item.disabled && styles.disabledMoreItem]}
+              onPress={item.disabled ? toastDisabledAction : item.onPress}
               key={item.title}>
               <item.Icon style={styles.actionIcon} />
               <Text style={styles.itemText}>{item.title}</Text>
@@ -199,6 +207,9 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  disabledMoreItem: {
+    opacity: 0.5,
   },
   itemText: {
     marginLeft: 12,

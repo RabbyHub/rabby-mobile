@@ -25,7 +25,7 @@ function coerceBinaryTheme(
   rnColorScheme: ColorSchemeName = 'light',
 ): ColorSchemeName {
   if (__DEV__) {
-    return appTheme === 'system' ? rnColorScheme ?? 'light' : appTheme;
+    return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
   }
 
   return FORCE_THEME;

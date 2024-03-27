@@ -57,7 +57,7 @@ export function usePsudoPagination<T extends any>(
       setIsFetchingNextPage(true);
 
       try {
-        await sleep(1000);
+        await sleep(timeout);
         goToNextPage();
       } catch (err) {
         console.error(err);
@@ -68,6 +68,14 @@ export function usePsudoPagination<T extends any>(
     [goToNextPage],
   );
 
+  const isReachTheEnd = useMemo(() => {
+    return currentPage >= totalPage;
+  }, [currentPage, totalPage]);
+
+  const resetPage = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
   return {
     currentPageList,
     fallList,
@@ -75,9 +83,11 @@ export function usePsudoPagination<T extends any>(
     currentPage,
     totalPage,
     goToPage,
+    resetPage,
 
     goToNextPage,
     simulateLoadNext,
     isFetchingNextPage,
+    isReachTheEnd,
   };
 }

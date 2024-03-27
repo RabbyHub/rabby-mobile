@@ -11,6 +11,8 @@ import SendScreen from '../Send/Send';
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
+import ApprovalsScreen from '../Approvals';
+
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
@@ -64,6 +66,19 @@ export default function TransactionNavigator() {
         options={{
           ...screenOptions,
           title: 'Swap',
+          ...headerPresets.withBgCard2,
+          headerStyle: {
+            backgroundColor: colors?.['neutral-bg-2'],
+          },
+        }}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.Approvals}
+        component={ApprovalsScreen}
+        options={{
+          ...screenOptions,
+          title: 'Approvals',
           ...headerPresets.withBgCard2,
           headerStyle: {
             backgroundColor: colors?.['neutral-bg-2'],

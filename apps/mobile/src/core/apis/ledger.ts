@@ -5,7 +5,7 @@ import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { keyringService } from '../services';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import PQueue from 'p-queue';
+import PQueue from 'p-queue/dist/index';
 import { t } from 'i18next';
 
 let queue: PQueue;

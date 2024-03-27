@@ -4923,6 +4923,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/biz-utils@workspace:^, @rabby-wallet/biz-utils@workspace:packages/biz-utils":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/biz-utils@workspace:packages/biz-utils"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/rabby-api": 0.7.7
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    bignumber.js: ^9.1.2
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/eth-keyring-ledger@workspace:^, @rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
@@ -17987,6 +18007,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"intl-pluralrules@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "intl-pluralrules@npm:2.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fintl-pluralrules%2F-%2Fintl-pluralrules-2.0.1.tgz"
+  checksum: e07d5818a0583decb24677f958689f4dfc3c62d972d897c576917aefcd6af429ce8c1eee77af9e2fbf4fce71a800851fe1c33970f7ca56efbe3e70c023e658c1
+  languageName: node
+  linkType: hard
+
 "invariant@npm:*, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Finvariant%2F-%2Finvariant-2.2.4.tgz"
@@ -25901,6 +25928,7 @@ __metadata:
     "@ledgerhq/react-native-hw-transport-ble": ^6.32.2
     "@metamask/eth-sig-util": 5.1.0
     "@notifee/react-native": ^7.8.0
+    "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-walletconnect-keyring": beta
@@ -25962,6 +25990,7 @@ __metadata:
     i18next: ^23.7.14
     immer: ^10.0.3
     interval-promise: ^1.4.0
+    intl-pluralrules: ^2.0.1
     jest: ^27.5.1
     jotai: ^2.6.0
     json-rpc-engine: ^6.1.0

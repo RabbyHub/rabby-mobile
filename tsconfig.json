@@ -8,6 +8,9 @@
       "path": "./packages/base-utils/tsconfig.json"
     },
     {
+      "path": "./packages/biz-utils/tsconfig.json"
+    },
+    {
       "path": "./packages/eth-keyring-watch/tsconfig.json"
     },
     {
