@@ -180,10 +180,10 @@ export const KeystoneHardwareWaiting = ({
     rejectApproval('User rejected the request.');
   };
   const handleRequestSignature = async () => {
-    const approval = (await getApproval())!;
+    const approval = await getApproval();
     if (account) {
       if (!isSignText) {
-        const signingTxId = approval.data.params.signingTxId;
+        const signingTxId = approval?.data?.params?.signingTxId;
         if (signingTxId) {
           const signingTx = await transactionHistoryService.getSigningTx(
             signingTxId,

@@ -29,10 +29,14 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'relative',
       flex: 1,
     },
-    qrCode: {
+    qrCodeContainer: {
       alignItems: 'center',
       justifyContent: 'center',
       flex: 1,
+    },
+    qrCode: {
+      backgroundColor: 'white',
+      padding: 5,
     },
   });
 
@@ -72,8 +76,13 @@ const Player = ({
           }}
         />
       </Text>
-      <View style={styles.qrCode}>
-        <QRCode value={currentQRCode.toUpperCase()} size={playerSize ?? 165} />
+      <View style={styles.qrCodeContainer}>
+        <View style={styles.qrCode}>
+          <QRCode
+            value={currentQRCode.toUpperCase()}
+            size={playerSize ?? 165}
+          />
+        </View>
       </View>
 
       <FooterButton
