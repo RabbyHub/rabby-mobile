@@ -31,4 +31,6 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
   }
 });
 
-initSentry();
+if (!__DEV__) {
+  initSentry();
+}
