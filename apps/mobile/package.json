@@ -53,7 +53,7 @@
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-api": "0.7.7",
     "@rabby-wallet/rabby-security-engine": "^1.1.17",
-    "@rabby-wallet/rabby-swap": "^0.0.29",
+    "@rabby-wallet/rabby-swap": "0.0.32",
     "@rabby-wallet/service-address": "workspace:^",
     "@rabby-wallet/service-keyring": "workspace:^",
     "@react-native-async-storage/async-storage": "^1.21.0",
