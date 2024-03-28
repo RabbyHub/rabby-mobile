@@ -21,6 +21,9 @@ export const ApprovalsLayouts = {
   contractCardHeight: 108,
   contractCardPadding: 16,
 
+  assetsItemHeight: 60,
+  assetsItemPadding: 16,
+
   listFooterComponentHeight: 56,
   innerContainerHorizontalOffset: 20,
 };

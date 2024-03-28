@@ -12,16 +12,19 @@ import PQueue from 'p-queue/dist/index';
 
 import { CHAINS_ENUM } from '@debank/common';
 import {
-  AssetApprovalItem,
-  ContractApprovalItem as OriginalContractApprovalItem,
-  NftApprovalItem as OriginalNftApprovalItem,
-  TokenApprovalItem as OriginalTokenApprovalItem,
+  type AssetApprovalSpender,
+  type AssetApprovalItem,
+  type ContractApprovalItem as OriginalContractApprovalItem,
+  type NftApprovalItem as OriginalNftApprovalItem,
+  type TokenApprovalItem as OriginalTokenApprovalItem,
   getContractRiskEvaluation,
   makeComputedRiskAboutValues,
   markParentForAssetItemSpender,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 approvalUtils.setApprovalEnvsOnce({ appIsDev: __DEV__, appIsProd: !__DEV__ });
+
+export { type AssetApprovalSpender, type AssetApprovalItem };
 
 // TODO: maybe it's not necessary to patch the type, you can fallback to the Rc-version if field `logo_url` is not provided
 export interface ContractApprovalItem extends OriginalContractApprovalItem {
@@ -34,13 +37,16 @@ export interface TokenApprovalItem extends OriginalTokenApprovalItem {
   logo_url_rc?: React.FC<import('react-native-svg').SvgProps>;
 }
 
+export type ApprovalAssetsItem =
+  | approvalUtils.SpenderInNFTApproval
+  | approvalUtils.SpenderInTokenApproval;
+
 import { groupBy, sortBy, flatten, debounce } from 'lodash';
 import { default as RcIconUnknownNFT } from './icons/unknown-nft.svg';
 import { default as RcIconUnknownToken } from './icons/token-default.svg';
 import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 import { useCurrentAccount } from '@/hooks/account';
-import { useAlias2 } from '@/hooks/alias';
 
 import { openapi, testOpenapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
@@ -95,15 +101,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   );
 
   const debouncedSearchKw = useDebounceValue(searchKw, 250);
-
-  useLayoutEffect(() => {
-    // const vGridRef =
-    //   filterType === 'contract' ? vGridRefContracts : vGridRefAsset;
-    // if (vGridRef.current) {
-    //   vGridRef.current?.scrollToItem({ columnIndex: 0 });
-    //   vGridRef.current?.resetAfterRowIndex(0, true);
-    // }
-  }, [debouncedSearchKw, filterType]);
 
   const queueRef = useRef(new PQueue({ concurrency: 40 }));
 
@@ -424,50 +421,70 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     return [];
   }, [approvalsData.contractMap]);
 
-  useEffect(() => {
-    // setTimeout(() => {
-    //   resetTableRenderer(vGridRefContracts);
-    // }, 200);
-  }, [sortedContractList]);
+  const {
+    sortedFlattenedAssetstList,
+    sortedTokenApprovals,
+    sortedNftApprovals,
+  } = useMemo(() => {
+    const tokenAssets = Object.values(approvalsData.tokenMap || {});
+    const nftAssets = Object.values(approvalsData.nftMap || {});
 
-  const sortedAssetstList = useMemo(() => {
     const assetsList = [
-      ...flatten(
-        Object.values(approvalsData.tokenMap || {}).map(
-          (item: TokenApprovalItem) => item.list,
-        ),
-      ),
-      ...flatten(
-        Object.values(approvalsData.nftMap || {}).map(item => item.list),
-      ),
+      ...flatten(tokenAssets.map(item => item.list)),
+      ...flatten(nftAssets.map(item => item.list)),
     ] as AssetApprovalItem['list'][number][];
 
-    return assetsList;
+    return {
+      sortedTokenApprovals: tokenAssets.sort(
+        (a, b) => b.list.length - a.list.length,
+      ),
+      sortedNftApprovals: nftAssets.sort(
+        (a, b) => b.list.length - a.list.length,
+      ),
+      sortedFlattenedAssetstList: assetsList,
+    };
     // return [...dangerList, ...warnList, ...flatten(sortedList.reverse())];
   }, [approvalsData.tokenMap, approvalsData.nftMap]);
 
-  useEffect(() => {
-    // setTimeout(() => {
-    //   resetTableRenderer(vGridRefAsset);
-    // }, 200);
-  }, [sortedAssetstList]);
-
-  const { displaySortedContractList, displaySortedAssetsList } = useMemo(() => {
+  const {
+    displaySortedContractList,
+    displayTokenApprovals,
+    displayNftApprovals,
+    displayApprovals,
+    displaySortedFlattenedAssetsList,
+  } = useMemo(() => {
     if (!debouncedSearchKw || debouncedSearchKw.trim() === '') {
       return {
         displaySortedContractList: sortedContractList,
-        displaySortedAssetsList: sortedAssetstList,
+        displayTokenApprovals: sortedTokenApprovals,
+        displayNftApprovals: sortedNftApprovals,
+        displayApprovals: [...sortedTokenApprovals, ...sortedNftApprovals],
+        displaySortedFlattenedAssetsList: sortedFlattenedAssetstList,
       };
     }
 
     const keywords = debouncedSearchKw.toLowerCase();
+    const fTokenApprovals = sortedTokenApprovals.filter(e => {
+      return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
+        i.toLowerCase().includes(keywords),
+      );
+    });
+    const fNftApprovals = sortedNftApprovals.filter(e => {
+      return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
+        i.toLowerCase().includes(keywords),
+      );
+    });
+
     return {
       displaySortedContractList: sortedContractList.filter(e => {
         return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
           i.toLowerCase().includes(keywords),
         );
       }),
-      displaySortedAssetsList: sortedAssetstList.filter(e => {
+      displayTokenApprovals: fTokenApprovals,
+      displayNftApprovals: fNftApprovals,
+      displayApprovals: [...fTokenApprovals, ...fNftApprovals],
+      displaySortedFlattenedAssetsList: sortedFlattenedAssetstList.filter(e => {
         return [
           e.id,
           e.risk_alert || '',
@@ -477,7 +494,13 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
         ].some(i => i?.toLowerCase().includes(keywords));
       }),
     };
-  }, [sortedContractList, sortedAssetstList, debouncedSearchKw]);
+  }, [
+    sortedContractList,
+    sortedTokenApprovals,
+    sortedNftApprovals,
+    sortedFlattenedAssetstList,
+    debouncedSearchKw,
+  ]);
 
   return {
     isLoading,
@@ -492,7 +515,11 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     account: currentAccount,
     chain,
     displaySortedContractList,
-    displaySortedAssetsList,
+    displayTokenApprovals,
+    displayNftApprovals,
+    displayApprovals,
+
+    displaySortedFlattenedAssetsList,
   };
 }
 
@@ -509,7 +536,10 @@ export const ApprovalsPageContext = React.createContext<
   account: null,
   chain: CHAINS_ENUM.ETH,
   displaySortedContractList: [],
-  displaySortedAssetsList: [],
+  displayTokenApprovals: [],
+  displayNftApprovals: [],
+  displayApprovals: [],
+  displaySortedFlattenedAssetsList: [],
 });
 
 export function useApprovalsPage() {

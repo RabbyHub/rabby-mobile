@@ -11,11 +11,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import {
-  ApprovalsBottomArea,
-  ApprovalsLayouts,
-  ApprovalsTabView,
-} from './components/Layout';
+import { ApprovalsBottomArea, ApprovalsLayouts } from './components/Layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
@@ -69,6 +65,9 @@ const ApprovalScreenContainer = () => {
 
   return (
     <Tabs.Container
+      {...(__DEV__ && {
+        initialTabName: 'assets',
+      })}
       lazy
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}

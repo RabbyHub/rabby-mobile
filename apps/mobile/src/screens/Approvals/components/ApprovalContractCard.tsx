@@ -153,11 +153,10 @@ function CardProto({
           )}
         </View>
         <RightTouchableView
-          style={[styles.floorRight, { height: '100%' }]}
           onPress={evt => {
             onPressArea?.({ type: 'entry', contract });
           }}>
-          <Text>{contract.list.length}</Text>
+          <Text style={styles.entryText}>{contract.list.length}</Text>
           <RcIconRightEntryCC
             width={14}
             height={14}
@@ -281,6 +280,11 @@ export const getCardStyles = createGetStyles(colors => {
       justifyContent: 'flex-end',
       minWidth: 54,
       // ...makeDebugBorder('pink')
+    },
+    entryText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors['neutral-title1'],
     },
     rowCenter: {
       flexDirection: 'row',

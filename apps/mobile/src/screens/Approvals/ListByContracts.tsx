@@ -67,7 +67,7 @@ export default function ListByContracts() {
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
-  } = usePsudoPagination(displaySortedContractList, { pageSize: 8 });
+  } = usePsudoPagination(displaySortedContractList, { pageSize: 10 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length

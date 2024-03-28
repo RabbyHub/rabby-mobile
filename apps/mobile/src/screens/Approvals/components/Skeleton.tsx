@@ -57,3 +57,41 @@ export const SkeletonListByContracts = memo(() => {
     </View>
   );
 });
+
+export const SkeletonListByAssets = memo(() => {
+  const { styles: cardStyles } = useThemeStyles(getCardStyles);
+  return (
+    <View
+      style={{
+        paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+      }}>
+      {Array(5)
+        .fill(0)
+        .map((e, i) => (
+          <View
+            key={i}
+            style={[
+              cardStyles.container,
+              { height: ApprovalsLayouts.assetsItemHeight },
+              i > 0 && {
+                marginTop: 10,
+              },
+            ]}>
+            <View style={{ flexDirection: 'row' }}>
+              <Skeleton
+                animation="pulse"
+                style={{ width: '100%', flexShrink: 1, height: '100%' }}
+              />
+              <Skeleton
+                animation="pulse"
+                width={'100%'}
+                style={[
+                  { width: 54, flexShrink: 0, height: '100%', marginLeft: 6 },
+                ]}
+              />
+            </View>
+          </View>
+        ))}
+    </View>
+  );
+});
