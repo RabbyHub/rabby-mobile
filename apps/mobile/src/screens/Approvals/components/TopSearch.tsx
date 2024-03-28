@@ -5,6 +5,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
+import { useApprovalsPage } from '../useApprovalsPage';
 
 export function TopSearch({
   filterType,
@@ -26,13 +27,15 @@ export function TopSearch({
     setIsInputActive(false);
   }, []);
 
+  const { setSearchKw } = useApprovalsPage();
+
   return (
     <SearchInput
       isActive={isInputActive}
       containerStyle={styles.searchInputContainer}
       inputProps={{
         // value: query,
-        // onChange: e => handleQueryChange(e.nativeEvent.text),
+        onChangeText: setSearchKw,
         onFocus: handleInputFocus,
         onBlur: handleInputBlur,
         placeholder: t('page.approvals.search.placeholder', {
