@@ -21,7 +21,7 @@ import { ApprovalsLayouts } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { toast } from '@/components/Toast';
 
-const FloorLayouts = {
+export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
   floor2: { height: 25, paddingTop: 5 },
   floor3: { height: 24, paddingTop: 4 },
@@ -31,7 +31,7 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getListItemStyles);
+  const { colors, styles } = useThemeStyles(getCardStyles);
 
   return (
     <TouchableView
@@ -54,7 +54,7 @@ function CardProto({
     contract: ContractApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getListItemStyles);
+  const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
 
   if (listIndex === 0) {
@@ -123,7 +123,7 @@ function CardProto({
         onPressArea?.({ type: 'selection', contract });
       }}>
       {/* floor 1 */}
-      <View style={[styles.contractItemFloor, FloorLayouts.floor1]}>
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
         <View style={styles.floorLeft}>
           {chainLogoUrl ? (
             <ChainIconImage
@@ -167,7 +167,7 @@ function CardProto({
       </View>
 
       {/* floor 2 */}
-      <View style={[styles.contractItemFloor, FloorLayouts.floor2]}>
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor2]}>
         <View style={styles.floorLeft}>
           <Text style={styles.floorLabel}>
             {t(
@@ -205,7 +205,7 @@ function CardProto({
       </View>
 
       {/* floor 3 */}
-      <View style={[styles.contractItemFloor, FloorLayouts.floor3]}>
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor3]}>
         <View style={styles.floorLeft}>
           <Text style={styles.floorLabel}>
             {t(
@@ -243,7 +243,7 @@ function CardProto({
   );
 }
 
-const getListItemStyles = createGetStyles(colors => {
+export const getCardStyles = createGetStyles(colors => {
   return {
     container: {
       borderRadius: 8,
@@ -251,9 +251,9 @@ const getListItemStyles = createGetStyles(colors => {
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: 10,
-      height: 108,
+      height: ApprovalsLayouts.contractCardHeight,
       width: '100%',
-      padding: 16,
+      padding: ApprovalsLayouts.contractCardPadding,
       maxWidth:
         Dimensions.get('window').width -
         ApprovalsLayouts.innerContainerHorizontalOffset * 2,

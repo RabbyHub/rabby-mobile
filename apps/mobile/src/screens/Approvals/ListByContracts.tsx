@@ -6,10 +6,15 @@ import {
   ActivityIndicator,
   RefreshControl,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ApprovalsLayouts, ApprovalsTabView } from './components/Layout';
+import {
+  ApprovalsLayouts,
+  ApprovalsTabView,
+  getApprovalsSizes,
+} from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { TopSearch } from './components/TopSearch';
@@ -22,7 +27,8 @@ import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
 import ApprovalContractCard from './components/ApprovalContractCard';
 import { TailedTitle } from '@/components/patches/Simulation';
-import TouchableView from '@/components/Touchable/TouchableView';
+import { SkeletonListByContracts } from './components/Skeleton';
+import { EmptyHolder } from '@/components/EmptyHolder';
 
 export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
@@ -30,13 +36,6 @@ export default function ListByContracts() {
 
   const { isLoading, displaySortedContractList, loadApprovals } =
     useApprovalsPage();
-  const refreshing = React.useMemo(() => {
-    if (displaySortedContractList.length > 0) {
-      return isLoading;
-    } else {
-      return false;
-    }
-  }, [isLoading, displaySortedContractList]);
 
   const keyExtractor = React.useCallback<
     SectionListProps<ContractApprovalItem>['keyExtractor'] & object
@@ -63,12 +62,23 @@ export default function ListByContracts() {
   );
 
   const {
-    fallList: sectionList,
+    fallList,
     simulateLoadNext,
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
   } = usePsudoPagination(displaySortedContractList, { pageSize: 8 });
+
+  const sectionList = React.useMemo(() => {
+    return !fallList?.length
+      ? []
+      : [
+          {
+            title: '',
+            data: fallList,
+          },
+        ];
+  }, [fallList]);
 
   const onEndReached = React.useCallback(() => {
     simulateLoadNext(150);
@@ -82,6 +92,22 @@ export default function ListByContracts() {
     } finally {
     }
   }, [resetPage, loadApprovals]);
+
+  const ListEmptyComponent = React.useMemo(() => {
+    return isLoading ? (
+      <SkeletonListByContracts />
+    ) : (
+      <EmptyHolder text="No Contracts" type="card" />
+    );
+  }, [isLoading]);
+
+  const refreshing = React.useMemo(() => {
+    if (fallList.length > 0) {
+      return isLoading;
+    } else {
+      return false;
+    }
+  }, [isLoading, fallList]);
 
   return (
     <ApprovalsTabView
@@ -105,7 +131,7 @@ export default function ListByContracts() {
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? (
               <ActivityIndicator />
-            ) : isReachTheEnd ? (
+            ) : sectionList.length && isReachTheEnd ? (
               <TailedTitle
                 style={{
                   paddingHorizontal:
@@ -121,13 +147,9 @@ export default function ListByContracts() {
         renderItem={renderItem}
         // renderSectionHeader={renderSectionHeader}
         renderSectionFooter={() => <View style={styles.footContainer} />}
-        sections={[
-          {
-            data: sectionList,
-          },
-        ]}
+        sections={sectionList}
         keyExtractor={keyExtractor}
-        // ListEmptyComponent={ListEmptyComponent}
+        ListEmptyComponent={ListEmptyComponent}
         stickySectionHeadersEnabled={false}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.3}

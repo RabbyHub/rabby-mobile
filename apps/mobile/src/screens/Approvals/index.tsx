@@ -94,8 +94,7 @@ export default function ApprovalsScreen() {
 
   useEffect(() => {
     loadApprovals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadApprovals]);
   return (
     <ApprovalsPageContext.Provider value={approvalsPageCtx}>
       <NormalScreenContainer

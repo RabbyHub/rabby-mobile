@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { Platform, View, ViewProps, Text, StyleSheet } from 'react-native';
+import { Platform, View, Dimensions } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { Button } from '@/components';
 
@@ -18,9 +18,22 @@ export const ApprovalsLayouts = {
   tabbarHeight: 44,
   bottomAreaHeight: 100,
 
+  contractCardHeight: 108,
+  contractCardPadding: 16,
+
   listFooterComponentHeight: 56,
   innerContainerHorizontalOffset: 20,
 };
+
+export function getApprovalsSizes() {
+  const contractCardW =
+    Dimensions.get('window').width -
+    ApprovalsLayouts.innerContainerHorizontalOffset * 2;
+
+  return {
+    contractCardW,
+  };
+}
 
 export function ApprovalsTabView<T extends React.ComponentType<any>>({
   children,
