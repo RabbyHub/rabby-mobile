@@ -68,17 +68,9 @@ function sortTokenOrNFTApprovalsSpenderList(
 
 export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
-  const { currentAddr, chain } = useMemo(() => {
-    const currentAddr = currentAccount?.address?.toLowerCase() || '';
-    return {
-      currentAddr,
-      chain:
-        preferenceService.getTokenApprovalChain(currentAddr) || CHAINS_ENUM.ETH,
-    };
-  }, [currentAccount?.address]);
 
   const [filterType, setFilterType] =
-    useState<keyof typeof FILTER_TYPES>('contract');
+    useState<keyof typeof FILTER_TYPES>('assets');
 
   const [skContract, setSKContract] = useState('');
   const [skAssets, setSKAssets] = useState('');
@@ -505,7 +497,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     setFilterType,
 
     account: currentAccount,
-    chain,
     displaySortedContractList,
     displaySortedAssetsApprovalList,
 
@@ -524,7 +515,6 @@ export const ApprovalsPageContext = React.createContext<
   filterType: 'contract',
   setFilterType: () => {},
   account: null,
-  chain: CHAINS_ENUM.ETH,
   displaySortedContractList: [],
   displaySortedAssetsApprovalList: [],
   displaySortedFlattenedAssetsList: [],

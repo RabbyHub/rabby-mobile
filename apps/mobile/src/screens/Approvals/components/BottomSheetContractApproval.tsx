@@ -14,7 +14,7 @@ import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalRows';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
-export function BottomSheetContractDetail({
+export default function BottomSheetContractApproval({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
