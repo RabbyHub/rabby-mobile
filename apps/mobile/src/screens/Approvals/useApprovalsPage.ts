@@ -67,13 +67,19 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
 
   const [filterType, setFilterType] =
-    useState<keyof typeof FILTER_TYPES>('assets');
+    useState<keyof typeof FILTER_TYPES>('contract');
 
   const [skContract, setSKContract] = useState('');
   const [skAssets, setSKAssets] = useState('');
 
-  const setSearchKw = useMemo(
-    () => (filterType === 'contract' ? setSKContract : setSKAssets),
+  const setSearchKw = React.useCallback(
+    (nextVal: string) => {
+      if (filterType === 'contract') {
+        setSKContract(nextVal);
+      } else {
+        setSKAssets(nextVal);
+      }
+    },
     [filterType],
   );
 
@@ -466,8 +472,9 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   return {
     isLoading,
     loadApprovals,
-    debouncedSkContract,
-    debouncedSkAssets,
+    skContract,
+    skAssets,
+    searchKw: filterType === 'contract' ? skContract : skAssets,
     setSearchKw,
 
     filterType,
@@ -486,8 +493,9 @@ export const ApprovalsPageContext = React.createContext<
 >({
   isLoading: false,
   loadApprovals: async () => [],
-  debouncedSkAssets: '',
-  debouncedSkContract: '',
+  skContract: '',
+  skAssets: '',
+  searchKw: '',
   setSearchKw: () => {},
   filterType: 'contract',
   setFilterType: () => {},

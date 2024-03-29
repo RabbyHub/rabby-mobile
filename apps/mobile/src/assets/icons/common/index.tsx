@@ -19,3 +19,5 @@ export { default as RcIconUncheckCC } from './icon-uncheck-cc.svg';
 export { default as RcWalletCC } from './wallet-cc.svg';
 
 export { default as RcIconCheckmarkCC } from './icon-checkmark-cc.svg';
+
+export { default as RcIconCloseCC } from './icon-close-cc.svg';

@@ -44,10 +44,6 @@ const getStyle = (colors: AppColorsVariants) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    emptyList: {
-      marginTop: 160,
-      alignItems: 'center',
-    },
     emptyListText: {
       fontSize: 15,
       color: colors['neutral-title-1'],

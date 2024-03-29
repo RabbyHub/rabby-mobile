@@ -5,3 +5,5 @@ export { default as RcIconUncheckCC } from './icon-unchecked-cc.svg';
 export { default as RcIconUnknown } from './icon-unknown.svg';
 
 export { default as RcIconRightEntryCC } from './icon-right-entry-cc.svg';
+
+export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';

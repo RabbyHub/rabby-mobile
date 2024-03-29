@@ -7,13 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
 import { useSafeAndroidBottomOffset } from '@/hooks/useAppLayout';
-import { NFTBadgeType } from '../utils';
+import { RcIconNotMatchedCC } from '../icons';
 
 const isAndroid = Platform.OS === 'android';
 
 export const ApprovalsLayouts = {
   tabbarHeight: 44,
   bottomAreaHeight: 100,
+
+  searchBarMarginOffset: 16,
+  searchBarHeight: 48,
 
   contractCardHeight: 108,
   contractCardPadding: 16,
@@ -23,6 +26,16 @@ export const ApprovalsLayouts = {
 
   listFooterComponentHeight: 56,
   innerContainerHorizontalOffset: 20,
+
+  get scrollableSectionHeight() {
+    return (
+      Dimensions.get('window').height -
+      this.tabbarHeight -
+      this.bottomAreaHeight -
+      this.searchBarHeight -
+      this.searchBarMarginOffset * 2
+    );
+  },
 };
 
 export function getApprovalsSizes() {
@@ -141,6 +154,31 @@ export const getTooltipContentStyles = createGetStyles(colors => {
       width: 12,
       height: 12,
       marginRight: 4,
+    },
+  };
+});
+
+export function NotMatchedHolder({ style }: RNViewProps) {
+  const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
+  return (
+    <View style={[styles.container, style]}>
+      <RcIconNotMatchedCC color={colors['neutral-body']} />
+      <Text style={styles.emptyText}>Not Matched</Text>
+    </View>
+  );
+}
+const getNotMatchedHolderStyle = createGetStyles(colors => {
+  return {
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyText: {
+      marginTop: 12,
+      fontSize: 15,
+      color: colors['neutral-body'],
+      fontWeight: '600',
     },
   };
 });

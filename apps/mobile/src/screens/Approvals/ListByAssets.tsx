@@ -1,8 +1,17 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, RefreshControl } from 'react-native';
+import {
+  View,
+  SectionList,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ApprovalsLayouts, ApprovalsTabView } from './components/Layout';
+import {
+  ApprovalsLayouts,
+  ApprovalsTabView,
+  NotMatchedHolder,
+} from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { TopSearch } from './components/TopSearch';
@@ -19,7 +28,7 @@ export default function ListByAssets() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedAssetApprovalList, loadApprovals } =
+  const { isLoading, displaySortedAssetApprovalList, loadApprovals, skAssets } =
     useApprovalsPage();
 
   const keyExtractor = React.useCallback<
@@ -82,9 +91,15 @@ export default function ListByAssets() {
     return isLoading ? (
       <SkeletonListByAssets />
     ) : (
-      <EmptyHolder text="No Assets" type="card" />
+      <View style={styles.emptyHolderContainer}>
+        {skAssets ? (
+          <NotMatchedHolder />
+        ) : (
+          <EmptyHolder text="No Assets" type="card" />
+        )}
+      </View>
     );
-  }, [isLoading]);
+  }, [styles.emptyHolderContainer, skAssets, isLoading]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -152,15 +167,22 @@ export default function ListByAssets() {
 
 const getStyles = createGetStyles(colors => {
   return {
+    emptyHolderContainer: {
+      height: ApprovalsLayouts.scrollableSectionHeight,
+    },
     container: {
       flex: 1,
       flexDirection: 'column',
     },
 
-    list: {},
+    list: {
+      // ...makeDebugBorder(),
+    },
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      // height: '100%',
+      // ...makeDebugBorder('yellow'),
     },
     listFooterContainer: {
       flexDirection: 'row',

@@ -2,7 +2,11 @@ import React from 'react';
 import { View, ActivityIndicator, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ApprovalsLayouts, ApprovalsTabView } from './components/Layout';
+import {
+  ApprovalsLayouts,
+  ApprovalsTabView,
+  NotMatchedHolder,
+} from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { TopSearch } from './components/TopSearch';
@@ -22,7 +26,7 @@ export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedContractList, loadApprovals } =
+  const { isLoading, displaySortedContractList, loadApprovals, skContract } =
     useApprovalsPage();
 
   const keyExtractor = React.useCallback<
@@ -85,9 +89,15 @@ export default function ListByContracts() {
     return isLoading ? (
       <SkeletonListByContracts />
     ) : (
-      <EmptyHolder text="No Contracts" type="card" />
+      <View style={styles.emptyHolderContainer}>
+        {skContract ? (
+          <NotMatchedHolder />
+        ) : (
+          <EmptyHolder text="No Assets" type="card" />
+        )}
+      </View>
     );
-  }, [isLoading]);
+  }, [styles.emptyHolderContainer, skContract, isLoading]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -156,6 +166,9 @@ export default function ListByContracts() {
 
 const getStyles = createGetStyles(colors => {
   return {
+    emptyHolderContainer: {
+      height: ApprovalsLayouts.scrollableSectionHeight,
+    },
     container: {
       flex: 1,
       flexDirection: 'column',

@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 
-import { RcSearchCC } from '@/assets/icons/common';
+import { RcSearchCC, RcIconCloseCC } from '@/assets/icons/common';
 import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import TouchableView from '../Touchable/TouchableView';
 
 const getInputStyles = createGetStyles(colors => {
   return {
@@ -34,6 +35,18 @@ const getInputStyles = createGetStyles(colors => {
       width: 20,
       height: 20,
     },
+    closeIconWrapper: {
+      paddingLeft: 16,
+      paddingRight: 8,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      // ...makeDebugBorder('red'),
+    },
+    closeIcon: {
+      width: 20,
+      height: 20,
+    },
     input: {
       fontSize: 15,
       paddingVertical: 12,
@@ -55,6 +68,7 @@ export function SearchInput({
   inputProps,
   searchIconStyle,
   searchIcon: _searchIcon,
+  clearable,
   ...viewProps
 }: React.PropsWithoutRef<
   RNViewProps & {
@@ -64,6 +78,7 @@ export function SearchInput({
     searchIconStyle?: React.ComponentProps<typeof View>['style'];
     inputProps?: TextInputProps;
     searchIcon?: React.ReactNode;
+    clearable?: boolean;
   }
 >) {
   const colors = useThemeColors();
@@ -82,6 +97,18 @@ export function SearchInput({
     return searchIcon || null;
   }, [_searchIcon, styles.searchIcon, searchIconStyle, colors]);
 
+  const closeIcon = useMemo(() => {
+    return (
+      <RcIconCloseCC style={styles.closeIcon} color={colors['neutral-foot']} />
+    );
+  }, [styles.closeIcon, colors]);
+
+  const onPressClose = useCallback(() => {
+    if (clearable) {
+      inputProps?.onChangeText?.('');
+    }
+  }, [clearable, inputProps]);
+
   return (
     <View
       {...viewProps}
@@ -93,6 +120,14 @@ export function SearchInput({
       ]}>
       <View style={styles.searchIconWrapper}>{searchIcon}</View>
       <TextInput {...inputProps} style={[styles.input, inputStyle]} />
+      {inputProps?.value && clearable && (
+        <TouchableView
+          disabled={!clearable}
+          style={styles.closeIconWrapper}
+          onPress={onPressClose}>
+          {closeIcon}
+        </TouchableView>
+      )}
     </View>
   );
 }

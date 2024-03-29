@@ -145,11 +145,6 @@ const getStyles = createGetStyles(colors => {
     tabBar: {
       height: ApprovalsLayouts.tabbarHeight,
     },
-    // tabBarIndicator: {
-    //   flexDirection: 'row',
-    //   justifyContent: 'center',
-    //   backgroundColor: 'transparent',
-    // },
     label: {
       fontSize: 16,
       fontWeight: '500',

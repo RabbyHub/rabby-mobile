@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { useApprovalsPage } from '../useApprovalsPage';
+import { ApprovalsLayouts } from './Layout';
 
 export function TopSearch({
   filterType,
@@ -27,15 +28,18 @@ export function TopSearch({
     setIsInputActive(false);
   }, []);
 
-  const { setSearchKw } = useApprovalsPage();
+  const { skAssets, skContract, setSearchKw } = useApprovalsPage();
+
+  const searchKw = filterType === 'contract' ? skContract : skAssets;
 
   return (
     <SearchInput
       isActive={isInputActive}
       containerStyle={styles.searchInputContainer}
       searchIconStyle={styles.searchIconStyle}
+      clearable
       inputProps={{
-        // value: query,
+        value: searchKw,
         onChangeText: setSearchKw,
         onFocus: handleInputFocus,
         onBlur: handleInputBlur,
@@ -54,8 +58,8 @@ const getStyles = createGetStyles(colors => {
     searchInputContainer: {
       borderRadius: 8,
       backgroundColor: colors['neutral-card1'],
-      marginVertical: 16,
-      height: 48,
+      marginVertical: ApprovalsLayouts.searchBarMarginOffset,
+      height: ApprovalsLayouts.searchBarHeight,
     },
 
     searchIconStyle: {

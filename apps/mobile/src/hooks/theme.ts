@@ -135,7 +135,7 @@ export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   getStyle: T,
 ) {
   const binaryTheme = useGetAppThemeMode();
-  const colors = ThemeColors[binaryTheme];
+  const colors = ThemeColors[binaryTheme] as AppColorsVariants;
 
   const appThemeMode = useGetAppThemeMode();
   const isLight = appThemeMode === 'light';

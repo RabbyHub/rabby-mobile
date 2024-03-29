@@ -64,10 +64,6 @@ function CardProto({
   const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
 
-  if (listIndex === 0) {
-    console.log('CardProto:: contract.logo_url', contract.logo_url);
-  }
-
   const itemSelected = listIndex === 1;
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
