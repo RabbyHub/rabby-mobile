@@ -16,7 +16,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { MiniButton } from '@/components/Button';
 import ApprovalCardAsset from './ApprovalCardAsset';
-import { InModalAssetApprovalRow } from './InModalAssetApprovalRow';
+import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
@@ -71,7 +71,7 @@ export default function BottomSheetAssetApproval({
       <View
         key={`${item.$assetParent?.chain}-${item.id}-${index}`}
         style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
-        <InModalAssetApprovalRow spender={item} />
+        <InModalApprovalAssetRow spender={item} />
       </View>
     );
   }, []);

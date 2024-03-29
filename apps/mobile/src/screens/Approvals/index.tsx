@@ -20,8 +20,8 @@ import {
   useApprovalsPage,
   useApprovalsPageOnTop,
 } from './useApprovalsPage';
-import BottomSheetContractApproval from './components/BottomSheetContractApproval';
-import BottomSheetAssetApproval from './components/BottomSheetAssetApproval';
+import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
+import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -120,8 +120,8 @@ export default function ApprovalsScreen() {
         }}>
         <ApprovalScreenContainer />
 
-        <BottomSheetContractApproval />
-        <BottomSheetAssetApproval />
+        <BottomSheetApprovalContract />
+        <BottomSheetApprovalAsset />
 
         <ApprovalsBottomArea />
       </NormalScreenContainer>

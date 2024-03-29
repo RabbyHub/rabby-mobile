@@ -122,7 +122,7 @@ const getApprovalAmountStyles = createGetStyles(colors => {
   };
 });
 
-export function InModalAssetApprovalRow({
+export function InModalApprovalAssetRow({
   style,
   spender,
 }: {

@@ -11,9 +11,9 @@ import {
 import { useFocusedApprovalOnApprovals } from '../useApprovalsPage';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import ApprovalContractCard from './ApprovalContractCard';
+import ApprovalCardContract from './ApprovalCardContract';
 import { MiniButton } from '@/components/Button';
-import { InModalApprovalContractRow } from './InModalRows';
+import { InModalApprovalContractRow } from './InModalApprovalContractRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 
@@ -103,7 +103,7 @@ export default function BottomSheetContractApproval({
       {focusedApprovalContract && (
         <BottomSheetView style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalContractCard
+            <ApprovalCardContract
               contract={focusedApprovalContract}
               inDetailModal
             />

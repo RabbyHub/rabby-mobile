@@ -373,6 +373,6 @@ export const getCardStyles = createGetStyles(colors => {
   };
 });
 
-const ApprovalContractCard = React.memo(CardProto);
+const ApprovalCardContract = React.memo(CardProto);
 
-export default ApprovalContractCard;
+export default ApprovalCardContract;
