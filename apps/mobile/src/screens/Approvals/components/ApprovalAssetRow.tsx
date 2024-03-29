@@ -7,6 +7,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useFocusedApprovalOnApprovals,
+  useRevokeValues,
 } from '../useApprovalsPage';
 
 import {
@@ -15,12 +16,13 @@ import {
   RcIconUncheckCC,
   RcIconUnknown,
 } from '../icons';
-import { ApprovalsLayouts } from './Layout';
+import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { encodeApprovalKey } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -58,9 +60,21 @@ function AssetsApprovalRowProto({
   const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
   const { t } = useTranslation();
 
-  const itemSelected = listIndex === 1;
-
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
+
+  const { assetsSelection } = useRevokeValues();
+  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
+    const approvalKey = encodeApprovalKey(assetApproval);
+    const isSelectedAll =
+      assetsSelection[approvalKey] === assetApproval.list.length;
+    const isSelectedPartials =
+      !isSelectedAll && assetsSelection[approvalKey] > 0;
+
+    return {
+      isSelectedAll,
+      isSelectedPartials,
+    };
+  }, [assetApproval, assetsSelection]);
 
   const { approvalInfo } = React.useMemo(() => {
     const approvalInfo = {
@@ -95,7 +109,10 @@ function AssetsApprovalRowProto({
 
   return (
     <TouchableView
-      style={[styles.container, itemSelected && styles.selectedContainer]}
+      style={[
+        styles.container,
+        (isSelectedAll || isSelectedPartials) && styles.selectedContainer,
+      ]}
       onPress={evt => {
         onPressArea?.({ type: 'selection', assetApproval });
       }}>
@@ -126,17 +143,11 @@ function AssetsApprovalRowProto({
                 numberOfLines={1}>
                 {approvalInfo.floor1Text}
               </Text>
-              {itemSelected ? (
-                <RcIconCheckedCC
-                  style={[styles.contractCheckbox, { flexShrink: 0 }]}
-                  color={colors['blue-default']}
-                />
-              ) : (
-                <RcIconUncheckCC
-                  style={[styles.contractCheckbox, { flexShrink: 0 }]}
-                  color={colors['neutral-line']}
-                />
-              )}
+              <SelectionCheckbox
+                isSelectedAll={isSelectedAll}
+                isSelectedPartials={isSelectedPartials}
+                style={styles.contractCheckbox}
+              />
             </View>
             <View style={styles.basicInfoF2}>
               <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text>

@@ -587,6 +587,21 @@ const revokeAtom = atom<{
   assetsSelection: {},
   assets: {},
 });
+export function useRevokeValues() {
+  const {
+    contract: contractRevokeMap,
+    contractSelection,
+    assets: assetRevokeMap,
+    assetsSelection,
+  } = useAtomValue(revokeAtom);
+
+  return {
+    contractRevokeMap,
+    contractSelection,
+    assetRevokeMap,
+    assetsSelection,
+  };
+}
 export function useRevokeSpenders() {
   const [
     {

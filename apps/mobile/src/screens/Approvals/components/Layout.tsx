@@ -7,7 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
 import { useSafeAndroidBottomOffset } from '@/hooks/useAppLayout';
-import { RcIconNotMatchedCC } from '../icons';
+import {
+  RcIconCheckedCC,
+  RcIconIndeterminateCC,
+  RcIconNotMatchedCC,
+  RcIconUncheckCC,
+} from '../icons';
+import { useApprovalsPage, useRevokeValues } from '../useApprovalsPage';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -82,6 +88,32 @@ export function ApprovalsBottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
+  const { filterType } = useApprovalsPage();
+  const { contractSelection, assetsSelection } = useRevokeValues();
+
+  const { buttonTitle } = useMemo(() => {
+    const selection =
+      filterType === 'contract' ? contractSelection : assetsSelection;
+
+    const revokeCount = Object.values(selection).reduce(
+      (acc, value) => acc + value,
+      0,
+    );
+    const buttonTitle = [
+      `${t('page.approvals.component.RevokeButton.btnText', {
+        // count: revokeList.length,
+        // count: revokeCount,
+      })}`,
+      revokeCount && `(${revokeCount})`,
+    ]
+      .filter(Boolean)
+      .join('');
+
+    return {
+      buttonTitle,
+    };
+  }, [filterType, t, contractSelection, assetsSelection]);
+
   const { canSubmit, isSubmitLoading } = useMemo(() => {
     return {
       isSubmitLoading: false,
@@ -101,10 +133,7 @@ export function ApprovalsBottomArea() {
         containerStyle={styles.buttonContainer}
         titleStyle={styles.buttonText}
         type="primary"
-        title={t('page.approvals.component.RevokeButton.btnText', {
-          // count: revokeList.length,
-          count: 0,
-        })}
+        title={buttonTitle}
         loading={isSubmitLoading}
         onPress={() => {}}
       />
@@ -157,6 +186,47 @@ export const getTooltipContentStyles = createGetStyles(colors => {
     },
   };
 });
+
+export function SelectionCheckbox({
+  isSelectedAll,
+  isSelectedPartials,
+  style,
+}: {
+  isSelectedAll: boolean;
+  isSelectedPartials: boolean;
+} & RNViewProps) {
+  const colors = useThemeColors();
+
+  if (isSelectedAll) {
+    return (
+      <RcIconCheckedCC
+        style={[contractCheckboxStyle, style]}
+        color={colors['blue-default']}
+      />
+    );
+  }
+
+  if (isSelectedPartials) {
+    return (
+      <RcIconIndeterminateCC
+        style={[contractCheckboxStyle, style]}
+        color={colors['blue-default']}
+      />
+    );
+  }
+
+  return (
+    <RcIconUncheckCC
+      style={[contractCheckboxStyle, style]}
+      color={colors['neutral-line']}
+    />
+  );
+}
+
+const contractCheckboxStyle = {
+  width: 20,
+  height: 20,
+};
 
 export function NotMatchedHolder({ style }: RNViewProps) {
   const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);

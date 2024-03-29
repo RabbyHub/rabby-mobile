@@ -8,6 +8,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   useFocusedApprovalOnApprovals,
   type ContractApprovalItem,
+  useRevokeValues,
 } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
@@ -20,10 +21,11 @@ import {
   RcIconUncheckCC,
   RcIconUnknown,
 } from '../icons';
-import { ApprovalsLayouts } from './Layout';
+import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { toast } from '@/components/Toast';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { encodeApprovalKey } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -64,7 +66,19 @@ function CardProto({
   const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
 
-  const itemSelected = listIndex === 1;
+  const { contractSelection } = useRevokeValues();
+  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
+    const approvalKey = encodeApprovalKey(contract);
+    const isSelectedAll =
+      contractSelection[approvalKey] === contract.list.length;
+    const isSelectedPartials =
+      !isSelectedAll && contractSelection[approvalKey] > 0;
+
+    return {
+      isSelectedAll,
+      isSelectedPartials,
+    };
+  }, [contract, contractSelection]);
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
     React.useMemo(() => {
@@ -127,7 +141,9 @@ function CardProto({
       disabled={inDetailModal}
       style={[
         styles.container,
-        !inDetailModal && itemSelected && styles.selectedContainer,
+        !inDetailModal &&
+          (isSelectedAll || isSelectedPartials) &&
+          styles.selectedContainer,
         style,
       ]}
       onPress={evt => {
@@ -160,17 +176,11 @@ function CardProto({
             ({contract.name})
           </Text>
           {!inDetailModal ? (
-            itemSelected ? (
-              <RcIconCheckedCC
-                style={styles.contractCheckbox}
-                color={colors['blue-default']}
-              />
-            ) : (
-              <RcIconUncheckCC
-                style={styles.contractCheckbox}
-                color={colors['neutral-line']}
-              />
-            )
+            <SelectionCheckbox
+              isSelectedAll={isSelectedAll}
+              isSelectedPartials={isSelectedPartials}
+              style={styles.contractCheckbox}
+            />
           ) : (
             <CopyAddressIcon
               address={contract.id}
@@ -363,8 +373,6 @@ export const getCardStyles = createGetStyles(colors => {
     },
     contractCheckbox: {
       marginLeft: 6,
-      width: 20,
-      height: 20,
     },
   };
 });

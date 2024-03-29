@@ -22,6 +22,7 @@ import ApprovalCardContract from './components/ApprovalCardContract';
 import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByContracts } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { encodeApprovalKey } from './utils';
 
 export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
