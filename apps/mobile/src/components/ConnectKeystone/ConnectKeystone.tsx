@@ -2,7 +2,10 @@ import { RootNames } from '@/constant/layout';
 import { apiKeystone } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
@@ -28,8 +31,8 @@ export const ConnectKeystone: React.FC<{
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
-          type: KEYRING_TYPE.KeystoneKeyring,
-          brandName: KEYRING_CLASS.HARDWARE.KEYSTONE,
+          type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+          brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
           address,
           isKeystoneFirstImport: true,
         },

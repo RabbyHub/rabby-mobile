@@ -3,7 +3,11 @@ import { AppColorsVariants } from '@/constant/theme';
 import { apiKeystone, apiLedger } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
   ScrollView,
@@ -132,10 +136,28 @@ export const ImportHardwareScreen = () => {
     type: KEYRING_TYPE;
   };
   const apiHD = React.useMemo(() => {
-    if (state.type === KEYRING_TYPE.LedgerKeyring) {
-      return apiLedger;
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return apiLedger;
+      default:
+        return apiKeystone;
     }
-    return apiKeystone;
+  }, [state.type]);
+  const hdType = React.useMemo(() => {
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return KEYRING_TYPE.LedgerKeyring;
+      default:
+        return HARDWARE_KEYRING_TYPES.Keystone.type;
+    }
+  }, [state.type]) as KEYRING_TYPE;
+  const hdBrandName = React.useMemo(() => {
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return KEYRING_CLASS.HARDWARE.LEDGER;
+      default:
+        return HARDWARE_KEYRING_TYPES.Keystone.brandName;
+    }
   }, [state.type]);
   const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
@@ -268,11 +290,12 @@ export const ImportHardwareScreen = () => {
       for (const acc of selectedAccounts) {
         await apiHD.importAddress(acc.index - 1);
       }
+
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
-          type: KEYRING_TYPE.LedgerKeyring,
-          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+          type: hdType,
+          brandName: hdBrandName,
           address: selectedAccounts.map(a => a.address),
         },
       });
@@ -283,7 +306,7 @@ export const ImportHardwareScreen = () => {
       importToastHiddenRef.current?.();
     }
     setImporting(false);
-  }, [apiHD, selectedAccounts]);
+  }, [apiHD, hdBrandName, hdType, selectedAccounts]);
 
   React.useEffect(() => {
     return () => {
