@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-  useLayoutEffect,
-} from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -14,9 +8,9 @@ import { CHAINS_ENUM } from '@debank/common';
 import {
   type AssetApprovalSpender,
   type AssetApprovalItem,
-  type ContractApprovalItem as OriginalContractApprovalItem,
-  type NftApprovalItem as OriginalNftApprovalItem,
-  type TokenApprovalItem as OriginalTokenApprovalItem,
+  type ContractApprovalItem,
+  type NftApprovalItem,
+  type TokenApprovalItem,
   getContractRiskEvaluation,
   makeComputedRiskAboutValues,
   markParentForAssetItemSpender,
@@ -24,18 +18,13 @@ import {
 
 approvalUtils.setApprovalEnvsOnce({ appIsDev: __DEV__, appIsProd: !__DEV__ });
 
-export { type AssetApprovalSpender, type AssetApprovalItem };
-
-// TODO: maybe it's not necessary to patch the type, you can fallback to the Rc-version if field `logo_url` is not provided
-export interface ContractApprovalItem extends OriginalContractApprovalItem {
-  logo_url_rc?: React.FC<import('react-native-svg').SvgProps>;
-}
-export interface NftApprovalItem extends OriginalNftApprovalItem {
-  logo_url_rc?: React.FC<import('react-native-svg').SvgProps>;
-}
-export interface TokenApprovalItem extends OriginalTokenApprovalItem {
-  logo_url_rc?: React.FC<import('react-native-svg').SvgProps>;
-}
+export {
+  type AssetApprovalSpender,
+  type AssetApprovalItem,
+  type ContractApprovalItem,
+  type NftApprovalItem,
+  type TokenApprovalItem,
+};
 
 export type ApprovalAssetsItem =
   | approvalUtils.SpenderInNFTApproval
@@ -51,10 +40,13 @@ import { useCurrentAccount } from '@/hooks/account';
 import { openapi, testOpenapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useSheetModals } from '@/hooks/useSheetModal';
 
-const FILTER_TYPES = {
-  contract: 'By Contracts',
-  assets: 'By Assets',
+export const FILTER_TYPES = {
+  contract: 'contract',
+  assets: 'assets',
 } as const;
 
 function sortTokenOrNFTApprovalsSpenderList(
@@ -88,19 +80,16 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const [filterType, setFilterType] =
     useState<keyof typeof FILTER_TYPES>('contract');
 
-  const [skContracts, setSKContracts] = useState('');
+  const [skContract, setSKContract] = useState('');
   const [skAssets, setSKAssets] = useState('');
 
   const setSearchKw = useMemo(
-    () => (filterType === 'contract' ? setSKContracts : setSKAssets),
+    () => (filterType === 'contract' ? setSKContract : setSKAssets),
     [filterType],
   );
-  const searchKw = useMemo(
-    () => (filterType === 'contract' ? skContracts : skAssets),
-    [filterType, skContracts, skAssets],
-  );
 
-  const debouncedSearchKw = useDebounceValue(searchKw, 250);
+  const debouncedSkContract = useDebounceValue(skContract, 250);
+  const debouncedSkAssets = useDebounceValue(skAssets, 250);
 
   const queueRef = useRef(new PQueue({ concurrency: 40 }));
 
@@ -192,9 +181,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                     risk_level: 'safe',
                     id: contract.contract_id,
                     name: contract.contract_name,
-                    logo_url:
-                      (contract as any)?.collection?.logo_url ||
-                      RcIconUnknownNFT,
+                    logo_url: (contract as any)?.collection?.logo_url,
                     amount: contract.amount,
                     chain: e.id,
                   };
@@ -235,7 +222,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                     id: spender.id,
                     name: spender?.protocol?.name || 'Unknown',
                     logo_url: spender.protocol?.logo_url,
-                    logo_url_rc: RcIconUnknownNFT,
                     type: 'contract',
                     contractFor: 'nft',
                     $riskAboutValues,
@@ -334,7 +320,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                       id: token.id,
                       name: token.symbol,
                       logo_url: token.logo_url,
-                      logo_url_rc: RcIconUnknownToken,
                       type: 'token',
                       $riskAboutValues: makeComputedRiskAboutValues(
                         'token',
@@ -385,7 +370,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const isLoading = isLoadingOnAsyncFn && loadingMaybeWrong;
 
   if (error) {
-    console.log('[useApprovalsPage] error', error);
+    console.debug('[useApprovalsPage] error', error);
   }
 
   const sortedContractList: ContractApprovalItem[] = useMemo(() => {
@@ -448,65 +433,72 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
 
   const {
     displaySortedContractList,
-    displayTokenApprovals,
-    displayNftApprovals,
-    displayApprovals,
+    displaySortedAssetsApprovalList,
     displaySortedFlattenedAssetsList,
   } = useMemo(() => {
-    if (!debouncedSearchKw || debouncedSearchKw.trim() === '') {
-      return {
-        displaySortedContractList: sortedContractList,
-        displayTokenApprovals: sortedTokenApprovals,
-        displayNftApprovals: sortedNftApprovals,
-        displayApprovals: [...sortedTokenApprovals, ...sortedNftApprovals],
-        displaySortedFlattenedAssetsList: sortedFlattenedAssetstList,
-      };
+    const result = {
+      displaySortedContractList: sortedContractList,
+      displaySortedAssetsApprovalList: [] as (
+        | TokenApprovalItem
+        | NftApprovalItem
+      )[],
+      displaySortedFlattenedAssetsList: sortedFlattenedAssetstList,
+    };
+    const trimmedSkContract = debouncedSkContract?.trim()?.toLowerCase();
+    if (trimmedSkContract) {
+      result.displaySortedContractList = sortedContractList.filter(e => {
+        return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
+          i.toLowerCase().includes(trimmedSkContract),
+        );
+      });
     }
 
-    const keywords = debouncedSearchKw.toLowerCase();
-    const fTokenApprovals = sortedTokenApprovals.filter(e => {
-      return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
-        i.toLowerCase().includes(keywords),
-      );
-    });
-    const fNftApprovals = sortedNftApprovals.filter(e => {
-      return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
-        i.toLowerCase().includes(keywords),
-      );
-    });
+    const trimmedSkAssets = debouncedSkAssets?.trim()?.toLowerCase();
+    if (trimmedSkAssets) {
+      result.displaySortedAssetsApprovalList = [
+        ...sortedTokenApprovals.filter(e => {
+          return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
+            i.toLowerCase().includes(trimmedSkAssets),
+          );
+        }),
+        ...sortedNftApprovals.filter(e => {
+          return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
+            i.toLowerCase().includes(trimmedSkAssets),
+          );
+        }),
+      ];
+      result.displaySortedFlattenedAssetsList =
+        sortedFlattenedAssetstList.filter(e => {
+          return [
+            e.id,
+            e.risk_alert || '',
+            e.$assetParent?.name,
+            e.id,
+            e.$assetParent?.chain,
+          ].some(i => i?.toLowerCase().includes(trimmedSkAssets));
+        });
+    } else {
+      result.displaySortedAssetsApprovalList = [
+        ...sortedTokenApprovals,
+        ...sortedNftApprovals,
+      ];
+    }
 
-    return {
-      displaySortedContractList: sortedContractList.filter(e => {
-        return [e.id, e.risk_alert || '', e.name, e.id, e.chain].some(i =>
-          i.toLowerCase().includes(keywords),
-        );
-      }),
-      displayTokenApprovals: fTokenApprovals,
-      displayNftApprovals: fNftApprovals,
-      displayApprovals: [...fTokenApprovals, ...fNftApprovals],
-      displaySortedFlattenedAssetsList: sortedFlattenedAssetstList.filter(e => {
-        return [
-          e.id,
-          e.risk_alert || '',
-          e.$assetParent?.name,
-          e.id,
-          e.$assetParent?.chain,
-        ].some(i => i?.toLowerCase().includes(keywords));
-      }),
-    };
+    return result;
   }, [
     sortedContractList,
     sortedTokenApprovals,
     sortedNftApprovals,
     sortedFlattenedAssetstList,
-    debouncedSearchKw,
+    debouncedSkContract,
+    debouncedSkAssets,
   ]);
 
   return {
     isLoading,
     loadApprovals,
-    searchKw,
-    debouncedSearchKw,
+    debouncedSkContract,
+    debouncedSkAssets,
     setSearchKw,
 
     filterType,
@@ -515,9 +507,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     account: currentAccount,
     chain,
     displaySortedContractList,
-    displayTokenApprovals,
-    displayNftApprovals,
-    displayApprovals,
+    displaySortedAssetsApprovalList,
 
     displaySortedFlattenedAssetsList,
   };
@@ -528,20 +518,73 @@ export const ApprovalsPageContext = React.createContext<
 >({
   isLoading: false,
   loadApprovals: async () => [],
-  searchKw: '',
-  debouncedSearchKw: '',
+  debouncedSkAssets: '',
+  debouncedSkContract: '',
   setSearchKw: () => {},
   filterType: 'contract',
   setFilterType: () => {},
   account: null,
   chain: CHAINS_ENUM.ETH,
   displaySortedContractList: [],
-  displayTokenApprovals: [],
-  displayNftApprovals: [],
-  displayApprovals: [],
+  displaySortedAssetsApprovalList: [],
   displaySortedFlattenedAssetsList: [],
 });
 
 export function useApprovalsPage() {
   return React.useContext(ApprovalsPageContext);
+}
+
+const focusedApprovalAtom = atom<{
+  contract: ContractApprovalItem | null;
+  asset: AssetApprovalItem | null;
+}>({
+  contract: null,
+  asset: null,
+});
+
+const sheetModalRefAtom = atom({
+  approvalContractDetail: React.createRef<BottomSheetModal>(),
+  approvalAssetDetail: React.createRef<BottomSheetModal>(),
+});
+
+export function useFocusedApprovalOnApprovals() {
+  const [focusedApproval, setFocusedApproval] = useAtom(focusedApprovalAtom);
+  const sheetModals = useAtomValue(sheetModalRefAtom);
+
+  const sheetModalsOps = useSheetModals(sheetModals);
+  const { toggleShowSheetModal } = sheetModalsOps;
+
+  const toggleFocusedContractItem = React.useCallback(
+    (contractItem?: ContractApprovalItem | null) => {
+      if (contractItem) {
+        toggleShowSheetModal('approvalContractDetail', true);
+        setFocusedApproval(prev => ({ ...prev, contract: contractItem }));
+      } else {
+        toggleShowSheetModal('approvalContractDetail', 'destroy');
+        setFocusedApproval(prev => ({ ...prev, contract: null }));
+      }
+    },
+    [toggleShowSheetModal, setFocusedApproval],
+  );
+
+  const toggleFocusedAssetItem = React.useCallback(
+    (assetItem?: AssetApprovalItem | null) => {
+      if (assetItem) {
+        toggleShowSheetModal('approvalAssetDetail', true);
+        setFocusedApproval(prev => ({ ...prev, asset: assetItem }));
+      } else {
+        toggleShowSheetModal('approvalAssetDetail', 'destroy');
+        setFocusedApproval(prev => ({ ...prev, asset: null }));
+      }
+    },
+    [toggleShowSheetModal, setFocusedApproval],
+  );
+
+  return {
+    ...sheetModalsOps,
+    focusedApprovalContract: focusedApproval.contract,
+    focusedApprovalAsset: focusedApproval.asset,
+    toggleFocusedContractItem,
+    toggleFocusedAssetItem,
+  };
 }

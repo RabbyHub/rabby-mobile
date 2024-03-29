@@ -1,16 +1,13 @@
 import React, { useMemo, useCallback } from 'react';
-import { Platform, View, Dimensions } from 'react-native';
-import { useThemeColors } from '@/hooks/theme';
+import { Platform, View, Text, Dimensions } from 'react-native';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
 
 import { useTranslation } from 'react-i18next';
-import {
-  createGetStyles,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 
 import { useSafeAndroidBottomOffset } from '@/hooks/useAppLayout';
+import { NFTBadgeType } from '../utils';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -128,6 +125,22 @@ const getStyles = createGetStyles(colors => {
 
     buttonText: {
       color: colors['neutral-title-2'],
+    },
+  };
+});
+
+export const getTooltipContentStyles = createGetStyles(colors => {
+  return {
+    tipContent: {
+      // maxWidth: 358,
+      padding: 12,
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    tipContentIcon: {
+      width: 12,
+      height: 12,
+      marginRight: 4,
     },
   };
 });

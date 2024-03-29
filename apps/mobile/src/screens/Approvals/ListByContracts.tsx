@@ -1,20 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  RefreshControl,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import { View, ActivityIndicator, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import {
-  ApprovalsLayouts,
-  ApprovalsTabView,
-  getApprovalsSizes,
-} from './components/Layout';
+import { ApprovalsLayouts, ApprovalsTabView } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { TopSearch } from './components/TopSearch';

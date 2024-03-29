@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { type ContractApprovalItem } from '../useApprovalsPage';
+import {
+  useFocusedApprovalOnApprovals,
+  type ContractApprovalItem,
+} from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { ellipsisAddress } from '@/utils/address';
@@ -20,6 +23,7 @@ import {
 import { ApprovalsLayouts } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { toast } from '@/components/Toast';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -43,9 +47,11 @@ function RightTouchableView({
 }
 
 function CardProto({
+  style,
   contract,
   listIndex,
   onPressArea,
+  inDetailModal = false,
 }: {
   contract: ContractApprovalItem;
   listIndex?: number;
@@ -53,6 +59,7 @@ function CardProto({
     type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
     contract: ContractApprovalItem;
   }) => void;
+  inDetailModal?: boolean;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
@@ -60,8 +67,6 @@ function CardProto({
   if (listIndex === 0) {
     console.log('CardProto:: contract.logo_url', contract.logo_url);
   }
-
-  const isListFirstItem = listIndex === 0;
 
   const itemSelected = listIndex === 1;
 
@@ -113,12 +118,22 @@ function CardProto({
       };
     }, [contract, styles]);
 
-  const chainItem = findChainByServerID(contract.chain);
+  const chainItem = useMemo(
+    () => findChainByServerID(contract.chain),
+    [contract.chain],
+  );
   const chainLogoUrl = chainItem?.logo || contract.logo_url;
+
+  const { toggleFocusedContractItem } = useFocusedApprovalOnApprovals();
 
   return (
     <TouchableView
-      style={[styles.container, itemSelected && styles.selectedContainer]}
+      disabled={inDetailModal}
+      style={[
+        styles.container,
+        !inDetailModal && itemSelected && styles.selectedContainer,
+        style,
+      ]}
       onPress={evt => {
         onPressArea?.({ type: 'selection', contract });
       }}>
@@ -136,32 +151,61 @@ function CardProto({
           ) : (
             <RcIconUnknown style={styles.chainIcon} />
           )}
-          <Text style={styles.contractAddrText}>
+          <Text
+            style={styles.contractAddrText}
+            ellipsizeMode="tail"
+            numberOfLines={1}>
             {ellipsisAddress(contract.id)}
           </Text>
-          <Text style={styles.contractName}>({contract.name})</Text>
-          {itemSelected ? (
-            <RcIconCheckedCC
-              style={styles.contractCheckbox}
-              color={colors['blue-default']}
-            />
+          <Text
+            style={styles.contractName}
+            ellipsizeMode="tail"
+            numberOfLines={1}>
+            ({contract.name})
+          </Text>
+          {!inDetailModal ? (
+            itemSelected ? (
+              <RcIconCheckedCC
+                style={styles.contractCheckbox}
+                color={colors['blue-default']}
+              />
+            ) : (
+              <RcIconUncheckCC
+                style={styles.contractCheckbox}
+                color={colors['neutral-line']}
+              />
+            )
           ) : (
-            <RcIconUncheckCC
-              style={styles.contractCheckbox}
-              color={colors['neutral-line']}
+            <CopyAddressIcon
+              address={contract.id}
+              style={{ marginLeft: 2 }}
+              color={colors['neutral-foot']}
             />
           )}
         </View>
         <RightTouchableView
+          disabled={inDetailModal}
           onPress={evt => {
-            onPressArea?.({ type: 'entry', contract });
+            if (inDetailModal) return;
+            toggleFocusedContractItem(contract);
+            evt.stopPropagation();
           }}>
-          <Text style={styles.entryText}>{contract.list.length}</Text>
-          <RcIconRightEntryCC
-            width={14}
-            height={14}
-            color={colors['neutral-foot']}
-          />
+          {!inDetailModal ? (
+            <>
+              <Text style={styles.entryText}>{contract.list.length}</Text>
+              <RcIconRightEntryCC
+                width={14}
+                height={14}
+                color={colors['neutral-foot']}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.entryText}>
+                {contract.list.length} Approvals
+              </Text>
+            </>
+          )}
         </RightTouchableView>
       </View>
 
@@ -313,10 +357,12 @@ export const getCardStyles = createGetStyles(colors => {
     contractAddrText: {
       color: colors['neutral-title1'],
       fontSize: 14,
+      fontWeight: '500',
     },
     contractName: {
       color: colors['neutral-foot'],
       fontSize: 14,
+      fontWeight: '400',
       marginLeft: 6,
     },
     contractCheckbox: {

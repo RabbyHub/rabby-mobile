@@ -30,12 +30,16 @@ const getInputStyles = createGetStyles(colors => {
       paddingLeft: 16,
       paddingRight: 8,
     },
-    searchIcon: {},
+    searchIcon: {
+      width: 20,
+      height: 20,
+    },
     input: {
       fontSize: 15,
       paddingVertical: 12,
       flexShrink: 1,
       width: '100%',
+      color: colors['neutral-title1'],
 
       // // leave here for debug
       // borderColor: 'blue',
@@ -49,6 +53,7 @@ export function SearchInput({
   isActive,
   inputStyle,
   inputProps,
+  searchIconStyle,
   searchIcon: _searchIcon,
   ...viewProps
 }: React.PropsWithoutRef<
@@ -56,6 +61,7 @@ export function SearchInput({
     isActive?: boolean;
     containerStyle?: React.ComponentProps<typeof View>['style'];
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
+    searchIconStyle?: React.ComponentProps<typeof View>['style'];
     inputProps?: TextInputProps;
     searchIcon?: React.ReactNode;
   }
@@ -66,12 +72,15 @@ export function SearchInput({
   const searchIcon = useMemo(() => {
     if (_searchIcon === undefined) {
       return (
-        <RcSearchCC style={styles.searchIcon} color={colors['neutral-foot']} />
+        <RcSearchCC
+          style={[styles.searchIcon, searchIconStyle]}
+          color={colors['neutral-foot']}
+        />
       );
     }
 
     return searchIcon || null;
-  }, [_searchIcon, styles.searchIcon, colors]);
+  }, [_searchIcon, styles.searchIcon, searchIconStyle, colors]);
 
   return (
     <View

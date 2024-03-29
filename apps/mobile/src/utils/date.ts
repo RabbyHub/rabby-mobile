@@ -4,6 +4,7 @@ import utc from 'dayjs/plugin/utc';
 import isTomorrow from 'dayjs/plugin/isTomorrow';
 import isToday from 'dayjs/plugin/isToday';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import updateLocale from 'dayjs/plugin/updateLocale';
 
 dayjs.extend(isToday);
 dayjs.extend(isTomorrow);
@@ -24,3 +25,4 @@ dayjs.extend(relativeTime, {
     { l: 'yy', d: 'year' },
   ],
 });
+dayjs.extend(updateLocale);

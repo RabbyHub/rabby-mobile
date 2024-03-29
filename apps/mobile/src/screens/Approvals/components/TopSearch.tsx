@@ -33,6 +33,7 @@ export function TopSearch({
     <SearchInput
       isActive={isInputActive}
       containerStyle={styles.searchInputContainer}
+      searchIconStyle={styles.searchIconStyle}
       inputProps={{
         // value: query,
         onChangeText: setSearchKw,
@@ -55,6 +56,11 @@ const getStyles = createGetStyles(colors => {
       backgroundColor: colors['neutral-card1'],
       marginVertical: 16,
       height: 48,
+    },
+
+    searchIconStyle: {
+      width: 16,
+      height: 16,
     },
 
     // input: {

@@ -16,6 +16,7 @@ import { ApprovalsLayouts } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import ApprovalNFTBadge from './NFTBadge';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -58,7 +59,6 @@ function AssetsApprovalRowProto({
   const { approvalInfo } = React.useMemo(() => {
     const approvalInfo = {
       nftType: null as null | 'collection' | 'nft',
-      nftTypeBadge: '',
       assetName: '',
       hasSubtitle: false,
     };
@@ -66,8 +66,6 @@ function AssetsApprovalRowProto({
     if (approvalItem?.type === 'nft') {
       // chainItem = findChainByServerID(asset?.chain as Chain['serverId']);
       approvalInfo.nftType = approvalItem.nftContract ? 'collection' : 'nft';
-      approvalInfo.nftTypeBadge =
-        approvalInfo.nftType === 'collection' ? 'Collection' : 'NFT';
       approvalInfo.hasSubtitle = true;
     }
 
@@ -132,14 +130,9 @@ function AssetsApprovalRowProto({
                 />
               )}
             </View>
-            {approvalInfo.nftTypeBadge && (
+            {approvalInfo.nftType && (
               <View style={styles.basicInfoF2}>
-                <Text
-                  style={styles.nftTypeBadge}
-                  ellipsizeMode="tail"
-                  numberOfLines={1}>
-                  {approvalInfo.nftTypeBadge}
-                </Text>
+                <ApprovalNFTBadge type={approvalInfo.nftType} />
               </View>
             )}
           </View>
@@ -207,18 +200,6 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-    },
-    nftTypeBadge: {
-      borderRadius: 2,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-line'],
-      borderWidth: 0.5,
-      marginTop: 6,
-      paddingVertical: 1,
-      paddingHorizontal: 4,
-      fontSize: 12,
-      fontWeight: '400',
-      color: colors['neutral-foot'],
     },
 
     floorRight: {

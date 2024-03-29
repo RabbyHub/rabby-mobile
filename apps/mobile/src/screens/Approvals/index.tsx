@@ -16,8 +16,11 @@ import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
   ApprovalsPageContext,
+  FILTER_TYPES,
+  useApprovalsPage,
   useApprovalsPageOnTop,
 } from './useApprovalsPage';
+import { BottomSheetContractDetail } from './components/BottomSheets';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -59,25 +62,35 @@ const ApprovalScreenContainer = () => {
     [colors, renderTabItem, styles.indicator, styles.label, styles.tabBar],
   );
 
+  const { filterType, setFilterType } = useApprovalsPage();
+
   if (!currentAccount?.address) {
     return null;
   }
 
   return (
     <Tabs.Container
-      {...(__DEV__ && {
-        initialTabName: 'assets',
-      })}
+      initialTabName={filterType}
+      onTabChange={({ tabName }) => {
+        setFilterType(tabName as any);
+      }}
+      // {...(__DEV__ && {
+      //   initialTabName: 'assets',
+      // })}
       lazy
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}
       // disable horizontal swiping-scroll-to-switch
       pagerProps={{ scrollEnabled: false }}
       headerContainerStyle={styles.tabHeaderContainer}>
-      <Tabs.Tab label={t('page.approvals.tab-switch.contract')} name="contract">
+      <Tabs.Tab
+        label={t('page.approvals.tab-switch.contract')}
+        name={FILTER_TYPES.contract}>
         <ListByContracts />
       </Tabs.Tab>
-      <Tabs.Tab label={t('page.approvals.tab-switch.assets')} name="assets">
+      <Tabs.Tab
+        label={t('page.approvals.tab-switch.assets')}
+        name={FILTER_TYPES.assets}>
         <ListByAssets />
       </Tabs.Tab>
     </Tabs.Container>
@@ -104,6 +117,8 @@ export default function ApprovalsScreen() {
           position: 'relative',
         }}>
         <ApprovalScreenContainer />
+
+        <BottomSheetContractDetail />
 
         <ApprovalsBottomArea />
       </NormalScreenContainer>

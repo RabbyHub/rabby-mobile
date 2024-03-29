@@ -19,7 +19,8 @@ export default function ListByAssets() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displayApprovals, loadApprovals } = useApprovalsPage();
+  const { isLoading, displaySortedAssetsApprovalList, loadApprovals } =
+    useApprovalsPage();
 
   const keyExtractor = React.useCallback<
     SectionListProps<AssetApprovalItem>['keyExtractor'] & object
@@ -51,7 +52,7 @@ export default function ListByAssets() {
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
-  } = usePsudoPagination(displayApprovals, { pageSize: 20 });
+  } = usePsudoPagination(displaySortedAssetsApprovalList, { pageSize: 20 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
