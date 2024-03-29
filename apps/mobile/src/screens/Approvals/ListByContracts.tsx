@@ -13,6 +13,7 @@ import { TopSearch } from './components/TopSearch';
 import {
   type ContractApprovalItem,
   useApprovalsPage,
+  useRevokeSpenders,
 } from './useApprovalsPage';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
@@ -28,6 +29,8 @@ export default function ListByContracts() {
 
   const { isLoading, displaySortedContractList, loadApprovals, skContract } =
     useApprovalsPage();
+
+  const { contractSelection } = useRevokeSpenders();
 
   const keyExtractor = React.useCallback<
     SectionListProps<ContractApprovalItem>['keyExtractor'] & object

@@ -11,6 +11,7 @@ import {
   type ContractApprovalItem,
   type NftApprovalItem,
   type TokenApprovalItem,
+  type ApprovalSpenderItemToBeRevoked,
   getContractRiskEvaluation,
   makeComputedRiskAboutValues,
   markParentForAssetItemSpender,
@@ -24,6 +25,7 @@ export {
   type ContractApprovalItem,
   type NftApprovalItem,
   type TokenApprovalItem,
+  type ApprovalSpenderItemToBeRevoked,
 };
 
 export type ApprovalAssetsItem =
@@ -40,6 +42,12 @@ import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
+import {
+  encodeApprovalKey,
+  encodeApprovalSpenderKey,
+  findIndexRevokeList,
+  toRevokeItem,
+} from './utils';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -66,8 +74,9 @@ function sortTokenOrNFTApprovalsSpenderList(
 export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
 
-  const [filterType, setFilterType] =
-    useState<keyof typeof FILTER_TYPES>('contract');
+  const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
+    __DEV__ ? 'contract' : 'contract',
+  );
 
   const [skContract, setSKContract] = useState('');
   const [skAssets, setSKAssets] = useState('');
@@ -561,5 +570,115 @@ export function useFocusedApprovalOnApprovals() {
     focusedApprovalAsset: focusedApproval.asset,
     toggleFocusedContractItem,
     toggleFocusedAssetItem,
+  };
+}
+
+export type ToggleSelectApprovalSpenderCtx = {
+  spender: AssetApprovalItem['list'][number];
+};
+const revokeAtom = atom<{
+  contractSelection: Record<string, number>;
+  contract: Record<string, ApprovalSpenderItemToBeRevoked>;
+  assetsSelection: Record<string, number>;
+  assets: Record<string, ApprovalSpenderItemToBeRevoked>;
+}>({
+  contractSelection: {},
+  contract: {},
+  assetsSelection: {},
+  assets: {},
+});
+export function useRevokeSpenders() {
+  const [
+    {
+      contract: contractRevokeMap,
+      contractSelection,
+      assets: assetRevokeMap,
+      assetsSelection,
+    },
+    setRevoke,
+  ] = useAtom(revokeAtom);
+  const toggleSelectContractSpender = React.useCallback(
+    (
+      ctx: ToggleSelectApprovalSpenderCtx & { approval: ContractApprovalItem },
+    ) => {
+      const spender = ctx.spender;
+      const approval = ctx.approval;
+
+      const approvalSpenderKey = encodeApprovalSpenderKey(
+        spender.$assetContract!,
+        spender.$assetToken!,
+      );
+      if (approvalSpenderKey) {
+        setRevoke(prev => {
+          const contract = { ...prev.contract };
+          const contractSelection = { ...prev.contractSelection };
+          const approvalItemKey = encodeApprovalKey(approval);
+
+          contractSelection[approvalItemKey] =
+            contractSelection[approvalItemKey] || 0;
+          if (contract[approvalSpenderKey]) {
+            contractSelection[approvalItemKey] -= Math.max(0, 1);
+            delete contract[approvalSpenderKey];
+          } else {
+            contract[approvalSpenderKey] = toRevokeItem(
+              spender.$assetContract!,
+              spender.$assetToken!,
+            )!;
+            contractSelection[approvalItemKey] += 1;
+          }
+          return { ...prev, contractSelection, contract };
+        });
+      } else if (__DEV__) {
+        console.warn(
+          '[toggleSelectContractSpender] approvalSpenderKey is empty',
+        );
+      }
+    },
+    [setRevoke],
+  );
+
+  const toggleSelectAssetSpender = React.useCallback(
+    (ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem }) => {
+      const spender = ctx.spender;
+      const approval = ctx.approval;
+
+      const approvalSpenderKey = encodeApprovalSpenderKey(
+        spender.$assetContract!,
+        spender.$assetToken!,
+      );
+      if (approvalSpenderKey) {
+        setRevoke(prev => {
+          const assets = { ...prev.assets };
+          const assetsSelection = { ...prev.assetsSelection };
+          const approvalItemKey = encodeApprovalKey(approval);
+
+          assetsSelection[approvalItemKey] =
+            assetsSelection[approvalItemKey] || 0;
+          if (assets[approvalSpenderKey]) {
+            assetsSelection[approvalItemKey] -= Math.max(0, 1);
+            delete assets[approvalSpenderKey];
+          } else {
+            assets[approvalSpenderKey] = toRevokeItem(
+              spender.$assetContract!,
+              spender.$assetToken!,
+            )!;
+            assetsSelection[approvalItemKey] += 1;
+          }
+          return { ...prev, assetsSelection, assets };
+        });
+      } else if (__DEV__) {
+        console.warn('[toggleSelectAssetSpender] approvalSpenderKey is empty');
+      }
+    },
+    [setRevoke],
+  );
+
+  return {
+    contractSelection,
+    contractRevokeMap,
+    toggleSelectContractSpender,
+    assetsSelection,
+    assetRevokeMap,
+    toggleSelectAssetSpender,
   };
 }

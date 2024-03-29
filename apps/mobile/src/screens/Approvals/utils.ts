@@ -12,10 +12,13 @@ import {
   NFTApproval,
   NFTApprovalContract,
   Spender,
+  TokenApproval,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { Chain } from '@debank/common';
 import { getAddressScanLink } from '@/utils/address';
 import { openExternalUrl } from '@/core/utils/linking';
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { approvalUtils } from '@rabby-wallet/biz-utils';
 
 export function formatTimeFromNow(time?: Date | number) {
   if (!time) return '';
@@ -50,6 +53,87 @@ export function isRiskyContract(contract: ContractApprovalItem) {
 
 export function encodeRevokeItemIndex(approval: ApprovalItem) {
   return `${approval.chain}:${approval.id}`;
+}
+
+export function parseContractApprovalListItem(
+  spender: ContractApprovalItem['list'][number],
+) {
+  // NFTApproval | NFTApprovalContract | TokenApproval
+  const id =
+    (spender as NFTApproval | TokenApproval).id ||
+    (spender as NFTApprovalContract).spender.id;
+
+  return {
+    id,
+    chain: spender.chain,
+  };
+}
+
+export function encodeApprovalKey(approvalItem: ApprovalItem) {
+  switch (approvalItem.type) {
+    // default: {
+    //   return `${approvalItem.chain}:${approvalItem.id}`;
+    // }
+    case 'token':
+    case 'nft':
+    case 'contract': {
+      return `${approvalItem.type}:${approvalItem.chain}:${approvalItem.id}`;
+    }
+  }
+}
+
+export function encodeApprovalSpenderKey<
+  T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
+>(approval: ApprovalItem, token: T) {
+  if (approval.type === 'contract') {
+    if ('inner_id' in token) {
+      return `approval://contract-token/?${urlUtils.obj2query({
+        spender: token.spender.id,
+        chainServerId: token.chain,
+        contractId: token.contract_id,
+        tokenId: token.inner_id,
+      })}`;
+    } else if ('contract_name' in token) {
+      return `approval://contract/?${urlUtils.obj2query({
+        spender: token.spender.id,
+        chainServerId: token.chain,
+        tokenContractId: token.contract_id,
+      })}`;
+    } else {
+      return `approval://contract/?${urlUtils.obj2query({
+        spender: approval.id,
+        chainServerId: approval.chain,
+        tokenId: token.id,
+      })}`;
+    }
+  } else if (approval.type === 'token') {
+    return `approval://token/?${urlUtils.obj2query({
+      spender: (token as Spender).id,
+      chainServerId: approval.chain,
+      approvalId: approval.id,
+    })}`;
+  } else if (approval.type === 'nft') {
+    const isNftContracts = !!approval.nftContract;
+    const nftInfo = isNftContracts ? approval.nftContract : approval.nftToken;
+
+    return `approval://nft/?${urlUtils.obj2query({
+      spender: (token as Spender).id,
+      chainServerId: approval.chain,
+      tokenId: (nftInfo as NFTApproval).inner_id,
+    })}`;
+  }
+}
+
+export function matchAssetApprovalSpender(
+  assetRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
+  spender?: approvalUtils.AssetApprovalSpender | null,
+) {
+  if (!spender) return null;
+  const key = encodeApprovalSpenderKey(
+    spender.$assetContract!,
+    spender.$assetToken!,
+  );
+  return key && assetRevokeMap[key];
 }
 
 export const findIndexRevokeList = <

@@ -4,18 +4,23 @@ import { View, Text } from 'react-native';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import { AssetAvatar, Tip } from '@/components';
-import NFTAvatar from '@/components/NFTAvatar';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { NFTBadgeType } from '../utils';
 
-import { AssetApprovalItem } from '../useApprovalsPage';
+import {
+  AssetApprovalItem,
+  ToggleSelectApprovalSpenderCtx,
+  ApprovalSpenderItemToBeRevoked,
+  useRevokeSpenders,
+} from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import { useTranslation } from 'react-i18next';
 import { getTooltipContentStyles } from './Layout';
 import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from '@/utils/address';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { findIndexRevokeList, matchAssetApprovalSpender } from '../utils';
 
 function ApprovalAmountInfo({
   style,
@@ -125,10 +130,19 @@ const getApprovalAmountStyles = createGetStyles(colors => {
 export function InModalApprovalAssetRow({
   style,
   spender,
+  onToggleSelection,
 }: {
   spender: AssetApprovalItem['list'][number];
+  onToggleSelection?: (ctx: ToggleSelectApprovalSpenderCtx) => void;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getStyles);
+
+  const { assetRevokeMap } = useRevokeSpenders();
+  const selected = React.useMemo(
+    () => matchAssetApprovalSpender(assetRevokeMap, spender),
+    [spender, assetRevokeMap],
+  );
+  const isSelected = !!selected;
 
   const { spenderInfo, spenderValues } = React.useMemo(() => {
     const risky = ['danger', 'warning'].includes(spender.risk_level);
@@ -161,10 +175,12 @@ export function InModalApprovalAssetRow({
     };
   }, [spender]);
 
-  const itemSelected = false;
-
   return (
-    <View style={[styles.container, style]}>
+    <TouchableView
+      style={[styles.container, style]}
+      onPress={() => {
+        onToggleSelection?.({ spender });
+      }}>
       <View style={styles.leftArea}>
         <AssetAvatar
           style={styles.chainIcon}
@@ -218,7 +234,7 @@ export function InModalApprovalAssetRow({
                 })}
           />
         )}
-        {itemSelected ? (
+        {isSelected ? (
           <RcIconCheckedCC
             style={styles.itemCheckbox}
             color={colors['blue-default']}
@@ -230,7 +246,7 @@ export function InModalApprovalAssetRow({
           />
         )}
       </View>
-    </View>
+    </TouchableView>
   );
 }
 

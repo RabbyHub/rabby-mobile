@@ -11,6 +11,7 @@ import {
 import {
   ApprovalAssetsItem,
   useFocusedApprovalOnApprovals,
+  useRevokeSpenders,
 } from '../useApprovalsPage';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -33,6 +34,8 @@ export default function BottomSheetAssetApproval({
     focusedApprovalAsset,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
+
+  const { toggleSelectAssetSpender } = useRevokeSpenders();
 
   const { styles } = useThemeStyles(getStyles);
 
@@ -65,23 +68,35 @@ export default function BottomSheetAssetApproval({
 
   const renderItem = React.useCallback<
     SectionListProps<ApprovalAssetsItem>['renderItem'] & object
-  >(({ item, section, index }) => {
-    const isFirstItem = index === 0;
-    return (
-      <View
-        key={`${item.$assetParent?.chain}-${item.id}-${index}`}
-        style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
-        <InModalApprovalAssetRow spender={item} />
-      </View>
-    );
-  }, []);
+  >(
+    ({ item, section: _, index }) => {
+      const isFirstItem = index === 0;
+
+      return (
+        <View
+          key={`${item.$assetParent?.chain}-${item.id}-${index}`}
+          style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
+          <InModalApprovalAssetRow
+            spender={item}
+            onToggleSelection={ctx =>
+              toggleSelectAssetSpender({
+                ...ctx,
+                approval: focusedApprovalAsset!,
+              })
+            }
+          />
+        </View>
+      );
+    },
+    [toggleSelectAssetSpender, focusedApprovalAsset],
+  );
 
   const onEndReached = React.useCallback(() => {
     simulateLoadNext(50);
   }, [simulateLoadNext]);
 
   const ListEmptyComponent = React.useMemo(() => {
-    return <EmptyHolder text="No Assets" type="card" />;
+    return <EmptyHolder text="No Approved" type="card" />;
   }, []);
 
   return (

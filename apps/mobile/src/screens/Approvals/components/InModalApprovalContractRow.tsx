@@ -9,13 +9,22 @@ import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { getContractNFTType, maybeNFTLikeItem } from '../utils';
+import {
+  getContractNFTType,
+  matchAssetApprovalSpender,
+  maybeNFTLikeItem,
+} from '../utils';
 
-import { ContractApprovalItem } from '../useApprovalsPage';
+import {
+  ContractApprovalItem,
+  ToggleSelectApprovalSpenderCtx,
+  useRevokeSpenders,
+} from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
 import { getTooltipContentStyles } from './Layout';
+import TouchableView from '@/components/Touchable/TouchableView';
 
 function ApprovalAmountInfo({
   style,
@@ -125,10 +134,27 @@ const getApprovalAmountStyles = createGetStyles(colors => {
 export function InModalApprovalContractRow({
   style,
   contractApproval,
+  onToggleSelection,
 }: {
   contractApproval: ContractApprovalItem['list'][number];
+  onToggleSelection?: (ctx: ToggleSelectApprovalSpenderCtx) => void;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
+
+  const spender = React.useMemo(() => {
+    return 'spender' in contractApproval
+      ? contractApproval.spender
+      : 'spenders' in contractApproval
+      ? contractApproval.spenders?.[0]
+      : null;
+  }, [contractApproval]);
+
+  const { contractRevokeMap } = useRevokeSpenders();
+  const selected = React.useMemo(
+    () => matchAssetApprovalSpender(contractRevokeMap, spender),
+    [spender, contractRevokeMap],
+  );
+  const isSelected = !!selected;
 
   const { itemName, maybeTokenInfo, maybeNFTInfo, spenderValues } =
     React.useMemo(() => {
@@ -144,12 +170,6 @@ export function InModalApprovalContractRow({
         : contractApproval.contract_name || 'Unknown';
 
       // non-token type contract
-      const spender =
-        'spender' in contractApproval
-          ? contractApproval.spender
-          : 'spenders' in contractApproval
-          ? contractApproval.spenders?.[0]
-          : null;
 
       const isToken = 'logo_url' in contractApproval;
       const maybeTokenInfo = {
@@ -177,12 +197,16 @@ export function InModalApprovalContractRow({
         spender,
         spenderValues,
       };
-    }, [contractApproval]);
+    }, [contractApproval, spender]);
 
-  const itemSelected = false;
+  if (!spender) return null;
 
   return (
-    <View style={[styles.container, style]}>
+    <TouchableView
+      style={[styles.container, style]}
+      onPress={() => {
+        onToggleSelection?.({ spender });
+      }}>
       <View style={styles.leftArea}>
         {maybeTokenInfo.isToken ? (
           <AssetAvatar
@@ -234,7 +258,7 @@ export function InModalApprovalContractRow({
                 balanceValue: '',
               })}
         />
-        {itemSelected ? (
+        {isSelected ? (
           <RcIconCheckedCC
             style={styles.itemCheckbox}
             color={colors['blue-default']}
@@ -246,7 +270,7 @@ export function InModalApprovalContractRow({
           />
         )}
       </View>
-    </View>
+    </TouchableView>
   );
 }
 
