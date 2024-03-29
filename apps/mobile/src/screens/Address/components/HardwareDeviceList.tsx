@@ -72,6 +72,22 @@ export const HardwareDeviceList = () => {
     });
   }, [goImport]);
 
+  const handleOneKey = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.CONNECT_ONEKEY,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
+      },
+    });
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.ONEKEY,
+    });
+  }, []);
+
   return (
     <View>
       <WalletHeadline Icon={HardwareSVG}>Hardware Wallets</WalletHeadline>
@@ -94,7 +110,7 @@ export const HardwareDeviceList = () => {
         ])}
         Icon={OneKeySVG}
         title="OneKey"
-        onPress={handleComingSoon}
+        onPress={handleOneKey}
       />
     </View>
   );
