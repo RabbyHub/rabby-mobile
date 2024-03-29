@@ -91,7 +91,7 @@ export function ApprovalsBottomArea() {
   const { filterType } = useApprovalsPage();
   const { contractSelection, assetsSelection } = useRevokeValues();
 
-  const { buttonTitle } = useMemo(() => {
+  const { couldSubmit, buttonTitle } = useMemo(() => {
     const selection =
       filterType === 'contract' ? contractSelection : assetsSelection;
 
@@ -110,14 +110,14 @@ export function ApprovalsBottomArea() {
       .join('');
 
     return {
+      couldSubmit: !!revokeCount,
       buttonTitle,
     };
   }, [filterType, t, contractSelection, assetsSelection]);
 
-  const { canSubmit, isSubmitLoading } = useMemo(() => {
+  const { isSubmitLoading } = useMemo(() => {
     return {
       isSubmitLoading: false,
-      canSubmit: true,
     };
   }, []);
 
@@ -129,7 +129,7 @@ export function ApprovalsBottomArea() {
     <View
       style={[styles.bottomDockArea, { paddingBottom: androidBottomOffset }]}>
       <Button
-        disabled={!canSubmit}
+        disabled={!couldSubmit}
         containerStyle={styles.buttonContainer}
         titleStyle={styles.buttonText}
         type="primary"

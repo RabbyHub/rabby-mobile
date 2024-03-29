@@ -46,7 +46,7 @@ export default function BottomSheetAssetApproval({
     isFetchingNextPage,
     isReachTheEnd,
   } = usePsudoPagination<ApprovalAssetsItem>(focusedApprovalAsset?.list || [], {
-    pageSize: 20,
+    pageSize: 8,
   });
 
   const sectionList = React.useMemo(() => {

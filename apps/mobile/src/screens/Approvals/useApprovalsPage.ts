@@ -15,6 +15,7 @@ import {
   getContractRiskEvaluation,
   makeComputedRiskAboutValues,
   markParentForAssetItemSpender,
+  ApprovalItem,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 approvalUtils.setApprovalEnvsOnce({ appIsDev: __DEV__, appIsProd: !__DEV__ });
@@ -54,22 +55,69 @@ export const FILTER_TYPES = {
   assets: 'assets',
 } as const;
 
+const SAFE_LEVEL_MAP: Record<string, number> = {
+  safe: 1,
+  warning: 10,
+  danger: 100,
+};
 function sortTokenOrNFTApprovalsSpenderList(
-  item: Record<string, TokenApprovalItem> | Record<string, NftApprovalItem>,
+  approval: TokenApprovalItem | NftApprovalItem,
 ) {
-  Object.keys(item).forEach(t => {
-    item[t].list
-      .sort((a, b) => b.value - a.value)
-      .sort((a, b) => {
-        const numMap: Record<string, number> = {
-          safe: 1,
-          warning: 10,
-          danger: 100,
-        };
-        return numMap[b.risk_level] - numMap[a.risk_level];
-      });
+  type Tmp =
+    | TokenApprovalItem['list'][number]
+    | NftApprovalItem['list'][number];
+  approval.list = approval.list.sort((a: Tmp, b: Tmp) => {
+    const risk_comparison =
+      SAFE_LEVEL_MAP[b.risk_level] - SAFE_LEVEL_MAP[a.risk_level];
+    if (risk_comparison !== 0) return risk_comparison;
+
+    return (
+      b.value - a.value ||
+      // @ts-expect-error
+      b.id - a.id ||
+      // @ts-expect-error
+      (b.protocol?.name ?? '') - (a.protocol?.name ?? '')
+    );
   });
 }
+
+function sortAssetApproval<T extends ApprovalItem>(approvals: T[]) {
+  const l = approvals.length;
+  const dangerList: T[] = [];
+  const warnList: T[] = [];
+  const safeListProto: T[] = [];
+  for (let i = 0; i < l; i++) {
+    const item = approvals[i];
+    if (item.risk_level === SAFE_LEVEL.warning) {
+      warnList.push(item);
+    } else if (item.risk_level === SAFE_LEVEL.danger) {
+      dangerList.push(item);
+    } else {
+      safeListProto.push(item);
+    }
+  }
+
+  const groupedSafeList = groupBy(safeListProto, item => item.chain);
+  const sortedSafeList = sortBy(Object.values(groupedSafeList), 'length').map(
+    e => sortBy(e, a => a.list.length).reverse(),
+  );
+
+  const safeList = flatten(sortedSafeList.reverse());
+  const finalList = [...dangerList, ...warnList, ...safeList];
+
+  return {
+    dangerList,
+    warnList,
+    safeList,
+    finalList,
+  };
+}
+
+const SAFE_LEVEL: Record<string, string> = {
+  safe: 'safe',
+  warning: 'warning',
+  danger: 'danger',
+};
 
 export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
@@ -335,8 +383,12 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
         ]);
       }
 
-      sortTokenOrNFTApprovalsSpenderList(nextApprovalsData.tokenMap);
-      sortTokenOrNFTApprovalsSpenderList(nextApprovalsData.nftMap);
+      Object.values(nextApprovalsData.tokenMap).forEach(v =>
+        sortTokenOrNFTApprovalsSpenderList(v),
+      );
+      Object.values(nextApprovalsData.nftMap).forEach(v =>
+        sortTokenOrNFTApprovalsSpenderList(v),
+      );
 
       setIsLoadingOnAsyncFn(false);
 
@@ -357,21 +409,16 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
 
   const sortedContractList: ContractApprovalItem[] = useMemo(() => {
     if (approvalsData.contractMap) {
-      const contractMapArr = Object.values(approvalsData.contractMap);
-      const l = contractMapArr.length;
+      const contractList = Object.values(approvalsData.contractMap);
+      const l = contractList.length;
       const dangerList: ContractApprovalItem[] = [];
       const warnList: ContractApprovalItem[] = [];
       const safeList: ContractApprovalItem[] = [];
-      const numMap: Record<string, string> = {
-        safe: 'safe',
-        warning: 'warning',
-        danger: 'danger',
-      };
       for (let i = 0; i < l; i++) {
-        const item = contractMapArr[i];
-        if (item.risk_level === numMap.warning) {
+        const item = contractList[i];
+        if (item.risk_level === SAFE_LEVEL.warning) {
           warnList.push(item);
-        } else if (item.risk_level === numMap.danger) {
+        } else if (item.risk_level === SAFE_LEVEL.danger) {
           dangerList.push(item);
         } else {
           safeList.push(item);
@@ -379,38 +426,34 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
       }
 
       const groupedSafeList = groupBy(safeList, item => item.chain);
-      const sorted = sortBy(Object.values(groupedSafeList), 'length');
-      const sortedList = sorted.map(e =>
-        sortBy(e, a => a.list.length).reverse(),
-      );
-      return [...dangerList, ...warnList, ...flatten(sortedList.reverse())];
+      const sortedSafeList = sortBy(
+        Object.values(groupedSafeList),
+        'length',
+      ).map(e => sortBy(e, a => a.list.length).reverse());
+      return [...dangerList, ...warnList, ...flatten(sortedSafeList.reverse())];
     }
     return [];
   }, [approvalsData.contractMap]);
 
   const {
-    sortedFlattenedAssetstList,
+    // sortedFlattenedAssetstList,
     sortedTokenApprovals,
     sortedNftApprovals,
   } = useMemo(() => {
     const tokenAssets = Object.values(approvalsData.tokenMap || {});
     const nftAssets = Object.values(approvalsData.nftMap || {});
 
-    const assetsList = [
-      ...flatten(tokenAssets.map(item => item.list)),
-      ...flatten(nftAssets.map(item => item.list)),
-    ] as AssetApprovalItem['list'][number][];
+    // const assetsList = [
+    //   ...flatten(tokenAssets.map(item => item.list)),
+    //   ...flatten(nftAssets.map(item => item.list)),
+    // ] as AssetApprovalItem['list'][number][];
 
     return {
       // descending order by approved amounts
-      sortedTokenApprovals: tokenAssets.sort(
-        (a, b) => b.list.length - a.list.length,
-      ),
+      sortedTokenApprovals: sortAssetApproval(tokenAssets).finalList,
       // descending order by approved amounts
-      sortedNftApprovals: nftAssets.sort(
-        (a, b) => b.list.length - a.list.length,
-      ),
-      sortedFlattenedAssetstList: assetsList,
+      sortedNftApprovals: sortAssetApproval(nftAssets).finalList,
+      // sortedFlattenedAssetstList: assetsList,
     };
     // return [...dangerList, ...warnList, ...flatten(sortedList.reverse())];
   }, [approvalsData.tokenMap, approvalsData.nftMap]);
@@ -418,7 +461,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const {
     displaySortedContractList,
     displaySortedAssetApprovalList,
-    displaySortedFlattenedAssetsList,
+    // displaySortedFlattenedAssetsList,
   } = useMemo(() => {
     const result = {
       displaySortedContractList: sortedContractList,
@@ -426,7 +469,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
         | TokenApprovalItem
         | NftApprovalItem
       )[],
-      displaySortedFlattenedAssetsList: sortedFlattenedAssetstList,
+      // displaySortedFlattenedAssetsList: sortedFlattenedAssetstList,
     };
     const trimmedSkContract = debouncedSkContract?.trim()?.toLowerCase();
     if (trimmedSkContract) {
@@ -451,16 +494,16 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
           );
         }),
       ];
-      result.displaySortedFlattenedAssetsList =
-        sortedFlattenedAssetstList.filter(e => {
-          return [
-            e.id,
-            e.risk_alert || '',
-            e.$assetParent?.name,
-            e.id,
-            e.$assetParent?.chain,
-          ].some(i => i?.toLowerCase().includes(trimmedSkAssets));
-        });
+      // result.displaySortedFlattenedAssetsList =
+      //   sortedFlattenedAssetstList.filter(e => {
+      //     return [
+      //       e.id,
+      //       e.risk_alert || '',
+      //       e.$assetParent?.name,
+      //       e.id,
+      //       e.$assetParent?.chain,
+      //     ].some(i => i?.toLowerCase().includes(trimmedSkAssets));
+      //   });
     } else {
       result.displaySortedAssetApprovalList = [
         ...sortedTokenApprovals,
@@ -473,7 +516,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     sortedContractList,
     sortedTokenApprovals,
     sortedNftApprovals,
-    sortedFlattenedAssetstList,
     debouncedSkContract,
     debouncedSkAssets,
   ]);
@@ -492,8 +534,6 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     account: currentAccount,
     displaySortedContractList,
     displaySortedAssetApprovalList,
-
-    displaySortedFlattenedAssetsList,
   };
 }
 
@@ -511,7 +551,6 @@ export const ApprovalsPageContext = React.createContext<
   account: null,
   displaySortedContractList: [],
   displaySortedAssetApprovalList: [],
-  displaySortedFlattenedAssetsList: [],
 });
 
 export function useApprovalsPage() {
