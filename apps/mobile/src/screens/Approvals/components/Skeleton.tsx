@@ -65,7 +65,7 @@ export const SkeletonListByAssets = memo(() => {
       style={{
         paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
       }}>
-      {Array(5)
+      {Array(15)
         .fill(0)
         .map((e, i) => (
           <View

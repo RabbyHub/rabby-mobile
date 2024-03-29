@@ -91,6 +91,7 @@ export type TokenApprovalItem = {
   risk_alert?: string;
   id: string;
   type: 'token';
+  // TODO: could the field be big number?
   balance: number;
 
   list: SpenderInTokenApproval[];
@@ -98,6 +99,11 @@ export type TokenApprovalItem = {
   $riskAboutValues: ComputedRiskAboutValues;
 };
 
+export type SpenderBalancePartials = {
+  from: ContractFor;
+  nftAmount: 0,
+  tokenBalance: 0,
+}
 export type SpenderInNFTApproval = Spender & {
   readonly $assetParent?: NftApprovalItem;
   readonly $assetToken?: NFTApproval | NFTApprovalContract;
@@ -338,6 +344,42 @@ export function markParentForAssetItemSpender(
   return spender;
 }
 
+export function getSpenderBalancePartials(spender: AssetApprovalSpender) {
+  const partials = {
+    from: 'token' as ContractFor,
+    isNFT: false,
+    isNFTCollection: false,
+    nftAmount: 0,
+    tokenBalance: 0,
+  };
+
+  if (spender.$assetParent?.type === 'nft') {
+    partials.isNFT = true;
+
+    if (spender.$assetParent?.nftContract) {
+      partials.from = 'nft-contract';
+      partials.nftAmount = coerceInteger(spender.$assetParent?.nftContract.amount, 0);
+    } else if (spender.$assetParent?.nftToken) {
+      if (spender.$assetParent?.nftToken?.is_erc1155) {
+        partials.from = 'nft-contract';
+        partials.nftAmount = coerceInteger(spender.$assetParent?.nftToken.amount, 0);
+      } else if (spender.$assetParent?.nftToken?.is_erc721) {
+        partials.nftAmount = 1;
+      }
+    }
+  } else if (spender.$assetParent?.type === 'token') {
+    partials.tokenBalance = coerceFloat(spender.$assetParent?.balance);
+  } else if (approvalEnvs.appIsDev) {
+    console.debug('unknown type spender', spender);
+  }
+
+  return {
+    ...partials,
+    balanceValue: partials.from === 'token' ? partials.tokenBalance : partials.nftAmount,
+  };
+}
+type AmountPartialsType = ReturnType<typeof getSpenderBalancePartials>;
+
 /**
  * @debug test account 0x364acfceaf895aa369170f2b2237695e342e15aa
  */
@@ -347,6 +389,7 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
 
   const isUnlimited = bigValue.gte(10 ** 9);
   let displayAmountText = '';
+  let displayAmountUnitText = '';
   let displayBalanceText = '';
   let nftOrderScore = 0;
 
@@ -355,7 +398,7 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
     bigValue = new BigNumber(absValue);
 
     if (spender.$assetParent?.nftContract) {
-      displayAmountText = '1 Collection';
+      displayAmountText = displayAmountUnitText = '1 Collection';
       const nftCount = spender.$assetParent?.nftContract.amount || 0;
       displayBalanceText = nftCount
         ? `${formatNumber(nftCount, 0)} ${
@@ -370,20 +413,23 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
       }
     } else if (spender.$assetParent?.nftToken) {
       if (spender.$assetParent?.nftToken?.is_erc1155) {
-        displayAmountText = '1 Collection';
+        displayAmountText = displayAmountUnitText = '1 Collection';
         displayBalanceText = '1 Collection';
         nftOrderScore = 202;
       } else if (spender.$assetParent?.nftToken?.is_erc721) {
-        displayAmountText = '1 NFT';
+        displayAmountText = displayAmountUnitText = '1 NFT';
         displayBalanceText = '1 NFT';
         nftOrderScore = 201;
       }
     }
   } else if (spender.$assetParent?.type === 'token') {
     const stepNumberText = splitNumberByStep(bigValue.toFixed(2));
-    displayAmountText = isUnlimited
-      ? 'Unlimited'
-      : `${stepNumberText} ${spender.$assetParent?.name || ''}`;
+    if (isUnlimited) {
+      displayAmountText = displayAmountUnitText = 'Unlimited';
+    } else {
+      displayAmountText = stepNumberText;
+      displayAmountUnitText = `${stepNumberText} ${spender.$assetParent?.name || ''}`;
+    }
 
     const absBalance = spender.$assetParent?.balance;
     displayBalanceText = `${
@@ -399,6 +445,7 @@ export function getSpenderApprovalAmount(spender: AssetApprovalSpender) {
     bigValue,
     isUnlimited,
     displayAmountText,
+    displayAmountUnitText,
     displayBalanceText,
     nftOrderScore,
     get spender() {

@@ -13,13 +13,13 @@ import { SectionListProps } from 'react-native';
 import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import ApprovalAssetsRow from './components/ApprovalAssetsRow';
+import ApprovalAssetRow from './components/ApprovalAssetRow';
 
 export default function ListByAssets() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedAssetsApprovalList, loadApprovals } =
+  const { isLoading, displaySortedAssetApprovalList, loadApprovals } =
     useApprovalsPage();
 
   const keyExtractor = React.useCallback<
@@ -39,7 +39,7 @@ export default function ListByAssets() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalAssetsRow approvalItem={item} listIndex={index} />
+          <ApprovalAssetRow assetApproval={item} listIndex={index} />
         </View>
       );
     },
@@ -52,7 +52,7 @@ export default function ListByAssets() {
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
-  } = usePsudoPagination(displaySortedAssetsApprovalList, { pageSize: 20 });
+  } = usePsudoPagination(displaySortedAssetApprovalList, { pageSize: 20 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length

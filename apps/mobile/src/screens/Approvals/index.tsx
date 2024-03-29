@@ -21,6 +21,7 @@ import {
   useApprovalsPageOnTop,
 } from './useApprovalsPage';
 import BottomSheetContractApproval from './components/BottomSheetContractApproval';
+import BottomSheetAssetApproval from './components/BottomSheetAssetApproval';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -107,6 +108,7 @@ export default function ApprovalsScreen() {
   useEffect(() => {
     loadApprovals();
   }, [loadApprovals]);
+
   return (
     <ApprovalsPageContext.Provider value={approvalsPageCtx}>
       <NormalScreenContainer
@@ -119,6 +121,7 @@ export default function ApprovalsScreen() {
         <ApprovalScreenContainer />
 
         <BottomSheetContractApproval />
+        <BottomSheetAssetApproval />
 
         <ApprovalsBottomArea />
       </NormalScreenContainer>

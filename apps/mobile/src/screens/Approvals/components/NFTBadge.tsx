@@ -31,7 +31,6 @@ const getNFTBadgeStyle = createGetStyles(colors => {
       borderStyle: 'solid',
       borderColor: colors['neutral-line'],
       borderWidth: 0.5,
-      marginTop: 6,
       paddingVertical: 1,
       paddingHorizontal: 4,
       fontSize: 12,

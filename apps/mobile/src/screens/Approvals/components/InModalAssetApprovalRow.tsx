@@ -1,21 +1,21 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-import { stringUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { NFTApproval } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { getContractNFTType, maybeNFTLikeItem } from '../utils';
+import { NFTBadgeType } from '../utils';
 
-import { ContractApprovalItem } from '../useApprovalsPage';
+import { AssetApprovalItem } from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
-import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
 import { getTooltipContentStyles } from './Layout';
+import BigNumber from 'bignumber.js';
+import { ellipsisAddress } from '@/utils/address';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 
 function ApprovalAmountInfo({
   style,
@@ -38,11 +38,11 @@ function ApprovalAmountInfo({
     return bizNumberUtils.formatNumber(amountValue);
   }, [amountValue]);
 
-  const balanceText = React.useMemo(() => {
-    if (typeof balanceValue !== 'number') return balanceValue;
+  // const balanceText = React.useMemo(() => {
+  //   if (typeof balanceValue !== 'number') return balanceValue;
 
-    return bizNumberUtils.formatNumber(balanceValue);
-  }, [balanceValue]);
+  //   return bizNumberUtils.formatNumber(balanceValue);
+  // }, [balanceValue]);
 
   return (
     <View style={[styles.amountInfo, style]}>
@@ -69,7 +69,7 @@ function ApprovalAmountInfo({
         </View>
       )}
 
-      {balanceText && (
+      {/* {balanceText && (
         <View>
           <Tip
             isVisible={false}
@@ -88,7 +88,7 @@ function ApprovalAmountInfo({
             </View>
           </Tip>
         </View>
-      )}
+      )} */}
     </View>
   );
 }
@@ -110,7 +110,7 @@ const getApprovalAmountStyles = createGetStyles(colors => {
     },
     approvalAmount: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: '500',
       color: colors['neutral-body'],
     },
     approvalValues: {
@@ -122,118 +122,102 @@ const getApprovalAmountStyles = createGetStyles(colors => {
   };
 });
 
-export function InModalApprovalContractRow({
+export function InModalAssetApprovalRow({
   style,
-  contractApproval,
+  spender,
 }: {
-  contractApproval: ContractApprovalItem['list'][number];
+  spender: AssetApprovalItem['list'][number];
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
+  const { colors, styles } = useThemeStyles(getStyles);
 
-  const { itemName, maybeTokenInfo, maybeNFTInfo, spenderValues } =
-    React.useMemo(() => {
-      const maybeContractForNFT = maybeNFTLikeItem(contractApproval);
+  const { spenderInfo, spenderValues } = React.useMemo(() => {
+    const risky = ['danger', 'warning'].includes(spender.risk_level);
 
-      const itemName = !maybeContractForNFT
-        ? contractApproval.symbol
-        : 'inner_id' in contractApproval
-        ? stringUtils.ensureSuffix(
-            contractApproval.contract_name || 'Unknown',
-            ` #${contractApproval.inner_id}`,
-          )
-        : contractApproval.contract_name || 'Unknown';
+    const value = new BigNumber(spender.value || 0);
+    const isUnlimited = value.gte(10 ** 9);
+    const displayApprovalValue = isUnlimited
+      ? 'Unlimited'
+      : bizNumberUtils.splitNumberByStep(value.toFixed(2));
 
-      // non-token type contract
-      const spender =
-        'spender' in contractApproval
-          ? contractApproval.spender
-          : 'spenders' in contractApproval
-          ? contractApproval.spenders?.[0]
-          : null;
+    const spenderValues = spender
+      ? approvalUtils.getSpenderApprovalAmount(spender)
+      : null;
 
-      const isToken = 'logo_url' in contractApproval;
-      const maybeTokenInfo = {
-        isToken,
-        tokenLogoUrl: isToken ? contractApproval.logo_url : null,
-      };
+    const isNFT = spender.$assetContract?.contractFor !== 'token';
+    // const isNFTCollection = isNFT && asset && 'nftContract' in asset;
 
-      const maybeNFTInfo = {
-        nftBadgeType: !maybeContractForNFT
-          ? null
-          : getContractNFTType(contractApproval).nftBadgeType,
-        nftImageURL:
-          (contractApproval as NFTApproval)?.content ||
-          ((contractApproval as any)?.collection?.logo_url as string),
-      };
-
-      const spenderValues = spender
-        ? approvalUtils.getSpenderApprovalAmount(spender)
-        : null;
-
-      return {
-        itemName,
-        maybeTokenInfo,
-        maybeNFTInfo,
-        spender,
-        spenderValues,
-      };
-    }, [contractApproval]);
+    return {
+      spenderInfo: {
+        isNFT,
+        tokenLogoURL: spender.$assetContract?.logo_url || '',
+        nftImageURL: spender.$assetContract?.logo_url,
+        protocolName: spender.protocol?.name || 'Unknown Contract',
+        isRisky: risky,
+        value,
+        isUnlimited,
+        displayApprovalValue,
+      },
+      spenderValues,
+    };
+  }, [spender]);
 
   const itemSelected = false;
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftArea}>
-        {maybeTokenInfo.isToken ? (
-          <AssetAvatar
-            style={styles.chainIcon}
-            // pass empty if it's token as no logo_url to enforce the default logo
-            logo={maybeTokenInfo.tokenLogoUrl || ''}
-            logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-            chain={contractApproval?.chain}
-            chainIconPosition="tr"
-            size={28}
-            chainSize={16}
-          />
-        ) : (
-          <NFTAvatar
-            nftImageUrl={maybeNFTInfo.nftImageURL}
-            style={styles.chainIcon}
-            size={28}
-          />
-        )}
+        <AssetAvatar
+          style={styles.chainIcon}
+          // pass empty if it's token as no logo_url to enforce the default logo
+          logo={spender.protocol?.logo_url}
+          logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+          chain={spender.protocol?.chain}
+          chainIconPosition="tr"
+          size={28}
+          chainSize={16}
+        />
 
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
             <Text
-              style={styles.itemName}
+              style={styles.protocolName}
               ellipsizeMode="tail"
               numberOfLines={1}>
-              {itemName}
+              {spenderInfo.protocolName}
             </Text>
           </View>
-          {maybeNFTInfo.nftBadgeType && (
-            <View style={styles.basicInfoF2}>
-              <ApprovalNFTBadge type={maybeNFTInfo.nftBadgeType} />
-            </View>
-          )}
+          <View style={styles.basicInfoF2}>
+            <Text
+              style={[styles.addressText]}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {ellipsisAddress(spender.id)}
+            </Text>
+            <CopyAddressIcon
+              address={spender.id}
+              style={{ marginLeft: 2 }}
+              color={colors['neutral-foot']}
+            />
+          </View>
         </View>
       </View>
 
       <View style={styles.rightArea}>
-        <ApprovalAmountInfo
-          style={{ flexShrink: 1 }}
-          {...(spenderValues
-            ? {
-                amountValue: spenderValues.displayAmountText,
-                balanceValue: spenderValues.displayBalanceText,
-              }
-            : {
-                amountValue:
-                  'amount' in contractApproval ? contractApproval.amount : '',
-                balanceValue: '',
-              })}
-        />
+        {!spenderInfo.isNFT && (
+          <ApprovalAmountInfo
+            style={{ flexShrink: 1 }}
+            {...(spenderValues
+              ? {
+                  amountValue: spenderValues.displayAmountText,
+                  balanceValue: spenderValues.displayBalanceText,
+                }
+              : {
+                  amountValue:
+                    'amount' in spender ? (spender.amount as string) : '',
+                  balanceValue: '',
+                })}
+          />
+        )}
         {itemSelected ? (
           <RcIconCheckedCC
             style={styles.itemCheckbox}
@@ -250,7 +234,7 @@ export function InModalApprovalContractRow({
   );
 }
 
-const getApprovalContractRowStyles = createGetStyles(colors => {
+const getStyles = createGetStyles(colors => {
   return {
     container: {
       flexDirection: 'row',
@@ -289,7 +273,13 @@ const getApprovalContractRowStyles = createGetStyles(colors => {
       justifyContent: 'flex-end',
       flexShrink: 1,
     },
-    itemName: {
+    addressText: {
+      color: colors['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      // marginLeft: 6,
+    },
+    protocolName: {
       fontSize: 16,
       fontWeight: '500',
       color: colors['neutral-title1'],

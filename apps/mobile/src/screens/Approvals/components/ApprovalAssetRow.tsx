@@ -1,15 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { type AssetApprovalSpender } from '../useApprovalsPage';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { findChainByServerID } from '@/utils/chain';
-import { ellipsisAddress } from '@/utils/address';
-import { SimulateUnderline } from '@/components/patches/Simulation';
+import {
+  type AssetApprovalItem,
+  useFocusedApprovalOnApprovals,
+} from '../useApprovalsPage';
 
 import {
   RcIconCheckedCC,
@@ -19,10 +17,10 @@ import {
 } from '../icons';
 import { ApprovalsLayouts } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { toast } from '@/components/Toast';
-import { Chain } from '@debank/common';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import ApprovalNFTBadge from './NFTBadge';
+import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -34,7 +32,7 @@ function RightTouchableView({
   children,
   ...props
 }: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getAssetItemStyles);
+  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
 
   return (
     <TouchableView
@@ -45,78 +43,72 @@ function RightTouchableView({
   );
 }
 
-function AssetsItemInListProto({
-  assetsItem,
+function AssetsApprovalRowProto({
+  assetApproval,
   listIndex,
   onPressArea,
 }: {
-  assetsItem: AssetApprovalSpender;
+  assetApproval: AssetApprovalItem;
   listIndex?: number;
   onPressArea?: (ctx: {
     type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
-    assetsItem: AssetApprovalSpender;
+    assetApproval: AssetApprovalItem;
   }) => void;
 } & RNViewProps) {
-  const { colors, styles } = useThemeStyles(getAssetItemStyles);
+  const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
   const { t } = useTranslation();
 
   const itemSelected = listIndex === 1;
 
-  const { asset, assetInfo } = React.useMemo(() => {
-    const asset = assetsItem.$assetParent;
-    let chainItem: Chain | null = null;
+  const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
 
-    const assetInfo = {
+  const { approvalInfo } = React.useMemo(() => {
+    const approvalInfo = {
       nftType: null as null | 'collection' | 'nft',
-      nftTypeBadge: '',
-      assetName: '',
-      hasSubtitle: false,
+      floor1Text: '',
+      floor2Text: '',
     };
 
-    if (asset?.type === 'nft') {
+    if (assetApproval?.type === 'nft') {
       // chainItem = findChainByServerID(asset?.chain as Chain['serverId']);
-      assetInfo.nftType = asset.nftContract ? 'collection' : 'nft';
-      assetInfo.nftTypeBadge =
-        assetInfo.nftType === 'collection' ? 'Collection' : 'NFT';
-      assetInfo.hasSubtitle = true;
+      approvalInfo.nftType = assetApproval.nftContract ? 'collection' : 'nft';
     }
 
-    const assetChainServerId = asset?.chain;
-
-    assetInfo.assetName =
-      asset?.type === 'nft' && asset?.nftToken
+    if (assetApproval?.type === 'token') {
+      approvalInfo.floor1Text = `${bizNumberUtils.splitNumberByStep(
+        assetApproval.balance.toFixed(2),
+      )}`;
+      approvalInfo.floor2Text = assetApproval?.name || '';
+    } else {
+      approvalInfo.floor1Text = assetApproval?.nftToken
         ? stringUtils.ensureSuffix(
-            asset?.name || 'Unknown',
-            ` #${asset?.nftToken.inner_id}`,
+            assetApproval?.name || 'Unknown',
+            ` #${assetApproval?.nftToken.inner_id}`,
           )
-        : asset?.name || 'Unknown';
-
-    const assetSubTitle = '';
+        : assetApproval?.name || 'Unknown';
+    }
 
     return {
-      asset,
-      assetInfo,
-      assetChainServerId,
-      assetSubTitle,
+      approvalInfo,
     };
-  }, [assetsItem.$assetParent]);
+  }, [assetApproval]);
 
   return (
     <TouchableView
       style={[styles.container, itemSelected && styles.selectedContainer]}
       onPress={evt => {
-        onPressArea?.({ type: 'selection', assetsItem });
+        onPressArea?.({ type: 'selection', assetApproval });
       }}>
       {/* floor 1 */}
       <View style={[styles.itemFloor, ContractFloorLayouts.floor1]}>
         <View style={styles.floorLeft}>
-          {asset?.logo_url ? (
+          {assetApproval?.logo_url ? (
             <AssetAvatar
-              logo={asset?.logo_url}
+              style={styles.chainIcon}
+              logo={assetApproval?.logo_url}
               logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-              chain={asset?.chain}
+              chain={assetApproval?.chain}
               chainIconPosition="tr"
-              style={{ marginRight: 12 }}
               size={28}
               chainSize={16}
             />
@@ -126,41 +118,40 @@ function AssetsItemInListProto({
           <View style={styles.basicInfo}>
             <View style={styles.basicInfoF1}>
               <Text
-                style={styles.assetNameText}
-                ellipsizeMode="clip"
+                style={[
+                  styles.assetNameText,
+                  { flexShrink: 1, maxWidth: '85%' },
+                ]}
+                ellipsizeMode="tail"
                 numberOfLines={1}>
-                {assetInfo.assetName}
+                {approvalInfo.floor1Text}
               </Text>
-              {/* <Text style={styles.contractName}>()</Text> */}
               {itemSelected ? (
                 <RcIconCheckedCC
-                  style={styles.contractCheckbox}
+                  style={[styles.contractCheckbox, { flexShrink: 0 }]}
                   color={colors['blue-default']}
                 />
               ) : (
                 <RcIconUncheckCC
-                  style={styles.contractCheckbox}
+                  style={[styles.contractCheckbox, { flexShrink: 0 }]}
                   color={colors['neutral-line']}
                 />
               )}
             </View>
-            {assetInfo.nftTypeBadge && (
-              <View style={styles.basicInfoF2}>
-                <Text
-                  style={styles.nftTypeBadge}
-                  ellipsizeMode="clip"
-                  numberOfLines={1}>
-                  {assetInfo.nftTypeBadge}
-                </Text>
-              </View>
-            )}
+            <View style={styles.basicInfoF2}>
+              <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text>
+              {approvalInfo.nftType && (
+                <ApprovalNFTBadge type={approvalInfo.nftType} />
+              )}
+            </View>
           </View>
         </View>
         <RightTouchableView
-          style={[styles.floorRight, { height: '100%' }]}
           onPress={evt => {
-            onPressArea?.({ type: 'entry', assetsItem });
+            toggleFocusedAssetItem(assetApproval);
+            evt.stopPropagation();
           }}>
+          <Text style={styles.entryText}>{assetApproval.list.length}</Text>
           <RcIconRightEntryCC
             width={14}
             height={14}
@@ -172,7 +163,7 @@ function AssetsItemInListProto({
   );
 }
 
-export const getAssetItemStyles = createGetStyles(colors => {
+export const getAssetsApprovalRowStyles = createGetStyles(colors => {
   return {
     container: {
       borderRadius: 8,
@@ -203,6 +194,7 @@ export const getAssetItemStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      flexShrink: 1,
     },
     basicInfo: {
       flexDirection: 'column',
@@ -218,25 +210,25 @@ export const getAssetItemStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-    },
-    nftTypeBadge: {
-      borderRadius: 2,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-line'],
-      borderWidth: 0.5,
       marginTop: 6,
-      paddingVertical: 1,
-      paddingHorizontal: 4,
-      fontSize: 12,
+    },
+    floor2Text: {
+      fontSize: 13,
       fontWeight: '400',
-      color: colors['neutral-foot'],
+      color: colors['neutral-body'],
     },
     floorRight: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
       minWidth: 54,
+      flexShrink: 0,
       // ...makeDebugBorder('pink')
+    },
+    entryText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors['neutral-title1'],
     },
     rowCenter: {
       flexDirection: 'row',
@@ -259,9 +251,7 @@ export const getAssetItemStyles = createGetStyles(colors => {
     floorValueDanger: {
       color: colors['red-default'],
     },
-    chainIcon: {
-      marginRight: 6,
-    },
+    chainIcon: { marginRight: 12 },
     assetNameText: {
       color: colors['neutral-title1'],
       fontSize: 16,
@@ -280,6 +270,6 @@ export const getAssetItemStyles = createGetStyles(colors => {
   };
 });
 
-const AssetsItemInList = React.memo(AssetsItemInListProto);
+const ApprovalAssetRow = React.memo(AssetsApprovalRowProto);
 
-export default AssetsItemInList;
+export default ApprovalAssetRow;

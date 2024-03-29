@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, SectionListProps } from 'react-native';
+import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
 
 import { AppBottomSheetModal } from '@/components';
 import {
@@ -8,23 +8,29 @@ import {
   BottomSheetSectionList,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { useFocusedApprovalOnApprovals } from '../useApprovalsPage';
+import {
+  ApprovalAssetsItem,
+  useFocusedApprovalOnApprovals,
+} from '../useApprovalsPage';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import ApprovalContractCard from './ApprovalContractCard';
 import { MiniButton } from '@/components/Button';
-import { InModalApprovalContractRow } from './InModalRows';
+import ApprovalCardAsset from './ApprovalCardAsset';
+import { InModalAssetApprovalRow } from './InModalAssetApprovalRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
+import { EmptyHolder } from '@/components/EmptyHolder';
+import { TailedTitle } from '@/components/patches/Simulation';
+import { ApprovalsLayouts } from './Layout';
 
-export default function BottomSheetContractApproval({
+export default function BottomSheetAssetApproval({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
 }) {
   const {
-    sheetModalRefs: { approvalContractDetail: modalRef },
-    focusedApprovalContract,
+    sheetModalRefs: { approvalAssetDetail: modalRef },
+    focusedApprovalAsset,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
 
@@ -36,7 +42,9 @@ export default function BottomSheetContractApproval({
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
-  } = usePsudoPagination(focusedApprovalContract?.list || [], { pageSize: 20 });
+  } = usePsudoPagination<ApprovalAssetsItem>(focusedApprovalAsset?.list || [], {
+    pageSize: 20,
+  });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
@@ -49,41 +57,32 @@ export default function BottomSheetContractApproval({
         ];
   }, [fallList]);
 
-  // const keyExtractor = React.useCallback<
-  //   SectionListProps<AssetApprovalItem>['keyExtractor'] & object
-  // >((contractItem, index) => {
-  //   return `${contractItem.id}-${index}`;
-  // }, []);
+  const keyExtractor = React.useCallback<
+    SectionListProps<ApprovalAssetsItem>['keyExtractor'] & object
+  >((contractItem, index) => {
+    return `${contractItem.id}-${index}`;
+  }, []);
 
-  // const renderItem = React.useCallback<
-  //   SectionListProps<AssetApprovalItem>['renderItem'] & object
-  // >(
-  //   ({ item, section, index }) => {
-  //     const isFirstItem = index === 0;
-  //     return (
-  //       <View
-  //         style={[
-  //           styles.itemWrapper,
-  //           isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
-  //         ]}>
-  //         <ApprovalAssetRow assetsApprovalItem={item} listIndex={index} />
-  //       </View>
-  //     );
-  //   },
-  //   [styles],
-  // );
+  const renderItem = React.useCallback<
+    SectionListProps<ApprovalAssetsItem>['renderItem'] & object
+  >(({ item, section, index }) => {
+    const isFirstItem = index === 0;
+    return (
+      <View
+        key={`${item.$assetParent?.chain}-${item.id}-${index}`}
+        style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
+        <InModalAssetApprovalRow spender={item} />
+      </View>
+    );
+  }, []);
 
   const onEndReached = React.useCallback(() => {
-    simulateLoadNext(150);
+    simulateLoadNext(50);
   }, [simulateLoadNext]);
 
-  // const ListEmptyComponent = React.useMemo(() => {
-  //   return isLoading ? (
-  //     <SkeletonListByAssets />
-  //   ) : (
-  //     <EmptyHolder text="No Assets" type="card" />
-  //   );
-  // }, [isLoading]);
+  const ListEmptyComponent = React.useMemo(() => {
+    return <EmptyHolder text="No Assets" type="card" />;
+  }, []);
 
   return (
     <AppBottomSheetModal
@@ -100,53 +99,52 @@ export default function BottomSheetContractApproval({
       }}
       snapPoints={['80%']}
       bottomInset={1}>
-      {focusedApprovalContract && (
+      {focusedApprovalAsset && (
         <BottomSheetView style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalContractCard
-              contract={focusedApprovalContract}
-              inDetailModal
-            />
+            <ApprovalCardAsset assetItem={focusedApprovalAsset} inDetailModal />
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                Approved Contracts & Amount
+                {/* Approved Assets Amount & Balance */}
+                Approved to the following Contracts
               </Text>
               <MiniButton
-                disabled={!focusedApprovalContract?.list.length}
+                disabled={!focusedApprovalAsset?.list.length}
                 onPress={() => {}}>
                 Select All
               </MiniButton>
             </View>
           </BottomSheetHandlableView>
-          {/*
+
           <BottomSheetSectionList
+            initialNumToRender={4}
+            maxToRenderPerBatch={20}
+            ListFooterComponent={
+              <View style={styles.listFooterContainer}>
+                {isFetchingNextPage ? (
+                  <ActivityIndicator />
+                ) : sectionList.length && isReachTheEnd ? (
+                  <TailedTitle
+                    style={{
+                      paddingHorizontal:
+                        ApprovalsLayouts.innerContainerHorizontalOffset,
+                    }}
+                    text="No more"
+                  />
+                ) : null}
+              </View>
+            }
             style={[styles.scrollableView, styles.scrollableArea]}
+            contentContainerStyle={styles.listContainer}
+            renderItem={renderItem}
             sections={sectionList}
             keyExtractor={keyExtractor}
             ListEmptyComponent={ListEmptyComponent}
             stickySectionHeadersEnabled={false}
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
-          >
-
-          </BottomSheetSectionList> */}
-          <BottomSheetScrollView
-            style={[styles.scrollableView, styles.scrollableArea]}>
-            {focusedApprovalContract.list.map((approval, idx, arr) => {
-              return (
-                <View key={`${approval.chain}-${idx}`}>
-                  <InModalApprovalContractRow
-                    contractApproval={approval}
-                    style={[
-                      idx > 0 && { marginTop: 8 },
-                      idx === arr.length - 1 && { marginBottom: 16 },
-                    ]}
-                  />
-                </View>
-              );
-            })}
-          </BottomSheetScrollView>
+          />
         </BottomSheetView>
       )}
     </AppBottomSheetModal>
@@ -195,6 +193,17 @@ const getStyles = createGetStyles(colors => {
     },
     scrollableView: {
       paddingHorizontal: 16,
+    },
+    listContainer: {
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    listFooterContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: ApprovalsLayouts.listFooterComponentHeight,
+      // ...makeDebugBorder('green'),
     },
 
     title: {
