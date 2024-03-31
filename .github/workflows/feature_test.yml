@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - feat/*
+  workflow_dispatch:
+    inputs:
+      REALLY_UPLOAD:
+        required: true
+        type: boolean
 
 defaults:
   run:
