@@ -1,9 +1,15 @@
 name: Feature Test
 
 on:
-  push:
-    branches:
-      - feat/*
+  # push:
+  #   branches:
+  #     - feat/*
+  # workflow_call:
+  workflow_dispatch:
+    inputs:
+      REALLY_UPLOAD:
+        required: true
+        type: boolean
 
 defaults:
   run:
@@ -60,13 +66,13 @@ jobs:
 
           # build android
           yarn prepare-archive;
-          buildchannel=selfhost-reg REALLY_UPLOAD=false ./scripts/deploy-android.sh
+          buildchannel=selfhost-reg ./scripts/deploy-android.sh
 
           # build android
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
           cd ios && bundle install && bundle exec pod install;
           cd ../;
-          REALLY_UPLOAD=false ./scripts/deploy-ios-adhoc.sh
+          ./scripts/deploy-ios-adhoc.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
@@ -74,6 +80,7 @@ jobs:
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
+          REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           CONFIGURATION: release
           TYPE: adhoc
           BUILD_ENV: alpha
