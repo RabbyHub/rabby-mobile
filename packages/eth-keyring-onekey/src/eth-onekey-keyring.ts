@@ -1,9 +1,13 @@
+/* eslint-disable promise/no-multiple-resolved */
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable prefer-promise-reject-errors */
 import { TransactionFactory } from '@ethereumjs/tx';
 import type { EVMTransaction, EVMTransactionEIP1559 } from '@onekeyfe/hd-core';
+import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   SignHelper,
   SIGN_HELPER_EVENTS as EVENTS,
-  eventBus,
 } from '@rabby-wallet/keyring-utils';
 import * as sigUtil from 'eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
@@ -11,6 +15,8 @@ import EventEmitter from 'events';
 import HDKey from 'hdkey';
 
 import type { OneKeyBridgeInterface } from './onekey-bridge-interface';
+
+const { isSameAddress } = addressUtils;
 
 const keyringType = 'Onekey Hardware';
 const hdPathString = "m/44'/60'/0'/0";
@@ -52,7 +58,7 @@ type AccountDetail = {
  * @param tx.getChainId
  * @returns Returns `true` if tx is an old-style ethereumjs-tx transaction.
  */
-function isOldStyleEthereumjsTx(tx: { getChainId: any }) {
+function isOldStyleEthereumjsTx(tx: { getChainId: any }): boolean {
   return typeof tx.getChainId === 'function';
 }
 
@@ -71,7 +77,7 @@ class OneKeyKeyring extends EventEmitter {
 
   unlockedAccount = 0;
 
-  paths = {};
+  paths: Record<string, number> = {};
 
   hdPath = '';
 
@@ -338,24 +344,25 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   // tx is an instance of the ethereumjs-transaction class.
-  signTransaction(address: string, tx): Promise<any> {
+  signTransaction(address: string, tx: any): Promise<any> {
     return this.signHelper.invoke(async () => {
       return new Promise((resolve, reject) => {
         this.unlock()
           .then(status => {
             setTimeout(
-              _ => {
+              (_: any) => {
                 if (isOldStyleEthereumjsTx(tx)) {
                   // In this version of ethereumjs-tx we must add the chainId in hex format
                   // to the initial v value. The chainId must be included in the serialized
                   // transaction which is only communicated to ethereumjs-tx in this
                   // value. In newer versions the chainId is communicated via the 'Common'
                   // object.
+                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
                   this._signTransaction(
                     address,
                     tx.getChainId(),
                     tx,
-                    payload => {
+                    (payload: { v: string; r: string; s: string }) => {
                       tx.v = Buffer.from(payload.v, 'hex');
                       tx.r = Buffer.from(payload.r, 'hex');
                       tx.s = Buffer.from(payload.s, 'hex');
@@ -363,11 +370,12 @@ class OneKeyKeyring extends EventEmitter {
                     },
                   ).then(resolve);
                 } else {
+                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
                   this._signTransaction(
                     address,
                     Number(tx.common.chainId()),
                     tx,
-                    payload => {
+                    (payload: { v: string; r: string; s: string }) => {
                       // Because tx will be immutable, first get a plain javascript object that
                       // represents the transaction. Using txData here as it aligns with the
                       // nomenclature of ethereumjs/tx.
@@ -400,7 +408,12 @@ class OneKeyKeyring extends EventEmitter {
     });
   }
 
-  async _signTransaction(address, chainId, tx, handleSigning) {
+  async _signTransaction(
+    address: string,
+    chainId: number,
+    tx: any,
+    handleSigning: any,
+  ) {
     let transaction: EVMTransaction | EVMTransactionEIP1559;
     if (isOldStyleEthereumjsTx(tx)) {
       // legacy transaction from ethereumjs-tx package has no .toJSON() function,
@@ -459,7 +472,7 @@ class OneKeyKeyring extends EventEmitter {
         this.unlock()
           .then(status => {
             setTimeout(
-              _ => {
+              (_: any) => {
                 this.bridge
                   .evmSignMessage(this.connectId!, this.deviceId!, {
                     path: this._pathFromAddress(withAccount),
@@ -477,6 +490,7 @@ class OneKeyKeyring extends EventEmitter {
                         );
                       }
                       const signature = `0x${response.payload.signature}`;
+                      // eslint-disable-next-line promise/no-multiple-resolved
                       resolve(signature);
                     } else {
                       reject(
@@ -505,7 +519,7 @@ class OneKeyKeyring extends EventEmitter {
     });
   }
 
-  async signTypedData(address, data, opts) {
+  async signTypedData(address: string, data: any, opts: any) {
     switch (opts.version) {
       case 'V1':
         return this.signTypedData_v1(address, data, opts);
@@ -518,7 +532,7 @@ class OneKeyKeyring extends EventEmitter {
     }
   }
 
-  signTypedData_v1(address, typedData, opts = {}) {
+  signTypedData_v1(_address: string, _typedData: any, _opts = {}) {
     // Waiting on trezor to enable this
     return this.signHelper.invoke(async () => {
       throw new Error('Not supported on this device');
@@ -527,8 +541,8 @@ class OneKeyKeyring extends EventEmitter {
 
   // personal_signTypedData, signs data along with the schema
   signTypedData_v3_v4(
-    address,
-    typedData,
+    address: string,
+    typedData: any,
     opts: { version?: 'V3' | 'V4' } = {},
   ) {
     return this.signHelper.invoke(async () => {
@@ -551,7 +565,7 @@ class OneKeyKeyring extends EventEmitter {
         this.unlock()
           .then(status => {
             setTimeout(
-              _ => {
+              (_: any) => {
                 try {
                   this.bridge
                     .evmSignTypedData(this.connectId!, this.deviceId!, {
@@ -582,6 +596,7 @@ class OneKeyKeyring extends EventEmitter {
                       } else {
                         let code =
                           (response.payload && response.payload.code) || '';
+                        // eslint-disable-next-line @typescript-eslint/no-shadow
                         const message =
                           (response.payload && response.payload.error) || '';
                         let errorMsg =
@@ -593,6 +608,7 @@ class OneKeyKeyring extends EventEmitter {
                           code = 'EIP712_DOMAIN_NOT_SUPPORT';
                         } else if (message.includes('EIP712')) {
                           code = 'EIP712_BLIND_SIGN_DISABLED';
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           errorUrl =
                             'https://help.onekey.so/hc/zh-cn/articles/4406637762959';
                         }
@@ -614,7 +630,7 @@ class OneKeyKeyring extends EventEmitter {
                       console.log('Error while trying to sign a message ', e);
                       reject(new Error((e && e.toString()) || 'Unknown error'));
                     });
-                } catch (e) {
+                } catch (e: any) {
                   reject(new Error((e && e.toString()) || 'Unknown error'));
                 }
                 // This is necessary to avoid popup collision
@@ -649,7 +665,7 @@ class OneKeyKeyring extends EventEmitter {
     return ethUtil.bufferToHex(buf).toString();
   }
 
-  // eslint-disable-next-line no-shadow
+  // eslint-disable-next-line no-shadow, @typescript-eslint/no-shadow
   _addressFromIndex(pathBase: string, i: number): string {
     const dkey = this.hdk.derive(`${pathBase}/${i}`);
     const address = ethUtil
@@ -689,6 +705,7 @@ class OneKeyKeyring extends EventEmitter {
     const currentPublicKey = this.getPathBasePublicKey();
     const accounts: Account[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/prefer-for-of
     for (let i = 0; i < addresses.length; i++) {
       const address = addresses[i];
       await this._fixAccountDetail(address);
@@ -742,7 +759,7 @@ class OneKeyKeyring extends EventEmitter {
 
     this.accountDetails[checksummedAddress] = {
       ...detail,
-      index,
+      index: index as any,
       hdPath: this._pathFromAddress(address),
       hdPathType: LedgerHDPathType.BIP44,
       hdPathBasePublicKey: this.getPathBasePublicKey(),
@@ -751,3 +768,7 @@ class OneKeyKeyring extends EventEmitter {
 }
 
 export default OneKeyKeyring;
+/* eslint-enable promise/no-multiple-resolved */
+/* eslint-enable jsdoc/require-param-description */
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable prefer-promise-reject-errors */

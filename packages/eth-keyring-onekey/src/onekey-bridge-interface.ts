@@ -1,6 +1,6 @@
 import type { CoreApi } from '@onekeyfe/hd-core';
 
-export interface OneKeyBridgeInterface {
+export type OneKeyBridgeInterface = {
   init: () => Promise<void>;
   evmSignTransaction: CoreApi['evmSignTransaction'];
   evmSignMessage: CoreApi['evmSignMessage'];
@@ -8,4 +8,4 @@ export interface OneKeyBridgeInterface {
   searchDevices: CoreApi['searchDevices'];
   getPassphraseState: CoreApi['getPassphraseState'];
   evmGetPublicKey: CoreApi['evmGetPublicKey'];
-}
+};

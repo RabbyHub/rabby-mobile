@@ -4923,23 +4923,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@onekeyfe/hd-ble-sdk@npm:^0.3.42":
-  version: 0.3.42
-  resolution: "@onekeyfe/hd-ble-sdk@npm:0.3.42"
+"@onekeyfe/hd-ble-sdk@npm:^1.0.0-alpha.2":
+  version: 1.0.0-alpha.2
+  resolution: "@onekeyfe/hd-ble-sdk@npm:1.0.0-alpha.2"
   dependencies:
-    "@onekeyfe/hd-core": ^0.3.42
-    "@onekeyfe/hd-shared": ^0.3.42
-    "@onekeyfe/hd-transport-react-native": ^0.3.42
-  checksum: a84e3b09b6907c031d6a007f04ade9708714eeff337e6f88f7327f6d9dd8006eb143a34b81a826b31807d15ced288d7df6cfac0662c00654c7da7c839629af42
+    "@onekeyfe/hd-core": ^1.0.0-alpha.2
+    "@onekeyfe/hd-shared": ^1.0.0-alpha.2
+    "@onekeyfe/hd-transport-react-native": ^1.0.0-alpha.2
+  checksum: 8ff2d1a19c184c8ad6849530937a1412b8bf03248adb142a20914078ceab3c7bcab338fe375b7cc0287eb5ac48abbbf8b9bb392d1321c70c159a02d4681d7f45
   languageName: node
   linkType: hard
 
-"@onekeyfe/hd-core@npm:^0.3.42":
-  version: 0.3.42
-  resolution: "@onekeyfe/hd-core@npm:0.3.42"
+"@onekeyfe/hd-core@npm:^1.0.0-alpha.2":
+  version: 1.0.0-alpha.2
+  resolution: "@onekeyfe/hd-core@npm:1.0.0-alpha.2"
   dependencies:
-    "@onekeyfe/hd-shared": ^0.3.42
-    "@onekeyfe/hd-transport": ^0.3.42
+    "@onekeyfe/hd-shared": ^1.0.0-alpha.2
+    "@onekeyfe/hd-transport": ^1.0.0-alpha.2
     axios: ^0.27.2
     bignumber.js: ^9.0.2
     bytebuffer: ^5.0.1
@@ -4949,37 +4949,37 @@ __metadata:
   peerDependencies:
     "@noble/hashes": ^1.1.3
     ripple-keypairs: ^1.1.4
-  checksum: 43a209cd93a11dd28d97b8bcf2ec6ab0cb2ffc7618525875339097f6cab5fddee946869d4ec37dd5f32221e1268287ae5aba51aebcbc9147734b013c6160b0bd
+  checksum: a76b983f84b858c2ed2412826265d99754da43a2e70efa2e581ce8acb0e69b31c38d6785b54e62e284a83df7544e0b3db3348886d7c79200d611f8c273d3359a
   languageName: node
   linkType: hard
 
-"@onekeyfe/hd-shared@npm:^0.3.42":
-  version: 0.3.42
-  resolution: "@onekeyfe/hd-shared@npm:0.3.42"
-  checksum: f71d4cce6db2b647be0d159235684774d9411a0f6450d3c7dd63da3b547b0b5c09d3eabee10d34032a6882dd5131aeb259e3d56fe5fb3fb4b842832e64b96bec
+"@onekeyfe/hd-shared@npm:^1.0.0-alpha.2":
+  version: 1.0.0-alpha.2
+  resolution: "@onekeyfe/hd-shared@npm:1.0.0-alpha.2"
+  checksum: fb8468d0428eed52858602fe731e80a6e5ef5dfebe86ecb4b3778ed41ee05cab8e03f6897a38a422308de0f7bb00eeeeb2c49c25e1d35f79f0de50ca28d52cff
   languageName: node
   linkType: hard
 
-"@onekeyfe/hd-transport-react-native@npm:^0.3.42":
-  version: 0.3.42
-  resolution: "@onekeyfe/hd-transport-react-native@npm:0.3.42"
+"@onekeyfe/hd-transport-react-native@npm:^1.0.0-alpha.2":
+  version: 1.0.0-alpha.2
+  resolution: "@onekeyfe/hd-transport-react-native@npm:1.0.0-alpha.2"
   dependencies:
-    "@onekeyfe/hd-shared": ^0.3.42
-    "@onekeyfe/hd-transport": ^0.3.42
+    "@onekeyfe/hd-shared": ^1.0.0-alpha.2
+    "@onekeyfe/hd-transport": ^1.0.0-alpha.2
     "@onekeyfe/react-native-ble-plx": 3.0.0
     react-native-ble-manager: ^8.1.0
-  checksum: efce25000f6fd604a3180fa3309790544bcf70fe23edf165058d296268d53ce68ef90f46637939499b8cd4e32e8b2a629aa68b0fe4b45b6c6b3c3055da661d28
+  checksum: f21e87f84f81d4da4cf2993c067f773907855c9c0ea2bb41bff25bcec20a486d260f0240a040df7b2d355f3118a14c4a6ac854a34258e7b217c10d80461ffbb6
   languageName: node
   linkType: hard
 
-"@onekeyfe/hd-transport@npm:^0.3.42":
-  version: 0.3.42
-  resolution: "@onekeyfe/hd-transport@npm:0.3.42"
+"@onekeyfe/hd-transport@npm:^1.0.0-alpha.2":
+  version: 1.0.0-alpha.2
+  resolution: "@onekeyfe/hd-transport@npm:1.0.0-alpha.2"
   dependencies:
     bytebuffer: ^5.0.1
     long: ^4.0.0
     protobufjs: ^6.11.2
-  checksum: 25ea6dd6d78f7a3c929a01d16533ed39ddefa5c60b6f276462a6cb35ee282948468971498c3d8650bad48bfefa04ac04648f1a1da5888ce65ea6336af08f6a4f
+  checksum: 435bcc42bc73571f1e13190efab6912f2aa255909a348c38434f68775fbbcece28f8bc237aa427c88be532f8295671052d1a0cb8ce5757dd7186f8291552ebaf
   languageName: node
   linkType: hard
 
@@ -5339,7 +5339,8 @@ __metadata:
   dependencies:
     "@ethereumjs/tx": ^5.3.0
     "@metamask/auto-changelog": ^3.4.3
-    "@onekeyfe/hd-ble-sdk": ^0.3.42
+    "@onekeyfe/hd-ble-sdk": ^1.0.0-alpha.2
+    "@onekeyfe/hd-core": ^1.0.0-alpha.2
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/hdkey": ^2.0.3
