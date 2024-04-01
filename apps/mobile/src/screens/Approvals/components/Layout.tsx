@@ -13,7 +13,9 @@ import {
   RcIconNotMatchedCC,
   RcIconUncheckCC,
 } from '../icons';
-import { useApprovalsPage, useRevokeValues } from '../useApprovalsPage';
+import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
+import { apiApprovals } from '@/core/apis';
+import { useRefState } from '@/hooks/common/useRefState';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -88,17 +90,20 @@ export function ApprovalsBottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const { filterType } = useApprovalsPage();
-  const { contractSelection, assetsSelection } = useRevokeValues();
+  const { filterType, loadApprovals } = useApprovalsPage();
+  const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
+    useRevokeApprovals();
+
+  const currentRevokeList = React.useMemo(() => {
+    return filterType === 'contract'
+      ? Object.values(contractRevokeMap)
+      : filterType === 'assets'
+      ? Object.values(assetRevokeMap)
+      : [];
+  }, [filterType, contractRevokeMap, assetRevokeMap]);
 
   const { couldSubmit, buttonTitle } = useMemo(() => {
-    const selection =
-      filterType === 'contract' ? contractSelection : assetsSelection;
-
-    const revokeCount = Object.values(selection).reduce(
-      (acc, value) => acc + value,
-      0,
-    );
+    const revokeCount = currentRevokeList.length;
     const buttonTitle = [
       `${t('page.approvals.component.RevokeButton.btnText', {
         // count: revokeList.length,
@@ -113,13 +118,37 @@ export function ApprovalsBottomArea() {
       couldSubmit: !!revokeCount,
       buttonTitle,
     };
-  }, [filterType, t, contractSelection, assetsSelection]);
+  }, [t, currentRevokeList]);
 
-  const { isSubmitLoading } = useMemo(() => {
-    return {
-      isSubmitLoading: false,
-    };
-  }, []);
+  const {
+    state: isSubmitLoading,
+    setRefState: setIsSubmitLoading,
+    stateRef: isSubmitLoadingRef,
+  } = useRefState(false);
+
+  const handleRevoke = React.useCallback(() => {
+    if (isSubmitLoadingRef.current) return;
+    setIsSubmitLoading(true, true);
+
+    apiApprovals
+      .revoke({ list: currentRevokeList })
+      .then(() => {
+        loadApprovals();
+        resetRevokeMaps();
+      })
+      .catch(err => {
+        console.error(err);
+      })
+      .finally(() => {
+        setIsSubmitLoading(false, true);
+      });
+  }, [
+    currentRevokeList,
+    isSubmitLoadingRef,
+    setIsSubmitLoading,
+    resetRevokeMaps,
+    loadApprovals,
+  ]);
 
   const { androidBottomOffset } = useSafeAndroidBottomOffset(
     ApprovalsLayouts.bottomAreaHeight,
@@ -135,7 +164,7 @@ export function ApprovalsBottomArea() {
         type="primary"
         title={buttonTitle}
         loading={isSubmitLoading}
-        onPress={() => {}}
+        onPress={handleRevoke}
       />
     </View>
   );

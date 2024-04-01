@@ -4,14 +4,13 @@ import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetScrollView,
   BottomSheetSectionList,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
   ApprovalAssetsItem,
   useFocusedApprovalOnApprovals,
-  useRevokeSpenders,
+  useRevokeAssetSpenders,
 } from '../useApprovalsPage';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -31,23 +30,22 @@ export default function BottomSheetAssetApproval({
 }) {
   const {
     sheetModalRefs: { approvalAssetDetail: modalRef },
-    focusedApprovalAsset,
+    focusedAssetApproval,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
 
-  const { toggleSelectAssetSpender } = useRevokeSpenders();
+  const {
+    toggleSelectAssetSpender,
+    nextShouldSelectAllAsset,
+    onSelectAllAsset,
+  } = useRevokeAssetSpenders();
 
   const { styles } = useThemeStyles(getStyles);
 
-  const {
-    fallList,
-    simulateLoadNext,
-    resetPage,
-    isFetchingNextPage,
-    isReachTheEnd,
-  } = usePsudoPagination<ApprovalAssetsItem>(focusedApprovalAsset?.list || [], {
-    pageSize: 8,
-  });
+  const { fallList, simulateLoadNext, isFetchingNextPage, isReachTheEnd } =
+    usePsudoPagination<ApprovalAssetsItem>(focusedAssetApproval?.list || [], {
+      pageSize: 20,
+    });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
@@ -77,18 +75,14 @@ export default function BottomSheetAssetApproval({
           key={`${item.$assetParent?.chain}-${item.id}-${index}`}
           style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
           <InModalApprovalAssetRow
+            approval={focusedAssetApproval!}
             spender={item}
-            onToggleSelection={ctx =>
-              toggleSelectAssetSpender({
-                ...ctx,
-                approval: focusedApprovalAsset!,
-              })
-            }
+            onToggleSelection={toggleSelectAssetSpender}
           />
         </View>
       );
     },
-    [toggleSelectAssetSpender, focusedApprovalAsset],
+    [toggleSelectAssetSpender, focusedAssetApproval],
   );
 
   const onEndReached = React.useCallback(() => {
@@ -114,10 +108,10 @@ export default function BottomSheetAssetApproval({
       }}
       snapPoints={['80%']}
       bottomInset={1}>
-      {focusedApprovalAsset && (
+      {focusedAssetApproval && (
         <BottomSheetView style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardAsset assetItem={focusedApprovalAsset} inDetailModal />
+            <ApprovalCardAsset assetItem={focusedAssetApproval} inDetailModal />
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
@@ -125,9 +119,14 @@ export default function BottomSheetAssetApproval({
                 Approved to the following Contracts
               </Text>
               <MiniButton
-                disabled={!focusedApprovalAsset?.list.length}
-                onPress={() => {}}>
-                Select All
+                disabled={!focusedAssetApproval?.list.length}
+                onPress={() =>
+                  onSelectAllAsset(
+                    focusedAssetApproval!,
+                    nextShouldSelectAllAsset,
+                  )
+                }>
+                {nextShouldSelectAllAsset ? 'Select All' : 'Unselect All'}
               </MiniButton>
             </View>
           </BottomSheetHandlableView>

@@ -10,15 +10,17 @@ import NFTAvatar from '@/components/NFTAvatar';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import {
+  checkoutContractSpender,
   getContractNFTType,
-  matchAssetApprovalSpender,
+  querySelectedContractSpender,
   maybeNFTLikeItem,
+  encodeApprovalSpenderKey,
 } from '../utils';
 
 import {
   ContractApprovalItem,
   ToggleSelectApprovalSpenderCtx,
-  useRevokeSpenders,
+  useRevokeApprovals,
 } from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import ApprovalNFTBadge from './NFTBadge';
@@ -133,28 +135,34 @@ const getApprovalAmountStyles = createGetStyles(colors => {
 
 export function InModalApprovalContractRow({
   style,
+  approval,
   contractApproval,
   onToggleSelection,
 }: {
+  approval: ContractApprovalItem;
   contractApproval: ContractApprovalItem['list'][number];
-  onToggleSelection?: (ctx: ToggleSelectApprovalSpenderCtx) => void;
+  onToggleSelection?: (
+    ctx: ToggleSelectApprovalSpenderCtx & {
+      approval: ContractApprovalItem;
+      contractApproval: ContractApprovalItem['list'][number];
+    },
+  ) => void;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
 
-  const spender = React.useMemo(() => {
-    return 'spender' in contractApproval
-      ? contractApproval.spender
-      : 'spenders' in contractApproval
-      ? contractApproval.spenders?.[0]
-      : null;
-  }, [contractApproval]);
+  const { contractRevokeMap } = useRevokeApprovals();
+  const { spender, isSelected } = React.useMemo(() => {
+    const spender = checkoutContractSpender(contractApproval);
 
-  const { contractRevokeMap } = useRevokeSpenders();
-  const selected = React.useMemo(
-    () => matchAssetApprovalSpender(contractRevokeMap, spender),
-    [spender, contractRevokeMap],
-  );
-  const isSelected = !!selected;
+    return {
+      spender,
+      isSelected: !!querySelectedContractSpender(
+        contractRevokeMap,
+        approval,
+        contractApproval,
+      ),
+    };
+  }, [contractRevokeMap, approval, contractApproval]);
 
   const { itemName, maybeTokenInfo, maybeNFTInfo, spenderValues } =
     React.useMemo(() => {
@@ -205,7 +213,7 @@ export function InModalApprovalContractRow({
     <TouchableView
       style={[styles.container, style]}
       onPress={() => {
-        onToggleSelection?.({ spender });
+        onToggleSelection?.({ spender, approval, contractApproval });
       }}>
       <View style={styles.leftArea}>
         {maybeTokenInfo.isToken ? (

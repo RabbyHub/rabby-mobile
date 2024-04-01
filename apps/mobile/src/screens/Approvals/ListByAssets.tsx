@@ -15,7 +15,11 @@ import {
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { TopSearch } from './components/TopSearch';
-import { type AssetApprovalItem, useApprovalsPage } from './useApprovalsPage';
+import {
+  type AssetApprovalItem,
+  useApprovalsPage,
+  useRevokeApprovals,
+} from './useApprovalsPage';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
@@ -48,7 +52,7 @@ export default function ListByAssets() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalAssetRow assetApproval={item} listIndex={index} />
+          <ApprovalAssetRow assetApproval={item} />
         </View>
       );
     },
@@ -78,14 +82,18 @@ export default function ListByAssets() {
     simulateLoadNext(150);
   }, [simulateLoadNext]);
 
+  const { resetRevokeMaps } = useRevokeApprovals();
   const refresh = React.useCallback(async () => {
     resetPage();
 
     try {
       await loadApprovals();
+      resetRevokeMaps('assets');
+    } catch (err) {
+      console.error(err);
     } finally {
     }
-  }, [resetPage, loadApprovals]);
+  }, [resetRevokeMaps, resetPage, loadApprovals]);
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (

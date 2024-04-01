@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
 
 import {
-  ApprovalItem,
-  ApprovalSpenderItemToBeRevoked,
-  ContractApprovalItem,
+  type ApprovalItem,
+  type ApprovalSpenderItemToBeRevoked,
+  type AssetApprovalItem,
+  type ContractApprovalItem,
+  type SpenderInNFTApproval,
   RiskNumMap,
-  SpenderInNFTApproval,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 import {
@@ -77,131 +78,87 @@ export function encodeApprovalKey(approvalItem: ApprovalItem) {
     case 'token':
     case 'nft':
     case 'contract': {
-      return `${approvalItem.type}:${approvalItem.chain}:${approvalItem.id}`;
+      return `${approvalItem.type}-${approvalItem.chain}-${approvalItem.id}`;
     }
   }
+}
+
+export function makeApprovalIndexURLBase(approval: ApprovalItem) {
+  const approvalKey = encodeApprovalKey(approval);
+  return `approval://${approvalKey}`;
 }
 
 export function encodeApprovalSpenderKey<
   T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
 >(approval: ApprovalItem, token: T) {
+  const approvalIndexBase = makeApprovalIndexURLBase(approval);
+
   if (approval.type === 'contract') {
     if ('inner_id' in token) {
-      return `approval://contract-token/?${urlUtils.obj2query({
+      return `${approvalIndexBase}/contract-token/?${urlUtils.obj2query({
         spender: token.spender.id,
         chainServerId: token.chain,
         contractId: token.contract_id,
         tokenId: token.inner_id,
       })}`;
     } else if ('contract_name' in token) {
-      return `approval://contract/?${urlUtils.obj2query({
+      return `${approvalIndexBase}/contract/?${urlUtils.obj2query({
         spender: token.spender.id,
         chainServerId: token.chain,
         tokenContractId: token.contract_id,
       })}`;
     } else {
-      return `approval://contract/?${urlUtils.obj2query({
+      return `${approvalIndexBase}/contract/?${urlUtils.obj2query({
         spender: approval.id,
         chainServerId: approval.chain,
-        tokenId: token.id,
+        id: token.id,
       })}`;
     }
   } else if (approval.type === 'token') {
-    return `approval://token/?${urlUtils.obj2query({
+    return `${approvalIndexBase}/token/?${urlUtils.obj2query({
       spender: (token as Spender).id,
       chainServerId: approval.chain,
-      approvalId: approval.id,
+      id: approval.id,
     })}`;
   } else if (approval.type === 'nft') {
     const isNftContracts = !!approval.nftContract;
     const nftInfo = isNftContracts ? approval.nftContract : approval.nftToken;
 
-    return `approval://nft/?${urlUtils.obj2query({
+    return `${approvalIndexBase}/nft/?${urlUtils.obj2query({
       spender: (token as Spender).id,
       chainServerId: approval.chain,
       tokenId: (nftInfo as NFTApproval).inner_id,
     })}`;
   }
+
+  return approvalIndexBase;
 }
 
-export function matchAssetApprovalSpender(
+export function querySelectedContractSpender(
+  assetRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
+  approval: ContractApprovalItem,
+  contract?: ContractApprovalItem['list'][number] | null,
+) {
+  if (!contract) return null;
+  const key = encodeApprovalSpenderKey(approval, contract);
+  return key && assetRevokeMap[key]
+    ? { spenderKey: key, spender: assetRevokeMap[key] }
+    : null;
+}
+
+export function querySelectedAssetSpender(
   assetRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
   spender?: approvalUtils.AssetApprovalSpender | null,
 ) {
-  if (!spender) return null;
+  if (!spender || !spender.$assetContract || !spender.$assetToken) return null;
   const key = encodeApprovalSpenderKey(
-    spender.$assetContract!,
-    spender.$assetToken!,
+    spender.$assetContract,
+    spender.$assetToken,
   );
-  return key && assetRevokeMap[key];
+  return key && assetRevokeMap[key]
+    ? { spenderKey: key, spender: assetRevokeMap[key] }
+    : null;
 }
-
-export const findIndexRevokeList = <
-  T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
->(
-  list: any[],
-  item: ApprovalItem,
-  token: T,
-) => {
-  if (item.type === 'contract') {
-    if ('inner_id' in token) {
-      return list.findIndex(revoke => {
-        if (
-          revoke.contractId === token.contract_id &&
-          revoke.spender === token.spender.id &&
-          revoke.tokenId === token.inner_id &&
-          revoke.chainServerId === token.chain
-        ) {
-          return true;
-        }
-      });
-    } else if ('contract_name' in token) {
-      return list.findIndex(revoke => {
-        if (
-          revoke.contractId === token.contract_id &&
-          revoke.spender === token.spender.id &&
-          revoke.chainServerId === token.chain
-        ) {
-          return true;
-        }
-      });
-    } else {
-      return list.findIndex(revoke => {
-        if (
-          revoke.spender === item.id &&
-          revoke.id === token.id &&
-          revoke.chainServerId === item.chain
-        ) {
-          return true;
-        }
-      });
-    }
-  } else if (item.type === 'token') {
-    return list.findIndex(revoke => {
-      if (
-        revoke.spender === (token as Spender).id &&
-        revoke.id === item.id &&
-        revoke.chainServerId === item.chain
-      ) {
-        return true;
-      }
-    });
-  } else if (item.type === 'nft') {
-    return list.findIndex(revoke => {
-      const isNftContracts = !!item.nftContract;
-      const nftInfo = isNftContracts ? item.nftContract : item.nftToken;
-
-      if (
-        revoke.spender === (token as Spender).id &&
-        revoke.tokenId === (nftInfo as NFTApproval).inner_id &&
-        revoke.chainServerId === item.chain
-      ) {
-        return true;
-      }
-    });
-  }
-  return -1;
-};
 
 export const toRevokeItem = <T extends ApprovalItem>(
   item: T,
@@ -273,6 +230,58 @@ export const toRevokeItem = <T extends ApprovalItem>(
 
   return undefined;
 };
+
+export function checkoutContractSpender(
+  contractApproval: ContractApprovalItem['list'][number],
+) {
+  return 'spender' in contractApproval
+    ? contractApproval.spender
+    : 'spenders' in contractApproval
+    ? contractApproval.spenders?.[0]
+    : null;
+}
+
+export function checkoutApprovalSelection<
+  T extends ContractApprovalItem | AssetApprovalItem,
+>(
+  approvalRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
+  approval?: T | null,
+) {
+  if (!approval || !approval?.list.length)
+    return {
+      isSelectedAll: false,
+      isSelectedPartials: false,
+    };
+
+  const selecteds = [] as T['list'][number][];
+  approval.list.forEach(
+    (
+      member:
+        | ContractApprovalItem['list'][number]
+        | ApprovalItem['list'][number],
+    ) => {
+      const indexKey =
+        '$assetContract' in member
+          ? encodeApprovalSpenderKey(
+              member.$assetContract!,
+              member.$assetToken!,
+            )
+          : encodeApprovalSpenderKey(approval, member);
+      if (approvalRevokeMap[indexKey]) {
+        selecteds.push(member);
+      }
+    },
+  );
+
+  const isSelectedAll = selecteds.length >= approval.list.length;
+  const isSelectedPartials = !isSelectedAll && selecteds.length > 0;
+
+  return {
+    selecteds,
+    isSelectedAll,
+    isSelectedPartials,
+  };
+}
 
 export function getFinalRiskInfo(contract: ContractApprovalItem) {
   const eva = contract.$contractRiskEvaluation;

@@ -4,7 +4,6 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import PQueue from 'p-queue/dist/index';
 
-import { CHAINS_ENUM } from '@debank/common';
 import {
   type AssetApprovalSpender,
   type AssetApprovalItem,
@@ -44,9 +43,9 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
-  encodeApprovalKey,
+  checkoutApprovalSelection,
   encodeApprovalSpenderKey,
-  findIndexRevokeList,
+  makeApprovalIndexURLBase,
   toRevokeItem,
 } from './utils';
 
@@ -123,7 +122,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
 
   const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
-    __DEV__ ? 'contract' : 'contract',
+    __DEV__ ? 'assets' : 'contract',
   );
 
   const [skContract, setSKContract] = useState('');
@@ -605,134 +604,210 @@ export function useFocusedApprovalOnApprovals() {
 
   return {
     ...sheetModalsOps,
-    focusedApprovalContract: focusedApproval.contract,
-    focusedApprovalAsset: focusedApproval.asset,
+    focusedContractApproval: focusedApproval.contract,
+    focusedAssetApproval: focusedApproval.asset,
     toggleFocusedContractItem,
     toggleFocusedAssetItem,
   };
 }
 
-export type ToggleSelectApprovalSpenderCtx = {
-  spender: AssetApprovalItem['list'][number];
-};
 const revokeAtom = atom<{
-  contractSelection: Record<string, number>;
   contract: Record<string, ApprovalSpenderItemToBeRevoked>;
-  assetsSelection: Record<string, number>;
   assets: Record<string, ApprovalSpenderItemToBeRevoked>;
 }>({
-  contractSelection: {},
   contract: {},
-  assetsSelection: {},
   assets: {},
 });
-export function useRevokeValues() {
-  const {
-    contract: contractRevokeMap,
-    contractSelection,
-    assets: assetRevokeMap,
-    assetsSelection,
-  } = useAtomValue(revokeAtom);
+export function useRevokeApprovals() {
+  const [{ contract: contractRevokeMap, assets: assetRevokeMap }, setRevoke] =
+    useAtom(revokeAtom);
 
-  return {
-    contractRevokeMap,
-    contractSelection,
-    assetRevokeMap,
-    assetsSelection,
-  };
-}
-export function useRevokeSpenders() {
-  const [
-    {
-      contract: contractRevokeMap,
-      contractSelection,
-      assets: assetRevokeMap,
-      assetsSelection,
-    },
-    setRevoke,
-  ] = useAtom(revokeAtom);
-  const toggleSelectContractSpender = React.useCallback(
-    (
-      ctx: ToggleSelectApprovalSpenderCtx & { approval: ContractApprovalItem },
-    ) => {
-      const spender = ctx.spender;
-      const approval = ctx.approval;
-
-      const approvalSpenderKey = encodeApprovalSpenderKey(
-        spender.$assetContract!,
-        spender.$assetToken!,
-      );
-      if (approvalSpenderKey) {
-        setRevoke(prev => {
-          const contract = { ...prev.contract };
-          const contractSelection = { ...prev.contractSelection };
-          const approvalItemKey = encodeApprovalKey(approval);
-
-          contractSelection[approvalItemKey] =
-            contractSelection[approvalItemKey] || 0;
-          if (contract[approvalSpenderKey]) {
-            contractSelection[approvalItemKey] -= Math.max(0, 1);
-            delete contract[approvalSpenderKey];
-          } else {
-            contract[approvalSpenderKey] = toRevokeItem(
-              spender.$assetContract!,
-              spender.$assetToken!,
-            )!;
-            contractSelection[approvalItemKey] += 1;
-          }
-          return { ...prev, contractSelection, contract };
-        });
-      } else if (__DEV__) {
-        console.warn(
-          '[toggleSelectContractSpender] approvalSpenderKey is empty',
-        );
+  const resetRevokeMaps = React.useCallback(
+    (type?: 'contract' | 'assets') => {
+      switch (type) {
+        case 'contract':
+          setRevoke(prev => ({ ...prev, contract: {} }));
+          break;
+        case 'assets':
+          setRevoke(prev => ({ ...prev, assets: {} }));
+          break;
+        default:
+          setRevoke({ contract: {}, assets: {} });
       }
     },
     [setRevoke],
   );
+
+  return {
+    contractRevokeMap,
+    assetRevokeMap,
+    resetRevokeMaps,
+  };
+}
+export function useRevokeContractSpenders() {
+  const focusedApproval = useAtomValue(focusedApprovalAtom);
+  const [{ contract: contractRevokeMap }, setRevoke] = useAtom(revokeAtom);
+
+  const toggleSelectContractSpender = React.useCallback(
+    (ctx: {
+      approval: ContractApprovalItem;
+      contractApproval:
+        | ContractApprovalItem['list'][number]
+        | ContractApprovalItem['list'][number][]
+        | null;
+    }) => {
+      const approval = ctx.approval;
+
+      if (!ctx.contractApproval) {
+        const approvalIndexBase = makeApprovalIndexURLBase(approval);
+
+        setRevoke(prev => {
+          const contractRevokeMap = { ...prev.contract };
+
+          Object.keys(contractRevokeMap).forEach(k => {
+            if (k.startsWith(approvalIndexBase)) {
+              delete contractRevokeMap[k];
+            }
+          });
+
+          return { ...prev, contract: contractRevokeMap };
+        });
+        return;
+      }
+
+      const contractList = Array.isArray(ctx.contractApproval)
+        ? ctx.contractApproval
+        : [ctx.contractApproval];
+      const isToggledSingle = contractList.length === 1;
+
+      setRevoke(prev => {
+        const contractRevokeMap = { ...prev.contract };
+
+        contractList.forEach(contract => {
+          const contractRevokeKey = encodeApprovalSpenderKey(
+            ctx.approval,
+            contract,
+          );
+          if (!contractRevokeKey) {
+            __DEV__ &&
+              console.warn(
+                '[toggleSelectContractSpender] contractRevokeKey is empty',
+              );
+            return;
+          }
+          if (isToggledSingle && contractRevokeMap[contractRevokeKey]) {
+            delete contractRevokeMap[contractRevokeKey];
+          } else {
+            contractRevokeMap[contractRevokeKey] = toRevokeItem(
+              approval,
+              contract,
+            )!;
+          }
+        });
+        return { ...prev, contract: contractRevokeMap };
+      });
+    },
+    [setRevoke],
+  );
+  const { nextShouldSelectAllContracts } = React.useMemo(() => {
+    return {
+      nextShouldSelectAllContracts: !checkoutApprovalSelection(
+        contractRevokeMap,
+        focusedApproval.contract,
+      ).isSelectedAll,
+    };
+  }, [contractRevokeMap, focusedApproval.contract]);
+
+  const onSelectAllContractApprovals = React.useCallback(
+    (targetApproval: ContractApprovalItem, nextSelectAll: boolean) => {
+      if (!targetApproval) return;
+
+      toggleSelectContractSpender({
+        approval: targetApproval,
+        contractApproval: nextSelectAll ? targetApproval?.list || [] : null,
+      });
+    },
+    [toggleSelectContractSpender],
+  );
+
+  return {
+    nextShouldSelectAllContracts,
+    contractRevokeMap,
+    toggleSelectContractSpender,
+    onSelectAllContractApprovals,
+  };
+}
+
+export type ToggleSelectApprovalSpenderCtx = {
+  /** @description if only one spender provided, it will be treated as the one to be toggled selection */
+  spender: null | AssetApprovalSpender | AssetApprovalSpender[];
+  nextSelect?: boolean;
+};
+export function useRevokeAssetSpenders() {
+  const focusedApproval = useAtomValue(focusedApprovalAtom);
+  const [{ assets: assetRevokeMap }, setRevoke] = useAtom(revokeAtom);
 
   const toggleSelectAssetSpender = React.useCallback(
     (ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem }) => {
-      const spender = ctx.spender;
-      const approval = ctx.approval;
+      const inputSpender = ctx.spender || [];
+      let nextSelect = ctx.nextSelect;
 
-      const approvalSpenderKey = encodeApprovalSpenderKey(
-        spender.$assetContract!,
-        spender.$assetToken!,
-      );
-      if (approvalSpenderKey) {
-        setRevoke(prev => {
-          const assets = { ...prev.assets };
-          const assetsSelection = { ...prev.assetsSelection };
-          const approvalItemKey = encodeApprovalKey(approval);
+      const spenders = (
+        Array.isArray(inputSpender) ? inputSpender : [inputSpender]
+      ).filter(Boolean) as AssetApprovalSpender[];
+      const isToggledSingle = spenders.length === 1;
 
-          assetsSelection[approvalItemKey] =
-            assetsSelection[approvalItemKey] || 0;
-          if (assets[approvalSpenderKey]) {
-            assetsSelection[approvalItemKey] -= Math.max(0, 1);
-            delete assets[approvalSpenderKey];
+      setRevoke(prev => {
+        const assetRevokeMap = { ...prev.assets };
+
+        spenders.forEach(spender => {
+          const revokeSpenderKey = encodeApprovalSpenderKey(
+            spender.$assetContract!,
+            spender.$assetToken!,
+          );
+
+          if (isToggledSingle) nextSelect = !assetRevokeMap[revokeSpenderKey];
+
+          if (!nextSelect) {
+            delete assetRevokeMap[revokeSpenderKey];
           } else {
-            assets[approvalSpenderKey] = toRevokeItem(
+            assetRevokeMap[revokeSpenderKey] = toRevokeItem(
               spender.$assetContract!,
               spender.$assetToken!,
             )!;
-            assetsSelection[approvalItemKey] += 1;
           }
-          return { ...prev, assetsSelection, assets };
         });
-      } else if (__DEV__) {
-        console.warn('[toggleSelectAssetSpender] approvalSpenderKey is empty');
-      }
+
+        return { ...prev, assets: assetRevokeMap };
+      });
     },
     [setRevoke],
   );
+  const nextShouldSelectAllAsset = React.useMemo(() => {
+    const { isSelectedAll } = checkoutApprovalSelection(
+      assetRevokeMap,
+      focusedApproval.asset,
+    );
+    return !isSelectedAll;
+  }, [assetRevokeMap, focusedApproval.asset]);
+
+  const onSelectAllAsset = React.useCallback(
+    (targetApproval: AssetApprovalItem, nextSelectAll: boolean) => {
+      if (!targetApproval) return;
+
+      toggleSelectAssetSpender({
+        approval: targetApproval,
+        spender: targetApproval.list,
+        nextSelect: nextSelectAll,
+      });
+    },
+    [toggleSelectAssetSpender],
+  );
 
   return {
-    contractSelection,
-    contractRevokeMap,
-    toggleSelectContractSpender,
-    assetsSelection,
     assetRevokeMap,
     toggleSelectAssetSpender,
+    nextShouldSelectAllAsset,
+    onSelectAllAsset,
   };
 }

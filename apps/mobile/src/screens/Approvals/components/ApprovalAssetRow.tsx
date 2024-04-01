@@ -7,22 +7,17 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   type AssetApprovalItem,
   useFocusedApprovalOnApprovals,
-  useRevokeValues,
+  useRevokeAssetSpenders,
 } from '../useApprovalsPage';
 
-import {
-  RcIconCheckedCC,
-  RcIconRightEntryCC,
-  RcIconUncheckCC,
-  RcIconUnknown,
-} from '../icons';
+import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
 import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
-import { encodeApprovalKey } from '../utils';
+import { checkoutApprovalSelection } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -47,34 +42,18 @@ function RightTouchableView({
 
 function AssetsApprovalRowProto({
   assetApproval,
-  listIndex,
-  onPressArea,
 }: {
   assetApproval: AssetApprovalItem;
-  listIndex?: number;
-  onPressArea?: (ctx: {
-    type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
-    assetApproval: AssetApprovalItem;
-  }) => void;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getAssetsApprovalRowStyles);
   const { t } = useTranslation();
 
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
 
-  const { assetsSelection } = useRevokeValues();
+  const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
   const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    const approvalKey = encodeApprovalKey(assetApproval);
-    const isSelectedAll =
-      assetsSelection[approvalKey] === assetApproval.list.length;
-    const isSelectedPartials =
-      !isSelectedAll && assetsSelection[approvalKey] > 0;
-
-    return {
-      isSelectedAll,
-      isSelectedPartials,
-    };
-  }, [assetApproval, assetsSelection]);
+    return checkoutApprovalSelection(assetRevokeMap, assetApproval);
+  }, [assetApproval, assetRevokeMap]);
 
   const { approvalInfo } = React.useMemo(() => {
     const approvalInfo = {
@@ -114,7 +93,7 @@ function AssetsApprovalRowProto({
         (isSelectedAll || isSelectedPartials) && styles.selectedContainer,
       ]}
       onPress={evt => {
-        onPressArea?.({ type: 'selection', assetApproval });
+        onSelectAllAsset(assetApproval, !isSelectedAll);
       }}>
       {/* floor 1 */}
       <View style={[styles.itemFloor, ContractFloorLayouts.floor1]}>
@@ -188,10 +167,11 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
       maxWidth:
         Dimensions.get('window').width -
         ApprovalsLayouts.innerContainerHorizontalOffset * 2,
-    },
-    selectedContainer: {
       borderWidth: 1,
       borderStyle: 'solid',
+      borderColor: colors['neutral-card1'],
+    },
+    selectedContainer: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light1'],
     },

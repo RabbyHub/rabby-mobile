@@ -11,7 +11,7 @@ import {
 import {
   ContractApprovalItem,
   useFocusedApprovalOnApprovals,
-  useRevokeSpenders,
+  useRevokeContractSpenders,
 } from '../useApprovalsPage';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -22,7 +22,6 @@ import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHan
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { ApprovalsLayouts } from './Layout';
 import { TailedTitle } from '@/components/patches/Simulation';
-import { SkeletonListByContracts } from './Skeleton';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 
@@ -33,11 +32,15 @@ export default function BottomSheetContractApproval({
 }) {
   const {
     sheetModalRefs: { approvalContractDetail: modalRef },
-    focusedApprovalContract,
+    focusedContractApproval,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
 
-  const { toggleSelectContractSpender } = useRevokeSpenders();
+  const {
+    toggleSelectContractSpender,
+    nextShouldSelectAllContracts,
+    onSelectAllContractApprovals,
+  } = useRevokeContractSpenders();
 
   const { styles } = useThemeStyles(getStyles);
 
@@ -47,7 +50,7 @@ export default function BottomSheetContractApproval({
     resetPage,
     isFetchingNextPage,
     isReachTheEnd,
-  } = usePsudoPagination(focusedApprovalContract?.list || [], { pageSize: 20 });
+  } = usePsudoPagination(focusedContractApproval?.list || [], { pageSize: 15 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
@@ -75,23 +78,31 @@ export default function BottomSheetContractApproval({
       const isFirstItem = index === 0;
       const { id, chain } = parseContractApprovalListItem(item);
 
+      if (!focusedContractApproval) return null;
+
       return (
         <View
           key={`${chain}-${id}-${index}`}
-          style={[isFirstItem ? { marginTop: 0 } : { marginTop: 12 }]}>
+          style={[
+            styles.rowItem,
+            isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
+          ]}>
+          {__DEV__ && (
+            <Text
+              style={[styles.rowOrderText, { marginRight: 4, flexShrink: 0 }]}>
+              {index + 1}.
+            </Text>
+          )}
           <InModalApprovalContractRow
+            style={{ flexShrink: 1 }}
+            approval={focusedContractApproval}
             contractApproval={item}
-            onToggleSelection={ctx => {
-              toggleSelectContractSpender({
-                ...ctx,
-                approval: focusedApprovalContract!,
-              });
-            }}
+            onToggleSelection={toggleSelectContractSpender}
           />
         </View>
       );
     },
-    [toggleSelectContractSpender, focusedApprovalContract],
+    [toggleSelectContractSpender, focusedContractApproval, styles],
   );
 
   const onEndReached = React.useCallback(() => {
@@ -117,11 +128,11 @@ export default function BottomSheetContractApproval({
       }}
       snapPoints={['80%']}
       bottomInset={1}>
-      {focusedApprovalContract && (
+      {focusedContractApproval && (
         <BottomSheetView style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
             <ApprovalCardContract
-              contract={focusedApprovalContract}
+              contract={focusedContractApproval}
               inDetailModal
             />
 
@@ -130,9 +141,14 @@ export default function BottomSheetContractApproval({
                 Approved Contracts & Amount
               </Text>
               <MiniButton
-                disabled={!focusedApprovalContract?.list.length}
-                onPress={() => {}}>
-                Select All
+                disabled={!focusedContractApproval?.list.length}
+                onPress={() =>
+                  onSelectAllContractApprovals(
+                    focusedContractApproval!,
+                    nextShouldSelectAllContracts,
+                  )
+                }>
+                {nextShouldSelectAllContracts ? 'Select All' : 'Unselect All'}
               </MiniButton>
             </View>
           </BottomSheetHandlableView>
@@ -224,6 +240,14 @@ const getStyles = createGetStyles(colors => {
       justifyContent: 'center',
       height: ApprovalsLayouts.listFooterComponentHeight,
       // ...makeDebugBorder('green'),
+    },
+    rowItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    rowOrderText: {
+      color: colors['neutral-title1'],
     },
 
     title: {

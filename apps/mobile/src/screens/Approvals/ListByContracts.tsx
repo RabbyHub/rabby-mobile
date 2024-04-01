@@ -13,7 +13,7 @@ import { TopSearch } from './components/TopSearch';
 import {
   type ContractApprovalItem,
   useApprovalsPage,
-  useRevokeSpenders,
+  useRevokeApprovals,
 } from './useApprovalsPage';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
@@ -30,8 +30,6 @@ export default function ListByContracts() {
 
   const { isLoading, displaySortedContractList, loadApprovals, skContract } =
     useApprovalsPage();
-
-  const { contractSelection } = useRevokeSpenders();
 
   const keyExtractor = React.useCallback<
     SectionListProps<ContractApprovalItem>['keyExtractor'] & object
@@ -50,7 +48,7 @@ export default function ListByContracts() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalCardContract contract={item} listIndex={index} />
+          <ApprovalCardContract contract={item} />
         </View>
       );
     },
@@ -80,14 +78,18 @@ export default function ListByContracts() {
     simulateLoadNext(150);
   }, [simulateLoadNext]);
 
+  const { resetRevokeMaps } = useRevokeApprovals();
   const refresh = React.useCallback(async () => {
     resetPage();
 
     try {
       await loadApprovals();
+      resetRevokeMaps('contract');
+    } catch (err) {
+      console.error(err);
     } finally {
     }
-  }, [resetPage, loadApprovals]);
+  }, [resetRevokeMaps, resetPage, loadApprovals]);
 
   const ListEmptyComponent = React.useMemo(() => {
     return isLoading ? (

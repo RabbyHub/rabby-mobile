@@ -10,8 +10,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   AssetApprovalItem,
   ToggleSelectApprovalSpenderCtx,
-  ApprovalSpenderItemToBeRevoked,
-  useRevokeSpenders,
+  useRevokeApprovals,
 } from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +19,7 @@ import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from '@/utils/address';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { findIndexRevokeList, matchAssetApprovalSpender } from '../utils';
+import { querySelectedAssetSpender } from '../utils';
 
 function ApprovalAmountInfo({
   style,
@@ -129,20 +128,23 @@ const getApprovalAmountStyles = createGetStyles(colors => {
 
 export function InModalApprovalAssetRow({
   style,
+  approval,
   spender,
   onToggleSelection,
 }: {
+  approval: AssetApprovalItem;
   spender: AssetApprovalItem['list'][number];
-  onToggleSelection?: (ctx: ToggleSelectApprovalSpenderCtx) => void;
+  onToggleSelection?: (
+    ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
+  ) => void;
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getStyles);
 
-  const { assetRevokeMap } = useRevokeSpenders();
-  const selected = React.useMemo(
-    () => matchAssetApprovalSpender(assetRevokeMap, spender),
+  const { assetRevokeMap } = useRevokeApprovals();
+  const isSelected = React.useMemo(
+    () => !!querySelectedAssetSpender(assetRevokeMap, spender),
     [spender, assetRevokeMap],
   );
-  const isSelected = !!selected;
 
   const { spenderInfo, spenderValues } = React.useMemo(() => {
     const risky = ['danger', 'warning'].includes(spender.risk_level);
@@ -179,7 +181,7 @@ export function InModalApprovalAssetRow({
     <TouchableView
       style={[styles.container, style]}
       onPress={() => {
-        onToggleSelection?.({ spender });
+        onToggleSelection?.({ spender, approval });
       }}>
       <View style={styles.leftArea}>
         <AssetAvatar

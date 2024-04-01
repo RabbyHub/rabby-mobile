@@ -8,24 +8,19 @@ import { useThemeStyles } from '@/hooks/theme';
 import {
   useFocusedApprovalOnApprovals,
   type ContractApprovalItem,
-  useRevokeValues,
+  useRevokeContractSpenders,
 } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { ellipsisAddress } from '@/utils/address';
 import { SimulateUnderline } from '@/components/patches/Simulation';
 
-import {
-  RcIconCheckedCC,
-  RcIconRightEntryCC,
-  RcIconUncheckCC,
-  RcIconUnknown,
-} from '../icons';
+import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
 import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { toast } from '@/components/Toast';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { encodeApprovalKey } from '../utils';
+import { checkoutApprovalSelection } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -51,12 +46,10 @@ function RightTouchableView({
 function CardProto({
   style,
   contract,
-  listIndex,
   onPressArea,
   inDetailModal = false,
 }: {
   contract: ContractApprovalItem;
-  listIndex?: number;
   onPressArea?: (ctx: {
     type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
     contract: ContractApprovalItem;
@@ -66,19 +59,12 @@ function CardProto({
   const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
 
-  const { contractSelection } = useRevokeValues();
-  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    const approvalKey = encodeApprovalKey(contract);
-    const isSelectedAll =
-      contractSelection[approvalKey] === contract.list.length;
-    const isSelectedPartials =
-      !isSelectedAll && contractSelection[approvalKey] > 0;
+  const { contractRevokeMap, onSelectAllContractApprovals } =
+    useRevokeContractSpenders();
 
-    return {
-      isSelectedAll,
-      isSelectedPartials,
-    };
-  }, [contract, contractSelection]);
+  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
+    return checkoutApprovalSelection(contractRevokeMap, contract);
+  }, [contractRevokeMap, contract]);
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
     React.useMemo(() => {
@@ -146,8 +132,10 @@ function CardProto({
           styles.selectedContainer,
         style,
       ]}
-      onPress={evt => {
-        onPressArea?.({ type: 'selection', contract });
+      onPress={() => {
+        if (!inDetailModal) {
+          onSelectAllContractApprovals(contract, !isSelectedAll);
+        }
       }}>
       {/* floor 1 */}
       <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
@@ -163,18 +151,24 @@ function CardProto({
           ) : (
             <RcIconUnknown style={styles.chainIcon} />
           )}
-          <Text
-            style={styles.contractAddrText}
-            ellipsizeMode="tail"
-            numberOfLines={1}>
-            {ellipsisAddress(contract.id)}
-          </Text>
-          <Text
-            style={styles.contractName}
-            ellipsizeMode="tail"
-            numberOfLines={1}>
-            ({contract.name})
-          </Text>
+          <View style={styles.addrContractWrapper}>
+            <Text
+              style={styles.contractAddrText}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {ellipsisAddress(contract.id)}
+            </Text>
+            <Text
+              style={[
+                styles.contractName,
+                inDetailModal && styles.contractNameInDetailModal,
+              ]}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
+              ({contract.name})
+            </Text>
+          </View>
           {!inDetailModal ? (
             <SelectionCheckbox
               isSelectedAll={isSelectedAll}
@@ -190,6 +184,7 @@ function CardProto({
           )}
         </View>
         <RightTouchableView
+          style={styles.rightOps}
           disabled={inDetailModal}
           onPress={evt => {
             if (inDetailModal) return;
@@ -306,10 +301,11 @@ export const getCardStyles = createGetStyles(colors => {
       maxWidth:
         Dimensions.get('window').width -
         ApprovalsLayouts.innerContainerHorizontalOffset * 2,
-    },
-    selectedContainer: {
       borderWidth: 1,
       borderStyle: 'solid',
+      borderColor: colors['neutral-card1'],
+    },
+    selectedContainer: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light1'],
     },
@@ -323,6 +319,7 @@ export const getCardStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      flexShrink: 1,
     },
     floorRight: {
       flexDirection: 'row',
@@ -330,6 +327,33 @@ export const getCardStyles = createGetStyles(colors => {
       justifyContent: 'flex-end',
       minWidth: 54,
       // ...makeDebugBorder('pink')
+    },
+    addrContractWrapper: {
+      flexShrink: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    contractAddrText: {
+      color: colors['neutral-title1'],
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    contractName: {
+      color: colors['neutral-foot'],
+      fontSize: 14,
+      fontWeight: '400',
+      marginLeft: 6,
+      maxWidth: 100,
+    },
+    contractNameInDetailModal: {
+      maxWidth: 80,
+    },
+    contractCheckbox: {
+      marginLeft: 6,
+    },
+    rightOps: {
+      flexShrink: 0,
     },
     entryText: {
       fontSize: 16,
@@ -359,20 +383,6 @@ export const getCardStyles = createGetStyles(colors => {
     },
     chainIcon: {
       marginRight: 6,
-    },
-    contractAddrText: {
-      color: colors['neutral-title1'],
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    contractName: {
-      color: colors['neutral-foot'],
-      fontSize: 14,
-      fontWeight: '400',
-      marginLeft: 6,
-    },
-    contractCheckbox: {
-      marginLeft: 6,
     },
   };
 });
