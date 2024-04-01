@@ -340,7 +340,8 @@
         "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
         "misMatchSignId": "Incongruent transaction data. Please check the transaction details.",
         "unknownQRCode": "Error: We couldn't identify that QR code",
-        "afterSignDesc": "Scan the QR code on Keystone to get signature"
+        "afterSignDesc": "Scan the QR code on Keystone to get signature",
+        "submitting": "Signed. Creating transaction"
       },
       "keystone": {
         "signWith": "Switch to {{method}} for signing",

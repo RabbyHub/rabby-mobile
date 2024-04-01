@@ -45,7 +45,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
   [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400],
   [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
-  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440],
+  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440, 455],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {

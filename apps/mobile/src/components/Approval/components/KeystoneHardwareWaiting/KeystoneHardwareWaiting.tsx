@@ -237,9 +237,9 @@ export const KeystoneHardwareWaiting = ({
     }
 
     if (status === QR_HARDWARE_STATUS.RECEIVED) {
-      setContent(t('page.signFooterBar.qrcode.sigReceived'));
       handleSubmit();
-      return 'SUBMITTING';
+      setContent(t('page.signFooterBar.qrcode.submitting'));
+      return 'SENDING';
     }
     if (status === QR_HARDWARE_STATUS.DONE) {
       setContent(t('page.signFooterBar.qrcode.sigCompleted'));
