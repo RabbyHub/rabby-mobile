@@ -36,10 +36,7 @@ export function BottomSheetContent({
           <DappCardInWebViewNav
             data={dappInfo.maybeDappInfo}
             onFavoritePress={dapp => {
-              addDapp({
-                ...dapp,
-                isFavorite: !dapp.isFavorite,
-              });
+              updateFavorite(dapp.origin, !dapp.isFavorite);
             }}
           />
         </BottomSheetScrollView>
