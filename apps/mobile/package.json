@@ -48,6 +48,7 @@
     "@ngraveio/bc-ur": "1.1.6",
     "@notifee/react-native": "^7.8.0",
     "@rabby-wallet/eth-keyring-ledger": "workspace:^",
+    "@rabby-wallet/eth-keyring-onekey": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "*",
     "@rabby-wallet/eth-walletconnect-keyring": "beta",
     "@rabby-wallet/object-multiplex": "workspace:^",

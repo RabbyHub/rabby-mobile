@@ -35,6 +35,9 @@
     },
     {
       "path": "./packages/eth-keyring-keystone/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/eth-keyring-onekey/tsconfig.build.json"
     }
   ],
   "files": [],

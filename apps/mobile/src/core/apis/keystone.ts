@@ -6,7 +6,7 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import {
   AcquireMemeStoreData,
   MemStoreDataReady,
-} from '@rabby-wallet/eth-keyring-keystone/dist/OneKeyKeyring';
+} from '@rabby-wallet/eth-keyring-keystone/dist/KeystoneKeyring';
 import { eventBus, EVENTS } from '@/utils/events';
 
 export async function submitQRHardwareCryptoHDKey(cbor: string) {

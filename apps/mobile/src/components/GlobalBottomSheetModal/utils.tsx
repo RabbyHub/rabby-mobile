@@ -16,6 +16,7 @@ import { SettingLedger } from '../HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
 import { ConnectKeystone } from '../ConnectKeystone/ConnectKeystone';
 import { SettingKeystone } from '../HDSetting/SettingKeystone';
+import { ConnectOneKey } from '../ConnectOneKey/ConnectOneKey';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -65,7 +66,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SETTING_LEDGER]: SettingLedger,
   [MODAL_NAMES.CONNECT_KEYSTONE]: ConnectKeystone,
   [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
-  [MODAL_NAMES.CONNECT_ONEKEY]: ConnectKeystone,
+  [MODAL_NAMES.CONNECT_ONEKEY]: ConnectOneKey,
   [MODAL_NAMES.SETTING_ONEKEY]: SettingKeystone,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,

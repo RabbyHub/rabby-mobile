@@ -27,10 +27,6 @@ const styles = StyleSheet.create({
 });
 
 export const HardwareDeviceList = () => {
-  const handleComingSoon = React.useCallback(() => {
-    toast.show('Coming Soon :)');
-  }, []);
-
   const handleLedger = React.useCallback(() => {
     const id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.CONNECT_LEDGER,
@@ -104,10 +100,7 @@ export const HardwareDeviceList = () => {
         onPress={handleKeystone}
       />
       <WalletItem
-        style={StyleSheet.flatten([
-          styles.walletItem,
-          styles.walletItemDisabled,
-        ])}
+        style={StyleSheet.flatten([styles.walletItem])}
         Icon={OneKeySVG}
         title="OneKey"
         onPress={handleOneKey}

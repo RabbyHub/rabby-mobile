@@ -1,26 +1,25 @@
+import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core';
-import { OneKeyBridgeInterface } from './onekey-bridge-interface';
-import HardwareSDK from '@onekeyfe/hd-web-sdk';
-const { HardwareWebSdk } = HardwareSDK;
+
+import type { OneKeyBridgeInterface } from './onekey-bridge-interface';
 
 export default class OneKeyBridge implements OneKeyBridgeInterface {
   init: OneKeyBridgeInterface['init'] = async () => {
-    HardwareWebSdk.init({
-      debug: false,
-      // The official iframe page deployed by OneKey
-      // of course you can also deploy it yourself
-      connectSrc: 'https://jssdk.onekey.so/0.3.27/',
+    await HardwareBleSdk.init({
+      debug: true,
+      fetchConfig: true,
     });
-    HardwareWebSdk.on(UI_EVENT, (e) => {
+    console.log('init');
+    HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
         case UI_REQUEST.REQUEST_PIN:
-          HardwareWebSdk.uiResponse({
+          HardwareBleSdk.uiResponse({
             type: UI_RESPONSE.RECEIVE_PIN,
             payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE',
           });
           break;
         case UI_REQUEST.REQUEST_PASSPHRASE:
-          HardwareWebSdk.uiResponse({
+          HardwareBleSdk.uiResponse({
             type: UI_RESPONSE.RECEIVE_PASSPHRASE,
             payload: {
               value: '',
@@ -35,15 +34,15 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
     });
   };
 
-  evmSignTransaction = HardwareWebSdk.evmSignTransaction;
+  evmSignTransaction = HardwareBleSdk.evmSignTransaction;
 
-  evmSignMessage = HardwareWebSdk.evmSignMessage;
+  evmSignMessage = HardwareBleSdk.evmSignMessage;
 
-  evmSignTypedData = HardwareWebSdk.evmSignTypedData;
+  evmSignTypedData = HardwareBleSdk.evmSignTypedData;
 
-  searchDevices = HardwareWebSdk.searchDevices;
+  searchDevices = HardwareBleSdk.searchDevices;
 
-  getPassphraseState = HardwareWebSdk.getPassphraseState;
+  getPassphraseState = HardwareBleSdk.getPassphraseState;
 
-  evmGetPublicKey = HardwareWebSdk.evmGetPublicKey;
+  evmGetPublicKey = HardwareBleSdk.evmGetPublicKey;
 }

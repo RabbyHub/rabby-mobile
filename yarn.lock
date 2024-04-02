@@ -5333,7 +5333,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-keyring-onekey@workspace:packages/eth-keyring-onekey":
+"@rabby-wallet/eth-keyring-onekey@workspace:^, @rabby-wallet/eth-keyring-onekey@workspace:packages/eth-keyring-onekey":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-onekey@workspace:packages/eth-keyring-onekey"
   dependencies:
@@ -5343,6 +5343,7 @@ __metadata:
     "@onekeyfe/hd-core": ^1.0.0-alpha.2
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
+    "@types/bytebuffer": ^5.0.48
     "@types/hdkey": ^2.0.3
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
@@ -7590,6 +7591,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bytebuffer@npm:^5.0.48":
+  version: 5.0.48
+  resolution: "@types/bytebuffer@npm:5.0.48"
+  dependencies:
+    "@types/long": ^3.0.0
+    "@types/node": "*"
+  checksum: 26d119d8326df961e2e1313551435d91f1b9629a8af85fd9a02f1fa196e1c80de63aa43b918cbc25dbdaff1bcc07d92fb0be53495e2e36d78ba22179630241f6
+  languageName: node
+  linkType: hard
+
 "@types/cacheable-request@npm:^6.0.1":
   version: 6.0.3
   resolution: "@types/cacheable-request@npm:6.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fcacheable-request%2F-%2Fcacheable-request-6.0.3.tgz"
@@ -8022,6 +8033,13 @@ __metadata:
   version: 4.14.202
   resolution: "@types/lodash@npm:4.14.202::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Flodash%2F-%2Flodash-4.14.202.tgz"
   checksum: a91acf3564a568c6f199912f3eb2c76c99c5a0d7e219394294213b3f2d54f672619f0fde4da22b29dc5d4c31457cd799acc2e5cb6bd90f9af04a1578483b6ff7
+  languageName: node
+  linkType: hard
+
+"@types/long@npm:^3.0.0":
+  version: 3.0.32
+  resolution: "@types/long@npm:3.0.32"
+  checksum: 7c64c64b4a8bf38d9a6690f725ed5e92383905b22c1320493749729c4f476a74fa2507cc9364268ecdfdba1cf11573a46648157f3e34cb0c39f51b05d13c37eb
   languageName: node
   linkType: hard
 
@@ -26492,6 +26510,7 @@ __metadata:
     "@ngraveio/bc-ur": 1.1.6
     "@notifee/react-native": ^7.8.0
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
+    "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-walletconnect-keyring": beta
     "@rabby-wallet/object-multiplex": "workspace:^"
