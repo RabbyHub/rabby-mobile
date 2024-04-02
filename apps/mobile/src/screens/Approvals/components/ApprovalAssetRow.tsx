@@ -16,7 +16,6 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
-import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { checkoutApprovalSelection } from '../utils';
 
 export const ContractFloorLayouts = {
@@ -60,6 +59,7 @@ function AssetsApprovalRowProto({
       nftType: null as null | 'collection' | 'nft',
       floor1Text: '',
       floor2Text: '',
+      hasFloor2: false,
     };
 
     if (assetApproval?.type === 'nft') {
@@ -68,10 +68,11 @@ function AssetsApprovalRowProto({
     }
 
     if (assetApproval?.type === 'token') {
-      approvalInfo.floor1Text = `${bizNumberUtils.splitNumberByStep(
-        assetApproval.balance.toFixed(2),
-      )}`;
-      approvalInfo.floor2Text = assetApproval?.name || '';
+      // approvalInfo.floor1Text = `${bizNumberUtils.splitNumberByStep(
+      //   assetApproval.balance.toFixed(2),
+      // )}`;
+      approvalInfo.floor1Text = assetApproval?.name || '';
+      // approvalInfo.floor2Text = assetApproval?.name || '';
     } else {
       approvalInfo.floor1Text = assetApproval?.nftToken
         ? stringUtils.ensureSuffix(
@@ -80,6 +81,9 @@ function AssetsApprovalRowProto({
           )
         : assetApproval?.name || 'Unknown';
     }
+
+    approvalInfo.hasFloor2 =
+      !!approvalInfo.floor2Text || !!approvalInfo.nftType;
 
     return {
       approvalInfo,
@@ -128,12 +132,14 @@ function AssetsApprovalRowProto({
                 style={styles.contractCheckbox}
               />
             </View>
-            <View style={styles.basicInfoF2}>
-              <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text>
-              {approvalInfo.nftType && (
-                <ApprovalNFTBadge type={approvalInfo.nftType} />
-              )}
-            </View>
+            {approvalInfo.hasFloor2 && (
+              <View style={styles.basicInfoF2}>
+                {/* <Text style={styles.floor2Text}>{approvalInfo.floor2Text}</Text> */}
+                {approvalInfo.nftType && (
+                  <ApprovalNFTBadge type={approvalInfo.nftType} />
+                )}
+              </View>
+            )}
           </View>
         </View>
         <RightTouchableView
@@ -143,6 +149,7 @@ function AssetsApprovalRowProto({
           }}>
           <Text style={styles.entryText}>{assetApproval.list.length}</Text>
           <RcIconRightEntryCC
+            style={{ marginLeft: 4 }}
             width={14}
             height={14}
             color={colors['neutral-foot']}

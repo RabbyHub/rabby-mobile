@@ -6,5 +6,6 @@ export { default as RcIconIndeterminateCC } from './icon-indeterminate-cc.svg';
 export { default as RcIconUnknown } from './icon-unknown.svg';
 
 export { default as RcIconRightEntryCC } from './icon-right-entry-cc.svg';
+export { default as RcIconRightEntryMiniCC } from './icon-right-entry-mini-cc.svg';
 
 export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';

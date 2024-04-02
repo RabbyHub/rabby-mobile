@@ -19,7 +19,7 @@ import { findChainByServerID } from '@/utils/chain';
 import { ellipsisAddress } from '@/utils/address';
 import { SimulateUnderline } from '@/components/patches/Simulation';
 
-import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
+import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
 import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
@@ -238,7 +238,7 @@ function CardProto({
           {!inDetailModal ? (
             <>
               <Text style={styles.entryText}>{contract.list.length}</Text>
-              <RcIconRightEntryCC
+              <RcIconRightEntryMiniCC
                 width={14}
                 height={14}
                 color={colors['neutral-foot']}
