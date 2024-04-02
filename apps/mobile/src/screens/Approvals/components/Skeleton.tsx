@@ -4,9 +4,26 @@ import { View } from 'react-native';
 import { ApprovalsLayouts } from './Layout';
 import { getCardStyles } from './ApprovalCardContract';
 import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles } from '@/utils/styles';
+
+const getSkeletonStyles = createGetStyles(colors => {
+  return {
+    skeletonFloor: {
+      height: '33%',
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    skeletonBg: {
+      backgroundColor: colors['neutral-card2'],
+      height: 14,
+    },
+  };
+});
 
 export const SkeletonListByContracts = memo(() => {
-  const { styles: cardStyles } = useThemeStyles(getCardStyles);
+  const { styles: cardStyles, colors } = useThemeStyles(getCardStyles);
+  const { styles: skeletonStyles } = useThemeStyles(getSkeletonStyles);
   return (
     <View
       style={{
@@ -19,37 +36,45 @@ export const SkeletonListByContracts = memo(() => {
             key={i}
             style={[
               cardStyles.container,
+              { height: 96 },
               i > 0 && {
                 marginTop: 10,
               },
             ]}>
-            <View style={{ flexDirection: 'row' }}>
-              <Skeleton
-                animation="pulse"
-                style={{ width: '70%', flexShrink: 0, height: '100%' }}
-              />
-              <View
-                style={{
-                  width: '100%',
-                  flexShrink: 1,
-                  marginLeft: 6,
-                  flexDirection: 'column',
-                }}>
+            <View
+              style={{
+                width: '100%',
+                flexShrink: 1,
+                flexDirection: 'column',
+                justifyContent: 'space-evenly',
+              }}>
+              <View style={[skeletonStyles.skeletonFloor, { width: '50%' }]}>
                 <Skeleton
                   animation="pulse"
                   width={'100%'}
-                  style={[{ flexShrink: 1, height: '40%' }]}
+                  style={[
+                    skeletonStyles.skeletonBg,
+                    { borderRadius: 20, width: 20, height: 20 },
+                  ]}
                 />
                 <Skeleton
                   animation="pulse"
                   width={'100%'}
-                  style={[{ flexShrink: 1, height: '30%', paddingTop: 5 }]}
+                  style={[
+                    skeletonStyles.skeletonBg,
+                    { flexShrink: 1, marginLeft: 8 },
+                  ]}
                 />
+              </View>
+              <View style={[skeletonStyles.skeletonFloor]}>
                 <Skeleton
                   animation="pulse"
                   width={'100%'}
-                  style={[{ flexShrink: 1, height: '30%', paddingTop: 4 }]}
+                  style={[skeletonStyles.skeletonBg]}
                 />
+              </View>
+              <View style={[skeletonStyles.skeletonFloor]}>
+                <Skeleton animation="pulse" width={'100%'} style={[{}]} />
               </View>
             </View>
           </View>

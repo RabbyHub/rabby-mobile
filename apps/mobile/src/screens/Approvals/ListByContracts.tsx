@@ -96,14 +96,10 @@ export default function ListByContracts() {
       <SkeletonListByContracts />
     ) : (
       <View style={styles.emptyHolderContainer}>
-        {skContract ? (
-          <NotMatchedHolder />
-        ) : (
-          <EmptyHolder text="No Assets" type="card" />
-        )}
+        <NotMatchedHolder />
       </View>
     );
-  }, [styles.emptyHolderContainer, skContract, isLoading]);
+  }, [styles.emptyHolderContainer, isLoading]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -133,17 +129,7 @@ export default function ListByContracts() {
         // ListHeaderComponent={renderHeaderComponent}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
-            {isFetchingNextPage ? (
-              <ActivityIndicator />
-            ) : sectionList.length && isReachTheEnd ? (
-              <TailedTitle
-                style={{
-                  paddingHorizontal:
-                    ApprovalsLayouts.innerContainerHorizontalOffset,
-                }}
-                text="No more"
-              />
-            ) : null}
+            {isFetchingNextPage ? <ActivityIndicator /> : null}
           </View>
         }
         style={styles.list}

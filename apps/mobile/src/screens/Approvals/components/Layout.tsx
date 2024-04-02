@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { Platform, View, Text, Dimensions } from 'react-native';
+import { Platform, View, Text, Dimensions, StatusBar } from 'react-native';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
 
@@ -42,6 +42,7 @@ export const ApprovalsLayouts = {
   get scrollableSectionHeight() {
     return (
       Dimensions.get('window').height -
+      (StatusBar.currentHeight || 0) -
       this.tabbarHeight -
       this.bottomAreaHeight -
       this.searchBarHeight -

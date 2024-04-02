@@ -164,15 +164,16 @@ function CardProto({
     [contract.$riskAboutValues.risk_exposure_usd_value],
   );
 
+  const isTreatedAsSelected =
+    !inDetailModal && (isSelectedAll || isSelectedPartials);
+
   return (
     <TouchableView
       disabled={inDetailModal}
       style={[
         styles.container,
         contract?.risk_alert ? styles.containerWithRisky : {},
-        !inDetailModal &&
-          (isSelectedAll || isSelectedPartials) &&
-          styles.selectedContainer,
+        isTreatedAsSelected && styles.selectedContainer,
         style,
       ]}
       onPress={() => {
@@ -386,6 +387,7 @@ function CardProto({
               },
               revokeTrendsEvaluation.finalUnderlineStyle,
             ]}
+            innerBg={!isTreatedAsSelected ? undefined : colors['blue-light1']}
           />
         </Tip>
       </View>

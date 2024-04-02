@@ -1,15 +1,20 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { StyleSheet } from 'react-native';
-import { Text } from 'react-native';
-import { View } from 'react-native';
+import { Text, View, ViewStyle, StyleSheet } from 'react-native';
 
-export function SimulateUnderline(props: RNViewProps) {
+export function SimulateUnderline({
+  innerBg,
+  ...props
+}: RNViewProps & {
+  innerBg?: ViewStyle['backgroundColor'];
+}) {
   const { styles } = useThemeStyles(getStyles);
 
   return (
     <View {...props} style={[styles.outer, props.style]}>
-      <View style={styles.inner} />
+      <View
+        style={[styles.inner, !innerBg ? {} : { backgroundColor: innerBg }]}
+      />
     </View>
   );
 }
@@ -23,6 +28,7 @@ const getStyles = createGetStyles(colors => {
       borderWidth: 1,
       borderColor: colors['red-default'],
       borderStyle: 'dashed',
+      // backgroundColor: 'trasparent',
       zIndex: 0,
     },
     inner: {

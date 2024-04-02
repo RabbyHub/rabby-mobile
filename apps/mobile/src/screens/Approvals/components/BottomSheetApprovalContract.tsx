@@ -158,17 +158,7 @@ export default function BottomSheetContractApproval({
             maxToRenderPerBatch={20}
             ListFooterComponent={
               <View style={styles.listFooterContainer}>
-                {isFetchingNextPage ? (
-                  <ActivityIndicator />
-                ) : sectionList.length && isReachTheEnd ? (
-                  <TailedTitle
-                    style={{
-                      paddingHorizontal:
-                        ApprovalsLayouts.innerContainerHorizontalOffset,
-                    }}
-                    text="No more"
-                  />
-                ) : null}
+                {isFetchingNextPage ? <ActivityIndicator /> : null}
               </View>
             }
             style={[styles.scrollableView, styles.scrollableArea]}

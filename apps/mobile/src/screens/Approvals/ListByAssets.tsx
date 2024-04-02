@@ -100,14 +100,10 @@ export default function ListByAssets() {
       <SkeletonListByAssets />
     ) : (
       <View style={styles.emptyHolderContainer}>
-        {skAssets ? (
-          <NotMatchedHolder />
-        ) : (
-          <EmptyHolder text="No Assets" type="card" />
-        )}
+        <NotMatchedHolder />
       </View>
     );
-  }, [styles.emptyHolderContainer, skAssets, isLoading]);
+  }, [styles.emptyHolderContainer, isLoading]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -136,17 +132,7 @@ export default function ListByAssets() {
         maxToRenderPerBatch={20}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
-            {isFetchingNextPage ? (
-              <ActivityIndicator />
-            ) : sectionList.length && isReachTheEnd ? (
-              <TailedTitle
-                style={{
-                  paddingHorizontal:
-                    ApprovalsLayouts.innerContainerHorizontalOffset,
-                }}
-                text="No more"
-              />
-            ) : null}
+            {isFetchingNextPage ? <ActivityIndicator /> : null}
           </View>
         }
         style={styles.list}
