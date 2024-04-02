@@ -6,6 +6,7 @@ import {
   type AssetApprovalItem,
   type ContractApprovalItem,
   type SpenderInNFTApproval,
+  type AssetApprovalSpender,
   RiskNumMap,
   compareContractApprovalItemByRiskLevel,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
@@ -257,6 +258,7 @@ export function checkoutContractSpender(
 export function checkoutApprovalSelection<
   T extends ContractApprovalItem | AssetApprovalItem,
 >(
+  _for: 'contract' | 'assets',
   approvalRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
   approval?: T | null,
 ) {
@@ -274,10 +276,10 @@ export function checkoutApprovalSelection<
         | ApprovalItem['list'][number],
     ) => {
       const indexKey =
-        '$assetContract' in member
+        _for === 'assets'
           ? encodeApprovalSpenderKey(
-              member.$assetContract!,
-              member.$assetToken!,
+              (member as AssetApprovalSpender).$assetContract!,
+              (member as AssetApprovalSpender).$assetToken!,
             )
           : encodeApprovalSpenderKey(approval, member);
       if (approvalRevokeMap[indexKey]) {

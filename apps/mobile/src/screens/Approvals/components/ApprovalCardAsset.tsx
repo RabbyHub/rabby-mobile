@@ -36,7 +36,6 @@ function ApprovalCardAssetsProto({
     let balance = 0 as number;
 
     if (asset?.type === 'nft') {
-      // chainItem = findChainByServerID(asset?.chain as Chain['serverId']);
       assetInfo.nftType = asset.nftContract ? 'collection' : 'nft';
       assetInfo.nftTypeBadge =
         assetInfo.nftType === 'collection' ? 'Collection' : 'NFT';
@@ -46,6 +45,8 @@ function ApprovalCardAssetsProto({
           asset?.name || 'Unknown',
           ` #${asset?.nftToken.inner_id}`,
         );
+      } else if (asset?.nftContract) {
+        assetInfo.assetName = asset?.nftContract.contract_name || 'Unknown';
       }
     } else {
       assetInfo.assetName = asset?.name || 'Unknown';
@@ -81,14 +82,14 @@ function ApprovalCardAssetsProto({
           <View style={styles.basicInfo}>
             <Text
               style={styles.assetNameText}
-              ellipsizeMode="clip"
+              ellipsizeMode="tail"
               numberOfLines={1}>
               {assetName}
             </Text>
             {nftTypeBadge && (
               <Text
                 style={styles.nftTypeBadge}
-                ellipsizeMode="clip"
+                ellipsizeMode="tail"
                 numberOfLines={1}>
                 {nftTypeBadge}
               </Text>
@@ -179,6 +180,7 @@ export const getAssetItemStyles = createGetStyles(colors => {
       color: colors['neutral-title1'],
       fontSize: 16,
       fontWeight: '600',
+      maxWidth: 180,
     },
   };
 });

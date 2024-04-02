@@ -338,7 +338,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                   markParentForAssetItemSpender(
                     spender,
                     nextApprovalsData.nftMap[nftTokenKey],
-                    nextApprovalsData.contractMap[nftTokenKey],
+                    nextApprovalsData.contractMap[contractNftKey],
                     token,
                   ),
                 );
@@ -738,6 +738,7 @@ export function useRevokeContractSpenders() {
   const { nextShouldSelectAllContracts } = React.useMemo(() => {
     return {
       nextShouldSelectAllContracts: !checkoutApprovalSelection(
+        'contract',
         contractRevokeMap,
         focusedApproval.contract,
       ).isSelectedAll,
@@ -811,6 +812,7 @@ export function useRevokeAssetSpenders() {
   );
   const nextShouldSelectAllAsset = React.useMemo(() => {
     const { isSelectedAll } = checkoutApprovalSelection(
+      'assets',
       assetRevokeMap,
       focusedApproval.asset,
     );

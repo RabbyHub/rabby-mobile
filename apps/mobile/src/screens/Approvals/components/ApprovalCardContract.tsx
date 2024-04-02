@@ -68,7 +68,7 @@ function CardProto({
     useRevokeContractSpenders();
 
   const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    return checkoutApprovalSelection(contractRevokeMap, contract);
+    return checkoutApprovalSelection('contract', contractRevokeMap, contract);
   }, [contractRevokeMap, contract]);
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =

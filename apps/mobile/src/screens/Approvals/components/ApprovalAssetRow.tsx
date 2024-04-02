@@ -51,7 +51,7 @@ function AssetsApprovalRowProto({
 
   const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
   const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    return checkoutApprovalSelection(assetRevokeMap, assetApproval);
+    return checkoutApprovalSelection('assets', assetRevokeMap, assetApproval);
   }, [assetApproval, assetRevokeMap]);
 
   const { approvalInfo } = React.useMemo(() => {
