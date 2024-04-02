@@ -57,6 +57,8 @@ export class Session {
     this.origin = origin;
     this.icon = icon;
     this.name = name;
+
+    console.log('setProp', origin, icon, name);
   }
 }
 

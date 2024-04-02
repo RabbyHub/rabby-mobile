@@ -35,7 +35,7 @@ export function useHasActiveOpenedDapp() {
 }
 
 export function useOpenDappView() {
-  const { dapps, addDapp, syncDappInfo } = useDapps();
+  const { dapps, addDapp } = useDapps();
   const [activeDappOrigin, setActiveDappOrigin] = useAtom(activeDappOriginAtom);
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
