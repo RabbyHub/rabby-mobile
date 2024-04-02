@@ -43,6 +43,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
+  checkCompareContractItem,
   checkoutApprovalSelection,
   encodeApprovalSpenderKey,
   makeApprovalIndexURLBase,
@@ -54,6 +55,11 @@ export const FILTER_TYPES = {
   assets: 'assets',
 } as const;
 
+const SAFE_LEVEL: Record<string, string> = {
+  safe: 'safe',
+  warning: 'warning',
+  danger: 'danger',
+};
 const SAFE_LEVEL_MAP: Record<string, number> = {
   safe: 1,
   warning: 10,
@@ -112,17 +118,56 @@ function sortAssetApproval<T extends ApprovalItem>(approvals: T[]) {
   };
 }
 
-const SAFE_LEVEL: Record<string, string> = {
-  safe: 'safe',
-  warning: 'warning',
-  danger: 'danger',
-};
+function sortContractListAsTable(
+  a: ContractApprovalItem,
+  b: ContractApprovalItem,
+) {
+  const checkResult = checkCompareContractItem(a, b);
+  // descending to keep risk-first-return-value
+  if (checkResult.shouldEarlyReturn) return -checkResult.comparison;
+
+  return (
+    // ascending order by risk exposure
+    a.$riskAboutValues.risk_exposure_usd_value -
+      b.$riskAboutValues.risk_exposure_usd_value ||
+    // or descending order by approved count
+    b.list.length - a.list.length
+  );
+}
+function sortContractApproval<T extends ContractApprovalItem>(
+  contractApprovals: T[],
+) {
+  const l = contractApprovals.length;
+  const dangerList: ContractApprovalItem[] = [];
+  const warnList: ContractApprovalItem[] = [];
+  const safeList: ContractApprovalItem[] = [];
+  for (let i = 0; i < l; i++) {
+    const item = contractApprovals[i];
+    if (item.risk_level === SAFE_LEVEL.danger) {
+      dangerList.push(item);
+    } else if (item.risk_level === SAFE_LEVEL.warning) {
+      warnList.push(item);
+    } else {
+      safeList.push(item);
+    }
+  }
+
+  const groupedSafeList = groupBy(safeList, item => item.chain);
+  const sortedSafeList = sortBy(Object.values(groupedSafeList), 'length').map(
+    e => sortBy(e, a => a.list.length).reverse(),
+  );
+  return [
+    ...dangerList.sort(sortContractListAsTable),
+    ...warnList.sort(sortContractListAsTable),
+    ...flatten(sortedSafeList.reverse()).sort(sortContractListAsTable),
+  ];
+}
 
 export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const { currentAccount } = useCurrentAccount();
 
   const [filterType, setFilterType] = useState<keyof typeof FILTER_TYPES>(
-    __DEV__ ? 'assets' : 'contract',
+    __DEV__ ? 'contract' : 'contract',
   );
 
   const [skContract, setSKContract] = useState('');
@@ -409,27 +454,8 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
   const sortedContractList: ContractApprovalItem[] = useMemo(() => {
     if (approvalsData.contractMap) {
       const contractList = Object.values(approvalsData.contractMap);
-      const l = contractList.length;
-      const dangerList: ContractApprovalItem[] = [];
-      const warnList: ContractApprovalItem[] = [];
-      const safeList: ContractApprovalItem[] = [];
-      for (let i = 0; i < l; i++) {
-        const item = contractList[i];
-        if (item.risk_level === SAFE_LEVEL.warning) {
-          warnList.push(item);
-        } else if (item.risk_level === SAFE_LEVEL.danger) {
-          dangerList.push(item);
-        } else {
-          safeList.push(item);
-        }
-      }
 
-      const groupedSafeList = groupBy(safeList, item => item.chain);
-      const sortedSafeList = sortBy(
-        Object.values(groupedSafeList),
-        'length',
-      ).map(e => sortBy(e, a => a.list.length).reverse());
-      return [...dangerList, ...warnList, ...flatten(sortedSafeList.reverse())];
+      return sortContractApproval(contractList);
     }
     return [];
   }, [approvalsData.contractMap]);

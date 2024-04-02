@@ -19,6 +19,8 @@ import { useRefState } from '@/hooks/common/useRefState';
 
 const isAndroid = Platform.OS === 'android';
 
+const riskyTipHeight = 32;
+const riskyTipArrowOffset = 14;
 export const ApprovalsLayouts = {
   tabbarHeight: 44,
   bottomAreaHeight: 100,
@@ -27,6 +29,8 @@ export const ApprovalsLayouts = {
   searchBarHeight: 48,
 
   contractCardHeight: 108,
+  contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
+  contractCardHeightWithRiskAlert: 108 + riskyTipHeight + riskyTipArrowOffset,
   contractCardPadding: 16,
 
   assetsItemHeight: 60,
@@ -42,6 +46,12 @@ export const ApprovalsLayouts = {
       this.bottomAreaHeight -
       this.searchBarHeight -
       this.searchBarMarginOffset * 2
+    );
+  },
+  get riskAlertTooltipMaxWidth() {
+    return (
+      Dimensions.get('window').width -
+      (this.innerContainerHorizontalOffset + this.contractCardPadding + 63)
     );
   },
 };
@@ -220,9 +230,11 @@ export function SelectionCheckbox({
   isSelectedAll,
   isSelectedPartials,
   style,
+  size = 20,
 }: {
   isSelectedAll: boolean;
   isSelectedPartials: boolean;
+  size?: number;
 } & RNViewProps) {
   const colors = useThemeColors();
 
@@ -238,6 +250,8 @@ export function SelectionCheckbox({
   if (isSelectedPartials) {
     return (
       <RcIconIndeterminateCC
+        width={size}
+        height={size}
         style={[contractCheckboxStyle, style]}
         color={colors['blue-default']}
       />
@@ -246,6 +260,8 @@ export function SelectionCheckbox({
 
   return (
     <RcIconUncheckCC
+      width={size}
+      height={size}
       style={[contractCheckboxStyle, style]}
       color={colors['neutral-line']}
     />

@@ -7,6 +7,7 @@ import {
   type ContractApprovalItem,
   type SpenderInNFTApproval,
   RiskNumMap,
+  compareContractApprovalItemByRiskLevel,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 import {
@@ -50,6 +51,18 @@ export function formatTimeFromNow(time?: Date | number) {
 
 export function isRiskyContract(contract: ContractApprovalItem) {
   return ['danger', 'warning'].includes(contract.risk_level);
+}
+
+export function checkCompareContractItem(
+  a: ContractApprovalItem,
+  b: ContractApprovalItem,
+) {
+  const comparison = compareContractApprovalItemByRiskLevel(a, b);
+
+  return {
+    comparison,
+    shouldEarlyReturn: !!comparison,
+  };
 }
 
 export function encodeRevokeItemIndex(approval: ApprovalItem) {

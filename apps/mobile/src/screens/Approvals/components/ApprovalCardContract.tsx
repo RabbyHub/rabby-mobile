@@ -3,7 +3,11 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles,
+  makeDebugBorder,
+  makeTriangleStyle,
+} from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import {
   useFocusedApprovalOnApprovals,
@@ -18,9 +22,10 @@ import { SimulateUnderline } from '@/components/patches/Simulation';
 import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
 import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { toast } from '@/components/Toast';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { checkoutApprovalSelection } from '../utils';
+import { RcIconInfoCC } from '@/assets/icons/common';
+import { Tip } from '@/components';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -84,8 +89,20 @@ function CardProto({
           isWarning && styles.floorValueWarn,
           isDanger && styles.floorValueDanger,
         ]);
+        const finalUnderlineStyle = StyleSheet.flatten([
+          styles.floorValueUnderlineDefault,
+          isRisky && {
+            borderColor: finalTextStyle['color'],
+          },
+        ]);
 
-        return { isDanger, isWarning, isRisky, finalTextStyle };
+        return {
+          isDanger,
+          isWarning,
+          isRisky,
+          finalTextStyle,
+          finalUnderlineStyle,
+        };
       })();
 
       const revokeTrends = (() => {
@@ -104,8 +121,20 @@ function CardProto({
           isWarning && styles.floorValueWarn,
           isDanger && styles.floorValueDanger,
         ]);
+        const finalUnderlineStyle = StyleSheet.flatten([
+          styles.floorValueUnderlineDefault,
+          isRisky && {
+            borderColor: finalTextStyle['color'],
+          },
+        ]);
 
-        return { isDanger, isWarning, isRisky, finalTextStyle };
+        return {
+          isDanger,
+          isWarning,
+          isRisky,
+          finalTextStyle,
+          finalUnderlineStyle,
+        };
       })();
 
       return {
@@ -122,11 +151,25 @@ function CardProto({
 
   const { toggleFocusedContractItem } = useFocusedApprovalOnApprovals();
 
+  const risky = useMemo(
+    () => ['danger', 'warning'].includes(contract.risk_level),
+    [contract.risk_level],
+  );
+
+  const contractUsdText = useMemo(
+    () =>
+      bizNumberUtils.formatUsdValue(
+        contract.$riskAboutValues.risk_exposure_usd_value || 0,
+      ),
+    [contract.$riskAboutValues.risk_exposure_usd_value],
+  );
+
   return (
     <TouchableView
       disabled={inDetailModal}
       style={[
         styles.container,
+        contract?.risk_alert ? styles.containerWithRisky : {},
         !inDetailModal &&
           (isSelectedAll || isSelectedPartials) &&
           styles.selectedContainer,
@@ -210,6 +253,26 @@ function CardProto({
         </RightTouchableView>
       </View>
 
+      {risky && (
+        <View
+          style={[
+            styles.contractItemFloor,
+            { height: ApprovalsLayouts.contractCardRiskAlertSpace },
+          ]}>
+          <View style={[styles.riskyTip]}>
+            <RcIconInfoCC
+              width={14}
+              height={14}
+              color={colors['neutral-title2']}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.riskyTipText}>{contract.risk_alert}</Text>
+
+            <View style={styles.riskyTipArrow} />
+          </View>
+        </View>
+      )}
+
       {/* floor 2 */}
       <View style={[styles.contractItemFloor, ContractFloorLayouts.floor2]}>
         <View style={styles.floorLeft}>
@@ -219,33 +282,53 @@ function CardProto({
             )}
           </Text>
         </View>
-        <RightTouchableView
-          disabled={!trustValueEvalutation.isRisky}
-          style={[styles.floorRight, { height: '100%' }]}
-          onPress={evt => {
-            if (!trustValueEvalutation.isRisky) return;
-
-            evt?.stopPropagation();
-            __DEV__ && toast.show('[Debug] Pressed Trust Value');
-            onPressArea?.({ type: 'trustValue', contract });
-          }}>
+        <Tip
+          // {...(!trustValueEvalutation.isRisky && { isVisible: false })}
+          contentStyle={[styles.riskyAlertTooltipContent]}
+          content={
+            <View style={[styles.riskyAlertTooltipInner]}>
+              {trustValueEvalutation.isDanger && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueDanger',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {trustValueEvalutation.isWarning && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueWarning',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {!trustValueEvalutation.isRisky && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  The contract trust value : {contractUsdText}
+                  {'\n'}
+                </Text>
+              )}
+              <Text style={styles.riskyAlertTooltipText}>
+                {t(
+                  'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
+                )}
+              </Text>
+            </View>
+          }>
           <Text style={trustValueEvalutation.finalTextStyle}>
-            {bizNumberUtils.formatUsdValue(
-              contract.$riskAboutValues.risk_exposure_usd_value || 0,
-            )}
+            {contractUsdText}
           </Text>
-          {trustValueEvalutation.isRisky && (
-            <SimulateUnderline
-              style={[
-                {
-                  position: 'absolute',
-                  bottom: -1,
-                  borderColor: trustValueEvalutation.finalTextStyle['color'],
-                },
-              ]}
-            />
-          )}
-        </RightTouchableView>
+          <SimulateUnderline
+            style={[
+              {
+                position: 'absolute',
+                bottom: -1,
+              },
+              trustValueEvalutation.finalUnderlineStyle,
+            ]}
+          />
+        </Tip>
       </View>
 
       {/* floor 3 */}
@@ -257,31 +340,54 @@ function CardProto({
             )}
           </Text>
         </View>
-        <RightTouchableView
-          disabled={!revokeTrendsEvaluation.isRisky}
-          style={[styles.floorRight, { height: '100%' }]}
-          onPress={evt => {
-            if (!revokeTrendsEvaluation.isRisky) return;
-
-            evt?.stopPropagation();
-            __DEV__ && toast.show('[Debug] Pressed Revoke Trends in 24 hours');
-            onPressArea?.({ type: 'revokeTrends', contract });
-          }}>
+        <Tip
+          // {...(!revokeTrendsEvaluation.isRisky && { isVisible: false })}
+          placement="top"
+          contentStyle={[
+            styles.riskyAlertTooltipContent,
+            !revokeTrendsEvaluation.isRisky &&
+              styles.riskyAlertTooltipContentForSafeRevokeTrend,
+          ]}
+          content={
+            <View style={styles.riskyAlertTooltipInner}>
+              {revokeTrendsEvaluation.isDanger && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {revokeTrendsEvaluation.isWarning && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              <Text style={styles.riskyAlertTooltipText}>
+                Newly approved users(24h):{' '}
+                {contract.$riskAboutValues.approve_user_count}
+                {'\n'}
+                Recent revokes(24h):{' '}
+                {contract.$riskAboutValues.revoke_user_count}
+              </Text>
+            </View>
+          }>
           <Text style={revokeTrendsEvaluation.finalTextStyle}>
             {contract.$riskAboutValues.revoke_user_count}
           </Text>
-          {revokeTrendsEvaluation.isRisky && (
-            <SimulateUnderline
-              style={[
-                {
-                  position: 'absolute',
-                  bottom: -1,
-                  borderColor: revokeTrendsEvaluation.finalTextStyle['color'],
-                },
-              ]}
-            />
-          )}
-        </RightTouchableView>
+          <SimulateUnderline
+            style={[
+              {
+                position: 'absolute',
+                bottom: -1,
+              },
+              revokeTrendsEvaluation.finalUnderlineStyle,
+            ]}
+          />
+        </Tip>
       </View>
     </TouchableView>
   );
@@ -305,6 +411,9 @@ export const getCardStyles = createGetStyles(colors => {
       borderStyle: 'solid',
       borderColor: colors['neutral-card1'],
     },
+    containerWithRisky: {
+      height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
+    },
     selectedContainer: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light1'],
@@ -327,6 +436,31 @@ export const getCardStyles = createGetStyles(colors => {
       justifyContent: 'flex-end',
       minWidth: 54,
       // ...makeDebugBorder('pink')
+    },
+    riskyTip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      borderRadius: 6,
+      padding: 8,
+      backgroundColor: colors['red-default'],
+      position: 'relative',
+    },
+    riskyTipArrow: {
+      position: 'absolute',
+      left: '20%',
+      top: -7,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 12,
+        color: colors['red-default'],
+      }),
+      borderTopWidth: 0,
+      borderLeftWidth: 12,
+      borderRightWidth: 12,
+    },
+    riskyTipText: {
+      color: colors['neutral-title2'],
     },
     addrContractWrapper: {
       flexShrink: 1,
@@ -369,6 +503,27 @@ export const getCardStyles = createGetStyles(colors => {
       color: colors['neutral-body'],
       fontSize: 13,
     },
+    riskyAlertTooltipContent: {
+      borderRadius: 2,
+      minHeight: 96,
+      maxHeight: 128,
+      width: 296,
+      maxWidth: ApprovalsLayouts.riskAlertTooltipMaxWidth,
+    },
+    riskyAlertTooltipContentForSafeRevokeTrend: {
+      width: 220,
+      height: 48,
+      minHeight: 48,
+    },
+    riskyAlertTooltipInner: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    riskyAlertTooltipText: {
+      color: colors['neutral-title2'],
+      fontSize: 13,
+      fontWeight: '400',
+    },
     floorValue: {
       color: colors['neutral-body'],
       fontSize: 13,
@@ -380,6 +535,9 @@ export const getCardStyles = createGetStyles(colors => {
     },
     floorValueDanger: {
       color: colors['red-default'],
+    },
+    floorValueUnderlineDefault: {
+      borderColor: colors['neutral-line'],
     },
     chainIcon: {
       marginRight: 6,
