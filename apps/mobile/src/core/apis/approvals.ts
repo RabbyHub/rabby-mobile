@@ -216,6 +216,7 @@ export async function revoke({
   list: ApprovalSpenderItemToBeRevoked[];
 }) {
   const queue = getQueue();
+  const controller = new AbortController();
 
   const revokeList = list.map(e => async () => {
     try {
@@ -230,14 +231,15 @@ export async function revoke({
         });
       }
     } catch (error) {
-      queue.clear();
+      await queue.clear();
       console.error('revoke error', e);
+      controller.abort();
     }
   });
 
   try {
-    await queue.addAll(revokeList);
+    await queue.addAll(revokeList, { signal: controller.signal });
   } catch (error) {
-    console.warn('revoke error', error);
+    console.warn('[revoke] revoke error', error);
   }
 }
