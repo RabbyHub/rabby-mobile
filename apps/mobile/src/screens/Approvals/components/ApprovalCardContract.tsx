@@ -406,9 +406,6 @@ export const getCardStyles = createGetStyles(colors => {
       height: ApprovalsLayouts.contractCardHeight,
       width: '100%',
       padding: ApprovalsLayouts.contractCardPadding,
-      maxWidth:
-        Dimensions.get('window').width -
-        ApprovalsLayouts.innerContainerHorizontalOffset * 2,
       borderWidth: 1,
       borderStyle: 'solid',
       borderColor: colors['neutral-card1'],

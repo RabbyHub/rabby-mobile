@@ -303,7 +303,7 @@ const getStyles = createGetStyles(colors => {
       color: colors['neutral-title1'],
     },
     itemCheckbox: {
-      marginLeft: 6,
+      marginLeft: 16,
       width: 24,
       height: 24,
     },

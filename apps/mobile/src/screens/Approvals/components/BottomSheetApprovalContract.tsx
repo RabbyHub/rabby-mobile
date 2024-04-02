@@ -214,7 +214,7 @@ const getStyles = createGetStyles(colors => {
     scrollableArea: {
       flexShrink: 1,
       height: '100%',
-      marginTop: 16,
+      marginTop: 12,
       paddingBottom: 16,
     },
     scrollableView: {

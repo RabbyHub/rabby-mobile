@@ -31,7 +31,7 @@ export const ApprovalsLayouts = {
   contractCardHeight: 108,
   contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
   contractCardHeightWithRiskAlert: 108 + riskyTipHeight + riskyTipArrowOffset,
-  contractCardPadding: 16,
+  contractCardPadding: 14,
 
   assetsItemHeight: 60,
   assetsItemPadding: 16,

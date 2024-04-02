@@ -1,5 +1,10 @@
 import React from 'react';
-import { View, ActivityIndicator, RefreshControl } from 'react-native';
+import {
+  View,
+  Dimensions,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -48,7 +53,7 @@ export default function ListByContracts() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalCardContract contract={item} />
+          <ApprovalCardContract style={styles.cardContainer} contract={item} />
         </View>
       );
     },
@@ -181,6 +186,11 @@ const getStyles = createGetStyles(colors => {
     itemWrapper: {
       width: '100%',
       paddingHorizontal: ApprovalsLayouts.innerContainerHorizontalOffset,
+    },
+    cardContainer: {
+      maxWidth:
+        Dimensions.get('window').width -
+        ApprovalsLayouts.innerContainerHorizontalOffset * 2,
     },
     footContainer: {},
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { TextInput } from 'react-native';
+import { TextInput, StyleSheet } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -57,6 +57,7 @@ const getStyles = createGetStyles(colors => {
   return {
     searchInputContainer: {
       borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
       backgroundColor: colors['neutral-card1'],
       marginVertical: ApprovalsLayouts.searchBarMarginOffset,
       height: ApprovalsLayouts.searchBarHeight,
