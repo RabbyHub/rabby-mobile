@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -544,6 +544,12 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     debouncedSkContract,
     debouncedSkAssets,
   ]);
+
+  const { resetRevokeMaps } = useRevokeApprovals();
+
+  useEffect(() => {
+    resetRevokeMaps();
+  }, [currentAccount?.address, approvalsData, resetRevokeMaps]);
 
   return {
     isLoading,
