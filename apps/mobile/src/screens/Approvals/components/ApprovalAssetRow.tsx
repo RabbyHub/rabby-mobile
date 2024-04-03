@@ -11,7 +11,11 @@ import {
 } from '../useApprovalsPage';
 
 import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
-import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
+import {
+  ApprovalsLayouts,
+  SelectionCheckbox,
+  getSelectableContainerStyle,
+} from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
@@ -149,9 +153,9 @@ function AssetsApprovalRowProto({
           }}>
           <Text style={styles.entryText}>{assetApproval.list.length}</Text>
           <RcIconRightEntryCC
-            style={{ marginLeft: 4 }}
-            width={14}
-            height={14}
+            style={{ marginLeft: 4, top: 1 }}
+            width={16}
+            height={16}
             color={colors['neutral-foot']}
           />
         </RightTouchableView>
@@ -161,6 +165,8 @@ function AssetsApprovalRowProto({
 }
 
 export const getAssetsApprovalRowStyles = createGetStyles(colors => {
+  const selectableStyles = getSelectableContainerStyle(colors);
+
   return {
     container: {
       borderRadius: 8,
@@ -174,13 +180,10 @@ export const getAssetsApprovalRowStyles = createGetStyles(colors => {
       maxWidth:
         Dimensions.get('window').width -
         ApprovalsLayouts.innerContainerHorizontalOffset * 2,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-card1'],
+      ...selectableStyles.container,
     },
     selectedContainer: {
-      borderColor: colors['blue-default'],
-      backgroundColor: colors['blue-light1'],
+      ...selectableStyles.selectedContainer,
     },
     itemFloor: {
       flexDirection: 'row',
