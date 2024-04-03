@@ -32,6 +32,7 @@ function ApprovalCardAssetsProto({
       assetName: '',
       nftType: null as null | 'collection' | 'nft',
       nftTypeBadge: '',
+      balanceText: '',
     };
     let balance = 0 as number;
 
@@ -45,20 +46,21 @@ function ApprovalCardAssetsProto({
           asset?.name || 'Unknown',
           ` #${asset?.nftToken.inner_id}`,
         );
+        assetInfo.balanceText = asset?.nftToken.amount;
       } else if (asset?.nftContract) {
         assetInfo.assetName = asset?.nftContract.contract_name || 'Unknown';
+        assetInfo.balanceText = asset?.nftContract.amount;
       }
     } else {
       assetInfo.assetName = asset?.name || 'Unknown';
       balance = bizNumberUtils.coerceFloat(asset.balance);
+      assetInfo.balanceText = bizNumberUtils.formatAmount(balance);
     }
 
     return {
       assetName: assetInfo.assetName,
       nftTypeBadge: assetInfo.nftTypeBadge,
-      // only give balance for token type asset
-      displayBalanceText:
-        asset?.type === 'nft' ? '' : bizNumberUtils.formatAmount(balance),
+      displayBalanceText: assetInfo.balanceText,
     };
   }, [asset]);
 
