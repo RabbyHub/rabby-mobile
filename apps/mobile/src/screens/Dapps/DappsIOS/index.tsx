@@ -29,6 +29,8 @@ import { DappInfo } from '@/core/services/dappService';
 import { isPossibleDomain } from '@/utils/url';
 import { DappCardList } from '../Dapps/components/DappCardList';
 import { EmptyDapps } from './components/EmptyDapps';
+import { ScreenLayouts } from '@/constant/layout';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 
 export function DappsIOSScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -255,7 +257,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     container: {
       flex: 1,
-      paddingBottom: 80,
+      paddingBottom: ScreenLayouts.bottomBarHeight + 12,
     },
 
     searchContainer: {

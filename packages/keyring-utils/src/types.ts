@@ -7,6 +7,7 @@ export enum KEYRING_TYPE {
   LedgerKeyring = 'Ledger Hardware',
   // GnosisKeyring = 'Gnosis',
   // CoboArgusKeyring = 'CoboArgus',
+  KeystoneKeyring = 'QR Hardware Wallet Device',
 }
 
 export type KeyringTypeName =
@@ -18,7 +19,8 @@ export type KeyringTypeName =
   // OnekeyKeyring
   | KEYRING_TYPE.WatchAddressKeyring
   | KEYRING_TYPE.WalletConnectKeyring
-  | KEYRING_TYPE.LedgerKeyring;
+  | KEYRING_TYPE.LedgerKeyring
+  | KEYRING_TYPE.KeystoneKeyring;
 // GnosisKeyring
 // LatticeKeyring
 // KeystoneKeyring
@@ -85,6 +87,7 @@ export const KEYRING_CLASS = {
     // BITBOX02: BitBox02Keyring.type,
     // TREZOR: TrezorKeyring.type,
     LEDGER: KEYRING_TYPE.LedgerKeyring,
+    KEYSTONE: KEYRING_TYPE.KeystoneKeyring,
     // ONEKEY: OnekeyKeyring.type,
     // GRIDPLUS: LatticeKeyring.type,
   },

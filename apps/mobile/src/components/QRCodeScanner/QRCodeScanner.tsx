@@ -1,6 +1,6 @@
 import { useThemeColors } from '@/hooks/theme';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   CameraRuntimeError,
   Code,
@@ -11,39 +11,44 @@ import {
 } from 'react-native-vision-camera';
 import { Text } from '../Text';
 import { useAppState } from '@react-native-community/hooks';
+import { AppColorsVariants } from '@/constant/theme';
 
 interface CameraViewProps {
   onCodeScanned?: (code: Code[]) => void;
+  containerStyle?: StyleProp<ViewStyle>;
 }
-export const CameraView = ({ onCodeScanned }: CameraViewProps) => {
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    container: {
+      borderWidth: 1,
+      borderColor: colors['neutral-line'],
+      width: 200,
+      height: 200,
+      borderRadius: 8,
+      padding: 15,
+    },
+    camera: {
+      width: '100%',
+      height: '100%',
+    },
+    cameraWrap: {
+      position: 'relative',
+      borderRadius: 8,
+      overflow: 'hidden',
+      filter: 'blur(4px)',
+    },
+  });
+
+export const CameraView = ({
+  onCodeScanned,
+  containerStyle,
+}: CameraViewProps) => {
   const colors = useThemeColors();
   const [initialized, setInitialized] = useState(false);
   const cameraRef = React.useRef(null);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
 
-  const styles = React.useMemo(
-    () =>
-      StyleSheet.create({
-        container: {
-          borderWidth: 1,
-          borderColor: colors['neutral-line'],
-          width: 200,
-          height: 200,
-          borderRadius: 8,
-          padding: 15,
-        },
-        camera: {
-          width: '100%',
-          height: '100%',
-        },
-        cameraWrap: {
-          position: 'relative',
-          borderRadius: 8,
-          overflow: 'hidden',
-          filter: 'blur(4px)',
-        },
-      }),
-    [colors],
-  );
   const device = useCameraDevice('back');
 
   const codeScanner = useCodeScanner({
@@ -68,14 +73,14 @@ export const CameraView = ({ onCodeScanned }: CameraViewProps) => {
 
   if (device == null) {
     return (
-      <View style={styles.container}>
+      <View style={StyleSheet.flatten([styles.container, containerStyle])}>
         <Text>No Camera Device</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={StyleSheet.flatten([styles.container, containerStyle])}>
       <View style={styles.cameraWrap}>
         {device != null && (
           <VisionCamera

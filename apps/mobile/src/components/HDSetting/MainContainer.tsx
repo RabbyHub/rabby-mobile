@@ -44,6 +44,7 @@ interface Props {
   initAccounts?: InitAccounts;
   setting: Setting;
   loading?: boolean;
+  children?: React.ReactNode;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -95,7 +96,7 @@ const getStyles = (colors: AppColorsVariants) =>
     selectIndexFoot: {
       fontSize: 13,
       color: colors['neutral-foot'],
-      marginBottom: 50,
+      marginBottom: 24,
     },
     selectIndex: {
       rowGap: 12,
@@ -140,6 +141,7 @@ export const MainContainer: React.FC<Props> = ({
   setting,
   onConfirm,
   loading,
+  children,
 }) => {
   const [fetching, setFetching] = React.useState(false);
   const { t } = useTranslation();
@@ -162,8 +164,8 @@ export const MainContainer: React.FC<Props> = ({
           newInitAccounts[key] = await fetchAccountsInfo(items);
         }
         setCurrentInitAccounts(newInitAccounts as InitAccounts);
-        setFetching(false);
       }
+      setFetching(false);
     };
 
     run();
@@ -245,6 +247,7 @@ export const MainContainer: React.FC<Props> = ({
               ])}
             </Text>
           </View>
+          {children}
         </ScrollView>
         <FooterButton
           title={t('global.Confirm')}

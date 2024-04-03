@@ -3,24 +3,16 @@ import React from 'react';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
 import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
 import { RootNames } from '@/constant/layout';
-import {
-  RcIconHeaderAddAccount,
-  RcIconHeaderSettings,
-} from '@/assets/icons/home';
+import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
 import AddressDetailScreen from '../Address/AddressDetail';
-import { ImportLedgerScreen } from '../Address/ImportLedger';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { ImportHardwareScreen } from '../Address/ImportHardware';
+import { ImportHardwareScreenButton } from '../Address/ImportHardwareButton';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -106,29 +98,15 @@ export function AddressNavigator() {
         }}
       />
       <AddressStack.Screen
-        name={RootNames.ImportLedger}
-        component={ImportLedgerScreen}
+        name={RootNames.ImportHardware}
+        component={ImportHardwareScreen}
         options={{
           headerTitle: 'Import more address',
           headerTitleStyle: {
             fontSize: 20,
           },
           title: 'Import more address',
-          // eslint-disable-next-line react/no-unstable-nested-components
-          headerRight: ({ tintColor }) => (
-            <CustomTouchableOpacity
-              hitSlop={hitSlop}
-              onPress={() => {
-                const id = createGlobalBottomSheetModal({
-                  name: MODAL_NAMES.SETTING_LEDGER,
-                  onDone: () => {
-                    removeGlobalBottomSheetModal(id);
-                  },
-                });
-              }}>
-              <RcIconHeaderSettings width={24} height={24} color={tintColor} />
-            </CustomTouchableOpacity>
-          ),
+          headerRight: ImportHardwareScreenButton,
         }}
       />
     </AddressStack.Navigator>

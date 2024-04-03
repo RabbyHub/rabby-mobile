@@ -19,7 +19,7 @@ export const LinkCard = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
-  const str = url.trim();
+  const str = url.trim().toLowerCase();
   const _url = isPossibleDomain(str)
     ? /^\w+:\/\//.test(str)
       ? str

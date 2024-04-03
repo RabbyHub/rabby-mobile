@@ -10,12 +10,20 @@ import ConnectBleSVG from '@/assets/icons/approval/connect-ble.svg';
 import ConnectLedgerSVG from '@/assets/icons/approval/connect-ledger.svg';
 import ConnectWirelessSVG from '@/assets/icons/approval/connect-wireless.svg';
 import ConnectQRCodeSVG from '@/assets/icons/approval/connect-qrcode.svg';
+import ConnectKeystoneSVG from '@/assets/icons/approval/connect-keystone.svg';
 import ConnectWalletConnectSVG from '@/assets/icons/approval/connect-walletconnect.svg';
 import { FooterDoneButton } from './FooterDoneButton';
 import { Dots } from './Dots';
 import { noop } from 'lodash';
 import { SvgProps } from 'react-native-svg';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
@@ -74,6 +82,7 @@ export interface Props {
     | 'privatekey'
     | 'walletconnect'
     | 'ble'
+    | 'keystone'
     | 'ledger';
   status:
     | 'SENDING'
@@ -92,6 +101,7 @@ export interface Props {
   children?: React.ReactNode;
   showAnimation?: boolean;
   BrandIcon?: React.FC<SvgProps>;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const ApprovalPopupContainer: React.FC<Props> = ({
@@ -107,6 +117,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   children,
   showAnimation,
   BrandIcon,
+  style,
 }) => {
   const [iconColor, setIconColor] = React.useState('');
   const [contentColor, setContentColor] = React.useState('');
@@ -128,6 +139,8 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
         return ConnectBleSVG;
       case 'ledger':
         return ConnectLedgerSVG;
+      case 'keystone':
+        return ConnectKeystoneSVG;
       case 'qrcode':
       default:
         return ConnectQRCodeSVG;
@@ -189,7 +202,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   }, [snapToIndexPopup, hdType, status, description]);
   const isHD = hdType === 'ledger';
   return (
-    <View style={styles.wrapper}>
+    <View style={StyleSheet.flatten([styles.wrapper, style])}>
       {SendSVG ? (
         <View style={styles.mainContainer}>
           {BrandIcon && (

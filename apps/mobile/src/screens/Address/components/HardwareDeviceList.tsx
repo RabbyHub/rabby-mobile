@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
@@ -14,6 +14,8 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { apiKeystone } from '@/core/apis';
+import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -45,6 +47,31 @@ export const HardwareDeviceList = () => {
     });
   }, []);
 
+  const goImport = useImportKeystone();
+
+  const handleKeystone = React.useCallback(async () => {
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.KEYSTONE,
+    });
+
+    const isReady = await apiKeystone.isReady();
+    if (isReady) {
+      goImport();
+      return;
+    }
+
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.CONNECT_KEYSTONE,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
+      },
+    });
+  }, [goImport]);
+
   return (
     <View>
       <WalletHeadline Icon={HardwareSVG}>Hardware Wallets</WalletHeadline>
@@ -55,21 +82,18 @@ export const HardwareDeviceList = () => {
         onPress={handleLedger}
       />
       <WalletItem
-        style={StyleSheet.flatten([
-          styles.walletItem,
-          styles.walletItemDisabled,
-        ])}
-        Icon={OneKeySVG}
-        title="OneKey"
-        onPress={handleComingSoon}
+        style={StyleSheet.flatten([styles.walletItem])}
+        Icon={KeystoneSVG}
+        title="Keystone"
+        onPress={handleKeystone}
       />
       <WalletItem
         style={StyleSheet.flatten([
           styles.walletItem,
           styles.walletItemDisabled,
         ])}
-        Icon={KeystoneSVG}
-        title="Keystone"
+        Icon={OneKeySVG}
+        title="OneKey"
         onPress={handleComingSoon}
       />
     </View>

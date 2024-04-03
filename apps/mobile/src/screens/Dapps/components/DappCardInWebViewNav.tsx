@@ -26,30 +26,30 @@ export const DappCardInWebViewNav = ({
 }) => {
   const { styles } = useThemeStyles(getStyles);
 
-  const [description, setDescription] = React.useState(
-    data.info?.description || '',
-  );
-  const {} = useDapps();
+  // const [description, setDescription] = React.useState(
+  //   data.info?.description || '',
+  // );
+  // const {dapps} = useDapps();
 
-  React.useEffect(() => {
-    (async () => {
-      if (data.origin && !data.info?.description) {
-        const dappInfo = await apisDapp.cachedFetchDappInfo(
-          [data.origin],
-          data.origin,
-          false,
-        );
+  // React.useEffect(() => {
+  //   (async () => {
+  //     if (data.origin && !data.info?.description) {
+  //       const dappInfo = await apisDapp.cachedFetchDappInfo(
+  //         [data.origin],
+  //         data.origin,
+  //         false,
+  //       );
 
-        setDescription(dappInfo?.description);
-      }
-    })();
-  }, [data.origin, data.info?.description]);
+  //       setDescription(dappInfo?.description);
+  //     }
+  //   })();
+  // }, [data.origin, data.info?.description]);
 
-  React.useEffect(() => {
-    if (data.info?.description) {
-      setDescription(data.info.description);
-    }
-  }, [data.info?.description]);
+  // React.useEffect(() => {
+  //   if (data.info?.description) {
+  //     setDescription(data.info.description);
+  //   }
+  // }, [data.info?.description]);
 
   return (
     <View style={[styles.dappCard, style]}>
@@ -92,7 +92,7 @@ export const DappCardInWebViewNav = ({
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
         </TouchableWithoutFeedback>
       </View>
-      {description ? (
+      {data?.info?.description ? (
         <View style={styles.footer}>
           <View
             className="relative"
@@ -102,7 +102,7 @@ export const DappCardInWebViewNav = ({
               style={styles.dappDescText}
               numberOfLines={NUM_OF_LINES}
               ellipsizeMode="tail">
-              {description}
+              {data?.info?.description}
             </Text>
           </View>
         </View>

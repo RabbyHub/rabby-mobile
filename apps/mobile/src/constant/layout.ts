@@ -58,6 +58,7 @@ export const RootNames = {
   NftDetail: 'NftDetail',
 
   ImportLedger: 'ImportLedger',
+  ImportHardware: 'ImportHardware',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

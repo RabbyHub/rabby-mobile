@@ -4,13 +4,14 @@ import { Alert } from 'react-native';
 import { BackgroundBridge } from './BackgroundBridge';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import type { WebViewNavigation } from 'react-native-webview';
-import { sessionService } from '../services/shared';
+import { dappService, sessionService } from '../services/shared';
 import {
   allowLinkOpen,
   getAlertMessage,
   protocolAllowList,
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
+import { createDappBySession } from '../apis/dapp';
 
 export function useBackgroundBridges() {
   const [, setSpinner] = useState(false);
@@ -91,6 +92,10 @@ export function useSetupWebview({
       icon: '//todo',
       name: '//todo',
     });
+
+    if (!dappService.getDapp(urlBridge) && session) {
+      dappService.addDapp(createDappBySession(session));
+    }
 
     putBackgroundBridge(newBridge);
   };
