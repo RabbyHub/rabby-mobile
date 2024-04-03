@@ -734,7 +734,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "logo_url": "https://static.debank.com/image/chain/logo_url/ron/6e0f509804bc83bf042ef4d674c1c5ee.png",
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/ron/a7164cbb1bcf36c6b13abece4956e7ec.png",
     "eip_1559": false,
-    "is_disabled": true,
+    "is_disabled": false,
     "explorer_host": "https://explorer.roninchain.com",
     "need_estimate_gas": false
   },
@@ -937,7 +937,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/zora/de39f62c4489a2359d5e1198a8e02ef1.png",
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/zora/25dfb04c552c35d3d8e30e5ba136b9e6.png",
-    "eip_1559": false,
+    "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://explorer.zora.energy",
     "need_estimate_gas": false
@@ -1384,6 +1384,23 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://scan.platon.network",
     "need_estimate_gas": false
   },
+  "rollux": {
+    "id": "rollux",
+    "community_id": 570,
+    "name": "Rollux",
+    "native_token": {
+      "id": "rollux",
+      "symbol": "SYS",
+      "logo": "https://static.debank.com/image/rollux_token/logo_url/rollux/a57476d6cd8e27ee6d7eae318c3c7eee.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/rollux/b38f1a5be41a8e87766436ad9d9919a9.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/rollux/25c6383b3ae8b989c1e234c6734ba2ae.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.rollux.com",
+    "need_estimate_gas": false
+  },
   "sx": {
     "id": "sx",
     "community_id": 416,
@@ -1416,6 +1433,142 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://eon-explorer.horizenlabs.io",
+    "need_estimate_gas": false
+  },
+  "ulx": {
+    "id": "ulx",
+    "community_id": 1231,
+    "name": "Ultron",
+    "native_token": {
+      "id": "ulx",
+      "symbol": "ULX",
+      "logo": "https://static.debank.com/image/ulx_token/logo_url/ulx/371eb14527f3a80ed382f67278f43c7e.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/ulx/371eb14527f3a80ed382f67278f43c7e.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/ulx/7d6d20d13ec0a5c7d286aaea404f2d91.png",
+    "eip_1559": false,
+    "is_disabled": false,
+    "explorer_host": "https://ulxscan.com",
+    "need_estimate_gas": false
+  },
+  "map": {
+    "id": "map",
+    "community_id": 22776,
+    "name": "MAP Protocol",
+    "native_token": {
+      "id": "map",
+      "symbol": "MAPO",
+      "logo": "https://static.debank.com/image/map_token/logo_url/map/3efde740a6e9d32661757aad8ae2b3a2.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/map/3efde740a6e9d32661757aad8ae2b3a2.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/map/18ec31888ba251dd6d47e469b636d5fe.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://www.maposcan.io",
+    "need_estimate_gas": false
+  },
+  "karak": {
+    "id": "karak",
+    "community_id": 2410,
+    "name": "Karak",
+    "native_token": {
+      "id": "karak",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/karak_token/logo_url/karak/d61441782d4a08a7479d54aea211679e.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/karak/a9e47f00f6eeb2c9cc8f9551cff5fe68.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/karak/5d5ca3507b4a1d64a85406f7382412d7.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.karak.network",
+    "need_estimate_gas": false
+  },
+  "aze": {
+    "id": "aze",
+    "community_id": 3776,
+    "name": "Astar zkEVM",
+    "native_token": {
+      "id": "aze",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/aze_token/logo_url/aze/389dd9a835250219889e01d5a31a75f1.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/aze/6def6ac081a37e94ed0106da2cefeaf4.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/aze/490d08032b0ee878dc0251c35c26383b.png",
+    "eip_1559": false,
+    "is_disabled": false,
+    "explorer_host": "https://astar-zkevm.explorer.startale.com",
+    "need_estimate_gas": false
+  },
+  "frax": {
+    "id": "frax",
+    "community_id": 252,
+    "name": "Fraxtal",
+    "native_token": {
+      "id": "frax",
+      "symbol": "frxETH",
+      "logo": "https://static.debank.com/image/frax_token/logo_url/frax/4313f25f6c5196e8fce2c80fa34c73d0.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/frax/2e210d888690ad0c424355cc8471d48d.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/frax/7ae2bc54b406cd3c378b0bd28df2b3ff.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://fraxscan.com",
+    "need_estimate_gas": false
+  },
+  "lumio": {
+    "id": "lumio",
+    "community_id": 8866,
+    "name": "SuperLumio",
+    "native_token": {
+      "id": "lumio",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/lumio_token/logo_url/lumio/389dd9a835250219889e01d5a31a75f1.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/lumio/be6cd376260e0e214d8486f2300a4fb9.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/lumio/7960121f0a9235ff30bc65c57f0fe3a8.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.lumio.io",
+    "need_estimate_gas": false
+  },
+  "apex": {
+    "id": "apex",
+    "community_id": 70700,
+    "name": "Proof of Play Apex",
+    "native_token": {
+      "id": "apex",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/apex_token/logo_url/apex/389dd9a835250219889e01d5a31a75f1.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/apex/f60665106aba5b08563e26b4ba4baf83.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/apex/e1b94232b7eeedb147c489761118411a.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.apex.proofofplay.com",
+    "need_estimate_gas": false
+  },
+  "savm": {
+    "id": "savm",
+    "community_id": 3109,
+    "name": "SatoshiVM Alpha",
+    "native_token": {
+      "id": "savm",
+      "symbol": "BTC",
+      "logo": "https://static.debank.com/image/savm_token/logo_url/savm/fe230e468272b84aba78d08bb4140456.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/savm/8f92638826f2c97063c7de7726160655.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/savm/3315cc8579422c06720d9521e3bb0f90.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://svmscan.io",
     "need_estimate_gas": false
   }
 };

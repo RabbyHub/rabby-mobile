@@ -7,6 +7,8 @@ import { MMKV } from 'react-native-mmkv';
 import { keyBy } from 'lodash';
 import { DEFAULT_CHAIN_LIST } from './default-chain-data';
 import { supportedChainToChain } from '@/isomorphic/chain';
+import axios from 'axios';
+import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
 
 const storage = new MMKV({
   id: 'mmkv.chains',
@@ -48,7 +50,10 @@ export const CHAIN_ID_LIST = new Map<string, PortfolioChain>(
 
 export const syncChainList = async () => {
   try {
-    const chains = await openapi.getSupportedChains();
+    const chains: SupportedChain[] = await axios
+      .get('https://static.debank.com/supported_chains.json')
+      .then(res => res.data);
+
     const chainServerIdDict = keyBy(CHAINS_LIST, 'serverId');
 
     const list: Chain[] = chains
