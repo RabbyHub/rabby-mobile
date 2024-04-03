@@ -2,7 +2,7 @@ import { bindLedgerEvents } from '@/utils/ledger';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
-import { keyringService } from '../services';
+import { keyringService } from '../services/shared';
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import PQueue from 'p-queue';

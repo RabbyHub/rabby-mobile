@@ -1,39 +1,7 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-// import styled from 'styled-components';
-
-// const DotsStyled = styled.span`
-//   span {
-//     display: inline-block;
-//   }
-
-//   .dot1 {
-//     animation: jump 1.5s infinite -0.2s;
-//   }
-
-//   .dot2 {
-//     animation: jump 1.5s infinite;
-//   }
-
-//   .dot3 {
-//     animation: jump 1.5s infinite 0.2s;
-//   }
-
-//   @keyframes jump {
-//     30% {
-//       transform: translateY(0);
-//     }
-//     50% {
-//       transform: translateY(-5px);
-//     }
-
-//     70% {
-//       transform: translateY(2px);
-//     }
-//   }
-// `;
+import React, { useEffect, useState } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -47,42 +15,88 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const bounceHeight = 5;
+
 export const Dots: React.FC<{
   color?: string;
 }> = ({ color }) => {
-  // TODO: jump dots animation
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [animations, setAnimations] = useState<Animated.Value[]>([]);
+  const [reverse, setReverse] = useState(false);
+
+  useEffect(() => {
+    const dotAnimations: Animated.Value[] = [];
+    let animationsAmount = 3;
+    for (let i = 0; i < animationsAmount; i++) {
+      dotAnimations.push(new Animated.Value(0));
+    }
+    setAnimations(dotAnimations);
+  }, []);
+
+  useEffect(() => {
+    if (animations.length === 0) {
+      return;
+    }
+    loadingAnimation(animations, reverse);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animations]);
+
+  function floatAnimation(node, reverseY, delay) {
+    const floatSequence = Animated.sequence([
+      Animated.timing(node, {
+        toValue: reverseY ? 0 : -bounceHeight,
+        easing: Easing.bezier(0.41, -0.15, 0.56, 1.21),
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(node, {
+        toValue: reverseY ? -bounceHeight : 0,
+        easing: Easing.bezier(0.41, -0.15, 0.56, 1.21),
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(node, {
+        toValue: 0,
+        delay,
+        useNativeDriver: true,
+      }),
+    ]);
+    return floatSequence;
+  }
+
+  function loadingAnimation(nodes, reverseY) {
+    Animated.parallel(
+      nodes.map((node, index) => floatAnimation(node, reverseY, index * 100)),
+    ).start(() => {
+      setReverse(!reverse);
+    });
+  }
+
+  useEffect(() => {
+    if (animations.length === 0) {
+      return;
+    }
+    loadingAnimation(animations, reverse);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reverse, animations]);
 
   return (
     <View style={styles.wrapper}>
-      <Text
-        style={[
-          styles.dot,
-          {
-            color: colors[color],
-          },
-        ]}>
-        .
-      </Text>
-      <Text
-        style={[
-          styles.dot,
-          {
-            color: colors[color],
-          },
-        ]}>
-        .
-      </Text>
-      <Text
-        style={[
-          styles.dot,
-          {
-            color: colors[color],
-          },
-        ]}>
-        .
-      </Text>
+      {animations.map((animation, index) => (
+        <Animated.View style={{ transform: [{ translateY: animation }] }}>
+          <Text
+            key={`loading-anim-${index}`}
+            style={[
+              styles.dot,
+              {
+                color: colors[color],
+              },
+            ]}>
+            .
+          </Text>
+        </Animated.View>
+      ))}
     </View>
   );
 };

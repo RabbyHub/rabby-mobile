@@ -14,6 +14,8 @@ import type { ThemeColors } from '@/constant/theme';
 import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
 import { SettingLedger } from '../HDSetting/SettingLedger';
 import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
+import { ConnectKeystone } from '../ConnectKeystone/ConnectKeystone';
+import { SettingKeystone } from '../HDSetting/SettingKeystone';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -28,7 +30,8 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
   [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
   [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
-
+  [MODAL_NAMES.CONNECT_KEYSTONE]: ['68%'],
+  [MODAL_NAMES.SETTING_KEYSTONE]: ['65%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
 };
 
@@ -42,6 +45,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
   [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400],
   [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
+  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440, 455],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -57,6 +61,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: CancelTxPopup,
   [MODAL_NAMES.CONNECT_LEDGER]: ConnectLedger,
   [MODAL_NAMES.SETTING_LEDGER]: SettingLedger,
+  [MODAL_NAMES.CONNECT_KEYSTONE]: ConnectKeystone,
+  [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
 };
@@ -79,8 +85,11 @@ export function makeBottomSheetProps(ctx: {
 
   if (ctx.params?.name === 'APPROVAL') {
     if (
-      ctx.params.approvalComponent === 'WatchAddressWaiting' ||
-      ctx.params.approvalComponent === 'LedgerHardwareWaiting'
+      [
+        APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
+        APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
+        APPROVAL_MODAL_NAMES.WatchAddressWaiting,
+      ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)
     ) {
       return {
         handleStyle: {

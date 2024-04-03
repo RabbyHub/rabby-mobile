@@ -337,10 +337,11 @@
         "sigReceived": "Signature received",
         "sigCompleted": "Transaction created",
         "getSig": "Get signature",
-        "qrcodeDesc": "Scan with your {{brand}} to sign<br></br>After signing, click the button below to receive the signature",
+        "qrcodeDesc": "Scan with your {{brand}} to sign\nAfter signing, click the button below to receive the signature",
         "misMatchSignId": "Incongruent transaction data. Please check the transaction details.",
         "unknownQRCode": "Error: We couldn't identify that QR code",
-        "afterSignDesc": "After signing, place the QR code on {{brand}} in front of your PC camera"
+        "afterSignDesc": "Scan the QR code on Keystone to get signature",
+        "submitting": "Signed. Creating transaction"
       },
       "keystone": {
         "signWith": "Switch to {{method}} for signing",
@@ -1190,9 +1191,9 @@
         "passphrase": "Passphrase"
       },
       "metamask": {
-        "step1": " Export seed phrase or private key from MetaMask <br /> <1>Click to view tutorial <1/></1>",
+        "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
         "step2": "Import the seed phrase or private key in Rabby",
-        "step3": "Import is completed and all your assets will <br /> appear automatically",
+        "step3": "Import is completed and all your assets will \n appear automatically",
         "how": "How to import my MetaMask Account?",
         "step": "Step",
         "importSeedPhrase": "Import the seed phrase or private key",
@@ -1269,7 +1270,15 @@
         "deviceRejectedExportAddress": "Approve connection to Rabby",
         "deviceIsBusy": "Device is busy",
         "exportAddressJustAllowedOnHomePage": "Export address just allowed on home page",
-        "unknownError": "Unknown error, please try again"
+        "unknowError": "Unknown error, please try again",
+        "camera": {
+          "title": "Connect Keystone",
+          "description": "Enable camera access and scan your Keystone"
+        },
+        "scan": {
+          "title": "Scan Keystone to Connect",
+          "description": "Scan the QR code on the Keystone hardware wallet"
+        }
       },
       "walletConnect": {
         "connectYour": "Connect your",

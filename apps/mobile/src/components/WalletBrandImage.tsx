@@ -15,7 +15,11 @@ export function WalletBrandImage({
   const { RcWalletIcon } = useWalletBrandLogo(brandType);
 
   return (
-    <RcWalletIcon style={[styles.brandLogo, { width: size, height: size }]} />
+    <RcWalletIcon
+      width={size}
+      height={size}
+      style={[styles.brandLogo, { width: size, height: size }]}
+    />
   );
 }
 

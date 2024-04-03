@@ -1,9 +1,13 @@
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiLedger } from '@/core/apis';
+import { apiKeystone, apiLedger } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
   ScrollView,
@@ -29,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import { useNavigationState } from '@react-navigation/native';
 
 const { isSameAddress } = addressUtils;
 
@@ -124,7 +129,36 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const ImportLedgerScreen = () => {
+export const ImportHardwareScreen = () => {
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.ImportHardware)?.params,
+  ) as {
+    type: KEYRING_TYPE;
+  };
+  const apiHD = React.useMemo(() => {
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return apiLedger;
+      default:
+        return apiKeystone;
+    }
+  }, [state.type]);
+  const hdType = React.useMemo(() => {
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return KEYRING_TYPE.LedgerKeyring;
+      default:
+        return HARDWARE_KEYRING_TYPES.Keystone.type;
+    }
+  }, [state.type]) as KEYRING_TYPE;
+  const hdBrandName = React.useMemo(() => {
+    switch (state.type) {
+      case KEYRING_TYPE.LedgerKeyring:
+        return KEYRING_CLASS.HARDWARE.LEDGER;
+      default:
+        return HARDWARE_KEYRING_TYPES.Keystone.brandName;
+    }
+  }, [state.type]);
   const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -142,23 +176,26 @@ export const ImportLedgerScreen = () => {
   const [importing, setImporting] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
-  const loadAddress = React.useCallback(async (index: number) => {
-    const res = await apiLedger.getAddresses(index, index + 1);
-    const balance = await getAccountBalance(res[0].address);
-    if (stoppedRef.current) {
-      return;
-    }
-    setAccounts(prev => {
-      return [
-        ...prev,
-        {
-          address: res[0].address,
-          index: res[0].index,
-          balance,
-        },
-      ];
-    });
-  }, []);
+  const loadAddress = React.useCallback(
+    async (index: number) => {
+      const res = await apiHD.getAddresses(index, index + 1);
+      const balance = await getAccountBalance(res[0].address);
+      if (stoppedRef.current) {
+        return;
+      }
+      setAccounts(prev => {
+        return [
+          ...prev,
+          {
+            address: res[0].address,
+            index: res[0].index,
+            balance,
+          },
+        ];
+      });
+    },
+    [apiHD],
+  );
 
   const handleLoadAddress = React.useCallback(async () => {
     setLoading(true);
@@ -223,12 +260,12 @@ export const ImportLedgerScreen = () => {
   }, [setting?.startNumber]);
 
   React.useEffect(() => {
-    apiLedger.getCurrentAccounts().then(res => {
+    apiHD.getCurrentAccounts().then(res => {
       if (res) {
         setCurrentAccounts(res);
       }
     });
-  }, [setting.hdPath]);
+  }, [apiHD, setting.hdPath]);
 
   React.useEffect(() => {
     return () => {
@@ -251,13 +288,14 @@ export const ImportLedgerScreen = () => {
     });
     try {
       for (const acc of selectedAccounts) {
-        await apiLedger.importAddress(acc.index - 1);
+        await apiHD.importAddress(acc.index - 1);
       }
+
       navigate(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess,
         params: {
-          type: KEYRING_TYPE.LedgerKeyring,
-          brandName: KEYRING_CLASS.HARDWARE.LEDGER,
+          type: hdType,
+          brandName: hdBrandName,
           address: selectedAccounts.map(a => a.address),
         },
       });
@@ -268,7 +306,7 @@ export const ImportLedgerScreen = () => {
       importToastHiddenRef.current?.();
     }
     setImporting(false);
-  }, [selectedAccounts]);
+  }, [apiHD, hdBrandName, hdType, selectedAccounts]);
 
   React.useEffect(() => {
     return () => {
@@ -278,7 +316,7 @@ export const ImportLedgerScreen = () => {
 
   return (
     <Spin spinning={!accounts.length}>
-      <RootScreenContainer hideBottomBar top={24} style={styles.root}>
+      <RootScreenContainer hideBottomBar style={styles.root}>
         <ScrollView style={styles.main}>
           <View style={styles.list}>
             {accounts.map(({ address, index, balance }) => {
