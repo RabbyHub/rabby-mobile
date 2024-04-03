@@ -79,6 +79,8 @@ const ApprovalScreenContainer = () => {
       //   initialTabName: 'assets',
       // })}
       lazy
+      allowHeaderOverscroll={false}
+      hackContentInsetOnIOS
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}
       // disable horizontal swiping-scroll-to-switch

@@ -131,6 +131,7 @@ export default function ListByContracts() {
       <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
+        progressViewOffset={0}
         // ListHeaderComponent={renderHeaderComponent}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
@@ -150,6 +151,7 @@ export default function ListByContracts() {
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
+            progressViewOffset={0}
             refreshing={refreshing}
             onRefresh={() => {
               refresh();

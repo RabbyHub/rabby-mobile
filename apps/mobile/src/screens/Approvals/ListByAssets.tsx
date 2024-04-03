@@ -130,6 +130,7 @@ export default function ListByAssets() {
       <Tabs.SectionList<AssetApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
+        progressViewOffset={0}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -148,6 +149,7 @@ export default function ListByAssets() {
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
+            progressViewOffset={0}
             refreshing={refreshing}
             onRefresh={() => {
               refresh();

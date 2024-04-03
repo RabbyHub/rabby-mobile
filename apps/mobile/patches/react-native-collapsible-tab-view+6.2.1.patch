@@ -1,0 +1,93 @@
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js b/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
+index 6d2f814..5ea0c64 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/commonjs/Container.js
+@@ -76,7 +76,8 @@ const Container = /*#__PURE__*/_react.default.memo( /*#__PURE__*/_react.default.
+     onIndexChange,
+     onTabChange,
+     width: customWidth,
+-    allowHeaderOverscroll
++    allowHeaderOverscroll,
++    hackContentInsetOnIOS
+   } = _ref;
+   const containerRef = (0, _hooks.useContainerRef)();
+   const [tabProps, tabNamesArray] = (0, _hooks.useTabProps)(children, _Tab.Tab);
+@@ -90,7 +91,7 @@ const Container = /*#__PURE__*/_react.default.memo( /*#__PURE__*/_react.default.
+     if (allowHeaderOverscroll) return 0; // necessary for the refresh control on iOS to be positioned underneath the header
+     // this also adjusts the scroll bars to clamp underneath the header area
+ 
+-    return _helpers.IS_IOS ? (headerHeight.value || 0) + (tabBarHeight.value || 0) : 0;
++    return _helpers.IS_IOS && !hackContentInsetOnIOS ? (headerHeight.value || 0) + (tabBarHeight.value || 0) : 0;
+   });
+   const snappingTo = (0, _reactNativeReanimated.useSharedValue)(0);
+   const offset = (0, _reactNativeReanimated.useSharedValue)(0);
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/module/Container.js b/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
+index 2f5c338..766d834 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/module/Container.js
+@@ -52,7 +52,8 @@ export const Container = /*#__PURE__*/React.memo( /*#__PURE__*/React.forwardRef(
+     onIndexChange,
+     onTabChange,
+     width: customWidth,
+-    allowHeaderOverscroll
++    allowHeaderOverscroll,
++    hackContentInsetOnIOS
+   } = _ref;
+   const containerRef = useContainerRef();
+   const [tabProps, tabNamesArray] = useTabProps(children, Tab);
+@@ -66,7 +67,7 @@ export const Container = /*#__PURE__*/React.memo( /*#__PURE__*/React.forwardRef(
+     if (allowHeaderOverscroll) return 0; // necessary for the refresh control on iOS to be positioned underneath the header
+     // this also adjusts the scroll bars to clamp underneath the header area
+ 
+-    return IS_IOS ? (headerHeight.value || 0) + (tabBarHeight.value || 0) : 0;
++    return IS_IOS && !hackContentInsetOnIOS ? (headerHeight.value || 0) + (tabBarHeight.value || 0) : 0;
+   });
+   const snappingTo = useSharedValue(0);
+   const offset = useSharedValue(0);
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/typescript/src/types.d.ts b/node_modules/react-native-collapsible-tab-view/lib/typescript/src/types.d.ts
+index a5041df..56d7a6c 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/typescript/src/types.d.ts
++++ b/node_modules/react-native-collapsible-tab-view/lib/typescript/src/types.d.ts
+@@ -94,6 +94,8 @@ export declare type CollapsibleProps = {
+      * @default false
+      */
+     allowHeaderOverscroll?: boolean;
++
++    hackContentInsetOnIOS?: boolean;
+ };
+ export declare type ContextType<T extends TabName = TabName> = {
+     headerHeight: Animated.SharedValue<number | undefined>;
+diff --git a/node_modules/react-native-collapsible-tab-view/src/Container.tsx b/node_modules/react-native-collapsible-tab-view/src/Container.tsx
+index 1023290..29a101c 100644
+--- a/node_modules/react-native-collapsible-tab-view/src/Container.tsx
++++ b/node_modules/react-native-collapsible-tab-view/src/Container.tsx
+@@ -81,6 +81,7 @@ export const Container = React.memo(
+         onTabChange,
+         width: customWidth,
+         allowHeaderOverscroll,
++        hackContentInsetOnIOS,
+       },
+       ref
+     ) => {
+@@ -108,7 +109,7 @@ export const Container = React.memo(
+ 
+         // necessary for the refresh control on iOS to be positioned underneath the header
+         // this also adjusts the scroll bars to clamp underneath the header area
+-        return IS_IOS
++        return IS_IOS && !hackContentInsetOnIOS
+           ? (headerHeight.value || 0) + (tabBarHeight.value || 0)
+           : 0
+       })
+diff --git a/node_modules/react-native-collapsible-tab-view/src/types.ts b/node_modules/react-native-collapsible-tab-view/src/types.ts
+index 4cf32ee..9e0a1db 100644
+--- a/node_modules/react-native-collapsible-tab-view/src/types.ts
++++ b/node_modules/react-native-collapsible-tab-view/src/types.ts
+@@ -128,6 +128,8 @@ export type CollapsibleProps = {
+    * @default false
+    */
+   allowHeaderOverscroll?: boolean
++
++  hackContentInsetOnIOS?: boolean
+ }
+ 
+ export type ContextType<T extends TabName = TabName> = {
