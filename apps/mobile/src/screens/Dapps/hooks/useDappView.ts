@@ -6,7 +6,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
-import { createDappBySession } from '@/core/apis/dapp';
+import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 
 const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
 
@@ -35,7 +35,7 @@ export function useHasActiveOpenedDapp() {
 }
 
 export function useOpenDappView() {
-  const { dapps } = useDapps();
+  const { dapps, addDapp } = useDapps();
   const [activeDappOrigin, setActiveDappOrigin] = useAtom(activeDappOriginAtom);
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
@@ -54,6 +54,18 @@ export function useOpenDappView() {
 
       const itemUrl = item.origin;
       item.origin = canoicalizeDappUrl(itemUrl).origin;
+
+      if (!dapps[item.origin]) {
+        addDapp(
+          createDappBySession({
+            origin: item.origin,
+            name: '',
+            icon: '',
+          }),
+        );
+      }
+
+      syncBasicDappInfo(item.origin);
 
       item.$openParams = {
         ...item.$openParams,
@@ -85,7 +97,7 @@ export function useOpenDappView() {
         setActiveDappOrigin(item.origin);
       }
     },
-    [setOpenedOriginsDapps, setActiveDappOrigin],
+    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin],
   );
 
   const removeOpenedDapp = useCallback(

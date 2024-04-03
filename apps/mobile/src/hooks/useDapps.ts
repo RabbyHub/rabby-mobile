@@ -1,3 +1,4 @@
+import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { useCallback } from 'react';
 
 import { DappInfo } from '@/core/services/dappService';
@@ -28,7 +29,18 @@ export function useDapps() {
   }, []);
 
   const updateFavorite = useCallback((id: string, v: boolean) => {
-    dappService.updateFavorite(id, v);
+    if (dappService.getDapp(id)) {
+      dappService.updateFavorite(id, v);
+    } else {
+      dappService.addDapp({
+        ...createDappBySession({
+          origin: id,
+          name: '',
+          icon: '',
+        }),
+        isFavorite: v,
+      });
+    }
   }, []);
 
   const removeDapp = useCallback((id: string) => {
