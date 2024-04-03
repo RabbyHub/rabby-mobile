@@ -33,6 +33,7 @@ deployment_local_dir="$script_dir/deployments"
 rm -rf $deployment_local_dir/android && mkdir -p $deployment_local_dir/android;
 
 build_alpha() {
+  yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     bundle exec fastlane android alpha
   else
@@ -42,6 +43,7 @@ build_alpha() {
 }
 
 build_appstore() {
+  yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     bundle exec fastlane android release
   else
@@ -74,10 +76,10 @@ done
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
   version_bundle_suffix=".aab"
-  REALLY_UPLOAD="";
-  unset REALLY_UPLOAD;
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
   [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore
+
+  cp $android_export_target $deployment_local_dir/android/
 else
   version_bundle_suffix=".apk"
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
@@ -119,29 +121,30 @@ echo "[deploy-android] will upload to $staging_s3_dir"
 if [ $staging_acl == "public-read" ]; then
   echo "[deploy-android] will be public at $staging_cdn_baseurl"
 else
-  echo "[deploy-android] will be stored at $staging_cdn_baseurl (not public)"
+  echo "[deploy-android] will be stored at $staging_s3_dir (not public)"
 fi
 
 echo ""
 echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
-  echo "[deploy-android] backup as $staging_s3_dir/$apk_name..."
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.json" --acl $staging_acl --content-type application/json
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.md" --acl $staging_acl --content-type text/plain
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.apk" --acl $staging_acl --content-type application/vnd.android.package-archive
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.aab" --acl $staging_acl --content-type application/x-authorware-bin
+  echo "[deploy-android] backup to $staging_s3_dir..."
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.json" --acl $staging_acl --content-type application/json --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.md" --acl $staging_acl --content-type text/plain --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.apk" --acl $staging_acl --content-type application/vnd.android.package-archive --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.aab" --acl $staging_acl --content-type application/x-authorware-bin --exact-timestamps
+
+  echo "";
+  if [ $buildchannel != "appstore" ]; then
+    echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
+    echo "[deploy-android] aws s3 sync $staging_s3_dir/ $release_s3_dir/ --acl public-read"
+  else
+    echo "[deploy-android] open directory and upload to google play store "
+    echo "[deploy-android] you can find the .aar from $staging_s3_dir";
+  fi
 
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
-
-    echo "";
-    if [ $buildchannel != "appstore" ]; then
-      echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-      echo "[deploy-android] aws s3 sync $staging_s3_dir/ $release_s3_dir/ --acl public-read"
-    else
-      echo "[deploy-android] open directory and upload to google play store "
-    fi
 
     node $script_dir/notify-lark.js "$apk_url" android
   fi
