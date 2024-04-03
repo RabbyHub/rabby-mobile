@@ -5,7 +5,7 @@ import { SENTRY_DEBUG, getSentryEnv } from '@/constant/env';
 
 export function initSentry() {
   Sentry.init({
-    dsn: 'https://5dc34e0794776dfb2d4e263b466b5052@o460488.ingest.sentry.io/4506406044696576',
+    dsn: 'https://86c83b97aaf2afd16f3d3227340c78dd@o4507018303438848.ingest.us.sentry.io/4507018395975680',
     release: APP_VERSIONS.forSentry,
     ignoreErrors: [
       'Missing or invalid topic field',
