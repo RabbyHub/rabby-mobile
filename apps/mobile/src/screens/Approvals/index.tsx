@@ -10,7 +10,11 @@ import {
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import {
+  createGetStyles,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { ApprovalsBottomArea, ApprovalsLayouts } from './components/Layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
@@ -138,11 +142,12 @@ const getStyles = createGetStyles(colors => {
     },
     tabHeaderContainer: {
       backgroundColor: colors['neutral-bg2'],
-      // ...makeDevOnlyStyle({ backgroundColor: 'transparent' }),
       shadowColor: 'transparent',
       borderTopWidth: 0,
       borderColor: colors['neutral-line'],
       borderWidth: StyleSheet.hairlineWidth,
+      // ...makeDevOnlyStyle({ backgroundColor: 'transparent' }),
+      // ...makeDebugBorder('red'),
     },
     tabBar: {
       height: ApprovalsLayouts.tabbarHeight,

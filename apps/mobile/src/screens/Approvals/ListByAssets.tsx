@@ -4,6 +4,7 @@ import {
   SectionList,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,8 @@ import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByAssets } from './components/Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
+
+const isIOS = Platform.OS === 'ios';
 
 export default function ListByAssets() {
   const { colors, styles } = useThemeStyles(getStyles);
@@ -130,7 +133,6 @@ export default function ListByAssets() {
       <Tabs.SectionList<AssetApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
-        progressViewOffset={0}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
             {isFetchingNextPage ? <ActivityIndicator /> : null}
@@ -149,7 +151,9 @@ export default function ListByAssets() {
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
-            progressViewOffset={0}
+            {...(isIOS && {
+              progressViewOffset: -12,
+            })}
             refreshing={refreshing}
             onRefresh={() => {
               refresh();
@@ -177,6 +181,8 @@ const getStyles = createGetStyles(colors => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
       // height: '100%',
       // ...makeDebugBorder('yellow'),
     },

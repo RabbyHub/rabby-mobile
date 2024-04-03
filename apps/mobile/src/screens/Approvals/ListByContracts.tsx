@@ -4,6 +4,7 @@ import {
   Dimensions,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -26,8 +27,8 @@ import { SectionListProps } from 'react-native';
 import ApprovalCardContract from './components/ApprovalCardContract';
 import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByContracts } from './components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
-import { encodeApprovalKey } from './utils';
+
+const isIOS = Platform.OS === 'ios';
 
 export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
@@ -131,7 +132,6 @@ export default function ListByContracts() {
       <Tabs.SectionList<ContractApprovalItem>
         initialNumToRender={4}
         maxToRenderPerBatch={20}
-        progressViewOffset={0}
         // ListHeaderComponent={renderHeaderComponent}
         ListFooterComponent={
           <View style={styles.listFooterContainer}>
@@ -151,7 +151,9 @@ export default function ListByContracts() {
         onEndReachedThreshold={0.3}
         refreshControl={
           <RefreshControl
-            progressViewOffset={0}
+            {...(isIOS && {
+              progressViewOffset: -12,
+            })}
             refreshing={refreshing}
             onRefresh={() => {
               refresh();
@@ -166,6 +168,7 @@ export default function ListByContracts() {
 const getStyles = createGetStyles(colors => {
   return {
     emptyHolderContainer: {
+      // ...makeDebugBorder(),
       height: ApprovalsLayouts.scrollableSectionHeight,
     },
     container: {
@@ -177,6 +180,8 @@ const getStyles = createGetStyles(colors => {
     listContainer: {
       paddingTop: 0,
       paddingBottom: 0,
+      // repair top offset due to special contentInset in iOS
+      ...(isIOS && { marginTop: -ApprovalsLayouts.tabbarHeight }),
     },
     listFooterContainer: {
       flexDirection: 'row',
