@@ -76,12 +76,14 @@ done
 echo "[deploy-android] start build..."
 if [ $buildchannel == "appstore" ]; then
   version_bundle_suffix=".aab"
+  staging_dir_suffix="-appstore"
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
   [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore
 
   cp $android_export_target $deployment_local_dir/android/
 else
   version_bundle_suffix=".apk"
+  staging_dir_suffix=""
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
   [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_alpha
 
@@ -102,8 +104,8 @@ else
   version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 fi
 
-staging_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android-$version_bundle_name
-staging_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name
+staging_s3_dir=$S3_ANDROID_BAK_DEPLOYMENT/android-$version_bundle_name$staging_dir_suffix
+staging_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name$staging_dir_suffix
 release_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
 release_cdn_baseurl=$cdn_deployment_urlbase/android
 staging_acl="authenticated-read"
@@ -146,7 +148,7 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ ! -z $apk_url ]; then
     echo "[deploy-android] publish as $apk_name, with version.json"
 
-    node $script_dir/notify-lark.js "$apk_url" android
+    [ ! -z $CI ] && node $script_dir/notify-lark.js "$apk_url" android
   fi
 fi
 
