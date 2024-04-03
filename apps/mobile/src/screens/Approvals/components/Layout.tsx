@@ -23,6 +23,7 @@ const riskyTipHeight = 32;
 const riskyTipArrowOffset = 14;
 export const ApprovalsLayouts = {
   tabbarHeight: 44,
+  contentInsetTopOffset: isAndroid ? 0 : 44 /* same with tabbarHeight */,
   bottomAreaHeight: 100,
 
   searchBarMarginOffset: 16,
@@ -46,7 +47,8 @@ export const ApprovalsLayouts = {
       this.tabbarHeight -
       this.bottomAreaHeight -
       this.searchBarHeight -
-      this.searchBarMarginOffset * 2
+      this.searchBarMarginOffset * 2 -
+      (isAndroid ? 0 : this.contentInsetTopOffset + this.tabbarHeight)
     );
   },
   get riskAlertTooltipMaxWidth() {
