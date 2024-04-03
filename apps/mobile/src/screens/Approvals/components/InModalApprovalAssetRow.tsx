@@ -14,7 +14,7 @@ import {
 } from '../useApprovalsPage';
 import { RcIconCheckedCC, RcIconUncheckCC } from '../icons';
 import { useTranslation } from 'react-i18next';
-import { getTooltipContentStyles } from './Layout';
+import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import BigNumber from 'bignumber.js';
 import { ellipsisAddress } from '@/utils/address';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
@@ -179,7 +179,7 @@ export function InModalApprovalAssetRow({
 
   return (
     <TouchableView
-      style={[styles.container, style]}
+      style={[styles.container, isSelected && styles.selectedContainer, style]}
       onPress={() => {
         onToggleSelection?.({ spender, approval });
       }}>
@@ -253,15 +253,21 @@ export function InModalApprovalAssetRow({
 }
 
 const getStyles = createGetStyles(colors => {
+  const selectableStyles = getSelectableContainerStyle(colors);
+
   return {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderRadius: 8,
-      padding: 8,
+      padding: 16,
       backgroundColor: colors['neutral-card1'],
       height: 60,
+      ...selectableStyles.container,
+    },
+    selectedContainer: {
+      ...selectableStyles.selectedContainer,
     },
     leftArea: {
       flexDirection: 'row',

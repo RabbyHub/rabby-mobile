@@ -20,7 +20,11 @@ import { ellipsisAddress } from '@/utils/address';
 import { SimulateUnderline } from '@/components/patches/Simulation';
 
 import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
-import { ApprovalsLayouts, SelectionCheckbox } from './Layout';
+import {
+  ApprovalsLayouts,
+  SelectionCheckbox,
+  getSelectableContainerStyle,
+} from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { checkoutApprovalSelection } from '../utils';
@@ -246,7 +250,7 @@ function CardProto({
             </>
           ) : (
             <>
-              <Text style={styles.entryText}>
+              <Text style={[styles.entryText, styles.approvalsCount]}>
                 {contract.list.length} Approvals
               </Text>
             </>
@@ -396,6 +400,8 @@ function CardProto({
 }
 
 export const getCardStyles = createGetStyles(colors => {
+  const selectableStyles = getSelectableContainerStyle(colors);
+
   return {
     container: {
       borderRadius: 8,
@@ -406,16 +412,13 @@ export const getCardStyles = createGetStyles(colors => {
       height: ApprovalsLayouts.contractCardHeight,
       width: '100%',
       padding: ApprovalsLayouts.contractCardPadding,
-      borderWidth: 1,
-      borderStyle: 'solid',
-      borderColor: colors['neutral-card1'],
+      ...selectableStyles.container,
     },
     containerWithRisky: {
       height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
     },
     selectedContainer: {
-      borderColor: colors['blue-default'],
-      backgroundColor: colors['blue-light1'],
+      ...selectableStyles.selectedContainer,
     },
     contractItemFloor: {
       flexDirection: 'row',
@@ -489,9 +492,12 @@ export const getCardStyles = createGetStyles(colors => {
       flexShrink: 0,
     },
     entryText: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '600',
       color: colors['neutral-title1'],
+    },
+    approvalsCount: {
+      fontSize: 14,
     },
     rowCenter: {
       flexDirection: 'row',
@@ -510,7 +516,7 @@ export const getCardStyles = createGetStyles(colors => {
       maxWidth: ApprovalsLayouts.riskAlertTooltipMaxWidth,
     },
     riskyAlertTooltipContentForSafeRevokeTrend: {
-      width: 220,
+      minWidth: 220,
       height: 48,
       minHeight: 48,
     },

@@ -122,7 +122,7 @@ export function ApprovalsBottomArea() {
         // count: revokeList.length,
         // count: revokeCount,
       })}`,
-      revokeCount && `(${revokeCount})`,
+      revokeCount && ` (${revokeCount})`,
     ]
       .filter(Boolean)
       .join('');
@@ -297,6 +297,20 @@ const getNotMatchedHolderStyle = createGetStyles(colors => {
       fontSize: 15,
       color: colors['neutral-body'],
       fontWeight: '600',
+    },
+  };
+});
+
+export const getSelectableContainerStyle = createGetStyles(colors => {
+  return {
+    container: {
+      borderWidth: 1,
+      borderStyle: 'solid',
+      borderColor: colors['neutral-card1'],
+    },
+    selectedContainer: {
+      borderColor: colors['blue-default'],
+      backgroundColor: colors['blue-light1'],
     },
   };
 });
