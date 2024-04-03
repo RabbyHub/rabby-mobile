@@ -169,7 +169,7 @@ export function OpenedDappWebViewStub() {
       // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
       // openedDappWebviewSheetModalRef?.current?.present();
       toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+      // toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
     }
   }, [toggleShowSheetModal, activeDapp]);
 
