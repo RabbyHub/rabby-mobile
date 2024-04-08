@@ -10,6 +10,7 @@ on:
       REALLY_UPLOAD:
         required: true
         type: boolean
+        default: true
 
 defaults:
   run:
@@ -79,8 +80,8 @@ jobs:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
-          RABBY_MOBILE_SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN }}
+          RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           CONFIGURATION: release
           TYPE: adhoc
