@@ -8,7 +8,7 @@ export enum KEYRING_TYPE {
   // GnosisKeyring = 'Gnosis',
   // CoboArgusKeyring = 'CoboArgus',
   KeystoneKeyring = 'QR Hardware Wallet Device',
-  OneKeyKeyring = 'OneKey Hardware',
+  OneKeyKeyring = 'Onekey Hardware',
 }
 
 export type KeyringTypeName =

@@ -9,7 +9,6 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
       debug: true,
       fetchConfig: true,
     });
-    console.log('init');
     HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
         case UI_REQUEST.REQUEST_PIN:
