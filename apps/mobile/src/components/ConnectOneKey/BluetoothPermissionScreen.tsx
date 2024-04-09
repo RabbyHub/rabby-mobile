@@ -40,10 +40,10 @@ export const BluetoothPermissionScreen: React.FC<{
 
   return (
     <View style={styles.root}>
-      <AppBottomSheetModalTitle title={t('page.newAddress.ledger.ble.title')} />
+      <AppBottomSheetModalTitle title={t('page.newAddress.onekey.ble.title')} />
       <View style={styles.main}>
         <Text style={styles.text}>
-          {t('page.newAddress.ledger.ble.description')}
+          {t('page.newAddress.onekey.ble.description')}
         </Text>
         <ScanLedgerSVG style={styles.logo} />
       </View>

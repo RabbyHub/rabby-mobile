@@ -32,6 +32,5 @@ export async function unlock() {
 export async function searchDevices() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
-  console.log('keyring.bridge.searchDevices');
   return keyring.bridge.searchDevices();
 }
