@@ -17,15 +17,17 @@ import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
+import type { SearchDevice } from '@onekeyfe/hd-core';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
   onSelectDevice?: (d: Device) => void;
   deviceId?: string;
 }> = ({ onDone, onSelectDevice, deviceId }) => {
-  const { searchAndPair, devices, errorCode } = useLedgerImport();
   const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
+  const [devices, setDevices] = React.useState<SearchDevice[]>([]);
+  const [errorCode, setErrorCode] = React.useState<string | number>();
   const { t } = useTranslation();
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
@@ -38,11 +40,15 @@ export const ConnectOneKey: React.FC<{
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
     apiOneKey.searchDevices().then(res => {
-      console.log('res', res);
+      if (res.success) {
+        setDevices(res.payload);
+      } else {
+        setErrorCode(res.payload.code);
+      }
     });
-    notfoundTimerRef.current = setTimeout(() => {
-      setCurrentScreen('notfound');
-    }, 5000);
+    // notfoundTimerRef.current = setTimeout(() => {
+    //   setCurrentScreen('notfound');
+    // }, 5000);
   }, []);
 
   const handleScanDone = React.useCallback(() => {

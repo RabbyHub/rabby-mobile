@@ -74,10 +74,10 @@ export const NotFoundDeviceScreen: React.FC<{}> = () => {
           <ErrorCircleSVG width={40} height={40} style={styles.errorIcon} />
         </View>
       </View>
-      <FooterButton
+      {/* <FooterButton
         onPress={handleButton}
         title={t('page.newAddress.ledger.notFound.buttonText')}
-      />
+      /> */}
     </View>
   );
 };
