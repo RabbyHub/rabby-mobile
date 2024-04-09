@@ -27,10 +27,6 @@ const styles = StyleSheet.create({
 });
 
 export const HardwareDeviceList = () => {
-  const handleComingSoon = React.useCallback(() => {
-    toast.show('Coming Soon :)');
-  }, []);
-
   const handleLedger = React.useCallback(() => {
     const id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.CONNECT_LEDGER,
@@ -72,6 +68,22 @@ export const HardwareDeviceList = () => {
     });
   }, [goImport]);
 
+  const handleOneKey = React.useCallback(() => {
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.CONNECT_ONEKEY,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
+      },
+    });
+    matomoRequestEvent({
+      category: 'Import Address',
+      action: `Begin_Import_${KEYRING_CATEGORY.Hardware}`,
+      label: KEYRING_CLASS.HARDWARE.ONEKEY,
+    });
+  }, []);
+
   return (
     <View>
       <WalletHeadline Icon={HardwareSVG}>Hardware Wallets</WalletHeadline>
@@ -88,13 +100,10 @@ export const HardwareDeviceList = () => {
         onPress={handleKeystone}
       />
       <WalletItem
-        style={StyleSheet.flatten([
-          styles.walletItem,
-          styles.walletItemDisabled,
-        ])}
+        style={StyleSheet.flatten([styles.walletItem])}
         Icon={OneKeySVG}
         title="OneKey"
-        onPress={handleComingSoon}
+        onPress={handleOneKey}
       />
     </View>
   );
