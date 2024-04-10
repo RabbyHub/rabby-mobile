@@ -1,7 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiLedger, apiOneKey } from '@/core/apis';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
-import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
@@ -9,7 +8,6 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Device } from 'react-native-ble-plx';
 import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
 import { toast, toastIndicator } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
@@ -21,9 +19,9 @@ import type { SearchDevice } from '@onekeyfe/hd-core';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
-  onSelectDevice?: (d: Device) => void;
+  onSelectDeviceId?: (id: string) => void;
   deviceId?: string;
-}> = ({ onDone, onSelectDevice, deviceId }) => {
+}> = ({ onDone, onSelectDeviceId, deviceId }) => {
   const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
   const [devices, setDevices] = React.useState<SearchDevice[]>([]);
@@ -34,7 +32,7 @@ export const ConnectOneKey: React.FC<{
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
   const openEthAppExpiredTimerRef = React.useRef<any>(null);
-  let toastHiddenRef = React.useRef<() => void>(() => {});
+  // let toastHiddenRef = React.useRef<() => void>(() => {});
   let loopCountRef = React.useRef(0);
 
   const handleBleNext = React.useCallback(async () => {
@@ -46,6 +44,7 @@ export const ConnectOneKey: React.FC<{
         setErrorCode(res.payload.code);
       }
     });
+
     // notfoundTimerRef.current = setTimeout(() => {
     //   setCurrentScreen('notfound');
     // }, 5000);
@@ -134,10 +133,11 @@ export const ConnectOneKey: React.FC<{
   );
 
   const handleSelectDevice = React.useCallback(
-    async device => {
-      apiLedger.setDeviceId(device.id);
-      if (onSelectDevice) {
-        onSelectDevice(device);
+    async ({ id }) => {
+      apiOneKey.setDeviceConnectId(id);
+
+      if (onSelectDeviceId) {
+        onSelectDeviceId(id);
       } else {
         // if (await checkEthApp()) {
         //   await importFirstAddress(1);
@@ -149,11 +149,12 @@ export const ConnectOneKey: React.FC<{
         //   await importFirstAddress(5);
         //   toastHiddenRef.current?.();
         // }
+        console.log('unlock');
         apiOneKey.unlock();
       }
     },
 
-    [onSelectDevice],
+    [onSelectDeviceId],
   );
 
   React.useEffect(() => {

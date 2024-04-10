@@ -4,9 +4,9 @@ import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
-import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { toastIndicator } from '../Toast';
+import { SvgProps } from 'react-native-svg';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -80,6 +80,7 @@ export type Props = {
   titleText: string;
   descriptionText: string;
   currentDeviceText: string;
+  DeviceLogo: React.FC<SvgProps>;
 };
 
 export const CommonSelectDeviceScreen: React.FC<Props> = ({
@@ -90,6 +91,7 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
   titleText,
   descriptionText,
   currentDeviceText,
+  DeviceLogo,
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -145,9 +147,9 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
                   },
                 ])}>
                 <View style={styles.textWrapper}>
-                  <OneKeySVG width={28} height={28} />
+                  <DeviceLogo width={28} height={28} />
                   <Text style={styles.itemText}>{device.name}</Text>
-                  {currentDeviceId === device.id && (
+                  {currentDeviceId && currentDeviceId === device.id && (
                     <View style={styles.currentDeviceTag}>
                       <Text style={styles.currentDeviceTagText}>
                         {currentDeviceText}

@@ -32,5 +32,27 @@ export async function unlock() {
 export async function searchDevices() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
-  return keyring.bridge.searchDevices();
+  let retryCount = 0;
+  const MAX_RETRY_COUNT = 10;
+  const pollScan = () => {
+    return keyring.bridge.searchDevices().then(res => {
+      if (!res.success) {
+        if (retryCount >= MAX_RETRY_COUNT) {
+          return res;
+        }
+        retryCount++;
+        return new Promise(resolve => setTimeout(resolve, 1000)).then(pollScan);
+      }
+
+      return res;
+    });
+  };
+
+  return pollScan();
+}
+
+export async function setDeviceConnectId(deviceConnectId: string) {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+
+  return keyring.setDeviceConnectId(deviceConnectId);
 }

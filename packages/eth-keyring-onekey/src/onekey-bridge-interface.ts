@@ -8,4 +8,5 @@ export type OneKeyBridgeInterface = {
   searchDevices: CoreApi['searchDevices'];
   getPassphraseState: CoreApi['getPassphraseState'];
   evmGetPublicKey: CoreApi['evmGetPublicKey'];
+  getFeatures: CoreApi['getFeatures'];
 };
