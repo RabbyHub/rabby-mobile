@@ -5,6 +5,7 @@ import {
   Props,
 } from '../ConnectCommon/SelectDeviceScreen';
 import { useTranslation } from 'react-i18next';
+import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 
 export const SelectDeviceScreen: React.FC<
   Pick<Props, 'errorCode' | 'onSelect' | 'currentDeviceId'> & {
@@ -12,7 +13,7 @@ export const SelectDeviceScreen: React.FC<
   }
 > = ({ devices, ...props }) => {
   const deviceMeta = React.useMemo(
-    () => devices.map(d => ({ id: d.deviceId, name: d.name })),
+    () => devices.map(d => ({ id: d.connectId, name: d.name })),
     [devices],
   );
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export const SelectDeviceScreen: React.FC<
       descriptionText={t('page.newAddress.onekey.select.description')}
       currentDeviceText={t('page.newAddress.onekey.select.currentDevice')}
       devices={deviceMeta}
+      DeviceLogo={OneKeySVG}
     />
   );
 };

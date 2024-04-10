@@ -5,6 +5,7 @@ import {
   CommonSelectDeviceScreen,
   Props,
 } from '../ConnectCommon/SelectDeviceScreen';
+import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 
 export const SelectDeviceScreen: React.FC<
   Pick<Props, 'errorCode' | 'onSelect' | 'currentDeviceId'> & {
@@ -20,6 +21,7 @@ export const SelectDeviceScreen: React.FC<
       descriptionText={t('page.newAddress.ledger.select.description')}
       currentDeviceText={t('page.newAddress.ledger.select.currentDevice')}
       devices={devices}
+      DeviceLogo={LedgerSVG}
     />
   );
 };

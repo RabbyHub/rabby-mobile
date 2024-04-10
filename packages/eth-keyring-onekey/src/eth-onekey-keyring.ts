@@ -114,6 +114,12 @@ class OneKeyKeyring extends EventEmitter {
     this.bridge.init();
   }
 
+  _deviceConnectId?: string;
+
+  setDeviceConnectId(deviceConnectId: string) {
+    this._deviceConnectId = deviceConnectId;
+  }
+
   serialize(): Promise<any> {
     return Promise.resolve({
       hdPath: this.hdPath,
@@ -157,64 +163,84 @@ class OneKeyKeyring extends EventEmitter {
     //   return Promise.resolve('already unlocked');
     // }
     return new Promise((resolve, reject) => {
-      this.bridge
-        .searchDevices()
-        .then(async result => {
-          if (!result.success) {
-            reject('searchDevices failed');
-          } else {
-            if (result.payload.length <= 0) {
+      const devicePromise = this._deviceConnectId
+        ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
+            if (!res.success) {
+              reject('searchDevices failed');
+              return undefined;
+            }
+
+            return {
+              deviceId: res.payload.device_id,
+              connectId: this._deviceConnectId,
+            };
+          })
+        : this.bridge.searchDevices().then(res => {
+            if (!res.success) {
+              reject('searchDevices failed');
+              return undefined;
+            }
+
+            if (res.payload.length <= 0) {
               reject('No OneKey Device found');
+              return undefined;
             }
-            const device = result.payload[0];
-            const { deviceId, connectId } = device;
-            if (!deviceId || !connectId) {
-              reject('no deviceId or connectId');
-              return;
-            }
-            if (
-              this.deviceId &&
-              this.connectId &&
-              this.isUnlocked() &&
-              this.deviceId === deviceId &&
-              this.connectId === connectId
-            ) {
-              resolve('already unlocked');
-              return;
-            }
-            this.deviceId = deviceId;
-            this.connectId = connectId;
-            const passphraseState = await this.bridge.getPassphraseState(
-              connectId,
-            );
-            if (!passphraseState.success) {
-              reject('getPassphraseState failed');
-              return;
-            }
-            this.passphraseState = passphraseState.payload;
-            this.bridge
-              .evmGetPublicKey(connectId, deviceId, {
-                showOnOneKey: false,
-                chainId: 1,
-                path: hdPathString,
-                passphraseState: passphraseState.payload,
-              })
-              .then(res => {
-                if (res.success) {
-                  this.hdk.publicKey = Buffer.from(
-                    res.payload.publicKey,
-                    'hex',
-                  );
-                  this.hdk.chainCode = Buffer.from(
-                    res.payload.node.chain_code,
-                    'hex',
-                  );
-                  resolve('just unlocked');
-                } else {
-                  reject('getPublicKey failed');
-                }
-              });
+
+            return res.payload[0];
+          });
+
+      devicePromise
+        .then(async device => {
+          if (!device) {
+            reject('no device');
+            return;
           }
+          const { deviceId, connectId } = device;
+
+          if (!deviceId || !connectId) {
+            reject('no deviceId or connectId');
+            return;
+          }
+          if (
+            this.deviceId &&
+            this.connectId &&
+            this.isUnlocked() &&
+            this.deviceId === deviceId &&
+            this.connectId === connectId
+          ) {
+            resolve('already unlocked');
+            return;
+          }
+          this.deviceId = deviceId;
+          this.connectId = connectId;
+          const passphraseState = await this.bridge.getPassphraseState(
+            connectId,
+          );
+          if (!passphraseState.success) {
+            reject('getPassphraseState failed');
+            return;
+          }
+          this.passphraseState = passphraseState.payload;
+
+          await this.bridge
+            .evmGetPublicKey(connectId, deviceId, {
+              showOnOneKey: false,
+              chainId: 1,
+              path: hdPathString,
+              passphraseState: passphraseState.payload,
+            })
+            .then(res => {
+              if (res.success) {
+                this.hdk.publicKey = Buffer.from(res.payload.publicKey, 'hex');
+                this.hdk.chainCode = Buffer.from(
+                  res.payload.node.chain_code,
+                  'hex',
+                );
+                resolve('just unlocked');
+              } else {
+                reject('getPublicKey failed');
+              }
+            });
         })
         .catch(e => {
           reject(new Error((e && e.toString()) || 'Unknown error'));
