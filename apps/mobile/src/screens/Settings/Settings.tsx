@@ -30,7 +30,11 @@ import {
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
 import { type SettingConfBlock, Block } from './Block';
-import { useAppTheme, useThemeColors } from '@/hooks/theme';
+import {
+  SHOULD_SUPPORT_DARK_MODE,
+  useAppTheme,
+  useThemeColors,
+} from '@/hooks/theme';
 import { styled } from 'styled-components/native';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
@@ -108,7 +112,7 @@ function SettingsScreen(): JSX.Element {
             },
           },
           {
-            visible: __DEV__,
+            visible: SHOULD_SUPPORT_DARK_MODE,
             label: 'Switch Theme',
             icon: RcThemeMode,
             onPress: () => {
