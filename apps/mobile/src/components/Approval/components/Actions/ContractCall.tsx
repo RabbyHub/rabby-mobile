@@ -72,7 +72,10 @@ const ContractCall = ({
 
             {requireData.protocol && (
               <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
+                <ProtocolListItem
+                  protocol={requireData.protocol}
+                  style={commonStyle.secondaryText}
+                />
               </DescItem>
             )}
             <DescItem>

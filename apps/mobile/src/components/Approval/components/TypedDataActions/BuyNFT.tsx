@@ -18,6 +18,7 @@ import { Text, View } from 'react-native';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import DescItem from '../Actions/components/DescItem';
+import useCommonStyle from '../../hooks/useCommonStyle';
 const { isSameAddress } = addressUtils;
 
 const BuyNFT = ({
@@ -35,6 +36,7 @@ const BuyNFT = ({
 }) => {
   const actionData = data!;
   const { t } = useTranslation();
+  const commonStyle = useCommonStyle();
   const {
     rules,
     currentTx: { processedRules },
@@ -192,7 +194,10 @@ const BuyNFT = ({
             <View className="desc-list">
               {requireData.protocol && (
                 <DescItem>
-                  <ProtocolListItem protocol={requireData.protocol} />
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
                 </DescItem>
               )}
 
