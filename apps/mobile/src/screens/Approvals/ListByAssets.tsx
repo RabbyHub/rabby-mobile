@@ -38,6 +38,7 @@ export default function ListByAssets() {
     isLoading,
     displaySortedAssetApprovalList,
     loadApprovals,
+    assetEmptyStatus,
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
 
@@ -114,10 +115,17 @@ export default function ListByAssets() {
             }),
           },
         ]}>
-        <NotMatchedHolder />
+        <NotMatchedHolder
+          text={assetEmptyStatus === 'none' ? 'No approvals' : 'Not Matched'}
+        />
       </View>
     );
-  }, [styles.emptyHolderContainer, safeSizes.bottomAreaHeight, isLoading]);
+  }, [
+    styles.emptyHolderContainer,
+    safeSizes.bottomAreaHeight,
+    isLoading,
+    assetEmptyStatus,
+  ]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {

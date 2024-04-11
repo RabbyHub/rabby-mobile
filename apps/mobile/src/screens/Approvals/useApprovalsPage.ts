@@ -565,7 +565,26 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     isLoading,
     loadApprovals,
     skContract,
+    contractEmptyStatus: useMemo(() => {
+      if (!sortedContractList.length) return 'none' as const;
+
+      if (!displaySortedContractList.length) return 'no-matched' as const;
+
+      return false;
+    }, [sortedContractList, displaySortedContractList]),
     skAssets,
+    assetEmptyStatus: useMemo(() => {
+      if (!sortedTokenApprovals.length && !sortedNftApprovals.length)
+        return 'none' as const;
+
+      if (!displaySortedAssetApprovalList.length) return 'no-matched' as const;
+
+      return false;
+    }, [
+      sortedTokenApprovals,
+      sortedNftApprovals,
+      displaySortedAssetApprovalList,
+    ]),
     searchKw: filterType === 'contract' ? skContract : skAssets,
     setSearchKw,
 
@@ -585,7 +604,9 @@ export const ApprovalsPageContext = React.createContext<
   isLoading: false,
   loadApprovals: async () => [],
   skContract: '',
+  contractEmptyStatus: false,
   skAssets: '',
+  assetEmptyStatus: false,
   searchKw: '',
   setSearchKw: () => {},
   filterType: 'contract',

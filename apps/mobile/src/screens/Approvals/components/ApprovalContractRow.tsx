@@ -501,13 +501,10 @@ export const getCardStyles = createGetStyles(colors => {
       fontWeight: '400',
     },
     floorValue: {
-      color: colors['neutral-body'],
+      color: colors['neutral-title1'],
       fontSize: 13,
       fontWeight: '600',
       position: 'relative',
-    },
-    floorValueMarked: {
-      color: colors['neutral-title1'],
     },
     floorValueWarn: {
       color: colors['orange-default'],

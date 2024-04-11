@@ -183,13 +183,6 @@ function CardProto({
               numberOfLines={1}>
               {ellipsisAddress(contract.id)}
             </Text>
-            <Text
-              style={[styles.contractName, styles.contractNameInDetailModal]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
-              ({contract.name})
-            </Text>
           </View>
           <CopyAddressIcon
             address={contract.id}
@@ -230,7 +223,7 @@ function CardProto({
           <Text style={styles.floorLabel}>Contract Note</Text>
         </View>
         <Text
-          style={[styles.floorValue, styles.floorValueMarked]}
+          style={[styles.floorValue]}
           ellipsizeMode="tail"
           numberOfLines={1}>
           {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
@@ -489,13 +482,10 @@ export const getCardStyles = createGetStyles(colors => {
       fontWeight: '400',
     },
     floorValue: {
-      color: colors['neutral-body'],
+      color: colors['neutral-title1'],
       fontSize: 13,
       fontWeight: '600',
       position: 'relative',
-    },
-    floorValueMarked: {
-      color: colors['neutral-title1'],
     },
     floorValueWarn: {
       color: colors['orange-default'],

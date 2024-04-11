@@ -38,6 +38,7 @@ export default function ListByContracts() {
     isLoading,
     displaySortedContractList,
     loadApprovals,
+    contractEmptyStatus,
     safeSizeInfo: { safeSizes },
   } = useApprovalsPage();
 
@@ -114,10 +115,17 @@ export default function ListByContracts() {
             }),
           },
         ]}>
-        <NotMatchedHolder />
+        <NotMatchedHolder
+          text={contractEmptyStatus === 'none' ? 'No approvals' : 'Not Matched'}
+        />
       </View>
     );
-  }, [styles.emptyHolderContainer, safeSizes.bottomAreaHeight, isLoading]);
+  }, [
+    styles.emptyHolderContainer,
+    safeSizes.bottomAreaHeight,
+    isLoading,
+    contractEmptyStatus,
+  ]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {

@@ -251,12 +251,15 @@ const contractCheckboxStyle = {
   height: 20,
 };
 
-export function NotMatchedHolder({ style }: RNViewProps) {
+export function NotMatchedHolder({
+  style,
+  text = 'Not Matched',
+}: RNViewProps & { text?: string }) {
   const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
   return (
     <View style={[styles.container, style]}>
       <RcIconNotMatchedCC color={colors['neutral-body']} />
-      <Text style={styles.emptyText}>Not Matched</Text>
+      <Text style={styles.emptyText}>{text}</Text>
     </View>
   );
 }
