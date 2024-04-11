@@ -42,7 +42,7 @@ const RevokeNFTCollection = ({
             </Text>
           </Row>
           <Row>
-            {actionData?.collection?.name}
+            <Text>{actionData?.collection?.name}</Text>
             <View>
               <DescItem>
                 <ViewMore
