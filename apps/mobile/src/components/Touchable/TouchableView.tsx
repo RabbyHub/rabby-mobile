@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 type Props = React.ComponentProps<typeof TouchableOpacity> & {
-  onPress: (event?: GestureResponderEvent) => void;
+  onPress: (event: GestureResponderEvent) => void;
   onLongPress?: () => void;
   delayPressIn?: number;
   borderless?: boolean;
@@ -39,10 +39,10 @@ export default class TouchableView extends React.Component<Props> {
 }
 
 type SilentProps = React.ComponentProps<typeof TouchableWithoutFeedback> & {
-  viewStyle? : StyleProp<ViewStyle>;
+  viewStyle?: StyleProp<ViewStyle>;
   viewProps?: React.ComponentProps<typeof View>;
 };
-export function SilentTouchableView (props: SilentProps) {
+export function SilentTouchableView(props: SilentProps) {
   const { children, viewProps, viewStyle, ...rest } = props;
   return (
     <TouchableWithoutFeedback {...rest}>
@@ -50,5 +50,5 @@ export function SilentTouchableView (props: SilentProps) {
         {children}
       </View>
     </TouchableWithoutFeedback>
-  )
-};
+  );
+}

@@ -61,11 +61,15 @@ export function makeTriangleStyle(
   return retStyle;
 }
 
-export function makeDebugBorder(color = 'blue'): ViewStyle {
+export function makeDevOnlyStyle<T extends any = ViewStyle>(input: T): T | {} {
   if (!__DEV__) return {};
 
-  return {
+  return input;
+}
+
+export function makeDebugBorder(color = 'blue'): ViewStyle {
+  return makeDevOnlyStyle({
     borderWidth: 1,
     borderColor: color,
-  };
+  });
 }

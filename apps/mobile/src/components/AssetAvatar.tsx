@@ -1,7 +1,8 @@
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { useSwitch } from '@/hooks/useSwitch';
+import { Chain } from '@debank/common';
 import { memo, ReactNode, useMemo } from 'react';
 import { StyleSheet, View, Image, ImageStyle, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -9,7 +10,8 @@ import FastImage from 'react-native-fast-image';
 type AssetAvatarProps = {
   logo?: string;
   size?: number;
-  chain?: string | false;
+  chain?: Chain['serverId'] | false;
+  chainIconPosition?: 'tr' | 'br' | 'tl' | 'bl';
   chainSize?: number;
   failedPlaceholder?: ReactNode;
   style?: ViewStyle;
@@ -33,14 +35,14 @@ const DefaultToken = memo(
 export const AssetAvatar = memo(
   ({
     chain,
+    chainIconPosition = 'br',
     logo,
     chainSize = 12,
     size = 28,
     style,
     logoStyle,
   }: AssetAvatarProps) => {
-    const colors = useThemeColors();
-    const styles = useMemo(() => getStyles(colors), [colors]);
+    const { styles, colors } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
 
     const chainLogo = useMemo(
@@ -56,10 +58,14 @@ export const AssetAvatar = memo(
     const chainStyle = useMemo(
       () =>
         StyleSheet.flatten([
-          styles.imageBadge,
+          styles.chainIcon,
+          chainIconPosition === 'tl' && styles.chainIconTL,
+          chainIconPosition === 'bl' && styles.chainIconBL,
+          chainIconPosition === 'br' && styles.chainIconBR,
+          chainIconPosition === 'tr' && styles.chainIconTR,
           { width: chainSize, height: chainSize, borderRadius: chainSize / 2 },
         ]),
-      [chainSize],
+      [chainSize, chainIconPosition, styles],
     );
 
     const source = useMemo(
@@ -82,12 +88,12 @@ export const AssetAvatar = memo(
             borderRadius: logoStyle?.borderRadius ?? size / 2,
           },
         ]),
-      [size, logoStyle],
+      [size, logoStyle, styles.iconStyle],
     );
 
     const containerStyle = useMemo(
       () => StyleSheet.flatten([styles.imageBox, style]),
-      [style],
+      [style, styles.imageBox],
     );
 
     return (
@@ -116,12 +122,26 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    imageBadge: {
+    chainIcon: {
       width: 12,
       height: 12,
       position: 'absolute',
+      backgroundColor: colors['neutral-bg-2'],
+    },
+    chainIconTL: {
+      left: -2,
+      top: -2,
+    },
+    chainIconBL: {
+      left: -2,
+      bottom: -2,
+    },
+    chainIconTR: {
+      right: -2,
+      top: -2,
+    },
+    chainIconBR: {
       right: -2,
       bottom: -2,
-      backgroundColor: colors['neutral-bg-2'],
     },
   });

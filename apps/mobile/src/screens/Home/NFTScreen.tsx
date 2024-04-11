@@ -1,7 +1,7 @@
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Text } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
-import { Media } from '@/components/Media';
+import { MEDIA_TYPE, Media } from '@/components/Media';
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
@@ -80,7 +80,7 @@ const Item = ({ item, lastCountMark }: ItemProps) => {
       onPress={handleNFTPress}>
       <Media
         failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
-        type={item?.content_type}
+        type={item?.content_type as MEDIA_TYPE}
         src={isSvgURL ? '' : item?.content}
         thumbnail={isSvgURL ? '' : item?.content}
         mediaStyle={styles.images}

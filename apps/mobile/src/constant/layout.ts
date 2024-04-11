@@ -40,6 +40,9 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  Receive: 'Receive',
+  Swap: 'Swap',
+  Approvals: 'Approvals',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
 
@@ -54,11 +57,8 @@ export const RootNames = {
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
 
-  Receive: 'Receive',
-
+  ImportLedger: 'ImportLedger',
   ImportHardware: 'ImportHardware',
-
-  Swap: 'Swap',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -93,6 +93,10 @@ export const getRootSpecConfig = (
     Receive: {
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
+    },
+    Approvals: {
+      statusBarStyle: defaultStatusBarStyle,
+      statusbarBackgroundColor: colors['neutral-card2'],
     },
   } as {
     [P in AppRootName]?: {

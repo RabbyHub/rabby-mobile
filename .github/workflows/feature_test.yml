@@ -61,6 +61,7 @@ jobs:
       - name: Install and build
         shell: bash
         run: |
+          echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           yarn install;
           cd apps/mobile;
           bundle install;

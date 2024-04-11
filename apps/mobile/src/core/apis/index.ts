@@ -11,3 +11,4 @@ export * as apiKeyring from './keyring';
 export * as apiPageStateCache from './pageStateCache';
 export * as apiLedger from './ledger';
 export * as apiKeystone from './keystone';
+export * as apiApprovals from './approvals';

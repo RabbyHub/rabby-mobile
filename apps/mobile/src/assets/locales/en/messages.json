@@ -662,6 +662,7 @@
           "ApprovalCount_other": "Approvals"
         },
         "RevokeButton": {
+          "btnText": "Revoke",
           "btnText_zero": "Revoke",
           "btnText_one": "Revoke ({{count}})",
           "btnText_other": "Revoke ({{count}})"
@@ -685,7 +686,9 @@
           "columnTip": {
             "contractTrustValue": "Trust value refers to the total asset value approved and exposed to this contract. A low trust value indicates either risk or inactivity for 180 days.",
             "contractTrustValueWarning": "The contract trust value < $100,000",
-            "contractTrustValueDanger": "The contract trust value < $10,000"
+            "contractTrustValueDanger": "The contract trust value < $10,000",
+            "revokeTrendsValueWarning": "Recent revokes are greater than double the number of newly approved users.",
+            "revokeTrendsValueDanger": "Recent revokes are greater than 4 times the number of newly approved users."
           }
         },
         "byAssets": {

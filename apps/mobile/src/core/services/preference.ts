@@ -66,6 +66,8 @@ export interface PreferenceStore {
   currentVersion: string;
   pinnedChain: string[];
 
+  tokenApprovalChain: Record<string, CHAINS_ENUM>;
+  nftApprovalChain: Record<string, CHAINS_ENUM>;
   sendLogTime?: number;
   lastSelectedGasTopUpChain?: Record<string, CHAINS_ENUM>;
   sendEnableTime?: number;
@@ -126,6 +128,8 @@ export class PreferenceService {
           gasCache: {},
           currentVersion: '0',
           pinnedChain: [],
+          tokenApprovalChain: {},
+          nftApprovalChain: {},
           sendLogTime: 0,
           sendEnableTime: 0,
           customizedToken: [],
@@ -156,6 +160,32 @@ export class PreferenceService {
 
   setPreference = (params: Partial<PreferenceStore>) => {
     Object.assign(this.store, params);
+  };
+
+  getTokenApprovalChain = (address: string) => {
+    const key = address.toLowerCase();
+    return this.store.tokenApprovalChain[key] || CHAINS_ENUM.ETH;
+  };
+
+  setTokenApprovalChain = (address: string, chain: CHAINS_ENUM) => {
+    const key = address.toLowerCase();
+    this.store.tokenApprovalChain = {
+      ...this.store.tokenApprovalChain,
+      [key]: chain,
+    };
+  };
+
+  getNFTApprovalChain = (address: string) => {
+    const key = address.toLowerCase();
+    return this.store.nftApprovalChain[key] || CHAINS_ENUM.ETH;
+  };
+
+  setNFTApprovalChain = (address: string, chain: CHAINS_ENUM) => {
+    const key = address.toLowerCase();
+    this.store.nftApprovalChain = {
+      ...this.store.nftApprovalChain,
+      [key]: chain,
+    };
   };
 
   getLastTimeSendToken = (address: string) => {

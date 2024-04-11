@@ -1,9 +1,13 @@
 import { sleep } from '@/utils/async';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+const PAGI_START = 1;
+/**
+ * @description ensure page valid in range, but not less than 0
+ */
 function getValidPage(newPage: number, totalPage: number) {
-  let validPage = Math.max(1, newPage);
-  validPage = Math.min(validPage, totalPage);
+  let validPage = Math.min(newPage, totalPage);
+  validPage = Math.max(PAGI_START, validPage);
 
   return validPage;
 }
@@ -21,43 +25,48 @@ export function usePsudoPagination<T extends any>(
 ) {
   options = typeof options === 'number' ? { pageSize: options } : options;
   const { pageSize = 10 } = options || {};
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(PAGI_START);
 
-  const { currentPageList, fallList, total, totalPage } = useMemo(() => {
+  const { currentPageList, fallList } = useMemo(() => {
+    const offset = currentPage - PAGI_START;
     const currentList: T[] = fullList.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize,
+      offset * pageSize,
+      (offset + 1) * pageSize,
     );
     const fallList = fullList.slice(0, currentPage * pageSize);
-    const totalPage = Math.ceil(fullList.length / pageSize);
 
     return {
       currentPageList: currentList,
       fallList,
-      total: fullList.length,
-      totalPage,
     };
   }, [currentPage, fullList, pageSize]);
 
+  const { total, maxPage } = useMemo(() => {
+    return {
+      total: fullList.length,
+      maxPage: Math.ceil(fullList.length / pageSize),
+    };
+  }, [fullList.length, pageSize]);
+
   const goToPage = useCallback(
     (newPage: number) => {
-      setCurrentPage(getValidPage(newPage, totalPage));
+      setCurrentPage(getValidPage(newPage, maxPage));
     },
-    [totalPage],
+    [maxPage],
   );
 
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
   const goToNextPage = useCallback(() => {
-    setCurrentPage(prev => getValidPage(prev + 1, totalPage));
-  }, [totalPage]);
+    setCurrentPage(prev => getValidPage(prev + PAGI_START, maxPage));
+  }, [maxPage]);
 
   const simulateLoadNext = useCallback(
     async (timeout = 1000) => {
       setIsFetchingNextPage(true);
 
       try {
-        await sleep(1000);
+        await sleep(timeout);
         goToNextPage();
       } catch (err) {
         console.error(err);
@@ -68,16 +77,24 @@ export function usePsudoPagination<T extends any>(
     [goToNextPage],
   );
 
+  const isReachTheEnd = useMemo(() => {
+    return currentPage >= maxPage;
+  }, [currentPage, maxPage]);
+
+  const resetPage = useCallback(() => {
+    setCurrentPage(PAGI_START);
+  }, []);
+
   return {
     currentPageList,
     fallList,
     total,
-    currentPage,
-    totalPage,
     goToPage,
+    resetPage,
 
     goToNextPage,
     simulateLoadNext,
     isFetchingNextPage,
+    isReachTheEnd,
   };
 }

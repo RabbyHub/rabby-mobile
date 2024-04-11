@@ -17,8 +17,14 @@ import {
 } from 'react-native';
 import { colord } from 'colord';
 
-import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
+import {
+  useThemeColors,
+  useGetAppThemeMode,
+  useThemeStyles,
+} from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
+import TouchableView from './Touchable/TouchableView';
+import { createGetStyles } from '@/utils/styles';
 
 export type ButtonProps = TouchableOpacityProps &
   TouchableNativeFeedbackProps & {
@@ -304,3 +310,38 @@ const styles = StyleSheet.create({
 });
 
 Button.displayName = 'Button';
+
+export function MiniButton({
+  children,
+  title = children,
+  textStyle,
+  ...props
+}: React.ComponentProps<typeof TouchableView> & {
+  children?: string;
+  title?: string;
+  textStyle?: StyleProp<TextStyle>;
+}) {
+  const { styles } = useThemeStyles(getMiniButtonStyle);
+
+  return (
+    <TouchableView {...props} style={[styles.miniBtnView, props.style]}>
+      {renderText(title, { style: [styles.miniBtnTextView, textStyle] })}
+    </TouchableView>
+  );
+}
+
+const getMiniButtonStyle = createGetStyles(colors => {
+  return {
+    miniBtnView: {
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      backgroundColor: colors['blue-light2'],
+      borderRadius: 4,
+    },
+    miniBtnTextView: {
+      color: colors['blue-default'],
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  };
+});

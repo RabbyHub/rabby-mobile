@@ -67,6 +67,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.Swap]?: {};
+  [RootNames.Approvals]?: {};
 };
 
 export type SettingNavigatorParamList = {

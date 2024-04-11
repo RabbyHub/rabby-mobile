@@ -3,6 +3,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenLayouts } from '@/constant/layout';
 import { Dimensions, Platform, StatusBar } from 'react-native';
 
+const isAndroid = Platform.OS === 'android';
+
 export function getVerticalLayoutHeights() {
   const screenHeight = Dimensions.get('screen').height;
   const windowHeight = Dimensions.get('window').height;
@@ -14,8 +16,7 @@ export function getVerticalLayoutHeights() {
     screenHeight,
     windowHeight,
     statusbarHeight,
-    androidSystembarHeight:
-      Platform.OS === 'android' ? androidSystembarHeight : 0,
+    androidSystembarHeight: isAndroid ? androidSystembarHeight : 0,
   };
 }
 
@@ -34,4 +35,13 @@ export function useSafeSizes() {
      */
     systembarOffsetBottom: bottom,
   };
+}
+
+export function useSafeAndroidBottomOffset(baseOffset: number = 0) {
+  const { bottom } = useSafeAreaInsets();
+
+  const androidBottomOffset = isAndroid ? bottom : 0;
+  const safeBottomOffset = baseOffset + androidBottomOffset;
+
+  return { safeBottomOffset, androidBottomOffset };
 }

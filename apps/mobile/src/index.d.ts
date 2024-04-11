@@ -22,6 +22,8 @@ declare module 'eth-json-rpc-middleware';
 declare module 'eth-json-rpc-middleware/providerAsMiddleware';
 
 type RNViewProps = {
-  style?: ViewStyle;
+  style?: import('react').ComponentProps<
+    typeof import('react-native').View
+  >['style'];
   className?: string;
 };

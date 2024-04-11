@@ -1,0 +1,65 @@
+{
+  "name": "@rabby-wallet/biz-utils",
+  "version": "0.1.0",
+  "description": "biz utils for rabby wallet project",
+  "keywords": [
+    "RabbyHub",
+    "Ethereum"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "node": "./dist/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "homepage": "https://github.com/RabbyHub/rabby-mono/tree/main/packages/biz-utils#readme",
+  "bugs": {
+    "url": "https://github.com/RabbyHub/rabby-mono/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RabbyHub/rabby-mono.git"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build:docs": "typedoc",
+    "changelog:validate": "../../scripts/validate-changelog.sh @rabby-wallet/biz-utils",
+    "publish:preview": "yarn npm publish --tag preview",
+    "test": "jest --reporters=jest-silent-reporter",
+    "test:clean": "jest --clearCache",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch",
+    "cov:report": "open ./coverage/index.html"
+  },
+  "dependencies": {
+    "@rabby-wallet/rabby-api": "0.7.7",
+    "bignumber.js": "^9.1.2",
+    "ethereumjs-util": "^7.1.5"
+  },
+  "devDependencies": {
+    "@metamask/auto-changelog": "^3.4.3",
+    "@types/jest": "^27.4.1",
+    "@types/sinon": "^9.0.10",
+    "deepmerge": "^4.2.2",
+    "jest": "^27.5.1",
+    "sinon": "^9.2.4",
+    "ts-jest": "^27.1.4",
+    "typedoc": "^0.24.8",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "~4.8.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

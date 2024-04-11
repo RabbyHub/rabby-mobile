@@ -25,7 +25,7 @@ function coerceBinaryTheme(
   rnColorScheme: ColorSchemeName = 'light',
 ): ColorSchemeName {
   if (__DEV__) {
-    return appTheme === 'system' ? rnColorScheme ?? 'light' : appTheme;
+    return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
   }
 
   return FORCE_THEME;
@@ -134,12 +134,22 @@ export const useThemeColors = (): AppColorsVariants => {
 export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   getStyle: T,
 ) {
-  const colors = useThemeColors();
+  const binaryTheme = useGetAppThemeMode();
+  const colors = ThemeColors[binaryTheme] as AppColorsVariants;
 
-  return React.useMemo(() => {
+  const appThemeMode = useGetAppThemeMode();
+  const isLight = appThemeMode === 'light';
+
+  const cs = React.useMemo(() => {
     return {
       colors,
       styles: getStyle(colors) as ReturnType<T>,
     };
   }, [colors, getStyle]);
+
+  return {
+    ...cs,
+    appThemeMode,
+    isLight,
+  };
 }

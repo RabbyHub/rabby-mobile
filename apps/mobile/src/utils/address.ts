@@ -24,3 +24,10 @@ export const enum AddressType {
   CONTRACT = 'CONTRACT',
   UNKNOWN = 'UNKNOWN',
 }
+
+export const getAddressScanLink = (scanLink: string, address: string) => {
+  if (/transaction\/_s_/.test(scanLink)) {
+    return scanLink.replace(/transaction\/_s_/, `address/${address}`);
+  }
+  return scanLink.replace(/tx\/_s_/, `address/${address}`);
+};

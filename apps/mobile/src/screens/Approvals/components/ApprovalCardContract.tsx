@@ -1,0 +1,554 @@
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
+
+import {
+  createGetStyles,
+  makeDebugBorder,
+  makeTriangleStyle,
+} from '@/utils/styles';
+import { useThemeStyles } from '@/hooks/theme';
+import {
+  useFocusedApprovalOnApprovals,
+  type ContractApprovalItem,
+  useRevokeContractSpenders,
+} from '../useApprovalsPage';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { findChainByServerID } from '@/utils/chain';
+import { ellipsisAddress } from '@/utils/address';
+import { SimulateUnderline } from '@/components/patches/Simulation';
+
+import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
+import {
+  ApprovalsLayouts,
+  SelectionCheckbox,
+  getSelectableContainerStyle,
+} from './Layout';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { checkoutApprovalSelection } from '../utils';
+import { RcIconInfoCC } from '@/assets/icons/common';
+import { Tip } from '@/components';
+
+export const ContractFloorLayouts = {
+  floorHeader: { height: 33, paddingTop: 0 },
+  floor1: { height: 25, paddingTop: 5 },
+  floor2: { height: 25, paddingTop: 5 },
+  floor3: { height: 24, paddingTop: 4 },
+};
+
+function RightTouchableView({
+  children,
+  ...props
+}: React.ComponentProps<typeof TouchableView>) {
+  const { colors, styles } = useThemeStyles(getCardStyles);
+
+  return (
+    <TouchableView
+      {...props}
+      style={[styles.floorRight, { height: '100%' }, props.style]}>
+      <View style={styles.rowCenter}>{children}</View>
+    </TouchableView>
+  );
+}
+
+function CardProto({
+  style,
+  contract,
+  onPressArea,
+  inDetailModal = false,
+}: {
+  contract: ContractApprovalItem;
+  onPressArea?: (ctx: {
+    type: 'selection' | 'entry' | 'trustValue' | 'revokeTrends';
+    contract: ContractApprovalItem;
+  }) => void;
+  inDetailModal?: boolean;
+} & RNViewProps) {
+  const { colors, styles } = useThemeStyles(getCardStyles);
+  const { t } = useTranslation();
+
+  const { contractRevokeMap, onSelectAllContractApprovals } =
+    useRevokeContractSpenders();
+
+  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
+    return checkoutApprovalSelection('contract', contractRevokeMap, contract);
+  }, [contractRevokeMap, contract]);
+
+  const { revokeTrendsEvaluation, trustValueEvalutation } =
+    React.useMemo(() => {
+      const trustValue = (() => {
+        const isDanger =
+          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          approvalUtils.RiskNumMap.danger;
+        const isWarning =
+          !isDanger &&
+          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+            approvalUtils.RiskNumMap.warning;
+
+        const isRisky = isDanger || isWarning;
+
+        const finalTextStyle = StyleSheet.flatten([
+          styles.floorValue,
+          isWarning && styles.floorValueWarn,
+          isDanger && styles.floorValueDanger,
+        ]);
+        const finalUnderlineStyle = StyleSheet.flatten([
+          styles.floorValueUnderlineDefault,
+          isRisky && {
+            borderColor: finalTextStyle['color'],
+          },
+        ]);
+
+        return {
+          isDanger,
+          isWarning,
+          isRisky,
+          finalTextStyle,
+          finalUnderlineStyle,
+        };
+      })();
+
+      const revokeTrends = (() => {
+        const isDanger =
+          contract.$contractRiskEvaluation.extra.clientApprovalScore >=
+          approvalUtils.RiskNumMap.danger;
+        const isWarning =
+          !isDanger &&
+          contract.$contractRiskEvaluation.extra.clientApprovalScore >=
+            approvalUtils.RiskNumMap.warning;
+
+        const isRisky = isDanger || isWarning;
+
+        const finalTextStyle = StyleSheet.flatten([
+          styles.floorValue,
+          isWarning && styles.floorValueWarn,
+          isDanger && styles.floorValueDanger,
+        ]);
+        const finalUnderlineStyle = StyleSheet.flatten([
+          styles.floorValueUnderlineDefault,
+          isRisky && {
+            borderColor: finalTextStyle['color'],
+          },
+        ]);
+
+        return {
+          isDanger,
+          isWarning,
+          isRisky,
+          finalTextStyle,
+          finalUnderlineStyle,
+        };
+      })();
+
+      return {
+        trustValueEvalutation: trustValue,
+        revokeTrendsEvaluation: revokeTrends,
+      };
+    }, [contract, styles]);
+
+  const chainItem = useMemo(
+    () => findChainByServerID(contract.chain),
+    [contract.chain],
+  );
+  const chainLogoUrl = chainItem?.logo || contract.logo_url;
+
+  const { toggleFocusedContractItem } = useFocusedApprovalOnApprovals();
+
+  const risky = useMemo(
+    () => ['danger', 'warning'].includes(contract.risk_level),
+    [contract.risk_level],
+  );
+
+  const contractUsdText = useMemo(
+    () =>
+      bizNumberUtils.formatUsdValue(
+        contract.$riskAboutValues.risk_exposure_usd_value || 0,
+      ),
+    [contract.$riskAboutValues.risk_exposure_usd_value],
+  );
+
+  const isTreatedAsSelected =
+    !inDetailModal && (isSelectedAll || isSelectedPartials);
+
+  return (
+    <TouchableView
+      disabled={inDetailModal}
+      style={[
+        styles.container,
+        contract?.risk_alert ? styles.containerWithRisky : {},
+        isTreatedAsSelected && styles.selectedContainer,
+        style,
+      ]}
+      onPress={() => {
+        if (!inDetailModal) {
+          onSelectAllContractApprovals(contract, !isSelectedAll);
+        }
+      }}>
+      {/* floor header */}
+      <View
+        style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
+        <View style={styles.floorLeft}>
+          {chainLogoUrl ? (
+            <ChainIconImage
+              style={styles.chainIcon}
+              size={20}
+              {...(contract.logo_url && {
+                source: { uri: chainLogoUrl },
+              })}
+            />
+          ) : (
+            <RcIconUnknown style={styles.chainIcon} />
+          )}
+          <View style={styles.addrContractWrapper}>
+            <Text
+              style={styles.contractAddrText}
+              ellipsizeMode="tail"
+              numberOfLines={1}>
+              {ellipsisAddress(contract.id)}
+            </Text>
+          </View>
+          {!inDetailModal ? (
+            <SelectionCheckbox
+              isSelectedAll={isSelectedAll}
+              isSelectedPartials={isSelectedPartials}
+              style={styles.contractCheckbox}
+            />
+          ) : (
+            <CopyAddressIcon
+              address={contract.id}
+              style={{ marginLeft: 2 }}
+              color={colors['neutral-foot']}
+            />
+          )}
+        </View>
+        <RightTouchableView
+          style={styles.rightOps}
+          disabled={inDetailModal}
+          onPress={evt => {
+            if (inDetailModal) return;
+            toggleFocusedContractItem(contract);
+            evt.stopPropagation();
+          }}>
+          {!inDetailModal ? (
+            <>
+              <Text style={styles.entryText}>{contract.list.length}</Text>
+              <RcIconRightEntryMiniCC
+                width={14}
+                height={14}
+                color={colors['neutral-foot']}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={[styles.entryText, styles.approvalsCount]}>
+                {contract.list.length} Approvals
+              </Text>
+            </>
+          )}
+        </RightTouchableView>
+      </View>
+
+      {risky && (
+        <View
+          style={[
+            styles.contractItemFloor,
+            { height: ApprovalsLayouts.contractCardRiskAlertSpace },
+          ]}>
+          <View style={[styles.riskyTip]}>
+            <RcIconInfoCC
+              width={14}
+              height={14}
+              color={colors['neutral-title2']}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.riskyTipText}>{contract.risk_alert}</Text>
+
+            <View style={styles.riskyTipArrow} />
+          </View>
+        </View>
+      )}
+
+      {/* floor 1 */}
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
+        <View style={styles.floorLeft}>
+          <Text style={styles.floorLabel}>Contract Note</Text>
+        </View>
+        <Text
+          style={[styles.floorValue, styles.floorValueMarked]}
+          ellipsizeMode="tail"
+          numberOfLines={1}>
+          {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
+          {contract.name}
+        </Text>
+      </View>
+
+      {/* floor 2 */}
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor2]}>
+        <View style={styles.floorLeft}>
+          <Text style={styles.floorLabel}>
+            {t(
+              'page.approvals.tableConfig.byContracts.columnTitle.contractTrustValue',
+            )}
+          </Text>
+        </View>
+        <Tip
+          // {...(!trustValueEvalutation.isRisky && { isVisible: false })}
+          contentStyle={[styles.riskyAlertTooltipContent]}
+          content={
+            <View style={[styles.riskyAlertTooltipInner]}>
+              {trustValueEvalutation.isDanger && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueDanger',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {trustValueEvalutation.isWarning && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.contractTrustValueWarning',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {!trustValueEvalutation.isRisky && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  The contract trust value : {contractUsdText}
+                  {'\n'}
+                </Text>
+              )}
+              <Text style={styles.riskyAlertTooltipText}>
+                {t(
+                  'page.approvals.tableConfig.byContracts.columnTip.contractTrustValue',
+                )}
+              </Text>
+            </View>
+          }>
+          <Text style={trustValueEvalutation.finalTextStyle}>
+            {contractUsdText}
+          </Text>
+          <SimulateUnderline
+            style={[
+              {
+                position: 'absolute',
+                bottom: -1,
+              },
+              trustValueEvalutation.finalUnderlineStyle,
+            ]}
+          />
+        </Tip>
+      </View>
+
+      {/* floor 3 */}
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor3]}>
+        <View style={styles.floorLeft}>
+          <Text style={styles.floorLabel}>
+            {t(
+              'page.approvals.tableConfig.byContracts.columnTitle.revokeTrends',
+            )}
+          </Text>
+        </View>
+        <Tip
+          // {...(!revokeTrendsEvaluation.isRisky && { isVisible: false })}
+          placement="top"
+          contentStyle={[
+            styles.riskyAlertTooltipContent,
+            !revokeTrendsEvaluation.isRisky &&
+              styles.riskyAlertTooltipContentForSafeRevokeTrend,
+          ]}
+          content={
+            <View style={styles.riskyAlertTooltipInner}>
+              {revokeTrendsEvaluation.isDanger && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueDanger',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              {revokeTrendsEvaluation.isWarning && (
+                <Text style={styles.riskyAlertTooltipText}>
+                  {t(
+                    'page.approvals.tableConfig.byContracts.columnTip.revokeTrendsValueWarning',
+                  )}
+                  {'\n'}
+                </Text>
+              )}
+              <Text style={styles.riskyAlertTooltipText}>
+                Newly approved users(24h):{' '}
+                {contract.$riskAboutValues.approve_user_count}
+                {'\n'}
+                Recent revokes(24h):{' '}
+                {contract.$riskAboutValues.revoke_user_count}
+              </Text>
+            </View>
+          }>
+          <Text style={revokeTrendsEvaluation.finalTextStyle}>
+            {contract.$riskAboutValues.revoke_user_count}
+          </Text>
+          <SimulateUnderline
+            style={[
+              {
+                position: 'absolute',
+                bottom: -1,
+              },
+              revokeTrendsEvaluation.finalUnderlineStyle,
+            ]}
+            innerBg={!isTreatedAsSelected ? undefined : colors['blue-light1']}
+          />
+        </Tip>
+      </View>
+    </TouchableView>
+  );
+}
+
+export const getCardStyles = createGetStyles(colors => {
+  const selectableStyles = getSelectableContainerStyle(colors);
+
+  return {
+    container: {
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card1'],
+      flexDirection: 'column',
+      justifyContent: 'center',
+      paddingVertical: 10,
+      height: ApprovalsLayouts.contractCardHeight,
+      width: '100%',
+      padding: ApprovalsLayouts.contractCardPadding,
+      ...selectableStyles.container,
+    },
+    containerWithRisky: {
+      height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
+    },
+    selectedContainer: {
+      ...selectableStyles.selectedContainer,
+    },
+    contractItemFloor: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+    },
+    floorLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      flexShrink: 1,
+    },
+    floorRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      minWidth: 54,
+      // ...makeDebugBorder('pink')
+    },
+    riskyTip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      borderRadius: 6,
+      padding: 8,
+      backgroundColor: colors['red-default'],
+      position: 'relative',
+    },
+    riskyTipArrow: {
+      position: 'absolute',
+      left: '20%',
+      top: -7,
+      ...makeTriangleStyle({
+        dir: 'up',
+        size: 12,
+        color: colors['red-default'],
+      }),
+      borderTopWidth: 0,
+      borderLeftWidth: 12,
+      borderRightWidth: 12,
+    },
+    riskyTipText: {
+      color: colors['neutral-title2'],
+    },
+    addrContractWrapper: {
+      flexShrink: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    contractAddrText: {
+      color: colors['neutral-title1'],
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    contractCheckbox: {
+      marginLeft: 6,
+    },
+    rightOps: {
+      flexShrink: 0,
+    },
+    entryText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors['neutral-title1'],
+    },
+    approvalsCount: {
+      fontSize: 14,
+    },
+    rowCenter: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    floorLabel: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+    },
+    riskyAlertTooltipContent: {
+      borderRadius: 2,
+      minHeight: 96,
+      maxHeight: 128,
+      width: 296,
+      maxWidth: ApprovalsLayouts.riskAlertTooltipMaxWidth,
+    },
+    riskyAlertTooltipContentForSafeRevokeTrend: {
+      minWidth: 220,
+      height: 48,
+      minHeight: 48,
+    },
+    riskyAlertTooltipInner: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    riskyAlertTooltipText: {
+      color: colors['neutral-title2'],
+      fontSize: 13,
+      fontWeight: '400',
+    },
+    floorValue: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      fontWeight: '600',
+      position: 'relative',
+    },
+    floorValueMarked: {
+      color: colors['neutral-title1'],
+    },
+    floorValueWarn: {
+      color: colors['orange-default'],
+    },
+    floorValueDanger: {
+      color: colors['red-default'],
+    },
+    floorValueUnderlineDefault: {
+      borderColor: colors['neutral-line'],
+    },
+    chainIcon: {
+      marginRight: 6,
+    },
+  };
+});
+
+const ApprovalCardContract = React.memo(CardProto);
+
+export default ApprovalCardContract;

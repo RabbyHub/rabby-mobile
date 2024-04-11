@@ -5108,6 +5108,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/biz-utils@workspace:^, @rabby-wallet/biz-utils@workspace:packages/biz-utils":
+  version: 0.0.0-use.local
+  resolution: "@rabby-wallet/biz-utils@workspace:packages/biz-utils"
+  dependencies:
+    "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/rabby-api": 0.7.7
+    "@types/jest": ^27.4.1
+    "@types/sinon": ^9.0.10
+    bignumber.js: ^9.1.2
+    deepmerge: ^4.2.2
+    ethereumjs-util: ^7.1.5
+    jest: ^27.5.1
+    sinon: ^9.2.4
+    ts-jest: ^27.1.4
+    typedoc: ^0.24.8
+    typedoc-plugin-missing-exports: ^2.0.0
+    typescript: ~4.8.4
+  languageName: unknown
+  linkType: soft
+
 "@rabby-wallet/eth-keyring-keystone@workspace:packages/eth-keyring-keystone":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-keystone@workspace:packages/eth-keyring-keystone"
@@ -5356,6 +5376,23 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 2b327aad3dcf2392d7a02a702df3262036ba6d8bde825e77005996f6fefecc4c08535041b57401ad69d68e4b9d4644cc26bf07a09c72e55603d6dc7a325a29e1
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:0.7.7":
+  version: 0.7.7
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.7.tgz"
+  dependencies:
+    "@rabby-wallet/rabby-sign": ^0.3.3
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: 1eae94f82deec09fff280531fd5426d7bfd1dd5dfb1f901636da8979d301c583b880c8f2ac9baeeb2773f49d9936517587675ee3119df3bffa34fb6cb75ffa1f
   languageName: node
   linkType: hard
 
@@ -18252,6 +18289,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"intl-pluralrules@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "intl-pluralrules@npm:2.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fintl-pluralrules%2F-%2Fintl-pluralrules-2.0.1.tgz"
+  checksum: e07d5818a0583decb24677f958689f4dfc3c62d972d897c576917aefcd6af429ce8c1eee77af9e2fbf4fce71a800851fe1c33970f7ca56efbe3e70c023e658c1
+  languageName: node
+  linkType: hard
+
 "invariant@npm:*, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Finvariant%2F-%2Finvariant-2.2.4.tgz"
@@ -26184,6 +26228,7 @@ __metadata:
     "@metamask/eth-sig-util": 5.1.0
     "@ngraveio/bc-ur": 1.1.6
     "@notifee/react-native": ^7.8.0
+    "@rabby-wallet/biz-utils": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-walletconnect-keyring": beta
@@ -26245,6 +26290,7 @@ __metadata:
     i18next: ^23.7.14
     immer: ^10.0.3
     interval-promise: ^1.4.0
+    intl-pluralrules: ^2.0.1
     jest: ^27.5.1
     jotai: ^2.6.0
     json-rpc-engine: ^6.1.0

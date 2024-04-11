@@ -24,7 +24,7 @@ interface MediaProps {
   src?: string;
   thumbnail?: string;
   poster?: string;
-  type?: string;
+  type?: MEDIA_TYPE;
   failedPlaceholder?: ReactNode;
   style?: ViewStyle;
   mediaStyle?: ImageStyle;
@@ -128,11 +128,11 @@ export const Media = ({
   }, [toggle]);
   const containerStyles = useMemo(
     () => StyleSheet.flatten([styles.view, style]),
-    [style],
+    [styles.view, style],
   );
   const mediaContainerStyles = useMemo(
     () => StyleSheet.flatten([styles.media, mediaStyle]),
-    [mediaStyle],
+    [styles.media, mediaStyle],
   );
 
   const handleLoad = useCallback(
