@@ -67,10 +67,12 @@ const RevokeNFT = ({
             <Values.Address address={actionData.spender} chain={chain} />
             <View>
               {requireData.protocol && (
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.primaryText}
-                />
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.primaryText}
+                  />
+                </DescItem>
               )}
               <DescItem>
                 <ViewMore

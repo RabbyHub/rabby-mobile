@@ -190,9 +190,11 @@ const BuyNFT = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View className="desc-list">
-              <DescItem>
-                <ProtocolListItem protocol={requireData.protocol} />
-              </DescItem>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem protocol={requireData.protocol} />
+                </DescItem>
+              )}
 
               {isInWhitelist && (
                 <Text>

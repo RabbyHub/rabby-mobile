@@ -150,9 +150,11 @@ const CancelTx = ({
           {pendingTx && !canCancel && (
             <View style={styles.gasPriceTip}>
               <IconAlert className="w-[15px] mr-10" />
-              {t('page.signTx.cancelTx.gasPriceAlert', {
-                value: pendingTx.gasPrice / 1e9,
-              })}
+              <Text>
+                {t('page.signTx.cancelTx.gasPriceAlert', {
+                  value: pendingTx.gasPrice / 1e9,
+                })}
+              </Text>
             </View>
           )}
         </>
