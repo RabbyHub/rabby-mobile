@@ -65,10 +65,14 @@ const RevokeNFTCollection = ({
           <Row>
             <Values.Address address={actionData.spender} chain={chain} />
             <View>
-              <ProtocolListItem
-                protocol={requireData.protocol}
-                style={commonStyle.primaryText}
-              />
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.primaryText}
+                  />
+                </DescItem>
+              )}
 
               <DescItem>
                 <ViewMore

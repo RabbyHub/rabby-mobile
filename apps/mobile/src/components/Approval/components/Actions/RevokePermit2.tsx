@@ -66,10 +66,14 @@ const RevokePermit2 = ({
           <Row>
             <Values.Address address={actionData.spender} chain={chain} />
             <View className="desc-list">
-              <ProtocolListItem
-                protocol={requireData.protocol}
-                style={commonStyle.primaryText}
-              />
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.primaryText}
+                  />
+                </DescItem>
+              )}
 
               <DescItem>
                 <ViewMore
