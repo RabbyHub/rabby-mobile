@@ -129,7 +129,9 @@ export default function BottomSheetContractApproval({
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
-        toggleFocusedContractItem({ contractItem: null });
+        toggleFocusedContractItem({
+          contractItemToBlur: focusedContractApproval,
+        });
       }}
       footerComponent={() => {
         return (
@@ -142,7 +144,7 @@ export default function BottomSheetContractApproval({
               .join('')}
             onPress={() => {
               toggleFocusedContractItem({
-                contractItem: null,
+                contractItemToBlur: focusedContractApproval,
                 isConfirmSelected: true,
               });
             }}

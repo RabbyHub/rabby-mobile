@@ -102,6 +102,13 @@ export function makeApprovalIndexURLBase(approval: ApprovalItem) {
   return `approval://${approvalKey}`;
 }
 
+export type ApprovalProcessType = 'contract' | 'assets';
+export type RevokeItemDict = Record<string, ApprovalSpenderItemToBeRevoked>;
+
+/**
+ * @description the key function to serialize the ContractApprovalItem or AssetApprovalItem,
+ * used as selection key of spender in the approval list
+ */
 export function encodeApprovalSpenderKey<
   T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
 >(approval: ApprovalItem, token: T) {
@@ -146,6 +153,112 @@ export function encodeApprovalSpenderKey<
   }
 
   return approvalIndexBase;
+}
+export function checkoutApprovalSelection<
+  T extends ContractApprovalItem | AssetApprovalItem,
+>(
+  _for: ApprovalProcessType,
+  approvalRevokeMap: RevokeItemDict,
+  approval?: T | null,
+) {
+  if (!approval || !approval?.list.length)
+    return {
+      isSelectedAll: false,
+      isSelectedPartials: false,
+    };
+
+  const selecteds = [] as T['list'][number][];
+  approval.list.forEach(
+    (
+      member:
+        | ContractApprovalItem['list'][number]
+        | ApprovalItem['list'][number],
+    ) => {
+      const indexKey =
+        _for === 'assets'
+          ? encodeApprovalSpenderKey(
+              (member as AssetApprovalSpender).$assetContract!,
+              (member as AssetApprovalSpender).$assetToken!,
+            )
+          : encodeApprovalSpenderKey(approval, member);
+      if (approvalRevokeMap[indexKey]) {
+        selecteds.push(member);
+      }
+    },
+  );
+
+  const isSelectedAll = selecteds.length >= approval.list.length;
+  const isSelectedPartials = !isSelectedAll && selecteds.length > 0;
+
+  return {
+    selecteds,
+    isSelectedAll,
+    isSelectedPartials,
+  };
+}
+
+type TParseMaps = {
+  preAllSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
+  nextKeepMap?: Record<string, ApprovalSpenderItemToBeRevoked>;
+};
+export function parseApprovalSpenderSelection<T extends TParseMaps>(
+  approval: ApprovalItem,
+  type: ApprovalProcessType,
+  maps: T,
+): {
+  preSelectedThisApprovalSpenderKeys: Set<string>;
+  curSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
+} & (T['nextKeepMap'] extends void
+  ? {}
+  : {
+      postSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
+    }) {
+  const isAssetItem = type === 'assets';
+
+  const { preAllSelectedMap } = maps;
+
+  const result = approval.list.reduce(
+    (
+      acc,
+      member:
+        | ContractApprovalItem['list'][number]
+        | ApprovalItem['list'][number],
+    ) => {
+      const indexKey = isAssetItem
+        ? encodeApprovalSpenderKey(
+            (member as AssetApprovalSpender).$assetContract!,
+            (member as AssetApprovalSpender).$assetToken!,
+          )
+        : encodeApprovalSpenderKey(approval, member);
+
+      const nextS = maps.nextKeepMap?.[indexKey]
+        ? { key: indexKey, item: maps.nextKeepMap?.[indexKey] }
+        : null;
+      if (preAllSelectedMap[indexKey]) {
+        acc.preSelectedThisApprovalSpenderKeys.add(indexKey);
+        acc.curSelectedMap[indexKey] = preAllSelectedMap[indexKey];
+
+        if (!nextS) {
+          delete acc.postSelectedMap[indexKey];
+        }
+      }
+
+      if (nextS) {
+        acc.postSelectedMap[indexKey] = nextS.item;
+      }
+
+      return acc;
+    },
+    {
+      preSelectedThisApprovalSpenderKeys: new Set<string>(),
+      curSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{},
+      postSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{
+        ...preAllSelectedMap,
+      },
+    },
+  );
+
+  return result;
 }
 
 export function querySelectedContractSpender(
@@ -253,49 +366,6 @@ export function checkoutContractSpender(
     : 'spenders' in contractApproval
     ? contractApproval.spenders?.[0]
     : null;
-}
-
-export function checkoutApprovalSelection<
-  T extends ContractApprovalItem | AssetApprovalItem,
->(
-  _for: 'contract' | 'assets',
-  approvalRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
-  approval?: T | null,
-) {
-  if (!approval || !approval?.list.length)
-    return {
-      isSelectedAll: false,
-      isSelectedPartials: false,
-    };
-
-  const selecteds = [] as T['list'][number][];
-  approval.list.forEach(
-    (
-      member:
-        | ContractApprovalItem['list'][number]
-        | ApprovalItem['list'][number],
-    ) => {
-      const indexKey =
-        _for === 'assets'
-          ? encodeApprovalSpenderKey(
-              (member as AssetApprovalSpender).$assetContract!,
-              (member as AssetApprovalSpender).$assetToken!,
-            )
-          : encodeApprovalSpenderKey(approval, member);
-      if (approvalRevokeMap[indexKey]) {
-        selecteds.push(member);
-      }
-    },
-  );
-
-  const isSelectedAll = selecteds.length >= approval.list.length;
-  const isSelectedPartials = !isSelectedAll && selecteds.length > 0;
-
-  return {
-    selecteds,
-    isSelectedAll,
-    isSelectedPartials,
-  };
 }
 
 export function getFinalRiskInfo(contract: ContractApprovalItem) {

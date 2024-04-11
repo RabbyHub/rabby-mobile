@@ -110,7 +110,7 @@ export default function BottomSheetAssetApproval({
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
-        toggleFocusedAssetItem({ assetItem: null });
+        toggleFocusedAssetItem({ assetItemToBlur: focusedAssetApproval });
       }}
       footerComponent={() => {
         return (
@@ -123,7 +123,7 @@ export default function BottomSheetAssetApproval({
               .join('')}
             onPress={() => {
               toggleFocusedAssetItem({
-                assetItem: null,
+                assetItemToBlur: focusedAssetApproval,
                 isConfirmSelected: true,
               });
             }}

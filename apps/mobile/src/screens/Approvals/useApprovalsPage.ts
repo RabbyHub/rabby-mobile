@@ -44,10 +44,13 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
+  type RevokeItemDict,
+  type ApprovalProcessType,
   checkCompareContractItem,
-  checkoutApprovalSelection,
-  encodeApprovalSpenderKey,
   makeApprovalIndexURLBase,
+  encodeApprovalSpenderKey,
+  checkoutApprovalSelection,
+  parseApprovalSpenderSelection,
   toRevokeItem,
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
@@ -605,29 +608,6 @@ export function useApprovalsPage() {
   return React.useContext(ApprovalsPageContext);
 }
 
-function pickoutApprovalSelectedSpender(
-  approval: ContractApprovalItem | AssetApprovalItem,
-  revokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
-) {
-  const approvalIndexBase = makeApprovalIndexURLBase(approval);
-
-  return Object.keys(revokeMap).reduce(
-    (acc, k) => {
-      if (k.startsWith(approvalIndexBase)) {
-        acc.picked[k] = revokeMap[k];
-      } else {
-        // acc.filtered[k] = revokeMap[k];
-      }
-
-      return acc;
-    },
-    {
-      picked: <typeof revokeMap>{},
-      // filtered: <typeof revokeMap>{},
-    },
-  );
-}
-
 const focusedApprovalAtom = atom<{
   contract: ContractApprovalItem | null;
   asset: AssetApprovalItem | null;
@@ -659,19 +639,23 @@ export function useFocusedApprovalOnApprovals() {
     (
       options:
         | { contractItem: ContractApprovalItem }
-        | { contractItem: null; isConfirmSelected?: boolean },
+        | {
+            contractItemToBlur: ContractApprovalItem | null;
+            isConfirmSelected?: boolean;
+          },
     ) => {
-      if (options.contractItem) {
+      if ('contractItem' in options) {
         toggleShowSheetModal('approvalContractDetail', true);
         setFocusedApproval(prev => ({
           ...prev,
           contract: options.contractItem,
         }));
         startFocusApprovalRevokes('contract', options.contractItem);
-      } else {
-        toggleShowSheetModal('approvalContractDetail', 'destroy');
+      } else if (options.contractItemToBlur) {
+        if (options.isConfirmSelected)
+          confirmSelectedRevoke('contract', options.contractItemToBlur);
         setFocusedApproval(prev => ({ ...prev, contract: null }));
-        if (options.isConfirmSelected) confirmSelectedRevoke('contract');
+        toggleShowSheetModal('approvalContractDetail', 'destroy');
       }
     },
     [
@@ -686,16 +670,20 @@ export function useFocusedApprovalOnApprovals() {
     (
       options:
         | { assetItem: AssetApprovalItem }
-        | { assetItem: null; isConfirmSelected?: boolean },
+        | {
+            assetItemToBlur: AssetApprovalItem | null;
+            isConfirmSelected?: boolean;
+          },
     ) => {
-      if (options.assetItem) {
+      if ('assetItem' in options) {
         toggleShowSheetModal('approvalAssetDetail', true);
         setFocusedApproval(prev => ({ ...prev, asset: options.assetItem }));
         startFocusApprovalRevokes('assets', options.assetItem);
-      } else {
-        toggleShowSheetModal('approvalAssetDetail', 'destroy');
+      } else if (options.assetItemToBlur) {
+        if (options.isConfirmSelected)
+          confirmSelectedRevoke('assets', options.assetItemToBlur);
         setFocusedApproval(prev => ({ ...prev, asset: null }));
-        if (options.isConfirmSelected) confirmSelectedRevoke('assets');
+        toggleShowSheetModal('approvalAssetDetail', 'destroy');
       }
     },
     [
@@ -725,10 +713,10 @@ const DFLT_REVOKE = {
   assetsFocusing: {},
 };
 const revokeAtom = atom<{
-  contract: Record<string, ApprovalSpenderItemToBeRevoked>;
-  contractFocusing: Record<string, ApprovalSpenderItemToBeRevoked>;
-  assets: Record<string, ApprovalSpenderItemToBeRevoked>;
-  assetsFocusing: Record<string, ApprovalSpenderItemToBeRevoked>;
+  contract: RevokeItemDict;
+  contractFocusing: RevokeItemDict;
+  assets: RevokeItemDict;
+  assetsFocusing: RevokeItemDict;
 }>({ ...DFLT_REVOKE });
 export function useRevokeApprovals() {
   const [
@@ -765,53 +753,66 @@ export function useRevokeApprovals() {
 
   const startFocusApprovalRevokes = React.useCallback(
     (
-      type: 'contract' | 'assets',
+      type: ApprovalProcessType,
       approval: ContractApprovalItem | AssetApprovalItem,
     ) => {
       setRevoke(prev => {
-        switch (type) {
-          default:
-          case 'contract': {
-            return {
+        const result = parseApprovalSpenderSelection(
+          approval,
+          type,
+          type === 'contract'
+            ? {
+                preAllSelectedMap: prev.contract,
+              }
+            : {
+                preAllSelectedMap: prev.assets,
+              },
+        );
+
+        return type === 'contract'
+          ? {
               ...prev,
-              contractFocusing: pickoutApprovalSelectedSpender(
-                approval,
-                prev.contract,
-              ).picked,
-            };
-          }
-          case 'assets':
-            return {
+              contractFocusing: result.curSelectedMap,
+            }
+          : {
               ...prev,
-              assetsFocusing: pickoutApprovalSelectedSpender(
-                approval,
-                prev.contract,
-              ).picked,
+              assetsFocusing: result.curSelectedMap,
             };
-        }
       });
     },
     [setRevoke],
   );
   const confirmSelectedRevoke = React.useCallback(
-    (type: 'contract' | 'assets') => {
+    (
+      type: ApprovalProcessType,
+      focusingApproval: ContractApprovalItem | AssetApprovalItem,
+    ) => {
       setRevoke(prev => {
-        switch (type) {
-          default:
-          case 'contract': {
-            return {
+        const result = parseApprovalSpenderSelection(
+          focusingApproval,
+          type,
+          type === 'contract'
+            ? {
+                preAllSelectedMap: prev.contract,
+                nextKeepMap: prev.contractFocusing,
+              }
+            : {
+                preAllSelectedMap: prev.assets,
+                nextKeepMap: prev.assetsFocusing,
+              },
+        );
+
+        return type === 'contract'
+          ? {
               ...prev,
-              contract: { ...prev.contractFocusing },
+              contract: result.postSelectedMap,
               contractFocusing: {},
-            };
-          }
-          case 'assets':
-            return {
+            }
+          : {
               ...prev,
-              assets: { ...prev.assetsFocusing },
+              assets: result.postSelectedMap,
               assetsFocusing: {},
             };
-        }
       });
     },
     [setRevoke],
