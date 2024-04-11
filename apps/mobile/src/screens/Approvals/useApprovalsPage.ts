@@ -1,10 +1,5 @@
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { Platform, Dimensions } from 'react-native';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -55,6 +50,8 @@ import {
   makeApprovalIndexURLBase,
   toRevokeItem,
 } from './utils';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { ApprovalsLayouts } from './layout';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -557,6 +554,11 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     resetRevokeMaps();
   }, [currentAccount?.address, approvalsData, resetRevokeMaps]);
 
+  const safeSizeInfo = useSafeAndroidBottomSizes({
+    bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+    bottomSheetConfirmAreaHeight: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+  });
+
   return {
     isLoading,
     loadApprovals,
@@ -571,6 +573,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     account: currentAccount,
     displaySortedContractList,
     displaySortedAssetApprovalList,
+    safeSizeInfo,
   };
 }
 
@@ -588,6 +591,14 @@ export const ApprovalsPageContext = React.createContext<
   account: null,
   displaySortedContractList: [],
   displaySortedAssetApprovalList: [],
+  safeSizeInfo: {
+    androidBottomOffset: 0,
+    safeSizes: {
+      bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+      bottomSheetConfirmAreaHeight:
+        ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+    },
+  },
 });
 
 export function useApprovalsPage() {

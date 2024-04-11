@@ -11,11 +11,8 @@ import {
 } from '../useApprovalsPage';
 
 import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
-import {
-  ApprovalsLayouts,
-  SelectionCheckbox,
-  getSelectableContainerStyle,
-} from './Layout';
+import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';

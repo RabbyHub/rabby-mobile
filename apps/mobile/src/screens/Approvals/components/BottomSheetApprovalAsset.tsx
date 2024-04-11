@@ -20,8 +20,8 @@ import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { TailedTitle } from '@/components/patches/Simulation';
-import { ApprovalsLayouts, BottomSheetModalFooterButton } from './Layout';
+import { BottomSheetModalFooterButton } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 
 export default function BottomSheetAssetApproval({
   modalProps,

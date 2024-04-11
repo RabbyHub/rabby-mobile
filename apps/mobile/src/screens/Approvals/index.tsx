@@ -15,7 +15,8 @@ import {
   makeDebugBorder,
   makeDevOnlyStyle,
 } from '@/utils/styles';
-import { ApprovalsBottomArea, ApprovalsLayouts } from './components/Layout';
+import { ApprovalsBottomArea } from './components/Layout';
+import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
 import ListByContracts from './ListByContracts';
 import {
@@ -84,7 +85,6 @@ const ApprovalScreenContainer = () => {
       // })}
       lazy
       allowHeaderOverscroll={false}
-      hackContentInsetOnIOS
       containerStyle={[styles.tabContainer]}
       renderTabBar={renderTabBar}
       // disable horizontal swiping-scroll-to-switch

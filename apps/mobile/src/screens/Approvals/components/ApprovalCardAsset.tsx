@@ -10,7 +10,7 @@ import {
 } from '../useApprovalsPage';
 
 import { RcIconUnknown } from '../icons';
-import { ApprovalsLayouts } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import { Chain } from '@debank/common';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';

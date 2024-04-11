@@ -20,7 +20,8 @@ import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalApprovalContractRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import { ApprovalsLayouts, BottomSheetModalFooterButton } from './Layout';
+import { BottomSheetModalFooterButton } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 

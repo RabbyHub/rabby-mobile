@@ -6,7 +6,7 @@ import { Button } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
-import { useSafeAndroidBottomOffset } from '@/hooks/useAppLayout';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
   RcIconCheckedCC,
   RcIconIndeterminateCC,
@@ -16,65 +16,27 @@ import {
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
+import { ApprovalsLayouts } from '../layout';
+/** @deprecated import from '../layout' directly */
+export { ApprovalsLayouts };
 
 const isAndroid = Platform.OS === 'android';
 
-const riskyTipHeight = 32;
-const riskyTipArrowOffset = 14;
-const contractRowHeight = 108;
-const contractCardHeight = 133;
-export const ApprovalsLayouts = {
-  tabbarHeight: 40,
-  contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
-  bottomAreaHeight: isAndroid ? 100 : 120,
+export function getScrollableSectionHeight(options?: {
+  bottomAreaHeight?: number;
+}) {
+  const A = ApprovalsLayouts;
+  const { bottomAreaHeight = A.bottomAreaHeight } = options || {};
 
-  bottomSheetConfirmAreaHeight: isAndroid ? 100 : 120,
-
-  searchBarMarginOffset: 16,
-  searchBarHeight: 48,
-
-  contractRowHeight,
-  contractRowHeightWithRiskAlert:
-    contractRowHeight + riskyTipHeight + riskyTipArrowOffset,
-  contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
-  contractCardHeight,
-  contractCardHeightWithRiskAlert:
-    contractCardHeight + riskyTipHeight + riskyTipArrowOffset,
-  contractCardPadding: 14,
-
-  assetsItemHeight: 60,
-  assetsItemPadding: 16,
-
-  listFooterComponentHeight: 56,
-  innerContainerHorizontalOffset: 20,
-
-  get scrollableSectionHeight() {
-    return (
-      Dimensions.get('window').height -
-      (StatusBar.currentHeight || 0) -
-      this.tabbarHeight -
-      this.bottomAreaHeight -
-      this.searchBarHeight -
-      this.searchBarMarginOffset * 2 -
-      (isAndroid ? 0 : this.contentInsetTopOffset + this.tabbarHeight)
-    );
-  },
-  get riskAlertTooltipMaxWidth() {
-    return (
-      Dimensions.get('window').width -
-      (this.innerContainerHorizontalOffset + this.contractCardPadding + 63)
-    );
-  },
-};
-
-export function getApprovalsSizes() {
-  const contractCardW =
-    Dimensions.get('window').width -
-    ApprovalsLayouts.innerContainerHorizontalOffset * 2;
-
-  return {
-    contractCardW,
-  };
+  return (
+    Dimensions.get('window').height -
+    (StatusBar.currentHeight || 0) -
+    A.tabbarHeight -
+    bottomAreaHeight -
+    A.searchBarHeight -
+    A.searchBarMarginOffset * 2 -
+    (isAndroid ? 0 : A.contentInsetTopOffset + A.tabbarHeight)
+  );
 }
 
 export function ApprovalsTabView<T extends React.ComponentType<any>>({
@@ -88,6 +50,10 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
     innerStyle?: RNViewProps['style'];
   } & React.ComponentProps<T>
 >) {
+  const {
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
+
   return (
     <ViewComponent
       {...props}
@@ -95,7 +61,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
         props?.style,
         {
           paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom: ApprovalsLayouts.bottomAreaHeight,
+          paddingBottom: safeSizes.bottomAreaHeight,
         },
       ]}>
       <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
@@ -111,7 +77,11 @@ export function ApprovalsBottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const { filterType, loadApprovals } = useApprovalsPage();
+  const {
+    filterType,
+    loadApprovals,
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
     useRevokeApprovals();
 
@@ -171,13 +141,9 @@ export function ApprovalsBottomArea() {
     loadApprovals,
   ]);
 
-  const { androidBottomOffset } = useSafeAndroidBottomOffset(
-    ApprovalsLayouts.bottomAreaHeight,
-  );
-
   return (
     <View
-      style={[styles.bottomDockArea, { paddingBottom: androidBottomOffset }]}>
+      style={[styles.bottomDockArea, { height: safeSizes.bottomAreaHeight }]}>
       <Button
         disabled={!couldSubmit}
         containerStyle={styles.buttonContainer}
@@ -328,8 +294,19 @@ export function BottomSheetModalFooterButton({
   ...buttonProps
 }: React.PropsWithoutRef<React.ComponentProps<typeof Button>>) {
   const { styles } = useThemeStyles(getBottomSheetModalFooterButtonStyles);
+  const {
+    safeSizeInfo: { safeSizes, androidBottomOffset },
+  } = useApprovalsPage();
+
   return (
-    <View style={[styles.footerContainer]}>
+    <View
+      style={[
+        styles.footerContainer,
+        {
+          height: safeSizes.bottomSheetConfirmAreaHeight,
+          paddingBottom: androidBottomOffset,
+        },
+      ]}>
       <Button
         {...buttonProps}
         titleStyle={[styles.footerText, buttonProps?.titleStyle]}

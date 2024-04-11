@@ -2,6 +2,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenLayouts } from '@/constant/layout';
 import { Dimensions, Platform, StatusBar } from 'react-native';
+import { useMemo } from 'react';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -37,11 +38,21 @@ export function useSafeSizes() {
   };
 }
 
-export function useSafeAndroidBottomOffset(baseOffset: number = 0) {
+export function useSafeAndroidBottomSizes<T extends Record<string, number>>(
+  inputs: T,
+) {
   const { bottom } = useSafeAreaInsets();
 
   const androidBottomOffset = isAndroid ? bottom : 0;
-  const safeBottomOffset = baseOffset + androidBottomOffset;
+  const safeSizes = useMemo(() => {
+    const outpus = { ...inputs };
 
-  return { safeBottomOffset, androidBottomOffset };
+    return Object.entries(outpus).reduce((acc, [key, value]) => {
+      // @ts-expect-error
+      acc[key] = isAndroid ? value + bottom : acc[key];
+      return acc;
+    }, outpus);
+  }, [bottom, inputs]);
+
+  return { safeSizes, androidBottomOffset };
 }

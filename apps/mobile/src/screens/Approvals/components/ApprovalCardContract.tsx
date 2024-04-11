@@ -20,11 +20,8 @@ import { ellipsisAddress } from '@/utils/address';
 import { SimulateUnderline } from '@/components/patches/Simulation';
 
 import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
-import {
-  ApprovalsLayouts,
-  SelectionCheckbox,
-  getSelectableContainerStyle,
-} from './Layout';
+import { getSelectableContainerStyle } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { checkoutApprovalSelection } from '../utils';

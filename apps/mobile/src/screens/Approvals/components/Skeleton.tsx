@@ -1,7 +1,7 @@
 import { Skeleton } from '@rneui/themed';
 import { memo } from 'react';
 import { View } from 'react-native';
-import { ApprovalsLayouts } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import { getCardStyles } from './ApprovalCardContract';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';

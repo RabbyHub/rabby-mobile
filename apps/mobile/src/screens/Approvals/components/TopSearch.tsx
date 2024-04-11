@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SearchInput } from '@/components/Form/SearchInput';
 import { useApprovalsPage } from '../useApprovalsPage';
-import { ApprovalsLayouts } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 
 export function TopSearch({
   filterType,

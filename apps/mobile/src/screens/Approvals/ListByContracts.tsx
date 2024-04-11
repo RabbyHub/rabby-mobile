@@ -9,9 +9,9 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import {
-  ApprovalsLayouts,
   ApprovalsTabView,
   NotMatchedHolder,
+  getScrollableSectionHeight,
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -25,8 +25,8 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
 import ApprovalContractRow from './components/ApprovalContractRow';
-import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByContracts } from './components/Skeleton';
+import { ApprovalsLayouts } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -34,8 +34,12 @@ export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedContractList, loadApprovals, skContract } =
-    useApprovalsPage();
+  const {
+    isLoading,
+    displaySortedContractList,
+    loadApprovals,
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
 
   const keyExtractor = React.useCallback<
     SectionListProps<ContractApprovalItem>['keyExtractor'] & object
@@ -101,11 +105,19 @@ export default function ListByContracts() {
     return isLoading ? (
       <SkeletonListByContracts />
     ) : (
-      <View style={styles.emptyHolderContainer}>
+      <View
+        style={[
+          styles.emptyHolderContainer,
+          {
+            height: getScrollableSectionHeight({
+              bottomAreaHeight: safeSizes.bottomAreaHeight,
+            }),
+          },
+        ]}>
         <NotMatchedHolder />
       </View>
     );
-  }, [styles.emptyHolderContainer, isLoading]);
+  }, [styles.emptyHolderContainer, safeSizes.bottomAreaHeight, isLoading]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -169,7 +181,7 @@ const getStyles = createGetStyles(colors => {
   return {
     emptyHolderContainer: {
       // ...makeDebugBorder(),
-      height: ApprovalsLayouts.scrollableSectionHeight,
+      height: getScrollableSectionHeight(),
     },
     container: {
       flex: 1,
