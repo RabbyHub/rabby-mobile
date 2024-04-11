@@ -140,10 +140,10 @@ export function InModalApprovalAssetRow({
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getStyles);
 
-  const { assetRevokeMap } = useRevokeApprovals();
+  const { assetFocusingRevokeMap } = useRevokeApprovals();
   const isSelected = React.useMemo(
-    () => !!querySelectedAssetSpender(assetRevokeMap, spender),
-    [spender, assetRevokeMap],
+    () => !!querySelectedAssetSpender(assetFocusingRevokeMap, spender),
+    [spender, assetFocusingRevokeMap],
   );
 
   const { spenderInfo, spenderValues } = React.useMemo(() => {

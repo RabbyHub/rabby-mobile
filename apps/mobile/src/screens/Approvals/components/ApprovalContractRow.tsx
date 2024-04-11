@@ -177,7 +177,7 @@ function CardProto({
         style,
       ]}
       onPress={() => {
-        onSelectAllContractApprovals(contract, !isSelectedAll);
+        onSelectAllContractApprovals(contract, !isSelectedAll, 'final');
       }}>
       {/* floor header */}
       <View
@@ -218,7 +218,7 @@ function CardProto({
         <RightTouchableView
           style={styles.rightOps}
           onPress={evt => {
-            toggleFocusedContractItem(contract);
+            toggleFocusedContractItem({ contractItem: contract });
             evt.stopPropagation();
           }}>
           <Text style={styles.entryText}>{contract.list.length}</Text>

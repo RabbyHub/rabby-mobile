@@ -20,8 +20,7 @@ import { MiniButton } from '@/components/Button';
 import { InModalApprovalContractRow } from './InModalApprovalContractRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
-import { ApprovalsLayouts } from './Layout';
-import { TailedTitle } from '@/components/patches/Simulation';
+import { ApprovalsLayouts, BottomSheetModalFooterButton } from './Layout';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 
@@ -32,25 +31,28 @@ export default function BottomSheetContractApproval({
 }) {
   const {
     sheetModalRefs: { approvalContractDetail: modalRef },
+    contractFocusingRevokeMap,
     focusedContractApproval,
     toggleFocusedContractItem,
   } = useFocusedApprovalOnApprovals();
 
   const {
     toggleSelectContractSpender,
-    nextShouldSelectAllContracts,
+    nextShouldPickAllFocusingContracts,
     onSelectAllContractApprovals,
   } = useRevokeContractSpenders();
 
+  const confirmingContractCount = React.useMemo(
+    () => Object.keys(contractFocusingRevokeMap).length,
+    [contractFocusingRevokeMap],
+  );
+
   const { styles } = useThemeStyles(getStyles);
 
-  const {
-    fallList,
-    simulateLoadNext,
-    resetPage,
-    isFetchingNextPage,
-    isReachTheEnd,
-  } = usePsudoPagination(focusedContractApproval?.list || [], { pageSize: 15 });
+  const { fallList, simulateLoadNext, isFetchingNextPage } = usePsudoPagination(
+    focusedContractApproval?.list || [],
+    { pageSize: 15 },
+  );
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length
@@ -97,7 +99,9 @@ export default function BottomSheetContractApproval({
             style={{ flexShrink: 1 }}
             approval={focusedContractApproval}
             contractApproval={item}
-            onToggleSelection={toggleSelectContractSpender}
+            onToggleSelection={ctx =>
+              toggleSelectContractSpender(ctx, 'focusing')
+            }
           />
         </View>
       );
@@ -124,7 +128,25 @@ export default function BottomSheetContractApproval({
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
-        toggleFocusedContractItem(null);
+        toggleFocusedContractItem({ contractItem: null });
+      }}
+      footerComponent={() => {
+        return (
+          <BottomSheetModalFooterButton
+            title={[
+              `Confirm`,
+              confirmingContractCount && ` (${confirmingContractCount})`,
+            ]
+              .filter(Boolean)
+              .join('')}
+            onPress={() => {
+              toggleFocusedContractItem({
+                contractItem: null,
+                isConfirmSelected: true,
+              });
+            }}
+          />
+        );
       }}
       snapPoints={['80%']}
       bottomInset={1}>
@@ -142,10 +164,13 @@ export default function BottomSheetContractApproval({
                 onPress={() =>
                   onSelectAllContractApprovals(
                     focusedContractApproval!,
-                    nextShouldSelectAllContracts,
+                    nextShouldPickAllFocusingContracts,
+                    'focusing',
                   )
                 }>
-                {nextShouldSelectAllContracts ? 'Select All' : 'Unselect All'}
+                {nextShouldPickAllFocusingContracts
+                  ? 'Select All'
+                  : 'Unselect All'}
               </MiniButton>
             </View>
           </BottomSheetHandlableView>
@@ -188,7 +213,7 @@ const getStyles = createGetStyles(colors => {
     },
     bodyContainer: {
       paddingVertical: 8,
-      paddingBottom: 0,
+      paddingBottom: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
       height: '100%',
       // ...makeDebugBorder('red'),
     },

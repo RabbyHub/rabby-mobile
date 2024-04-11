@@ -101,7 +101,7 @@ function AssetsApprovalRowProto({
         (isSelectedAll || isSelectedPartials) && styles.selectedContainer,
       ]}
       onPress={evt => {
-        onSelectAllAsset(assetApproval, !isSelectedAll);
+        onSelectAllAsset(assetApproval, !isSelectedAll, 'final');
       }}>
       {/* floor 1 */}
       <View style={[styles.itemFloor, ContractFloorLayouts.floor1]}>
@@ -148,7 +148,7 @@ function AssetsApprovalRowProto({
         </View>
         <RightTouchableView
           onPress={evt => {
-            toggleFocusedAssetItem(assetApproval);
+            toggleFocusedAssetItem({ assetItem: assetApproval });
             evt.stopPropagation();
           }}>
           <Text style={styles.entryText}>{assetApproval.list.length}</Text>

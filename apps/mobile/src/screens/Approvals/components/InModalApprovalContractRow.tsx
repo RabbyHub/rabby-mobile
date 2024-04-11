@@ -150,19 +150,19 @@ export function InModalApprovalContractRow({
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
 
-  const { contractRevokeMap } = useRevokeApprovals();
+  const { contractFocusingRevokeMap } = useRevokeApprovals();
   const { spender, isSelected } = React.useMemo(() => {
     const spender = checkoutContractSpender(contractApproval);
 
     return {
       spender,
       isSelected: !!querySelectedContractSpender(
-        contractRevokeMap,
+        contractFocusingRevokeMap,
         approval,
         contractApproval,
       ),
     };
-  }, [contractRevokeMap, approval, contractApproval]);
+  }, [contractFocusingRevokeMap, approval, contractApproval]);
 
   const { itemName, maybeTokenInfo, maybeNFTInfo, spenderValues } =
     React.useMemo(() => {

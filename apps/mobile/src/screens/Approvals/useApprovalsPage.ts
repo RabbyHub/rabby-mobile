@@ -1,4 +1,10 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from 'react';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -588,6 +594,29 @@ export function useApprovalsPage() {
   return React.useContext(ApprovalsPageContext);
 }
 
+function pickoutApprovalSelectedSpender(
+  approval: ContractApprovalItem | AssetApprovalItem,
+  revokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
+) {
+  const approvalIndexBase = makeApprovalIndexURLBase(approval);
+
+  return Object.keys(revokeMap).reduce(
+    (acc, k) => {
+      if (k.startsWith(approvalIndexBase)) {
+        acc.picked[k] = revokeMap[k];
+      } else {
+        // acc.filtered[k] = revokeMap[k];
+      }
+
+      return acc;
+    },
+    {
+      picked: <typeof revokeMap>{},
+      // filtered: <typeof revokeMap>{},
+    },
+  );
+}
+
 const focusedApprovalAtom = atom<{
   contract: ContractApprovalItem | null;
   asset: AssetApprovalItem | null;
@@ -608,93 +637,212 @@ export function useFocusedApprovalOnApprovals() {
   const sheetModalsOps = useSheetModals(sheetModals);
   const { toggleShowSheetModal } = sheetModalsOps;
 
+  const {
+    contractFocusingRevokeMap,
+    assetFocusingRevokeMap,
+    startFocusApprovalRevokes,
+    confirmSelectedRevoke,
+  } = useRevokeApprovals();
+
   const toggleFocusedContractItem = React.useCallback(
-    (contractItem?: ContractApprovalItem | null) => {
-      if (contractItem) {
+    (
+      options:
+        | { contractItem: ContractApprovalItem }
+        | { contractItem: null; isConfirmSelected?: boolean },
+    ) => {
+      if (options.contractItem) {
         toggleShowSheetModal('approvalContractDetail', true);
-        setFocusedApproval(prev => ({ ...prev, contract: contractItem }));
+        setFocusedApproval(prev => ({
+          ...prev,
+          contract: options.contractItem,
+        }));
+        startFocusApprovalRevokes('contract', options.contractItem);
       } else {
         toggleShowSheetModal('approvalContractDetail', 'destroy');
         setFocusedApproval(prev => ({ ...prev, contract: null }));
+        if (options.isConfirmSelected) confirmSelectedRevoke('contract');
       }
     },
-    [toggleShowSheetModal, setFocusedApproval],
+    [
+      toggleShowSheetModal,
+      setFocusedApproval,
+      startFocusApprovalRevokes,
+      confirmSelectedRevoke,
+    ],
   );
 
   const toggleFocusedAssetItem = React.useCallback(
-    (assetItem?: AssetApprovalItem | null) => {
-      if (assetItem) {
+    (
+      options:
+        | { assetItem: AssetApprovalItem }
+        | { assetItem: null; isConfirmSelected?: boolean },
+    ) => {
+      if (options.assetItem) {
         toggleShowSheetModal('approvalAssetDetail', true);
-        setFocusedApproval(prev => ({ ...prev, asset: assetItem }));
+        setFocusedApproval(prev => ({ ...prev, asset: options.assetItem }));
+        startFocusApprovalRevokes('assets', options.assetItem);
       } else {
         toggleShowSheetModal('approvalAssetDetail', 'destroy');
         setFocusedApproval(prev => ({ ...prev, asset: null }));
+        if (options.isConfirmSelected) confirmSelectedRevoke('assets');
       }
     },
-    [toggleShowSheetModal, setFocusedApproval],
+    [
+      toggleShowSheetModal,
+      setFocusedApproval,
+      startFocusApprovalRevokes,
+      confirmSelectedRevoke,
+    ],
   );
 
   return {
     ...sheetModalsOps,
+    contractFocusingRevokeMap,
     focusedContractApproval: focusedApproval.contract,
+    assetFocusingRevokeMap,
     focusedAssetApproval: focusedApproval.asset,
     toggleFocusedContractItem,
     toggleFocusedAssetItem,
   };
 }
 
+type RevokePickTarget = 'final' | 'focusing';
+const DFLT_REVOKE = {
+  contract: {},
+  contractFocusing: {},
+  assets: {},
+  assetsFocusing: {},
+};
 const revokeAtom = atom<{
   contract: Record<string, ApprovalSpenderItemToBeRevoked>;
+  contractFocusing: Record<string, ApprovalSpenderItemToBeRevoked>;
   assets: Record<string, ApprovalSpenderItemToBeRevoked>;
-}>({
-  contract: {},
-  assets: {},
-});
+  assetsFocusing: Record<string, ApprovalSpenderItemToBeRevoked>;
+}>({ ...DFLT_REVOKE });
 export function useRevokeApprovals() {
-  const [{ contract: contractRevokeMap, assets: assetRevokeMap }, setRevoke] =
-    useAtom(revokeAtom);
+  const [
+    {
+      contract: contractRevokeMap,
+      contractFocusing: contractFocusingRevokeMap,
+      assets: assetRevokeMap,
+      assetsFocusing: assetFocusingRevokeMap,
+    },
+    setRevoke,
+  ] = useAtom(revokeAtom);
 
   const resetRevokeMaps = React.useCallback(
-    (type?: 'contract' | 'assets') => {
+    (type?: keyof typeof DFLT_REVOKE) => {
       switch (type) {
         case 'contract':
           setRevoke(prev => ({ ...prev, contract: {} }));
           break;
+        case 'contractFocusing':
+          setRevoke(prev => ({ ...prev, contractFocusing: {} }));
+          break;
         case 'assets':
           setRevoke(prev => ({ ...prev, assets: {} }));
           break;
+        case 'assetsFocusing':
+          setRevoke(prev => ({ ...prev, assetsFocusing: {} }));
+          break;
         default:
-          setRevoke({ contract: {}, assets: {} });
+          setRevoke({ ...DFLT_REVOKE });
       }
+    },
+    [setRevoke],
+  );
+
+  const startFocusApprovalRevokes = React.useCallback(
+    (
+      type: 'contract' | 'assets',
+      approval: ContractApprovalItem | AssetApprovalItem,
+    ) => {
+      setRevoke(prev => {
+        switch (type) {
+          default:
+          case 'contract': {
+            return {
+              ...prev,
+              contractFocusing: pickoutApprovalSelectedSpender(
+                approval,
+                prev.contract,
+              ).picked,
+            };
+          }
+          case 'assets':
+            return {
+              ...prev,
+              assetsFocusing: pickoutApprovalSelectedSpender(
+                approval,
+                prev.contract,
+              ).picked,
+            };
+        }
+      });
+    },
+    [setRevoke],
+  );
+  const confirmSelectedRevoke = React.useCallback(
+    (type: 'contract' | 'assets') => {
+      setRevoke(prev => {
+        switch (type) {
+          default:
+          case 'contract': {
+            return {
+              ...prev,
+              contract: { ...prev.contractFocusing },
+              contractFocusing: {},
+            };
+          }
+          case 'assets':
+            return {
+              ...prev,
+              assets: { ...prev.assetsFocusing },
+              assetsFocusing: {},
+            };
+        }
+      });
     },
     [setRevoke],
   );
 
   return {
     contractRevokeMap,
+    contractFocusingRevokeMap,
+
     assetRevokeMap,
+    assetFocusingRevokeMap,
+
+    startFocusApprovalRevokes,
+    confirmSelectedRevoke,
     resetRevokeMaps,
   };
 }
 export function useRevokeContractSpenders() {
   const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [{ contract: contractRevokeMap }, setRevoke] = useAtom(revokeAtom);
+  const [revokes, setRevoke] = useAtom(revokeAtom);
 
   const toggleSelectContractSpender = React.useCallback(
-    (ctx: {
-      approval: ContractApprovalItem;
-      contractApproval:
-        | ContractApprovalItem['list'][number]
-        | ContractApprovalItem['list'][number][]
-        | null;
-    }) => {
+    (
+      ctx: {
+        approval: ContractApprovalItem;
+        contractApproval:
+          | ContractApprovalItem['list'][number]
+          | ContractApprovalItem['list'][number][]
+          | null;
+      },
+      target: RevokePickTarget = 'final',
+    ) => {
       const approval = ctx.approval;
+
+      const revokeKey =
+        target === 'final' ? 'contract' : ('contractFocusing' as const);
 
       if (!ctx.contractApproval) {
         const approvalIndexBase = makeApprovalIndexURLBase(approval);
 
         setRevoke(prev => {
-          const contractRevokeMap = { ...prev.contract };
+          const contractRevokeMap = { ...prev[revokeKey] };
 
           Object.keys(contractRevokeMap).forEach(k => {
             if (k.startsWith(approvalIndexBase)) {
@@ -702,7 +850,7 @@ export function useRevokeContractSpenders() {
             }
           });
 
-          return { ...prev, contract: contractRevokeMap };
+          return { ...prev, [revokeKey]: contractRevokeMap };
         });
         return;
       }
@@ -713,7 +861,7 @@ export function useRevokeContractSpenders() {
       const isToggledSingle = contractList.length === 1;
 
       setRevoke(prev => {
-        const contractRevokeMap = { ...prev.contract };
+        const contractRevokeMap = { ...prev[revokeKey] };
 
         contractList.forEach(contract => {
           const contractRevokeKey = encodeApprovalSpenderKey(
@@ -736,36 +884,43 @@ export function useRevokeContractSpenders() {
             )!;
           }
         });
-        return { ...prev, contract: contractRevokeMap };
+        return { ...prev, [revokeKey]: contractRevokeMap };
       });
     },
     [setRevoke],
   );
-  const { nextShouldSelectAllContracts } = React.useMemo(() => {
+  const { nextShouldPickAllFocusingContracts } = React.useMemo(() => {
     return {
-      nextShouldSelectAllContracts: !checkoutApprovalSelection(
+      nextShouldPickAllFocusingContracts: !checkoutApprovalSelection(
         'contract',
-        contractRevokeMap,
+        revokes.contractFocusing,
         focusedApproval.contract,
       ).isSelectedAll,
     };
-  }, [contractRevokeMap, focusedApproval.contract]);
+  }, [revokes.contractFocusing, focusedApproval.contract]);
 
   const onSelectAllContractApprovals = React.useCallback(
-    (targetApproval: ContractApprovalItem, nextSelectAll: boolean) => {
+    (
+      targetApproval: ContractApprovalItem,
+      nextSelectAll: boolean,
+      pickTarget: RevokePickTarget,
+    ) => {
       if (!targetApproval) return;
 
-      toggleSelectContractSpender({
-        approval: targetApproval,
-        contractApproval: nextSelectAll ? targetApproval?.list || [] : null,
-      });
+      toggleSelectContractSpender(
+        {
+          approval: targetApproval,
+          contractApproval: nextSelectAll ? targetApproval?.list || [] : null,
+        },
+        pickTarget,
+      );
     },
     [toggleSelectContractSpender],
   );
 
   return {
-    nextShouldSelectAllContracts,
-    contractRevokeMap,
+    nextShouldPickAllFocusingContracts,
+    contractRevokeMap: revokes.contract,
     toggleSelectContractSpender,
     onSelectAllContractApprovals,
   };
@@ -778,10 +933,16 @@ export type ToggleSelectApprovalSpenderCtx = {
 };
 export function useRevokeAssetSpenders() {
   const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [{ assets: assetRevokeMap }, setRevoke] = useAtom(revokeAtom);
+  const [revokes, setRevoke] = useAtom(revokeAtom);
 
   const toggleSelectAssetSpender = React.useCallback(
-    (ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem }) => {
+    (
+      ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
+      target: RevokePickTarget = 'final',
+    ) => {
+      const revokeKey =
+        target === 'final' ? 'assets' : ('assetsFocusing' as const);
+
       const inputSpender = ctx.spender || [];
       let nextSelect = ctx.nextSelect;
 
@@ -791,7 +952,7 @@ export function useRevokeAssetSpenders() {
       const isToggledSingle = spenders.length === 1;
 
       setRevoke(prev => {
-        const assetRevokeMap = { ...prev.assets };
+        const assetRevokeMap = { ...prev[revokeKey] };
 
         spenders.forEach(spender => {
           const revokeSpenderKey = encodeApprovalSpenderKey(
@@ -811,37 +972,44 @@ export function useRevokeAssetSpenders() {
           }
         });
 
-        return { ...prev, assets: assetRevokeMap };
+        return { ...prev, [revokeKey]: assetRevokeMap };
       });
     },
     [setRevoke],
   );
-  const nextShouldSelectAllAsset = React.useMemo(() => {
+  const nextShouldPickAllFocusingAsset = React.useMemo(() => {
     const { isSelectedAll } = checkoutApprovalSelection(
       'assets',
-      assetRevokeMap,
+      revokes.assetsFocusing,
       focusedApproval.asset,
     );
     return !isSelectedAll;
-  }, [assetRevokeMap, focusedApproval.asset]);
+  }, [revokes.assetsFocusing, focusedApproval.asset]);
 
   const onSelectAllAsset = React.useCallback(
-    (targetApproval: AssetApprovalItem, nextSelectAll: boolean) => {
+    (
+      targetApproval: AssetApprovalItem,
+      nextSelectAll: boolean,
+      pickTarget: RevokePickTarget,
+    ) => {
       if (!targetApproval) return;
 
-      toggleSelectAssetSpender({
-        approval: targetApproval,
-        spender: targetApproval.list,
-        nextSelect: nextSelectAll,
-      });
+      toggleSelectAssetSpender(
+        {
+          approval: targetApproval,
+          spender: targetApproval.list,
+          nextSelect: nextSelectAll,
+        },
+        pickTarget,
+      );
     },
     [toggleSelectAssetSpender],
   );
 
   return {
-    assetRevokeMap,
+    assetRevokeMap: revokes.assets,
     toggleSelectAssetSpender,
-    nextShouldSelectAllAsset,
+    nextShouldPickAllFocusingAsset,
     onSelectAllAsset,
   };
 }

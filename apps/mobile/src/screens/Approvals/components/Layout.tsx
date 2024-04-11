@@ -28,6 +28,8 @@ export const ApprovalsLayouts = {
   contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
   bottomAreaHeight: isAndroid ? 100 : 120,
 
+  bottomSheetConfirmAreaHeight: isAndroid ? 100 : 120,
+
   searchBarMarginOffset: 16,
   searchBarHeight: 48,
 
@@ -318,6 +320,59 @@ export const getSelectableContainerStyle = createGetStyles(colors => {
     selectedContainer: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light1'],
+    },
+  };
+});
+
+export function BottomSheetModalFooterButton({
+  ...buttonProps
+}: React.PropsWithoutRef<React.ComponentProps<typeof Button>>) {
+  const { styles } = useThemeStyles(getBottomSheetModalFooterButtonStyles);
+  return (
+    <View style={[styles.footerContainer]}>
+      <Button
+        {...buttonProps}
+        titleStyle={[styles.footerText, buttonProps?.titleStyle]}
+        disabledTitleStyle={[
+          styles.disabledFooterText,
+          buttonProps?.disabledTitleStyle,
+        ]}
+        containerStyle={[
+          styles.footerButtonContainer,
+          buttonProps?.containerStyle,
+        ]}
+      />
+    </View>
+  );
+}
+
+const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
+  return {
+    footerContainer: {
+      borderTopWidth: 0.5,
+      borderTopStyle: 'solid',
+      borderTopColor: colors['neutral-line'],
+      backgroundColor: colors['neutral-bg1'],
+      paddingVertical: 20,
+      paddingHorizontal: 20,
+      height: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+      flexShrink: 0,
+
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      alignItems: 'center',
+    },
+    footerButtonContainer: {
+      width: 248,
+      height: 52,
+    },
+    footerText: {
+      color: colors['neutral-title2'],
+    },
+    disabledFooterText: {
+      color: colors['neutral-title2'],
     },
   };
 });
