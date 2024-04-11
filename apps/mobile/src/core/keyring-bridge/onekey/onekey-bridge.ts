@@ -1,3 +1,4 @@
+import { eventBus, EVENTS } from '@/utils/events';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
 import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core';
 
@@ -12,20 +13,10 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
     HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
         case UI_REQUEST.REQUEST_PIN:
-          HardwareBleSdk.uiResponse({
-            type: UI_RESPONSE.RECEIVE_PIN,
-            payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE',
-          });
+          eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN);
           break;
         case UI_REQUEST.REQUEST_PASSPHRASE:
-          HardwareBleSdk.uiResponse({
-            type: UI_RESPONSE.RECEIVE_PASSPHRASE,
-            payload: {
-              value: '',
-              passphraseOnDevice: true,
-              save: true,
-            },
-          });
+          eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE);
           break;
         default:
         // NOTHING
@@ -46,4 +37,22 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
   evmGetPublicKey = HardwareBleSdk.evmGetPublicKey;
 
   getFeatures = HardwareBleSdk.getFeatures;
+
+  receivePin = ({ pin, switchOnDevice }) => {
+    HardwareBleSdk.uiResponse({
+      type: UI_RESPONSE.RECEIVE_PIN,
+      payload: switchOnDevice ? '@@ONEKEY_INPUT_PIN_IN_DEVICE' : pin,
+    });
+  };
+
+  receivePassphrase = ({ passphrase, switchOnDevice }) => {
+    HardwareBleSdk.uiResponse({
+      type: UI_RESPONSE.RECEIVE_PASSPHRASE,
+      payload: {
+        value: passphrase,
+        passphraseOnDevice: switchOnDevice,
+        save: true,
+      },
+    });
+  };
 }

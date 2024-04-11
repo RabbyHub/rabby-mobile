@@ -1,5 +1,20 @@
 import type { CoreApi } from '@onekeyfe/hd-core';
 
+export type ReceivePinParams =
+  | {
+      pin: string;
+      switchOnDevice: false;
+    }
+  | {
+      pin: undefined;
+      switchOnDevice: true;
+    };
+
+export type ReceivePassphraseParams = {
+  passphrase: string;
+  switchOnDevice: boolean;
+};
+
 export type OneKeyBridgeInterface = {
   init: () => Promise<void>;
   evmSignTransaction: CoreApi['evmSignTransaction'];
@@ -9,4 +24,6 @@ export type OneKeyBridgeInterface = {
   getPassphraseState: CoreApi['getPassphraseState'];
   evmGetPublicKey: CoreApi['evmGetPublicKey'];
   getFeatures: CoreApi['getFeatures'];
+  receivePin: (params: ReceivePinParams) => void;
+  receivePassphrase: (params: ReceivePassphraseParams) => void;
 };
