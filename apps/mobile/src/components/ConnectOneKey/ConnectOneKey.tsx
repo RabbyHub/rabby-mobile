@@ -149,8 +149,7 @@ export const ConnectOneKey: React.FC<{
         //   await importFirstAddress(5);
         //   toastHiddenRef.current?.();
         // }
-        console.log('unlock');
-        apiOneKey.unlock();
+        apiOneKey.unlockDevice();
       }
     },
 

@@ -2,10 +2,11 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKeyring } from './keyring';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { keyringService } from '../services/shared';
+import { bindOneKeyEvents } from '@/utils/onekey';
 
 export async function initOneKeyKeyring() {
   return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {
-    (keyring as unknown as OneKeyKeyring).init();
+    bindOneKeyEvents(keyring);
   });
 }
 
@@ -23,7 +24,7 @@ export async function getAddresses(start: number, end: number) {
   return keyring.getAddresses(start, end);
 }
 
-export async function unlock() {
+export async function unlockDevice() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
   return keyring.unlock();
