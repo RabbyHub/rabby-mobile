@@ -18,13 +18,14 @@ import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
+import { BUILD_CHANNEL } from '@/constant/env';
 
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
   appTheme: AppThemeScheme,
   rnColorScheme: ColorSchemeName = 'light',
 ): ColorSchemeName {
-  if (__DEV__) {
+  if (__DEV__ || BUILD_CHANNEL === 'selfhost-reg') {
     return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
   }
 
