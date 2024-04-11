@@ -206,12 +206,12 @@ export const getTooltipContentStyles = createGetStyles(colors => {
 
 export function SelectionCheckbox({
   isSelectedAll,
-  isSelectedPartials,
+  isSelectedPartial,
   style,
   size = 20,
 }: {
   isSelectedAll: boolean;
-  isSelectedPartials: boolean;
+  isSelectedPartial: boolean;
   size?: number;
 } & RNViewProps) {
   const colors = useThemeColors();
@@ -225,7 +225,7 @@ export function SelectionCheckbox({
     );
   }
 
-  if (isSelectedPartials) {
+  if (isSelectedPartial) {
     return (
       <RcIconIndeterminateCC
         width={size}

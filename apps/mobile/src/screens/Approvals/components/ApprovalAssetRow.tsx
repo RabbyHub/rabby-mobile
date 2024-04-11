@@ -17,7 +17,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
-import { checkoutApprovalSelection } from '../utils';
+import { parseApprovalSpenderSelection } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -51,8 +51,10 @@ function AssetsApprovalRowProto({
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
 
   const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
-  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    return checkoutApprovalSelection('assets', assetRevokeMap, assetApproval);
+  const { isSelectedAll, isSelectedPartial } = React.useMemo(() => {
+    return parseApprovalSpenderSelection(assetApproval, 'assets', {
+      curAllSelectedMap: assetRevokeMap,
+    });
   }, [assetApproval, assetRevokeMap]);
 
   const { approvalInfo } = React.useMemo(() => {
@@ -95,7 +97,7 @@ function AssetsApprovalRowProto({
     <TouchableView
       style={[
         styles.container,
-        (isSelectedAll || isSelectedPartials) && styles.selectedContainer,
+        (isSelectedAll || isSelectedPartial) && styles.selectedContainer,
       ]}
       onPress={evt => {
         onSelectAllAsset(assetApproval, !isSelectedAll, 'final');
@@ -129,7 +131,7 @@ function AssetsApprovalRowProto({
               </Text>
               <SelectionCheckbox
                 isSelectedAll={isSelectedAll}
-                isSelectedPartials={isSelectedPartials}
+                isSelectedPartial={isSelectedPartial}
                 style={styles.contractCheckbox}
               />
             </View>

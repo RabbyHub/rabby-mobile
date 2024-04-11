@@ -154,70 +154,41 @@ export function encodeApprovalSpenderKey<
 
   return approvalIndexBase;
 }
-export function checkoutApprovalSelection<
-  T extends ContractApprovalItem | AssetApprovalItem,
->(
-  _for: ApprovalProcessType,
-  approvalRevokeMap: RevokeItemDict,
-  approval?: T | null,
-) {
-  if (!approval || !approval?.list.length)
-    return {
-      isSelectedAll: false,
-      isSelectedPartials: false,
-    };
-
-  const selecteds = [] as T['list'][number][];
-  approval.list.forEach(
-    (
-      member:
-        | ContractApprovalItem['list'][number]
-        | ApprovalItem['list'][number],
-    ) => {
-      const indexKey =
-        _for === 'assets'
-          ? encodeApprovalSpenderKey(
-              (member as AssetApprovalSpender).$assetContract!,
-              (member as AssetApprovalSpender).$assetToken!,
-            )
-          : encodeApprovalSpenderKey(approval, member);
-      if (approvalRevokeMap[indexKey]) {
-        selecteds.push(member);
-      }
-    },
-  );
-
-  const isSelectedAll = selecteds.length >= approval.list.length;
-  const isSelectedPartials = !isSelectedAll && selecteds.length > 0;
-
-  return {
-    selecteds,
-    isSelectedAll,
-    isSelectedPartials,
-  };
-}
 
 type TParseMaps = {
-  preAllSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
-  nextKeepMap?: Record<string, ApprovalSpenderItemToBeRevoked>;
+  curAllSelectedMap: RevokeItemDict;
+  nextKeepMap?: RevokeItemDict;
 };
 export function parseApprovalSpenderSelection<T extends TParseMaps>(
-  approval: ApprovalItem,
+  approval: ApprovalItem | null,
   type: ApprovalProcessType,
   maps: T,
 ): {
-  preSelectedThisApprovalSpenderKeys: Set<string>;
-  curSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
+  curSelectedSpenderKeys: Set<string>;
+  curSelectedMap: RevokeItemDict;
+  isSelectedAll: boolean;
+  isSelectedPartial: boolean;
 } & (T['nextKeepMap'] extends void
   ? {}
   : {
-      postSelectedMap: Record<string, ApprovalSpenderItemToBeRevoked>;
+      postSelectedMap: RevokeItemDict;
     }) {
   const isAssetItem = type === 'assets';
 
-  const { preAllSelectedMap } = maps;
+  const { curAllSelectedMap } = maps;
 
-  const result = approval.list.reduce(
+  const preset = {
+    curSelectedSpenderKeys: new Set<string>(),
+    curSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{},
+    isSelectedAll: false,
+    isSelectedPartial: false,
+    postSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{
+      ...curAllSelectedMap,
+    },
+  };
+  if (!approval) return preset;
+
+  approval.list.reduce(
     (
       acc,
       member:
@@ -234,9 +205,9 @@ export function parseApprovalSpenderSelection<T extends TParseMaps>(
       const nextS = maps.nextKeepMap?.[indexKey]
         ? { key: indexKey, item: maps.nextKeepMap?.[indexKey] }
         : null;
-      if (preAllSelectedMap[indexKey]) {
-        acc.preSelectedThisApprovalSpenderKeys.add(indexKey);
-        acc.curSelectedMap[indexKey] = preAllSelectedMap[indexKey];
+      if (curAllSelectedMap[indexKey]) {
+        acc.curSelectedSpenderKeys.add(indexKey);
+        acc.curSelectedMap[indexKey] = curAllSelectedMap[indexKey];
 
         if (!nextS) {
           delete acc.postSelectedMap[indexKey];
@@ -249,16 +220,15 @@ export function parseApprovalSpenderSelection<T extends TParseMaps>(
 
       return acc;
     },
-    {
-      preSelectedThisApprovalSpenderKeys: new Set<string>(),
-      curSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{},
-      postSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{
-        ...preAllSelectedMap,
-      },
-    },
+    preset,
   );
 
-  return result;
+  preset.isSelectedAll =
+    approval.list.length === preset.curSelectedSpenderKeys.size;
+  preset.isSelectedPartial =
+    !preset.isSelectedAll && preset.curSelectedSpenderKeys.size > 0;
+
+  return preset;
 }
 
 export function querySelectedContractSpender(

@@ -49,7 +49,6 @@ import {
   checkCompareContractItem,
   makeApprovalIndexURLBase,
   encodeApprovalSpenderKey,
-  checkoutApprovalSelection,
   parseApprovalSpenderSelection,
   toRevokeItem,
 } from './utils';
@@ -762,10 +761,10 @@ export function useRevokeApprovals() {
           type,
           type === 'contract'
             ? {
-                preAllSelectedMap: prev.contract,
+                curAllSelectedMap: prev.contract,
               }
             : {
-                preAllSelectedMap: prev.assets,
+                curAllSelectedMap: prev.assets,
               },
         );
 
@@ -793,11 +792,11 @@ export function useRevokeApprovals() {
           type,
           type === 'contract'
             ? {
-                preAllSelectedMap: prev.contract,
+                curAllSelectedMap: prev.contract,
                 nextKeepMap: prev.contractFocusing,
               }
             : {
-                preAllSelectedMap: prev.assets,
+                curAllSelectedMap: prev.assets,
                 nextKeepMap: prev.assetsFocusing,
               },
         );
@@ -903,13 +902,13 @@ export function useRevokeContractSpenders() {
   );
   const { nextShouldPickAllFocusingContracts } = React.useMemo(() => {
     return {
-      nextShouldPickAllFocusingContracts: !checkoutApprovalSelection(
-        'contract',
-        revokes.contractFocusing,
+      nextShouldPickAllFocusingContracts: !parseApprovalSpenderSelection(
         focusedApproval.contract,
+        'contract',
+        { curAllSelectedMap: revokes.assetsFocusing },
       ).isSelectedAll,
     };
-  }, [revokes.contractFocusing, focusedApproval.contract]);
+  }, [revokes.assetsFocusing, focusedApproval.contract]);
 
   const onSelectAllContractApprovals = React.useCallback(
     (
@@ -990,10 +989,10 @@ export function useRevokeAssetSpenders() {
     [setRevoke],
   );
   const nextShouldPickAllFocusingAsset = React.useMemo(() => {
-    const { isSelectedAll } = checkoutApprovalSelection(
-      'assets',
-      revokes.assetsFocusing,
+    const { isSelectedAll } = parseApprovalSpenderSelection(
       focusedApproval.asset,
+      'assets',
+      { curAllSelectedMap: revokes.assetsFocusing },
     );
     return !isSelectedAll;
   }, [revokes.assetsFocusing, focusedApproval.asset]);

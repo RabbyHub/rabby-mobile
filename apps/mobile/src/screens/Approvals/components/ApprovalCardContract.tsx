@@ -24,7 +24,6 @@ import { getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { checkoutApprovalSelection } from '../utils';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 

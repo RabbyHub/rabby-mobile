@@ -24,7 +24,7 @@ import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { checkoutApprovalSelection } from '../utils';
+import { parseApprovalSpenderSelection } from '../utils';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 
@@ -66,8 +66,10 @@ function CardProto({
   const { contractRevokeMap, onSelectAllContractApprovals } =
     useRevokeContractSpenders();
 
-  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    return checkoutApprovalSelection('contract', contractRevokeMap, contract);
+  const { isSelectedAll, isSelectedPartial } = React.useMemo(() => {
+    return parseApprovalSpenderSelection(contract, 'contract', {
+      curAllSelectedMap: contractRevokeMap,
+    });
   }, [contractRevokeMap, contract]);
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
@@ -163,7 +165,7 @@ function CardProto({
     [contract.$riskAboutValues.risk_exposure_usd_value],
   );
 
-  const isTreatedAsSelected = isSelectedAll || isSelectedPartials;
+  const isTreatedAsSelected = isSelectedAll || isSelectedPartial;
 
   return (
     <TouchableView
@@ -208,7 +210,7 @@ function CardProto({
           </View>
           <SelectionCheckbox
             isSelectedAll={isSelectedAll}
-            isSelectedPartials={isSelectedPartials}
+            isSelectedPartial={isSelectedPartial}
             style={styles.contractCheckbox}
           />
         </View>
