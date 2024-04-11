@@ -20,12 +20,15 @@ import { devLog } from '@/utils/logger';
 import { useThemeMode } from '@rneui/themed';
 import { BUILD_CHANNEL } from '@/constant/env';
 
+export const SHOULD_SUPPORT_DARK_MODE =
+  __DEV__ || BUILD_CHANNEL === 'selfhost-reg';
+
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
   appTheme: AppThemeScheme,
   rnColorScheme: ColorSchemeName = 'light',
 ): ColorSchemeName {
-  if (__DEV__ || BUILD_CHANNEL === 'selfhost-reg') {
+  if (SHOULD_SUPPORT_DARK_MODE) {
     return appTheme === 'system' ? rnColorScheme || 'light' : appTheme;
   }
 
