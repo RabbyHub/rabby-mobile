@@ -65,7 +65,7 @@ const TokenApprove = ({
                 <DescItem>
                   <ProtocolListItem
                     protocol={requireData.protocol}
-                    style={commonStyle.primaryText}
+                    style={commonStyle.secondaryText}
                   />
                 </DescItem>
               )}

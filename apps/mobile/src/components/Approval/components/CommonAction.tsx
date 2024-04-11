@@ -93,7 +93,10 @@ export const CommonAction = ({
           <Row>
             <Values.Address address={requireData.id} chain={chain} />
             <DescItem>
-              <ProtocolListItem protocol={requireData.protocol} />
+              <ProtocolListItem
+                protocol={requireData.protocol}
+                style={commonStyle.secondaryText}
+              />
             </DescItem>
             <DescItem>
               <Values.Interacted value={requireData.hasInteraction} />
