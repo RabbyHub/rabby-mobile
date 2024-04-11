@@ -176,6 +176,7 @@ export function ApprovalsBottomArea() {
         disabled={!couldSubmit}
         containerStyle={styles.buttonContainer}
         titleStyle={styles.buttonText}
+        disabledTitleStyle={styles.buttonText}
         type="primary"
         title={buttonTitle}
         loading={isSubmitLoading}
