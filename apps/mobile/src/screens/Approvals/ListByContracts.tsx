@@ -24,7 +24,7 @@ import {
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
-import ApprovalCardContract from './components/ApprovalCardContract';
+import ApprovalContractRow from './components/ApprovalContractRow';
 import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByContracts } from './components/Skeleton';
 
@@ -54,7 +54,7 @@ export default function ListByContracts() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalCardContract style={styles.cardContainer} contract={item} />
+          <ApprovalContractRow style={styles.cardContainer} contract={item} />
         </View>
       );
     },

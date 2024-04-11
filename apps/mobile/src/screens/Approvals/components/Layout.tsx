@@ -21,6 +21,7 @@ const isAndroid = Platform.OS === 'android';
 
 const riskyTipHeight = 32;
 const riskyTipArrowOffset = 14;
+const contractRowHeight = 108;
 const contractCardHeight = 133;
 export const ApprovalsLayouts = {
   tabbarHeight: 40,
@@ -30,8 +31,11 @@ export const ApprovalsLayouts = {
   searchBarMarginOffset: 16,
   searchBarHeight: 48,
 
-  contractCardHeight: contractCardHeight,
+  contractRowHeight,
+  contractRowHeightWithRiskAlert:
+    contractRowHeight + riskyTipHeight + riskyTipArrowOffset,
   contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
+  contractCardHeight,
   contractCardHeightWithRiskAlert:
     contractCardHeight + riskyTipHeight + riskyTipArrowOffset,
   contractCardPadding: 14,

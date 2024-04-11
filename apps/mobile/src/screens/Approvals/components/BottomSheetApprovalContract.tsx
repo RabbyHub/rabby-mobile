@@ -131,10 +131,7 @@ export default function BottomSheetContractApproval({
       {focusedContractApproval && (
         <BottomSheetView style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
-            <ApprovalCardContract
-              contract={focusedContractApproval}
-              inDetailModal
-            />
+            <ApprovalCardContract contract={focusedContractApproval} />
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>

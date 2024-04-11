@@ -33,7 +33,6 @@ import { Tip } from '@/components';
 
 export const ContractFloorLayouts = {
   floorHeader: { height: 33, paddingTop: 0 },
-  floor1: { height: 24, paddingTop: 4 },
   floor2: { height: 24, paddingTop: 4 },
   floor3: { height: 24, paddingTop: 4 },
 };
@@ -66,6 +65,13 @@ function CardProto({
 } & RNViewProps) {
   const { colors, styles } = useThemeStyles(getCardStyles);
   const { t } = useTranslation();
+
+  const { contractRevokeMap, onSelectAllContractApprovals } =
+    useRevokeContractSpenders();
+
+  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
+    return checkoutApprovalSelection('contract', contractRevokeMap, contract);
+  }, [contractRevokeMap, contract]);
 
   const { revokeTrendsEvaluation, trustValueEvalutation } =
     React.useMemo(() => {
@@ -145,6 +151,8 @@ function CardProto({
   );
   const chainLogoUrl = chainItem?.logo || contract.logo_url;
 
+  const { toggleFocusedContractItem } = useFocusedApprovalOnApprovals();
+
   const risky = useMemo(
     () => ['danger', 'warning'].includes(contract.risk_level),
     [contract.risk_level],
@@ -158,13 +166,19 @@ function CardProto({
     [contract.$riskAboutValues.risk_exposure_usd_value],
   );
 
+  const isTreatedAsSelected = isSelectedAll || isSelectedPartials;
+
   return (
-    <View
+    <TouchableView
       style={[
         styles.container,
         contract?.risk_alert ? styles.containerWithRisky : {},
+        isTreatedAsSelected && styles.selectedContainer,
         style,
-      ]}>
+      ]}
+      onPress={() => {
+        onSelectAllContractApprovals(contract, !isSelectedAll);
+      }}>
       {/* floor header */}
       <View
         style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
@@ -188,24 +202,32 @@ function CardProto({
               {ellipsisAddress(contract.id)}
             </Text>
             <Text
-              style={[styles.contractName, styles.contractNameInDetailModal]}
+              style={[styles.contractName]}
               ellipsizeMode="tail"
               numberOfLines={1}>
               {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
               ({contract.name})
             </Text>
           </View>
-          <CopyAddressIcon
-            address={contract.id}
-            style={{ marginLeft: 2 }}
-            color={colors['neutral-foot']}
+          <SelectionCheckbox
+            isSelectedAll={isSelectedAll}
+            isSelectedPartials={isSelectedPartials}
+            style={styles.contractCheckbox}
           />
         </View>
-        <View style={styles.rightOps}>
-          <Text style={[styles.entryText, styles.approvalsCount]}>
-            {contract.list.length} Approvals
-          </Text>
-        </View>
+        <RightTouchableView
+          style={styles.rightOps}
+          onPress={evt => {
+            toggleFocusedContractItem(contract);
+            evt.stopPropagation();
+          }}>
+          <Text style={styles.entryText}>{contract.list.length}</Text>
+          <RcIconRightEntryMiniCC
+            width={14}
+            height={14}
+            color={colors['neutral-foot']}
+          />
+        </RightTouchableView>
       </View>
 
       {risky && (
@@ -227,20 +249,6 @@ function CardProto({
           </View>
         </View>
       )}
-
-      {/* floor 1 */}
-      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
-        <View style={styles.floorLeft}>
-          <Text style={styles.floorLabel}>Contract Note</Text>
-        </View>
-        <Text
-          style={[styles.floorValue, styles.floorValueMarked]}
-          ellipsizeMode="tail"
-          numberOfLines={1}>
-          {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
-          {contract.name}
-        </Text>
-      </View>
 
       {/* floor 2 */}
       <View style={[styles.contractItemFloor, ContractFloorLayouts.floor2]}>
@@ -355,10 +363,11 @@ function CardProto({
               },
               revokeTrendsEvaluation.finalUnderlineStyle,
             ]}
+            innerBg={!isTreatedAsSelected ? undefined : colors['blue-light1']}
           />
         </Tip>
       </View>
-    </View>
+    </TouchableView>
   );
 }
 
@@ -372,13 +381,13 @@ export const getCardStyles = createGetStyles(colors => {
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: 10,
-      height: ApprovalsLayouts.contractCardHeight,
+      height: ApprovalsLayouts.contractRowHeight,
       width: '100%',
       padding: ApprovalsLayouts.contractCardPadding,
       ...selectableStyles.container,
     },
     containerWithRisky: {
-      height: ApprovalsLayouts.contractCardHeightWithRiskAlert,
+      height: ApprovalsLayouts.contractRowHeightWithRiskAlert,
     },
     selectedContainer: {
       ...selectableStyles.selectedContainer,
