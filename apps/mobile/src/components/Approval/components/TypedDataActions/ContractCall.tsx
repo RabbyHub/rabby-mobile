@@ -77,12 +77,14 @@ const ContractCall = ({
               <Values.Address address={requireData.id} chain={chain} />
             </View>
             <View>
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem
+                    protocol={requireData.protocol}
+                    style={commonStyle.secondaryText}
+                  />
+                </DescItem>
+              )}
               <DescItem>
                 <Values.Interacted
                   value={requireData.hasInteraction}

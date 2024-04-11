@@ -349,7 +349,11 @@ const TokenApprove = ({
           <Row>
             <Values.Address address={actionData.spender} chain={chain} />
             <View>
-              <ProtocolListItem protocol={requireData.protocol} />
+              {requireData.protocol && (
+                <DescItem>
+                  <ProtocolListItem protocol={requireData.protocol} />
+                </DescItem>
+              )}
 
               <SecurityListItem
                 id="1022"
