@@ -32,7 +32,8 @@ import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 
 export const ContractFloorLayouts = {
-  floor1: { height: 33, paddingTop: 0 },
+  floorHeader: { height: 33, paddingTop: 0 },
+  floor1: { height: 25, paddingTop: 5 },
   floor2: { height: 25, paddingTop: 5 },
   floor3: { height: 24, paddingTop: 4 },
 };
@@ -185,8 +186,9 @@ function CardProto({
           onSelectAllContractApprovals(contract, !isSelectedAll);
         }
       }}>
-      {/* floor 1 */}
-      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
+      {/* floor header */}
+      <View
+        style={[styles.contractItemFloor, ContractFloorLayouts.floorHeader]}>
         <View style={styles.floorLeft}>
           {chainLogoUrl ? (
             <ChainIconImage
@@ -205,16 +207,6 @@ function CardProto({
               ellipsizeMode="tail"
               numberOfLines={1}>
               {ellipsisAddress(contract.id)}
-            </Text>
-            <Text
-              style={[
-                styles.contractName,
-                inDetailModal && styles.contractNameInDetailModal,
-              ]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
-              ({contract.name})
             </Text>
           </View>
           {!inDetailModal ? (
@@ -277,6 +269,20 @@ function CardProto({
           </View>
         </View>
       )}
+
+      {/* floor 1 */}
+      <View style={[styles.contractItemFloor, ContractFloorLayouts.floor1]}>
+        <View style={styles.floorLeft}>
+          <Text style={styles.floorLabel}>Contract Note</Text>
+        </View>
+        <Text
+          style={[styles.floorValue, styles.floorValueMarked]}
+          ellipsizeMode="tail"
+          numberOfLines={1}>
+          {/* ({contract.name}{contract.name}{contract.name}{contract.name}{contract.name}) */}
+          {contract.name}
+        </Text>
+      </View>
 
       {/* floor 2 */}
       <View style={[styles.contractItemFloor, ContractFloorLayouts.floor2]}>
@@ -475,16 +481,6 @@ export const getCardStyles = createGetStyles(colors => {
       fontSize: 14,
       fontWeight: '500',
     },
-    contractName: {
-      color: colors['neutral-foot'],
-      fontSize: 14,
-      fontWeight: '400',
-      marginLeft: 6,
-      maxWidth: 100,
-    },
-    contractNameInDetailModal: {
-      maxWidth: 80,
-    },
     contractCheckbox: {
       marginLeft: 6,
     },
@@ -534,6 +530,9 @@ export const getCardStyles = createGetStyles(colors => {
       fontSize: 13,
       fontWeight: '600',
       position: 'relative',
+    },
+    floorValueMarked: {
+      color: colors['neutral-title1'],
     },
     floorValueWarn: {
       color: colors['orange-default'],

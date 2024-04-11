@@ -21,17 +21,19 @@ const isAndroid = Platform.OS === 'android';
 
 const riskyTipHeight = 32;
 const riskyTipArrowOffset = 14;
+const contractCardHeight = 133;
 export const ApprovalsLayouts = {
-  tabbarHeight: 44,
-  contentInsetTopOffset: isAndroid ? 0 : 44 /* same with tabbarHeight */,
-  bottomAreaHeight: 100,
+  tabbarHeight: 40,
+  contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
+  bottomAreaHeight: isAndroid ? 100 : 120,
 
   searchBarMarginOffset: 16,
   searchBarHeight: 48,
 
-  contractCardHeight: 108,
+  contractCardHeight: contractCardHeight,
   contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
-  contractCardHeightWithRiskAlert: 108 + riskyTipHeight + riskyTipArrowOffset,
+  contractCardHeightWithRiskAlert:
+    contractCardHeight + riskyTipHeight + riskyTipArrowOffset,
   contractCardPadding: 14,
 
   assetsItemHeight: 60,
