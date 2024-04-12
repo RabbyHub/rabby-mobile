@@ -139,8 +139,7 @@ export default function BottomSheetAssetApproval({
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                {/* Approved Assets Amount & Balance */}
-                Approved to the following Contracts
+                Approved Contracts and Amount
               </Text>
               <MiniButton
                 disabled={!focusedAssetApproval?.list.length}

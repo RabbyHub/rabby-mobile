@@ -160,7 +160,7 @@ export default function BottomSheetContractApproval({
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                Approved Contracts & Amount
+                Approved Assets and Amount
               </Text>
               <MiniButton
                 disabled={!focusedContractApproval?.list.length}
