@@ -112,5 +112,4 @@ jobs:
           name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
           path: |
             ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-            ./apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 7

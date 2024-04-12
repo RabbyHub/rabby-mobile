@@ -44,12 +44,13 @@ build_alpha() {
 
 build_appstore() {
   yarn;
-  if [ $RABBY_HOST_OS != "Windows" ]; then
-    bundle exec fastlane android release
-  else
-    echo "[deploy-android] run build.sh script directly."
-    sh $project_dir/android/build.sh buildAppStore
-  fi
+  # if [ $RABBY_HOST_OS != "Windows" ]; then
+  #   bundle exec fastlane android appstore
+  # else
+
+  # fi
+  echo "[deploy-android] run build.sh script directly."
+  sh $project_dir/android/build.sh buildAppStore
 }
 
 # ============ prepare version.json :start ============== #
