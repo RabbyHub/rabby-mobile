@@ -13,13 +13,13 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
     HardwareBleSdk.on(UI_EVENT, e => {
       switch (e.type) {
         case UI_REQUEST.REQUEST_PIN:
-          eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN);
+          eventBus.emit(EVENTS.ONEKEY.REQUEST_PIN, e);
           break;
         case UI_REQUEST.REQUEST_PASSPHRASE:
-          eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE);
+          eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e);
           break;
         case UI_REQUEST.CLOSE_UI_WINDOW:
-          eventBus.emit(EVENTS.ONEKEY.CLOSE_UI_WINDOW);
+          eventBus.emit(EVENTS.ONEKEY.CLOSE_UI_WINDOW, e);
           break;
         default:
         // NOTHING
@@ -58,4 +58,6 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
       },
     });
   };
+
+  cancel = HardwareBleSdk.cancel;
 }

@@ -57,3 +57,36 @@ export async function setDeviceConnectId(deviceConnectId: string) {
 
   return keyring.setDeviceConnectId(deviceConnectId);
 }
+
+export async function importFirstAddress({
+  retryCount = 1,
+}: {
+  retryCount?: number;
+}): Promise<string | false> {
+  let address;
+
+  const task = async () => {
+    try {
+      address = await importAddress('0');
+    } catch (e: any) {
+      // only catch not `duplicate import` error
+      if (!e.message?.includes('import is invalid')) {
+        throw e;
+      }
+      return false;
+    }
+  };
+
+  for (let i = 0; i < retryCount; i++) {
+    try {
+      await task();
+      break;
+    } catch (e) {
+      if (i === retryCount - 1) {
+        throw e;
+      }
+    }
+  }
+
+  return address;
+}

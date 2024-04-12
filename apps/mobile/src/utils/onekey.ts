@@ -1,5 +1,6 @@
 import {
   createGlobalBottomSheetModal,
+  globalBottomSheetModalAddListener,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
@@ -14,7 +15,7 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
   let pinModalId: string | null = null;
   let passphraseModalId: string | null = null;
 
-  eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, () => {
+  eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, e => {
     if (pinModalId) {
       return;
     }
@@ -31,8 +32,23 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
         });
       },
     });
+
+    globalBottomSheetModalAddListener(
+      'DISMISS',
+      _id => {
+        if (_id !== pinModalId) {
+          return;
+        }
+        const connectId = e?.payload?.device?.connectId;
+        console.log('oneKeyKeyring.bridge.cancel();', connectId);
+        oneKeyKeyring.bridge.cancel(connectId);
+        pinModalId = null;
+      },
+      true,
+    );
   });
-  eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, () => {
+
+  eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e => {
     if (passphraseModalId) {
       return;
     }
@@ -49,5 +65,18 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
         });
       },
     });
+
+    globalBottomSheetModalAddListener(
+      'DISMISS',
+      _id => {
+        if (_id !== passphraseModalId) {
+          return;
+        }
+        const connectId = e?.payload?.device?.connectId;
+        oneKeyKeyring.bridge.cancel(connectId);
+        passphraseModalId = null;
+      },
+      true,
+    );
   });
 }

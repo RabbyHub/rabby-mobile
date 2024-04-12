@@ -23,7 +23,12 @@ export const removeGlobalBottomSheetModal = (key?: string | null) => {
 export const globalBottomSheetModalAddListener = (
   eventName: 'DISMISS',
   callback: (key: string) => void,
+  once?: boolean,
 ) => {
+  if (once) {
+    events.once(eventName, callback);
+    return;
+  }
   events.on(eventName, callback);
 };
 
