@@ -38,8 +38,8 @@ env:
   BUILD_TARGET_PLATFORM: android
 
 jobs:
-  alpha-build:
-    name: android-alpha-build
+  release-build:
+    name: android-release-build
     runs-on:
       - self-hosted
       - mobile
