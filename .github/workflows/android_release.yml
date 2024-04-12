@@ -1,8 +1,35 @@
-name: Build and deploy Android release
+name: Build and deploy Android Release
 on:
   push:
     tags:
       - 'android-release-*'
+    branches:
+      - 'ci/android-release-*'
+      - ci/*
+  workflow_dispatch:
+    inputs:
+      buildchannel:
+        description: 'Build Channel'
+        required: true
+        default: 'selfhost'
+        type: choice
+        options:
+          - selfhost
+          - appstore
+      REALLY_UPLOAD:
+        required: true
+        type: boolean
+        default: true
+  workflow_call:
+    secrets:
+      RABBY_MOBILE_ANDROID_KEY_STORE:
+        required: true
+      RABBY_MOBILE_ANDROID_KEY_PASSWORD:
+        required: true
+      RABBY_MOBILE_ANDROID_KEY_ALIAS:
+        required: true
+      RABBY_MOBILE_KR_PWD:
+        required: true
 
 # defaults:
 #   run:
@@ -11,8 +38,8 @@ env:
   BUILD_TARGET_PLATFORM: android
 
 jobs:
-  release-build:
-    name: android-release-build
+  alpha-build:
+    name: android-alpha-build
     runs-on:
       - self-hosted
       - mobile
@@ -63,6 +90,8 @@ jobs:
           LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
           RABBY_ROBOT_LARK_APP_SECRET: ${{ secrets.RABBY_ROBOT_LARK_APP_SECRET }}
+          buildchannel: ${{ inputs.buildchannel }}
+          REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           # see more details on https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
           GIT_ACTIONS_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -74,7 +103,8 @@ jobs:
         run: |
           cd apps/mobile;
           yarn prepare-archive;
-          buildchannel=selfhost REALLY_UPLOAD=true ./scripts/deploy-android.sh
+          [ -z $buildchannel ]; && export buildchannel=selfhost-reg;
+          REALLY_UPLOAD=true ./scripts/deploy-android.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -82,4 +112,5 @@ jobs:
           name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
           path: |
             ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 90
+            ./apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 7
