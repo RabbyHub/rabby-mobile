@@ -3,11 +3,7 @@ import { apiOneKey } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import {
-  HARDWARE_KEYRING_TYPES,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { settingAtom } from '../HDSetting/MainContainer';
@@ -66,8 +62,7 @@ export const ConnectOneKey: React.FC<{
         hdPath: LedgerHDPathType.BIP44,
       });
       navigate(RootNames.ImportHardware, {
-        type: HARDWARE_KEYRING_TYPES.OneKey.type as KEYRING_TYPE,
-        brand: HARDWARE_KEYRING_TYPES.OneKey.brandName,
+        type: KEYRING_TYPE.OneKeyKeyring,
       });
       onDone?.();
     }

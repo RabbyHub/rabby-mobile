@@ -116,7 +116,7 @@ class OneKeyKeyring extends EventEmitter {
 
   _deviceConnectId?: string;
 
-  setDeviceConnectId(deviceConnectId: string) {
+  setDeviceConnectId(deviceConnectId?: string) {
     this._deviceConnectId = deviceConnectId;
   }
 
@@ -148,6 +148,7 @@ class OneKeyKeyring extends EventEmitter {
 
   cleanUp() {
     this.hdk = new HDKey();
+    this.setDeviceConnectId(undefined);
   }
 
   resend() {
@@ -159,9 +160,9 @@ class OneKeyKeyring extends EventEmitter {
   }
 
   unlock(): Promise<string> {
-    // if (this.isUnlocked()) {
-    //   return Promise.resolve('already unlocked');
-    // }
+    if (this.isUnlocked()) {
+      return Promise.resolve('already unlocked');
+    }
     return new Promise((resolve, reject) => {
       const devicePromise = this._deviceConnectId
         ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
@@ -269,6 +270,10 @@ class OneKeyKeyring extends EventEmitter {
                 hdPathBasePublicKey: this.getPathBasePublicKey(),
                 index: i,
               };
+            } else {
+              throw new Error(
+                "The address you're are trying to import is invalid",
+              );
             }
             this.page = 0;
           }

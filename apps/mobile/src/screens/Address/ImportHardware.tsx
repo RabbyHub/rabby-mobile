@@ -1,6 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiKeystone, apiLedger } from '@/core/apis';
+import { apiKeystone, apiLedger, apiOneKey } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import {
@@ -139,6 +139,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return apiLedger;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return apiOneKey;
       default:
         return apiKeystone;
     }
@@ -147,6 +149,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return KEYRING_TYPE.LedgerKeyring;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return KEYRING_TYPE.OneKeyKeyring;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.type;
     }
@@ -155,6 +159,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return KEYRING_CLASS.HARDWARE.LEDGER;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return KEYRING_CLASS.HARDWARE.ONEKEY;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.brandName;
     }
