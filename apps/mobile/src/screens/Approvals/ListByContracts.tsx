@@ -9,9 +9,9 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import {
-  ApprovalsLayouts,
   ApprovalsTabView,
   NotMatchedHolder,
+  getScrollableSectionHeight,
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -24,9 +24,9 @@ import {
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
-import ApprovalCardContract from './components/ApprovalCardContract';
-import { TailedTitle } from '@/components/patches/Simulation';
+import ApprovalContractRow from './components/ApprovalContractRow';
 import { SkeletonListByContracts } from './components/Skeleton';
+import { ApprovalsLayouts } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -34,8 +34,13 @@ export default function ListByContracts() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedContractList, loadApprovals, skContract } =
-    useApprovalsPage();
+  const {
+    isLoading,
+    displaySortedContractList,
+    loadApprovals,
+    contractEmptyStatus,
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
 
   const keyExtractor = React.useCallback<
     SectionListProps<ContractApprovalItem>['keyExtractor'] & object
@@ -54,7 +59,7 @@ export default function ListByContracts() {
             styles.itemWrapper,
             isFirstItem ? { marginTop: 0 } : { marginTop: 12 },
           ]}>
-          <ApprovalCardContract style={styles.cardContainer} contract={item} />
+          <ApprovalContractRow style={styles.cardContainer} contract={item} />
         </View>
       );
     },
@@ -101,11 +106,26 @@ export default function ListByContracts() {
     return isLoading ? (
       <SkeletonListByContracts />
     ) : (
-      <View style={styles.emptyHolderContainer}>
-        <NotMatchedHolder />
+      <View
+        style={[
+          styles.emptyHolderContainer,
+          {
+            height: getScrollableSectionHeight({
+              bottomAreaHeight: safeSizes.bottomAreaHeight,
+            }),
+          },
+        ]}>
+        <NotMatchedHolder
+          text={contractEmptyStatus === 'none' ? 'No approvals' : 'Not Matched'}
+        />
       </View>
     );
-  }, [styles.emptyHolderContainer, isLoading]);
+  }, [
+    styles.emptyHolderContainer,
+    safeSizes.bottomAreaHeight,
+    isLoading,
+    contractEmptyStatus,
+  ]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -169,7 +189,7 @@ const getStyles = createGetStyles(colors => {
   return {
     emptyHolderContainer: {
       // ...makeDebugBorder(),
-      height: ApprovalsLayouts.scrollableSectionHeight,
+      height: getScrollableSectionHeight(),
     },
     container: {
       flex: 1,

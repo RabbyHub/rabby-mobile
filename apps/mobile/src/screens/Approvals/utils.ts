@@ -22,6 +22,7 @@ import { getAddressScanLink } from '@/utils/address';
 import { openExternalUrl } from '@/core/utils/linking';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
+import { ObjectMirror } from '@/utils/type';
 
 export function formatTimeFromNow(time?: Date | number) {
   if (!time) return '';
@@ -102,6 +103,13 @@ export function makeApprovalIndexURLBase(approval: ApprovalItem) {
   return `approval://${approvalKey}`;
 }
 
+export type ApprovalProcessType = 'contract' | 'assets';
+export type RevokeItemDict = Record<string, ApprovalSpenderItemToBeRevoked>;
+
+/**
+ * @description the key function to serialize the ContractApprovalItem or AssetApprovalItem,
+ * used as selection key of spender in the approval list
+ */
 export function encodeApprovalSpenderKey<
   T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
 >(approval: ApprovalItem, token: T) {
@@ -146,6 +154,82 @@ export function encodeApprovalSpenderKey<
   }
 
   return approvalIndexBase;
+}
+
+type TParseMaps = {
+  curAllSelectedMap: RevokeItemDict;
+  nextKeepMap?: RevokeItemDict;
+};
+export function parseApprovalSpenderSelection<T extends TParseMaps>(
+  approval: ApprovalItem | null,
+  type: ApprovalProcessType,
+  maps: T,
+): {
+  curSelectedSpenderKeys: Set<string>;
+  curSelectedMap: RevokeItemDict;
+  isSelectedAll: boolean;
+  isSelectedPartial: boolean;
+} & (T['nextKeepMap'] extends void
+  ? {}
+  : {
+      postSelectedMap: RevokeItemDict;
+    }) {
+  const isAssetItem = type === 'assets';
+
+  const { curAllSelectedMap } = maps;
+
+  const preset = {
+    curSelectedSpenderKeys: new Set<string>(),
+    curSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{},
+    isSelectedAll: false,
+    isSelectedPartial: false,
+    postSelectedMap: <Record<string, ApprovalSpenderItemToBeRevoked>>{
+      ...curAllSelectedMap,
+    },
+  };
+  if (!approval) return preset;
+
+  approval.list.reduce(
+    (
+      acc,
+      member:
+        | ContractApprovalItem['list'][number]
+        | ApprovalItem['list'][number],
+    ) => {
+      const indexKey = isAssetItem
+        ? encodeApprovalSpenderKey(
+            (member as AssetApprovalSpender).$assetContract!,
+            (member as AssetApprovalSpender).$assetToken!,
+          )
+        : encodeApprovalSpenderKey(approval, member);
+
+      const nextS = maps.nextKeepMap?.[indexKey]
+        ? { key: indexKey, item: maps.nextKeepMap?.[indexKey] }
+        : null;
+      if (curAllSelectedMap[indexKey]) {
+        acc.curSelectedSpenderKeys.add(indexKey);
+        acc.curSelectedMap[indexKey] = curAllSelectedMap[indexKey];
+
+        if (!nextS) {
+          delete acc.postSelectedMap[indexKey];
+        }
+      }
+
+      if (nextS) {
+        acc.postSelectedMap[indexKey] = nextS.item;
+      }
+
+      return acc;
+    },
+    preset,
+  );
+
+  preset.isSelectedAll =
+    approval.list.length === preset.curSelectedSpenderKeys.size;
+  preset.isSelectedPartial =
+    !preset.isSelectedAll && preset.curSelectedSpenderKeys.size > 0;
+
+  return preset;
 }
 
 export function querySelectedContractSpender(
@@ -255,49 +339,6 @@ export function checkoutContractSpender(
     : null;
 }
 
-export function checkoutApprovalSelection<
-  T extends ContractApprovalItem | AssetApprovalItem,
->(
-  _for: 'contract' | 'assets',
-  approvalRevokeMap: Record<string, ApprovalSpenderItemToBeRevoked>,
-  approval?: T | null,
-) {
-  if (!approval || !approval?.list.length)
-    return {
-      isSelectedAll: false,
-      isSelectedPartials: false,
-    };
-
-  const selecteds = [] as T['list'][number][];
-  approval.list.forEach(
-    (
-      member:
-        | ContractApprovalItem['list'][number]
-        | ApprovalItem['list'][number],
-    ) => {
-      const indexKey =
-        _for === 'assets'
-          ? encodeApprovalSpenderKey(
-              (member as AssetApprovalSpender).$assetContract!,
-              (member as AssetApprovalSpender).$assetToken!,
-            )
-          : encodeApprovalSpenderKey(approval, member);
-      if (approvalRevokeMap[indexKey]) {
-        selecteds.push(member);
-      }
-    },
-  );
-
-  const isSelectedAll = selecteds.length >= approval.list.length;
-  const isSelectedPartials = !isSelectedAll && selecteds.length > 0;
-
-  return {
-    selecteds,
-    isSelectedAll,
-    isSelectedPartials,
-  };
-}
-
 export function getFinalRiskInfo(contract: ContractApprovalItem) {
   const eva = contract.$contractRiskEvaluation;
   const finalMaxScore = Math.max(eva.clientMaxRiskScore, eva.serverRiskScore);
@@ -311,6 +352,76 @@ export function getFinalRiskInfo(contract: ContractApprovalItem) {
     // isServerWarning: eva.serverRiskScore >= RiskNumMap.warning,
     isDanger,
     isWarning,
+  };
+}
+export function sortContractListAsTable(
+  a: ContractApprovalItem,
+  b: ContractApprovalItem,
+) {
+  const checkResult = checkCompareContractItem(a, b);
+  // descending to keep risk-first-return-value
+  if (checkResult.shouldEarlyReturn) return -checkResult.comparison;
+
+  return (
+    // descending order by client total risk score
+    reEvaluateContractRisk(b).totalRiskScore -
+      reEvaluateContractRisk(a).totalRiskScore ||
+    // ascending order by risk exposure
+    a.$riskAboutValues.risk_exposure_usd_value -
+      b.$riskAboutValues.risk_exposure_usd_value ||
+    // or descending order by approved count
+    b.list.length - a.list.length
+  );
+}
+const RiskNumMapMirrors = Object.entries(approvalUtils.RiskNumMap).reduce(
+  (acc, [k, v]) => {
+    acc[v] = k;
+    return acc;
+  },
+  { ...approvalUtils.RiskNumMap } as typeof approvalUtils.RiskNumMap &
+    ObjectMirror<typeof approvalUtils.RiskNumMap>,
+);
+export function reEvaluateContractRisk(contract: ContractApprovalItem) {
+  const $riskEval = contract.$contractRiskEvaluation;
+  const trustValue = (() => {
+    const isDanger =
+      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.danger;
+    const isWarning =
+      !isDanger &&
+      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.warning;
+
+    const isRisky = isDanger || isWarning;
+
+    return { isDanger, isWarning, isRisky };
+  })();
+
+  const revokeTrends = (() => {
+    const isDanger =
+      $riskEval.extra.clientApprovalScore >= approvalUtils.RiskNumMap.danger;
+    const isWarning =
+      !isDanger &&
+      $riskEval.extra.clientApprovalScore >= approvalUtils.RiskNumMap.warning;
+
+    const isRisky = isDanger || isWarning;
+
+    return { isDanger, isWarning, isRisky };
+  })();
+
+  // server risk has higher priority
+  const totalRiskScore =
+    $riskEval.clientTotalRiskScore + $riskEval.serverRiskScore * 100;
+  const clientLevel = RiskNumMapMirrors[
+    $riskEval.clientMaxRiskScore
+  ] as approvalUtils.ApprovalRiskLevel;
+
+  return {
+    serverLevel: contract.risk_level as approvalUtils.ApprovalRiskLevel,
+    clientLevel,
+    totalRiskScore,
+    clientTotalRiskScore: $riskEval.clientTotalRiskScore,
+    serverRiskScore: $riskEval.serverRiskScore,
+    trustValueEvalutation: trustValue,
+    revokeTrendsEvaluation: revokeTrends,
   };
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { Platform, Dimensions } from 'react-native';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
@@ -43,12 +44,19 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import {
+  type RevokeItemDict,
+  type ApprovalProcessType,
   checkCompareContractItem,
-  checkoutApprovalSelection,
-  encodeApprovalSpenderKey,
   makeApprovalIndexURLBase,
+  encodeApprovalSpenderKey,
+  parseApprovalSpenderSelection,
   toRevokeItem,
+  reEvaluateContractRisk,
+  sortContractListAsTable,
 } from './utils';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { ApprovalsLayouts } from './layout';
+import { ObjectMirror } from '@/utils/type';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -118,35 +126,37 @@ function sortAssetApproval<T extends ApprovalItem>(approvals: T[]) {
   };
 }
 
-function sortContractListAsTable(
-  a: ContractApprovalItem,
-  b: ContractApprovalItem,
-) {
-  const checkResult = checkCompareContractItem(a, b);
-  // descending to keep risk-first-return-value
-  if (checkResult.shouldEarlyReturn) return -checkResult.comparison;
-
-  return (
-    // ascending order by risk exposure
-    a.$riskAboutValues.risk_exposure_usd_value -
-      b.$riskAboutValues.risk_exposure_usd_value ||
-    // or descending order by approved count
-    b.list.length - a.list.length
-  );
-}
 function sortContractApproval<T extends ContractApprovalItem>(
   contractApprovals: T[],
 ) {
   const l = contractApprovals.length;
-  const dangerList: ContractApprovalItem[] = [];
-  const warnList: ContractApprovalItem[] = [];
-  const safeList: ContractApprovalItem[] = [];
+  const lists = {
+    danger2List: [] as ContractApprovalItem[],
+    danger1List: [] as ContractApprovalItem[],
+    warn2List: [] as ContractApprovalItem[],
+    warn1List: [] as ContractApprovalItem[],
+  };
+  const safeList = [] as ContractApprovalItem[];
   for (let i = 0; i < l; i++) {
     const item = contractApprovals[i];
-    if (item.risk_level === SAFE_LEVEL.danger) {
-      dangerList.push(item);
-    } else if (item.risk_level === SAFE_LEVEL.warning) {
-      warnList.push(item);
+    const evals = reEvaluateContractRisk(item);
+    if (evals.serverLevel === 'danger' && evals.clientLevel === 'danger') {
+      lists.danger2List.push(item);
+    } else if (
+      evals.serverLevel === 'danger' &&
+      evals.clientLevel === 'warning'
+    ) {
+      lists.danger1List.push(item);
+    } else if (
+      evals.serverLevel === 'danger' ||
+      evals.clientLevel === 'danger'
+    ) {
+      lists.warn2List.push(item);
+    } else if (
+      evals.serverLevel === 'warning' ||
+      evals.clientLevel === 'warning'
+    ) {
+      lists.warn1List.push(item);
     } else {
       safeList.push(item);
     }
@@ -157,8 +167,10 @@ function sortContractApproval<T extends ContractApprovalItem>(
     e => sortBy(e, a => a.list.length).reverse(),
   );
   return [
-    ...dangerList.sort(sortContractListAsTable),
-    ...warnList.sort(sortContractListAsTable),
+    ...Object.values(lists).reduce(
+      (acc, l) => acc.concat(l.sort(sortContractListAsTable)),
+      [] as ContractApprovalItem[],
+    ),
     ...flatten(sortedSafeList.reverse()).sort(sortContractListAsTable),
   ];
 }
@@ -551,11 +563,35 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     resetRevokeMaps();
   }, [currentAccount?.address, approvalsData, resetRevokeMaps]);
 
+  const safeSizeInfo = useSafeAndroidBottomSizes({
+    bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+    bottomSheetConfirmAreaHeight: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+  });
+
   return {
     isLoading,
     loadApprovals,
     skContract,
+    contractEmptyStatus: useMemo(() => {
+      if (!sortedContractList.length) return 'none' as const;
+
+      if (!displaySortedContractList.length) return 'no-matched' as const;
+
+      return false;
+    }, [sortedContractList, displaySortedContractList]),
     skAssets,
+    assetEmptyStatus: useMemo(() => {
+      if (!sortedTokenApprovals.length && !sortedNftApprovals.length)
+        return 'none' as const;
+
+      if (!displaySortedAssetApprovalList.length) return 'no-matched' as const;
+
+      return false;
+    }, [
+      sortedTokenApprovals,
+      sortedNftApprovals,
+      displaySortedAssetApprovalList,
+    ]),
     searchKw: filterType === 'contract' ? skContract : skAssets,
     setSearchKw,
 
@@ -565,6 +601,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
     account: currentAccount,
     displaySortedContractList,
     displaySortedAssetApprovalList,
+    safeSizeInfo,
   };
 }
 
@@ -574,7 +611,9 @@ export const ApprovalsPageContext = React.createContext<
   isLoading: false,
   loadApprovals: async () => [],
   skContract: '',
+  contractEmptyStatus: false,
   skAssets: '',
+  assetEmptyStatus: false,
   searchKw: '',
   setSearchKw: () => {},
   filterType: 'contract',
@@ -582,6 +621,14 @@ export const ApprovalsPageContext = React.createContext<
   account: null,
   displaySortedContractList: [],
   displaySortedAssetApprovalList: [],
+  safeSizeInfo: {
+    androidBottomOffset: 0,
+    safeSizes: {
+      bottomAreaHeight: ApprovalsLayouts.bottomAreaHeight,
+      bottomSheetConfirmAreaHeight:
+        ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+    },
+  },
 });
 
 export function useApprovalsPage() {
@@ -608,93 +655,233 @@ export function useFocusedApprovalOnApprovals() {
   const sheetModalsOps = useSheetModals(sheetModals);
   const { toggleShowSheetModal } = sheetModalsOps;
 
+  const {
+    contractFocusingRevokeMap,
+    assetFocusingRevokeMap,
+    startFocusApprovalRevokes,
+    confirmSelectedRevoke,
+  } = useRevokeApprovals();
+
   const toggleFocusedContractItem = React.useCallback(
-    (contractItem?: ContractApprovalItem | null) => {
-      if (contractItem) {
+    (
+      options:
+        | { contractItem: ContractApprovalItem }
+        | {
+            contractItemToBlur: ContractApprovalItem | null;
+            isConfirmSelected?: boolean;
+          },
+    ) => {
+      if ('contractItem' in options) {
         toggleShowSheetModal('approvalContractDetail', true);
-        setFocusedApproval(prev => ({ ...prev, contract: contractItem }));
-      } else {
-        toggleShowSheetModal('approvalContractDetail', 'destroy');
+        setFocusedApproval(prev => ({
+          ...prev,
+          contract: options.contractItem,
+        }));
+        startFocusApprovalRevokes('contract', options.contractItem);
+      } else if (options.contractItemToBlur) {
+        if (options.isConfirmSelected)
+          confirmSelectedRevoke('contract', options.contractItemToBlur);
         setFocusedApproval(prev => ({ ...prev, contract: null }));
+        toggleShowSheetModal('approvalContractDetail', 'destroy');
       }
     },
-    [toggleShowSheetModal, setFocusedApproval],
+    [
+      toggleShowSheetModal,
+      setFocusedApproval,
+      startFocusApprovalRevokes,
+      confirmSelectedRevoke,
+    ],
   );
 
   const toggleFocusedAssetItem = React.useCallback(
-    (assetItem?: AssetApprovalItem | null) => {
-      if (assetItem) {
+    (
+      options:
+        | { assetItem: AssetApprovalItem }
+        | {
+            assetItemToBlur: AssetApprovalItem | null;
+            isConfirmSelected?: boolean;
+          },
+    ) => {
+      if ('assetItem' in options) {
         toggleShowSheetModal('approvalAssetDetail', true);
-        setFocusedApproval(prev => ({ ...prev, asset: assetItem }));
-      } else {
-        toggleShowSheetModal('approvalAssetDetail', 'destroy');
+        setFocusedApproval(prev => ({ ...prev, asset: options.assetItem }));
+        startFocusApprovalRevokes('assets', options.assetItem);
+      } else if (options.assetItemToBlur) {
+        if (options.isConfirmSelected)
+          confirmSelectedRevoke('assets', options.assetItemToBlur);
         setFocusedApproval(prev => ({ ...prev, asset: null }));
+        toggleShowSheetModal('approvalAssetDetail', 'destroy');
       }
     },
-    [toggleShowSheetModal, setFocusedApproval],
+    [
+      toggleShowSheetModal,
+      setFocusedApproval,
+      startFocusApprovalRevokes,
+      confirmSelectedRevoke,
+    ],
   );
 
   return {
     ...sheetModalsOps,
+    contractFocusingRevokeMap,
     focusedContractApproval: focusedApproval.contract,
+    assetFocusingRevokeMap,
     focusedAssetApproval: focusedApproval.asset,
     toggleFocusedContractItem,
     toggleFocusedAssetItem,
   };
 }
 
-const revokeAtom = atom<{
-  contract: Record<string, ApprovalSpenderItemToBeRevoked>;
-  assets: Record<string, ApprovalSpenderItemToBeRevoked>;
-}>({
+type RevokePickTarget = 'final' | 'focusing';
+const DFLT_REVOKE = {
   contract: {},
+  contractFocusing: {},
   assets: {},
-});
+  assetsFocusing: {},
+};
+const revokeAtom = atom<{
+  contract: RevokeItemDict;
+  contractFocusing: RevokeItemDict;
+  assets: RevokeItemDict;
+  assetsFocusing: RevokeItemDict;
+}>({ ...DFLT_REVOKE });
 export function useRevokeApprovals() {
-  const [{ contract: contractRevokeMap, assets: assetRevokeMap }, setRevoke] =
-    useAtom(revokeAtom);
+  const [
+    {
+      contract: contractRevokeMap,
+      contractFocusing: contractFocusingRevokeMap,
+      assets: assetRevokeMap,
+      assetsFocusing: assetFocusingRevokeMap,
+    },
+    setRevoke,
+  ] = useAtom(revokeAtom);
 
   const resetRevokeMaps = React.useCallback(
-    (type?: 'contract' | 'assets') => {
+    (type?: keyof typeof DFLT_REVOKE) => {
       switch (type) {
         case 'contract':
           setRevoke(prev => ({ ...prev, contract: {} }));
           break;
+        case 'contractFocusing':
+          setRevoke(prev => ({ ...prev, contractFocusing: {} }));
+          break;
         case 'assets':
           setRevoke(prev => ({ ...prev, assets: {} }));
           break;
+        case 'assetsFocusing':
+          setRevoke(prev => ({ ...prev, assetsFocusing: {} }));
+          break;
         default:
-          setRevoke({ contract: {}, assets: {} });
+          setRevoke({ ...DFLT_REVOKE });
       }
+    },
+    [setRevoke],
+  );
+
+  const startFocusApprovalRevokes = React.useCallback(
+    (
+      type: ApprovalProcessType,
+      approval: ContractApprovalItem | AssetApprovalItem,
+    ) => {
+      setRevoke(prev => {
+        const result = parseApprovalSpenderSelection(
+          approval,
+          type,
+          type === 'contract'
+            ? {
+                curAllSelectedMap: prev.contract,
+              }
+            : {
+                curAllSelectedMap: prev.assets,
+              },
+        );
+
+        return type === 'contract'
+          ? {
+              ...prev,
+              contractFocusing: result.curSelectedMap,
+            }
+          : {
+              ...prev,
+              assetsFocusing: result.curSelectedMap,
+            };
+      });
+    },
+    [setRevoke],
+  );
+  const confirmSelectedRevoke = React.useCallback(
+    (
+      type: ApprovalProcessType,
+      focusingApproval: ContractApprovalItem | AssetApprovalItem,
+    ) => {
+      setRevoke(prev => {
+        const result = parseApprovalSpenderSelection(
+          focusingApproval,
+          type,
+          type === 'contract'
+            ? {
+                curAllSelectedMap: prev.contract,
+                nextKeepMap: prev.contractFocusing,
+              }
+            : {
+                curAllSelectedMap: prev.assets,
+                nextKeepMap: prev.assetsFocusing,
+              },
+        );
+
+        return type === 'contract'
+          ? {
+              ...prev,
+              contract: result.postSelectedMap,
+              contractFocusing: {},
+            }
+          : {
+              ...prev,
+              assets: result.postSelectedMap,
+              assetsFocusing: {},
+            };
+      });
     },
     [setRevoke],
   );
 
   return {
     contractRevokeMap,
+    contractFocusingRevokeMap,
+
     assetRevokeMap,
+    assetFocusingRevokeMap,
+
+    startFocusApprovalRevokes,
+    confirmSelectedRevoke,
     resetRevokeMaps,
   };
 }
 export function useRevokeContractSpenders() {
   const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [{ contract: contractRevokeMap }, setRevoke] = useAtom(revokeAtom);
+  const [revokes, setRevoke] = useAtom(revokeAtom);
 
   const toggleSelectContractSpender = React.useCallback(
-    (ctx: {
-      approval: ContractApprovalItem;
-      contractApproval:
-        | ContractApprovalItem['list'][number]
-        | ContractApprovalItem['list'][number][]
-        | null;
-    }) => {
+    (
+      ctx: {
+        approval: ContractApprovalItem;
+        contractApproval:
+          | ContractApprovalItem['list'][number]
+          | ContractApprovalItem['list'][number][]
+          | null;
+      },
+      target: RevokePickTarget = 'final',
+    ) => {
       const approval = ctx.approval;
+
+      const revokeKey =
+        target === 'final' ? 'contract' : ('contractFocusing' as const);
 
       if (!ctx.contractApproval) {
         const approvalIndexBase = makeApprovalIndexURLBase(approval);
 
         setRevoke(prev => {
-          const contractRevokeMap = { ...prev.contract };
+          const contractRevokeMap = { ...prev[revokeKey] };
 
           Object.keys(contractRevokeMap).forEach(k => {
             if (k.startsWith(approvalIndexBase)) {
@@ -702,7 +889,7 @@ export function useRevokeContractSpenders() {
             }
           });
 
-          return { ...prev, contract: contractRevokeMap };
+          return { ...prev, [revokeKey]: contractRevokeMap };
         });
         return;
       }
@@ -713,7 +900,7 @@ export function useRevokeContractSpenders() {
       const isToggledSingle = contractList.length === 1;
 
       setRevoke(prev => {
-        const contractRevokeMap = { ...prev.contract };
+        const contractRevokeMap = { ...prev[revokeKey] };
 
         contractList.forEach(contract => {
           const contractRevokeKey = encodeApprovalSpenderKey(
@@ -736,36 +923,43 @@ export function useRevokeContractSpenders() {
             )!;
           }
         });
-        return { ...prev, contract: contractRevokeMap };
+        return { ...prev, [revokeKey]: contractRevokeMap };
       });
     },
     [setRevoke],
   );
-  const { nextShouldSelectAllContracts } = React.useMemo(() => {
+  const { nextShouldPickAllFocusingContracts } = React.useMemo(() => {
     return {
-      nextShouldSelectAllContracts: !checkoutApprovalSelection(
-        'contract',
-        contractRevokeMap,
+      nextShouldPickAllFocusingContracts: !parseApprovalSpenderSelection(
         focusedApproval.contract,
+        'contract',
+        { curAllSelectedMap: revokes.assetsFocusing },
       ).isSelectedAll,
     };
-  }, [contractRevokeMap, focusedApproval.contract]);
+  }, [revokes.assetsFocusing, focusedApproval.contract]);
 
   const onSelectAllContractApprovals = React.useCallback(
-    (targetApproval: ContractApprovalItem, nextSelectAll: boolean) => {
+    (
+      targetApproval: ContractApprovalItem,
+      nextSelectAll: boolean,
+      pickTarget: RevokePickTarget,
+    ) => {
       if (!targetApproval) return;
 
-      toggleSelectContractSpender({
-        approval: targetApproval,
-        contractApproval: nextSelectAll ? targetApproval?.list || [] : null,
-      });
+      toggleSelectContractSpender(
+        {
+          approval: targetApproval,
+          contractApproval: nextSelectAll ? targetApproval?.list || [] : null,
+        },
+        pickTarget,
+      );
     },
     [toggleSelectContractSpender],
   );
 
   return {
-    nextShouldSelectAllContracts,
-    contractRevokeMap,
+    nextShouldPickAllFocusingContracts,
+    contractRevokeMap: revokes.contract,
     toggleSelectContractSpender,
     onSelectAllContractApprovals,
   };
@@ -778,10 +972,16 @@ export type ToggleSelectApprovalSpenderCtx = {
 };
 export function useRevokeAssetSpenders() {
   const focusedApproval = useAtomValue(focusedApprovalAtom);
-  const [{ assets: assetRevokeMap }, setRevoke] = useAtom(revokeAtom);
+  const [revokes, setRevoke] = useAtom(revokeAtom);
 
   const toggleSelectAssetSpender = React.useCallback(
-    (ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem }) => {
+    (
+      ctx: ToggleSelectApprovalSpenderCtx & { approval: AssetApprovalItem },
+      target: RevokePickTarget = 'final',
+    ) => {
+      const revokeKey =
+        target === 'final' ? 'assets' : ('assetsFocusing' as const);
+
       const inputSpender = ctx.spender || [];
       let nextSelect = ctx.nextSelect;
 
@@ -791,7 +991,7 @@ export function useRevokeAssetSpenders() {
       const isToggledSingle = spenders.length === 1;
 
       setRevoke(prev => {
-        const assetRevokeMap = { ...prev.assets };
+        const assetRevokeMap = { ...prev[revokeKey] };
 
         spenders.forEach(spender => {
           const revokeSpenderKey = encodeApprovalSpenderKey(
@@ -811,37 +1011,44 @@ export function useRevokeAssetSpenders() {
           }
         });
 
-        return { ...prev, assets: assetRevokeMap };
+        return { ...prev, [revokeKey]: assetRevokeMap };
       });
     },
     [setRevoke],
   );
-  const nextShouldSelectAllAsset = React.useMemo(() => {
-    const { isSelectedAll } = checkoutApprovalSelection(
-      'assets',
-      assetRevokeMap,
+  const nextShouldPickAllFocusingAsset = React.useMemo(() => {
+    const { isSelectedAll } = parseApprovalSpenderSelection(
       focusedApproval.asset,
+      'assets',
+      { curAllSelectedMap: revokes.assetsFocusing },
     );
     return !isSelectedAll;
-  }, [assetRevokeMap, focusedApproval.asset]);
+  }, [revokes.assetsFocusing, focusedApproval.asset]);
 
   const onSelectAllAsset = React.useCallback(
-    (targetApproval: AssetApprovalItem, nextSelectAll: boolean) => {
+    (
+      targetApproval: AssetApprovalItem,
+      nextSelectAll: boolean,
+      pickTarget: RevokePickTarget,
+    ) => {
       if (!targetApproval) return;
 
-      toggleSelectAssetSpender({
-        approval: targetApproval,
-        spender: targetApproval.list,
-        nextSelect: nextSelectAll,
-      });
+      toggleSelectAssetSpender(
+        {
+          approval: targetApproval,
+          spender: targetApproval.list,
+          nextSelect: nextSelectAll,
+        },
+        pickTarget,
+      );
     },
     [toggleSelectAssetSpender],
   );
 
   return {
-    assetRevokeMap,
+    assetRevokeMap: revokes.assets,
     toggleSelectAssetSpender,
-    nextShouldSelectAllAsset,
+    nextShouldPickAllFocusingAsset,
     onSelectAllAsset,
   };
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
-import { useSafeAndroidBottomOffset } from '@/hooks/useAppLayout';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
   RcIconCheckedCC,
   RcIconIndeterminateCC,
@@ -16,59 +16,27 @@ import {
 import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
+import { ApprovalsLayouts } from '../layout';
+/** @deprecated import from '../layout' directly */
+export { ApprovalsLayouts };
 
 const isAndroid = Platform.OS === 'android';
 
-const riskyTipHeight = 32;
-const riskyTipArrowOffset = 14;
-const contractCardHeight = 133;
-export const ApprovalsLayouts = {
-  tabbarHeight: 40,
-  contentInsetTopOffset: isAndroid ? 0 : 40 /* same with tabbarHeight */,
-  bottomAreaHeight: isAndroid ? 100 : 120,
+export function getScrollableSectionHeight(options?: {
+  bottomAreaHeight?: number;
+}) {
+  const A = ApprovalsLayouts;
+  const { bottomAreaHeight = A.bottomAreaHeight } = options || {};
 
-  searchBarMarginOffset: 16,
-  searchBarHeight: 48,
-
-  contractCardHeight: contractCardHeight,
-  contractCardRiskAlertSpace: riskyTipHeight + riskyTipArrowOffset,
-  contractCardHeightWithRiskAlert:
-    contractCardHeight + riskyTipHeight + riskyTipArrowOffset,
-  contractCardPadding: 14,
-
-  assetsItemHeight: 60,
-  assetsItemPadding: 16,
-
-  listFooterComponentHeight: 56,
-  innerContainerHorizontalOffset: 20,
-
-  get scrollableSectionHeight() {
-    return (
-      Dimensions.get('window').height -
-      (StatusBar.currentHeight || 0) -
-      this.tabbarHeight -
-      this.bottomAreaHeight -
-      this.searchBarHeight -
-      this.searchBarMarginOffset * 2 -
-      (isAndroid ? 0 : this.contentInsetTopOffset + this.tabbarHeight)
-    );
-  },
-  get riskAlertTooltipMaxWidth() {
-    return (
-      Dimensions.get('window').width -
-      (this.innerContainerHorizontalOffset + this.contractCardPadding + 63)
-    );
-  },
-};
-
-export function getApprovalsSizes() {
-  const contractCardW =
-    Dimensions.get('window').width -
-    ApprovalsLayouts.innerContainerHorizontalOffset * 2;
-
-  return {
-    contractCardW,
-  };
+  return (
+    Dimensions.get('window').height -
+    (StatusBar.currentHeight || 0) -
+    A.tabbarHeight -
+    bottomAreaHeight -
+    A.searchBarHeight -
+    A.searchBarMarginOffset * 2 -
+    (isAndroid ? 0 : A.contentInsetTopOffset + A.tabbarHeight)
+  );
 }
 
 export function ApprovalsTabView<T extends React.ComponentType<any>>({
@@ -82,6 +50,10 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
     innerStyle?: RNViewProps['style'];
   } & React.ComponentProps<T>
 >) {
+  const {
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
+
   return (
     <ViewComponent
       {...props}
@@ -89,7 +61,7 @@ export function ApprovalsTabView<T extends React.ComponentType<any>>({
         props?.style,
         {
           paddingTop: ApprovalsLayouts.tabbarHeight,
-          paddingBottom: ApprovalsLayouts.bottomAreaHeight,
+          paddingBottom: safeSizes.bottomAreaHeight,
         },
       ]}>
       <View style={[{ height: '100%', width: '100%' }, innerStyle]}>
@@ -105,7 +77,11 @@ export function ApprovalsBottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const { filterType, loadApprovals } = useApprovalsPage();
+  const {
+    filterType,
+    loadApprovals,
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
   const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
     useRevokeApprovals();
 
@@ -165,13 +141,9 @@ export function ApprovalsBottomArea() {
     loadApprovals,
   ]);
 
-  const { androidBottomOffset } = useSafeAndroidBottomOffset(
-    ApprovalsLayouts.bottomAreaHeight,
-  );
-
   return (
     <View
-      style={[styles.bottomDockArea, { paddingBottom: androidBottomOffset }]}>
+      style={[styles.bottomDockArea, { height: safeSizes.bottomAreaHeight }]}>
       <Button
         disabled={!couldSubmit}
         containerStyle={styles.buttonContainer}
@@ -234,12 +206,12 @@ export const getTooltipContentStyles = createGetStyles(colors => {
 
 export function SelectionCheckbox({
   isSelectedAll,
-  isSelectedPartials,
+  isSelectedPartial,
   style,
   size = 20,
 }: {
   isSelectedAll: boolean;
-  isSelectedPartials: boolean;
+  isSelectedPartial: boolean;
   size?: number;
 } & RNViewProps) {
   const colors = useThemeColors();
@@ -253,7 +225,7 @@ export function SelectionCheckbox({
     );
   }
 
-  if (isSelectedPartials) {
+  if (isSelectedPartial) {
     return (
       <RcIconIndeterminateCC
         width={size}
@@ -279,12 +251,15 @@ const contractCheckboxStyle = {
   height: 20,
 };
 
-export function NotMatchedHolder({ style }: RNViewProps) {
+export function NotMatchedHolder({
+  style,
+  text = 'Not Matched',
+}: RNViewProps & { text?: string }) {
   const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
   return (
     <View style={[styles.container, style]}>
       <RcIconNotMatchedCC color={colors['neutral-body']} />
-      <Text style={styles.emptyText}>Not Matched</Text>
+      <Text style={styles.emptyText}>{text}</Text>
     </View>
   );
 }
@@ -314,6 +289,70 @@ export const getSelectableContainerStyle = createGetStyles(colors => {
     selectedContainer: {
       borderColor: colors['blue-default'],
       backgroundColor: colors['blue-light1'],
+    },
+  };
+});
+
+export function BottomSheetModalFooterButton({
+  ...buttonProps
+}: React.PropsWithoutRef<React.ComponentProps<typeof Button>>) {
+  const { styles } = useThemeStyles(getBottomSheetModalFooterButtonStyles);
+  const {
+    safeSizeInfo: { safeSizes, androidBottomOffset },
+  } = useApprovalsPage();
+
+  return (
+    <View
+      style={[
+        styles.footerContainer,
+        {
+          height: safeSizes.bottomSheetConfirmAreaHeight,
+          paddingBottom: androidBottomOffset,
+        },
+      ]}>
+      <Button
+        {...buttonProps}
+        titleStyle={[styles.footerText, buttonProps?.titleStyle]}
+        disabledTitleStyle={[
+          styles.disabledFooterText,
+          buttonProps?.disabledTitleStyle,
+        ]}
+        containerStyle={[
+          styles.footerButtonContainer,
+          buttonProps?.containerStyle,
+        ]}
+      />
+    </View>
+  );
+}
+
+const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
+  return {
+    footerContainer: {
+      borderTopWidth: 0.5,
+      borderTopStyle: 'solid',
+      borderTopColor: colors['neutral-line'],
+      backgroundColor: colors['neutral-bg1'],
+      paddingVertical: 20,
+      paddingHorizontal: 20,
+      height: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
+      flexShrink: 0,
+
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      alignItems: 'center',
+    },
+    footerButtonContainer: {
+      width: 248,
+      height: 52,
+    },
+    footerText: {
+      color: colors['neutral-title2'],
+    },
+    disabledFooterText: {
+      color: colors['neutral-title2'],
     },
   };
 });

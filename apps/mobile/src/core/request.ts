@@ -27,7 +27,7 @@ export const SignApiPlugin: RabbyApiPlugin = {
 
 export const openapi = new OpenApiService({
   store: {
-    host: 'https://api.rabby.io',
+    host: __DEV__ ? 'https://app-api.rabby.io' : 'https://api.rabby.io',
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',
@@ -37,7 +37,9 @@ openapi.initSync();
 
 export const testOpenapi = new OpenApiService({
   store: {
-    host: 'https://api.testnet.rabby.io',
+    host: __DEV__
+      ? 'https://app-api.testnet.rabby.io'
+      : 'https://api.testnet.rabby.io',
   },
   plugin: SignApiPlugin,
   clientName: 'rabbymobile',

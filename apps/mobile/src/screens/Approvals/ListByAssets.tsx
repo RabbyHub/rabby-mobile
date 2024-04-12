@@ -9,9 +9,9 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import {
-  ApprovalsLayouts,
   ApprovalsTabView,
   NotMatchedHolder,
+  getScrollableSectionHeight,
 } from './components/Layout';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
@@ -24,10 +24,9 @@ import {
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { SectionListProps } from 'react-native';
-import { TailedTitle } from '@/components/patches/Simulation';
 import { SkeletonListByAssets } from './components/Skeleton';
-import { EmptyHolder } from '@/components/EmptyHolder';
 import ApprovalAssetRow from './components/ApprovalAssetRow';
+import { ApprovalsLayouts } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -35,8 +34,13 @@ export default function ListByAssets() {
   const { colors, styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
-  const { isLoading, displaySortedAssetApprovalList, loadApprovals, skAssets } =
-    useApprovalsPage();
+  const {
+    isLoading,
+    displaySortedAssetApprovalList,
+    loadApprovals,
+    assetEmptyStatus,
+    safeSizeInfo: { safeSizes },
+  } = useApprovalsPage();
 
   const keyExtractor = React.useCallback<
     SectionListProps<AssetApprovalItem>['keyExtractor'] & object
@@ -102,11 +106,26 @@ export default function ListByAssets() {
     return isLoading ? (
       <SkeletonListByAssets />
     ) : (
-      <View style={styles.emptyHolderContainer}>
-        <NotMatchedHolder />
+      <View
+        style={[
+          styles.emptyHolderContainer,
+          {
+            height: getScrollableSectionHeight({
+              bottomAreaHeight: safeSizes.bottomAreaHeight,
+            }),
+          },
+        ]}>
+        <NotMatchedHolder
+          text={assetEmptyStatus === 'none' ? 'No approvals' : 'Not Matched'}
+        />
       </View>
     );
-  }, [styles.emptyHolderContainer, isLoading]);
+  }, [
+    styles.emptyHolderContainer,
+    safeSizes.bottomAreaHeight,
+    isLoading,
+    assetEmptyStatus,
+  ]);
 
   const refreshing = React.useMemo(() => {
     if (fallList.length > 0) {
@@ -168,7 +187,7 @@ export default function ListByAssets() {
 const getStyles = createGetStyles(colors => {
   return {
     emptyHolderContainer: {
-      height: ApprovalsLayouts.scrollableSectionHeight,
+      height: getScrollableSectionHeight(),
     },
     container: {
       flex: 1,

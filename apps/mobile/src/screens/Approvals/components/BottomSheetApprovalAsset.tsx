@@ -20,8 +20,8 @@ import { InModalApprovalAssetRow } from './InModalApprovalAssetRow';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { TailedTitle } from '@/components/patches/Simulation';
-import { ApprovalsLayouts } from './Layout';
+import { BottomSheetModalFooterButton } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 
 export default function BottomSheetAssetApproval({
   modalProps,
@@ -30,15 +30,21 @@ export default function BottomSheetAssetApproval({
 }) {
   const {
     sheetModalRefs: { approvalAssetDetail: modalRef },
+    assetFocusingRevokeMap,
     focusedAssetApproval,
-    toggleFocusedContractItem,
+    toggleFocusedAssetItem,
   } = useFocusedApprovalOnApprovals();
 
   const {
     toggleSelectAssetSpender,
-    nextShouldSelectAllAsset,
+    nextShouldPickAllFocusingAsset,
     onSelectAllAsset,
   } = useRevokeAssetSpenders();
+
+  const confirmingAssetsCount = React.useMemo(
+    () => Object.keys(assetFocusingRevokeMap).length,
+    [assetFocusingRevokeMap],
+  );
 
   const { styles } = useThemeStyles(getStyles);
 
@@ -77,7 +83,7 @@ export default function BottomSheetAssetApproval({
           <InModalApprovalAssetRow
             approval={focusedAssetApproval!}
             spender={item}
-            onToggleSelection={toggleSelectAssetSpender}
+            onToggleSelection={ctx => toggleSelectAssetSpender(ctx, 'focusing')}
           />
         </View>
       );
@@ -104,7 +110,25 @@ export default function BottomSheetAssetApproval({
       backgroundStyle={styles.bg}
       keyboardBlurBehavior="restore"
       onDismiss={() => {
-        toggleFocusedContractItem(null);
+        toggleFocusedAssetItem({ assetItemToBlur: focusedAssetApproval });
+      }}
+      footerComponent={() => {
+        return (
+          <BottomSheetModalFooterButton
+            title={[
+              `Confirm`,
+              confirmingAssetsCount && ` (${confirmingAssetsCount})`,
+            ]
+              .filter(Boolean)
+              .join('')}
+            onPress={() => {
+              toggleFocusedAssetItem({
+                assetItemToBlur: focusedAssetApproval,
+                isConfirmSelected: true,
+              });
+            }}
+          />
+        );
       }}
       snapPoints={['80%']}
       bottomInset={1}>
@@ -115,18 +139,18 @@ export default function BottomSheetAssetApproval({
 
             <View style={styles.listHeadOps}>
               <Text style={styles.listHeadText}>
-                {/* Approved Assets Amount & Balance */}
-                Approved to the following Contracts
+                Approved Contracts and Amount
               </Text>
               <MiniButton
                 disabled={!focusedAssetApproval?.list.length}
                 onPress={() =>
                   onSelectAllAsset(
                     focusedAssetApproval!,
-                    nextShouldSelectAllAsset,
+                    nextShouldPickAllFocusingAsset,
+                    'focusing',
                   )
                 }>
-                {nextShouldSelectAllAsset ? 'Select All' : 'Unselect All'}
+                {nextShouldPickAllFocusingAsset ? 'Select All' : 'Unselect All'}
               </MiniButton>
             </View>
           </BottomSheetHandlableView>
@@ -169,7 +193,7 @@ const getStyles = createGetStyles(colors => {
     },
     bodyContainer: {
       paddingVertical: 8,
-      paddingBottom: 0,
+      paddingBottom: ApprovalsLayouts.bottomSheetConfirmAreaHeight,
       height: '100%',
       // ...makeDebugBorder('red'),
     },

@@ -11,16 +11,13 @@ import {
 } from '../useApprovalsPage';
 
 import { RcIconRightEntryCC, RcIconUnknown } from '../icons';
-import {
-  ApprovalsLayouts,
-  SelectionCheckbox,
-  getSelectableContainerStyle,
-} from './Layout';
+import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
+import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { AssetAvatar } from '@/components';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import ApprovalNFTBadge from './NFTBadge';
-import { checkoutApprovalSelection } from '../utils';
+import { parseApprovalSpenderSelection } from '../utils';
 
 export const ContractFloorLayouts = {
   floor1: { height: 33, paddingTop: 0 },
@@ -54,8 +51,10 @@ function AssetsApprovalRowProto({
   const { toggleFocusedAssetItem } = useFocusedApprovalOnApprovals();
 
   const { assetRevokeMap, onSelectAllAsset } = useRevokeAssetSpenders();
-  const { isSelectedAll, isSelectedPartials } = React.useMemo(() => {
-    return checkoutApprovalSelection('assets', assetRevokeMap, assetApproval);
+  const { isSelectedAll, isSelectedPartial } = React.useMemo(() => {
+    return parseApprovalSpenderSelection(assetApproval, 'assets', {
+      curAllSelectedMap: assetRevokeMap,
+    });
   }, [assetApproval, assetRevokeMap]);
 
   const { approvalInfo } = React.useMemo(() => {
@@ -98,10 +97,10 @@ function AssetsApprovalRowProto({
     <TouchableView
       style={[
         styles.container,
-        (isSelectedAll || isSelectedPartials) && styles.selectedContainer,
+        (isSelectedAll || isSelectedPartial) && styles.selectedContainer,
       ]}
       onPress={evt => {
-        onSelectAllAsset(assetApproval, !isSelectedAll);
+        onSelectAllAsset(assetApproval, !isSelectedAll, 'final');
       }}>
       {/* floor 1 */}
       <View style={[styles.itemFloor, ContractFloorLayouts.floor1]}>
@@ -132,7 +131,7 @@ function AssetsApprovalRowProto({
               </Text>
               <SelectionCheckbox
                 isSelectedAll={isSelectedAll}
-                isSelectedPartials={isSelectedPartials}
+                isSelectedPartial={isSelectedPartial}
                 style={styles.contractCheckbox}
               />
             </View>
@@ -148,7 +147,7 @@ function AssetsApprovalRowProto({
         </View>
         <RightTouchableView
           onPress={evt => {
-            toggleFocusedAssetItem(assetApproval);
+            toggleFocusedAssetItem({ assetItem: assetApproval });
             evt.stopPropagation();
           }}>
           <Text style={styles.entryText}>{assetApproval.list.length}</Text>
