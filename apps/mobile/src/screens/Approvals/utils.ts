@@ -22,6 +22,7 @@ import { getAddressScanLink } from '@/utils/address';
 import { openExternalUrl } from '@/core/utils/linking';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
+import { ObjectMirror } from '@/utils/type';
 
 export function formatTimeFromNow(time?: Date | number) {
   if (!time) return '';
@@ -351,6 +352,76 @@ export function getFinalRiskInfo(contract: ContractApprovalItem) {
     // isServerWarning: eva.serverRiskScore >= RiskNumMap.warning,
     isDanger,
     isWarning,
+  };
+}
+export function sortContractListAsTable(
+  a: ContractApprovalItem,
+  b: ContractApprovalItem,
+) {
+  const checkResult = checkCompareContractItem(a, b);
+  // descending to keep risk-first-return-value
+  if (checkResult.shouldEarlyReturn) return -checkResult.comparison;
+
+  return (
+    // descending order by client total risk score
+    reEvaluateContractRisk(b).totalRiskScore -
+      reEvaluateContractRisk(a).totalRiskScore ||
+    // ascending order by risk exposure
+    a.$riskAboutValues.risk_exposure_usd_value -
+      b.$riskAboutValues.risk_exposure_usd_value ||
+    // or descending order by approved count
+    b.list.length - a.list.length
+  );
+}
+const RiskNumMapMirrors = Object.entries(approvalUtils.RiskNumMap).reduce(
+  (acc, [k, v]) => {
+    acc[v] = k;
+    return acc;
+  },
+  { ...approvalUtils.RiskNumMap } as typeof approvalUtils.RiskNumMap &
+    ObjectMirror<typeof approvalUtils.RiskNumMap>,
+);
+export function reEvaluateContractRisk(contract: ContractApprovalItem) {
+  const $riskEval = contract.$contractRiskEvaluation;
+  const trustValue = (() => {
+    const isDanger =
+      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.danger;
+    const isWarning =
+      !isDanger &&
+      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.warning;
+
+    const isRisky = isDanger || isWarning;
+
+    return { isDanger, isWarning, isRisky };
+  })();
+
+  const revokeTrends = (() => {
+    const isDanger =
+      $riskEval.extra.clientApprovalScore >= approvalUtils.RiskNumMap.danger;
+    const isWarning =
+      !isDanger &&
+      $riskEval.extra.clientApprovalScore >= approvalUtils.RiskNumMap.warning;
+
+    const isRisky = isDanger || isWarning;
+
+    return { isDanger, isWarning, isRisky };
+  })();
+
+  // server risk has higher priority
+  const totalRiskScore =
+    $riskEval.clientTotalRiskScore + $riskEval.serverRiskScore * 100;
+  const clientLevel = RiskNumMapMirrors[
+    $riskEval.clientMaxRiskScore
+  ] as approvalUtils.ApprovalRiskLevel;
+
+  return {
+    serverLevel: contract.risk_level as approvalUtils.ApprovalRiskLevel,
+    clientLevel,
+    totalRiskScore,
+    clientTotalRiskScore: $riskEval.clientTotalRiskScore,
+    serverRiskScore: $riskEval.serverRiskScore,
+    trustValueEvalutation: trustValue,
+    revokeTrendsEvaluation: revokeTrends,
   };
 }
 

@@ -51,9 +51,12 @@ import {
   encodeApprovalSpenderKey,
   parseApprovalSpenderSelection,
   toRevokeItem,
+  reEvaluateContractRisk,
+  sortContractListAsTable,
 } from './utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { ApprovalsLayouts } from './layout';
+import { ObjectMirror } from '@/utils/type';
 
 export const FILTER_TYPES = {
   contract: 'contract',
@@ -123,35 +126,37 @@ function sortAssetApproval<T extends ApprovalItem>(approvals: T[]) {
   };
 }
 
-function sortContractListAsTable(
-  a: ContractApprovalItem,
-  b: ContractApprovalItem,
-) {
-  const checkResult = checkCompareContractItem(a, b);
-  // descending to keep risk-first-return-value
-  if (checkResult.shouldEarlyReturn) return -checkResult.comparison;
-
-  return (
-    // ascending order by risk exposure
-    a.$riskAboutValues.risk_exposure_usd_value -
-      b.$riskAboutValues.risk_exposure_usd_value ||
-    // or descending order by approved count
-    b.list.length - a.list.length
-  );
-}
 function sortContractApproval<T extends ContractApprovalItem>(
   contractApprovals: T[],
 ) {
   const l = contractApprovals.length;
-  const dangerList: ContractApprovalItem[] = [];
-  const warnList: ContractApprovalItem[] = [];
-  const safeList: ContractApprovalItem[] = [];
+  const lists = {
+    danger2List: [] as ContractApprovalItem[],
+    danger1List: [] as ContractApprovalItem[],
+    warn2List: [] as ContractApprovalItem[],
+    warn1List: [] as ContractApprovalItem[],
+  };
+  const safeList = [] as ContractApprovalItem[];
   for (let i = 0; i < l; i++) {
     const item = contractApprovals[i];
-    if (item.risk_level === SAFE_LEVEL.danger) {
-      dangerList.push(item);
-    } else if (item.risk_level === SAFE_LEVEL.warning) {
-      warnList.push(item);
+    const evals = reEvaluateContractRisk(item);
+    if (evals.serverLevel === 'danger' && evals.clientLevel === 'danger') {
+      lists.danger2List.push(item);
+    } else if (
+      evals.serverLevel === 'danger' &&
+      evals.clientLevel === 'warning'
+    ) {
+      lists.danger1List.push(item);
+    } else if (
+      evals.serverLevel === 'danger' ||
+      evals.clientLevel === 'danger'
+    ) {
+      lists.warn2List.push(item);
+    } else if (
+      evals.serverLevel === 'warning' ||
+      evals.clientLevel === 'warning'
+    ) {
+      lists.warn1List.push(item);
     } else {
       safeList.push(item);
     }
@@ -162,8 +167,10 @@ function sortContractApproval<T extends ContractApprovalItem>(
     e => sortBy(e, a => a.list.length).reverse(),
   );
   return [
-    ...dangerList.sort(sortContractListAsTable),
-    ...warnList.sort(sortContractListAsTable),
+    ...Object.values(lists).reduce(
+      (acc, l) => acc.concat(l.sort(sortContractListAsTable)),
+      [] as ContractApprovalItem[],
+    ),
     ...flatten(sortedSafeList.reverse()).sort(sortContractListAsTable),
   ];
 }
