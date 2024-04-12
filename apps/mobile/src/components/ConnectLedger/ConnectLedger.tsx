@@ -103,7 +103,7 @@ export const ConnectLedger: React.FC<{
             type: KEYRING_TYPE.LedgerKeyring,
             brandName: KEYRING_CLASS.HARDWARE.LEDGER,
             address,
-            isLedgerFirstImport: true,
+            isFirstImport: true,
           },
         });
         onDone?.();

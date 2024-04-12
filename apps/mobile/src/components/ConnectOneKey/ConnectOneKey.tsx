@@ -1,136 +1,77 @@
 import { RootNames } from '@/constant/layout';
-import { apiLedger, apiOneKey } from '@/core/apis';
-import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import { apiOneKey } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  HARDWARE_KEYRING_TYPES,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { isLoadedAtom, settingAtom } from '../HDSetting/MainContainer';
-import { toast, toastIndicator } from '../Toast';
+import { settingAtom } from '../HDSetting/MainContainer';
+import { toastIndicator } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
-import type { SearchDevice } from '@onekeyfe/hd-core';
+import { useOneKeyImport } from '@/hooks/onekey/useOneKeyImport';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
   onSelectDeviceId?: (id: string) => void;
   deviceId?: string;
 }> = ({ onDone, onSelectDeviceId, deviceId }) => {
-  const [_1, setIsLoaded] = useAtom(isLoadedAtom);
   const [_2, setSetting] = useAtom(settingAtom);
-  const [devices, setDevices] = React.useState<SearchDevice[]>([]);
-  const [errorCode, setErrorCode] = React.useState<string | number>();
-  const { t } = useTranslation();
   const [currentScreen, setCurrentScreen] = React.useState<
     'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
-  const openEthAppExpiredTimerRef = React.useRef<any>(null);
-  // let toastHiddenRef = React.useRef<() => void>(() => {});
-  let loopCountRef = React.useRef(0);
+  let toastHiddenRef = React.useRef<() => void>(() => {});
+  const { devices, startScan, error } = useOneKeyImport();
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
-    apiOneKey.searchDevices().then(res => {
-      if (res.success) {
-        setDevices(res.payload);
-      } else {
-        setErrorCode(res.payload.code);
-      }
-    });
+    startScan();
 
     // notfoundTimerRef.current = setTimeout(() => {
     //   setCurrentScreen('notfound');
     // }, 5000);
-  }, []);
+  }, [startScan]);
 
   const handleScanDone = React.useCallback(() => {
     setCurrentScreen('select');
     clearTimeout(notfoundTimerRef.current);
   }, []);
 
-  const checkEthApp = React.useCallback(async () => {
-    try {
-      return await apiLedger.checkEthApp(result => {
-        if (!result) {
-          setCurrentScreen('openEthApp');
-          clearTimeout(openEthAppExpiredTimerRef.current);
-          openEthAppExpiredTimerRef.current = setTimeout(() => {
-            setCurrentScreen('select');
-          }, 60000);
-        }
+  const importFirstAddress = React.useCallback(async () => {
+    const address = await apiOneKey.importFirstAddress({});
+
+    if (address) {
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportSuccess,
+        params: {
+          type: KEYRING_TYPE.OneKeyKeyring,
+          brandName: KEYRING_CLASS.HARDWARE.ONEKEY,
+          address,
+          isFirstImport: true,
+        },
       });
-    } catch (err: any) {
-      // maybe session is disconnect, just try to reconnect
-      if (loopCountRef.current < 3) {
-        loopCountRef.current++;
-        console.log('checkEthApp isConnected error', err);
-        return await checkEthApp();
-      }
-      toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
-      setCurrentScreen('select');
-      console.error('checkEthApp', err);
-      throw err;
+      onDone?.();
+    } else {
+      setSetting({
+        startNumber: 1,
+        hdPath: LedgerHDPathType.BIP44,
+      });
+      navigate(RootNames.ImportHardware, {
+        type: HARDWARE_KEYRING_TYPES.OneKey.type as KEYRING_TYPE,
+        brand: HARDWARE_KEYRING_TYPES.OneKey.brandName,
+      });
+      onDone?.();
     }
-  }, [t]);
-
-  const importFirstAddress = React.useCallback(
-    async (retryCount: number) => {
-      loopCountRef.current = 0;
-      setIsLoaded(false);
-      let address;
-      try {
-        address = await apiLedger.importFirstAddress({
-          retryCount,
-        });
-      } catch (err: any) {
-        const code = ledgerErrorHandler(err);
-        if (code === LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP) {
-          toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
-        }
-        setIsLoaded(true);
-
-        return;
-      }
-
-      if (address) {
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
-          params: {
-            type: KEYRING_TYPE.LedgerKeyring,
-            brandName: KEYRING_CLASS.HARDWARE.LEDGER,
-            address,
-            isLedgerFirstImport: true,
-          },
-        });
-        onDone?.();
-      } else {
-        await apiLedger
-          .getCurrentUsedHDPathType()
-          .then(res => {
-            const hdPathType = res ?? LedgerHDPathType.LedgerLive;
-            apiLedger.setHDPathType(hdPathType);
-            setSetting({
-              startNumber: 1,
-              hdPath: hdPathType,
-            });
-          })
-          .then(() => {
-            navigate(RootNames.ImportHardware, {
-              type: KEYRING_TYPE.LedgerKeyring,
-            });
-            onDone?.();
-          });
-      }
-    },
-    [onDone, setIsLoaded, setSetting, t],
-  );
+  }, [onDone, setSetting]);
 
   const handleSelectDevice = React.useCallback(
     async ({ id }) => {
@@ -138,22 +79,23 @@ export const ConnectOneKey: React.FC<{
 
       if (onSelectDeviceId) {
         onSelectDeviceId(id);
-      } else {
-        // if (await checkEthApp()) {
-        //   await importFirstAddress(1);
-        // } else {
-        //   toastHiddenRef.current = toastIndicator('Connecting', {
-        //     isTop: true,
-        //   });
-        //   // maybe need to reconnect device
-        //   await importFirstAddress(5);
-        //   toastHiddenRef.current?.();
-        // }
-        apiOneKey.unlockDevice();
+        return;
+      }
+
+      toastHiddenRef.current = toastIndicator('Connecting', {
+        isTop: true,
+      });
+      try {
+        await apiOneKey.unlockDevice();
+        await importFirstAddress();
+      } catch (e) {
+        console.error('OneKey import error', e);
+      } finally {
+        toastHiddenRef.current?.();
       }
     },
 
-    [onSelectDeviceId],
+    [importFirstAddress, onSelectDeviceId],
   );
 
   React.useEffect(() => {
@@ -164,7 +106,7 @@ export const ConnectOneKey: React.FC<{
 
   React.useEffect(() => {
     return () => {
-      // toastHiddenRef.current?.();
+      toastHiddenRef.current?.();
     };
   }, []);
 
@@ -178,7 +120,7 @@ export const ConnectOneKey: React.FC<{
         <SelectDeviceScreen
           onSelect={handleSelectDevice}
           devices={devices}
-          errorCode={errorCode}
+          errorCode={error}
           currentDeviceId={deviceId}
         />
       )}

@@ -45,8 +45,7 @@ export type AddressNavigatorParamList = {
     brandName: string;
     deepLink?: string;
     realBrandName?: string;
-    isLedgerFirstImport?: boolean;
-    isKeystoneFirstImport?: boolean;
+    isFirstImport?: boolean;
     type: KEYRING_TYPE;
   };
   [RootNames.ImportWatchAddress]?: {};
