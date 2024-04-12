@@ -18,6 +18,9 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
         case UI_REQUEST.REQUEST_PASSPHRASE:
           eventBus.emit(EVENTS.ONEKEY.REQUEST_PASSPHRASE);
           break;
+        case UI_REQUEST.CLOSE_UI_WINDOW:
+          eventBus.emit(EVENTS.ONEKEY.CLOSE_UI_WINDOW);
+          break;
         default:
         // NOTHING
       }
@@ -38,10 +41,10 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
 
   getFeatures = HardwareBleSdk.getFeatures;
 
-  receivePin = ({ pin, switchOnDevice }) => {
+  receivePin = data => {
     HardwareBleSdk.uiResponse({
       type: UI_RESPONSE.RECEIVE_PIN,
-      payload: switchOnDevice ? '@@ONEKEY_INPUT_PIN_IN_DEVICE' : pin,
+      payload: data.switchOnDevice ? '@@ONEKEY_INPUT_PIN_IN_DEVICE' : data.pin,
     });
   };
 

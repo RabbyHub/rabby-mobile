@@ -1298,9 +1298,14 @@
           "ethereum_app_open_error": "Please install/accept Ethereum app on your Ledger device.",
           "running_app_close_error": "Failed to close the running app on your Ledger device."
         },
-        "openEthApp": {
-          "title": "Connect Ledger",
-          "description": "Please open Ethereum app on Ledger"
+        "inputPin": {
+          "title": "输入PIN码",
+          "description": "按照设备屏幕上显示的数字布局输入PIN码",
+          "onDevice": "在设备上输入PIN码"
+        },
+        "inputPassphrase": {
+          "title": "输入Passphrase",
+          "description": "请输入输入Passphrase"
         }
       },
       "keystone": {

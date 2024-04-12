@@ -6,7 +6,6 @@ export type ReceivePinParams =
       switchOnDevice: false;
     }
   | {
-      pin: undefined;
       switchOnDevice: true;
     };
 
