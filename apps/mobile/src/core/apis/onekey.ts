@@ -10,17 +10,16 @@ export async function initOneKeyKeyring() {
   });
 }
 
-export async function importAddress(index: string) {
+export async function importAddress(index: number) {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
 
-  keyring.setAccountToUnlock(index);
+  keyring.setAccountToUnlock(index.toString());
   const result = await keyringService.addNewAccount(keyring as any);
   return result;
 }
 
 export async function getAddresses(start: number, end: number) {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
-
   return keyring.getAddresses(start, end);
 }
 
@@ -67,7 +66,7 @@ export async function importFirstAddress({
 
   const task = async () => {
     try {
-      address = await importAddress('0');
+      address = await importAddress(0);
     } catch (e: any) {
       // only catch not `duplicate import` error
       if (!e.message?.includes('import is invalid')) {
@@ -89,4 +88,14 @@ export async function importFirstAddress({
   }
 
   return address;
+}
+
+export async function getCurrentAccounts() {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  return keyring.getCurrentAccounts();
+}
+
+export async function cleanUp() {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  return keyring.cleanUp();
 }

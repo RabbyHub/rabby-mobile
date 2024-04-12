@@ -17,6 +17,7 @@ import {
 import { RcIconWatchAddress } from '@/assets/icons/address';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
+import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 
 export const WALLET_INFO: Record<WALLET_NAME, WalletInfo> = {
   [WALLET_NAME.Bitget]: {
@@ -121,6 +122,10 @@ export const getWalletIcon = (brandName: string | undefined) => {
   }
   if (brandName === KEYRING_CLASS.HARDWARE.LEDGER) {
     return LedgerSVG;
+  }
+
+  if (brandName === KEYRING_CLASS.HARDWARE.ONEKEY) {
+    return OneKeySVG;
   }
 
   if (brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {

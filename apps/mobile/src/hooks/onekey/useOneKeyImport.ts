@@ -3,7 +3,7 @@ import type { SearchDevice } from '@onekeyfe/hd-core';
 import { apiOneKey } from '@/core/apis';
 import React from 'react';
 import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
-import { DEVICE_EVENT, DEVICE } from '@onekeyfe/hd-core';
+import { DEVICE } from '@onekeyfe/hd-core';
 
 const oneKeyDevices = atom<SearchDevice[]>([]);
 
@@ -22,18 +22,11 @@ export function useOneKeyImport() {
   }, [setDevices]);
 
   React.useEffect(() => {
-    HardwareBleSdk.on(DEVICE_EVENT, e => {
-      console.log('断开了啊啊啊啊啊', e);
-      switch (e.type) {
-        case DEVICE.DISCONNECT:
-          setDevices(prev =>
-            prev.filter(d => d.connectId !== e.payload?.device?.connectId),
-          );
-          break;
-
-        default:
-        // NOTHING
-      }
+    HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
+      apiOneKey.cleanUp();
+      setDevices(prev =>
+        prev.filter(d => d.connectId !== payload?.device?.connectId),
+      );
     });
   }, [setDevices]);
 
