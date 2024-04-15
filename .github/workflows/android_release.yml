@@ -38,8 +38,8 @@ env:
   BUILD_TARGET_PLATFORM: android
 
 jobs:
-  alpha-build:
-    name: android-alpha-build
+  release-build:
+    name: android-release-build
     runs-on:
       - self-hosted
       - mobile
@@ -103,7 +103,7 @@ jobs:
         run: |
           cd apps/mobile;
           yarn prepare-archive;
-          [ -z $buildchannel ]; && export buildchannel=selfhost-reg;
+          [ -z $buildchannel ] && export buildchannel=selfhost-reg;
           REALLY_UPLOAD=true ./scripts/deploy-android.sh
 
       - name: Upload artifact
@@ -112,5 +112,4 @@ jobs:
           name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
           path: |
             ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-            ./apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 7
