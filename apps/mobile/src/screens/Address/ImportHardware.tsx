@@ -185,6 +185,8 @@ export const ImportHardwareScreen = () => {
   const loadAddress = React.useCallback(
     async (index: number) => {
       const res = await apiHD.getAddresses(index, index + 1);
+      // avoid blocking the UI thread
+      await new Promise(resolve => setTimeout(resolve, 1));
       const balance = await getAccountBalance(res[0].address);
       if (stoppedRef.current) {
         return;
@@ -224,7 +226,9 @@ export const ImportHardwareScreen = () => {
       } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
         errMessage = t('page.newAddress.ledger.error.unknown');
       }
-      toast.show(errMessage);
+      if (errMessage) {
+        toast.show(errMessage);
+      }
     }
     stoppedRef.current = true;
     setLoading(false);

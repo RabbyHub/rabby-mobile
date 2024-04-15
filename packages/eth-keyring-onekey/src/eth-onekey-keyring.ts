@@ -117,6 +117,9 @@ class OneKeyKeyring extends EventEmitter {
   _deviceConnectId?: string;
 
   setDeviceConnectId(deviceConnectId?: string) {
+    if (deviceConnectId && deviceConnectId !== this._deviceConnectId) {
+      this.cleanUp();
+    }
     this._deviceConnectId = deviceConnectId;
   }
 
@@ -148,7 +151,6 @@ class OneKeyKeyring extends EventEmitter {
 
   cleanUp() {
     this.hdk = new HDKey();
-    this.setDeviceConnectId(undefined);
   }
 
   resend() {

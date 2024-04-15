@@ -8,6 +8,9 @@ import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring'
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';
 
+// 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
+const ONLY_IN_DEVICE = true;
+
 export function bindOneKeyEvents(keyring: KeyringInstance) {
   const oneKeyKeyring = keyring as unknown as OneKeyKeyring;
 
@@ -19,6 +22,14 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
     if (pinModalId) {
       return;
     }
+
+    if (ONLY_IN_DEVICE) {
+      oneKeyKeyring.bridge.receivePin({
+        switchOnDevice: true,
+      });
+      return;
+    }
+
     pinModalId = createGlobalBottomSheetModal({
       name: MODAL_NAMES.ONEKEY_INPUT_PIN,
       onConfirm(pin: string, switchOnDevice: boolean) {
@@ -40,7 +51,6 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
           return;
         }
         const connectId = e?.payload?.device?.connectId;
-        console.log('oneKeyKeyring.bridge.cancel();', connectId);
         oneKeyKeyring.bridge.cancel(connectId);
         pinModalId = null;
       },
@@ -52,6 +62,15 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
     if (passphraseModalId) {
       return;
     }
+
+    if (ONLY_IN_DEVICE) {
+      oneKeyKeyring.bridge.receivePassphrase({
+        passphrase: '',
+        switchOnDevice: true,
+      });
+      return;
+    }
+
     passphraseModalId = createGlobalBottomSheetModal({
       name: MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE,
       onConfirm(passphrase: string, switchOnDevice: boolean) {

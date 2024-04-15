@@ -32,6 +32,8 @@ export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return MODAL_NAMES.SETTING_LEDGER;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return MODAL_NAMES.SETTING_ONEKEY;
       case KEYRING_TYPE.KeystoneKeyring:
       default:
         return MODAL_NAMES.SETTING_KEYSTONE;
