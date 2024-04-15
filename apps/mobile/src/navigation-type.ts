@@ -68,6 +68,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Send]?: {};
   [RootNames.Swap]?: {};
   [RootNames.Approvals]?: {};
+  [RootNames.GasTopUp]?: {};
 };
 
 export type SettingNavigatorParamList = {

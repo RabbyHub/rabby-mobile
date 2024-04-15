@@ -1,0 +1,197 @@
+import { AppBottomSheetModal, Text } from '@/components';
+import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles } from '@/utils/styles';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import React from 'react';
+import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ListRenderItem, TouchableOpacity, View } from 'react-native';
+import { GasTokenItem } from './TokenItem';
+import RcIconBackCC from '@/assets/icons/gas-top-up/back-cc.svg';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import RcEmptyCC from '@/assets/icons/swap/empty-cc.svg';
+
+interface GasTopUpTokenSelectProps {
+  visible?: boolean;
+  setTokenModalVisible: any;
+  loading: boolean;
+  list: TokenItem[];
+  onChange: (t: TokenItem) => void;
+  cost: string;
+}
+const GasTopUpTokenSelect = ({
+  setTokenModalVisible,
+  loading,
+  list,
+  onChange,
+  cost,
+}: GasTopUpTokenSelectProps) => {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+
+  const { t } = useTranslation();
+
+  const RenderItem: ListRenderItem<TokenItem> = React.useCallback(
+    ({ item }) => {
+      return (
+        <GasTokenItem
+          item={item}
+          cost={cost}
+          onChange={onChange}
+          setTokenModalVisible={setTokenModalVisible}
+        />
+      );
+    },
+    [cost, onChange, setTokenModalVisible],
+  );
+
+  const ListHeaderComponent = React.useCallback(() => {
+    return (
+      <View style={styles.header}>
+        <View style={styles.rowCenter}>
+          <TouchableOpacity
+            style={styles.backWrapper}
+            onPress={() => setTokenModalVisible(false)}>
+            <RcIconBackCC
+              color={colors['neutral-title-1']}
+              width={20}
+              height={20}
+            />
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            {t('page.gasTopUp.Select-from-supported-tokens')}
+          </Text>
+        </View>
+        <View style={styles.labelBox}>
+          <Text style={styles.label}>
+            {t('page.gasTopUp.Token')} / {t('page.gasTopUp.Balance')}
+          </Text>
+          <Text style={styles.label}>{t('page.gasTopUp.Value')}</Text>
+        </View>
+        <View style={styles.wrapper}>
+          {!loading && list.length === 0 ? (
+            <View style={styles.emptyView}>
+              <RcEmptyCC color={colors['neutral-body']} />
+              <Text style={styles.noToken}>{t('page.gasTopUp.No_Tokens')}</Text>
+            </View>
+          ) : null}
+          {loading ? (
+            <View style={styles.loadingView}>
+              {/* <SvgIconLoading fill={colors['blue-default']} /> */}
+              <Text style={styles.loadingText}>
+                {t('page.gasTopUp.Loading_Tokens')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    );
+  }, [
+    styles.header,
+    styles.rowCenter,
+    styles.backWrapper,
+    styles.title,
+    styles.labelBox,
+    styles.label,
+    styles.wrapper,
+    styles.emptyView,
+    styles.noToken,
+    styles.loadingView,
+    styles.loadingText,
+    colors,
+    t,
+    loading,
+    list.length,
+    setTokenModalVisible,
+  ]);
+
+  return (
+    <BottomSheetFlatList
+      stickyHeaderIndices={[0]}
+      ListHeaderComponent={ListHeaderComponent}
+      style={{ flex: 1 }}
+      data={list}
+      keyExtractor={item => item.id + item.chain}
+      renderItem={RenderItem}
+    />
+  );
+};
+
+export const GasTopUpTokenSelectModal = (props: GasTopUpTokenSelectProps) => {
+  const bottomRef = useRef<BottomSheetModalMethods>(null);
+  useEffect(() => {
+    if (props.visible) {
+      bottomRef.current?.present();
+    } else {
+      bottomRef.current?.dismiss();
+    }
+  }, [props.visible]);
+
+  return (
+    <AppBottomSheetModal
+      snapPoints={['80%']}
+      ref={bottomRef}
+      enableDismissOnClose
+      onDismiss={() => props.setTokenModalVisible(false)}>
+      <GasTopUpTokenSelect {...props} />
+    </AppBottomSheetModal>
+  );
+};
+
+const getStyles = createGetStyles(colors => ({
+  header: {
+    paddingTop: 20,
+    backgroundColor: colors['neutral-card-1'],
+  },
+  rowCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backWrapper: {
+    position: 'absolute',
+    left: 12,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: colors['neutral-title-1'],
+  },
+  labelBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 0.5,
+    borderColor: colors['neutral-line'],
+    paddingTop: 24,
+    paddingBottom: 8,
+    marginHorizontal: 20,
+  },
+  label: {
+    color: colors['neutral-body'],
+    fontSize: 14,
+  },
+  wrapper: { flex: 1, overflow: 'hidden' },
+  emptyView: {
+    gap: 20,
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  noToken: {
+    fontSize: 14,
+    color: colors['neutral-body'],
+    marginBottom: 12,
+  },
+  loadingView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 80,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors['neutral-title-1'],
+  },
+}));

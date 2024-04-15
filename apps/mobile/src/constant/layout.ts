@@ -43,6 +43,7 @@ export const RootNames = {
   Receive: 'Receive',
   Swap: 'Swap',
   Approvals: 'Approvals',
+  GasTopUp: 'GasTopUp',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
 
