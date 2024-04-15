@@ -22,6 +22,7 @@ export function useLedgerImport() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [errorCode, setErrorCode] = useState<LEDGER_ERROR_CODES>();
   const handleCleanUp = () => {
+    console.log('[LedgerImport] - Cleaning up');
     observer?.current?.unsubscribe();
     listener?.current?.unsubscribe();
   };

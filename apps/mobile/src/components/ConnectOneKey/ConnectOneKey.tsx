@@ -26,7 +26,7 @@ export const ConnectOneKey: React.FC<{
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
   let toastHiddenRef = React.useRef<() => void>(() => {});
-  const { devices, startScan, error } = useOneKeyImport();
+  const { devices, startScan, error, cleanDevices } = useOneKeyImport();
 
   const handleBleNext = React.useCallback(async () => {
     setCurrentScreen('scan');
@@ -85,12 +85,13 @@ export const ConnectOneKey: React.FC<{
         await importFirstAddress();
       } catch (e) {
         console.error('OneKey import error', e);
+        cleanDevices();
       } finally {
         toastHiddenRef.current?.();
       }
     },
 
-    [importFirstAddress, onSelectDeviceId],
+    [cleanDevices, importFirstAddress, onSelectDeviceId],
   );
 
   React.useEffect(() => {

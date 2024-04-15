@@ -30,5 +30,9 @@ export function useOneKeyImport() {
     });
   }, [setDevices]);
 
-  return { startScan, devices, error };
+  const cleanDevices = React.useCallback(() => {
+    setDevices([]);
+  }, [setDevices]);
+
+  return { startScan, devices, error, cleanDevices };
 }
