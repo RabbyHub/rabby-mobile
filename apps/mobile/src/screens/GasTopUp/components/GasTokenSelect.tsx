@@ -172,7 +172,7 @@ export const GasTopUpTokenSelectModal = (props: GasTopUpTokenSelectProps) => {
 const getStyles = createGetStyles(colors => ({
   header: {
     paddingTop: 20,
-    backgroundColor: colors['neutral-card-1'],
+    backgroundColor: colors['neutral-bg-1'],
   },
   rowCenter: {
     flexDirection: 'row',
