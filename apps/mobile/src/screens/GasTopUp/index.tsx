@@ -410,7 +410,6 @@ const GasTopUp = () => {
         onConfirm={handleGasTopUp}
         loading={tokenListLoading || gasTokenLoading}
         retry={retryFetchTokenList}
-        // colors={colors}
       />
     </View>
   );

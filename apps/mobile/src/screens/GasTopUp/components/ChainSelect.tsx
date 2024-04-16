@@ -32,14 +32,14 @@ const getStyles = createGetStyles(colors => ({
   },
 
   icon: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: 9999,
     marginRight: 12,
   },
   text: {
     fontWeight: '500',
-    fontSize: 20,
+    fontSize: 18,
     lineHeight: 23,
     color: colors['neutral-title-1'],
   },
@@ -110,8 +110,8 @@ export const GasTopUpChainSelect = ({
         </View>
         {!readonly && (
           <SvgIconArrowDownTriangle
-            width={20}
-            height={20}
+            width={24}
+            height={24}
             color={colors['neutral-foot']}
           />
         )}
