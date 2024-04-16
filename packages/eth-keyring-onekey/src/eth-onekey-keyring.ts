@@ -42,6 +42,8 @@ type AccountDetail = {
   hdPath: string;
   hdPathType: HDPathType;
   index: number;
+  connectId?: string | null;
+  deviceId?: string | null;
 };
 
 /**
@@ -271,6 +273,7 @@ class OneKeyKeyring extends EventEmitter {
                 hdPathType: LedgerHDPathType.BIP44,
                 hdPathBasePublicKey: this.getPathBasePublicKey(),
                 index: i,
+                connectId: this._deviceConnectId,
               };
             } else {
               throw new Error(
@@ -796,7 +799,24 @@ class OneKeyKeyring extends EventEmitter {
       hdPath: this._pathFromAddress(address),
       hdPathType: LedgerHDPathType.BIP44,
       hdPathBasePublicKey: this.getPathBasePublicKey(),
+      connectId: this._deviceConnectId,
     };
+  }
+
+  getAccountInfo(address: string) {
+    const detail = this.accountDetails[ethUtil.toChecksumAddress(address)];
+    if (detail) {
+      const { index, hdPathType, hdPathBasePublicKey, connectId } = detail;
+      return {
+        address,
+        index: index + 1,
+        balance: null,
+        hdPathType,
+        hdPathBasePublicKey,
+        connectId,
+      };
+    }
+    return undefined;
   }
 }
 

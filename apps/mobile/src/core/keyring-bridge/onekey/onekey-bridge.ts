@@ -60,4 +60,6 @@ export default class OneKeyBridge implements OneKeyBridgeInterface {
   };
 
   cancel = HardwareBleSdk.cancel;
+
+  dispose = HardwareBleSdk.dispose;
 }
