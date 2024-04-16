@@ -316,6 +316,7 @@
       },
       "beginSigning": "Begin signing process",
       "ledgerSign": "Sign with Ledger",
+      "oneKeySign": "Sign with OneKey",
       "addressTip": {
         "onekey": "OneKey address",
         "trezor": "Trezor address",
