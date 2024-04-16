@@ -1,7 +1,7 @@
-import { AssetAvatar, Text, Tip } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import BigNumber from 'bignumber.js';
 import { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
 import { splitNumberByStep } from '@/utils/number';
@@ -75,7 +75,7 @@ export const GasTokenItem = ({
 const getStyles = createGetStyles(colors => ({
   container: {
     paddingHorizontal: 20,
-    height: 52,
+    height: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

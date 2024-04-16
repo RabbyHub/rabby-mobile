@@ -26,7 +26,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { createGetStyles } from '@/utils/styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmDrawer from './components/ConfirmDrawer';
-import { ChainSelect } from './components/ChainSelect';
+import { GasTopUpChainSelect } from './components/ChainSelect';
 
 const GasList = [20, 50, 100];
 
@@ -363,7 +363,7 @@ const GasTopUp = () => {
           <Text style={styles.descText}>{t('page.gasTopUp.description')}</Text>
           <View style={styles.centerBox}>
             <Text style={styles.label}>{t('page.gasTopUp.topUpChain')}</Text>
-            <ChainSelect value={chain} onChange={setChain} />
+            <GasTopUpChainSelect value={chain} onChange={setChain} />
 
             <Text style={styles.label}>{t('page.gasTopUp.Amount')}</Text>
             <View style={styles.gasBox}>
@@ -441,7 +441,7 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 8,
     padding: 16,
     paddingTop: 0,
-    paddingBottom: 32,
+    paddingBottom: 24,
     shadowColor: 'rgba(0, 0, 0, 0.05)',
     shadowOffset: {
       width: 0,
@@ -453,7 +453,7 @@ const getStyles = createGetStyles(colors => ({
   },
 
   label: {
-    paddingTop: 32,
+    paddingTop: 24,
     paddingBottom: 12,
     color: colors['neutral-title-1'],
     fontSize: 16,

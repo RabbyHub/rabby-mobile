@@ -11,6 +11,7 @@ import { GasTokenItem } from './TokenItem';
 import RcIconBackCC from '@/assets/icons/gas-top-up/back-cc.svg';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import RcEmptyCC from '@/assets/icons/swap/empty-cc.svg';
+import { Skeleton } from '@rneui/themed';
 
 interface GasTopUpTokenSelectProps {
   visible?: boolean;
@@ -78,9 +79,11 @@ const GasTopUpTokenSelect = ({
           ) : null}
           {loading ? (
             <View style={styles.loadingView}>
-              {/* <SvgIconLoading fill={colors['blue-default']} /> */}
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Loader key={index} />
+              ))}
               <Text style={styles.loadingText}>
-                {t('page.gasTopUp.Loading_Tokens')}
+                {/* {t('page.gasTopUp.Loading_Tokens')} */}
               </Text>
             </View>
           ) : null}
@@ -117,6 +120,33 @@ const GasTopUpTokenSelect = ({
     />
   );
 };
+
+function Loader() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 60,
+        paddingHorizontal: 20,
+      }}>
+      <Skeleton width={32} height={32} circle />
+      <Skeleton width={88} height={20} style={{ marginLeft: 20 }} />
+      <View
+        style={{
+          marginLeft: 'auto',
+        }}>
+        <Skeleton
+          width={78}
+          height={20}
+          skeletonStyle={{ marginLeft: 'auto' }}
+        />
+      </View>
+    </View>
+  );
+}
 
 export const GasTopUpTokenSelectModal = (props: GasTopUpTokenSelectProps) => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
@@ -171,6 +201,7 @@ const getStyles = createGetStyles(colors => ({
   label: {
     color: colors['neutral-body'],
     fontSize: 14,
+    fontWeight: 'normal',
   },
   wrapper: { flex: 1, overflow: 'hidden' },
   emptyView: {
@@ -187,7 +218,6 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
   },
   loadingText: {
     marginTop: 12,

@@ -94,13 +94,7 @@ export const GasBox = ({
           ${item[0]}
         </Text>
         {gasTokenLoading || chainUsdBalanceLoading ? (
-          <Skeleton
-            width={60}
-            height={14}
-            style={{
-              marginTop: 4,
-            }}
-          />
+          <Skeleton width={60} height={14} />
         ) : (
           <Text
             style={{
@@ -111,7 +105,6 @@ export const GasBox = ({
                   : index === selectedIndex
                   ? colors['blue-default']
                   : colors['neutral-title-1'],
-              marginTop: 4,
             }}>
             {' '}
             ≈ {item[1]} {getTokenSymbol(gasToken)}
@@ -139,14 +132,13 @@ export const GasBox = ({
 
 const getStyles = createGetStyles(colors => ({
   default: {
-    height: 64,
+    height: 60,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: colors['neutral-card-2'],
     alignItems: 'center',
     flexDirection: 'row',
-    padding: 20,
-    paddingLeft: 16,
+    paddingHorizontal: 16,
   },
   insufficient: {
     backgroundColor: colors['neutral-card-2'],

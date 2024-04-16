@@ -16,8 +16,9 @@ const allMainnetChainEnums = CHAINS_BY_NET.mainnet.map(item => item.enum);
 const getStyles = createGetStyles(colors => ({
   container: {
     backgroundColor: colors['neutral-card-2'],
-    borderRadius: 4,
-    padding: 16,
+    borderRadius: 8,
+    height: 60,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -62,7 +63,7 @@ interface ChainSelectProps {
   direction?: 'top' | 'bottom';
 }
 
-export const ChainSelect = ({
+export const GasTopUpChainSelect = ({
   value,
   onChange,
   readonly = false,
