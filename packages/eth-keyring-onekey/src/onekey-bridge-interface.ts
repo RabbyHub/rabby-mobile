@@ -26,4 +26,5 @@ export type OneKeyBridgeInterface = {
   receivePin: (params: ReceivePinParams) => void;
   receivePassphrase: (params: ReceivePassphraseParams) => void;
   cancel: CoreApi['cancel'];
+  dispose: CoreApi['dispose'];
 };

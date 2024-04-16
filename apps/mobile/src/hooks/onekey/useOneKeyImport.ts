@@ -1,11 +1,8 @@
-import { atom, useAtom } from 'jotai';
+import { useAtom } from 'jotai';
 import type { SearchDevice } from '@onekeyfe/hd-core';
 import { apiOneKey } from '@/core/apis';
 import React from 'react';
-import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
-import { DEVICE } from '@onekeyfe/hd-core';
-
-const oneKeyDevices = atom<SearchDevice[]>([]);
+import { oneKeyDevices } from '@/core/apis/onekey';
 
 export function useOneKeyImport() {
   const [devices, setDevices] = useAtom(oneKeyDevices);
@@ -18,15 +15,6 @@ export function useOneKeyImport() {
       } else {
         setError(res.payload.code);
       }
-    });
-  }, [setDevices]);
-
-  React.useEffect(() => {
-    HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
-      apiOneKey.cleanUp();
-      setDevices(prev =>
-        prev.filter(d => d.connectId !== payload?.device?.connectId),
-      );
     });
   }, [setDevices]);
 

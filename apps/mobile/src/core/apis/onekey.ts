@@ -3,6 +3,34 @@ import { getKeyring } from './keyring';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { keyringService } from '../services/shared';
 import { bindOneKeyEvents } from '@/utils/onekey';
+import HardwareBleSdk from '@onekeyfe/hd-ble-sdk';
+import { DEVICE } from '@onekeyfe/hd-core';
+import { atom, useAtom } from 'jotai';
+import type { SearchDevice } from '@onekeyfe/hd-core';
+import React from 'react';
+
+export const oneKeyDevices = atom<SearchDevice[]>([]);
+
+export const useGlobalInitOneKey = () => {
+  const [, setDevices] = useAtom(oneKeyDevices);
+
+  React.useEffect(() => {
+    HardwareBleSdk.on(DEVICE.CONNECT, payload => {
+      setDevices(prev => {
+        if (prev.find(d => d.connectId === payload?.device?.connectId)) {
+          return prev;
+        }
+        return [...prev, payload?.device];
+      });
+    });
+    HardwareBleSdk.on(DEVICE.DISCONNECT, payload => {
+      cleanUp();
+      setDevices(prev =>
+        prev.filter(d => d.connectId !== payload?.device?.connectId),
+      );
+    });
+  }, [setDevices]);
+};
 
 export async function initOneKeyKeyring() {
   return getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring, keyring => {
@@ -97,5 +125,21 @@ export async function getCurrentAccounts() {
 
 export async function cleanUp() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  keyring.bridge.dispose();
   return keyring.cleanUp();
+}
+
+export async function isConnected(
+  address: string,
+): Promise<[boolean, string?]> {
+  const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
+  const detail = keyring.getAccountInfo(address);
+
+  if (!detail?.connectId) {
+    return [false];
+  }
+
+  keyring.setDeviceConnectId(detail.connectId);
+
+  return [true, detail.connectId];
 }

@@ -84,9 +84,10 @@ export const Dots: React.FC<{
   return (
     <View style={styles.wrapper}>
       {animations.map((animation, index) => (
-        <Animated.View style={{ transform: [{ translateY: animation }] }}>
+        <Animated.View
+          key={`loading-anim-${index}`}
+          style={{ transform: [{ translateY: animation }] }}>
           <Text
-            key={`loading-anim-${index}`}
             style={[
               styles.dot,
               {
