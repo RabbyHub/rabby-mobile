@@ -7,13 +7,13 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';
 import React from 'react';
 import { settingAtom } from '../HDSetting/MainContainer';
-import { toastIndicator } from '../Toast';
 import { BluetoothPermissionScreen } from './BluetoothPermissionScreen';
 import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
-import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
 import { useOneKeyImport } from '@/hooks/onekey/useOneKeyImport';
+import { ConnectDeviceScreen } from './ConnectDeviceScreen';
+import { eventBus, EVENTS } from '@/utils/events';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
@@ -22,10 +22,9 @@ export const ConnectOneKey: React.FC<{
 }> = ({ onDone, onSelectDeviceId, deviceId }) => {
   const [_2, setSetting] = useAtom(settingAtom);
   const [currentScreen, setCurrentScreen] = React.useState<
-    'scan' | 'select' | 'ble' | 'notfound' | 'openEthApp'
+    'scan' | 'select' | 'ble' | 'notfound' | 'connect'
   >('ble');
   const notfoundTimerRef = React.useRef<any>(null);
-  let toastHiddenRef = React.useRef<() => void>(() => {});
   const { devices, startScan, error, cleanDevices } = useOneKeyImport();
 
   const handleBleNext = React.useCallback(async () => {
@@ -77,21 +76,16 @@ export const ConnectOneKey: React.FC<{
         return;
       }
 
-      toastHiddenRef.current = toastIndicator('Connecting', {
-        isTop: true,
-      });
       try {
         await apiOneKey.unlockDevice();
         await importFirstAddress();
       } catch (e) {
         console.error('OneKey import error', e);
-        cleanDevices();
-      } finally {
-        toastHiddenRef.current?.();
+        setCurrentScreen('select');
       }
     },
 
-    [cleanDevices, importFirstAddress, onSelectDeviceId],
+    [importFirstAddress, onSelectDeviceId],
   );
 
   React.useEffect(() => {
@@ -101,8 +95,16 @@ export const ConnectOneKey: React.FC<{
   }, [devices, handleScanDone]);
 
   React.useEffect(() => {
+    const switchConnectScreen = () => {
+      setCurrentScreen('connect');
+    };
+
+    eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, switchConnectScreen);
+    eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, switchConnectScreen);
+
     return () => {
-      toastHiddenRef.current?.();
+      eventBus.off(EVENTS.ONEKEY.REQUEST_PIN, switchConnectScreen);
+      eventBus.off(EVENTS.ONEKEY.REQUEST_PASSPHRASE, switchConnectScreen);
     };
   }, []);
 
@@ -121,7 +123,7 @@ export const ConnectOneKey: React.FC<{
         />
       )}
       {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
-      {currentScreen === 'openEthApp' && <OpenEthAppScreen />}
+      {currentScreen === 'connect' && <ConnectDeviceScreen />}
     </BottomSheetView>
   );
 };
