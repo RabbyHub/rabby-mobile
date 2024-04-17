@@ -1291,6 +1291,10 @@
           "description": "Please select a OneKey to connect",
           "currentDevice": "current"
         },
+        "connect": {
+          "title": "Connecting",
+          "description": "Enter the pin on the device or passphrase"
+        },
         "error": {
           "lockedOrNoEthApp": "Please keep Ledger unlocked and Ethereum APP open",
           "unknown": "Connection failed, please go back and retry",
