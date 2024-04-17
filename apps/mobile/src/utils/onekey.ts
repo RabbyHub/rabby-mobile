@@ -11,14 +11,83 @@ import { eventBus, EVENTS } from './events';
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;
 
+let pinModalId: string | null = null;
+let passphraseModalId: string | null = null;
+
+function createPinModal(
+  oneKeyKeyring: OneKeyKeyring,
+  connectId: string,
+  modalName: MODAL_NAMES,
+) {
+  pinModalId = createGlobalBottomSheetModal({
+    name: modalName,
+    onConfirm(pin: string, switchOnDevice: boolean) {
+      oneKeyKeyring.bridge.receivePin({
+        pin,
+        switchOnDevice,
+      });
+    },
+  });
+
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
+    removeGlobalBottomSheetModal(pinModalId);
+    pinModalId = null;
+  });
+
+  globalBottomSheetModalAddListener(
+    'DISMISS',
+    _id => {
+      if (_id !== pinModalId) {
+        return;
+      }
+      oneKeyKeyring.bridge.cancel(connectId);
+      pinModalId = null;
+    },
+    true,
+  );
+}
+
+function createPassphraseModal(
+  oneKeyKeyring: OneKeyKeyring,
+  connectId: string,
+  modalName: MODAL_NAMES,
+) {
+  passphraseModalId = createGlobalBottomSheetModal({
+    name: modalName,
+    onConfirm(passphrase: string, switchOnDevice: boolean) {
+      oneKeyKeyring.bridge.receivePassphrase({
+        passphrase,
+        switchOnDevice,
+      });
+    },
+  });
+
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
+    removeGlobalBottomSheetModal(passphraseModalId);
+    passphraseModalId = null;
+  });
+
+  globalBottomSheetModalAddListener(
+    'DISMISS',
+    _id => {
+      if (_id !== passphraseModalId) {
+        return;
+      }
+      oneKeyKeyring.bridge.cancel(connectId);
+      passphraseModalId = null;
+    },
+    true,
+  );
+}
+
 export function bindOneKeyEvents(keyring: KeyringInstance) {
   const oneKeyKeyring = keyring as unknown as OneKeyKeyring;
 
   oneKeyKeyring.init();
-  let pinModalId: string | null = null;
-  let passphraseModalId: string | null = null;
 
   eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, e => {
+    const connectId = e?.payload?.device?.connectId;
+
     if (pinModalId) {
       return;
     }
@@ -27,38 +96,21 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
       oneKeyKeyring.bridge.receivePin({
         switchOnDevice: true,
       });
+
+      createPinModal(
+        oneKeyKeyring,
+        connectId,
+        MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
+      );
       return;
     }
 
-    pinModalId = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.ONEKEY_INPUT_PIN,
-      onConfirm(pin: string, switchOnDevice: boolean) {
-        oneKeyKeyring.bridge.receivePin({
-          pin,
-          switchOnDevice,
-        });
-        eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-          removeGlobalBottomSheetModal(pinModalId);
-          pinModalId = null;
-        });
-      },
-    });
-
-    globalBottomSheetModalAddListener(
-      'DISMISS',
-      _id => {
-        if (_id !== pinModalId) {
-          return;
-        }
-        const connectId = e?.payload?.device?.connectId;
-        oneKeyKeyring.bridge.cancel(connectId);
-        pinModalId = null;
-      },
-      true,
-    );
+    createPinModal(oneKeyKeyring, connectId, MODAL_NAMES.ONEKEY_INPUT_PIN);
   });
 
   eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, e => {
+    const connectId = e?.payload?.device?.connectId;
+
     if (passphraseModalId) {
       return;
     }
@@ -68,34 +120,19 @@ export function bindOneKeyEvents(keyring: KeyringInstance) {
         passphrase: '',
         switchOnDevice: true,
       });
+
+      createPassphraseModal(
+        oneKeyKeyring,
+        connectId,
+        MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE,
+      );
       return;
     }
 
-    passphraseModalId = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE,
-      onConfirm(passphrase: string, switchOnDevice: boolean) {
-        oneKeyKeyring.bridge.receivePassphrase({
-          passphrase,
-          switchOnDevice,
-        });
-        eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-          removeGlobalBottomSheetModal(passphraseModalId);
-          passphraseModalId = null;
-        });
-      },
-    });
-
-    globalBottomSheetModalAddListener(
-      'DISMISS',
-      _id => {
-        if (_id !== passphraseModalId) {
-          return;
-        }
-        const connectId = e?.payload?.device?.connectId;
-        oneKeyKeyring.bridge.cancel(connectId);
-        passphraseModalId = null;
-      },
-      true,
+    createPassphraseModal(
+      oneKeyKeyring,
+      connectId,
+      MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE,
     );
   });
 }
