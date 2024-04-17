@@ -94,20 +94,6 @@ export const ConnectOneKey: React.FC<{
     }
   }, [devices, handleScanDone]);
 
-  React.useEffect(() => {
-    const switchConnectScreen = () => {
-      setCurrentScreen('connect');
-    };
-
-    eventBus.on(EVENTS.ONEKEY.REQUEST_PIN, switchConnectScreen);
-    eventBus.on(EVENTS.ONEKEY.REQUEST_PASSPHRASE, switchConnectScreen);
-
-    return () => {
-      eventBus.off(EVENTS.ONEKEY.REQUEST_PIN, switchConnectScreen);
-      eventBus.off(EVENTS.ONEKEY.REQUEST_PASSPHRASE, switchConnectScreen);
-    };
-  }, []);
-
   return (
     <BottomSheetView>
       {currentScreen === 'ble' && (

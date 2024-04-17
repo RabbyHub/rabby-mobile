@@ -20,6 +20,7 @@ import { ConnectOneKey } from '../ConnectOneKey/ConnectOneKey';
 import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
 import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
+import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -41,6 +42,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
+  [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['68%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -76,6 +78,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SETTING_ONEKEY]: SettingOneKey,
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: OneKeyInputPin,
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,
+  [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
 };

@@ -125,15 +125,7 @@ export const OneKeyHardwareWaiting = ({
     setIsSignText(isSignText);
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
-      // const tx = approval.data?.params;
       if (signingTxId) {
-        // const { nonce, from, chainId } = tx;
-        // const explain = await wallet.getExplainCache({
-        //   nonce: Number(nonce),
-        //   address: from,
-        //   chainId: Number(chainId),
-        // });
-
         const signingTx = await transactionHistoryService.getSigningTx(
           signingTxId,
         );
@@ -164,10 +156,7 @@ export const OneKeyHardwareWaiting = ({
         method: params?.extra?.signTextMethod,
       });
     }
-    eventBus.addListener(EVENTS.LEDGER.REJECT_APPROVAL, data => {
-      rejectApproval(data, false, true);
-    });
-    eventBus.addListener(EVENTS.LEDGER.REJECTED, async data => {
+    eventBus.addListener(EVENTS.COMMON_HARDWARE.REJECTED, async data => {
       setErrorMessage(data);
       setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
     });
@@ -183,7 +172,7 @@ export const OneKeyHardwareWaiting = ({
         matomoRequestEvent({
           category: 'Transaction',
           action: 'Submit',
-          label: KEYRING_CLASS.HARDWARE.LEDGER,
+          label: KEYRING_CLASS.HARDWARE.ONEKEY,
         });
 
         setSignFinishedData({
@@ -192,7 +181,7 @@ export const OneKeyHardwareWaiting = ({
         });
       } else {
         Sentry.captureException(
-          new Error('Ledger sign error: ' + JSON.stringify(data)),
+          new Error('OneKey sign error: ' + JSON.stringify(data)),
         );
         setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
         setErrorMessage(data.errorMsg);
@@ -259,20 +248,6 @@ export const OneKeyHardwareWaiting = ({
   }, [connectStatus, errorMessage]);
 
   const currentDescription = React.useMemo(() => {
-    if (description?.includes('0x650f')) {
-      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
-    }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
-
     return description;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [description]);

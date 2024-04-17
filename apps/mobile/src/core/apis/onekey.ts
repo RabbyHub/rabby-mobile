@@ -125,7 +125,7 @@ export async function getCurrentAccounts() {
 
 export async function cleanUp() {
   const keyring = await getKeyring<OneKeyKeyring>(KEYRING_TYPE.OneKeyKeyring);
-  keyring.bridge.dispose();
+  // keyring.bridge.dispose();
   return keyring.cleanUp();
 }
 
