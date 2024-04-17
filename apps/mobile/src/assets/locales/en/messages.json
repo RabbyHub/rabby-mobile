@@ -1304,13 +1304,13 @@
           "running_app_close_error": "Failed to close the running app on your Ledger device."
         },
         "inputPin": {
-          "title": "输入PIN码",
-          "description": "按照设备屏幕上显示的数字布局输入PIN码",
-          "onDevice": "在设备上输入PIN码"
+          "title": "Enter PIN",
+          "description": "Enter the PIN code according to the number layout displayed on the device screen",
+          "onDevice": "Enter PIN code on device"
         },
         "inputPassphrase": {
-          "title": "输入Passphrase",
-          "description": "请输入输入Passphrase"
+          "title": "Enter Passphrase",
+          "description": "Please enter the Passphrase"
         }
       },
       "keystone": {
