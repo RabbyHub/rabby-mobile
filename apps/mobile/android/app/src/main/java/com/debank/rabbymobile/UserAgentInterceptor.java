@@ -25,8 +25,8 @@ public class UserAgentInterceptor implements Interceptor {
 
     this.userAgent = String.format(
         "RabbyMobile/%s.%d okhttp/%s %s (Android %s; %s; %s %s; %s)",
-        BuildConfig.VERSION_NAME, /* versionName */
-        BuildConfig.VERSION_CODE, /* versionCode */
+        versionName, /* versionName */
+        versionCode, /* versionCode */
         OkHttp.VERSION,
         this.getVmString(),
         Build.VERSION.RELEASE, /* osVersion */
