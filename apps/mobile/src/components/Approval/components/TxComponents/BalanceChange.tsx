@@ -356,7 +356,7 @@ const BalanceChange = ({
                     />
 
                     <DescItem>
-                      <Text>
+                      <Text style={commonStyle.secondaryText}>
                         ≈{' '}
                         {formatUsdValue(
                           new BigNumber(token.amount)
