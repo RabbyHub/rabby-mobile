@@ -10,7 +10,7 @@ import {
 import { BSheetModal } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
 import { Text, View, Platform } from 'react-native';
@@ -25,6 +25,7 @@ import {
 import { CHAINS_ENUM } from '@/constant/chains';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useApprovalAlert } from '../hooks/approvals';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -93,6 +94,8 @@ export const HomeTopArea = () => {
     toast.show('Coming Soon :)');
   }, []);
 
+  const { approvalRiskAlert } = useApprovalAlert();
+
   const moreItems = [
     {
       title: 'Approvals',
@@ -103,6 +106,8 @@ export const HomeTopArea = () => {
         });
         moresheetModalRef.current?.dismiss();
       },
+      badge: approvalRiskAlert,
+      badgeAlert: approvalRiskAlert > 0,
     },
     {
       title: 'Gas Top Up',
@@ -141,12 +146,30 @@ export const HomeTopArea = () => {
         <BottomSheetView style={styles.list}>
           {moreItems.map(item => (
             <TouchableView
-              style={[styles.item, item.disabled && styles.disabledMoreItem]}
+              style={[
+                styles.item,
+                styles.moreItem,
+                item.disabled && styles.disabledMoreItem,
+              ]}
               onPress={item.disabled ? toastDisabledAction : item.onPress}
               key={item.title}>
-              <item.Icon style={styles.actionIcon} />
-              <Text style={styles.itemText}>{item.title}</Text>
-              <RcIconRightCC style={styles.chevron} />
+              <View style={[styles.sheetModalItemLeft]}>
+                <item.Icon style={styles.actionIcon} />
+                <Text style={styles.itemText}>{item.title}</Text>
+              </View>
+              <View style={[styles.sheetModalItemRight]}>
+                {item.badgeAlert && (
+                  <Text
+                    style={[
+                      styles.badgeBg,
+                      item.badge > 9 && styles.badgeBgNeedPaddingHorizontal,
+                      styles.badgeText,
+                    ]}>
+                    {item.badge}
+                  </Text>
+                )}
+                <RcIconRightCC style={styles.chevron} />
+              </View>
             </TouchableView>
           ))}
         </BottomSheetView>
@@ -208,14 +231,50 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  moreItem: {
+    justifyContent: 'space-between',
+  },
   disabledMoreItem: {
     opacity: 0.5,
+  },
+  sheetModalItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexShrink: 1,
+    width: '100%',
   },
   itemText: {
     marginLeft: 12,
     color: colors['neutral-title-1'],
     fontSize: 16,
     fontWeight: '500',
+  },
+  sheetModalItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    maxWidth: '50%',
+    // ...makeDebugBorder(),
+  },
+  badgeBg: {
+    backgroundColor: colors['red-default'],
+    borderRadius: 18,
+    paddingVertical: 1,
+    minWidth: 18,
+    height: 18,
+    textAlign: 'center',
+    marginRight: 4,
+  },
+  badgeBgNeedPaddingHorizontal: {
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: colors['neutral-title2'],
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 17,
   },
   chevron: {
     marginLeft: 'auto',
