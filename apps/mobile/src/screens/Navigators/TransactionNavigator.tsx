@@ -11,6 +11,7 @@ import SendScreen from '../Send/Send';
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
+import GasTopUp from '../GasTopUp';
 import ApprovalsScreen from '../Approvals';
 
 const TransactionStack =
@@ -69,6 +70,24 @@ export default function TransactionNavigator() {
           ...headerPresets.withBgCard2,
           headerStyle: {
             backgroundColor: colors?.['neutral-bg-2'],
+          },
+        }}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.GasTopUp}
+        component={GasTopUp}
+        options={{
+          ...screenOptions,
+          title: 'Instant Gas Top Up',
+          ...headerPresets.withBgCard2,
+          headerTintColor: colors?.['neutral-title-2'],
+          headerTitleStyle: {
+            ...headerPresets.withBgCard2.headerTitleStyle,
+            color: colors?.['neutral-title-2'],
+          },
+          headerStyle: {
+            backgroundColor: 'transparent',
           },
         }}
       />
