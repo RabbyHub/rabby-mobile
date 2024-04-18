@@ -54,7 +54,7 @@ export const useSwapHistory = () => {
     d =>
       getSwapList(
         addr,
-        d?.list?.length && d?.list?.length > 1 ? d?.list?.length - 1 : 0,
+        d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
         5,
       ),
     {

@@ -13,7 +13,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
-import { Text, View, Platform } from 'react-native';
+import { Text, View } from 'react-native';
 import { toast } from '@/components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -37,7 +37,12 @@ export const HomeTopArea = () => {
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
 
-  const actions = [
+  const actions: {
+    title: string;
+    Icon: any;
+    onPress: () => void;
+    disabled?: boolean;
+  }[] = [
     {
       title: 'Send',
       Icon: RcIconSend,
@@ -83,7 +88,6 @@ export const HomeTopArea = () => {
     {
       title: 'More',
       Icon: RcIconMore,
-      disabled: false,
       onPress: () => {
         moresheetModalRef.current?.present();
       },
@@ -96,7 +100,14 @@ export const HomeTopArea = () => {
 
   const { approvalRiskAlert } = useApprovalAlert();
 
-  const moreItems = [
+  const moreItems: {
+    title: string;
+    Icon: any;
+    onPress: () => void;
+    disabled?: boolean;
+    badge?: number;
+    badgeAlert?: boolean;
+  }[] = [
     {
       title: 'Approvals',
       Icon: RcIconApproval,
@@ -112,8 +123,11 @@ export const HomeTopArea = () => {
     {
       title: 'Gas Top Up',
       Icon: RcIconGasTopUp,
-      disabled: true,
-      onPress: () => {},
+      onPress: () => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.GasTopUp,
+        });
+      },
     },
   ];
 
@@ -127,7 +141,7 @@ export const HomeTopArea = () => {
         <View style={styles.group}>
           {actions.map(item => (
             <TouchableView
-              style={[styles.action, item.disabled && styles.disabledAction]}
+              style={[styles.action, !!item?.disabled && styles.disabledAction]}
               onPress={item.disabled ? toastDisabledAction : item.onPress}
               key={item.title}>
               <View style={styles.actionIconWrapper}>
@@ -149,16 +163,23 @@ export const HomeTopArea = () => {
               style={[
                 styles.item,
                 styles.moreItem,
-                item.disabled && styles.disabledMoreItem,
+                !!item?.disabled && styles.disabledAction,
               ]}
-              onPress={item.disabled ? toastDisabledAction : item.onPress}
+              onPress={
+                item.disabled
+                  ? toastDisabledAction
+                  : () => {
+                      moresheetModalRef.current?.dismiss();
+                      item.onPress();
+                    }
+              }
               key={item.title}>
               <View style={[styles.sheetModalItemLeft]}>
                 <item.Icon style={styles.actionIcon} />
                 <Text style={styles.itemText}>{item.title}</Text>
               </View>
               <View style={[styles.sheetModalItemRight]}>
-                {item.badgeAlert && (
+                {item.badgeAlert && item.badge && item.badge > 0 && (
                   <Text
                     style={[
                       styles.badgeBg,
@@ -233,9 +254,6 @@ const getStyles = createGetStyles(colors => ({
   },
   moreItem: {
     justifyContent: 'space-between',
-  },
-  disabledMoreItem: {
-    opacity: 0.5,
   },
   sheetModalItemLeft: {
     flexDirection: 'row',

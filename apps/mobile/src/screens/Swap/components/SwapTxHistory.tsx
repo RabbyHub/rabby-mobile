@@ -30,7 +30,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { Skeleton } from '@rneui/themed';
 import { ellipsis } from '@/utils/address';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useWindowDimensions } from 'react-native';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -44,8 +43,6 @@ import {
 const getStyles = createGetStyles(colors => ({
   contentContainerStyle: {
     gap: 12,
-    paddingHorizontal: 20,
-    flex: 1,
   },
   headerTitle: {
     fontSize: 20,
@@ -424,6 +421,9 @@ const HistoryList = () => {
           paddingBottom: 20 + bottom,
         },
       ]}
+      style={{
+        paddingHorizontal: 20,
+      }}
       stickyHeaderIndices={[0]}
       ListHeaderComponent={ListHeaderComponent}
       data={txList?.list}
