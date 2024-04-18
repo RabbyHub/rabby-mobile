@@ -37,9 +37,8 @@ const ETHGasTokenChains = [CHAINS_ENUM.ETH, CHAINS_ENUM.RSK];
 const GasTopUp = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  // const wallet = useWallet();
+
   const { t } = useTranslation();
-  // const history = useHistory();
 
   const [visible, setVisible] = useState(false);
 

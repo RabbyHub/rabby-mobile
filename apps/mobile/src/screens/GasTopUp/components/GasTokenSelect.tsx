@@ -51,15 +51,6 @@ const GasTopUpTokenSelect = ({
     return (
       <View style={styles.header}>
         <View style={styles.rowCenter}>
-          <TouchableOpacity
-            style={styles.backWrapper}
-            onPress={() => setTokenModalVisible(false)}>
-            <RcIconBackCC
-              color={colors['neutral-title-1']}
-              width={20}
-              height={20}
-            />
-          </TouchableOpacity>
           <Text style={styles.title}>
             {t('page.gasTopUp.Select-from-supported-tokens')}
           </Text>
@@ -93,7 +84,6 @@ const GasTopUpTokenSelect = ({
   }, [
     styles.header,
     styles.rowCenter,
-    styles.backWrapper,
     styles.title,
     styles.labelBox,
     styles.label,
@@ -106,7 +96,6 @@ const GasTopUpTokenSelect = ({
     t,
     loading,
     list.length,
-    setTokenModalVisible,
   ]);
 
   return (
@@ -171,7 +160,7 @@ export const GasTopUpTokenSelectModal = (props: GasTopUpTokenSelectProps) => {
 
 const getStyles = createGetStyles(colors => ({
   header: {
-    paddingTop: 20,
+    paddingTop: 8,
     backgroundColor: colors['neutral-bg-1'],
   },
   rowCenter: {
@@ -200,7 +189,7 @@ const getStyles = createGetStyles(colors => ({
   },
   label: {
     color: colors['neutral-body'],
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'normal',
   },
   wrapper: { flex: 1, overflow: 'hidden' },

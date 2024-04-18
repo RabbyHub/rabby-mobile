@@ -62,8 +62,8 @@ const ConfirmToken: React.FC<ConfirmDrawerProps> = ({
           </Text>
           <Tip content={t('page.gasTopUp.service-fee-tip')}>
             <RcIconInfoCC
-              width={18}
-              height={18}
+              width={16}
+              height={16}
               color={colors['neutral-body']}
             />
           </Tip>
@@ -84,7 +84,7 @@ const ConfirmToken: React.FC<ConfirmDrawerProps> = ({
             {token && (
               <>
                 <AssetAvatar
-                  size={32}
+                  size={28}
                   chain={token.chain}
                   logo={token.logo_url}
                   chainSize={16}
@@ -93,7 +93,11 @@ const ConfirmToken: React.FC<ConfirmDrawerProps> = ({
                 <Text style={styles.rightText}>{getTokenSymbol(token)}</Text>
               </>
             )}
-            <RcIconRightArrowCC color={colors['neutral-body']} />
+            <RcIconRightArrowCC
+              width={20}
+              height={20}
+              color={colors['neutral-body']}
+            />
           </View>
         </TouchableOpacity>
       </View>
@@ -197,11 +201,12 @@ const getStyles = createGetStyles(colors => ({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     marginLeft: 'auto',
   },
   rightText: {
-    marginLeft: 12,
-    marginRight: 18,
+    marginLeft: 10,
+    marginRight: 2,
     color: colors['neutral-title-1'],
     fontSize: 15,
     fontWeight: '500',
