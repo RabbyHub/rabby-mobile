@@ -157,6 +157,7 @@ fi
 [ -z $RABBY_MOBILE_CDN_FRONTEND_ID ] && RABBY_MOBILE_CDN_FRONTEND_ID="<DIST_ID>"
 
 if [ -z $CI ]; then
+  echo "";
   echo "[deploy-android] force fresh CDN:"
   echo "[deploy-android] \`aws cloudfront create-invalidation --distribution-id $RABBY_MOBILE_CDN_FRONTEND_ID --paths '/$s3_upload_prefix/android*'\`"
   echo ""
