@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import RcBubleInBg from '@/assets/icons/gas-top-up/bulb-in-bg.svg';
 import { CHAINS_ENUM } from '@debank/common';
 import BigNumber from 'bignumber.js';
 import { findChainByEnum } from '@/utils/chain';
@@ -20,7 +19,7 @@ import { toast } from '@/components/Toast';
 import { stats } from '@/utils/stats';
 import { gasTopUp } from './hooks';
 import { useThemeColors } from '@/hooks/theme';
-import { Button, FocusAwareStatusBar, Text } from '@/components';
+import { Button, Text } from '@/components';
 import { GasBox } from './components/GasBox';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { createGetStyles } from '@/utils/styles';
@@ -350,15 +349,18 @@ const GasTopUp = () => {
             backgroundColor: colors['blue-default'],
           },
         ]}>
-        <RcBubleInBg
-          style={{ position: 'absolute', right: 25, top: top + 16 }}
+        <Image
+          source={require('@/assets/icons/gas-top-up/light.png')}
+          style={{
+            width: 56,
+            height: 72,
+            position: 'absolute',
+            right: 25,
+            top: top + 16,
+          }}
         />
       </View>
-      <NormalScreenContainer
-        overwriteStyle={{
-          backgroundColor: 'transparent',
-          position: 'relative',
-        }}>
+      <NormalScreenContainer overwriteStyle={styles.screenContainer}>
         <View style={styles.wrapper}>
           <Text style={styles.descText}>{t('page.gasTopUp.description')}</Text>
           <View style={styles.centerBox}>
@@ -416,12 +418,17 @@ const GasTopUp = () => {
 };
 
 const getStyles = createGetStyles(colors => ({
+  screenContainer: {
+    backgroundColor: 'transparent',
+    position: 'relative',
+  },
   blueBg: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
   },
+
   wrapper: {
     padding: 24,
     paddingTop: 0,
