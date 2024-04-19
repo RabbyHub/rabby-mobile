@@ -13,7 +13,7 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { toast } from '@/components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -31,20 +31,34 @@ type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 const MORE_SHEET_MODAL_SNAPPOINTS = [220];
 
+const isAndroid = Platform.OS === 'android';
 function BadgeText({ count }: { count?: number }) {
   const { styles } = useThemeStyles(getStyles);
 
   if (!count) return null;
 
+  if (isAndroid) {
+    return (
+      <Text
+        style={[
+          styles.badgeBg,
+          count > 9 && styles.badgeBgNeedPaddingHorizontal,
+          styles.badgeText,
+        ]}>
+        {count}
+      </Text>
+    );
+  }
+
+  // TODO: on iOS, if count >= 1000, maybe some text would be cut due to screen edge.
   return (
-    <Text
+    <View
       style={[
         styles.badgeBg,
         count > 9 && styles.badgeBgNeedPaddingHorizontal,
-        styles.badgeText,
       ]}>
-      {count}
-    </Text>
+      <Text style={[styles.badgeText]}>{count}</Text>
+    </View>
   );
 }
 
@@ -313,6 +327,13 @@ const getStyles = createGetStyles(colors => ({
     height: BADGE_SIZE,
     textAlign: 'center',
     marginRight: 4,
+    ...Platform.select({
+      ios: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    }),
   },
   badgeBgNeedPaddingHorizontal: {
     paddingHorizontal: 6,
