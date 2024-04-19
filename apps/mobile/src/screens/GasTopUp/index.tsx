@@ -333,13 +333,14 @@ const GasTopUp = () => {
     setToken(undefined);
   }, [chain]);
 
+  useEffect(() => {
+    if (!visible) {
+      setToken(undefined);
+    }
+  }, [visible]);
+
   return (
     <View style={{ flex: 1 }}>
-      <FocusAwareStatusBar
-        barStyle="light-content"
-        backgroundColor={'transparent'}
-        translucent
-      />
       <View
         style={[
           styles.blueBg,
@@ -410,6 +411,7 @@ const GasTopUp = () => {
         loading={tokenListLoading || gasTokenLoading}
         retry={retryFetchTokenList}
       />
+      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </View>
   );
 };
