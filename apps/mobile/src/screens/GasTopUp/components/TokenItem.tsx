@@ -61,7 +61,7 @@ export const GasTokenItem = ({
               },
               styles.text,
             ])}>
-            {splitNumberByStep(item.amount?.toFixed(4))} {getTokenSymbol(item)}
+            {getTokenSymbol(item)}
           </Text>
         </View>
         <Text style={styles.text}>
