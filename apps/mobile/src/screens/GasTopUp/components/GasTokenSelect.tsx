@@ -55,9 +55,7 @@ const GasTopUpTokenSelect = ({
           </Text>
         </View>
         <View style={styles.labelBox}>
-          <Text style={styles.label}>
-            {t('page.gasTopUp.Token')} / {t('page.gasTopUp.Balance')}
-          </Text>
+          <Text style={styles.label}>{t('page.gasTopUp.Token')}</Text>
           <Text style={styles.label}>{t('page.gasTopUp.Value')}</Text>
         </View>
         <View style={styles.wrapper}>
