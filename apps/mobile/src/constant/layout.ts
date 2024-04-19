@@ -99,6 +99,9 @@ export const getRootSpecConfig = (
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['neutral-card2'],
     },
+    GasTopUp: {
+      statusBarStyle: 'light-content',
+    },
   } as {
     [P in AppRootName]?: {
       statusBarStyle?: 'light-content' | 'dark-content';
