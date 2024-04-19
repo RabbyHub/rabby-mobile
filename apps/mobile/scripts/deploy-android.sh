@@ -141,10 +141,10 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "";
   if [ $buildchannel != "appstore" ]; then
     echo "[deploy-android] to refresh the release($buildchannel), you could execute:"
-    echo "[deploy-android] aws s3 sync $staging_s3_dir/ $release_s3_dir/ --acl public-read"
+    echo "[deploy-android] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --acl public-read"
   else
     echo "[deploy-android] open directory and upload to google play store "
-    echo "[deploy-android] you can find the .aar from $staging_s3_dir";
+    echo "[deploy-android] you can find the .aar from $backup_s3_dir";
   fi
 
   if [ ! -z $apk_url ]; then
