@@ -105,12 +105,14 @@ else
   version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 fi
 
-staging_s3_dir=$S3_ANDROID_BAK_DEPLOYMENT/android-$version_bundle_name$staging_dir_suffix
-staging_cdn_baseurl=$cdn_deployment_urlbase/android-$version_bundle_name$staging_dir_suffix
+staging_dirname=android-$version_bundle_name$staging_dir_suffix
+backup_s3_dir=$S3_ANDROID_BAK_DEPLOYMENT/$staging_dirname
+staging_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/$staging_dirname
+staging_cdn_baseurl=$cdn_deployment_urlbase/$staging_dirname
+
 release_s3_dir=$S3_ANDROID_PUB_DEPLOYMENT/android
 release_cdn_baseurl=$cdn_deployment_urlbase/android
 staging_acl="authenticated-read"
-[ $buildchannel == "selfhost-reg" ] && staging_acl="public-read"
 
 backup_name=$S3_ANDROID_BAK_DEPLOYMENT/android/$version_bundle_filename
 
@@ -120,22 +122,21 @@ else
   apk_url=""
 fi
 
-echo "[deploy-android] will upload to $staging_s3_dir"
-if [ $staging_acl == "public-read" ]; then
-  echo "[deploy-android] will be public at $staging_cdn_baseurl"
-else
-  echo "[deploy-android] will be stored at $staging_s3_dir (not public)"
-fi
 
 echo ""
 echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
-  echo "[deploy-android] backup to $staging_s3_dir..."
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.json" --acl $staging_acl --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.md" --acl $staging_acl --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.apk" --acl $staging_acl --content-type application/vnd.android.package-archive --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $staging_s3_dir/ --exclude '*' --include "*.aab" --acl $staging_acl --content-type application/x-authorware-bin --exact-timestamps
+  echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
+  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
+  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
+
+  if [ $buildchannel == 'selfhost-reg' ]; then
+    echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
+    aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
+  fi
 
   echo "";
   if [ $buildchannel != "appstore" ]; then
