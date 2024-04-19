@@ -69,8 +69,10 @@ target 'RabbyMobile' do
   use_react_native!(
     :path => config[:reactNativePath],
     # Hermes is now enabled by default. Disable by setting this flag to false.
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
+    :hermes_enabled => true,
+    # :fabric_enabled => flags[:fabric_enabled],
+    :fabric_enabled => false,
+    # :new_arch_enabled => false,
     # Enables Flipper.
     #
     # Note that if you have use_frameworks! enabled, Flipper will not work and
@@ -88,7 +90,7 @@ target 'RabbyMobile' do
   # use_flipper!({'Flipper' => '0.58.0'})
   post_install do |installer|
     # flipper_post_install(installer)
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    # https://github.com/facebook/react-native/blob/v0.72.7/packages/react-native/scripts/react_native_pods.rb#L366
     react_native_post_install(
       installer,
       config[:reactNativePath],
@@ -99,6 +101,14 @@ target 'RabbyMobile' do
   end
 end
 
+def append_header_search_path(target, path)
+  target.build_configurations.each do |config|
+    # Note that there's a space character after `$(inherited)`.
+    config.build_settings["HEADER_SEARCH_PATHS"] ||= "$(inherited) "
+    config.build_settings["HEADER_SEARCH_PATHS"] << path
+  end
+end
+
 def patch_build_settings(installer)
   arch = `arch`.strip
 
@@ -106,6 +116,10 @@ def patch_build_settings(installer)
     # https://github.com/facebook/react-native/issues/37748#issuecomment-1580589448
     target.build_configurations.each do |config|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', '_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION']
+
+      # if target.name === "react-native-blur"
+      #   append_header_search_path(target, "${PODS_ROOT}/Headers/Private/Yoga")
+      # end
     end
     # https://github.com/CocoaPods/CocoaPods/issues/11402
     if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"

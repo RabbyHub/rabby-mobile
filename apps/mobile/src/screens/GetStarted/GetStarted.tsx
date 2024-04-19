@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   Modal,
@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 
 import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
@@ -25,6 +26,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
+import useInterval from 'react-use/lib/useInterval';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -85,12 +87,25 @@ function GetStartedScreen(): JSX.Element {
           screen: RootNames.ImportNewAddress,
         });
         setIsShowModal(false);
-      } else if (+data?.code === 2) {
-        setErrMessage(INVALID_VERSION);
       } else {
-        setErrMessage(INVALID_CODE);
+        Sentry.captureEvent({
+          message: 'Invalid invitation code',
+          tags: {
+            remote_code: data?.code,
+          },
+          extra: {
+            remote_data: data,
+          },
+        });
+        if (+data?.code === 2) {
+          setErrMessage(INVALID_VERSION);
+        } else {
+          setErrMessage(INVALID_CODE);
+        }
       }
     } catch (e) {
+      if (__DEV__) console.error(e);
+      Sentry.captureException(e);
       setErrMessage(INVALID_CODE);
     }
   };
@@ -104,21 +119,33 @@ function GetStartedScreen(): JSX.Element {
 
   const navigation = useNavigation();
 
-  const init = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (accounts?.length) {
-      navigation.dispatch(
-        StackActions.replace(RootNames.StackRoot, {
-          screen: RootNames.Home,
-        }),
-      );
+  const enteredRef = useRef(false);
+  const tryEnterMain = useMemoizedFn(async () => {
+    try {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      if (accounts?.length) {
+        enteredRef.current = true;
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      }
+    } catch (e) {
+      enteredRef.current = false;
     }
   });
 
+  useInterval(() => {
+    if (!enteredRef.current) {
+      tryEnterMain();
+    }
+  }, 3000);
+
   useFocusEffect(
     useCallback(() => {
-      init();
-    }, [init]),
+      tryEnterMain();
+    }, [tryEnterMain]),
   );
 
   return (
