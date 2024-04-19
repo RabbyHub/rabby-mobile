@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
-import { splitNumberByStep } from '@/utils/number';
+import { formatUsdValue, splitNumberByStep } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
 import { getTokenSymbol } from '@/utils/token';
 import { createGetStyles } from '@/utils/styles';
@@ -65,7 +65,7 @@ export const GasTokenItem = ({
           </Text>
         </View>
         <Text style={styles.text}>
-          ${(item.amount * item.price || 0)?.toFixed(2)}
+          {formatUsdValue(item.amount * item.price || 0)}
         </Text>
       </TouchableOpacity>
     </Tip>

@@ -72,9 +72,6 @@ const GasTopUpTokenSelect = ({
               {Array.from({ length: 8 }).map((_, index) => (
                 <Loader key={index} />
               ))}
-              <Text style={styles.loadingText}>
-                {/* {t('page.gasTopUp.Loading_Tokens')} */}
-              </Text>
             </View>
           ) : null}
         </View>
@@ -90,7 +87,6 @@ const GasTopUpTokenSelect = ({
     styles.emptyView,
     styles.noToken,
     styles.loadingView,
-    styles.loadingText,
     colors,
     t,
     loading,

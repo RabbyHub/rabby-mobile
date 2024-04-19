@@ -57,7 +57,7 @@ const ConfirmToken: React.FC<ConfirmDrawerProps> = ({
         <View style={styles.costView}>
           <Text style={styles.costText}>
             {t('page.gasTopUp.Including-service-fee', {
-              fee: new BigNumber(cost).times(0.2).toString(10),
+              fee: '$' + new BigNumber(cost).times(0.2).toString(10),
             })}
           </Text>
           <Tip content={t('page.gasTopUp.service-fee-tip')}>
