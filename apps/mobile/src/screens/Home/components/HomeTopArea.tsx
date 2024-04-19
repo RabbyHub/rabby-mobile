@@ -9,7 +9,7 @@ import {
 } from '@/assets/icons/home';
 import { BSheetModal } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
@@ -31,17 +31,38 @@ type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 const MORE_SHEET_MODAL_SNAPPOINTS = [220];
 
+function BadgeText({ count }: { count?: number }) {
+  const { styles } = useThemeStyles(getStyles);
+
+  if (!count) return null;
+
+  return (
+    <Text
+      style={[
+        styles.badgeBg,
+        count > 9 && styles.badgeBgNeedPaddingHorizontal,
+        styles.badgeText,
+      ]}>
+      {count}
+    </Text>
+  );
+}
+
 export const HomeTopArea = () => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const navigation = useNavigation<HomeProps['navigation']>();
   const moresheetModalRef = React.useRef<BottomSheetModal>(null);
+  const { approvalRiskAlert, loadApprovalStatus } = useApprovalAlert();
+  // const approvalRiskAlert = 200;
+  const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
   const actions: {
     title: string;
     Icon: any;
     onPress: () => void;
     disabled?: boolean;
+    badge?: number;
   }[] = [
     {
       title: 'Send',
@@ -89,16 +110,16 @@ export const HomeTopArea = () => {
       title: 'More',
       Icon: RcIconMore,
       onPress: () => {
+        loadApprovalStatus();
         moresheetModalRef.current?.present();
       },
+      badge: totalAlertCount,
     },
   ];
 
   const toastDisabledAction = useCallback(() => {
     toast.show('Coming Soon :)');
   }, []);
-
-  const { approvalRiskAlert } = useApprovalAlert();
 
   const moreItems: {
     title: string;
@@ -147,6 +168,12 @@ export const HomeTopArea = () => {
               <View style={styles.actionIconWrapper}>
                 <item.Icon style={styles.actionIcon} />
               </View>
+
+              <View style={styles.actionBadgeWrapper}>
+                {!!item.badge && item.badge > 0 && (
+                  <BadgeText count={item.badge} />
+                )}
+              </View>
               <Text style={styles.actionText}>{item.title}</Text>
             </TouchableView>
           ))}
@@ -180,14 +207,7 @@ export const HomeTopArea = () => {
               </View>
               <View style={[styles.sheetModalItemRight]}>
                 {item.badgeAlert && item.badge && item.badge > 0 && (
-                  <Text
-                    style={[
-                      styles.badgeBg,
-                      item.badge > 9 && styles.badgeBgNeedPaddingHorizontal,
-                      styles.badgeText,
-                    ]}>
-                    {item.badge}
-                  </Text>
+                  <BadgeText count={item.badge} />
                 )}
                 <RcIconRightCC style={styles.chevron} />
               </View>
@@ -198,6 +218,8 @@ export const HomeTopArea = () => {
     </>
   );
 };
+
+const BADGE_SIZE = 18;
 const getStyles = createGetStyles(colors => ({
   container: {
     padding: 20,
@@ -215,6 +237,7 @@ const getStyles = createGetStyles(colors => ({
     gap: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
   disabledAction: {
     opacity: 0.6,
@@ -226,6 +249,12 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['neutral-card-2'],
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  actionBadgeWrapper: {
+    position: 'absolute',
+    top: -4,
+    right: -(BADGE_SIZE / 2),
+    // ...makeDebugBorder(),
   },
   actionIcon: {
     width: 24,
@@ -278,10 +307,10 @@ const getStyles = createGetStyles(colors => ({
   },
   badgeBg: {
     backgroundColor: colors['red-default'],
-    borderRadius: 18,
+    borderRadius: BADGE_SIZE,
     paddingVertical: 1,
-    minWidth: 18,
-    height: 18,
+    minWidth: BADGE_SIZE,
+    height: BADGE_SIZE,
     textAlign: 'center',
     marginRight: 4,
   },
