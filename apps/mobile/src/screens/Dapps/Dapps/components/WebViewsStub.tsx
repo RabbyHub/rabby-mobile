@@ -100,7 +100,7 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
 }
 
 const isIOS = Platform.OS === 'ios';
-function useForceExpandOnceOnIOS(
+function useForceExpandOnceOnBootstrap(
   sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
 ) {
   const [firstTouched, setFirstTouched] = useState(false);
@@ -110,8 +110,9 @@ function useForceExpandOnceOnIOS(
       sheetModalRef?.current?.present();
       sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
       setTimeout(() => {
-        sheetModalRef?.current?.close();
+        sheetModalRef?.current?.forceClose();
         haventOpenedRef.current = false;
+        sheetModalRef?.current?.dismiss();
         setFirstTouched(true);
       }, 200);
     }
@@ -141,7 +142,7 @@ export function OpenedDappWebViewStub() {
     return [DEFAULT_RANGES[0], safeOffScreenTop];
   }, [safeOffScreenTop]);
 
-  useForceExpandOnceOnIOS(openedDappWebviewSheetModalRef);
+  useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
 
   const { isDappConnected, disconnectDapp } = useDapps();
 
