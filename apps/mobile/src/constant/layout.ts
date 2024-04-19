@@ -101,6 +101,7 @@ export const getRootSpecConfig = (
     },
     GasTopUp: {
       statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
     },
   } as {
     [P in AppRootName]?: {

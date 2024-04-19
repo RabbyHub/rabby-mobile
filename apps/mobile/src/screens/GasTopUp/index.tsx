@@ -411,7 +411,6 @@ const GasTopUp = () => {
         loading={tokenListLoading || gasTokenLoading}
         retry={retryFetchTokenList}
       />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
     </View>
   );
 };
