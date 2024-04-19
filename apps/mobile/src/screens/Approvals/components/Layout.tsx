@@ -345,8 +345,9 @@ const getBottomSheetModalFooterButtonStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     footerButtonContainer: {
-      width: 248,
+      minWidth: 248,
       height: 52,
+      width: '100%',
     },
     footerText: {
       color: colors['neutral-title2'],
