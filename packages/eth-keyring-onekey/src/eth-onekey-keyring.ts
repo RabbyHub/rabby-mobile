@@ -469,7 +469,6 @@ class OneKeyKeyring extends EventEmitter {
       transaction = {
         ...tx.toJSON(),
         chainId,
-        to: this._normalize(tx.to),
       };
     }
     return this.bridge
