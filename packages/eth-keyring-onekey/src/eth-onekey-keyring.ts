@@ -404,7 +404,9 @@ class OneKeyKeyring extends EventEmitter {
                       tx.s = Buffer.from(payload.s, 'hex');
                       return tx;
                     },
-                  ).then(resolve);
+                  )
+                    .then(resolve)
+                    .catch(reject);
                 } else {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
                   this._signTransaction(
@@ -429,7 +431,9 @@ class OneKeyKeyring extends EventEmitter {
                         freeze: Object.isFrozen(tx),
                       });
                     },
-                  ).then(resolve);
+                  )
+                    .then(resolve)
+                    .catch(reject);
                 }
                 // This is necessary to avoid popup collision
                 // between the unlock & sign trezor popups

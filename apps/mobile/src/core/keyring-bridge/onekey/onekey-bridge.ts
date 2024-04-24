@@ -7,7 +7,7 @@ import type { OneKeyBridgeInterface } from '@rabby-wallet/eth-keyring-onekey';
 export default class OneKeyBridge implements OneKeyBridgeInterface {
   init: OneKeyBridgeInterface['init'] = async () => {
     await HardwareBleSdk.init({
-      debug: true,
+      debug: false,
       fetchConfig: true,
     });
     HardwareBleSdk.on(UI_EVENT, e => {
