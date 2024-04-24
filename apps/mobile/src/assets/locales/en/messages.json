@@ -1293,7 +1293,7 @@
         },
         "connect": {
           "title": "Connecting",
-          "description": "Enter the pin on the device or passphrase"
+          "description": "Enter the pin or passphrase on the device"
         },
         "error": {
           "lockedOrNoEthApp": "Please keep Ledger unlocked and Ethereum APP open",
