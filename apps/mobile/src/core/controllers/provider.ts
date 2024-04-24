@@ -314,7 +314,7 @@ class ProviderController extends BaseController {
       sessionService.broadcastEvent(
         BroadcastEvent.chainChanged,
         {
-          chain: chain.hex,
+          chainId: chain.hex,
           networkVersion: chain.network,
         },
         origin,
@@ -1112,6 +1112,7 @@ class ProviderController extends BaseController {
     if (!connectSite) {
       return;
     }
+
     dappService.updateDapp({
       ...connectSite,
       chainId: chain.enum,
@@ -1134,7 +1135,15 @@ class ProviderController extends BaseController {
     //     networkVersion: chain.network,
     //   },
     //   origin,
-    // );
+    // )
+    sessionService.broadcastEvent(
+      BroadcastEvent.chainChanged,
+      {
+        chainId: chain.hex,
+        networkVersion: chain.network,
+      },
+      origin,
+    );
     return null;
   };
 
@@ -1219,6 +1228,15 @@ class ProviderController extends BaseController {
     //   },
     //   origin,
     // );
+    sessionService.broadcastEvent(
+      BroadcastEvent.chainChanged,
+      {
+        chainId: chain.hex,
+        networkVersion: chain.network,
+      },
+      origin,
+    );
+
     return null;
   };
 
