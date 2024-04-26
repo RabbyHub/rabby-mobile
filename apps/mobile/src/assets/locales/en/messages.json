@@ -316,6 +316,7 @@
       },
       "beginSigning": "Begin signing process",
       "ledgerSign": "Sign with Ledger",
+      "oneKeySign": "Sign with OneKey",
       "addressTip": {
         "onekey": "OneKey address",
         "trezor": "Trezor address",
@@ -1261,6 +1262,55 @@
         "openEthApp": {
           "title": "Connect Ledger",
           "description": "Please open Ethereum app on Ledger"
+        }
+      },
+      "onekey": {
+        "cameraPermissionTitle": "Allow Rabby to access the camera",
+        "cameraPermission1": "Allow Rabby to access the camera in the browser pop-up",
+        "allowRabbyPermissionsTitle": "Allow Rabby permissions to:",
+        "ledgerPermission1": "Connect to an HID device",
+        "ledgerPermissionTip": "Please click \"Allow\" below and authorize access to your Ledger in the following pop-up window.",
+        "permissionsAuthorized": "Permissions Authorized",
+        "nowYouCanReInitiateYourTransaction": "Now you can re-initiate your transaction.",
+        "allow": "Allow",
+        "imported": "Already imported",
+        "ble": {
+          "title": "Connect OneKey",
+          "description": "Turn on Bluetooth and unlock OneKey"
+        },
+        "scan": {
+          "title": "Searching for Device",
+          "description": "Turn on Bluetooth and unlock OneKey"
+        },
+        "notFound": {
+          "title": "Device Not Found",
+          "description": "Turn on Bluetooth and unlock OneKey"
+        },
+        "select": {
+          "title": "Available Devices",
+          "description": "Please select a OneKey to connect",
+          "currentDevice": "current"
+        },
+        "connect": {
+          "title": "Connecting",
+          "description": "Enter the pin or passphrase on the device"
+        },
+        "error": {
+          "lockedOrNoEthApp": "Please keep Ledger unlocked and Ethereum APP open",
+          "unknown": "Connection failed, please go back and retry",
+          "ethereum_app_not_installed_error": "Please install the Ethereum app on your Ledger device.",
+          "ethereum_app_unconfirmed_error": "You have denied the request to open the Ethereum app.",
+          "ethereum_app_open_error": "Please install/accept Ethereum app on your Ledger device.",
+          "running_app_close_error": "Failed to close the running app on your Ledger device."
+        },
+        "inputPin": {
+          "title": "Enter PIN",
+          "description": "Enter the PIN code according to the number layout displayed on the device screen",
+          "onDevice": "Enter PIN code on device"
+        },
+        "inputPassphrase": {
+          "title": "Enter Passphrase",
+          "description": "Please enter the Passphrase"
         }
       },
       "keystone": {

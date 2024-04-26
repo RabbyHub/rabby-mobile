@@ -77,6 +77,7 @@ export const FooterButton: React.FC<
           {...props}
         />
       </View>
+      {props.children}
     </View>
   );
 };

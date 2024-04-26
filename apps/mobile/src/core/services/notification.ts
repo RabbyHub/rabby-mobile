@@ -37,6 +37,7 @@ const QUEUE_APPROVAL_COMPONENTS_WHITELIST = [
   'SignText',
   'SignTypedData',
   'LedgerHardwareWaiting',
+  'OneKeyHardwareWaiting',
   'QRHardWareWaiting',
   'WatchAddressWaiting',
   'CommonWaiting',

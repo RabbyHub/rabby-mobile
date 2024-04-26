@@ -17,8 +17,12 @@ export enum MODAL_NAMES {
   'SETTING_LEDGER' = 'SETTING_LEDGER',
   'CONNECT_KEYSTONE' = 'CONNECT_KEYSTONE',
   'SETTING_KEYSTONE' = 'SETTING_KEYSTONE',
-
+  'CONNECT_ONEKEY' = 'CONNECT_ONEKEY',
+  'SETTING_ONEKEY' = 'SETTING_ONEKEY',
   'TIP_UPGRADE' = 'TIP_UPGRADE',
+  'ONEKEY_INPUT_PIN' = 'ONEKEY_INPUT_PIN',
+  'ONEKEY_INPUT_PASSPHRASE' = 'ONEKEY_INPUT_PASSPHRASE',
+  'ONEKEY_TEMP_PIN_OR_PASSPHRASE' = 'ONEKEY_TEMP_PIN_OR_PASSPHRASE',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -29,6 +33,7 @@ export enum APPROVAL_MODAL_NAMES {
   'WatchAddressWaiting' = 'WatchAddressWaiting',
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
+  'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
 }
 
 export type MODAL_CREATE_PARMAS = {

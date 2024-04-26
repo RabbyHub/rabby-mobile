@@ -8,18 +8,14 @@ export enum KEYRING_TYPE {
   // GnosisKeyring = 'Gnosis',
   // CoboArgusKeyring = 'CoboArgus',
   KeystoneKeyring = 'QR Hardware Wallet Device',
+  OneKeyKeyring = 'Onekey Hardware',
 }
 
 export type KeyringTypeName =
-  // SimpleKeyring
-  // | KEYRING_TYPE.HdKeyring
-  // BitBox02Keyring
-  // TrezorKeyring
-  // LedgerBridgeKeyring
-  // OnekeyKeyring
   | KEYRING_TYPE.WatchAddressKeyring
   | KEYRING_TYPE.WalletConnectKeyring
   | KEYRING_TYPE.LedgerKeyring
+  | KEYRING_TYPE.OneKeyKeyring
   | KEYRING_TYPE.KeystoneKeyring;
 // GnosisKeyring
 // LatticeKeyring
@@ -58,9 +54,9 @@ export const HARDWARE_KEYRING_TYPES = {
     type: 'Trezor Hardware',
     brandName: 'Trezor',
   },
-  Onekey: {
+  OneKey: {
     type: 'Onekey Hardware',
-    brandName: 'Onekey',
+    brandName: 'OneKey',
   },
   GridPlus: {
     type: 'GridPlus Hardware',
@@ -88,6 +84,7 @@ export const KEYRING_CLASS = {
     // TREZOR: TrezorKeyring.type,
     LEDGER: KEYRING_TYPE.LedgerKeyring,
     KEYSTONE: KEYRING_TYPE.KeystoneKeyring,
+    ONEKEY: KEYRING_TYPE.OneKeyKeyring,
     // ONEKEY: OnekeyKeyring.type,
     // GRIDPLUS: LatticeKeyring.type,
   },
@@ -114,7 +111,7 @@ export const KEYRING_CATEGORY_MAP = {
   [KEYRING_CLASS.WATCH]: KEYRING_CATEGORY.WatchMode,
   [KEYRING_CLASS.WALLETCONNECT]: KEYRING_CATEGORY.WalletConnect,
   [KEYRING_CLASS.HARDWARE.LEDGER]: KEYRING_CATEGORY.Hardware,
-  // [KEYRING_CLASS.HARDWARE.ONEKEY]: KEYRING_CATEGORY.Hardware,
+  [KEYRING_CLASS.HARDWARE.ONEKEY]: KEYRING_CATEGORY.Hardware,
   // [KEYRING_CLASS.HARDWARE.TREZOR]: KEYRING_CATEGORY.Hardware,
   // [KEYRING_CLASS.HARDWARE.BITBOX02]: KEYRING_CATEGORY.Hardware,
   [KEYRING_CLASS.HARDWARE.KEYSTONE]: KEYRING_CATEGORY.Hardware,
@@ -150,4 +147,5 @@ export const BRAND_ALIAS_TYPE_TEXT = {
   [WALLET_NAME.Rainbow]: 'Rainbow',
   [WALLET_NAME.UnknownWallet]: 'UnknownWallet',
   [KEYRING_CLASS.HARDWARE.LEDGER]: 'Ledger',
+  [KEYRING_CLASS.HARDWARE.ONEKEY]: 'OneKey',
 };

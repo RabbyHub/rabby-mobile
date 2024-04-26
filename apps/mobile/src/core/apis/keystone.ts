@@ -92,8 +92,6 @@ export async function getAddresses(start: number, end: number) {
     KEYRING_TYPE.KeystoneKeyring,
   );
 
-  await new Promise(resolve => setTimeout(resolve, 1));
-
   return keyring.getAddresses(start, end);
 }
 

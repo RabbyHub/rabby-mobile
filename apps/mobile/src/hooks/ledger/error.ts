@@ -13,6 +13,9 @@ export enum LEDGER_ERROR_CODES {
  * Parses ledger errors based on common issues
  */
 export const ledgerErrorHandler = (error: Error) => {
+  if (!error.message) {
+    return LEDGER_ERROR_CODES.UNKNOWN;
+  }
   if (error.message.includes('0x650f')) {
     return LEDGER_ERROR_CODES.LOCKED_OR_NO_ETH_APP;
   }

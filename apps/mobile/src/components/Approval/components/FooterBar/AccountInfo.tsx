@@ -17,6 +17,7 @@ import { AddressViewer } from '@/components/AddressViewer';
 import { AppColorsVariants } from '@/constant/theme';
 import { LedgerAccount } from './LedgerAccount';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
+import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 
 export interface Props {
   account: Account;
@@ -121,6 +122,12 @@ export const AccountInfo: React.FC<Props> = ({
         <CommonAccount
           icon={KeystoneSVG}
           tip={t('page.signFooterBar.addressTip.keystone')}
+        />
+      )}
+      {account?.type === KEYRING_CLASS.HARDWARE.ONEKEY && (
+        <CommonAccount
+          icon={OneKeySVG}
+          tip={t('page.signFooterBar.addressTip.onekey')}
         />
       )}
     </View>
