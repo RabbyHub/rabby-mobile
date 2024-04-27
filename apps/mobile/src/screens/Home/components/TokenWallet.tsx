@@ -184,6 +184,7 @@ export const TokenWallet = ({
     <>
       <Tabs.FlatList
         ListHeaderComponent={<View style={{ height: 12 }} />}
+        ListFooterComponent={<View style={{ height: 24 }} />}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         data={mainTokens}
