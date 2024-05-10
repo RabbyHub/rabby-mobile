@@ -72,15 +72,13 @@ function ReceiveScreen(): JSX.Element {
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Receive)?.params,
-  ) as
-    | {
-        params: { chain?: CHAINS_ENUM | undefined };
-      }
-    | undefined;
+  ) as { chainEnum?: CHAINS_ENUM | undefined } | undefined;
+
+  console.log('[feat] RootNames.Receive:: navState', navState);
 
   useEffect(() => {
-    if (navState?.params.chain) {
-      setDefaultChain(navState?.params.chain);
+    if (navState?.chainEnum) {
+      setDefaultChain(navState?.chainEnum);
     }
   }, [navState]);
 

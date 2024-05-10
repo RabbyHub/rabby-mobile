@@ -60,6 +60,8 @@ const PAGE_COUNT = 10;
 
 export const TOKEN_DETAIL_HISTORY_SIZES = {
   sheetModalHorizontalPercentage: 0.8,
+  horizontalPadding: 20,
+  buttonGap: 12,
   containerPt: 8,
   headerHeight: 100,
   headerTokenLogo: 24,
@@ -344,43 +346,51 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
   const tokenSupportSwap = useMemo(() => {
     const tokenChain = getChain(token?.chain)?.enum;
-    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain as any);
-    // return false;
+
+    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
   }, [token]);
 
   // Customized and not added
   const isHiddenButton = !token?.is_core && !isAdded;
+
+  const [latestData, setLatestData] = React.useState<LoadData>({
+    last: null,
+    list: [],
+  });
 
   type LoadData = {
     last?: TxDisplayItem['time_at'] | null;
     list: TxDisplayItem[];
   };
   const {
-    data,
+    // data,
     loading: isLoading,
     loadingMore: isLoadingMore,
     loadMore,
     reloadAsync,
   } = useInfiniteScroll<LoadData>(
-    async (d?) => {
-      const nextResult: LoadData = {
+    async (currentData?) => {
+      const tickResult: LoadData = {
         last: null,
         list: [],
       };
 
-      const startTime = d?.last || 0;
+      if (!token) {
+        setLatestData(tickResult);
+        return tickResult;
+      }
+
+      const startTime = currentData?.last || 0;
       try {
         const res: TxHistoryResult = await openapi.listTxHisotry({
           id: currentAccount?.address,
           chain_id: token?.chain,
           start_time: startTime,
           page_count: PAGE_COUNT,
-          // ...token.id && {
-          //   token_id: token.id,
-          // }
+          token_id: token?._tokenId,
         });
         const { project_dict, cate_dict, token_dict, history_list: list } = res;
-        const displayList = list
+        const displayList: TxDisplayItem[] = list
           .map(item => ({
             ...item,
             projectDict: project_dict,
@@ -389,33 +399,52 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           }))
           .sort((v1, v2) => v2.time_at - v1.time_at);
 
-        nextResult.last = last(displayList)?.time_at ?? null;
-        nextResult.list = displayList;
+        tickResult.last = last(displayList)?.time_at ?? null;
+        tickResult.list = displayList;
 
-        return nextResult;
+        setLatestData(prev => ({
+          last: tickResult.last,
+          list: [...prev.list, ...tickResult.list],
+        }));
+
+        return tickResult;
       } catch (error) {
         console.error(error);
-        return nextResult;
+        return tickResult;
       }
     },
     {
+      reloadDeps: [token],
       isNoMore: d => {
         return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
       },
-      onSuccess(data) {
-        // runFetchLocalTx();
-      },
+      onSuccess(data) {},
     },
   );
+
+  const dataList = useMemo(() => {
+    // is reloading
+    if (isLoading && !isLoadingMore) return [];
+
+    // // TODO: leave here for debug
+    // if (__DEV__) {
+    //   if (data?.list) {
+    //     // data.list = [];
+    //     data.list = data.list.slice(0, 5);
+    //   }
+    // }
+
+    return latestData?.list || [];
+  }, [isLoading, isLoadingMore, latestData?.list]);
 
   const onEndReached = React.useCallback(() => {
     loadMore();
   }, [loadMore]);
 
-  const refresh = useMemoizedFn(() => {
-    // runFetchLocalTx();
-    reloadAsync();
-  });
+  const refresh = useCallback(async () => {
+    console.debug('handle refreshing');
+    await reloadAsync();
+  }, [reloadAsync]);
 
   const renderItem = useCallback(({ item }: { item: TxDisplayItem }) => {
     return (
@@ -428,43 +457,83 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     );
   }, []);
 
-  const keyExtractor = useCallback((item: TxDisplayItem) => {
-    return item.id;
+  const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
+    return `${item.chain}/${item.cate_id}/${item.id}/${idx}`;
   }, []);
 
-  // // TODO: leave here for debug
-  // if (__DEV__) {
-  //   if (data?.list) {
-  //     // data.list = [];
-  //     data.list = data.list.slice(0, 5);
-  //   }
-  // }
-
   const navigation = useRabbyAppNavigation();
+
+  const onRedirecTo = useCallback(
+    (type?: 'Swap' | 'Send' | 'Receive') => {
+      onTriggerDismiss?.();
+      const chainItem = !token?.chain
+        ? null
+        : findChainByServerID(token?.chain);
+
+      switch (type) {
+        case 'Swap':
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.Swap,
+            params: {
+              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+              tokenId: token?._tokenId,
+            },
+          });
+          break;
+        case 'Send': {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.Send,
+            params: {
+              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+              tokenId: token?._tokenId,
+            },
+          });
+          break;
+        }
+        case 'Receive': {
+          navigation.push(RootNames.StackTransaction, {
+            screen: RootNames.Receive,
+            params: {
+              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+            },
+          });
+          break;
+        }
+      }
+    },
+    [navigation, onTriggerDismiss, token?._tokenId, token?.chain],
+  );
 
   const ListHeaderComponent = React.useMemo(() => {
     if (isHiddenButton) return <View style={{ height: 12 }} />;
 
     return (
       <View style={[styles.buttonGroup]}>
-        {/* <Tip
+        <Tip
+          {...(tokenSupportSwap && {
+            isVisible: false,
+          })}
           placement="top"
-          // childrenWrapperStyle={{ paddingHorizontal: 0, margin: 0 }}
-          // tooltipStyle={{ paddingHorizontal: 0 }}
-          parentWrapperStyle={[styles.buttonTipWrapper, styles.buttonContainer]}
+          parentWrapperStyle={[styles.buttonTipWrapper]}
+          childrenWrapperStyle={[styles.buttonTipChildrenWrapper]}
           // isLight
+          pressableProps={{
+            hitSlop: 0,
+            style: { width: '100%' },
+          }}
           content={t('page.dashboard.tokenDetail.notSupported')}>
-
-        </Tip> */}
-        <Button
-          type="primary"
-          disabled={!tokenSupportSwap}
-          buttonStyle={styles.operationButton}
-          containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonText}
-          onPress={() => {}}
-          title={t('page.dashboard.tokenDetail.swap')}
-        />
+          <Button
+            type="primary"
+            disabled={!tokenSupportSwap}
+            buttonStyle={styles.operationButton}
+            containerStyle={styles.buttonContainer}
+            titleStyle={styles.buttonText}
+            onPress={() => {
+              onRedirecTo('Swap');
+            }}
+            title={t('page.dashboard.tokenDetail.swap')}
+          />
+        </Tip>
         <Button
           type="primary"
           ghost
@@ -472,18 +541,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           containerStyle={styles.buttonContainer}
           titleStyle={styles.buttonText}
           onPress={() => {
-            onTriggerDismiss?.();
-            const chainItem = !token?.chain
-              ? null
-              : findChainByServerID(token?.chain);
-
-            navigation.push(RootNames.StackTransaction, {
-              screen: RootNames.Send,
-              params: {
-                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenId: token?._tokenId,
-              },
-            });
+            onRedirecTo('Send');
           }}
           title={t('page.dashboard.tokenDetail.send')}
         />
@@ -493,21 +551,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           buttonStyle={styles.operationButton}
           containerStyle={styles.buttonContainer}
           titleStyle={styles.buttonText}
-          onPress={() => {}}
+          onPress={() => {
+            onRedirecTo('Receive');
+          }}
           title={t('page.dashboard.tokenDetail.receive')}
         />
       </View>
     );
-  }, [
-    styles,
-    isHiddenButton,
-    navigation,
-    onTriggerDismiss,
-    t,
-    token?._tokenId,
-    token?.chain,
-    tokenSupportSwap,
-  ]);
+  }, [styles, isHiddenButton, t, tokenSupportSwap, onRedirecTo]);
 
   const { safeOffBottom } = useSafeSizes();
 
@@ -523,13 +574,13 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     return isLoading ? (
       <SkeletonHistoryListOfTokenDetail />
     ) : (
-      <BottomSheetHandlableView style={[styles.emptyHolderContainer]}>
+      <View style={[styles.emptyHolderContainer]}>
         <NotFoundHolder
           text={t('page.dashboard.tokenDetail.noTransactions')}
           iconSize={52}
           colorVariant="foot"
         />
-      </BottomSheetHandlableView>
+      </View>
     );
   }, [t, styles.emptyHolderContainer, isLoading]);
 
@@ -544,47 +595,41 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   return (
     <AppBottomSheetModal
       ref={ref}
-      backgroundStyle={{
-        backgroundColor: colors['neutral-bg-1'],
-      }}
-      handleStyle={{
-        ...makeDebugBorder('red'),
-      }}
+      backgroundStyle={styles.modal}
+      // handleStyle={{
+      //   ...makeDebugBorder('red'),
+      // }}
       enableContentPanningGesture={false}
       enablePanDownToClose={true}
       snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
       onChange={useCallback(() => {}, [])}
       onDismiss={onDismiss}>
-      <BottomSheetView>
-        {token && (
-          <View style={styles.container}>
-            <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
-              <TokenDetailHeader token={token} />
-            </BottomSheetHandlableView>
-            <View style={styles.bodyContainer}>
-              <BottomSheetFlatList
-                renderItem={renderItem}
-                ListHeaderComponent={ListHeaderComponent}
-                ListFooterComponent={ListFooterComponent}
-                keyExtractor={keyExtractor}
-                ListEmptyComponent={ListEmptyComponent}
-                data={data?.list || []}
-                style={styles.scrollView}
-                onEndReached={onEndReached}
-                onEndReachedThreshold={0.3}
-                refreshControl={
-                  <RefreshControl
-                    {...(isIOS && {
-                      progressViewOffset: -12,
-                    })}
-                    refreshing={isLoading}
-                    onRefresh={refresh}
-                  />
-                }
-              />
-            </View>
-          </View>
-        )}
+      <BottomSheetView style={styles.container}>
+        <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
+          {token && <TokenDetailHeader token={token} />}
+        </BottomSheetHandlableView>
+        <BottomSheetFlatList
+          renderItem={renderItem}
+          ListHeaderComponent={ListHeaderComponent}
+          ListFooterComponent={ListFooterComponent}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={ListEmptyComponent}
+          data={dataList}
+          style={styles.scrollView}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.3}
+          refreshing={false}
+          onRefresh={refresh}
+          // refreshControl={
+          //   <RefreshControl
+          //     {...(isIOS && {
+          //       progressViewOffset: -12,
+          //     })}
+          //     refreshing={isLoading}
+          //     onRefresh={refresh}
+          //   />
+          // }
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );
@@ -592,6 +637,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
 
 const getStyles = createGetStyles(colors => {
   return {
+    modal: {
+      backgroundColor: colors['neutral-bg-1'],
+    },
     container: {
       height: '100%',
       paddingTop: SIZES.containerPt,
@@ -607,27 +655,40 @@ const getStyles = createGetStyles(colors => {
       maxHeight: SIZES.maxEmptyHeight,
       // paddingTop: 12,
     },
+    scrollView: {
+      flexShrink: 1,
+      minHeight: 150,
+      height: '100%',
+      maxHeight: SIZES.maxEmptyHeight,
+      marginBottom: 15,
+      paddingHorizontal: 20,
+    },
     buttonGroup: {
       marginTop: 4,
-      marginBottom: 12,
-      // height: SIZES.opButtonHeight + 12,
+      marginBottom: SIZES.buttonGap,
+      width:
+        Dimensions.get('window').width -
+        SIZES.horizontalPadding * 2 +
+        SIZES.buttonGap,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      // ...makeDebugBorder('gray')
     },
-    buttonTipWrapper: {
-      height: SIZES.opButtonHeight,
-      paddingHorizontal: 0,
-      backgroundColor: 'red',
-      alignItems: 'center',
+    buttonOuter: {
       width: '100%',
       flexShrink: 1,
     },
     buttonContainer: {
+      position: 'relative',
       height: SIZES.opButtonHeight,
       alignItems: 'center',
+      width: '100%',
       flexShrink: 1,
+      paddingRight: SIZES.buttonGap,
+      ...(__DEV__ &&
+        {
+          // ...makeDebugBorder('red'),
+          // backgroundColor: 'red',
+        }),
     },
     buttonText: {
       fontSize: 15,
@@ -637,19 +698,39 @@ const getStyles = createGetStyles(colors => {
       height: SIZES.opButtonHeight,
       borderRadius: 6,
     },
+    buttonTipWrapper: {
+      position: 'relative',
+      height: SIZES.opButtonHeight,
+      alignItems: 'center',
+      width: '100%',
+      flexShrink: 1,
+      paddingRight: 0,
+      backgroundColor: 'transparent',
+      ...(__DEV__ &&
+        {
+          // ...makeDebugBorder('blue'),
+          // backgroundColor: 'red',
+        }),
+    },
+    buttonTipChildrenWrapper: {
+      // height: '100%',
+    },
+    buttonTipText: {
+      color: colors['neutral-title2'],
+      height: '100%',
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      ...(__DEV__ && {
+        backgroundColor: 'blue',
+        color: 'yellow',
+      }),
+    },
     listFooterContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       height: 56,
-      // ...makeDebugBorder('green'),
-    },
-    scrollView: {
-      flexShrink: 1,
-      minHeight: 150,
-      height: '100%',
-      marginBottom: 15,
-      paddingHorizontal: 20,
     },
     emptyHolderContainer: {
       ...makeDebugBorder('yellow'),
