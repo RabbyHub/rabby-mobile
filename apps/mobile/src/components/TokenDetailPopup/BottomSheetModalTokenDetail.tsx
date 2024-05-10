@@ -521,7 +521,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             hitSlop: 0,
             style: { width: '100%' },
           }}
-          content={t('page.dashboard.tokenDetail.notSupported')}>
+          contentStyle={[styles.disabledTooltipContent]}
+          content={
+            <View style={[styles.disabledTooltipInner]}>
+              <Text style={styles.disabledTooltipText}>
+                {t('page.dashboard.tokenDetail.notSupported')}
+              </Text>
+            </View>
+          }>
           <Button
             type="primary"
             disabled={!tokenSupportSwap}
@@ -693,6 +700,20 @@ const getStyles = createGetStyles(colors => {
     buttonText: {
       fontSize: 15,
       fontWeight: '600',
+    },
+    disabledTooltipContent: {
+      borderRadius: 2,
+    },
+    disabledTooltipInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    disabledTooltipText: {
+      color: colors['neutral-title2'],
+      fontSize: 13,
+      fontWeight: '400',
     },
     operationButton: {
       height: SIZES.opButtonHeight,
