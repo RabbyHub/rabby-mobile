@@ -258,7 +258,11 @@ export function NotMatchedHolder({
   const { colors, styles } = useThemeStyles(getNotMatchedHolderStyle);
   return (
     <View style={[styles.container, style]}>
-      <RcIconNotMatchedCC color={colors['neutral-body']} />
+      <RcIconNotMatchedCC
+        width={32}
+        height={32}
+        color={colors['neutral-body']}
+      />
       <Text style={styles.emptyText}>{text}</Text>
     </View>
   );

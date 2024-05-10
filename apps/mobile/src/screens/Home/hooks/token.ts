@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { produce } from 'immer';
 import { Dayjs } from 'dayjs';
 
@@ -64,6 +64,26 @@ export const testnetTokensAtom = atom({
   customize: [] as AbstractPortfolioToken[],
   blocked: [] as AbstractPortfolioToken[],
 });
+const focusingTokenAtom = atom({
+  token: null as AbstractPortfolioToken | null,
+  isTest: false,
+});
+
+export function useToggleFocusingToken() {
+  const [focusingToken, setFocusingToken] = useAtom(focusingTokenAtom);
+
+  const onFocusToken = useCallback(
+    (token: AbstractPortfolioToken | null) => {
+      setFocusingToken({ token, isTest: false });
+    },
+    [setFocusingToken],
+  );
+
+  return {
+    focusingToken,
+    onFocusToken,
+  };
+}
 
 export const useTokens = (
   userAddr: string | undefined,
@@ -93,6 +113,7 @@ export const useTokens = (
     return () => {
       abortProcess.current?.abort();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateNonce]);
 
   useEffect(() => {
@@ -121,6 +142,7 @@ export const useTokens = (
         timer = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible, chainServerId]);
 
   useEffect(() => {
@@ -133,7 +155,7 @@ export const useTokens = (
     } else {
       historyTime.current = 0;
     }
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeAt, isLoading]);
 
   const loadProcess = async () => {

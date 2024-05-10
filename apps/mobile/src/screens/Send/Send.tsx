@@ -22,7 +22,11 @@ import {
   useSendTokenScreenState,
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
-import { findChainByServerID, makeTokenFromChain } from '@/utils/chain';
+import {
+  findChainByEnum,
+  findChainByServerID,
+  makeTokenFromChain,
+} from '@/utils/chain';
 import { preferenceService } from '@/core/services';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
@@ -35,6 +39,8 @@ import ToAddressControl from './components/ToAddressControl';
 import { createGetStyles } from '@/utils/styles';
 import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { toastLoading } from '@/components/Toast';
+import { sleep } from '@/utils/async';
 
 function SendScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -53,9 +59,7 @@ function SendScreen(): JSX.Element {
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Send)?.params,
   ) as
-    | {
-        params?: { chain?: CHAINS_ENUM | undefined };
-      }
+    | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | undefined;
 
   const {
@@ -132,6 +136,34 @@ function SendScreen(): JSX.Element {
       //   safeInfo,
       //   currentToken: nativeToken || currentToken,
       // });
+    } else if (navState?.chainEnum && navState?.tokenId) {
+      const target = findChainByEnum(navState?.chainEnum);
+
+      const hideLoading = toastLoading('Loading Token...');
+      try {
+        if (!target) {
+          await Promise.race([
+            await loadCurrentToken(
+              currentToken.id,
+              currentToken.chain,
+              account.address,
+            ),
+            sleep(5000),
+          ]);
+        } else {
+          setChainEnum(target.enum);
+          await Promise.race([
+            await loadCurrentToken(
+              navState?.tokenId,
+              target.serverId,
+              account.address,
+            ),
+            sleep(5000),
+          ]);
+        }
+      } finally {
+        hideLoading();
+      }
     } else {
       let tokenFromOrder: TokenItem | null = null;
 

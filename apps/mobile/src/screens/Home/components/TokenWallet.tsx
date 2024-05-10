@@ -1,4 +1,11 @@
-import React, { useMemo, memo, useCallback, useState, useEffect } from 'react';
+import React, {
+  useMemo,
+  memo,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -16,15 +23,20 @@ import { AbstractPortfolioToken } from '../types';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { AssetAvatar } from '@/components/AssetAvatar';
+import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
 import {
-  SMALL_TOKEN_ID,
-  useMergeSmallTokens,
-} from '../hooks/useMergeSmallTokens';
-import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
+  BottomSheetFlatList,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import { PositionLoader } from './Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { useSheetModals } from '@/hooks/useSheetModal';
+import { useToggleFocusingToken } from '../hooks/token';
+import { SMALL_TOKEN_ID } from '@/utils/token';
+import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 
 const ITEM_HEIGHT = 68;
 
@@ -52,8 +64,8 @@ const TokenRow = memo(
     logoStyle?: ViewStyle;
     logoSize?: number;
     showHistory?: boolean;
-    onSmallTokenPress?(): void;
-    onTokenPress?(): void;
+    onSmallTokenPress?(token: AbstractPortfolioToken): void;
+    onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const colors = useThemeColors();
     const styles = useMemo(() => getStyle(colors), [colors]);
@@ -63,12 +75,18 @@ const TokenRow = memo(
       [logoStyle, styles.tokenRowLogo],
     );
 
+    const onPressToken = useCallback(() => {
+      if (data?.id === SMALL_TOKEN_ID) {
+        return onSmallTokenPress?.(data);
+      } else {
+        return onTokenPress?.(data);
+      }
+    }, [data, onSmallTokenPress, onTokenPress]);
+
     return (
       <TouchableOpacity
         style={StyleSheet.flatten([styles.tokenRowWrap, style])}
-        onPress={
-          data?.id === SMALL_TOKEN_ID ? onSmallTokenPress : onTokenPress
-        }>
+        onPress={onPressToken}>
         <View style={styles.tokenRowTokenWrap}>
           {data?.id === SMALL_TOKEN_ID ? (
             <Image
@@ -131,16 +149,28 @@ export const TokenWallet = ({
     }
   }, [isPortfoliosLoading, tokens]);
 
-  const smallTokenModalRef = React.useRef<BottomSheetModal>(null);
-  const handleOpenSmallToken = React.useCallback(() => {
-    smallTokenModalRef.current?.present();
-  }, []);
+  const {
+    sheetModalRefs: { smallTokenModalRef, tokenDetailModalRef },
+    toggleShowSheetModal,
+  } = useSheetModals({
+    smallTokenModalRef: useRef<BottomSheetModal>(null),
+    tokenDetailModalRef: useRef<BottomSheetModal>(null),
+  });
 
-  // const tokenDetailModalRef = React.useRef<BottomSheetModal>(null);
-  const handleOpenTokenDetail = React.useCallback(() => {
-    toast.show('Coming Soon :)');
-    // tokenDetailModalRef.current?.present();
-  }, []);
+  const { onFocusToken, focusingToken } = useToggleFocusingToken();
+
+  const handleOpenSmallToken = React.useCallback(() => {
+    smallTokenModalRef?.current?.present();
+  }, [smallTokenModalRef]);
+
+  const handleOpenTokenDetail = React.useCallback(
+    (token: AbstractPortfolioToken) => {
+      // toast.show('Coming Soon :)');
+      onFocusToken(token);
+      tokenDetailModalRef?.current?.present();
+    },
+    [onFocusToken, tokenDetailModalRef],
+  );
 
   const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);
 
@@ -159,9 +189,12 @@ export const TokenWallet = ({
     [showHistory, handleOpenSmallToken, handleOpenTokenDetail],
   );
 
-  const keyExtractor = useCallback((item: AbstractPortfolioToken) => {
-    return item.id;
-  }, []);
+  const keyExtractor = useCallback(
+    (item: AbstractPortfolioToken, idx: number) => {
+      return `${item.chain}/${item.symbol}/${item.id}/${idx}`;
+    },
+    [],
+  );
 
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
@@ -219,38 +252,16 @@ export const TokenWallet = ({
         />
       </AppBottomSheetModal>
 
-      {/* <AppBottomSheetModal
+      <BottomSheetModalTokenDetail
         ref={tokenDetailModalRef}
-        backgroundStyle={{
-          backgroundColor: colors['neutral-bg-1'],
+        token={focusingToken.token}
+        onDismiss={() => {
+          onFocusToken(null);
         }}
-        snapPoints={['50%']}>
-        <BottomSheetView>
-          <Text
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              fontSize: 20,
-              fontWeight: '600',
-              color: colors['neutral-title-1'],
-              marginBottom: 10,
-              marginTop: 30,
-              textAlign: 'center',
-            }}>
-            Token Detail
-          </Text>
-          <Text
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              fontSize: 16,
-              fontWeight: '400',
-              color: colors['neutral-foot'],
-              textAlign: 'center',
-              marginTop: '20%',
-            }}>
-            Coming soon
-          </Text>
-        </BottomSheetView>
-      </AppBottomSheetModal> */}
+        onTriggerDismiss={() => {
+          toggleShowSheetModal('tokenDetailModalRef', false);
+        }}
+      />
     </>
   );
 };

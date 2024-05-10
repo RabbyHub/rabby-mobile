@@ -82,7 +82,9 @@ export const Button = ({
     const colorMap = {
       primary: {
         bg: !ghost ? colors['blue-default'] : colors['neutral-bg1'],
-        currentColor: colors['neutral-title2'],
+        currentColor: !ghost
+          ? colors['neutral-title2']
+          : colors['blue-default'],
       },
       white: {
         currentColor: colors['blue-default'],

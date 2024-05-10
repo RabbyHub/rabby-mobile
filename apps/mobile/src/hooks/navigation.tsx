@@ -2,7 +2,10 @@ import { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import {
+  NativeStackNavigationOptions,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 import { useThemeColors } from '@/hooks/theme';
 import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
@@ -13,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { makeThemeIconFromCC } from './makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
+import type { RootStackParamsList } from '@/navigation-type';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-body'],
@@ -106,3 +110,9 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
   },
 });
+
+export function useRabbyAppNavigation() {
+  return useNavigation<
+    NativeStackScreenProps<RootStackParamsList>['navigation']
+  >();
+}
