@@ -62,8 +62,6 @@ function SendScreen(): JSX.Element {
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
     | undefined;
 
-  console.log('[feat] RootNames.Send:: navState', navState);
-
   const {
     chainItem,
     currentToken,
