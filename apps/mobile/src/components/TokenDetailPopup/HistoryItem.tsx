@@ -6,7 +6,7 @@ import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
-import { TxId } from '@/screens/Transaction/components//TxId';
+import { TxId } from '@/screens/Transaction/components/TxId';
 import { TxInterAddressExplain } from '@/screens/Transaction/components//TxInterAddressExplain';
 import React from 'react';
 
@@ -49,6 +49,7 @@ export const HistoryItem = React.memo(
             projectDict={projectDict}
             tokenDict={tokenDict}
             cateDict={cateDict}
+            isScam={isScam}
           />
           <TxChange data={data} tokenDict={tokenDict} />
         </View>

@@ -1,26 +1,66 @@
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSymbol } from '@/utils/token';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 type TxInterAddressExplainProps = {
   data: TxDisplayItem;
+  isScam?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
-const NameAndAddress = ({ address }: { address: string }) => {
-  return <Text>{ellipsisAddress(address)}</Text>;
+const NameAndAddress = ({
+  address,
+  hideCopy = false,
+}: {
+  address: string;
+  hideCopy?: boolean;
+}) => {
+  const isAddr = useMemo(() => {
+    return /^0x[a-zA-Z0-9]{40}/.test(address);
+  }, [address]);
+
+  const { styles } = useThemeStyles(getNameAndAddressStyle);
+
+  const nameNode = useMemo(() => {
+    return <Text style={styles.text}>{ellipsisAddress(address)}</Text>;
+  }, [address, styles]);
+
+  if (!isAddr || hideCopy) return nameNode;
+
+  return (
+    <View style={styles.lineContainer}>
+      {nameNode}
+      {isAddr && <CopyAddressIcon address={address} style={styles.copyIcon} />}
+    </View>
+  );
 };
+
+const getNameAndAddressStyle = createGetStyles(colors => {
+  return {
+    lineContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      // ...makeDebugBorder(),
+    },
+    text: { fontSize: 12, color: colors['neutral-foot'] },
+    copyIcon: { marginLeft: 3, width: 14, height: 14 },
+  };
+});
 
 export const TxInterAddressExplain = ({
   data,
   projectDict,
   tokenDict,
   cateDict,
+  isScam,
 }: TxInterAddressExplainProps) => {
   const isCancel = data.cate_id === 'cancel';
   const isApprove = data.cate_id === 'approve';
@@ -34,12 +74,12 @@ export const TxInterAddressExplain = ({
       {project?.name ? (
         <Text>{project.name}</Text>
       ) : data.other_addr ? (
-        <NameAndAddress address={data.other_addr} />
+        <NameAndAddress address={data.other_addr} hideCopy={isScam} />
       ) : null}
     </>
   );
 
-  let interAddressExplain;
+  let interAddressExplain: React.ReactNode = null;
 
   if (isCancel) {
     interAddressExplain = (

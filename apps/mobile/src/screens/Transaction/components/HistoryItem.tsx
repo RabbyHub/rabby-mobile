@@ -43,6 +43,7 @@ export const HistoryItem = React.memo(
             projectDict={projectDict}
             tokenDict={tokenDict}
             cateDict={cateDict}
+            isScam={isScam}
           />
           <TxChange data={data} tokenDict={tokenDict} />
         </View>
