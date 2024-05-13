@@ -48,8 +48,6 @@ export default function ApprovalTokenDetailSheetModalStub() {
   const { focusingToken, onFocusToken, sheetModalRef, cleanFocusingToken } =
     useTokenDetailSheetModalOnApprovals();
 
-  console.log('[feat] focusingToken', focusingToken);
-
   return (
     <>
       <BottomSheetModalTokenDetail
