@@ -62,18 +62,13 @@ jobs:
           # use specific version rather than 'latest-stable' if multiple Xcodes installed
           xcode-version: '15.3'
 
-      - name: Install dependencies
-        shell: bash
-        run: |
-          yarn --version;
-          cd ./apps/mobile;
-          yarn install;
-
-      - name: Build app
+      - name: Install dependencies && Build app
         shell: bash
         run: |
           cd apps/mobile;
+          yarn;
           yarn prepare-archive;
+          export SENTRY_DISABLE_AUTO_UPLOAD=true;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
