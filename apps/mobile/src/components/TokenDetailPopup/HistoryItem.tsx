@@ -133,7 +133,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     txInterAddressExplain: { flexShrink: 1, width: '60%' },
     txInterAddressExplainActionTitleStyle: { marginBottom: 4 },
-    txChange: { flexShrink: 0 },
+    txChange: { flexShrink: 0, maxWidth: '70%' },
     cardFooter: {
       padding: 12,
       flexDirection: 'row',

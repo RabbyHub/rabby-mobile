@@ -97,13 +97,14 @@ const getNameAndAddressStyle = createGetStyles(colors => {
       alignItems: 'center',
       justifyContent: 'flex-start',
       maxWidth: '100%',
-      // ...makeDebugBorder(),
+      // ...makeDebugBorder('yellow'),
     },
     textWrapper: {
       maxWidth: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      flexShrink: 1,
     },
     aliasName: {
       fontSize: 12,
@@ -117,7 +118,7 @@ const getNameAndAddressStyle = createGetStyles(colors => {
       flexShrink: 0,
       // ...makeDebugBorder(),
     },
-    copyIcon: { marginLeft: 3, width: 14, height: 14 },
+    copyIcon: { marginLeft: 3, width: 14, height: 14, flexShrink: 0 },
   };
 });
 
