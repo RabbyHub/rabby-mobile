@@ -5,7 +5,7 @@ on:
       - 'android-release-*'
     branches:
       - 'ci/android-release-*'
-      - ci/*
+      - ci/universal-release-*
   workflow_dispatch:
     inputs:
       buildchannel:
