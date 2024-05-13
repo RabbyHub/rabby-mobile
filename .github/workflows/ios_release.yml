@@ -68,7 +68,6 @@ jobs:
           cd apps/mobile;
           yarn;
           yarn prepare-archive;
-          export SENTRY_DISABLE_AUTO_UPLOAD=true;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
