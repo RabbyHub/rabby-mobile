@@ -12,7 +12,7 @@ import {
 import { last } from 'lodash';
 
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
 import {
   BottomSheetFlatList,
   BottomSheetScrollView,
@@ -533,6 +533,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             type="primary"
             disabled={!tokenSupportSwap}
             buttonStyle={styles.operationButton}
+            style={styles.buttonTouchableStyle}
             containerStyle={styles.buttonContainer}
             titleStyle={styles.buttonText}
             onPress={() => {
@@ -545,6 +546,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           type="primary"
           ghost
           buttonStyle={styles.operationButton}
+          style={styles.buttonTouchableStyle}
           containerStyle={styles.buttonContainer}
           titleStyle={styles.buttonText}
           onPress={() => {
@@ -556,6 +558,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           type="primary"
           ghost
           buttonStyle={styles.operationButton}
+          style={styles.buttonTouchableStyle}
           containerStyle={styles.buttonContainer}
           titleStyle={styles.buttonText}
           onPress={() => {
@@ -680,10 +683,6 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    buttonOuter: {
-      width: '100%',
-      flexShrink: 1,
-    },
     buttonContainer: {
       position: 'relative',
       height: SIZES.opButtonHeight,
@@ -691,11 +690,20 @@ const getStyles = createGetStyles(colors => {
       width: '100%',
       flexShrink: 1,
       paddingRight: SIZES.buttonGap,
-      ...(__DEV__ &&
-        {
-          // ...makeDebugBorder('red'),
-          // backgroundColor: 'red',
-        }),
+      ...makeDevOnlyStyle({
+        // borderColor: 'red',
+        // backgroundColor: 'red',
+      }),
+    },
+    buttonTouchableStyle: {
+      // padding: 0,
+      width: '100%',
+      // ...makeDebugBorder('red'),
+    },
+    operationButton: {
+      height: SIZES.opButtonHeight,
+      borderRadius: 6,
+      width: '100%',
     },
     buttonText: {
       fontSize: 15,
@@ -714,10 +722,6 @@ const getStyles = createGetStyles(colors => {
       color: colors['neutral-title2'],
       fontSize: 13,
       fontWeight: '400',
-    },
-    operationButton: {
-      height: SIZES.opButtonHeight,
-      borderRadius: 6,
     },
     buttonTipWrapper: {
       position: 'relative',
