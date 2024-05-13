@@ -11,6 +11,10 @@ on:
         required: true
         type: boolean
         default: true
+      SENTRY_DISABLE_AUTO_UPLOAD:
+        required: false
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -83,6 +87,7 @@ jobs:
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           CONFIGURATION: release
           TYPE: adhoc
           BUILD_ENV: alpha
