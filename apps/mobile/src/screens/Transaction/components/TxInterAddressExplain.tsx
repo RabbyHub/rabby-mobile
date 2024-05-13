@@ -7,9 +7,15 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import {
+  CopyAddressIcon,
+  CopyAddressIconType,
+} from '@/components/AddressViewer/CopyAddress';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { toast } from '@/components/Toast';
+import { getAliasName } from '@/core/apis/contact';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import TouchableView from '@/components/Touchable/TouchableView';
 
 type TxInterAddressExplainProps = RNViewProps & {
   actionTitleStyle?: StyleProp<TextStyle>;
@@ -30,17 +36,38 @@ const NameAndAddress = ({
 
   const { styles } = useThemeStyles(getNameAndAddressStyle);
 
-  const nameNode = useMemo(() => {
-    return <Text style={styles.text}>{ellipsisAddress(address)}</Text>;
-  }, [address, styles]);
+  const aliasName = useMemo(() => {
+    return (
+      getAliasName(address) || ALIAS_ADDRESS[address?.toLowerCase() || ''] || ''
+    );
+  }, [address]);
 
-  if (!isAddr || hideCopy) return nameNode;
+  const copyAddressRef = React.useRef<CopyAddressIconType>(null);
+
+  const noCopy = !isAddr || hideCopy;
 
   return (
     <View style={styles.lineContainer}>
-      {nameNode}
-      {isAddr && (
+      <TouchableView
+        style={styles.textWrapper}
+        disabled={noCopy}
+        onPress={() => {
+          copyAddressRef.current?.doCopy();
+        }}>
+        {aliasName && (
+          <Text style={styles.aliasName} numberOfLines={1} ellipsizeMode="tail">
+            {aliasName}
+          </Text>
+        )}
+        <Text style={[styles.text]} numberOfLines={1}>
+          {aliasName
+            ? `(${ellipsisAddress(address)})`
+            : ellipsisAddress(address)}
+        </Text>
+      </TouchableView>
+      {!noCopy && (
         <CopyAddressIcon
+          ref={copyAddressRef}
           address={address}
           style={styles.copyIcon}
           onToastSucess={ctx => {
@@ -69,9 +96,27 @@ const getNameAndAddressStyle = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      maxWidth: '100%',
       // ...makeDebugBorder(),
     },
-    text: { fontSize: 12, color: colors['neutral-foot'] },
+    textWrapper: {
+      maxWidth: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    aliasName: {
+      fontSize: 12,
+      marginRight: 4,
+      color: colors['neutral-foot'],
+      flexShrink: 1,
+    },
+    text: {
+      fontSize: 12,
+      color: colors['neutral-foot'],
+      flexShrink: 0,
+      // ...makeDebugBorder(),
+    },
     copyIcon: { marginLeft: 3, width: 14, height: 14 },
   };
 });

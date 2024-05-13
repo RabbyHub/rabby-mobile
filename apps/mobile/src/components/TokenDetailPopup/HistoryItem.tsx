@@ -131,7 +131,7 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       gap: 12,
     },
-    txInterAddressExplain: { flexShrink: 1, width: '100%' },
+    txInterAddressExplain: { flexShrink: 1, width: '60%' },
     txInterAddressExplainActionTitleStyle: { marginBottom: 4 },
     txChange: { flexShrink: 0 },
     cardFooter: {
