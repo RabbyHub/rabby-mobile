@@ -15,7 +15,7 @@ on:
       SENTRY_DISABLE_AUTO_UPLOAD:
         required: true
         type: boolean
-        default: true
+        default: false
   workflow_call:
     secrets:
       KEYCHAIN_PASS:
@@ -76,9 +76,7 @@ jobs:
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
           security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
-          cd ios && bundle install && bundle exec pod install;
-          cd ../;
-          ./scripts/deploy-ios-adhoc.sh
+          ./scripts/deploy-ios-appstore.sh
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
@@ -89,8 +87,10 @@ jobs:
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
           SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release
-          TYPE: adhoc
+          TYPE: appstore
           BUILD_ENV: release
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.RABBY_MOBILE_APPLE_TRANSPORT_PASSWORD }}
+          RABBY_MOBILE_PILOT_USERNAME: ${{ secrets.RABBY_MOBILE_PILOT_USERNAME }}
           LARK_CHAT_URL: ${{ secrets.LARK_CHAT_URL }}
           LARK_CHAT_SECRET: ${{ secrets.LARK_CHAT_SECRET }}
           RABBY_ROBOT_LARK_APP_ID: ${{ secrets.RABBY_ROBOT_LARK_APP_ID }}
@@ -109,7 +109,6 @@ jobs:
         with:
           name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
           path: |
-            ./apps/mobile/ios/Package/*.ipa
-            ./apps/mobile/ios/Package/manifest.plist
-            ./apps/mobile/ios/Package/*.zip
+            ./apps/mobile/ios/Package/appstore/*.ipa
+            ./apps/mobile/ios/Package/appstore/*.zip
           retention-days: 90

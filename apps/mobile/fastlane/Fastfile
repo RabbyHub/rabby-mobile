@@ -31,8 +31,8 @@ platform :ios do
       scheme: 'RabbyMobile',
       workspace: './ios/RabbyMobile.xcworkspace',
       configuration: 'Release',
-      output_directory: "./ios/Package/latest",
-      build_path: "./ios/Package/latest",
+      output_directory: "./ios/Package/adhoc",
+      build_path: "./ios/Package/adhoc",
       destination: "generic/platform=iOS",
       clean: true,
       ## if you wanna output log to stdout, uncomment below 2 lines
@@ -55,7 +55,7 @@ platform :ios do
       })
 
     # # shell executeb on ./fastlane directory, add `sh "pwd"` below to check it
-    # sh "/usr/libexec/PlistBuddy -c \"Set:items:0:metadata:title Rabby Wallet\" ../ios/Package/latest/manifest.plist"
+    # sh "/usr/libexec/PlistBuddy -c \"Set:items:0:metadata:title Rabby Wallet\" ../ios/Package/adhoc/manifest.plist"
   end
 
   desc "Release for the iOS production"
@@ -65,23 +65,30 @@ platform :ios do
         scheme: 'RabbyMobile',
         workspace: './ios/RabbyMobile.xcworkspace',
         configuration: 'Release',
-        output_directory: "./ios/Package",
-        build_path: "./ios/Package",
+        output_directory: "./ios/Package/appstore",
+        build_path: "./ios/Package/appstore",
         destination: "generic/platform=iOS",
         skip_profile_detection: true,
         clean: true,
+        ## if you wanna output log to stdout, uncomment below 2 lines
+        # xcodebuild_formatter: '',
+        # suppress_xcode_output: false,
         skip_package_pkg: true,
         export_method: "app-store",
         verbose: true,
         export_options: {
           method: "app-store",
           signingStyle: 'manual',
+          # provisioningProfiles: {
+          #   "com.debank.rabby-mobile": "RabbyMobileAppStore"
+          # }
         })
       pilot(
         apple_id: '6474381673',
         username: ENV["RABBY_MOBILE_PILOT_USERNAME"],
-        ipa: "./ios/Package/RabbyMobile.ipa",
+        ipa: "./ios/Package/appstore/RabbyMobile.ipa",
         skip_waiting_for_build_processing: true,
+        distribute_only: ENV["RABBY_MOBILE_PILOT_DISTRIBUTE_ONLY"] || false,
       )
   end
 end
