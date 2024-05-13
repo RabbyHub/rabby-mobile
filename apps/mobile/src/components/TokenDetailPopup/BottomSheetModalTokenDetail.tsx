@@ -495,13 +495,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             screen: RootNames.Receive,
             params: {
               chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+              tokenName: token?.name,
             },
           });
           break;
         }
       }
     },
-    [navigation, onTriggerDismiss, token?._tokenId, token?.chain],
+    [navigation, onTriggerDismiss, token?._tokenId, token?.chain, token?.name],
   );
 
   const ListHeaderComponent = React.useMemo(() => {

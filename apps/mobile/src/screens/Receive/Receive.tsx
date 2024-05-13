@@ -29,6 +29,7 @@ import { Button } from '@/components/Button';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-title-2'],
@@ -54,7 +55,10 @@ const hitSlop = {
 function ReceiveScreen(): JSX.Element {
   const navigation = useNavigation();
 
-  const [defaultChain, setDefaultChain] = useState(CHAINS_ENUM.ETH);
+  const [chainTokenInfo, setChainTokenInfo] = useState({
+    chainEnum: CHAINS_ENUM.ETH,
+    tokenName: null as TokenItem['id'] | null,
+  });
   const [clickedCopy, setClickedCopy] = useState(false);
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -72,11 +76,16 @@ function ReceiveScreen(): JSX.Element {
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Receive)?.params,
-  ) as { chainEnum?: CHAINS_ENUM | undefined } | undefined;
+  ) as
+    | { chainEnum?: CHAINS_ENUM | undefined; tokenName?: TokenItem['name'] }
+    | undefined;
 
   useEffect(() => {
     if (navState?.chainEnum) {
-      setDefaultChain(navState?.chainEnum);
+      setChainTokenInfo({
+        chainEnum: navState.chainEnum,
+        tokenName: navState.tokenName ?? null,
+      });
     }
   }, [navState]);
 
@@ -87,9 +96,10 @@ function ReceiveScreen(): JSX.Element {
   const receiveTitle = useMemo(
     () =>
       t('page.receive.title', {
-        chain: findChainByEnum(defaultChain)?.name,
+        chain: findChainByEnum(chainTokenInfo.chainEnum)?.name,
+        token: chainTokenInfo.tokenName || t('global.assets'),
       }),
-    [defaultChain, t],
+    [chainTokenInfo, t],
   );
 
   const clickCopyHandler = useCallback(() => {
