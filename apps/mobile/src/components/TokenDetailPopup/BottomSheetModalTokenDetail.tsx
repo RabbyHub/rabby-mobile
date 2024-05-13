@@ -337,314 +337,346 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     isAdded?: boolean;
     isTestnet?: boolean;
     onDismiss?: () => void;
-    onTriggerDismiss?: () => void;
+    onTriggerDismissFromInternal?: () => void;
+    hideOperationButtons?: boolean;
   }
->(({ token, isAdded, onDismiss, onTriggerDismiss }, ref) => {
-  const { styles, colors } = useThemeStyles(getStyles);
-  const { currentAccount } = useCurrentAccount();
-  const { t } = useTranslation();
-
-  const tokenSupportSwap = useMemo(() => {
-    const tokenChain = getChain(token?.chain)?.enum;
-
-    return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
-  }, [token]);
-
-  // Customized and not added
-  const isHiddenButton = !token?.is_core && !isAdded;
-
-  const [latestData, setLatestData] = React.useState<LoadData>({
-    last: null,
-    list: [],
-  });
-
-  type LoadData = {
-    last?: TxDisplayItem['time_at'] | null;
-    list: TxDisplayItem[];
-  };
-  const {
-    // data,
-    loading: isLoading,
-    loadingMore: isLoadingMore,
-    loadMore,
-    reloadAsync,
-  } = useInfiniteScroll<LoadData>(
-    async (currentData?) => {
-      const tickResult: LoadData = {
-        last: null,
-        list: [],
-      };
-
-      if (!token) {
-        setLatestData(tickResult);
-        return tickResult;
-      }
-
-      const startTime = currentData?.last || 0;
-      try {
-        const res: TxHistoryResult = await openapi.listTxHisotry({
-          id: currentAccount?.address,
-          chain_id: token?.chain,
-          start_time: startTime,
-          page_count: PAGE_COUNT,
-          token_id: token?._tokenId,
-        });
-        const { project_dict, cate_dict, token_dict, history_list: list } = res;
-        const displayList: TxDisplayItem[] = list
-          .map(item => ({
-            ...item,
-            projectDict: project_dict,
-            cateDict: cate_dict,
-            tokenDict: token_dict,
-          }))
-          .sort((v1, v2) => v2.time_at - v1.time_at);
-
-        tickResult.last = last(displayList)?.time_at ?? null;
-        tickResult.list = displayList;
-
-        setLatestData(prev => ({
-          last: tickResult.last,
-          list: [...prev.list, ...tickResult.list],
-        }));
-
-        return tickResult;
-      } catch (error) {
-        console.error(error);
-        return tickResult;
-      }
-    },
+>(
+  (
     {
-      reloadDeps: [token],
-      isNoMore: d => {
-        return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
+      token,
+      isAdded,
+      onDismiss,
+      onTriggerDismissFromInternal,
+      hideOperationButtons = false,
+    },
+    ref,
+  ) => {
+    const { styles, colors } = useThemeStyles(getStyles);
+    const { currentAccount } = useCurrentAccount();
+    const { t } = useTranslation();
+
+    const tokenSupportSwap = useMemo(() => {
+      const tokenChain = getChain(token?.chain)?.enum;
+
+      return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
+    }, [token]);
+
+    // Customized and not added
+    const isHiddenButton = !token?.is_core && !isAdded;
+
+    const [latestData, setLatestData] = React.useState<LoadData>({
+      last: null,
+      list: [],
+    });
+
+    type LoadData = {
+      last?: TxDisplayItem['time_at'] | null;
+      list: TxDisplayItem[];
+    };
+    const {
+      // data,
+      loading: isLoading,
+      loadingMore: isLoadingMore,
+      loadMore,
+      reloadAsync,
+    } = useInfiniteScroll<LoadData>(
+      async (currentData?) => {
+        const tickResult: LoadData = {
+          last: null,
+          list: [],
+        };
+
+        if (!token) {
+          setLatestData(tickResult);
+          return tickResult;
+        }
+
+        const startTime = currentData?.last || 0;
+        try {
+          const res: TxHistoryResult = await openapi.listTxHisotry({
+            id: currentAccount?.address,
+            chain_id: token?.chain,
+            start_time: startTime,
+            page_count: PAGE_COUNT,
+            token_id: token?._tokenId,
+          });
+          const {
+            project_dict,
+            cate_dict,
+            token_dict,
+            history_list: list,
+          } = res;
+          const displayList: TxDisplayItem[] = list
+            .map(item => ({
+              ...item,
+              projectDict: project_dict,
+              cateDict: cate_dict,
+              tokenDict: token_dict,
+            }))
+            .sort((v1, v2) => v2.time_at - v1.time_at);
+
+          tickResult.last = last(displayList)?.time_at ?? null;
+          tickResult.list = displayList;
+
+          setLatestData(prev => ({
+            last: tickResult.last,
+            list: [...prev.list, ...tickResult.list],
+          }));
+
+          return tickResult;
+        } catch (error) {
+          console.error(error);
+          return tickResult;
+        }
       },
-      onSuccess(data) {},
-    },
-  );
-
-  const dataList = useMemo(() => {
-    // is reloading
-    if (isLoading && !isLoadingMore) return [];
-
-    // // TODO: leave here for debug
-    // if (__DEV__) {
-    //   if (data?.list) {
-    //     // data.list = [];
-    //     data.list = data.list.slice(0, 5);
-    //   }
-    // }
-
-    return latestData?.list || [];
-  }, [isLoading, isLoadingMore, latestData?.list]);
-
-  const onEndReached = React.useCallback(() => {
-    loadMore();
-  }, [loadMore]);
-
-  const refresh = useCallback(async () => {
-    console.debug('handle refreshing');
-    await reloadAsync();
-  }, [reloadAsync]);
-
-  const renderItem = useCallback(({ item }: { item: TxDisplayItem }) => {
-    return (
-      <HistoryItem
-        data={item}
-        projectDict={item.projectDict}
-        cateDict={item.cateDict}
-        tokenDict={item.tokenDict || {}}
-      />
+      {
+        reloadDeps: [token],
+        isNoMore: d => {
+          return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
+        },
+        onSuccess(data) {},
+      },
     );
-  }, []);
 
-  const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
-    return `${item.chain}/${item.cate_id}/${item.id}/${idx}`;
-  }, []);
+    const dataList = useMemo(() => {
+      // is reloading
+      if (isLoading && !isLoadingMore) return [];
 
-  const navigation = useRabbyAppNavigation();
+      // // TODO: leave here for debug
+      // if (__DEV__) {
+      //   if (data?.list) {
+      //     // data.list = [];
+      //     data.list = data.list.slice(0, 5);
+      //   }
+      // }
 
-  const onRedirecTo = useCallback(
-    (type?: 'Swap' | 'Send' | 'Receive') => {
-      onTriggerDismiss?.();
-      const chainItem = !token?.chain
-        ? null
-        : findChainByServerID(token?.chain);
+      return latestData?.list || [];
+    }, [isLoading, isLoadingMore, latestData?.list]);
 
-      switch (type) {
-        case 'Swap':
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Swap,
-            params: {
-              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-              tokenId: token?._tokenId,
-            },
-          });
-          break;
-        case 'Send': {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Send,
-            params: {
-              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-              tokenId: token?._tokenId,
-            },
-          });
-          break;
+    const onEndReached = React.useCallback(() => {
+      loadMore();
+    }, [loadMore]);
+
+    const refresh = useCallback(async () => {
+      console.debug('handle refreshing');
+      await reloadAsync();
+    }, [reloadAsync]);
+
+    const renderItem = useCallback(({ item }: { item: TxDisplayItem }) => {
+      return (
+        <HistoryItem
+          data={item}
+          projectDict={item.projectDict}
+          cateDict={item.cateDict}
+          tokenDict={item.tokenDict || {}}
+        />
+      );
+    }, []);
+
+    const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
+      return `${item.chain}/${item.cate_id}/${item.id}/${idx}`;
+    }, []);
+
+    const navigation = useRabbyAppNavigation();
+
+    const onRedirecTo = useCallback(
+      (type?: 'Swap' | 'Send' | 'Receive') => {
+        onTriggerDismissFromInternal?.();
+        const chainItem = !token?.chain
+          ? null
+          : findChainByServerID(token?.chain);
+
+        switch (type) {
+          case 'Swap':
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Swap,
+              params: {
+                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                tokenId: token?._tokenId,
+              },
+            });
+            break;
+          case 'Send': {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Send,
+              params: {
+                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                tokenId: token?._tokenId,
+              },
+            });
+            break;
+          }
+          case 'Receive': {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Receive,
+              params: {
+                chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
+                tokenName: token?.name,
+              },
+            });
+            break;
+          }
         }
-        case 'Receive': {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.Receive,
-            params: {
-              chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-              tokenName: token?.name,
-            },
-          });
-          break;
-        }
-      }
-    },
-    [navigation, onTriggerDismiss, token?._tokenId, token?.chain, token?.name],
-  );
+      },
+      [
+        navigation,
+        onTriggerDismissFromInternal,
+        token?._tokenId,
+        token?.chain,
+        token?.name,
+      ],
+    );
 
-  const ListHeaderComponent = React.useMemo(() => {
-    if (isHiddenButton) return <View style={{ height: 12 }} />;
+    const ListHeaderComponent = React.useMemo(() => {
+      if (isHiddenButton || hideOperationButtons)
+        return <View style={{ height: 12 }} />;
 
-    return (
-      <View style={[styles.buttonGroup]}>
-        <Tip
-          {...(tokenSupportSwap && {
-            isVisible: false,
-          })}
-          placement="top"
-          parentWrapperStyle={[styles.buttonTipWrapper]}
-          childrenWrapperStyle={[styles.buttonTipChildrenWrapper]}
-          // isLight
-          pressableProps={{
-            hitSlop: 0,
-            style: { width: '100%' },
-          }}
-          contentStyle={[styles.disabledTooltipContent]}
-          content={
-            <View style={[styles.disabledTooltipInner]}>
-              <Text style={styles.disabledTooltipText}>
-                {t('page.dashboard.tokenDetail.notSupported')}
-              </Text>
-            </View>
-          }>
+      return (
+        <View style={[styles.buttonGroup]}>
+          <Tip
+            {...(tokenSupportSwap && {
+              isVisible: false,
+            })}
+            placement="top"
+            parentWrapperStyle={[styles.buttonTipWrapper]}
+            childrenWrapperStyle={[styles.buttonTipChildrenWrapper]}
+            // isLight
+            pressableProps={{
+              hitSlop: 0,
+              style: { width: '100%' },
+            }}
+            contentStyle={[styles.disabledTooltipContent]}
+            content={
+              <View style={[styles.disabledTooltipInner]}>
+                <Text style={styles.disabledTooltipText}>
+                  {t('page.dashboard.tokenDetail.notSupported')}
+                </Text>
+              </View>
+            }>
+            <Button
+              type="primary"
+              disabled={!tokenSupportSwap}
+              buttonStyle={styles.operationButton}
+              style={styles.buttonTouchableStyle}
+              containerStyle={styles.buttonContainer}
+              titleStyle={styles.buttonTitle}
+              onPress={() => {
+                onRedirecTo('Swap');
+              }}
+              title={t('page.dashboard.tokenDetail.swap')}
+            />
+          </Tip>
           <Button
             type="primary"
-            disabled={!tokenSupportSwap}
+            ghost
             buttonStyle={styles.operationButton}
             style={styles.buttonTouchableStyle}
             containerStyle={styles.buttonContainer}
             titleStyle={styles.buttonTitle}
             onPress={() => {
-              onRedirecTo('Swap');
+              onRedirecTo('Send');
             }}
-            title={t('page.dashboard.tokenDetail.swap')}
+            title={t('page.dashboard.tokenDetail.send')}
           />
-        </Tip>
-        <Button
-          type="primary"
-          ghost
-          buttonStyle={styles.operationButton}
-          style={styles.buttonTouchableStyle}
-          containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonTitle}
-          onPress={() => {
-            onRedirecTo('Send');
-          }}
-          title={t('page.dashboard.tokenDetail.send')}
-        />
-        <Button
-          type="primary"
-          ghost
-          buttonStyle={styles.operationButton}
-          style={styles.buttonTouchableStyle}
-          containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonTitle}
-          onPress={() => {
-            onRedirecTo('Receive');
-          }}
-          title={t('page.dashboard.tokenDetail.receive')}
-        />
-      </View>
+          <Button
+            type="primary"
+            ghost
+            buttonStyle={styles.operationButton}
+            style={styles.buttonTouchableStyle}
+            containerStyle={styles.buttonContainer}
+            titleStyle={styles.buttonTitle}
+            onPress={() => {
+              onRedirecTo('Receive');
+            }}
+            title={t('page.dashboard.tokenDetail.receive')}
+          />
+        </View>
+      );
+    }, [
+      styles,
+      isHiddenButton,
+      hideOperationButtons,
+      t,
+      tokenSupportSwap,
+      onRedirecTo,
+    ]);
+
+    const { safeOffBottom } = useSafeSizes();
+
+    const ListFooterComponent = React.useMemo(() => {
+      return (
+        <View
+          style={[styles.listFooterContainer, { minHeight: safeOffBottom }]}>
+          {isLoadingMore ? <ActivityIndicator /> : null}
+        </View>
+      );
+    }, [styles, isLoadingMore, safeOffBottom]);
+
+    const ListEmptyComponent = React.useMemo(() => {
+      return isLoading ? (
+        <SkeletonHistoryListOfTokenDetail />
+      ) : (
+        <View style={[styles.emptyHolderContainer]}>
+          <NotFoundHolder
+            text={t('page.dashboard.tokenDetail.noTransactions')}
+            iconSize={52}
+            colorVariant="foot"
+          />
+        </View>
+      );
+    }, [t, styles.emptyHolderContainer, isLoading]);
+
+    const { onHardwareBackHandler } = useHandleBackPressClosable(
+      useCallback(() => {
+        onTriggerDismissFromInternal?.();
+        return false;
+      }, [onTriggerDismissFromInternal]),
     );
-  }, [styles, isHiddenButton, t, tokenSupportSwap, onRedirecTo]);
+    useFocusEffect(onHardwareBackHandler);
 
-  const { safeOffBottom } = useSafeSizes();
-
-  const ListFooterComponent = React.useMemo(() => {
     return (
-      <View style={[styles.listFooterContainer, { minHeight: safeOffBottom }]}>
-        {isLoadingMore ? <ActivityIndicator /> : null}
-      </View>
+      <AppBottomSheetModal
+        ref={ref}
+        backgroundStyle={styles.modal}
+        // handleStyle={{
+        //   ...makeDebugBorder('red'),
+        // }}
+        enableContentPanningGesture={false}
+        enablePanDownToClose={true}
+        snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
+        onChange={useCallback(() => {}, [])}
+        onDismiss={onDismiss}>
+        <BottomSheetView style={styles.container}>
+          <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
+            {token && <TokenDetailHeader token={token} />}
+          </BottomSheetHandlableView>
+          <BottomSheetFlatList
+            renderItem={renderItem}
+            ListHeaderComponent={ListHeaderComponent}
+            ListFooterComponent={ListFooterComponent}
+            keyExtractor={keyExtractor}
+            ListEmptyComponent={ListEmptyComponent}
+            data={dataList}
+            style={styles.scrollView}
+            onEndReached={onEndReached}
+            onEndReachedThreshold={0.3}
+            refreshing={false}
+            onRefresh={refresh}
+            // refreshControl={
+            //   <RefreshControl
+            //     {...(isIOS && {
+            //       progressViewOffset: -12,
+            //     })}
+            //     refreshing={isLoading}
+            //     onRefresh={refresh}
+            //   />
+            // }
+          />
+        </BottomSheetView>
+      </AppBottomSheetModal>
     );
-  }, [styles, isLoadingMore, safeOffBottom]);
-
-  const ListEmptyComponent = React.useMemo(() => {
-    return isLoading ? (
-      <SkeletonHistoryListOfTokenDetail />
-    ) : (
-      <View style={[styles.emptyHolderContainer]}>
-        <NotFoundHolder
-          text={t('page.dashboard.tokenDetail.noTransactions')}
-          iconSize={52}
-          colorVariant="foot"
-        />
-      </View>
-    );
-  }, [t, styles.emptyHolderContainer, isLoading]);
-
-  const { onHardwareBackHandler } = useHandleBackPressClosable(
-    useCallback(() => {
-      onTriggerDismiss?.();
-      return false;
-    }, [onTriggerDismiss]),
-  );
-  useFocusEffect(onHardwareBackHandler);
-
-  return (
-    <AppBottomSheetModal
-      ref={ref}
-      backgroundStyle={styles.modal}
-      // handleStyle={{
-      //   ...makeDebugBorder('red'),
-      // }}
-      enableContentPanningGesture={false}
-      enablePanDownToClose={true}
-      snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
-      onChange={useCallback(() => {}, [])}
-      onDismiss={onDismiss}>
-      <BottomSheetView style={styles.container}>
-        <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
-          {token && <TokenDetailHeader token={token} />}
-        </BottomSheetHandlableView>
-        <BottomSheetFlatList
-          renderItem={renderItem}
-          ListHeaderComponent={ListHeaderComponent}
-          ListFooterComponent={ListFooterComponent}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={ListEmptyComponent}
-          data={dataList}
-          style={styles.scrollView}
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.3}
-          refreshing={false}
-          onRefresh={refresh}
-          // refreshControl={
-          //   <RefreshControl
-          //     {...(isIOS && {
-          //       progressViewOffset: -12,
-          //     })}
-          //     refreshing={isLoading}
-          //     onRefresh={refresh}
-          //   />
-          // }
-        />
-      </BottomSheetView>
-    </AppBottomSheetModal>
-  );
-});
+  },
+);
 
 const getStyles = createGetStyles(colors => {
   return {

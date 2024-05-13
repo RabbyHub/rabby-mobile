@@ -1,4 +1,10 @@
-import React, { useMemo, ReactNode, useState, useEffect } from 'react';
+import React, {
+  useMemo,
+  ReactNode,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -43,6 +49,7 @@ import { keyringService } from '@/core/services';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
+import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 
 const { isSameAddress } = addressUtils;
 
@@ -479,10 +486,11 @@ const TokenSymbol = ({
   token: TokenItem;
   style?: TextStyle;
 }) => {
-  const handleClickTokenSymbol = () => {
-    // TODO
-    // dispatch.sign.openTokenDetailPopup(token);
-  };
+  const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
+  const handleClickTokenSymbol = useCallback(() => {
+    openTokenDetailPopup(token);
+  }, [openTokenDetailPopup, token]);
+
   return (
     <Text
       onPress={handleClickTokenSymbol}

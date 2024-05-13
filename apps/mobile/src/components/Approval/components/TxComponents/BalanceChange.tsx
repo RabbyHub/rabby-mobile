@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
@@ -19,6 +19,7 @@ import DescItem from '../Actions/components/DescItem';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -214,10 +215,13 @@ const BalanceChange = ({
       };
     }, [data]);
 
-  const handleClickToken = (t: TokenItem) => {
-    // TODO
-    // dispatch.sign.openTokenDetailPopup(t);
-  };
+  const { openTokenDetailPopup } = useTokenDetailSheetModalOnApprovals();
+  const handleClickToken = useCallback(
+    (t: TokenItem) => {
+      openTokenDetailPopup(t);
+    },
+    [openTokenDetailPopup],
+  );
 
   if (version === 'v0') {
     return (

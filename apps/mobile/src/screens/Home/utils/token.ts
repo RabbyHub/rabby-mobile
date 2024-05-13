@@ -3,11 +3,12 @@ import {
   PortfolioItemToken,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { DisplayedProject, pQueue } from './project';
+import { DisplayedProject, DisplayedToken, pQueue } from './project';
 import { isTestnet as checkIsTestnet } from '@/utils/chain';
 import { flatten } from 'lodash';
 import { requestOpenApiWithChainId } from '@/utils/openapi';
 import { openapi } from '@/core/request';
+import { AbstractPortfolioToken } from '../types';
 
 export const queryTokensCache = async (user_id: string, isTestnet = false) => {
   return requestOpenApiWithChainId(
@@ -87,4 +88,12 @@ export const sortWalletTokens = (wallet: DisplayedProject) => {
   return wallet._portfolios
     .flatMap(x => x._tokenList)
     .sort((m, n) => (n._usdValue || 0) - (m._usdValue || 0));
+};
+
+export const ensureAbstractPortfolioToken = (
+  token: TokenItem | AbstractPortfolioToken,
+): AbstractPortfolioToken => {
+  if (token instanceof DisplayedToken) return token as AbstractPortfolioToken;
+
+  return new DisplayedToken(token) as AbstractPortfolioToken;
 };
