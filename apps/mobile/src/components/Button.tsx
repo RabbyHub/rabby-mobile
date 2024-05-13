@@ -139,7 +139,7 @@ export const Button = ({
       disabled &&
         !ghost &&
         !isClearType && {
-          color: isLight ? '#fff' : colors['blue-light-1'],
+          color: isLight ? colors['neutral-bg1'] : colors['neutral-title2'],
         },
       disabled && disabledTitleStyle,
     ]);
@@ -153,6 +153,55 @@ export const Button = ({
     isLight,
     isClearType,
   ]);
+
+  const touchableInnerStyle = useMemo(() => {
+    const isDisabledNonClear = disabled && !isClearType;
+
+    return StyleSheet.flatten([
+      styles.button,
+      styles.buttonOrientation,
+      isClearType && styles.clearButtonStyle,
+      {
+        backgroundColor: bgColor,
+        borderColor: 'transparent',
+        ...(ghost && {
+          borderColor: currentColor,
+          backgroundColor: 'transparent',
+        }),
+        borderWidth: 1,
+      },
+      Array.isArray(buttonStyle)
+        ? StyleSheet.flatten(buttonStyle)
+        : buttonStyle,
+      isDisabledNonClear &&
+        (!ghost
+          ? {
+              backgroundColor:
+                type === 'primary'
+                  ? colors['blue-disable']
+                  : colors['neutral-line'],
+            }
+          : {
+              opacity: 0.3,
+            }),
+      disabled && disabledStyle,
+    ]);
+  }, [
+    disabled,
+    isClearType,
+    ghost,
+    bgColor,
+    currentColor,
+    buttonStyle,
+    disabledStyle,
+    type,
+    colors,
+  ]);
+
+  if (type === 'primary' && !ghost) {
+    console.log('[feat] currentColor', currentColor);
+    console.log('[feat] titleStyle', titleStyle);
+  }
 
   // const background =
   //   Platform.OS === 'android' && Platform.Version >= 21
@@ -182,39 +231,7 @@ export const Button = ({
         accessibilityState={accessibilityState}
         {...rest}
         style={rest.style}>
-        <ViewComponent
-          {...linearGradientProps}
-          style={StyleSheet.flatten([
-            styles.button,
-            styles.buttonOrientation,
-            isClearType && styles.clearButtonStyle,
-            {
-              backgroundColor: bgColor,
-              borderColor: 'transparent',
-              ...(ghost && {
-                borderColor: currentColor,
-                backgroundColor: 'transparent',
-              }),
-              borderWidth: 1,
-            },
-            Array.isArray(buttonStyle)
-              ? StyleSheet.flatten(buttonStyle)
-              : buttonStyle,
-            disabled &&
-              !isClearType &&
-              !ghost && {
-                backgroundColor:
-                  type === 'primary'
-                    ? colord(colors['blue-default']).alpha(0.5).toHex()
-                    : colors['neutral-line'],
-              },
-            disabled &&
-              !isClearType &&
-              ghost && {
-                opacity: 0.3,
-              },
-            disabled && disabledStyle,
-          ])}>
+        <ViewComponent {...linearGradientProps} style={touchableInnerStyle}>
           {/* Activity Indicator on loading */}
           {loading && (
             <ActivityIndicator

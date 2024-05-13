@@ -535,7 +535,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             buttonStyle={styles.operationButton}
             style={styles.buttonTouchableStyle}
             containerStyle={styles.buttonContainer}
-            titleStyle={styles.buttonText}
+            titleStyle={styles.buttonTitle}
             onPress={() => {
               onRedirecTo('Swap');
             }}
@@ -548,7 +548,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           buttonStyle={styles.operationButton}
           style={styles.buttonTouchableStyle}
           containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonText}
+          titleStyle={styles.buttonTitle}
           onPress={() => {
             onRedirecTo('Send');
           }}
@@ -560,7 +560,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           buttonStyle={styles.operationButton}
           style={styles.buttonTouchableStyle}
           containerStyle={styles.buttonContainer}
-          titleStyle={styles.buttonText}
+          titleStyle={styles.buttonTitle}
           onPress={() => {
             onRedirecTo('Receive');
           }}
@@ -705,7 +705,7 @@ const getStyles = createGetStyles(colors => {
       borderRadius: 6,
       width: '100%',
     },
-    buttonText: {
+    buttonTitle: {
       fontSize: 15,
       fontWeight: '600',
     },
@@ -746,9 +746,9 @@ const getStyles = createGetStyles(colors => {
       width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      ...(__DEV__ && {
-        backgroundColor: 'blue',
-        color: 'yellow',
+      ...makeDevOnlyStyle({
+        // backgroundColor: 'blue',
+        // color: 'yellow',
       }),
     },
     listFooterContainer: {
@@ -758,7 +758,7 @@ const getStyles = createGetStyles(colors => {
       height: 56,
     },
     emptyHolderContainer: {
-      ...makeDebugBorder('yellow'),
+      // ...makeDebugBorder('yellow'),
       height: SIZES.maxEmptyHeight * 0.8,
       maxHeight: '100%',
       flexShrink: 1,
