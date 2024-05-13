@@ -190,8 +190,12 @@ export const Button = ({
             isClearType && styles.clearButtonStyle,
             {
               backgroundColor: bgColor,
-              borderColor: colors['blue-default'],
-              borderWidth: ghost ? 1 : 0,
+              borderColor: 'transparent',
+              ...(ghost && {
+                borderColor: currentColor,
+                backgroundColor: 'transparent',
+              }),
+              borderWidth: 1,
             },
             Array.isArray(buttonStyle)
               ? StyleSheet.flatten(buttonStyle)
