@@ -9,6 +9,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { toast } from '@/components/Toast';
 
 type TxInterAddressExplainProps = {
   data: TxDisplayItem;
@@ -37,7 +38,26 @@ const NameAndAddress = ({
   return (
     <View style={styles.lineContainer}>
       {nameNode}
-      {isAddr && <CopyAddressIcon address={address} style={styles.copyIcon} />}
+      {isAddr && (
+        <CopyAddressIcon
+          address={address}
+          style={styles.copyIcon}
+          onToastSucess={ctx => {
+            toast.success(tctx => {
+              return (
+                <View
+                  style={{
+                    flexDirection: 'column',
+                    justifyContent: 'flex-start',
+                  }}>
+                  <Text style={tctx.textStyle}>Copied</Text>
+                  <Text style={tctx.textStyle}>{ctx.address}</Text>
+                </View>
+              );
+            });
+          }}
+        />
+      )}
     </View>
   );
 };

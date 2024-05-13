@@ -1,4 +1,11 @@
-import { View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Platform,
+  ActivityIndicator,
+  StyleProp,
+  TextStyle,
+} from 'react-native';
 import Toast, { ToastOptions } from 'react-native-root-toast';
 import { SvgProps } from 'react-native-svg';
 
@@ -39,20 +46,28 @@ const show = (message: any, extraConfig?: ToastOptions) => {
   return () => Toast.hide(_toast);
 };
 
+type ToastRenderCtx = {
+  textStyle: StyleProp<TextStyle>;
+  config?: Partial<ToastOptions>;
+};
 export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
-  (message: string, _config?: Partial<ToastOptions>) => {
-    let msg = message;
-    if (typeof message !== 'string') {
-      // avoid crash
-      msg = ' ';
-    }
+  (
+    message: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+    _config?: Partial<ToastOptions>,
+  ) => {
+    const msgNode =
+      typeof message === 'function' ? (
+        message({ textStyle: styles.content, config: _config }) || null
+      ) : (
+        <Text style={styles.content}>{message || ' '}</Text>
+      );
 
     const _toast = Toast.show(
       (
         <View style={styles.container}>
           <Icon style={styles.icon} />
-          <Text style={styles.content}>{msg}</Text>
+          {msgNode}
         </View>
       ) as any,
       Object.assign(
