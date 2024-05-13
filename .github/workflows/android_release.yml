@@ -103,6 +103,7 @@ jobs:
         run: |
           cd apps/mobile;
           yarn prepare-archive;
+
           [ -z $buildchannel ] && export buildchannel=selfhost-reg;
           REALLY_UPLOAD=true ./scripts/deploy-android.sh
 

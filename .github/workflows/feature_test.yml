@@ -65,9 +65,9 @@ jobs:
           yarn install;
           cd apps/mobile;
           bundle install;
+          yarn prepare-archive;
 
           # build android
-          yarn prepare-archive;
           buildchannel=selfhost-reg ./scripts/deploy-android.sh
 
           # build android
