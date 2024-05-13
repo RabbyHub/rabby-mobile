@@ -1,19 +1,34 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { getChain } from '@/utils/chain';
-import { numberWithCommasIsLtOne } from '@/utils/number';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
-import { TxId } from '@/screens/Transaction/components/TxId';
-import { TxInterAddressExplain } from '@/screens/Transaction/components//TxInterAddressExplain';
+import { TxInterAddressExplain } from '@/screens/Transaction/components/TxInterAddressExplain';
 import React from 'react';
+import { ellipsisAddress } from '@/utils/address';
 
 type HistoryItemProps = {
   data: TxDisplayItem;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'> &
   RNViewProps;
+
+const TxId = ({
+  style,
+  id,
+}: {
+  style?: React.ComponentProps<typeof View>['style'];
+  id: string;
+}) => {
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  return (
+    <View style={[styles.txIdContainer, style]}>
+      <Text style={styles.txIdHash}>{ellipsisAddress(id)}</Text>
+    </View>
+  );
+};
 
 export const HistoryItem = React.memo(
   ({ data, cateDict, projectDict, tokenDict, style }: HistoryItemProps) => {
@@ -40,35 +55,21 @@ export const HistoryItem = React.memo(
             <Text style={styles.time} numberOfLines={1}>
               {sinceTime(data.time_at)}
             </Text>
-            <TxId chain={data.chain} id={data.id} />
+            <TxId id={data.id} />
           </View>
         </View>
         <View style={styles.cardBody}>
           <TxInterAddressExplain
+            style={styles.txInterAddressExplain}
+            actionTitleStyle={styles.txInterAddressExplainActionTitleStyle}
             data={data}
             projectDict={projectDict}
             tokenDict={tokenDict}
             cateDict={cateDict}
             isScam={isScam}
           />
-          <TxChange data={data} tokenDict={tokenDict} />
+          <TxChange style={styles.txChange} data={data} tokenDict={tokenDict} />
         </View>
-
-        {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
-          <>
-            <View style={styles.divider} />
-            <View style={styles.cardFooter}>
-              {data.tx && data.tx?.eth_gas_fee ? (
-                <Text style={styles.gas}>
-                  Gas: {numberWithCommasIsLtOne(data.tx?.eth_gas_fee, 2)}{' '}
-                  {chainItem?.nativeTokenSymbol} ($
-                  {numberWithCommasIsLtOne(data.tx?.usd_gas_fee ?? 0, 2)})
-                </Text>
-              ) : null}
-              {isFailed ? <Text style={styles.failed}>Failed</Text> : null}
-            </View>
-          </>
-        ) : null}
       </View>
     );
   },
@@ -92,6 +93,16 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       flexWrap: 'wrap',
       gap: 8,
+    },
+    txIdContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    txIdHash: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
     },
     scamContainer: {
       borderRadius: 2,
@@ -120,6 +131,9 @@ const getStyles = (colors: AppColorsVariants) =>
       alignItems: 'center',
       gap: 12,
     },
+    txInterAddressExplain: { flexShrink: 1, width: '100%' },
+    txInterAddressExplainActionTitleStyle: { marginBottom: 4 },
+    txChange: { flexShrink: 0 },
     cardFooter: {
       padding: 12,
       flexDirection: 'row',

@@ -5,13 +5,14 @@ import { getTokenSymbol } from '@/utils/token';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { toast } from '@/components/Toast';
 
-type TxInterAddressExplainProps = {
+type TxInterAddressExplainProps = RNViewProps & {
+  actionTitleStyle?: StyleProp<TextStyle>;
   data: TxDisplayItem;
   isScam?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
@@ -76,6 +77,8 @@ const getNameAndAddressStyle = createGetStyles(colors => {
 });
 
 export const TxInterAddressExplain = ({
+  style,
+  actionTitleStyle,
   data,
   projectDict,
   tokenDict,
@@ -103,7 +106,7 @@ export const TxInterAddressExplain = ({
 
   if (isCancel) {
     interAddressExplain = (
-      <Text style={styles.actionTitle}>
+      <Text style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}>
         {t('page.transactions.explain.cancel')}
       </Text>
     );
@@ -116,7 +119,9 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <Text style={styles.actionTitle} numberOfLines={1}>
+      <Text
+        style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+        numberOfLines={1}>
         Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
         {`${getTokenSymbol(approveToken)} for `}
         {projectName}
@@ -125,7 +130,9 @@ export const TxInterAddressExplain = ({
   } else {
     interAddressExplain = (
       <>
-        <Text style={styles.actionTitle} numberOfLines={1}>
+        <Text
+          style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+          numberOfLines={1}>
           {cateDict[data.cate_id || '']?.name ??
             (data.tx?.name || t('page.transactions.explain.unknown'))}
         </Text>
@@ -134,7 +141,7 @@ export const TxInterAddressExplain = ({
     );
   }
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <TxAvatar
         src={projectDict[data.project_id as string]?.logo_url}
         cateId={data.cate_id}

@@ -198,11 +198,6 @@ export const Button = ({
     colors,
   ]);
 
-  if (type === 'primary' && !ghost) {
-    console.log('[feat] currentColor', currentColor);
-    console.log('[feat] titleStyle', titleStyle);
-  }
-
   // const background =
   //   Platform.OS === 'android' && Platform.Version >= 21
   //     ? TouchableNativeFeedback.Ripple(colord(currentColor).alpha(0.32).toRgbString(), true)

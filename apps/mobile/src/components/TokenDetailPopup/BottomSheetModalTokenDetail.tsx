@@ -230,7 +230,7 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
     tokenDetailHeaderLogo: {
       width: SIZES.headerTokenLogo,
       height: SIZES.headerTokenLogo,
-      marginRight: 12,
+      marginRight: 8,
     },
     tokenSymbol: {
       color: colors['neutral-title-1'],
