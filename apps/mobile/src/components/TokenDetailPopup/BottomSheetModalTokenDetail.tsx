@@ -515,7 +515,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
               screen: RootNames.Receive,
               params: {
                 chainEnum: chainItem?.enum ?? CHAINS_ENUM.ETH,
-                tokenName: token?.name,
+                tokenSymbol: token?.symbol,
               },
             });
             break;
@@ -527,7 +527,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         onTriggerDismissFromInternal,
         token?._tokenId,
         token?.chain,
-        token?.name,
+        token?.symbol,
       ],
     );
 

@@ -57,7 +57,7 @@ function ReceiveScreen(): JSX.Element {
 
   const [chainTokenInfo, setChainTokenInfo] = useState({
     chainEnum: CHAINS_ENUM.ETH,
-    tokenName: null as TokenItem['id'] | null,
+    tokenSymbol: null as TokenItem['id'] | null,
   });
   const [clickedCopy, setClickedCopy] = useState(false);
   const { t } = useTranslation();
@@ -77,14 +77,14 @@ function ReceiveScreen(): JSX.Element {
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Receive)?.params,
   ) as
-    | { chainEnum?: CHAINS_ENUM | undefined; tokenName?: TokenItem['name'] }
+    | { chainEnum?: CHAINS_ENUM | undefined; tokenSymbol?: TokenItem['symbol'] }
     | undefined;
 
   useEffect(() => {
     if (navState?.chainEnum) {
       setChainTokenInfo({
         chainEnum: navState.chainEnum,
-        tokenName: navState.tokenName ?? null,
+        tokenSymbol: navState.tokenSymbol ?? null,
       });
     }
   }, [navState]);
@@ -97,7 +97,7 @@ function ReceiveScreen(): JSX.Element {
     () =>
       t('page.receive.title', {
         chain: findChainByEnum(chainTokenInfo.chainEnum)?.name,
-        token: chainTokenInfo.tokenName || t('global.assets'),
+        token: chainTokenInfo.tokenSymbol || t('global.assets'),
       }),
     [chainTokenInfo, t],
   );
