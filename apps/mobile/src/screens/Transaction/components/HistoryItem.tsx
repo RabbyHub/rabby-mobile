@@ -39,13 +39,14 @@ export const HistoryItem = React.memo(
         </View>
         <View style={styles.cardBody}>
           <TxInterAddressExplain
+            style={styles.txInterAddressExplain}
             data={data}
             projectDict={projectDict}
             tokenDict={tokenDict}
             cateDict={cateDict}
             isScam={isScam}
           />
-          <TxChange data={data} tokenDict={tokenDict} />
+          <TxChange style={styles.txChange} data={data} tokenDict={tokenDict} />
         </View>
 
         {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (
@@ -136,6 +137,8 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-foot'],
       minWidth: 0,
     },
+    txInterAddressExplain: { flexShrink: 1, width: '60%' },
+    txChange: { flexShrink: 0, maxWidth: '70%' },
     divider: {
       height: 0.5,
       backgroundColor: colors['neutral-line'],

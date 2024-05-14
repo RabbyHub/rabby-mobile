@@ -37,6 +37,7 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import { useToggleFocusingToken } from '../hooks/token';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
+import { makeDebugBorder } from '@/utils/styles';
 
 const ITEM_HEIGHT = 68;
 
@@ -107,7 +108,9 @@ const TokenRow = memo(
               style={StyleSheet.flatten([
                 styles.tokenSymbol,
                 data.id === SMALL_TOKEN_ID && styles.smallTokenSymbol,
-              ])}>
+              ])}
+              numberOfLines={1}
+              ellipsizeMode="tail">
               {data.symbol}
             </Text>
             {data._priceStr ? (
@@ -271,16 +274,6 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    tokenRowTokenWrap: {
-      flexShrink: 1,
-      flexDirection: 'row',
-      flexBasis: '50%',
-    },
-    tokenSymbol: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '600',
-    },
     tokenRowWrap: {
       height: 68,
       width: '100%',
@@ -288,6 +281,19 @@ const getStyle = (colors: AppColorsVariants) =>
       flexGrow: 1,
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    tokenRowTokenWrap: {
+      flexShrink: 1,
+      flexDirection: 'row',
+      maxWidth: '70%',
+    },
+    tokenSymbol: {
+      color: colors['neutral-title-1'],
+      fontSize: 16,
+      fontWeight: '600',
+      width: '100%',
+      // ...makeDebugBorder(),
     },
     tokenRowLogo: {
       marginRight: 12,
@@ -307,8 +313,8 @@ const getStyle = (colors: AppColorsVariants) =>
       fontWeight: '500',
     },
     tokenRowUsdValueWrap: {
-      flexShrink: 1,
-      flexBasis: '50%',
+      flexShrink: 0,
+      justifyContent: 'flex-end',
       alignItems: 'flex-end',
     },
     tokenRowAmount: {

@@ -55,7 +55,10 @@ const NameAndAddress = ({
           copyAddressRef.current?.doCopy();
         }}>
         {aliasName && (
-          <Text style={styles.aliasName} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={styles.aliasNameStyle}
+            numberOfLines={1}
+            ellipsizeMode="tail">
             {aliasName}
           </Text>
         )}
@@ -86,23 +89,22 @@ const getNameAndAddressStyle = createGetStyles(colors => {
       // ...makeDebugBorder('yellow'),
     },
     textWrapper: {
-      maxWidth: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
       flexShrink: 1,
     },
-    aliasName: {
+    aliasNameStyle: {
       fontSize: 12,
-      marginRight: 4,
+      marginRight: 0,
       color: colors['neutral-foot'],
       flexShrink: 1,
+      // ...makeDebugBorder(),
     },
     text: {
       fontSize: 12,
       color: colors['neutral-foot'],
       flexShrink: 0,
-      // ...makeDebugBorder(),
     },
     copyIcon: { marginLeft: 3, width: 14, height: 14, flexShrink: 0 },
   };
@@ -124,10 +126,10 @@ export const TxInterAddressExplain = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const projectName = (
+  const projectNameNode = (
     <>
       {project?.name ? (
-        <Text>{project.name}</Text>
+        <Text style={[styles.projectNameText]}>{project.name}</Text>
       ) : data.other_addr ? (
         <NameAndAddress address={data.other_addr} hideCopy={isScam} />
       ) : null}
@@ -156,7 +158,7 @@ export const TxInterAddressExplain = ({
         numberOfLines={1}>
         Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
         {`${getTokenSymbol(approveToken)} for `}
-        {projectName}
+        {projectNameNode}
       </Text>
     );
   } else {
@@ -168,10 +170,11 @@ export const TxInterAddressExplain = ({
           {cateDict[data.cate_id || '']?.name ??
             (data.tx?.name || t('page.transactions.explain.unknown'))}
         </Text>
-        <Text style={styles.actionDesc}>{projectName}</Text>
+        <View style={styles.actionDesc}>{projectNameNode}</View>
       </>
     );
   }
+
   return (
     <View style={[styles.container, style]}>
       <TxAvatar
@@ -193,14 +196,21 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     explain: {
       flexShrink: 1,
+      maxWidth: '100%',
+      // ...makeDebugBorder('red'),
     },
     actionTitle: {
       fontSize: 15,
       lineHeight: 18,
       color: colors['neutral-title1'],
       marginBottom: 4,
+      maxWidth: '100%',
     },
     actionDesc: {
+      maxWidth: '100%',
+      // ...makeDebugBorder('blue'),
+    },
+    projectNameText: {
       fontSize: 12,
       lineHeight: 14,
       color: colors['neutral-foot'],
