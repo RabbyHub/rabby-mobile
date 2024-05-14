@@ -9,6 +9,7 @@
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
+      android:screenOrientation="portrait"
       android:theme="@style/AppTheme">
       <!-- android:windowSoftInputMode="adjustPan":https://github.com/APSL/react-native-keyboard-aware-scroll-view?tab=readme-ov-file#android-support -->
       <activity
