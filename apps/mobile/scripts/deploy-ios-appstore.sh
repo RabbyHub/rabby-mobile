@@ -54,7 +54,9 @@ build_appstore() {
   yarn;
   yarn syncrnversion;
   cd $project_dir/ios;
-  bundle install && bundle exec pod install;
+  bundle install;
+  [ ! -z $CI ] && bundle exec pod cache clean --all;
+  bundle exec pod install;
   cd $project_dir;
   bundle exec fastlane ios appstore;
 }
