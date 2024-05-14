@@ -181,7 +181,10 @@ export const TransactionItem = ({
             explain={data.originTx?.explain}
           />
           {data?.isPending &&
-          [KEYRING_TYPE.LedgerKeyring].includes(currentAccount?.type!) ? (
+          ![
+            KEYRING_TYPE.WatchAddressKeyring,
+            KEYRING_TYPE.WalletConnectKeyring,
+          ].includes(currentAccount?.type!) ? (
             <TransactionAction
               canCancel={canCancel}
               onTxCancel={handleTxCancel}
