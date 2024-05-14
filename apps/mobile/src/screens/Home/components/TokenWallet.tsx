@@ -258,7 +258,10 @@ export const TokenWallet = ({
         onDismiss={() => {
           onFocusToken(null);
         }}
-        onTriggerDismissFromInternal={() => {
+        onTriggerDismissFromInternal={ctx => {
+          if (ctx?.reason === 'redirect-to') {
+            toggleShowSheetModal('smallTokenModalRef', false);
+          }
           toggleShowSheetModal('tokenDetailModalRef', false);
         }}
       />

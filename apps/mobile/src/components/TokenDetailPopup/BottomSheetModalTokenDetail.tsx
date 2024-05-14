@@ -330,6 +330,7 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
   };
 });
 
+type RedirectToType = 'Swap' | 'Send' | 'Receive';
 export const BottomSheetModalTokenDetail = React.forwardRef<
   BottomSheetModalMethods,
   {
@@ -337,7 +338,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     isAdded?: boolean;
     isTestnet?: boolean;
     onDismiss?: () => void;
-    onTriggerDismissFromInternal?: () => void;
+    onTriggerDismissFromInternal?: (ctx?: {
+      reason?: 'redirect-to';
+      data?: RedirectToType;
+    }) => void;
     hideOperationButtons?: boolean;
   }
 >(
@@ -480,8 +484,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     const navigation = useRabbyAppNavigation();
 
     const onRedirecTo = useCallback(
-      (type?: 'Swap' | 'Send' | 'Receive') => {
-        onTriggerDismissFromInternal?.();
+      (type?: RedirectToType) => {
+        onTriggerDismissFromInternal?.({ reason: 'redirect-to', data: type });
         const chainItem = !token?.chain
           ? null
           : findChainByServerID(token?.chain);
