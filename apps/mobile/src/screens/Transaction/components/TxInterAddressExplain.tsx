@@ -70,20 +70,6 @@ const NameAndAddress = ({
           ref={copyAddressRef}
           address={address}
           style={styles.copyIcon}
-          onToastSucess={ctx => {
-            toast.success(tctx => {
-              return (
-                <View
-                  style={{
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                  }}>
-                  <Text style={tctx.textStyle}>Copied</Text>
-                  <Text style={tctx.textStyle}>{ctx.address}</Text>
-                </View>
-              );
-            });
-          }}
         />
       )}
     </View>
@@ -212,6 +198,7 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 18,
       color: colors['neutral-title1'],
+      marginBottom: 4,
     },
     actionDesc: {
       fontSize: 12,

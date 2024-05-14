@@ -1,5 +1,5 @@
 import React, { useCallback, useImperativeHandle } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { SvgProps } from 'react-native-svg';
 
@@ -40,7 +40,7 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
       ({ address }) => {
         if (propOnToastSucess) propOnToastSucess({ address });
         else {
-          toast.success('Copied');
+          toastCopyAddressSuccess(address);
         }
       },
       [propOnToastSucess],
@@ -68,6 +68,26 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
     );
   },
 );
+
+export function toastCopyAddressSuccess(address?: string) {
+  if (!address) {
+    toast.success('Copied');
+    return;
+  }
+
+  toast.success(tctx => {
+    return (
+      <View
+        style={{
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+        }}>
+        <Text style={tctx.textStyle}>Copied</Text>
+        <Text style={tctx.textStyle}>{address}</Text>
+      </View>
+    );
+  });
+}
 
 const getStyles = createGetStyles(colors => {
   return {

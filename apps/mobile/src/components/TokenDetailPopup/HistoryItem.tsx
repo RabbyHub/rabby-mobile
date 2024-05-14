@@ -61,7 +61,6 @@ export const HistoryItem = React.memo(
         <View style={styles.cardBody}>
           <TxInterAddressExplain
             style={styles.txInterAddressExplain}
-            actionTitleStyle={styles.txInterAddressExplainActionTitleStyle}
             data={data}
             projectDict={projectDict}
             tokenDict={tokenDict}
