@@ -61,12 +61,14 @@ export const ConnectLedger: React.FC<{
       });
     } catch (err: any) {
       // maybe session is disconnect, just try to reconnect
-      if (loopCountRef.current < 3) {
+      if (!err.message && loopCountRef.current < 3) {
         loopCountRef.current++;
         console.log('checkEthApp isConnected error', err);
         return await checkEthApp();
       }
-      toast.show(t('page.newAddress.ledger.error.lockedOrNoEthApp'));
+      toast.show(
+        err.message || t('page.newAddress.ledger.error.lockedOrNoEthApp'),
+      );
       setCurrentScreen('select');
       console.error('checkEthApp', err);
       throw err;
