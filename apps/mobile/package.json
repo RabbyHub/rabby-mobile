@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "repository": {
     "type": "git",
@@ -52,7 +52,7 @@
     "@rabby-wallet/eth-keyring-ledger": "workspace:^",
     "@rabby-wallet/eth-keyring-onekey": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "*",
-    "@rabby-wallet/eth-walletconnect-keyring": "beta",
+    "@rabby-wallet/eth-walletconnect-keyring": "2.1.3",
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-api": "0.7.12",
@@ -74,7 +74,7 @@
     "@rematch/core": "^2.2.0",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
-    "@sentry/react-native": "^5.18.0",
+    "@sentry/react-native": "^5.19.3",
     "@types/lodash.debounce": "^4.0.9",
     "@types/pump": "^1.1.3",
     "@types/through2": "^2.0.41",

@@ -28,9 +28,9 @@ BUILD_DATE=`date '+%Y%m%d_%H%M%S'`
 version_bundle_name="$BUILD_DATE-${android_version_name}.${android_version_code}"
 version_bundle_suffix=""
 apk_name="rabby-mobile.apk"
-deployment_local_dir="$script_dir/deployments"
+deployment_local_dir="$script_dir/deployments/android"
 
-rm -rf $deployment_local_dir/android && mkdir -p $deployment_local_dir/android;
+rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 build_alpha() {
   yarn;
@@ -54,7 +54,7 @@ build_appstore() {
 }
 
 # ============ prepare version.json :start ============== #
-unix_replace_variables $script_dir/tpl/android/version.json $deployment_local_dir/android/version.json \
+unix_replace_variables $script_dir/tpl/android/version.json $deployment_local_dir/version.json \
   --var-APP_VER_CODE=$android_version_code \
   --var-APP_VER="$android_version_name"
 # ============ prepare version.json :end ============== #
@@ -68,7 +68,7 @@ possible_changelogs=(
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-android] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/android/
+    cp $changelog $deployment_local_dir/
     break
   fi
 done
@@ -81,14 +81,14 @@ if [ $buildchannel == "appstore" ]; then
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
   [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore
 
-  cp $android_export_target $deployment_local_dir/android/
+  cp $android_export_target $deployment_local_dir/
 else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
   [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_alpha
 
-  cp $android_export_target $deployment_local_dir/android/$apk_name
+  cp $android_export_target $deployment_local_dir/$apk_name
 fi
 
 # # leave here for debug
@@ -128,10 +128,10 @@ echo "[deploy-android] start sync..."
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-android] will be backup at $backup_s3_dir (not public)"
-  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
-  aws s3 sync $deployment_local_dir/android $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.apk" --acl authenticated-read --content-type application/vnd.android.package-archive --exact-timestamps
+  aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.aab" --acl authenticated-read --content-type application/x-authorware-bin --exact-timestamps
 
   if [ $buildchannel == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"

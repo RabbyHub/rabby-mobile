@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
+		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
@@ -34,6 +35,7 @@
 		00E356EE1AD99517003FC87E /* RabbyMobileTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RabbyMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
+		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* RabbyMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RabbyMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = RabbyMobile/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = RabbyMobile/AppDelegate.mm; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */,
 				ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* RabbyMobile */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -265,6 +268,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */,
 				C0BB5FE02FF340589CA2BDC4 /* InpageBridgeWeb3.js in Resources */,
