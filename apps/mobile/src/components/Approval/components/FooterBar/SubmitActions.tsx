@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { Tip } from '@/components/Tip';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { GasLessAnimatedWrapper } from './GasLessComponents';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -35,6 +36,7 @@ export const SubmitActions: React.FC<Props> = ({
   onCancel,
   tooltipContent,
   enableTooltip,
+  gasLess,
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(false);
@@ -51,15 +53,22 @@ export const SubmitActions: React.FC<Props> = ({
         // @ts-expect-error
         <Tip content={enableTooltip ? tooltipContent : undefined}>
           <View style={styles.buttonWrapper}>
-            <Button
-              disabled={disabledProcess}
-              type="primary"
-              buttonStyle={styles.button}
-              titleStyle={styles.buttonText}
-              disabledStyle={styles.buttonDisabled}
-              onPress={handleClickSign}
+            <GasLessAnimatedWrapper
               title={t('page.signFooterBar.signAndSubmitButton')}
-            />
+              titleStyle={styles.buttonText}
+              buttonStyle={styles.button}
+              gasLess={gasLess}
+              showOrigin={!gasLess && !disabledProcess}>
+              <Button
+                disabled={disabledProcess}
+                type="primary"
+                buttonStyle={styles.button}
+                titleStyle={styles.buttonText}
+                disabledStyle={styles.buttonDisabled}
+                onPress={handleClickSign}
+                title={t('page.signFooterBar.signAndSubmitButton')}
+              />
+            </GasLessAnimatedWrapper>
           </View>
         </Tip>
       )}

@@ -66,7 +66,6 @@ import {
   getRecommendNonce,
   getRecommendGas,
   getNativeTokenBalance,
-  getGasLimitBaseAccountBalance,
   explainGas,
 } from './calc';
 import { TxTypeComponent } from './TxTypeComponent';
@@ -232,6 +231,18 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       priority_price: null,
     },
   ]);
+
+  const [currentAccountType, setCurrentAccountType] = useState<
+    undefined | string
+  >();
+  const [gasLessLoading, setGasLessLoading] = useState(false);
+  const [canUseGasLess, setCanUseGasLess] = useState(false);
+  const [useGasLess, setUseGasLess] = useState(false);
+
+  // const [isGnosisAccount, setIsGnosisAccount] = useState(false);
+  // const [isCoboArugsAccount, setIsCoboArugsAccount] = useState(false);
+  const isGnosisAccount = false;
+  const isCoboArugsAccount = false;
   const scrollRef = useRef<HTMLDivElement>(null);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
@@ -344,6 +355,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     nativeTokenPrice: txDetail?.native_token.price || 0,
     tx,
     gasLimit,
+    isReady,
   });
 
   const checkErrors = useCheckGasAndNonce({
@@ -359,6 +371,38 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     nativeTokenBalance,
     recommendGasLimitRatio,
   });
+
+  const isGasNotEnough = useMemo(() => {
+    return checkErrors.some(e => e.code === 3001);
+  }, [checkErrors]);
+
+  const isSupportedAddr = useMemo(() => {
+    const isNotWalletConnect =
+      currentAccountType !== KEYRING_TYPE.WalletConnectKeyring;
+    const isNotWatchAddress =
+      currentAccountType !== KEYRING_TYPE.WatchAddressKeyring;
+
+    return isNotWatchAddress && isNotWalletConnect;
+  }, [currentAccountType]);
+
+  const [noCustomRPC, setNoCustomRPC] = useState(true);
+
+  // useEffect(() => {
+  //   const hasCustomRPC = async () => {
+  //     if (chain?.enum) {
+  //       const b = await wallet.hasCustomRPC(chain?.enum);
+  //       setNoCustomRPC(!b);
+  //     }
+  //   };
+  //   hasCustomRPC();
+  // }, [chain?.enum]);
+
+  const showGasLess = useMemo(() => {
+    return isGasNotEnough;
+    // return (
+    //   chainSupportGasLess && isGasNotEnough && isSupportedAddr && noCustomRPC
+    // );
+  }, [isGasNotEnough]);
 
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
@@ -433,21 +477,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         }
         if (tx.gas && origin === INTERNAL_REQUEST_ORIGIN) {
           setGasLimit(intToHex(Number(tx.gas))); // use origin gas as gasLimit when tx is an internal tx with gasLimit(i.e. for SendMax native token)
-          reCalcGasLimitBaseAccountBalance({
-            nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-            tx: {
-              ...tx,
-              nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1', // set a mock nonce for explain if dapp not set it
-              data: tx.data,
-              value: tx.value || '0x0',
-              gas: tx.gas || '', // set gas limit if dapp not set
-            },
-            gasPrice: selectedGas?.price || 0,
-            customRecommendGasLimit: gas.toNumber(),
-            customGasLimit: Number(tx.gas),
-            customRecommendGasLimitRatio: 1,
-            block,
-          });
         } else if (!gasLimit) {
           // use server response gas limit
           const ratio =
@@ -457,21 +486,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             ? gas.times(ratio).toFixed(0)
             : gas.toFixed(0);
           setGasLimit(intToHex(Number(recommendGasLimit)));
-          reCalcGasLimitBaseAccountBalance({
-            nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-            tx: {
-              ...tx,
-              nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1', // set a mock nonce for explain if dapp not set it
-              data: tx.data,
-              value: tx.value || '0x0',
-              gas: tx.gas || '', // set gas limit if dapp not set
-            },
-            gasPrice: selectedGas?.price || 0,
-            customRecommendGasLimit: gas.toNumber(),
-            customGasLimit: Number(recommendGasLimit),
-            customRecommendGasLimitRatio: needRatio ? ratio : 1,
-            block,
-          });
         }
         setTxDetail(res);
 
@@ -650,6 +664,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         pushType: pushInfo.type,
         lowGasDeadline: pushInfo.lowGasDeadline,
         reqId,
+        isGasLess: useGasLess,
       });
 
       return;
@@ -722,18 +737,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     setGasLimit(intToHex(gas.gasLimit));
     if (Number(gasLimit) !== gas.gasLimit) {
       setManuallyChangeGasLimit(true);
-    } else {
-      reCalcGasLimitBaseAccountBalance({
-        gasPrice: gas.price,
-        tx: {
-          ...tx,
-          gasPrice: intToHex(Math.round(gas.price)),
-          gas: intToHex(gas.gasLimit),
-          nonce: afterNonce,
-        },
-        nonce: afterNonce,
-        block: blockInfo,
-      });
     }
     setRealNonce(afterNonce);
 
@@ -785,6 +788,45 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     }
   };
 
+  const checkGasLessStatus = async () => {
+    const sendUsdValue =
+      txDetail?.balance_change.send_token_list?.reduce((sum, item) => {
+        return new BigNumber(item.raw_amount || 0)
+          .div(10 ** item.decimals)
+          .times(item.price || 0)
+          .plus(sum);
+      }, new BigNumber(0)) || new BigNumber(0);
+    const receiveUsdValue =
+      txDetail?.balance_change?.receive_token_list.reduce((sum, item) => {
+        return new BigNumber(item.raw_amount || 0)
+          .div(10 ** item.decimals)
+          .times(item.price || 0)
+          .plus(sum);
+      }, new BigNumber(0)) || new BigNumber(0);
+    try {
+      setGasLessLoading(true);
+      const res = await openapi.gasLessTxCheck({
+        tx: {
+          ...tx,
+          nonce: realNonce,
+          gasPrice: tx.gasPrice || tx.maxFeePerGas,
+          gas: gasLimit,
+        },
+        usdValue: Math.max(sendUsdValue.toNumber(), receiveUsdValue.toNumber()),
+        preExecSuccess: txDetail?.pre_exec.success || false,
+        gasUsed: txDetail?.gas?.gas_used || 0,
+      });
+
+      console.log('gasLessTxCheck', res);
+      setCanUseGasLess(res.is_gasless);
+      setGasLessLoading(false);
+    } catch (error) {
+      console.error('gasLessTxCheck error', error);
+
+      setGasLessLoading(false);
+    }
+  };
+
   const handleIgnoreAllRules = () => {
     apiApprovalSecurityEngine.processAllRules(
       engineResults.map(result => result.id),
@@ -820,6 +862,9 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     apiApprovalSecurityEngine.resetCurrentTx();
     try {
       const currentAccount = (await preferenceService.getCurrentAccount())!;
+
+      setCurrentAccountType(currentAccount.type);
+
       const is1559 =
         support1559 &&
         SUPPORT_1559_KEYRING_TYPE.includes(currentAccount.type as any);
@@ -919,51 +964,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     }
   };
 
-  const reCalcGasLimitBaseAccountBalance = async ({
-    gasPrice,
-    nonce,
-    tx,
-    customRecommendGasLimit,
-    customGasLimit,
-    customRecommendGasLimitRatio,
-    block,
-  }: {
-    tx: Tx;
-    nonce: number | string | BigNumber;
-    gasPrice: number | string | BigNumber;
-    customRecommendGasLimit?: number;
-    customGasLimit?: number;
-    customRecommendGasLimitRatio?: number;
-    block: BlockInfo | null;
-  }) => {
-    const calcGasLimit = customGasLimit || gasLimit;
-    const calcGasLimitRatio =
-      customRecommendGasLimitRatio || recommendGasLimitRatio;
-    const calcRecommendGasLimit = customRecommendGasLimit || recommendGasLimit;
-    if (!calcGasLimit) return;
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
-    const { pendings } = await transactionHistoryService.getList(
-      currentAccount.address,
-    );
-    let res = getGasLimitBaseAccountBalance({
-      gasPrice,
-      nonce,
-      pendingList: pendings.filter(item => item.chainId === chainId),
-      nativeTokenBalance,
-      tx,
-      recommendGasLimit: calcRecommendGasLimit,
-      recommendGasLimitRatio: calcGasLimitRatio,
-    });
-
-    if (block && res > Number(block.gasLimit)) {
-      res = Math.floor(Number(block.gasLimit) * 0.95); // use 95% of block gasLimit when gasLimit greater than block gasLimit
-    }
-    if (!new BigNumber(res).eq(calcGasLimit)) {
-      setGasLimit(`0x${new BigNumber(res).toNumber().toString(16)}`);
-      setManuallyChangeGasLimit(false);
-    }
-  };
-
   const executeSecurityEngine = async () => {
     const ctx = formatSecurityEngineCtx({
       actionData: actionData,
@@ -1010,6 +1010,41 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   // }, [isReady]);
 
   useEffect(() => {
+    if (
+      isReady &&
+      !gasExplainResponse.isExplainingGas &&
+      !isGnosisAccount &&
+      !isCoboArugsAccount
+    ) {
+      let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
+      sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
+        ? new BigNumber(0)
+        : sendNativeTokenAmount;
+      const gasNotEnough = gasExplainResponse.maxGasCostAmount
+        .plus(sendNativeTokenAmount.div(1e18))
+        .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18));
+      if (gasNotEnough && isSupportedAddr && noCustomRPC) {
+        checkGasLessStatus();
+      } else {
+        setGasLessLoading(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isReady,
+    nativeTokenBalance,
+    gasLimit,
+    tx,
+    realNonce,
+    txDetail,
+    isSupportedAddr,
+    noCustomRPC,
+    gasExplainResponse,
+    isGnosisAccount,
+    isCoboArugsAccount,
+  ]);
+
+  useEffect(() => {
     if (!inited) return;
     explain();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1035,7 +1070,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-
   return (
     <BottomSheetView style={styles.wrapper}>
       <ScrollView style={styles.approvalTx}>
@@ -1127,6 +1161,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       </ScrollView>
       {txDetail && (
         <FooterBar
+          canUseGasLess={canUseGasLess}
+          showGasLess={!gasLessLoading && isReady && showGasLess}
+          useGasLess={showGasLess && canUseGasLess && useGasLess}
+          enableGasLess={() => setUseGasLess(true)}
           hasShadow={footerShowShadow}
           origin={origin}
           originLogo={params.session.icon}
@@ -1139,11 +1177,16 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           onSubmit={() => handleAllow()}
           onIgnoreAllRules={handleIgnoreAllRules}
           enableTooltip={
-            !canProcess ||
-            !!checkErrors.find(item => item.level === 'forbidden')
+            // 3001 use gasless tip
+            checkErrors && checkErrors?.[0]?.code === 3001
+              ? false
+              : !canProcess ||
+                !!checkErrors.find(item => item.level === 'forbidden')
           }
           tooltipContent={
-            checkErrors.find(item => item.level === 'forbidden')
+            checkErrors && checkErrors?.[0]?.code === 3001
+              ? undefined
+              : checkErrors.find(item => item.level === 'forbidden')
               ? checkErrors.find(item => item.level === 'forbidden')!.msg
               : cantProcessReason
           }
