@@ -70,14 +70,15 @@ const TxChangeItem = ({
 export const TxChange = ({
   data,
   tokenDict,
+  style,
 }: {
   data: TxDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
-}) => {
+} & RNViewProps) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {data?.sends?.map(item => (
         <TxChangeItem
           isSend

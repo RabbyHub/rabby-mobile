@@ -31,6 +31,7 @@ import { PointScreen } from '../Points';
 import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeDebugBorder } from '@/utils/styles';
+import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -224,6 +225,8 @@ export default function BottomTabNavigator() {
 
       <OpenedDappWebViewStub />
       {/* <OpenedWebViewsStub /> */}
+
+      <ApprovalTokenDetailSheetModalStub />
 
       <WebViewControlPreload />
     </>

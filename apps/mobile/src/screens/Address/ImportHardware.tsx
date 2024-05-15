@@ -34,6 +34,7 @@ import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 const { isSameAddress } = addressUtils;
 
@@ -286,7 +287,7 @@ export const ImportHardwareScreen = () => {
 
   const onCopy = React.useCallback((address: string) => {
     Clipboard.setString(address);
-    toast.success('Copied');
+    toastCopyAddressSuccess(address);
   }, []);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createGetStyles } from '@/utils/styles';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SwapHeader } from './components/Header';
@@ -12,8 +12,8 @@ import { ChainInfo } from '../Send/components/ChainInfo';
 import { RcIconSwapArrow } from '@/assets/icons/swap';
 import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
 import { useCurrentAccount } from '@/hooks/account';
-import { findChainByServerID } from '@/utils/chain';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { CHAINS, CHAINS_ENUM, Chain } from '@debank/common';
 import TokenSelect from './components/TokenSelect';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount, formatUsdValue } from '@/utils/number';
@@ -32,6 +32,9 @@ import { Slippage } from './components/Slippage';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import { dexSwap } from './hooks/swap';
 import { colord } from 'colord';
+import { RootNames } from '@/constant/layout';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import useMount from 'react-use/lib/useMount';
 
 type SwapProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -94,6 +97,21 @@ const Swap = () => {
     slippageValidInfo,
     expired,
   } = useTokenPair(currentAccount!.address);
+
+  const navState = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.Swap)?.params,
+  ) as
+    | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
+    | undefined;
+
+  useMount(() => {
+    if (!navState?.chainEnum) return;
+
+    const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
+    switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
+      payTokenId: navState?.tokenId,
+    });
+  });
 
   const miniReceivedAmount = useMemo(() => {
     if (activeProvider?.quote?.toTokenAmount) {

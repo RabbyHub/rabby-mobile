@@ -14,7 +14,7 @@ type AssetAvatarProps = {
   chainIconPosition?: 'tr' | 'br' | 'tl' | 'bl';
   chainSize?: number;
   failedPlaceholder?: ReactNode;
-  style?: ViewStyle;
+  style?: RNViewProps['style'];
   logoStyle?: ViewStyle;
 };
 

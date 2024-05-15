@@ -1,9 +1,15 @@
-import { useMemo } from 'react';
-import { Text, StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import {
+  Text,
+  StyleSheet,
+  View,
+  PressableProps,
+  GestureResponderEvent,
+} from 'react-native';
 import { Platform, StatusBar, Pressable } from 'react-native';
 import Tooltip, { TooltipProps } from 'react-native-walkthrough-tooltip';
 import { colord } from 'colord';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { useSwitch } from '@/hooks/useSwitch';
 import { AppColorsVariants } from '@/constant/theme';
 
@@ -11,19 +17,28 @@ type TipProps = Omit<TooltipProps, 'content'> & {
   content: string | TooltipProps['content'];
   hideArrow?: boolean;
   isLight?: boolean;
+  pressableProps?: Omit<PressableProps, 'onPress'> & {
+    onPress?: (ctx: {
+      event: GestureResponderEvent;
+      turnOn: () => void;
+    }) => void;
+  };
+  noPressable?: boolean;
 };
 
 export const Tip = ({
   content,
   tooltipStyle,
+  pressableProps,
   contentStyle,
   hideArrow,
   arrowSize,
   isLight,
+  children,
+  noPressable = false,
   ...rest
 }: TipProps) => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { colors, styles } = useThemeStyles(getStyle);
 
   const { on, turnOn, turnOff } = useSwitch();
 
@@ -43,7 +58,7 @@ export const Tip = ({
     ) : (
       content
     );
-  }, [content, styles.contentText]);
+  }, [content, isLight, colors, styles.content, styles.contentText]);
 
   const controlled = useMemo(
     () => typeof rest.isVisible !== 'undefined',
@@ -53,6 +68,18 @@ export const Tip = ({
   const _arrowSize = useMemo(
     () => (hideArrow ? { width: 0, height: 0 } : arrowSize),
     [arrowSize, hideArrow],
+  );
+
+  const handleOnPress = useCallback<PressableProps['onPress'] & object>(
+    evt => {
+      if (typeof pressableProps?.onPress === 'function') {
+        pressableProps.onPress({ event: evt, turnOn });
+        return;
+      }
+
+      turnOn();
+    },
+    [pressableProps, turnOn],
   );
 
   return (
@@ -67,6 +94,9 @@ export const Tip = ({
       }
       onClose={turnOff}
       content={_content}
+      showChildInTooltip={false}
+      arrowSize={_arrowSize}
+      {...rest}
       contentStyle={StyleSheet.flatten([
         styles.tooltipContent,
         contentStyle,
@@ -74,15 +104,16 @@ export const Tip = ({
           backgroundColor: colors['neutral-bg-1'],
         },
       ])}
-      tooltipStyle={StyleSheet.flatten([styles.tooltip, tooltipStyle])}
-      showChildInTooltip={false}
-      arrowSize={_arrowSize}
-      {...rest}>
-      {controlled ? (
-        rest.children
+      tooltipStyle={StyleSheet.flatten([styles.tooltip, tooltipStyle])}>
+      {controlled || noPressable ? (
+        children
       ) : (
-        <Pressable hitSlop={10} onPress={turnOn}>
-          {rest.children}
+        <Pressable
+          hitSlop={10}
+          {...pressableProps}
+          style={StyleSheet.flatten([pressableProps?.style])}
+          onPress={handleOnPress}>
+          {children}
         </Pressable>
       )}
     </Tooltip>

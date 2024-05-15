@@ -13,7 +13,6 @@ export type RootStackParamsList = {
   [RootNames.StackRoot]?: NavigatorScreenParams<BottomTabParamsList>;
   [RootNames.StackGetStarted]?: NavigatorScreenParams<GetStartedNavigatorParamsList>;
   [RootNames.NotFound]?: {};
-  [RootNames.Receive]?: {};
   [RootNames.AccountTransaction]: NavigatorScreenParams<AccountNavigatorParamList>;
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
@@ -66,6 +65,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.Swap]?: {};
+  [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.GasTopUp]?: {};
 };

@@ -45,6 +45,7 @@ import {
   RootStackParamsList,
 } from '@/navigation-type';
 import { toast } from '@/components/Toast';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -204,7 +205,7 @@ const AddressInfo = (props: AddressInfoProps) => {
           <TouchableOpacity
             onPress={useCallback(() => {
               Clipboard.setString(account.address);
-              toast.success('Copied');
+              toastCopyAddressSuccess(account.address);
             }, [account?.address])}
             style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
             <Text style={styles.addrText} textBreakStrategy="simple">

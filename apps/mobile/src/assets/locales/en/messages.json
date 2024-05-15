@@ -518,7 +518,7 @@
       }
     },
     "receive": {
-      "title": "Receive assets on {{chain}}",
+      "title": "Receive {{token}} on {{chain}}",
       "watchModeAlert": "This is a watch-only address. Are you sure to use it to receive?"
     },
     "sendToken": {
