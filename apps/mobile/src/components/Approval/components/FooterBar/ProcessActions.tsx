@@ -27,7 +27,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const SubmitActions: React.FC<Props> = ({
+export const ProcessActions: React.FC<Props> = ({
   onSubmit,
   onCancel,
   disabledProcess,

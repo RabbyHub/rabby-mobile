@@ -8,8 +8,6 @@ import { default as RcIconLogo } from '@/assets/icons/sign/tx/rabby.svg';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 
-const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
-
 import {
   View,
   Text,
@@ -34,6 +32,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { renderText } from '@/utils/renderNode';
+
+const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
 export function GasLessNotEnough() {
   const { t } = useTranslation();
