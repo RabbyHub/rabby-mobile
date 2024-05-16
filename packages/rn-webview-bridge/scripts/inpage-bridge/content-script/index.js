@@ -1,4 +1,5 @@
 /* global inpageBundle */
+/* or gloabl fn: injectRabbyPageProvider */
 
 // const isAndroid = window.navigator.userAgent.includes('Android');
 
@@ -35,7 +36,7 @@ async function injectProcess() {
        * we should retry it.
        */
       if (!shouldInject()) return ;
-      injectScript(inpageBundle);
+      injectScript();
 
       injectionState.error = null;
     } catch (err) {
@@ -46,7 +47,7 @@ async function injectProcess() {
   } while (injectionState.error && injectionState.retry < RETRY_LIMIT)
 
   if (injectionState.error) {
-    console.error(`Rabby script injection failed, total retry count: ${injectionState.retry}`, err);
+    console.error(`Rabby script injection failed, total retry count: ${injectionState.retry}`, injectionState.error);
   } else if (injectionState.retry) {
     console.warn(`Rabby script injection succeeded after ${injectionState.retry} retries`);
   }
@@ -74,17 +75,25 @@ async function connectOnDomReady() {
  *
  * @param {string} content - Code to be executed in the current document
  */
-function injectScript(content) {
-  const container = document.head || document.documentElement;
+function injectScript() {
+  try {
+    if (typeof injectRabbyPageProvider === 'function') {
+      injectRabbyPageProvider();
+    } else if (typeof inpageBundle === 'string') {
+      const container = document.head || document.documentElement;
 
-  // synchronously execute script in page context
-  const scriptTag = document.createElement('script');
-  scriptTag.setAttribute('async', false);
-  scriptTag.textContent = content;
-  container.insertBefore(scriptTag, container.children[0]);
+      // synchronously execute script in page context
+      const scriptTag = document.createElement('script');
+      scriptTag.setAttribute('async', false);
+      scriptTag.textContent = inpageBundle;
+      container.insertBefore(scriptTag, container.children[0]);
 
-  // script executed; remove script element from DOM
-  container.removeChild(scriptTag);
+      // script executed; remove script element from DOM
+      container.removeChild(scriptTag);
+    }
+  } catch (err) {
+    console.error('Rabby script injection failed', err);
+  }
 }
 
 /**
