@@ -336,6 +336,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   {
     token?: AbstractPortfolioToken | null;
     isAdded?: boolean;
+    canClickToken?: boolean;
     isTestnet?: boolean;
     onDismiss?: () => void;
     onTriggerDismissFromInternal?: (ctx?: {
@@ -349,6 +350,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     {
       token,
       isAdded,
+      canClickToken,
       onDismiss,
       onTriggerDismissFromInternal,
       hideOperationButtons = false,
@@ -466,16 +468,20 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       await reloadAsync();
     }, [reloadAsync]);
 
-    const renderItem = useCallback(({ item }: { item: TxDisplayItem }) => {
-      return (
-        <HistoryItem
-          data={item}
-          projectDict={item.projectDict}
-          cateDict={item.cateDict}
-          tokenDict={item.tokenDict || {}}
-        />
-      );
-    }, []);
+    const renderItem = useCallback(
+      ({ item }: { item: TxDisplayItem }) => {
+        return (
+          <HistoryItem
+            data={item}
+            canClickToken={canClickToken}
+            projectDict={item.projectDict}
+            cateDict={item.cateDict}
+            tokenDict={item.tokenDict || {}}
+          />
+        );
+      },
+      [canClickToken],
+    );
 
     const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
       return `${item.chain}/${item.cate_id}/${item.id}/${idx}`;

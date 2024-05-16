@@ -64,26 +64,6 @@ export const testnetTokensAtom = atom({
   customize: [] as AbstractPortfolioToken[],
   blocked: [] as AbstractPortfolioToken[],
 });
-const focusingTokenAtom = atom({
-  token: null as AbstractPortfolioToken | null,
-  isTest: false,
-});
-
-export function useToggleFocusingToken() {
-  const [focusingToken, setFocusingToken] = useAtom(focusingTokenAtom);
-
-  const onFocusToken = useCallback(
-    (token: AbstractPortfolioToken | null) => {
-      setFocusingToken({ token, isTest: false });
-    },
-    [setFocusingToken],
-  );
-
-  return {
-    focusingToken,
-    onFocusToken,
-  };
-}
 
 export const useTokens = (
   userAddr: string | undefined,

@@ -34,10 +34,10 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { useToggleFocusingToken } from '../hooks/token';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { makeDebugBorder } from '@/utils/styles';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 
 const ITEM_HEIGHT = 68;
 
@@ -153,14 +153,18 @@ export const TokenWallet = ({
   }, [isPortfoliosLoading, tokens]);
 
   const {
-    sheetModalRefs: { smallTokenModalRef, tokenDetailModalRef },
+    sheetModalRefs: { smallTokenModalRef },
     toggleShowSheetModal,
   } = useSheetModals({
     smallTokenModalRef: useRef<BottomSheetModal>(null),
-    tokenDetailModalRef: useRef<BottomSheetModal>(null),
   });
 
-  const { onFocusToken, focusingToken } = useToggleFocusingToken();
+  const {
+    sheetModalRef: tokenDetailModalRef,
+    openTokenDetailPopup,
+    cleanFocusingToken,
+    focusingToken,
+  } = useGeneralTokenDetailSheetModal();
 
   const handleOpenSmallToken = React.useCallback(() => {
     smallTokenModalRef?.current?.present();
@@ -168,11 +172,9 @@ export const TokenWallet = ({
 
   const handleOpenTokenDetail = React.useCallback(
     (token: AbstractPortfolioToken) => {
-      // toast.show('Coming Soon :)');
-      onFocusToken(token);
-      tokenDetailModalRef?.current?.present();
+      openTokenDetailPopup(token);
     },
-    [onFocusToken, tokenDetailModalRef],
+    [openTokenDetailPopup],
   );
 
   const { mainTokens, smallTokens } = useMergeSmallTokens(tokens);
@@ -257,15 +259,16 @@ export const TokenWallet = ({
 
       <BottomSheetModalTokenDetail
         ref={tokenDetailModalRef}
-        token={focusingToken.token}
+        token={focusingToken}
         onDismiss={() => {
-          onFocusToken(null);
+          cleanFocusingToken({ noNeedCloseModal: true });
         }}
         onTriggerDismissFromInternal={ctx => {
           if (ctx?.reason === 'redirect-to') {
             toggleShowSheetModal('smallTokenModalRef', false);
           }
-          toggleShowSheetModal('tokenDetailModalRef', false);
+          // toggleShowSheetModal('tokenDetailModalRef', false);
+          cleanFocusingToken();
         }}
       />
     </>

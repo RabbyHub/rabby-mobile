@@ -8,11 +8,48 @@ import { AbstractPortfolioToken } from '@/screens/Home/types';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 
 const popups = {
+  generalTokenDetailPopup: {
+    atom: atom(null as AbstractPortfolioToken | null),
+    ref: React.createRef<BottomSheetModalMethods>(),
+  },
   tokenDetailPopupOnSendToken: {
     atom: atom(null as AbstractPortfolioToken | null),
     ref: React.createRef<BottomSheetModalMethods>(),
   },
 };
+
+export function useGeneralTokenDetailSheetModal() {
+  const [focusingToken, onFocusToken] = useAtom(
+    popups.generalTokenDetailPopup.atom,
+  );
+  const { sheetModalRef, toggleShowSheetModal } = useSheetModal(
+    popups.generalTokenDetailPopup.ref,
+  );
+
+  const openTokenDetailPopup = useCallback(
+    (token: TokenItem | AbstractPortfolioToken) => {
+      onFocusToken(ensureAbstractPortfolioToken(token));
+      toggleShowSheetModal(true);
+    },
+    [onFocusToken, toggleShowSheetModal],
+  );
+
+  const cleanFocusingToken = useCallback(
+    (options?: { noNeedCloseModal?: boolean }) => {
+      if (!options?.noNeedCloseModal) toggleShowSheetModal(false);
+
+      onFocusToken(null);
+    },
+    [onFocusToken, toggleShowSheetModal],
+  );
+
+  return {
+    focusingToken,
+    sheetModalRef,
+    openTokenDetailPopup,
+    cleanFocusingToken,
+  };
+}
 
 export function useTokenDetailSheetModalOnApprovals() {
   const [focusingToken, onFocusToken] = useAtom(
@@ -51,6 +88,7 @@ export default function ApprovalTokenDetailSheetModalStub() {
   return (
     <>
       <BottomSheetModalTokenDetail
+        canClickToken={false}
         hideOperationButtons
         ref={sheetModalRef}
         token={focusingToken}

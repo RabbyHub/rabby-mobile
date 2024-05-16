@@ -7,35 +7,45 @@ import {
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+} from 'react-native';
 import RcIconUnknown from '@/assets/icons/token/default.svg';
 import { numberWithCommasIsLtOne } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
+import TokenLabel from './TokenLabel';
 
 const TxChangeItem = ({
   item,
   tokenDict,
   data,
   isSend,
+  canClickToken = true,
 }: {
   data: TxHistoryItem;
   item: TxHistoryItem['sends'][0] | TxDisplayItem['receives'][0];
   tokenDict: TxDisplayItem['tokenDict'];
   isSend?: boolean;
+  canClickToken?: boolean;
 }) => {
-  const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const tokenId = item.token_id;
   const tokenUUID = `${data.chain}_token:${tokenId}`;
   const token = tokenDict[tokenId] || tokenDict[tokenUUID];
   const isNft = item.token_id?.length === 32;
-  const symbol = getTokenSymbol(token);
-  const name = isNft
-    ? token?.name ||
-      (symbol ? `${symbol} ${token?.inner_id}` : t('global.unknownNFT'))
-    : symbol;
+
+  const tokenChangeStyle = StyleSheet.flatten([
+    styles.text,
+    isSend ? styles.textNegative : null,
+  ]) as StyleProp<TextStyle>;
+
   return (
     <View style={styles.item}>
       {isNft ? (
@@ -58,22 +68,29 @@ const TxChangeItem = ({
       ) : (
         <RcIconUnknown width={14} height={14} />
       )}
-      <Text
-        style={[styles.text, isSend ? styles.textNegative : null]}
-        numberOfLines={1}>
+
+      <Text style={[tokenChangeStyle]} numberOfLines={1}>
         {isSend ? '-' : '+'}{' '}
-        {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)} {name}
+        {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)}
       </Text>
+      <TokenLabel
+        canClickToken={canClickToken}
+        style={[styles.tokenLabel, tokenChangeStyle]}
+        token={token}
+        isNft={isNft}
+      />
     </View>
   );
 };
 export const TxChange = ({
   data,
   tokenDict,
+  canClickToken,
   style,
 }: {
   data: TxDisplayItem;
   tokenDict: TxDisplayItem['tokenDict'];
+  canClickToken?: boolean;
 } & RNViewProps) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -82,6 +99,7 @@ export const TxChange = ({
       {data?.sends?.map(item => (
         <TxChangeItem
           isSend
+          canClickToken={canClickToken}
           key={item.token_id}
           data={data}
           tokenDict={tokenDict}
@@ -90,6 +108,7 @@ export const TxChange = ({
       ))}
       {data?.receives?.map(item => (
         <TxChangeItem
+          canClickToken={canClickToken}
           key={item.token_id}
           data={data}
           tokenDict={tokenDict}
@@ -120,6 +139,11 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 14,
       borderRadius: 14,
     },
+    media: {
+      width: 14,
+      height: 14,
+      borderRadius: 2,
+    },
     text: {
       fontSize: 13,
       lineHeight: 15,
@@ -132,9 +156,14 @@ const getStyles = (colors: AppColorsVariants) =>
     textNegative: {
       color: colors['neutral-body'],
     },
-    media: {
-      width: 14,
-      height: 14,
-      borderRadius: 2,
+    // tokenChangeTextWrapper: {
+    //   flexDirection: 'row',
+    //   alignItems: 'center',
+    //   justifyContent: 'flex-start',
+    //   flexShrink: 0,
+    // },
+    tokenLabel: {
+      position: 'relative',
+      top: 0,
     },
   });

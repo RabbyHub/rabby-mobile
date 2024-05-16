@@ -11,6 +11,7 @@ import { ellipsisAddress } from '@/utils/address';
 
 type HistoryItemProps = {
   data: TxDisplayItem;
+  canClickToken?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'> &
   RNViewProps;
 
@@ -31,7 +32,14 @@ const TxId = ({
 };
 
 export const HistoryItem = React.memo(
-  ({ data, cateDict, projectDict, tokenDict, style }: HistoryItemProps) => {
+  ({
+    data,
+    canClickToken,
+    cateDict,
+    projectDict,
+    tokenDict,
+    style,
+  }: HistoryItemProps) => {
     const isFailed = data.tx?.status === 0;
     const isScam = data.is_scam;
     const chainItem = getChain(data.chain);
@@ -67,7 +75,12 @@ export const HistoryItem = React.memo(
             cateDict={cateDict}
             isScam={isScam}
           />
-          <TxChange style={styles.txChange} data={data} tokenDict={tokenDict} />
+          <TxChange
+            style={styles.txChange}
+            data={data}
+            tokenDict={tokenDict}
+            canClickToken={canClickToken}
+          />
         </View>
       </View>
     );
