@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useMemo } from 'react';
+import React, { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { default as RcIconGasLight } from '@/assets/icons/sign/tx/gas-light.svg';
 import { default as RcIconGasDark } from '@/assets/icons/sign/tx/gas-dark.svg';
 
@@ -32,6 +32,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { renderText } from '@/utils/renderNode';
+import { colord } from 'colord';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
@@ -96,20 +97,22 @@ export function GasLessToSign({
     display: hiddenAnimated.value === 1 ? 'flex' : 'none',
   }));
 
+  const [animated, setAnimated] = useState(false);
+
   const startAnimation = React.useCallback(() => {
+    setAnimated(true);
+    handleFreeGas();
     hiddenAnimated.value = withDelay(
       900,
       withTiming(1, {
         duration: 0,
       }),
     );
-  }, [hiddenAnimated]);
+  }, [hiddenAnimated, handleFreeGas]);
 
-  useEffect(() => {
-    if (gasLessEnable) {
-      startAnimation();
-    }
-  }, [gasLessEnable, startAnimation]);
+  if (gasLessEnable && !animated) {
+    return <FreeGasReady />;
+  }
 
   return (
     <>
@@ -125,7 +128,7 @@ export function GasLessToSign({
           <Text style={[styles.text, styles.gasText]}>
             {t('page.signFooterBar.gasless.notEnough')}
           </Text>
-          <TouchableOpacity onPress={handleFreeGas}>
+          <TouchableOpacity onPress={startAnimation}>
             <LinearGradient
               colors={['#60bcff', '#8154ff']}
               locations={[0.1447, 0.9383]}
@@ -202,6 +205,21 @@ export const GasLessAnimatedWrapper = (
     backgroundColor: colors['blue-default'],
     left: (blueBgXValue.value + '%') as DimensionValue,
   }));
+
+  const processBgColor = useMemo(
+    () => colord(colors['blue-default']).alpha(0.5).toRgbString(),
+    [colors],
+  );
+
+  const bgStyle = useAnimatedStyle(
+    () =>
+      logoXValue.value > -10
+        ? {
+            backgroundColor: processBgColor,
+          }
+        : {},
+    [processBgColor],
+  );
 
   const start = React.useCallback(() => {
     blueBgXValue.value = withTiming(-100, {
@@ -285,6 +303,7 @@ export const GasLessAnimatedWrapper = (
                   : colors['blue-default'],
             },
             props.buttonStyle,
+            bgStyle,
           ]}>
           <Animated.View style={blueBgStyle} />
 

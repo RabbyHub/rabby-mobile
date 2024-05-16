@@ -817,7 +817,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         gasUsed: txDetail?.gas?.gas_used || 0,
       });
 
-      console.log('gasLessTxCheck', res);
       setCanUseGasLess(res.is_gasless);
       setGasLessLoading(false);
     } catch (error) {
