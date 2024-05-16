@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  RefreshControl,
   Platform,
   ViewStyle,
   Image,
@@ -16,7 +15,6 @@ import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
 import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
-  BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
@@ -480,16 +478,13 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
     );
 
-    useEffect(() => {
-      if (token) {
-        resetHistoryListPosition();
-        reloadAsync();
-      }
-    }, [token, reloadAsync, resetHistoryListPosition]);
-
-    const dataList = useMemo(() => {
+    const { dataList, isRefreshing } = useMemo(() => {
+      const res = {
+        isRefreshing: isLoading && !isLoadingMore,
+        dataList: [] as TxDisplayItem[],
+      };
       // is reloading
-      if (isLoading && !isLoadingMore) return [];
+      if (res.isRefreshing) return res;
 
       // // TODO: leave here for debug
       // if (__DEV__) {
@@ -498,18 +493,33 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       //     data.list = data.list.slice(0, 5);
       //   }
       // }
+      res.dataList = latestData?.list || [];
 
-      return latestData?.list || [];
+      return res;
     }, [isLoading, isLoadingMore, latestData?.list]);
 
     const onEndReached = React.useCallback(() => {
       loadMore();
     }, [loadMore]);
 
-    const refresh = useCallback(async () => {
-      __DEV__ && console.debug('handle refreshing');
-      await reloadAsync();
-    }, [reloadAsync]);
+    const refresh = useCallback(
+      async (options?: { resetPrevious?: boolean }) => {
+        __DEV__ && console.debug('handle refreshing');
+        const { resetPrevious = true } = options || {};
+        if (resetPrevious) {
+          setLatestData({ last: null, list: [] });
+        }
+        await reloadAsync();
+      },
+      [reloadAsync],
+    );
+
+    useEffect(() => {
+      if (token) {
+        resetHistoryListPosition();
+        refresh();
+      }
+    }, [token, refresh, resetHistoryListPosition]);
 
     const renderItem = useCallback(
       ({ item }: { item: TxDisplayItem }) => {
@@ -669,7 +679,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, [styles, isLoadingMore, safeOffBottom]);
 
     const ListEmptyComponent = React.useMemo(() => {
-      return isLoading ? (
+      return isRefreshing ? (
         <SkeletonHistoryListOfTokenDetail />
       ) : (
         <View style={[styles.emptyHolderContainer]}>
@@ -680,7 +690,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           />
         </View>
       );
-    }, [t, styles.emptyHolderContainer, isLoading]);
+    }, [t, styles.emptyHolderContainer, isRefreshing]);
 
     const { onHardwareBackHandler } = useHandleBackPressClosable(
       useCallback(() => {
@@ -721,7 +731,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             style={styles.scrollView}
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
-            refreshing={false}
+            refreshing={isRefreshing}
             onRefresh={refresh}
             // refreshControl={
             //   <RefreshControl

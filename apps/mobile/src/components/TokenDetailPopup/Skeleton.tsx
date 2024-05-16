@@ -104,18 +104,16 @@ const getHeaderSkeletonStyles = createGetStyles(colors => {
     tokenSymbolPlaceholder: {
       width: 32,
     },
-    tokenAddrInfo: {
+    tokenAddrInfoPlaceholder: {
       width: 100,
       marginLeft: 8,
       paddingVertical: 4,
       paddingHorizontal: 8,
-      backgroundColor: colors['neutral-card2'],
       borderRadius: 4,
+      height: 20,
 
       flexDirection: 'row',
       alignItems: 'center',
-
-      color: colors['neutral-foot'],
     },
     tokenDetailHeaderF2: {
       flexDirection: 'column',
@@ -124,10 +122,9 @@ const getHeaderSkeletonStyles = createGetStyles(colors => {
       marginBottom: 0,
     },
     balanceTitlePlaceholder: {
-      color: colors['neutral-foot'],
       width: 60,
       marginBottom: 4,
-      ...makeDebugBorder(),
+      // ...makeDebugBorder(),
     },
     tokenDetailHeaderF2Inner: {
       flexDirection: 'row',
@@ -155,10 +152,7 @@ export const SkeletonTokenDetailHeader = memo(() => {
           animation="pulse"
           style={[styles.skeletonBg, styles.tokenSymbolPlaceholder]}
         />
-        <Skeleton
-          animation="pulse"
-          style={[styles.skeletonBg, styles.tokenAddrInfo]}
-        />
+        <Skeleton animation="pulse" style={[styles.tokenAddrInfoPlaceholder]} />
       </View>
 
       <View style={styles.tokenDetailHeaderF2}>
