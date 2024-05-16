@@ -30,7 +30,7 @@ import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 
 import { makeDebugBorder } from '@/utils/styles';
 import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
-import { SMALL_TOKEN_ID } from '@/utils/token';
+import { SMALL_TOKEN_ID, abstractTokenToTokenItem } from '@/utils/token';
 import { AppBottomSheetModal, AssetAvatar, Button, Tip } from '@/components';
 import { ChainIconFastImage } from '@/components/Chain/ChainIconImage';
 import {
@@ -384,7 +384,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       if (!tokenInfo || tokenInfo.id !== token._tokenId) return token;
 
       return ensureAbstractPortfolioToken({
-        ...token,
+        ...abstractTokenToTokenItem(token),
         amount: tokenInfo?.amount,
       });
     }, [token, tokenLoad]);
@@ -404,18 +404,19 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     // Customized and not added
     const isHiddenButton = !token?.is_core && !isAdded;
 
-    const [latestData, setLatestData] = React.useState<LoadData>({
-      last: null,
-      list: [],
-    });
+    // const [latestData, setLatestData] = React.useState<LoadData>({
+    //   last: null,
+    //   list: [],
+    // });
 
     type LoadData = {
       last?: TxDisplayItem['time_at'] | null;
+      tokenId?: AbstractPortfolioToken['_tokenId'] | null;
       list: TxDisplayItem[];
     };
     const {
-      // data,
-      loading: isLoading,
+      data: latestData,
+      loading: isLoadingFirst,
       loadingMore: isLoadingMore,
       loadMore,
       reloadAsync,
@@ -423,11 +424,11 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       async (currentData?) => {
         const tickResult: LoadData = {
           last: null,
+          tokenId: token?._tokenId,
           list: [],
         };
 
         if (!token) {
-          setLatestData(tickResult);
           return tickResult;
         }
 
@@ -458,11 +459,6 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           tickResult.last = last(displayList)?.time_at ?? null;
           tickResult.list = displayList;
 
-          setLatestData(prev => ({
-            last: tickResult.last,
-            list: [...prev.list, ...tickResult.list],
-          }));
-
           return tickResult;
         } catch (error) {
           console.error(error);
@@ -470,6 +466,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         }
       },
       {
+        manual: true,
         // reloadDeps: [token],
         isNoMore: d => {
           return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
@@ -478,13 +475,23 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
     );
 
-    const { dataList, isRefreshing } = useMemo(() => {
+    useEffect(() => {
+      if (token) {
+        resetHistoryListPosition();
+      }
+
+      // though no token, trigger it to make latestData to be empty
+      reloadAsync();
+    }, [token, reloadAsync, resetHistoryListPosition]);
+
+    const { dataList, shouldRenderLoadingOnEmpty } = useMemo(() => {
       const res = {
-        isRefreshing: isLoading && !isLoadingMore,
         dataList: [] as TxDisplayItem[],
+        shouldRenderLoadingOnEmpty: false,
       };
-      // is reloading
-      if (res.isRefreshing) return res;
+
+      res.dataList =
+        latestData?.tokenId === token?._tokenId ? latestData?.list || [] : [];
 
       // // TODO: leave here for debug
       // if (__DEV__) {
@@ -493,47 +500,35 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       //     data.list = data.list.slice(0, 5);
       //   }
       // }
-      res.dataList = latestData?.list || [];
+      res.shouldRenderLoadingOnEmpty =
+        isLoadingFirst || (!res.dataList?.length && isLoadingMore);
 
       return res;
-    }, [isLoading, isLoadingMore, latestData?.list]);
+    }, [
+      latestData?.tokenId,
+      token?._tokenId,
+      isLoadingFirst,
+      isLoadingMore,
+      latestData?.list,
+    ]);
 
     const onEndReached = React.useCallback(() => {
       loadMore();
     }, [loadMore]);
-
-    const refresh = useCallback(
-      async (options?: { resetPrevious?: boolean }) => {
-        __DEV__ && console.debug('handle refreshing');
-        const { resetPrevious = true } = options || {};
-        if (resetPrevious) {
-          setLatestData({ last: null, list: [] });
-        }
-        await reloadAsync();
-      },
-      [reloadAsync],
-    );
-
-    useEffect(() => {
-      if (token) {
-        resetHistoryListPosition();
-        refresh();
-      }
-    }, [token, refresh, resetHistoryListPosition]);
 
     const renderItem = useCallback(
       ({ item }: { item: TxDisplayItem }) => {
         return (
           <HistoryItem
             data={item}
-            canClickToken={canClickToken}
+            canClickToken={!isLoadingFirst && canClickToken}
             projectDict={item.projectDict}
             cateDict={item.cateDict}
             tokenDict={item.tokenDict || {}}
           />
         );
       },
-      [canClickToken],
+      [isLoadingFirst, canClickToken],
     );
 
     const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
@@ -679,7 +674,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, [styles, isLoadingMore, safeOffBottom]);
 
     const ListEmptyComponent = React.useMemo(() => {
-      return isRefreshing ? (
+      return shouldRenderLoadingOnEmpty ? (
         <SkeletonHistoryListOfTokenDetail />
       ) : (
         <View style={[styles.emptyHolderContainer]}>
@@ -690,7 +685,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           />
         </View>
       );
-    }, [t, styles.emptyHolderContainer, isRefreshing]);
+    }, [t, styles.emptyHolderContainer, shouldRenderLoadingOnEmpty]);
 
     const { onHardwareBackHandler } = useHandleBackPressClosable(
       useCallback(() => {
@@ -723,16 +718,16 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           <BottomSheetFlatList
             ref={historyListRef}
             renderItem={renderItem}
+            keyExtractor={keyExtractor}
             ListHeaderComponent={ListHeaderComponent}
             ListFooterComponent={ListFooterComponent}
-            keyExtractor={keyExtractor}
             ListEmptyComponent={ListEmptyComponent}
             data={dataList}
             style={styles.scrollView}
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
-            refreshing={isRefreshing}
-            onRefresh={refresh}
+            refreshing={isLoadingFirst}
+            onRefresh={reloadAsync}
             // refreshControl={
             //   <RefreshControl
             //     {...(isIOS && {

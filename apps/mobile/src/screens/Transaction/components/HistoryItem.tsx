@@ -46,7 +46,12 @@ export const HistoryItem = React.memo(
             cateDict={cateDict}
             isScam={isScam}
           />
-          <TxChange style={styles.txChange} data={data} tokenDict={tokenDict} />
+          <TxChange
+            style={styles.txChange}
+            data={data}
+            tokenDict={tokenDict}
+            canClickToken
+          />
         </View>
 
         {(data.tx && data.tx?.eth_gas_fee) || isFailed ? (

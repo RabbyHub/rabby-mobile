@@ -20,6 +20,7 @@ import { numberWithCommasIsLtOne } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import TokenLabel from './TokenLabel';
+import { makeDebugBorder } from '@/utils/styles';
 
 const TxChangeItem = ({
   item,
@@ -69,13 +70,15 @@ const TxChangeItem = ({
         <RcIconUnknown width={14} height={14} />
       )}
 
-      <Text style={[tokenChangeStyle]} numberOfLines={1}>
+      <Text
+        style={[tokenChangeStyle, styles.tokenChangeDelta]}
+        numberOfLines={1}>
         {isSend ? '-' : '+'}{' '}
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)}
       </Text>
       <TokenLabel
         canClickToken={canClickToken}
-        style={[styles.tokenLabel, tokenChangeStyle]}
+        style={[tokenChangeStyle, styles.tokenLabel]}
         token={token}
         isNft={isNft}
       />
@@ -119,6 +122,9 @@ export const TxChange = ({
   );
 };
 
+const ChangeSizes = {
+  gap: 6,
+};
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
@@ -131,37 +137,32 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     item: {
       flexDirection: 'row',
+      justifyContent: 'flex-end',
       alignItems: 'center',
-      gap: 6,
-    },
-    image: {
-      width: 14,
-      height: 14,
-      borderRadius: 14,
+      gap: ChangeSizes.gap,
+      // ...makeDebugBorder()
     },
     media: {
       width: 14,
       height: 14,
       borderRadius: 2,
+      // ...makeDebugBorder('red')
     },
     text: {
       fontSize: 13,
       lineHeight: 15,
       color: colors['green-default'],
-      // flex: 1,
       minWidth: 0,
-      flexGrow: 1,
+      // flexGrow: 1,
       flexShrink: 1,
+      textAlign: 'right',
+    },
+    tokenChangeDelta: {
+      justifyContent: 'flex-end',
     },
     textNegative: {
       color: colors['neutral-body'],
     },
-    // tokenChangeTextWrapper: {
-    //   flexDirection: 'row',
-    //   alignItems: 'center',
-    //   justifyContent: 'flex-start',
-    //   flexShrink: 0,
-    // },
     tokenLabel: {
       position: 'relative',
       top: 0,
