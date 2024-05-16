@@ -2,8 +2,9 @@ import { Skeleton } from '@rneui/themed';
 import { memo } from 'react';
 import { View } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { getHistoryItemStyles } from './HistoryItem';
+import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 
 const getSkeletonStyles = createGetStyles(colors => {
   const historyItemStyles = getHistoryItemStyles(colors);
@@ -72,6 +73,107 @@ export const SkeletonHistoryListOfTokenDetail = memo(() => {
             </View>
           </View>
         ))}
+    </View>
+  );
+});
+
+const SIZES = TOKEN_DETAIL_HISTORY_SIZES;
+const getHeaderSkeletonStyles = createGetStyles(colors => {
+  return {
+    skeletonBg: {
+      backgroundColor: colors['neutral-card2'],
+    },
+    tokenDetailHeaderWrap: {
+      height: SIZES.headerHeight,
+      width: '100%',
+      paddingVertical: 4,
+      alignItems: 'flex-start',
+    },
+    tokenDetailHeaderF1: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingVertical: 0,
+    },
+    tokenDetailHeaderLogo: {
+      width: SIZES.headerTokenLogo,
+      height: SIZES.headerTokenLogo,
+      borderRadius: SIZES.headerTokenLogo,
+      marginRight: 8,
+    },
+    tokenSymbolPlaceholder: {
+      width: 32,
+    },
+    tokenAddrInfo: {
+      width: 100,
+      marginLeft: 8,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      backgroundColor: colors['neutral-card2'],
+      borderRadius: 4,
+
+      flexDirection: 'row',
+      alignItems: 'center',
+
+      color: colors['neutral-foot'],
+    },
+    tokenDetailHeaderF2: {
+      flexDirection: 'column',
+      // alignItems: 'center',
+      marginTop: 16,
+      marginBottom: 0,
+    },
+    balanceTitlePlaceholder: {
+      color: colors['neutral-foot'],
+      width: 60,
+      marginBottom: 4,
+      ...makeDebugBorder(),
+    },
+    tokenDetailHeaderF2Inner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    tokenDetailHeaderUsdValueWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: 80,
+      height: 24,
+    },
+  };
+});
+export const SkeletonTokenDetailHeader = memo(() => {
+  const { styles } = useThemeStyles(getHeaderSkeletonStyles);
+
+  return (
+    <View style={[styles.tokenDetailHeaderWrap]}>
+      <View style={styles.tokenDetailHeaderF1}>
+        <Skeleton
+          animation="pulse"
+          style={[styles.skeletonBg, styles.tokenDetailHeaderLogo]}
+        />
+        <Skeleton
+          animation="pulse"
+          style={[styles.skeletonBg, styles.tokenSymbolPlaceholder]}
+        />
+        <Skeleton
+          animation="pulse"
+          style={[styles.skeletonBg, styles.tokenAddrInfo]}
+        />
+      </View>
+
+      <View style={styles.tokenDetailHeaderF2}>
+        <Skeleton
+          animation="pulse"
+          style={[styles.skeletonBg, styles.balanceTitlePlaceholder]}
+        />
+
+        <View style={styles.tokenDetailHeaderF2Inner}>
+          <Skeleton
+            animation="pulse"
+            style={[styles.skeletonBg, styles.tokenDetailHeaderUsdValueWrap]}
+          />
+        </View>
+      </View>
     </View>
   );
 });

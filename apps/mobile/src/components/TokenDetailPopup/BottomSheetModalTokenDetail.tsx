@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,12 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
 import {
   BottomSheetFlatList,
+  BottomSheetFlatListMethods,
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
+  TokenItem,
   TxDisplayItem,
   TxHistoryResult,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -43,7 +45,10 @@ import { useTranslation } from 'react-i18next';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { ellipsisAddress } from '@/utils/address';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { SkeletonHistoryListOfTokenDetail } from './Skeleton';
+import {
+  SkeletonHistoryListOfTokenDetail,
+  SkeletonTokenDetailHeader,
+} from './Skeleton';
 import { NotFoundHolder } from '@/components/EmptyHolder/NotFound';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
@@ -53,33 +58,12 @@ import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
+import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
+import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
 
 const isIOS = Platform.OS === 'ios';
 
 const PAGE_COUNT = 10;
-
-export const TOKEN_DETAIL_HISTORY_SIZES = {
-  sheetModalHorizontalPercentage: 0.8,
-  horizontalPadding: 20,
-  buttonGap: 12,
-  containerPt: 8,
-  headerHeight: 100,
-  headerTokenLogo: 24,
-  get maxEmptyHeight() {
-    const modalHeight = Math.floor(
-      Dimensions.get('window').height * SIZES.sheetModalHorizontalPercentage,
-    );
-
-    return (
-      modalHeight -
-      12 /* handlebar height */ -
-      SIZES.containerPt -
-      SIZES.headerHeight
-    );
-  },
-
-  opButtonHeight: 40,
-};
 
 const SIZES = TOKEN_DETAIL_HISTORY_SIZES;
 
@@ -358,14 +342,66 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     ref,
   ) => {
     const { styles, colors } = useThemeStyles(getStyles);
-    const { currentAccount } = useCurrentAccount();
     const { t } = useTranslation();
+    const { currentAccount } = useCurrentAccount();
+    const [tokenLoad, setTokenLoad] = React.useState<{
+      isLoading: boolean;
+      token: TokenItem | null;
+    }>({
+      isLoading: false,
+      token: token || null,
+    });
 
     const tokenSupportSwap = useMemo(() => {
       const tokenChain = getChain(token?.chain)?.enum;
 
       return !!tokenChain && SWAP_SUPPORT_CHAINS.includes(tokenChain);
     }, [token]);
+
+    const getTokenAmount = React.useCallback(async () => {
+      if (
+        !currentAccount?.address ||
+        !token ||
+        /* token.amount !== undefined */ token.amount
+      )
+        return;
+
+      setTokenLoad({ isLoading: true, token: null });
+      try {
+        const res = await openapi.getToken(
+          currentAccount.address,
+          token.chain,
+          token._tokenId,
+        );
+        if (res) {
+          setTokenLoad(prev => ({ isLoading: false, token: res }));
+        }
+      } finally {
+        setTokenLoad(prev => ({ ...prev, isLoading: false }));
+      }
+    }, [currentAccount?.address, token]);
+    const tokenWithAmount = useMemo(() => {
+      if (!token) return null;
+      const { token: tokenInfo } = tokenLoad;
+      if (!tokenInfo || tokenInfo.id !== token._tokenId) return token;
+
+      return ensureAbstractPortfolioToken({
+        ...token,
+        amount: tokenInfo?.amount,
+      });
+    }, [token, tokenLoad]);
+
+    React.useEffect(() => {
+      getTokenAmount();
+    }, [getTokenAmount]);
+
+    const historyListRef = useRef<BottomSheetFlatListMethods>(null);
+    const resetHistoryListPosition = useCallback(() => {
+      const listRef = historyListRef.current;
+      if (listRef) {
+        listRef.scrollToOffset({ offset: 0, animated: false });
+      }
+    }, []);
 
     // Customized and not added
     const isHiddenButton = !token?.is_core && !isAdded;
@@ -436,13 +472,20 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         }
       },
       {
-        reloadDeps: [token],
+        // reloadDeps: [token],
         isNoMore: d => {
           return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
         },
         onSuccess(data) {},
       },
     );
+
+    useEffect(() => {
+      if (token) {
+        resetHistoryListPosition();
+        reloadAsync();
+      }
+    }, [token, reloadAsync, resetHistoryListPosition]);
 
     const dataList = useMemo(() => {
       // is reloading
@@ -464,7 +507,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     }, [loadMore]);
 
     const refresh = useCallback(async () => {
-      console.debug('handle refreshing');
+      __DEV__ && console.debug('handle refreshing');
       await reloadAsync();
     }, [reloadAsync]);
 
@@ -565,7 +608,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             }>
             <Button
               type="primary"
-              disabled={!tokenSupportSwap}
+              disabled={!tokenSupportSwap || tokenLoad.isLoading}
               buttonStyle={styles.operationButton}
               style={styles.buttonTouchableStyle}
               containerStyle={styles.buttonContainer}
@@ -578,6 +621,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           </Tip>
           <Button
             type="primary"
+            disabled={tokenLoad.isLoading}
             ghost
             buttonStyle={styles.operationButton}
             style={styles.buttonTouchableStyle}
@@ -590,6 +634,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           />
           <Button
             type="primary"
+            disabled={tokenLoad.isLoading}
             ghost
             buttonStyle={styles.operationButton}
             style={styles.buttonTouchableStyle}
@@ -603,6 +648,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         </View>
       );
     }, [
+      tokenLoad.isLoading,
       styles,
       isHiddenButton,
       hideOperationButtons,
@@ -658,9 +704,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         onDismiss={onDismiss}>
         <BottomSheetView style={styles.container}>
           <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
-            {token && <TokenDetailHeader token={token} />}
+            {tokenLoad?.isLoading ? (
+              <SkeletonTokenDetailHeader />
+            ) : (
+              !!tokenWithAmount && <TokenDetailHeader token={tokenWithAmount} />
+            )}
           </BottomSheetHandlableView>
           <BottomSheetFlatList
+            ref={historyListRef}
             renderItem={renderItem}
             ListHeaderComponent={ListHeaderComponent}
             ListFooterComponent={ListFooterComponent}
