@@ -10,7 +10,7 @@ import {
   Supplements,
 } from '../components/PortfolioDetail';
 import { AbstractPortfolio } from '../types';
-import { formatPrice } from '@/utils/math';
+import { formatPriceMainsite } from '@/utils/math';
 import { getTokenSymbol } from '@/utils/token';
 
 export default React.memo(
@@ -27,7 +27,7 @@ export default React.memo(
 
     const optionsType = portfolio.detail.type;
     const strikePrice = portfolio.detail.underlying_token?.amount
-      ? formatPrice(
+      ? formatPriceMainsite(
           (portfolio.detail.strike_token?.amount || 0) /
             portfolio.detail.underlying_token?.amount,
         )

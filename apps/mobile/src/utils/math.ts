@@ -177,7 +177,7 @@ export const formatNetworth = (num?: number, trimFractionZero = false) => {
   return formatNum(num, 0, { prefix: '$', trimFractionZero });
 };
 
-export const formatPrice = (num?: number) => {
+export const formatPriceMainsite = (num?: number) => {
   if (!num && num !== 0) {
     return '';
   }
