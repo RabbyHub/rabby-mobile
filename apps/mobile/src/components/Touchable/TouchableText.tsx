@@ -3,26 +3,28 @@ import { TextProps, Text } from 'react-native';
 import TouchableView from './TouchableView';
 
 export default function TouchableText({
-  textStyle,
+  onPress,
+  touchableProps,
   children,
-  text = '',
   ...props
-}: React.ComponentProps<typeof TouchableView> & {
-  textStyle?: TextProps['style'];
-  text?: string;
-}) {
+}: {
+  onPress?: React.ComponentProps<typeof TouchableView>['onPress'];
+  touchableProps?: Omit<
+    React.ComponentProps<typeof TouchableView>,
+    'children' | 'onPress'
+  >;
+  children?: string;
+} & TextProps) {
+  const handlePress = React.useCallback(
+    evt => {
+      onPress?.(evt);
+    },
+    [onPress],
+  );
+
   return (
-    <TouchableView
-      {...props}
-      style={[
-        {
-          // // leave here for debug
-          // borderColor: 'blue',
-          // borderWidth: 1
-        },
-        props.style,
-      ]}>
-      <Text style={textStyle}>{text}</Text>
+    <TouchableView {...touchableProps} onPress={handlePress}>
+      <Text {...props}>{children}</Text>
     </TouchableView>
   );
 }

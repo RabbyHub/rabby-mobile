@@ -2,7 +2,9 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
 import { hexToString } from 'web3-utils';
 
-import { AbstractPortfolioToken } from '@/screens/Home/types';
+import type { AbstractPortfolioToken } from '@/screens/Home/types';
+
+export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 
 export const geTokenDecimals = async (
   id: string,

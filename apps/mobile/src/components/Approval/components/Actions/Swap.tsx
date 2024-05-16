@@ -123,7 +123,7 @@ const Swap = ({
               text={
                 <View className="flex flex-row">
                   <Text style={commonStyle.primaryText}>
-                    {formatAmount(payToken.amount)}
+                    {formatAmount(payToken.amount)}{' '}
                   </Text>
                   <Values.TokenSymbol
                     token={payToken}
@@ -160,7 +160,7 @@ const Swap = ({
                   balanceChange.success && balanceChange.support ? (
                     <View className="flex flex-row">
                       <Text style={commonStyle.primaryText}>
-                        {formatAmount(receiveToken.amount)}
+                        {formatAmount(receiveToken.amount)}{' '}
                       </Text>
                       <Values.TokenSymbol
                         token={receiveToken}

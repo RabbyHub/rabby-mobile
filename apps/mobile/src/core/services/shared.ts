@@ -24,6 +24,7 @@ import { RabbyPointsService } from './rabbyPoints';
 import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { SwapService } from './swap';
+import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -39,6 +40,7 @@ const keyringClasses = [
   WatchKeyring,
   LedgerKeyring,
   KeystoneKeyring,
+  OneKeyKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({

@@ -98,9 +98,10 @@ export const HomeTopArea = () => {
           name: MODAL_NAMES.SELECT_SORTED_CHAIN,
           value: CHAINS_ENUM.ETH,
           onChange: (v: CHAINS_ENUM) => {
-            navigation.push(RootNames.Receive, {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.Receive,
               params: {
-                chain: v,
+                chainEnum: v,
               },
             });
             removeGlobalBottomSheetModal(id);

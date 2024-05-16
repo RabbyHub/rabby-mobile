@@ -1,6 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiKeystone, apiLedger } from '@/core/apis';
+import { apiKeystone, apiLedger, apiOneKey } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import {
@@ -34,6 +34,7 @@ import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 const { isSameAddress } = addressUtils;
 
@@ -139,6 +140,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return apiLedger;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return apiOneKey;
       default:
         return apiKeystone;
     }
@@ -147,6 +150,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return KEYRING_TYPE.LedgerKeyring;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return KEYRING_TYPE.OneKeyKeyring;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.type;
     }
@@ -155,6 +160,8 @@ export const ImportHardwareScreen = () => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return KEYRING_CLASS.HARDWARE.LEDGER;
+      case KEYRING_TYPE.OneKeyKeyring:
+        return KEYRING_CLASS.HARDWARE.ONEKEY;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.brandName;
     }
@@ -179,6 +186,8 @@ export const ImportHardwareScreen = () => {
   const loadAddress = React.useCallback(
     async (index: number) => {
       const res = await apiHD.getAddresses(index, index + 1);
+      // avoid blocking the UI thread
+      await new Promise(resolve => setTimeout(resolve, 1));
       const balance = await getAccountBalance(res[0].address);
       if (stoppedRef.current) {
         return;
@@ -218,7 +227,9 @@ export const ImportHardwareScreen = () => {
       } else if (errorCode === LEDGER_ERROR_CODES.UNKNOWN) {
         errMessage = t('page.newAddress.ledger.error.unknown');
       }
-      toast.show(errMessage);
+      if (errMessage) {
+        toast.show(errMessage);
+      }
     }
     stoppedRef.current = true;
     setLoading(false);
@@ -276,7 +287,7 @@ export const ImportHardwareScreen = () => {
 
   const onCopy = React.useCallback((address: string) => {
     Clipboard.setString(address);
-    toast.success('Copied');
+    toastCopyAddressSuccess(address);
   }, []);
 
   const importToastHiddenRef = React.useRef<() => void>(() => {});

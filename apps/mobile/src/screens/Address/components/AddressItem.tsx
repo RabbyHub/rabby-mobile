@@ -38,7 +38,7 @@ import { navigate } from '@/utils/navigation';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
-import { toast } from '@/components/Toast';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
@@ -83,7 +83,7 @@ export const AddressItem = (props: AddressItemProps) => {
     (e?: GestureResponderEvent) => {
       e?.stopPropagation();
       Clipboard.setString(wallet.address);
-      toast.success('Copied');
+      toastCopyAddressSuccess(wallet.address);
     },
     [wallet.address],
   );

@@ -11,6 +11,10 @@ on:
         required: true
         type: boolean
         default: true
+      SENTRY_DISABLE_AUTO_UPLOAD:
+        required: false
+        type: boolean
+        default: false
 
 defaults:
   run:
@@ -65,9 +69,9 @@ jobs:
           yarn install;
           cd apps/mobile;
           bundle install;
+          yarn prepare-archive;
 
           # build android
-          yarn prepare-archive;
           buildchannel=selfhost-reg ./scripts/deploy-android.sh
 
           # build android
@@ -83,6 +87,7 @@ jobs:
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ inputs.SENTRY_DISABLE_AUTO_UPLOAD }}
           CONFIGURATION: release
           TYPE: adhoc
           BUILD_ENV: alpha
@@ -98,3 +103,14 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+          path: |
+            ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            ./apps/mobile/ios/Package/adhoc/*.ipa
+            ./apps/mobile/ios/Package/adhoc/manifest.plist
+            ./apps/mobile/ios/Package/adhoc/*.zip
+          retention-days: 7

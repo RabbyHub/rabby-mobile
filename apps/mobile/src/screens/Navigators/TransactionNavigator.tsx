@@ -13,6 +13,7 @@ import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
 import GasTopUp from '../GasTopUp';
 import ApprovalsScreen from '../Approvals';
+import ReceiveScreen from '../Receive/Receive';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -50,6 +51,17 @@ export default function TransactionNavigator() {
           ...screenOptions,
           title: 'Send',
           ...headerPresets.withBgCard2,
+        }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.Receive}
+        component={ReceiveScreen}
+        options={{
+          ...screenOptions,
+          title: '',
+          headerShadowVisible: false,
+          headerShown: true,
+          headerTransparent: true,
         }}
       />
       <TransactionStack.Screen

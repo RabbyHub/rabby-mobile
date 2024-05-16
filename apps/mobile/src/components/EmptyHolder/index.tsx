@@ -2,7 +2,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { Image, StyleSheet, useColorScheme, View } from 'react-native';
-import { Text } from './Text';
+import { Text } from '../Text';
 
 const Icon = {
   card: {

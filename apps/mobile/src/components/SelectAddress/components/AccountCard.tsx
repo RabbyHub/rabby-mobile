@@ -14,8 +14,8 @@ import { RcIconAddressWhitelistCC } from '@/assets/icons/address';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { WalletBrandImage } from '@/components/WalletBrandImage';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { toast } from '@/components/Toast';
 import { useCallback } from 'react';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 
 export default function AccountCard({
   account,
@@ -38,7 +38,7 @@ export default function AccountCard({
     evt => {
       evt.stopPropagation();
       Clipboard.setString(account.address);
-      toast.success('Copied');
+      toastCopyAddressSuccess(account.address);
     },
     [account?.address],
   );

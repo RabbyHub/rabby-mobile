@@ -34,7 +34,7 @@ export const ConnectKeystone: React.FC<{
           type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
           brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
           address,
-          isKeystoneFirstImport: true,
+          isFirstImport: true,
         },
       });
       onDone?.();

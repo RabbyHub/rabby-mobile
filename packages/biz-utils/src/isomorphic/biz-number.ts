@@ -19,17 +19,25 @@ export const splitNumberByStep = (
   return n.toFormat(fmt);
 };
 
-export const formatTokenAmount = (amount: number | string, decimals = 4) => {
+export const formatTokenAmount = (
+  amount: number | string,
+  decimals = 4,
+  moreDecimalsWhenNotEnough = false, // when number less then 0.0001, auto change decimals to 8
+) => {
   if (!amount) {
     return '0';
   }
   const bn = new BigNumber(amount);
   const str = bn.toFixed();
   const split = str.split('.');
-  if (!split[1] || split[1].length < decimals) {
+  let realDecimals = decimals;
+  if (moreDecimalsWhenNotEnough && bn.lt(0.0001) && decimals < 8) {
+    realDecimals = 8;
+  }
+  if (!split[1] || split[1].length < realDecimals) {
     return splitNumberByStep(bn.toFixed());
   }
-  return splitNumberByStep(bn.toFixed(decimals));
+  return splitNumberByStep(bn.toFixed(realDecimals));
 };
 
 export const numberWithCommasIsLtOne = (
@@ -43,10 +51,10 @@ export const numberWithCommasIsLtOne = (
     return '0';
   }
 
-  if (x as number < 0.00005) {
+  if ((x as number) < 0.00005) {
     return '< 0.0001';
   }
-  precision = x as number < 1 ? 4 : precision ?? 2;
+  precision = (x as number) < 1 ? 4 : precision ?? 2;
   const parts: string[] = Number(x).toFixed(precision).split('.');
 
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -81,10 +89,10 @@ export const formatNumber = (
 };
 
 export const formatPrice = (price: string | number) => {
-  if (price as number >= 1) {
+  if ((price as number) >= 1) {
     return formatNumber(price);
   }
-  if (price as number < 0.00001) {
+  if ((price as number) < 0.00001) {
     if (price.toString().length > 10) {
       return Number(price).toExponential(4);
     }
@@ -112,16 +120,16 @@ export const formatUsdValue = (value: string | number) => {
 };
 
 export const formatAmount = (amount: string | number, decimals = 4) => {
-  if (amount as number > 1e9) {
+  if ((amount as number) > 1e9) {
     return `${new BigNumber(amount).div(1e9).toFormat(4)}B`;
   }
-  if (amount as number > 10000) {
+  if ((amount as number) > 10000) {
     return formatNumber(amount);
   }
-  if (amount as number > 1) {
+  if ((amount as number) > 1) {
     return formatNumber(amount, 4);
   }
-  if (amount as number < 0.00001) {
+  if ((amount as number) < 0.00001) {
     if (amount.toString().length > 10) {
       return Number(amount).toExponential(4);
     }

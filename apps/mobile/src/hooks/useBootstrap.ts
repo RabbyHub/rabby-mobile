@@ -11,6 +11,7 @@ import { syncChainList } from '@/constant/chains';
 import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
+import { useGlobal } from './global';
 
 const bootstrapAtom = atom({
   appInitialized: false,
@@ -143,6 +144,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 export function useBootstrapApp() {
   const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
+  useGlobal();
 
   React.useEffect(() => {
     apisBoot

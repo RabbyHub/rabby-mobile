@@ -21,16 +21,16 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { HistoryList } from './components/HistoryList';
 import { Empty } from './components/Empty';
 import { findChainByServerID } from '@/utils/chain';
-import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EVENTS, eventBus } from '@/utils/events';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 const PAGE_COUNT = 10;
 
 function HistoryScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
-  const navigation = useNavigation();
+  const navigation = useRabbyAppNavigation();
   const { bottom } = useSafeAreaInsets();
 
   const fetchData = async (startTime = 0) => {

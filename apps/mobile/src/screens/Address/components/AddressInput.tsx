@@ -13,7 +13,7 @@ import {
 import { RcIconCopyCC } from '@/assets/icons/common';
 import { contactService } from '@/core/services';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { toast } from '@/components/Toast';
+import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import RcIconClose from '@/assets/icons/import-success/clear.svg';
 
 interface Props {
@@ -103,7 +103,7 @@ export const AddressInput: React.FC<Props> = ({
 
   const onCopy = React.useCallback(() => {
     Clipboard.setString(address);
-    toast.success('Copied');
+    toastCopyAddressSuccess(address);
   }, [address]);
 
   const handleSubmit = React.useCallback(

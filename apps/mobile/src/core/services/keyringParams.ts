@@ -1,4 +1,5 @@
 import { bindLedgerEvents } from '@/utils/ledger';
+import { bindOneKeyEvents } from '@/utils/onekey';
 import { bindWalletConnectEvents } from '@/utils/wc';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { generateAliasName, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -51,6 +52,10 @@ export const onCreateKeyring: KeyringServiceOptions['onCreateKeyring'] =
 
     if (Keyring.type === KEYRING_CLASS.HARDWARE.LEDGER) {
       bindLedgerEvents(keyring);
+    }
+
+    if (Keyring.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
+      bindOneKeyEvents(keyring);
     }
 
     return keyring;

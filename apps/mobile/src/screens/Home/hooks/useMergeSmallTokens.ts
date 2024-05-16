@@ -3,8 +3,7 @@ import { formatNetworth } from '@/utils/math';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 import { AbstractPortfolioToken } from '../types';
-
-export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
+import { SMALL_TOKEN_ID } from '@/utils/token';
 
 const SMALL_TOKEN = {
   id: SMALL_TOKEN_ID,

@@ -1,26 +1,123 @@
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { getTokenSymbol } from '@/utils/token';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
+import {
+  CopyAddressIcon,
+  CopyAddressIconType,
+} from '@/components/AddressViewer/CopyAddress';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { toast } from '@/components/Toast';
+import { getAliasName } from '@/core/apis/contact';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import TouchableView from '@/components/Touchable/TouchableView';
 
-type TxInterAddressExplainProps = {
+type TxInterAddressExplainProps = RNViewProps & {
+  actionTitleStyle?: StyleProp<TextStyle>;
   data: TxDisplayItem;
+  isScam?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
 
-const NameAndAddress = ({ address }: { address: string }) => {
-  return <Text>{ellipsisAddress(address)}</Text>;
+const NameAndAddress = ({
+  address,
+  hideCopy = false,
+}: {
+  address: string;
+  hideCopy?: boolean;
+}) => {
+  const isAddr = useMemo(() => {
+    return /^0x[a-zA-Z0-9]{40}/.test(address);
+  }, [address]);
+
+  const { styles } = useThemeStyles(getNameAndAddressStyle);
+
+  const aliasName = useMemo(() => {
+    return (
+      getAliasName(address) || ALIAS_ADDRESS[address?.toLowerCase() || ''] || ''
+    );
+  }, [address]);
+
+  const copyAddressRef = React.useRef<CopyAddressIconType>(null);
+
+  const noCopy = !isAddr || hideCopy;
+
+  return (
+    <View style={styles.lineContainer}>
+      <TouchableView
+        style={styles.textWrapper}
+        disabled={noCopy}
+        onPress={() => {
+          copyAddressRef.current?.doCopy();
+        }}>
+        {aliasName && (
+          <Text
+            style={styles.aliasNameStyle}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {aliasName}
+          </Text>
+        )}
+        <Text style={[styles.text]} numberOfLines={1}>
+          {aliasName
+            ? `(${ellipsisAddress(address)})`
+            : ellipsisAddress(address)}
+        </Text>
+      </TouchableView>
+      {!noCopy && (
+        <CopyAddressIcon
+          ref={copyAddressRef}
+          address={address}
+          style={styles.copyIcon}
+        />
+      )}
+    </View>
+  );
 };
 
+const getNameAndAddressStyle = createGetStyles(colors => {
+  return {
+    lineContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      maxWidth: '100%',
+      // ...makeDebugBorder('yellow'),
+    },
+    textWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      flexShrink: 1,
+    },
+    aliasNameStyle: {
+      fontSize: 12,
+      marginRight: 0,
+      color: colors['neutral-foot'],
+      flexShrink: 1,
+      // ...makeDebugBorder(),
+    },
+    text: {
+      fontSize: 12,
+      color: colors['neutral-foot'],
+      flexShrink: 0,
+    },
+    copyIcon: { marginLeft: 3, width: 14, height: 14, flexShrink: 0 },
+  };
+});
+
 export const TxInterAddressExplain = ({
+  style,
+  actionTitleStyle,
   data,
   projectDict,
   tokenDict,
   cateDict,
+  isScam,
 }: TxInterAddressExplainProps) => {
   const isCancel = data.cate_id === 'cancel';
   const isApprove = data.cate_id === 'approve';
@@ -29,21 +126,21 @@ export const TxInterAddressExplain = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const projectName = (
+  const projectNameNode = (
     <>
       {project?.name ? (
-        <Text>{project.name}</Text>
+        <Text style={[styles.projectNameText]}>{project.name}</Text>
       ) : data.other_addr ? (
-        <NameAndAddress address={data.other_addr} />
+        <NameAndAddress address={data.other_addr} hideCopy={isScam} />
       ) : null}
     </>
   );
 
-  let interAddressExplain;
+  let interAddressExplain: React.ReactNode = null;
 
   if (isCancel) {
     interAddressExplain = (
-      <Text style={styles.actionTitle}>
+      <Text style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}>
         {t('page.transactions.explain.cancel')}
       </Text>
     );
@@ -56,25 +153,30 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <Text style={styles.actionTitle} numberOfLines={1}>
+      <Text
+        style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+        numberOfLines={1}>
         Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
         {`${getTokenSymbol(approveToken)} for `}
-        {projectName}
+        {projectNameNode}
       </Text>
     );
   } else {
     interAddressExplain = (
       <>
-        <Text style={styles.actionTitle} numberOfLines={1}>
+        <Text
+          style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+          numberOfLines={1}>
           {cateDict[data.cate_id || '']?.name ??
             (data.tx?.name || t('page.transactions.explain.unknown'))}
         </Text>
-        <Text style={styles.actionDesc}>{projectName}</Text>
+        <View style={styles.actionDesc}>{projectNameNode}</View>
       </>
     );
   }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <TxAvatar
         src={projectDict[data.project_id as string]?.logo_url}
         cateId={data.cate_id}
@@ -94,13 +196,21 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     explain: {
       flexShrink: 1,
+      maxWidth: '100%',
+      // ...makeDebugBorder('red'),
     },
     actionTitle: {
       fontSize: 15,
       lineHeight: 18,
       color: colors['neutral-title1'],
+      marginBottom: 4,
+      maxWidth: '100%',
     },
     actionDesc: {
+      maxWidth: '100%',
+      // ...makeDebugBorder('blue'),
+    },
+    projectNameText: {
       fontSize: 12,
       lineHeight: 14,
       color: colors['neutral-foot'],

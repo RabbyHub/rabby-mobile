@@ -202,17 +202,6 @@ export default function AppNavigation({
             }}
           />
           <RootStack.Screen
-            name={RootNames.Receive}
-            component={ReceiveScreen}
-            options={{
-              ...screenOptions,
-              title: '',
-              headerShadowVisible: false,
-              headerShown: true,
-              headerTransparent: true,
-            }}
-          />
-          <RootStack.Screen
             name={RootNames.AccountTransaction}
             component={AccountNavigator}
           />
