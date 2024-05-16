@@ -4,15 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import { formatTokenAmount } from '@/utils/number';
-import { getGasLevelI18nKey } from '@/utils/trans';
 import { Tip } from '@/components/Tip';
 import {
   NativeSyntheticEvent,
   StyleSheet,
   Text,
-  TextInput,
   TextInputChangeEventData,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
@@ -105,6 +102,8 @@ export const GasSelectPanel = ({
               symbol: chain.nativeTokenSymbol,
               amount: formatTokenAmount(
                 new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                4,
+                true,
               ),
             })}
           </Text>
