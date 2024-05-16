@@ -58,7 +58,7 @@ export class Session {
     this.icon = icon;
     this.name = name;
 
-    console.log('setProp', origin, icon, name);
+    console.debug('Session::setProp', origin, icon, name);
   }
 }
 

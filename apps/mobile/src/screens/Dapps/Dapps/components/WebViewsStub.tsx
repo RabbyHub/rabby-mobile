@@ -213,7 +213,7 @@ export function OpenedDappWebViewStub() {
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
           const key = `${dappInfo.origin}-${
             dappInfo.maybeDappInfo?.chainId || 'ETH'
-          }`;
+          }-${idx}`;
 
           return (
             <DappWebViewControl
