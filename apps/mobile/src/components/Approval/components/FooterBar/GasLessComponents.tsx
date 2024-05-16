@@ -56,9 +56,9 @@ export function GasLessNotEnough() {
 }
 
 function FreeGasReady() {
-  const { t } = useTranslation();
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  // const { t } = useTranslation();
+  // const colors = useThemeColors();
+  // const styles = useMemo(() => getStyles(colors), [colors]);
 
   return (
     <View
@@ -67,19 +67,10 @@ function FreeGasReady() {
         height: 58,
       }}>
       <ImageBackground
-        source={require('@/assets/icons/sign/tx/bg.png')}
+        source={require('@/assets/icons/sign/tx/pay-for-gas.png')}
         resizeMode="contain"
-        style={{
-          flexDirection: 'row',
-          paddingLeft: 16,
-          height: 46,
-          paddingTop: 18,
-        }}>
-        <RcIconLogo width={16} height={16} style={{ marginRight: 4 }} />
-        <Text style={styles.text}>
-          {t('page.signFooterBar.gasless.rabbyPayGas')}
-        </Text>
-      </ImageBackground>
+        style={{ width: '100%', height: '100%' }}
+      />
     </View>
   );
 }
@@ -123,7 +114,7 @@ export function GasLessToSign({
   return (
     <>
       <Animated.View style={toSignStyle}>
-        <View style={styles.securityLevelTip}>
+        <View style={[styles.securityLevelTip, { paddingHorizontal: 6 }]}>
           <View style={styles.tipTriangle} />
           <RcIconGas
             width={16}
@@ -175,16 +166,19 @@ export const GasLessAnimatedWrapper = (
 
   const hiddenAnimated = useSharedValue(0);
 
-  const overlayStyle = useAnimatedStyle(() => ({
-    position: 'absolute',
-    opacity: 0.5,
-    width: '100%',
-    height: '100%',
-    top: 0,
-    backgroundColor: 'white',
-    left: (interpolate(logoXValue.value, [-10, 100], [0, 105]) +
-      '%') as DimensionValue, //(overlayValue.value + '%') as DimensionValue,
-  }));
+  const overlayStyle = useAnimatedStyle(
+    () => ({
+      position: 'absolute',
+      opacity: 0.5,
+      width: '100%',
+      height: '100%',
+      top: 0,
+      backgroundColor: colors['neutral-bg-1'],
+      left: (interpolate(logoXValue.value, [-10, 100], [0, 105]) +
+        '%') as DimensionValue, //(overlayValue.value + '%') as DimensionValue,
+    }),
+    [colors],
+  );
 
   const logoStyle = useAnimatedStyle(() => ({
     alignItems: 'center',
@@ -342,7 +336,7 @@ const getStyles = createGetStyles(colors => ({
   text: {
     flex: 1,
     color: colors['neutral-title-1'],
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
   },
   imageBackground: {
@@ -378,7 +372,7 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
   },
   linearGradientText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors['neutral-title-2'],
     cursor: 'pointer',
   },
