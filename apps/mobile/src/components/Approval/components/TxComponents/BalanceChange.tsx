@@ -19,7 +19,7 @@ import DescItem from '../Actions/components/DescItem';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

@@ -6,8 +6,8 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { Text } from 'react-native';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 
 export default function TokenLabel({
   token,

@@ -37,7 +37,7 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { makeDebugBorder } from '@/utils/styles';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 
 const ITEM_HEIGHT = 68;
 
