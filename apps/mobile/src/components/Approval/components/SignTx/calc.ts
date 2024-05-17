@@ -156,29 +156,45 @@ export const useExplainGas = ({
   nativeTokenPrice,
   tx,
   gasLimit,
-}: Parameters<typeof explainGas>[0]) => {
+  isReady,
+}: {
+  gasUsed: number | string;
+  gasPrice: number | string;
+  chainId: number;
+  nativeTokenPrice: number;
+  tx: Tx;
+  gasLimit: string | undefined;
+  isReady: boolean;
+}) => {
   const [result, setResult] = useState({
     gasCostUsd: new BigNumber(0),
     gasCostAmount: new BigNumber(0),
     maxGasCostAmount: new BigNumber(0),
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    explainGas({
-      gasUsed,
-      gasPrice,
-      chainId,
-      nativeTokenPrice,
-      tx,
-      gasLimit,
-    }).then(data => {
-      setResult(data);
-    });
-  }, [gasUsed, gasPrice, chainId, nativeTokenPrice, tx, gasLimit]);
+    if (isReady) {
+      explainGas({
+        gasUsed,
+        gasPrice,
+        chainId,
+        nativeTokenPrice,
+        tx,
+        gasLimit,
+      }).then(data => {
+        setResult(data);
+        setIsLoading(false);
+      });
+    }
+  }, [gasUsed, gasPrice, chainId, nativeTokenPrice, tx, gasLimit, isReady]);
 
-  return {
-    ...result,
-  };
+  return useMemo(() => {
+    return {
+      ...result,
+      isExplainingGas: isLoading,
+    };
+  }, [result, isLoading]);
 };
 
 export const checkGasAndNonce = ({
@@ -306,6 +322,7 @@ export const useCheckGasAndNonce = ({
         isGnosisAccount,
         nativeTokenBalance,
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       recommendGasLimit,
       recommendNonce,
@@ -319,85 +336,4 @@ export const useCheckGasAndNonce = ({
       nativeTokenBalance,
     ],
   );
-};
-
-export const getGasLimitBaseAccountBalance = ({
-  gasPrice,
-  nativeTokenBalance,
-  nonce,
-  pendingList,
-  tx,
-  recommendGasLimit,
-  recommendGasLimitRatio,
-}: {
-  tx: Tx;
-  nonce: number | string | BigNumber;
-  gasPrice: number | string | BigNumber;
-  pendingList: TransactionGroup[];
-  nativeTokenBalance: string;
-  recommendGasLimit: string | number;
-  recommendGasLimitRatio: number;
-}) => {
-  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
-  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
-    ? new BigNumber(0)
-    : sendNativeTokenAmount;
-  const pendingsSumNativeTokenCost = pendingList
-    .filter(item => new BigNumber(item.nonce).lt(nonce))
-    .reduce((sum, item) => {
-      return sum.plus(
-        item.txs
-          .map(txItem => ({
-            value: isNaN(Number(txItem.rawTx.value))
-              ? 0
-              : Number(txItem.rawTx.value),
-            gasPrice: txItem.rawTx.gasPrice || txItem.rawTx.maxFeePerGas,
-            gasUsed:
-              txItem.gasUsed || txItem.rawTx.gasLimit || txItem.rawTx.gas || 0,
-          }))
-          .reduce((sum, txItem) => {
-            return sum.plus(
-              new BigNumber(txItem.value).plus(
-                new BigNumber(txItem.gasUsed).times(txItem.gasUsed),
-              ),
-            );
-          }, new BigNumber(0)),
-      );
-    }, new BigNumber(0)); // sum native token cost in pending tx list which nonce less than current tx
-  const avaliableGasToken = new BigNumber(nativeTokenBalance).minus(
-    sendNativeTokenAmount.plus(pendingsSumNativeTokenCost),
-  ); // avaliableGasToken = current native token balance - sendNativeTokenAmount - pendingsSumNativeTokenCost
-  if (avaliableGasToken.lte(0)) {
-    // avaliableGasToken less than 0 use 1.5x gasUsed as gasLimit
-    return Math.floor(
-      new BigNumber(recommendGasLimit)
-        .times(Math.min(recommendGasLimitRatio, 1.5))
-        .toNumber(),
-    );
-  }
-  if (
-    avaliableGasToken.gt(
-      new BigNumber(gasPrice).times(
-        Number(recommendGasLimit) * recommendGasLimitRatio,
-      ),
-    )
-  ) {
-    // if avaliableGasToken is enough to pay gas fee of recommendGasLimit * recommendGasLimitRatio, use recommendGasLimit * recommendGasLimitRatio as gasLimit
-    return Math.ceil(Number(recommendGasLimit) * recommendGasLimitRatio);
-  }
-  const adaptGasLimit = avaliableGasToken.div(gasPrice); // adapt gasLimit by account balance
-  if (
-    adaptGasLimit.lt(
-      new BigNumber(recommendGasLimit).times(
-        Math.min(recommendGasLimitRatio, 1.5),
-      ),
-    )
-  ) {
-    return Math.floor(
-      new BigNumber(recommendGasLimit)
-        .times(Math.min(recommendGasLimitRatio, 1.5))
-        .toNumber(),
-    );
-  }
-  return Math.floor(adaptGasLimit.toNumber());
 };

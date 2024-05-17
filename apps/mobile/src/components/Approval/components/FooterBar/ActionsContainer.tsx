@@ -50,6 +50,7 @@ export interface Props {
   children?: React.ReactNode;
   chain?: Chain;
   submitText?: string;
+  gasLess?: boolean;
 }
 
 export const ActionsContainer: React.FC<

@@ -31,7 +31,7 @@ export function shimWeb3(
         if (property === 'currentProvider' && !loggedCurrentProvider) {
           loggedCurrentProvider = true;
           log.warn(
-            'You are accessing the Rabby window.web3.currentProvider shim. This property is deprecated; use window.ethereum instead. For details, see: https://docs.metamask.io/guide/provider-migration.html#replacing-window-web3',
+            'You are accessing the Rabby window.web3.currentProvider shim. This property is deprecated; use window.ethereum instead.',
           );
         } else if (
           property !== 'currentProvider' &&
@@ -40,7 +40,7 @@ export function shimWeb3(
         ) {
           loggedMissingProperty = true;
           log.error(
-            `Rabby no longer injects web3. For details, see: https://docs.metamask.io/guide/provider-migration.html#replacing-window-web3`,
+            `Rabby no longer injects web3.`,
           );
           provider
             .request({ method: 'rabby_logWeb3ShimUsage' })
@@ -52,7 +52,7 @@ export function shimWeb3(
       },
       set: (...args) => {
         log.warn(
-          'You are accessing the Rabby window.web3 shim. This object is deprecated; use window.ethereum instead. For details, see: https://docs.metamask.io/guide/provider-migration.html#replacing-window-web3',
+          'You are accessing the Rabby window.web3 shim. This object is deprecated; use window.ethereum instead.',
         );
         return Reflect.set(...args);
       },

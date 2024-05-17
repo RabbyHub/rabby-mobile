@@ -19,6 +19,7 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
+import { GasLessNotEnough, GasLessToSign } from './GasLessComponents';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -31,6 +32,10 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   isTestnet?: boolean;
   engineResults?: Result[];
   onIgnoreAllRules(): void;
+  useGasLess?: boolean;
+  showGasLess?: boolean;
+  enableGasLess?: () => void;
+  canUseGasLess?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -159,7 +164,12 @@ export const FooterBar: React.FC<Props> = ({
   engineResults = [],
   hasUnProcessSecurityResult,
   hasShadow = false,
+  showGasLess = false,
+  useGasLess = false,
+  canUseGasLess = false,
   onIgnoreAllRules,
+  enableGasLess,
+
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -317,7 +327,13 @@ export const FooterBar: React.FC<Props> = ({
           account={account}
           isTestnet={props.isTestnet}
         />
-        <ActionGroup account={account} {...props} />
+        <ActionGroup
+          account={account}
+          gasLess={useGasLess}
+          {...props}
+          disabledProcess={useGasLess ? false : props.disabledProcess}
+          enableTooltip={useGasLess ? false : props.enableTooltip}
+        />
         {securityLevel && hasUnProcessSecurityResult && (
           <View
             className="security-level-tip"
@@ -352,6 +368,19 @@ export const FooterBar: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
         )}
+
+        {showGasLess &&
+          (!securityLevel || !hasUnProcessSecurityResult) &&
+          (canUseGasLess ? (
+            <GasLessToSign
+              gasLessEnable={useGasLess}
+              handleFreeGas={() => {
+                enableGasLess?.();
+              }}
+            />
+          ) : (
+            <GasLessNotEnough />
+          ))}
       </View>
     </View>
   );
