@@ -404,18 +404,17 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     // Customized and not added
     const isHiddenButton = !token?.is_core && !isAdded;
 
-    const [latestData, setLatestData] = React.useState<LoadData>({
-      last: null,
-      list: [],
-    });
+    // const [latestData, setLatestData] = React.useState<LoadData>({
+    //   list: [],
+    // });
 
     type LoadData = {
-      last?: TxDisplayItem['time_at'] | null;
+      last?: TxDisplayItem['time_at'] | undefined;
       tokenId?: AbstractPortfolioToken['_tokenId'] | null;
       list: TxDisplayItem[];
     };
     const {
-      // data: latestData,
+      data: latestData,
       loading: isLoadingFirst,
       loadingMore: isLoadingMore,
       loadMore,
@@ -423,23 +422,21 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     } = useInfiniteScroll<LoadData>(
       async currentData => {
         const tickResult: LoadData = {
-          // last: latestData?.last || 0,
-          last: currentData?.last || 0,
+          last: currentData?.last ?? undefined,
           tokenId: token?._tokenId,
           list: [],
         };
 
         if (!token) {
-          setLatestData(tickResult);
           return tickResult;
         }
 
-        const startTime = tickResult.last || 0;
+        const startTime = tickResult.last;
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
             id: currentAccount?.address,
             chain_id: token?.chain,
-            start_time: startTime,
+            start_time: startTime ?? undefined,
             page_count: PAGE_COUNT,
             token_id: token?._tokenId,
           });
@@ -458,13 +455,23 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             }))
             .sort((v1, v2) => v2.time_at - v1.time_at);
 
-          tickResult.last = last(displayList)?.time_at ?? null;
-          tickResult.list = displayList;
+          tickResult.last = last(displayList)?.time_at;
+          const limitStart = startTime ?? last(currentData?.list)?.time_at;
 
-          setLatestData(prev => ({
-            ...tickResult,
-            list: [...prev.list, ...tickResult.list],
-          }));
+          tickResult.list = !limitStart
+            ? displayList
+            : displayList.filter(item => item.time_at > limitStart);
+
+          // setLatestData(prev => {
+          //   tickResult.list = !limitStart
+          //     ? displayList
+          //     : displayList.filter(item => item.time_at > limitStart);
+
+          //   return {
+          //     ...tickResult,
+          //     list: [...prev.list, ...tickResult.list],
+          //   };
+          // });
 
           return tickResult;
         } catch (error) {
@@ -473,8 +480,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         }
       },
       {
-        manual: true,
-        reloadDeps: [token],
+        // manual: true,
+        reloadDeps: [token, token?._tokenId],
         isNoMore: d => {
           return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
         },
@@ -482,24 +489,24 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
     );
 
-    const refresh = useCallback(
-      async (options?: { resetPrevious?: boolean }) => {
-        __DEV__ && console.debug('handle refreshing');
-        const { resetPrevious = true } = options || {};
-        if (resetPrevious) {
-          setLatestData({ last: null, list: [] });
-        }
-        await reloadAsync();
-      },
-      [reloadAsync],
-    );
+    // const refresh = useCallback(
+    //   async (options?: { resetPrevious?: boolean }) => {
+    //     __DEV__ && console.debug('handle refreshing');
+    //     const { resetPrevious = true } = options || {};
+    //     if (resetPrevious) {
+    //       // setLatestData({ list: [] });
+    //     }
+    //     await reloadAsync();
+    //   },
+    //   [reloadAsync],
+    // );
 
     useEffect(() => {
       if (token) {
         resetHistoryListPosition();
-        refresh();
+        // refresh();
       }
-    }, [token, refresh, resetHistoryListPosition]);
+    }, [token, /* refresh, */ resetHistoryListPosition]);
 
     const { dataList, shouldRenderLoadingOnEmpty } = useMemo(() => {
       const res = {
@@ -508,10 +515,9 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         shouldRenderLoadingOnEmpty: false,
       };
 
-      res.dataList =
-        token?._tokenId && latestData?.tokenId === token?._tokenId
-          ? latestData?.list || []
-          : [];
+      const lastTokenIdNotMatch =
+        !!token?._tokenId && latestData?.tokenId === token?._tokenId;
+      res.dataList = lastTokenIdNotMatch ? latestData?.list || [] : [];
 
       // // TODO: leave here for debug
       // if (__DEV__) {
@@ -521,15 +527,17 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       //   }
       // }
       res.shouldRenderLoadingOnEmpty =
-        isLoadingFirst || (!res.dataList?.length && isLoadingMore);
+        isLoadingFirst ||
+        (!res.dataList?.length && isLoadingMore) ||
+        lastTokenIdNotMatch;
 
       return res;
     }, [
       latestData?.tokenId,
+      latestData?.list,
       token?._tokenId,
       isLoadingFirst,
       isLoadingMore,
-      latestData?.list,
     ]);
 
     const onEndReached = React.useCallback(() => {
@@ -747,14 +755,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
             refreshing={isLoadingFirst}
-            onRefresh={refresh}
+            onRefresh={reloadAsync}
             // refreshControl={
             //   <RefreshControl
             //     {...(isIOS && {
             //       progressViewOffset: -12,
             //     })}
             //     refreshing={isLoading}
-            //     onRefresh={refresh}
+            //     onRefresh={reloadAsync}
             //   />
             // }
           />
