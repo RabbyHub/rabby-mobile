@@ -306,7 +306,7 @@ export const GasLessAnimatedWrapper = (
         </Animated.View>
         <Animated.View style={overlayStyle} />
         <Animated.View style={logoStyle}>
-          <RcIconLogo width={16} height={16} />
+          <RcIconLogo width={24} height={24} />
         </Animated.View>
       </Animated.View>
     </>
