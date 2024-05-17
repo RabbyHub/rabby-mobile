@@ -172,7 +172,7 @@ export const GasLessAnimatedWrapper = (
       top: 0,
       backgroundColor: colors['neutral-bg-1'],
       left: (interpolate(logoXValue.value, [-10, 100], [-1, 100]) +
-        '%') as DimensionValue, //(overlayValue.value + '%') as DimensionValue,
+        '%') as DimensionValue,
     }),
     [colors],
   );
