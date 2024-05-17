@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { GasLessAnimatedWrapper } from './GasLessComponents';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -32,6 +33,7 @@ export const ProcessActions: React.FC<Props> = ({
   disabledProcess,
   tooltipContent,
   submitText,
+  gasLess,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -43,15 +45,30 @@ export const ProcessActions: React.FC<Props> = ({
         // @ts-expect-error
         content={tooltipContent}>
         <View>
-          <Button
-            disabled={disabledProcess}
-            type="clear"
-            buttonStyle={styles.button}
+          <GasLessAnimatedWrapper
+            title={t('page.signFooterBar.signAndSubmitButton')}
             titleStyle={styles.buttonText}
-            disabledStyle={styles.disabled}
-            onPress={onSubmit}
-            title={submitText ?? t('page.signFooterBar.beginSigning')}
-          />
+            buttonStyle={styles.button}
+            gasLess={gasLess}
+            showOrigin={!gasLess && !disabledProcess}
+            type="process">
+            <Button
+              disabled={disabledProcess}
+              type={gasLess ? 'primary' : 'clear'}
+              buttonStyle={styles.button}
+              titleStyle={
+                gasLess
+                  ? StyleSheet.flatten([
+                      styles.buttonText,
+                      { color: colors['neutral-title-2'] },
+                    ])
+                  : styles.buttonText
+              }
+              disabledStyle={styles.disabled}
+              onPress={onSubmit}
+              title={submitText ?? t('page.signFooterBar.beginSigning')}
+            />
+          </GasLessAnimatedWrapper>
         </View>
       </Tip>
     </ActionsContainer>

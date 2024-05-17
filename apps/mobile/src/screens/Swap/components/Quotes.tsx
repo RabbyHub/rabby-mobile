@@ -60,9 +60,16 @@ export const Quotes = ({
 
   const viewCount = useMemo(() => {
     if (swapViewList) {
+      const DexList = Object.keys(DEX);
+      const CEXList = Object.keys(CEX);
+
+      const availableList = [...DexList, ...CEXList];
+
       return (
         exchangeCount -
-        Object.values(swapViewList).filter(e => e === false).length
+        Object.entries(swapViewList).filter(
+          ([name, e]) => e === false && availableList.includes(name),
+        ).length
       );
     }
     return exchangeCount;
@@ -70,7 +77,10 @@ export const Quotes = ({
 
   const tradeCount = useMemo(() => {
     if (swapTradeList) {
-      return Object.values(swapTradeList).filter(e => e === true).length;
+      const TradeDexList = Object.keys(DEX);
+      return Object.entries(swapTradeList).filter(
+        ([name, enable]) => enable === true && TradeDexList.includes(name),
+      ).length;
     }
     return 0;
   }, [swapTradeList]);
@@ -83,6 +93,7 @@ export const Quotes = ({
     () => [
       ...(list?.sort((a, b) => {
         const getNumber = (quote: typeof a) => {
+          const price = other.receiveToken.price ? other.receiveToken.price : 1;
           if (quote.isDex) {
             if (inSufficient) {
               return new BigNumber(quote.data?.toTokenAmount || 0)
@@ -91,10 +102,10 @@ export const Quotes = ({
                     (quote.data?.toTokenDecimals ||
                       other.receiveToken.decimals),
                 )
-                .times(other.receiveToken.price);
+                .times(price);
             }
             if (!quote.preExecResult) {
-              return new BigNumber(-Number.MAX_SAFE_INTEGER);
+              return new BigNumber(Number.MIN_SAFE_INTEGER);
             }
 
             if (sortIncludeGasFee) {
@@ -102,21 +113,19 @@ export const Quotes = ({
                 quote?.preExecResult.swapPreExecTx.balance_change
                   .receive_token_list?.[0]?.amount || 0,
               )
-                .times(other.receiveToken.price)
+                .times(price)
                 .minus(quote?.preExecResult?.gasUsdValue || 0);
             }
 
             return new BigNumber(
               quote?.preExecResult.swapPreExecTx.balance_change
                 .receive_token_list?.[0]?.amount || 0,
-            ).times(other.receiveToken.price);
+            ).times(price);
           }
 
-          return new BigNumber(
-            quote?.data?.receive_token
-              ? quote?.data?.receive_token?.amount
-              : -Number.MAX_SAFE_INTEGER,
-          ).times(other.receiveToken.price);
+          return quote?.data?.receive_token
+            ? new BigNumber(quote?.data?.receive_token?.amount).times(price)
+            : new BigNumber(Number.MIN_SAFE_INTEGER);
         };
         return getNumber(b).minus(getNumber(a)).toNumber();
       }) || []),
