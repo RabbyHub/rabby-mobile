@@ -49,7 +49,7 @@ import { keyringService } from '@/core/services';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
-import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 
 const { isSameAddress } = addressUtils;
 

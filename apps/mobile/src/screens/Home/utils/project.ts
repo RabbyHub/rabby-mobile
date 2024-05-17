@@ -11,9 +11,10 @@ import {
   AbstractProject,
   PortfolioProject,
 } from '../types';
-import { calcPercent, formatPrice } from '@/utils/math';
+import { calcPercent } from '@/utils/math';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
+import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 export const pQueue = new PQueue({
   interval: 1000,
@@ -345,7 +346,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
     this.symbol = getTokenSymbol(token);
 
     this._usdValueStr = formatUsdValue(this._usdValue);
-    this._priceStr = formatPrice(this.price);
+    this._priceStr = bizNumberUtils.formatPrice(this.price);
     this._amountStr = formatAmount(Math.abs(this.amount));
     this.decimals = token.decimals;
     this.is_core = token.is_core;
