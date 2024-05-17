@@ -167,11 +167,11 @@ export const GasLessAnimatedWrapper = (
     () => ({
       position: 'absolute',
       opacity: 0.5,
-      width: '100%',
+      width: '110%',
       height: '100%',
       top: 0,
       backgroundColor: colors['neutral-bg-1'],
-      left: (interpolate(logoXValue.value, [-10, 100], [-1, 100]) +
+      left: (interpolate(logoXValue.value, [-10, 100], [-10, 100]) +
         '%') as DimensionValue,
     }),
     [colors],
@@ -197,7 +197,7 @@ export const GasLessAnimatedWrapper = (
     right: 0,
     bottom: 0,
     backgroundColor: colors['blue-default'],
-    left: (interpolate(logoXValue.value, [-10, 100], [-200, -100]) +
+    left: (interpolate(logoXValue.value, [-10, 100], [-210, -100]) +
       '%') as DimensionValue,
   }));
 
@@ -297,9 +297,6 @@ export const GasLessAnimatedWrapper = (
           ]}>
           <Animated.View style={blueBgStyle} />
 
-          <Animated.View style={logoStyle}>
-            <RcIconLogo width={16} height={16} />
-          </Animated.View>
           {renderText(props.title, {
             style: StyleSheet.flatten([
               props.titleStyle,
@@ -308,6 +305,9 @@ export const GasLessAnimatedWrapper = (
           })}
         </Animated.View>
         <Animated.View style={overlayStyle} />
+        <Animated.View style={logoStyle}>
+          <RcIconLogo width={16} height={16} />
+        </Animated.View>
       </Animated.View>
     </>
   );
