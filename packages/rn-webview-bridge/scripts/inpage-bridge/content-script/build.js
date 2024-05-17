@@ -8,7 +8,11 @@ const inpageContent = fs
   .toString();
 
 // wrap the inpage content in a variable declaration
-const code = `const inpageBundle = ${JSON.stringify(inpageContent)}`;
+// const code = `var inpageBundle = ${JSON.stringify(inpageContent)}`;
+const code = `var injectRabbyPageProvider = (function () {
+  ${inpageContent}
+});
+`;
 
 fs.writeFileSync(path.join(distPath, 'inpage-bundle.js'), code, 'ascii');
 console.log('content-script.js generated succesfully');
