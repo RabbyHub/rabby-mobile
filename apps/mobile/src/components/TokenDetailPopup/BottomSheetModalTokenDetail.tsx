@@ -404,10 +404,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     // Customized and not added
     const isHiddenButton = !token?.is_core && !isAdded;
 
-    // const [latestData, setLatestData] = React.useState<LoadData>({
-    //   last: null,
-    //   list: [],
-    // });
+    const [latestData, setLatestData] = React.useState<LoadData>({
+      last: null,
+      list: [],
+    });
 
     type LoadData = {
       last?: TxDisplayItem['time_at'] | null;
@@ -415,24 +415,26 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       list: TxDisplayItem[];
     };
     const {
-      data: latestData,
+      // data: latestData,
       loading: isLoadingFirst,
       loadingMore: isLoadingMore,
       loadMore,
       reloadAsync,
     } = useInfiniteScroll<LoadData>(
-      async (currentData?) => {
+      async currentData => {
         const tickResult: LoadData = {
-          last: null,
+          // last: latestData?.last || 0,
+          last: currentData?.last || 0,
           tokenId: token?._tokenId,
           list: [],
         };
 
         if (!token) {
+          setLatestData(tickResult);
           return tickResult;
         }
 
-        const startTime = currentData?.last || 0;
+        const startTime = tickResult.last || 0;
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
             id: currentAccount?.address,
@@ -459,6 +461,11 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           tickResult.last = last(displayList)?.time_at ?? null;
           tickResult.list = displayList;
 
+          setLatestData(prev => ({
+            ...tickResult,
+            list: [...prev.list, ...tickResult.list],
+          }));
+
           return tickResult;
         } catch (error) {
           console.error(error);
@@ -467,7 +474,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
       {
         manual: true,
-        // reloadDeps: [token],
+        reloadDeps: [token],
         isNoMore: d => {
           return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
         },
@@ -475,23 +482,36 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
     );
 
+    const refresh = useCallback(
+      async (options?: { resetPrevious?: boolean }) => {
+        __DEV__ && console.debug('handle refreshing');
+        const { resetPrevious = true } = options || {};
+        if (resetPrevious) {
+          setLatestData({ last: null, list: [] });
+        }
+        await reloadAsync();
+      },
+      [reloadAsync],
+    );
+
     useEffect(() => {
       if (token) {
         resetHistoryListPosition();
+        refresh();
       }
-
-      // though no token, trigger it to make latestData to be empty
-      reloadAsync();
-    }, [token, reloadAsync, resetHistoryListPosition]);
+    }, [token, refresh, resetHistoryListPosition]);
 
     const { dataList, shouldRenderLoadingOnEmpty } = useMemo(() => {
       const res = {
         dataList: [] as TxDisplayItem[],
+        // isRefreshing: isLoadingFirst && !isLoadingMore,
         shouldRenderLoadingOnEmpty: false,
       };
 
       res.dataList =
-        latestData?.tokenId === token?._tokenId ? latestData?.list || [] : [];
+        token?._tokenId && latestData?.tokenId === token?._tokenId
+          ? latestData?.list || []
+          : [];
 
       // // TODO: leave here for debug
       // if (__DEV__) {
@@ -727,7 +747,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
             refreshing={isLoadingFirst}
-            onRefresh={reloadAsync}
+            onRefresh={refresh}
             // refreshControl={
             //   <RefreshControl
             //     {...(isIOS && {
