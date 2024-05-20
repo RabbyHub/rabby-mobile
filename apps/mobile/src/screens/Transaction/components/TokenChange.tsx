@@ -123,7 +123,7 @@ export const TxChange = ({
 };
 
 const ChangeSizes = {
-  gap: 6,
+  gap: 2,
 };
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({

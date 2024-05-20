@@ -485,39 +485,24 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         isNoMore: d => {
           return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
         },
-        onSuccess(data) {},
       },
     );
-
-    // const refresh = useCallback(
-    //   async (options?: { resetPrevious?: boolean }) => {
-    //     __DEV__ && console.debug('handle refreshing');
-    //     const { resetPrevious = true } = options || {};
-    //     if (resetPrevious) {
-    //       // setLatestData({ list: [] });
-    //     }
-    //     await reloadAsync();
-    //   },
-    //   [reloadAsync],
-    // );
 
     useEffect(() => {
       if (token) {
         resetHistoryListPosition();
-        // refresh();
       }
-    }, [token, /* refresh, */ resetHistoryListPosition]);
+    }, [token, resetHistoryListPosition]);
 
     const { dataList, shouldRenderLoadingOnEmpty } = useMemo(() => {
       const res = {
         dataList: [] as TxDisplayItem[],
-        // isRefreshing: isLoadingFirst && !isLoadingMore,
         shouldRenderLoadingOnEmpty: false,
       };
 
-      const lastTokenIdNotMatch =
+      const lastTokenIdMatched =
         !!token?._tokenId && latestData?.tokenId === token?._tokenId;
-      res.dataList = lastTokenIdNotMatch ? latestData?.list || [] : [];
+      res.dataList = lastTokenIdMatched ? latestData?.list || [] : [];
 
       // // TODO: leave here for debug
       // if (__DEV__) {
@@ -529,7 +514,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       res.shouldRenderLoadingOnEmpty =
         isLoadingFirst ||
         (!res.dataList?.length && isLoadingMore) ||
-        lastTokenIdNotMatch;
+        lastTokenIdMatched;
 
       return res;
     }, [
@@ -541,8 +526,17 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     ]);
 
     const onEndReached = React.useCallback(() => {
+      if (isLoadingFirst) return;
+      if (latestData?.tokenId !== token?._tokenId) {
+        if (__DEV__) {
+          console.warn(
+            'latestData?.tokenId !== token?._tokenId, skip load more',
+          );
+        }
+        return;
+      }
       loadMore();
-    }, [loadMore]);
+    }, [isLoadingFirst, latestData?.tokenId, token?._tokenId, loadMore]);
 
     const renderItem = useCallback(
       ({ item }: { item: TxDisplayItem }) => {

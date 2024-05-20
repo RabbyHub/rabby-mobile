@@ -78,8 +78,8 @@ ios/Package
 scripts/deployments/**/version.json
 scripts/deployments/**/*.md
 
-scripts/deployments/ios/manifest.plist
-scripts/deployments/ios/*.ipa
+scripts/deployments/ios*/manifest.plist
+scripts/deployments/ios*/*.ipa
 scripts/deployments/android/*.apk
 scripts/deployments/android/*.aab
 
