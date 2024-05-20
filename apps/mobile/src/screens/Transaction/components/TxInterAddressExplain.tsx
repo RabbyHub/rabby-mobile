@@ -129,7 +129,12 @@ export const TxInterAddressExplain = ({
   const projectNameNode = (
     <>
       {project?.name ? (
-        <Text style={[styles.projectNameText]}>{project.name}</Text>
+        <Text
+          style={[
+            !isApprove ? styles.projectNameText : styles.approveProjectText,
+          ]}>
+          {project.name}
+        </Text>
       ) : data.other_addr ? (
         <NameAndAddress address={data.other_addr} hideCopy={isScam} />
       ) : null}
@@ -153,13 +158,15 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <Text
-        style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
-        numberOfLines={1}>
-        Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
-        {`${getTokenSymbol(approveToken)} for `}
+      <>
+        <Text
+          style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+          numberOfLines={1}>
+          Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
+          {`${getTokenSymbol(approveToken)} for `}
+        </Text>
         {projectNameNode}
-      </Text>
+      </>
     );
   } else {
     interAddressExplain = (
@@ -181,9 +188,16 @@ export const TxInterAddressExplain = ({
         src={projectDict[data.project_id as string]?.logo_url}
         cateId={data.cate_id}
       />
-      <View style={styles.explain}>{interAddressExplain}</View>
+      <View style={[styles.explain, isApprove && styles.explainForApprove]}>
+        {interAddressExplain}
+      </View>
     </View>
   );
+};
+
+const actionFont = {
+  fontSize: 15,
+  lineHeight: 18,
 };
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -199,9 +213,15 @@ const getStyles = (colors: AppColorsVariants) =>
       maxWidth: '100%',
       // ...makeDebugBorder('red'),
     },
+    explainForApprove: {
+      width: '100%',
+      flexShrink: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
     actionTitle: {
-      fontSize: 15,
-      lineHeight: 18,
+      ...actionFont,
       color: colors['neutral-title1'],
       marginBottom: 4,
       maxWidth: '100%',
@@ -214,5 +234,10 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 12,
       lineHeight: 14,
       color: colors['neutral-foot'],
+    },
+    approveProjectText: {
+      position: 'relative',
+      top: -2,
+      ...actionFont,
     },
   });
