@@ -164,8 +164,8 @@ export const TxInterAddressExplain = ({
           numberOfLines={1}>
           Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
           {`${getTokenSymbol(approveToken)} for `}
+          {projectNameNode}
         </Text>
-        {projectNameNode}
       </View>
     );
   } else {
