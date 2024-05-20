@@ -541,8 +541,17 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     ]);
 
     const onEndReached = React.useCallback(() => {
+      if (isLoadingFirst) return;
+      if (latestData?.tokenId !== token?._tokenId) {
+        if (__DEV__) {
+          console.warn(
+            'latestData?.tokenId !== token?._tokenId, skip load more',
+          );
+        }
+        return;
+      }
       loadMore();
-    }, [loadMore]);
+    }, [isLoadingFirst, latestData?.tokenId, token?._tokenId, loadMore]);
 
     const renderItem = useCallback(
       ({ item }: { item: TxDisplayItem }) => {
