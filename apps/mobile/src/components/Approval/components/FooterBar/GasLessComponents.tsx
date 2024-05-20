@@ -57,10 +57,6 @@ export function GasLessNotEnough() {
 }
 
 function FreeGasReady() {
-  // const { t } = useTranslation();
-  // const colors = useThemeColors();
-  // const styles = useMemo(() => getStyles(colors), [colors]);
-
   return (
     <View
       style={{
@@ -70,7 +66,7 @@ function FreeGasReady() {
       <ImageBackground
         source={require('@/assets/icons/sign/tx/pay-for-gas.png')}
         resizeMode="contain"
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: 50, marginTop: 6 }}
       />
     </View>
   );
@@ -161,8 +157,6 @@ export const GasLessAnimatedWrapper = (
 ) => {
   const colors = useThemeColors();
 
-  const blueBgXValue = useSharedValue(-200);
-
   const logoXValue = useSharedValue(-10);
 
   const logoYValue = useSharedValue(0);
@@ -173,12 +167,12 @@ export const GasLessAnimatedWrapper = (
     () => ({
       position: 'absolute',
       opacity: 0.5,
-      width: '100%',
+      width: '110%',
       height: '100%',
       top: 0,
       backgroundColor: colors['neutral-bg-1'],
-      left: (interpolate(logoXValue.value, [-10, 100], [0, 105]) +
-        '%') as DimensionValue, //(overlayValue.value + '%') as DimensionValue,
+      left: (interpolate(logoXValue.value, [-10, 100], [-10, 100]) +
+        '%') as DimensionValue,
     }),
     [colors],
   );
@@ -203,7 +197,8 @@ export const GasLessAnimatedWrapper = (
     right: 0,
     bottom: 0,
     backgroundColor: colors['blue-default'],
-    left: (blueBgXValue.value + '%') as DimensionValue,
+    left: (interpolate(logoXValue.value, [-10, 100], [-210, -100]) +
+      '%') as DimensionValue,
   }));
 
   const processBgColor = useMemo(
@@ -222,18 +217,13 @@ export const GasLessAnimatedWrapper = (
   );
 
   const start = React.useCallback(() => {
-    blueBgXValue.value = withTiming(-100, {
-      duration: 900,
-      easing: Easing.linear,
-    });
-
     logoXValue.value = withTiming(100, {
       duration: 900,
       easing: Easing.linear,
     });
 
     const config = {
-      duration: 75,
+      duration: 112.5,
       easing: Easing.linear,
     };
 
@@ -244,7 +234,7 @@ export const GasLessAnimatedWrapper = (
         withTiming(16, config),
         withTiming(0, config),
       ),
-      3,
+      2,
       true,
     );
 
@@ -254,7 +244,7 @@ export const GasLessAnimatedWrapper = (
         duration: 0,
       }),
     );
-  }, [blueBgXValue, hiddenAnimated, logoXValue, logoYValue]);
+  }, [hiddenAnimated, logoXValue, logoYValue]);
 
   const showOriginButtonStyle = useAnimatedStyle(() => ({
     display: hiddenAnimated.value === 1 ? 'flex' : 'none',
@@ -307,9 +297,6 @@ export const GasLessAnimatedWrapper = (
           ]}>
           <Animated.View style={blueBgStyle} />
 
-          <Animated.View style={logoStyle}>
-            <RcIconLogo width={16} height={16} />
-          </Animated.View>
           {renderText(props.title, {
             style: StyleSheet.flatten([
               props.titleStyle,
@@ -318,6 +305,9 @@ export const GasLessAnimatedWrapper = (
           })}
         </Animated.View>
         <Animated.View style={overlayStyle} />
+        <Animated.View style={logoStyle}>
+          <RcIconLogo width={24} height={24} />
+        </Animated.View>
       </Animated.View>
     </>
   );
@@ -338,7 +328,7 @@ const getStyles = createGetStyles(colors => ({
   tipTriangle: {
     position: 'absolute',
     top: -13,
-    left: 110,
+    left: '33%',
     width: 0,
     height: 0,
     backgroundColor: 'transparent',
