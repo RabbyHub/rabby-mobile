@@ -18,7 +18,6 @@ import { ALIAS_ADDRESS } from '@/constant/gas';
 import TouchableView from '@/components/Touchable/TouchableView';
 
 type TxInterAddressExplainProps = RNViewProps & {
-  actionTitleStyle?: StyleProp<TextStyle>;
   data: TxDisplayItem;
   isScam?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
@@ -112,7 +111,6 @@ const getNameAndAddressStyle = createGetStyles(colors => {
 
 export const TxInterAddressExplain = ({
   style,
-  actionTitleStyle,
   data,
   projectDict,
   tokenDict,
@@ -145,9 +143,11 @@ export const TxInterAddressExplain = ({
 
   if (isCancel) {
     interAddressExplain = (
-      <Text style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}>
-        {t('page.transactions.explain.cancel')}
-      </Text>
+      <View style={[styles.explain]}>
+        <Text style={StyleSheet.flatten([styles.actionTitle])}>
+          {t('page.transactions.explain.cancel')}
+        </Text>
+      </View>
     );
   } else if (isApprove) {
     const tokenId = data.token_approve?.token_id || '';
@@ -158,27 +158,27 @@ export const TxInterAddressExplain = ({
     const amount = data.token_approve?.value || 0;
 
     interAddressExplain = (
-      <>
+      <View style={[styles.explain, isApprove && styles.explainForApprove]}>
         <Text
-          style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+          style={StyleSheet.flatten([styles.actionTitle])}
           numberOfLines={1}>
           Approve {amount < 1e9 ? amount.toFixed(4) : 'infinite'}{' '}
           {`${getTokenSymbol(approveToken)} for `}
         </Text>
         {projectNameNode}
-      </>
+      </View>
     );
   } else {
     interAddressExplain = (
-      <>
+      <View style={[styles.explain]}>
         <Text
-          style={StyleSheet.flatten([styles.actionTitle, actionTitleStyle])}
+          style={StyleSheet.flatten([styles.actionTitle])}
           numberOfLines={1}>
           {cateDict[data.cate_id || '']?.name ??
             (data.tx?.name || t('page.transactions.explain.unknown'))}
         </Text>
         <View style={styles.actionDesc}>{projectNameNode}</View>
-      </>
+      </View>
     );
   }
 
@@ -188,9 +188,7 @@ export const TxInterAddressExplain = ({
         src={projectDict[data.project_id as string]?.logo_url}
         cateId={data.cate_id}
       />
-      <View style={[styles.explain, isApprove && styles.explainForApprove]}>
-        {interAddressExplain}
-      </View>
+      {interAddressExplain}
     </View>
   );
 };
