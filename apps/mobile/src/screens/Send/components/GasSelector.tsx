@@ -359,7 +359,7 @@ const getStyles = createGetStyles(colors => {
     selectionTitle: {
       textAlign: 'center',
       lineHeight: 14,
-      marginTop: 4,
+      marginTop: 2,
       marginHorizontal: 'auto',
       marginBottom: 0,
       color: colors['neutral-title-1'],
@@ -370,7 +370,8 @@ const getStyles = createGetStyles(colors => {
     cardCustomInputContainer: {
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors['neutral-card2'],
+      // backgroundColor: colors['neutral-card2'],
+      backgroundColor: 'transparent',
       width: '100%',
       height: '100%',
     },

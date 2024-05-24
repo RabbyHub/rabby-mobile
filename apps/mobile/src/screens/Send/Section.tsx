@@ -129,6 +129,7 @@ export function BalanceSection({ style }: RNViewProps) {
           {showGasReserved &&
             (selectedGasLevel ? (
               <GasReserved
+                style={styles.gasReserved}
                 token={currentToken}
                 amount={tokenAmountForGas}
                 onClickAmount={() => {
@@ -244,6 +245,11 @@ const getBalanceStyles = createGetStyles(colors => {
       width: '100%',
       justifyContent: 'flex-end',
       // ...makeDebugBorder(),
+    },
+
+    gasReserved: {
+      paddingLeft: 8,
+      // ...makeDebugBorder()
     },
 
     issueBlockSkeleton: {
