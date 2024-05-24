@@ -274,7 +274,7 @@ export const TokenAmountInput = React.forwardRef<
               ]}
               value={value}
               onChangeText={(value: string) => {
-                onChange(formatSpeicalAmount(value));
+                onChange?.(formatSpeicalAmount(value));
               }}
               ref={tokenInputRef}
               placeholder="0"

@@ -439,9 +439,6 @@ export function useSendTokenForm() {
         }
 
         params.value = `0x${sendValue.toString(16)}`;
-        const noEstimateGasRequired =
-          !ARB_LIKE_L2_CHAINS.includes(chain.enum) &&
-          !L2_ENUMS.includes(chain.enum);
 
         try {
           const code = await apiProvider.requestETHRpc(
@@ -451,23 +448,21 @@ export function useSendTokenForm() {
             },
             chain.serverId,
           );
+          const isContract = !!code && !(code === '0x' || code === '0x0');
           /**
            * we dont' need always fetch estimateGas, if no `params.gas` set below,
            * `params.gas` would be filled on Tx Page.
            */
-          if (chain.needEstimateGas && screenState.estimateGas > 0) {
-            params.gas = intToHex(screenState.estimateGas);
-          } else if (
-            code &&
-            (code === '0x' || code === '0x0') &&
-            noEstimateGasRequired
+          if (
+            screenState.estimateGas > 0 &&
+            (chain.needEstimateGas || isContract)
           ) {
+            params.gas = intToHex(screenState.estimateGas);
+          } else if (!isContract) {
             params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
           }
         } catch (e) {
-          if (noEstimateGasRequired) {
-            params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
-          }
+          params.gas = intToHex(21000);
         }
         if (
           isShowMessageDataForToken &&
@@ -651,7 +646,10 @@ export function useSendTokenForm() {
       // });
       formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
-      putScreenState({ cacheAmount: resultAmount });
+      putScreenState({
+        cacheAmount: resultAmount,
+        ...(!resultAmount && { showGasReserved: false }),
+      });
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
         putScreenState({
@@ -772,7 +770,11 @@ export function useSendTokenForm() {
 
   const handleClickTokenBalance = useCallback(async () => {
     if (!currentAccount) return;
-    if (screenState.isLoading || screenState.showGasReserved) return;
+    if (
+      screenState.isLoading ||
+      (screenState.showGasReserved && formik.values.amount)
+    )
+      return;
 
     const tokenBalance = new BigNumber(
       currentToken.raw_amount_hex_str || 0,
