@@ -66,9 +66,13 @@ export const ConnectLedger: React.FC<{
         console.log('checkEthApp isConnected error', err);
         return await checkEthApp();
       }
-      toast.show(
-        err.message || t('page.newAddress.ledger.error.lockedOrNoEthApp'),
-      );
+
+      if (err.message !== LEDGER_ERROR_CODES.FIRMWARE_OR_APP_UPDATE_REQUIRED) {
+        toast.show(
+          err.message || t('page.newAddress.ledger.error.lockedOrNoEthApp'),
+        );
+      }
+
       setCurrentScreen('select');
       console.error('checkEthApp', err);
       throw err;

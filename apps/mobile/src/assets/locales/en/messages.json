@@ -2109,6 +2109,12 @@
       "message": "Rabby Wallet uses bluetooth access to connect Ledger",
       "open_settings": "OK",
       "cancel": "Don't Allow"
+    },
+    "update_firmware_alert": {
+      "title": "Ledger Firmware Outdated",
+      "message": "Check out how to update Ledger firmware from Ledger support",
+      "update": "Update",
+      "cancel": "Cancel"
     }
   }
 }

@@ -8,6 +8,7 @@ import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import PQueue from 'p-queue/dist/index';
 import { t } from 'i18next';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 
 let queue: PQueue;
 setTimeout(() => {
@@ -158,9 +159,8 @@ export async function checkEthApp(cb: (result: boolean) => void) {
     const message = ledgerErrorHandler(e);
 
     if (message === LEDGER_ERROR_CODES.FIRMWARE_OR_APP_UPDATE_REQUIRED) {
-      throw new Error(
-        t('page.newAddress.ledger.error.firmwareOrAppUpdateRequired'),
-      );
+      UpdateFirmwareAlert();
+      throw new Error(message);
     }
   }
   const { appName } = await keyring.getAppAndVersion();
