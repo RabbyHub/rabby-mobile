@@ -39,6 +39,7 @@ import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { ModalLayouts } from '@/constant/layout';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -652,7 +653,7 @@ const GasSelector = ({
         )}
       </View>
       <AppBottomSheetModal
-        snapPoints={['80%']}
+        snapPoints={[ModalLayouts.defaultHeightPercentText]}
         ref={modalRef}
         onDismiss={() => setModalVisible(false)}>
         <BottomSheetView style={styles.modalWrap}>

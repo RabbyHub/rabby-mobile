@@ -38,6 +38,10 @@ export function useSafeSizes() {
   };
 }
 
+/**
+ * @description pass inputs with key-value pairs, the value should be a number which means the original size
+ * if it's not on android's navigation mode(3 buttons mode).
+ */
 export function useSafeAndroidBottomSizes<T extends Record<string, number>>(
   inputs: T,
 ) {

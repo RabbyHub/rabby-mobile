@@ -39,6 +39,7 @@ import {
   RcIconSwapHistoryEmpty,
   RcIconSwapRightArrow,
 } from '@/assets/icons/swap';
+import { ModalLayouts } from '@/constant/layout';
 
 const getStyles = createGetStyles(colors => ({
   contentContainerStyle: {
@@ -439,7 +440,7 @@ const HistoryList = () => {
 
 export const SwapTxHistory = () => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const snapPoints = useMemo(() => ['80%'], []);
+  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapTxHistoryVisible();
 
   const onDismiss = useCallback(() => {

@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 
 import SelectSortedChain, { SelectSortedChainProps } from './SelectSortedChain';
+import { ModalLayouts } from '@/constant/layout';
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -39,7 +40,7 @@ export default function SelectSortedChainModal({
     <AppBottomSheetModal
       ref={modalRef}
       index={0}
-      snapPoints={['80%']}
+      snapPoints={[ModalLayouts.defaultHeightPercentText]}
       backgroundStyle={styles.sheet}
       onDismiss={onCancel}
       enableContentPanningGesture={false}>

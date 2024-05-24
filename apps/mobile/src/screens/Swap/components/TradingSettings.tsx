@@ -25,6 +25,7 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { colord } from 'colord';
+import { ModalLayouts } from '@/constant/layout';
 
 const list = [...Object.values(DEX), ...Object.values(CEX)] as {
   id: keyof typeof DEX | keyof typeof CEX;
@@ -35,7 +36,7 @@ const list = [...Object.values(DEX), ...Object.values(CEX)] as {
 
 export const TradingSettings = () => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const snapPoints = useMemo(() => ['80%'], []);
+  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapSettingsVisible();
 
   const onDismiss = useCallback(() => {
