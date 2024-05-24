@@ -30,6 +30,8 @@ import { navigate } from '@/utils/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
+import { Chain } from '@/constant/chains';
+import { GnosisSupportChainList } from './ImportSafeAddressScreen';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -100,6 +102,7 @@ export const ImportSuccessScreen = () => {
     deepLink: string;
     isFirstImport: boolean;
     type: KEYRING_TYPE;
+    supportChainList?: Chain[];
   };
   const [importAddresses, setImportAddresses] = React.useState<
     {
@@ -221,6 +224,12 @@ export const ImportSuccessScreen = () => {
                   }}
                 />
               ))}
+              {state?.supportChainList?.length ? (
+                <GnosisSupportChainList
+                  data={state?.supportChainList}
+                  style={{ marginTop: 0 }}
+                />
+              ) : null}
             </View>
           </ScrollView>
           {state.isFirstImport && (

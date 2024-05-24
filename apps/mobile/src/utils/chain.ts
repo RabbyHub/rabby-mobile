@@ -10,6 +10,31 @@ import {
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { keyBy } from 'lodash';
+
+export const findChain = (params: {
+  enum?: CHAINS_ENUM | string | null;
+  id?: number | null;
+  serverId?: string | null;
+  hex?: string | null;
+  networkId?: string | null;
+}): Chain | null | undefined => {
+  const { enum: chainEnum, id, serverId, hex, networkId } = params;
+  if (chainEnum && chainEnum.startsWith('CUSTOM_')) {
+    return findChain({
+      id: +chainEnum.replace('CUSTOM_', ''),
+    });
+  }
+  const chain = [...CHAINS_LIST].find(
+    item =>
+      item.enum === chainEnum ||
+      (id && +item.id === +id) ||
+      item.serverId === serverId ||
+      item.hex === hex ||
+      item.network === networkId,
+  );
+
+  return chain;
+};
 /**
  * @description safe find chain, if not found, return fallback(if provided) or null
  */

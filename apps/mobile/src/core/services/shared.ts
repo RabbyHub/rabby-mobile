@@ -13,6 +13,7 @@ import { TransactionWatcherService } from './transactionWatcher';
 import { WhitelistService } from './whitelist';
 import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
+import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import {
   EncryptorAdapter,
@@ -41,6 +42,7 @@ const keyringClasses = [
   LedgerKeyring,
   KeystoneKeyring,
   OneKeyKeyring,
+  GnosisKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({

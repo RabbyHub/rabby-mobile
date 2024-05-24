@@ -6,6 +6,7 @@ import {
   RcIconMore,
   RcIconApproval,
   RcIconGasTopUp,
+  RcIconQueue,
 } from '@/assets/icons/home';
 import { BSheetModal } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -13,7 +14,7 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, StyleProp, Text, TextStyle, View } from 'react-native';
 import { toast } from '@/components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -26,13 +27,22 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useApprovalAlert } from '../hooks/approvals';
+import { useCurrentAccount } from '@/hooks/account';
+import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
 const MORE_SHEET_MODAL_SNAPPOINTS = [220];
 
 const isAndroid = Platform.OS === 'android';
-function BadgeText({ count }: { count?: number }) {
+function BadgeText({
+  count,
+  style,
+}: {
+  count?: number;
+  style?: StyleProp<TextStyle>;
+}) {
   const { styles } = useThemeStyles(getStyles);
 
   if (!count) return null;
@@ -44,6 +54,7 @@ function BadgeText({ count }: { count?: number }) {
           styles.badgeBg,
           count > 9 && styles.badgeBgNeedPaddingHorizontal,
           styles.badgeText,
+          style,
         ]}>
         {count}
       </Text>
@@ -71,12 +82,19 @@ export const HomeTopArea = () => {
   // const approvalRiskAlert = 200;
   const totalAlertCount = useMemo(() => approvalRiskAlert, [approvalRiskAlert]);
 
+  const { currentAccount } = useCurrentAccount();
+  const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
+  const { data: gnosisPendingTxs } = useGnosisPendingTxs({
+    address: isGnosisKeyring ? currentAccount?.address : undefined,
+  });
+
   const actions: {
     title: string;
     Icon: any;
     onPress: () => void;
     disabled?: boolean;
     badge?: number;
+    badgeStyle?: StyleProp<TextStyle>;
   }[] = [
     {
       title: 'Send',
@@ -121,6 +139,24 @@ export const HomeTopArea = () => {
         });
       },
     },
+    ...(isGnosisKeyring
+      ? [
+          {
+            title: 'Queue',
+            badge: gnosisPendingTxs?.total,
+            Icon: RcIconQueue,
+            onPress: () => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.GnosisTransactionQueue,
+              });
+            },
+            badgeStyle: {
+              backgroundColor: colors['blue-default'],
+            },
+          },
+        ]
+      : []),
+
     {
       title: 'More',
       Icon: RcIconMore,
@@ -186,7 +222,7 @@ export const HomeTopArea = () => {
 
               <View style={styles.actionBadgeWrapper}>
                 {!!item.badge && item.badge > 0 && (
-                  <BadgeText count={item.badge} />
+                  <BadgeText count={item.badge} style={item.badgeStyle} />
                 )}
               </View>
               <Text style={styles.actionText}>{item.title}</Text>

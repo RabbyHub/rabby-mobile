@@ -3,6 +3,7 @@ import {} from '@react-navigation/bottom-tabs';
 
 import { RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { Chain } from './constant/chains';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -46,8 +47,10 @@ export type AddressNavigatorParamList = {
     realBrandName?: string;
     isFirstImport?: boolean;
     type: KEYRING_TYPE;
+    supportChainList?: Chain[];
   };
   [RootNames.ImportWatchAddress]?: {};
+  [RootNames.ImportSafeAddress]?: {};
   [RootNames.AddressDetail]: {
     address: string;
     type: string;
@@ -65,6 +68,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.Swap]?: {};
+  [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.GasTopUp]?: {};

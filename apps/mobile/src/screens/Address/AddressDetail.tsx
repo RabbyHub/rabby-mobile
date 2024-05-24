@@ -46,6 +46,8 @@ import {
 } from '@/navigation-type';
 import { toast } from '@/components/Toast';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { GnosisSafeInfo } from './components/GnosisSafeInfo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -188,8 +190,16 @@ const AddressInfo = (props: AddressInfoProps) => {
     [],
   );
 
+  const { bottom } = useSafeAreaInsets();
+
   return (
-    <View style={{ gap: 20, paddingHorizontal: 20, paddingTop: 8 }}>
+    <View
+      style={{
+        gap: 20,
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        paddingBottom: bottom,
+      }}>
       <View style={styles.view}>
         <View
           style={[
@@ -285,6 +295,15 @@ const AddressInfo = (props: AddressInfoProps) => {
               />
             </View>
           )}
+          {account.type === KEYRING_TYPE.GnosisKeyring ? (
+            <View>
+              <GnosisSafeInfo
+                address={account.address}
+                type={account.type}
+                brandName={account.brandName}
+              />
+            </View>
+          ) : null}
         </View>
 
         <AppBottomSheetModal

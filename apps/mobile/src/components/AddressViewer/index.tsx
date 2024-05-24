@@ -5,6 +5,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -22,6 +23,7 @@ interface AddressViewProps {
   index?: number;
   showIndex?: boolean;
   style?: StyleProp<ViewStyle>;
+  addressStyle?: StyleProp<TextStyle>;
 }
 
 export const AddressViewer = ({
@@ -33,6 +35,7 @@ export const AddressViewer = ({
   index = -1,
   showIndex = false,
   style,
+  addressStyle,
 }: AddressViewProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -44,10 +47,13 @@ export const AddressViewer = ({
           <Text style={styles.numberIndex}>{index}</Text>
         )}
         <Text
-          style={{
-            lineHeight: 20,
-            color: colors['neutral-foot'],
-          }}>
+          style={[
+            {
+              lineHeight: 20,
+              color: colors['neutral-foot'],
+            },
+            addressStyle,
+          ]}>
           {ellipsis
             ? `${address?.toLowerCase().slice(0, 6)}...${address
                 ?.toLowerCase()

@@ -42,6 +42,7 @@ export const RootNames = {
   Send: 'Send',
   Receive: 'Receive',
   Swap: 'Swap',
+  GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
   GasTopUp: 'GasTopUp',
   History: 'History',
@@ -55,6 +56,7 @@ export const RootNames = {
   ImportNewAddress: 'ImportNewAddress',
   ImportSuccess: 'ImportSuccess',
   ImportWatchAddress: 'ImportWatchAddress',
+  ImportSafeAddress: 'ImportSafeAddress',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
 
@@ -83,6 +85,10 @@ export const getRootSpecConfig = (
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
     },
+    ImportSafeAddress: {
+      statusBarStyle: defaultStatusBarStyle,
+      statusbarBackgroundColor: colors['blue-default'],
+    },
     ImportSuccess: {
       statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
@@ -94,6 +100,10 @@ export const getRootSpecConfig = (
     Receive: {
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
+    },
+    GnosisTransactionQueue: {
+      statusBarStyle: defaultStatusBarStyle,
+      statusbarBackgroundColor: colors['neutral-card2'],
     },
     Approvals: {
       statusBarStyle: defaultStatusBarStyle,

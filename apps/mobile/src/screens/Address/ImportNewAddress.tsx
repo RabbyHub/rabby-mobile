@@ -4,6 +4,8 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
+import { default as RcBuilding } from '@/assets/icons/address/building-cc.svg';
+import { default as RcSafe } from '@/assets/icons/address/icon-safe.svg';
 import { RootNames } from '@/constant/layout';
 import { RootStackParamsList } from '@/navigation-type';
 import { matomoRequestEvent } from '@/utils/analytics';
@@ -29,6 +31,23 @@ function BottomBlockArea() {
       </View>
       <View style={styles.section}>
         <WalletConnectList />
+      </View>
+      <View style={styles.section}>
+        <WalletHeadline Icon={RcBuilding}>Institutional Wallets</WalletHeadline>
+        <WalletItem
+          title="Safe"
+          Icon={RcSafe}
+          onPress={() => {
+            navigation.push(RootNames.StackAddress, {
+              screen: RootNames.ImportSafeAddress,
+            });
+            matomoRequestEvent({
+              category: 'Import Address',
+              action: `Begin_Import_${KEYRING_CATEGORY.Contract}`,
+              label: KEYRING_CLASS.GNOSIS,
+            });
+          }}
+        />
       </View>
       <View style={styles.section}>
         <WalletHeadline>Import Watch-only Address</WalletHeadline>

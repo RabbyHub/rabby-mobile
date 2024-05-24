@@ -13,6 +13,7 @@ import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
 import AddressDetailScreen from '../Address/AddressDetail';
 import { ImportHardwareScreen } from '../Address/ImportHardware';
 import { ImportHardwareScreenButton } from '../Address/ImportHardwareButton';
+import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -85,6 +86,13 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress}
         component={ImportWatchAddressScreen}
+        options={{
+          headerTintColor: colors['neutral-title-2'],
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSafeAddress}
+        component={ImportSafeAddressScreen}
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
