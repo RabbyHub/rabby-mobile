@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { default as RcIconGasLight } from '@/assets/icons/sign/tx/gas-light.svg';
 import { default as RcIconGasDark } from '@/assets/icons/sign/tx/gas-dark.svg';
+import { default as RcIconQuestion } from '@/assets/icons/sign/tx/question-cc.svg';
 
 import { useTranslation } from 'react-i18next';
 import { default as RcIconLogo } from '@/assets/icons/sign/tx/rabby.svg';
@@ -33,10 +34,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { renderText } from '@/utils/renderNode';
 import { colord } from 'colord';
+import { Tip } from '@/components/Tip';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
-export function GasLessNotEnough() {
+export function GasLessNotEnough({
+  gasLessFailedReason,
+}: {
+  gasLessFailedReason?: string;
+}) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -49,9 +55,18 @@ export function GasLessNotEnough() {
         color={colors['neutral-title-1']}
         style={{ marginRight: 4 }}
       />
-      <Text style={styles.text}>
+      <Text style={[styles.text, { flexBasis: 'auto', marginRight: 4 }]}>
         {t('page.signFooterBar.gasless.unavailable')}
       </Text>
+      {gasLessFailedReason ? (
+        <Tip content={gasLessFailedReason}>
+          <RcIconQuestion
+            color={colors['neutral-foot']}
+            width={14}
+            height={14}
+          />
+        </Tip>
+      ) : null}
     </View>
   );
 }
@@ -341,6 +356,7 @@ const getStyles = createGetStyles(colors => ({
     borderRightColor: 'transparent',
     borderTopColor: 'transparent',
     borderBottomColor: colors['neutral-card-2'],
+    alignItems: 'center',
   },
   text: {
     flex: 1,

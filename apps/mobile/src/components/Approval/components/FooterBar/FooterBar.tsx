@@ -36,6 +36,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   showGasLess?: boolean;
   enableGasLess?: () => void;
   canUseGasLess?: boolean;
+  gasLessFailedReason?: string;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -169,7 +170,7 @@ export const FooterBar: React.FC<Props> = ({
   canUseGasLess = false,
   onIgnoreAllRules,
   enableGasLess,
-
+  gasLessFailedReason,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -379,7 +380,7 @@ export const FooterBar: React.FC<Props> = ({
               }}
             />
           ) : (
-            <GasLessNotEnough />
+            <GasLessNotEnough gasLessFailedReason={gasLessFailedReason} />
           ))}
       </View>
     </View>
