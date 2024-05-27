@@ -55,7 +55,7 @@ export function GasLessNotEnough({
         color={colors['neutral-title-1']}
         style={{ marginRight: 4 }}
       />
-      <Text style={[styles.text, { flexBasis: 'auto', marginRight: 4 }]}>
+      <Text style={[styles.text, { marginRight: 4 }]}>
         {t('page.signFooterBar.gasless.unavailable')}
       </Text>
       {gasLessFailedReason ? (
@@ -359,7 +359,6 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
   },
   text: {
-    flex: 1,
     color: colors['neutral-title-1'],
     fontSize: 12,
     fontWeight: '500',
@@ -388,6 +387,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-card-2'],
   },
   gasText: {
+    flex: 1,
     color: colors['neutral-title-1'],
   },
   linearGradient: {
