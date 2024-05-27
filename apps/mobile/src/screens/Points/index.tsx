@@ -209,7 +209,7 @@ export const PointScreen = () => {
 
   const refreshInitRef = useRef(false);
 
-  const ended = true ?? true;
+  const ended = useMemo(() => !!campaignIsEnded, [campaignIsEnded]);
 
   useEffect(() => {
     if (!focused) {
