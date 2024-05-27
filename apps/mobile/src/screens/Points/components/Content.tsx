@@ -10,6 +10,7 @@ import {
 } from 'react-native-collapsible-tab-view';
 import { ClaimItem, ClaimLoading } from './ClaimItem';
 import { TopUserItem } from './TopBoard';
+import { Text } from 'react-native';
 
 export const PointsContent = ({
   activities,
@@ -21,6 +22,7 @@ export const PointsContent = ({
   currentUserIdx,
   renderHeader,
   activitiesLoading,
+  pointsEnded,
 }: {
   claimItem: (campaign_id: number, points: number) => void;
   claimItemLoading: Record<number, boolean>;
@@ -51,6 +53,7 @@ export const PointsContent = ({
   currentUserIdx: number;
   renderHeader: CollapsibleProps['renderHeader'];
   activitiesLoading: boolean;
+  pointsEnded?: boolean;
 }) => {
   const theme = useGetAppThemeMode();
   const { t } = useTranslation();
@@ -136,6 +139,8 @@ export const PointsContent = ({
     ],
   );
 
+  console.log('pointsEnded', pointsEnded);
+
   return (
     <Tabs.Container
       containerStyle={styles.container}
@@ -145,6 +150,26 @@ export const PointsContent = ({
       renderHeader={renderHeader}>
       <Tabs.Tab label={t('page.rabbyPoints.earn-points')} name="earn">
         <Tabs.FlatList
+          ListHeaderComponent={
+            pointsEnded ? (
+              <Text
+                style={{
+                  textAlign: 'center',
+                  justifyContent: 'center',
+                  margin: 20,
+                  marginBottom: 0,
+                  backgroundColor: colors['neutral-card2'],
+                  paddingVertical: 12,
+                  fontSize: 13,
+                  color: colors['neutral-title-1'],
+                  fontWeight: '500',
+                  overflow: 'hidden',
+                  borderRadius: 6,
+                }}>
+                {t('page.rabbyPoints.firstRoundEnded')}
+              </Text>
+            ) : undefined
+          }
           ListEmptyComponent={activitiesLoading ? ClaimLoading : undefined}
           renderItem={React.useCallback(
             ({ item }) => (
