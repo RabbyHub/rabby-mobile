@@ -49,12 +49,14 @@ export const GnosisTransactionItem = ({
   safeInfo,
   onSubmit,
   style,
+  reload,
 }: {
   data: SafeTransactionItem;
   networkId: string;
   safeInfo: BasicSafeInfo;
   onSubmit(data: SafeTransactionItem): void;
   style?: StyleProp<ViewStyle>;
+  reload?: () => void;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -161,6 +163,7 @@ export const GnosisTransactionItem = ({
         },
         INTERNAL_REQUEST_SESSION,
       );
+      reload?.();
     } catch (err: any) {
       console.error(err);
       toast.info(err.message);
@@ -194,13 +197,14 @@ export const GnosisTransactionItem = ({
         gasPrice: '0',
         baseGas: 0,
       };
-      sendRequest(
+      await sendRequest(
         {
           method: 'eth_sendTransaction',
           params: [params],
         },
         INTERNAL_REQUEST_SESSION,
       );
+      reload?.();
     }
   };
 

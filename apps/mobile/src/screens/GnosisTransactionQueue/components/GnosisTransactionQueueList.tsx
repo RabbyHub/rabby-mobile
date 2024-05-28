@@ -86,12 +86,14 @@ const Item = React.memo(
     safeInfo,
     networkId,
     onSubmit,
+    reload,
   }: {
     nonce: string;
     txs: SafeTransactionItem[];
     safeInfo?: BasicSafeInfo | null;
     networkId?: string | null;
     onSubmit(data: SafeTransactionItem): void;
+    reload?: () => void;
   }) => {
     const themeColors = useThemeColors();
     const styles = useMemo(() => getStyles(themeColors), [themeColors]);
@@ -126,6 +128,7 @@ const Item = React.memo(
                 safeInfo={safeInfo}
                 key={transaction.safeTxHash}
                 onSubmit={onSubmit}
+                reload={reload}
               />
             ))}
           </View>
@@ -137,6 +140,7 @@ const Item = React.memo(
               safeInfo={safeInfo}
               key={transaction.safeTxHash}
               onSubmit={onSubmit}
+              reload={reload}
             />
           ))
         )}
@@ -146,13 +150,14 @@ const Item = React.memo(
 );
 
 export const GnosisTransactionQueueList = (props: {
+  reload?: () => void;
   usefulChain: CHAINS_ENUM;
   pendingTxs?: SafeTransactionItem[];
   loading?: boolean;
 }) => {
   const themeColors = useThemeColors();
   const styles = useMemo(() => getStyles(themeColors), [themeColors]);
-  const { usefulChain: chain, pendingTxs, loading } = props;
+  const { usefulChain: chain, pendingTxs, loading, reload } = props;
   const networkId = findChain({
     enum: chain,
   })?.network;
@@ -303,6 +308,9 @@ export const GnosisTransactionQueueList = (props: {
       );
       await apisSafe.execGnosisTransaction(account);
       setIsSubmitting(false);
+      setSubmitDrawerVisible(false);
+      setSubmitTransaction(null);
+      reload?.();
     } catch (e: any) {
       toast.info(e.message || JSON.stringify(e));
       setIsSubmitting(false);
@@ -329,6 +337,7 @@ export const GnosisTransactionQueueList = (props: {
         txs={transactionsGroup[nonce]}
         networkId={networkId}
         onSubmit={handleSubmit}
+        reload={reload}
       />
     );
   });

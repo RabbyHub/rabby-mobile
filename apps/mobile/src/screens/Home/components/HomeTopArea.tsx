@@ -16,7 +16,7 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useMemo } from 'react';
 import { Platform, StyleProp, Text, TextStyle, View } from 'react-native';
 import { toast } from '@/components/Toast';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import {
@@ -30,6 +30,7 @@ import { useApprovalAlert } from '../hooks/approvals';
 import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useMemoizedFn } from 'ahooks';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -84,9 +85,15 @@ export const HomeTopArea = () => {
 
   const { currentAccount } = useCurrentAccount();
   const isGnosisKeyring = currentAccount?.type === KEYRING_TYPE.GnosisKeyring;
-  const { data: gnosisPendingTxs } = useGnosisPendingTxs({
+  const { data: gnosisPendingTxs, refreshAsync } = useGnosisPendingTxs({
     address: isGnosisKeyring ? currentAccount?.address : undefined,
   });
+
+  useFocusEffect(
+    useMemoizedFn(() => {
+      refreshAsync();
+    }),
+  );
 
   const actions: {
     title: string;

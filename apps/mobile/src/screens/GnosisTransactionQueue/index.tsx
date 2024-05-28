@@ -55,7 +55,11 @@ export const GnosisTransactionQueue = () => {
 
   const { currentAccount: account } = useCurrentAccount();
   const { data: networks } = useGnosisNetworks({ address: account?.address });
-  const { data: pendingTxs, loading } = useGnosisPendingTxs({
+  const {
+    data: pendingTxs,
+    loading,
+    refreshAsync,
+  } = useGnosisPendingTxs({
     address: account?.address,
   });
 
@@ -121,6 +125,7 @@ export const GnosisTransactionQueue = () => {
           usefulChain={activeKey}
           key={activeKey}
           loading={loading}
+          reload={refreshAsync}
         />
       )}
     </NormalScreenContainer>
