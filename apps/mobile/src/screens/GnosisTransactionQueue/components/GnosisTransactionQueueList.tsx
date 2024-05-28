@@ -312,7 +312,7 @@ export const GnosisTransactionQueueList = (props: {
       setSubmitTransaction(null);
       reload?.();
     } catch (e: any) {
-      toast.info(e.message || JSON.stringify(e));
+      // toast.info(e.message || JSON.stringify(e));
       setIsSubmitting(false);
     }
   };
