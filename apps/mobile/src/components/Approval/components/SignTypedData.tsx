@@ -204,7 +204,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     error,
   } = useAsync(async () => {
     if (!isSignTypedDataV1 && signTypedData) {
-      const currentAccount = await preferenceService.getCurrentAccount();
+      const currentAccount = isGnosis
+        ? account
+        : await preferenceService.getCurrentAccount();
 
       const chainId = signTypedData?.domain?.chainId;
       const apiProvider = isTestnetChainId(chainId) ? testOpenapi : openapi;
@@ -222,13 +224,19 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   }
 
   const checkWachMode = async () => {
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? account
+      : await preferenceService.getCurrentAccount();
     if (
       currentAccount &&
       currentAccount.type === KEYRING_TYPE.WatchAddressKeyring
     ) {
       setIsWatch(true);
       setCantProcessReason(t('page.signTx.canOnlyUseImportedAddress'));
+    }
+    if (currentAccount && currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
+      setIsWatch(true);
+      setCantProcessReason(t('page.signTypedData.safeCantSignText'));
     }
   };
 
@@ -240,7 +248,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       | 'completeSignText',
     extra?: Record<string, any>,
   ) => {
-    const currentAccount = preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? account
+      : await preferenceService.getCurrentAccount();
     if (currentAccount) {
       matomoRequestEvent({
         category: 'SignText',
@@ -271,7 +281,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (activeApprovalPopup()) {
       return;
     }
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? account
+      : await preferenceService.getCurrentAccount();
 
     if (
       currentAccount?.type &&
@@ -296,7 +308,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   const init = async () => {};
 
   const getRequireData = async (data: TypedDataActionData) => {
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? account
+      : await preferenceService.getCurrentAccount();
 
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);

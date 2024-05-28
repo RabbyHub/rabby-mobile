@@ -576,7 +576,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   };
 
   const explain = async () => {
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
     try {
       setIsReady(false);
       await explainTx(currentAccount.address);
@@ -642,7 +645,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
 
     try {
       validateGasPriceRange(tx);
@@ -845,7 +851,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const checkCanProcess = async () => {
     const session = params.session;
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
     const site = await dappService.getDapp(session.origin);
 
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
@@ -893,7 +902,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   };
 
   const getSafeInfo = async () => {
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
     const networkId = '' + chainId;
     let safeInfo: BasicSafeInfo | null = null;
     try {
@@ -992,7 +1004,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   const init = async () => {
     apiApprovalSecurityEngine.resetCurrentTx();
     try {
-      const currentAccount = (await preferenceService.getCurrentAccount())!;
+      const currentAccount =
+        isGnosis && account
+          ? account
+          : (await preferenceService.getCurrentAccount())!;
 
       setCurrentAccountType(currentAccount.type);
 

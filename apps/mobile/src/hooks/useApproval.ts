@@ -32,7 +32,14 @@ export const useApproval = () => {
     }
 
     setTimeout(() => {
+      console.log('resolve', data);
       if (data && enablePopup(data.type)) {
+        console.log('showPopup');
+        return showPopup();
+      }
+      if (data?.uiRequestComponent) {
+        closePopup();
+        removeGlobalBottomSheetModal(currentNotificationId);
         return showPopup();
       }
 
