@@ -64,8 +64,6 @@ function SendScreen(): JSX.Element {
     | { safeInfo: { nonce: number; chainId: number } }
     | undefined;
 
-  console.log(navState);
-
   const {
     chainItem,
     currentToken,
@@ -81,11 +79,6 @@ function SendScreen(): JSX.Element {
     putScreenState,
     resetScreenState,
   } = useSendTokenScreenState();
-
-  const [safeInfo, setSafeInfo] = useState<{
-    chainId: number;
-    nonce: number;
-  } | null>(null);
 
   const {
     sendTokenEvents,
@@ -151,7 +144,9 @@ function SendScreen(): JSX.Element {
       //   currentToken: nativeToken || currentToken,
       // });
       const target = findChainByID(safeInfo.chainId);
-      setSafeInfo(safeInfo);
+      putScreenState({
+        safeInfo: safeInfo,
+      });
 
       const hideLoading = toastLoading('Loading Token...');
       try {
