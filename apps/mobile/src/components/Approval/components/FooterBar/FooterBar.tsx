@@ -248,6 +248,7 @@ export const FooterBar: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  console.log('a', account);
   if (!account) {
     return null;
   }

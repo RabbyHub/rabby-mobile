@@ -26,6 +26,8 @@ import {
   KEYRING_CLASS,
 } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
+import { adjustV } from '@/utils/gnosis';
+import { apisSafe } from '@/core/apis/safe';
 
 interface ApprovalParams {
   address: string;
@@ -116,7 +118,9 @@ export const LedgerHardwareWaiting = ({
   };
 
   const init = async () => {
-    const account = (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis
+      ? params.account!
+      : (await preferenceService.getCurrentAccount())!;
     const approval = (await getApproval())!;
 
     const isSignText = params.isGnosis
@@ -179,6 +183,22 @@ export const LedgerHardwareWaiting = ({
         let sig = data.data;
         setResult(sig);
         setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTED);
+        try {
+          if (params.isGnosis) {
+            sig = adjustV('eth_signTypedData', sig);
+            const sigs = await apisSafe.getGnosisTransactionSignatures();
+            if (sigs.length > 0) {
+              await apisSafe.gnosisAddConfirmation(account.address, sig);
+            } else {
+              await apisSafe.gnosisAddSignature(account.address, sig);
+              await apisSafe.postGnosisTransaction();
+            }
+          }
+        } catch (e) {
+          Sentry.captureException(e);
+          setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          return;
+        }
 
         matomoRequestEvent({
           category: 'Transaction',

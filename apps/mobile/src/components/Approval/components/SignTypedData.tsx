@@ -24,7 +24,7 @@ import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
-import { apiSecurityEngine } from '@/core/apis';
+import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
 import { dappService, preferenceService } from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
@@ -35,6 +35,10 @@ import { getStyles } from './SignTx/style';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { stats } from '@/utils/stats';
+import { apisSafe } from '@/core/apis/safe';
+import { toast } from '@/components/Toast';
+import { adjustV } from '@/utils/gnosis';
+import { apisKeyring } from '@/core/apis/keyring';
 
 interface SignTypedDataProps {
   method: string;
@@ -285,6 +289,65 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       ? account
       : await preferenceService.getCurrentAccount();
 
+    if (isGnosis && params.account) {
+      if (WaitingSignMessageComponent[params.account.type]) {
+        apisKeyring.signTypedData(
+          params.account.type,
+          params.account.address,
+          JSON.parse(params.data[1]),
+          {
+            brandName: params.account.brandName,
+            version: 'V4',
+          },
+        );
+
+        resolveApproval({
+          uiRequestComponent: WaitingSignMessageComponent[params.account.type],
+          type: params.account.type,
+          address: params.account.address,
+          data: params.data,
+          isGnosis: true,
+          account: params.account,
+        });
+      } else {
+        // todo
+        console.log('else...');
+        // try {
+        //   let result = await wallet.signTypedData(
+        //     params.account.type,
+        //     params.account.address,
+        //     JSON.parse(params.data[1]),
+        //     {
+        //       version: 'V4',
+        //     },
+        //   );
+        //   result = adjustV('eth_signTypedData', result);
+        //   report('completeSignText', {
+        //     success: true,
+        //   });
+        //   const sigs = await apisSafe.getGnosisTransactionSignatures();
+        //   if (sigs.length > 0) {
+        //     await apisSafe.gnosisAddConfirmation(
+        //       params.account.address,
+        //       result,
+        //     );
+        //   } else {
+        //     await apisSafe.gnosisAddSignature(params.account.address, result);
+        //     await apisSafe.postGnosisTransaction();
+        //   }
+        //   // if (isSend) {
+        //   //   wallet.clearPageStateCache();
+        //   // }
+        //   resolveApproval(result, false, true);
+        // } catch (e: any) {
+        //   toast.info(e.message);
+        //   report('completeSignText', {
+        //     success: false,
+        //   });
+        // }
+      }
+      return;
+    }
     if (
       currentAccount?.type &&
       WaitingSignMessageComponent[currentAccount?.type]

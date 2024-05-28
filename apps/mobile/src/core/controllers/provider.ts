@@ -1017,6 +1017,7 @@ class ProviderController extends BaseController {
     };
     approvalRes: ApprovalRes;
   }) => {
+    console.log('sign typed data v4');
     const currentAccount = preferenceService.getCurrentAccount()!;
     try {
       const result = await this._signTypedData(

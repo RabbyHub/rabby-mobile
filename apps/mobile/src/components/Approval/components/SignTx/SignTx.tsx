@@ -80,6 +80,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { maxBy } from 'lodash';
 import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
+import { useMemoizedFn } from 'ahooks';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -632,6 +633,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         method: 'ethSignTypedDataV4',
         uiRequestComponent: 'SignTypedData',
       });
+      setDrawerVisible(false);
     } catch (e) {
       console.log(e);
     }
@@ -1114,6 +1116,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     }
   };
 
+  const handleIsGnosisAccountChange = useMemoizedFn(async () => {
+    if (!isViewGnosisSafe) {
+      await apisSafe.clearGnosisTransaction();
+    }
+  });
+
   const executeSecurityEngine = async () => {
     const ctx = formatSecurityEngineCtx({
       actionData: actionData,
@@ -1193,6 +1201,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     isGnosisAccount,
     isCoboArugsAccount,
   ]);
+
+  useEffect(() => {
+    if (isGnosisAccount) {
+      handleIsGnosisAccountChange();
+    }
+  }, [handleIsGnosisAccountChange, isGnosisAccount]);
 
   useEffect(() => {
     if (!inited) return;

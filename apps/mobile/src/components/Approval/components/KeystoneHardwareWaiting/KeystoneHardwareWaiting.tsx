@@ -21,6 +21,8 @@ import { apiKeystone } from '@/core/apis';
 import { findChainByEnum } from '@/utils/chain';
 import Player from './Player';
 import Reader from './Reader';
+import { adjustV } from '@/utils/gnosis';
+import { apisSafe } from '@/core/apis/safe';
 
 enum QR_HARDWARE_STATUS {
   SYNC,
@@ -103,7 +105,8 @@ export const KeystoneHardwareWaiting = ({
     stay: boolean;
     approvalId: string;
   }>();
-  const { currentAccount: account } = useCurrentAccount();
+  const { currentAccount: _account } = useCurrentAccount();
+  const account = params.isGnosis ? params.account! : _account;
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -141,6 +144,22 @@ export const KeystoneHardwareWaiting = ({
     eventBus.addListener(EVENTS.SIGN_FINISHED, async data => {
       if (data.success) {
         let sig = data.data;
+        try {
+          if (params.isGnosis) {
+            sig = adjustV('eth_signTypedData', sig);
+            const sigs = await apisSafe.getGnosisTransactionSignatures();
+            if (sigs.length > 0) {
+              await apisSafe.gnosisAddConfirmation(account.address, sig);
+            } else {
+              await apisSafe.gnosisAddSignature(account.address, sig);
+              await apisSafe.postGnosisTransaction();
+            }
+          }
+        } catch (e: any) {
+          setErrorMessage(e.message);
+          // rejectApproval(e.message);
+          return;
+        }
         setStatus(QR_HARDWARE_STATUS.DONE);
         setSignFinishedData({
           data: sig,

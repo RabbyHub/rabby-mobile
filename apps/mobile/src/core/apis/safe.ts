@@ -429,6 +429,14 @@ class ApisSafe {
     }
     await keyring.addSignature(address, signature);
   };
+
+  clearGnosisTransaction = async () => {
+    const keyring: GnosisKeyring = await getKeyring(KEYRING_TYPE.GnosisKeyring);
+    if (keyring.currentTransaction || keyring.safeInstance) {
+      keyring.currentTransaction = null;
+      keyring.safeInstance = null;
+    }
+  };
 }
 
 export const apisSafe = new ApisSafe();
