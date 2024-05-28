@@ -61,6 +61,7 @@ export const GnosisTransactionConfirmations = React.memo(
                   address={owner}
                   nameStyle={[styles.nameStyle, styles.selected]}
                   addressStyle={[styles.addressStyle, styles.selected]}
+                  style={styles.nameAndAddress}
                   hideCopy
                 />
                 {isTagYou ? <RcIconTagYou /> : null}
@@ -100,6 +101,10 @@ const getStyles = createGetStyles(colors => ({
   iconCheck: {
     width: 16,
     height: 16,
+  },
+  nameAndAddress: {
+    flex: 1,
+    minWidth: 0,
   },
   nameStyle: {
     fontSize: 15,

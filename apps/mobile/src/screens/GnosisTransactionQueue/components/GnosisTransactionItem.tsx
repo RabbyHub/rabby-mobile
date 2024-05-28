@@ -34,6 +34,7 @@ import { ReplacePopup } from './ReplacePopup';
 import { toast } from '@/components/Toast';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 export type ConfirmationProps = {
   owner: string;
@@ -106,7 +107,6 @@ export const GnosisTransactionItem = ({
       origin: INTERNAL_REQUEST_ORIGIN,
       addr: data.safe,
     });
-    console.log('parseTx', res);
     setExplain(res);
   });
 
@@ -168,27 +168,20 @@ export const GnosisTransactionItem = ({
     setIsLoading(false);
   };
 
+  const navigation = useRabbyAppNavigation();
+
   const handleReplace = async (type: string) => {
+    setIsShowReplacePopup(false);
     if (type === 'send') {
-      // history.replace({
-      //   pathname: '/send-token',
-      //   state: {
-      //     safeInfo: {
-      //       nonce: data.nonce,
-      //       chainId: Number(networkId),
-      //     },
-      //     from: '/gnosis-queue',
-      //   },
-      // });
-      // navigate(RootNames.StackRoot, {
-      //   screen: RootNames.Send,
-      //   params: {
-      //     type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
-      //     brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
-      //     address,
-      //     isFirstImport: true,
-      //   },
-      // });
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.Send,
+        params: {
+          safeInfo: {
+            nonce: data.nonce,
+            chainId: Number(networkId),
+          },
+        },
+      });
     } else if (type === 'reject') {
       const params = {
         chainId: Number(networkId),
@@ -212,7 +205,6 @@ export const GnosisTransactionItem = ({
   };
 
   useEffect(() => {
-    console.log('init parseTx');
     init();
   }, [init]);
 

@@ -93,7 +93,6 @@ const Item = React.memo(
     networkId?: string | null;
     onSubmit(data: SafeTransactionItem): void;
   }) => {
-    console.log('renderItem', nonce);
     const themeColors = useThemeColors();
     const styles = useMemo(() => getStyles(themeColors), [themeColors]);
     const { t } = useTranslation();

@@ -5766,7 +5766,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis":
+"@rabby-wallet/eth-keyring-gnosis@workspace:^, @rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
   dependencies:
@@ -27421,6 +27421,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": ^0.3.43-alpha.0
     "@rabby-wallet/biz-utils": "workspace:^"
+    "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"

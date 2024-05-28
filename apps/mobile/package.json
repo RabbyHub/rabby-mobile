@@ -49,6 +49,7 @@
     "@notifee/react-native": "^7.8.0",
     "@onekeyfe/hd-ble-sdk": "^0.3.43-alpha.0",
     "@rabby-wallet/biz-utils": "workspace:^",
+    "@rabby-wallet/eth-keyring-gnosis": "workspace:^",
     "@rabby-wallet/eth-keyring-ledger": "workspace:^",
     "@rabby-wallet/eth-keyring-onekey": "workspace:^",
     "@rabby-wallet/eth-keyring-watch": "*",

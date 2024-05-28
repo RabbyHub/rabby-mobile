@@ -412,12 +412,14 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
-    recommendNonce = await getRecommendNonce({
-      tx,
-      chainId,
-    });
-    setRecommendNonce(recommendNonce);
-    if (updateNonce) {
+    if (!isGnosisAccount) {
+      recommendNonce = await getRecommendNonce({
+        tx,
+        chainId,
+      });
+      setRecommendNonce(recommendNonce);
+    }
+    if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
     } // do not overwrite nonce if from === to(cancel transaction)
     const { pendings } = await transactionHistoryService.getList(address);
@@ -907,9 +909,13 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         console.error(e);
       }
       if (!networkIds.includes(networkId)) {
-        throw new Error(
-          t('page.signTx.safeAddressNotSupportChain', { 0: chain.name }),
-        );
+        const msg = t('page.signTx.safeAddressNotSupportChain', {
+          0: chain.name,
+        });
+        setTimeout(() => {
+          rejectApproval(msg);
+        }, 2000);
+        throw new Error(msg);
       } else {
         throw e;
       }
