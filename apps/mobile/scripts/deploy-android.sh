@@ -18,8 +18,8 @@ checkout_s3_pub_deployment_params;
 # TODO: read from gradle
 proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
-android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
 android_version_name=$(grep -m1 "versionName" $project_dir/android/app/build.gradle | cut -d'"' -f2)
+android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
 
 cd $project_dir;
 
@@ -32,7 +32,7 @@ deployment_local_dir="$script_dir/deployments/android"
 
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
-build_alpha() {
+build_selfhost() {
   yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     bundle exec fastlane android alpha
@@ -79,16 +79,31 @@ if [ $buildchannel == "appstore" ]; then
   version_bundle_suffix=".aab"
   staging_dir_suffix="-appstore"
   [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/bundle/release/app-release.aab"
-  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore
+  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_appstore;
 
-  cp $android_export_target $deployment_local_dir/
+  if [ ! -f $android_export_target ]; then
+    echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
+    exit 1
+  fi
 else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
-  [ -z $android_export_target ] && android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
-  [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_alpha
+  if [ $buildchannel == "selfhost-reg" ]; then
+    android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
+    [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
 
-  cp $android_export_target $deployment_local_dir/$apk_name
+    if [ ! -f $android_export_target ]; then
+      echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
+      exit 1
+    fi
+  else
+    android_export_target="$project_dir/android/app/build/outputs/apk/release/$android_version_code.apk"
+
+    if [ ! -f $android_export_target ]; then
+      echo "'$android_export_target' is not exist, maybe you need to download it from https://play.google.com/console/u/1/developers/bundle-explorer-selector to $android_export_target MANUALLY"
+      exit 1
+    fi
+  fi
 fi
 
 # # leave here for debug
@@ -96,14 +111,11 @@ fi
 
 echo "[deploy-android] finish build."
 
-if [ ! -f $android_export_target ]; then
-  echo "'$android_export_target' is not exist, maybe you need to run build.sh first?"
-  exit 1
-else
-  file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
-  version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
-  version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
-fi
+cp $android_export_target $deployment_local_dir/$apk_name
+
+file_date=$(date -r $android_export_target '+%Y%m%d_%H%M%S')
+version_bundle_name="$file_date-${android_version_name}.${android_version_code}"
+version_bundle_filename="${version_bundle_name}${version_bundle_suffix}"
 
 staging_dirname=android-$version_bundle_name$staging_dir_suffix
 backup_s3_dir=$S3_ANDROID_BAK_DEPLOYMENT/$staging_dirname
