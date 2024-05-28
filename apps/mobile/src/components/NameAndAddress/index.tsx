@@ -10,6 +10,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import React, { useMemo } from 'react';
 import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 export const NameAndAddress = ({
   address,
@@ -44,12 +45,13 @@ export const NameAndAddress = ({
 
   return (
     <View style={[styles.lineContainer, style]}>
-      <TouchableView
+      <View
         style={styles.textWrapper}
-        disabled={noCopy}
-        onPress={() => {
-          copyAddressRef.current?.doCopy();
-        }}>
+        // disabled={noCopy}
+        // onPress={() => {
+        //   copyAddressRef.current?.doCopy();
+        // }}
+      >
         {aliasName && (
           <Text
             style={[styles.aliasNameStyle, nameStyle]}
@@ -63,13 +65,16 @@ export const NameAndAddress = ({
             ? `(${ellipsisAddress(address)})`
             : ellipsisAddress(address)}
         </Text>
-      </TouchableView>
+      </View>
       {!noCopy && (
-        <CopyAddressIcon
-          ref={copyAddressRef}
-          address={address}
-          style={[styles.copyIcon, copyIconStyle]}
-        />
+        <TouchableWithoutFeedback
+          onPress={() => copyAddressRef.current?.doCopy()}>
+          <CopyAddressIcon
+            ref={copyAddressRef}
+            address={address}
+            style={[styles.copyIcon, copyIconStyle]}
+          />
+        </TouchableWithoutFeedback>
       )}
     </View>
   );
@@ -95,6 +100,7 @@ const getNameAndAddressStyle = createGetStyles(colors => {
       marginRight: 0,
       color: colors['neutral-foot'],
       flexShrink: 1,
+      minWidth: 0,
       // ...makeDebugBorder(),
     },
     text: {

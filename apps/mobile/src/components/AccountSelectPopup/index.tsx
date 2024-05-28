@@ -67,7 +67,7 @@ export const AccountSelectPopup = ({
           style={[
             styles.popupContainer,
             {
-              paddingBottom: bottom,
+              paddingBottom: bottom || 20,
             },
           ]}>
           <Text style={styles.title}>{title}</Text>

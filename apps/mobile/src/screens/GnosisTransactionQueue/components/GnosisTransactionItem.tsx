@@ -31,6 +31,9 @@ import { GnosisTransactionConfirmations } from './GnosisTransactionConfirmations
 import { Skeleton } from '@rneui/themed';
 import { Button, Tip } from '@/components';
 import { ReplacePopup } from './ReplacePopup';
+import { toast } from '@/components/Toast';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 export type ConfirmationProps = {
   owner: string;
@@ -112,52 +115,57 @@ export const GnosisTransactionItem = ({
       return;
     }
     setIsLoading(true);
-    const account = currentAccount;
-    const params = {
-      chainId: Number(networkId),
-      from: toChecksumAddress(data.safe),
-      to: data.to,
-      data: data.data || '0x',
-      value: `0x${Number(data.value).toString(16)}`,
-      nonce: intToHex(data.nonce),
-      safeTxGas: data.safeTxGas,
-      gasPrice: Number(data.gasPrice),
-      baseGas: data.baseGas,
-    };
-    const tmpBuildAccount: Account = {
-      address: safeInfo.owners[0],
-      type: KEYRING_TYPE.WatchAddressKeyring,
-      brandName: KEYRING_CLASS.WATCH,
-    };
-    await apisSafe.buildGnosisTransaction(
-      account.address,
-      tmpBuildAccount,
-      params,
-      safeInfo.version,
-      networkId,
-    );
-    await apisSafe.setGnosisTransactionHash(data.safeTxHash);
-    await Promise.all(
-      data.confirmations.map(confirm => {
-        return apisSafe.gnosisAddPureSignature(
-          confirm.owner,
-          confirm.signature,
-        );
-      }),
-    );
+    try {
+      const account = currentAccount;
+      const params = {
+        chainId: Number(networkId),
+        from: toChecksumAddress(data.safe),
+        to: data.to,
+        data: data.data || '0x',
+        value: `0x${Number(data.value).toString(16)}`,
+        nonce: intToHex(data.nonce),
+        safeTxGas: data.safeTxGas,
+        gasPrice: Number(data.gasPrice),
+        baseGas: data.baseGas,
+      };
+      const tmpBuildAccount: Account = {
+        address: safeInfo.owners[0],
+        type: KEYRING_TYPE.WatchAddressKeyring,
+        brandName: KEYRING_CLASS.WATCH,
+      };
+      await apisSafe.buildGnosisTransaction(
+        account.address,
+        tmpBuildAccount,
+        params,
+        safeInfo.version,
+        networkId,
+      );
+      await apisSafe.setGnosisTransactionHash(data.safeTxHash);
+      await Promise.all(
+        data.confirmations.map(confirm => {
+          return apisSafe.gnosisAddPureSignature(
+            confirm.owner,
+            confirm.signature,
+          );
+        }),
+      );
+      await sendRequest(
+        {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              ...params,
+              isViewGnosisSafe: true,
+            },
+          ],
+        },
+        INTERNAL_REQUEST_SESSION,
+      );
+    } catch (err: any) {
+      console.error(err);
+      toast.info(err.message);
+    }
     setIsLoading(false);
-    sendRequest(
-      {
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            ...params,
-            isViewGnosisSafe: true,
-          },
-        ],
-      },
-      INTERNAL_REQUEST_SESSION,
-    );
   };
 
   const handleReplace = async (type: string) => {
@@ -170,6 +178,15 @@ export const GnosisTransactionItem = ({
       //       chainId: Number(networkId),
       //     },
       //     from: '/gnosis-queue',
+      //   },
+      // });
+      // navigate(RootNames.StackRoot, {
+      //   screen: RootNames.Send,
+      //   params: {
+      //     type: HARDWARE_KEYRING_TYPES.Keystone.type as KEYRING_TYPE,
+      //     brandName: HARDWARE_KEYRING_TYPES.Keystone.brandName,
+      //     address,
+      //     isFirstImport: true,
       //   },
       // });
     } else if (type === 'reject') {

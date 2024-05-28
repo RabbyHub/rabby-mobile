@@ -9,6 +9,7 @@ export const createGlobalBottomSheetModal = <
 ) => {
   params.name = params.name ?? MODAL_NAMES.APPROVAL;
   const id = `${params.name}_${uniqueId()}`;
+  console.log('createGlobalBottomSheetModal', id, params);
   events.emit(EVENT_NAMES.CREATE, id, params);
   return id;
 };

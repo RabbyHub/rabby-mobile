@@ -288,20 +288,35 @@ const flowContext = flow
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
       ctx.request.requestedApproval = true;
-      const res = await notificationService.requestApproval({
-        approvalComponent: uiRequestComponent,
-        params: rest,
-        origin,
-        approvalType,
-        isUnshift: true,
-      });
-      if (res?.uiRequestComponent) {
-        return await requestApprovalLoop(res);
-      } else {
-        return res;
+      console.log(
+        JSON.stringify({
+          approvalComponent: uiRequestComponent,
+          params: rest,
+          origin,
+          approvalType,
+          isUnshift: true,
+        }),
+      );
+      try {
+        const res = await notificationService.requestApproval({
+          approvalComponent: uiRequestComponent,
+          params: rest,
+          origin,
+          approvalType,
+          isUnshift: true,
+        });
+        if (res?.uiRequestComponent) {
+          return await requestApprovalLoop(res);
+        } else {
+          return res;
+        }
+      } catch (e) {
+        console.error(e);
+        throw e;
       }
     }
     if (uiRequestComponent) {
+      console.log('ui', uiRequestComponent);
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
       reportStatsData();

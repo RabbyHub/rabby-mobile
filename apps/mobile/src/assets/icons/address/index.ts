@@ -14,6 +14,7 @@ export { default as RcIconScannerCC } from './scanner-cc.svg';
 export { default as RcIconScannerDownArrowCC } from './scan-down-arrow-cc.svg';
 export { default as RcIconSAddressRisk } from './address-risk.svg';
 export { default as RcIconTagYou } from './icon-tag-you.svg';
+export { default as RcIconTagNotYou } from './icon-tag-not-you.svg';
 import WalletCC from '@/assets/icons/address/wallet-cc.svg';
 import HardwareCC from '@/assets/icons/address/hardware-cc.svg';
 
