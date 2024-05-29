@@ -14,3 +14,5 @@ export const APPROVAL_STATUS_MAP = {
   FAILED: 6,
   SUBMITTING: 7,
 };
+
+export const EVENT_ACTIVE_WINDOW = 'EVENT_ACTIVE_WINDOW';

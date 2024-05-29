@@ -1,6 +1,10 @@
-import { removeGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
+import {
+  presentGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal';
 import { notificationService } from '@/core/services';
 import { Approval } from '@/core/services/notification';
+import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
 
@@ -44,11 +48,13 @@ export const useApproval = () => {
       }
 
       closePopup();
-      removeGlobalBottomSheetModal(currentNotificationId);
+      eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);
     }, 0);
   };
 
   const rejectApproval = async (err?, stay = false, isInternal = false) => {
+    let currentNotificationId = notificationService.notifyWindowId;
+
     closePopup();
     const approval = await getApproval();
     if (approval?.data?.params?.data?.[0]?.isCoboSafe) {
@@ -59,7 +65,7 @@ export const useApproval = () => {
       await notificationService.rejectApproval(err, stay, isInternal);
     }
     if (!stay) {
-      // history.push('/');
+      eventBus.emit(EVENT_ACTIVE_WINDOW, currentNotificationId);
     }
   };
 
