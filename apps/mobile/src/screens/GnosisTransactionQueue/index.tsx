@@ -95,9 +95,12 @@ export const GnosisTransactionQueue = () => {
 
   return (
     <NormalScreenContainer
-      style={{
-        paddingBottom: bottom,
-      }}>
+      style={[
+        {
+          paddingBottom: bottom,
+        },
+        styles.container,
+      ]}>
       <View style={[styles.tabsContainer]}>
         <View style={styles.tabs}>
           {tabs?.map(tab => {
@@ -133,6 +136,9 @@ export const GnosisTransactionQueue = () => {
 };
 
 const getStyles = createGetStyles(colors => ({
+  container: {
+    flexDirection: 'column',
+  },
   tabsContainer: {
     paddingHorizontal: 20,
   },

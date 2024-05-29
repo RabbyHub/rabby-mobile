@@ -97,14 +97,15 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     gap: 8,
     padding: 12,
+    minWidth: 0,
   },
   iconCheck: {
     width: 16,
     height: 16,
   },
   nameAndAddress: {
-    flex: 1,
-    minWidth: 0,
+    // flex: 1,
+    // minWidth: 0,
   },
   nameStyle: {
     fontSize: 15,

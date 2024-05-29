@@ -119,7 +119,7 @@ const getStyles = (colors: AppColorsVariants) =>
       gap: 12,
       minWidth: 0,
     },
-    nameAndAddress: { flex: 1, minWidth: 0 },
+    // nameAndAddress: { flex: 1, minWidth: 0 },
     name: {
       fontSize: 16,
       fontWeight: '600',
