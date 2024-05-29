@@ -23,20 +23,26 @@ import { keyringService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUpdateNonce } from '@/hooks/useCurrentBalance';
+import { useCurrentAccount } from '@/hooks/account';
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
   const colors = useThemeColors();
   const [nonce, setNonce] = useUpdateNonce();
+  const { currentAccount } = useCurrentAccount({
+    disableAutoFetch: true,
+  });
 
   React.useEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HomeScreen.HeaderArea />,
+      headerTitle: () => (
+        <HomeScreen.HeaderArea key={currentAccount?.address} />
+      ),
       headerStyle: {
         backgroundColor: colors['neutral-bg-1'],
       },
     });
-  }, [colors, navigation]);
+  }, [colors, currentAccount?.address, navigation]);
 
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
