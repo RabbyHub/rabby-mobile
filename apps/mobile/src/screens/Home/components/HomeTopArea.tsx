@@ -68,8 +68,9 @@ function BadgeText({
       style={[
         styles.badgeBg,
         count > 9 && styles.badgeBgNeedPaddingHorizontal,
+        style,
       ]}>
-      <Text style={[styles.badgeText]}>{count}</Text>
+      <Text style={[styles.badgeText, style]}>{count}</Text>
     </View>
   );
 }

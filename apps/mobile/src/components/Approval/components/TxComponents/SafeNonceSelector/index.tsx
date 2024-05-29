@@ -147,6 +147,7 @@ const getStyles = createGetStyles(colors => ({
     borderColor: colors['blue-default'],
   },
   nonceInput: {
+    height: 44,
     flex: 1,
     color: colors['neutral-title-1'],
     fontSize: 15,
