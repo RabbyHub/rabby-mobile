@@ -349,6 +349,7 @@ class ApisSafe {
       buildinProvider.currentProvider.currentAccount = account.address;
       buildinProvider.currentProvider.currentAccountType = account.type;
       buildinProvider.currentProvider.currentAccountBrand = account.brandName;
+      buildinProvider.currentProvider.chainId = keyring.safeInstance.network;
       return keyring.confirmTransaction({
         safeAddress: keyring.safeInstance.safeAddress,
         transaction: keyring.currentTransaction,
@@ -375,6 +376,7 @@ class ApisSafe {
       buildinProvider.currentProvider.currentAccount = account.address;
       buildinProvider.currentProvider.currentAccountType = account.type;
       buildinProvider.currentProvider.currentAccountBrand = account.brandName;
+      buildinProvider.currentProvider.chainId = keyring.safeInstance.network;
       await keyring.execTransaction({
         safeAddress: keyring.safeInstance.safeAddress,
         transaction: keyring.currentTransaction,

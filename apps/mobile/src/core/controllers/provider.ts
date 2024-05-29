@@ -58,6 +58,8 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import { StatsData } from '../services/notification';
+import buildinProvider from '../apis/buildinProvider';
+import { ethers } from 'ethers';
 // import eventBus from '@/eventBus';
 
 const reportSignText = (params: {
@@ -463,24 +465,24 @@ class ProviderController extends BaseController {
     const currentAccount = preferenceService.getCurrentAccount()!;
     let opts;
     opts = extra;
-    // if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
-    //   buildinProvider.currentProvider.currentAccount =
-    //     approvalRes!.account!.address;
-    //   buildinProvider.currentProvider.currentAccountType =
-    //     approvalRes!.account!.type;
-    //   buildinProvider.currentProvider.currentAccountBrand =
-    //     approvalRes!.account!.brandName;
-    //   try {
-    //     const provider = new ethers.providers.Web3Provider(
-    //       buildinProvider.currentProvider,
-    //     );
-    //     opts = {
-    //       provider,
-    //     };
-    //   } catch (e) {
-    //     console.log(e);
-    //   }
-    // }
+    if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
+      buildinProvider.currentProvider.currentAccount =
+        approvalRes!.account!.address;
+      buildinProvider.currentProvider.currentAccountType =
+        approvalRes!.account!.type;
+      buildinProvider.currentProvider.currentAccountBrand =
+        approvalRes!.account!.brandName;
+      try {
+        const provider = new ethers.providers.Web3Provider(
+          buildinProvider.currentProvider,
+        );
+        opts = {
+          provider,
+        };
+      } catch (e) {
+        console.log(e);
+      }
+    }
     const chain = dappService.isInternalDapp(origin)
       ? Object.values(CHAINS).find(chain => chain.id === approvalRes.chainId)!
           .enum
@@ -522,15 +524,17 @@ class ProviderController extends BaseController {
         txParams.from,
         opts,
       );
-      // if (
-      //   currentAccount.type === KEYRING_TYPE.GnosisKeyring ||
-      //   currentAccount.type === KEYRING_TYPE.CoboArgusKeyring
-      // ) {
-      //   signedTransactionSuccess = true;
-      //   statsData.signed = true;
-      //   statsData.signedSuccess = true;
-      //   return;
-      // }
+      console.log('signedTx', signedTx);
+      if (
+        currentAccount.type === KEYRING_TYPE.GnosisKeyring
+        // ||
+        // currentAccount.type === KEYRING_TYPE.CoboArgusKeyring
+      ) {
+        signedTransactionSuccess = true;
+        statsData.signed = true;
+        statsData.signedSuccess = true;
+        return;
+      }
 
       const onTransactionCreated = (info: {
         hash?: string;
@@ -1375,19 +1379,19 @@ class ProviderController extends BaseController {
   //   return approvalRes.data;
   // };
 
-  ethGetTransactionByHash = async (req: ControllerParams<string[]>) => {
-    const {
-      data: {
-        params: [hash],
-      },
-    } = req;
-    // const tx = transactionHistoryService.getPendingTxByHash(hash);
-    // if (tx) return formatTxMetaForRpcResult(tx);
-    return this.ethRpc({
-      ...req,
-      data: { method: 'eth_getTransactionByHash', params: [hash] },
-    });
-  };
+  // ethGetTransactionByHash = async (req: ControllerParams<string[]>) => {
+  //   const {
+  //     data: {
+  //       params: [hash],
+  //     },
+  //   } = req;
+  //   // const tx = transactionHistoryService.getPendingTxByHash(hash);
+  //   // if (tx) return formatTxMetaForRpcResult(tx);
+  //   return this.ethRpc({
+  //     ...req,
+  //     data: { method: 'eth_getTransactionByHash', params: [hash] },
+  //   });
+  // };
 
   // TODO: support import address
   // @Reflect.metadata('APPROVAL', [

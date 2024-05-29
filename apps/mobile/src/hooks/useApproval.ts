@@ -30,20 +30,9 @@ export const useApproval = () => {
       return;
     }
     let currentNotificationId = notificationService.notifyWindowId;
-    // this is a main approval, no child approval
-    if (!data || !enablePopup(data.type)) {
-      notificationService.notifyWindowId = null;
-    }
 
     setTimeout(() => {
-      console.log('resolve', data);
       if (data && enablePopup(data.type)) {
-        console.log('showPopup');
-        return showPopup();
-      }
-      if (data?.uiRequestComponent) {
-        closePopup();
-        removeGlobalBottomSheetModal(currentNotificationId);
         return showPopup();
       }
 

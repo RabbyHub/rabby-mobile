@@ -307,12 +307,14 @@ export const GnosisTransactionQueueList = (props: {
         }),
       );
       await apisSafe.execGnosisTransaction(account);
+      toast.success('Submitted');
       setIsSubmitting(false);
       setSubmitDrawerVisible(false);
       setSubmitTransaction(null);
       reload?.();
     } catch (e: any) {
       // toast.info(e.message || JSON.stringify(e));
+      console.log('execGnosisTransaction error', e);
       setIsSubmitting(false);
     }
   };
