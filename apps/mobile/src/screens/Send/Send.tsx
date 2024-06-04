@@ -41,6 +41,8 @@ import { useContactAccounts } from '@/hooks/contact';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { toastLoading } from '@/components/Toast';
 import { sleep } from '@/utils/async';
+import BigNumber from 'bignumber.js';
+import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 
 function SendScreen(): JSX.Element {
   const navigation = useNavigation();
@@ -68,7 +70,6 @@ function SendScreen(): JSX.Element {
     loadCurrentToken,
     setCurrentToken,
     setChainEnum,
-    currentTokenBalance,
     currentTokenPrice,
   } = useSendTokenScreenChainToken();
 
@@ -274,6 +275,26 @@ function SendScreen(): JSX.Element {
     };
   }, [resetScreenState]);
 
+  const { balanceNumText } = React.useMemo(() => {
+    const balanceNum = new BigNumber(currentToken.raw_amount_hex_str || 0).div(
+      10 ** currentToken.decimals,
+    );
+    const decimalPlaces =
+      screenState.clickedMax || screenState.selectedGasLevel ? 8 : 4;
+
+    return {
+      balanceNumText: bizNumberUtils.formatTokenAmount(
+        balanceNum.toFixed(decimalPlaces, BigNumber.ROUND_FLOOR),
+        decimalPlaces,
+      ),
+    };
+  }, [
+    currentToken.raw_amount_hex_str,
+    currentToken.decimals,
+    screenState.clickedMax,
+    screenState.selectedGasLevel,
+  ]);
+
   return (
     <SendTokenInternalContextProvider
       value={{
@@ -288,8 +309,8 @@ function SendScreen(): JSX.Element {
 
           chainItem,
           currentToken,
-          currentTokenBalance,
           currentTokenPrice,
+          currentTokenBalance: balanceNumText,
         },
         events: sendTokenEvents,
         formik,

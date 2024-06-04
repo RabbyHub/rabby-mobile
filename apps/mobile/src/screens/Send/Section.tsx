@@ -23,6 +23,7 @@ import { CHAINS } from '@/constant/chains';
 import { findChainByServerID } from '@/utils/chain';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { default as RcMaxButton } from './icons/max-button.svg';
+import { useTranslation } from 'react-i18next';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -47,6 +48,7 @@ export function Section({
 
 export function BalanceSection({ style }: RNViewProps) {
   const { styles } = useThemeStyles(getBalanceStyles);
+  const { t } = useTranslation();
 
   const { currentAccount } = useCurrentAccount();
   const {
@@ -108,7 +110,8 @@ export function BalanceSection({ style }: RNViewProps) {
           ) : (
             <>
               <Text style={styles.balanceText}>
-                Balance: {currentTokenBalance}
+                {t('page.sendToken.sectionBalance.title')}:{' '}
+                {currentTokenBalance}
               </Text>
               {/* max button */}
               {currentToken.amount > 0 && (
@@ -126,7 +129,7 @@ export function BalanceSection({ style }: RNViewProps) {
 
         {/* right area */}
         <View style={styles.issueBlock}>
-          {showGasReserved &&
+          {/* {showGasReserved &&
             (selectedGasLevel ? (
               <GasReserved
                 style={styles.gasReserved}
@@ -139,7 +142,10 @@ export function BalanceSection({ style }: RNViewProps) {
               />
             ) : (
               <Skeleton style={styles.issueBlockSkeleton} />
-            ))}
+            ))} */}
+          {showGasReserved && !selectedGasLevel && (
+            <Skeleton style={styles.issueBlockSkeleton} />
+          )}
           {!showGasReserved && (balanceError || balanceWarn) ? (
             <Text style={[styles.issueText]}>
               {balanceError || balanceWarn}
