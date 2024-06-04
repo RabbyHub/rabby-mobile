@@ -827,55 +827,55 @@ export function useSendTokenForm() {
     // const to = form.getFieldValue('to');
     const to = formik.values.to;
 
-    if (isNativeToken && !screenState.isGnosisSafe) {
-      putScreenState({ showGasReserved: true });
-      try {
-        const list = await fetchGasList(chainItem);
-        putScreenState({ gasList: list });
-        let instant = list[0];
-        for (let i = 1; i < list.length; i++) {
-          if (list[i].price > instant.price) {
-            instant = list[i];
-          }
-        }
-        const { gasNumber } = await ethEstimateGas();
-        putScreenState({ estimateGas: gasNumber });
+    // if (isNativeToken && !screenState.isGnosisSafe) {
+    //   putScreenState({ showGasReserved: true });
+    //   try {
+    //     const list = await fetchGasList(chainItem);
+    //     putScreenState({ gasList: list });
+    //     let instant = list[0];
+    //     for (let i = 1; i < list.length; i++) {
+    //       if (list[i].price > instant.price) {
+    //         instant = list[i];
+    //       }
+    //     }
+    //     const { gasNumber } = await ethEstimateGas();
+    //     putScreenState({ estimateGas: gasNumber });
 
-        let gasTokenAmount = handleGasChange(instant, false, gasNumber);
-        if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
-          const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
-            {
-              txParams: {
-                chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
-                from: currentAccount.address,
-                to: to && isValidAddress(to) ? to : zeroAddress(),
-                value: currentToken.raw_amount_hex_str,
-                gas: intToHex(21000),
-                gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
-                data: '0x',
-              },
-            },
-            chainEnum,
-          );
-          gasTokenAmount = gasTokenAmount
-            .plus(new BigNumber(l1GasFee).div(1e18))
-            .times(1.1);
-        }
-        const tokenForSend = tokenBalance.minus(gasTokenAmount);
-        amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
-        if (tokenForSend.lt(0)) {
-          putScreenState({ showGasReserved: false });
-        }
-      } catch (e) {
-        if (!screenState.isGnosisSafe) {
-          // Gas fee reservation required
-          putScreenState({
-            showGasReserved: false,
-            // balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
-          });
-        }
-      }
-    }
+    //     let gasTokenAmount = handleGasChange(instant, false, gasNumber);
+    //     if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
+    //       const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+    //         {
+    //           txParams: {
+    //             chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
+    //             from: currentAccount.address,
+    //             to: to && isValidAddress(to) ? to : zeroAddress(),
+    //             value: currentToken.raw_amount_hex_str,
+    //             gas: intToHex(21000),
+    //             gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
+    //             data: '0x',
+    //           },
+    //         },
+    //         chainEnum,
+    //       );
+    //       gasTokenAmount = gasTokenAmount
+    //         .plus(new BigNumber(l1GasFee).div(1e18))
+    //         .times(1.1);
+    //     }
+    //     const tokenForSend = tokenBalance.minus(gasTokenAmount);
+    //     amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+    //     if (tokenForSend.lt(0)) {
+    //       putScreenState({ showGasReserved: false });
+    //     }
+    //   } catch (e) {
+    //     if (!screenState.isGnosisSafe) {
+    //       // Gas fee reservation required
+    //       putScreenState({
+    //         showGasReserved: false,
+    //         // balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
+    //       });
+    //     }
+    //   }
+    // }
 
     const values = formik.values;
     const newValues = {
@@ -885,18 +885,18 @@ export function useSendTokenForm() {
     formik.setFormikState(prev => ({ ...prev, values: newValues }));
     handleFormValuesChange(null, { currentPartials: newValues });
   }, [
-    chainEnum,
-    chainItem,
+    // chainEnum,
+    // chainItem,
     currentAccount,
     currentToken.decimals,
     currentToken.raw_amount_hex_str,
     formik,
     handleFormValuesChange,
-    handleGasChange,
-    isNativeToken,
+    // handleGasChange,
+    // isNativeToken,
     putScreenState,
     screenState,
-    ethEstimateGas,
+    // ethEstimateGas,
     // t,
   ]);
 
