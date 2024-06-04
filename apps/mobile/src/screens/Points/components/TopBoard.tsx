@@ -136,8 +136,10 @@ export const TopUserItem = (props: User) => {
             />
           )}
           {props.index > 2 && (
-            <View style={styles.rankText}>
-              <Text>{props.index > 99 ? '100+' : props.index + 1}</Text>
+            <View>
+              <Text style={styles.rankText}>
+                {props.index > 99 ? '100+' : props.index + 1}
+              </Text>
             </View>
           )}
         </View>

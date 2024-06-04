@@ -47,6 +47,8 @@ export const PointScreen = () => {
   }, []);
 
   const {
+    campaignIsEnded,
+    campaignIsEndedLoading,
     signature,
     signatureLoading,
     snapshot,
@@ -207,6 +209,8 @@ export const PointScreen = () => {
 
   const refreshInitRef = useRef(false);
 
+  const ended = useMemo(() => !!campaignIsEnded, [campaignIsEnded]);
+
   useEffect(() => {
     if (!focused) {
       resetState();
@@ -226,8 +230,14 @@ export const PointScreen = () => {
       }
     }
 
-    if (focused && !initRef.current && !signatureLoading && !snapshotLoading) {
-      if (snapshot && !snapshot?.claimed) {
+    if (
+      focused &&
+      !initRef.current &&
+      !signatureLoading &&
+      !snapshotLoading &&
+      !campaignIsEndedLoading
+    ) {
+      if (snapshot && !snapshot?.claimed && !ended) {
         setVisible(true);
         setVerifyVisible(false);
       } else if (!signature) {
@@ -245,6 +255,8 @@ export const PointScreen = () => {
     refreshTopUsers,
     refreshUserPoints,
     signature,
+    campaignIsEndedLoading,
+    ended,
   ]);
 
   const currentUserIdx = useMemo(() => {
@@ -327,9 +339,11 @@ export const PointScreen = () => {
           }, [])}
           showDiffPoints={showDiffPoints}
           total={total}
+          initClaimedEnded={ended && !snapshot?.claimed}
         />
         <View style={contentStyle}>
           <PointsContent
+            pointsEnded={ended}
             activities={activities}
             claimItem={claimItem}
             claimItemLoading={claimItemLoading}
@@ -340,9 +354,16 @@ export const PointScreen = () => {
             activitiesLoading={activitiesLoading}
             renderHeader={React.useCallback(
               () => (
-                <View style={styles.padding20}>
+                <View
+                  style={
+                    !hadInvitedCode && ended
+                      ? { paddingTop: 6 }
+                      : styles.padding20
+                  }>
                   {!hadInvitedCode ? (
-                    <SetReferralCode onSetCode={setReferralCode} />
+                    ended ? null : (
+                      <SetReferralCode onSetCode={setReferralCode} />
+                    )
                   ) : (
                     <CodeAndShare
                       invitedCode={invitedCode}
@@ -360,12 +381,13 @@ export const PointScreen = () => {
               [
                 styles.padding20,
                 hadInvitedCode,
+                ended,
                 setReferralCode,
                 invitedCode,
                 snapshot,
+                userPointsDetail,
                 userLoading,
                 snapshotLoading,
-                userPointsDetail,
               ],
             )}
           />

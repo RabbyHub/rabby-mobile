@@ -312,14 +312,15 @@ const Swap = () => {
             </Text>
             <TouchableItem
               onPress={() => {
-                if (!payTokenIsNativeToken) {
-                  handleBalance();
-                }
+                // if (!payTokenIsNativeToken) {
+                handleBalance();
+                // }
               }}>
               <Text
                 style={[
                   styles.label,
-                  !payTokenIsNativeToken && {
+                  // !payTokenIsNativeToken &&
+                  {
                     textDecorationLine: 'underline',
                   },
                 ]}>

@@ -244,7 +244,7 @@ const ClaimPoints: React.FC<ClaimPointsProps> = ({
       <Text style={styles.title}>{t('page.rabbyPoints.claimModal.title')}</Text>
       <View style={styles.avatarContainer}>
         <ClaimUserAvatar src={avatar} />
-        <Text>{name}</Text>
+        <Text style={{ color: colors['neutral-title-1'] }}>{name}</Text>
       </View>
       <View style={styles.pointsContainer}>
         {!titleLoading ? (
