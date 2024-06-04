@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { AccountSelectItem } from './AccountSelectItem';
+import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 
 interface AccountSelectDrawerProps {
   onChange(account: Account): void;
@@ -61,7 +62,7 @@ export const AccountSelectPopup = ({
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={() => onCancel?.()}
-      snapPoints={[440]}>
+      snapPoints={[640]}>
       <BottomSheetView>
         <View
           style={[
@@ -88,6 +89,12 @@ export const AccountSelectPopup = ({
                 />
               );
             }}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <RcIconEmptyCC color={themeColors['neutral-foot']} />
+                <Text style={styles.emptyText}>No available address</Text>
+              </View>
+            }
           />
           <View style={styles.footer}>
             <Button
@@ -123,6 +130,7 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     marginBottom: 10,
     lineHeight: 20,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -136,5 +144,18 @@ const getStyles = createGetStyles(colors => ({
   },
   buttonContainer: {
     flex: 1,
+  },
+  empty: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 140,
+  },
+  emptyText: {
+    color: colors['neutral-foot'],
+    fontSize: 14,
+    lineHeight: 24,
+    marginTop: 16,
   },
 }));
