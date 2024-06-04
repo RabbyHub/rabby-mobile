@@ -18,6 +18,7 @@ import {
   ViewStyle,
   DimensionValue,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import LinearGradient from 'react-native-linear-gradient';
@@ -46,8 +47,12 @@ export function GasLessNotEnough({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const [visible, setVisible] = useState(false);
+
   return (
-    <View style={styles.securityLevelTip}>
+    <Pressable
+      style={[styles.securityLevelTip, { paddingHorizontal: 8 }]}
+      onPress={() => setVisible(true)}>
       <View style={styles.tipTriangle} />
       <RcIconGas
         width={16}
@@ -55,11 +60,16 @@ export function GasLessNotEnough({
         color={colors['neutral-title-1']}
         style={{ marginRight: 4 }}
       />
-      <Text style={[styles.text, { marginRight: 4 }]}>
+      <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
         {t('page.signFooterBar.gasless.unavailable')}
       </Text>
       {gasLessFailedReason ? (
-        <Tip content={gasLessFailedReason}>
+        <Tip
+          content={gasLessFailedReason}
+          isVisible={visible}
+          onClose={() => {
+            setVisible(false);
+          }}>
           <RcIconQuestion
             color={colors['neutral-foot']}
             width={14}
@@ -67,7 +77,7 @@ export function GasLessNotEnough({
           />
         </Tip>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 

@@ -1182,6 +1182,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       </ScrollView>
       {txDetail && (
         <FooterBar
+          isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
           gasLessFailedReason={gasLessFailedReason}
           canUseGasLess={canUseGasLess}
           showGasLess={!gasLessLoading && isReady && showGasLess}
