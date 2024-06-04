@@ -24,7 +24,7 @@ import {
   BottomSheetView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import {
   CompositeScreenProps,
   useNavigation,
@@ -139,6 +139,8 @@ const AddressInfo = (props: AddressInfoProps) => {
 
   const inputNameBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
+  const inputRef = useRef<TextInput>(null);
+
   const deleteBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const handlePresentCodeModalPress = useCallback(() => {
@@ -148,6 +150,9 @@ const AddressInfo = (props: AddressInfoProps) => {
   const handlePresentInputModalPress = useCallback(() => {
     setAliasPendingName(aliasName || '');
     inputNameBottomSheetModalRef.current?.present();
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
   }, [aliasName]);
 
   const handlePresentDeleteModalPress = useCallback(() => {
@@ -382,7 +387,8 @@ const AddressInfo = (props: AddressInfoProps) => {
                 }}
                 value={aliasPendingName}
                 onChangeText={setAliasPendingName}
-                autoFocus
+                // autoFocus
+                ref={inputRef}
               />
             </View>
             <View

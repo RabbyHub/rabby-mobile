@@ -322,13 +322,10 @@ export class NotificationService extends Events {
         }
       }
 
-      console.log('winId', this.notifyWindowId);
       if (this.notifyWindowId !== null) {
         presentGlobalBottomSheetModal(this.notifyWindowId);
       } else {
         this.openNotification(approval.winProps);
-        // todo
-        // this.openNotification(approval.winProps, true);
       }
     });
   };
@@ -369,19 +366,15 @@ export class NotificationService extends Events {
   };
 
   openNotification = (winProps: any, ignoreLock = false) => {
-    console.log('open', winProps, ignoreLock);
-    console.log(this.isLocked);
     // Only use ignoreLock flag when approval exist but no notification window exist
     if (!ignoreLock) {
       if (this.isLocked) return;
       this.lock();
     }
-    console.log('id', this.notifyWindowId);
     if (this.notifyWindowId !== null) {
       removeGlobalBottomSheetModal(this.notifyWindowId);
       this.notifyWindowId = null;
     }
-    console.log('create');
     this.notifyWindowId = createGlobalBottomSheetModal(winProps);
   };
 

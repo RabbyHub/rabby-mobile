@@ -78,20 +78,27 @@ export const GnosisSafeInfo = ({
               <View style={styles.tabsContainer}>
                 <View style={styles.tabs}>
                   {safeInfo?.map(item => {
+                    const isAcitve =
+                      activeData?.chain?.enum === item?.chain?.enum;
                     return (
                       <TouchableOpacity
                         onPress={() => {
                           setActiveData(item);
                         }}
                         key={item?.chain?.enum}>
-                        <Text
+                        <View
                           style={[
-                            styles.tabItemTitle,
-                            activeData?.chain?.enum === item?.chain?.enum &&
-                              styles.tabItemActive,
+                            styles.tabItem,
+                            isAcitve && styles.tabItemActive,
                           ]}>
-                          {item?.chain?.name}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.tabItemTitle,
+                              isAcitve && styles.tabItemTitleActive,
+                            ]}>
+                            {item?.chain?.name}
+                          </Text>
+                        </View>
                       </TouchableOpacity>
                     );
                   })}
@@ -149,17 +156,21 @@ const getStyles = (colors: AppColorsVariants) => {
       gap: 16,
       flexWrap: 'wrap',
     },
+    tabItem: {
+      borderBottomColor: 'transparent',
+      borderBottomWidth: 2,
+    },
     tabItemTitle: {
       color: colors['neutral-body'],
       fontSize: 14,
       lineHeight: 17,
-      borderBottomColor: 'transparent',
-      borderBottomWidth: 2,
+      fontWeight: '500',
+    },
+    tabItemTitleActive: {
+      color: colors['blue-default'],
     },
     tabItemActive: {
-      color: colors['blue-default'],
       borderBottomColor: colors['blue-default'],
-      fontWeight: '500',
     },
     listItemDesc: {
       color: colors['neutral-foot'],

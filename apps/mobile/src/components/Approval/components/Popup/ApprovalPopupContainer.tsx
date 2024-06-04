@@ -205,7 +205,6 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
     }
   }, [snapToIndexPopup, hdType, status, description]);
   const isHD = hdType === 'ledger';
-  console.log('status', status);
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>
       {SendSVG ? (

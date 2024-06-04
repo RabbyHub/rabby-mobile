@@ -1704,7 +1704,7 @@
     "importSuccess": {
       "title": "Imported Successfully",
       "addressCount": "{{count}} addresses",
-      "gnosisChainDesc": "This address was found deployed on  {{count}} chains"
+      "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "backupSeedPhrase": {
       "title": "Backup Seed Phrase",
@@ -1750,7 +1750,7 @@
         "required": "Please input address"
       },
       "loading": "Searching the deployed chain of this address",
-      "gnosisChainDesc": "This address was found deployed on  {{count}} chains"
+      "gnosisChainDesc": "This address was found deployed on {{count}} chains"
     },
     "importQrBase": {
       "desc": "Scan the QR code on the {{brandName}} hardware wallet",

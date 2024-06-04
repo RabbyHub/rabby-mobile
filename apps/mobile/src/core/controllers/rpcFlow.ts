@@ -288,15 +288,6 @@ const flowContext = flow
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
       ctx.request.requestedApproval = true;
-      console.log(
-        JSON.stringify({
-          approvalComponent: uiRequestComponent,
-          params: rest,
-          origin,
-          approvalType,
-          isUnshift: true,
-        }),
-      );
       try {
         const res = await notificationService.requestApproval({
           approvalComponent: uiRequestComponent,
@@ -316,7 +307,6 @@ const flowContext = flow
       }
     }
     if (uiRequestComponent) {
-      console.log('ui', uiRequestComponent);
       ctx.request.requestedApproval = true;
       const result = await requestApprovalLoop({ uiRequestComponent, ...rest });
       reportStatsData();

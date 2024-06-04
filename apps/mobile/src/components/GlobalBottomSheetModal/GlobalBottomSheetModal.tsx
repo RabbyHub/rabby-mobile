@@ -42,7 +42,6 @@ export const GlobalBottomSheetModal = () => {
 
   const handlePresent = React.useCallback((key: string) => {
     const currentModal = modalRefs.current[key];
-    console.log(currentModal, modalRefs.current);
 
     if (!currentModal) {
       return;

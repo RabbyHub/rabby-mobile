@@ -18,6 +18,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { LedgerAccount } from './LedgerAccount';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
+import GnosisSVG from '@/assets/icons/wallet/safe.svg';
 
 export interface Props {
   account: Account;
@@ -128,6 +129,12 @@ export const AccountInfo: React.FC<Props> = ({
         <CommonAccount
           icon={OneKeySVG}
           tip={t('page.signFooterBar.addressTip.onekey')}
+        />
+      )}
+      {account?.type === KEYRING_CLASS.GNOSIS && (
+        <CommonAccount
+          icon={GnosisSVG}
+          tip={t('page.signFooterBar.addressTip.safe')}
         />
       )}
     </View>

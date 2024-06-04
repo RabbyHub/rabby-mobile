@@ -58,7 +58,7 @@ export const AccountSelectItem = ({
   );
 
   useEffect(() => {
-    if (checked && nativeTokenBalance != null) {
+    if (checked && nativeTokenBalance == null) {
       runFetchBalance();
     }
   }, [

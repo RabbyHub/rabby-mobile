@@ -104,19 +104,20 @@ export const GnosisTransactionQueue = () => {
       <View style={[styles.tabsContainer]}>
         <View style={styles.tabs}>
           {tabs?.map(tab => {
+            const isActive = tab?.key === activeKey;
             return (
               <TouchableOpacity
                 onPress={() => {
                   setActiveKey(tab?.key || null);
                 }}
                 key={tab?.key}>
-                <Text
-                  style={[
-                    styles.tabsItemTitle,
-                    activeKey === tab?.key && styles.active,
-                  ]}>
-                  {tab?.title}
-                </Text>
+                <View
+                  style={[styles.tabsItem, isActive && styles.tabsItemActive]}>
+                  <Text
+                    style={[styles.tabsItemTitle, isActive && styles.active]}>
+                    {tab?.title}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -147,18 +148,21 @@ const getStyles = createGetStyles(colors => ({
     flexWrap: 'wrap',
     gap: 16,
   },
-  tabsItem: {},
+  tabsItem: {
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabsItemActive: {
+    borderBottomColor: colors['blue-default'],
+  },
   tabsItemTitle: {
     color: colors['neutral-body'],
     fontSize: 15,
     lineHeight: 18,
     paddingBottom: 4,
     fontWeight: '500',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
   },
   active: {
-    borderBottomColor: colors['blue-default'],
     color: colors['blue-default'],
   },
 }));

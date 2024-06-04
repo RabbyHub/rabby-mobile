@@ -524,7 +524,6 @@ class ProviderController extends BaseController {
         txParams.from,
         opts,
       );
-      console.log('signedTx', signedTx);
       if (
         currentAccount.type === KEYRING_TYPE.GnosisKeyring
         // ||
@@ -1021,7 +1020,6 @@ class ProviderController extends BaseController {
     };
     approvalRes: ApprovalRes;
   }) => {
-    console.log('sign typed data v4');
     const currentAccount = preferenceService.getCurrentAccount()!;
     try {
       const result = await this._signTypedData(

@@ -66,7 +66,6 @@ const Process = ({
   onCancel(): void;
   onDone(): void;
 }) => {
-  console.log('process', account);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [displayBrandName] = useDisplayBrandName(account.brandName);

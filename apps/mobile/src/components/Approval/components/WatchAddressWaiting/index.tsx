@@ -58,8 +58,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
   const { t } = useTranslation();
   const { openWalletByBrandName } = useValidWalletServices();
 
-  console.log('params', params);
-
   const initWalletConnect = async () => {
     const account = params.isGnosis
       ? params.account!
@@ -123,7 +121,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       if (data.success) {
         let sig = data.data;
         setResult(sig);
-        console.log('finished', params, data);
         try {
           if (params.isGnosis) {
             sig = adjustV('eth_signTypedData', sig);
@@ -134,7 +131,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
               await apisSafe.gnosisAddSignature(account.address, sig);
               await apisSafe.postGnosisTransaction();
             }
-            console.log('sigs', sigs);
           }
         } catch (e: any) {
           rejectApproval(e.message);

@@ -400,7 +400,8 @@ export const GnosisTransactionQueueList = (props: {
 const getStyles = createGetStyles(colors => ({
   container: {
     flex: 1,
-    paddingVertical: 20,
+    // paddingVertical: 20,
+    paddingTop: 20,
   },
   queueList: {
     paddingHorizontal: 20,

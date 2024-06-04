@@ -61,6 +61,7 @@ export const ReplacePopup = ({
                 <TouchableOpacity
                   key={item.value}
                   style={styles.optionListItem}
+                  activeOpacity={0.6}
                   onPress={() => {
                     onSelect?.(item.value);
                   }}>
