@@ -14,6 +14,7 @@ import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
+import { IExtractFromPromise } from '@/utils/type';
 
 function buildTxParams(txMeta) {
   return {
@@ -45,10 +46,10 @@ export default function buildUnserializedTransaction(txMeta) {
 
 export { sendRequest } from './sendRequest';
 
-export const requestETHRpc = (
+export const requestETHRpc = <T = any>(
   data: { method: string; params: any },
   chainId: string,
-) => {
+): Promise<IExtractFromPromise<T>> => {
   return providerController.ethRpc(
     {
       data,

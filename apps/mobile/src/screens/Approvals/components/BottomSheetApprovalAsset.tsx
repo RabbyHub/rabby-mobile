@@ -22,6 +22,7 @@ import { usePsudoPagination } from '@/hooks/common/usePagination';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
+import { ModalLayouts } from '@/constant/layout';
 
 export default function BottomSheetAssetApproval({
   modalProps,
@@ -130,7 +131,7 @@ export default function BottomSheetAssetApproval({
           />
         );
       }}
-      snapPoints={['80%']}
+      snapPoints={[ModalLayouts.defaultHeightPercentText]}
       bottomInset={1}>
       {focusedAssetApproval && (
         <BottomSheetView style={[styles.bodyContainer]}>

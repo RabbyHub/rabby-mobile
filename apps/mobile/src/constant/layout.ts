@@ -1,6 +1,11 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { AppColorsVariants } from './theme';
 
+export const ModalLayouts = {
+  defaultHeightPercentText: '80%' as `${number}%`,
+  titleTopOffset: 8,
+};
+
 export const ScreenLayouts = {
   headerAreaHeight: 56,
   bottomBarHeight: 60,

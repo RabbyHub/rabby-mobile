@@ -1,6 +1,6 @@
 import { isValidElementType } from 'react-is';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import {
   RcIconNavigationHomeLight,
   RcIconNavigationHomeFocusLight,
@@ -32,6 +32,7 @@ import WebViewControlPreload from '@/components/WebView/WebViewControlPreload';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeDebugBorder } from '@/utils/styles';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
+import { toast } from '@/components/Toast';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -71,20 +72,26 @@ const BottomTabLabel = ({
   label,
   children = label,
   focused,
+  style,
 }: // color,
 React.PropsWithChildren<{
   label?: string;
   focused: boolean;
   color?: string;
+  style?: React.ComponentProps<typeof Text>['style'];
 }>) => {
   const colors = useThemeColors();
 
   return (
     <Text
-      style={{
-        ...tabBarLabelStyle,
-        color: focused ? colors['blue-default'] : colors['neutral-foot'],
-      }}>
+      style={[
+        {
+          ...tabBarLabelStyle,
+
+          color: focused ? colors['blue-default'] : colors['neutral-foot'],
+        },
+        style,
+      ]}>
       {children}
     </Text>
   );
@@ -204,16 +211,34 @@ export default function BottomTabNavigator() {
         <BottomTab.Screen
           name={RootNames.Points}
           component={PointScreen}
+          listeners={{
+            tabPress: e => {
+              e.preventDefault();
+              toast.show('Stay tuned :) ', {
+                position: toast.positions.CENTER,
+              });
+            },
+          }}
           options={useMemo(
             () => ({
               headerShown: false,
               tabBarLabel: ({ focused }) => (
-                <BottomTabLabel focused={focused} label={'Points'} />
+                <BottomTabLabel
+                  focused={focused}
+                  label={'Points'}
+                  style={{ opacity: 0.5 }}
+                />
               ),
               tabBarIcon: ({ focused }) => (
                 <BottomTabIcon
                   icon={
-                    focused ? <RcIconPointsFocusLight /> : <RcIconPointsLight />
+                    focused ? (
+                      <RcIconPointsFocusLight />
+                    ) : (
+                      <View style={{ opacity: 0.5 }}>
+                        <RcIconPointsLight />
+                      </View>
+                    )
                   }
                 />
               ),

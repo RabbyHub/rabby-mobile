@@ -19,6 +19,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import ModalPreviewNFTItem from '@/components/ModalPreviewNFTItem';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { ModalLayouts } from '@/constant/layout';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -103,7 +104,7 @@ const NFTWithName = ({
           visible={!!focusingNFT}
           nft={focusingNFT as unknown as TransferingNFTItem}
           onDismiss={() => setFocusingNFT(null)}
-          snapPoints={['80%']}
+          snapPoints={[ModalLayouts.defaultHeightPercentText]}
         />
       )}
     </>

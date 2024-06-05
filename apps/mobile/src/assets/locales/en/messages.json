@@ -299,10 +299,13 @@
       "importedByLedger": "Imported by Ledger",
       "signAndSubmitButton": "Sign and Create",
       "gasless": {
-        "unavailable": "Gas balance is not enough for this transaction",
+        "unavailable": "Gas is not enough and not qualify for Free Gas",
         "notEnough": "Gas balance is not enough",
         "GetFreeGasToSign": "Get Free Gas to sign",
-        "rabbyPayGas": "Rabby'll pay for the gas needed – just sign on"
+        "rabbyPayGas": "Rabby'll pay for the gas needed – just sign on",
+        "customRpcUnavailableTip": "Custom RPCs are not supported for Free Gas",
+        "walletConnectUnavailableTip": "Mobile wallet connected via WalletConnect is not supported for Free Gas",
+        "watchUnavailableTip": "Watch-only address is not supported for Free Gas"
       },
       "walletConnect": {
         "connectedButCantSign": "Connected but unable to sign.",
@@ -1263,7 +1266,8 @@
           "ethereum_app_not_installed_error": "Please install the Ethereum app on your Ledger device.",
           "ethereum_app_unconfirmed_error": "You have denied the request to open the Ethereum app.",
           "ethereum_app_open_error": "Please install/accept Ethereum app on your Ledger device.",
-          "running_app_close_error": "Failed to close the running app on your Ledger device."
+          "running_app_close_error": "Failed to close the running app on your Ledger device.",
+          "firmwareOrAppUpdateRequired": "Please update the firmware and Ethereum App on your Ledger"
         },
         "openEthApp": {
           "title": "Connect Ledger",
@@ -1881,7 +1885,9 @@
           "sign": "Sign"
         }
       },
-      "code-set-successfully": "Referral code set successfully"
+      "code-set-successfully": "Referral code set successfully",
+      "initialPointsClaimEnded": "Initial Points claim ended",
+      "firstRoundEnded": "🎉 The first round of Rabby Points has ended"
     }
   },
   "component": {
@@ -2108,6 +2114,12 @@
       "message": "Rabby Wallet uses bluetooth access to connect Ledger",
       "open_settings": "OK",
       "cancel": "Don't Allow"
+    },
+    "update_firmware_alert": {
+      "title": "Ledger Firmware Outdated",
+      "message": "Check out how to update Ledger firmware from Ledger support",
+      "update": "Update",
+      "cancel": "Cancel"
     }
   }
 }

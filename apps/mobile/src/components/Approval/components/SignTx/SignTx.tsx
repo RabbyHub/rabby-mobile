@@ -247,6 +247,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   const [useGasLess, setUseGasLess] = useState(false);
 
   const [isGnosisAccount, setIsGnosisAccount] = useState(false);
+  const [gasLessFailedReason, setGasLessFailedReason] = useState<
+    string | undefined
+  >(undefined);
+
+  // const [isGnosisAccount, setIsGnosisAccount] = useState(false);
   // const [isCoboArugsAccount, setIsCoboArugsAccount] = useState(false);
   const isCoboArugsAccount = false;
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -389,8 +394,20 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     const isNotWatchAddress =
       currentAccountType !== KEYRING_TYPE.WatchAddressKeyring;
 
+    if (!isNotWalletConnect) {
+      setGasLessFailedReason(
+        t('page.signFooterBar.gasless.walletConnectUnavailableTip'),
+      );
+    }
+
+    if (!isNotWatchAddress) {
+      setGasLessFailedReason(
+        t('page.signFooterBar.gasless.watchUnavailableTip'),
+      );
+    }
+
     return isNotWatchAddress && isNotWalletConnect;
-  }, [currentAccountType]);
+  }, [currentAccountType, t]);
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
 
@@ -398,6 +415,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   //   const hasCustomRPC = async () => {
   //     if (chain?.enum) {
   //       const b = await wallet.hasCustomRPC(chain?.enum);
+  // if (b) {
+  //   setGasLessFailedReason(
+  //     t('page.signFooterBar.gasless.customRpcUnavailableTip')
+  //   );
+  // }
   //       setNoCustomRPC(!b);
   //     }
   //   };
@@ -895,6 +917,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       });
 
       setCanUseGasLess(res.is_gasless);
+      setGasLessFailedReason(res.desc);
       setGasLessLoading(false);
     } catch (error) {
       console.error('gasLessTxCheck error', error);
@@ -1347,6 +1370,8 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       </ScrollView>
       {txDetail && (
         <FooterBar
+          isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
+          gasLessFailedReason={gasLessFailedReason}
           canUseGasLess={canUseGasLess}
           showGasLess={!gasLessLoading && isReady && showGasLess}
           useGasLess={showGasLess && canUseGasLess && useGasLess}

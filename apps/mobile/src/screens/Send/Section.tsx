@@ -4,7 +4,11 @@ import { View, Text, TextInput } from 'react-native';
 import { Skeleton } from '@rneui/themed';
 import { TokenAmountInput } from '@/components/Token';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
+import {
+  createGetStyles,
+  makeDebugBorder,
+  makeTriangleStyle,
+} from '@/utils/styles';
 import {
   useInputBlurOnEvents,
   useSendTokenInternalContext,
@@ -17,6 +21,9 @@ import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { CHAINS } from '@/constant/chains';
 import { findChainByServerID } from '@/utils/chain';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { default as RcMaxButton } from './icons/max-button.svg';
+import { useTranslation } from 'react-i18next';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -41,6 +48,7 @@ export function Section({
 
 export function BalanceSection({ style }: RNViewProps) {
   const { styles } = useThemeStyles(getBalanceStyles);
+  const { t } = useTranslation();
 
   const { currentAccount } = useCurrentAccount();
   const {
@@ -55,7 +63,6 @@ export function BalanceSection({ style }: RNViewProps) {
       gasList,
     },
 
-    events,
     formValues,
     computed: {
       chainItem,
@@ -85,6 +92,8 @@ export function BalanceSection({ style }: RNViewProps) {
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
 
+  const disableMax = showGasReserved && !!formValues.amount;
+
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
@@ -101,26 +110,29 @@ export function BalanceSection({ style }: RNViewProps) {
           ) : (
             <>
               <Text style={styles.balanceText}>
-                Balance: {currentTokenBalance}
+                {t('page.sendToken.sectionBalance.title')}:{' '}
+                {currentTokenBalance}
               </Text>
               {/* max button */}
-              {/* {currentToken.amount > 0 && (
+              {currentToken.amount > 0 && (
                 <TouchableView
+                  disabled={disableMax}
                   className="h-[100%] ml-[4]"
                   style={styles.maxButtonWrapper}
                   onPress={handleClickTokenBalance}>
                   <RcMaxButton />
                 </TouchableView>
-              )} */}
+              )}
             </>
           )}
         </View>
 
         {/* right area */}
         <View style={styles.issueBlock}>
-          {showGasReserved &&
+          {/* {showGasReserved &&
             (selectedGasLevel ? (
               <GasReserved
+                style={styles.gasReserved}
                 token={currentToken}
                 amount={tokenAmountForGas}
                 onClickAmount={() => {
@@ -129,8 +141,11 @@ export function BalanceSection({ style }: RNViewProps) {
                 trigger="whole"
               />
             ) : (
-              <Skeleton style={{ width: 180 }} />
-            ))}
+              <Skeleton style={styles.issueBlockSkeleton} />
+            ))} */}
+          {showGasReserved && !selectedGasLevel && (
+            <Skeleton style={styles.issueBlockSkeleton} />
+          )}
           {!showGasReserved && (balanceError || balanceWarn) ? (
             <Text style={[styles.issueText]}>
               {balanceError || balanceWarn}
@@ -139,7 +154,7 @@ export function BalanceSection({ style }: RNViewProps) {
         </View>
       </View>
 
-      <View className="mt-[10]">
+      <View style={{ marginTop: 10 }}>
         {currentAccount && chainItem && (
           <TokenAmountInput
             ref={amountInputRef}
@@ -147,6 +162,7 @@ export function BalanceSection({ style }: RNViewProps) {
             onChange={value => {
               handleFieldChange?.('amount', value);
             }}
+            // selection={amountInputSelection || undefined}
             token={currentToken}
             chainServerId={chainItem.serverId}
             onTokenChange={handleCurrentTokenChange}
@@ -155,7 +171,7 @@ export function BalanceSection({ style }: RNViewProps) {
           />
         )}
       </View>
-      <View className="mt-[16]">
+      <View style={{ marginTop: 16 }}>
         <View style={styles.tokenDetailBlock}>
           <View style={styles.tokenDetailTriangle} />
           {!isNativeToken && (
@@ -225,11 +241,27 @@ const getBalanceStyles = createGetStyles(colors => {
     balanceArea: {
       flexDirection: 'row',
       height: 16,
+      flexShrink: 0,
     },
 
     issueBlock: {
       flexDirection: 'row',
       height: 16,
+      flexShrink: 1,
+      width: '100%',
+      justifyContent: 'flex-end',
+      // ...makeDebugBorder(),
+    },
+
+    gasReserved: {
+      paddingLeft: 8,
+      // ...makeDebugBorder()
+    },
+
+    issueBlockSkeleton: {
+      width: '100%',
+      maxWidth: 120,
+      height: '100%',
     },
 
     issueText: {

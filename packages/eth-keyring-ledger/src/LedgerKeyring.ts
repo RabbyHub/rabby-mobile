@@ -180,11 +180,7 @@ class LedgerKeyring {
         this.transport = await this.getTransport(this.deviceId!);
         this.app = new LedgerEth(this.transport);
       } catch (e: any) {
-        if (
-          e.name === 'BleError' ||
-          e.message?.includes('isConnected') ||
-          e.message?.includes('DisconnectedDevice')
-        ) {
+        if (this.transportType === 'ble') {
           throw e;
         } else if (!e.message?.includes('The device is already open')) {
           console.error(e);

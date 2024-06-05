@@ -24,6 +24,7 @@ import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { ModalLayouts } from '@/constant/layout';
 
 export default function BottomSheetContractApproval({
   modalProps,
@@ -151,7 +152,7 @@ export default function BottomSheetContractApproval({
           />
         );
       }}
-      snapPoints={['80%']}
+      snapPoints={[ModalLayouts.defaultHeightPercentText]}
       bottomInset={1}>
       {focusedContractApproval && (
         <BottomSheetView style={[styles.bodyContainer]}>

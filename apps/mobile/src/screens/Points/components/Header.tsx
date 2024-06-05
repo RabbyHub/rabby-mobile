@@ -16,6 +16,7 @@ export const PointsHeader = ({
   onComplete,
   onUpdate,
   total,
+  initClaimedEnded,
 }: {
   avatar?: string;
   userName: string;
@@ -26,6 +27,7 @@ export const PointsHeader = ({
   onUpdate: (value: ReturnValue) => void;
   showDiffPoints: boolean;
   total: string;
+  initClaimedEnded?: boolean;
 }) => {
   const { t } = useTranslation();
 
@@ -42,17 +44,24 @@ export const PointsHeader = ({
         </View>
         <View>
           <View style={styles.pointsWrapper}>
-            <Text style={styles.points}>
-              <CountUp
-                start={previousPoints}
-                end={currentPoints}
-                duration={1}
-                isCounting={currentPoints !== previousPoints}
-                thousandsSeparator=","
-                onComplete={onComplete}
-                onUpdate={onUpdate}
-                key={currentPoints}
-              />
+            <Text
+              style={
+                initClaimedEnded ? styles.initClaimedEnded : styles.points
+              }>
+              {initClaimedEnded ? (
+                t('page.rabbyPoints.initialPointsClaimEnded')
+              ) : (
+                <CountUp
+                  start={previousPoints}
+                  end={currentPoints}
+                  duration={1}
+                  isCounting={currentPoints !== previousPoints}
+                  thousandsSeparator=","
+                  onComplete={onComplete}
+                  onUpdate={onUpdate}
+                  key={currentPoints}
+                />
+              )}
             </Text>
 
             {/* {showDiffPoints && (
@@ -108,6 +117,7 @@ const getStyle = createGetStyles(colors => ({
     padding: 0,
     margin: 0,
   },
+
   points: {
     color: colors['neutral-title2'],
     fontSize: 40,
@@ -115,6 +125,13 @@ const getStyle = createGetStyles(colors => ({
     marginTop: 12,
     marginBottom: 12,
     position: 'relative',
+  },
+  initClaimedEnded: {
+    color: colors['neutral-title2'],
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 20,
+    marginBottom: 25,
   },
   diffPointsContainer: {
     position: 'absolute',
