@@ -34,6 +34,8 @@ import { GnosisTransactionItem } from './GnosisTransactionItem';
 import { AccountSelectPopup } from '@/components/AccountSelectPopup';
 import { intToHex } from '@/utils/number';
 import { toast } from '@/components/Toast';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 export type ConfirmationProps = {
   owner: string;
@@ -269,7 +271,7 @@ export const GnosisTransactionQueueList = (props: {
       setSubmitDrawerVisible(true);
     },
   );
-
+  const navigation = useNavigation();
   const handleConfirm = async (account: KeyringAccountWithAlias) => {
     if (!safeInfo) {
       return;
@@ -312,6 +314,11 @@ export const GnosisTransactionQueueList = (props: {
       setSubmitDrawerVisible(false);
       setSubmitTransaction(null);
       reload?.();
+      navigation.dispatch(
+        StackActions.replace(RootNames.StackRoot, {
+          screen: RootNames.Home,
+        }),
+      );
     } catch (e: any) {
       // toast.info(e.message || JSON.stringify(e));
       console.log('execGnosisTransaction error', e);

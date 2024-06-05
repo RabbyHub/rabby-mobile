@@ -50,7 +50,7 @@ import { APP_URLS, APP_VERSIONS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
-import { useRemoteUpgradeInfo } from '@/hooks/version';
+import { useUpgradeInfo } from '@/hooks/version';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
@@ -75,7 +75,7 @@ function SettingsScreen(): JSX.Element {
   const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
   const { currentAccount } = useCurrentAccount();
 
-  const { remoteVersion, triggerCheckVersion } = useRemoteUpgradeInfo();
+  const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
 
@@ -176,7 +176,7 @@ function SettingsScreen(): JSX.Element {
                       fontWeight: '400',
                       paddingRight: 8,
                     }}>
-                    {APP_VERSIONS.fromJs}
+                    {localVersion || APP_VERSIONS.fromJs}
                   </Text>
                   {remoteVersion.couldUpgrade && (
                     <Text
