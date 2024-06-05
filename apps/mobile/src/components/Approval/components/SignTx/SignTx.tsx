@@ -13,6 +13,7 @@ import { Chain } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
+  KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import {
@@ -74,6 +75,12 @@ import { getStyles } from './style';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
+import Safe, { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
+import { apisSafe } from '@/core/apis/safe';
+import { maxBy } from 'lodash';
+import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
+import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
+import { useMemoizedFn } from 'ahooks';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -115,7 +122,7 @@ interface BlockInfo {
 }
 
 export const SignTx = ({ params, origin }: SignTxProps) => {
-  const { account } = params;
+  const { isGnosis, account } = params;
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
   const [canProcess, setCanProcess] = useState(true);
@@ -239,14 +246,15 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   const [canUseGasLess, setCanUseGasLess] = useState(false);
   const [useGasLess, setUseGasLess] = useState(false);
 
+  const [isGnosisAccount, setIsGnosisAccount] = useState(false);
   const [gasLessFailedReason, setGasLessFailedReason] = useState<
     string | undefined
   >(undefined);
 
   // const [isGnosisAccount, setIsGnosisAccount] = useState(false);
   // const [isCoboArugsAccount, setIsCoboArugsAccount] = useState(false);
-  const isGnosisAccount = false;
   const isCoboArugsAccount = false;
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
@@ -332,7 +340,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   });
   const [realNonce, setRealNonce] = useState('');
   const [gasLimit, setGasLimit] = useState<string | undefined>(undefined);
-  // const [safeInfo, setSafeInfo] = useState<BasicSafeInfo | null>(null);
+  const [safeInfo, setSafeInfo] = useState<BasicSafeInfo | null>(null);
   const [maxPriorityFee, setMaxPriorityFee] = useState(0);
   const [nativeTokenBalance, setNativeTokenBalance] = useState('0x0');
   const { executeEngine } = useSecurityEngine();
@@ -371,7 +379,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     isSpeedUp,
     isCancel,
     tx,
-    isGnosisAccount: false,
+    isGnosisAccount: isGnosisAccount,
     nativeTokenBalance,
     recommendGasLimitRatio,
   });
@@ -427,12 +435,14 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
-    recommendNonce = await getRecommendNonce({
-      tx,
-      chainId,
-    });
-    setRecommendNonce(recommendNonce);
-    if (updateNonce) {
+    if (!isGnosisAccount) {
+      recommendNonce = await getRecommendNonce({
+        tx,
+        chainId,
+      });
+      setRecommendNonce(recommendNonce);
+    }
+    if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
     } // do not overwrite nonce if from === to(cancel transaction)
     const { pendings } = await transactionHistoryService.getList(address);
@@ -543,6 +553,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             res.gas.gas_used,
           );
           const requiredData = await fetchActionRequiredData({
+            origin: origin || '',
             actionData: parsed,
             contractCall: actionData.contract_call,
             chainId: chain.serverId,
@@ -588,13 +599,65 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   };
 
   const explain = async () => {
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
     try {
       setIsReady(false);
       await explainTx(currentAccount.address);
       setIsReady(true);
     } catch (e: any) {
       toast.show(e.message || JSON.stringify(e));
+    }
+  };
+
+  const handleGnosisConfirm = async (account: Account) => {
+    if (!safeInfo) {
+      return;
+    }
+    stats.report('signTransaction', {
+      type: KEYRING_TYPE.GnosisKeyring,
+      category: KEYRING_CATEGORY_MAP[KEYRING_CLASS.GNOSIS],
+      chainId: chain.serverId,
+      preExecSuccess:
+        checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
+      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      source: params?.$ctx?.ga?.source || '',
+      trigger: params?.$ctx?.ga?.trigger || '',
+      networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
+    });
+    if (!isViewGnosisSafe) {
+      const params: any = {
+        from: tx.from,
+        to: tx.to,
+        data: tx.data,
+        value: tx.value,
+        safeTxGas: safeTxGas,
+      };
+      params.nonce = realNonce;
+      await apisSafe.buildGnosisTransaction(
+        tx.from,
+        account,
+        params,
+        safeInfo.version,
+        chain.network,
+      );
+    }
+    const typedData = await apisSafe.gnosisGenerateTypedData();
+    try {
+      await resolveApproval({
+        data: [account.address, JSON.stringify(typedData)],
+        session: params.session,
+        isGnosis: true,
+        isSend,
+        account: account,
+        method: 'ethSignTypedDataV4',
+        uiRequestComponent: 'SignTypedData',
+      });
+      setDrawerVisible(false);
+    } catch (e) {
+      console.log(e);
     }
   };
 
@@ -606,7 +669,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
 
     try {
       validateGasPriceRange(tx);
@@ -691,6 +757,11 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       return;
     }
 
+    if (isGnosisAccount || isCoboArugsAccount) {
+      setDrawerVisible(true);
+      return;
+    }
+
     stats.report('signTransaction', {
       type: currentAccount.brandName,
       chainId: chain.serverId,
@@ -771,6 +842,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     rejectApproval('User rejected the request.');
   };
 
+  const handleDrawerCancel = () => {
+    setDrawerVisible(false);
+  };
+
   const handleTxChange = (obj: Record<string, any>) => {
     setTx({
       ...tx,
@@ -800,7 +875,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
 
   const checkCanProcess = async () => {
     const session = params.session;
-    const currentAccount = (await preferenceService.getCurrentAccount())!;
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
     const site = await dappService.getDapp(session.origin);
 
     if (currentAccount.type === KEYRING_TYPE.WatchAddressKeyring) {
@@ -848,6 +926,75 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     }
   };
 
+  const getSafeInfo = async () => {
+    const currentAccount =
+      isGnosis && account
+        ? account
+        : (await preferenceService.getCurrentAccount())!;
+    const networkId = '' + chainId;
+    let safeInfo: BasicSafeInfo | null = null;
+    try {
+      safeInfo = await apisSafe.getBasicSafeInfo({
+        address: currentAccount.address,
+        networkId,
+      });
+    } catch (e) {
+      let networkIds: string[] = [];
+      try {
+        networkIds = await apisSafe.getGnosisNetworkIds(currentAccount.address);
+      } catch (e) {
+        console.error(e);
+      }
+      if (!networkIds.includes(networkId)) {
+        const msg = t('page.signTx.safeAddressNotSupportChain', {
+          0: chain.name,
+        });
+        setTimeout(() => {
+          rejectApproval(msg);
+        }, 2000);
+        throw new Error(msg);
+      } else {
+        throw e;
+      }
+    }
+    const pendingTxs = await Safe.getPendingTransactions(
+      currentAccount.address,
+      networkId,
+      safeInfo.nonce,
+    );
+    const maxNonceTx = maxBy(pendingTxs.results, item => item.nonce);
+    let recommendSafeNonce = maxNonceTx ? maxNonceTx.nonce + 1 : safeInfo.nonce;
+
+    setSafeInfo(safeInfo);
+    setRecommendNonce(`0x${recommendSafeNonce.toString(16)}`);
+
+    if (
+      tx.nonce !== undefined &&
+      tx.nonce !== null &&
+      Number(tx.nonce || '0') >= safeInfo.nonce &&
+      origin === INTERNAL_REQUEST_ORIGIN
+    ) {
+      recommendSafeNonce = Number(tx.nonce || '0');
+      setRecommendNonce(tx.nonce || '0x0');
+    }
+    if (Number(tx.nonce || 0) < safeInfo.nonce) {
+      setTx({
+        ...tx,
+        nonce: `0x${recommendSafeNonce.toString(16)}`,
+      });
+      setRealNonce(`0x${recommendSafeNonce.toString(16)}`);
+    } else {
+      setRealNonce(`0x${Number(tx.nonce).toString(16)}`);
+    }
+    if (tx.nonce === undefined || tx.nonce === null) {
+      setTx({
+        ...tx,
+        nonce: `0x${recommendSafeNonce.toString(16)}`,
+      });
+      setRealNonce(`0x${recommendSafeNonce.toString(16)}`);
+    }
+  };
+
   const handleIgnoreAllRules = () => {
     apiApprovalSecurityEngine.processAllRules(
       engineResults.map(result => result.id),
@@ -882,7 +1029,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   const init = async () => {
     apiApprovalSecurityEngine.resetCurrentTx();
     try {
-      const currentAccount = (await preferenceService.getCurrentAccount())!;
+      const currentAccount =
+        isGnosis && account
+          ? account
+          : (await preferenceService.getCurrentAccount())!;
 
       setCurrentAccountType(currentAccount.type);
 
@@ -917,6 +1067,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         label: currentAccount.brandName,
       });
 
+      if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
+        setIsGnosisAccount(true);
+        await getSafeInfo();
+      }
       checkCanProcess();
       const lastTimeGas: ChainGas | null =
         await preferenceService.getLastTimeGasSelection(chainId);
@@ -984,6 +1138,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       toast.show(e.message || JSON.stringify(e));
     }
   };
+
+  const handleIsGnosisAccountChange = useMemoizedFn(async () => {
+    if (!isViewGnosisSafe) {
+      await apisSafe.clearGnosisTransaction();
+    }
+  });
 
   const executeSecurityEngine = async () => {
     const ctx = formatSecurityEngineCtx({
@@ -1066,6 +1226,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   ]);
 
   useEffect(() => {
+    if (isGnosisAccount) {
+      handleIsGnosisAccountChange();
+    }
+  }, [handleIsGnosisAccountChange, isGnosisAccount]);
+
+  useEffect(() => {
     if (!inited) return;
     explain();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1113,46 +1279,60 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 engineResults={engineResults}
               />
             )}
-            <GasSelector
-              disabled={false}
-              isReady={isReady}
-              gasLimit={gasLimit}
-              noUpdate={isCancel || isSpeedUp}
-              gasList={gasList}
-              selectedGas={selectedGas}
-              version={txDetail.pre_exec_version}
-              gas={{
-                error: txDetail.gas.error,
-                success: txDetail.gas.success,
-                gasCostUsd: gasExplainResponse.gasCostUsd,
-                gasCostAmount: gasExplainResponse.gasCostAmount,
-              }}
-              gasCalcMethod={price => {
-                return explainGas({
-                  gasUsed,
-                  gasPrice: price,
-                  chainId,
-                  nativeTokenPrice: txDetail?.native_token.price || 0,
-                  tx,
-                  gasLimit,
-                });
-              }}
-              recommendGasLimit={recommendGasLimit}
-              recommendNonce={recommendNonce}
-              chainId={chainId}
-              onChange={handleGasChange}
-              nonce={realNonce || tx.nonce}
-              disableNonce={isSpeedUp || isCancel}
-              isSpeedUp={isSpeedUp}
-              isCancel={isCancel}
-              is1559={support1559}
-              isHardware={isHardware}
-              manuallyChangeGasLimit={manuallyChangeGasLimit}
-              errors={checkErrors}
-              engineResults={engineResults}
-              nativeTokenBalance={nativeTokenBalance}
-              gasPriceMedian={gasPriceMedian}
-            />
+            {isGnosisAccount ? (
+              <SafeNonceSelector
+                disabled={isViewGnosisSafe}
+                isReady={isReady}
+                chainId={chainId}
+                value={realNonce}
+                safeInfo={safeInfo}
+                onChange={v => {
+                  setRealNonce(v);
+                  setNonceChanged(true);
+                }}
+              />
+            ) : (
+              <GasSelector
+                disabled={false}
+                isReady={isReady}
+                gasLimit={gasLimit}
+                noUpdate={isCancel || isSpeedUp}
+                gasList={gasList}
+                selectedGas={selectedGas}
+                version={txDetail.pre_exec_version}
+                gas={{
+                  error: txDetail.gas.error,
+                  success: txDetail.gas.success,
+                  gasCostUsd: gasExplainResponse.gasCostUsd,
+                  gasCostAmount: gasExplainResponse.gasCostAmount,
+                }}
+                gasCalcMethod={price => {
+                  return explainGas({
+                    gasUsed,
+                    gasPrice: price,
+                    chainId,
+                    nativeTokenPrice: txDetail?.native_token.price || 0,
+                    tx,
+                    gasLimit,
+                  });
+                }}
+                recommendGasLimit={recommendGasLimit}
+                recommendNonce={recommendNonce}
+                chainId={chainId}
+                onChange={handleGasChange}
+                nonce={realNonce || tx.nonce}
+                disableNonce={isSpeedUp || isCancel}
+                isSpeedUp={isSpeedUp}
+                isCancel={isCancel}
+                is1559={support1559}
+                isHardware={isHardware}
+                manuallyChangeGasLimit={manuallyChangeGasLimit}
+                errors={checkErrors}
+                engineResults={engineResults}
+                nativeTokenBalance={nativeTokenBalance}
+                gasPriceMedian={gasPriceMedian}
+              />
+            )}
           </View>
         )}
         {/* <BroadcastMode
@@ -1169,6 +1349,14 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             setPushInfo(value);
           }}
         /> */}
+        {isGnosisAccount && safeInfo ? (
+          <GnosisDrawer
+            visible={drawerVisible}
+            safeInfo={safeInfo}
+            onCancel={handleDrawerCancel}
+            onConfirm={handleGnosisConfirm}
+          />
+        ) : null}
 
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}
@@ -1193,7 +1381,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           originLogo={params.session.icon}
           hasUnProcessSecurityResult={hasUnProcessSecurityResult}
           securityLevel={securityLevel}
-          gnosisAccount={undefined}
+          gnosisAccount={isGnosis ? account : undefined}
           chain={chain}
           isTestnet={chain.isTestnet}
           onCancel={handleCancel}

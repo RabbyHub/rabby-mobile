@@ -1,113 +1,17 @@
+import { NameAndAddress } from '@/components/NameAndAddress';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { ellipsisAddress } from '@/utils/address';
+import { useThemeColors } from '@/hooks/theme';
 import { getTokenSymbol } from '@/utils/token';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { TxAvatar } from './TxAvatar';
-import {
-  CopyAddressIcon,
-  CopyAddressIconType,
-} from '@/components/AddressViewer/CopyAddress';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { toast } from '@/components/Toast';
-import { getAliasName } from '@/core/apis/contact';
-import { ALIAS_ADDRESS } from '@/constant/gas';
-import TouchableView from '@/components/Touchable/TouchableView';
 
 type TxInterAddressExplainProps = RNViewProps & {
   data: TxDisplayItem;
   isScam?: boolean;
 } & Pick<TxDisplayItem, 'cateDict' | 'projectDict' | 'tokenDict'>;
-
-const NameAndAddress = ({
-  address,
-  hideCopy = false,
-}: {
-  address: string;
-  hideCopy?: boolean;
-}) => {
-  const isAddr = useMemo(() => {
-    return /^0x[a-zA-Z0-9]{40}/.test(address);
-  }, [address]);
-
-  const { styles } = useThemeStyles(getNameAndAddressStyle);
-
-  const aliasName = useMemo(() => {
-    return (
-      getAliasName(address) || ALIAS_ADDRESS[address?.toLowerCase() || ''] || ''
-    );
-  }, [address]);
-
-  const copyAddressRef = React.useRef<CopyAddressIconType>(null);
-
-  const noCopy = !isAddr || hideCopy;
-
-  return (
-    <View style={styles.lineContainer}>
-      <TouchableView
-        style={styles.textWrapper}
-        disabled={noCopy}
-        onPress={() => {
-          copyAddressRef.current?.doCopy();
-        }}>
-        {aliasName && (
-          <Text
-            style={styles.aliasNameStyle}
-            numberOfLines={1}
-            ellipsizeMode="tail">
-            {aliasName}
-          </Text>
-        )}
-        <Text style={[styles.text]} numberOfLines={1}>
-          {aliasName
-            ? `(${ellipsisAddress(address)})`
-            : ellipsisAddress(address)}
-        </Text>
-      </TouchableView>
-      {!noCopy && (
-        <CopyAddressIcon
-          ref={copyAddressRef}
-          address={address}
-          style={styles.copyIcon}
-        />
-      )}
-    </View>
-  );
-};
-
-const getNameAndAddressStyle = createGetStyles(colors => {
-  return {
-    lineContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      maxWidth: '100%',
-      // ...makeDebugBorder('yellow'),
-    },
-    textWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      flexShrink: 1,
-    },
-    aliasNameStyle: {
-      fontSize: 12,
-      marginRight: 0,
-      color: colors['neutral-foot'],
-      flexShrink: 1,
-      // ...makeDebugBorder(),
-    },
-    text: {
-      fontSize: 12,
-      color: colors['neutral-foot'],
-      flexShrink: 0,
-    },
-    copyIcon: { marginLeft: 3, width: 14, height: 14, flexShrink: 0 },
-  };
-});
 
 export const TxInterAddressExplain = ({
   style,

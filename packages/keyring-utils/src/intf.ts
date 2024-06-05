@@ -43,7 +43,11 @@ export declare class KeyringIntf {
 
   removeAccount(address: string): void;
 
-  signTransaction(address: string, transaction: any): Promise<void>;
+  signTransaction(
+    address: string,
+    transaction: any,
+    ...rest: any
+  ): Promise<void>;
 
   signPersonalMessage(address: string, message: string): Promise<void>;
 

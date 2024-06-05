@@ -57,6 +57,12 @@ export const getStyle = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       marginBottom: 15,
     },
+    signTitleText: {
+      color: colors['neutral-title-1'],
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 19,
+    },
     leftContainer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -203,7 +209,7 @@ const Actions = ({
       <View style={styles.signTitle}>
         <View style={styles.signTitleLeft}>
           {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
-          <Text>
+          <Text style={styles.signTitleText}>
             {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
           </Text>
         </View>

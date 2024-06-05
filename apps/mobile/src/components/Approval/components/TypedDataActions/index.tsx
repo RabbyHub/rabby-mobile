@@ -227,7 +227,9 @@ const Actions = ({
         <Text style={styles.signTitleLeft}>
           {t('page.signTypedData.signTypeDataOnChain', {
             chain: chain ? chain.name : '',
-          })}
+          })
+            .trim()
+            .replace(/\s+/g, ' ')}
         </Text>
         <TouchableOpacity
           style={styles.signTitleRight}

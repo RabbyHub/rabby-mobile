@@ -1,5 +1,6 @@
 import { Image, Platform } from 'react-native';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
+import { CHAINS_ENUM } from './chains';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
@@ -64,3 +65,18 @@ export const APPLICATION_ID =
     : __DEV__
     ? 'com.debank.rabby-mobile-debug'
     : 'com.debank.rabby-mobile';
+
+export const GNOSIS_SUPPORT_CHAINS = [
+  CHAINS_ENUM.ETH,
+  CHAINS_ENUM.BSC,
+  CHAINS_ENUM.POLYGON,
+  CHAINS_ENUM.GNOSIS,
+  CHAINS_ENUM.AVAX,
+  CHAINS_ENUM.OP,
+  CHAINS_ENUM.ARBITRUM,
+  CHAINS_ENUM.AURORA,
+  CHAINS_ENUM.BASE,
+  CHAINS_ENUM.CELO,
+  CHAINS_ENUM.PZE,
+  CHAINS_ENUM.ERA,
+];

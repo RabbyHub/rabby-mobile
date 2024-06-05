@@ -7,6 +7,7 @@ import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { LedgerProcessActions } from './LedgerProcessActions';
 import { KeystoneProcessActions } from './KeystoneProcessActions';
 import { OneKeyProcessActions } from './OneKeyProcessActions';
+import { ProcessActions } from './ProcessActions';
 
 export const ActionGroup: React.FC<Props> = props => {
   const { account } = props;
@@ -29,6 +30,5 @@ export const ActionGroup: React.FC<Props> = props => {
   if (account.type === KEYRING_CLASS.HARDWARE.ONEKEY) {
     return <OneKeyProcessActions {...props} />;
   }
-  // return <ProcessActions {...props} />;
-  return null;
+  return <ProcessActions {...props} />;
 };

@@ -14,6 +14,7 @@ import Swap from '../Swap';
 import GasTopUp from '../GasTopUp';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
+import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -69,6 +70,15 @@ export default function TransactionNavigator() {
         component={HistoryFilterScamScreen}
         options={{
           title: 'Hide scam transactions',
+        }}
+      />
+      <TransactionStack.Screen
+        name={RootNames.GnosisTransactionQueue}
+        component={GnosisTransactionQueue}
+        options={{
+          ...screenOptions,
+          title: 'Queue',
+          ...headerPresets.withBgCard2,
         }}
       />
       {/* ReceiveScreen */}

@@ -7,6 +7,7 @@ import ZerionSVG from '@/assets/icons/wallet/zerion.svg';
 import MathWalletSVG from '@/assets/icons/wallet/math.svg';
 import TrustWalletSVG from '@/assets/icons/wallet/trust.svg';
 import WalletConnectSVG from '@/assets/icons/wallet/walletconnect.svg';
+import SafeSVG from '@/assets/icons/wallet/safe.svg';
 import { SvgProps } from 'react-native-svg';
 import {
   BRAND_ALIAS_TYPE_TEXT,
@@ -130,6 +131,10 @@ export const getWalletIcon = (brandName: string | undefined) => {
 
   if (brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
     return KeystoneSVG;
+  }
+
+  if (brandName === KEYRING_CLASS.GNOSIS) {
+    return SafeSVG;
   }
 
   return (

@@ -106,7 +106,9 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     loading,
     error,
   } = useAsync(async () => {
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? params.account
+      : await preferenceService.getCurrentAccount();
     let chainId = 1; // ETH as default
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
@@ -151,7 +153,9 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       | 'completeSignText',
     extra?: Record<string, any>,
   ) => {
-    const currentAccount = preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? params.account
+      : preferenceService.getCurrentAccount();
     if (!currentAccount) {
       return;
     }
@@ -183,7 +187,9 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     if (activeApprovalPopup()) {
       return;
     }
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? params.account
+      : await preferenceService.getCurrentAccount();
 
     if (
       currentAccount?.type &&
@@ -246,7 +252,9 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   };
 
   const checkWachMode = async () => {
-    const currentAccount = await preferenceService.getCurrentAccount();
+    const currentAccount = isGnosis
+      ? params.account
+      : await preferenceService.getCurrentAccount();
     const accountType =
       isGnosis && params.account ? params.account.type : currentAccount?.type;
     if (accountType === KEYRING_TYPE.WatchAddressKeyring) {
@@ -306,6 +314,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
 
   useEffect(() => {
     report('createSignText');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

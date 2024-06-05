@@ -10,6 +10,7 @@ import { default as RcIconApprovalCC } from './approvals-cc.svg';
 import { default as RcIconGasTopUpCC } from './gas-top-up-cc.svg';
 import { default as RcIconHeaderEyeCC } from './header-eye-cc.svg';
 import { default as RcIconHeaderEyeCloseCC } from './header-eye-close-cc.svg';
+import { default as RcIconQueueCC } from './queue-cc.svg';
 
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
@@ -62,6 +63,11 @@ export const RcIconSwap = makeThemeIconFromCC(RcIconSwapCC, {
 });
 
 export const RcIconReceive = makeThemeIconFromCC(RcIconReceiveCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const RcIconQueue = makeThemeIconFromCC(RcIconQueueCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });

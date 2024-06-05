@@ -42,6 +42,9 @@
     },
     {
       "path": "./packages/eth-keyring-keystone/tsconfig.json"
+    },
+    {
+      "path": "./packages/eth-keyring-gnosis/tsconfig.json"
     }
   ],
   "files": [],

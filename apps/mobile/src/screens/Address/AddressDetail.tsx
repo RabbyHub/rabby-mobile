@@ -24,7 +24,7 @@ import {
   BottomSheetView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import {
   CompositeScreenProps,
   useNavigation,
@@ -46,6 +46,8 @@ import {
 } from '@/navigation-type';
 import { toast } from '@/components/Toast';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { GnosisSafeInfo } from './components/GnosisSafeInfo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -137,6 +139,8 @@ const AddressInfo = (props: AddressInfoProps) => {
 
   const inputNameBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
+  const inputRef = useRef<TextInput>(null);
+
   const deleteBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const handlePresentCodeModalPress = useCallback(() => {
@@ -146,6 +150,9 @@ const AddressInfo = (props: AddressInfoProps) => {
   const handlePresentInputModalPress = useCallback(() => {
     setAliasPendingName(aliasName || '');
     inputNameBottomSheetModalRef.current?.present();
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
   }, [aliasName]);
 
   const handlePresentDeleteModalPress = useCallback(() => {
@@ -188,8 +195,16 @@ const AddressInfo = (props: AddressInfoProps) => {
     [],
   );
 
+  const { bottom } = useSafeAreaInsets();
+
   return (
-    <View style={{ gap: 20, paddingHorizontal: 20, paddingTop: 8 }}>
+    <View
+      style={{
+        gap: 20,
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        paddingBottom: bottom,
+      }}>
       <View style={styles.view}>
         <View
           style={[
@@ -285,6 +300,15 @@ const AddressInfo = (props: AddressInfoProps) => {
               />
             </View>
           )}
+          {account.type === KEYRING_TYPE.GnosisKeyring ? (
+            <View>
+              <GnosisSafeInfo
+                address={account.address}
+                type={account.type}
+                brandName={account.brandName}
+              />
+            </View>
+          ) : null}
         </View>
 
         <AppBottomSheetModal
@@ -363,7 +387,8 @@ const AddressInfo = (props: AddressInfoProps) => {
                 }}
                 value={aliasPendingName}
                 onChangeText={setAliasPendingName}
-                autoFocus
+                // autoFocus
+                ref={inputRef}
               />
             </View>
             <View

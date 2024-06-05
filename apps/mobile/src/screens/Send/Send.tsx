@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -24,6 +24,7 @@ import {
 import BottomArea from './components/BottomArea';
 import {
   findChainByEnum,
+  findChainByID,
   findChainByServerID,
   makeTokenFromChain,
 } from '@/utils/chain';
@@ -62,6 +63,7 @@ function SendScreen(): JSX.Element {
     s => s.routes.find(r => r.name === RootNames.Send)?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
+    | { safeInfo: { nonce: number; chainId: number } }
     | undefined;
 
   const {
@@ -117,7 +119,12 @@ function SendScreen(): JSX.Element {
       // }
       // setChain(target.enum);
       // loadCurrentToken(id, tokenChain, account.address);
-    } else if (/* (history.location.state as any)?.safeInfo */ false) {
+    } else if (
+      navState &&
+      'safeInfo' in navState &&
+      typeof navState.safeInfo === 'object'
+    ) {
+      const safeInfo = navState.safeInfo;
       // const safeInfo: {
       //   nonce: number;
       //   chainId: number;
@@ -137,7 +144,42 @@ function SendScreen(): JSX.Element {
       //   safeInfo,
       //   currentToken: nativeToken || currentToken,
       // });
-    } else if (navState?.chainEnum && navState?.tokenId) {
+      const target = findChainByID(safeInfo.chainId);
+      putScreenState({
+        safeInfo: safeInfo,
+      });
+
+      const hideLoading = toastLoading('Loading Token...');
+      try {
+        if (!target) {
+          await Promise.race([
+            await loadCurrentToken(
+              currentToken.id,
+              currentToken.chain,
+              account.address,
+            ),
+            sleep(5000),
+          ]);
+        } else {
+          setChainEnum(target.enum);
+          await Promise.race([
+            await loadCurrentToken(
+              target.nativeTokenAddress,
+              target.serverId,
+              account.address,
+            ),
+            sleep(5000),
+          ]);
+        }
+      } finally {
+        hideLoading();
+      }
+    } else if (
+      navState &&
+      'chainEnum' in navState &&
+      navState?.chainEnum &&
+      navState?.tokenId
+    ) {
       const target = findChainByEnum(navState?.chainEnum);
 
       const hideLoading = toastLoading('Loading Token...');

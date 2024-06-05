@@ -17,6 +17,8 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { findChainByEnum } from '@/utils/chain';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { stats } from '@/utils/stats';
+import { adjustV } from '@/utils/gnosis';
+import { apisSafe } from '@/core/apis/safe';
 
 interface ApprovalParams {
   address: string;
@@ -57,7 +59,9 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
   const { openWalletByBrandName } = useValidWalletServices();
 
   const initWalletConnect = async () => {
-    const account = (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis
+      ? params.account!
+      : (await preferenceService.getCurrentAccount())!;
     const status = await apisWalletConnect.getWalletConnectStatus(
       account.address,
       account.brandName,
@@ -88,7 +92,9 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
   };
 
   const handleRetry = async () => {
-    const account = (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis
+      ? params.account!
+      : (await preferenceService.getCurrentAccount())!;
 
     setConnectStatus(WALLETCONNECT_STATUS_MAP.PENDING);
     setConnectError(null);
@@ -99,7 +105,9 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
   const init = async () => {
     const approval = await getApproval();
-    const account = (await preferenceService.getCurrentAccount())!;
+    const account = params.isGnosis
+      ? params.account!
+      : (await preferenceService.getCurrentAccount())!;
 
     setCurrentAccount(account);
 
@@ -113,6 +121,21 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       if (data.success) {
         let sig = data.data;
         setResult(sig);
+        try {
+          if (params.isGnosis) {
+            sig = adjustV('eth_signTypedData', sig);
+            const sigs = await apisSafe.getGnosisTransactionSignatures();
+            if (sigs.length > 0) {
+              await apisSafe.gnosisAddConfirmation(account.address, sig);
+            } else {
+              await apisSafe.gnosisAddSignature(account.address, sig);
+              await apisSafe.postGnosisTransaction();
+            }
+          }
+        } catch (e: any) {
+          rejectApproval(e.message);
+          return;
+        }
         setSignFinishedData({
           data: sig,
           approvalId: approval!.id,

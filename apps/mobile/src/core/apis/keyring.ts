@@ -3,6 +3,7 @@ import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
+import { EVENTS, eventBus } from '@/utils/events';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -58,3 +59,24 @@ export function requestKeyring(
     return keyring[methodName].call(keyring, ...params);
   }
 }
+
+export const apisKeyring = {
+  signTypedData: async (
+    type: string,
+    from: string,
+    data: string,
+    options?: any,
+  ) => {
+    const keyring = await keyringService.getKeyringForAccount(from, type);
+    const res = await keyringService.signTypedMessage(
+      keyring,
+      { from, data },
+      options,
+    );
+    eventBus.emit(EVENTS.SIGN_FINISHED, {
+      success: true,
+      data: res,
+    });
+    return res;
+  },
+};
