@@ -456,7 +456,7 @@ export class NotificationService extends Events {
     dapp.blockedTimestamp = Date.now();
   };
 
-  private getOrigin(data = this.currentApproval?.data) {
+  private getOrigin(data = this.currentApproval?.data): string {
     return data?.params?.origin || data?.origin;
   }
 }

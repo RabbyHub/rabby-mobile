@@ -119,6 +119,7 @@ export class SessionService {
       try {
         session.data.pushMessage?.(ev, data);
       } catch (e) {
+        __DEV__ && console.error(e);
         if (sessionMap.has(session.key)) {
           this.deleteSession(session.key);
         }
