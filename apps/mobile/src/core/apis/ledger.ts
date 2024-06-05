@@ -7,6 +7,8 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import PQueue from 'p-queue/dist/index';
 import { t } from 'i18next';
+import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
+import { UpdateFirmwareAlert } from '@/utils/bluetoothPermissions';
 
 let queue: PQueue;
 setTimeout(() => {
@@ -151,6 +153,16 @@ export async function importFirstAddress({
 export async function checkEthApp(cb: (result: boolean) => void) {
   const keyring = await getKeyring<LedgerKeyring>(KEYRING_TYPE.LedgerKeyring);
 
+  try {
+    await keyring.makeApp();
+  } catch (e: any) {
+    const message = ledgerErrorHandler(e);
+
+    if (message === LEDGER_ERROR_CODES.FIRMWARE_OR_APP_UPDATE_REQUIRED) {
+      UpdateFirmwareAlert();
+      throw new Error(message);
+    }
+  }
   const { appName } = await keyring.getAppAndVersion();
 
   if (appName === 'BOLOS') {

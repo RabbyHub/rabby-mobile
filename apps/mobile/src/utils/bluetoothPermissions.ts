@@ -59,6 +59,28 @@ export const showBluetoothPermissionsAlert = async () => {
   );
 };
 
+export const UpdateFirmwareAlert = async () => {
+  Alert.alert(
+    i18n.t('bluetooth.update_firmware_alert.title'),
+    i18n.t('bluetooth.update_firmware_alert.message'),
+    [
+      {
+        onPress: () => {
+          Linking.openURL(
+            'https://support.ledger.com/hc/articles/360003117594-Ledger-device-firmware-update-FAQ',
+          );
+        },
+        text: i18n.t('bluetooth.update_firmware_alert.update'),
+      },
+      {
+        onPress: () => null,
+        style: 'cancel',
+        text: i18n.t('bluetooth.update_firmware_alert.cancel'),
+      },
+    ],
+  );
+};
+
 /**
  * Checks and requests bluetooth permissions for Android
  */
