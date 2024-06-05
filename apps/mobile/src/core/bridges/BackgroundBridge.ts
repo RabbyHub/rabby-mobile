@@ -44,6 +44,10 @@ export class BackgroundBridge extends EventEmitter {
 
   #engine: JsonRpcEngine | null = null;
 
+  get origin() {
+    return this.#webviewOrigin;
+  }
+
   get url() {
     return this.#urlRef.current;
   }

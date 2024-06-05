@@ -7,6 +7,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { openapi } from '../request';
 import { BasicDappInfo } from '@rabby-wallet/rabby-api/dist/types';
 import { cached } from '@/utils/cache';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 export const removeDapp = (origin: string) => {
   disconnect(origin);
@@ -113,7 +114,7 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
     ids: ids,
   });
   res.forEach(item => {
-    dappService.patchDapp(`https://${item.id}`, {
+    dappService.patchDapp(stringUtils.ensurePrefix(item.id, 'https://'), {
       info: item,
     });
   });
