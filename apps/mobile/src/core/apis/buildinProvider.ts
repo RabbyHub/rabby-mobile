@@ -7,6 +7,7 @@ import { notificationService, preferenceService } from '../services';
 import providerController from '@/core/controllers/provider';
 import { findChain } from '@/utils/chain';
 import { sendRequest } from './provider';
+import { setGlobalProvider } from './globalProvider';
 
 interface StateProvider {
   accounts: string[] | null;
@@ -211,8 +212,11 @@ const provider = new EthereumProvider();
 
 // window.dispatchEvent(new Event('ethereum#initialized'));
 
-export default {
+const buildinProvider = {
   currentProvider: new Proxy(provider, {
     deleteProperty: () => true,
   }),
 };
+setGlobalProvider(buildinProvider);
+
+export default buildinProvider;
