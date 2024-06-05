@@ -138,6 +138,7 @@ export const BRAND_ALIAS_TYPE_TEXT = {
   [KEYRING_TYPE.HdKeyring]: 'Seed Phrase',
   [KEYRING_TYPE.SimpleKeyring]: 'Private Key',
   [KEYRING_TYPE.WatchAddressKeyring]: 'Contact',
+  [KEYRING_TYPE.GnosisKeyring]: 'Safe',
   [WALLET_NAME.MetaMask]: 'MetaMask',
   [WALLET_NAME.TP]: 'TokenPocket',
   [WALLET_NAME.imToken]: 'imToken',
