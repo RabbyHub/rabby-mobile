@@ -44,13 +44,12 @@ build_selfhost() {
 
 build_appstore() {
   yarn;
-  # if [ $RABBY_HOST_OS != "Windows" ]; then
-  #   bundle exec fastlane android appstore
-  # else
-
-  # fi
-  echo "[deploy-android] run build.sh script directly."
-  sh $project_dir/android/build.sh buildAppStore
+  if [ $RABBY_HOST_OS != "Windows" ]; then
+    bundle exec fastlane android appstore
+  else
+    echo "[deploy-android] run build.sh script directly."
+    sh $project_dir/android/build.sh buildAppStore
+  fi
 }
 
 # ============ prepare version.json :start ============== #
