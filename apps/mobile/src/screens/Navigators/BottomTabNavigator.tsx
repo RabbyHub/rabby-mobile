@@ -84,14 +84,14 @@ React.PropsWithChildren<{
 
   return (
     <Text
-      style={[
+      style={StyleSheet.flatten([
         {
           ...tabBarLabelStyle,
 
           color: focused ? colors['blue-default'] : colors['neutral-foot'],
         },
         style,
-      ]}>
+      ])}>
       {children}
     </Text>
   );
