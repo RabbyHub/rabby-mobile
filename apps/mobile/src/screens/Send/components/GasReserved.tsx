@@ -48,7 +48,8 @@ export default function GasReserved({
   token,
   onClickAmount,
   trigger = 'number',
-}: GasReservedProps) {
+  style,
+}: RNViewProps & GasReservedProps) {
   const { t } = useTranslation();
 
   const tokenName = useMemo(() => {
@@ -62,9 +63,12 @@ export default function GasReserved({
   return (
     <TouchableView
       disabled={triggerOnNumber}
-      style={styles.gasReservedView}
+      style={[styles.gasReservedView, style]}
       onPress={onClickAmount}>
-      <Text style={styles.gasReservedText}>
+      <Text
+        style={styles.gasReservedText}
+        ellipsizeMode="tail"
+        numberOfLines={1}>
         <Trans
           i18nKey="page.sendTokenComponents.GasReserved"
           values={{

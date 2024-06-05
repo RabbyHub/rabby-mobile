@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, View, Text } from 'react-native';
+import { Dimensions, View, Text, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   BottomSheetBackdrop,
@@ -29,14 +29,17 @@ import FooterComponentForConfirm from '../customized/FooterComponentForConfirm';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import ModalConfirmDiscard from './components/ModalConfirmDiscard';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
+import { ModalLayouts } from '@/constant/layout';
 
 export interface SelectAddressProps {
+  heightPercent?: `${number}%`;
   visible: boolean;
   onConfirm?(account: UIContactBookItem): void;
   onClose?(options: { behavior: 'canceled' | 'confirmed' }): void;
 }
 
 export function SelectAddressSheetModal({
+  heightPercent = ModalLayouts.defaultHeightPercentText,
   visible,
   onConfirm,
   onClose,
@@ -175,7 +178,7 @@ export function SelectAddressSheetModal({
       <AppBottomSheetModal
         ref={sheetModalRef}
         index={0}
-        snapPoints={['70%']}
+        snapPoints={[heightPercent]}
         backgroundStyle={styles.sheet}
         enablePanDownToClose={!isEditing}
         enableDismissOnClose={true}
@@ -230,8 +233,8 @@ export function SelectAddressSheetModal({
                     inWhitelist={inWhitelistLocal || !whitelistEnabled}
                     isEditing={isEditing}
                     style={[
-                      idx > 0 && { marginTop: 16 },
-                      idx === arr.length - 1 && { marginBottom: 16 },
+                      idx > 0 && { marginTop: 8 },
+                      idx === arr.length - 1 && { marginBottom: 8 },
                     ]}
                     onPress={() => {
                       if (isEditing) {
@@ -270,7 +273,16 @@ export function SelectAddressSheetModal({
 
 const FOOTER_SIZES = {
   buttonHeight: 52,
-  paddingVertical: 20,
+  ...Platform.select({
+    ios: {
+      paddingTop: 16,
+      paddingBottom: 24,
+    },
+    android: {
+      paddingTop: 16,
+      paddingBottom: 24,
+    },
+  })!,
 };
 
 const getStyles = createGetStyles(colors => {
@@ -279,13 +291,15 @@ const getStyles = createGetStyles(colors => {
       backgroundColor: colors['neutral-bg-1'],
     },
     container: {
-      paddingVertical: 20,
+      paddingTop: ModalLayouts.titleTopOffset,
       flexDirection: 'column',
       position: 'relative',
       height: '100%',
 
       paddingBottom:
-        FOOTER_SIZES.buttonHeight + FOOTER_SIZES.paddingVertical * 2,
+        FOOTER_SIZES.buttonHeight +
+        FOOTER_SIZES.paddingTop +
+        FOOTER_SIZES.paddingBottom,
     },
     innerBlock: {
       paddingHorizontal: 20,
@@ -324,7 +338,9 @@ const getStyles = createGetStyles(colors => {
       borderTopWidth: 0.5,
       borderTopStyle: 'solid',
       borderTopColor: colors['neutral-line'],
-      paddingVertical: FOOTER_SIZES.paddingVertical,
+      backgroundColor: colors['neutral-bg-1'],
+      paddingTop: FOOTER_SIZES.paddingTop,
+      paddingBottom: FOOTER_SIZES.paddingBottom,
       flexShrink: 0,
 
       position: 'absolute',

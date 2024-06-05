@@ -10,6 +10,15 @@ import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 export const useRabbyPoints = () => {
   const { currentAccount: account } = useCurrentAccount();
 
+  const { value: campaignIsEnded, loading: campaignIsEndedLoading } =
+    useAsync(async () => {
+      if (account?.address) {
+        const data = await openapi.getRabbyPointsCampaignIsEnded();
+        return data?.campaign_is_ended;
+      }
+      return;
+    }, [account?.address]);
+
   const {
     value: signature,
     loading: signatureLoading,
@@ -101,6 +110,8 @@ export const useRabbyPoints = () => {
   );
 
   return {
+    campaignIsEnded,
+    campaignIsEndedLoading,
     signature,
     signatureLoading,
     snapshot,

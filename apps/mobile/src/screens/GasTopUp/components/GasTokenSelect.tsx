@@ -11,6 +11,7 @@ import { GasTokenItem } from './TokenItem';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import RcEmptyCC from '@/assets/icons/swap/empty-cc.svg';
 import { Skeleton } from '@rneui/themed';
+import { ModalLayouts } from '@/constant/layout';
 
 interface GasTopUpTokenSelectProps {
   visible?: boolean;
@@ -142,7 +143,7 @@ export const GasTopUpTokenSelectModal = (props: GasTopUpTokenSelectProps) => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={['80%']}
+      snapPoints={[ModalLayouts.defaultHeightPercentText]}
       ref={bottomRef}
       enableDismissOnClose
       onDismiss={() => props.setTokenModalVisible(false)}>

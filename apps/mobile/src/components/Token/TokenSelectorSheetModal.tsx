@@ -31,6 +31,7 @@ import { findChainByServerID } from '@/utils/chain';
 import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
+import { ModalLayouts } from '@/constant/layout';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -213,7 +214,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     return (
       <AppBottomSheetModal
         ref={tokenSelectorModal}
-        snapPoints={['80%']}
+        snapPoints={[ModalLayouts.defaultHeightPercentText]}
         enableContentPanningGesture={false}
         backgroundStyle={styles.sheet}
         enableDismissOnClose={true}
@@ -329,7 +330,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
 const getStyles = createGetStyles(colors => {
   return {
     container: {
-      paddingTop: 8,
+      paddingTop: ModalLayouts.titleTopOffset,
       paddingBottom: 20,
       flex: 1,
     },

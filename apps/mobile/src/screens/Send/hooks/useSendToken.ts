@@ -38,6 +38,7 @@ import { formatTxInputDataOnERC20 } from '@/utils/transaction';
 import {
   ARB_LIKE_L2_CHAINS,
   CAN_ESTIMATE_L1_FEE_CHAINS,
+  CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS,
   L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
@@ -140,14 +141,8 @@ export function useSendTokenScreenChainToken() {
     [putChainToken],
   );
 
-  const { currentTokenBalance, currentTokenPrice } = useMemo(() => {
+  const { currentTokenPrice } = useMemo(() => {
     return {
-      currentTokenBalance: formatTokenAmount(
-        new BigNumber(currentToken.raw_amount_hex_str || 0)
-          .div(10 ** currentToken.decimals)
-          .toFixed(),
-        4,
-      ),
       currentTokenPrice: formatUsdValue(currentToken.price),
     };
   }, [currentToken]);
@@ -163,7 +158,6 @@ export function useSendTokenScreenChainToken() {
     currentToken,
     setCurrentToken,
     loadCurrentToken,
-    currentTokenBalance,
     currentTokenPrice,
   };
 }
@@ -182,6 +176,7 @@ export type SendScreenState = {
   tokenAmountForGas: string;
   showWhitelistAlert: boolean;
   showGasReserved: boolean;
+  clickedMax: boolean;
   balanceError: string | null;
   balanceWarn: string | null;
   isLoading: boolean;
@@ -216,6 +211,7 @@ const DFLT_SEND_STATE: SendScreenState = {
   tokenAmountForGas: '0',
   showWhitelistAlert: false,
   showGasReserved: false,
+  clickedMax: false,
   balanceError: null,
   balanceWarn: null,
   isLoading: false,
@@ -439,9 +435,9 @@ export function useSendTokenForm() {
         }
 
         params.value = `0x${sendValue.toString(16)}`;
-        const noEstimateGasRequired =
-          !ARB_LIKE_L2_CHAINS.includes(chain.enum) &&
-          !L2_ENUMS.includes(chain.enum);
+        // L2 has extra validation fee so we can not set gasLimit as 21000 when send native token
+        const couldSpecifyIntrinsicGas =
+          !CAN_NOT_SPECIFY_INTRINSIC_GAS_CHAINS.includes(chain.enum);
 
         try {
           const code = await apiProvider.requestETHRpc(
@@ -451,22 +447,25 @@ export function useSendTokenForm() {
             },
             chain.serverId,
           );
+          const notContract = !!code && (code === '0x' || code === '0x0');
+          let gasLimit = 0;
+
+          if (screenState.estimateGas) {
+            gasLimit = screenState.estimateGas;
+          }
+
           /**
            * we dont' need always fetch estimateGas, if no `params.gas` set below,
            * `params.gas` would be filled on Tx Page.
            */
-          if (chain.needEstimateGas && screenState.estimateGas > 0) {
-            params.gas = intToHex(screenState.estimateGas);
-          } else if (
-            code &&
-            (code === '0x' || code === '0x0') &&
-            noEstimateGasRequired
-          ) {
-            params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
+          if (gasLimit > 0) {
+            params.gas = intToHex(gasLimit);
+          } else if (notContract && couldSpecifyIntrinsicGas) {
+            params.gas = intToHex(21000);
           }
         } catch (e) {
-          if (noEstimateGasRequired) {
-            params.gas = intToHex(21000); // L2 has extra validation fee so can not set gasLimit as 21000 when send native token
+          if (couldSpecifyIntrinsicGas) {
+            params.gas = intToHex(21000);
           }
         }
         if (
@@ -607,7 +606,7 @@ export function useSendTokenForm() {
       if (currentValues.amount !== screenState.cacheAmount) {
         if (screenState.showGasReserved && Number(resultAmount) > 0) {
           putScreenState({ showGasReserved: false });
-        } else if (isNativeToken && !screenState.isGnosisSafe) {
+        } /*  else if (isNativeToken && !screenState.isGnosisSafe) {
           const gasCostTokenAmount = calcGasCost({ chainEnum, gasPriceMap });
           if (
             new BigNumber(targetToken.raw_amount_hex_str || 0)
@@ -622,7 +621,7 @@ export function useSendTokenForm() {
           } else {
             putScreenState({ balanceWarn: null });
           }
-        }
+        } */
       }
 
       if (
@@ -651,7 +650,10 @@ export function useSendTokenForm() {
       // });
       formik.setFormikState(prev => ({ ...prev, values: nextFormValues }));
       patchFormValues(nextFormValues);
-      putScreenState({ cacheAmount: resultAmount });
+      putScreenState({
+        cacheAmount: resultAmount,
+        ...(!resultAmount && { showGasReserved: false }),
+      });
       const aliasName = apiContact.getAliasName(currentValues.to.toLowerCase());
       if (aliasName) {
         putScreenState({
@@ -664,15 +666,15 @@ export function useSendTokenForm() {
     },
     [
       patchFormValues,
-      chainEnum,
+      // chainEnum,
+      // gasPriceMap,
+      // isNativeToken,
+      // screenState.isGnosisSafe,
       screenState.cacheAmount,
       screenState.contactInfo,
-      screenState.isGnosisSafe,
       screenState.showGasReserved,
       formik,
       currentToken,
-      gasPriceMap,
-      isNativeToken,
       putScreenState,
       t,
     ],
@@ -718,6 +720,9 @@ export function useSendTokenForm() {
       putChainToken({
         chainEnum: nextChainItem?.enum ?? CHAINS_ENUM.ETH,
         currentToken: token,
+      });
+      putScreenState({
+        estimateGas: 0,
       });
 
       // await persistPageStateCache({ currentToken: token });
@@ -770,9 +775,50 @@ export function useSendTokenForm() {
     [currentToken, handleFieldChange, putScreenState],
   );
 
+  const ethEstimateGas = useCallback(async () => {
+    const result = {
+      gasNumber: 0,
+      gasNumHex: intToHex(0),
+    };
+
+    if (!currentAccount?.address) return result;
+    if (!chainItem) return result;
+
+    const to = formik.values.to;
+
+    const _gasUsed = await apiProvider.requestETHRpc<string>(
+      {
+        method: 'eth_estimateGas',
+        params: [
+          {
+            from: currentAccount.address,
+            to: to && isValidAddress(to) ? to : zeroAddress(),
+            value: currentToken.raw_amount_hex_str,
+          },
+        ],
+      },
+      chainItem.serverId,
+    );
+    const gasUsed = chainItem.isTestnet
+      ? new BigNumber(_gasUsed).multipliedBy(1.5).integerValue().toNumber()
+      : _gasUsed;
+
+    result.gasNumber = Number(gasUsed);
+    result.gasNumHex =
+      typeof gasUsed === 'string' ? gasUsed : intToHex(gasUsed);
+
+    return result;
+  }, [currentAccount, chainItem, formik, currentToken.raw_amount_hex_str]);
+
   const handleClickTokenBalance = useCallback(async () => {
     if (!currentAccount) return;
-    if (screenState.isLoading || screenState.showGasReserved) return;
+    putScreenState({ clickedMax: true });
+
+    if (
+      screenState.isLoading ||
+      (screenState.showGasReserved && formik.values.amount)
+    )
+      return;
 
     const tokenBalance = new BigNumber(
       currentToken.raw_amount_hex_str || 0,
@@ -781,66 +827,55 @@ export function useSendTokenForm() {
     // const to = form.getFieldValue('to');
     const to = formik.values.to;
 
-    if (isNativeToken && !screenState.isGnosisSafe) {
-      putScreenState({ showGasReserved: true });
-      try {
-        const list = await fetchGasList(chainItem);
-        putScreenState({ gasList: list });
-        let instant = list[0];
-        for (let i = 1; i < list.length; i++) {
-          if (list[i].price > instant.price) {
-            instant = list[i];
-          }
-        }
-        const gasUsed = await apiProvider.requestETHRpc(
-          {
-            method: 'eth_estimateGas',
-            params: [
-              {
-                from: currentAccount.address,
-                to: to && isValidAddress(to) ? to : zeroAddress(),
-                value: currentToken.raw_amount_hex_str,
-              },
-            ],
-          },
-          findChainByEnum(chainEnum, { fallback: true })!.serverId,
-        );
-        putScreenState({ estimateGas: Number(gasUsed) });
-        let gasTokenAmount = handleGasChange(instant, false, Number(gasUsed));
-        if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
-          const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
-            {
-              txParams: {
-                chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
-                from: currentAccount.address,
-                to: to && isValidAddress(to) ? to : zeroAddress(),
-                value: currentToken.raw_amount_hex_str,
-                gas: intToHex(21000),
-                gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
-                data: '0x',
-              },
-            },
-            chainEnum,
-          );
-          gasTokenAmount = gasTokenAmount
-            .plus(new BigNumber(l1GasFee).div(1e18))
-            .times(1.1);
-        }
-        const tokenForSend = tokenBalance.minus(gasTokenAmount);
-        amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
-        if (tokenForSend.lt(0)) {
-          putScreenState({ showGasReserved: false });
-        }
-      } catch (e) {
-        if (!screenState.isGnosisSafe) {
-          // Gas fee reservation required
-          putScreenState({
-            showGasReserved: false,
-            balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
-          });
-        }
-      }
-    }
+    // if (isNativeToken && !screenState.isGnosisSafe) {
+    //   putScreenState({ showGasReserved: true });
+    //   try {
+    //     const list = await fetchGasList(chainItem);
+    //     putScreenState({ gasList: list });
+    //     let instant = list[0];
+    //     for (let i = 1; i < list.length; i++) {
+    //       if (list[i].price > instant.price) {
+    //         instant = list[i];
+    //       }
+    //     }
+    //     const { gasNumber } = await ethEstimateGas();
+    //     putScreenState({ estimateGas: gasNumber });
+
+    //     let gasTokenAmount = handleGasChange(instant, false, gasNumber);
+    //     if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
+    //       const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+    //         {
+    //           txParams: {
+    //             chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
+    //             from: currentAccount.address,
+    //             to: to && isValidAddress(to) ? to : zeroAddress(),
+    //             value: currentToken.raw_amount_hex_str,
+    //             gas: intToHex(21000),
+    //             gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
+    //             data: '0x',
+    //           },
+    //         },
+    //         chainEnum,
+    //       );
+    //       gasTokenAmount = gasTokenAmount
+    //         .plus(new BigNumber(l1GasFee).div(1e18))
+    //         .times(1.1);
+    //     }
+    //     const tokenForSend = tokenBalance.minus(gasTokenAmount);
+    //     amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+    //     if (tokenForSend.lt(0)) {
+    //       putScreenState({ showGasReserved: false });
+    //     }
+    //   } catch (e) {
+    //     if (!screenState.isGnosisSafe) {
+    //       // Gas fee reservation required
+    //       putScreenState({
+    //         showGasReserved: false,
+    //         // balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
+    //       });
+    //     }
+    //   }
+    // }
 
     const values = formik.values;
     const newValues = {
@@ -850,18 +885,19 @@ export function useSendTokenForm() {
     formik.setFormikState(prev => ({ ...prev, values: newValues }));
     handleFormValuesChange(null, { currentPartials: newValues });
   }, [
-    chainEnum,
-    chainItem,
+    // chainEnum,
+    // chainItem,
     currentAccount,
     currentToken.decimals,
     currentToken.raw_amount_hex_str,
     formik,
     handleFormValuesChange,
-    handleGasChange,
-    isNativeToken,
+    // handleGasChange,
+    // isNativeToken,
     putScreenState,
     screenState,
-    t,
+    // ethEstimateGas,
+    // t,
   ]);
 
   const handleChainChanged = useCallback(
@@ -889,6 +925,7 @@ export function useSendTokenForm() {
           time_at: 0,
         },
       });
+      putScreenState({ estimateGas: 0 });
 
       let nextToken: TokenItem | null = null;
       try {
