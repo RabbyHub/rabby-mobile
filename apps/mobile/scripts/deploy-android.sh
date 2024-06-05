@@ -147,6 +147,8 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   if [ $buildchannel == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
     aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
+  else
+    aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
   fi
 
   echo "";

@@ -85,11 +85,11 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-ios-appstore] will be backup at $backup_s3_dir (not public)"
   # aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.json" --acl authenticated-read --content-type application/json --exact-timestamps
   aws s3 sync $deployment_local_dir $backup_s3_dir/ --exclude '*' --include "*.md" --acl authenticated-read --content-type text/plain --exact-timestamps
+  aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
-  echo ""
-  echo "[deploy-ios-appstore] to refresh changelog, you could execute:"
-  # echo "[deploy-ios-appstore] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include \"*.json\" --acl public-read"
-  echo "[deploy-ios-appstore] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include \"*.md\" --acl public-read"
+  # echo ""
+  # echo "[deploy-ios-appstore] to refresh changelog, you could execute:"
+  # echo "[deploy-ios-appstore] aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include \"*.md\" --acl public-read"
   echo ""
   echo "[deploy-ios-appstore] after sync, will public at $release_s3_dir, served as $release_cdn_baseurl"
   echo ""
