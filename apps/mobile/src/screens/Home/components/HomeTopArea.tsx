@@ -233,7 +233,15 @@ export const HomeTopArea = () => {
                   <BadgeText count={item.badge} style={item.badgeStyle} />
                 )}
               </View>
-              <Text style={styles.actionText}>{item.title}</Text>
+              <Text
+                style={[
+                  styles.actionText,
+                  {
+                    fontSize: actions.length > 4 ? 13 : 14,
+                  },
+                ]}>
+                {item.title}
+              </Text>
             </TouchableView>
           ))}
         </View>
