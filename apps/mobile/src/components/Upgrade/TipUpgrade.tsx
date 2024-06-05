@@ -2,7 +2,7 @@ import { View, Text } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { useThemeStyles } from '@/hooks/theme';
-import { useRemoteUpgradeInfo } from '@/hooks/version';
+import { useUpgradeInfo } from '@/hooks/version';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 import FooterComponentForUpgrade from './FooterComponentForUpgrade';
@@ -23,7 +23,7 @@ import { MarkdownInWebView } from '../Markdown/InWebView';
 export function TipUpgradeModalInner() {
   const { styles } = useThemeStyles(getStyles);
 
-  const { remoteVersion } = useRemoteUpgradeInfo();
+  const { remoteVersion } = useUpgradeInfo();
 
   const { safeOffBottom } = useSafeSizes();
 

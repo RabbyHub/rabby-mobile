@@ -23,8 +23,9 @@ import { APP_URLS } from '@/constant';
 import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
 
+const appLocalVersion = getVersion();
 const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>('RemoteVersionMMKV', {
-  version: getVersion(),
+  version: appLocalVersion,
   downloadUrl: APP_URLS.DOWNLOAD_PAGE,
   externalUrlToOpen: '',
   storeUrl: null,
@@ -32,19 +33,22 @@ const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>('RemoteVersionMMKV', {
   couldUpgrade: false,
   changelog: '',
 });
+const localVersionAtom = atom<string>(appLocalVersion);
 
-export function useRemoteUpgradeInfo(options?: { isTop?: boolean }) {
+export function useUpgradeInfo(options?: { isTop?: boolean }) {
   const { isTop = false } = options || {};
 
   const [remoteVersion, setRemoteVersion] = useAtom(RemoteVersionAtom);
+  const [localVersion, setLocalVersion] = useAtom(localVersionAtom);
 
   const loadRemoteVersion = useCallback(async () => {
     return getUpgradeInfo().then(result => {
       setRemoteVersion(result.finalRemoteInfo);
+      setLocalVersion(result.localVersion);
 
       return result;
     });
-  }, [setRemoteVersion]);
+  }, [setLocalVersion, setRemoteVersion]);
 
   const openedModalIdRef = useRef<string>('');
   const triggerCheckVersion = useCallback(async () => {
@@ -87,6 +91,7 @@ export function useRemoteUpgradeInfo(options?: { isTop?: boolean }) {
   }, [isTop, loadRemoteVersion]);
 
   return {
+    localVersion,
     remoteVersion,
     triggerCheckVersion,
   };

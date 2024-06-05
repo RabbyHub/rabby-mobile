@@ -23,7 +23,7 @@ import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
 import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
-import { useRemoteUpgradeInfo } from './hooks/version';
+import { useUpgradeInfo } from './hooks/version';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -42,7 +42,7 @@ function MainScreen() {
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
-  useRemoteUpgradeInfo({ isTop: true });
+  useUpgradeInfo({ isTop: true });
 
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

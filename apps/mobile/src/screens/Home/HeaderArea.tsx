@@ -26,7 +26,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { PendingTxCount } from './components/PendingTxCount';
-import { useRemoteUpgradeInfo } from '@/hooks/version';
+import { useUpgradeInfo } from '@/hooks/version';
 import { useTranslation } from 'react-i18next';
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
@@ -117,7 +117,7 @@ export default function HomeHeaderArea() {
     [navigation],
   );
 
-  const { remoteVersion } = useRemoteUpgradeInfo();
+  const { remoteVersion } = useUpgradeInfo();
 
   const curveBottomSheetModalRef = useRef<BottomSheetModal>();
 
