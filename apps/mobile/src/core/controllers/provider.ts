@@ -58,8 +58,8 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import { StatsData } from '../services/notification';
-import buildinProvider from '../apis/buildinProvider';
 import { ethers } from 'ethers';
+import { getGlobalProvider } from '../apis/globalProvider';
 // import eventBus from '@/eventBus';
 
 const reportSignText = (params: {
@@ -466,6 +466,10 @@ class ProviderController extends BaseController {
     let opts;
     opts = extra;
     if (currentAccount.type === KEYRING_TYPE.GnosisKeyring) {
+      const buildinProvider = getGlobalProvider();
+      if (!buildinProvider?.currentProvider) {
+        throw new Error('buildinProvider not found');
+      }
       buildinProvider.currentProvider.currentAccount =
         approvalRes!.account!.address;
       buildinProvider.currentProvider.currentAccountType =
