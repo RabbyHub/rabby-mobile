@@ -35,14 +35,16 @@ const isProductionChannel = [
   'appstore',
 ].includes(BUILD_CHANNEL);
 
-export const SELF_HOST_BASE = `https://download.rabby.io/downloads/${
-  isProductionChannel
-    ? 'wallet-mobile'
-    : isAndroid
-    ? 'wallet-mobile-reg'
-    : `wallet-mobile-pretest`
-}`;
+export const SELF_HOST_BASE_PROD = `https://download.rabby.io/downloads/wallet-mobile`;
+export const SELF_HOST_BASE = isProductionChannel
+  ? SELF_HOST_BASE_PROD
+  : `https://download.rabby.io/downloads/${
+      isAndroid ? 'wallet-mobile-reg' : `wallet-mobile-pretest`
+    }`;
 
+const PROD_RES_BASE_URL = `${SELF_HOST_BASE_PROD}/${
+  isAndroid ? 'android' : 'ios'
+}`;
 const RES_BASE_URL = `${SELF_HOST_BASE}/${isAndroid ? 'android' : 'ios'}`;
 const VERSION_JSON_URL = `${RES_BASE_URL}/version.json`;
 
@@ -113,8 +115,8 @@ export async function getUpgradeInfo() {
       // },
       country: 'us',
     }).catch(() => null),
-    // if the network is not available, it will return null
-    sleep(1000).then(() => null),
+    // timeout 10s, if the network is not available, it will return null
+    sleep(1e4).then(() => null),
   ]);
 
   let selfHostUpgrade: RemoteVersionRes = {};
@@ -131,7 +133,7 @@ export async function getUpgradeInfo() {
   );
 
   const finalRemoteInfo: MergedRemoteVersion = {
-    version: localVersion,
+    version: storeVersion || selfHostUpgrade.version || localVersion,
     downloadUrl: APP_URLS.DOWNLOAD_PAGE,
     externalUrlToOpen: '',
     storeUrl,
@@ -143,21 +145,22 @@ export async function getUpgradeInfo() {
   switch (BUILD_CHANNEL) {
     case 'selfhost':
     case 'selfhost-reg':
-      if (!isAndroid) {
-        finalRemoteInfo.version = storeVersion || localVersion;
-        finalRemoteInfo.downloadUrl = storeUrl || APP_URLS.STORE_URL;
-        finalRemoteInfo.externalUrlToOpen = storeUrl;
-      } else if (
-        selfHostUpgrade?.version &&
-        semver.gt(selfHostUpgrade.version, localVersion)
-      ) {
-        finalRemoteInfo.version = selfHostUpgrade.version;
-        finalRemoteInfo.downloadUrl = APP_URLS.DOWNLOAD_PAGE;
-      }
+      finalRemoteInfo.version = storeVersion || localVersion;
+      finalRemoteInfo.downloadUrl = storeUrl || APP_URLS.STORE_URL;
+      finalRemoteInfo.externalUrlToOpen = storeUrl;
+      // if (!isAndroid) {
+      // } else if (
+      //   selfHostUpgrade?.version &&
+      //   semver.gt(selfHostUpgrade.version, localVersion)
+      // ) {
+      //   finalRemoteInfo.version = selfHostUpgrade.version;
+      //   finalRemoteInfo.downloadUrl = APP_URLS.DOWNLOAD_PAGE;
+      //   finalRemoteInfo.externalUrlToOpen = storeUrl;
+      // }
       break;
     case 'appstore':
       finalRemoteInfo.version = storeVersion || localVersion;
-      finalRemoteInfo.downloadUrl = storeUrl;
+      finalRemoteInfo.downloadUrl = storeUrl || APP_URLS.STORE_URL;
       finalRemoteInfo.externalUrlToOpen = storeUrl;
       break;
   }
@@ -168,12 +171,28 @@ export async function getUpgradeInfo() {
   );
 
   try {
-    finalRemoteInfo.changelog = await fetch(
-      `${RES_BASE_URL}/${finalRemoteInfo.version}.md`,
-    )
-      .then(res => {
-        if (res.status === 200) {
-          return res.text();
+    finalRemoteInfo.changelog = await Promise.allSettled([
+      await fetch(`${RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+      isProductionChannel
+        ? Promise.resolve('')
+        : await fetch(`${PROD_RES_BASE_URL}/${finalRemoteInfo.version}.md`),
+    ])
+      .then(([channelMdRes, prodMdRes]) => {
+        const channelMd =
+          channelMdRes.status === 'fulfilled' &&
+          channelMdRes.value.status === 200
+            ? channelMdRes.value.text()
+            : '';
+        if (channelMd) return channelMd;
+
+        if (prodMdRes.status === 'fulfilled') {
+          const prodMd =
+            typeof prodMdRes.value === 'string'
+              ? prodMdRes.value
+              : prodMdRes.value.status === 200
+              ? prodMdRes.value.text()
+              : '';
+          if (prodMd) return prodMd;
         }
 
         return '';

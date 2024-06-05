@@ -8,7 +8,7 @@ import { openExternalUrl, openInAppBrowser } from '@/core/utils/linking';
 import { APP_URLS } from '@/constant';
 import {
   DownloadStage,
-  useRemoteUpgradeInfo,
+  useUpgradeInfo,
   useDownloadLatestApk,
 } from '@/hooks/version';
 import { makeDebugBorder } from '@/utils/styles';
@@ -35,7 +35,7 @@ export default function FooterComponentForUpgrade(props: FooterComponentProps) {
     resetProgress,
   } = useDownloadLatestApk();
 
-  const { remoteVersion } = useRemoteUpgradeInfo();
+  const { remoteVersion } = useUpgradeInfo();
 
   const onStartDownload = useCallback(async () => {
     if (!isAndroid) {
