@@ -26,6 +26,8 @@ import { LedgerKeyring } from '@rabby-wallet/eth-keyring-ledger';
 import { KeystoneKeyring } from '@rabby-wallet/eth-keyring-keystone';
 import { SwapService } from './swap';
 import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
+import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
+import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -43,6 +45,8 @@ const keyringClasses = [
   KeystoneKeyring,
   OneKeyKeyring,
   GnosisKeyring,
+  SimpleKeyring,
+  HDKeyring,
 ] as any;
 
 export const contactService = new ContactBookService({

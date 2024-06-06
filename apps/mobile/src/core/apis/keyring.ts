@@ -26,9 +26,9 @@ export async function getKeyring<T = KeyringInstance>(
   return keyring as T;
 }
 
-const stashKeyrings: Record<string | number, any> = {};
+export const stashKeyrings: Record<string | number, any> = {};
 
-function _getKeyringByType(type: KeyringTypeName) {
+export function _getKeyringByType(type: KeyringTypeName) {
   const keyring = keyringService.getKeyringsByType(type)[0];
 
   if (keyring) {
@@ -59,6 +59,13 @@ export function requestKeyring(
     return keyring[methodName].call(keyring, ...params);
   }
 }
+
+export const addKeyringToStash = keyring => {
+  const stashId = Object.values(stashKeyrings).length + 1;
+  stashKeyrings[stashId] = keyring;
+
+  return stashId;
+};
 
 export const apisKeyring = {
   signTypedData: async (
