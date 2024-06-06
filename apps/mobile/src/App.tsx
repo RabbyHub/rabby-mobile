@@ -15,7 +15,6 @@ import React, { Suspense, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import SplashScreen from 'react-native-splash-screen';
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
@@ -37,28 +36,27 @@ const rneuiTheme = createTheme({
 });
 
 function MainScreen() {
-  useInitializeAppOnTop();
+  const { appUnlocked } = useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
 
-  const init = useMemoizedFn(async () => {
+  const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,
       });
     }
-    SplashScreen.hide();
   });
 
   useEffect(() => {
-    if (couldRender) {
-      init();
+    if (appUnlocked) {
+      initAccounts();
     }
-  }, [couldRender, init]);
+  }, [appUnlocked, initAccounts]);
 
   return (
     <BottomSheetModalProvider>

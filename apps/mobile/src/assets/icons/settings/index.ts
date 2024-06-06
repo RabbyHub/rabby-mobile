@@ -59,3 +59,9 @@ export const RcSignatureRecord = makeThemeIconFromCC(
   RcSignatureRecordCC,
   'neutral-body',
 );
+
+import { default as RcManagePasswordCC } from './manage-password-cc.svg';
+export const RcManagePassword = makeThemeIconFromCC(
+  RcManagePasswordCC,
+  'neutral-body',
+);

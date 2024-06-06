@@ -16,6 +16,7 @@ import {
   RcWhitelist,
   RcEarth,
   RcFeedback,
+  RcManagePassword,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -42,8 +43,13 @@ import { useUpgradeInfo } from '@/hooks/version';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
+import {
+  useOpenManageSheetModal,
+  useSheetModalsForManagingPassword,
+} from '../ManagePassword/hooks';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -65,6 +71,8 @@ export default function SettingsScreen(): JSX.Element {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
+
+  const { openManagePasswordSheetModal } = useOpenManageSheetModal();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -136,6 +144,7 @@ export default function SettingsScreen(): JSX.Element {
             label: 'Custom RPC',
             icon: RcCustomRpc,
             onPress: () => {},
+            disabled: true,
             visible: !!__DEV__,
           },
           {
@@ -228,6 +237,14 @@ export default function SettingsScreen(): JSX.Element {
           label: 'Dev Lab',
           icon: RcEarth,
           items: [
+            {
+              label: 'Manage Password',
+              icon: RcManagePassword,
+              onPress: () => {
+                // TODO: on password setup
+                openManagePasswordSheetModal();
+              },
+            },
             {
               label: 'WebView Test',
               icon: RcEarth,
@@ -325,6 +342,8 @@ export default function SettingsScreen(): JSX.Element {
           </Text>
         }
       />
+
+      <ManagePasswordSheetModal height={422} />
 
       <SheetWebViewTester />
     </NormalScreenContainer>

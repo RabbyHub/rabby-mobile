@@ -1,0 +1,237 @@
+import { AppBottomSheetModal, Button } from '@/components';
+import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import {
+  BottomSheetModal,
+  BottomSheetModalProps,
+  BottomSheetScrollView,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
+import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSheetModalsForManagingPassword } from '../hooks';
+
+import { default as RcNoPassword } from '../icons/no-password.svg';
+import { useManagePasswordUI, useWalletLockInfo } from '../useManagePassword';
+import { PasswordStatus } from '@/core/apis/lock';
+
+type Props = {
+  height?: number;
+};
+const ConfirmSetupPasswordSheetModal = (props: Props) => {
+  const { height = 422 } = props;
+
+  const { sheetModalRefs, toggleShowSheetModal } =
+    useSheetModalsForManagingPassword();
+  const insets = useSafeAreaInsets();
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  const cancel = () => {
+    toggleShowSheetModal('modifyPasswordModalRef', false);
+  };
+  const confirm = () => {
+    toggleShowSheetModal('modifyPasswordModalRef', false);
+  };
+
+  return (
+    <AppBottomSheetModal
+      backgroundStyle={styles.sheet}
+      index={0}
+      ref={sheetModalRefs.setupPasswordModalRef}
+      snapPoints={[height + insets.bottom]}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
+        <Text style={styles.title}>{'Setup Password'}</Text>
+        <BottomSheetView style={styles.bodyContainer}>
+          <RcNoPassword style={{ width: 40, height: 40 }} />
+          <Text style={[styles.desc]}>
+            {'Set up a password to lock the app and secure your data'}
+          </Text>
+        </BottomSheetView>
+        <View style={styles.btnGroup}>
+          <View style={styles.border} />
+          <Button
+            onPress={cancel}
+            title={'Cancel'}
+            type="clear"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnCancelTitle}
+            containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>
+            Cancel
+          </Button>
+          <View style={styles.btnGap} />
+          <Button
+            onPress={confirm}
+            title={'Confirm'}
+            type="primary"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnConfirmTitle}
+            containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
+            Confirm
+          </Button>
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+};
+
+const ModifyPasswordSheetModal = (props: Props) => {
+  const { height = 422 } = props;
+
+  const { sheetModalRefs, toggleShowSheetModal } =
+    useSheetModalsForManagingPassword();
+  const insets = useSafeAreaInsets();
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  const cancel = () => {
+    toggleShowSheetModal('modifyPasswordModalRef', false);
+  };
+  const confirm = () => {
+    toggleShowSheetModal('modifyPasswordModalRef', false);
+  };
+
+  return (
+    <AppBottomSheetModal
+      backgroundStyle={styles.sheet}
+      index={0}
+      ref={sheetModalRefs.setupPasswordModalRef}
+      snapPoints={[height + insets.bottom]}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
+        <Text style={styles.title}>{'Manage Password'}</Text>
+        <BottomSheetView style={styles.bodyContainer}>
+          <RcNoPassword style={{ width: 40, height: 40 }} />
+          <Text style={[styles.desc]}>{'Password successfully set up'}</Text>
+        </BottomSheetView>
+        <View style={styles.btnGroup}>
+          <View style={styles.border} />
+          <Button
+            onPress={cancel}
+            title={'Cancel'}
+            type="clear"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnCancelTitle}
+            containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>
+            Cancel
+          </Button>
+          <View style={styles.btnGap} />
+          <Button
+            onPress={confirm}
+            title={'Confirm'}
+            type="primary"
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnConfirmTitle}
+            containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
+            Confirm
+          </Button>
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+};
+
+export function ManagePasswordSheetModal(props: Props) {
+  const { lockInfo } = useWalletLockInfo({ autoFetch: true });
+
+  console.log('[feat] lockInfo', lockInfo);
+
+  if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+    return <ModifyPasswordSheetModal {...props} />;
+  }
+
+  return <ConfirmSetupPasswordSheetModal {...props} />;
+}
+
+const getStyles = createGetStyles(colors => ({
+  sheet: {
+    backgroundColor: colors['neutral-bg-1'],
+  },
+  container: {
+    flex: 1,
+    paddingVertical: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+    textAlign: 'center',
+  },
+
+  bodyContainer: {
+    height: '100%',
+    flexShrink: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...makeDebugBorder(),
+  },
+
+  desc: {
+    color: colors['neutral-body'],
+    fontSize: 16,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
+
+  btnGroup: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopColor: colors['neutral-line'],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 'auto',
+    position: 'relative',
+  },
+
+  border: {
+    height: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors['neutral-bg1'],
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+
+  btnContainer: {
+    flexShrink: 1,
+    display: 'flex',
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    flex: 1,
+    maxWidth: 170,
+  },
+  btnGap: {
+    width: 18,
+  },
+
+  buttonStyle: {
+    width: '100%',
+    height: '100%',
+  },
+  btnCancelContainer: {
+    borderColor: colors['blue-default'],
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  btnCancelTitle: {
+    color: colors['blue-default'],
+    flex: 1,
+  },
+  btnConfirmContainer: {},
+  btnConfirmTitle: {
+    color: colors['neutral-title-2'],
+    flex: 1,
+  },
+}));

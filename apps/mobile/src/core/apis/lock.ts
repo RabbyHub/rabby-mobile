@@ -1,5 +1,6 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
-import { keyringService } from '../services';
+import { BroadcastEvent } from '@/constant/event';
+import { keyringService, sessionService } from '../services';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -80,7 +81,7 @@ export async function updateWalletPassword(
   return result;
 }
 
-export async function cancelCustomPassword(currentPassword: string) {
+export async function clearCustomPassword(currentPassword: string) {
   const result = getInitError(currentPassword);
   if (result.error) return result;
   try {
@@ -145,4 +146,32 @@ export async function tryAutoUnlockRabbyMobile() {
   return {
     useBuiltInPwd,
   };
+}
+
+export function isUnlocked() {
+  return keyringService.isUnlocked();
+}
+
+export async function unlockWallet(password: string) {
+  const unlockResult = {
+    error: '',
+  };
+
+  try {
+    await keyringService.verifyPassword(password);
+  } catch (err) {
+    unlockResult.error = 'Incorrect Password';
+    return unlockResult;
+  }
+
+  await keyringService.submitPassword(password);
+  sessionService.broadcastEvent(BroadcastEvent.unlock);
+
+  return unlockResult;
+}
+
+export async function lockWallet() {
+  await keyringService.setLocked();
+  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
+  sessionService.broadcastEvent(BroadcastEvent.lock);
 }

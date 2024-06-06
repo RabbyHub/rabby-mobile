@@ -1,10 +1,14 @@
-import { ScreenLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
+import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
 
-import { KeyboardAvoidingView, View, ViewProps } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  StyleSheet,
+  View,
+  ViewProps,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ContainerAsMap = {
   View: typeof View;
@@ -29,7 +33,7 @@ export default function NormalScreenContainer<T extends ContainerAs = 'View'>({
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
   } & React.ComponentProps<ContainerAsMap[T]>
 >) {
-  const { top } = useSafeAreaInsets();
+  const { safeOffHeader } = useSafeSizes();
   const colors = useThemeColors();
 
   const ViewComp = useMemo(() => {
@@ -50,18 +54,18 @@ export default function NormalScreenContainer<T extends ContainerAs = 'View'>({
 
   return (
     <ViewComp
-      style={[
+      style={StyleSheet.flatten([
         style,
         fitStatuBar && { marginTop: -1 },
         {
-          paddingTop: top + ScreenLayouts.headerAreaHeight,
+          paddingTop: safeOffHeader,
           flexDirection: 'column',
           width: '100%',
           height: '100%',
           backgroundColor: colors['neutral-bg-2'],
         },
         overwriteStyle,
-      ]}>
+      ])}>
       {children}
     </ViewComp>
   );

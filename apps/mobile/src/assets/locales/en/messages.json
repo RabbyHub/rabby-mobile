@@ -1533,7 +1533,7 @@
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
-        "error": "incorrect password"
+        "error": "Incorrect password"
       }
     },
     "addToken": {

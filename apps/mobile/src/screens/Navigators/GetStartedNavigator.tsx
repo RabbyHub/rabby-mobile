@@ -2,8 +2,6 @@ import { RootNames } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import SettingsScreen from '../Settings/Settings';
-import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
 import GetStartedScreen from '../GetStarted/GetStarted';
 
 const Stack = createCustomNativeStackNavigator();

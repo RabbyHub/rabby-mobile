@@ -6,6 +6,7 @@ import {
   GestureResponderEvent,
   TouchableWithoutFeedback,
   View,
+  StyleSheet,
 } from 'react-native';
 
 type Props = React.ComponentProps<typeof TouchableOpacity> & {
@@ -46,7 +47,9 @@ export function SilentTouchableView(props: SilentProps) {
   const { children, viewProps, viewStyle, ...rest } = props;
   return (
     <TouchableWithoutFeedback {...rest}>
-      <View {...viewProps} style={[viewStyle, viewProps?.style]}>
+      <View
+        {...viewProps}
+        style={StyleSheet.flatten([viewStyle, viewProps?.style])}>
         {children}
       </View>
     </TouchableWithoutFeedback>

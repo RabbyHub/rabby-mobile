@@ -1,5 +1,6 @@
 import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
+import { globalSerivceEvents } from '../apis/serviceEvent';
 
 // import { permissionService } from 'background/service';
 // import PortMessage from '@/utils/message/portMessage';
@@ -125,5 +126,7 @@ export class SessionService {
         }
       }
     });
+
+    globalSerivceEvents.emit(`srvEvent:${ev}`);
   };
 }

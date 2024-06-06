@@ -1,5 +1,14 @@
 import React, { useMemo } from 'react';
-import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
+import {
+  View,
+  TextInput,
+  TextInputProps,
+  StyleSheet,
+  Text,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -25,6 +34,15 @@ const getFormInputStyles = createGetStyles(colors => {
       width: '100%',
       height: '100%',
     },
+    formFieldError: {
+      marginTop: 12,
+    },
+    formFieldErrorText: {
+      color: colors['red-default'],
+      fontSize: 14,
+      fontWeight: '400',
+      textAlign: 'center',
+    },
   };
 });
 
@@ -37,10 +55,23 @@ export const FormInput = React.forwardRef<
     containerStyle?: React.ComponentProps<typeof View>['style'];
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
     hasError?: boolean;
+    errorText?: string;
+    fieldErrorContainerStyle?: StyleProp<ViewStyle>;
+    fieldErrorTextStyle?: StyleProp<TextStyle>;
   }
 >(
   (
-    { as, containerStyle, inputStyle, inputProps, hasError, ...viewProps },
+    {
+      as,
+      containerStyle,
+      inputStyle,
+      inputProps,
+      errorText,
+      fieldErrorContainerStyle,
+      fieldErrorTextStyle,
+      hasError = !!errorText,
+      ...viewProps
+    },
     ref,
   ) => {
     const colors = useThemeColors();
@@ -57,24 +88,41 @@ export const FormInput = React.forwardRef<
     }, [as]);
 
     return (
-      <View
-        {...viewProps}
-        style={StyleSheet.flatten([
-          styles.inputContainer,
-          hasError && styles.errorInputContainer,
-          containerStyle,
-          viewProps?.style,
-        ])}>
-        <JSXComponent
-          {...inputProps}
-          ref={ref as any}
+      <>
+        <View
+          {...viewProps}
           style={StyleSheet.flatten([
-            styles.input,
-            inputStyle,
-            inputProps?.style,
-          ])}
-        />
-      </View>
+            styles.inputContainer,
+            hasError && styles.errorInputContainer,
+            containerStyle,
+            viewProps?.style,
+          ])}>
+          <JSXComponent
+            {...inputProps}
+            ref={ref as any}
+            style={StyleSheet.flatten([
+              styles.input,
+              inputStyle,
+              inputProps?.style,
+            ])}
+          />
+        </View>
+        {errorText && (
+          <View
+            style={StyleSheet.flatten([
+              styles.formFieldError,
+              fieldErrorContainerStyle,
+            ])}>
+            <Text
+              style={StyleSheet.flatten([
+                styles.formFieldErrorText,
+                fieldErrorTextStyle,
+              ])}>
+              {errorText}
+            </Text>
+          </View>
+        )}
+      </>
     );
   },
 );

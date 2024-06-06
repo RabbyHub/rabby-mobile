@@ -33,7 +33,8 @@ export function SettingNavigator() {
         name={RootNames.Settings}
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: '',
+          headerTitle: 'Settings',
         }}
       />
       <SettingsStack.Screen

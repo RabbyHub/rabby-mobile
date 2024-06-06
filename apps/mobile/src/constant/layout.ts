@@ -24,8 +24,11 @@ export const ScreenColors = {
 export const RootNames = {
   StackLogin: 'StackLogin',
   StackGetStarted: 'StackGetStarted',
-  NotFound: 'NotFound',
+
   StackRoot: 'StackRoot',
+  NotFound: 'NotFound',
+  Unlock: 'Unlock',
+
   StackBottom: 'StackBottom',
   Home: 'Home',
   Points: 'Points',
@@ -86,6 +89,10 @@ export const getRootSpecConfig = (
     Home: {
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['neutral-bg-1'],
+    },
+    Unlock: {
+      statusBarStyle: 'dark-content',
+      statusbarBackgroundColor: colors['neutral-bg1'],
     },
     ImportWatchAddress: {
       statusBarStyle: defaultStatusBarStyle,

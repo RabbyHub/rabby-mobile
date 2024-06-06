@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { TextInput } from 'react-native';
 
 import EventEmitter from 'events';
@@ -10,22 +10,8 @@ export const enum TouchawayInputEvents {
 type BlurOnTouchawayContextType = {
   eventsRef: React.MutableRefObject<EventEmitter>;
 };
-export const BlurOnTouchawayContext =
-  React.createContext<BlurOnTouchawayContextType>({
-    eventsRef: { current: new EventEmitter() },
-  });
 
-export function useMakeTouchawayValuesOnScreen() {
-  const eventsRef = useRef(new EventEmitter());
-
-  return {
-    eventsRef,
-  };
-}
-export function useTouchaway() {
-  return React.useContext(BlurOnTouchawayContext);
-}
-export function subscribeTouchawayEvent<T extends TouchawayInputEvents>(
+function subscribeTouchawayEvent<T extends TouchawayInputEvents>(
   events: EventEmitter,
   type: T,
   cb: (payload: any) => void,
@@ -44,9 +30,16 @@ export function subscribeTouchawayEvent<T extends TouchawayInputEvents>(
 
   return dispose;
 }
-export function useInputBlurOnTouchaway(inputRef: React.RefObject<TextInput>) {
-  const { eventsRef } = React.useContext(BlurOnTouchawayContext);
+export function useInputBlurOnTouchaway(
+  inputRefs: React.RefObject<TextInput> | React.RefObject<TextInput>[],
+) {
+  const eventsRef = useRef(new EventEmitter());
   const events = eventsRef.current;
+
+  const inputRefList = useMemo(
+    () => (Array.isArray(inputRefs) ? inputRefs : [inputRefs]),
+    [inputRefs],
+  );
 
   useEffect(() => {
     const disposeRets = [] as Function[];
@@ -54,7 +47,7 @@ export function useInputBlurOnTouchaway(inputRef: React.RefObject<TextInput>) {
       events,
       TouchawayInputEvents.ON_PRESS_DISMISS,
       () => {
-        inputRef.current?.blur();
+        inputRefList.forEach(ref => ref.current?.blur());
       },
       { disposeRets },
     );
@@ -63,7 +56,7 @@ export function useInputBlurOnTouchaway(inputRef: React.RefObject<TextInput>) {
       events,
       TouchawayInputEvents.ON_LEAVE_SCREEN,
       () => {
-        inputRef.current?.blur();
+        inputRefList.forEach(ref => ref.current?.blur());
       },
       { disposeRets },
     );
@@ -71,5 +64,13 @@ export function useInputBlurOnTouchaway(inputRef: React.RefObject<TextInput>) {
     return () => {
       disposeRets.forEach(dispose => dispose());
     };
-  }, [events, inputRef]);
+  }, [events, inputRefList]);
+
+  const onTouchInputAway = useCallback(() => {
+    events.emit(TouchawayInputEvents.ON_PRESS_DISMISS);
+  }, [events]);
+
+  return {
+    onTouchInputAway,
+  };
 }

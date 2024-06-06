@@ -56,11 +56,15 @@ function HomeScreen(): JSX.Element {
       //   screen: RootNames.ImportNewAddress,
       // });
     } else if (__DEV__) {
-      navigation.dispatch(
-        StackActions.replace(RootNames.StackSettings, {
-          screen: RootNames.SetPassword,
-        }),
-      );
+      // debug only
+      // navigation.dispatch(
+      //   StackActions.replace(RootNames.StackSettings, {
+      //     screen: RootNames.SetPassword,
+      //   }),
+      // );
+      // navigation.dispatch(
+      //   StackActions.replace(RootNames.Unlock),
+      // );
     }
   });
 

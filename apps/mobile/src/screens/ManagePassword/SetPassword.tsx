@@ -1,7 +1,9 @@
+import React from 'react';
+import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
-import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import * as Yup from 'yup';
+import { useFormik } from 'formik';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -11,6 +13,22 @@ import { FormInput } from '@/components/Form/Input';
 
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
+import { getFormikErrorsCount } from '@/utils/patch';
+import { toast, toastWithIcon } from '@/components/Toast';
+import { apisLock } from '@/core/apis';
+import TouchableView, {
+  SilentTouchableView,
+} from '@/components/Touchable/TouchableView';
+import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
+import {
+  resetNavigationToHome,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
+
+const TEST_PWD = __DEV__ ? '11111111' : '';
+const INIT_FORM_DATA = __DEV__
+  ? { password: TEST_PWD, confirmPassword: TEST_PWD, checked: false }
+  : { password: '', confirmPassword: '', checked: false };
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -21,8 +39,65 @@ const LAYOUTS = {
   },
 };
 
+function useSetupPasswordForm() {
+  const { t } = useTranslation();
+  const yupSchema = React.useMemo(() => {
+    return Yup.object({
+      password: Yup.string()
+        .required(t('page.createPassword.passwordRequired'))
+        .min(8, t('page.createPassword.passwordMin')),
+      confirmPassword: Yup.string()
+        .required(t('page.createPassword.confirmRequired'))
+        .oneOf(
+          [Yup.ref('password'), ''],
+          t('page.createPassword.confirmError'),
+        ),
+      checked: Yup.boolean().oneOf([true]),
+    });
+  }, [t]);
+
+  const navigation = useRabbyAppNavigation();
+
+  const formik = useFormik({
+    initialValues: INIT_FORM_DATA,
+    validationSchema: yupSchema,
+    validateOnMount: false,
+    validateOnBlur: true,
+    onSubmit: async (values, helpers) => {
+      let errors = await helpers.validateForm();
+
+      if (getFormikErrorsCount(errors)) return;
+
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={{ marginRight: 6 }} />
+      ))(`Setting up password`, {
+        duration: 1e6,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
+
+      try {
+        const result = await apisLock.setupWalletPassword(values.password);
+        if (result.error) {
+          toast.show(result.error);
+        }
+        resetNavigationToHome(navigation);
+      } finally {
+        toastHide();
+      }
+    },
+  });
+
+  const shouldDisabled =
+    !formik.values.checked || !!getFormikErrorsCount(formik.errors);
+
+  return { formik, shouldDisabled };
+}
+
 export default function SetPasswordScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
+  const { t } = useTranslation();
+  const { formik, shouldDisabled } = useSetupPasswordForm();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: LAYOUTS.fixedFooterHeight,
@@ -33,14 +108,19 @@ export default function SetPasswordScreen() {
   const passwordInputRef = React.useRef<TextInput>(null);
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
 
-  const { t } = useTranslation();
+  const { onTouchInputAway } = useInputBlurOnTouchaway([
+    passwordInputRef,
+    confirmPasswordInputRef,
+  ]);
 
   return (
-    <View
-      style={[
+    <SilentTouchableView
+      style={{ height: '100%', flex: 1 }}
+      viewStyle={[
         styles.container,
         { paddingBottom: safeSizes.containerPaddingBottom },
-      ]}>
+      ]}
+      onPress={onTouchInputAway}>
       <View style={styles.topContainer}>
         <RcPasswordLockCC color={colors['neutral-title2']} />
         <Text style={styles.title1}>{t('page.createPassword.title')}</Text>
@@ -54,13 +134,17 @@ export default function SetPasswordScreen() {
               style={styles.inputContainer}
               inputStyle={styles.input}
               inputProps={{
-                // value: '',
+                value: formik.values.password,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
                 placeholder: t('page.createPassword.passwordPlaceholder'),
                 placeholderTextColor: colors['neutral-foot'],
+                onChangeText(text) {
+                  formik.setFieldValue('password', text);
+                },
               }}
+              errorText={formik.errors.password}
             />
 
             <FormInput
@@ -68,7 +152,7 @@ export default function SetPasswordScreen() {
               style={[styles.inputContainer, { marginTop: 20 }]}
               inputStyle={styles.input}
               inputProps={{
-                // value: '',
+                value: formik.values.confirmPassword,
                 secureTextEntry: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
@@ -76,12 +160,20 @@ export default function SetPasswordScreen() {
                   'page.createPassword.confirmPasswordPlaceholder',
                 ),
                 placeholderTextColor: colors['neutral-foot'],
+                onChangeText(text) {
+                  formik.setFieldValue('confirmPassword', text);
+                },
               }}
+              errorText={formik.errors.confirmPassword}
             />
           </View>
-          <View style={styles.agreementWrapper}>
+          <TouchableView
+            style={styles.agreementWrapper}
+            onPress={() => {
+              formik.setFieldValue('checked', !formik.values.checked);
+            }}>
             <View>
-              <CheckBoxCircled />
+              <CheckBoxCircled checked={formik.values.checked} />
             </View>
 
             <Text style={styles.agreementText}>
@@ -90,7 +182,7 @@ export default function SetPasswordScreen() {
                 <Text style={styles.termOfUse}>Term of Use</Text>
               </Trans>
             </Text>
-          </View>
+          </TouchableView>
         </View>
       </View>
       <View
@@ -99,16 +191,17 @@ export default function SetPasswordScreen() {
           { height: safeSizes.footerHeight },
         ]}>
         <Button
-          disabled
+          disabled={shouldDisabled}
           type="primary"
           containerStyle={[
             styles.nextButtonContainer,
             { height: safeSizes.nextButtonContainerHeight },
           ]}
           title={'Next'}
+          onPress={formik.handleSubmit}
         />
       </View>
-    </View>
+    </SilentTouchableView>
   );
 }
 
@@ -164,7 +257,7 @@ const getStyles = createGetStyles(colors => {
       width: '100%',
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     },
 
     inputContainer: {

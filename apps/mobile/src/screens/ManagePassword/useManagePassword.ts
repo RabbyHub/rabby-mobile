@@ -59,7 +59,7 @@ const lockInfoAtom = atom<RabbyMobileLockInfo>({
   pwdStatus: PasswordStatus.Unknown,
 });
 
-export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
+export function useLoadLockInfo() {
   const [lockInfo, setLockInfo] = useAtom(lockInfoAtom);
   const isLoadingRef = useRef(false);
 
@@ -79,6 +79,16 @@ export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
       isLoadingRef.current = false;
     }
   }, [setLockInfo]);
+
+  return {
+    isLoading: isLoadingRef.current,
+    lockInfo,
+    fetchLockInfo,
+  };
+}
+
+export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
+  const { isLoading, lockInfo, fetchLockInfo } = useLoadLockInfo();
 
   const setupPassword = useCallback(
     async (newPassword: string) => {
@@ -109,7 +119,7 @@ export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
 
   const cancelPassword = useCallback(
     async (oldPassword: string) => {
-      const result = await apisLock.cancelCustomPassword(oldPassword);
+      const result = await apisLock.clearCustomPassword(oldPassword);
       await fetchLockInfo();
 
       if (result.error) {
@@ -126,7 +136,7 @@ export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
   }, [options?.autoFetch, fetchLockInfo]);
 
   return {
-    isLoading: isLoadingRef.current,
+    isLoading,
     lockInfo,
     fetchLockInfo,
 
