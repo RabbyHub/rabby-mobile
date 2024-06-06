@@ -81,8 +81,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 18
-        versionName "0.1.9"
+        versionCode 19
+        versionName "0.2.0"
     }
     splits {
         abi {
@@ -105,6 +105,11 @@ android {
                 storePassword MYAPP_UPLOAD_STORE_PASSWORD
                 keyAlias MYAPP_UPLOAD_KEY_ALIAS
                 keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            } else if (System.getenv("RABBY_MOBILE_ANDROID_STORE_FILE") != null) {
+                storeFile file(System.getenv("RABBY_MOBILE_ANDROID_STORE_FILE"))
+                storePassword System.getenv("RABBY_MOBILE_ANDROID_STORE_PASSWORD")
+                keyAlias System.getenv("RABBY_MOBILE_ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("RABBY_MOBILE_ANDROID_KEY_PASSWORD")
             }
         }
     }
