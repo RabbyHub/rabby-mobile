@@ -38,6 +38,7 @@ export const RootNames = {
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  SetPassword: 'SetPassword',
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -115,6 +116,10 @@ export const getRootSpecConfig = (
       statusbarBackgroundColor: colors['neutral-card2'],
     },
     GasTopUp: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
+    },
+    SetPassword: {
       statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
     },

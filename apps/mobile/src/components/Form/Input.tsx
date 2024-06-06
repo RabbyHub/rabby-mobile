@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, TextInput, TextInputProps } from 'react-native';
+import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInputProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetTextInput';
 
-const getSendInputStyles = createGetStyles(colors => {
+const getFormInputStyles = createGetStyles(colors => {
   return {
     inputContainer: {
       borderRadius: 4,
@@ -44,7 +44,7 @@ export const FormInput = React.forwardRef<
     ref,
   ) => {
     const colors = useThemeColors();
-    const styles = getSendInputStyles(colors);
+    const styles = getFormInputStyles(colors);
 
     const JSXComponent = useMemo(() => {
       switch (as) {
@@ -59,16 +59,20 @@ export const FormInput = React.forwardRef<
     return (
       <View
         {...viewProps}
-        style={[
+        style={StyleSheet.flatten([
           styles.inputContainer,
           hasError && styles.errorInputContainer,
           containerStyle,
           viewProps?.style,
-        ]}>
+        ])}>
         <JSXComponent
           {...inputProps}
           ref={ref as any}
-          style={[styles.input, inputStyle, inputProps?.style]}
+          style={StyleSheet.flatten([
+            styles.input,
+            inputStyle,
+            inputProps?.style,
+          ])}
         />
       </View>
     );

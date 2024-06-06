@@ -1,4 +1,4 @@
-export * as apisBoot from './boot';
+export * as apisLock from './lock';
 export * as apisDapp from './dapp';
 export * as apisAddress from './address';
 export * as apisWalletConnect from './walletconnect';

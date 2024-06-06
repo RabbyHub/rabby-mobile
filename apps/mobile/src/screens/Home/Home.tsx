@@ -55,6 +55,12 @@ function HomeScreen(): JSX.Element {
       // navigate(RootNames.StackAddress, {
       //   screen: RootNames.ImportNewAddress,
       // });
+    } else if (__DEV__) {
+      navigation.dispatch(
+        StackActions.replace(RootNames.StackSettings, {
+          screen: RootNames.SetPassword,
+        }),
+      );
     }
   });
 

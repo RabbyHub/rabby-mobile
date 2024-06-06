@@ -1727,9 +1727,11 @@
     },
     "createPassword": {
       "title": "Set Password",
+      "subTitle": "It will be used to unlock your wallet and encrypt local data",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
+      "confirmPasswordPlaceholder": "Confirm password ",
       "confirmRequired": "Please Confirm Password",
       "confirmError": "Passwords do not match",
       "confirmPlaceholder": "Confirm password",

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { apisBoot } from '@/core/apis';
+import { apisLock } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
@@ -147,7 +147,7 @@ export function useBootstrapApp() {
   useGlobal();
 
   React.useEffect(() => {
-    apisBoot
+    apisLock
       .tryAutoUnlockRabbyMobile()
       .then(async result => {
         setBootstrap(prev => ({
