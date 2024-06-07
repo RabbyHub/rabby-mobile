@@ -28,6 +28,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
+import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -58,6 +59,7 @@ export const ImportWatchAddressScreen = () => {
     () => getStyles(colors, safeOffHeader),
     [colors, safeOffHeader],
   );
+  const duplicateAddressModal = useDuplicateAddressModal();
 
   const handleDone = async () => {
     if (!input) {
@@ -79,8 +81,16 @@ export const ImportWatchAddressScreen = () => {
           brandName: KEYRING_CLASS.WATCH,
         },
       });
-    } catch (e) {
-      setError(INPUT_ERROR.ADDRESS_EXIST);
+    } catch (err) {
+      if (err.name === 'DuplicateAccountError') {
+        duplicateAddressModal.show({
+          address: err.message,
+          brandName: KEYRING_CLASS.WATCH,
+          type: KEYRING_TYPE.WatchAddressKeyring,
+        });
+      } else {
+        setError(err.message);
+      }
     }
   };
 

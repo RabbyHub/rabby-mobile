@@ -362,7 +362,7 @@ export class KeyringService extends RNEventEmitter {
       .reduce((m, n) => m.concat(n), [] as string[])
       .map(address => normalizeAddress(address).toLowerCase());
 
-    const isIncluded = newAccountArray.some(account => {
+    const isIncluded = newAccountArray.find(account => {
       return accounts.find(
         key =>
           key === account.toLowerCase() ||
@@ -370,11 +370,11 @@ export class KeyringService extends RNEventEmitter {
       );
     });
 
+    const error = new Error(isIncluded);
+    error.name = 'DuplicateAccountError';
     return isIncluded
       ? // ? Promise.reject(new Error(i18n.t('background.error.duplicateAccount')))
-        Promise.reject(
-          new Error(`The account you're are trying to import is duplicate`),
-        )
+        Promise.reject(error)
       : Promise.resolve(newAccountArray);
   }
 

@@ -10,7 +10,7 @@ import { apiPrivateKey } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { toast } from '@/components/Toast';
+import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -32,24 +32,38 @@ export const ImportPrivateKeyScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const [privateKey, setPrivateKey] = React.useState<string>('');
+  const [error, setError] = React.useState<string>();
+  const duplicateAddressModal = useDuplicateAddressModal();
 
   const handleConfirm = React.useCallback(() => {
     apiPrivateKey
       .importPrivateKey(privateKey)
-      .then(([{ address }]) => {
+      .then(([account]) => {
         navigate(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess,
           params: {
             type: KEYRING_TYPE.SimpleKeyring,
             brandName: KEYRING_CLASS.PRIVATE_KEY,
-            address,
+            address: account.address,
           },
         });
       })
       .catch(err => {
         console.error(err);
-        toast.show(err.message);
+        if (err.name === 'DuplicateAccountError') {
+          duplicateAddressModal.show({
+            address: err.message,
+            brandName: KEYRING_CLASS.PRIVATE_KEY,
+            type: KEYRING_TYPE.SimpleKeyring,
+          });
+        } else {
+          setError(err.message);
+        }
       });
+  }, [duplicateAddressModal, privateKey]);
+
+  React.useEffect(() => {
+    setError(undefined);
   }, [privateKey]);
 
   return (
@@ -61,6 +75,7 @@ export const ImportPrivateKeyScreen = () => {
         value={privateKey}
         onChange={setPrivateKey}
         placeholder="Enter your Private Key"
+        error={error}
       />
       <QandASection
         style={styles.qAndASection}

@@ -42,6 +42,7 @@ import {
 } from './navigation-type';
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -172,6 +173,8 @@ export default function AppNavigation({
         independent
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <DuplicateAddressModal />
+
         <RootStack.Navigator
           screenOptions={{
             ...RootStackOptions,

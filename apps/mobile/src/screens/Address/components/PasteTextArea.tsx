@@ -46,6 +46,15 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 18,
     },
+    textAreaError: {
+      borderColor: colors['red-default'],
+    },
+    errorText: {
+      color: colors['red-default'],
+      fontSize: 13,
+      marginTop: 12,
+      lineHeight: 16,
+    },
   });
 
 interface Props {
@@ -53,6 +62,7 @@ interface Props {
   placeholder?: string;
   value?: string;
   onChange?: (text: string) => void;
+  error?: string;
 }
 
 export const PasteTextArea: React.FC<Props> = ({
@@ -60,6 +70,7 @@ export const PasteTextArea: React.FC<Props> = ({
   placeholder,
   value,
   onChange,
+  error,
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -77,19 +88,26 @@ export const PasteTextArea: React.FC<Props> = ({
   }, [onChange, t]);
 
   return (
-    <View style={StyleSheet.flatten([styles.textArea, style])}>
-      <TextInput
-        placeholder={placeholder}
-        multiline={true}
-        style={styles.textAreaInput}
-        placeholderTextColor={colors['neutral-foot']}
-        value={value}
-        onChangeText={onChange}
-      />
-      <TouchableOpacity onPress={onPressPaste} style={styles.pasteButton}>
-        <IconPaste width={16} height={16} color={colors['neutral-foot']} />
-        <Text style={styles.pasteButtonText}>Paste</Text>
-      </TouchableOpacity>
+    <View style={style}>
+      <View
+        style={StyleSheet.flatten([
+          styles.textArea,
+          error ? styles.textAreaError : {},
+        ])}>
+        <TextInput
+          placeholder={placeholder}
+          multiline={true}
+          style={styles.textAreaInput}
+          placeholderTextColor={colors['neutral-foot']}
+          value={value}
+          onChangeText={onChange}
+        />
+        <TouchableOpacity onPress={onPressPaste} style={styles.pasteButton}>
+          <IconPaste width={16} height={16} color={colors['neutral-foot']} />
+          <Text style={styles.pasteButtonText}>Paste</Text>
+        </TouchableOpacity>
+      </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
