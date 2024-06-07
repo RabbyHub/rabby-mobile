@@ -1735,7 +1735,9 @@
       "confirmRequired": "Please Confirm Password",
       "confirmError": "Passwords do not match",
       "confirmPlaceholder": "Confirm password",
-      "agree": "I have read and agree to the<1/> <2>Terms of Use</2>"
+      "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
+      "confirmTitle": "Confirm password",
+      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby."
     },
     "welcome": {
       "step1": {

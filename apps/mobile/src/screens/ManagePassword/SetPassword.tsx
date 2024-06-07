@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -24,6 +24,9 @@ import {
   resetNavigationToHome,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
+import TouchableText from '@/components/Touchable/TouchableText';
+import { useShowTipTermOfUseModal } from './components/TipTermOfUseModalInner';
+import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 
 const TEST_PWD = __DEV__ ? '11111111' : '';
 const INIT_FORM_DATA = __DEV__
@@ -101,6 +104,17 @@ export default function SetPasswordScreen() {
   const { t } = useTranslation();
   const { formik, shouldDisabled } = useSetupPasswordForm();
 
+  const [isConfirmModalVisible, setConfirmModalVisible] = React.useState(false);
+  const onCancel = React.useCallback(() => {
+    setConfirmModalVisible(false);
+  }, []);
+  const onConfirm = React.useCallback(() => {
+    setConfirmModalVisible(false);
+    formik.handleSubmit();
+  }, [formik]);
+
+  const { viewTermOfUse } = useShowTipTermOfUseModal();
+
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: LAYOUTS.fixedFooterHeight,
     footerHeight: LAYOUTS.fixedFooterHeight,
@@ -116,94 +130,113 @@ export default function SetPasswordScreen() {
   ]);
 
   return (
-    <SilentTouchableView
-      style={{ height: '100%', flex: 1 }}
-      viewStyle={[
-        styles.container,
-        { paddingBottom: safeSizes.containerPaddingBottom },
-      ]}
-      onPress={onTouchInputAway}>
-      <View style={styles.topContainer}>
-        <RcPasswordLockCC color={colors['neutral-title2']} />
-        <Text style={styles.title1}>{t('page.createPassword.title')}</Text>
-        <Text style={styles.title2}>{t('page.createPassword.subTitle')}</Text>
-      </View>
-      <View style={styles.bodyContainer}>
-        <View style={styles.formWrapper}>
-          <View style={styles.inputHorizontalGroup}>
-            <FormInput
-              ref={passwordInputRef}
-              style={styles.inputContainer}
-              inputStyle={styles.input}
-              inputProps={{
-                value: formik.values.password,
-                secureTextEntry: true,
-                inputMode: 'text',
-                returnKeyType: 'done',
-                placeholder: t('page.createPassword.passwordPlaceholder'),
-                placeholderTextColor: colors['neutral-foot'],
-                onChangeText(text) {
-                  formik.setFieldValue('password', text);
-                },
-              }}
-              errorText={formik.errors.password}
-            />
-
-            <FormInput
-              ref={confirmPasswordInputRef}
-              style={[styles.inputContainer, { marginTop: 20 }]}
-              inputStyle={styles.input}
-              inputProps={{
-                value: formik.values.confirmPassword,
-                secureTextEntry: true,
-                inputMode: 'text',
-                returnKeyType: 'done',
-                placeholder: t(
-                  'page.createPassword.confirmPasswordPlaceholder',
-                ),
-                placeholderTextColor: colors['neutral-foot'],
-                onChangeText(text) {
-                  formik.setFieldValue('confirmPassword', text);
-                },
-              }}
-              errorText={formik.errors.confirmPassword}
-            />
-          </View>
-          <TouchableView
-            style={styles.agreementWrapper}
-            onPress={() => {
-              formik.setFieldValue('checked', !formik.values.checked);
-            }}>
-            <View>
-              <CheckBoxCircled checked={formik.values.checked} />
-            </View>
-
-            <Text style={styles.agreementText}>
-              <Trans i18nKey="page.createPassword.agree" t={t}>
-                I have read and agree to the{' '}
-                <Text style={styles.termOfUse}>Term of Use</Text>
-              </Trans>
-            </Text>
-          </TouchableView>
+    <>
+      <SilentTouchableView
+        style={{ height: '100%', flex: 1 }}
+        viewStyle={[
+          styles.container,
+          { paddingBottom: safeSizes.containerPaddingBottom },
+        ]}
+        onPress={onTouchInputAway}>
+        <View style={styles.topContainer}>
+          <RcPasswordLockCC color={colors['neutral-title2']} />
+          <Text style={styles.title1}>{t('page.createPassword.title')}</Text>
+          <Text style={styles.title2}>{t('page.createPassword.subTitle')}</Text>
         </View>
-      </View>
-      <View
-        style={[
-          styles.fixedFooterContainer,
-          { height: safeSizes.footerHeight },
-        ]}>
-        <Button
-          disabled={shouldDisabled}
-          type="primary"
-          containerStyle={[
-            styles.nextButtonContainer,
-            { height: safeSizes.nextButtonContainerHeight },
-          ]}
-          title={'Next'}
-          onPress={formik.handleSubmit}
-        />
-      </View>
-    </SilentTouchableView>
+        <View style={styles.bodyContainer}>
+          <View style={styles.formWrapper}>
+            <View style={styles.inputHorizontalGroup}>
+              <FormInput
+                ref={passwordInputRef}
+                style={styles.inputContainer}
+                inputStyle={styles.input}
+                inputProps={{
+                  value: formik.values.password,
+                  secureTextEntry: true,
+                  inputMode: 'text',
+                  returnKeyType: 'done',
+                  placeholder: t('page.createPassword.passwordPlaceholder'),
+                  placeholderTextColor: colors['neutral-foot'],
+                  onChangeText(text) {
+                    formik.setFieldValue('password', text);
+                  },
+                }}
+                errorText={formik.errors.password}
+              />
+
+              <FormInput
+                ref={confirmPasswordInputRef}
+                style={[styles.inputContainer, { marginTop: 20 }]}
+                inputStyle={styles.input}
+                inputProps={{
+                  value: formik.values.confirmPassword,
+                  secureTextEntry: true,
+                  inputMode: 'text',
+                  returnKeyType: 'done',
+                  placeholder: t(
+                    'page.createPassword.confirmPasswordPlaceholder',
+                  ),
+                  placeholderTextColor: colors['neutral-foot'],
+                  onChangeText(text) {
+                    formik.setFieldValue('confirmPassword', text);
+                  },
+                }}
+                errorText={formik.errors.confirmPassword}
+              />
+            </View>
+            <TouchableView
+              style={styles.agreementWrapper}
+              onPress={() => {
+                formik.setFieldValue('checked', !formik.values.checked);
+              }}>
+              <View>
+                <CheckBoxCircled checked={formik.values.checked} />
+              </View>
+
+              <View style={styles.agreementTextWrapper}>
+                {/* <Trans i18nKey="page.createPassword.agree" t={t}>
+                </Trans> */}
+                <Text style={styles.agreementText}>
+                  I have read and agree to the{' '}
+                </Text>
+                <TouchableText
+                  style={styles.termOfUse}
+                  touchableProps={{ style: styles.termOfUseTouchable }}
+                  onPress={evt => {
+                    evt.stopPropagation();
+                    viewTermOfUse();
+                  }}>
+                  Term of Use
+                </TouchableText>
+              </View>
+            </TouchableView>
+          </View>
+        </View>
+        <View
+          style={[
+            styles.fixedFooterContainer,
+            { height: safeSizes.footerHeight },
+          ]}>
+          <Button
+            disabled={shouldDisabled}
+            type="primary"
+            containerStyle={[
+              styles.nextButtonContainer,
+              { height: safeSizes.nextButtonContainerHeight },
+            ]}
+            title={'Next'}
+            onPress={() => {
+              setConfirmModalVisible(true);
+            }}
+          />
+        </View>
+      </SilentTouchableView>
+      <ConfirmSetPasswordModal
+        visible={isConfirmModalVisible}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />
+    </>
   );
 }
 
@@ -276,12 +309,26 @@ const getStyles = createGetStyles(colors => {
       justifyContent: 'center',
       alignItems: 'center',
     },
-    agreementText: {
+    agreementTextWrapper: {
       marginLeft: 6,
+      position: 'relative',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    agreementText: {
+      fontSize: 14,
       color: colors['neutral-body'],
     },
     termOfUse: {
+      fontSize: 14,
       color: colors['blue-default'],
+    },
+    termOfUseTouchable: {
+      padding: 0,
+      // position: 'relative',
+      // top: 0,
+      // ...makeDebugBorder(),
     },
 
     fixedFooterContainer: {
