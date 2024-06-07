@@ -25,6 +25,7 @@ export type RootStackParamsList = {
     type: KEYRING_TYPE;
     brand?: string;
   };
+  [RootNames.Scanner]?: {};
 };
 
 export type BottomTabParamsList = {

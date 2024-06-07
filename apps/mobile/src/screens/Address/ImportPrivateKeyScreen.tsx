@@ -11,6 +11,7 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
+import { useScanner } from '../Scanner/ScannerScreen';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -34,6 +35,7 @@ export const ImportPrivateKeyScreen = () => {
   const [privateKey, setPrivateKey] = React.useState<string>('');
   const [error, setError] = React.useState<string>();
   const duplicateAddressModal = useDuplicateAddressModal();
+  const scanner = useScanner();
 
   const handleConfirm = React.useCallback(() => {
     apiPrivateKey
@@ -65,6 +67,13 @@ export const ImportPrivateKeyScreen = () => {
   React.useEffect(() => {
     setError(undefined);
   }, [privateKey]);
+
+  React.useEffect(() => {
+    if (scanner.text) {
+      setPrivateKey(scanner.text);
+      scanner.clear();
+    }
+  }, [scanner]);
 
   return (
     <FooterButtonScreenContainer

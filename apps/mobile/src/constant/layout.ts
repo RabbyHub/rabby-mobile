@@ -69,6 +69,7 @@ export const RootNames = {
   ImportHardware: 'ImportHardware',
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
+  Scanner: 'Scanner',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

@@ -17,7 +17,7 @@ import { RootNames } from '@/constant/layout';
 
 const { isSameAddress } = addressUtils;
 
-const visibleAtom = atom(true);
+const visibleAtom = atom(false);
 const accountAtom = atom<KeyringAccountWithAlias | undefined>(undefined);
 
 export const useDuplicateAddressModal = () => {
