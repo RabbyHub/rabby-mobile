@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   TextInput,
@@ -24,6 +24,9 @@ const getFormInputStyles = createGetStyles(colors => {
       borderColor: colors['neutral-line'],
       overflow: 'hidden',
       width: '100%',
+    },
+    inputContainerFocusing: {
+      borderColor: colors['blue-default'],
     },
     errorInputContainer: {
       borderColor: colors['red-default'],
@@ -56,6 +59,7 @@ export const FormInput = React.forwardRef<
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
     hasError?: boolean;
     errorText?: string;
+    disableFocusingStyle?: boolean;
     fieldErrorContainerStyle?: StyleProp<ViewStyle>;
     fieldErrorTextStyle?: StyleProp<TextStyle>;
   }
@@ -67,6 +71,7 @@ export const FormInput = React.forwardRef<
       inputStyle,
       inputProps,
       errorText,
+      disableFocusingStyle = false,
       fieldErrorContainerStyle,
       fieldErrorTextStyle,
       hasError = !!errorText,
@@ -87,6 +92,22 @@ export const FormInput = React.forwardRef<
       }
     }, [as]);
 
+    const [isFocusing, setIsFocusing] = React.useState(false);
+    const onFocus = useCallback<TextInputProps['onFocus'] & object>(
+      evt => {
+        setIsFocusing(true);
+        inputProps?.onFocus?.(evt);
+      },
+      [inputProps],
+    );
+    const onBlur = useCallback<TextInputProps['onBlur'] & object>(
+      evt => {
+        setIsFocusing(false);
+        inputProps?.onBlur?.(evt);
+      },
+      [inputProps],
+    );
+
     return (
       <>
         <View
@@ -94,11 +115,17 @@ export const FormInput = React.forwardRef<
           style={StyleSheet.flatten([
             styles.inputContainer,
             hasError && styles.errorInputContainer,
+            !disableFocusingStyle &&
+              isFocusing &&
+              !hasError &&
+              styles.inputContainerFocusing,
             containerStyle,
             viewProps?.style,
           ])}>
           <JSXComponent
             {...inputProps}
+            onFocus={onFocus}
+            onBlur={onBlur}
             ref={ref as any}
             style={StyleSheet.flatten([
               styles.input,

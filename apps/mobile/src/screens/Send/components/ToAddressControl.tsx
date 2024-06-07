@@ -100,6 +100,7 @@ export default function ToAddressControl({
         className="mt-[8]"
         containerStyle={styles.inputContainer}
         ref={formInputRef}
+        disableFocusingStyle
         inputStyle={styles.input}
         hasError={!!errors.to}
         inputProps={{
