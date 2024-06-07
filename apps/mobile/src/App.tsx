@@ -20,6 +20,7 @@ import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
+import { useSecureOnBackground } from './hooks/useLock';
 import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
@@ -42,6 +43,7 @@ function MainScreen() {
 
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
+  useSecureOnBackground();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

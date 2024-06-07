@@ -44,6 +44,7 @@ import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useIsAppUnlocked } from './hooks/useLock';
+import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -270,6 +271,7 @@ export default function AppNavigation({
           />
         </RootStack.Navigator>
       </NavigationContainer>
+      <BackgroundSecureBlurView />
     </View>
   );
 }
