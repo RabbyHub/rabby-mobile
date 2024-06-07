@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -168,7 +169,7 @@ const CancelPasswordSheetModal = (props: Props) => {
       backgroundStyle={styles.sheet}
       index={0}
       ref={sheetModalRefs.clearPasswordModalRef}
-      // keyboardBehavior='interactive'
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       snapPoints={[height + insets.bottom]}>
       <BottomSheetView
@@ -186,6 +187,7 @@ const CancelPasswordSheetModal = (props: Props) => {
             <View style={styles.inputHorizontalGroup}>
               <Text style={styles.formFieldLabel}>Current Password</Text>
               <FormInput
+                as="BottomSheetTextInput"
                 ref={passwordInputRef}
                 style={styles.inputContainer}
                 inputStyle={styles.input}
@@ -193,7 +195,7 @@ const CancelPasswordSheetModal = (props: Props) => {
                   value: formik.values.currentPassword,
                   secureTextEntry: true,
                   inputMode: 'text',
-                  // returnKeyType: 'done',
+                  returnKeyType: 'none',
                   placeholder: 'Confirm cancellation by entering your password',
                   placeholderTextColor: colors['neutral-foot'],
                   onChangeText(text) {

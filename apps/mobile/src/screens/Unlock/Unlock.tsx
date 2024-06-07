@@ -104,10 +104,12 @@ export default function UnlockScreen() {
   return (
     <SilentTouchableView
       style={{ height: '100%', flex: 1 }}
-      viewStyle={[
-        styles.container,
-        { paddingBottom: safeSizes.containerPaddingBottom },
-      ]}
+      viewProps={{
+        style: [
+          styles.container,
+          { paddingBottom: safeSizes.containerPaddingBottom },
+        ],
+      }}
       onPress={onTouchInputAway}>
       <View style={styles.topContainer}>
         <RcRabbyLogo style={{ width: 100, height: 100 }} />
@@ -195,6 +197,7 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 0,
       paddingTop: 32,
       paddingBottom: 24,
+      backgroundColor: colors['neutral-bg1'],
       // ...makeDebugBorder()
     },
     formWrapper: {

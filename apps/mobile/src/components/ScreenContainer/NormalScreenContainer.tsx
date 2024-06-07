@@ -1,23 +1,17 @@
+import {
+  ReactNativeViewAs,
+  ReactNativeViewAsMap,
+  getViewComponentByAs,
+} from '@/hooks/common/useReactNativeViews';
 import { useThemeColors } from '@/hooks/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import React, { useMemo } from 'react';
 
-import {
-  KeyboardAvoidingView,
-  StyleSheet,
-  View,
-  ViewProps,
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { StyleSheet, View, ViewProps } from 'react-native';
 
-type ContainerAsMap = {
-  View: typeof View;
-  KeyboardAvoidingView: typeof KeyboardAvoidingView;
-  KeyboardAwareScrollView: typeof KeyboardAwareScrollView;
-};
-type ContainerAs = keyof ContainerAsMap;
-
-export default function NormalScreenContainer<T extends ContainerAs = 'View'>({
+export default function NormalScreenContainer<
+  T extends ReactNativeViewAs = 'View',
+>({
   as = 'View' as T,
   children,
   style,
@@ -31,26 +25,12 @@ export default function NormalScreenContainer<T extends ContainerAs = 'View'>({
     style?: React.ComponentProps<typeof View>['style'];
     hideBottomBar?: boolean;
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
-  } & React.ComponentProps<ContainerAsMap[T]>
+  } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
   const { safeOffHeader } = useSafeSizes();
   const colors = useThemeColors();
 
-  const ViewComp = useMemo(() => {
-    switch (as) {
-      case 'KeyboardAvoidingView':
-        return KeyboardAvoidingView as any as React.FC<
-          React.ComponentProps<typeof KeyboardAvoidingView>
-        >;
-      case 'KeyboardAwareScrollView':
-        return KeyboardAwareScrollView as any as React.FC<
-          React.ComponentProps<typeof KeyboardAwareScrollView>
-        >;
-      case 'View':
-      default:
-        return View as any as React.FC<React.ComponentProps<typeof View>>;
-    }
-  }, [as]);
+  const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
 
   return (
     <ViewComp

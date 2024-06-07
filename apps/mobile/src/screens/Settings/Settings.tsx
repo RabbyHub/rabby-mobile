@@ -56,6 +56,8 @@ const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
 
+const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
+
 export default function SettingsScreen(): JSX.Element {
   const { styles, colors } = useThemeStyles(getStyles);
   const { appThemeText } = useAppTheme();
@@ -73,22 +75,17 @@ export default function SettingsScreen(): JSX.Element {
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
 
-  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
-    useManagePasswordOnSettings();
+  const {
+    hasSetupCustomPassword,
+    requestLockWallet,
+    openManagePasswordSheetModal,
+  } = useManagePasswordOnSettings();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
         items: [
-          // // only valid if custom password given
-          // hasSetupCustomPassword && {
-          //   label: 'Lock Wallet',
-          //   icon: RcLockWallet,
-          //   onPress: () => {
-          //     requestLockWallet();
-          //   },
-          // },
           {
             label: 'Signature Record',
             icon: RcSignatureRecord,
@@ -156,17 +153,6 @@ export default function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             visible: !!__DEV__,
-          },
-          {
-            label: hasSetupCustomPassword
-              ? 'Clear Password'
-              : 'Set Up Password',
-            icon: RcManagePassword,
-            onPress: () => {
-              // TODO: on password setup
-              openManagePasswordSheetModal();
-            },
-            visible: BUILD_CHANNEL === 'selfhost-reg',
           },
           {
             label: 'Clear Pending',
@@ -253,6 +239,33 @@ export default function SettingsScreen(): JSX.Element {
           },
         ].filter(Boolean),
       },
+      ...(isSelfhostRegPkg && {
+        testkits: {
+          label: 'Test Kits (Not present on production package)',
+          items: [
+            // only valid if custom password given
+            {
+              label: 'Lock Wallet',
+              icon: RcLockWallet,
+              disabled: !hasSetupCustomPassword,
+              onPress: () => {
+                requestLockWallet();
+              },
+            },
+            {
+              label: hasSetupCustomPassword
+                ? 'Clear Password'
+                : 'Set Up Password',
+              icon: RcManagePassword,
+              onPress: () => {
+                // TODO: on password setup
+                openManagePasswordSheetModal();
+              },
+              visible: isSelfhostRegPkg,
+            },
+          ],
+        },
+      }),
       ...(__DEV__ && {
         devlab: {
           label: 'Dev Lab',

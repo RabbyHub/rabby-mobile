@@ -1,3 +1,8 @@
+import {
+  ReactNativeViewAs,
+  ReactNativeViewAsMap,
+  getViewComponentByAs,
+} from '@/hooks/common/useReactNativeViews';
 import * as React from 'react';
 import {
   TouchableOpacity,
@@ -39,19 +44,29 @@ export default class TouchableView extends React.Component<Props> {
   }
 }
 
-type SilentProps = React.ComponentProps<typeof TouchableWithoutFeedback> & {
+type SilentProps<T extends ReactNativeViewAs = 'View'> = React.ComponentProps<
+  typeof TouchableWithoutFeedback
+> & {
   viewStyle?: StyleProp<ViewStyle>;
-  viewProps?: React.ComponentProps<typeof View>;
+  as?: T;
+  viewProps?: React.ComponentProps<ReactNativeViewAsMap[T]>;
 };
-export function SilentTouchableView(props: SilentProps) {
-  const { children, viewProps, viewStyle, ...rest } = props;
+export function SilentTouchableView<T extends ReactNativeViewAs = 'View'>(
+  props: SilentProps<T>,
+) {
+  const { children, viewProps, viewStyle, as, ...rest } = props;
+
+  const ViewComp = React.useMemo(() => {
+    return getViewComponentByAs(as);
+  }, [as]);
+
   return (
     <TouchableWithoutFeedback {...rest}>
-      <View
+      <ViewComp
         {...viewProps}
         style={StyleSheet.flatten([viewStyle, viewProps?.style])}>
         {children}
-      </View>
+      </ViewComp>
     </TouchableWithoutFeedback>
   );
 }
