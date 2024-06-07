@@ -73,25 +73,22 @@ export default function SettingsScreen(): JSX.Element {
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
 
-  const {
-    hasSetupCustomPassword,
-    requestLockWallet,
-    openManagePasswordSheetModal,
-  } = useManagePasswordOnSettings();
+  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
+    useManagePasswordOnSettings();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
         items: [
-          // TODO: only valid if custom password given
-          hasSetupCustomPassword && {
-            label: 'Lock Wallet',
-            icon: RcLockWallet,
-            onPress: () => {
-              requestLockWallet();
-            },
-          },
+          // // only valid if custom password given
+          // hasSetupCustomPassword && {
+          //   label: 'Lock Wallet',
+          //   icon: RcLockWallet,
+          //   onPress: () => {
+          //     requestLockWallet();
+          //   },
+          // },
           {
             label: 'Signature Record',
             icon: RcSignatureRecord,
@@ -169,7 +166,7 @@ export default function SettingsScreen(): JSX.Element {
               // TODO: on password setup
               openManagePasswordSheetModal();
             },
-            visible: BUILD_CHANNEL !== 'appstore',
+            visible: BUILD_CHANNEL === 'selfhost-reg',
           },
           {
             label: 'Clear Pending',
