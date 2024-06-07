@@ -11,9 +11,11 @@ import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
 import AddressDetailScreen from '../Address/AddressDetail';
-import { ImportHardwareScreen } from '../Address/ImportHardware';
-import { ImportHardwareScreenButton } from '../Address/ImportHardwareButton';
+import { ImportHardwareScreen } from '../Address/ImportHardwareScreen';
+import { ImportHardwareScreenButton } from '../Address/ImportHardwareScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
+import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
+import { ImportPrivateKeyScreenButton } from '../Address/ImportPrivateKeyScreenButton';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -115,6 +117,18 @@ export function AddressNavigator() {
           },
           title: 'Import more address',
           headerRight: ImportHardwareScreenButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportPrivateKey}
+        component={ImportPrivateKeyScreen}
+        options={{
+          headerTitle: 'Import Private Key',
+          title: 'Import Private Key',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+          headerRight: ImportPrivateKeyScreenButton,
         }}
       />
     </AddressStack.Navigator>

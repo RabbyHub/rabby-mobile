@@ -17,6 +17,10 @@ export { default as RcIconTagYou } from './icon-tag-you.svg';
 export { default as RcIconTagNotYou } from './icon-tag-not-you.svg';
 import WalletCC from '@/assets/icons/address/wallet-cc.svg';
 import HardwareCC from '@/assets/icons/address/hardware-cc.svg';
+import ImportAddressCC from '@/assets/icons/address/import-address-cc.svg';
+import CreateAddressCC from '@/assets/icons/address/create-address-cc.svg';
+import PrivateKeyCC from '@/assets/icons/wallet/private-key.svg';
+import SeedPhraseCC from '@/assets/icons/wallet/seed.svg';
 
 export const WalletSVG = makeThemeIconFromCC(WalletCC, {
   onLight: ThemeColors.light['neutral-body'],
@@ -38,5 +42,35 @@ export const RcWhiteListEnabled = makeThemeIconFromCC(WhitelistEnabledCC, {
 import WhitelistDisabledCC from '@/assets/icons/address/whitelist-disabled-cc.svg';
 export const RcWhiteListDisabled = makeThemeIconFromCC(WhitelistDisabledCC, {
   onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const ImportAddressSVG = makeThemeIconFromCC(ImportAddressCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const CreateAddressSVG = makeThemeIconFromCC(CreateAddressCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const PrivateKeySVG = makeThemeIconFromCC(PrivateKeyCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const PrivateKeySVGLight = makeThemeIconFromCC(PrivateKeyCC, {
+  onLight: ThemeColors.dark['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const SeedPhraseSVG = makeThemeIconFromCC(SeedPhraseCC, {
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
+});
+
+export const SeedPhraseSVGLight = makeThemeIconFromCC(SeedPhraseCC, {
+  onLight: ThemeColors.dark['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });

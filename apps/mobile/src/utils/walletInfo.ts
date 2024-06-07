@@ -15,7 +15,13 @@ import {
   KEYRING_CLASS,
   WALLET_NAME,
 } from '@rabby-wallet/keyring-utils';
-import { RcIconWatchAddress } from '@/assets/icons/address';
+import {
+  PrivateKeySVG,
+  SeedPhraseSVG,
+  RcIconWatchAddress,
+  PrivateKeySVGLight,
+  SeedPhraseSVGLight,
+} from '@/assets/icons/address';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
@@ -117,7 +123,10 @@ export type WalletInfo = {
   displayName: string;
 };
 
-export const getWalletIcon = (brandName: string | undefined) => {
+export const getWalletIcon = (
+  brandName: string | undefined,
+  isLight?: boolean,
+) => {
   if (brandName === KEYRING_CLASS.WATCH) {
     return RcIconWatchAddress;
   }
@@ -135,6 +144,14 @@ export const getWalletIcon = (brandName: string | undefined) => {
 
   if (brandName === KEYRING_CLASS.GNOSIS) {
     return SafeSVG;
+  }
+
+  if (brandName === KEYRING_CLASS.PRIVATE_KEY) {
+    return isLight ? PrivateKeySVGLight : PrivateKeySVG;
+  }
+
+  if (brandName === KEYRING_CLASS.MNEMONIC) {
+    return isLight ? SeedPhraseSVGLight : SeedPhraseSVG;
   }
 
   return (

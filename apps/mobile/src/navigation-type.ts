@@ -57,6 +57,8 @@ export type AddressNavigatorParamList = {
     brandName: string;
     byImport?: string;
   };
+  [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportMnemonic]?: {};
 };
 
 export type AccountNavigatorParamList = {

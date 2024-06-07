@@ -1176,7 +1176,7 @@
         },
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
-          "answer": "Yes, it will be stored locally on your browser and only accessible to you."
+          "answer": "Yes, it will be stored locally on your phone and only accessible to you."
         },
         "importError": "[CreateMnemonics] unexpected step {{0}}",
         "importQuestion1": "If I lose my seed phrase, my assets will be lost forever.",

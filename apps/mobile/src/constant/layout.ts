@@ -67,6 +67,8 @@ export const RootNames = {
 
   ImportLedger: 'ImportLedger',
   ImportHardware: 'ImportHardware',
+  ImportPrivateKey: 'ImportPrivateKey',
+  ImportMnemonic: 'ImportMnemonic',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

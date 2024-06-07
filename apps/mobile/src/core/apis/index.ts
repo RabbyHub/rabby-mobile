@@ -13,3 +13,4 @@ export * as apiLedger from './ledger';
 export * as apiKeystone from './keystone';
 export * as apiApprovals from './approvals';
 export * as apiOneKey from './onekey';
+export * as apiPrivateKey from './privateKey';

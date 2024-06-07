@@ -1,6 +1,6 @@
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
-import { keyringService } from '../services';
+import { keyringService, preferenceService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
 import { EVENTS, eventBus } from '@/utils/events';
@@ -66,6 +66,26 @@ export const addKeyringToStash = keyring => {
 
   return stashId;
 };
+
+export async function _setCurrentAccountFromKeyring(keyring, index = 0) {
+  const accounts = keyring.getAccountsWithBrand
+    ? await keyring.getAccountsWithBrand()
+    : await keyring.getAccounts();
+  const account = accounts[index < 0 ? index + accounts.length : index];
+
+  if (!account) {
+    throw new Error('background.error.emptyAccount');
+  }
+
+  const _account = {
+    address: typeof account === 'string' ? account : account.address,
+    type: keyring.type,
+    brandName: typeof account === 'string' ? keyring.type : account.brandName,
+  };
+  preferenceService.setCurrentAccount(_account);
+
+  return [_account];
+}
 
 export const apisKeyring = {
   signTypedData: async (

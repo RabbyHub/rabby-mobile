@@ -76,8 +76,8 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 
   const WalletIcon = useMemo(() => {
-    return getWalletIcon(wallet.brandName);
-  }, [wallet.brandName]);
+    return getWalletIcon(wallet.brandName, isCurrentAddress);
+  }, [wallet.brandName, isCurrentAddress]);
 
   const copyAddress = useCallback(
     (e?: GestureResponderEvent) => {

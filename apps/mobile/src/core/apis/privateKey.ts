@@ -1,6 +1,7 @@
 import * as ethUtil from 'ethereumjs-util';
 import { keyringService } from '../services';
 import { t } from 'i18next';
+import { _setCurrentAccountFromKeyring } from './keyring';
 
 export const getPrivateKey = async (
   password: string,
@@ -27,7 +28,6 @@ export const importPrivateKey = async data => {
     throw error;
   }
 
-  // const keyring =
-  await keyringService.importPrivateKey(privateKey);
-  // return this._setCurrentAccountFromKeyring(keyring);
+  const keyring = await keyringService.importPrivateKey(privateKey);
+  return _setCurrentAccountFromKeyring(keyring);
 };
