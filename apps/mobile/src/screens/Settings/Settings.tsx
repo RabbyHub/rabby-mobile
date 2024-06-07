@@ -16,6 +16,7 @@ import {
   RcWhitelist,
   RcEarth,
   RcFeedback,
+  RcLockWallet,
   RcManagePassword,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
@@ -47,7 +48,7 @@ import { createGetStyles } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import {
-  useOpenManageSheetModal,
+  useManagePasswordOnSettings,
   useSheetModalsForManagingPassword,
 } from '../ManagePassword/hooks';
 
@@ -72,13 +73,25 @@ export default function SettingsScreen(): JSX.Element {
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
 
-  const { openManagePasswordSheetModal } = useOpenManageSheetModal();
+  const {
+    hasSetupCustomPassword,
+    requestLockWallet,
+    openManagePasswordSheetModal,
+  } = useManagePasswordOnSettings();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
         items: [
+          // TODO: only valid if custom password given
+          hasSetupCustomPassword && {
+            label: 'Lock Wallet',
+            icon: RcLockWallet,
+            onPress: () => {
+              requestLockWallet();
+            },
+          },
           {
             label: 'Signature Record',
             icon: RcSignatureRecord,
@@ -127,7 +140,7 @@ export default function SettingsScreen(): JSX.Element {
               );
             },
           },
-        ],
+        ].filter(Boolean) as SettingConfBlock['items'],
       },
       settings: {
         label: 'Settings',
@@ -146,6 +159,17 @@ export default function SettingsScreen(): JSX.Element {
             onPress: () => {},
             disabled: true,
             visible: !!__DEV__,
+          },
+          {
+            label: hasSetupCustomPassword
+              ? 'Clear Password'
+              : 'Set Up Password',
+            icon: RcManagePassword,
+            onPress: () => {
+              // TODO: on password setup
+              openManagePasswordSheetModal();
+            },
+            visible: BUILD_CHANNEL !== 'appstore',
           },
           {
             label: 'Clear Pending',
@@ -237,14 +261,6 @@ export default function SettingsScreen(): JSX.Element {
           label: 'Dev Lab',
           icon: RcEarth,
           items: [
-            {
-              label: 'Manage Password',
-              icon: RcManagePassword,
-              onPress: () => {
-                // TODO: on password setup
-                openManagePasswordSheetModal();
-              },
-            },
             {
               label: 'WebView Test',
               icon: RcEarth,

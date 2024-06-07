@@ -43,7 +43,7 @@ import {
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import UnlockScreen from './screens/Unlock/Unlock';
-import { useAppUnlocked } from './hooks/useLock';
+import { useIsAppUnlocked } from './hooks/useLock';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -131,8 +131,7 @@ export default function AppNavigation({
   );
 
   // useLoginTestAccount();
-
-  const appUnlocked = useAppUnlocked();
+  const { isAppUnlocked } = useIsAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
@@ -143,7 +142,7 @@ export default function AppNavigation({
     setCurrentRouteName(routeNameRef.current);
     console.debug('routeNameRef', routeNameRef.current);
 
-    if (appUnlocked === false) {
+    if (isAppUnlocked === false) {
       replace(RootNames.Unlock);
     }
 
@@ -152,7 +151,7 @@ export default function AppNavigation({
       screen_class: routeNameRef.current,
     });
     matomoLogScreenView({ name: routeNameRef.current! });
-  }, [setNavigationReady, appUnlocked, setCurrentRouteName]);
+  }, [setNavigationReady, isAppUnlocked, setCurrentRouteName]);
 
   const onStateChange = useCallback(async () => {
     const previousRouteName = routeNameRef.current;

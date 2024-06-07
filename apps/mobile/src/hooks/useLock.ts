@@ -1,8 +1,6 @@
-import { globalSerivceEvents } from '@/core/apis/serviceEvent';
 import { atom, useAtom } from 'jotai';
-import { useEffect } from 'react';
 
-export const appLockAtom = atom({
+const appLockAtom = atom({
   appUnlocked: false,
 });
 // /**
@@ -13,7 +11,6 @@ export const appLockAtom = atom({
 
 //   useEffect(() => {
 //     const listener = (params) => {
-//       console.log('[feat] useInitializeOnUnlocked:: params', params);
 //       setAppLock({ appUnlocked: true });
 //     }
 //     globalSerivceEvents.on(`srvEvent:unlock`, listener);
@@ -26,7 +23,16 @@ export const appLockAtom = atom({
 //   return { appUnlocked }
 // }
 
-export function useAppUnlocked() {
+export function useIsAppUnlocked() {
   const [{ appUnlocked }] = useAtom(appLockAtom);
-  return appUnlocked;
+  return { isAppUnlocked: appUnlocked };
+}
+
+export function useAppUnlocked() {
+  const [{ appUnlocked }, setAppLock] = useAtom(appLockAtom);
+
+  return {
+    appUnlocked,
+    setAppLock,
+  };
 }

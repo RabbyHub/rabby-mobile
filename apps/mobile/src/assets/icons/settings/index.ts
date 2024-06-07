@@ -60,6 +60,9 @@ export const RcSignatureRecord = makeThemeIconFromCC(
   'neutral-body',
 );
 
+import { default as RcLockWalletCC } from './lock-wallet-cc.svg';
+export const RcLockWallet = makeThemeIconFromCC(RcLockWalletCC, 'neutral-body');
+
 import { default as RcManagePasswordCC } from './manage-password-cc.svg';
 export const RcManagePassword = makeThemeIconFromCC(
   RcManagePasswordCC,

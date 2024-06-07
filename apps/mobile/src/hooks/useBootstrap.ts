@@ -12,7 +12,7 @@ import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { useGlobal } from './global';
-import { appLockAtom } from './useLock';
+import { useAppUnlocked, useIsAppUnlocked } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 
@@ -53,7 +53,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const [{ appUnlocked }, setAppLock] = useAtom(appLockAtom);
+  const { appUnlocked, setAppLock } = useAppUnlocked();
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {
@@ -150,7 +150,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp() {
-  const { appUnlocked } = useAtomValue(appLockAtom);
+  const { isAppUnlocked } = useIsAppUnlocked();
   const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
@@ -183,6 +183,6 @@ export function useBootstrapApp() {
 
   return {
     couldRender,
-    shouldLeaveInUnlock: !appUnlocked,
+    shouldLeaveInUnlock: !isAppUnlocked,
   };
 }
