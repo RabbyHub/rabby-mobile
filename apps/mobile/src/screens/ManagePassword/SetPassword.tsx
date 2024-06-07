@@ -80,8 +80,10 @@ function useSetupPasswordForm() {
         const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
+        } else {
+          toast.success('Setup Password Successfully');
+          resetNavigationToHome(navigation);
         }
-        resetNavigationToHome(navigation);
       } finally {
         toastHide();
       }

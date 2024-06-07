@@ -11,7 +11,7 @@ import { StackActions } from '@react-navigation/native';
 
 const sheetModalRefAtom = atom({
   setupPasswordModalRef: React.createRef<BottomSheetModal>(),
-  modifyPasswordModalRef: React.createRef<BottomSheetModal>(),
+  clearPasswordModalRef: React.createRef<BottomSheetModal>(),
 });
 
 export function useSheetModalsForManagingPassword() {
@@ -27,7 +27,7 @@ export function useOpenManageSheetModal() {
   const { lockInfo } = useWalletLockInfo();
   const openManagePasswordSheetModal = useCallback(() => {
     if (lockInfo.pwdStatus === PasswordStatus.Custom) {
-      toggleShowSheetModal('modifyPasswordModalRef', true);
+      toggleShowSheetModal('clearPasswordModalRef', true);
     } else {
       // toggleShowSheetModal('setupPasswordModalRef', true);
 
