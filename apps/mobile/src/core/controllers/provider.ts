@@ -62,6 +62,8 @@ import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 // import eventBus from '@/eventBus';
 
+const SIGN_TIMEOUT = 100;
+
 const reportSignText = (params: {
   method: string;
   account: Account;
@@ -504,6 +506,9 @@ class ProviderController extends BaseController {
 
     const chainItem = findChainByEnum(chain);
 
+    // wait ui
+    await new Promise(r => setTimeout(r, SIGN_TIMEOUT));
+
     const statsData: StatsData = {
       signed: false,
       signedSuccess: false,
@@ -827,6 +832,9 @@ class ProviderController extends BaseController {
     approvalRes: ApprovalRes;
   }) => {
     if (!data.params) return;
+    // wait ui
+    await new Promise(r => setTimeout(r, SIGN_TIMEOUT));
+
     const currentAccount = preferenceService.getCurrentAccount()!;
     try {
       const [string, from] = data.params;
@@ -873,6 +881,10 @@ class ProviderController extends BaseController {
         _data = JSON.parse(data);
       }
     }
+
+    // wait ui
+    await new Promise(r => setTimeout(r, SIGN_TIMEOUT));
+
     const keyring = await this._checkAddress(from);
 
     return keyringService.signTypedMessage(

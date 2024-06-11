@@ -61,7 +61,9 @@ export type AddressNavigatorParamList = {
   };
   [RootNames.ImportPrivateKey]?: {};
   [RootNames.ImportMnemonic]?: {};
-  [RootNames.BackupPrivateKey]?: {};
+  [RootNames.BackupPrivateKey]?: {
+    address: string;
+  };
 };
 
 export type AccountNavigatorParamList = {

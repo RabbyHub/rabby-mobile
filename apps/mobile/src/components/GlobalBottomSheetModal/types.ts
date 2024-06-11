@@ -35,6 +35,7 @@ export enum APPROVAL_MODAL_NAMES {
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
   'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
+  'PrivatekeyWaiting' = 'PrivatekeyWaiting',
 }
 
 export type MODAL_CREATE_PARMAS = {

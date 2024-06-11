@@ -202,8 +202,11 @@ const AddressInfo = (props: AddressInfoProps) => {
   const handlePressBackupPrivateKey = useCallback(() => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.BackupPrivateKey,
+      params: {
+        address: account.address,
+      },
     });
-  }, []);
+  }, [account.address]);
 
   return (
     <View

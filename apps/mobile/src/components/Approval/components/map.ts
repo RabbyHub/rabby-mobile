@@ -7,6 +7,8 @@ export const WaitingSignComponent = {
   [KEYRING_CLASS.HARDWARE.LEDGER]: 'LedgerHardwareWaiting',
   [KEYRING_CLASS.HARDWARE.ONEKEY]: 'OneKeyHardwareWaiting',
   [KEYRING_CLASS.HARDWARE.KEYSTONE]: 'KeystoneHardwareWaiting',
+  [KEYRING_CLASS.PRIVATE_KEY]: 'PrivatekeyWaiting',
+  [KEYRING_CLASS.MNEMONIC]: 'PrivatekeyWaiting',
 };
 
 export const WaitingSignMessageComponent = {
@@ -14,4 +16,6 @@ export const WaitingSignMessageComponent = {
   [KEYRING_CLASS.HARDWARE.LEDGER]: 'LedgerHardwareWaiting',
   [KEYRING_CLASS.HARDWARE.KEYSTONE]: 'KeystoneHardwareWaiting',
   [KEYRING_CLASS.HARDWARE.ONEKEY]: 'OneKeyHardwareWaiting',
+  [KEYRING_CLASS.PRIVATE_KEY]: 'PrivatekeyWaiting',
+  [KEYRING_CLASS.MNEMONIC]: 'PrivatekeyWaiting',
 };

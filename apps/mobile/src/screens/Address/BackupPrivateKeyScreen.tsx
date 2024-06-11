@@ -1,12 +1,26 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { useScanner } from '../Scanner/ScannerScreen';
-import { useNavigation } from '@react-navigation/native';
-import { RcIconInfo2CC } from '@/assets/icons/common';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { RcIconCopyCC, RcIconInfo2CC } from '@/assets/icons/common';
+import QRCode from 'react-native-qrcode-svg';
+import { RootNames } from '@/constant/layout';
+import { apiPrivateKey } from '@/core/apis';
+import { RABBY_MOBILE_KR_PWD } from '@env';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
+import { MaskContainer } from './components/MaskContainer';
+
+const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -22,6 +36,42 @@ const getStyles = (colors: AppColorsVariants) =>
     alertText: {
       color: colors['red-default'],
       fontSize: 14,
+      flex: 1,
+    },
+    privateKeyContainer: {
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
+      padding: 12,
+      height: 100,
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    qrCodeContainer: {
+      backgroundColor: colors['neutral-bg1'],
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors['neutral-line'],
+      width: QR_CODE_WIDTH + 20,
+      height: QR_CODE_WIDTH + 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    main: {
+      gap: 40,
+      flex: 1,
+      alignItems: 'center',
+    },
+    privateKeyContainerText: {
+      color: colors['neutral-title1'],
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    copyButton: {
+      position: 'absolute',
+      right: 6,
+      bottom: 6,
     },
   });
 
@@ -29,33 +79,57 @@ export const BackupPrivateKeyScreen = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
-  const [privateKey, setPrivateKey] = React.useState<string>('');
-  const [error, setError] = React.useState<string>();
-  const scanner = useScanner();
   const nav = useNavigation();
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.BackupPrivateKey)?.params,
+  ) as {
+    address: string;
+  };
+  const [privateKey, setPrivateKey] = React.useState<string>();
 
   const handleDone = React.useCallback(() => {
     nav.goBack();
   }, [nav]);
 
   React.useEffect(() => {
-    setError(undefined);
-  }, [privateKey]);
-
-  React.useEffect(() => {
-    if (scanner.text) {
-      setPrivateKey(scanner.text);
-      scanner.clear();
-    }
-  }, [scanner]);
+    apiPrivateKey
+      .getPrivateKey(RABBY_MOBILE_KR_PWD, {
+        address: state.address,
+        type: KEYRING_TYPE.SimpleKeyring,
+      })
+      .then(setPrivateKey);
+  }, [state.address]);
 
   return (
     <FooterButtonScreenContainer
       buttonText={t('global.Done')}
       onPressButton={handleDone}>
-      <View style={styles.alert}>
-        <RcIconInfo2CC color={colors['red-default']} />
-        <Text style={styles.alertText}>{t('page.backupPrivateKey.alert')}</Text>
+      <View style={styles.main}>
+        <View style={styles.alert}>
+          <RcIconInfo2CC color={colors['red-default']} />
+          <Text style={styles.alertText}>
+            {t('page.backupPrivateKey.alert')}
+          </Text>
+        </View>
+
+        <View style={styles.qrCodeContainer}>
+          <MaskContainer
+            textSize={17}
+            logoSize={52}
+            textGap={16}
+            flexDirection="column"
+            text={t('page.backupPrivateKey.clickToShowQr')}
+          />
+          {privateKey && <QRCode size={QR_CODE_WIDTH} value={privateKey} />}
+        </View>
+        <View style={styles.privateKeyContainer}>
+          <MaskContainer
+            isLight
+            text={t('page.backupPrivateKey.clickToShow')}
+          />
+          <Text style={styles.privateKeyContainerText}>{privateKey}</Text>
+          <CopyAddressIcon style={styles.copyButton} address={privateKey} />
+        </View>
       </View>
     </FooterButtonScreenContainer>
   );
