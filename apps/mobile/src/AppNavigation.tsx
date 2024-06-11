@@ -9,11 +9,12 @@ import { ColorSchemeName, Platform, StatusBar, View } from 'react-native';
 
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 
-import { navigationRef } from '@/utils/navigation';
+import { navigationRef, replace } from '@/utils/navigation';
 import { AppRootName, RootNames, getRootSpecConfig } from './constant/layout';
 import {
   useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
+  useSetNavigationReady,
   useStackScreenConfig,
 } from './hooks/navigation';
 import { analytics, matomoLogScreenView } from './utils/analytics';
@@ -21,7 +22,6 @@ import { analytics, matomoLogScreenView } from './utils/analytics';
 import NotFoundScreen from './screens/NotFound';
 
 import MyBundleScreen from './screens/Assets/MyBundle';
-import ReceiveScreen from './screens/Receive/Receive';
 
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
@@ -44,6 +44,9 @@ import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
 import { ScannerScreen } from './screens/Scanner/ScannerScreen';
+import UnlockScreen from './screens/Unlock/Unlock';
+import { useIsAppUnlocked } from './hooks/useLock';
+import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -131,20 +134,27 @@ export default function AppNavigation({
   );
 
   // useLoginTestAccount();
+  const { isAppUnlocked } = useIsAppUnlocked();
+  const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
 
   const onReady = useCallback(() => {
+    setNavigationReady(true);
     routeNameRef.current = navigationRef?.getCurrentRoute()?.name;
     setCurrentRouteName(routeNameRef.current);
-    console.log('routeNameRef', routeNameRef.current);
+    console.debug('routeNameRef', routeNameRef.current);
+
+    if (isAppUnlocked === false) {
+      replace(RootNames.Unlock);
+    }
 
     analytics.logScreenView({
       screen_name: routeNameRef.current,
       screen_class: routeNameRef.current,
     });
     matomoLogScreenView({ name: routeNameRef.current! });
-  }, [setCurrentRouteName]);
+  }, [setNavigationReady, isAppUnlocked, setCurrentRouteName]);
 
   const onStateChange = useCallback(async () => {
     const previousRouteName = routeNameRef.current;
@@ -181,15 +191,31 @@ export default function AppNavigation({
             ...RootStackOptions,
             navigationBarColor: 'transparent',
           }}
-          initialRouteName={'Root'}>
+          initialRouteName={RootNames.StackGetStarted}>
+          <RootStack.Screen
+            name={RootNames.StackGetStarted}
+            component={GetStartedNavigator}
+          />
           <RootStack.Screen
             name={RootNames.StackRoot}
             component={BottomTabNavigator}
             options={RootOptions}
           />
           <RootStack.Screen
-            name={RootNames.StackGetStarted}
-            component={GetStartedNavigator}
+            name={RootNames.Unlock}
+            component={UnlockScreen}
+            options={{
+              ...screenOptions,
+              title: '',
+              headerTitle: '',
+              headerBackVisible: false,
+              headerShadowVisible: false,
+              headerShown: true,
+              headerTransparent: true,
+              headerStyle: {
+                backgroundColor: '#fff',
+              },
+            }}
           />
           <RootStack.Screen
             name={RootNames.NotFound}
@@ -266,6 +292,7 @@ export default function AppNavigation({
           />
         </RootStack.Navigator>
       </NavigationContainer>
+      <BackgroundSecureBlurView />
     </View>
   );
 }

@@ -4,6 +4,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import SettingsScreen from '../Settings/Settings';
 import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
+import SetPasswordScreen from '../ManagePassword/SetPassword';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
@@ -32,7 +33,20 @@ export function SettingNavigator() {
         name={RootNames.Settings}
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: '',
+          headerTitle: 'Settings',
+        }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.SetPassword}
+        component={SetPasswordScreen}
+        options={{
+          title: '',
+          headerTitle: '',
+          headerTintColor: colors['neutral-title2'],
+          headerTitleStyle: {
+            color: colors['neutral-title2'],
+          },
         }}
       />
       {__DEV__ && (

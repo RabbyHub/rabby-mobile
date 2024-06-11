@@ -8,24 +8,24 @@ const AnimatedStatusBarComp = !isIOS
   ? Animated.createAnimatedComponent(StatusBar)
   : StatusBar;
 
-function AndroidStatusBar(props: StatusBarProps) {
-  useEffect(() => {
-    Animated.timing(barColorAnim, {
-      useNativeDriver: false,
-      duration: 300,
-      toValue: barStyle === 'light-content' ? 1 : 0,
-    }).start();
-  }, []);
+// function AndroidStatusBar(props: StatusBarProps) {
+//   useEffect(() => {
+//     Animated.timing(barColorAnim, {
+//       useNativeDriver: false,
+//       duration: 300,
+//       toValue: barStyle === 'light-content' ? 1 : 0,
+//     }).start();
+//   }, []);
 
-  return (
-    <AnimatedStatusBar
-      animated={true}
-      backgroundColor={barColor}
-      barStyle={barStyle}
-      translucent={true}
-    />
-  );
-}
+//   return (
+//     <AnimatedStatusBar
+//       animated={true}
+//       backgroundColor={barColor}
+//       barStyle={barStyle}
+//       translucent={true}
+//     />
+//   );
+// }
 
 export default function AnimatedStatusBar(props: StatusBarProps) {
   if (isIOS) {
@@ -33,6 +33,9 @@ export default function AnimatedStatusBar(props: StatusBarProps) {
   }
 
   return (
-    <AnimatedStatusBarComp {...props} {...(isIOS && { translucent: true })} />
+    <AnimatedStatusBarComp
+      {...props}
+      {...(isIOS ? { translucent: true } : {})}
+    />
   );
 }

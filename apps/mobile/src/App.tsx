@@ -15,12 +15,12 @@ import React, { Suspense, useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import SplashScreen from 'react-native-splash-screen';
 import { RootNames } from './constant/layout';
 import { ThemeColors } from './constant/theme';
 import { keyringService } from './core/services';
 import { useSetupServiceStub } from './core/storage/serviceStoreStub';
 import { useBootstrapApp, useInitializeAppOnTop } from './hooks/useBootstrap';
+import { useSecureOnBackground } from './hooks/useLock';
 import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
@@ -37,28 +37,28 @@ const rneuiTheme = createTheme({
 });
 
 function MainScreen() {
-  useInitializeAppOnTop();
+  const { appUnlocked } = useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
+  useSecureOnBackground();
 
-  const init = useMemoizedFn(async () => {
+  const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStarted,
       });
     }
-    SplashScreen.hide();
   });
 
   useEffect(() => {
-    if (couldRender) {
-      init();
+    if (appUnlocked) {
+      initAccounts();
     }
-  }, [couldRender, init]);
+  }, [appUnlocked, initAccounts]);
 
   return (
     <BottomSheetModalProvider>

@@ -5,4 +5,6 @@ export enum BroadcastEvent {
    */
   unlockStateChanged = 'rabby_unlockStateChanged',
   chainChanged = 'rabby_chainChanged',
+  unlock = 'unlock',
+  lock = 'lock',
 }

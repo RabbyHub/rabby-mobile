@@ -1534,7 +1534,7 @@
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
-        "error": "incorrect password"
+        "error": "Incorrect password"
       }
     },
     "addToken": {
@@ -1728,13 +1728,17 @@
     },
     "createPassword": {
       "title": "Set Password",
+      "subTitle": "It will be used to unlock your wallet and encrypt local data",
       "passwordRequired": "Please input Password",
       "passwordMin": "Password must be at least 8 characters long",
       "passwordPlaceholder": "Password must be at least 8 characters long",
+      "confirmPasswordPlaceholder": "Confirm password ",
       "confirmRequired": "Please Confirm Password",
       "confirmError": "Passwords do not match",
       "confirmPlaceholder": "Confirm password",
-      "agree": "I have read and agree to the<1/> <2>Terms of Use</2>"
+      "agree": "I have read and agree to the<1/> <2>Terms of Use</2>",
+      "confirmTitle": "Confirm password",
+      "confirmModalDesc": "Please store your password properly. Once lost, it cannot be changed or recovered by Rabby."
     },
     "welcome": {
       "step1": {

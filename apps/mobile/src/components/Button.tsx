@@ -154,7 +154,7 @@ export const Button = ({
     isClearType,
   ]);
 
-  const touchableInnerStyle = useMemo(() => {
+  const innerStyle = useMemo(() => {
     const isDisabledNonClear = disabled && !isClearType;
 
     return StyleSheet.flatten([
@@ -226,7 +226,7 @@ export const Button = ({
         accessibilityState={accessibilityState}
         {...rest}
         style={rest.style}>
-        <ViewComponent {...linearGradientProps} style={touchableInnerStyle}>
+        <ViewComponent {...linearGradientProps} style={innerStyle}>
           {/* Activity Indicator on loading */}
           {loading && (
             <ActivityIndicator

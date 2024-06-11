@@ -12,7 +12,7 @@ import {
 } from '@/assets/icons/home';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { Skeleton } from '@rneui/themed';
 import { useCurve } from '@/hooks/useCurve';
@@ -30,9 +30,7 @@ import { useUpgradeInfo } from '@/hooks/version';
 import { useTranslation } from 'react-i18next';
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
-import { toast } from '@/components/Toast';
 import { CurveBottomSheetModal } from './components/CurveBottomSheet';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 export default function HomeHeaderArea() {
@@ -41,7 +39,7 @@ export default function HomeHeaderArea() {
   const { width } = useWindowDimensions();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors, width), [colors, width]);
-  const navigation = useNavigation();
+  const navigation = useRabbyAppNavigation();
   const { currentAccount } = useCurrentAccount();
   const {
     balance,

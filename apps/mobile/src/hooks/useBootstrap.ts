@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { apisBoot } from '@/core/apis';
+import { apisLock } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
@@ -12,14 +12,13 @@ import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { useGlobal } from './global';
+import { useAppUnlocked, useIsAppUnlocked } from './useLock';
+import { useNavigationReady } from './navigation';
+import SplashScreen from 'react-native-splash-screen';
 
 const bootstrapAtom = atom({
-  appInitialized: false,
+  couldRender: false,
   useBuiltinPwd: false,
-});
-
-const lockAtom = atom({
-  locked: true,
 });
 
 export function useIfUseBuiltinPwd() {
@@ -54,15 +53,33 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const [{ locked }, setLock] = useAtom(lockAtom);
+  const { appUnlocked, setAppLock } = useAppUnlocked();
+
+  const apiInitializedRef = React.useRef(false);
+  const doInitializeApis = React.useCallback(async () => {
+    if (apiInitializedRef.current) return;
+    apiInitializedRef.current = true;
+
+    try {
+      await initServices();
+      await initApis();
+      await Promise.race([syncChainList(), sleep(5000)]);
+    } catch (error) {
+      console.error('useInitializeAppOnTop::', error);
+      apiInitializedRef.current = false;
+    }
+  }, []);
 
   React.useEffect(() => {
     const onUnlock = () => {
-      setLock(prev => ({ ...prev, locked: false }));
+      console.debug('onUnlock::');
+      setAppLock(prev => ({ ...prev, appUnlocked: true }));
       sendUserAddressEvent();
+
+      doInitializeApis();
     };
     const onLock = () => {
-      setLock(prev => ({ ...prev, locked: true }));
+      setAppLock(prev => ({ ...prev, appUnlocked: false }));
     };
     keyringService.on('unlock', onUnlock);
     keyringService.on('lock', onLock);
@@ -71,16 +88,9 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setLock]);
+  }, [setAppLock, doInitializeApis]);
 
-  const [{ appInitialized }] = useAtom(bootstrapAtom);
-  React.useEffect(() => {
-    if (!locked || !appInitialized) {
-      return;
-    }
-  }, [appInitialized, locked]);
-
-  return { locked };
+  return { appUnlocked };
 }
 
 const loadEntryScriptsAtom = atom({
@@ -90,14 +100,12 @@ const loadEntryScriptsAtom = atom({
 export function useJavaScriptBeforeContentLoaded(options?: {
   isTop?: boolean;
 }) {
-  const [{ locked }] = useAtom(lockAtom);
-  const [{ appInitialized }] = useAtom(bootstrapAtom);
+  const [{ couldRender }] = useAtom(bootstrapAtom);
 
   const [entryScripts, setEntryScripts] = useAtom(loadEntryScriptsAtom);
   const { isTop } = options || {};
 
   React.useEffect(() => {
-    if (!appInitialized) return;
     if (!isTop || entryScripts.inPageWeb3) return;
 
     Promise.allSettled([
@@ -111,7 +119,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 
       setEntryScripts(prev => ({ ...prev, inPageWeb3, vConsole }));
     });
-  }, [isTop, appInitialized, locked, entryScripts.inPageWeb3, setEntryScripts]);
+  }, [isTop, entryScripts.inPageWeb3, setEntryScripts]);
 
   const fullScript = React.useMemo(() => {
     return [
@@ -129,7 +137,7 @@ export function useJavaScriptBeforeContentLoaded(options?: {
 
   return {
     entryScriptWeb3Loaded: [
-      appInitialized,
+      couldRender,
       !!entryScripts.inPageWeb3,
       // __DEV__ ? !!entryScripts.vConsole : true,
     ].every(x => !!x),
@@ -142,33 +150,39 @@ export function useJavaScriptBeforeContentLoaded(options?: {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp() {
-  const [{ appInitialized }, setBootstrap] = useAtom(bootstrapAtom);
+  const { isAppUnlocked } = useIsAppUnlocked();
+  const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
 
+  const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
-    apisBoot
+    if (appNavigationReady) {
+      SplashScreen.hide();
+    }
+  }, [appNavigationReady]);
+
+  React.useEffect(() => {
+    apisLock
       .tryAutoUnlockRabbyMobile()
       .then(async result => {
         setBootstrap(prev => ({
           ...prev,
           useBuiltinPwd: result.useBuiltInPwd,
-          appInitialized: true,
+          couldRender: true,
         }));
-        await initServices();
-        await initApis();
-        await Promise.race([syncChainList(), sleep(5000)]);
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);
         setBootstrap(prev => ({
           ...prev,
-          appInitialized: true,
+          couldRender: true,
         }));
       });
   }, [setBootstrap]);
 
   return {
-    couldRender: appInitialized,
+    couldRender,
+    shouldLeaveInUnlock: !isAppUnlocked,
   };
 }

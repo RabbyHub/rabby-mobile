@@ -24,7 +24,7 @@ export const BlurView = forwardRef(
         blurAmount={blurAmount}
         blurRadius={blurRadius}
         ref={ref}
-        blurType={theme}
+        blurType={theme ?? undefined}
       />
     );
   },

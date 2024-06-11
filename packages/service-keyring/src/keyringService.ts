@@ -128,11 +128,27 @@ export class KeyringService extends RNEventEmitter {
     });
   }
 
-  async boot(password: string) {
+  private async _setupBoot(password: string) {
     this.password = password;
     const encryptBooted = await this.encryptor.encrypt(password, 'true');
     this.store.updateState({ booted: encryptBooted });
+  }
+
+  async boot(password: string) {
+    await this._setupBoot(password);
     this.memStore.updateState({ isUnlocked: true });
+  }
+
+  async updatePassword(oldPassword: string, newPassword: string) {
+    await this.verifyPassword(oldPassword);
+
+    this.emit('beforeUpdatePassword', {
+      keyringState: this.store.getState()
+    });
+
+    // reboot it
+    await this._setupBoot(newPassword);
+    this.persistAllKeyrings();
   }
 
   isBooted() {

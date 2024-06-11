@@ -1,0 +1,177 @@
+import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
+import { BroadcastEvent } from '@/constant/event';
+import { keyringService, sessionService } from '../services';
+
+export const enum PasswordStatus {
+  Unknown = -1,
+  UseBuiltIn = 1,
+  Custom = 11,
+}
+
+export type RabbyMobileLockInfo = {
+  pwdStatus: PasswordStatus;
+};
+
+function getInitError(password: string) {
+  if (password === RABBY_MOBILE_KR_PWD) {
+    return {
+      error: 'Incorret Password',
+    };
+  }
+
+  return { error: '' };
+}
+
+export function verifyPassword(password: string) {
+  return keyringService.verifyPassword(password);
+}
+
+export function safeVerifyPassword(password: string) {
+  const result = { success: false, error: null as null | Error };
+  try {
+    keyringService.verifyPassword(password);
+    result.success = true;
+  } catch (error: any) {
+    result.success = false;
+    result.error = error?.message;
+  }
+
+  return result;
+}
+
+const ERRORS = {
+  CURRENT_IS_INCORRET: 'Current password is incorrect',
+};
+
+export async function setupWalletPassword(newPassword: string) {
+  const result = getInitError(newPassword);
+  if (result.error) return result;
+
+  try {
+    verifyPassword(RABBY_MOBILE_KR_PWD);
+    await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
+  } catch (error) {
+    result.error = 'Failed to set password';
+  }
+
+  return result;
+}
+
+export async function updateWalletPassword(
+  oldPassword: string,
+  newPassword: string,
+) {
+  const result = getInitError(newPassword);
+  if (result.error) return result;
+
+  try {
+    const r = safeVerifyPassword(oldPassword);
+    if (r.error) throw new Error(ERRORS.CURRENT_IS_INCORRET);
+  } catch (error) {
+    result.error = ERRORS.CURRENT_IS_INCORRET;
+    return result;
+  }
+
+  try {
+    await keyringService.updatePassword(oldPassword, newPassword);
+  } catch (error) {
+    result.error = 'Failed to set password';
+  }
+
+  return result;
+}
+
+export async function clearCustomPassword(currentPassword: string) {
+  const result = getInitError(currentPassword);
+  if (result.error) return result;
+  try {
+    const r = safeVerifyPassword(currentPassword);
+    if (r.error) throw new Error(ERRORS.CURRENT_IS_INCORRET);
+  } catch (error) {
+    result.error = ERRORS.CURRENT_IS_INCORRET;
+    return result;
+  }
+
+  try {
+    await keyringService.updatePassword(currentPassword, RABBY_MOBILE_KR_PWD);
+  } catch (error) {
+    result.error = 'Failed to cancel password';
+  }
+
+  return result;
+}
+
+export async function getRabbyLockInfo() {
+  const info: RabbyMobileLockInfo = {
+    pwdStatus: PasswordStatus.Unknown,
+  };
+
+  try {
+    await keyringService.verifyPassword(RABBY_MOBILE_KR_PWD);
+    info.pwdStatus = PasswordStatus.UseBuiltIn;
+  } catch (e) {
+    info.pwdStatus = PasswordStatus.Custom;
+  }
+
+  return info;
+}
+
+export async function tryAutoUnlockRabbyMobile() {
+  const isBooted = keyringService.isBooted();
+  // // leave here for debugging
+  console.debug(
+    'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
+    RABBY_MOBILE_KR_PWD,
+  );
+
+  if (!isBooted) {
+    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  }
+
+  const lockInfo = await getRabbyLockInfo();
+
+  const useBuiltInPwd = lockInfo.pwdStatus === PasswordStatus.UseBuiltIn;
+  try {
+    if (useBuiltInPwd) {
+      const isUnlocked = keyringService.isUnlocked();
+      if (!isUnlocked) {
+        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
+      }
+    }
+  } catch (e) {
+    console.error('[tryAutoUnlockRabbyMobile]');
+    console.error(e);
+  }
+
+  return {
+    useBuiltInPwd,
+  };
+}
+
+export function isUnlocked() {
+  return keyringService.isUnlocked();
+}
+
+export async function unlockWallet(password: string) {
+  const unlockResult = {
+    error: '',
+  };
+
+  try {
+    await keyringService.verifyPassword(password);
+  } catch (err) {
+    unlockResult.error = 'Incorrect Password';
+    return unlockResult;
+  }
+
+  await keyringService.submitPassword(password);
+  sessionService.broadcastEvent(BroadcastEvent.unlock);
+
+  return unlockResult;
+}
+
+export async function lockWallet() {
+  await keyringService.setLocked();
+  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
+  sessionService.broadcastEvent(BroadcastEvent.lock);
+}
