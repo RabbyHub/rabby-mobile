@@ -82,9 +82,11 @@ const getMarkdownPageStyle = createGetStyles(colors => {
 export function MarkdownInWebView({
   markdown,
   markdownit = dMarkdownit,
+  htmlInnerStyle,
 }: React.PropsWithoutRef<{
   markdown: string;
   markdownit?: MarkdownIt;
+  htmlInnerStyle?: string;
 }>) {
   const { styles, colors } = useThemeStyles(getStyles);
 
@@ -98,6 +100,7 @@ export function MarkdownInWebView({
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>${style}</style>
+      ${htmlInnerStyle ? `<style>${htmlInnerStyle}</style>` : ''}
     </head>
     <body>
       <div class="md-wrapper">
@@ -105,7 +108,7 @@ export function MarkdownInWebView({
       </div>
     </body>
   </html>`;
-  }, [markdown, markdownit, colors]);
+  }, [markdown, htmlInnerStyle, markdownit, colors]);
 
   return (
     <WebView

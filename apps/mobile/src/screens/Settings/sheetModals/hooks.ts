@@ -19,7 +19,7 @@ export function useSheetModalsOnSettingScreen() {
 
 export const DAPP_METAMASK_TEST_DAPP: DappInfo = {
   info: {
-    // chain_ids: ['eth', 'scrl'],
+    chain_ids: ['eth', 'scrl'],
     description: '',
     id: 'https://metamask.github.io',
     logo_url: '',

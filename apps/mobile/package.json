@@ -16,6 +16,7 @@
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",
     "restart": "yarn start --reset-cache",
     "build:deps": "yarn ../../ build",
+    "sync:data": "node ./scripts/sync.js",
     "ensure-git-hooks": "yarn ../../ install-husky",
     "syncrnversion:incb": "./node_modules/.bin/react-native-version --never-amend",
     "syncrnversion": "./node_modules/.bin/react-native-version --never-amend  --never-increment-build",

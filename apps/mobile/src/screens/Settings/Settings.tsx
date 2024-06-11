@@ -1,15 +1,5 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Dimensions,
-  Linking,
-  Platform,
-} from 'react-native';
-import clsx from 'clsx';
-
-import { stringUtils } from '@rabby-wallet/base-utils';
+import React, { useRef } from 'react';
+import { View, Text, ScrollView, Linking, Platform } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
@@ -26,6 +16,8 @@ import {
   RcWhitelist,
   RcEarth,
   RcFeedback,
+  RcLockWallet,
+  RcManagePassword,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -33,15 +25,13 @@ import { type SettingConfBlock, Block } from './Block';
 import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
-  useThemeColors,
+  useThemeStyles,
 } from '@/hooks/theme';
-import { styled } from 'styled-components/native';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
-import { useNavigation } from '@react-navigation/native';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -54,21 +44,27 @@ import { useUpgradeInfo } from '@/hooks/version';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
+import { createGetStyles } from '@/utils/styles';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
+import {
+  useManagePasswordOnSettings,
+  useSheetModalsForManagingPassword,
+} from '../ManagePassword/hooks';
 
-const Container = styled(NormalScreenContainer)`
-  flex: 1;
-  justify-content: space-between;
-  padding-bottom: 27px;
-`;
+const LAYOUTS = {
+  fiexedFooterHeight: 50,
+};
 
-function SettingsScreen(): JSX.Element {
-  const { appThemeText, toggleThemeMode } = useAppTheme();
+const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
+
+export default function SettingsScreen(): JSX.Element {
+  const { styles, colors } = useThemeStyles(getStyles);
+  const { appThemeText } = useAppTheme();
 
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
 
-  const colors = useThemeColors();
-
-  const navigation = useNavigation();
+  const navigation = useRabbyAppNavigation();
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
 
@@ -78,6 +74,12 @@ function SettingsScreen(): JSX.Element {
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
+
+  const {
+    hasSetupCustomPassword,
+    requestLockWallet,
+    openManagePasswordSheetModal,
+  } = useManagePasswordOnSettings();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -132,7 +134,7 @@ function SettingsScreen(): JSX.Element {
               );
             },
           },
-        ],
+        ].filter(Boolean) as SettingConfBlock['items'],
       },
       settings: {
         label: 'Settings',
@@ -149,6 +151,7 @@ function SettingsScreen(): JSX.Element {
             label: 'Custom RPC',
             icon: RcCustomRpc,
             onPress: () => {},
+            disabled: true,
             visible: !!__DEV__,
           },
           {
@@ -236,6 +239,33 @@ function SettingsScreen(): JSX.Element {
           },
         ].filter(Boolean),
       },
+      ...(isSelfhostRegPkg && {
+        testkits: {
+          label: 'Test Kits (Not present on production package)',
+          items: [
+            // only valid if custom password given
+            {
+              label: 'Lock Wallet',
+              icon: RcLockWallet,
+              disabled: !hasSetupCustomPassword,
+              onPress: () => {
+                requestLockWallet();
+              },
+            },
+            {
+              label: hasSetupCustomPassword
+                ? 'Clear Password'
+                : 'Set Up Password',
+              icon: RcManagePassword,
+              onPress: () => {
+                // TODO: on password setup
+                openManagePasswordSheetModal();
+              },
+              visible: isSelfhostRegPkg,
+            },
+          ],
+        },
+      }),
       ...(__DEV__ && {
         devlab: {
           label: 'Dev Lab',
@@ -252,8 +282,8 @@ function SettingsScreen(): JSX.Element {
               label: 'ProviderController Test',
               icon: RcEarth,
               onPress: () => {
-                navigation.push(RootNames.ProviderControllerTester, {
-                  params: {},
+                navigation.push(RootNames.StackSettings, {
+                  screen: RootNames.ProviderControllerTester,
                 });
               },
             },
@@ -263,56 +293,47 @@ function SettingsScreen(): JSX.Element {
     };
   })();
 
-  const { safeTop, safeOffBottom } = useSafeSizes();
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    containerPaddingBottom: 0,
+  });
 
   return (
-    <Container
+    <NormalScreenContainer
       fitStatuBar
-      className={clsx(
-        'bg-light-neutral-bg-2 dark:bg-dark-neutral-bg-2',
-        'pb-[40]',
-      )}>
-      <View
-        style={{
-          flex: 1,
-          maxHeight:
-            Dimensions.get('screen').height -
-            (safeTop + safeOffBottom + ScreenLayouts.headerAreaHeight),
-          // borderColor: 'black',
-          // borderWidth: 1,
-        }}>
-        <ScrollView
-          className="flex-1 p-[20] h-[100%]"
-          style={{
-            marginBottom: 20,
-          }}>
-          {Object.entries(SettingsBlocks).map(([key, block], idx) => {
-            const l1key = `${key}-${idx}`;
+      style={[
+        styles.container,
+        {
+          paddingBottom: safeSizes.containerPaddingBottom,
+        },
+      ]}>
+      <ScrollView
+        style={[styles.scrollableView]}
+        contentContainerStyle={[styles.scrollableContentStyle]}>
+        {Object.entries(SettingsBlocks).map(([key, block], idx) => {
+          const l1key = `${key}-${idx}`;
 
-            return (
-              <Block
-                key={l1key}
-                label={block.label}
-                className={clsx(idx > 0 && 'mt-[16]')}>
-                {block.items.map((item, idx_l2) => {
-                  return (
-                    <Block.Item
-                      key={`${l1key}-${item.label}-${idx_l2}`}
-                      {...item}
-                    />
-                  );
-                })}
-              </Block>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <View
-        className={clsx(
-          'items-center justify-center',
-          // 'absolute w-[100%] h-[40] left-0 bottom-0'
-        )}>
+          return (
+            <Block
+              key={l1key}
+              label={block.label}
+              style={[
+                idx > 0 && {
+                  marginTop: 16,
+                },
+              ]}>
+              {block.items.map((item, idx_l2) => {
+                return (
+                  <Block.Item
+                    key={`${l1key}-${item.label}-${idx_l2}`}
+                    {...item}
+                  />
+                );
+              })}
+            </Block>
+          );
+        })}
+      </ScrollView>
+      <View style={[styles.bottomFooter]}>
         <RcFooterLogo />
       </View>
 
@@ -348,9 +369,46 @@ function SettingsScreen(): JSX.Element {
         }
       />
 
+      <ManagePasswordSheetModal height={422} />
+
       <SheetWebViewTester />
-    </Container>
+    </NormalScreenContainer>
   );
 }
 
-export default SettingsScreen;
+const getStyles = createGetStyles(colors => {
+  return {
+    container: {
+      position: 'relative',
+      flex: 0,
+      flexDirection: 'column',
+      height: '100%',
+      backgroundColor: colors['neutral-bg-2'],
+      // paddingBottom: LAYOUTS.fiexedFooterHeight,
+    },
+    scrollableContentStyle: {
+      paddingHorizontal: 20,
+      width: '100%',
+      paddingBottom: 12,
+    },
+    scrollableView: {
+      marginBottom: 0,
+      height: '100%',
+      flexShrink: 1,
+      // ...makeDebugBorder('yellow'),
+    },
+    bottomFooter: {
+      flexShrink: 0,
+      // position: 'absolute',
+      // bottom: 0,
+      // left: 0,
+      // right: 0,
+      width: '100%',
+      paddingHorizontal: 20,
+      height: LAYOUTS.fiexedFooterHeight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // ...makeDebugBorder(),
+    },
+  };
+});

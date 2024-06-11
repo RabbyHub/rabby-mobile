@@ -11,7 +11,7 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { makeHeadersPresets } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/native';
 
 import { makeThemeIconFromCC } from './makeThemeIcon';
@@ -30,6 +30,18 @@ export function useCurrentRouteNameInAppStatusBar() {
 
 export function useSetCurrentRouteName() {
   return useSetAtom(currentRouteNameAtom);
+}
+
+const navigationReadyAtom = atom<boolean>(false);
+export function useNavigationReady() {
+  const appNavigationReady = useAtomValue(navigationReadyAtom);
+
+  return { appNavigationReady };
+}
+export function useSetNavigationReady() {
+  const setNavigationReady = useSetAtom(navigationReadyAtom);
+
+  return { setNavigationReady };
 }
 
 export function useToggleShowNavHeader() {
@@ -115,4 +127,20 @@ export function useRabbyAppNavigation() {
   return useNavigation<
     NativeStackScreenProps<RootStackParamsList>['navigation']
   >();
+}
+
+export function resetNavigationToHome(
+  navigation: ReturnType<typeof useRabbyAppNavigation>,
+) {
+  navigation.reset({
+    index: 0,
+    routes: [
+      {
+        name: RootNames.StackRoot,
+        params: {
+          screen: RootNames.Home,
+        },
+      },
+    ],
+  });
 }

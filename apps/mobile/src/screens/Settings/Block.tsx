@@ -11,7 +11,6 @@ import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
-import { WindView } from '@/components/NativeWind';
 
 const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
@@ -32,19 +31,22 @@ export function Block({
   return (
     <View style={style}>
       <Text
-        className="font-normal text-[12]"
         style={{
+          fontWeight: 'normal',
+          fontSize: 12,
           color: colors['neutral-title-1'],
         }}>
         {label}
       </Text>
-      <WindView
-        className="rounded-[6px] mt-[8] flex-col"
+      <View
         style={{
+          borderRadius: 6,
+          marginTop: 8,
+          flexDirection: 'column',
           backgroundColor: colors['neutral-card-1'],
         }}>
         {children}
-      </WindView>
+      </View>
     </View>
   );
 }
@@ -55,12 +57,6 @@ type GenerateNodeCtx = {
 };
 
 const BlockContainer = styled(TouchableView)<{ disableStyle?: boolean }>`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 52px;
-  padding: 16px;
   opacity: ${props => (props.disableStyle ? 0.6 : 1)};
 `;
 
@@ -134,14 +130,25 @@ function BlockItem({
   }
 
   return (
-    <BlockContainer
-      disableStyle={disabled}
+    <TouchableView
+      // disabled={disabled}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        height: 52,
+        padding: 16,
+        opacity: disabled ? 0.6 : 1,
+      }}
       disabled={disabled ? !onDisabledPress : !onPress}
-      onPress={() => (disabled ? onDisabledPress?.() : onPress?.())}>
+      onPress={evt => (disabled ? onDisabledPress?.(evt) : onPress?.(evt))}>
       {/* left area */}
-      <WindView
-        className="flex-row flex-shrink-1 items-center"
+      <View
         style={{
+          flexDirection: 'row',
+          flexShrink: 1,
+          alignItems: 'center',
           flex: 1,
           overflow: 'hidden',
         }}>
@@ -152,12 +159,17 @@ function BlockItem({
           }}>
           {children}
         </View>
-      </WindView>
+      </View>
       {/* right area */}
-      <WindView className="flex-row flex-shrink-0 items-center">
+      <View
+        style={{
+          flexDirection: 'row',
+          flexShrink: 0,
+          alignItems: 'center',
+        }}>
         {rightNode || null}
-      </WindView>
-    </BlockContainer>
+      </View>
+    </TouchableView>
   );
 }
 

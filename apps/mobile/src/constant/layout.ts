@@ -24,8 +24,11 @@ export const ScreenColors = {
 export const RootNames = {
   StackLogin: 'StackLogin',
   StackGetStarted: 'StackGetStarted',
-  NotFound: 'NotFound',
+
   StackRoot: 'StackRoot',
+  NotFound: 'NotFound',
+  Unlock: 'Unlock',
+
   StackBottom: 'StackBottom',
   Home: 'Home',
   Points: 'Points',
@@ -38,6 +41,7 @@ export const RootNames = {
 
   StackSettings: 'StackSettings',
   Settings: 'Settings',
+  SetPassword: 'SetPassword',
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -86,6 +90,10 @@ export const getRootSpecConfig = (
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['neutral-bg-1'],
     },
+    Unlock: {
+      statusBarStyle: 'dark-content',
+      statusbarBackgroundColor: colors['neutral-bg1'],
+    },
     ImportWatchAddress: {
       statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['blue-default'],
@@ -115,6 +123,10 @@ export const getRootSpecConfig = (
       statusbarBackgroundColor: colors['neutral-card2'],
     },
     GasTopUp: {
+      statusBarStyle: 'light-content',
+      statusbarBackgroundColor: colors['blue-default'],
+    },
+    SetPassword: {
       statusBarStyle: 'light-content',
       statusbarBackgroundColor: colors['blue-default'],
     },
