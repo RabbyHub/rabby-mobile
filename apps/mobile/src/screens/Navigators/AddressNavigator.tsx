@@ -15,7 +15,9 @@ import { ImportHardwareScreen } from '../Address/ImportHardwareScreen';
 import { ImportHardwareScreenButton } from '../Address/ImportHardwareScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
 import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
-import { ImportPrivateKeyScreenButton } from '../Address/ImportPrivateKeyScreenButton';
+import { ScannerButton } from '../Address/ScannerButton';
+import { ImportSeedPhraseScreen } from '../Address/ImportSeedPhraseScreen';
+import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -128,7 +130,30 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: 20,
           },
-          headerRight: ImportPrivateKeyScreenButton,
+          headerRight: ScannerButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportMnemonic}
+        component={ImportSeedPhraseScreen}
+        options={{
+          headerTitle: 'Import Seed Phrase',
+          title: 'Import Seed Phrase',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+          headerRight: ScannerButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.BackupPrivateKey}
+        component={BackupPrivateKeyScreen}
+        options={{
+          headerTitle: 'Backup Private Key',
+          title: 'Backup Private Key',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
         }}
       />
     </AddressStack.Navigator>

@@ -12,9 +12,7 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportPrivateKeyScreenButton: React.FC<HeaderButtonProps> = ({
-  tintColor,
-}) => {
+export const ScannerButton: React.FC<HeaderButtonProps> = ({ tintColor }) => {
   const onPress = React.useCallback(() => {
     navigate(RootNames.Scanner);
   }, []);

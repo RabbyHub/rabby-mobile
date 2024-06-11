@@ -70,6 +70,7 @@ export const RootNames = {
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
   Scanner: 'Scanner',
+  BackupPrivateKey: 'BackupPrivateKey',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

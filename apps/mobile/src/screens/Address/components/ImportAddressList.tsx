@@ -2,7 +2,11 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
-import { ImportAddressSVG, PrivateKeySVG } from '@/assets/icons/address';
+import {
+  ImportAddressSVG,
+  PrivateKeySVG,
+  SeedPhraseSVG,
+} from '@/assets/icons/address';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -22,6 +26,12 @@ export const ImportAddressList = () => {
     });
   }, []);
 
+  const handleSeedPhrase = React.useCallback(() => {
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportMnemonic,
+    });
+  }, []);
+
   return (
     <View>
       <WalletHeadline Icon={ImportAddressSVG}>Import an Address</WalletHeadline>
@@ -31,6 +41,12 @@ export const ImportAddressList = () => {
         title="Import Private Key"
         onPress={handlePrivateKey}
       />
+      {/* <WalletItem
+        style={styles.walletItem}
+        Icon={SeedPhraseSVG}
+        title="Import Seed Phrase"
+        onPress={handleSeedPhrase}
+      /> */}
     </View>
   );
 };

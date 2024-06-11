@@ -48,6 +48,8 @@ import { toast } from '@/components/Toast';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { GnosisSafeInfo } from './components/GnosisSafeInfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -196,6 +198,12 @@ const AddressInfo = (props: AddressInfoProps) => {
   );
 
   const { bottom } = useSafeAreaInsets();
+
+  const handlePressBackupPrivateKey = useCallback(() => {
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.BackupPrivateKey,
+    });
+  }, []);
 
   return (
     <View
@@ -514,6 +522,27 @@ const AddressInfo = (props: AddressInfoProps) => {
           </BottomSheetView>
         </AppBottomSheetModal>
       </View>
+
+      {account.type === KEYRING_TYPE.SimpleKeyring && (
+        <TouchableOpacity
+          onPress={handlePressBackupPrivateKey}
+          style={styles.view}>
+          <View
+            style={StyleSheet.flatten([
+              styles.itemView,
+              styles.noBOrderBottom,
+            ])}>
+            <Text style={styles.labelText}>Backup Private Key</Text>
+            <View style={styles.valueView}>
+              <RcIconRightCC
+                style={styles.rightIcon}
+                color={colors['neutral-foot']}
+              />
+            </View>
+          </View>
+        </TouchableOpacity>
+      )}
+
       <View style={styles.view}>
         <View
           style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}>
