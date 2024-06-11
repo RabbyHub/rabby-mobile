@@ -1,22 +1,13 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
-import { RcIconCopyCC, RcIconInfo2CC } from '@/assets/icons/common';
+import { RcIconInfo2CC } from '@/assets/icons/common';
 import QRCode from 'react-native-qrcode-svg';
 import { RootNames } from '@/constant/layout';
-import { apiPrivateKey } from '@/core/apis';
-import { RABBY_MOBILE_KR_PWD } from '@env';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { MaskContainer } from './components/MaskContainer';
 
@@ -80,25 +71,15 @@ export const BackupPrivateKeyScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const nav = useNavigation();
-  const state = useNavigationState(
+  const { data } = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.BackupPrivateKey)?.params,
   ) as {
-    address: string;
+    data: string;
   };
-  const [privateKey, setPrivateKey] = React.useState<string>();
 
   const handleDone = React.useCallback(() => {
     nav.goBack();
   }, [nav]);
-
-  React.useEffect(() => {
-    apiPrivateKey
-      .getPrivateKey(RABBY_MOBILE_KR_PWD, {
-        address: state.address,
-        type: KEYRING_TYPE.SimpleKeyring,
-      })
-      .then(setPrivateKey);
-  }, [state.address]);
 
   return (
     <FooterButtonScreenContainer
@@ -120,15 +101,15 @@ export const BackupPrivateKeyScreen = () => {
             flexDirection="column"
             text={t('page.backupPrivateKey.clickToShowQr')}
           />
-          {privateKey && <QRCode size={QR_CODE_WIDTH} value={privateKey} />}
+          {data && <QRCode size={QR_CODE_WIDTH} value={data} />}
         </View>
         <View style={styles.privateKeyContainer}>
           <MaskContainer
             isLight
             text={t('page.backupPrivateKey.clickToShow')}
           />
-          <Text style={styles.privateKeyContainerText}>{privateKey}</Text>
-          <CopyAddressIcon style={styles.copyButton} address={privateKey} />
+          <Text style={styles.privateKeyContainerText}>{data}</Text>
+          <CopyAddressIcon style={styles.copyButton} address={data} />
         </View>
       </View>
     </FooterButtonScreenContainer>

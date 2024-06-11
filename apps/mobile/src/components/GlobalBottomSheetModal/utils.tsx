@@ -22,6 +22,7 @@ import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
+import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -45,6 +46,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['68%'],
+  [MODAL_NAMES.AUTHENTICATION]: [300],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -85,6 +87,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
+  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
 };
 
 export function makeBottomSheetProps(ctx: {

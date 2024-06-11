@@ -50,6 +50,9 @@ import { GnosisSafeInfo } from './components/GnosisSafeInfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { useTranslation } from 'react-i18next';
+import { apiPrivateKey } from '@/core/apis';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -198,15 +201,34 @@ const AddressInfo = (props: AddressInfoProps) => {
   );
 
   const { bottom } = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const handlePressBackupPrivateKey = useCallback(() => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.BackupPrivateKey,
-      params: {
-        address: account.address,
+    let data = '';
+
+    AuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('global.Cancel'),
+      title: t('page.addressDetail.backup-private-key'),
+      validationHandler: async (password: string) => {
+        data = await apiPrivateKey.getPrivateKey(password, {
+          address: account.address,
+          type: KEYRING_TYPE.SimpleKeyring,
+        });
+      },
+      onFinished() {
+        if (!data) {
+          return;
+        }
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.BackupPrivateKey,
+          params: {
+            data,
+          },
+        });
       },
     });
-  }, [account.address]);
+  }, [account, t]);
 
   return (
     <View

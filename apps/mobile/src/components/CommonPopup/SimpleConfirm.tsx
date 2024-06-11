@@ -2,11 +2,11 @@ import { View, Text } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { MODAL_CREATE_PARMAS } from '../GlobalBottomSheetModal/types';
+import { MODAL_CREATE_PARAMS } from '../GlobalBottomSheetModal/types';
 
 export default function SimpleConfirmInner({
   title,
-}: MODAL_CREATE_PARMAS['SIMPLE_CONFIRM']) {
+}: MODAL_CREATE_PARAMS['SIMPLE_CONFIRM']) {
   const { styles } = useThemeStyles(getStyles);
 
   return (
