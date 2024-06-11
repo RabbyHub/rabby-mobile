@@ -2,11 +2,12 @@ import React from 'react';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { useTranslation } from 'react-i18next';
 import { Tip } from '@/components/Tip';
-import { StyleSheet, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
+import { HoldingAnimated } from './HoldingAnimated';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -34,17 +35,26 @@ export const ProcessActions: React.FC<Props> = ({
   tooltipContent,
   submitText,
   gasLess,
+  needHolding,
+  isPrimary,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [buttonWidth, setButtonWidth] = React.useState(0);
+  const [buttonHeight, setButtonHeight] = React.useState(0);
 
+  const getButtonWidthLayout = React.useCallback((e: LayoutChangeEvent) => {
+    setButtonWidth(e.nativeEvent.layout.width);
+    setButtonHeight(e.nativeEvent.layout.height);
+  }, []);
+  const buttonIsPrimary = isPrimary || gasLess;
   return (
     <ActionsContainer onCancel={onCancel}>
       <Tip
         // @ts-expect-error
         content={tooltipContent}>
-        <View>
+        <View onLayout={getButtonWidthLayout}>
           <GasLessAnimatedWrapper
             title={t('page.signFooterBar.signAndSubmitButton')}
             titleStyle={styles.buttonText}
@@ -52,22 +62,30 @@ export const ProcessActions: React.FC<Props> = ({
             gasLess={gasLess}
             showOrigin={!gasLess && !disabledProcess}
             type="process">
-            <Button
-              disabled={disabledProcess}
-              type={gasLess ? 'primary' : 'clear'}
-              buttonStyle={styles.button}
-              titleStyle={
-                gasLess
-                  ? StyleSheet.flatten([
-                      styles.buttonText,
-                      { color: colors['neutral-title-2'] },
-                    ])
-                  : styles.buttonText
-              }
-              disabledStyle={styles.disabled}
-              onPress={onSubmit}
-              title={submitText ?? t('page.signFooterBar.beginSigning')}
-            />
+            <HoldingAnimated
+              width={buttonWidth}
+              height={buttonHeight}
+              enable={needHolding}
+              onFinish={onSubmit}>
+              <Button
+                TouchableComponent={needHolding ? View : undefined}
+                disabled={disabledProcess}
+                type={buttonIsPrimary ? 'primary' : 'clear'}
+                buttonStyle={styles.button}
+                titleStyle={
+                  buttonIsPrimary
+                    ? StyleSheet.flatten([
+                        styles.buttonText,
+                        { color: colors['neutral-title-2'] },
+                      ])
+                    : styles.buttonText
+                }
+                disabledStyle={styles.disabled}
+                onPress={needHolding ? undefined : onSubmit}
+                title={submitText ?? t('page.signFooterBar.beginSigning')}
+                showTitleOnLoading
+              />
+            </HoldingAnimated>
           </GasLessAnimatedWrapper>
         </View>
       </Tip>
