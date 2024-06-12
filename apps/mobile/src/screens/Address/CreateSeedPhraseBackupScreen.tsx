@@ -8,7 +8,7 @@ import { toast } from '@/components/Toast';
 import { WordsMatrix } from '@/components/WordsMatrix';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { generatePreMnemonic, getPreMnemonics } from '@/core/apis/mnemonic';
+import { apiMnemonic } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -16,46 +16,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    alert: {
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      paddingVertical: 12,
-      backgroundColor: colors['red-light'],
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['red-default'],
-      marginTop: 8,
-
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 6,
-
-      marginBottom: 20,
-    },
-    alertText: {
-      color: colors['red-default'],
-      fontSize: 14,
-      lineHeight: 17,
-      flex: 1,
-      minWidth: 0,
-    },
-    main: {
-      marginBottom: 20,
-    },
-    copy: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-    },
-    copyText: {
-      color: colors['neutral-body'],
-      fontSize: 15,
-      lineHeight: 18,
-    },
-  });
 
 export const CreateSeedPhraseBackupScreen = () => {
   const colors = useThemeColors();
@@ -71,7 +31,7 @@ export const CreateSeedPhraseBackupScreen = () => {
   });
 
   const { data: seedPhrase } = useRequest(async () => {
-    const res = (await getPreMnemonics()) || (await generatePreMnemonic());
+    const res = await apiMnemonic.generatePreMnemonic();
     return res as string;
   });
 
@@ -108,3 +68,44 @@ export const CreateSeedPhraseBackupScreen = () => {
     </FooterButtonScreenContainer>
   );
 };
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    alert: {
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+      backgroundColor: colors['red-light'],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors['red-default'],
+      marginTop: 8,
+
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 6,
+
+      marginBottom: 20,
+    },
+    alertText: {
+      color: colors['red-default'],
+      fontSize: 14,
+      lineHeight: 17,
+      flex: 1,
+      minWidth: 0,
+    },
+    main: {
+      marginBottom: 20,
+    },
+    copy: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginBottom: 24,
+    },
+    copyText: {
+      color: colors['neutral-body'],
+      fontSize: 15,
+      lineHeight: 18,
+    },
+  });
