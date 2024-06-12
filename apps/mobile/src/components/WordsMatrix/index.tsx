@@ -28,7 +28,7 @@ export const WordsMatrix: FC<Props> = ({ style, words = [] }) => {
             style={[
               styles.gridItem,
               idx % 2 === 0 && styles.borderRight,
-              idx < list.length - 1 && styles.borderBottom,
+              idx < list.length - 2 && styles.borderBottom,
             ]}>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{number}.</Text>
@@ -79,10 +79,10 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     borderRight: {
       borderRightWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
+      borderRightColor: colors['neutral-line'],
     },
     borderBottom: {
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderColor: colors['neutral-line'],
+      borderBottomColor: colors['neutral-line'],
     },
   });

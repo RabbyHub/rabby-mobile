@@ -1,5 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { useDebounceFn, useMemoizedFn } from 'ahooks';
 import { colord } from 'colord';
 import React from 'react';
 import {
@@ -9,6 +10,8 @@ import {
 } from 'react-native';
 import Animated, {
   interpolate,
+  runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -48,7 +51,8 @@ export const HoldingAnimated: React.FC<Props> = ({
 
   const handlePressIn = React.useCallback(() => {
     pressAction.value = withTiming(1, { duration });
-  }, [duration, pressAction]);
+    onStart?.();
+  }, [duration, onStart, pressAction]);
 
   const handlePressOut = React.useCallback(() => {
     pressAction.value = withTiming(0, {
@@ -56,11 +60,22 @@ export const HoldingAnimated: React.FC<Props> = ({
     });
   }, [duration, pressAction]);
 
-  useDerivedValue(() => {
-    if (pressAction.value === 1) {
-      onFinish?.();
-    }
-  }, []);
+  useAnimatedReaction(
+    () => pressAction.value,
+    (current, prev) => {
+      if (current === prev) {
+        return;
+      }
+      if (current === 1) {
+        if (onFinish) {
+          runOnJS(onFinish)();
+        }
+      }
+      if (onChange) {
+        runOnJS(onChange)(current);
+      }
+    },
+  );
 
   return (
     <TouchableOpacity

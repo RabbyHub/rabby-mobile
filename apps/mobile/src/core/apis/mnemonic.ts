@@ -3,7 +3,7 @@ import { KEYRING_CLASS, generateAliasName } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
 import { contactService, keyringService, preferenceService } from '../services';
 import { Account } from '../services/preference';
-import { addKeyringToStash, stashKeyrings, _getKeyringByType } from './keyring';
+import { _getKeyringByType, addKeyringToStash, stashKeyrings } from './keyring';
 
 export const getMnemonics = async (password: string, address: string) => {
   await keyringService.verifyPassword(password);

@@ -143,7 +143,7 @@ export class KeyringService extends RNEventEmitter {
     await this.verifyPassword(oldPassword);
 
     this.emit('beforeUpdatePassword', {
-      keyringState: this.store.getState()
+      keyringState: this.store.getState(),
     });
 
     // reboot it

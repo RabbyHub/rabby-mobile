@@ -9,13 +9,13 @@ export const PrivateKeyActions: React.FC<Props> = props => {
 
   const handleSubmit = React.useCallback(() => {
     props.onSubmit();
-    console.log('Private key sign');
+    console.log('Private key sign2');
   }, [props]);
 
   return (
     <ProcessActions
       {...props}
-      // needHolding
+      needHolding
       isPrimary
       onSubmit={handleSubmit}
       submitText={t('page.signFooterBar.privateKeySign')}
