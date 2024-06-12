@@ -270,10 +270,14 @@ export const activeAndPersistAccountsByMnemonics = async (
 
   const currentLength = accounts.length;
 
-  await requestHDKeyringByMnemonics(
-    mnemonics,
-    'activeAccounts',
-    passphrase,
+  // await requestHDKeyringByMnemonics(
+  //   mnemonics,
+  //   'activeAccounts',
+  //   passphrase,
+  //   accountsToImport.map(acc => (acc as any).index! - 1),
+  // );
+
+  await keyring.activeAccounts(
     accountsToImport.map(acc => (acc as any).index! - 1),
   );
 

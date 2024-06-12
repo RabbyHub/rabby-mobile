@@ -14,6 +14,7 @@ import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components/Toast';
+import { useFocusEffect } from '@react-navigation/native';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -43,15 +44,10 @@ export const ImportSeedPhraseScreen = () => {
   const [importing, setImporting] = React.useState(false);
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
-  const handleConfirm = React.useCallback(() => {
-    setImporting(true);
-    importToastHiddenRef.current = toast.show('Importing...', {
-      duration: 100000,
-    });
+  const importSeedPhrase = React.useCallback(() => {
     apiMnemonic
       .generateKeyringWithMnemonic(mnemonics, passphrase)
       .then(async ({ keyringId, isExistedKR }) => {
-        const keyring = apiMnemonic.getKeyringByMnemonic(mnemonics, passphrase);
         const firstAddress = requestKeyring(
           KEYRING_TYPE.HdKeyring,
           'getAddresses',
@@ -60,13 +56,11 @@ export const ImportSeedPhraseScreen = () => {
           1,
         );
         try {
-          const importedAccounts = isExistedKR
-            ? await keyring?.getAccounts()
-            : await requestKeyring(
-                KEYRING_TYPE.HdKeyring,
-                'getAccounts',
-                keyringId ?? null,
-              );
+          const importedAccounts = await requestKeyring(
+            KEYRING_TYPE.HdKeyring,
+            'getAccounts',
+            keyringId ?? null,
+          );
           if (
             !importedAccounts ||
             (importedAccounts?.length < 1 && !!firstAddress?.length)
@@ -92,7 +86,9 @@ export const ImportSeedPhraseScreen = () => {
               },
             });
           }
-        } catch (error) {}
+        } catch (error) {
+          console.log('error', error);
+        }
 
         navigate(RootNames.ImportHardware, {
           type: KEYRING_TYPE.HdKeyring,
@@ -120,6 +116,17 @@ export const ImportSeedPhraseScreen = () => {
       });
   }, [duplicateAddressModal, mnemonics, passphrase]);
 
+  const handleConfirm = React.useCallback(() => {
+    setImporting(true);
+    importToastHiddenRef.current = toast.show('Importing...', {
+      duration: 100000,
+    });
+
+    setTimeout(() => {
+      importSeedPhrase();
+    }, 10);
+  }, [importSeedPhrase]);
+
   React.useEffect(() => {
     setError(undefined);
   }, [mnemonics]);
@@ -131,6 +138,12 @@ export const ImportSeedPhraseScreen = () => {
     }
   }, [scanner]);
 
+  useFocusEffect(() => {
+    return () => {
+      importToastHiddenRef.current?.();
+    };
+  });
+
   return (
     <FooterButtonScreenContainer
       buttonText={t('global.Confirm')}
@@ -141,7 +154,7 @@ export const ImportSeedPhraseScreen = () => {
       <PasteTextArea
         style={styles.textArea}
         value={mnemonics}
-        onChange={setMnemonics}
+        onChange={importing ? undefined : setMnemonics}
         placeholder="Enter your seed phrase  with space"
         error={error}
       />

@@ -37,6 +37,7 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { requestKeyring } from '@/core/apis/keyring';
 
 const { isSameAddress } = addressUtils;
 
@@ -139,6 +140,7 @@ export const ImportHardwareScreen = () => {
     type: KEYRING_TYPE;
     mnemonics?: string;
     passphrase?: string;
+    keyringId?: number;
   };
 
   const apiHD = React.useMemo(() => {
@@ -147,17 +149,12 @@ export const ImportHardwareScreen = () => {
         return apiLedger;
       case KEYRING_TYPE.OneKeyKeyring:
         return apiOneKey;
-      case KEYRING_TYPE.HdKeyring: {
-        return apiMnemonic.getKeyringByMnemonic(
-          state.mnemonics!,
-          state.passphrase!,
-        )!;
-      }
 
       default:
         return apiKeystone;
     }
   }, [state]);
+
   const hdType = React.useMemo(() => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
@@ -199,9 +196,34 @@ export const ImportHardwareScreen = () => {
   const [importing, setImporting] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
+  const mnemonicKeyringRef = React.useRef<
+    ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
+  >(undefined);
+  const getMnemonicKeyring = React.useCallback(() => {
+    if (state.type === KEYRING_TYPE.HdKeyring && state.mnemonics) {
+      if (!mnemonicKeyringRef.current) {
+        mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
+          state.mnemonics!,
+          state.passphrase!,
+        );
+      }
+      return mnemonicKeyringRef.current;
+    }
+    return undefined;
+  }, [state.mnemonics, state.passphrase, state.type]);
+
   const loadAddress = React.useCallback(
     async (index: number) => {
-      const res = await apiHD.getAddresses(index, index + 1);
+      const res =
+        state.type === KEYRING_TYPE?.HdKeyring
+          ? await requestKeyring(
+              KEYRING_TYPE.HdKeyring,
+              'getAddresses',
+              state?.keyringId ?? null,
+              index,
+              index + 1,
+            )
+          : await apiHD.getAddresses(index, index + 1);
       // avoid blocking the UI thread
       await new Promise(resolve => setTimeout(resolve, 1));
       const balance = await getAccountBalance(res[0].address);
@@ -219,7 +241,7 @@ export const ImportHardwareScreen = () => {
         ];
       });
     },
-    [apiHD],
+    [apiHD, state?.keyringId, state.type],
   );
 
   const handleLoadAddress = React.useCallback(async () => {
@@ -287,26 +309,28 @@ export const ImportHardwareScreen = () => {
   }, [setting?.startNumber]);
 
   React.useEffect(() => {
-    if ('getCurrentAccounts' in apiHD) {
-      apiHD.getCurrentAccounts().then(res => {
+    if (state.type === KEYRING_TYPE.HdKeyring) {
+      const api = getMnemonicKeyring();
+      api?.getAccounts().then(res => {
         if (res) {
-          setCurrentAccounts(res);
-        }
-      });
-    } else {
-      apiHD.getAccounts().then(res => {
-        if (res) {
+          console.log('res', res);
           const accounts = res.map((address, idx) => {
             return {
               address,
-              index: apiHD.getInfoByAddress(address)?.index || idx,
+              index: api?.getInfoByAddress(address)?.index || idx,
             };
           });
           setCurrentAccounts(accounts);
         }
       });
+    } else {
+      apiHD.getCurrentAccounts().then(res => {
+        if (res) {
+          setCurrentAccounts(res);
+        }
+      });
     }
-  }, [apiHD, setting.hdPath]);
+  }, [apiHD, getMnemonicKeyring, state.type]);
 
   React.useEffect(() => {
     return () => {
@@ -327,19 +351,41 @@ export const ImportHardwareScreen = () => {
     importToastHiddenRef.current = toast.show('Importing...', {
       duration: 100000,
     });
-    try {
-      console.log('selectedAccounts', selectedAccounts);
-      if ('importAddress' in apiHD) {
-        for (const acc of selectedAccounts) {
-          await apiHD.importAddress(acc.index - 1);
-        }
-      } else if (state?.mnemonics) {
-        await activeAndPersistAccountsByMnemonics(
-          state.mnemonics,
+
+    if (state.type === KEYRING_TYPE.HdKeyring) {
+      setTimeout(() => {
+        activeAndPersistAccountsByMnemonics(
+          state.mnemonics!,
           state.passphrase || '',
           selectedAccounts as any,
           true,
-        );
+        )
+          .then(() => {
+            navigate(RootNames.StackAddress, {
+              screen: RootNames.ImportSuccess,
+              params: {
+                type: hdType,
+                brandName: hdBrandName,
+                address: selectedAccounts.map(a => a.address),
+              },
+            });
+          })
+          .catch((err: any) => {
+            console.error(err);
+            toast.show(err.message);
+          })
+          .finally(() => {
+            importToastHiddenRef.current?.();
+            setImporting(false);
+          });
+      });
+
+      return;
+    }
+
+    try {
+      for (const acc of selectedAccounts) {
+        await apiHD.importAddress(acc.index - 1);
       }
 
       navigate(RootNames.StackAddress, {
@@ -364,6 +410,7 @@ export const ImportHardwareScreen = () => {
     selectedAccounts,
     state.mnemonics,
     state.passphrase,
+    state.type,
   ]);
 
   React.useEffect(() => {
@@ -465,6 +512,7 @@ export const ImportHardwareScreen = () => {
             selectedAccounts.length ? ` (${selectedAccounts.length})` : ''
           }`}
           onPress={handleConfirm}
+          loading={importing}
         />
       </RootScreenContainer>
     </Spin>
