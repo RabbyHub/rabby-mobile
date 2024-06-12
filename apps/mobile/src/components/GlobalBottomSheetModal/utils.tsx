@@ -23,6 +23,7 @@ import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
+import { SettingHDKeyring } from '../HDSetting/SettingHDKering';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -38,6 +39,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
   [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
   [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
+  [MODAL_NAMES.SETTING_HDKEYRING]: ['85%'],
   [MODAL_NAMES.CONNECT_KEYSTONE]: ['68%'],
   [MODAL_NAMES.SETTING_KEYSTONE]: ['65%'],
   [MODAL_NAMES.CONNECT_ONEKEY]: ['68%'],
@@ -82,6 +84,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
   [MODAL_NAMES.CONNECT_ONEKEY]: ConnectOneKey,
   [MODAL_NAMES.SETTING_ONEKEY]: SettingOneKey,
+  [MODAL_NAMES.SETTING_HDKEYRING]: SettingHDKeyring,
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: OneKeyInputPin,
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,

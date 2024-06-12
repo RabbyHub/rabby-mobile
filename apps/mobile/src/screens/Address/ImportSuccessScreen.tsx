@@ -103,6 +103,9 @@ export const ImportSuccessScreen = () => {
     isFirstImport: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
   };
   const [importAddresses, setImportAddresses] = React.useState<
     {
@@ -193,6 +196,9 @@ export const ImportSuccessScreen = () => {
     navigate(RootNames.ImportHardware, {
       type: state.type,
       brand: state.brandName,
+      mnemonics: state.mnemonics,
+      passphrase: state.passphrase,
+      keyringId: state.keyringId,
     });
   }, [state]);
 

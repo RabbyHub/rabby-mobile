@@ -26,10 +26,13 @@ export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
   ) as {
     type: KEYRING_TYPE;
     brand: string;
+    keyringId?: number;
   };
 
   const settingModalName = React.useMemo(() => {
     switch (state.type) {
+      case KEYRING_TYPE.HdKeyring:
+        return MODAL_NAMES.SETTING_HDKEYRING;
       case KEYRING_TYPE.LedgerKeyring:
         return MODAL_NAMES.SETTING_LEDGER;
       case KEYRING_TYPE.OneKeyKeyring:
@@ -50,6 +53,7 @@ export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
           onDone: () => {
             removeGlobalBottomSheetModal(id);
           },
+          ...(state.type ? { keyringId: state.keyringId } : {}),
         });
       }}>
       <RcIconHeaderSettings width={24} height={24} color={tintColor} />
