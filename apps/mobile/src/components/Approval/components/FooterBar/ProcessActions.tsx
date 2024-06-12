@@ -2,12 +2,20 @@ import React from 'react';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { useTranslation } from 'react-i18next';
 import { Tip } from '@/components/Tip';
-import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  LayoutChangeEvent,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { HoldingAnimated } from './HoldingAnimated';
+import { Spin } from '@/screens/TransactionRecord/components/Spin';
+import { RcIconSelectCC } from '@/assets/icons/common';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -26,6 +34,15 @@ const getStyles = (colors: AppColorsVariants) =>
     disabled: {
       opacity: 0.5,
     },
+    holdButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    spin: {
+      width: 16,
+      height: 16,
+    },
   });
 
 export const ProcessActions: React.FC<Props> = ({
@@ -43,12 +60,14 @@ export const ProcessActions: React.FC<Props> = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [buttonWidth, setButtonWidth] = React.useState(0);
   const [buttonHeight, setButtonHeight] = React.useState(0);
+  const [holdPercent, setHoldPercent] = React.useState(0);
 
   const getButtonWidthLayout = React.useCallback((e: LayoutChangeEvent) => {
     setButtonWidth(e.nativeEvent.layout.width);
     setButtonHeight(e.nativeEvent.layout.height);
   }, []);
   const buttonIsPrimary = isPrimary || gasLess;
+  const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
   return (
     <ActionsContainer onCancel={onCancel}>
       <Tip
@@ -66,6 +85,7 @@ export const ProcessActions: React.FC<Props> = ({
               width={buttonWidth}
               height={buttonHeight}
               enable={needHolding}
+              onChange={setHoldPercent}
               onFinish={onSubmit}>
               <Button
                 TouchableComponent={needHolding ? View : undefined}
@@ -82,7 +102,46 @@ export const ProcessActions: React.FC<Props> = ({
                 }
                 disabledStyle={styles.disabled}
                 onPress={needHolding ? undefined : onSubmit}
-                title={submitText ?? t('page.signFooterBar.beginSigning')}
+                title={
+                  needHolding ? (
+                    <View style={styles.holdButton}>
+                      {holdPercent > 0 && holdPercent < 1 ? (
+                        <Spin
+                          style={styles.spin}
+                          color={
+                            buttonIsPrimary
+                              ? colors['neutral-title-2']
+                              : styles.buttonText.color
+                          }
+                        />
+                      ) : null}
+                      {holdPercent >= 1 ? (
+                        <RcIconSelectCC
+                          width={16}
+                          height={16}
+                          color={
+                            buttonIsPrimary
+                              ? colors['neutral-title-2']
+                              : styles.buttonText.color
+                          }
+                        />
+                      ) : null}
+                      <Text
+                        style={
+                          buttonIsPrimary
+                            ? StyleSheet.flatten([
+                                styles.buttonText,
+                                { color: colors['neutral-title-2'] },
+                              ])
+                            : styles.buttonText
+                        }>
+                        {buttonText}
+                      </Text>
+                    </View>
+                  ) : (
+                    buttonText
+                  )
+                }
                 showTitleOnLoading
               />
             </HoldingAnimated>
