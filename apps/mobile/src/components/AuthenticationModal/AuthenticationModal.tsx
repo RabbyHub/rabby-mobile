@@ -36,12 +36,20 @@ export const AuthenticationModal = ({
   const { t } = useTranslation();
   const { styles } = useThemeStyles(getStyle);
   const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState<string>();
 
   const handleSubmit = React.useCallback(async () => {
-    await validationHandler?.(password);
-
-    onFinished?.();
+    try {
+      await validationHandler?.(password);
+      onFinished?.();
+    } catch (err: any) {
+      setError(err.message);
+    }
   }, [onFinished, password, validationHandler]);
+
+  React.useEffect(() => {
+    setError('');
+  }, [password]);
 
   return (
     <View>
@@ -53,13 +61,19 @@ export const AuthenticationModal = ({
         </View>
 
         <BottomSheetInput
+          secureTextEntry
           value={password}
           onChangeText={setPassword}
+          customStyle={StyleSheet.flatten([
+            styles.input,
+            error ? styles.errorInput : {},
+          ])}
           placeholder={
             placeholder ??
             t('component.AuthenticationModal.passwordPlaceholder')
           }
         />
+        {<Text style={styles.errorText}>{error}</Text>}
       </View>
       <View style={styles.buttonGroup}>
         <Button
@@ -155,6 +169,21 @@ const getStyle = createGetStyles(colors => {
     },
     main: {
       paddingHorizontal: 20,
+    },
+    errorText: {
+      color: colors['red-default'],
+      marginTop: 12,
+      fontSize: 14,
+      height: 20,
+    },
+    errorInput: {
+      borderColor: colors['red-default'],
+    },
+    input: {
+      borderColor: colors['neutral-line'],
+      backgroundColor: 'transparent',
+      borderRadius: 8,
+      marginBottom: 0,
     },
   };
 });
