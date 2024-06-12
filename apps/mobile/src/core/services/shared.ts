@@ -28,6 +28,7 @@ import { SwapService } from './swap';
 import { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
+import { HDKeyringService } from './hdKeyringService';
 
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
@@ -141,5 +142,9 @@ export const rabbyPointsService = new RabbyPointsService({
 });
 
 export const swapService = new SwapService({
+  storageAdapter: appStorage,
+});
+
+export const hdKeyringService = new HDKeyringService({
   storageAdapter: appStorage,
 });

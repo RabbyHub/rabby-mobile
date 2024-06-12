@@ -1,7 +1,12 @@
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import { KEYRING_CLASS, generateAliasName } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
-import { contactService, keyringService, preferenceService } from '../services';
+import {
+  contactService,
+  hdKeyringService,
+  keyringService,
+  preferenceService,
+} from '../services';
 import { Account } from '../services/preference';
 import { _getKeyringByType, addKeyringToStash, stashKeyrings } from './keyring';
 
@@ -280,6 +285,11 @@ export const activeAndPersistAccountsByMnemonics = async (
   await keyring.activeAccounts(
     accountsToImport.map(acc => (acc as any).index! - 1),
   );
+
+  const detail = keyring.getInfoByAddress(accountsToImport[0].address);
+  if (detail?.basePublicKey) {
+    hdKeyringService.addUnixRecord(detail.basePublicKey);
+  }
 
   await keyringService.persistAllKeyrings();
 
