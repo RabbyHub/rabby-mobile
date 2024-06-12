@@ -17,7 +17,6 @@ import {
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, Text, View } from 'react-native';
-import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
@@ -29,6 +28,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { apisSafe } from '@/core/apis/safe';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
 interface ApprovalParams {
   address: string;
@@ -221,6 +221,7 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
 
   React.useEffect(() => {
     init();
+    emitSignComponentAmounted();
 
     return () => {
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);

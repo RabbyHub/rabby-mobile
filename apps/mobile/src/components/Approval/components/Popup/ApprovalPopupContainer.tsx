@@ -220,7 +220,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
       <View
         style={StyleSheet.flatten([
           styles.titleWrapper,
-          isHD && styles.hdTitleWrapper,
+          styles.hdTitleWrapper,
         ])}>
         {InfoSVG ? <InfoSVG style={styles.infoIcon} /> : null}
         <View>{content({ contentColor })}</View>

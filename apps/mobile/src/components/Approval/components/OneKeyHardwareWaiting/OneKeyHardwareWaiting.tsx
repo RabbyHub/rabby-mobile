@@ -28,6 +28,7 @@ import {
 import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
 interface ApprovalParams {
   address: string;
@@ -215,7 +216,16 @@ export const OneKeyHardwareWaiting = ({
 
   React.useEffect(() => {
     init();
+    emitSignComponentAmounted();
+
     mountedRef.current = true;
+
+    return () => {
+      eventBus.removeAllListeners(EVENTS.COMMON_HARDWARE.REJECTED);
+      eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
+      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
