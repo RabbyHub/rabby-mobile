@@ -22,6 +22,7 @@ import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRisk
 import { CreateSeedPhraseBackupScreen } from '../Address/CreateSeedPhraseBackupScreen';
 import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyScreen';
 import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
+import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -155,6 +156,17 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Create New Seed Phrase',
           title: 'Create New Seed Phrase',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.AddMnemonic}
+        component={AddSeedPhraseScreen}
+        options={{
+          headerTitle: 'Add from Current Seed Phrase',
+          title: 'Add from Current Seed Phrase',
           headerTitleStyle: {
             fontSize: 20,
           },
