@@ -281,3 +281,11 @@ export const activeAndPersistAccountsByMnemonics = async (
   };
   preferenceService.setCurrentAccount(_account as any);
 };
+
+export const getKeyringAccountsByAddress = async (address: string) => {
+  const keyring = _getMnemonicKeyringByAddress(address);
+  if (!keyring) {
+    throw new Error(t('background.error.notFoundKeyringByAddress'));
+  }
+  return await keyring.getAccounts();
+};

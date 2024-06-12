@@ -75,6 +75,7 @@ export const PasteTextArea: React.FC<Props> = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
+  const [isFocus, setIsFocus] = React.useState(false);
 
   const onPressPaste = React.useCallback(() => {
     Clipboard.getString().then(text => {
@@ -93,8 +94,15 @@ export const PasteTextArea: React.FC<Props> = ({
         style={StyleSheet.flatten([
           styles.textArea,
           error ? styles.textAreaError : {},
+          {
+            borderColor: isFocus
+              ? colors['blue-default']
+              : colors['neutral-line'],
+          },
         ])}>
         <TextInput
+          onFocus={() => setIsFocus(true)}
+          onBlur={() => setIsFocus(false)}
           placeholder={placeholder}
           multiline={true}
           style={styles.textAreaInput}

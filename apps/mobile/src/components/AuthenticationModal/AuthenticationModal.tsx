@@ -1,6 +1,5 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -12,6 +11,7 @@ import {
 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BottomSheetInput } from '../Input';
+import { CheckItem } from './CheckItem';
 
 export interface AuthenticationModalProps {
   validationHandler?(password: string): Promise<void>;
@@ -23,6 +23,7 @@ export interface AuthenticationModalProps {
   placeholder?: string;
   onFinished?(...args: any[]): void;
   onCancel?(): void;
+  needPassword?: boolean;
 }
 
 export const AuthenticationModal = ({
@@ -32,20 +33,31 @@ export const AuthenticationModal = ({
   description,
   placeholder,
   onCancel,
+  checklist,
+  needPassword = true,
 }: AuthenticationModalProps) => {
   const { t } = useTranslation();
   const { styles } = useThemeStyles(getStyle);
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string>();
+  const [checklistState, setChecklistState] = React.useState<boolean[]>(
+    checklist?.map(() => false) ?? [],
+  );
+  const isDisabled = checklistState.includes(false);
 
   const handleSubmit = React.useCallback(async () => {
+    if (isDisabled) {
+      return;
+    }
     try {
-      await validationHandler?.(password);
+      if (needPassword) {
+        await validationHandler?.(password);
+      }
       onFinished?.();
     } catch (err: any) {
       setError(err.message);
     }
-  }, [onFinished, password, validationHandler]);
+  }, [isDisabled, needPassword, onFinished, password, validationHandler]);
 
   React.useEffect(() => {
     setError('');
@@ -60,20 +72,43 @@ export const AuthenticationModal = ({
           {description && <Text style={styles.description}>{description}</Text>}
         </View>
 
-        <BottomSheetInput
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          customStyle={StyleSheet.flatten([
-            styles.input,
-            error ? styles.errorInput : {},
-          ])}
-          placeholder={
-            placeholder ??
-            t('component.AuthenticationModal.passwordPlaceholder')
-          }
-        />
-        {<Text style={styles.errorText}>{error}</Text>}
+        {checklist && checklist?.length > 0 && (
+          <View style={styles.checklist}>
+            {checklist.map((item, index) => (
+              <CheckItem
+                onPress={() => {
+                  const newState = [...checklistState];
+                  newState[index] = !newState[index];
+                  setChecklistState(newState);
+                }}
+                checked={checklistState[index]}
+                label={item}
+                key={index}
+              />
+            ))}
+          </View>
+        )}
+
+        {needPassword && (
+          <>
+            <BottomSheetInput
+              secureTextEntry
+              returnKeyLabel={t('global.Confirm')}
+              value={password}
+              onChangeText={setPassword}
+              onSubmitEditing={handleSubmit}
+              customStyle={StyleSheet.flatten([
+                styles.input,
+                error ? styles.errorInput : {},
+              ])}
+              placeholder={
+                placeholder ??
+                t('component.AuthenticationModal.passwordPlaceholder')
+              }
+            />
+            <Text style={styles.errorText}>{error}</Text>
+          </>
+        )}
       </View>
       <View style={styles.buttonGroup}>
         <Button
@@ -100,6 +135,9 @@ export const AuthenticationModal = ({
 AuthenticationModal.show = (props: AuthenticationModalProps) => {
   const id = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
+    bottomSheetModalProps: {
+      enableDynamicSizing: true,
+    },
     ...props,
     onCancel() {
       props.onCancel?.();
@@ -115,11 +153,15 @@ AuthenticationModal.show = (props: AuthenticationModalProps) => {
 
 const getStyle = createGetStyles(colors => {
   return {
+    checklist: {
+      gap: 12,
+      marginBottom: 24,
+    },
     description: {
       color: colors['neutral-body'],
-      fontSize: 16,
-      lineHeight: 22,
-      marginBottom: 24,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 16,
     },
     buttonGroup: {
       paddingHorizontal: 20,
@@ -129,7 +171,8 @@ const getStyle = createGetStyles(colors => {
       borderTopColor: colors['neutral-line'],
       borderTopWidth: StyleSheet.hairlineWidth,
       paddingTop: 20,
-      marginTop: 28,
+      marginTop: 20,
+      marginBottom: 40,
     },
     btnContainer: {
       flex: 1,

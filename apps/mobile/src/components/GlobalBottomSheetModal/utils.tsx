@@ -24,7 +24,8 @@ import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 
-export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
+type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
+export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
   [MODAL_NAMES.CANCEL_APPROVAL]: [288],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
@@ -46,7 +47,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['68%'],
-  [MODAL_NAMES.AUTHENTICATION]: [300],
+  [MODAL_NAMES.AUTHENTICATION]: undefined,
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
