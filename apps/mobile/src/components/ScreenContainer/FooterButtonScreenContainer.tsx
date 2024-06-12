@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ButtonProps } from '../Button';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -31,7 +32,7 @@ interface Props {
   children: React.ReactNode;
   onPressButton: () => void;
   buttonText: string;
-  buttonDisabled?: boolean;
+  btnProps?: ButtonProps;
 }
 
 /**
@@ -48,9 +49,9 @@ interface Props {
  */
 export const FooterButtonScreenContainer: React.FC<Props> = ({
   buttonText,
-  buttonDisabled,
   onPressButton,
   children,
+  btnProps,
 }) => {
   const { top } = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -70,7 +71,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
         disabledStyle={styles.footerButtonDisabled}
         title={buttonText}
         onPress={onPressButton}
-        disabled={buttonDisabled}
+        {...btnProps}
       />
     </KeyboardAvoidingView>
   );

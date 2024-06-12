@@ -44,12 +44,15 @@ import {
   AddressNavigatorParamList,
   RootStackParamsList,
 } from '@/navigation-type';
-import { toast } from '@/components/Toast';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { GnosisSafeInfo } from './components/GnosisSafeInfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { useTranslation } from 'react-i18next';
+import { apiMnemonic, apiPrivateKey } from '@/core/apis';
+import { keyringService } from '@/core/services';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -94,6 +97,7 @@ const AddressInfo = (props: AddressInfoProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [aliasName, setAliasName] = useAlias(account.address);
+  const { t } = useTranslation();
 
   const [aliasPendingName, setAliasPendingName] = useState(aliasName || '');
 
@@ -157,10 +161,6 @@ const AddressInfo = (props: AddressInfoProps) => {
     }, 10);
   }, [aliasName]);
 
-  const handlePresentDeleteModalPress = useCallback(() => {
-    deleteBottomSheetModalRef.current?.present();
-  }, []);
-
   const handleCloseInputModalPress = useCallback(() => {
     inputNameBottomSheetModalRef.current?.close();
   }, []);
@@ -181,6 +181,41 @@ const AddressInfo = (props: AddressInfoProps) => {
     }
   }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
 
+  const handlePresentDeleteModalPress = useCallback(async () => {
+    const count =
+      account.type === KEYRING_TYPE.HdKeyring
+        ? (await apiMnemonic.getKeyringAccountsByAddress(account.address))
+            .length
+        : 1;
+    const title =
+      account.type === KEYRING_TYPE.SimpleKeyring
+        ? 'Delete address and Private Key'
+        : account.type === KEYRING_TYPE.HdKeyring && count <= 1
+        ? 'Delete address and Seed Phrase'
+        : 'Delete address';
+    const needPassword =
+      account.type === KEYRING_TYPE.SimpleKeyring ||
+      (account.type === KEYRING_TYPE.HdKeyring && count <= 1);
+
+    AuthenticationModal.show({
+      confirmText: t('page.manageAddress.confirm'),
+      cancelText: t('page.manageAddress.cancel'),
+      title,
+      description: t('page.manageAddress.delete-desc'),
+      checklist: needPassword
+        ? [
+            t('page.manageAddress.delete-checklist-1'),
+            t('page.manageAddress.delete-checklist-2'),
+          ]
+        : undefined,
+      needPassword,
+      onFinished: handleDelete,
+      validationHandler: async (password: string) => {
+        return keyringService.verifyPassword(password);
+      },
+    });
+  }, [account.address, account.type, handleDelete, t]);
+
   const changeAddressNote = useCallback(() => {
     setAliasName(aliasPendingName);
     handleCloseInputModalPress();
@@ -200,10 +235,55 @@ const AddressInfo = (props: AddressInfoProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const handlePressBackupPrivateKey = useCallback(() => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.BackupPrivateKey,
+    let data = '';
+
+    AuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('global.Cancel'),
+      title: t('page.addressDetail.backup-private-key'),
+      validationHandler: async (password: string) => {
+        data = await apiPrivateKey.getPrivateKey(password, {
+          address: account.address,
+          type: account.type,
+        });
+      },
+      onFinished() {
+        if (!data) {
+          return;
+        }
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.BackupPrivateKey,
+          params: {
+            data,
+          },
+        });
+      },
     });
-  }, []);
+  }, [account, t]);
+
+  const handlePressBackupSeedPhrase = useCallback(() => {
+    let data = '';
+
+    AuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('global.Cancel'),
+      title: t('page.addressDetail.backup-seed-phrase'),
+      validationHandler: async (password: string) => {
+        data = await apiMnemonic.getMnemonics(password, account.address);
+      },
+      onFinished() {
+        if (!data) {
+          return;
+        }
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.BackupMnemonic,
+          params: {
+            data,
+          },
+        });
+      },
+    });
+  }, [account, t]);
 
   return (
     <View
@@ -523,25 +603,43 @@ const AddressInfo = (props: AddressInfoProps) => {
         </AppBottomSheetModal>
       </View>
 
-      {account.type === KEYRING_TYPE.SimpleKeyring && (
-        <TouchableOpacity
-          onPress={handlePressBackupPrivateKey}
-          style={styles.view}>
-          <View
-            style={StyleSheet.flatten([
-              styles.itemView,
-              styles.noBOrderBottom,
-            ])}>
-            <Text style={styles.labelText}>Backup Private Key</Text>
+      <View style={styles.view}>
+        {account.type === KEYRING_TYPE.SimpleKeyring ||
+          (account.type === KEYRING_TYPE.HdKeyring && (
+            <TouchableOpacity
+              style={StyleSheet.flatten([
+                styles.itemView,
+                styles.noBOrderBottom,
+              ])}
+              onPress={handlePressBackupPrivateKey}>
+              <Text style={styles.labelText}>
+                {t('page.addressDetail.backup-private-key')}
+              </Text>
+              <View style={styles.valueView}>
+                <RcIconRightCC
+                  style={styles.rightIcon}
+                  color={colors['neutral-foot']}
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
+
+        {account.type === KEYRING_TYPE.HdKeyring && (
+          <TouchableOpacity
+            style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
+            onPress={handlePressBackupSeedPhrase}>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.backup-seed-phrase')}
+            </Text>
             <View style={styles.valueView}>
               <RcIconRightCC
                 style={styles.rightIcon}
                 color={colors['neutral-foot']}
               />
             </View>
-          </View>
-        </TouchableOpacity>
-      )}
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={styles.view}>
         <View

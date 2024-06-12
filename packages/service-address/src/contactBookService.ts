@@ -77,6 +77,9 @@ export class ContactBookService {
   }
 
   getAliasByAddress(address: string) {
+    if (!address) {
+      return undefined;
+    }
     const alias = this.store.aliases[address.toLocaleLowerCase()];
     if (!alias) {
       return undefined;

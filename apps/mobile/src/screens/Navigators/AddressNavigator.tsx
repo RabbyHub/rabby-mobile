@@ -21,6 +21,7 @@ import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
 import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRiskCheckScreen';
 import { CreateSeedPhraseBackupScreen } from '../Address/CreateSeedPhraseBackupScreen';
 import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyScreen';
+import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -187,6 +188,17 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Backup Private Key',
           title: 'Backup Private Key',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.BackupMnemonic}
+        component={BackSeedPhraseScreen}
+        options={{
+          headerTitle: 'Backup Seed Phrase',
+          title: 'Backup Seed Phrase',
           headerTitleStyle: {
             fontSize: 20,
           },

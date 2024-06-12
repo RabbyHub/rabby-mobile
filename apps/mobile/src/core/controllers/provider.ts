@@ -62,6 +62,8 @@ import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 // import eventBus from '@/eventBus';
 
+const SIGN_TIMEOUT = 100;
+
 const reportSignText = (params: {
   method: string;
   account: Account;
@@ -873,6 +875,7 @@ class ProviderController extends BaseController {
         _data = JSON.parse(data);
       }
     }
+
     const keyring = await this._checkAddress(from);
 
     return keyringService.signTypedMessage(

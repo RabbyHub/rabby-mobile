@@ -17,9 +17,8 @@ import {
 } from '../Popup/ApprovalPopupContainer';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, Text, View } from 'react-native';
-import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
   KEYRING_CATEGORY_MAP,
@@ -27,6 +26,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
+import { getWalletIcon } from '@/utils/walletInfo';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
@@ -38,6 +38,7 @@ interface ApprovalParams {
   account?: Account;
   $ctx?: any;
   extra?: Record<string, any>;
+  type: string;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -69,97 +70,103 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const LedgerHardwareWaiting = ({
-  params,
-}: {
-  params: ApprovalParams;
-}) => {
+export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { setVisible, visible, closePopup } = useCommonPopupView();
-  const [statusProp, setStatusProp] =
-    React.useState<ApprovalPopupContainerProps['status']>('SENDING');
-  const [content, setContent] = React.useState('');
-  const [description, setDescription] = React.useState('');
-
-  const [connectStatus, setConnectStatus] = React.useState(
-    APPROVAL_STATUS_MAP.WAITING,
-  );
+  const { setTitle, setVisible, closePopup, setHeight } = useCommonPopupView();
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
+  const { t } = useTranslation();
+  const { type } = params;
+  const [errorMessage, setErrorMessage] = React.useState('');
   const chain = Object.values(CHAINS).find(
     item => item.id === (params.chainId || 1),
   )!;
-  const { t } = useTranslation();
-  const [isSignText, setIsSignText] = React.useState(false);
+  const [connectStatus, setConnectStatus] = React.useState(
+    APPROVAL_STATUS_MAP.SUBMITTING,
+  );
   const [result, setResult] = React.useState('');
-  const [errorMessage, setErrorMessage] = React.useState('');
   const [isClickDone, setIsClickDone] = React.useState(false);
   const [signFinishedData, setSignFinishedData] = React.useState<{
     data: any;
     approvalId: string;
   }>();
-  const firstConnectRef = React.useRef<boolean>(false);
-  const mountedRef = React.useRef(false);
-  const showDueToStatusChangeRef = React.useRef(false);
+  const [statusProp, setStatusProp] =
+    React.useState<ApprovalPopupContainerProps['status']>('SENDING');
+  const [content, setContent] = React.useState('');
+  const [description, setDescription] = React.useState('');
+
+  const handleRetry = async () => {
+    if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
+      toast.success(t('page.signFooterBar.ledger.resubmited'));
+      return;
+    }
+    setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
+    await notificationService.callCurrentRequestDeferFn();
+    toast.success(t('page.signFooterBar.ledger.resent'));
+  };
 
   const handleCancel = () => {
     rejectApproval('user cancel');
   };
 
-  const handleRetry = async (showToast = true) => {
-    if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
-      toast.success(t('page.signFooterBar.ledger.resubmitted'));
-      return;
+  const binaryTheme = useGetAppThemeMode();
+  const isLight = binaryTheme === 'light';
+
+  const brandContent = React.useMemo(() => {
+    switch (type) {
+      case KEYRING_CLASS.PRIVATE_KEY:
+        return {
+          name: 'Private Key',
+          icon: getWalletIcon(KEYRING_CLASS.PRIVATE_KEY, !isLight),
+        };
+      case KEYRING_CLASS.MNEMONIC:
+        return {
+          name: 'Seed Phrase',
+          icon: getWalletIcon(KEYRING_CLASS.MNEMONIC, !isLight),
+        };
+      default:
+        break;
     }
-    setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationService.callCurrentRequestDeferFn();
-    if (showToast) {
-      toast.success(t('page.signFooterBar.ledger.resent'));
-    }
-  };
+  }, [type, isLight]);
 
   const init = async () => {
     const account = params.isGnosis
       ? params.account!
       : (await preferenceService.getCurrentAccount())!;
+
     const approval = (await getApproval())!;
 
     const isSignText = params.isGnosis
       ? true
       : approval?.data.approvalType !== 'SignTx';
-    setIsSignText(isSignText);
+
     if (!isSignText) {
       const signingTxId = approval.data.params.signingTxId;
-      // const tx = approval.data?.params;
       if (signingTxId) {
-        // const { nonce, from, chainId } = tx;
-        // const explain = await wallet.getExplainCache({
-        //   nonce: Number(nonce),
-        //   address: from,
-        //   chainId: Number(chainId),
-        // });
-
         const signingTx = await transactionHistoryService.getSigningTx(
           signingTxId,
         );
 
-        if (!signingTx?.explain) {
+        if (!signingTx?.explain && chain && !chain.isTestnet) {
           setErrorMessage(t('page.signFooterBar.qrcode.failedToGetExplain'));
           return;
         }
 
-        const explain = signingTx.explain;
+        const explain = signingTx?.explain;
 
         stats.report('signTransaction', {
           type: account.brandName,
-          chainId: chain.serverId,
+          chainId: chain?.serverId || '',
           category: KEYRING_CATEGORY_MAP[account.type],
           preExecSuccess: explain
             ? explain?.calcSuccess && explain?.pre_exec.success
             : true,
-          createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+          createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
           source: params?.$ctx?.ga?.source || '',
           trigger: params?.$ctx?.ga?.trigger || '',
+          networkType: chain?.isTestnet
+            ? 'Custom Network'
+            : 'Integrated Network',
         });
       }
     } else {
@@ -169,13 +176,7 @@ export const LedgerHardwareWaiting = ({
         method: params?.extra?.signTextMethod,
       });
     }
-    eventBus.addListener(EVENTS.LEDGER.REJECT_APPROVAL, data => {
-      rejectApproval(data, false, true);
-    });
-    eventBus.addListener(EVENTS.LEDGER.REJECTED, async data => {
-      setErrorMessage(data);
-      setConnectStatus(APPROVAL_STATUS_MAP.REJECTED);
-    });
+
     eventBus.addListener(EVENTS.TX_SUBMITTING, async () => {
       setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     });
@@ -189,54 +190,43 @@ export const LedgerHardwareWaiting = ({
             sig = adjustV('eth_signTypedData', sig);
             const sigs = await apisSafe.getGnosisTransactionSignatures();
             if (sigs.length > 0) {
-              await apisSafe.gnosisAddConfirmation(account.address, sig);
+              await apisSafe.gnosisAddConfirmation(account.address, data.data);
             } else {
-              await apisSafe.gnosisAddSignature(account.address, sig);
+              await apisSafe.gnosisAddSignature(account.address, data.data);
               await apisSafe.postGnosisTransaction();
             }
           }
-        } catch (e) {
-          Sentry.captureException(e);
+        } catch (e: any) {
           setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
+          setErrorMessage(e.message);
           return;
         }
-
         matomoRequestEvent({
           category: 'Transaction',
           action: 'Submit',
-          label: KEYRING_CLASS.HARDWARE.LEDGER,
+          label: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
         });
-
         setSignFinishedData({
           data: sig,
           approvalId: approval.id,
         });
       } else {
-        Sentry.captureException(
-          new Error('Ledger sign error: ' + JSON.stringify(data)),
-        );
         setConnectStatus(APPROVAL_STATUS_MAP.FAILED);
         setErrorMessage(data.errorMsg);
       }
     });
   };
 
-  React.useEffect(() => {
-    firstConnectRef.current = true;
-  }, []);
+  const Icon = brandContent?.icon;
 
   React.useEffect(() => {
     init();
     emitSignComponentAmounted();
-    mountedRef.current = true;
 
     return () => {
-      eventBus.removeAllListeners(EVENTS.LEDGER.REJECT_APPROVAL);
-      eventBus.removeAllListeners(EVENTS.LEDGER.REJECTED);
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
       eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
     };
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -252,60 +242,6 @@ export const LedgerHardwareWaiting = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
-
-  React.useEffect(() => {
-    setVisible(true);
-    showDueToStatusChangeRef.current = true;
-    switch (connectStatus) {
-      case APPROVAL_STATUS_MAP.WAITING:
-        setStatusProp('SENDING');
-        setContent(t('page.signFooterBar.ledger.siging'));
-        setDescription('');
-        break;
-      case APPROVAL_STATUS_MAP.SUBMITTING:
-        setStatusProp('SENDING');
-        setContent(t('page.signFooterBar.ledger.submitting'));
-        setDescription('');
-        break;
-      case APPROVAL_STATUS_MAP.REJECTED:
-        setStatusProp('REJECTED');
-        setContent(t('page.signFooterBar.ledger.txRejected'));
-        setDescription(errorMessage);
-        break;
-      case APPROVAL_STATUS_MAP.FAILED:
-        setStatusProp('FAILED');
-        setContent(t('page.signFooterBar.qrcode.txFailed'));
-        setDescription(errorMessage);
-        break;
-      case APPROVAL_STATUS_MAP.SUBMITTED:
-        setStatusProp('RESOLVED');
-        setContent(t('page.signFooterBar.qrcode.sigCompleted'));
-        setDescription('');
-        break;
-      default:
-        break;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectStatus, errorMessage]);
-
-  const currentDescription = React.useMemo(() => {
-    if (description?.includes('0x650f')) {
-      return t('page.newAddress.ledger.error.lockedOrNoEthApp');
-    }
-    if (description?.includes('0x5515') || description?.includes('0x6b0c')) {
-      return t('page.signFooterBar.ledger.unlockAlert');
-    } else if (
-      description?.includes('0x6e00') ||
-      description?.includes('0x6b00')
-    ) {
-      return t('page.signFooterBar.ledger.updateFirmwareAlert');
-    } else if (description?.includes('0x6985')) {
-      return t('page.signFooterBar.ledger.txRejectedByLedger');
-    }
-
-    return description;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description]);
 
   const renderContent = React.useCallback(
     ({ contentColor }) => (
@@ -324,27 +260,54 @@ export const LedgerHardwareWaiting = ({
     [colors, content, styles.content, styles.contentWrapper],
   );
 
+  React.useEffect(() => {
+    setVisible(true);
+    switch (connectStatus) {
+      case APPROVAL_STATUS_MAP.WAITING:
+      case APPROVAL_STATUS_MAP.SUBMITTING:
+        setStatusProp('SENDING');
+        setContent(t('page.signFooterBar.ledger.submitting'));
+        setDescription('');
+        break;
+      case APPROVAL_STATUS_MAP.FAILED:
+        setStatusProp('FAILED');
+        setContent(t('page.signFooterBar.qrcode.txFailed'));
+        setDescription(errorMessage);
+        break;
+      case APPROVAL_STATUS_MAP.SUBMITTED:
+        setStatusProp('RESOLVED');
+        setContent(t('page.signFooterBar.qrcode.sigCompleted'));
+        setDescription('');
+        break;
+      default:
+        setDescription('');
+        break;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectStatus, errorMessage]);
+
   return (
     <View>
       <View style={styles.titleWrapper}>
-        <LedgerSVG width={20} height={20} style={styles.brandIcon} />
+        {Icon && <Icon width={20} height={20} style={styles.brandIcon} />}
+
         <Text style={styles.title}>
-          {t('page.signFooterBar.qrcode.signWith', { brand: 'Ledger' })}
+          {t('page.signFooterBar.qrcode.signWith', {
+            brand: brandContent?.name,
+          })}
         </Text>
       </View>
 
       <ApprovalPopupContainer
         showAnimation
-        hdType="ledger"
+        hdType={'privatekey'}
         status={statusProp}
-        onRetry={() => handleRetry()}
+        onRetry={handleRetry}
+        content={renderContent}
+        description={description}
         onDone={() => setIsClickDone(true)}
         onCancel={handleCancel}
-        description={currentDescription}
-        content={renderContent}
-        hasMoreDescription={
-          statusProp === 'REJECTED' || statusProp === 'FAILED'
-        }
+        hasMoreDescription={!!description}
       />
     </View>
   );

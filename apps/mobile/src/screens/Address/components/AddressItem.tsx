@@ -107,6 +107,10 @@ export const AddressItem = (props: AddressItemProps) => {
     ],
   );
 
+  const disableDeleteButton =
+    wallet.type === KEYRING_TYPE.SimpleKeyring ||
+    wallet.type === KEYRING_TYPE.HdKeyring;
+
   return (
     <Swipeable
       ref={swipeRef}
@@ -126,7 +130,7 @@ export const AddressItem = (props: AddressItemProps) => {
               ) => (
                 <View
                   style={{
-                    width: 112,
+                    width: disableDeleteButton ? 56 : 112,
                     flexDirection: 'row',
                   }}>
                   {renderRightAction(
@@ -135,15 +139,16 @@ export const AddressItem = (props: AddressItemProps) => {
                     112,
                     progress,
                   )}
-                  {renderRightAction(
-                    'delete',
-                    themeColors['red-default'],
-                    56,
-                    progress,
-                  )}
+                  {!disableDeleteButton &&
+                    renderRightAction(
+                      'delete',
+                      themeColors['red-default'],
+                      56,
+                      progress,
+                    )}
                 </View>
               ),
-        [isCurrentAddress, renderRightAction, themeColors],
+        [disableDeleteButton, isCurrentAddress, renderRightAction, themeColors],
       )}>
       <TouchableOpacity
         onPress={handleSwitch}

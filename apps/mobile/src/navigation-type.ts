@@ -25,6 +25,10 @@ export type RootStackParamsList = {
   [RootNames.ImportHardware]?: {
     type: KEYRING_TYPE;
     brand?: string;
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.Scanner]?: {};
 };
@@ -50,6 +54,10 @@ export type AddressNavigatorParamList = {
     isFirstImport?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -64,7 +72,12 @@ export type AddressNavigatorParamList = {
   [RootNames.CreateMnemonic]?: {};
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
-  [RootNames.BackupPrivateKey]?: {};
+  [RootNames.BackupPrivateKey]?: {
+    data: string;
+  };
+  [RootNames.BackupMnemonic]?: {
+    data: string;
+  };
 };
 
 export type AccountNavigatorParamList = {

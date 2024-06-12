@@ -1,17 +1,14 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { RcIconInfo2CC } from '@/assets/icons/common';
-import QRCode from 'react-native-qrcode-svg';
 import { RootNames } from '@/constant/layout';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { MaskContainer } from './components/MaskContainer';
-
-const QR_CODE_WIDTH = Dimensions.get('window').width - 130;
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -29,23 +26,11 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 14,
       flex: 1,
     },
-    privateKeyContainer: {
+    seedPhraseContainer: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       padding: 12,
       height: 100,
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    qrCodeContainer: {
-      backgroundColor: colors['neutral-bg1'],
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors['neutral-line'],
-      width: QR_CODE_WIDTH + 20,
-      height: QR_CODE_WIDTH + 20,
-      alignItems: 'center',
-      justifyContent: 'center',
       position: 'relative',
       overflow: 'hidden',
     },
@@ -54,7 +39,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       alignItems: 'center',
     },
-    privateKeyContainerText: {
+    seedPhraseContainerText: {
       color: colors['neutral-title1'],
       fontSize: 15,
       lineHeight: 20,
@@ -66,13 +51,13 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const BackupPrivateKeyScreen = () => {
+export const BackSeedPhraseScreen = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const nav = useNavigation();
   const { data } = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.BackupPrivateKey)?.params,
+    s => s.routes.find(r => r.name === RootNames.BackupMnemonic)?.params,
   ) as {
     data: string;
   };
@@ -89,26 +74,16 @@ export const BackupPrivateKeyScreen = () => {
         <View style={styles.alert}>
           <RcIconInfo2CC color={colors['red-default']} />
           <Text style={styles.alertText}>
-            {t('page.backupPrivateKey.alert')}
+            {t('page.backupSeedPhrase.alert')}
           </Text>
         </View>
 
-        <View style={styles.qrCodeContainer}>
-          <MaskContainer
-            textSize={17}
-            logoSize={52}
-            textGap={16}
-            flexDirection="column"
-            text={t('page.backupPrivateKey.clickToShowQr')}
-          />
-          {data && <QRCode size={QR_CODE_WIDTH} value={data} />}
-        </View>
-        <View style={styles.privateKeyContainer}>
+        <View style={styles.seedPhraseContainer}>
           <MaskContainer
             isLight
-            text={t('page.backupPrivateKey.clickToShow')}
+            text={t('page.backupSeedPhrase.clickToShow')}
           />
-          <Text style={styles.privateKeyContainerText}>{data}</Text>
+          <Text style={styles.seedPhraseContainerText}>{data}</Text>
           <CopyAddressIcon style={styles.copyButton} address={data} />
         </View>
       </View>

@@ -1,7 +1,7 @@
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, generateAliasName } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
-import { keyringService, preferenceService } from '../services';
+import { contactService, keyringService, preferenceService } from '../services';
 import { Account } from '../services/preference';
 import { addKeyringToStash, stashKeyrings, _getKeyringByType } from './keyring';
 
@@ -259,25 +259,58 @@ export const activeAndPersistAccountsByMnemonics = async (
   mnemonics: string,
   passphrase: string,
   accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
+  addDefaultAlias = false,
 ) => {
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
   if (!keyring) {
     throw new Error('[activeAndPersistAccountsByMnemonics] no keyring found.');
   }
-  await requestHDKeyringByMnemonics(
-    mnemonics,
-    'activeAccounts',
-    passphrase,
+
+  const accounts: string[] = await (keyring as any).getAccounts();
+
+  const currentLength = accounts.length;
+
+  // await requestHDKeyringByMnemonics(
+  //   mnemonics,
+  //   'activeAccounts',
+  //   passphrase,
+  //   accountsToImport.map(acc => (acc as any).index! - 1),
+  // );
+
+  await keyring.activeAccounts(
     accountsToImport.map(acc => (acc as any).index! - 1),
   );
 
   await keyringService.persistAllKeyrings();
-  const accounts: string[] = await (keyring as any).getAccounts();
 
   const _account = {
     address: accountsToImport[0].address,
     type: keyring.type,
     brandName: keyring.type,
   };
+  if (addDefaultAlias) {
+    accountsToImport.forEach(({ address }, index) => {
+      if (!contactService.getContactByAddress(address)) {
+        const alias = generateAliasName({
+          keyringType: keyring.type,
+          brandName: keyring.type,
+          keyringCount: keyring?.index,
+          addressCount: (currentLength ?? 0) + index,
+        });
+        contactService.setAlias({
+          address,
+          alias,
+        });
+      }
+    });
+  }
   preferenceService.setCurrentAccount(_account as any);
+};
+
+export const getKeyringAccountsByAddress = async (address: string) => {
+  const keyring = _getMnemonicKeyringByAddress(address);
+  if (!keyring) {
+    throw new Error(t('background.error.notFoundKeyringByAddress'));
+  }
+  return await keyring.getAccounts();
 };

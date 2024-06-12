@@ -95,7 +95,9 @@ export const CreateSeedPhraseRickCheckScreen = () => {
 
   return (
     <FooterButtonScreenContainer
-      buttonDisabled={!isAllChecked}
+      btnProps={{
+        disabled: !isAllChecked,
+      }}
       buttonText={t('page.newAddress.seedPhrase.showSeedPhrase')}
       onPressButton={handleConfirm}>
       <View style={styles.tipsWarper}>

@@ -17,6 +17,7 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { CHAINS_ENUM } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
+import { waitSignComponentAmounted } from '../utils/signEvent';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -255,7 +256,20 @@ const flowContext = flow
       session: { origin },
     } = request;
     const requestDeferFn = async () =>
-      new Promise((resolve, reject) => {
+      new Promise(async (resolve, reject) => {
+        if (
+          [
+            'ethSendTransaction',
+            'personalSign',
+            'ethSignTypedData',
+            'ethSignTypedDataV1',
+            'ethSignTypedDataV3',
+            'ethSignTypedDataV4',
+          ].includes(ctx.mapMethod)
+        ) {
+          await waitSignComponentAmounted();
+        }
+
         return Promise.resolve(
           providerController[mapMethod]({
             ...request,

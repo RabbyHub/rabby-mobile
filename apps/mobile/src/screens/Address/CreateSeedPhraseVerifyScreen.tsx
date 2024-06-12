@@ -216,7 +216,9 @@ export const CreateSeedPhraseVerifyScreen = () => {
 
   return (
     <FooterButtonScreenContainer
-      buttonDisabled={selectedWord.length < 3}
+      btnProps={{
+        disabled: selectedWord.length < 3,
+      }}
       buttonText={'Next'}
       onPressButton={handleConfirm}>
       <View style={styles.tipsWarper}>

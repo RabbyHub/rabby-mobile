@@ -37,16 +37,16 @@ export const ImportAddressList = () => {
       <WalletHeadline Icon={ImportAddressSVG}>Import an Address</WalletHeadline>
       <WalletItem
         style={styles.walletItem}
+        Icon={SeedPhraseSVG}
+        title="Import Seed Phrase"
+        onPress={handleSeedPhrase}
+      />
+      <WalletItem
+        style={styles.walletItem}
         Icon={PrivateKeySVG}
         title="Import Private Key"
         onPress={handlePrivateKey}
       />
-      {/* <WalletItem
-        style={styles.walletItem}
-        Icon={SeedPhraseSVG}
-        title="Import Seed Phrase"
-        onPress={handleSeedPhrase}
-      /> */}
     </View>
   );
 };

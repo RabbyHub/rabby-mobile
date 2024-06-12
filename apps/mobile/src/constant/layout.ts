@@ -78,6 +78,7 @@ export const RootNames = {
   CreateMnemonicVerify: 'CreateMnemonicVerify',
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
+  BackupMnemonic: 'BackupMnemonic',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

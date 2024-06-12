@@ -22,8 +22,11 @@ import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
+import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
+import { SettingHDKeyring } from '../HDSetting/SettingHDKering';
 
-export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
+type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
+export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
   [MODAL_NAMES.CANCEL_APPROVAL]: [288],
   [MODAL_NAMES.SWITCH_ADDRESS]: ['45%'],
@@ -36,6 +39,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: [272],
   [MODAL_NAMES.CONNECT_LEDGER]: ['68%'],
   [MODAL_NAMES.SETTING_LEDGER]: ['85%'],
+  [MODAL_NAMES.SETTING_HDKEYRING]: ['85%'],
   [MODAL_NAMES.CONNECT_KEYSTONE]: ['68%'],
   [MODAL_NAMES.SETTING_KEYSTONE]: ['65%'],
   [MODAL_NAMES.CONNECT_ONEKEY]: ['68%'],
@@ -45,6 +49,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['68%'],
+  [MODAL_NAMES.AUTHENTICATION]: undefined,
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -59,6 +64,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
   [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440, 455],
   [APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting]: [400, 455],
+  [APPROVAL_MODAL_NAMES.PrivatekeyWaiting]: [200, 255],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -78,12 +84,14 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SETTING_KEYSTONE]: SettingKeystone,
   [MODAL_NAMES.CONNECT_ONEKEY]: ConnectOneKey,
   [MODAL_NAMES.SETTING_ONEKEY]: SettingOneKey,
+  [MODAL_NAMES.SETTING_HDKEYRING]: SettingHDKeyring,
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: OneKeyInputPin,
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
+  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
 };
 
 export function makeBottomSheetProps(ctx: {
@@ -107,6 +115,7 @@ export function makeBottomSheetProps(ctx: {
       [
         APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
         APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
+        APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
         APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
         APPROVAL_MODAL_NAMES.WatchAddressWaiting,
       ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)

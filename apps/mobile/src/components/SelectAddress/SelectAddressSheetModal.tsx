@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, View, Text, Platform } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetScrollView,
   BottomSheetView,
@@ -21,15 +20,11 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import AccountCard from './components/AccountCard';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '../GlobalBottomSheetModal';
-import FooterComponentForConfirm from '../customized/FooterComponentForConfirm';
-import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import ModalConfirmDiscard from './components/ModalConfirmDiscard';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { ModalLayouts } from '@/constant/layout';
+import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
+import { keyringService } from '@/core/services';
 
 export interface SelectAddressProps {
   heightPercent?: `${number}%`;
@@ -89,43 +84,17 @@ export function SelectAddressSheetModal({
     });
   }, [whitelistEnabled, accountsList, whitelist]);
 
-  const confirmIdRef = useRef<string | null>(null);
   const onPressSaveButton = useCallback(async () => {
     if (isEditing) {
-      if (confirmIdRef.current) return;
-
-      const clearConfirm = () => {
-        if (confirmIdRef.current) {
-          removeGlobalBottomSheetModal(confirmIdRef.current);
-          confirmIdRef.current = null;
-        }
-      };
-
-      confirmIdRef.current = createGlobalBottomSheetModal({
-        name: MODAL_NAMES.SIMPLE_CONFIRM,
+      AuthenticationModal.show({
+        confirmText: t('global.Confirm'),
+        cancelText: t('global.Cancel'),
         title: t('component.Contact.ListModal.authModal.title'),
-        bottomSheetModalProps: {
-          footerComponent: () => {
-            return (
-              <FooterComponentForConfirm
-                confirmButtonProps={{
-                  type: 'primary',
-                }}
-                onConfirm={async () => {
-                  try {
-                    await setWhitelist(localWhiteList);
-                    setEditing(!isEditing);
-                    // onClose?.({ behavior: 'confirmed' });
-                  } finally {
-                    clearConfirm();
-                  }
-                }}
-                onCancel={() => {
-                  clearConfirm();
-                }}
-              />
-            );
-          },
+        validationHandler: async (password: string) =>
+          keyringService.verifyPassword(password),
+        onFinished() {
+          setWhitelist(localWhiteList);
+          setEditing(!isEditing);
         },
       });
     } else {

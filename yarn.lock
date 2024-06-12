@@ -5779,9 +5779,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/eth-hd-keyring@npm:beta":
-  version: 4.3.0-beta.3
-  resolution: "@rabby-wallet/eth-hd-keyring@npm:4.3.0-beta.3"
+"@rabby-wallet/eth-hd-keyring@npm:4.3.1":
+  version: 4.3.1
+  resolution: "@rabby-wallet/eth-hd-keyring@npm:4.3.1"
   dependencies:
     "@ethereumjs/util": ^9.0.0
     "@metamask/eth-sig-util": ^4.0.0
@@ -5790,7 +5790,7 @@ __metadata:
     eth-sig-util: ^3.0.1
     ethereum-cryptography: ^2.1.2
     slip39: ^0.1.9
-  checksum: a5f5060d79160144af1bd6906bf349d192aec781fce6b908d8d2bfe0b3aa303e89a63b9c36f5db33b53f36d07304fcb03170e191ecbaea1d14542023490de3fb
+  checksum: 21f2d6cdb63990a08b184074c1eec2d91f5409c59ba0c74a2d2b31f98a44cde973368bf230449c1c695c8d033e159aaf80bc95b22dc84f2b9308726436e5c1a2
   languageName: node
   linkType: hard
 
@@ -27565,7 +27565,7 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": ^0.3.43-alpha.0
     "@rabby-wallet/biz-utils": "workspace:^"
-    "@rabby-wallet/eth-hd-keyring": beta
+    "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"

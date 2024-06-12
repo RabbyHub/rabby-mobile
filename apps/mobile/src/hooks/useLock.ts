@@ -1,25 +1,10 @@
-import React from 'react';
-import { AppState, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 
-// import {
-//   blockScreen as RNBSBlockScree,
-//   unblockScreen as RNBSUnBlockScree
-// } from 'react-native-background-secure';
+const isAndroid = Platform.OS === 'android';
+const isIOS = Platform.OS === 'ios';
 
-// const isAndroid = Platform.OS === 'android';
-// function blockScreen() {
-//   if (isAndroid) {
-//     RNBSBlockScree();
-//   }
-// }
-
-// function unblockScreen() {
-//   if (isAndroid) {
-//     RNBSUnBlockScree();
-//   }
-// }
-
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -39,37 +24,74 @@ export function useAppUnlocked() {
   };
 }
 
-const isOnBackgroundAtom = atom<boolean>(false);
-export function useIsOnBackground() {
-  const [isOnBackground] = useAtom(isOnBackgroundAtom);
-  return { isOnBackground };
+const FALLBACK_STATE: AppStateStatus = isIOS ? 'unknown' : 'active';
+function tryGetAppStatus() {
+  try {
+    if (!AppState.isAvailable) return FALLBACK_STATE;
+
+    return AppState.currentState;
+  } catch (err) {
+    return FALLBACK_STATE;
+  }
 }
+
+const appStatusAtom = atom<{
+  status: AppStateStatus;
+  // iosStatus: AppStateStatus;
+}>({
+  status: tryGetAppStatus(),
+  // iosStatus: FALLBACK_STATE,
+});
+
+export function useIsOnBackground() {
+  const appState = useAtomValue(appStatusAtom);
+
+  const isOnBackground = useMemo(() => {
+    if (isIOS) {
+      return [
+        'inactive',
+        /* not possible for our app, but just write here */
+        'background',
+      ].includes(appState.status);
+    }
+
+    return appState.status === 'background';
+  }, [appState.status]);
+
+  return {
+    isOnBackground,
+  };
+}
+
 /**
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  const appStateRef = React.useRef(AppState.currentState);
-  const [_isOnBackground, setIsOnBackground] = useAtom(isOnBackgroundAtom);
+  const setAppStatus = useSetAtom(appStatusAtom);
 
   React.useEffect(() => {
     if (!AppState.isAvailable) return;
 
-    const subBlur = AppState.addEventListener('blur', nextAppState => {
-      appStateRef.current = nextAppState;
-      setIsOnBackground(true);
-    });
-    const subFocus = AppState.addEventListener('focus', nextAppState => {
-      appStateRef.current = nextAppState;
-      setIsOnBackground(false);
-    });
+    if (isAndroid) {
+      const subBlur = AppState.addEventListener('blur', nextStatus => {
+        setAppStatus({ status: nextStatus });
+      });
+      const subFocus = AppState.addEventListener('focus', nextStatus => {
+        setAppStatus({ status: nextStatus });
+      });
 
-    return () => {
-      subBlur.remove();
-      subFocus.remove();
-    };
-  }, [setIsOnBackground]);
+      return () => {
+        subBlur.remove();
+        subFocus.remove();
+      };
+    } else if (isIOS) {
+      const subChange = AppState.addEventListener('change', nextStatus => {
+        setAppStatus({ status: nextStatus });
+      });
 
-  return {
-    appState: appStateRef.current,
-  };
+      return () => {
+        subChange.remove();
+      };
+    }
+  }, [setAppStatus]);
 }
