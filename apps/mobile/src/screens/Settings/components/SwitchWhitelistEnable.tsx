@@ -1,64 +1,43 @@
 import { AppSwitch } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { useWhitelist } from '@/hooks/whitelist';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useEffect, useRef } from 'react';
-import { ConfirmBottomSheetModal } from './ConfirmBottomSheetModal';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
-
-const disabledText = {
-  title: 'Disable Whitelist',
-  desc: 'You can send assets to any address once disabled',
-};
-
-const enableWhitelistText = {
-  title: 'Enable Whitelist',
-  desc: 'Once enabled, you can only send assets to the addresses in the whitelist using Rabby.',
-};
-
-const switchWhitelistSheetModalPresentAtom = atom<
-  BottomSheetModalMethods['present'] | null
->(null);
+import { useTranslation } from 'react-i18next';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { keyringService } from '@/core/services';
 
 export const SwitchWhitelistEnable = () => {
   const { enable, toggleWhitelist } = useWhitelist();
   const colors = useThemeColors();
-  const sheetModalRef = useRef<BottomSheetModal>(null);
-  const setRefAtom = useSetAtom(switchWhitelistSheetModalPresentAtom);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    setRefAtom(pre => {
-      if (sheetModalRef.current && pre !== sheetModalRef.current.present) {
-        return sheetModalRef.current?.present;
-      }
-      return pre;
+  const handleWhitelistEnableChange = async (value: boolean) => {
+    await AuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('page.dashboard.settings.cancel'),
+      title: value
+        ? t('page.dashboard.settings.enableWhitelist')
+        : t('page.dashboard.settings.disableWhitelist'),
+      description: value
+        ? t('page.dashboard.settings.enableWhitelistTip')
+        : t('page.dashboard.settings.disableWhitelistTip'),
+      validationHandler: async (password: string) => {
+        return keyringService.verifyPassword(password);
+      },
+      onFinished() {
+        toggleWhitelist(value);
+      },
     });
-    return () => {
-      setRefAtom(null);
-    };
-  });
+  };
+
   return (
-    <>
-      <AppSwitch
-        value={!!enable}
-        changeValueImmediately={false}
-        onValueChange={() => {
-          sheetModalRef?.current?.dismiss();
-          sheetModalRef?.current?.present();
-        }}
-        backgroundActive={colors['green-default']}
-        circleBorderActiveColor={colors['green-default']}
-      />
-      <ConfirmBottomSheetModal
-        ref={sheetModalRef}
-        onConfirm={() => toggleWhitelist(!enable)}
-        height={298}
-        {...(enable ? disabledText : enableWhitelistText)}
-      />
-    </>
+    <AppSwitch
+      value={!!enable}
+      changeValueImmediately={false}
+      onValueChange={() => {
+        handleWhitelistEnableChange(!enable);
+      }}
+      backgroundActive={colors['green-default']}
+      circleBorderActiveColor={colors['green-default']}
+    />
   );
 };
-
-SwitchWhitelistEnable.usePresent = () =>
-  useAtomValue(switchWhitelistSheetModalPresentAtom);

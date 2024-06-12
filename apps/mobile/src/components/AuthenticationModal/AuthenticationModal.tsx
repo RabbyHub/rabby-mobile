@@ -55,6 +55,7 @@ export const AuthenticationModal = ({
       }
       onFinished?.();
     } catch (err: any) {
+      console.error(err);
       setError(err.message);
     }
   }, [isDisabled, needPassword, onFinished, password, validationHandler]);
@@ -217,7 +218,7 @@ const getStyle = createGetStyles(colors => {
       color: colors['red-default'],
       marginTop: 12,
       fontSize: 14,
-      height: 20,
+      minHeight: 20,
     },
     errorInput: {
       borderColor: colors['red-default'],

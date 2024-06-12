@@ -47,10 +47,7 @@ import ThemeSelectorModal, {
 import { createGetStyles } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
-import {
-  useManagePasswordOnSettings,
-  useSheetModalsForManagingPassword,
-} from '../ManagePassword/hooks';
+import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -68,7 +65,6 @@ export default function SettingsScreen(): JSX.Element {
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
 
-  const presentWhitelistModal = SwitchWhitelistEnable.usePresent();
   const { currentAccount } = useCurrentAccount();
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
@@ -143,9 +139,6 @@ export default function SettingsScreen(): JSX.Element {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
             rightNode: SwitchWhitelistEnable,
-            onPress: () => {
-              presentWhitelistModal?.();
-            },
           },
           {
             label: 'Custom RPC',

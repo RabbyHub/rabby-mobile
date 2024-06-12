@@ -21,6 +21,7 @@ const getStyles = (colors: AppColorsVariants) =>
       width: '100%',
       color: colors['neutral-title1'],
       fontSize: 15,
+      textAlignVertical: 'top',
       height: '100%',
     },
     textArea: {
