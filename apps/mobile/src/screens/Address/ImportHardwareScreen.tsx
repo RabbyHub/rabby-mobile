@@ -1,12 +1,13 @@
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiKeystone, apiLedger, apiOneKey } from '@/core/apis';
+import { apiKeystone, apiLedger, apiMnemonic, apiOneKey } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
   KEYRING_TYPE,
+  generateAliasName,
 } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
@@ -35,6 +36,7 @@ import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 
 const { isSameAddress } = addressUtils;
 
@@ -135,23 +137,35 @@ export const ImportHardwareScreen = () => {
     s => s.routes.find(r => r.name === RootNames.ImportHardware)?.params,
   ) as {
     type: KEYRING_TYPE;
+    mnemonics?: string;
+    passphrase?: string;
   };
+
   const apiHD = React.useMemo(() => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return apiLedger;
       case KEYRING_TYPE.OneKeyKeyring:
         return apiOneKey;
+      case KEYRING_TYPE.HdKeyring: {
+        return apiMnemonic.getKeyringByMnemonic(
+          state.mnemonics!,
+          state.passphrase!,
+        )!;
+      }
+
       default:
         return apiKeystone;
     }
-  }, [state.type]);
+  }, [state]);
   const hdType = React.useMemo(() => {
     switch (state.type) {
       case KEYRING_TYPE.LedgerKeyring:
         return KEYRING_TYPE.LedgerKeyring;
       case KEYRING_TYPE.OneKeyKeyring:
         return KEYRING_TYPE.OneKeyKeyring;
+      case KEYRING_TYPE.HdKeyring:
+        return KEYRING_TYPE.HdKeyring;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.type;
     }
@@ -162,6 +176,8 @@ export const ImportHardwareScreen = () => {
         return KEYRING_CLASS.HARDWARE.LEDGER;
       case KEYRING_TYPE.OneKeyKeyring:
         return KEYRING_CLASS.HARDWARE.ONEKEY;
+      case KEYRING_TYPE.HdKeyring:
+        return KEYRING_CLASS.MNEMONIC;
       default:
         return HARDWARE_KEYRING_TYPES.Keystone.brandName;
     }
@@ -271,11 +287,25 @@ export const ImportHardwareScreen = () => {
   }, [setting?.startNumber]);
 
   React.useEffect(() => {
-    apiHD.getCurrentAccounts().then(res => {
-      if (res) {
-        setCurrentAccounts(res);
-      }
-    });
+    if ('getCurrentAccounts' in apiHD) {
+      apiHD.getCurrentAccounts().then(res => {
+        if (res) {
+          setCurrentAccounts(res);
+        }
+      });
+    } else {
+      apiHD.getAccounts().then(res => {
+        if (res) {
+          const accounts = res.map((address, idx) => {
+            return {
+              address,
+              index: apiHD.getInfoByAddress(address)?.index || idx,
+            };
+          });
+          setCurrentAccounts(accounts);
+        }
+      });
+    }
   }, [apiHD, setting.hdPath]);
 
   React.useEffect(() => {
@@ -298,8 +328,18 @@ export const ImportHardwareScreen = () => {
       duration: 100000,
     });
     try {
-      for (const acc of selectedAccounts) {
-        await apiHD.importAddress(acc.index - 1);
+      console.log('selectedAccounts', selectedAccounts);
+      if ('importAddress' in apiHD) {
+        for (const acc of selectedAccounts) {
+          await apiHD.importAddress(acc.index - 1);
+        }
+      } else if (state?.mnemonics) {
+        await activeAndPersistAccountsByMnemonics(
+          state.mnemonics,
+          state.passphrase || '',
+          selectedAccounts as any,
+          true,
+        );
       }
 
       navigate(RootNames.StackAddress, {
@@ -317,7 +357,14 @@ export const ImportHardwareScreen = () => {
       importToastHiddenRef.current?.();
     }
     setImporting(false);
-  }, [apiHD, hdBrandName, hdType, selectedAccounts]);
+  }, [
+    apiHD,
+    hdBrandName,
+    hdType,
+    selectedAccounts,
+    state.mnemonics,
+    state.passphrase,
+  ]);
 
   React.useEffect(() => {
     return () => {

@@ -25,6 +25,10 @@ export type RootStackParamsList = {
   [RootNames.ImportHardware]?: {
     type: KEYRING_TYPE;
     brand?: string;
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.Scanner]?: {};
 };
@@ -50,6 +54,10 @@ export type AddressNavigatorParamList = {
     isFirstImport?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
