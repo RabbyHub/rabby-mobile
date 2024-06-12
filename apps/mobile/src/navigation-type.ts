@@ -72,6 +72,9 @@ export type AddressNavigatorParamList = {
   [RootNames.BackupPrivateKey]?: {
     data: string;
   };
+  [RootNames.BackupMnemonic]?: {
+    data: string;
+  };
 };
 
 export type AccountNavigatorParamList = {

@@ -244,7 +244,7 @@ const AddressInfo = (props: AddressInfoProps) => {
       validationHandler: async (password: string) => {
         data = await apiPrivateKey.getPrivateKey(password, {
           address: account.address,
-          type: KEYRING_TYPE.SimpleKeyring,
+          type: account.type,
         });
       },
       onFinished() {
@@ -253,6 +253,30 @@ const AddressInfo = (props: AddressInfoProps) => {
         }
         navigate(RootNames.StackAddress, {
           screen: RootNames.BackupPrivateKey,
+          params: {
+            data,
+          },
+        });
+      },
+    });
+  }, [account, t]);
+
+  const handlePressBackupSeedPhrase = useCallback(() => {
+    let data = '';
+
+    AuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('global.Cancel'),
+      title: t('page.addressDetail.backup-seed-phrase'),
+      validationHandler: async (password: string) => {
+        data = await apiMnemonic.getMnemonics(password, account.address);
+      },
+      onFinished() {
+        if (!data) {
+          return;
+        }
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.BackupMnemonic,
           params: {
             data,
           },
@@ -579,25 +603,43 @@ const AddressInfo = (props: AddressInfoProps) => {
         </AppBottomSheetModal>
       </View>
 
-      {account.type === KEYRING_TYPE.SimpleKeyring && (
-        <TouchableOpacity
-          onPress={handlePressBackupPrivateKey}
-          style={styles.view}>
-          <View
-            style={StyleSheet.flatten([
-              styles.itemView,
-              styles.noBOrderBottom,
-            ])}>
-            <Text style={styles.labelText}>Backup Private Key</Text>
+      <View style={styles.view}>
+        {account.type === KEYRING_TYPE.SimpleKeyring ||
+          (account.type === KEYRING_TYPE.HdKeyring && (
+            <TouchableOpacity
+              style={StyleSheet.flatten([
+                styles.itemView,
+                styles.noBOrderBottom,
+              ])}
+              onPress={handlePressBackupPrivateKey}>
+              <Text style={styles.labelText}>
+                {t('page.addressDetail.backup-private-key')}
+              </Text>
+              <View style={styles.valueView}>
+                <RcIconRightCC
+                  style={styles.rightIcon}
+                  color={colors['neutral-foot']}
+                />
+              </View>
+            </TouchableOpacity>
+          ))}
+
+        {account.type === KEYRING_TYPE.HdKeyring && (
+          <TouchableOpacity
+            style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
+            onPress={handlePressBackupSeedPhrase}>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.backup-seed-phrase')}
+            </Text>
             <View style={styles.valueView}>
               <RcIconRightCC
                 style={styles.rightIcon}
                 color={colors['neutral-foot']}
               />
             </View>
-          </View>
-        </TouchableOpacity>
-      )}
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={styles.view}>
         <View
