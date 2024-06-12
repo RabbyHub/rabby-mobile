@@ -1182,7 +1182,7 @@
         "importError": "[CreateMnemonics] unexpected step {{0}}",
         "importQuestion1": "If I lose my seed phrase, my assets will be lost forever.",
         "importQuestion2": "If I share my seed phrase with others, my assets will be stolen.",
-        "importQuestion3": "The seed phrase is only stored on my computer, and Rabby has no access to it.",
+        "importQuestion3": "The seed phrase is only stored on my phone, and Rabby has no access to it.",
         "importQuestion4": "If I uninstall Rabby without backing up the seed phrase, Rabby cannot retrieve it for me.",
         "riskTips": "Before you start, please read and keep the following security tips in mind.",
         "showSeedPhrase": "Show Seed Phrase",

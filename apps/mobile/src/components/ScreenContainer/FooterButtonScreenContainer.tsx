@@ -31,6 +31,7 @@ interface Props {
   children: React.ReactNode;
   onPressButton: () => void;
   buttonText: string;
+  buttonDisabled?: boolean;
 }
 
 /**
@@ -47,6 +48,7 @@ interface Props {
  */
 export const FooterButtonScreenContainer: React.FC<Props> = ({
   buttonText,
+  buttonDisabled,
   onPressButton,
   children,
 }) => {
@@ -68,6 +70,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
         disabledStyle={styles.footerButtonDisabled}
         title={buttonText}
         onPress={onPressButton}
+        disabled={buttonDisabled}
       />
     </KeyboardAvoidingView>
   );

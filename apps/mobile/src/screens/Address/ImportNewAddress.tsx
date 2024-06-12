@@ -17,6 +17,7 @@ import { WalletConnectList } from './components/WalletConnectList';
 import { WalletHeadline } from './components/WalletHeadline';
 import { WalletItem } from './components/WalletItem';
 import { ImportAddressList } from './components/ImportAddressList';
+import { CreateAddressList } from './components/CreateAddressList';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -27,6 +28,9 @@ function BottomBlockArea() {
 
   return (
     <View style={[styles.blockView]}>
+      <View style={styles.section}>
+        <CreateAddressList />
+      </View>
       <View style={styles.section}>
         <ImportAddressList />
       </View>

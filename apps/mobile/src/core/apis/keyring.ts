@@ -4,6 +4,7 @@ import { keyringService, preferenceService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
 import { EVENTS, eventBus } from '@/utils/events';
+import { t } from 'i18next';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -106,4 +107,23 @@ export const apisKeyring = {
     });
     return res;
   },
+};
+
+export const addKeyring = async (
+  keyringId: keyof typeof stashKeyrings,
+  byImport = true,
+) => {
+  const keyring = stashKeyrings[keyringId];
+  if (keyring) {
+    keyring.byImport = byImport;
+    // If keyring exits, just save
+    if (keyringService.keyrings.find(item => item === keyring)) {
+      await keyringService.persistAllKeyrings();
+    } else {
+      await keyringService.addKeyring(keyring);
+    }
+    _setCurrentAccountFromKeyring(keyring, -1);
+  } else {
+    throw new Error(t('background.error.addKeyring404'));
+  }
 };

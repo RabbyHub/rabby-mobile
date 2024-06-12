@@ -18,6 +18,9 @@ import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
 import { ScannerButton } from '../Address/ScannerButton';
 import { ImportSeedPhraseScreen } from '../Address/ImportSeedPhraseScreen';
 import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
+import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRiskCheckScreen';
+import { CreateSeedPhraseBackupScreen } from '../Address/CreateSeedPhraseBackupScreen';
+import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -143,6 +146,39 @@ export function AddressNavigator() {
             fontSize: 20,
           },
           headerRight: ScannerButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateMnemonic}
+        component={CreateSeedPhraseRickCheckScreen}
+        options={{
+          headerTitle: 'Create New Seed Phrase',
+          title: 'Create New Seed Phrase',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateMnemonicBackup}
+        component={CreateSeedPhraseBackupScreen}
+        options={{
+          headerTitle: 'Backup seed phrase',
+          title: 'Backup seed phrase',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateMnemonicVerify}
+        component={CreateSeedPhraseVerifyScreen}
+        options={{
+          headerTitle: 'Verify seed phrase  ',
+          title: 'Verify seed phrase',
+          headerTitleStyle: {
+            fontSize: 20,
+          },
         }}
       />
       <AddressStack.Screen

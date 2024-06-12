@@ -73,6 +73,9 @@ export const RootNames = {
   ImportHardware: 'ImportHardware',
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
+  CreateMnemonic: 'CreateMnemonic',
+  CreateMnemonicBackup: 'CreateMnemonicBackup',
+  CreateMnemonicVerify: 'CreateMnemonicVerify',
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
 } as const;

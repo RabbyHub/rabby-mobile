@@ -84,7 +84,7 @@ export const WalletItem: React.FC<Props> = ({
       }}>
       <View style={styles.flexBox}>
         <View style={[styles.keyringIcon]}>
-          <Icon width={'100%'} height={'100%'} />
+          <Icon width={'100%'} height={'100%'} color={colors['neutral-body']} />
         </View>
       </View>
       <View style={styles.titleWrap}>

@@ -61,6 +61,9 @@ export type AddressNavigatorParamList = {
   };
   [RootNames.ImportPrivateKey]?: {};
   [RootNames.ImportMnemonic]?: {};
+  [RootNames.CreateMnemonic]?: {};
+  [RootNames.CreateMnemonicBackup]?: {};
+  [RootNames.CreateMnemonicVerify]?: {};
   [RootNames.BackupPrivateKey]?: {};
 };
 
