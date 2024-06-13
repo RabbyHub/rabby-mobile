@@ -15,6 +15,7 @@ import { useGlobal } from './global';
 import { useAppUnlocked, useIsAppUnlocked } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
+import { useAccounts } from './account';
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -70,6 +71,7 @@ export function useInitializeAppOnTop() {
     }
   }, []);
 
+  const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('onUnlock::');
@@ -77,9 +79,11 @@ export function useInitializeAppOnTop() {
       sendUserAddressEvent();
 
       doInitializeApis();
+      fetchAccounts();
     };
     const onLock = () => {
       setAppLock(prev => ({ ...prev, appUnlocked: false }));
+      fetchAccounts();
     };
     keyringService.on('unlock', onUnlock);
     keyringService.on('lock', onLock);
@@ -88,7 +92,7 @@ export function useInitializeAppOnTop() {
       keyringService.off('unlock', onUnlock);
       keyringService.off('lock', onLock);
     };
-  }, [setAppLock, doInitializeApis]);
+  }, [setAppLock, doInitializeApis, fetchAccounts]);
 
   return { appUnlocked };
 }
