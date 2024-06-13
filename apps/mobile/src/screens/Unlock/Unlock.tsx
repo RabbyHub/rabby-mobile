@@ -18,7 +18,6 @@ import {
   resetNavigationToHome,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
 import { getFormikErrorsCount } from '@/utils/patch';
 
 const LAYOUTS = {

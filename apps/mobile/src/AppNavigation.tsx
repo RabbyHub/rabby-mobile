@@ -5,14 +5,13 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, Platform, StatusBar, View } from 'react-native';
+import { ColorSchemeName, View } from 'react-native';
 
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
-import { AppRootName, RootNames, getRootSpecConfig } from './constant/layout';
+import { RootNames } from './constant/layout';
 import {
-  useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
   useSetNavigationReady,
   useStackScreenConfig,
@@ -45,6 +44,7 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useIsAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
+import { AppStatusBar, useTuneStatusBar } from './components/AppStatusBar';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -61,55 +61,6 @@ const RootStackOptions = {
   animation: 'slide_from_right',
   headerShown: false,
 } as const;
-
-function AppStatusBar() {
-  const currentRouteName = useCurrentRouteNameInAppStatusBar();
-  const isLight = useGetAppThemeMode() === 'light';
-  const colors = useThemeColors();
-
-  // maybe we need more smooth transition on toggle active dapp
-  const hasActiveOpenedDapp = useHasActiveOpenedDapp();
-
-  const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
-    if (hasActiveOpenedDapp) {
-      return {
-        statusBarStyle: 'light-content' as const,
-        statusBarBackgroundColor: 'rgba(0, 0, 0, 1)',
-      };
-    }
-
-    const specConfig = currentRouteName
-      ? getRootSpecConfig(colors, { isDarkTheme: !isLight })[
-          currentRouteName as any as AppRootName
-        ]
-      : undefined;
-
-    return {
-      statusBarBackgroundColor:
-        specConfig?.statusbarBackgroundColor || colors['neutral-bg-2'],
-      statusBarStyle:
-        specConfig?.statusBarStyle ||
-        (isLight ? ('dark-content' as const) : ('light-content' as const)),
-    };
-  }, [isLight, colors, currentRouteName, hasActiveOpenedDapp]);
-
-  React.useEffect(() => {
-    StatusBar.setBarStyle(statusBarStyle, true);
-
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(statusBarBackgroundColor, true);
-    }
-  }, [statusBarBackgroundColor, statusBarStyle]);
-
-  return (
-    <StatusBar
-      animated
-      translucent
-      backgroundColor={statusBarBackgroundColor}
-      barStyle={statusBarStyle}
-    />
-  );
-}
 
 export default function AppNavigation({
   colorScheme,
@@ -136,15 +87,36 @@ export default function AppNavigation({
   const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
+  const { tuneStatusBar } = useTuneStatusBar();
 
-  const onReady = useCallback(() => {
+  const onCurrentRouteChange = useCallback(
+    (currentRouteName?: string) => {
+      currentRouteName =
+        currentRouteName || navigationRef?.getCurrentRoute()?.name;
+      routeNameRef.current = currentRouteName;
+      setCurrentRouteName(currentRouteName);
+      tuneStatusBar(currentRouteName);
+      __DEV__ &&
+        console.debug(
+          'onCurrentRouteChange::currentRouteName',
+          currentRouteName,
+        );
+
+      return currentRouteName;
+    },
+    [setCurrentRouteName, tuneStatusBar],
+  );
+
+  const onReady = useCallback<
+    React.ComponentProps<typeof NavigationContainer>['onReady'] & object
+  >(() => {
     setNavigationReady(true);
-    routeNameRef.current = navigationRef?.getCurrentRoute()?.name;
-    setCurrentRouteName(routeNameRef.current);
-    console.debug('routeNameRef', routeNameRef.current);
 
     if (isAppUnlocked === false) {
       replace(RootNames.Unlock);
+      onCurrentRouteChange(RootNames.Unlock);
+    } else {
+      onCurrentRouteChange();
     }
 
     analytics.logScreenView({
@@ -152,15 +124,17 @@ export default function AppNavigation({
       screen_class: routeNameRef.current,
     });
     matomoLogScreenView({ name: routeNameRef.current! });
-  }, [setNavigationReady, isAppUnlocked, setCurrentRouteName]);
+  }, [setNavigationReady, isAppUnlocked, onCurrentRouteChange]);
 
-  const onStateChange = useCallback(async () => {
+  const onStateChange = useCallback<
+    React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
+  >(() => {
     const previousRouteName = routeNameRef.current;
     const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
 
-    setCurrentRouteName(currentRouteName);
-
     if (previousRouteName !== currentRouteName) {
+      onCurrentRouteChange(currentRouteName);
+
       analytics.logScreenView({
         screen_name: routeNameRef.current,
         screen_class: routeNameRef.current,
@@ -168,7 +142,7 @@ export default function AppNavigation({
       matomoLogScreenView({ name: currentRouteName! });
     }
     routeNameRef.current = currentRouteName;
-  }, [setCurrentRouteName]);
+  }, [onCurrentRouteChange]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>

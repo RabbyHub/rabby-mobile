@@ -11,7 +11,7 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/native';
 
 import { makeThemeIconFromCC } from './makeThemeIcon';
@@ -23,7 +23,7 @@ const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onDark: ThemeColors.dark['neutral-body'],
 });
 
-const currentRouteNameAtom = atom<string | undefined>(undefined);
+const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
 export function useCurrentRouteNameInAppStatusBar() {
   return useAtomValue(currentRouteNameAtom);
 }

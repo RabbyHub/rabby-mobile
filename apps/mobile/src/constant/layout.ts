@@ -75,6 +75,12 @@ export const RootNames = {
 
 export type AppRootName = keyof typeof RootNames;
 
+export type ScreenStatusBarConf = {
+  statusBarStyle?: 'light-content' | 'dark-content';
+  androidStatusBarBg?: string;
+  androidTranslucent?: boolean;
+};
+
 export const getRootSpecConfig = (
   colors: AppColorsVariants,
   options?: {
@@ -83,58 +89,71 @@ export const getRootSpecConfig = (
 ) => {
   const { isDarkTheme } = options || {};
 
-  const defaultStatusBarStyle = isDarkTheme ? 'light-content' : 'dark-content';
+  const adaptiveStatusBarStyle = isDarkTheme ? 'light-content' : 'dark-content';
+
+  const bg1DefaultConf = {
+    statusBarStyle: adaptiveStatusBarStyle,
+    androidStatusBarBg: colors['neutral-bg1'],
+  };
+
+  const bg2DefaultConf = {
+    statusBarStyle: adaptiveStatusBarStyle,
+    androidStatusBarBg: colors['neutral-bg2'],
+  };
+
+  const card2DefaultConf = {
+    statusBarStyle: adaptiveStatusBarStyle,
+    androidStatusBarBg: colors['neutral-card2'],
+  };
+
+  const blueDefaultConf = {
+    statusBarStyle: adaptiveStatusBarStyle,
+    androidStatusBarBg: colors['blue-default'],
+  };
+
+  const blueLightConf = {
+    statusBarStyle: 'light-content',
+    androidStatusBarBg: colors['blue-default'],
+  };
 
   return {
-    Home: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['neutral-bg-1'],
-    },
-    Unlock: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['neutral-bg1'],
-    },
-    ImportWatchAddress: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['blue-default'],
-    },
-    ImportSafeAddress: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['blue-default'],
-    },
-    ImportSuccess: {
+    '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    '@bg1default': { ...bg1DefaultConf },
+    '@openeddapp': {
       statusBarStyle: 'light-content',
-      statusbarBackgroundColor: colors['blue-default'],
+      androidStatusBarBg: 'rgba(0, 0, 0, 1)',
     },
-    Send: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['neutral-card2'],
-    },
-    Receive: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['blue-default'],
-    },
-    GnosisTransactionQueue: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['neutral-card2'],
-    },
-    Approvals: {
-      statusBarStyle: defaultStatusBarStyle,
-      statusbarBackgroundColor: colors['neutral-card2'],
-    },
-    GasTopUp: {
-      statusBarStyle: 'light-content',
-      statusbarBackgroundColor: colors['blue-default'],
-    },
-    SetPassword: {
-      statusBarStyle: 'light-content',
-      statusbarBackgroundColor: colors['blue-default'],
-    },
+    Home: bg1DefaultConf,
+    Unlock: bg1DefaultConf,
+
+    // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+
+    // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+
+    // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    ImportWatchAddress: blueDefaultConf,
+    ImportSafeAddress: blueDefaultConf,
+    ImportSuccess: blueLightConf,
+
+    // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    Receive: blueLightConf,
+
+    GnosisTransactionQueue: card2DefaultConf,
+
+    Approvals: bg2DefaultConf,
+    GasTopUp: blueLightConf,
+
+    SetPassword: blueLightConf,
+    // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
   } as {
-    [P in AppRootName]?: {
-      statusBarStyle?: 'light-content' | 'dark-content';
-      statusbarBackgroundColor?: string;
-    };
+    '@default': ScreenStatusBarConf;
+    '@bg1default': ScreenStatusBarConf;
+    '@openeddapp': ScreenStatusBarConf;
+  } & {
+    [P in AppRootName]: ScreenStatusBarConf;
   };
 };
 
@@ -157,6 +176,17 @@ export function makeHeadersPresets({
     withBgCard2: {
       headerStyle: {
         backgroundColor: colors?.['neutral-card2'],
+      },
+      headerTitleStyle: {
+        color: colors?.['neutral-title-1'],
+        fontWeight: '500' as const,
+        fontSize: 20,
+      },
+      headerTintColor: colors?.['neutral-title-1'],
+    },
+    withBg2: {
+      headerStyle: {
+        backgroundColor: colors?.['neutral-bg2'],
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
