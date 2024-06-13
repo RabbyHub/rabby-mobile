@@ -39,7 +39,7 @@ export function _getKeyringByType(type: KeyringTypeName) {
   throw ethErrors.rpc.internal(`No ${type} keyring found`);
 }
 
-export function requestKeyring(
+export async function requestKeyring(
   type: KeyringTypeName,
   methodName: string,
   keyringId: number | null,

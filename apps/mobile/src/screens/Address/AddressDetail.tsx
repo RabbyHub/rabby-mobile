@@ -53,6 +53,7 @@ import { AuthenticationModal } from '@/components/AuthenticationModal/Authentica
 import { useTranslation } from 'react-i18next';
 import { apiMnemonic, apiPrivateKey } from '@/core/apis';
 import { keyringService } from '@/core/services';
+import { useAccountInfo } from '@/hooks/useAccountInfo';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -285,6 +286,12 @@ const AddressInfo = (props: AddressInfoProps) => {
     });
   }, [account, t]);
 
+  const accountInfo = useAccountInfo(
+    account.type,
+    account.address,
+    account.brandName,
+  );
+
   return (
     <View
       style={{
@@ -378,6 +385,7 @@ const AddressInfo = (props: AddressInfoProps) => {
               </Text>
             </View>
           </View>
+
           {account.type === KEYRING_TYPE.WalletConnectKeyring && (
             <View>
               <SessionStatusBar
@@ -398,6 +406,18 @@ const AddressInfo = (props: AddressInfoProps) => {
             </View>
           ) : null}
         </View>
+
+        {accountInfo && (
+          <View style={styles.itemView}>
+            <Text style={styles.labelText}>HD Path</Text>
+            <View style={styles.valueView}>
+              <Text
+                style={
+                  styles.valueText
+                }>{`${accountInfo.hdPathTypeLabel} #${accountInfo.index}`}</Text>
+            </View>
+          </View>
+        )}
 
         <AppBottomSheetModal
           backdropComponent={renderBackdrop}

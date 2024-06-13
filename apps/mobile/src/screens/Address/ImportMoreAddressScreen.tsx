@@ -42,6 +42,7 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 
 const { isSameAddress } = addressUtils;
 
@@ -186,7 +187,7 @@ export const ImportMoreAddressScreen = () => {
   const [accounts, setAccounts] = React.useState<LedgerAccount[]>([]);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [setting] = useAtom(settingAtom);
+  const [setting, setSetting] = useAtom(settingAtom);
   const stoppedRef = React.useRef(true);
   const exitRef = React.useRef(false);
   const startNumberRef = React.useRef((setting?.startNumber || 1) - 1);
@@ -342,6 +343,12 @@ export const ImportMoreAddressScreen = () => {
       stoppedRef.current = true;
     };
   }, []);
+
+  React.useEffect(() => {
+    if (state.type === KEYRING_TYPE.HdKeyring) {
+      setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
+    }
+  }, [setSetting, state.type]);
 
   const onCopy = React.useCallback((address: string) => {
     Clipboard.setString(address);

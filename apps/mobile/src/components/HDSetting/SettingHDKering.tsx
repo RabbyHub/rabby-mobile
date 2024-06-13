@@ -1,5 +1,5 @@
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MainContainer, settingAtom } from './MainContainer';
 import { requestKeyring } from '@/core/apis/keyring';
@@ -14,10 +14,6 @@ export const SettingHDKeyring: React.FC<{
 }> = ({ onDone, keyringId }) => {
   const { t } = useTranslation();
   const [setting, setSetting] = useAtom(settingAtom);
-
-  useEffect(() => {
-    setSetting({ hdPath: LedgerHDPathType.BIP44, startNumber: 1 });
-  }, [setSetting]);
 
   const hdPathOptions = React.useMemo(
     () => [
