@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
@@ -130,4 +130,45 @@ export function resetNavigationToHome(
       },
     ],
   });
+}
+
+export function usePreventGoBack({
+  navigation,
+  shouldGoback,
+}: {
+  navigation?: ReturnType<typeof useRabbyAppNavigation>;
+  shouldGoback: (() => boolean) | React.RefObject<boolean>;
+}) {
+  const shouldPreventFn = useCallback(() => {
+    if (typeof shouldGoback === 'function') {
+      return !shouldGoback();
+    }
+
+    return !shouldGoback.current;
+  }, [shouldGoback]);
+
+  const registerPreventEffect = useCallback(() => {
+    if (!navigation) return;
+
+    const listener: Parameters<
+      typeof navigation.addListener<'beforeRemove'>
+    >[1] = e => {
+      if (shouldPreventFn()) {
+        // Prevent default behavior of leaving the screen
+        e.preventDefault();
+
+        return false;
+      }
+    };
+
+    navigation.addListener('beforeRemove', listener);
+
+    return () => {
+      navigation.removeListener('beforeRemove', listener);
+    };
+  }, [navigation, shouldPreventFn]);
+
+  return {
+    registerPreventEffect,
+  };
 }

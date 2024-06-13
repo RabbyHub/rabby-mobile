@@ -1,6 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
@@ -16,9 +16,11 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { apisLock } from '@/core/apis';
 import {
   resetNavigationToHome,
+  usePreventGoBack,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
+import { useFocusEffect } from '@react-navigation/native';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -99,6 +101,13 @@ export default function UnlockScreen() {
 
     resetNavigationToHome(navigation);
   }, [navigation]);
+
+  const { registerPreventEffect } = usePreventGoBack({
+    navigation,
+    shouldGoback: useCallback(() => apisLock.isUnlocked(), []),
+  });
+
+  useFocusEffect(registerPreventEffect);
 
   return (
     <SilentTouchableView

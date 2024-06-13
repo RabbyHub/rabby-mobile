@@ -154,7 +154,6 @@ export function useJavaScriptBeforeContentLoaded(options?: {
  * @description only call this hook on the top level component
  */
 export function useBootstrapApp() {
-  const { isAppUnlocked } = useIsAppUnlocked();
   const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
@@ -187,6 +186,5 @@ export function useBootstrapApp() {
 
   return {
     couldRender,
-    shouldLeaveInUnlock: !isAppUnlocked,
   };
 }

@@ -47,6 +47,7 @@ import {
   AppStatusBar,
   useTuneStatusBarOnRouteChange,
 } from './components/AppStatusBar';
+import usePrevious from 'ahooks/lib/usePrevious';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -140,6 +141,12 @@ export default function AppNavigation({
     [onRouteChange],
   );
 
+  const previousRoute = usePrevious(routeNameRef.current);
+  const isSlideFromGetStarted =
+    [undefined, RootNames.GetStarted].includes(previousRoute as any) &&
+    routeNameRef.current === RootNames.Unlock;
+  // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar __isTop__ />
@@ -173,6 +180,11 @@ export default function AppNavigation({
             options={{
               ...screenOptions,
               title: '',
+              // another valid composition
+              // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+              // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+              animationTypeForReplace: 'push',
+              animation: 'fade_from_bottom',
               headerTitle: '',
               headerBackVisible: false,
               headerShadowVisible: false,
