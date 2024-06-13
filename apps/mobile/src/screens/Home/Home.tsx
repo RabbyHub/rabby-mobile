@@ -14,20 +14,20 @@ import {
   useFocusEffect,
   useNavigation,
 } from '@react-navigation/native';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { AssetContainer } from './AssetContainer';
 
 import { HomeTopArea } from './components/HomeTopArea';
 import { useMemoizedFn } from 'ahooks';
 import { keyringService } from '@/core/services';
-import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useUpdateNonce } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
+import { createGetStyles } from '@/utils/styles';
 
 function HomeScreen(): JSX.Element {
   const navigation = useNavigation();
-  const colors = useThemeColors();
+  const { styles, colors } = useThemeStyles(getStyles);
   const [nonce, setNonce] = useUpdateNonce();
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
@@ -79,7 +79,7 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <RootScreenContainer style={{ backgroundColor: colors['neutral-bg-1'] }}>
+    <RootScreenContainer style={styles.rootScreenContainer}>
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
           renderHeader={() => <HomeTopArea />}
@@ -92,27 +92,32 @@ function HomeScreen(): JSX.Element {
 
 HomeScreen.HeaderArea = HeaderArea;
 
-const styles = StyleSheet.create({
-  safeView: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+const getStyles = createGetStyles(colors => {
+  return {
+    rootScreenContainer: {
+      backgroundColor: colors['neutral-bg-1'],
+    },
+    safeView: {
+      flex: 1,
+      overflow: 'hidden',
+    },
+    sectionContainer: {
+      marginTop: 32,
+      paddingHorizontal: 24,
+    },
+    sectionTitle: {
+      fontSize: 24,
+      fontWeight: '600',
+    },
+    sectionDescription: {
+      marginTop: 8,
+      fontSize: 18,
+      fontWeight: '400',
+    },
+    highlight: {
+      fontWeight: '700',
+    },
+  };
 });
 
 export default HomeScreen;
