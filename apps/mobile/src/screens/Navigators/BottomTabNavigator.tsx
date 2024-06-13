@@ -14,9 +14,6 @@ import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
 
 import { Text } from '@/components';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-// import {analytics} from '@/utils/analytics';
-
-// import { LoginNavigator } from '@/screens';
 
 import HomeScreen from '@/screens/Home/Home';
 
