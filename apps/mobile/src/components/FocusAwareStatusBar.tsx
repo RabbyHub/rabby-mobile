@@ -1,7 +1,7 @@
 import { useIsFocused } from '@react-navigation/native';
 import { StatusBar, StatusBarProps } from 'react-native';
 
-import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
+import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 import {
   USE_ANDROID_STATUS_BAR_TRANSPARENT,
   useScreenAppStatusBarConf,
@@ -19,7 +19,7 @@ import { AppRootName } from '@/constant/layout';
 export const FocusAwareStatusBar = (props: StatusBarProps) => {
   const isFocused = useIsFocused();
   const colors = useThemeColors();
-  const isLight = useGetAppThemeMode() === 'light';
+  const isLight = useGetBinaryMode() === 'light';
 
   return isFocused ? (
     <StatusBar

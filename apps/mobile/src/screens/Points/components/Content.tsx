@@ -1,4 +1,4 @@
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -55,7 +55,7 @@ export const PointsContent = ({
   activitiesLoading: boolean;
   pointsEnded?: boolean;
 }) => {
-  const theme = useGetAppThemeMode();
+  const theme = useGetBinaryMode();
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(

@@ -5,7 +5,7 @@ import {
   useCurrentRouteNameInAppStatusBar,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { useGetAppThemeMode } from '@/hooks/theme';
+import { useGetBinaryMode } from '@/hooks/theme';
 import { useHasActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
 import {
   AppRootName,
@@ -58,7 +58,7 @@ export function useSafeSetNavigationOptions() {
 }
 
 function useTuneStatusBar() {
-  const _isDarkTheme = useGetAppThemeMode() !== 'light';
+  const _isDarkTheme = useGetBinaryMode() !== 'light';
   const hasActiveOpenedDapp = useHasActiveOpenedDapp();
 
   const tuneStatusBar = React.useCallback(
@@ -131,7 +131,7 @@ export function useScreenAppStatusBarConf(expectedRoute?: string) {
   //   return getLatestNavigationName() || currentRouteNameOrig;
   // }, [currentRouteNameOrig]);
 
-  const isLight = useGetAppThemeMode() === 'light';
+  const isLight = useGetBinaryMode() === 'light';
 
   // maybe we need more smooth transition on toggle active dapp
   const hasActiveOpenedDapp = useHasActiveOpenedDapp();

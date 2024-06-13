@@ -53,7 +53,7 @@ const ThemeModeStore = atom(
   },
 );
 
-export function useGetAppThemeMode() {
+export function useGetBinaryMode() {
   const appTheme = useAtomValue(ThemeModeStore);
   const colorScheme = useColorScheme();
 
@@ -123,7 +123,7 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
 };
 
 export const useThemeColors = (): AppColorsVariants => {
-  const binaryTheme = useGetAppThemeMode();
+  const binaryTheme = useGetBinaryMode();
 
   return ThemeColors[binaryTheme];
 };
@@ -131,10 +131,10 @@ export const useThemeColors = (): AppColorsVariants => {
 export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   getStyle: T,
 ) {
-  const binaryTheme = useGetAppThemeMode();
+  const binaryTheme = useGetBinaryMode();
   const colors = ThemeColors[binaryTheme] as AppColorsVariants;
 
-  const appThemeMode = useGetAppThemeMode();
+  const appThemeMode = useGetBinaryMode();
   const isLight = appThemeMode === 'light';
 
   const cs = React.useMemo(() => {
