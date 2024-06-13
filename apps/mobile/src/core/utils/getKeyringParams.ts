@@ -10,6 +10,8 @@ export function getKeyringParams(type: KeyringTypeName) {
       getTransport: deviceId => TransportBLE.open(deviceId),
       transportType: 'ble',
     };
+  } else if (type === KEYRING_TYPE.SimpleKeyring) {
+    return undefined;
   }
 
   return {};
