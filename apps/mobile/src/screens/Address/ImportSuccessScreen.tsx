@@ -193,7 +193,7 @@ export const ImportSuccessScreen = () => {
     if (!state.isFirstImport) {
       return;
     }
-    navigate(RootNames.ImportHardware, {
+    navigate(RootNames.ImportMoreAddress, {
       type: state.type,
       brand: state.brandName,
       mnemonics: state.mnemonics,

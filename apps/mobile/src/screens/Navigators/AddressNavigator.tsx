@@ -11,8 +11,8 @@ import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
 import AddressDetailScreen from '../Address/AddressDetail';
-import { ImportHardwareScreen } from '../Address/ImportHardwareScreen';
-import { ImportHardwareScreenButton } from '../Address/ImportHardwareScreenButton';
+import { ImportMoreAddressScreen } from '../Address/ImportMoreAddressScreen';
+import { ImportMoreAddressScreenButton } from '../Address/ImportMoreAddressScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
 import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
 import { ScannerButton } from '../Address/ScannerButton';
@@ -115,15 +115,15 @@ export function AddressNavigator() {
         }}
       />
       <AddressStack.Screen
-        name={RootNames.ImportHardware}
-        component={ImportHardwareScreen}
+        name={RootNames.ImportMoreAddress}
+        component={ImportMoreAddressScreen}
         options={{
           headerTitle: 'Import more address',
           headerTitleStyle: {
             fontSize: 20,
           },
           title: 'Import more address',
-          headerRight: ImportHardwareScreenButton,
+          headerRight: ImportMoreAddressScreenButton,
         }}
       />
       <AddressStack.Screen

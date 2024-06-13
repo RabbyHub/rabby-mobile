@@ -8,7 +8,7 @@ export const useEnterPassphraseModal = (type: 'address' | 'publickey') => {
 
   const invoke = React.useCallback(
     async (value?: string) => {
-      let passphrase = '';
+      let passphrase: string | undefined = '';
 
       if (!value) {
         return '';

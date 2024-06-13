@@ -18,11 +18,11 @@ const hitSlop = {
   right: 10,
 };
 
-export const ImportHardwareScreenButton: React.FC<HeaderButtonProps> = ({
+export const ImportMoreAddressScreenButton: React.FC<HeaderButtonProps> = ({
   tintColor,
 }) => {
   const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportHardware)?.params,
+    s => s.routes.find(r => r.name === RootNames.ImportMoreAddress)?.params,
   ) as {
     type: KEYRING_TYPE;
     brand: string;

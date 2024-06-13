@@ -90,7 +90,7 @@ export const ImportSeedPhraseScreen = () => {
           console.log('error', error);
         }
 
-        navigate(RootNames.ImportHardware, {
+        navigate(RootNames.ImportMoreAddress, {
           type: KEYRING_TYPE.HdKeyring,
           mnemonics,
           passphrase,

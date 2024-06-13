@@ -1,13 +1,18 @@
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiKeystone, apiLedger, apiMnemonic, apiOneKey } from '@/core/apis';
+import {
+  apiKeyring,
+  apiKeystone,
+  apiLedger,
+  apiMnemonic,
+  apiOneKey,
+} from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
   KEYRING_TYPE,
-  generateAliasName,
 } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import {
@@ -37,7 +42,6 @@ import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
-import { requestKeyring } from '@/core/apis/keyring';
 
 const { isSameAddress } = addressUtils;
 
@@ -133,9 +137,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
-export const ImportHardwareScreen = () => {
+export const ImportMoreAddressScreen = () => {
   const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.ImportHardware)?.params,
+    s => s.routes.find(r => r.name === RootNames.ImportMoreAddress)?.params,
   ) as {
     type: KEYRING_TYPE;
     mnemonics?: string;
@@ -216,7 +220,7 @@ export const ImportHardwareScreen = () => {
     async (index: number) => {
       const res =
         state.type === KEYRING_TYPE?.HdKeyring
-          ? await requestKeyring(
+          ? await apiKeyring.requestKeyring(
               KEYRING_TYPE.HdKeyring,
               'getAddresses',
               state?.keyringId ?? null,

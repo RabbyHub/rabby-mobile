@@ -68,6 +68,15 @@ export const ProcessActions: React.FC<Props> = ({
   }, []);
   const buttonIsPrimary = isPrimary || gasLess;
   const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
+  const buttonTextStyle = StyleSheet.flatten([
+    styles.buttonText,
+    buttonIsPrimary ? { color: colors['neutral-title-2'] } : {},
+  ]);
+  const buttonStyle = StyleSheet.flatten([
+    styles.button,
+    buttonIsPrimary ? { backgroundColor: colors['blue-default'] } : {},
+  ]);
+
   return (
     <ActionsContainer onCancel={onCancel}>
       <Tip
@@ -75,9 +84,9 @@ export const ProcessActions: React.FC<Props> = ({
         content={tooltipContent}>
         <View onLayout={getButtonWidthLayout}>
           <GasLessAnimatedWrapper
-            title={t('page.signFooterBar.signAndSubmitButton')}
-            titleStyle={styles.buttonText}
-            buttonStyle={styles.button}
+            title={buttonText}
+            titleStyle={buttonTextStyle}
+            buttonStyle={buttonStyle}
             gasLess={gasLess}
             showOrigin={!gasLess && !disabledProcess}
             type="process">
@@ -92,14 +101,7 @@ export const ProcessActions: React.FC<Props> = ({
                 disabled={disabledProcess}
                 type={buttonIsPrimary ? 'primary' : 'clear'}
                 buttonStyle={styles.button}
-                titleStyle={
-                  buttonIsPrimary
-                    ? StyleSheet.flatten([
-                        styles.buttonText,
-                        { color: colors['neutral-title-2'] },
-                      ])
-                    : styles.buttonText
-                }
+                titleStyle={buttonTextStyle}
                 disabledStyle={styles.disabled}
                 onPress={needHolding ? undefined : onSubmit}
                 title={

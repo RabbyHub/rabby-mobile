@@ -28,9 +28,10 @@ interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
   isCurrentAddress?: boolean;
   isInModal?: boolean;
+  isInList?: boolean;
 }
 export const AddressItemInner = (props: AddressItemProps) => {
-  const { wallet, isCurrentAddress, isInModal } = props;
+  const { wallet, isCurrentAddress, isInModal, isInList } = props;
   const { isAddrOnWhitelist } = useWhitelist();
 
   const themeColors = useThemeColors();
@@ -173,7 +174,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
           )}
         </View>
       </View>
-      {isInModal ? null : isCurrentAddress ? (
+      {isInModal ? null : isCurrentAddress || isInList ? (
         <View
           style={{
             marginLeft: 'auto',
@@ -183,7 +184,9 @@ export const AddressItemInner = (props: AddressItemProps) => {
           }}>
           <Text
             style={{
-              color: themeColors['neutral-title-2'],
+              color: isInList
+                ? themeColors['neutral-body']
+                : themeColors['neutral-title-2'],
               fontSize: 15,
               fontWeight: '500',
             }}>

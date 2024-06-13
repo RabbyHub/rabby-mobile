@@ -42,7 +42,6 @@ export const getKeyringByMnemonic = (
       k.checkPassphrase(passphrase)
     );
   }) as unknown as HdKeyring;
-
   keyring?.setPassphrase(passphrase);
 
   return keyring;
@@ -138,11 +137,11 @@ export const getMnemonicByAddress = (address: string) => {
   return keyring.mnemonic;
 };
 
-const getMnemonicKeyring = async (
+export const getMnemonicKeyring = async (
   type: 'address' | 'publickey',
   value: string,
 ) => {
-  let keyring;
+  let keyring: HdKeyring;
   if (type === 'address') {
     keyring = await _getMnemonicKeyringByAddress(value);
   } else {
@@ -267,6 +266,7 @@ export const activeAndPersistAccountsByMnemonics = async (
   addDefaultAlias = false,
 ) => {
   const keyring = getKeyringByMnemonic(mnemonics, passphrase);
+
   if (!keyring) {
     throw new Error('[activeAndPersistAccountsByMnemonics] no keyring found.');
   }

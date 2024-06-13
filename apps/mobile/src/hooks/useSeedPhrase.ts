@@ -5,6 +5,8 @@ import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { TypeKeyringGroup, useWalletTypeData } from './useWalletTypeData';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { apiMnemonic } from '@/core/apis';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 const useGetHdKeys = () => {
   return useAsync(async () => {
@@ -25,12 +27,19 @@ export const useSeedPhrase = () => {
     async (publicKey: string) => {
       if (publicKey) {
         await invokeEnterPassphrase(publicKey);
-        const keyringId = await apiMnemonic.getMnemonicKeyRingIdFromPublicKey(
+        const keyringId =
+          apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
+        const data = await apiMnemonic.getMnemonicKeyring(
+          'publickey',
           publicKey,
         );
-        // openInternalPageInTab(
-        //   `import/select-address?hd=${KEYRING_CLASS.MNEMONIC}&keyringId=${keyringId}`,
-        // );
+
+        navigate(RootNames.ImportMoreAddress, {
+          type: KEYRING_TYPE.HdKeyring,
+          mnemonics: data.mnemonic!,
+          passphrase: data.passphrase!,
+          keyringId,
+        });
       }
     },
     [invokeEnterPassphrase],
