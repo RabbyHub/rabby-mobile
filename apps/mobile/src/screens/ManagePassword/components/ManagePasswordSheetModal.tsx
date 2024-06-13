@@ -302,7 +302,9 @@ const getStyles = createGetStyles(colors => ({
   formFieldLabel: {
     fontSize: 14,
     fontWeight: '400',
-    backgroundColor: colors['neutral-card1'],
+    // backgroundColor: colors['neutral-card1'],
+    backgroundColor: 'transparent',
+    color: colors['neutral-title1'],
     marginBottom: 8,
   },
   inputHorizontalGroup: {

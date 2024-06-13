@@ -485,6 +485,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     alertModalText: {
       fontSize: 17,
+      color: colors['neutral-title1'],
     },
     modalSplitLine: {
       height: StyleSheet.hairlineWidth,
