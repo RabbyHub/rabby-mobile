@@ -67,7 +67,7 @@ export const CreateSeedPhraseVerifyScreen = () => {
         const { keyringId, isExistedKR } =
           await apiMnemonic.generateKeyringWithMnemonic(mnemonics, passphrase);
 
-        const firstAddress = apiKeyring.requestKeyring(
+        const firstAddress = await apiKeyring.requestKeyring(
           KEYRING_TYPE.HdKeyring,
           'getAddresses',
           keyringId ?? null,
