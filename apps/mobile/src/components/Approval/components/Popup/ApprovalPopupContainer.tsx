@@ -196,7 +196,7 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   React.useEffect(() => {
     if ((status === 'FAILED' || status === 'REJECTED') && description) {
       if (hdType === 'privatekey') {
-        snapToIndexPopup(2);
+        snapToIndexPopup(1);
       } else {
         snapToIndexPopup(1);
       }
