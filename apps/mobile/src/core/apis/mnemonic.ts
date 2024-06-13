@@ -39,11 +39,13 @@ export const getKeyringByMnemonic = (
     return (
       k.type === KEYRING_CLASS.MNEMONIC &&
       k.mnemonic === mnemonic &&
-      k.checkPassphrase(passphrase)
+      (passphrase ? k.checkPassphrase(passphrase) : true)
     );
   }) as unknown as HdKeyring;
-  keyring?.setPassphrase(passphrase);
 
+  if (passphrase) {
+    keyring?.setPassphrase(passphrase);
+  }
   return keyring;
 };
 

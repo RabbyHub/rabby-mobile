@@ -1,7 +1,7 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { createGetStyles } from '@/utils/styles';
-import { View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SeedPhraseGroup } from './SeedPhraseGroup';
 import { useThemeStyles } from '@/hooks/theme';
 
@@ -11,16 +11,17 @@ export const AddSeedPhraseScreen = () => {
 
   return (
     <NormalScreenContainer>
-      <View style={styles.main}>
+      <ScrollView style={styles.main}>
         {seedPhraseList.map((item, index) => (
           <SeedPhraseGroup
             onAddAddress={handleAddSeedPhraseAddress}
             key={index}
             index={index}
             data={item}
+            style={styles.group}
           />
         ))}
-      </View>
+      </ScrollView>
     </NormalScreenContainer>
   );
 };
@@ -29,6 +30,9 @@ const getStyle = createGetStyles(colors => {
   return {
     main: {
       paddingHorizontal: 20,
+    },
+    group: {
+      marginBottom: 20,
     },
   };
 });

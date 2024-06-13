@@ -1,5 +1,5 @@
 import { createGetStyles } from '@/utils/styles';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, StyleProp, ViewStyle } from 'react-native';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
 import { AddressItemInner } from '../components/AddressItemInner';
@@ -11,19 +11,21 @@ interface Props {
   index: number;
   data: TypeKeyringGroup;
   onAddAddress: (pk: string) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const SeedPhraseGroup: React.FC<Props> = ({
   index,
   data,
   onAddAddress,
+  style,
 }) => {
   const { styles } = useThemeStyles(getStyle);
   const { t } = useTranslation();
   const colors = useThemeColors();
 
   return (
-    <View style={styles.main}>
+    <View style={StyleSheet.flatten([styles.main, style])}>
       <View style={styles.headline}>
         <Text style={styles.headlineText}>Seed Phrase {index + 1}</Text>
       </View>
