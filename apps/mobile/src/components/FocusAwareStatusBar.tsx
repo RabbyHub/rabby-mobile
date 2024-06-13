@@ -6,6 +6,7 @@ import {
   USE_ANDROID_STATUS_BAR_TRANSPARENT,
   useScreenAppStatusBarConf,
 } from './AppStatusBar';
+import { AppRootName } from '@/constant/layout';
 
 /**
  * @description this component can be ONLY used in navigation screens
@@ -30,8 +31,11 @@ export const FocusAwareStatusBar = (props: StatusBarProps) => {
   ) : null;
 };
 
-export const ScreenSpecificStatusBar = (props: StatusBarProps) => {
-  const { routeStatusbarConf } = useScreenAppStatusBarConf();
+export const ScreenSpecificStatusBar = ({
+  screenName,
+  ...props
+}: { screenName?: AppRootName } & StatusBarProps) => {
+  const { routeStatusbarConf } = useScreenAppStatusBarConf(screenName);
 
   return (
     <FocusAwareStatusBar

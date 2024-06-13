@@ -120,8 +120,11 @@ export function useTuneStatusBarOnRouteChange() {
   return { tuneOnRouteChange };
 }
 
-export function useScreenAppStatusBarConf() {
-  const currentRouteName = useCurrentRouteNameInAppStatusBar();
+export function useScreenAppStatusBarConf(expectedRoute?: string) {
+  const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
+  const currentRouteName = useMemo(() => {
+    return expectedRoute || getLatestNavigationName() || currentRouteNameOrig;
+  }, [currentRouteNameOrig, expectedRoute]);
 
   // const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
   // const currentRouteName = useMemo(() => {

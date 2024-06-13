@@ -78,7 +78,7 @@ function HomeScreen(): JSX.Element {
 
   return (
     <RootScreenContainer fitStatuBar style={styles.rootScreenContainer}>
-      <ScreenSpecificStatusBar />
+      <ScreenSpecificStatusBar screenName={RootNames.Home} />
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
           renderHeader={() => <HomeTopArea />}

@@ -125,11 +125,11 @@ function makeScreenSpecConfig() {
       androidStatusBarBg: colors['neutral-card2'],
     };
 
-    const blueDefaultConf = <ScreenStatusBarConf>{
-      barStyle: adaptiveStatusBarStyle,
-      iosStatusBarStyle: adaptiveIosStatusBarStyle,
-      androidStatusBarBg: colors['blue-default'],
-    };
+    // const blueDefaultConf = <ScreenStatusBarConf>{
+    //   barStyle: adaptiveStatusBarStyle,
+    //   iosStatusBarStyle: adaptiveIosStatusBarStyle,
+    //   androidStatusBarBg: colors['blue-default'],
+    // };
 
     const blueLightConf = <ScreenStatusBarConf>{
       barStyle: 'light-content',
@@ -155,8 +155,8 @@ function makeScreenSpecConfig() {
 
       // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      ImportWatchAddress: blueDefaultConf,
-      ImportSafeAddress: blueDefaultConf,
+      ImportWatchAddress: blueLightConf,
+      ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
 
       // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
