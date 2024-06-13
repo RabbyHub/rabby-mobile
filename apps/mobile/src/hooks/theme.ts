@@ -17,7 +17,6 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
-import { useThemeMode } from '@rneui/themed';
 import { BUILD_CHANNEL } from '@/constant/env';
 
 export const SHOULD_SUPPORT_DARK_MODE =
@@ -89,37 +88,31 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
     [appTheme, colorScheme],
   );
 
-  // use system now always
   React.useEffect(() => {
-    if (options?.isAppTop) {
-      // will only triggered on `useColorScheme()`/`Appearance.getColorScheme()` equals to null (means 'system')
-      const subp = Appearance.addChangeListener(
-        (pref: Appearance.AppearancePreferences) => {
-          devLog('system preference changed', pref);
-          setAppTheme(pref.colorScheme);
-        },
-      );
+    if (!options?.isAppTop) return;
 
-      return () => {
-        subp.remove();
-      };
-    }
-  }, [options?.isAppTop, setAppTheme]);
+    Appearance.setColorScheme(appThemeToColorScheme(appTheme));
+  }, [options?.isAppTop, appTheme]);
+
+  React.useEffect(() => {
+    if (!options?.isAppTop) return;
+
+    // will only triggered on `useColorScheme()`/`Appearance.getColorScheme()` equals to null (means 'system')
+    const subp = Appearance.addChangeListener(
+      (pref: Appearance.AppearancePreferences) => {
+        devLog('system preference changed', pref);
+      },
+    );
+
+    return () => {
+      subp.remove();
+    };
+  }, [options?.isAppTop, appTheme]);
 
   const appThemeText = React.useMemo(
     () => stringUtils.ucfirst(appTheme),
     [appTheme],
   );
-
-  const { setMode } = useThemeMode();
-  React.useEffect(() => {
-    if (binaryTheme === 'dark') {
-      setMode('dark');
-    } else {
-      setMode('light');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [binaryTheme]);
 
   return {
     appTheme,

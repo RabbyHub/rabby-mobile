@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createGetStyles } from '@/utils/styles';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SwapHeader } from './components/Header';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { ChainInfo } from '../Send/components/ChainInfo';
 import { RcIconSwapArrow } from '@/assets/icons/swap';
@@ -32,26 +32,26 @@ import { Slippage } from './components/Slippage';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import { dexSwap } from './hooks/swap';
 import { colord } from 'colord';
-import { RootNames } from '@/constant/layout';
+import { RootNames, getScreenStatusBarConf } from '@/constant/layout';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import useMount from 'react-use/lib/useMount';
+import { useSetNavigationReady } from '@/hooks/navigation';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 type SwapProps = NativeStackScreenProps<
   RootStackParamsList,
   'StackTransaction'
 >;
 const Swap = () => {
-  const navigation = useNavigation<SwapProps['navigation']>();
+  const { t } = useTranslation();
+  const { colors, styles } = useThemeStyles(getStyles);
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerRight: () => <SwapHeader />,
     });
-  }, [navigation]);
-  const { t } = useTranslation();
-
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  }, [setNavigationOptions]);
 
   const [twoStepApproveModalVisible, setTwoStepApproveModalVisible] =
     useState(false);
@@ -505,6 +505,8 @@ const Swap = () => {
     </NormalScreenContainer>
   );
 };
+
+Swap.SwapHeader = SwapHeader;
 
 const getStyles = createGetStyles(colors => ({
   container: {

@@ -44,19 +44,6 @@ export function useSetNavigationReady() {
   return { setNavigationReady };
 }
 
-export function useToggleShowNavHeader() {
-  const navigation = useNavigation();
-
-  const toggleShowNavHeader = useCallback(
-    (isShown: boolean) => {
-      navigation.setOptions({ headerShown: isShown });
-    },
-    [navigation],
-  );
-
-  return { toggleShowNavHeader };
-}
-
 const hitSlop = {
   top: 10,
   bottom: 10,
@@ -123,10 +110,10 @@ const styles = StyleSheet.create({
   },
 });
 
-export function useRabbyAppNavigation() {
-  return useNavigation<
-    NativeStackScreenProps<RootStackParamsList>['navigation']
-  >();
+export function useRabbyAppNavigation<
+  K extends NativeStackScreenProps<RootStackParamsList>['navigation'],
+>() {
+  return useNavigation<K>();
 }
 
 export function resetNavigationToHome(

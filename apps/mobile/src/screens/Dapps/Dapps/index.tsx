@@ -19,13 +19,13 @@ import {
   useOpenDappView,
 } from '../hooks/useDappView';
 import { EmptyDapps } from './components/EmptyDapps';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export const DappsScreen = () => {
   return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
 };
 
 export function DappsScreenRaw(): JSX.Element {
-  const navigation = useNavigation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
@@ -45,12 +45,13 @@ export function DappsScreenRaw(): JSX.Element {
     );
   }, [styles.navRight, styles.searchIcon]);
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerTitle: getHeaderTitle,
       headerRight: getHeaderRight,
     });
-  }, [navigation, getHeaderTitle, getHeaderRight]);
+  }, [setNavigationOptions, getHeaderTitle, getHeaderRight]);
 
   const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
     useDappsHome();

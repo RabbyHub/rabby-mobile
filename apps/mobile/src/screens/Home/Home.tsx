@@ -4,16 +4,12 @@
  *
  * @format
  */
-import React, { useCallback, useEffect } from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { SafeAreaView } from 'react-native';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 
 import HeaderArea from './HeaderArea';
-import {
-  StackActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useThemeStyles } from '@/hooks/theme';
 import { AssetContainer } from './AssetContainer';
 
@@ -23,10 +19,12 @@ import { keyringService } from '@/core/services';
 import { RootNames } from '@/constant/layout';
 import { useUpdateNonce } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 function HomeScreen(): JSX.Element {
-  const navigation = useNavigation();
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles, colors } = useThemeStyles(getStyles);
   const [nonce, setNonce] = useUpdateNonce();
   const { currentAccount } = useCurrentAccount({
@@ -34,7 +32,7 @@ function HomeScreen(): JSX.Element {
   });
 
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerTitle: () => (
         <HomeScreen.HeaderArea key={currentAccount?.address} />
       ),
@@ -42,7 +40,7 @@ function HomeScreen(): JSX.Element {
         backgroundColor: colors['neutral-bg-1'],
       },
     });
-  }, [colors, currentAccount?.address, navigation]);
+  }, [colors, currentAccount?.address, navigation, setNavigationOptions]);
 
   const init = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
@@ -79,7 +77,8 @@ function HomeScreen(): JSX.Element {
   );
 
   return (
-    <RootScreenContainer style={styles.rootScreenContainer}>
+    <RootScreenContainer fitStatuBar style={styles.rootScreenContainer}>
+      <ScreenSpecificStatusBar />
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
           renderHeader={() => <HomeTopArea />}
@@ -96,6 +95,7 @@ const getStyles = createGetStyles(colors => {
   return {
     rootScreenContainer: {
       backgroundColor: colors['neutral-bg-1'],
+      ...makeDebugBorder(),
     },
     safeView: {
       flex: 1,

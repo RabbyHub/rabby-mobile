@@ -30,7 +30,6 @@ import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
 
-import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
 import {
@@ -44,7 +43,10 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useIsAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
-import { AppStatusBar, useTuneStatusBar } from './components/AppStatusBar';
+import {
+  AppStatusBar,
+  useTuneStatusBarOnRouteChange,
+} from './components/AppStatusBar';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -71,82 +73,76 @@ export default function AppNavigation({
   const screenOptions = useStackScreenConfig();
   const colors = useThemeColors();
 
-  // console.log('============== AppNavigation Render =========');
-  useEffect(
-    () => {
-      // TODO: this may cause crash?
-      // FastImage.clearMemoryCache();
-    },
-    [
-      /* userId */
-    ],
-  );
-
-  // useLoginTestAccount();
   const { isAppUnlocked } = useIsAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
-  const { tuneStatusBar } = useTuneStatusBar();
+  const { tuneOnRouteChange } = useTuneStatusBarOnRouteChange();
 
-  const onCurrentRouteChange = useCallback(
+  const onRouteChange = useCallback(
     (currentRouteName?: string) => {
       currentRouteName =
-        currentRouteName || navigationRef?.getCurrentRoute()?.name;
+        currentRouteName || navigationRef.getCurrentRoute()?.name;
       routeNameRef.current = currentRouteName;
-      setCurrentRouteName(currentRouteName);
-      tuneStatusBar(currentRouteName);
-      __DEV__ &&
-        console.debug(
-          'onCurrentRouteChange::currentRouteName',
-          currentRouteName,
-        );
 
-      return currentRouteName;
+      // tuneOnRouteChange(currentRouteName);
+      setCurrentRouteName(currentRouteName);
+
+      /**
+       * Some actions would reset the StatusBar style, such as navigation.setOptions,
+       * so component `AppStatusBar` works for those Screen without weired behaviors from '@react-native/navigation'.
+       *
+       * we do extra tune for StatusBar
+       */
+      setTimeout(() => {
+        tuneOnRouteChange(currentRouteName);
+      }, 250);
     },
-    [setCurrentRouteName, tuneStatusBar],
+    [setCurrentRouteName, tuneOnRouteChange],
   );
 
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
     setNavigationReady(true);
-
+    let readyRootName = navigationRef.getCurrentRoute()?.name!;
     if (isAppUnlocked === false) {
       replace(RootNames.Unlock);
-      onCurrentRouteChange(RootNames.Unlock);
-    } else {
-      onCurrentRouteChange();
+      readyRootName = RootNames.Unlock;
     }
+    onRouteChange(readyRootName);
 
     analytics.logScreenView({
-      screen_name: routeNameRef.current,
-      screen_class: routeNameRef.current,
+      screen_name: readyRootName,
+      screen_class: readyRootName,
     });
-    matomoLogScreenView({ name: routeNameRef.current! });
-  }, [setNavigationReady, isAppUnlocked, onCurrentRouteChange]);
+    matomoLogScreenView({ name: readyRootName });
+  }, [setNavigationReady, isAppUnlocked, onRouteChange]);
 
   const onStateChange = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
-  >(() => {
-    const previousRouteName = routeNameRef.current;
-    const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
+  >(
+    _navState => {
+      const previousRouteName = routeNameRef.current;
+      const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
 
-    if (previousRouteName !== currentRouteName) {
-      onCurrentRouteChange(currentRouteName);
+      if (previousRouteName !== currentRouteName) {
+        onRouteChange(currentRouteName);
 
-      analytics.logScreenView({
-        screen_name: routeNameRef.current,
-        screen_class: routeNameRef.current,
-      });
-      matomoLogScreenView({ name: currentRouteName! });
-    }
-    routeNameRef.current = currentRouteName;
-  }, [onCurrentRouteChange]);
+        analytics.logScreenView({
+          screen_name: routeNameRef.current,
+          screen_class: routeNameRef.current,
+        });
+        matomoLogScreenView({ name: currentRouteName! });
+      }
+      routeNameRef.current = currentRouteName;
+    },
+    [onRouteChange],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-      <AppStatusBar />
+      <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}

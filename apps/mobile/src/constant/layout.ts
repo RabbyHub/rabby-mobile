@@ -1,5 +1,5 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { AppColorsVariants } from './theme';
+import { AppColorsVariants, ThemeColors } from './theme';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
@@ -22,7 +22,6 @@ export const ScreenColors = {
 };
 
 export const RootNames = {
-  StackLogin: 'StackLogin',
   StackGetStarted: 'StackGetStarted',
 
   StackRoot: 'StackRoot',
@@ -76,86 +75,133 @@ export const RootNames = {
 export type AppRootName = keyof typeof RootNames;
 
 export type ScreenStatusBarConf = {
-  statusBarStyle?: 'light-content' | 'dark-content';
+  barStyle?: 'light-content' | 'dark-content';
+  iosStatusBarStyle?: NativeStackNavigationOptions['statusBarStyle'];
   androidStatusBarBg?: string;
-  androidTranslucent?: boolean;
 };
 
-export const getRootSpecConfig = (
-  colors: AppColorsVariants,
-  options?: {
-    isDarkTheme?: boolean;
-  },
-) => {
-  const { isDarkTheme } = options || {};
+// function rgbaToAlphaHex(rgba: string) {
+//   return colord(rgba).toHex();
+// }
 
-  const adaptiveStatusBarStyle = isDarkTheme ? 'light-content' : 'dark-content';
-
-  const bg1DefaultConf = {
-    statusBarStyle: adaptiveStatusBarStyle,
-    androidStatusBarBg: colors['neutral-bg1'],
-  };
-
-  const bg2DefaultConf = {
-    statusBarStyle: adaptiveStatusBarStyle,
-    androidStatusBarBg: colors['neutral-bg2'],
-  };
-
-  const card2DefaultConf = {
-    statusBarStyle: adaptiveStatusBarStyle,
-    androidStatusBarBg: colors['neutral-card2'],
-  };
-
-  const blueDefaultConf = {
-    statusBarStyle: adaptiveStatusBarStyle,
-    androidStatusBarBg: colors['blue-default'],
-  };
-
-  const blueLightConf = {
-    statusBarStyle: 'light-content',
-    androidStatusBarBg: colors['blue-default'],
-  };
-
-  return {
-    '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    '@bg1default': { ...bg1DefaultConf },
-    '@openeddapp': {
-      statusBarStyle: 'light-content',
-      androidStatusBarBg: 'rgba(0, 0, 0, 1)',
-    },
-    Home: bg1DefaultConf,
-    Unlock: bg1DefaultConf,
-
-    // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-
-    // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-
-    // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    ImportWatchAddress: blueDefaultConf,
-    ImportSafeAddress: blueDefaultConf,
-    ImportSuccess: blueLightConf,
-
-    // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-    Receive: blueLightConf,
-
-    GnosisTransactionQueue: card2DefaultConf,
-
-    Approvals: bg2DefaultConf,
-    GasTopUp: blueLightConf,
-
-    SetPassword: blueLightConf,
-    // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-  } as {
+function makeScreenSpecConfig() {
+  type ThemeType = {
     '@default': ScreenStatusBarConf;
     '@bg1default': ScreenStatusBarConf;
     '@openeddapp': ScreenStatusBarConf;
   } & {
-    [P in AppRootName]: ScreenStatusBarConf;
+    [P in AppRootName]?: ScreenStatusBarConf;
   };
-};
+
+  const [dark, light] = [true, false].map(isDarkTheme => {
+    const adaptiveStatusBarStyle = isDarkTheme
+      ? ('light-content' as const)
+      : ('dark-content' as const);
+
+    // const adaptiveIosStatusBarStyle = isDarkTheme
+    //   ? 'dark' as const
+    //   : 'light' as const;
+    const adaptiveIosStatusBarStyle = isDarkTheme
+      ? ('light' as const)
+      : ('dark' as const);
+
+    const colors = ThemeColors[isDarkTheme ? 'dark' : 'light'];
+
+    const bg1DefaultConf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors['neutral-bg1'],
+    };
+
+    const bg2DefaultConf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors['neutral-bg2'],
+    };
+
+    const card2DefaultConf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors['neutral-card2'],
+    };
+
+    const blueDefaultConf = <ScreenStatusBarConf>{
+      barStyle: adaptiveStatusBarStyle,
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors['blue-default'],
+    };
+
+    const blueLightConf = <ScreenStatusBarConf>{
+      barStyle: 'light-content',
+      iosStatusBarStyle: adaptiveIosStatusBarStyle,
+      androidStatusBarBg: colors['blue-default'],
+    };
+
+    const themeSpecs = <ThemeType>{
+      '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      '@bg1default': { ...bg1DefaultConf },
+      '@openeddapp': {
+        barStyle: 'light-content',
+        iosStatusBarStyle: adaptiveIosStatusBarStyle,
+        androidStatusBarBg: 'rgba(0, 0, 0, 1)',
+      },
+      Home: bg1DefaultConf,
+      Unlock: bg1DefaultConf,
+
+      // Dapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // SearchDapps: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+
+      // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+
+      // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      ImportWatchAddress: blueDefaultConf,
+      ImportSafeAddress: blueDefaultConf,
+      ImportSuccess: blueLightConf,
+
+      // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      Receive: blueLightConf,
+
+      GnosisTransactionQueue: card2DefaultConf,
+
+      Approvals: bg2DefaultConf,
+      GasTopUp: blueLightConf,
+
+      SetPassword: blueLightConf,
+      // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+    };
+
+    // return __DEV__ ? Object.freeze(themeSpecs) : themeSpecs;
+    return themeSpecs;
+  });
+
+  return {
+    dark,
+    light,
+  } as const;
+}
+const ScreenSpecs = makeScreenSpecConfig();
+
+export function getScreenStatusBarConf(options: {
+  screenName: string | AppRootName;
+  isDarkTheme?: boolean;
+  isShowingDappCard?: boolean;
+}) {
+  const { screenName, isDarkTheme, isShowingDappCard } = options || {};
+  const rootSpecs = ScreenSpecs[isDarkTheme ? 'dark' : 'light'];
+
+  const screenSpec = isShowingDappCard
+    ? rootSpecs['@openeddapp']
+    : rootSpecs[screenName as AppRootName] || rootSpecs['@default'];
+
+  return {
+    rootSpecs,
+    screenSpec,
+    navStatusBarBackground: screenSpec.androidStatusBarBg,
+    navStatusBarStyle: screenSpec.iosStatusBarStyle,
+  };
+}
 
 export function makeHeadersPresets({
   colors,

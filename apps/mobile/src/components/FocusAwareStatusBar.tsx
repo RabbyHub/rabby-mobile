@@ -2,9 +2,10 @@ import { useIsFocused } from '@react-navigation/native';
 import { StatusBar, StatusBarProps } from 'react-native';
 
 import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
-import { useMemo } from 'react';
-import { getRootSpecConfig } from '@/constant/layout';
-import { useCurrentRouteNameInAppStatusBar } from '@/hooks/navigation';
+import {
+  USE_ANDROID_STATUS_BAR_TRANSPARENT,
+  useScreenAppStatusBarConf,
+} from './AppStatusBar';
 
 /**
  * @description this component can be ONLY used in navigation screens
@@ -23,29 +24,21 @@ export const FocusAwareStatusBar = (props: StatusBarProps) => {
     <StatusBar
       backgroundColor={colors['neutral-bg-1']}
       barStyle={isLight ? 'dark-content' : 'light-content'}
-      translucent
+      translucent={USE_ANDROID_STATUS_BAR_TRANSPARENT}
       {...props}
     />
   ) : null;
 };
 
 export const ScreenSpecificStatusBar = (props: StatusBarProps) => {
-  const colors = useThemeColors();
-  const isLight = useGetAppThemeMode() === 'light';
-  const currentRouteName = useCurrentRouteNameInAppStatusBar();
-  const routeConf = useMemo(() => {
-    const confs = getRootSpecConfig(colors, { isDarkTheme: !isLight });
-    if (!currentRouteName) return confs['@default']!;
-
-    return confs[currentRouteName] || confs['@default']!;
-  }, [colors, currentRouteName, isLight]);
+  const { routeStatusbarConf } = useScreenAppStatusBarConf();
 
   return (
     <FocusAwareStatusBar
-      backgroundColor={routeConf.androidStatusBarBg || colors['neutral-bg-1']}
-      barStyle={
-        routeConf.statusBarStyle || (isLight ? 'dark-content' : 'light-content')
-      }
+      animated
+      translucent={USE_ANDROID_STATUS_BAR_TRANSPARENT}
+      backgroundColor={routeStatusbarConf.androidStatusBarBg}
+      barStyle={routeStatusbarConf.barStyle}
       {...props}
     />
   );

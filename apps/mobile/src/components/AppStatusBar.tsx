@@ -1,93 +1,172 @@
 import React, { useMemo } from 'react';
-import { Platform, StatusBar } from 'react-native';
+import { Appearance, Platform, StatusBar } from 'react-native';
 
-import { useCurrentRouteNameInAppStatusBar } from '@/hooks/navigation';
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import {
+  useCurrentRouteNameInAppStatusBar,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
+import { useGetAppThemeMode } from '@/hooks/theme';
 import { useHasActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
 import {
   AppRootName,
   ScreenStatusBarConf,
-  getRootSpecConfig,
+  getScreenStatusBarConf,
 } from '@/constant/layout';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { getLatestNavigationName } from '@/utils/navigation';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
-const isAndroid = Platform.OS === 'android';
+const IS_ANDROID = Platform.OS === 'android';
+export const USE_ANDROID_STATUS_BAR_TRANSPARENT = true;
 
-export function useTuneStatusBar() {
-  const colors = useThemeColors();
-  const isDarkTheme = useGetAppThemeMode() !== 'light';
+export function useSafeSetNavigationOptions() {
+  const navigation = useRabbyAppNavigation();
+  const isShowingDappCard = useHasActiveOpenedDapp();
+
+  const setNavigationOptions = React.useCallback(
+    (options: NativeStackNavigationOptions) => {
+      const appColorScheme = Appearance.getColorScheme();
+      const isDarkTheme = appColorScheme === 'dark';
+
+      const screenName = getLatestNavigationName();
+      if (screenName) {
+        const { screenSpec } = getScreenStatusBarConf({
+          screenName,
+          isDarkTheme,
+          isShowingDappCard,
+        });
+
+        options = {
+          ...(IS_ANDROID && {
+            /* in fact, you also need set it on Android */
+            statusBarStyle:
+              screenSpec.barStyle === 'dark-content' ? 'dark' : 'light',
+            statusBarColor: screenSpec.androidStatusBarBg,
+          }),
+          ...(!IS_ANDROID && {
+            statusBarStyle: screenSpec.iosStatusBarStyle,
+          }),
+          ...options,
+        };
+      }
+
+      return navigation.setOptions(options);
+    },
+    [navigation, isShowingDappCard],
+  );
+
+  return { navigation, setNavigationOptions };
+}
+
+function useTuneStatusBar() {
+  const _isDarkTheme = useGetAppThemeMode() !== 'light';
+  const hasActiveOpenedDapp = useHasActiveOpenedDapp();
 
   const tuneStatusBar = React.useCallback(
-    (currentScreen?: AppRootName | string | ScreenStatusBarConf) => {
-      const specs = getRootSpecConfig(colors, { isDarkTheme });
-      const spec =
-        typeof currentScreen === 'string'
-          ? specs[currentScreen as AppRootName] || specs['@default']
-          : {
-              ...specs['@default'],
-              ...currentScreen,
-            };
+    (options: {
+      currentScreen: AppRootName | string | ScreenStatusBarConf;
+      isDarkTheme?: boolean;
+    }) => {
+      const { currentScreen, isDarkTheme = _isDarkTheme } = options || {};
 
-      const { statusBarStyle, androidStatusBarBg } = spec;
-      if (statusBarStyle) {
-        StatusBar.setBarStyle(statusBarStyle, true);
-      }
+      const screenSpec =
+        typeof currentScreen === 'object'
+          ? currentScreen
+          : getScreenStatusBarConf({
+              screenName: currentScreen,
+              isDarkTheme,
+              isShowingDappCard: hasActiveOpenedDapp,
+            }).screenSpec;
 
-      if (isAndroid && androidStatusBarBg) {
+      const { barStyle, iosStatusBarStyle, androidStatusBarBg } = screenSpec;
+
+      if (IS_ANDROID && androidStatusBarBg) {
+        StatusBar.setTranslucent(true);
         StatusBar.setBackgroundColor(androidStatusBarBg, true);
       }
-
-      if (isAndroid) {
-        StatusBar.setTranslucent(true);
+      if (barStyle) {
+        StatusBar.setBarStyle(barStyle, true);
       }
-
-      return spec;
     },
-    [colors, isDarkTheme],
+    [hasActiveOpenedDapp, _isDarkTheme],
   );
 
   return {
-    colors,
-    isDarkTheme,
     tuneStatusBar,
   };
 }
 
-export function AppStatusBar() {
-  const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
+/**
+ * @description hooks version of AppStatusBar
+ *
+ * We found, sometimes as property `backgroundColor` passed to StatuBar component, it will not update the StatusBar, or not correctly,
+ * so we do command-based update on route change.
+ */
+export function useTuneStatusBarOnRouteChange() {
+  const { tuneStatusBar } = useTuneStatusBar();
+
+  const tuneOnRouteChange = React.useCallback(
+    (currentRouteName?: string) => {
+      currentRouteName = currentRouteName || getLatestNavigationName()!;
+
+      __DEV__ &&
+        console.debug('tuneOnRouteChange::currentRouteName', currentRouteName);
+      tuneStatusBar({ currentScreen: currentRouteName });
+
+      return currentRouteName;
+    },
+    [tuneStatusBar],
+  );
+
+  return { tuneOnRouteChange };
+}
+
+export function useScreenAppStatusBarConf() {
+  const currentRouteName = useCurrentRouteNameInAppStatusBar();
+
+  // const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
+  // const currentRouteName = useMemo(() => {
+  //   return getLatestNavigationName() || currentRouteNameOrig;
+  // }, [currentRouteNameOrig]);
+
   const isLight = useGetAppThemeMode() === 'light';
-  const colors = useThemeColors();
 
   // maybe we need more smooth transition on toggle active dapp
   const hasActiveOpenedDapp = useHasActiveOpenedDapp();
 
-  const currentRouteName = useDebounceValue(currentRouteNameOrig, 250);
+  const { rootSpecs, screenSpec: routeStatusbarConf } = useMemo(() => {
+    return getScreenStatusBarConf({
+      screenName: currentRouteName || '@default',
+      isDarkTheme: !isLight,
+      isShowingDappCard: hasActiveOpenedDapp,
+    });
+  }, [isLight, currentRouteName, hasActiveOpenedDapp]);
 
-  const rootSpecs = useMemo(() => {
-    return getRootSpecConfig(colors, { isDarkTheme: !isLight });
-  }, [isLight, colors]);
+  return {
+    currentRouteName,
+    isLight,
+    rootSpecs,
+    routeStatusbarConf,
+  };
+}
 
-  const routeStatusbarConf = useMemo(() => {
-    if (hasActiveOpenedDapp) {
-      return rootSpecs['@openeddapp'];
-    }
-    return currentRouteName
-      ? rootSpecs[currentRouteName as any as AppRootName]
-      : rootSpecs['@default'];
-  }, [currentRouteName, hasActiveOpenedDapp, rootSpecs]);
+/**
+ * @description this component is used on Top of the App, only one instance
+ */
+export function AppStatusBar({ __isTop__ }: { __isTop__?: boolean }) {
+  const { isLight, currentRouteName, rootSpecs, routeStatusbarConf } =
+    useScreenAppStatusBarConf();
+
+  if (!__isTop__) return null;
 
   return (
     <StatusBar
       animated
-      translucent
+      translucent={USE_ANDROID_STATUS_BAR_TRANSPARENT}
       backgroundColor={
-        routeStatusbarConf?.androidStatusBarBg ||
+        routeStatusbarConf.androidStatusBarBg ||
         rootSpecs['@default'].androidStatusBarBg
       }
-      barStyle={
-        routeStatusbarConf?.statusBarStyle ||
-        rootSpecs['@default'].statusBarStyle
-      }
+      barStyle={routeStatusbarConf.barStyle || 'default'}
     />
   );
 }
