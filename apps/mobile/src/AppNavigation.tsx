@@ -213,7 +213,7 @@ export default function AppNavigation({
               headerShown: true,
               headerTransparent: true,
               headerStyle: {
-                backgroundColor: '#fff',
+                backgroundColor: colors['neutral-bg1'],
               },
             }}
           />
@@ -227,7 +227,7 @@ export default function AppNavigation({
               headerShown: true,
               headerTransparent: false,
               headerStyle: {
-                backgroundColor: '#fff',
+                backgroundColor: colors['neutral-bg1'],
               },
             }}
           />

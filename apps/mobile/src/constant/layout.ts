@@ -100,7 +100,7 @@ export const getRootSpecConfig = (
       statusbarBackgroundColor: colors['neutral-bg-1'],
     },
     Unlock: {
-      statusBarStyle: 'dark-content',
+      statusBarStyle: defaultStatusBarStyle,
       statusbarBackgroundColor: colors['neutral-bg1'],
     },
     ImportWatchAddress: {
