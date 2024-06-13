@@ -315,41 +315,37 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
           account: params.account,
         });
       } else {
-        // todo
-        console.log('else...');
-        // try {
-        //   let result = await wallet.signTypedData(
-        //     params.account.type,
-        //     params.account.address,
-        //     JSON.parse(params.data[1]),
-        //     {
-        //       version: 'V4',
-        //     },
-        //   );
-        //   result = adjustV('eth_signTypedData', result);
-        //   report('completeSignText', {
-        //     success: true,
-        //   });
-        //   const sigs = await apisSafe.getGnosisTransactionSignatures();
-        //   if (sigs.length > 0) {
-        //     await apisSafe.gnosisAddConfirmation(
-        //       params.account.address,
-        //       result,
-        //     );
-        //   } else {
-        //     await apisSafe.gnosisAddSignature(params.account.address, result);
-        //     await apisSafe.postGnosisTransaction();
-        //   }
-        //   // if (isSend) {
-        //   //   wallet.clearPageStateCache();
-        //   // }
-        //   resolveApproval(result, false, true);
-        // } catch (e: any) {
-        //   toast.info(e.message);
-        //   report('completeSignText', {
-        //     success: false,
-        //   });
-        // }
+        try {
+          let result = await apisKeyring.signTypedData(
+            params.account.type,
+            params.account.address,
+            JSON.parse(params.data[1]),
+            {
+              version: 'V4',
+            },
+          );
+          result = adjustV('eth_signTypedData', result);
+          report('completeSignText', {
+            success: true,
+          });
+          const sigs = await apisSafe.getGnosisTransactionSignatures();
+          if (sigs.length > 0) {
+            await apisSafe.gnosisAddConfirmation(
+              params.account.address,
+              result,
+            );
+          } else {
+            await apisSafe.gnosisAddSignature(params.account.address, result);
+            await apisSafe.postGnosisTransaction();
+          }
+
+          resolveApproval(result, false, true);
+        } catch (e: any) {
+          toast.info(e?.message);
+          report('completeSignText', {
+            success: false,
+          });
+        }
       }
       return;
     }
