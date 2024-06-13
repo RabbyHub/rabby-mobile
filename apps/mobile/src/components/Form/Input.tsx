@@ -36,6 +36,7 @@ const getFormInputStyles = createGetStyles(colors => {
       paddingHorizontal: 12,
       width: '100%',
       height: '100%',
+      color: colors['neutral-title1'],
     },
     formFieldError: {
       marginTop: 12,

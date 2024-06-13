@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { atom, useAtom } from 'jotai';
 import { KeyringAccount, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
@@ -24,6 +24,7 @@ import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
+import { useAtomicRequest } from './common/useAtomicAction';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -79,23 +80,21 @@ async function fetchAllAccounts() {
   }
 }
 
+const fetchingAccountsAtom = atom(false);
 export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   const [accounts, setAccounts] = useAtom(accountsAtom);
 
   const { disableAutoFetch = false } = opts || {};
 
-  const isFetchingRef = useRef(false);
-  const fetchAccounts = useCallback(async () => {
-    if (isFetchingRef.current) {
-      return;
-    }
-
-    isFetchingRef.current = true;
-
+  const doFetchAccounts = useCallback(async () => {
     const nextAccounts = await fetchAllAccounts();
     setAccounts(nextAccounts);
-    isFetchingRef.current = false;
   }, [setAccounts]);
+
+  const { fetchAction: fetchAccounts } = useAtomicRequest({
+    isRequestingAtom: fetchingAccountsAtom,
+    doRequest: doFetchAccounts,
+  });
 
   useEffect(() => {
     if (!disableAutoFetch) {
@@ -109,10 +108,17 @@ export function useAccounts(opts?: { disableAutoFetch?: boolean }) {
   };
 }
 
+const fetchingCurrentAccountAtom = atom(false);
+
+/**
+ * @description this hooks GET CURRENT account and re-PICK it from accounts, so you need to
+ * ensure the accounts is fetched/updated before using this hook
+ */
 export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
   const [currentAccount, setCurrentAccount] = useAtom(currentAccountAtom);
   const [accounts] = useAtom(accountsAtom);
-  const fetchCurrentAccount = useCallback(() => {
+
+  const doFetchCurrentAccount = useCallback(() => {
     const account = preferenceService.getCurrentAccount();
     const index = accounts.findIndex(
       e =>
@@ -128,6 +134,11 @@ export function useCurrentAccount(options?: { disableAutoFetch?: boolean }) {
         : null,
     );
   }, [accounts, setCurrentAccount]);
+
+  const { fetchAction: fetchCurrentAccount } = useAtomicRequest({
+    isRequestingAtom: fetchingCurrentAccountAtom,
+    doRequest: doFetchCurrentAccount,
+  });
 
   const switchAccount = useCallback(
     (account: Account) => {
