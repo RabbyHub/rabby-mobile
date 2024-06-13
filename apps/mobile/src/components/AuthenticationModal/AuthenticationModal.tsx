@@ -1,4 +1,4 @@
-import { useThemeStyles } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,7 @@ export const AuthenticationModal = ({
     checklist?.map(() => false) ?? [],
   );
   const isDisabled = checklistState.includes(false);
+  const colors = useThemeColors();
 
   const handleSubmit = React.useCallback(async () => {
     if (isDisabled) {
@@ -98,6 +99,7 @@ export const AuthenticationModal = ({
               value={password}
               onChangeText={setPassword}
               onSubmitEditing={handleSubmit}
+              placeholderTextColor={colors['neutral-foot']}
               customStyle={StyleSheet.flatten([
                 styles.input,
                 error ? styles.errorInput : {},
@@ -228,6 +230,7 @@ const getStyle = createGetStyles(colors => {
       backgroundColor: 'transparent',
       borderRadius: 8,
       marginBottom: 0,
+      color: colors['neutral-title-1'],
     },
   };
 });
