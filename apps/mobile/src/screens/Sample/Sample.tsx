@@ -8,7 +8,7 @@
 import React from 'react';
 import type { PropsWithChildren } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useGetAppThemeMode } from '@/hooks/theme';
+import { useGetBinaryMode } from '@/hooks/theme';
 
 import {
   Colors,
@@ -23,7 +23,7 @@ type SectionProps = PropsWithChildren<{
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useGetAppThemeMode() === 'dark';
+  const isDarkMode = useGetBinaryMode() === 'dark';
 
   return (
     <View style={styles.sectionContainer}>
@@ -50,7 +50,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
 }
 
 function SampleScreen(): JSX.Element {
-  const isDarkMode = useGetAppThemeMode() === 'dark';
+  const isDarkMode = useGetBinaryMode() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,

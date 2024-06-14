@@ -15,7 +15,7 @@ import {
   Header,
 } from 'react-native/Libraries/NewAppScreen';
 
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
@@ -28,7 +28,7 @@ type SectionProps = PropsWithChildren<{
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useGetAppThemeMode() === 'dark';
+  const isDarkMode = useGetBinaryMode() === 'dark';
 
   return (
     <View style={styles.sectionContainer}>
@@ -93,7 +93,7 @@ const TEST_SESSION = {
 };
 
 function ProviderControllerTester(): JSX.Element {
-  const isDarkMode = useGetAppThemeMode() === 'dark';
+  const isDarkMode = useGetBinaryMode() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };

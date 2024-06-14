@@ -10,13 +10,10 @@ import {
   RcIconPointsFocusLight,
 } from '@/assets/icons/bottom-bar';
 
-import { useThemeColors, useGetAppThemeMode } from '@/hooks/theme';
+import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 
 import { Text } from '@/components';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-// import {analytics} from '@/utils/analytics';
-
-// import { LoginNavigator } from '@/screens';
 
 import HomeScreen from '@/screens/Home/Home';
 
@@ -101,7 +98,7 @@ const isIOS = Platform.OS === 'ios';
 
 export default function BottomTabNavigator() {
   const colors = useThemeColors();
-  const isDark = useGetAppThemeMode() === 'dark';
+  const isDark = useGetBinaryMode() === 'dark';
 
   const { systembarOffsetBottom } = useSafeSizes();
   const tabbarHeight = ScreenLayouts.bottomBarHeight + systembarOffsetBottom;

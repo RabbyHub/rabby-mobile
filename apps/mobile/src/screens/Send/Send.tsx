@@ -51,14 +51,6 @@ function SendScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  React.useEffect(() => {
-    navigation.setOptions({
-      headerStyle: {
-        backgroundColor: colors['neutral-card2'],
-      },
-    });
-  }, [navigation, colors]);
-
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Send)?.params,
   ) as

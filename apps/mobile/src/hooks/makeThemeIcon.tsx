@@ -4,7 +4,7 @@ import { Image, ImageSourcePropType, ImageProps } from 'react-native';
 import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { SvgProps } from 'react-native-svg';
-import { useGetAppThemeMode } from '@/hooks/theme';
+import { useGetBinaryMode } from '@/hooks/theme';
 import { ColorOrVariant, pickColorVariants } from '@/core/theme';
 
 export const makeThemeIcon = (
@@ -12,7 +12,7 @@ export const makeThemeIcon = (
   DarkIcon: React.FC<SvgProps>,
 ) =>
   memo((props: SvgProps) => {
-    const isLight = useGetAppThemeMode() === 'light';
+    const isLight = useGetBinaryMode() === 'light';
 
     return isLight ? <LightIcon {...props} /> : <DarkIcon {...props} />;
   });
@@ -27,7 +27,7 @@ export function makeThemeIconFromCC(
       },
 ) {
   return memo((props: SvgProps) => {
-    const isLight = useGetAppThemeMode() === 'light';
+    const isLight = useGetBinaryMode() === 'light';
 
     return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
   });
@@ -57,7 +57,7 @@ export const makePngIcon = (
   darkPath: ImageSourcePropType,
 ) =>
   memo((props: any) => {
-    const isLight = useGetAppThemeMode() === 'light';
+    const isLight = useGetBinaryMode() === 'light';
 
     return <Image source={isLight ? lightPath : darkPath} {...props} />;
   });

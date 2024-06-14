@@ -2,7 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React, { useMemo } from 'react';
 
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
 import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 // import { useRequest } from 'ahooks';
@@ -30,12 +30,10 @@ import { isPossibleDomain } from '@/utils/url';
 import { DappCardList } from '../Dapps/components/DappCardList';
 import { EmptyDapps } from './components/EmptyDapps';
 import { ScreenLayouts } from '@/constant/layout';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export function DappsIOSScreen(): JSX.Element {
-  const navigation = useNavigation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors } = useThemeStyles(getStyles);
 
   const getHeaderTitle = React.useCallback(() => {
     return (
@@ -45,11 +43,12 @@ export function DappsIOSScreen(): JSX.Element {
     );
   }, []);
 
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerTitle: getHeaderTitle,
     });
-  }, [navigation, getHeaderTitle]);
+  }, [setNavigationOptions, getHeaderTitle]);
 
   const {
     dappSections,

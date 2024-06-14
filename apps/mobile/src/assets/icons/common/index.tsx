@@ -24,5 +24,6 @@ export { default as RcWalletCC } from './wallet-cc.svg';
 export { default as RcIconCheckmarkCC } from './icon-checkmark-cc.svg';
 
 export { default as RcIconCloseCC } from './icon-close-cc.svg';
+export { default as RcIconCloseCircleCC } from './icon-close-circle-cc.svg';
 
 export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';
