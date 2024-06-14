@@ -24,6 +24,10 @@ export function useSafeSetNavigationOptions() {
 
   const setNavigationOptions = React.useCallback(
     (options: NativeStackNavigationOptions) => {
+      if (!IS_ANDROID) {
+        return navigation.setOptions(options);
+      }
+
       const appColorScheme = Appearance.getColorScheme();
       const isDarkTheme = appColorScheme === 'dark';
 
@@ -36,15 +40,13 @@ export function useSafeSetNavigationOptions() {
         });
 
         options = {
-          ...(IS_ANDROID && {
-            /* in fact, you also need set it on Android */
-            statusBarStyle:
-              screenSpec.barStyle === 'dark-content' ? 'dark' : 'light',
-            statusBarColor: screenSpec.androidStatusBarBg,
-          }),
-          ...(!IS_ANDROID && {
-            statusBarStyle: screenSpec.iosStatusBarStyle,
-          }),
+          /* in fact, you also need set it on Android */
+          statusBarStyle:
+            screenSpec.barStyle === 'dark-content' ? 'dark' : 'light',
+          statusBarColor: screenSpec.androidStatusBarBg,
+          // ...(!IS_ANDROID && {
+          //   statusBarStyle: screenSpec.iosStatusBarStyle,
+          // }),
           ...options,
         };
       }

@@ -12,7 +12,7 @@ import { AppRootName } from '@/constant/layout';
  * @description this component can be ONLY used in navigation screens
  *
  * @deprecated this component is deprecated, set your screen's status bar config by one of the following ways:
- * - in `getRootSpecConfig` in `constant/layout.ts` instead
+ * - in `makeScreenSpecConfig` in `constant/layout.ts` instead
  * - or just use `ScreenSpecificStatusBar` component directly in your screen
  *
  */
