@@ -30,6 +30,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-title-2'],
@@ -53,7 +54,7 @@ const hitSlop = {
 };
 
 function ReceiveScreen(): JSX.Element {
-  const navigation = useNavigation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const [chainTokenInfo, setChainTokenInfo] = useState({
     chainEnum: CHAINS_ENUM.ETH,
@@ -131,7 +132,7 @@ function ReceiveScreen(): JSX.Element {
   }, []);
 
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerStyle: {
         backgroundColor: colors['blue-default'],
       },
@@ -193,7 +194,8 @@ function ReceiveScreen(): JSX.Element {
     colors,
     isShowAccount,
     navBack,
-    navigation,
+    // navigation,
+    setNavigationOptions,
     styles.accountBalance,
     styles.accountInfo,
     styles.accountInfoContainer,
@@ -485,6 +487,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     alertModalText: {
       fontSize: 17,
+      color: colors['neutral-title1'],
     },
     modalSplitLine: {
       height: StyleSheet.hairlineWidth,

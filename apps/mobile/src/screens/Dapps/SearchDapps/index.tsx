@@ -5,7 +5,7 @@ import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
 import { isPossibleDomain } from '@/utils/url';
@@ -29,18 +29,18 @@ import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
 import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
+import { createGetStyles } from '@/utils/styles';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export function SearchDappsScreen(): JSX.Element {
-  const navigation = useNavigation();
-  const colors = useThemeColors();
+  const { colors, styles } = useThemeStyles(getStyles);
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerShown: false,
     });
-  }, [navigation]);
-
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  }, [setNavigationOptions]);
 
   const [searchText, setSearchText] = React.useState('');
 
@@ -210,8 +210,8 @@ export function SearchDappsScreen(): JSX.Element {
   );
 }
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
+const getStyles = createGetStyles(colors => {
+  return {
     page: {
       flexDirection: 'column',
       width: '100%',
@@ -259,6 +259,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     header: {
       paddingHorizontal: 20,
     },
-  });
+  };
+});
 
 export default SearchDappsScreen;

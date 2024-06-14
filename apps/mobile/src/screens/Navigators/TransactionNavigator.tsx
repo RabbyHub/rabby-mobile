@@ -51,7 +51,7 @@ export default function TransactionNavigator() {
         options={{
           ...screenOptions,
           title: 'Send',
-          ...headerPresets.withBgCard2,
+          ...headerPresets.withBg2,
         }}
       />
       <TransactionStack.Screen
@@ -89,10 +89,7 @@ export default function TransactionNavigator() {
         options={{
           ...screenOptions,
           title: 'Swap',
-          ...headerPresets.withBgCard2,
-          headerStyle: {
-            backgroundColor: colors?.['neutral-bg-2'],
-          },
+          ...headerPresets.withBg2,
         }}
       />
 

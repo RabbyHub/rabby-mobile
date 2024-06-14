@@ -28,6 +28,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Code } from 'react-native-vision-camera';
 import { CameraPopup } from './components/CameraPopup';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -210,7 +211,7 @@ export const ImportWatchAddressScreen = () => {
         onPress={handleDone}
       />
       <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
+      <ScreenSpecificStatusBar screenName={RootNames.ImportWatchAddress} />
     </RootScreenContainer>
   );
 };

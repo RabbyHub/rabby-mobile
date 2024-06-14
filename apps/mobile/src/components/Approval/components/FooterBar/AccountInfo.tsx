@@ -10,7 +10,7 @@ import { splitNumberByStep } from '@/utils/number';
 import { contactService } from '@/core/services';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { KEYRING_ICONS, KEYRING_ICONS_WHITE } from '@/constant/icon';
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
 import { StyleSheet, Text, View } from 'react-native';
 import { AddressViewer } from '@/components/AddressViewer';
@@ -89,7 +89,7 @@ export const AccountInfo: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
-  const binaryTheme = useGetAppThemeMode();
+  const binaryTheme = useGetBinaryMode();
   const isDarkTheme = binaryTheme === 'dark';
 
   return (

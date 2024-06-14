@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Dimensions,
   Modal,
   Platform,
   StyleSheet,
@@ -14,7 +13,6 @@ import { RcIconLogo } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
 import { keyringService, preferenceService } from '@/core/services';
 import { useThemeColors } from '@/hooks/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { navigate } from '@/utils/navigation';
 import { Button } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
@@ -25,6 +23,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
+import { useIsAppUnlocked } from '@/hooks/useLock';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -55,14 +54,20 @@ function GetStartedScreen(): JSX.Element {
     },
   );
 
-  const handleGetStarted = async () => {
+  const { isAppUnlocked } = useIsAppUnlocked();
+  const handleGetStarted = useCallback(async () => {
+    if (!isAppUnlocked) {
+      navigate(RootNames.Unlock);
+      return;
+    }
+
     navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // if (preferenceService.getPreference('isInvited')) {
     //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // } else {
     //   setIsShowModal(true);
     // }
-  };
+  }, [isAppUnlocked]);
 
   const handleInvite = async () => {
     setErrMessage('');
@@ -104,7 +109,7 @@ function GetStartedScreen(): JSX.Element {
 
   const navigation = useNavigation();
 
-  const init = useMemoizedFn(async () => {
+  const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (accounts?.length) {
       navigation.dispatch(
@@ -117,8 +122,10 @@ function GetStartedScreen(): JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      init();
-    }, [init]),
+      if (isAppUnlocked) {
+        initAccounts();
+      }
+    }, [isAppUnlocked, initAccounts]),
   );
 
   return (

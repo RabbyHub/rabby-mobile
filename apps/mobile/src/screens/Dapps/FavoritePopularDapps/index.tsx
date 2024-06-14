@@ -2,7 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { DappInfo } from '@/core/services/dappService';
 import { useNavigation } from '@react-navigation/native';
@@ -12,21 +12,21 @@ import { FavoriteDappCardList } from './components/FavoriteDappCardList';
 import { openapi } from '@/core/request';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { stringUtils } from '@rabby-wallet/base-utils';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export function FavoritePopularDappsScreen(): JSX.Element {
-  const navigation = useNavigation();
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useThemeStyles(getStyles);
+  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
 
   const getHeaderTitle = React.useCallback(() => {
     return <HeaderTitleText>Explore Popular Dapp</HeaderTitleText>;
   }, []);
 
   React.useEffect(() => {
-    navigation.setOptions({
+    setNavigationOptions({
       headerTitle: getHeaderTitle,
     });
-  }, [navigation, getHeaderTitle]);
+  }, [setNavigationOptions, getHeaderTitle]);
 
   const { data } = useRequest(async () => {
     return openapi.getHotDapps({ limit: 50 });

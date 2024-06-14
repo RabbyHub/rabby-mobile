@@ -5,14 +5,13 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, Platform, StatusBar, View } from 'react-native';
+import { ColorSchemeName, View } from 'react-native';
 
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 
 import { navigationRef, replace } from '@/utils/navigation';
-import { AppRootName, RootNames, getRootSpecConfig } from './constant/layout';
+import { RootNames } from './constant/layout';
 import {
-  useCurrentRouteNameInAppStatusBar,
   useSetCurrentRouteName,
   useSetNavigationReady,
   useStackScreenConfig,
@@ -31,7 +30,6 @@ import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
 
-import { useHasActiveOpenedDapp } from './screens/Dapps/hooks/useDappView';
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
 import {
@@ -45,6 +43,11 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useIsAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
+import {
+  AppStatusBar,
+  useTuneStatusBarOnRouteChange,
+} from './components/AppStatusBar';
+import usePrevious from 'ahooks/lib/usePrevious';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -62,55 +65,6 @@ const RootStackOptions = {
   headerShown: false,
 } as const;
 
-function AppStatusBar() {
-  const currentRouteName = useCurrentRouteNameInAppStatusBar();
-  const isLight = useGetAppThemeMode() === 'light';
-  const colors = useThemeColors();
-
-  // maybe we need more smooth transition on toggle active dapp
-  const hasActiveOpenedDapp = useHasActiveOpenedDapp();
-
-  const { statusBarBackgroundColor, statusBarStyle } = useMemo(() => {
-    if (hasActiveOpenedDapp) {
-      return {
-        statusBarStyle: 'light-content' as const,
-        statusBarBackgroundColor: 'rgba(0, 0, 0, 1)',
-      };
-    }
-
-    const specConfig = currentRouteName
-      ? getRootSpecConfig(colors, { isDarkTheme: !isLight })[
-          currentRouteName as any as AppRootName
-        ]
-      : undefined;
-
-    return {
-      statusBarBackgroundColor:
-        specConfig?.statusbarBackgroundColor || colors['neutral-bg-2'],
-      statusBarStyle:
-        specConfig?.statusBarStyle ||
-        (isLight ? ('dark-content' as const) : ('light-content' as const)),
-    };
-  }, [isLight, colors, currentRouteName, hasActiveOpenedDapp]);
-
-  React.useEffect(() => {
-    StatusBar.setBarStyle(statusBarStyle, true);
-
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(statusBarBackgroundColor, true);
-    }
-  }, [statusBarBackgroundColor, statusBarStyle]);
-
-  return (
-    <StatusBar
-      animated
-      translucent
-      backgroundColor={statusBarBackgroundColor}
-      barStyle={statusBarStyle}
-    />
-  );
-}
-
 export default function AppNavigation({
   colorScheme,
 }: {
@@ -120,59 +74,82 @@ export default function AppNavigation({
   const screenOptions = useStackScreenConfig();
   const colors = useThemeColors();
 
-  // console.log('============== AppNavigation Render =========');
-  useEffect(
-    () => {
-      // TODO: this may cause crash?
-      // FastImage.clearMemoryCache();
-    },
-    [
-      /* userId */
-    ],
-  );
-
-  // useLoginTestAccount();
   const { isAppUnlocked } = useIsAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
+  const { tuneOnRouteChange } = useTuneStatusBarOnRouteChange();
 
-  const onReady = useCallback(() => {
+  const onRouteChange = useCallback(
+    (currentRouteName?: string) => {
+      currentRouteName =
+        currentRouteName || navigationRef.getCurrentRoute()?.name;
+      routeNameRef.current = currentRouteName;
+
+      // tuneOnRouteChange(currentRouteName);
+      setCurrentRouteName(currentRouteName);
+
+      /**
+       * Some actions would reset the StatusBar style, such as navigation.setOptions,
+       * so component `AppStatusBar` works for those Screen without weired behaviors from '@react-native/navigation'.
+       *
+       * we do extra tune for StatusBar
+       */
+      setTimeout(() => {
+        tuneOnRouteChange(currentRouteName);
+      }, 250);
+    },
+    [setCurrentRouteName, tuneOnRouteChange],
+  );
+
+  const onReady = useCallback<
+    React.ComponentProps<typeof NavigationContainer>['onReady'] & object
+  >(() => {
     setNavigationReady(true);
-    routeNameRef.current = navigationRef?.getCurrentRoute()?.name;
-    setCurrentRouteName(routeNameRef.current);
-    console.debug('routeNameRef', routeNameRef.current);
-
+    let readyRootName = navigationRef.getCurrentRoute()?.name!;
     if (isAppUnlocked === false) {
       replace(RootNames.Unlock);
+      readyRootName = RootNames.Unlock;
     }
+    onRouteChange(readyRootName);
 
     analytics.logScreenView({
-      screen_name: routeNameRef.current,
-      screen_class: routeNameRef.current,
+      screen_name: readyRootName,
+      screen_class: readyRootName,
     });
-    matomoLogScreenView({ name: routeNameRef.current! });
-  }, [setNavigationReady, isAppUnlocked, setCurrentRouteName]);
+    matomoLogScreenView({ name: readyRootName });
+  }, [setNavigationReady, isAppUnlocked, onRouteChange]);
 
-  const onStateChange = useCallback(async () => {
-    const previousRouteName = routeNameRef.current;
-    const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
+  const onStateChange = useCallback<
+    React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
+  >(
+    _navState => {
+      const previousRouteName = routeNameRef.current;
+      const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
 
-    setCurrentRouteName(currentRouteName);
+      if (previousRouteName !== currentRouteName) {
+        onRouteChange(currentRouteName);
 
-    if (previousRouteName !== currentRouteName) {
-      analytics.logScreenView({
-        screen_name: routeNameRef.current,
-        screen_class: routeNameRef.current,
-      });
-      matomoLogScreenView({ name: currentRouteName! });
-    }
-    routeNameRef.current = currentRouteName;
-  }, [setCurrentRouteName]);
+        analytics.logScreenView({
+          screen_name: routeNameRef.current,
+          screen_class: routeNameRef.current,
+        });
+        matomoLogScreenView({ name: currentRouteName! });
+      }
+      routeNameRef.current = currentRouteName;
+    },
+    [onRouteChange],
+  );
+
+  const previousRoute = usePrevious(routeNameRef.current);
+  const isSlideFromGetStarted =
+    [undefined, RootNames.GetStarted].includes(previousRoute as any) &&
+    routeNameRef.current === RootNames.Unlock;
+  // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
-      <AppStatusBar />
+      <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <NavigationContainer
         ref={navigationRef}
@@ -203,6 +180,11 @@ export default function AppNavigation({
             options={{
               ...screenOptions,
               title: '',
+              // another valid composition
+              // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
+              // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
+              animationTypeForReplace: 'push',
+              animation: 'fade_from_bottom',
               headerTitle: '',
               headerBackVisible: false,
               headerShadowVisible: false,

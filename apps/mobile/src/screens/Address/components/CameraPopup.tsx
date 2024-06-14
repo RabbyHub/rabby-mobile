@@ -5,22 +5,24 @@ import {
   QRCodeScanner,
   QRCodeScannerProps,
 } from '@/components/QRCodeScanner/QRCodeScanner';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { forwardRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 export const CameraPopup = forwardRef<BottomSheetModal, QRCodeScannerProps>(
   (props, ref) => {
-    const colors = useThemeColors();
-    const styles = React.useMemo(() => getStyle(colors), []);
+    const { colors, styles } = useThemeStyles(getStyle);
+    const { t } = useTranslation();
+
     return (
       <AppBottomSheetModal ref={ref} snapPoints={[436]}>
         <BottomSheetView style={styles.container}>
           <View>
             <Text style={styles.title}>
-              Please scan the QR code with your camera
+              {t('page.newAddress.addContacts.cameraTitle')}
             </Text>
           </View>
           <RcIconScannerDownArrowCC
@@ -43,6 +45,7 @@ const getStyle = createGetStyles(colors => ({
     marginTop: 20,
     fontSize: 15,
     fontWeight: '500',
+    color: colors['neutral-title1'],
   },
   icon: {
     marginTop: 20,

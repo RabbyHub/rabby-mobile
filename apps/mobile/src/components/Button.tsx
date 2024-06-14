@@ -19,7 +19,7 @@ import { colord } from 'colord';
 
 import {
   useThemeColors,
-  useGetAppThemeMode,
+  useGetBinaryMode,
   useThemeStyles,
 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
@@ -74,7 +74,7 @@ export const Button = ({
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
-  const isLight = useGetAppThemeMode() === 'light';
+  const isLight = useGetBinaryMode() === 'light';
   const colors = useThemeColors();
   const isClearType = useMemo(() => type === 'clear', [type]);
 

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
@@ -11,7 +11,7 @@ import { navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useNavigation } from '@react-navigation/native';
 
 import { makeThemeIconFromCC } from './makeThemeIcon';
@@ -23,7 +23,7 @@ const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onDark: ThemeColors.dark['neutral-body'],
 });
 
-const currentRouteNameAtom = atom<string | undefined>(undefined);
+const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
 export function useCurrentRouteNameInAppStatusBar() {
   return useAtomValue(currentRouteNameAtom);
 }
@@ -42,19 +42,6 @@ export function useSetNavigationReady() {
   const setNavigationReady = useSetAtom(navigationReadyAtom);
 
   return { setNavigationReady };
-}
-
-export function useToggleShowNavHeader() {
-  const navigation = useNavigation();
-
-  const toggleShowNavHeader = useCallback(
-    (isShown: boolean) => {
-      navigation.setOptions({ headerShown: isShown });
-    },
-    [navigation],
-  );
-
-  return { toggleShowNavHeader };
 }
 
 const hitSlop = {
@@ -123,10 +110,10 @@ const styles = StyleSheet.create({
   },
 });
 
-export function useRabbyAppNavigation() {
-  return useNavigation<
-    NativeStackScreenProps<RootStackParamsList>['navigation']
-  >();
+export function useRabbyAppNavigation<
+  K extends NativeStackScreenProps<RootStackParamsList>['navigation'],
+>() {
+  return useNavigation<K>();
 }
 
 export function resetNavigationToHome(
@@ -143,4 +130,45 @@ export function resetNavigationToHome(
       },
     ],
   });
+}
+
+export function usePreventGoBack({
+  navigation,
+  shouldGoback,
+}: {
+  navigation?: ReturnType<typeof useRabbyAppNavigation>;
+  shouldGoback: (() => boolean) | React.RefObject<boolean>;
+}) {
+  const shouldPreventFn = useCallback(() => {
+    if (typeof shouldGoback === 'function') {
+      return !shouldGoback();
+    }
+
+    return !shouldGoback.current;
+  }, [shouldGoback]);
+
+  const registerPreventEffect = useCallback(() => {
+    if (!navigation) return;
+
+    const listener: Parameters<
+      typeof navigation.addListener<'beforeRemove'>
+    >[1] = e => {
+      if (shouldPreventFn()) {
+        // Prevent default behavior of leaving the screen
+        e.preventDefault();
+
+        return false;
+      }
+    };
+
+    navigation.addListener('beforeRemove', listener);
+
+    return () => {
+      navigation.removeListener('beforeRemove', listener);
+    };
+  }, [navigation, shouldPreventFn]);
+
+  return {
+    registerPreventEffect,
+  };
 }

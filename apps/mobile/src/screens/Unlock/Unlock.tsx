@@ -1,6 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
@@ -16,10 +16,11 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { apisLock } from '@/core/apis';
 import {
   resetNavigationToHome,
+  usePreventGoBack,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
 import { getFormikErrorsCount } from '@/utils/patch';
+import { useFocusEffect } from '@react-navigation/native';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -101,6 +102,13 @@ export default function UnlockScreen() {
     resetNavigationToHome(navigation);
   }, [navigation]);
 
+  const { registerPreventEffect } = usePreventGoBack({
+    navigation,
+    shouldGoback: useCallback(() => apisLock.isUnlocked(), []),
+  });
+
+  useFocusEffect(registerPreventEffect);
+
   return (
     <SilentTouchableView
       style={{ height: '100%', flex: 1 }}
@@ -118,12 +126,13 @@ export default function UnlockScreen() {
       <View style={styles.bodyContainer}>
         <View style={styles.formWrapper}>
           <FormInput
+            clearable
             ref={passwordInputRef}
             style={styles.inputContainer}
             inputStyle={styles.input}
             errorText={errors.password}
             inputProps={{
-              // value: '',
+              value: formik.values.password,
               secureTextEntry: true,
               inputMode: 'text',
               returnKeyType: 'done',
