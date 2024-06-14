@@ -95,7 +95,7 @@ const getStyles = createGetStyles(colors => {
   return {
     rootScreenContainer: {
       backgroundColor: colors['neutral-bg-1'],
-      ...makeDebugBorder(),
+      // ...makeDebugBorder(),
     },
     safeView: {
       flex: 1,
