@@ -126,12 +126,13 @@ export default function UnlockScreen() {
       <View style={styles.bodyContainer}>
         <View style={styles.formWrapper}>
           <FormInput
+            clearable
             ref={passwordInputRef}
             style={styles.inputContainer}
             inputStyle={styles.input}
             errorText={errors.password}
             inputProps={{
-              // value: '',
+              value: formik.values.password,
               secureTextEntry: true,
               inputMode: 'text',
               returnKeyType: 'done',

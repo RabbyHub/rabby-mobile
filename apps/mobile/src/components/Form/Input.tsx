@@ -10,14 +10,22 @@ import {
   TextStyle,
 } from 'react-native';
 
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInputProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetTextInput';
 
+import { useThemeStyles } from '@/hooks/theme';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import TouchableView from '../Touchable/TouchableView';
+import { RcIconCloseCircleCC } from '@/assets/icons/common';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+
+const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
+
+const CLOSE_ICON_WRAPPER_WIDTH = 40;
 const getFormInputStyles = createGetStyles(colors => {
   return {
     inputContainer: {
+      position: 'relative',
       borderRadius: 4,
       borderWidth: 1,
       borderStyle: 'solid',
@@ -28,15 +36,37 @@ const getFormInputStyles = createGetStyles(colors => {
     inputContainerFocusing: {
       borderColor: colors['blue-default'],
     },
+    inputContainerClearable: {
+      position: 'relative',
+
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingRight: 0,
+    },
     errorInputContainer: {
       borderColor: colors['red-default'],
     },
     input: {
+      flexShrink: 1,
       fontSize: 15,
       paddingHorizontal: 12,
       width: '100%',
       height: '100%',
       color: colors['neutral-title1'],
+    },
+    closeIconWrapper: {
+      flexShrink: 0,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: CLOSE_ICON_WRAPPER_WIDTH,
+      backgroundColor: 'transparent',
+      // ...makeDebugBorder('red'),
+    },
+    closeIcon: {
+      width: 18,
+      height: 18,
     },
     formFieldError: {
       marginTop: 12,
@@ -51,13 +81,21 @@ const getFormInputStyles = createGetStyles(colors => {
 });
 
 type InputType = 'TextInput' | 'BottomSheetTextInput';
+type RenderCtx = {
+  clearable?: boolean;
+  wrapperStyle: StyleProp<ViewStyle>;
+  iconStyle: StyleProp<ViewStyle>;
+  onPressClear?: React.ComponentProps<typeof TouchableView>['onPress'];
+};
 export const FormInput = React.forwardRef<
   TextInput,
   RNViewProps & {
     as?: InputType;
-    inputProps?: TextInputProps | BottomSheetTextInputProps;
     containerStyle?: React.ComponentProps<typeof View>['style'];
+    inputProps?: Omit<TextInputProps | BottomSheetTextInputProps, 'onChange'>;
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
+    clearable?: boolean;
+    clearIcon?: React.ReactNode | ((ctx: RenderCtx) => React.ReactNode);
     hasError?: boolean;
     errorText?: string;
     disableFocusingStyle?: boolean;
@@ -69,8 +107,10 @@ export const FormInput = React.forwardRef<
     {
       as,
       containerStyle,
-      inputStyle,
       inputProps,
+      inputStyle,
+      clearable,
+      clearIcon,
       errorText,
       disableFocusingStyle = false,
       fieldErrorContainerStyle,
@@ -80,8 +120,7 @@ export const FormInput = React.forwardRef<
     },
     ref,
   ) => {
-    const colors = useThemeColors();
-    const styles = getFormInputStyles(colors);
+    const { styles } = useThemeStyles(getFormInputStyles);
 
     const JSXComponent = useMemo(() => {
       switch (as) {
@@ -109,12 +148,51 @@ export const FormInput = React.forwardRef<
       [inputProps],
     );
 
+    const onPressClear = useCallback<
+      React.ComponentProps<typeof TouchableView>['onPress'] & object
+    >(
+      evt => {
+        if (clearable) {
+          evt?.stopPropagation?.();
+          if (typeof ref !== 'function') {
+            ref?.current?.clear();
+          }
+
+          inputProps?.onChangeText?.('');
+        }
+      },
+      [ref, clearable, inputProps],
+    );
+
+    const formattedClearIcon = useMemo(() => {
+      const clearWrapperStyle = StyleSheet.flatten([styles.closeIconWrapper]);
+      const clearIconStyle = StyleSheet.flatten([styles.closeIcon]);
+
+      if (typeof clearIcon === 'function') {
+        return clearIcon({
+          clearable,
+          iconStyle: clearIconStyle,
+          wrapperStyle: clearWrapperStyle,
+          onPressClear,
+        });
+      }
+      return (
+        <TouchableView
+          disabled={!clearable}
+          style={clearWrapperStyle}
+          onPress={onPressClear}>
+          <RcIconClose style={clearIconStyle} />
+        </TouchableView>
+      );
+    }, [styles, clearable, clearIcon, onPressClear]);
+
     return (
       <>
         <View
           {...viewProps}
           style={StyleSheet.flatten([
             styles.inputContainer,
+            clearable && styles.inputContainerClearable,
             hasError && styles.errorInputContainer,
             !disableFocusingStyle &&
               isFocusing &&
@@ -134,6 +212,7 @@ export const FormInput = React.forwardRef<
               inputProps?.style,
             ])}
           />
+          {inputProps?.value && clearable && (formattedClearIcon || null)}
         </View>
         {errorText && (
           <View
