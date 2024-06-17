@@ -69,7 +69,7 @@ jobs:
 
       - name: "[Android] Setup Android SDK"
         if: runner.os == 'Linux'
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
 
       - name: "[iOS] Setup Xcode"
         if: runner.os == 'macOS'
