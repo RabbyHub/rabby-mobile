@@ -54,7 +54,9 @@ function GetStartedScreen(): JSX.Element {
     },
   );
 
+  const [isInited, setIsInited] = useState(false);
   const handleGetStarted = useCallback(async () => {
+    if (!isInited) return;
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
@@ -66,7 +68,7 @@ function GetStartedScreen(): JSX.Element {
     // } else {
     //   setIsShowModal(true);
     // }
-  }, []);
+  }, [isInited]);
 
   const handleInvite = async () => {
     setErrMessage('');
@@ -109,13 +111,20 @@ function GetStartedScreen(): JSX.Element {
   const navigation = useNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (accounts?.length) {
-      navigation.dispatch(
-        StackActions.replace(RootNames.StackRoot, {
-          screen: RootNames.Home,
-        }),
-      );
+    setIsInited(false);
+    try {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      if (accounts?.length) {
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsInited(true);
     }
   });
 
@@ -156,6 +165,7 @@ function GetStartedScreen(): JSX.Element {
       {/* button area */}
       <View style={styles.buttonArea}>
         <Button
+          disabled={!isInited}
           buttonStyle={styles.buttonStyle}
           titleStyle={styles.buttonTitleStyle}
           title="Get Started"
