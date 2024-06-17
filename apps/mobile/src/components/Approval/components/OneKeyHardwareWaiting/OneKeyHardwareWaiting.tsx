@@ -208,6 +208,8 @@ export const OneKeyHardwareWaiting = ({
         setErrorMessage(data.errorMsg);
       }
     });
+
+    emitSignComponentAmounted();
   };
 
   React.useEffect(() => {
@@ -216,7 +218,6 @@ export const OneKeyHardwareWaiting = ({
 
   React.useEffect(() => {
     init();
-    emitSignComponentAmounted();
 
     mountedRef.current = true;
 

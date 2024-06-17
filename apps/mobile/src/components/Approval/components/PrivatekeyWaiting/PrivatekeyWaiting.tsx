@@ -215,13 +215,14 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
         setErrorMessage(data.errorMsg);
       }
     });
+
+    emitSignComponentAmounted();
   };
 
   const Icon = brandContent?.icon;
 
   React.useEffect(() => {
     init();
-    emitSignComponentAmounted();
 
     return () => {
       eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
