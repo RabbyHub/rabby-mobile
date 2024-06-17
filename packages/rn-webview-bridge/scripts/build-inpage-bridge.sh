@@ -8,7 +8,7 @@ script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname $script_dir)
 repo_dir=$(dirname $(dirname $project_dir))
 
-[[ -z "${webpack_mode}" ]] && webpack_mode="production";
+[[ -z "${webpack_mode-}" ]] && webpack_mode="production";
 
 inpage_files_targets=(
   # for iOS
