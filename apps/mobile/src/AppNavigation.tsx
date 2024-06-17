@@ -41,7 +41,7 @@ import {
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import UnlockScreen from './screens/Unlock/Unlock';
-import { useIsAppUnlocked } from './hooks/useLock';
+import { useAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import {
   AppStatusBar,
@@ -74,7 +74,7 @@ export default function AppNavigation({
   const screenOptions = useStackScreenConfig();
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useIsAppUnlocked();
+  const { isAppUnlocked } = useAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
   const setCurrentRouteName = useSetCurrentRouteName();
@@ -107,7 +107,7 @@ export default function AppNavigation({
   >(() => {
     setNavigationReady(true);
     let readyRootName = navigationRef.getCurrentRoute()?.name!;
-    if (isAppUnlocked === false) {
+    if (!isAppUnlocked) {
       replace(RootNames.Unlock);
       readyRootName = RootNames.Unlock;
     }
@@ -183,7 +183,7 @@ export default function AppNavigation({
               // another valid composition
               // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
               // animation: isSlideFromGetStarted ? 'fade_from_bottom' : 'slide_from_left',
-              animationTypeForReplace: 'push',
+              // animationTypeForReplace: 'push',
               animation: 'fade_from_bottom',
               headerTitle: '',
               headerBackVisible: false,

@@ -23,7 +23,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
-import { useIsAppUnlocked } from '@/hooks/useLock';
+import { useAppUnlocked } from '@/hooks/useLock';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -54,9 +54,10 @@ function GetStartedScreen(): JSX.Element {
     },
   );
 
-  const { isAppUnlocked } = useIsAppUnlocked();
+  const [isInited, setIsInited] = useState(false);
   const handleGetStarted = useCallback(async () => {
-    if (!isAppUnlocked) {
+    if (!isInited) return;
+    if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
@@ -67,7 +68,7 @@ function GetStartedScreen(): JSX.Element {
     // } else {
     //   setIsShowModal(true);
     // }
-  }, [isAppUnlocked]);
+  }, [isInited]);
 
   const handleInvite = async () => {
     setErrMessage('');
@@ -110,16 +111,24 @@ function GetStartedScreen(): JSX.Element {
   const navigation = useNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
-    const accounts = await keyringService.getAllVisibleAccountsArray();
-    if (accounts?.length) {
-      navigation.dispatch(
-        StackActions.replace(RootNames.StackRoot, {
-          screen: RootNames.Home,
-        }),
-      );
+    setIsInited(false);
+    try {
+      const accounts = await keyringService.getAllVisibleAccountsArray();
+      if (accounts?.length) {
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsInited(true);
     }
   });
 
+  const { isAppUnlocked } = useAppUnlocked();
   useFocusEffect(
     useCallback(() => {
       if (isAppUnlocked) {
@@ -156,6 +165,7 @@ function GetStartedScreen(): JSX.Element {
       {/* button area */}
       <View style={styles.buttonArea}>
         <Button
+          disabled={!isInited}
           buttonStyle={styles.buttonStyle}
           titleStyle={styles.buttonTitleStyle}
           title="Get Started"
