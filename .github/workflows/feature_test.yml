@@ -47,30 +47,31 @@ jobs:
           echo "HOME is $HOME"
           echo "which node $(which node)"
 
-      - name: "[Android] Setup Nodejs and Yarn"
+      - name: "[Linux] Setup Nodejs and Yarn"
         if: runner.os == 'Linux'
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: "[Android] Setup Ruby & Fastlane"
+      - name: "[Linux] Setup Ruby & Fastlane"
         if: runner.os == 'Linux'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.2'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
-      - name: "[Android] Setup Java"
+      - name: "[Linux] Setup Java"
+        if: runner.os == 'Linux'
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
 
-      - name: "[Android] Setup Android SDK"
+      - name: "[Linux] Setup Android SDK"
         if: runner.os == 'Linux'
         uses: android-actions/setup-android@v3
 
-      - name: "[iOS] Setup Xcode"
+      - name: "[macOS] Setup Xcode"
         if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
@@ -125,13 +126,13 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-          path: |
-            ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-            ./apps/mobile/ios/Package/adhoc/*.ipa
-            ./apps/mobile/ios/Package/adhoc/manifest.plist
-            ./apps/mobile/ios/Package/adhoc/*.zip
-          retention-days: 7
+      # - name: Upload artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+      #     path: |
+      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+      #       ./apps/mobile/ios/Package/adhoc/*.ipa
+      #       ./apps/mobile/ios/Package/adhoc/manifest.plist
+      #       ./apps/mobile/ios/Package/adhoc/*.zip
+      #     retention-days: 7

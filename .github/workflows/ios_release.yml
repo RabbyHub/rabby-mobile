@@ -99,11 +99,11 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-          path: |
-            ./apps/mobile/ios/Package/appstore/*.ipa
-            ./apps/mobile/ios/Package/appstore/*.zip
-          retention-days: 90
+      # - name: Upload artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+      #     path: |
+      #       ./apps/mobile/ios/Package/appstore/*.ipa
+      #       ./apps/mobile/ios/Package/appstore/*.zip
+      #     retention-days: 90
