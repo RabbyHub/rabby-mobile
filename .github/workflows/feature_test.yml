@@ -18,14 +18,16 @@ on:
 
 defaults:
   run:
-    shell: bash -ieo pipefail {0}
+    shell: bash -ieol pipefail {0}
 
 jobs:
   setup:
     name: Build
     strategy:
       matrix:
-        host: [macOS]
+        host:
+          - macOS
+          - Linux
     runs-on:
       - self-hosted
       - mobile
@@ -39,23 +41,38 @@ jobs:
 
       - name: Env Test
         id: env-test
-        shell: bash
         run: |
           echo "whoami $(whoami)"
           echo "shell is $(echo $0)"
           echo "HOME is $HOME"
           echo "which node $(which node)"
 
-      - name: "[Android] Setup Java"
+      - name: "[Linux] Setup Nodejs and Yarn"
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: "[Linux] Setup Ruby & Fastlane"
+        if: runner.os == 'Linux'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.2'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+      - name: "[Linux] Setup Java"
+        if: runner.os == 'Linux'
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
 
-      - name: "[Android] Setup Android SDK"
-        uses: android-actions/setup-android@v2
+      - name: "[Linux] Setup Android SDK"
+        if: runner.os == 'Linux'
+        uses: android-actions/setup-android@v3
 
-      - name: "[iOS] Setup Xcode"
+      - name: "[macOS] Setup Xcode"
+        if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
         with:
@@ -63,7 +80,6 @@ jobs:
           xcode-version: '15.3'
 
       - name: Install and build
-        shell: bash
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           yarn install;
@@ -71,19 +87,25 @@ jobs:
           bundle install;
           yarn prepare-archive;
 
-          # build android
-          buildchannel=selfhost-reg ./scripts/deploy-android.sh
+          OS_TYPE=$(uname -s);
+          echo "OS_TYPE is $OS_TYPE";
 
-          # build android
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
-          cd ios && bundle install && bundle exec pod install;
-          cd ../;
-          ./scripts/deploy-ios-adhoc.sh
+          if [ "$OS_TYPE" == "Linux" ]; then
+            buildchannel=selfhost-reg ./scripts/deploy-android.sh
+          elif [ "$OS_TYPE" == "Darwin" ]; then
+            security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
+            cd ios && bundle install && bundle exec pod install;
+            cd ../;
+            ./scripts/deploy-ios-adhoc.sh
+          fi
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
+          RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
+          RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           REALLY_UPLOAD: ${{ inputs.REALLY_UPLOAD }}
@@ -104,13 +126,13 @@ jobs:
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-          path: |
-            ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-            ./apps/mobile/ios/Package/adhoc/*.ipa
-            ./apps/mobile/ios/Package/adhoc/manifest.plist
-            ./apps/mobile/ios/Package/adhoc/*.zip
-          retention-days: 7
+      # - name: Upload artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+      #     path: |
+      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+      #       ./apps/mobile/ios/Package/adhoc/*.ipa
+      #       ./apps/mobile/ios/Package/adhoc/manifest.plist
+      #       ./apps/mobile/ios/Package/adhoc/*.zip
+      #     retention-days: 7

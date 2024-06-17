@@ -1,6 +1,8 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-set -euo pipefail
+if [ "$(uname -s)" != "Linux" ]; then
+  set -euo pipefail
+fi
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname "$script_dir")

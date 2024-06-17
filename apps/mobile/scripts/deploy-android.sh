@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # release targets:
 # - https://download.rabby.io/downloads/wallet-mobile/android/version.json
@@ -18,7 +18,7 @@ checkout_s3_pub_deployment_params;
 # TODO: read from gradle
 proj_version=$(node --eval="process.stdout.write(require('./package.json').version)");
 app_display_name=$(node --eval="process.stdout.write(require('./app.json').displayName)");
-android_version_name=$(grep -m1 "versionName" $project_dir/android/app/build.gradle | cut -d'"' -f2)
+android_version_name=$(grep -m1 "versionName" ./android/app/build.gradle | cut -d'"' -f2)
 android_version_code=$(grep -m1 "versionCode" ./android/app/build.gradle | xargs | cut -c 13-)
 
 cd $project_dir;
