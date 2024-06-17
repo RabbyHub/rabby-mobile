@@ -20,7 +20,7 @@ export const CreateSeedPhraseVerifyScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
 
-  const { data } = useRequest(async () => {
+  const { data, runAsync: runShuffle } = useRequest(async () => {
     const seedPhrase: string = await apiMnemonic.getPreMnemonics();
     const words = seedPhrase.split(' ');
     const shuffledWords = _.shuffle(words);
@@ -35,19 +35,22 @@ export const CreateSeedPhraseVerifyScreen = () => {
     };
   });
 
-  const [selectedWord, setSelectedWords] = React.useState<string[]>([]);
+  const [selectedWordIndexes, setSelectedWordIndexes] = React.useState<
+    number[]
+  >([]);
   const [isShowDialog, setShowDialog] = React.useState(false);
 
   const validate = useMemoizedFn(() => {
-    if (selectedWord.length !== 3) {
+    if (selectedWordIndexes.length !== 3) {
       return false;
     }
-    return selectedWord.every((word, index) => {
+    return selectedWordIndexes.every((n, index) => {
       const number = data?.shuffledNumbers?.[index];
-      if (number == null) {
+      const word = data?.shuffledWords?.[n];
+      if (number == null || !word) {
         return false;
       }
-      return data?.words.indexOf(word) === number - 1;
+      return data?.words[number - 1] === word;
     });
   });
 
@@ -108,7 +111,7 @@ export const CreateSeedPhraseVerifyScreen = () => {
   return (
     <FooterButtonScreenContainer
       btnProps={{
-        disabled: selectedWord.length < 3,
+        disabled: selectedWordIndexes.length < 3,
         loading: isSubmitting,
       }}
       buttonText={'Next'}
@@ -128,20 +131,25 @@ export const CreateSeedPhraseVerifyScreen = () => {
         </Text>
       </View>
       <View style={styles.grid}>
-        {data?.shuffledWords.map(word => {
-          const selectedIndex = selectedWord.findIndex(item => item === word);
+        {data?.shuffledWords.map((word, index) => {
+          const selectedIndex = selectedWordIndexes.findIndex(
+            item => item === index,
+          );
           const isSelected = selectedIndex !== -1;
           const selectedNumber = isSelected
             ? data?.shuffledNumbers?.[selectedIndex]
             : null;
           return (
-            <View style={styles.gridItemWarper} key={word}>
+            <View style={styles.gridItemWarper} key={index}>
               <TouchableWithoutFeedback
                 onPress={() => {
-                  if (isSelected || selectedWord.length >= 3) {
-                    return;
+                  if (isSelected) {
+                    setSelectedWordIndexes(prev => {
+                      return prev.filter(item => item !== index);
+                    });
+                  } else if (selectedWordIndexes.length < 3) {
+                    setSelectedWordIndexes([...selectedWordIndexes, index]);
                   }
-                  setSelectedWords([...selectedWord, word]);
                 }}>
                 <View
                   style={[
@@ -186,7 +194,8 @@ export const CreateSeedPhraseVerifyScreen = () => {
             title="Try again"
             onPress={() => {
               setShowDialog(false);
-              setSelectedWords([]);
+              setSelectedWordIndexes([]);
+              runShuffle();
             }}
           />
         </View>
