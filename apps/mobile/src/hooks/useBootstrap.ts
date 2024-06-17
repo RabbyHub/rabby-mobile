@@ -12,7 +12,7 @@ import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { useGlobal } from './global';
-import { useAppUnlocked, useIsAppUnlocked } from './useLock';
+import { useAppUnlocked, useTryUnlockApp } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
@@ -54,7 +54,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { appUnlocked, setAppLock } = useAppUnlocked();
+  const { isAppUnlocked, setAppLock } = useAppUnlocked();
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {
@@ -94,7 +94,7 @@ export function useInitializeAppOnTop() {
     };
   }, [setAppLock, doInitializeApis, fetchAccounts]);
 
-  return { appUnlocked };
+  return { isAppUnlocked };
 }
 
 const loadEntryScriptsAtom = atom({
@@ -165,9 +165,10 @@ export function useBootstrapApp() {
     }
   }, [appNavigationReady]);
 
+  const { tryUnlock } = useTryUnlockApp();
+
   React.useEffect(() => {
-    apisLock
-      .tryAutoUnlockRabbyMobile()
+    tryUnlock()
       .then(async result => {
         setBootstrap(prev => ({
           ...prev,
@@ -182,7 +183,7 @@ export function useBootstrapApp() {
           couldRender: true,
         }));
       });
-  }, [setBootstrap]);
+  }, [tryUnlock, setBootstrap]);
 
   return {
     couldRender,

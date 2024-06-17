@@ -23,7 +23,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
-import { useIsAppUnlocked } from '@/hooks/useLock';
+import { useAppUnlocked } from '@/hooks/useLock';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -54,9 +54,8 @@ function GetStartedScreen(): JSX.Element {
     },
   );
 
-  const { isAppUnlocked } = useIsAppUnlocked();
   const handleGetStarted = useCallback(async () => {
-    if (!isAppUnlocked) {
+    if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
@@ -67,7 +66,7 @@ function GetStartedScreen(): JSX.Element {
     // } else {
     //   setIsShowModal(true);
     // }
-  }, [isAppUnlocked]);
+  }, []);
 
   const handleInvite = async () => {
     setErrMessage('');
@@ -120,6 +119,7 @@ function GetStartedScreen(): JSX.Element {
     }
   });
 
+  const { isAppUnlocked } = useAppUnlocked();
   useFocusEffect(
     useCallback(() => {
       if (isAppUnlocked) {

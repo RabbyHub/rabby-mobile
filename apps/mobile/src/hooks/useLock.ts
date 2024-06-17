@@ -5,23 +5,38 @@ const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { keyringService } from '@/core/services';
+import { apisLock } from '@/core/apis';
 
 const appLockAtom = atom({
   appUnlocked: false,
 });
-
-export function useIsAppUnlocked() {
-  const [{ appUnlocked }] = useAtom(appLockAtom);
-  return { isAppUnlocked: appUnlocked };
-}
+appLockAtom.onMount = setAppLock => {
+  setAppLock({
+    appUnlocked: keyringService.isUnlocked(),
+  });
+};
 
 export function useAppUnlocked() {
   const [{ appUnlocked }, setAppLock] = useAtom(appLockAtom);
 
   return {
-    appUnlocked,
+    isAppUnlocked: appUnlocked,
     setAppLock,
   };
+}
+
+export function useTryUnlockApp() {
+  const { setAppLock } = useAppUnlocked();
+
+  const tryUnlock = React.useCallback(async () => {
+    return apisLock.tryAutoUnlockRabbyMobile().then(async result => {
+      setAppLock({ appUnlocked: keyringService.isUnlocked() });
+      return result;
+    });
+  }, [setAppLock]);
+
+  return { tryUnlock };
 }
 
 const FALLBACK_STATE: AppStateStatus = isIOS ? 'unknown' : 'active';
