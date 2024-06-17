@@ -171,13 +171,15 @@ export const KeystoneHardwareWaiting = ({
         setErrorMessage(data.errorMsg);
       }
     });
-    await apiKeystone.acquireKeystoneMemStoreData();
+    emitSignComponentAmounted();
+    setTimeout(() => {
+      apiKeystone.acquireKeystoneMemStoreData();
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
     init();
-    emitSignComponentAmounted();
 
     return () => {
       eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);

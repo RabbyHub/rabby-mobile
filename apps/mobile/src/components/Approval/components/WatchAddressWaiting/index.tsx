@@ -215,11 +215,11 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       },
     );
     initWalletConnect();
+    emitSignComponentAmounted();
   };
 
   useEffect(() => {
     init();
-    emitSignComponentAmounted();
 
     return () => {
       eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);

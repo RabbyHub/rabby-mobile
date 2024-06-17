@@ -219,6 +219,8 @@ export const LedgerHardwareWaiting = ({
         setErrorMessage(data.errorMsg);
       }
     });
+
+    emitSignComponentAmounted();
   };
 
   React.useEffect(() => {
@@ -227,7 +229,6 @@ export const LedgerHardwareWaiting = ({
 
   React.useEffect(() => {
     init();
-    emitSignComponentAmounted();
     mountedRef.current = true;
 
     return () => {
