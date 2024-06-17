@@ -257,16 +257,7 @@ const flowContext = flow
     } = request;
     const requestDeferFn = async () =>
       new Promise(async (resolve, reject) => {
-        if (
-          [
-            'ethSendTransaction',
-            'personalSign',
-            'ethSignTypedData',
-            'ethSignTypedDataV1',
-            'ethSignTypedDataV3',
-            'ethSignTypedDataV4',
-          ].includes(ctx.mapMethod)
-        ) {
+        if (isSignApproval(approvalType) && uiRequestComponent) {
           await waitSignComponentAmounted();
         }
 
