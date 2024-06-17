@@ -22,14 +22,10 @@ function getInitError(password: string) {
   return { error: '' };
 }
 
-export function verifyPassword(password: string) {
-  return keyringService.verifyPassword(password);
-}
-
-export function safeVerifyPassword(password: string) {
+async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
-    keyringService.verifyPassword(password);
+    await keyringService.verifyPassword(password);
     result.success = true;
   } catch (error: any) {
     result.success = false;
@@ -48,7 +44,7 @@ export async function setupWalletPassword(newPassword: string) {
   if (result.error) return result;
 
   try {
-    verifyPassword(RABBY_MOBILE_KR_PWD);
+    keyringService.verifyPassword(RABBY_MOBILE_KR_PWD);
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
   } catch (error) {
     result.error = 'Failed to set password';
@@ -65,7 +61,7 @@ export async function updateWalletPassword(
   if (result.error) return result;
 
   try {
-    const r = safeVerifyPassword(oldPassword);
+    const r = await safeVerifyPassword(oldPassword);
     if (r.error) throw new Error(ERRORS.CURRENT_IS_INCORRET);
   } catch (error) {
     result.error = ERRORS.CURRENT_IS_INCORRET;
@@ -85,7 +81,7 @@ export async function clearCustomPassword(currentPassword: string) {
   const result = getInitError(currentPassword);
   if (result.error) return result;
   try {
-    const r = safeVerifyPassword(currentPassword);
+    const r = await safeVerifyPassword(currentPassword);
     if (r.error) throw new Error(ERRORS.CURRENT_IS_INCORRET);
   } catch (error) {
     result.error = ERRORS.CURRENT_IS_INCORRET;
@@ -107,10 +103,12 @@ export async function getRabbyLockInfo() {
   };
 
   try {
-    await keyringService.verifyPassword(RABBY_MOBILE_KR_PWD);
-    info.pwdStatus = PasswordStatus.UseBuiltIn;
+    const verifyResult = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
+    info.pwdStatus = verifyResult.success
+      ? PasswordStatus.UseBuiltIn
+      : PasswordStatus.Custom;
   } catch (e) {
-    info.pwdStatus = PasswordStatus.Custom;
+    info.pwdStatus = PasswordStatus.Unknown;
   }
 
   return info;
