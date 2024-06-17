@@ -1,12 +1,10 @@
 #!/usr/bin/env sh
 
-
-OS_TYPE=$(uname -s);
-# not set on Linx
-if [ "$OS_TYPE" != "Linux" ]; then
+if [ "$(uname -s)" != "Linux" ]; then
   set -euo pipefail
+else
+  set -ieo pipefail
 fi
-
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname "$script_dir")

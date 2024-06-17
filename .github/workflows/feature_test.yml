@@ -58,7 +58,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7'
+          ruby-version: '2.7.2'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: "[Android] Setup Java"
