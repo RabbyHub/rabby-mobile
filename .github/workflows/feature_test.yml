@@ -18,7 +18,7 @@ on:
 
 defaults:
   run:
-    shell: bash -ieo pipefail {0}
+    shell: bash -ieol pipefail {0}
 
 jobs:
   setup:
@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         host:
-          # - macOS
+          - macOS
           - Linux
     runs-on:
       - self-hosted
@@ -41,7 +41,6 @@ jobs:
 
       - name: Env Test
         id: env-test
-        shell: bash
         run: |
           echo "whoami $(whoami)"
           echo "shell is $(echo $0)"
@@ -80,7 +79,6 @@ jobs:
           xcode-version: '15.3'
 
       - name: Install and build
-        shell: bash
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           yarn install;
