@@ -27,6 +27,10 @@ import {
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowTipTermOfUseModal } from './components/TipTermOfUseModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
+import { useNavigationState } from '@react-navigation/native';
+import { AppRootName, RootNames } from '@/constant/layout';
+import { SettingNavigatorParamList } from '@/navigation-type';
+import { useLoadLockInfo } from './useManagePassword';
 
 const TEST_PWD = __DEV__ ? '11111111' : '';
 const INIT_FORM_DATA = __DEV__
@@ -60,6 +64,10 @@ function useSetupPasswordForm() {
   }, [t]);
 
   const navigation = useRabbyAppNavigation();
+  const navState = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.SetPassword)?.params,
+  ) as SettingNavigatorParamList['SetPassword'] | undefined;
+  const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useFormik({
     initialValues: INIT_FORM_DATA,
@@ -85,7 +93,14 @@ function useSetupPasswordForm() {
           toast.show(result.error);
         } else {
           toast.success('Setup Password Successfully');
-          resetNavigationToHome(navigation);
+          await fetchLockInfo();
+          if (!navState) {
+            resetNavigationToHome(navigation);
+          } else {
+            navigation.replace(navState.replaceStack, {
+              screen: navState.replaceScreen,
+            });
+          }
         }
       } finally {
         toastHide();

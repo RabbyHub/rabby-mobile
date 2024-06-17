@@ -23,7 +23,7 @@ type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
   'StackAddress'
 >;
-function BottomBlockArea() {
+function MainListBlocks() {
   const navigation = useNavigation<AddressStackProps['navigation']>();
 
   return (
@@ -83,7 +83,7 @@ function ImportNewAddressScreen(): JSX.Element {
   return (
     <NormalScreenContainer>
       <ScrollView style={styles.scrollView}>
-        <BottomBlockArea />
+        <MainListBlocks />
       </ScrollView>
     </NormalScreenContainer>
   );

@@ -59,9 +59,11 @@ const lockInfoAtom = atom<RabbyMobileLockInfo>({
   pwdStatus: PasswordStatus.Unknown,
 });
 
-export function useLoadLockInfo() {
+export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
   const [lockInfo, setLockInfo] = useAtom(lockInfoAtom);
   const isLoadingRef = useRef(false);
+
+  const { autoFetch } = options || {};
 
   const fetchLockInfo = useCallback(async () => {
     if (isLoadingRef.current) return;
@@ -73,12 +75,20 @@ export function useLoadLockInfo() {
       setLockInfo({
         pwdStatus: response.pwdStatus,
       });
+
+      return response;
     } catch (error) {
       console.error(error);
     } finally {
       isLoadingRef.current = false;
     }
   }, [setLockInfo]);
+
+  useEffect(() => {
+    if (autoFetch) {
+      fetchLockInfo();
+    }
+  }, [autoFetch, fetchLockInfo]);
 
   return {
     isLoading: isLoadingRef.current,

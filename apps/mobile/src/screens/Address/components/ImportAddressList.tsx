@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -9,6 +9,10 @@ import {
 } from '@/assets/icons/address';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { useLoadLockInfo } from '@/screens/ManagePassword/useManagePassword';
+import { PasswordStatus } from '@/core/apis/lock';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useFocusEffect } from '@react-navigation/native';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -20,17 +24,45 @@ const styles = StyleSheet.create({
 });
 
 export const ImportAddressList = () => {
+  const { lockInfo, fetchLockInfo } = useLoadLockInfo();
+  useFocusEffect(
+    useCallback(() => {
+      fetchLockInfo();
+    }, [fetchLockInfo]),
+  );
+
+  const navigation = useRabbyAppNavigation();
+
+  const shouldRedirectToSetPasswordBefore = React.useCallback(() => {
+    if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
+      navigation.push(RootNames.StackSettings, {
+        screen: RootNames.SetPassword,
+        params: {
+          replaceStack: RootNames.StackAddress,
+          replaceScreen: RootNames.ImportPrivateKey,
+        },
+      });
+      return true;
+    }
+
+    return false;
+  }, [navigation, lockInfo]);
+
   const handlePrivateKey = React.useCallback(() => {
+    if (shouldRedirectToSetPasswordBefore()) return;
+
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
     });
-  }, []);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const handleSeedPhrase = React.useCallback(() => {
+    if (shouldRedirectToSetPasswordBefore()) return;
+
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,
     });
-  }, []);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   return (
     <View>

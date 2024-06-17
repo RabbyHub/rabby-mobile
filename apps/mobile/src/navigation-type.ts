@@ -1,7 +1,7 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
-import { RootNames } from './constant/layout';
+import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain } from './constant/chains';
 
@@ -99,6 +99,12 @@ export type TransactionNavigatorParamList = {
 export type SettingNavigatorParamList = {
   [RootNames.Settings]?: {};
   [RootNames.ProviderControllerTester]?: {};
+  [RootNames.SetPassword]?: {
+    replaceStack: typeof RootNames.StackAddress;
+    replaceScreen:
+      | typeof RootNames.ImportPrivateKey
+      | typeof RootNames.ImportMnemonic;
+  };
 };
 
 export type FavoritePopularDappsNavigatorParamList = {

@@ -16,6 +16,7 @@ import { useAppUnlocked, useTryUnlockApp } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
+import { useLoadLockInfo } from '@/screens/ManagePassword/useManagePassword';
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -157,6 +158,7 @@ export function useBootstrapApp() {
   const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
+  useLoadLockInfo({ autoFetch: true });
 
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
