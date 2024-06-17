@@ -25,7 +25,9 @@ jobs:
     name: Build
     strategy:
       matrix:
-        host: [macOS]
+        host:
+          # - macOS
+          - Linux
     runs-on:
       - self-hosted
       - mobile
@@ -46,6 +48,19 @@ jobs:
           echo "HOME is $HOME"
           echo "which node $(which node)"
 
+      - name: "[Android] Setup Nodejs and Yarn"
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: "[Android] Setup Ruby & Fastlane"
+        if: runner.os == 'Linux'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
       - name: "[Android] Setup Java"
         uses: actions/setup-java@v3
         with:
@@ -53,9 +68,11 @@ jobs:
           java-version: '17'
 
       - name: "[Android] Setup Android SDK"
+        if: runner.os == 'Linux'
         uses: android-actions/setup-android@v2
 
       - name: "[iOS] Setup Xcode"
+        if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
         with:
@@ -71,14 +88,17 @@ jobs:
           bundle install;
           yarn prepare-archive;
 
-          # build android
-          buildchannel=selfhost-reg ./scripts/deploy-android.sh
+          OS_TYPE=$(uname -s);
+          echo "OS_TYPE is $OS_TYPE";
 
-          # build android
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
-          cd ios && bundle install && bundle exec pod install;
-          cd ../;
-          ./scripts/deploy-ios-adhoc.sh
+          if [ "$OS_TYPE" == "Linux" ]; then
+            buildchannel=selfhost-reg ./scripts/deploy-android.sh
+          elif [ "$OS_TYPE" == "Darwin" ]; then
+            security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
+            cd ios && bundle install && bundle exec pod install;
+            cd ../;
+            ./scripts/deploy-ios-adhoc.sh
+          fi
 
         env:
           KEYCHAIN_PASS: ${{ secrets.KEYCHAIN_PASS }}
