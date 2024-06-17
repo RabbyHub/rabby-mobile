@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # release targets:
 # - https://download.rabby.io/downloads/wallet-mobile/android/version.json

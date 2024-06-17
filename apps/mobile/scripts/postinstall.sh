@@ -1,9 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 if [ "$(uname -s)" != "Linux" ]; then
   set -euo pipefail
-else
-  set -ieo pipefail
 fi
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
