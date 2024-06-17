@@ -22,11 +22,7 @@ function getInitError(password: string) {
   return { error: '' };
 }
 
-export function verifyPassword(password: string) {
-  return keyringService.verifyPassword(password);
-}
-
-export async function safeVerifyPassword(password: string) {
+async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
     await keyringService.verifyPassword(password);
@@ -48,10 +44,13 @@ export async function setupWalletPassword(newPassword: string) {
   if (result.error) return result;
 
   try {
-    verifyPassword(RABBY_MOBILE_KR_PWD);
+    const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
+    if (r.error) {
+      throw new Error(ERRORS.CURRENT_IS_INCORRET);
+    }
     await keyringService.updatePassword(RABBY_MOBILE_KR_PWD, newPassword);
-  } catch (error) {
-    result.error = 'Failed to set password';
+  } catch (error: any) {
+    result.error = error?.message || 'Failed to set password';
   }
 
   return result;
