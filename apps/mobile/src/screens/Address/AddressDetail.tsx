@@ -54,6 +54,7 @@ import { useTranslation } from 'react-i18next';
 import { apiMnemonic, apiPrivateKey } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { useAccountInfo } from '@/hooks/useAccountInfo';
+import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -182,6 +183,7 @@ const AddressInfo = (props: AddressInfoProps) => {
     }
   }, [account, handleCloseDeleteModalPress, navigation, removeAccount]);
 
+  const invokeEnterPassphrase = useEnterPassphraseModal('address');
   const handlePresentDeleteModalPress = useCallback(async () => {
     const count =
       account.type === KEYRING_TYPE.HdKeyring
@@ -212,10 +214,14 @@ const AddressInfo = (props: AddressInfoProps) => {
       needPassword,
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
-        return keyringService.verifyPassword(password);
+        await keyringService.verifyPassword(password);
+
+        if (account.type === KEYRING_TYPE.HdKeyring) {
+          await invokeEnterPassphrase(account.address);
+        }
       },
     });
-  }, [account.address, account.type, handleDelete, t]);
+  }, [account, handleDelete, invokeEnterPassphrase, t]);
 
   const changeAddressNote = useCallback(() => {
     setAliasName(aliasPendingName);
@@ -247,6 +253,10 @@ const AddressInfo = (props: AddressInfoProps) => {
           address: account.address,
           type: account.type,
         });
+
+        if (account.type === KEYRING_TYPE.HdKeyring) {
+          await invokeEnterPassphrase(account.address);
+        }
       },
       onFinished() {
         if (!data) {
@@ -260,7 +270,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         });
       },
     });
-  }, [account, t]);
+  }, [account, invokeEnterPassphrase, t]);
 
   const handlePressBackupSeedPhrase = useCallback(() => {
     let data = '';
@@ -271,6 +281,10 @@ const AddressInfo = (props: AddressInfoProps) => {
       title: t('page.addressDetail.backup-seed-phrase'),
       validationHandler: async (password: string) => {
         data = await apiMnemonic.getMnemonics(password, account.address);
+
+        if (account.type === KEYRING_TYPE.HdKeyring) {
+          await invokeEnterPassphrase(account.address);
+        }
       },
       onFinished() {
         if (!data) {
@@ -284,7 +298,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         });
       },
     });
-  }, [account, t]);
+  }, [account, invokeEnterPassphrase, t]);
 
   const accountInfo = useAccountInfo(
     account.type,

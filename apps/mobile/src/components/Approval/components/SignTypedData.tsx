@@ -39,6 +39,7 @@ import { apisSafe } from '@/core/apis/safe';
 import { toast } from '@/components/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { apisKeyring } from '@/core/apis/keyring';
+import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 
 interface SignTypedDataProps {
   method: string;
@@ -285,6 +286,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   };
 
   const { activeApprovalPopup } = useCommonPopupView();
+  const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const handleAllow = async () => {
     if (activeApprovalPopup()) {
@@ -293,6 +295,10 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     const currentAccount = isGnosis
       ? account
       : await preferenceService.getCurrentAccount();
+
+    if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
+      await invokeEnterPassphrase(currentAccount.address);
+    }
 
     if (isGnosis && params.account) {
       if (WaitingSignMessageComponent[params.account.type]) {

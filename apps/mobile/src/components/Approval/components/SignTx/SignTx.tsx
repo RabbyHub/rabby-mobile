@@ -81,6 +81,7 @@ import { maxBy } from 'lodash';
 import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn } from 'ahooks';
+import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -662,6 +663,8 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   };
 
   const { activeApprovalPopup } = useCommonPopupView();
+  const invokeEnterPassphrase = useEnterPassphraseModal('address');
+
   const handleAllow = async () => {
     if (!selectedGas) return;
 
@@ -673,6 +676,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       isGnosis && account
         ? account
         : (await preferenceService.getCurrentAccount())!;
+
+    if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
+      await invokeEnterPassphrase(currentAccount.address);
+    }
 
     try {
       validateGasPriceRange(tx);

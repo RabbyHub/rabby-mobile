@@ -33,6 +33,7 @@ import { getStyles } from './SignTx/style';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
+import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 
 interface SignTextProps {
   data: string[];
@@ -182,6 +183,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   };
 
   const { activeApprovalPopup } = useCommonPopupView();
+  const invokeEnterPassphrase = useEnterPassphraseModal('address');
 
   const handleAllow = async () => {
     if (activeApprovalPopup()) {
@@ -190,6 +192,10 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     const currentAccount = isGnosis
       ? params.account
       : await preferenceService.getCurrentAccount();
+
+    if (currentAccount?.type === KEYRING_TYPE.HdKeyring) {
+      await invokeEnterPassphrase(currentAccount.address);
+    }
 
     if (
       currentAccount?.type &&

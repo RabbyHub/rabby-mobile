@@ -18,7 +18,7 @@ import {
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
-import { useGetAppThemeMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { stats } from '@/utils/stats';
 import {
   KEYRING_CATEGORY_MAP,
@@ -109,7 +109,7 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
     rejectApproval('user cancel');
   };
 
-  const binaryTheme = useGetAppThemeMode();
+  const binaryTheme = useGetBinaryMode();
   const isLight = binaryTheme === 'light';
 
   const brandContent = React.useMemo(() => {
