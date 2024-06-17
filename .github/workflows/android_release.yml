@@ -11,7 +11,7 @@ on:
       buildchannel:
         description: 'Build Channel'
         required: true
-        default: 'selfhost'
+        default: 'appstore'
         type: choice
         options:
           - selfhost
@@ -31,9 +31,9 @@ on:
       RABBY_MOBILE_KR_PWD:
         required: true
 
-# defaults:
-#   run:
-#     shell: bash -ieo pipefail {0}
+defaults:
+  run:
+    shell: bash -ieol pipefail {0}
 env:
   BUILD_TARGET_PLATFORM: android
 
@@ -43,12 +43,11 @@ jobs:
     runs-on:
       - self-hosted
       - mobile
-      - macOS
+      - Linux
     steps:
       - uses: actions/checkout@v3
       - name: Get Actions Variables
         id: actionvars
-        shell: bash
         run: |
           trigger_date=$(date +'%Y%m%d%H%M%S')
           echo "trigger_date=$trigger_date" >> "$GITHUB_OUTPUT"
@@ -56,6 +55,19 @@ jobs:
           flatten_refname=${GITHUB_REF_NAME//\//'_'}
           flatten_refname=${flatten_refname//\./'_'}
           echo "flatten_refname=$flatten_refname" >> "$GITHUB_OUTPUT"
+
+      - name: "[Android] Setup Nodejs and Yarn"
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: "[Android] Setup Ruby & Fastlane"
+        if: runner.os == 'Linux'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.2'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
       - name: Setup Java
         uses: actions/setup-java@v3
@@ -66,19 +78,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
 
-      - name: Setup & Install dependencies
+      - name: Install & Build app
         run: |
           yarn --version;
           # yarn setup && yarn postinstall;
           yarn install;
           cd apps/mobile;
           bundle install;
+          yarn prepare-archive;
+
+          [ -z $buildchannel ] && export buildchannel=appstore;
+          REALLY_UPLOAD=true ./scripts/deploy-android.sh
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
-
-      - name: Build app
-        env:
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
@@ -100,17 +113,11 @@ jobs:
           GIT_REF_NAME: ${{ github.ref_name }}
           GIT_REF_URL: ${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}
           GITHUB_REF: ${{ github.ref }}
-        run: |
-          cd apps/mobile;
-          yarn prepare-archive;
 
-          [ -z $buildchannel ] && export buildchannel=selfhost-reg;
-          REALLY_UPLOAD=true ./scripts/deploy-android.sh
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
-          path: |
-            ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 7
+      # - name: Upload artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
+      #     path: |
+      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+      #     retention-days: 7
