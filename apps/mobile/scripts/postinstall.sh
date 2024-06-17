@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 
-set -euo pipefail
+
+OS_TYPE=$(uname -s);
+# not set on Linx
+if [ "$OS_TYPE" != "Linux" ]; then
+  set -euo pipefail
+fi
+
 
 script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
 project_dir=$(dirname "$script_dir")
