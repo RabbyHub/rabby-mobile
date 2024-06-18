@@ -27597,6 +27597,7 @@ __metadata:
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
+    "@scure/bip39": ^1.3.0
     "@sentry/react-native": ^5.19.3
     "@tsconfig/react-native": ^3.0.0
     "@types/koa-compose": ^3.2.8
