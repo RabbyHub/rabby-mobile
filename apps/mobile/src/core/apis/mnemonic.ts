@@ -197,6 +197,7 @@ export const getMnemonicAddressInfo = async (address: string) => {
 export const generateKeyringWithMnemonic = async (
   mnemonic: string,
   passphrase: string,
+  byImport = false,
 ) => {
   // keep passphrase is empty string if not set
   passphrase = passphrase || '';
@@ -216,6 +217,9 @@ export const generateKeyringWithMnemonic = async (
     ) as any;
 
     keyring = new Keyring({ mnemonic, passphrase });
+    if (byImport) {
+      (keyring as any).byImport = true;
+    }
     keyringService.updateHdKeyringIndex(keyring as any);
     result.keyringId = addKeyringToStash(keyring);
     keyringService.addKeyring(keyring as any);

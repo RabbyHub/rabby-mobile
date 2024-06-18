@@ -48,7 +48,7 @@ export const ImportSeedPhraseScreen = () => {
 
   const importSeedPhrase = React.useCallback(() => {
     apiMnemonic
-      .generateKeyringWithMnemonic(mnemonics, passphrase)
+      .generateKeyringWithMnemonic(mnemonics, passphrase, true)
       .then(async ({ keyringId, isExistedKR }) => {
         const firstAddress = await requestKeyring(
           KEYRING_TYPE.HdKeyring,
