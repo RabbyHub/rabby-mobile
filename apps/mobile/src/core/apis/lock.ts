@@ -108,6 +108,8 @@ export async function clearCustomPassword(currentPassword: string) {
 export async function getRabbyLockInfo() {
   const info = {
     pwdStatus: PasswordStatus.Unknown,
+    isUseBuiltInPwd: false,
+    isUseCustomPwd: false,
   };
 
   try {
@@ -118,6 +120,9 @@ export async function getRabbyLockInfo() {
   } catch (e) {
     info.pwdStatus = PasswordStatus.Unknown;
   }
+
+  info.isUseBuiltInPwd = info.pwdStatus === PasswordStatus.UseBuiltIn;
+  info.isUseCustomPwd = info.pwdStatus === PasswordStatus.Custom;
 
   return info;
 }

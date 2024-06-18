@@ -12,6 +12,7 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BottomSheetInput } from '../Input';
 import { CheckItem } from './CheckItem';
+import { apisLock } from '@/core/apis';
 
 export interface AuthenticationModalProps {
   validationHandler?(password: string): Promise<void>;
@@ -135,12 +136,18 @@ export const AuthenticationModal = ({
   );
 };
 
-AuthenticationModal.show = (props: AuthenticationModalProps) => {
+AuthenticationModal.show = async (props: AuthenticationModalProps) => {
+  let needPassword = props.needPassword;
+  if (typeof needPassword !== 'boolean') {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    needPassword = lockInfo.isUseCustomPwd;
+  }
   const id = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
     },
+    needPassword,
     ...props,
     onCancel() {
       props.onCancel?.();
