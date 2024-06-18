@@ -112,7 +112,6 @@ export const ImportSeedPhraseScreen = () => {
           try {
             bip39.mnemonicToEntropy(mnemonics?.trim(), wordlist);
           } catch (e) {
-            console.log('error 1111', (e as any).message);
             if ((e as any).message.includes('Unknown letter:')) {
               let errorWords: string[] = [];
               mnemonics.split(/\s+/).forEach(word => {
