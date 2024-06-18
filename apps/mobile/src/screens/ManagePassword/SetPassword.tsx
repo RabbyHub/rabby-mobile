@@ -34,8 +34,8 @@ import { useLoadLockInfo } from './useManagePassword';
 
 const TEST_PWD = __DEV__ ? '11111111' : '';
 const INIT_FORM_DATA = __DEV__
-  ? { password: TEST_PWD, confirmPassword: TEST_PWD, checked: false }
-  : { password: '', confirmPassword: '', checked: false };
+  ? { password: TEST_PWD, confirmPassword: TEST_PWD, checked: true }
+  : { password: '', confirmPassword: '', checked: true };
 
 const LAYOUTS = {
   footerButtonHeight: 52,
