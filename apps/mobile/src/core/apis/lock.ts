@@ -36,8 +36,17 @@ async function safeVerifyPassword(password: string) {
 }
 
 const ERRORS = {
+  INCORRECT_PASSWORD: 'Incorrect password',
   CURRENT_IS_INCORRET: 'Current password is incorrect',
 };
+
+export async function throwErrorIfInvalidPwd(password: string) {
+  try {
+    await keyringService.verifyPassword(password);
+  } catch (error) {
+    throw new Error(ERRORS.INCORRECT_PASSWORD);
+  }
+}
 
 export async function setupWalletPassword(newPassword: string) {
   const result = getInitError(newPassword);

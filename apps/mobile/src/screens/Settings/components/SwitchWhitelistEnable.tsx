@@ -3,7 +3,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useTranslation } from 'react-i18next';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { keyringService } from '@/core/services';
+import { apisLock } from '@/core/apis';
 
 export const SwitchWhitelistEnable = () => {
   const { enable, toggleWhitelist } = useWhitelist();
@@ -21,7 +21,7 @@ export const SwitchWhitelistEnable = () => {
         ? t('page.dashboard.settings.enableWhitelistTip')
         : t('page.dashboard.settings.disableWhitelistTip'),
       validationHandler: async (password: string) => {
-        return keyringService.verifyPassword(password);
+        return apisLock.throwErrorIfInvalidPwd(password);
       },
       onFinished() {
         toggleWhitelist(value);

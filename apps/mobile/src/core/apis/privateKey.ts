@@ -2,12 +2,13 @@ import * as ethUtil from 'ethereumjs-util';
 import { keyringService } from '../services';
 import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
+import { throwErrorIfInvalidPwd } from './lock';
 
 export const getPrivateKey = async (
   password: string,
   { address, type }: { address: string; type: string },
 ) => {
-  await keyringService.verifyPassword(password);
+  await throwErrorIfInvalidPwd(password);
   const keyring = await keyringService.getKeyringForAccount(address, type);
   if (!keyring) {
     return null;

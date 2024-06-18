@@ -24,7 +24,7 @@ import ModalConfirmDiscard from './components/ModalConfirmDiscard';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { ModalLayouts } from '@/constant/layout';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { keyringService } from '@/core/services';
+import { apisLock } from '@/core/apis';
 
 export interface SelectAddressProps {
   heightPercent?: `${number}%`;
@@ -91,7 +91,7 @@ export function SelectAddressSheetModal({
         cancelText: t('global.Cancel'),
         title: t('component.Contact.ListModal.authModal.title'),
         validationHandler: async (password: string) =>
-          keyringService.verifyPassword(password),
+          apisLock.throwErrorIfInvalidPwd(password),
         onFinished() {
           setWhitelist(localWhiteList);
           setEditing(!isEditing);

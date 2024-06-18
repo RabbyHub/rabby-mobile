@@ -51,8 +51,7 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
-import { apiMnemonic, apiPrivateKey } from '@/core/apis';
-import { keyringService } from '@/core/services';
+import { apiMnemonic, apiPrivateKey, apisLock } from '@/core/apis';
 import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useAddressSource } from '@/hooks/useAddressSource';
@@ -215,7 +214,7 @@ const AddressInfo = (props: AddressInfoProps) => {
       needPassword,
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
-        await keyringService.verifyPassword(password);
+        await apisLock.throwErrorIfInvalidPwd(password);
 
         if (account.type === KEYRING_TYPE.HdKeyring) {
           await invokeEnterPassphrase(account.address);

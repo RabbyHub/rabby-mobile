@@ -9,9 +9,10 @@ import {
 } from '../services';
 import { Account } from '../services/preference';
 import { _getKeyringByType, addKeyringToStash, stashKeyrings } from './keyring';
+import { throwErrorIfInvalidPwd } from './lock';
 
 export const getMnemonics = async (password: string, address: string) => {
-  await keyringService.verifyPassword(password);
+  await throwErrorIfInvalidPwd(password);
   const keyring = await keyringService.getKeyringForAccount(
     address,
     KEYRING_CLASS.MNEMONIC,
