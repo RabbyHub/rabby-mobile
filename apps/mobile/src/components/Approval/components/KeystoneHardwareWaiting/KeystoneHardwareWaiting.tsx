@@ -23,6 +23,7 @@ import Player from './Player';
 import Reader from './Reader';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
 enum QR_HARDWARE_STATUS {
   SYNC,
@@ -170,12 +171,16 @@ export const KeystoneHardwareWaiting = ({
         setErrorMessage(data.errorMsg);
       }
     });
-    await apiKeystone.acquireKeystoneMemStoreData();
+    emitSignComponentAmounted();
+    setTimeout(() => {
+      apiKeystone.acquireKeystoneMemStoreData();
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
     init();
+
     return () => {
       eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
       eventBus.removeAllListeners(EVENTS.QRHARDWARE.ACQUIRE_MEMSTORE_SUCCEED);

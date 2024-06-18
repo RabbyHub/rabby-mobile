@@ -51,6 +51,8 @@ export interface Props {
   chain?: Chain;
   submitText?: string;
   gasLess?: boolean;
+  needHolding?: boolean;
+  isPrimary?: boolean;
 }
 
 export const ActionsContainer: React.FC<

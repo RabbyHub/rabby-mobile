@@ -1,13 +1,9 @@
-import { notificationService } from '@/core/services';
 import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import { IExtractFromPromise } from '@/utils/type';
-import events from 'events';
 import React from 'react';
 import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
-import { EVENT_NAMES } from '../GlobalBottomSheetModal/types';
-
 import * as ApprovalComponent from './components';
 
 export const Approval = () => {
@@ -48,7 +44,8 @@ export const Approval = () => {
   }
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
-  const CurrentApprovalComponent = ApprovalComponent[approvalComponent];
+  const CurrentApprovalComponent =
+    ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
   return <CurrentApprovalComponent params={params} origin={origin} />;
 };

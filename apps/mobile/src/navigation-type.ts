@@ -1,7 +1,7 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 import {} from '@react-navigation/bottom-tabs';
 
-import { RootNames } from './constant/layout';
+import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Chain } from './constant/chains';
 
@@ -22,10 +22,15 @@ export type RootStackParamsList = {
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};
-  [RootNames.ImportHardware]?: {
+  [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
     brand?: string;
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
+  [RootNames.Scanner]?: {};
 };
 
 export type BottomTabParamsList = {
@@ -49,6 +54,10 @@ export type AddressNavigatorParamList = {
     isFirstImport?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    isExistedKR?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
@@ -57,6 +66,18 @@ export type AddressNavigatorParamList = {
     type: string;
     brandName: string;
     byImport?: string;
+  };
+  [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportMnemonic]?: {};
+  [RootNames.AddMnemonic]?: {};
+  [RootNames.CreateMnemonic]?: {};
+  [RootNames.CreateMnemonicBackup]?: {};
+  [RootNames.CreateMnemonicVerify]?: {};
+  [RootNames.BackupPrivateKey]?: {
+    data: string;
+  };
+  [RootNames.BackupMnemonic]?: {
+    data: string;
   };
 };
 
@@ -78,6 +99,12 @@ export type TransactionNavigatorParamList = {
 export type SettingNavigatorParamList = {
   [RootNames.Settings]?: {};
   [RootNames.ProviderControllerTester]?: {};
+  [RootNames.SetPassword]?: {
+    replaceStack: typeof RootNames.StackAddress;
+    replaceScreen:
+      | typeof RootNames.ImportPrivateKey
+      | typeof RootNames.ImportMnemonic;
+  };
 };
 
 export type FavoritePopularDappsNavigatorParamList = {

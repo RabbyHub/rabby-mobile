@@ -1,4 +1,5 @@
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
+import { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -19,12 +20,15 @@ export enum MODAL_NAMES {
   'SETTING_KEYSTONE' = 'SETTING_KEYSTONE',
   'CONNECT_ONEKEY' = 'CONNECT_ONEKEY',
   'SETTING_ONEKEY' = 'SETTING_ONEKEY',
+  'SETTING_HDKEYRING' = 'SETTING_HDKEYRING',
+
   'TIP_UPGRADE' = 'TIP_UPGRADE',
   '__TEST_MARKDOWN_IN_WEBVIEW' = '__TEST_MARKDOWN_IN_WEBVIEW',
   'TIP_TERM_OF_USE' = 'TIP_TERM_OF_USE',
   'ONEKEY_INPUT_PIN' = 'ONEKEY_INPUT_PIN',
   'ONEKEY_INPUT_PASSPHRASE' = 'ONEKEY_INPUT_PASSPHRASE',
   'ONEKEY_TEMP_PIN_OR_PASSPHRASE' = 'ONEKEY_TEMP_PIN_OR_PASSPHRASE',
+  'AUTHENTICATION' = 'AUTHENTICATION',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -36,9 +40,12 @@ export enum APPROVAL_MODAL_NAMES {
   'LedgerHardwareWaiting' = 'LedgerHardwareWaiting',
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
   'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
+  'PrivatekeyWaiting' = 'PrivatekeyWaiting',
+  'ETHSign' = 'ETHSign',
+  'Unknown' = 'Unknown',
 }
 
-export type MODAL_CREATE_PARMAS = {
+export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.APPROVAL]: {};
   [MODAL_NAMES.SWITCH_ADDRESS]: {};
   [MODAL_NAMES.SWITCH_CHAIN]: {};
@@ -53,6 +60,7 @@ export type MODAL_CREATE_PARMAS = {
   [MODAL_NAMES.CANCEL_TX_POPUP]: {};
   [MODAL_NAMES.TIP_UPGRADE]: {};
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
+  [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
@@ -67,7 +75,7 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    */
   allowAndroidHarewareBack?: boolean;
   [key: string]: any;
-} & (T extends keyof MODAL_CREATE_PARMAS ? MODAL_CREATE_PARMAS[T] : {});
+} & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 
 export enum EVENT_NAMES {
   CREATE = 'CREATE',

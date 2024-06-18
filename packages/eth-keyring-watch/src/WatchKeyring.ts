@@ -1,6 +1,9 @@
 import { EventEmitter } from 'events';
 import { addHexPrefix, bufferToHex, isValidAddress } from 'ethereumjs-util';
-import { KeyringConstructorOptions, KeyringIntf } from '@rabby-wallet/keyring-utils';
+import {
+  KeyringConstructorOptions,
+  KeyringIntf,
+} from '@rabby-wallet/keyring-utils';
 
 const keyringType = 'Watch Address' as const;
 
@@ -36,11 +39,11 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
     }
   }
 
-  setAccountToAdd (account: string): void {
+  setAccountToAdd(account: string): void {
     this.accountToAdd = account;
-  };
+  }
 
-  async addAccounts (): Promise<string[]> {
+  async addAccounts(): Promise<string[]> {
     if (!isValidAddress(this.accountToAdd)) {
       throw new Error("The address you're are trying to import is invalid");
     }
@@ -48,16 +51,18 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
 
     if (
       this.accounts
-        .map((x) => x.toLowerCase())
+        .map(x => x.toLowerCase())
         .includes(prefixedAddress.toLowerCase())
     ) {
-      throw new Error("The address you're are trying to import is duplicated");
+      const error = new Error(prefixedAddress);
+      error.name = 'DuplicateAccountError';
+      throw error;
     }
 
     this.accounts.push(prefixedAddress);
 
     return [prefixedAddress];
-  };
+  }
 
   async signTransaction(address: string, transaction: any): Promise<void> {
     // TODO: split by protocol(walletconnect, cold wallet, etc)
@@ -78,17 +83,19 @@ class WatchKeyring extends EventEmitter implements KeyringIntf {
 
   removeAccount(address: string): void {
     if (
-      !this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())
+      !this.accounts.map(a => a.toLowerCase()).includes(address.toLowerCase())
     ) {
       throw new Error(`Address ${address} not found in watch keyring`);
     }
     this.accounts = this.accounts.filter(
-      (a) => a.toLowerCase() !== address.toLowerCase()
+      a => a.toLowerCase() !== address.toLowerCase(),
     );
   }
 
   _normalize(buf: Buffer | string): string {
-    return sanitizeHex(typeof buf === 'string' ? buf : bufferToHex(buf).toString());
+    return sanitizeHex(
+      typeof buf === 'string' ? buf : bufferToHex(buf).toString(),
+    );
   }
 }
 

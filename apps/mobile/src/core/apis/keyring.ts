@@ -1,9 +1,10 @@
 import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
-import { keyringService } from '../services';
+import { keyringService, preferenceService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
 import { getKeyringParams } from '../utils/getKeyringParams';
 import { EVENTS, eventBus } from '@/utils/events';
+import { t } from 'i18next';
 
 export async function getKeyring<T = KeyringInstance>(
   type: KeyringTypeName,
@@ -26,9 +27,9 @@ export async function getKeyring<T = KeyringInstance>(
   return keyring as T;
 }
 
-const stashKeyrings: Record<string | number, any> = {};
+export const stashKeyrings: Record<string | number, any> = {};
 
-function _getKeyringByType(type: KeyringTypeName) {
+export function _getKeyringByType(type: KeyringTypeName) {
   const keyring = keyringService.getKeyringsByType(type)[0];
 
   if (keyring) {
@@ -38,7 +39,7 @@ function _getKeyringByType(type: KeyringTypeName) {
   throw ethErrors.rpc.internal(`No ${type} keyring found`);
 }
 
-export function requestKeyring(
+export async function requestKeyring(
   type: KeyringTypeName,
   methodName: string,
   keyringId: number | null,
@@ -60,6 +61,33 @@ export function requestKeyring(
   }
 }
 
+export const addKeyringToStash = keyring => {
+  const stashId = Object.values(stashKeyrings).length + 1;
+  stashKeyrings[stashId] = keyring;
+
+  return stashId;
+};
+
+export async function _setCurrentAccountFromKeyring(keyring, index = 0) {
+  const accounts = keyring.getAccountsWithBrand
+    ? await keyring.getAccountsWithBrand()
+    : await keyring.getAccounts();
+  const account = accounts[index < 0 ? index + accounts.length : index];
+
+  if (!account) {
+    throw new Error('background.error.emptyAccount');
+  }
+
+  const _account = {
+    address: typeof account === 'string' ? account : account.address,
+    type: keyring.type,
+    brandName: typeof account === 'string' ? keyring.type : account.brandName,
+  };
+  preferenceService.setCurrentAccount(_account);
+
+  return [_account];
+}
+
 export const apisKeyring = {
   signTypedData: async (
     type: string,
@@ -79,4 +107,23 @@ export const apisKeyring = {
     });
     return res;
   },
+};
+
+export const addKeyring = async (
+  keyringId: keyof typeof stashKeyrings,
+  byImport = true,
+) => {
+  const keyring = stashKeyrings[keyringId];
+  if (keyring) {
+    keyring.byImport = byImport;
+    // If keyring exits, just save
+    if (keyringService.keyrings.find(item => item === keyring)) {
+      await keyringService.persistAllKeyrings();
+    } else {
+      await keyringService.addKeyring(keyring);
+    }
+    _setCurrentAccountFromKeyring(keyring, -1);
+  } else {
+    throw new Error(t('background.error.addKeyring404'));
+  }
 };

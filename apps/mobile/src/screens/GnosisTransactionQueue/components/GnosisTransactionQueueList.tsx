@@ -434,6 +434,8 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     lineHeight: 16,
     color: colors['blue-default'],
+    minWidth: 0,
+    flex: 1,
   },
   iconInformation: {
     width: 12,

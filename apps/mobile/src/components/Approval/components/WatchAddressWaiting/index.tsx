@@ -19,6 +19,7 @@ import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { stats } from '@/utils/stats';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
 interface ApprovalParams {
   address: string;
@@ -214,6 +215,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
       },
     );
     initWalletConnect();
+    emitSignComponentAmounted();
   };
 
   useEffect(() => {

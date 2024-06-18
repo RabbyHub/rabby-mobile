@@ -16,16 +16,24 @@ import { HardwareDeviceList } from './components/HardwareDeviceList';
 import { WalletConnectList } from './components/WalletConnectList';
 import { WalletHeadline } from './components/WalletHeadline';
 import { WalletItem } from './components/WalletItem';
+import { ImportAddressList } from './components/ImportAddressList';
+import { CreateAddressList } from './components/CreateAddressList';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
   'StackAddress'
 >;
-function BottomBlockArea() {
+function MainListBlocks() {
   const navigation = useNavigation<AddressStackProps['navigation']>();
 
   return (
     <View style={[styles.blockView]}>
+      <View style={styles.section}>
+        <CreateAddressList />
+      </View>
+      <View style={styles.section}>
+        <ImportAddressList />
+      </View>
       <View style={styles.section}>
         <HardwareDeviceList />
       </View>
@@ -75,7 +83,7 @@ function ImportNewAddressScreen(): JSX.Element {
   return (
     <NormalScreenContainer>
       <ScrollView style={styles.scrollView}>
-        <BottomBlockArea />
+        <MainListBlocks />
       </ScrollView>
     </NormalScreenContainer>
   );

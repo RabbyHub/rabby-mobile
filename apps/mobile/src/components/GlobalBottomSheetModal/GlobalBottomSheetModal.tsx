@@ -19,9 +19,10 @@ import {
 } from './utils';
 import { events } from './event';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 type ModalData = {
-  snapPoints: (string | number)[];
+  snapPoints: (string | number)[] | undefined;
   params: CreateParams;
   id: string;
   ref: React.RefObject<AppBottomSheetModal>;
@@ -68,7 +69,8 @@ export const GlobalBottomSheetModal = () => {
           },
           snapPoints:
             approvalComponent && params.name === MODAL_NAMES.APPROVAL
-              ? APPROVAL_SNAP_POINTS[approvalComponent]
+              ? APPROVAL_SNAP_POINTS[approvalComponent] ??
+                APPROVAL_SNAP_POINTS.Unknown
               : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },
@@ -144,10 +146,13 @@ export const GlobalBottomSheetModal = () => {
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
+        const enableDynamicSizing = bottomSheetModalProps?.enableDynamicSizing;
+
         return (
           <AppBottomSheetModal
             topInset={height.top}
             enableContentPanningGesture={false}
+            snapPoints={modal.snapPoints}
             {...bottomSheetModalProps}
             onDismiss={() => {
               handleDismiss(modal.id);
@@ -156,8 +161,15 @@ export const GlobalBottomSheetModal = () => {
             key={modal.id}
             ref={modal.ref}
             name={modal.id}
-            children={<ModalView {...modal.params} />}
-            snapPoints={modal.snapPoints}
+            children={
+              enableDynamicSizing ? (
+                <BottomSheetView>
+                  <ModalView {...modal.params} />
+                </BottomSheetView>
+              ) : (
+                <ModalView {...modal.params} />
+              )
+            }
             stackBehavior="push"
             {...makeBottomSheetProps({
               params: modal.params,

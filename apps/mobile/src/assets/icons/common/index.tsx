@@ -4,6 +4,7 @@ export { default as RcArrowRightCC } from './arrow-right-cc.svg';
 
 export { default as RcArrowDownCC } from './arrow-down-cc.svg';
 export { default as RcIconInfoCC } from './info-cc.svg';
+export { default as RcIconInfo2CC } from './info2-cc.svg';
 export { default as RcIconCopyCC } from './copy-cc.svg';
 export { default as IconCommonInfo } from './info.svg';
 export { default as IconTick } from './tick.svg';
@@ -16,6 +17,7 @@ export { default as RcSearchCC } from './search-cc.svg';
 export { default as RcIconCheckedFilledCC } from './icon-checked-filled-cc.svg';
 export { default as RcIconCheckedCC } from './icon-checked-cc.svg';
 export { default as RcIconUncheckCC } from './icon-uncheck-cc.svg';
+export { default as RcIconSelectCC } from './icon-select-cc.svg';
 
 export { default as RcWalletCC } from './wallet-cc.svg';
 

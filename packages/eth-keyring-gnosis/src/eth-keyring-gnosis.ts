@@ -329,7 +329,10 @@ export class GnosisKeyring extends EventEmitter implements KeyringIntf {
         acct => acct.toLowerCase() === prefixedAddress.toLowerCase(),
       )
     ) {
-      throw new Error("The address you're are trying to import is duplicate");
+      const error = new Error(prefixedAddress);
+      error.name = 'DuplicateAccountError';
+
+      throw error;
     }
 
     this.accounts.push(prefixedAddress.toLowerCase());

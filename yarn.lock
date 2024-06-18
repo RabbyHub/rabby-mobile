@@ -2362,6 +2362,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ethereumjs/util@npm:^9.0.0, @ethereumjs/util@npm:^9.0.3":
+  version: 9.0.3
+  resolution: "@ethereumjs/util@npm:9.0.3"
+  dependencies:
+    "@ethereumjs/rlp": ^5.0.2
+    ethereum-cryptography: ^2.1.3
+  checksum: 231dae61268c84d514a6c992a770559bb94a21c753c02287d08781cbeae01a6e5b5479af9f0d3d412d532fda6e9b1eeb746e617a68b738907a4a8ee4e24d79a6
+  languageName: node
+  linkType: hard
+
 "@ethereumjs/util@npm:^9.0.1":
   version: 9.0.1
   resolution: "@ethereumjs/util@npm:9.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40ethereumjs%2Futil%2F-%2Futil-9.0.1.tgz"
@@ -2389,16 +2399,6 @@ __metadata:
     c-kzg:
       optional: true
   checksum: cfac8c92beafc3ad1e7d7bce59027cde1f3cfd32623dea57c2295afbc1e33549799d39f92bdcf3cb7a8626b4620b0ba90af945534773fc9480c59def0e25e07d
-  languageName: node
-  linkType: hard
-
-"@ethereumjs/util@npm:^9.0.3":
-  version: 9.0.3
-  resolution: "@ethereumjs/util@npm:9.0.3"
-  dependencies:
-    "@ethereumjs/rlp": ^5.0.2
-    ethereum-cryptography: ^2.1.3
-  checksum: 231dae61268c84d514a6c992a770559bb94a21c753c02287d08781cbeae01a6e5b5479af9f0d3d412d532fda6e9b1eeb746e617a68b738907a4a8ee4e24d79a6
   languageName: node
   linkType: hard
 
@@ -5033,6 +5033,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/eth-sig-util@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "@metamask/eth-sig-util@npm:4.0.1"
+  dependencies:
+    ethereumjs-abi: ^0.6.8
+    ethereumjs-util: ^6.2.1
+    ethjs-util: ^0.1.6
+    tweetnacl: ^1.0.3
+    tweetnacl-util: ^0.15.1
+  checksum: 740df4c92a1282e6be4c00c86c1a8ccfb93e767596e43f6da895aa5bab4a28fc3c2209f0327db34924a4a1e9db72bc4d3dddfcfc45cca0b218c9ccbf7d1b1445
+  languageName: node
+  linkType: hard
+
 "@metamask/json-rpc-engine@npm:^7.1.1, @metamask/json-rpc-engine@npm:^7.3.0, @metamask/json-rpc-engine@npm:^7.3.1":
   version: 7.3.1
   resolution: "@metamask/json-rpc-engine@npm:7.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Fjson-rpc-engine%2F-%2Fjson-rpc-engine-7.3.1.tgz"
@@ -5225,7 +5238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.4.0, @noble/hashes@npm:^1.0.0, @noble/hashes@npm:^1.4.0":
+"@noble/hashes@npm:1.4.0, @noble/hashes@npm:^1.0.0, @noble/hashes@npm:^1.4.0, @noble/hashes@npm:~1.4.0":
   version: 1.4.0
   resolution: "@noble/hashes@npm:1.4.0"
   checksum: 8ba816ae26c90764b8c42493eea383716396096c5f7ba6bea559993194f49d80a73c081f315f4c367e51bd2d5891700bcdfa816b421d24ab45b41cb03e4f3342
@@ -5766,6 +5779,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rabby-wallet/eth-hd-keyring@npm:4.3.1":
+  version: 4.3.1
+  resolution: "@rabby-wallet/eth-hd-keyring@npm:4.3.1"
+  dependencies:
+    "@ethereumjs/util": ^9.0.0
+    "@metamask/eth-sig-util": ^4.0.0
+    "@rabby-wallet/eth-simple-keyring": ^5.0.1
+    "@scure/bip39": ^1.2.1
+    eth-sig-util: ^3.0.1
+    ethereum-cryptography: ^2.1.2
+    slip39: ^0.1.9
+  checksum: 21f2d6cdb63990a08b184074c1eec2d91f5409c59ba0c74a2d2b31f98a44cde973368bf230449c1c695c8d033e159aaf80bc95b22dc84f2b9308726436e5c1a2
+  languageName: node
+  linkType: hard
+
 "@rabby-wallet/eth-keyring-gnosis@workspace:^, @rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis":
   version: 0.0.0-use.local
   resolution: "@rabby-wallet/eth-keyring-gnosis@workspace:packages/eth-keyring-gnosis"
@@ -5889,6 +5917,24 @@ __metadata:
     typescript: ~4.8.4
   languageName: unknown
   linkType: soft
+
+"@rabby-wallet/eth-simple-keyring@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@rabby-wallet/eth-simple-keyring@npm:5.0.1"
+  dependencies:
+    "@ethereumjs/util": ^9.0.0
+    "@metamask/eth-sig-util": 5.1.0
+    "@metamask/utils": ^8.1.0
+    chai: ^4.3.4
+    eth-sig-util: ^3.0.1
+    ethereum-cryptography: ^2.1.2
+    ethereumjs-tx: ^2.1.2
+    ethereumjs-util: ^7.0.9
+    ethereumjs-wallet: ^1.0.2
+    randombytes: ^2.1.0
+  checksum: 8bbba6cab1ed6ddf0ba1bb46430a48a49222cb51a2c7fe81a41a3d3404d61107952c17799f6b40030678144509ee74fdf17f7945b006df244e4c0b4fa9656ff6
+  languageName: node
+  linkType: hard
 
 "@rabby-wallet/eth-walletconnect-keyring@npm:2.1.3":
   version: 2.1.3
@@ -6225,6 +6271,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": ^0.1.0
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@rabby-wallet/service-address": "workspace:^"
+    "@scure/bip39": ^1.3.0
     "@types/jest": ^27.4.1
     "@types/readable-stream": ^4.0.10
     "@types/sinon": ^9.0.10
@@ -7102,6 +7149,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:~1.1.6":
+  version: 1.1.6
+  resolution: "@scure/base@npm:1.1.6"
+  checksum: d6deaae91deba99e87939af9e55d80edba302674983f32bba57f942e22b1726a83c62dc50d8f4370a5d5d35a212dda167fb169f4b0d0c297488d8604608fc3d3
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.3.1":
   version: 1.3.1
   resolution: "@scure/bip32@npm:1.3.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40scure%2Fbip32%2F-%2Fbip32-1.3.1.tgz"
@@ -7152,6 +7206,16 @@ __metadata:
     "@noble/hashes": ~1.3.2
     "@scure/base": ~1.1.4
   checksum: cb99505e6d2deef8e55e81df8c563ce8dbfdf1595596dc912bceadcf366c91b05a98130e928ecb090df74efdb20150b64acc4be55bc42768cab4d39a2833d234
+  languageName: node
+  linkType: hard
+
+"@scure/bip39@npm:^1.2.1, @scure/bip39@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@scure/bip39@npm:1.3.0"
+  dependencies:
+    "@noble/hashes": ~1.4.0
+    "@scure/base": ~1.1.6
+  checksum: dbb0b27df753eb6c6380010b25cc9a9ea31f9cb08864fc51e69e5880ff7e2b8f85b72caea1f1f28af165e83b72c48dd38617e43fc632779d025b50ba32ea759e
   languageName: node
   linkType: hard
 
@@ -11125,6 +11189,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"assertion-error@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "assertion-error@npm:1.1.0"
+  checksum: fd9429d3a3d4fd61782eb3962ae76b6d08aa7383123fca0596020013b3ebd6647891a85b05ce821c47d1471ed1271f00b0545cf6a4326cf2fc91efcc3b0fbecf
+  languageName: node
+  linkType: hard
+
 "assign-symbols@npm:^1.0.0":
   version: 1.0.0
   resolution: "assign-symbols@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fassign-symbols%2F-%2Fassign-symbols-1.0.0.tgz"
@@ -12672,6 +12743,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chai@npm:^4.3.4":
+  version: 4.4.1
+  resolution: "chai@npm:4.4.1"
+  dependencies:
+    assertion-error: ^1.1.0
+    check-error: ^1.0.3
+    deep-eql: ^4.1.3
+    get-func-name: ^2.0.2
+    loupe: ^2.3.6
+    pathval: ^1.1.1
+    type-detect: ^4.0.8
+  checksum: 9ab84f36eb8e0b280c56c6c21ca4da5933132cd8a0c89c384f1497f77953640db0bc151edd47f81748240a9fab57b78f7d925edfeedc8e8fc98016d71f40c36e
+  languageName: node
+  linkType: hard
+
 "chalk@npm:5.3.0":
   version: 5.3.0
   resolution: "chalk@npm:5.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fchalk%2F-%2Fchalk-5.3.0.tgz"
@@ -12769,6 +12855,15 @@ __metadata:
   version: 1.1.4
   resolution: "character-reference-invalid@npm:1.1.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fcharacter-reference-invalid%2F-%2Fcharacter-reference-invalid-1.1.4.tgz"
   checksum: 20274574c70e05e2f81135f3b93285536bc8ff70f37f0809b0d17791a832838f1e49938382899ed4cb444e5bbd4314ca1415231344ba29f4222ce2ccf24fea0b
+  languageName: node
+  linkType: hard
+
+"check-error@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "check-error@npm:1.0.3"
+  dependencies:
+    get-func-name: ^2.0.2
+  checksum: e2131025cf059b21080f4813e55b3c480419256914601750b0fee3bd9b2b8315b531e551ef12560419b8b6d92a3636511322752b1ce905703239e7cc451b6399
   languageName: node
   linkType: hard
 
@@ -14414,6 +14509,15 @@ __metadata:
   version: 0.7.0
   resolution: "dedent@npm:0.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fdedent%2F-%2Fdedent-0.7.0.tgz"
   checksum: 87de191050d9a40dd70cad01159a0bcf05ecb59750951242070b6abf9569088684880d00ba92a955b4058804f16eeaf91d604f283929b4f614d181cd7ae633d2
+  languageName: node
+  linkType: hard
+
+"deep-eql@npm:^4.1.3":
+  version: 4.1.3
+  resolution: "deep-eql@npm:4.1.3"
+  dependencies:
+    type-detect: ^4.0.0
+  checksum: 7f6d30cb41c713973dc07eaadded848b2ab0b835e518a88b91bea72f34e08c4c71d167a722a6f302d3a6108f05afd8e6d7650689a84d5d29ec7fe6220420397f
   languageName: node
   linkType: hard
 
@@ -16718,6 +16822,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ethereumjs-common@npm:^1.5.0":
+  version: 1.5.2
+  resolution: "ethereumjs-common@npm:1.5.2"
+  checksum: 3fc64faced268e0c61da50c5db76d18cfd44325d5706792f32ac8c85c0e800d52db284f042c3bd0623daf59b946176ef7dbea476d1b0252492137fa4549a3349
+  languageName: node
+  linkType: hard
+
+"ethereumjs-tx@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "ethereumjs-tx@npm:2.1.2"
+  dependencies:
+    ethereumjs-common: ^1.5.0
+    ethereumjs-util: ^6.0.0
+  checksum: a5b607b4e125ed696d76a9e4db8a95e03a967323c66694912d799619b16fa43985336924221f9e7582dc1b09ff88a62116bf2290ee14d952bf7e6715e5728525
+  languageName: node
+  linkType: hard
+
 "ethereumjs-util@npm:^5.1.1":
   version: 5.2.1
   resolution: "ethereumjs-util@npm:5.2.1"
@@ -16733,7 +16854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethereumjs-util@npm:^6.0.0":
+"ethereumjs-util@npm:^6.0.0, ethereumjs-util@npm:^6.2.1":
   version: 6.2.1
   resolution: "ethereumjs-util@npm:6.2.1"
   dependencies:
@@ -16748,7 +16869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethereumjs-util@npm:^7.0.8, ethereumjs-util@npm:^7.1.3":
+"ethereumjs-util@npm:^7.0.8, ethereumjs-util@npm:^7.0.9, ethereumjs-util@npm:^7.1.3":
   version: 7.1.5
   resolution: "ethereumjs-util@npm:7.1.5"
   dependencies:
@@ -18038,6 +18159,13 @@ __metadata:
   version: 1.2.0
   resolution: "get-east-asian-width@npm:1.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fget-east-asian-width%2F-%2Fget-east-asian-width-1.2.0.tgz"
   checksum: ea55f4d4a42c4b00d3d9be3111bc17eb0161f60ed23fc257c1390323bb780a592d7a8bdd550260fd4627dabee9a118cdfa3475ae54edca35ebcd3bdae04179e3
+  languageName: node
+  linkType: hard
+
+"get-func-name@npm:^2.0.1, get-func-name@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "get-func-name@npm:2.0.2"
+  checksum: 3f62f4c23647de9d46e6f76d2b3eafe58933a9b3830c60669e4180d6c601ce1b4aa310ba8366143f55e52b139f992087a9f0647274e8745621fa2af7e0acf13b
   languageName: node
   linkType: hard
 
@@ -23010,6 +23138,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"loupe@npm:^2.3.6":
+  version: 2.3.7
+  resolution: "loupe@npm:2.3.7"
+  dependencies:
+    get-func-name: ^2.0.1
+  checksum: 96c058ec7167598e238bb7fb9def2f9339215e97d6685d9c1e3e4bdb33d14600e11fe7a812cf0c003dfb73ca2df374f146280b2287cae9e8d989e9d7a69a203b
+  languageName: node
+  linkType: hard
+
 "lower-case@npm:^2.0.2":
   version: 2.0.2
   resolution: "lower-case@npm:2.0.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Flower-case%2F-%2Flower-case-2.0.2.tgz"
@@ -25735,6 +25872,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pathval@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "pathval@npm:1.1.1"
+  checksum: 090e3147716647fb7fb5b4b8c8e5b55e5d0a6086d085b6cd23f3d3c01fcf0ff56fd3cc22f2f4a033bd2e46ed55d61ed8379e123b42afe7d531a2a5fc8bb556d6
+  languageName: node
+  linkType: hard
+
 "pbkdf2@npm:3.0.8":
   version: 3.0.8
   resolution: "pbkdf2@npm:3.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fpbkdf2%2F-%2Fpbkdf2-3.0.8.tgz"
@@ -27421,10 +27565,12 @@ __metadata:
     "@notifee/react-native": ^7.8.0
     "@onekeyfe/hd-ble-sdk": ^0.3.43-alpha.0
     "@rabby-wallet/biz-utils": "workspace:^"
+    "@rabby-wallet/eth-hd-keyring": 4.3.1
     "@rabby-wallet/eth-keyring-gnosis": "workspace:^"
     "@rabby-wallet/eth-keyring-ledger": "workspace:^"
     "@rabby-wallet/eth-keyring-onekey": "workspace:^"
     "@rabby-wallet/eth-keyring-watch": "*"
+    "@rabby-wallet/eth-simple-keyring": ^5.0.1
     "@rabby-wallet/eth-walletconnect-keyring": 2.1.3
     "@rabby-wallet/gnosis-sdk": ^1.3.6
     "@rabby-wallet/object-multiplex": "workspace:^"
@@ -27451,6 +27597,7 @@ __metadata:
     "@rematch/core": ^2.2.0
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
+    "@scure/bip39": ^1.3.0
     "@sentry/react-native": ^5.19.3
     "@tsconfig/react-native": ^3.0.0
     "@types/koa-compose": ^3.2.8
@@ -30386,6 +30533,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"slip39@npm:^0.1.9":
+  version: 0.1.9
+  resolution: "slip39@npm:0.1.9"
+  checksum: ed9c496b69db458c0daebb0003ea2c6037ac4b2686cb025898d2b38230eb2999a53f60d253fc5674b3a10c9097a198036bc2c25141031bd150e175314b341441
+  languageName: node
+  linkType: hard
+
 "smart-buffer@npm:^4.2.0":
   version: 4.2.0
   resolution: "smart-buffer@npm:4.2.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fsmart-buffer%2F-%2Fsmart-buffer-4.2.0.tgz"
@@ -32457,7 +32611,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-detect@npm:4.0.8, type-detect@npm:^4.0.8":
+"type-detect@npm:4.0.8, type-detect@npm:^4.0.0":
+  version: 4.0.8
+  resolution: "type-detect@npm:4.0.8"
+  checksum: 62b5628bff67c0eb0b66afa371bd73e230399a8d2ad30d852716efcc4656a7516904570cd8631a49a3ce57c10225adf5d0cbdcb47f6b0255fe6557c453925a15
+  languageName: node
+  linkType: hard
+
+"type-detect@npm:^4.0.8":
   version: 4.0.8
   resolution: "type-detect@npm:4.0.8::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ftype-detect%2F-%2Ftype-detect-4.0.8.tgz"
   checksum: 62b5628bff67c0eb0b66afa371bd73e230399a8d2ad30d852716efcc4656a7516904570cd8631a49a3ce57c10225adf5d0cbdcb47f6b0255fe6557c453925a15

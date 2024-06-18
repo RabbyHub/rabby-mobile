@@ -19,6 +19,7 @@ import { LedgerAccount } from './LedgerAccount';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import GnosisSVG from '@/assets/icons/wallet/safe.svg';
+import { PrivateKeySVG, SeedPhraseSVG } from '@/assets/icons/address';
 
 export interface Props {
   account: Account;
@@ -135,6 +136,18 @@ export const AccountInfo: React.FC<Props> = ({
         <CommonAccount
           icon={GnosisSVG}
           tip={t('page.signFooterBar.addressTip.safe')}
+        />
+      )}
+      {account?.type === KEYRING_CLASS.PRIVATE_KEY && (
+        <CommonAccount
+          icon={PrivateKeySVG}
+          tip={t('page.signFooterBar.addressTip.privateKey')}
+        />
+      )}
+      {account?.type === KEYRING_CLASS.MNEMONIC && (
+        <CommonAccount
+          icon={SeedPhraseSVG}
+          tip={t('page.signFooterBar.addressTip.seedPhrase')}
         />
       )}
     </View>

@@ -30,6 +30,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Spin } from '../TransactionRecord/components/Spin';
 import { Chain } from '@/constant/chains';
 import { ViewStyle } from 'react-native-size-matters';
+import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 
 enum INPUT_ERROR {
   INVALID_ADDRESS = 'INVALID_ADDRESS',
@@ -101,6 +102,7 @@ export const ImportSafeAddressScreen = () => {
       runAsync(value);
     },
   );
+  const duplicateAddressModal = useDuplicateAddressModal();
 
   const handleNext = async () => {
     Keyboard.dismiss();
@@ -119,7 +121,15 @@ export const ImportSafeAddressScreen = () => {
         },
       });
     } catch (err: any) {
-      setError(err?.message || t('Not a valid address'));
+      if (err.name === 'DuplicateAccountError') {
+        duplicateAddressModal.show({
+          address: err.message,
+          brandName: KEYRING_CLASS.GNOSIS,
+          type: KEYRING_TYPE.GnosisKeyring,
+        });
+      } else {
+        setError(err?.message || t('Not a valid address'));
+      }
     }
   };
 

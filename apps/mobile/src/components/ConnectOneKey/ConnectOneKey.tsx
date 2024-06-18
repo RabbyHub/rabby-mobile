@@ -60,7 +60,7 @@ export const ConnectOneKey: React.FC<{
         startNumber: 1,
         hdPath: LedgerHDPathType.BIP44,
       });
-      navigate(RootNames.ImportHardware, {
+      navigate(RootNames.ImportMoreAddress, {
         type: KEYRING_TYPE.OneKeyKeyring,
       });
       onDone?.();

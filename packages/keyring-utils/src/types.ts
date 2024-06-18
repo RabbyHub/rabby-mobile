@@ -17,7 +17,9 @@ export type KeyringTypeName =
   | KEYRING_TYPE.LedgerKeyring
   | KEYRING_TYPE.OneKeyKeyring
   | KEYRING_TYPE.KeystoneKeyring
-  | KEYRING_TYPE.GnosisKeyring;
+  | KEYRING_TYPE.GnosisKeyring
+  | KEYRING_TYPE.SimpleKeyring
+  | KEYRING_TYPE.HdKeyring;
 // LatticeKeyring
 // KeystoneKeyring
 // CoboArgusKeyring

@@ -69,7 +69,16 @@ export const RootNames = {
   NftDetail: 'NftDetail',
 
   ImportLedger: 'ImportLedger',
-  ImportHardware: 'ImportHardware',
+  ImportMoreAddress: 'ImportMoreAddress',
+  ImportPrivateKey: 'ImportPrivateKey',
+  ImportMnemonic: 'ImportMnemonic',
+  CreateMnemonic: 'CreateMnemonic',
+  AddMnemonic: 'AddMnemonic',
+  CreateMnemonicBackup: 'CreateMnemonicBackup',
+  CreateMnemonicVerify: 'CreateMnemonicVerify',
+  Scanner: 'Scanner',
+  BackupPrivateKey: 'BackupPrivateKey',
+  BackupMnemonic: 'BackupMnemonic',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

@@ -38,12 +38,18 @@ export function useShowTipTermOfUseModal() {
 }
 
 const HTML_INNER_STYLE = `
-h1 { font-size: 24px; }
-h2 { font-size: 20px; }
-h3 { font-size: 18px; }
-h4 { font-size: 16px; }
-h5 { font-size: 14px; }
+h1 { font-size: 22px; }
+h2 { font-size: 18px; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; }
+h5 { font-size: 13px; }
 h6 { font-size: 12px; }
+h1 + h2 {
+  margin-top: 8px;
+}
+p {
+  line-height: 18px;
+}
 `;
 
 export function TipTermOfUseModalInner() {

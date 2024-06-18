@@ -1,6 +1,17 @@
+/* eslint-disable jsdoc/check-tag-names */
+/* eslint-disable jsdoc/check-types */
+/* eslint-disable jsdoc/no-types */
+/* eslint-disable jsdoc/check-param-names */
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable jsdoc/require-returns */
+/* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
 import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
-import { DisplayKeyring, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  DisplayKeyring,
+  generateAliasName,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import type {
   AccountItemWithBrandQueryResult,
   DisplayedKeyring,
@@ -9,6 +20,9 @@ import type {
   KeyringSerializedData,
   KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
+import type { ContactBookService } from '@rabby-wallet/service-address';
+import * as bip39 from '@scure/bip39';
+import { wordlist } from '@scure/bip39/wordlists/english';
 import * as ethUtil from 'ethereumjs-util';
 import log from 'loglevel';
 
@@ -17,7 +31,6 @@ import { keyringSdks } from './types';
 import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
-import { ContactBookService } from '@rabby-wallet/service-address';
 
 type KeyringState = {
   booted?: string;
@@ -28,7 +41,7 @@ type MemStoreState = {
   isUnlocked: boolean;
   keyringTypes: any[];
   keyrings: any[];
-  // preMnemonics: string;
+  preMnemonics: string;
 };
 
 type OnSetAddressAlias = (
@@ -100,7 +113,7 @@ export class KeyringService extends RNEventEmitter {
       isUnlocked: false,
       keyringTypes: this.keyringClasses.map(krt => krt.type),
       keyrings: [],
-      // preMnemonics: '',
+      preMnemonics: '',
     });
     this.onSetAddressAlias = onSetAddressAlias;
     this.onCreateKeyring = onCreateKeyring;
@@ -130,7 +143,7 @@ export class KeyringService extends RNEventEmitter {
     await this.verifyPassword(oldPassword);
 
     this.emit('beforeUpdatePassword', {
-      keyringState: this.store.getState()
+      keyringState: this.store.getState(),
     });
 
     // reboot it
@@ -156,6 +169,43 @@ export class KeyringService extends RNEventEmitter {
   }
 
   /**
+   * Import Keychain using Private key
+   *
+   * @fires KeyringController#unlock
+   * @param privateKey - The privateKey to generate address
+   * @returns A Promise that resolves to the state.
+   */
+  importPrivateKey(privateKey: string): Promise<any> {
+    let keyring: any;
+
+    return this.persistAllKeyrings()
+      .then(
+        this.addNewKeyring.bind(this, KEYRING_TYPE.SimpleKeyring, [privateKey]),
+      )
+      .then(async _keyring => {
+        keyring = _keyring;
+        const [address] = await keyring.getAccounts();
+        const keyrings = await this.getAllTypedAccounts();
+        if (!this.contactService.getContactByAddress(address)) {
+          const alias = generateAliasName({
+            keyringType: KEYRING_TYPE.SimpleKeyring,
+            keyringCount:
+              keyrings.filter(k => k.type === KEYRING_TYPE.SimpleKeyring)
+                .length - 1,
+          });
+          this.contactService.updateAlias({
+            address,
+            name: alias,
+          });
+        }
+        return this.persistAllKeyrings.bind(this);
+      })
+      .then(this.setUnlocked.bind(this))
+      .then(this.fullUpdate.bind(this))
+      .then(() => keyring);
+  }
+
+  /**
    * @param keyringInst
    * @param type
    * @description create keyring instance is type of KeyringTypes
@@ -169,6 +219,7 @@ export class KeyringService extends RNEventEmitter {
    * @description get initialized keyrings in service
    */
   getKeyringByType<T extends KeyringClassType>(type: KeyringTypeName) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     const keyring = this.keyrings.find(keyring => keyring.type === type);
 
     return keyring as T | undefined;
@@ -327,7 +378,7 @@ export class KeyringService extends RNEventEmitter {
       .reduce((m, n) => m.concat(n), [] as string[])
       .map(address => normalizeAddress(address).toLowerCase());
 
-    const isIncluded = newAccountArray.some(account => {
+    const isIncluded = newAccountArray.find(account => {
       return accounts.find(
         key =>
           key === account.toLowerCase() ||
@@ -335,11 +386,11 @@ export class KeyringService extends RNEventEmitter {
       );
     });
 
+    const error = new Error(isIncluded);
+    error.name = 'DuplicateAccountError';
     return isIncluded
       ? // ? Promise.reject(new Error(i18n.t('background.error.duplicateAccount')))
-        Promise.reject(
-          new Error(`The account you're are trying to import is duplicate`),
-        )
+        Promise.reject(error)
       : Promise.resolve(newAccountArray);
   }
 
@@ -361,6 +412,7 @@ export class KeyringService extends RNEventEmitter {
       .addAccounts(1)
       .then((): Promise<AccountItemWithBrandQueryResult[] | string[]> => {
         if ((selectedKeyring as KeyringIntf).getAccountsWithBrand) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-expect-error
           return (selectedKeyring as KeyringIntf).getAccountsWithBrand();
         }
@@ -427,10 +479,10 @@ export class KeyringService extends RNEventEmitter {
    * Signs an Ethereum transaction object.
    *
    * @param keyring
-   * @param {Object} ethTx - The transaction to sign.
-   * @param {string} _fromAddress - The transaction 'from' address.
-   * @param {Object} opts - Signing options.
-   * @returns {Promise<Object>} The signed transactio object.
+   * @param ethTx - The transaction to sign.
+   * @param _fromAddress - The transaction 'from' address.
+   * @param opts - Signing options.
+   * @returns The signed transaction object.
    */
   signTransaction(keyring: any, ethTx: any, _fromAddress: string, opts = {}) {
     const fromAddress = normalizeAddress(_fromAddress);
@@ -442,11 +494,11 @@ export class KeyringService extends RNEventEmitter {
    *
    * Attempts to sign the provided message parameters.
    *
-   * @param {Object} msgParams - The message parameters to sign.
+   * @param msgParams - The message parameters to sign.
    * @param msgParams.from
    * @param opts
    * @param msgParams.data
-   * @returns {Promise<Buffer>} The raw signature.
+   * @returns The raw signature.
    */
   signMessage(msgParams: { from: string; data: any }, opts = {}) {
     const address = normalizeAddress(msgParams.from);
@@ -462,11 +514,11 @@ export class KeyringService extends RNEventEmitter {
    * Prefixes the hash before signing per the personal sign expectation.
    *
    * @param keyring
-   * @param {Object} msgParams - The message parameters to sign.
+   * @param msgParams - The message parameters to sign.
    * @param opts
    * @param msgParams.from
    * @param msgParams.data
-   * @returns {Promise<Buffer>} The raw signature.
+   * @returns The raw signature.
    */
   signPersonalMessage(
     keyring: any,
@@ -482,11 +534,11 @@ export class KeyringService extends RNEventEmitter {
    * (EIP712 https://github.com/ethereum/EIPs/pull/712#issuecomment-329988454)
    *
    * @param keyring
-   * @param {Object} msgParams - The message parameters to sign.
+   * @param msgParams - The message parameters to sign.
    * @param opts
    * @param msgParams.from
    * @param msgParams.data
-   * @returns {Promise<Buffer>} The raw signature.
+   * @returns The raw signature.
    */
   signTypedMessage(
     keyring: any,
@@ -694,6 +746,7 @@ export class KeyringService extends RNEventEmitter {
    * @param type
    */
   getKeyringClassForType(type: KeyringTypeName): KeyringClassType {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.keyringTypes.find(kr => kr.type === type)!;
   }
 
@@ -807,9 +860,11 @@ export class KeyringService extends RNEventEmitter {
     const accounts: Promise<
       ({ address: string; brandName: string } | string)[]
     > = (keyring as KeyringIntf).getAccountsWithBrand
-      ? (keyring as KeyringIntf).getAccountsWithBrand!()
+      ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        (keyring as KeyringIntf).getAccountsWithBrand!()
       : keyring.getAccounts();
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     return accounts.then(accounts => {
       const allAccounts = accounts.map(account => ({
         address: normalizeAddress(
@@ -902,4 +957,106 @@ export class KeyringService extends RNEventEmitter {
     );
     return this.memStore.updateState({ keyrings });
   }
+
+  /**
+   * Mnemonic Phrase
+   */
+  generateMnemonic(): string {
+    return bip39.generateMnemonic(wordlist);
+  }
+
+  async generatePreMnemonic(): Promise<string> {
+    if (!this.password) {
+      throw new Error('background.error.unlock');
+    }
+    const mnemonic = this.generateMnemonic();
+    const preMnemonics = await this.encryptor.encrypt(this.password, mnemonic);
+    this.memStore.updateState({ preMnemonics });
+
+    return mnemonic;
+  }
+
+  removePreMnemonics() {
+    this.memStore.updateState({ preMnemonics: '' });
+  }
+
+  async getPreMnemonics(): Promise<any> {
+    if (!this.memStore.getState().preMnemonics) {
+      return '';
+    }
+
+    if (!this.password) {
+      throw new Error('background.error.unlock');
+    }
+
+    return await this.encryptor.decrypt(
+      this.password,
+      this.memStore.getState().preMnemonics,
+    );
+  }
+
+  /**
+   * CreateNewVaultAndRestore Mnenoic
+   *
+   * Destroys any old encrypted storage,
+   * creates a new HD wallet from the given seed with 1 account.
+   *
+   * @emits KeyringController#unlock
+   * @param {string} seed - The BIP44-compliant seed phrase.
+   * @returns {Promise<Object>} A Promise that resolves to the state.
+   */
+  createKeyringWithMnemonics(seed: string): Promise<any> {
+    if (!bip39.validateMnemonic(seed, wordlist)) {
+      return Promise.reject(new Error('background.error.invalidMnemonic'));
+    }
+
+    let keyring: any;
+    return (
+      this.persistAllKeyrings()
+        .then(() => {
+          return this.addNewKeyring(KEYRING_TYPE.HdKeyring, {
+            mnemonic: seed,
+            activeIndexes: [],
+          });
+        })
+        .then(firstKeyring => {
+          keyring = firstKeyring;
+          return firstKeyring.getAccounts();
+        })
+        // .then(([firstAccount]) => {
+        //   if (!firstAccount) {
+        //     throw new Error('KeyringController - First Account not found.');
+        //   }
+        //   return null;
+        // })
+        .then(this.persistAllKeyrings.bind(this))
+        .then(this.setUnlocked.bind(this))
+        .then(this.fullUpdate.bind(this))
+        .then(() => keyring)
+    );
+  }
+
+  updateHdKeyringIndex(keyring: KeyringInstance) {
+    if (keyring.type !== KEYRING_TYPE.HdKeyring) {
+      return;
+    }
+    if (this.keyrings.find(item => item === keyring)) {
+      return;
+    }
+    const keryings = this.keyrings.filter(
+      item => item.type === KEYRING_TYPE.HdKeyring,
+    );
+    keyring.index =
+      Math.max(
+        ...keryings.map(item => (item as any).index),
+        keryings.length - 1,
+      ) + 1;
+  }
 }
+/* eslint-enable jsdoc/check-tag-names */
+/* eslint-enable jsdoc/check-types */
+/* eslint-enable jsdoc/no-types */
+/* eslint-enable jsdoc/check-param-names */
+/* eslint-enable jsdoc/require-param-description */
+/* eslint-enable jsdoc/require-returns */
+/* eslint-enable jsdoc/require-description */

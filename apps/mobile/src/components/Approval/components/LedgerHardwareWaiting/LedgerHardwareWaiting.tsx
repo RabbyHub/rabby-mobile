@@ -28,6 +28,7 @@ import {
 import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
+import { emitSignComponentAmounted } from '@/core/utils/signEvent';
 
 interface ApprovalParams {
   address: string;
@@ -218,6 +219,8 @@ export const LedgerHardwareWaiting = ({
         setErrorMessage(data.errorMsg);
       }
     });
+
+    emitSignComponentAmounted();
   };
 
   React.useEffect(() => {
@@ -227,6 +230,14 @@ export const LedgerHardwareWaiting = ({
   React.useEffect(() => {
     init();
     mountedRef.current = true;
+
+    return () => {
+      eventBus.removeAllListeners(EVENTS.LEDGER.REJECT_APPROVAL);
+      eventBus.removeAllListeners(EVENTS.LEDGER.REJECTED);
+      eventBus.removeAllListeners(EVENTS.TX_SUBMITTING);
+      eventBus.removeAllListeners(EVENTS.SIGN_FINISHED);
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -40,6 +40,8 @@ import {
 } from './navigation-type';
 import TransactionNavigator from './screens/Navigators/TransactionNavigator';
 import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
+import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import UnlockScreen from './screens/Unlock/Unlock';
 import { useAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
@@ -159,6 +161,8 @@ export default function AppNavigation({
         independent
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <DuplicateAddressModal />
+
         <RootStack.Navigator
           screenOptions={{
             ...RootStackOptions,
@@ -247,6 +251,23 @@ export default function AppNavigation({
               },
               headerTitleStyle: {
                 color: colors['neutral-title-1'],
+                fontWeight: 'normal',
+              },
+            }}
+          />
+          <RootStack.Screen
+            name={RootNames.Scanner}
+            component={ScannerScreen}
+            options={{
+              ...screenOptions,
+              title: 'Scan',
+              headerShadowVisible: false,
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: colors['neutral-black'],
+              },
+              headerTitleStyle: {
+                color: colors['neutral-title-2'],
                 fontWeight: 'normal',
               },
             }}
