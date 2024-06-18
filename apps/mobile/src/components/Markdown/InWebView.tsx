@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { Platform } from 'react-native';
 import WebView from 'react-native-webview';
 
 import MarkdownIt from 'markdown-it';
@@ -14,8 +14,46 @@ const TestRunFirst = `
   true; // note: this is required, or you'll sometimes get silent failures
 `;
 
+const fontUrls = {
+  antonRegulr: Platform.select({
+    ios: 'Anton-Regular.ttf',
+    android: 'file:///android_asset/fonts/Anton-Regular.ttf',
+  }),
+  sfPro: Platform.select({
+    ios: 'SF-Pro-Text-Regular.ttf',
+    android: 'file:///android_asset/fonts/SF-Pro-Text-Regular.ttf',
+  }),
+};
+
+const fontCss = `
+@font-face {
+  font-family: 'Anton-Regular';
+  src: url('${fontUrls.antonRegulr}') format('truetype')
+}
+
+@font-face {
+  font-family: 'SF-Pro';
+  src: url('${fontUrls.sfPro}') format('truetype')
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: url('${fontUrls.sfPro}') format('truetype')
+}
+
+:root {
+  --default-font: 'SF Pro', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+html, body {
+  font-family: 'SF Pro', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+`;
+
 const getMarkdownPageStyle = createGetStyles(colors => {
   return `
+  ${fontCss}
+
   html, body {
     height: '100%';
     width: '100%';
@@ -32,7 +70,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
 
   .md-wrapper {
     color: ${colors['neutral-title-1']};
-    font-family: "SF Pro";
+    font-family: var(--default-font);
     font-size: 16px;
     font-style: normal;
     font-weight: 600;
@@ -47,7 +85,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
   ul li, ol li
   , p, a, blockquote, pre, code, img {
     color: ${colors['neutral-body']};
-    font-family: "SF Pro";
+    font-family: var(--default-font);
     font-size: 14px;
     font-style: normal;
     font-weight: 400;
@@ -115,9 +153,11 @@ export function MarkdownInWebView({
       style={styles.webview}
       originWhitelist={['*']}
       source={{
+        baseUrl: '',
         html: webviewHtml,
         // html: '<h1>This is a static HTML source!</h1>',
       }}
+      webviewDebuggingEnabled={__DEV__}
       cacheEnabled={false}
       pullToRefreshEnabled={false}
       textInteractionEnabled={false}

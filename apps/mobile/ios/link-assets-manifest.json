@@ -6,12 +6,16 @@
       "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
     },
     {
+      "path": "assets/fonts/SF-Pro-Text-Regular.ttf",
+      "sha1": "fc1b6a2f59da1c8eb05248ce8b25ba30f244e5de"
+    },
+    {
       "path": "assets/custom/InpageBridgeWeb3.js",
-      "sha1": "f8f3142c22acf521f4c6106e24e6cb1386c7664f"
+      "sha1": "f2aed5b46e6094bd1807de546e57d80ddcbf08a6"
     },
     {
       "path": "assets/custom/vconsole.min.js",
-      "sha1": "cc79a9522ef457188c18283228b2b8759b7faf1e"
+      "sha1": "f14c26a8bc8928808c4f163dd5279100e471494e"
     }
   ]
 }

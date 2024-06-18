@@ -12,13 +12,14 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		3FB3928D597B4F3786F9EF3F /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 821CAA7F3D014D818B010EC1 /* vconsole.min.js */; };
 		519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */; };
 		61119C058F0C8F2FBCC8530A /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3D14902716EB42CC78905B /* Pods_RabbyMobile.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		953B5635BA976F3287BF7F26 /* Pods_RabbyMobile_RabbyMobileTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAEC992AC950B3ACACBDE0F2 /* Pods_RabbyMobile_RabbyMobileTests.framework */; };
 		ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */; };
-		B09DBCD419C14862A4DBECE2 /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = FE58486C036C49939FBB09A4 /* vconsole.min.js */; };
-		C0BB5FE02FF340589CA2BDC4 /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = EBD58466511C4944B2260062 /* InpageBridgeWeb3.js */; };
+		46BEC6DCA57647DA986BAA03 /* SF-Pro-Text-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FDFBE17E8EAF4553A021BE15 /* SF-Pro-Text-Regular.ttf */; };
+		152EF762CEDC4B0E8E81321B /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = C024E23FD86443E380C7FBC6 /* InpageBridgeWeb3.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,13 +48,14 @@
 		5709B34CF0A7D63546082F79 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = RabbyMobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		821CAA7F3D014D818B010EC1 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile-RabbyMobileTests/Pods-RabbyMobile-RabbyMobileTests.release.xcconfig"; sourceTree = "<group>"; };
 		ACB2DE2C2B72015F00A5516C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		CA3D14902716EB42CC78905B /* Pods_RabbyMobile.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EAEC992AC950B3ACACBDE0F2 /* Pods_RabbyMobile_RabbyMobileTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RabbyMobile_RabbyMobileTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		EBD58466511C4944B2260062 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = InpageBridgeWeb3.js; path = ../assets/custom/InpageBridgeWeb3.js; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		FE58486C036C49939FBB09A4 /* vconsole.min.js */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = vconsole.min.js; path = ../assets/custom/vconsole.min.js; sourceTree = "<group>"; };
+		FDFBE17E8EAF4553A021BE15 /* SF-Pro-Text-Regular.ttf */ = {isa = PBXFileReference; name = "SF-Pro-Text-Regular.ttf"; path = "../assets/fonts/SF-Pro-Text-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		C024E23FD86443E380C7FBC6 /* InpageBridgeWeb3.js */ = {isa = PBXFileReference; name = "InpageBridgeWeb3.js"; path = "../assets/custom/InpageBridgeWeb3.js"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,8 +167,9 @@
 			isa = PBXGroup;
 			children = (
 				335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */,
-				EBD58466511C4944B2260062 /* InpageBridgeWeb3.js */,
-				FE58486C036C49939FBB09A4 /* vconsole.min.js */,
+				821CAA7F3D014D818B010EC1 /* vconsole.min.js */,
+				FDFBE17E8EAF4553A021BE15 /* SF-Pro-Text-Regular.ttf */,
+				C024E23FD86443E380C7FBC6 /* InpageBridgeWeb3.js */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -271,9 +274,10 @@
 				014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */,
-				C0BB5FE02FF340589CA2BDC4 /* InpageBridgeWeb3.js in Resources */,
-				B09DBCD419C14862A4DBECE2 /* vconsole.min.js in Resources */,
 				ACB2DE2D2B72015F00A5516C /* GoogleService-Info.plist in Resources */,
+				3FB3928D597B4F3786F9EF3F /* vconsole.min.js in Resources */,
+				46BEC6DCA57647DA986BAA03 /* SF-Pro-Text-Regular.ttf in Resources */,
+				152EF762CEDC4B0E8E81321B /* InpageBridgeWeb3.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
