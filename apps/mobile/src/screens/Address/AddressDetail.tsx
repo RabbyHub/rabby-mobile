@@ -55,6 +55,7 @@ import { apiMnemonic, apiPrivateKey } from '@/core/apis';
 import { keyringService } from '@/core/services';
 import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import { useAddressSource } from '@/hooks/useAddressSource';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -306,6 +307,13 @@ const AddressInfo = (props: AddressInfoProps) => {
     account.brandName,
   );
 
+  const source = useAddressSource({
+    type: account.type,
+    brandName: account.brandName,
+    byImport: (account as any).byImport,
+    address: account.address,
+  });
+
   return (
     <View
       style={{
@@ -395,7 +403,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                   fontSize: 16,
                   color: colors['neutral-body'],
                 }}>
-                {account.brandName}
+                {source}
               </Text>
             </View>
           </View>
@@ -638,25 +646,22 @@ const AddressInfo = (props: AddressInfoProps) => {
       </View>
 
       <View style={styles.view}>
-        {account.type === KEYRING_TYPE.SimpleKeyring ||
-          (account.type === KEYRING_TYPE.HdKeyring && (
-            <TouchableOpacity
-              style={StyleSheet.flatten([
-                styles.itemView,
-                styles.noBOrderBottom,
-              ])}
-              onPress={handlePressBackupPrivateKey}>
-              <Text style={styles.labelText}>
-                {t('page.addressDetail.backup-private-key')}
-              </Text>
-              <View style={styles.valueView}>
-                <RcIconRightCC
-                  style={styles.rightIcon}
-                  color={colors['neutral-foot']}
-                />
-              </View>
-            </TouchableOpacity>
-          ))}
+        {(account.type === KEYRING_TYPE.SimpleKeyring ||
+          account.type === KEYRING_TYPE.HdKeyring) && (
+          <TouchableOpacity
+            style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
+            onPress={handlePressBackupPrivateKey}>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.backup-private-key')}
+            </Text>
+            <View style={styles.valueView}>
+              <RcIconRightCC
+                style={styles.rightIcon}
+                color={colors['neutral-foot']}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
 
         {account.type === KEYRING_TYPE.HdKeyring && (
           <TouchableOpacity
