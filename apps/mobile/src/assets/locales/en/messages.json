@@ -1724,7 +1724,7 @@
       "clickToShowQr": "Click to show private key QR Code"
     },
     "ethSign": {
-      "alert": "Signing with 'eth_sign' can lead to asset loss. For your safety,             Rabby does not support this method."
+      "alert": "Signing with 'eth_sign' can lead to asset loss. For your safety, Rabby does not support this method."
     },
     "createPassword": {
       "title": "Set Password",

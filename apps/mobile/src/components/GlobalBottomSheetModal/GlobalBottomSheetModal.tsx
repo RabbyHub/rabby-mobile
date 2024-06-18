@@ -69,7 +69,8 @@ export const GlobalBottomSheetModal = () => {
           },
           snapPoints:
             approvalComponent && params.name === MODAL_NAMES.APPROVAL
-              ? APPROVAL_SNAP_POINTS[approvalComponent]
+              ? APPROVAL_SNAP_POINTS[approvalComponent] ??
+                APPROVAL_SNAP_POINTS.Unknown
               : SNAP_POINTS[params.name],
           ref: React.createRef<AppBottomSheetModal>(),
         },

@@ -40,6 +40,8 @@ export enum APPROVAL_MODAL_NAMES {
   'KeystoneHardwareWaiting' = 'KeystoneHardwareWaiting',
   'OneKeyHardwareWaiting' = 'OneKeyHardwareWaiting',
   'PrivatekeyWaiting' = 'PrivatekeyWaiting',
+  'ETHSign' = 'ETHSign',
+  'Unknown' = 'Unknown',
 }
 
 export type MODAL_CREATE_PARAMS = {

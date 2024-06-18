@@ -7,3 +7,5 @@ export { LedgerHardwareWaiting } from './LedgerHardwareWaiting/LedgerHardwareWai
 export { OneKeyHardwareWaiting } from './OneKeyHardwareWaiting/OneKeyHardwareWaiting';
 export { KeystoneHardwareWaiting } from './KeystoneHardwareWaiting/KeystoneHardwareWaiting';
 export { PrivatekeyWaiting } from './PrivatekeyWaiting/PrivatekeyWaiting';
+export { ETHSign } from './ETHSign/ETHSign';
+export { Unknown } from './Unknown/Unknown';
