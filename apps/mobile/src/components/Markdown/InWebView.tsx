@@ -61,6 +61,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
     justify-content: flex-start;
     align-items: flex-start;
     padding: 0;
+    margin: 0;
     use-select: none;
     overflow: hidden;
     overflow-y: auto;
