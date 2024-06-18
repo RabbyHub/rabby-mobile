@@ -19,7 +19,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useSheetModalsForManagingPassword } from '../hooks';
 
-import { useLoadLockInfo, useWalletLockInfo } from '../useManagePassword';
+import { useWalletLockInfo } from '../useManagePassword';
 
 import { default as RcNoPassword } from '../icons/no-password.svg';
 import { default as RcHasPassword } from '../icons/has-password.svg';
@@ -104,7 +104,7 @@ function useClearPasswordForm() {
     });
   }, [t]);
 
-  const { fetchLockInfo } = useLoadLockInfo();
+  const { fetchLockInfo } = useWalletLockInfo();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },

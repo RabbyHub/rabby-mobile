@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 
 const isAndroid = Platform.OS === 'android';
@@ -7,14 +7,17 @@ const isIOS = Platform.OS === 'ios';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
+import { PasswordStatus } from '@/core/apis/lock';
 
 const appLockAtom = atom({
   appUnlocked: false,
+  pwdStatus: PasswordStatus.Unknown,
 });
 appLockAtom.onMount = setAppLock => {
-  setAppLock({
+  setAppLock(prev => ({
+    ...prev,
     appUnlocked: keyringService.isUnlocked(),
-  });
+  }));
 };
 
 export function useAppUnlocked() {
@@ -26,17 +29,71 @@ export function useAppUnlocked() {
   };
 }
 
-export function useTryUnlockApp() {
+/**
+ * @description only use this hooks on the top level of your app
+ */
+export function useTryUnlockAppOnTop() {
   const { setAppLock } = useAppUnlocked();
 
   const tryUnlock = React.useCallback(async () => {
     return apisLock.tryAutoUnlockRabbyMobile().then(async result => {
-      setAppLock({ appUnlocked: keyringService.isUnlocked() });
+      setAppLock({
+        appUnlocked: keyringService.isUnlocked(),
+        pwdStatus: result.lockInfo.pwdStatus,
+      });
       return result;
     });
   }, [setAppLock]);
 
   return { tryUnlock };
+}
+
+export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
+  const [appLock, setAppLock] = useAtom(appLockAtom);
+  const isLoadingRef = React.useRef(false);
+
+  const { autoFetch } = options || {};
+
+  const fetchLockInfo = useCallback(async () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+
+    try {
+      const response = await apisLock.getRabbyLockInfo();
+
+      setAppLock({
+        appUnlocked: keyringService.isUnlocked(),
+        pwdStatus: response.pwdStatus,
+      });
+
+      return response;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isLoadingRef.current = false;
+    }
+  }, [setAppLock]);
+
+  React.useEffect(() => {
+    if (autoFetch) {
+      fetchLockInfo();
+    }
+  }, [autoFetch, fetchLockInfo]);
+
+  const { isUseBuiltinPwd, isUseCustomPwd } = React.useMemo(() => {
+    return {
+      isUseBuiltinPwd: appLock.pwdStatus === PasswordStatus.UseBuiltIn,
+      isUseCustomPwd: appLock.pwdStatus === PasswordStatus.Custom,
+    };
+  }, [appLock.pwdStatus]);
+
+  return {
+    isLoading: isLoadingRef.current,
+    isUseBuiltinPwd,
+    isUseCustomPwd,
+    lockInfo: appLock,
+    fetchLockInfo,
+  };
 }
 
 const FALLBACK_STATE: AppStateStatus = isIOS ? 'unknown' : 'active';

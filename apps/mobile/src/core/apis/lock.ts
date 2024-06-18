@@ -8,10 +8,6 @@ export const enum PasswordStatus {
   Custom = 11,
 }
 
-export type RabbyMobileLockInfo = {
-  pwdStatus: PasswordStatus;
-};
-
 function getInitError(password: string) {
   if (password === RABBY_MOBILE_KR_PWD) {
     return {
@@ -110,7 +106,7 @@ export async function clearCustomPassword(currentPassword: string) {
 }
 
 export async function getRabbyLockInfo() {
-  const info: RabbyMobileLockInfo = {
+  const info = {
     pwdStatus: PasswordStatus.Unknown,
   };
 
@@ -154,7 +150,7 @@ export async function tryAutoUnlockRabbyMobile() {
   }
 
   return {
-    useBuiltInPwd,
+    lockInfo,
   };
 }
 
