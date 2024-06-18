@@ -51,6 +51,7 @@ import {
   useManagePasswordOnSettings,
   useSheetModalsForManagingPassword,
 } from '../ManagePassword/hooks';
+import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -63,6 +64,7 @@ export default function SettingsScreen(): JSX.Element {
   const { appThemeText } = useAppTheme();
 
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const navigation = useRabbyAppNavigation();
 
@@ -276,6 +278,13 @@ export default function SettingsScreen(): JSX.Element {
               icon: RcEarth,
               onPress: () => {
                 openMetaMaskTestDapp();
+              },
+            },
+            {
+              label: 'Markdown Webview Test',
+              icon: RcEarth,
+              onPress: () => {
+                viewMarkdownInWebView();
               },
             },
             {

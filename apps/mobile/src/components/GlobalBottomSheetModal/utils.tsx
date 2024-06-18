@@ -22,6 +22,7 @@ import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
+import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 
 export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.APPROVAL]: ['100%'],
@@ -41,6 +42,7 @@ export const SNAP_POINTS: Record<MODAL_NAMES, (string | number)[]> = {
   [MODAL_NAMES.CONNECT_ONEKEY]: ['68%'],
   [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
+  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
   [MODAL_NAMES.TIP_TERM_OF_USE]: ['80%'],
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
@@ -83,6 +85,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
+  [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
 };
 
