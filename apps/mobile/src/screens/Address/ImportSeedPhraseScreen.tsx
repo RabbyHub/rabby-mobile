@@ -15,6 +15,8 @@ import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
 import { toast } from '@/components/Toast';
 import { useFocusEffect } from '@react-navigation/native';
+import { wordlist } from '@scure/bip39/wordlists/english';
+import * as bip39 from '@scure/bip39';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -48,7 +50,7 @@ export const ImportSeedPhraseScreen = () => {
     apiMnemonic
       .generateKeyringWithMnemonic(mnemonics, passphrase)
       .then(async ({ keyringId, isExistedKR }) => {
-        const firstAddress = requestKeyring(
+        const firstAddress = await requestKeyring(
           KEYRING_TYPE.HdKeyring,
           'getAddresses',
           keyringId ?? null,
@@ -107,7 +109,26 @@ export const ImportSeedPhraseScreen = () => {
             type: KEYRING_TYPE.SimpleKeyring,
           });
         } else {
-          setError(err.message);
+          try {
+            bip39.mnemonicToEntropy(mnemonics?.trim(), wordlist);
+          } catch (e) {
+            console.log('error 1111', (e as any).message);
+            if ((e as any).message.includes('Unknown letter:')) {
+              let errorWords: string[] = [];
+              mnemonics.split(/\s+/).forEach(word => {
+                let v = word?.trim();
+                if (v && !wordlist.includes(v)) {
+                  errorWords.push(v);
+                }
+              });
+              setError(
+                `invalid ${errorWords.length > 1 ? 'words' : 'word'} found: ` +
+                  errorWords.join(', '),
+              );
+            } else {
+              setError(err.message);
+            }
+          }
         }
       })
       .finally(() => {
@@ -155,7 +176,7 @@ export const ImportSeedPhraseScreen = () => {
         style={styles.textArea}
         value={mnemonics}
         onChange={importing ? undefined : setMnemonics}
-        placeholder="Enter your seed phrase  with space"
+        placeholder="Enter your seed phrase with space"
         error={error}
       />
       <QandASection

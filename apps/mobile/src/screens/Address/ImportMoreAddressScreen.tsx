@@ -318,11 +318,10 @@ export const ImportMoreAddressScreen = () => {
       const api = getMnemonicKeyring();
       api?.getAccounts().then(res => {
         if (res) {
-          console.log('res', res);
           const accounts = res.map((address, idx) => {
             return {
               address,
-              index: api?.getInfoByAddress(address)?.index || idx,
+              index: api?.getInfoByAddress(address)?.index ?? idx,
             };
           });
           setCurrentAccounts(accounts);
