@@ -169,10 +169,10 @@ export function useBootstrapApp() {
     }
   }, [appNavigationReady]);
 
-  const { tryUnlock } = useTryUnlockAppOnTop();
+  const { getTriedUnlock } = useTryUnlockAppOnTop();
 
   React.useEffect(() => {
-    tryUnlock()
+    getTriedUnlock()
       .then(async result => {
         setBootstrap({ couldRender: true });
       })
@@ -183,7 +183,7 @@ export function useBootstrapApp() {
       .finally(() => {
         setTimeout(hideSplashScreen, 1000);
       });
-  }, [tryUnlock, setBootstrap]);
+  }, [getTriedUnlock, setBootstrap]);
 
   return {
     couldRender,
