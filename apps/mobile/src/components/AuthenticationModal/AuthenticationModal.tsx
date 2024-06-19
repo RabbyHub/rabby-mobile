@@ -136,6 +136,11 @@ export const AuthenticationModal = ({
   );
 };
 
+/**
+ * @description It's recommended to set `needPassword` property explicitly,
+ * whatever it's true or false. If not, it will fetch the lock info from the device.
+ *
+ */
 AuthenticationModal.show = async (props: AuthenticationModalProps) => {
   let needPassword = props.needPassword;
   if (typeof needPassword !== 'boolean') {
