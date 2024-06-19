@@ -99,7 +99,6 @@ export const AuthenticationModal = ({
               returnKeyLabel={t('global.Confirm')}
               value={password}
               onChangeText={setPassword}
-              onSubmitEditing={handleSubmit}
               placeholderTextColor={colors['neutral-foot']}
               customStyle={StyleSheet.flatten([
                 styles.input,
