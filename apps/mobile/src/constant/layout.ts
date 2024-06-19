@@ -154,6 +154,8 @@ function makeScreenSpecConfig() {
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: 'rgba(0, 0, 0, 1)',
       },
+      GetStarted: blueLightConf,
+
       Home: bg1DefaultConf,
       Unlock: bg1DefaultConf,
 
