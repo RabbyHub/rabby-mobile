@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "809331497367",
+    "project_id": "rabby-mobile",
+    "storage_bucket": "rabby-mobile.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:809331497367:android:1512c83173675e21570cd2",
+        "android_client_info": {
+          "package_name": "com.debank.rabbymobile.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMKhIvBPa7XIKopsjpakUj78CrlD8fMPw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
