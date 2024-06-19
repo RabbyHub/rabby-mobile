@@ -53,8 +53,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: "[Linux] Setup Ruby & Fastlane"
-        if: runner.os == 'Linux'
+      - name: "Setup Ruby & Fastlane"
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.2'
