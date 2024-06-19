@@ -86,6 +86,7 @@ export const PasteTextArea: React.FC<Props> = ({
 
       onChange?.(text);
       toast.success(t('page.newAddress.seedPhrase.pastedAndClear'));
+      Clipboard.setString('');
     });
   }, [onChange, t]);
 
