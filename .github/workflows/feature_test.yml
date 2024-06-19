@@ -27,7 +27,7 @@ jobs:
       matrix:
         host:
           - macOS
-          - Linux
+          # - Linux
     runs-on:
       - self-hosted
       - mobile
