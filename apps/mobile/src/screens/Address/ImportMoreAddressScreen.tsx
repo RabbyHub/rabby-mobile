@@ -289,7 +289,7 @@ export const ImportMoreAddressScreen = () => {
     async (address, index) => {
       setSelectedAccounts(prev => {
         if (prev.length >= MAX_ACCOUNT_COUNT) {
-          toast.show(t('page.newAddress.seedPhrase.maxAccountCount'));
+          toast.info(t('page.newAddress.seedPhrase.maxAccountCount'));
           return prev;
         }
         if (prev.some(a => isSameAddress(a.address, address))) {
@@ -308,6 +308,10 @@ export const ImportMoreAddressScreen = () => {
   );
 
   React.useEffect(() => {
+    startNumberRef.current = (setting?.startNumber || 1) - 1;
+  }, [setting?.startNumber]);
+
+  React.useEffect(() => {
     setAccounts([]);
     if (stoppedRef.current) {
       handleLoadAddress();
@@ -315,10 +319,6 @@ export const ImportMoreAddressScreen = () => {
       stoppedRef.current = true;
     }
   }, [handleLoadAddress, setting]);
-
-  React.useEffect(() => {
-    startNumberRef.current = (setting?.startNumber || 1) - 1;
-  }, [setting?.startNumber]);
 
   React.useEffect(() => {
     if (state.type === KEYRING_TYPE.HdKeyring) {
