@@ -178,6 +178,7 @@ function makeScreenSpecConfig() {
       GasTopUp: blueLightConf,
 
       SetPassword: blueLightConf,
+      Scanner: blueLightConf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
     };
 
