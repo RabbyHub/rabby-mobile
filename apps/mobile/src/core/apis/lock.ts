@@ -128,26 +128,22 @@ export async function getRabbyLockInfo() {
 }
 
 export async function tryAutoUnlockRabbyMobile() {
-  const isBooted = keyringService.isBooted();
   // // leave here for debugging
-  console.debug(
-    'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
-    RABBY_MOBILE_KR_PWD,
-  );
-
-  if (!isBooted) {
-    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  if (__DEV__) {
+    console.debug(
+      'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
+      RABBY_MOBILE_KR_PWD,
+    );
   }
 
+  if (!keyringService.isBooted()) {
+    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  }
   const lockInfo = await getRabbyLockInfo();
 
-  const useBuiltInPwd = lockInfo.pwdStatus === PasswordStatus.UseBuiltIn;
   try {
-    if (useBuiltInPwd) {
-      const isUnlocked = keyringService.isUnlocked();
-      if (!isUnlocked) {
-        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
-      }
+    if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
+      await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');

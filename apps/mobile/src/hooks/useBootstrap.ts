@@ -145,6 +145,14 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   };
 }
 
+const splashScreenVisibleRef = { current: true };
+const hideSplashScreen = () => {
+  if (!splashScreenVisibleRef.current) return;
+
+  SplashScreen.hide();
+  splashScreenVisibleRef.current = false;
+};
+
 /**
  * @description only call this hook on the top level component
  */
@@ -157,7 +165,7 @@ export function useBootstrapApp() {
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
     if (appNavigationReady) {
-      SplashScreen.hide();
+      hideSplashScreen();
     }
   }, [appNavigationReady]);
 
@@ -166,17 +174,14 @@ export function useBootstrapApp() {
   React.useEffect(() => {
     tryUnlock()
       .then(async result => {
-        setBootstrap(prev => ({
-          ...prev,
-          couldRender: true,
-        }));
+        setBootstrap({ couldRender: true });
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);
-        setBootstrap(prev => ({
-          ...prev,
-          couldRender: true,
-        }));
+        setBootstrap({ couldRender: true });
+      })
+      .finally(() => {
+        setTimeout(hideSplashScreen, 1000);
       });
   }, [tryUnlock, setBootstrap]);
 
