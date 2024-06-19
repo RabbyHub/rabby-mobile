@@ -197,7 +197,7 @@ export const getMnemonicAddressInfo = async (address: string) => {
 
 export const generateKeyringWithMnemonic = async (
   mnemonic: string,
-  passphrase: string,
+  passphrase?: string,
   byImport = false,
 ) => {
   // keep passphrase is empty string if not set

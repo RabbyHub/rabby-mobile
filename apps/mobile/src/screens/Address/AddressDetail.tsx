@@ -55,6 +55,7 @@ import { apiMnemonic, apiPrivateKey, apisLock } from '@/core/apis';
 import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useAddressSource } from '@/hooks/useAddressSource';
+import { SeedPhraseBar } from './components/SeedPhraseBar';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -415,6 +416,11 @@ const AddressInfo = (props: AddressInfoProps) => {
                 bgColor={colors['neutral-card2']}
                 textColor={colors['neutral-title-1']}
               />
+            </View>
+          )}
+          {account.type === KEYRING_TYPE.HdKeyring && (
+            <View>
+              <SeedPhraseBar address={account.address} />
             </View>
           )}
           {account.type === KEYRING_TYPE.GnosisKeyring ? (
