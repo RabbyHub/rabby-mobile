@@ -172,6 +172,7 @@ const getStyle = createGetStyles(colors => {
       fontSize: 14,
       lineHeight: 20,
       marginBottom: 16,
+      textAlign: 'center',
     },
     buttonGroup: {
       paddingHorizontal: 20,

@@ -645,13 +645,12 @@ const AddressInfo = (props: AddressInfoProps) => {
       </View>
 
       <View style={styles.view}>
-        {(account.type === KEYRING_TYPE.SimpleKeyring ||
-          account.type === KEYRING_TYPE.HdKeyring) && (
+        {account.type === KEYRING_TYPE.HdKeyring && (
           <TouchableOpacity
             style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
-            onPress={handlePressBackupPrivateKey}>
+            onPress={handlePressBackupSeedPhrase}>
             <Text style={styles.labelText}>
-              {t('page.addressDetail.backup-private-key')}
+              {t('page.addressDetail.backup-seed-phrase')}
             </Text>
             <View style={styles.valueView}>
               <RcIconRightCC
@@ -662,12 +661,13 @@ const AddressInfo = (props: AddressInfoProps) => {
           </TouchableOpacity>
         )}
 
-        {account.type === KEYRING_TYPE.HdKeyring && (
+        {(account.type === KEYRING_TYPE.SimpleKeyring ||
+          account.type === KEYRING_TYPE.HdKeyring) && (
           <TouchableOpacity
             style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
-            onPress={handlePressBackupSeedPhrase}>
+            onPress={handlePressBackupPrivateKey}>
             <Text style={styles.labelText}>
-              {t('page.addressDetail.backup-seed-phrase')}
+              {t('page.addressDetail.backup-private-key')}
             </Text>
             <View style={styles.valueView}>
               <RcIconRightCC

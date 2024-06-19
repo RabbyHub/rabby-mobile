@@ -1,6 +1,12 @@
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { keyringService, preferenceService } from '../services';
+import {
+  contactService,
+  keyringService,
+  preferenceService,
+  transactionHistoryService,
+  whitelistService,
+} from '../services';
 import { getKeyring } from './keyring';
 import { addressUtils } from '@rabby-wallet/base-utils';
 
@@ -43,6 +49,13 @@ export async function removeAddress(account: KeyringAccountWithAlias) {
     account.brandName,
     isRemoveEmptyKeyring,
   );
+
+  if (!(await keyringService.hasAddress(account.address))) {
+    contactService.removeAlias(account.address);
+    whitelistService.removeWhitelist(account.address);
+    transactionHistoryService.removeList(account.address);
+    preferenceService.removePinAddress(account);
+  }
 
   const currentAccount = getCurrentAccount();
 
