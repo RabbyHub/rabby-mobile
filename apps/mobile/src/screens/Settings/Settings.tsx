@@ -334,10 +334,10 @@ export default function SettingsScreen(): JSX.Element {
             </Block>
           );
         })}
+        <View style={[styles.bottomFooter]}>
+          <RcFooterLogo />
+        </View>
       </ScrollView>
-      <View style={[styles.bottomFooter]}>
-        <RcFooterLogo />
-      </View>
 
       <ThemeSelectorModal />
 
