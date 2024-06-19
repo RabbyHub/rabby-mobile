@@ -94,7 +94,7 @@ function useSetupPasswordForm() {
         } else {
           toast.success('Setup Password Successfully');
           await fetchLockInfo();
-          if (!navState) {
+          if (!navState?.replaceScreen) {
             resetNavigationToHome(navigation);
           } else {
             navigation.replace(navState.replaceStack, {
