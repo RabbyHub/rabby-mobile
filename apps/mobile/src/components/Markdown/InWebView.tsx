@@ -61,6 +61,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
     justify-content: flex-start;
     align-items: flex-start;
     padding: 0;
+    margin: 0;
     use-select: none;
     overflow: hidden;
     overflow-y: auto;
@@ -179,7 +180,7 @@ const getStyles = createGetStyles(colors => {
       maxHeight: '100%',
       height: '100%',
       width: '100%',
-      ...makeDebugBorder('orange'),
+      // ...makeDebugBorder('orange'),
     },
   };
 });

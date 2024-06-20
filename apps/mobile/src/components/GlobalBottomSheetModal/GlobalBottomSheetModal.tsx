@@ -152,6 +152,7 @@ export const GlobalBottomSheetModal = () => {
           <AppBottomSheetModal
             topInset={height.top}
             enableContentPanningGesture={false}
+            keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
             {...bottomSheetModalProps}
             onDismiss={() => {

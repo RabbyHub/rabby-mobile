@@ -543,6 +543,7 @@
         "error": "Failed to add to contacts"
       },
       "allowTransferModal": {
+        "title": "Confirm to allow sending",
         "error": "incorrect password",
         "placeholder": "Enter the Password to Confirm",
         "validator__empty": "Please input password",
@@ -833,7 +834,7 @@
       "deleted": "Deleted",
       "whitelisted-address": "Whitelisted address",
       "addressTypeTip": "Imported by {{type}}",
-      "delete-desc": "Before you delete, keep the following points in mind to understand how to protect your assets.",
+      "delete-desc": "Are you sure you want to delete this address?",
       "delete-checklist-1": "I understand that if I delete this address, the corresponding Private Key & Seed Phrase of this address will be deleted and Rabby will NOT be able to recover it.",
       "delete-checklist-2": "I confirm that I have backuped the private key or Seed Phrase and I'm ready to delete it now.",
       "confirm": "Confirm",
@@ -1202,7 +1203,8 @@
         "invalidContent": "Invalid content",
         "inputInvalidCount_one": "1 input do not conform to Seed Phrase norms, please check.",
         "inputInvalidCount_other": "{{count}} inputs do not conform to Seed Phrase norms, please check.",
-        "passphrase": "Passphrase"
+        "passphrase": "Passphrase",
+        "maxAccountCount": "Maximum 50 addresses each time"
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
@@ -1211,7 +1213,7 @@
         "how": "How to import my MetaMask Account?",
         "step": "Step",
         "importSeedPhrase": "Import the seed phrase or private key",
-        "importSeedPhraseTips": "It will only be stored locally on the browser. Rabby will never have access to your private information.",
+        "importSeedPhraseTips": "It will only be stored locally on the phone. Rabby will never have access to your private information.",
         "tips": "Tips:",
         "tipsDesc": "Your seed phrase/private key does not belong to MetaMask or any specific wallet; it only belongs to you."
       },
@@ -1224,7 +1226,7 @@
         },
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
-          "answer": "Yes, it will be stored locally on your browser and only accessible to you."
+          "answer": "Yes, it will be stored locally on your phone and only accessible to you."
         },
         "isItPossibleToImportKeystore": {
           "question": "Is it possible to import KeyStore?",
@@ -1235,7 +1237,7 @@
       "importedSuccessfully": "Imported Successfully",
       "ledger": {
         "cameraPermissionTitle": "Allow Rabby to access the camera",
-        "cameraPermission1": "Allow Rabby to access the camera in the browser pop-up",
+        "cameraPermission1": "Allow Rabby to access the camera in the phone pop-up",
         "allowRabbyPermissionsTitle": "Allow Rabby permissions to:",
         "ledgerPermission1": "Connect to an HID device",
         "ledgerPermissionTip": "Please click \"Allow\" below and authorize access to your Ledger in the following pop-up window.",
@@ -1277,7 +1279,7 @@
       },
       "onekey": {
         "cameraPermissionTitle": "Allow Rabby to access the camera",
-        "cameraPermission1": "Allow Rabby to access the camera in the browser pop-up",
+        "cameraPermission1": "Allow Rabby to access the camera in the phone pop-up",
         "allowRabbyPermissionsTitle": "Allow Rabby permissions to:",
         "ledgerPermission1": "Connect to an HID device",
         "ledgerPermissionTip": "Please click \"Allow\" below and authorize access to your Ledger in the following pop-up window.",
@@ -1713,7 +1715,7 @@
     },
     "backupSeedPhrase": {
       "title": "Backup Seed Phrase",
-      "alert": "This Seed Phrase is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever.         Please view it in a secure environment and keep it carefully.",
+      "alert": "This Seed Phrase is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
       "clickToShow": "Click to show Seed Phrase",
       "copySeedPhrase": "Copy seed phrase"
     },

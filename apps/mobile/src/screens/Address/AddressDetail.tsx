@@ -51,10 +51,11 @@ import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { useTranslation } from 'react-i18next';
-import { apiMnemonic, apiPrivateKey } from '@/core/apis';
-import { keyringService } from '@/core/services';
+import { apiMnemonic, apiPrivateKey, apisLock } from '@/core/apis';
 import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import { useAddressSource } from '@/hooks/useAddressSource';
+import { SeedPhraseBar } from './components/SeedPhraseBar';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -214,7 +215,7 @@ const AddressInfo = (props: AddressInfoProps) => {
       needPassword,
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
-        await keyringService.verifyPassword(password);
+        await apisLock.throwErrorIfInvalidPwd(password);
 
         if (account.type === KEYRING_TYPE.HdKeyring) {
           await invokeEnterPassphrase(account.address);
@@ -306,6 +307,13 @@ const AddressInfo = (props: AddressInfoProps) => {
     account.brandName,
   );
 
+  const source = useAddressSource({
+    type: account.type,
+    brandName: account.brandName,
+    byImport: (account as any).byImport,
+    address: account.address,
+  });
+
   return (
     <View
       style={{
@@ -395,7 +403,7 @@ const AddressInfo = (props: AddressInfoProps) => {
                   fontSize: 16,
                   color: colors['neutral-body'],
                 }}>
-                {account.brandName}
+                {source}
               </Text>
             </View>
           </View>
@@ -408,6 +416,11 @@ const AddressInfo = (props: AddressInfoProps) => {
                 bgColor={colors['neutral-card2']}
                 textColor={colors['neutral-title-1']}
               />
+            </View>
+          )}
+          {account.type === KEYRING_TYPE.HdKeyring && (
+            <View>
+              <SeedPhraseBar address={account.address} />
             </View>
           )}
           {account.type === KEYRING_TYPE.GnosisKeyring ? (
@@ -638,32 +651,29 @@ const AddressInfo = (props: AddressInfoProps) => {
       </View>
 
       <View style={styles.view}>
-        {account.type === KEYRING_TYPE.SimpleKeyring ||
-          (account.type === KEYRING_TYPE.HdKeyring && (
-            <TouchableOpacity
-              style={StyleSheet.flatten([
-                styles.itemView,
-                styles.noBOrderBottom,
-              ])}
-              onPress={handlePressBackupPrivateKey}>
-              <Text style={styles.labelText}>
-                {t('page.addressDetail.backup-private-key')}
-              </Text>
-              <View style={styles.valueView}>
-                <RcIconRightCC
-                  style={styles.rightIcon}
-                  color={colors['neutral-foot']}
-                />
-              </View>
-            </TouchableOpacity>
-          ))}
-
         {account.type === KEYRING_TYPE.HdKeyring && (
           <TouchableOpacity
             style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
             onPress={handlePressBackupSeedPhrase}>
             <Text style={styles.labelText}>
               {t('page.addressDetail.backup-seed-phrase')}
+            </Text>
+            <View style={styles.valueView}>
+              <RcIconRightCC
+                style={styles.rightIcon}
+                color={colors['neutral-foot']}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {(account.type === KEYRING_TYPE.SimpleKeyring ||
+          account.type === KEYRING_TYPE.HdKeyring) && (
+          <TouchableOpacity
+            style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
+            onPress={handlePressBackupPrivateKey}>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.backup-private-key')}
             </Text>
             <View style={styles.valueView}>
               <RcIconRightCC

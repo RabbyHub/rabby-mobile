@@ -30,12 +30,14 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
       padding: 12,
-      height: 100,
+      height: 140,
       position: 'relative',
       overflow: 'hidden',
+      width: '100%',
+      marginTop: 12,
     },
     main: {
-      gap: 40,
+      gap: 20,
       flex: 1,
       alignItems: 'center',
     },
@@ -44,10 +46,12 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 15,
       lineHeight: 20,
     },
+    copyButtonText: {
+      color: colors['neutral-body'],
+      fontSize: 15,
+    },
     copyButton: {
-      position: 'absolute',
-      right: 6,
-      bottom: 6,
+      height: 18,
     },
   });
 
@@ -61,10 +65,15 @@ export const BackSeedPhraseScreen = () => {
   ) as {
     data: string;
   };
+  const [visibleCopyButton, setVisibleCopyButton] = React.useState(false);
 
   const handleDone = React.useCallback(() => {
     nav.goBack();
   }, [nav]);
+
+  const onPressMask = React.useCallback(() => {
+    setVisibleCopyButton(true);
+  }, []);
 
   return (
     <FooterButtonScreenContainer
@@ -80,12 +89,24 @@ export const BackSeedPhraseScreen = () => {
 
         <View style={styles.seedPhraseContainer}>
           <MaskContainer
-            isLight
+            logoSize={40}
+            textGap={13}
+            textSize={17}
+            flexDirection="column"
             text={t('page.backupSeedPhrase.clickToShow')}
+            onPress={onPressMask}
           />
           <Text style={styles.seedPhraseContainerText}>{data}</Text>
-          <CopyAddressIcon style={styles.copyButton} address={data} />
         </View>
+
+        {visibleCopyButton && (
+          <CopyAddressIcon
+            style={styles.copyButton}
+            title={t('page.backupSeedPhrase.copySeedPhrase')}
+            address={data}
+            titleStyle={styles.copyButtonText}
+          />
+        )}
       </View>
     </FooterButtonScreenContainer>
   );

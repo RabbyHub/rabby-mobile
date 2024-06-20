@@ -99,4 +99,16 @@ export class ContactBookService {
       [key]: { alias: data.name, address: key },
     };
   }
+
+  removeAlias = (address: string) => {
+    const key = address.toLowerCase();
+    if (!this.store.aliases[key]) {
+      return;
+    }
+    if (this.store.contacts[key]) {
+      delete this.store.contacts[key];
+    } else {
+      delete this.store.aliases[key];
+    }
+  };
 }

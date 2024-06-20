@@ -311,6 +311,11 @@ export class TransactionHistoryService {
     });
   }
 
+  removeList(address: string) {
+    const normalizedAddress = address.toLowerCase();
+    delete this.store.transactions[normalizedAddress];
+  }
+
   completeTx({
     address,
     chainId,

@@ -1,5 +1,12 @@
 import React, { useCallback, useImperativeHandle } from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  StyleProp,
+  TextStyle,
+} from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { SvgProps } from 'react-native-svg';
 
@@ -19,6 +26,8 @@ type Props = {
   style?: SvgProps['style'];
   color?: string;
   onToastSucess?: (ctx: { address: string }) => void;
+  title?: string;
+  titleStyle?: StyleProp<TextStyle>;
 };
 export type CopyAddressIconType = {
   doCopy: CopyHandler;
@@ -31,6 +40,8 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
       // containerStyle,
       address,
       color,
+      title,
+      titleStyle,
     },
     ref,
   ) {
@@ -62,8 +73,20 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
     }));
 
     return (
-      <TouchableOpacity style={style} onPress={handleCopyAddress}>
+      <TouchableOpacity
+        style={StyleSheet.flatten([
+          style,
+          title
+            ? {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }
+            : {},
+        ])}
+        onPress={handleCopyAddress}>
         <RcIconCopyCC color={color || colors['neutral-foot']} style={style} />
+        {title && <Text style={titleStyle}>{title}</Text>}
       </TouchableOpacity>
     );
   },

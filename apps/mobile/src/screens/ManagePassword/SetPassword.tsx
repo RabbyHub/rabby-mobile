@@ -30,7 +30,7 @@ import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 import { useNavigationState } from '@react-navigation/native';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
-import { useLoadLockInfo } from './useManagePassword';
+import { useLoadLockInfo } from '@/hooks/useLock';
 
 const TEST_PWD = __DEV__ ? '11111111' : '';
 const INIT_FORM_DATA = __DEV__
@@ -94,7 +94,7 @@ function useSetupPasswordForm() {
         } else {
           toast.success('Setup Password Successfully');
           await fetchLockInfo();
-          if (!navState) {
+          if (!navState?.replaceScreen) {
             resetNavigationToHome(navigation);
           } else {
             navigation.replace(navState.replaceStack, {

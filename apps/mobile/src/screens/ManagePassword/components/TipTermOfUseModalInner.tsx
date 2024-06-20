@@ -38,9 +38,18 @@ export function useShowTipTermOfUseModal() {
 }
 
 const HTML_INNER_STYLE = `
-h1 { font-size: 22px; }
-h2 { font-size: 18px; }
-h3 { font-size: 16px; }
+html, body {
+  margin: 0;
+}
+ul { padding-left: 14px; }
+ul li, ol li { padding-left: 0; }
+.md-wrapper {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+h1 { font-size: 18px; }
+h2 { font-size: 14px; }
+h3 { font-size: 14px; }
 h4 { font-size: 14px; }
 h5 { font-size: 13px; }
 h6 { font-size: 12px; }
@@ -86,7 +95,7 @@ const getStyles = createGetStyles(colors => {
     },
 
     topContainer: {
-      paddingTop: 20,
+      paddingTop: 8,
       height: '100%',
       flexShrink: 1,
     },

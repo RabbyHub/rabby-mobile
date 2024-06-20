@@ -37,7 +37,7 @@ const rneuiTheme = createTheme({
 });
 
 function MainScreen() {
-  const { appUnlocked } = useInitializeAppOnTop();
+  const { isAppUnlocked } = useInitializeAppOnTop();
   const { couldRender } = useBootstrapApp();
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
@@ -55,10 +55,10 @@ function MainScreen() {
   });
 
   useEffect(() => {
-    if (appUnlocked) {
+    if (isAppUnlocked) {
       initAccounts();
     }
-  }, [appUnlocked, initAccounts]);
+  }, [isAppUnlocked, initAccounts]);
 
   return (
     <BottomSheetModalProvider>

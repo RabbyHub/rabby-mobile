@@ -33,11 +33,6 @@ import { HDKeyringService } from './hdKeyringService';
 export const appStorage = makeAppStorage();
 const keyringState = appStorage.getItem('keyringState');
 
-const rnEncryptor = new RNEncryptor();
-const encryptor: EncryptorAdapter = {
-  encrypt: rnEncryptor.encrypt,
-  decrypt: rnEncryptor.decrypt,
-};
 // TODO: add other keyring classes
 const keyringClasses = [
   WalletConnectKeyring,
@@ -55,7 +50,7 @@ export const contactService = new ContactBookService({
 });
 
 export const keyringService = new KeyringService({
-  encryptor,
+  encryptor: new RNEncryptor(),
   keyringClasses,
   onSetAddressAlias,
   onCreateKeyring,

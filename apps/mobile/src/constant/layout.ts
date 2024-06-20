@@ -154,6 +154,8 @@ function makeScreenSpecConfig() {
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
         androidStatusBarBg: 'rgba(0, 0, 0, 1)',
       },
+      GetStarted: blueLightConf,
+
       Home: bg1DefaultConf,
       Unlock: bg1DefaultConf,
 
@@ -178,6 +180,7 @@ function makeScreenSpecConfig() {
       GasTopUp: blueLightConf,
 
       SetPassword: blueLightConf,
+      Scanner: blueLightConf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
     };
 
