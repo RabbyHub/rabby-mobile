@@ -10,11 +10,16 @@ import { eventBus, EVENTS } from '@/utils/events';
 import { navigate } from '@/utils/navigation';
 import { WalletInfo } from '@/utils/walletInfo';
 import { WALLETCONNECT_SESSION_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
-import { KEYRING_CATEGORY, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  KEYRING_CATEGORY,
+  KEYRING_CLASS,
+  KEYRING_TYPE,
+} from '@rabby-wallet/keyring-utils';
 import { useAppState } from '@react-native-community/hooks';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useDuplicateAddressModal } from './DuplicateAddressModal';
 import { EmptyMobileWallet } from './EmptyMobileWallet';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -83,6 +88,8 @@ export const WalletConnectList = () => {
     };
   });
 
+  const duplicateAddressModal = useDuplicateAddressModal();
+
   const handleConnected = React.useCallback(
     (data: any) => {
       // fix: when ETH_ACCOUNTS_CHANGED will be triggered, it will also trigger this event, so we need to filter it
@@ -114,8 +121,16 @@ export const WalletConnectList = () => {
             });
           })
           .catch((err: any) => {
-            console.error(err);
-            toast.show(err.message);
+            if (err.name === 'DuplicateAccountError') {
+              duplicateAddressModal.show({
+                address: err.message,
+                brandName: data.brandName,
+                type: KEYRING_TYPE.WalletConnectKeyring,
+              });
+            } else {
+              console.error(err);
+              toast.show(err.message);
+            }
           })
           .finally(() => {
             hideToast();
@@ -126,7 +141,7 @@ export const WalletConnectList = () => {
           });
       }
     },
-    [toastImportTip],
+    [duplicateAddressModal, toastImportTip],
   );
 
   React.useEffect(() => {
