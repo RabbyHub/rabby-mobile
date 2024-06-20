@@ -9,7 +9,7 @@ import {
 } from '@/assets/icons/address';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useLoadLockInfo } from '@/screens/ManagePassword/useManagePassword';
+import { useLoadLockInfo } from '@/hooks/useLock';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useFocusEffect } from '@react-navigation/native';

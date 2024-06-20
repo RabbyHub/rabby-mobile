@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text } from 'react-native';
 
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import * as Yup from 'yup';
+import { useFormik } from 'formik';
+import { useFocusEffect } from '@react-navigation/native';
 import { BottomSheetModalConfirmContainer } from '@/components/customized/BottomSheetModalConfirmContainer';
 
 import { useWhitelist } from '@/hooks/whitelist';
@@ -14,13 +16,43 @@ import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { useTranslation } from 'react-i18next';
 import { FormInput } from '@/components/Form/Input';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
-import { useFocusEffect } from '@react-navigation/native';
+import { getFormikErrorsCount } from '@/utils/patch';
+import { apisLock } from '@/core/apis';
+import { toast } from '@/components/Toast';
+import { useLoadLockInfo } from '@/hooks/useLock';
 
 interface ConfirmAllowTransferModalProps {
   toAddr: string;
   showAddToWhitelist?: boolean;
   onFinished: (result: { isAddToWhitelist: boolean }) => void;
   onCancel(): void;
+}
+
+function useConfirmAllowForm() {
+  const { t } = useTranslation();
+  const yupSchema = useMemo(() => {
+    return Yup.object({
+      password: Yup.string().required(
+        t('page.createPassword.passwordRequired'),
+      ),
+      // .min(8, t('page.createPassword.passwordMin')),
+    });
+  }, [t]);
+
+  const initialValues = { password: '' };
+  const formik = useFormik({
+    initialValues,
+    validationSchema: yupSchema,
+    validateOnMount: false,
+    validateOnBlur: true,
+    // nothing to do, just type guard
+    onSubmit: () => void 0,
+  });
+
+  const shouldDisabledDueToForm =
+    !formik.values.password || !!getFormikErrorsCount(formik.errors);
+
+  return { formik, shouldDisabledDueToForm };
 }
 
 export function ModalConfirmAllowTransfer({
@@ -50,13 +82,42 @@ export function ModalConfirmAllowTransfer({
     disableAutoFetch: true,
   });
 
-  const handleConfirm = useCallback(async () => {
+  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
+  const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
+  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
+
+  const handleSubmit = useCallback<
+    React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
+      object
+  >(async () => {
+    // only validate password when using custom password
+    if (isUseCustomPwd) {
+      const errors = await formik.validateForm();
+
+      if (getFormikErrorsCount(errors)) return false;
+
+      try {
+        await apisLock.throwErrorIfInvalidPwd(formik.values.password);
+      } catch (error: any) {
+        formik.setFieldError('password', error?.message);
+        toast.show(error?.message);
+        return false;
+      }
+    }
+
     if (toAddr && confirmToAddToWhitelist) {
       await addWhitelist(toAddr);
     }
 
     onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
-  }, [toAddr, confirmToAddToWhitelist, addWhitelist, onFinished]);
+  }, [
+    isUseCustomPwd,
+    formik,
+    toAddr,
+    confirmToAddToWhitelist,
+    addWhitelist,
+    onFinished,
+  ]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
@@ -69,34 +130,47 @@ export function ModalConfirmAllowTransfer({
     <>
       <BottomSheetModalConfirmContainer
         ref={sheetModalRef}
-        onConfirm={handleConfirm}
+        onConfirm={handleSubmit}
         onCancel={onCancel}
-        height={279}
+        height={isUseCustomPwd ? 332 : 279}
         confirmButtonProps={{
           type: 'primary',
+          disabled: shouldDisabled,
         }}
         bottomSheetModalProps={{
           keyboardBehavior: 'interactive',
           keyboardBlurBehavior: 'restore',
         }}>
         <View style={styles.mainContainer}>
-          {/* <Text style={styles.title}>{t('page.sendToken.allowTransferModal.title')}</Text> */}
-          <Text style={styles.title}>Confirm to allow sending</Text>
+          <Text style={styles.title}>
+            {t('page.sendToken.allowTransferModal.title')}
+          </Text>
 
           <View style={styles.contentContainer}>
-            {/* now we have no password, just  */}
-            {/* <FormInput
-              as={'BottomSheetTextInput'}
-              style={styles.inputContainer}
-              inputStyle={styles.input}
-              inputProps={{
-                value: password,
-                onChangeText: setPassword,
-                placeholder: t('page.sendToken.allowTransferModal.placeholder'),
-                placeholderTextColor: colors['neutral-foot'],
-                secureTextEntry: true,
-              }}
-            /> */}
+            <View style={styles.formInputContainer}>
+              {isUseCustomPwd && (
+                <FormInput
+                  clearable
+                  errorText={formik.errors.password}
+                  fieldErrorContainerStyle={styles.fieldErrorContainerStyle}
+                  as={'BottomSheetTextInput'}
+                  style={styles.inputContainer}
+                  inputStyle={styles.input}
+                  inputProps={{
+                    value: formik.values.password,
+                    onChangeText: text => {
+                      formik.setFieldError('password', undefined);
+                      formik.setFieldValue('password', text);
+                    },
+                    placeholder: t(
+                      'page.sendToken.allowTransferModal.placeholder',
+                    ),
+                    placeholderTextColor: colors['neutral-foot'],
+                    secureTextEntry: true,
+                  }}
+                />
+              )}
+            </View>
             {showAddToWhitelist && (
               <TouchableView
                 style={styles.confirmTextBtn}
@@ -137,17 +211,32 @@ const getStyles = createGetStyles(colors => {
     },
     contentContainer: {
       width: '100%',
+      height: '100%',
+      flexShrink: 1,
+      flexDirection: 'column',
       alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: 20,
+      paddingVertical: 12,
+      // ...makeDebugBorder()
+    },
+    formInputContainer: {
+      width: '100%',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
     },
     inputContainer: {
-      borderRadius: 4,
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card2'],
 
       height: 52,
     },
     input: {
-      backgroundColor: colors['neutral-card2'],
       fontSize: 14,
+    },
+    fieldErrorContainerStyle: {
+      marginTop: 8,
     },
     title: {
       color: colors['neutral-title1'],
@@ -157,7 +246,7 @@ const getStyles = createGetStyles(colors => {
       fontWeight: '500',
     },
     confirmTextBtn: {
-      marginTop: 24,
+      // marginTop: 24,
       flexDirection: 'row',
       position: 'relative',
       alignItems: 'center',

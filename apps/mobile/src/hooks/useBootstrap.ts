@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { apisLock } from '@/core/apis';
+import { atom, useAtom } from 'jotai';
 import { keyringService } from '@/core/services';
 import { initApis } from '@/core/apis/init';
 import { initServices } from '@/core/services/init';
@@ -12,20 +11,15 @@ import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { useGlobal } from './global';
-import { useAppUnlocked, useTryUnlockApp } from './useLock';
+import { useAppUnlocked, useTryUnlockAppOnTop } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
-import { useLoadLockInfo } from '@/screens/ManagePassword/useManagePassword';
+import { useLoadLockInfo } from '@/hooks/useLock';
 
 const bootstrapAtom = atom({
   couldRender: false,
-  useBuiltinPwd: false,
 });
-
-export function useIfUseBuiltinPwd() {
-  return useAtomValue(bootstrapAtom).useBuiltinPwd;
-}
 
 const DEBUG_IN_PAGE_SCRIPTS = {
   LOAD_BEFORE: __DEV__
@@ -151,6 +145,14 @@ export function useJavaScriptBeforeContentLoaded(options?: {
   };
 }
 
+const splashScreenVisibleRef = { current: true };
+const hideSplashScreen = () => {
+  if (!splashScreenVisibleRef.current) return;
+
+  SplashScreen.hide();
+  splashScreenVisibleRef.current = false;
+};
+
 /**
  * @description only call this hook on the top level component
  */
@@ -163,29 +165,25 @@ export function useBootstrapApp() {
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
     if (appNavigationReady) {
-      SplashScreen.hide();
+      hideSplashScreen();
     }
   }, [appNavigationReady]);
 
-  const { tryUnlock } = useTryUnlockApp();
+  const { getTriedUnlock } = useTryUnlockAppOnTop();
 
   React.useEffect(() => {
-    tryUnlock()
+    getTriedUnlock()
       .then(async result => {
-        setBootstrap(prev => ({
-          ...prev,
-          useBuiltinPwd: result.useBuiltInPwd,
-          couldRender: true,
-        }));
+        setBootstrap({ couldRender: true });
       })
       .catch(err => {
         console.error('useBootstrapApp::', err);
-        setBootstrap(prev => ({
-          ...prev,
-          couldRender: true,
-        }));
+        setBootstrap({ couldRender: true });
+      })
+      .finally(() => {
+        setTimeout(hideSplashScreen, 1000);
       });
-  }, [tryUnlock, setBootstrap]);
+  }, [getTriedUnlock, setBootstrap]);
 
   return {
     couldRender,

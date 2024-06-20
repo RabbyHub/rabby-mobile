@@ -19,6 +19,7 @@ interface Props {
   textSize?: number;
   flexDirection?: 'row' | 'column';
   textGap?: number;
+  onPress?: () => void;
 }
 
 export const MaskContainer: React.FC<Props> = ({
@@ -29,6 +30,7 @@ export const MaskContainer: React.FC<Props> = ({
   logoSize = 20,
   flexDirection = 'row',
   textGap = 4,
+  onPress,
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -36,7 +38,8 @@ export const MaskContainer: React.FC<Props> = ({
 
   const handlePress = React.useCallback(() => {
     setVisible(false);
-  }, []);
+    onPress?.();
+  }, [onPress]);
 
   if (!visible) {
     return null;

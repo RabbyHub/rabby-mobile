@@ -24,7 +24,8 @@ import ModalConfirmDiscard from './components/ModalConfirmDiscard';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 import { ModalLayouts } from '@/constant/layout';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { keyringService } from '@/core/services';
+import { apisLock } from '@/core/apis';
+import { useLoadLockInfo } from '@/hooks/useLock';
 
 export interface SelectAddressProps {
   heightPercent?: `${number}%`;
@@ -84,6 +85,8 @@ export function SelectAddressSheetModal({
     });
   }, [whitelistEnabled, accountsList, whitelist]);
 
+  const { isUseCustomPwd } = useLoadLockInfo();
+
   const onPressSaveButton = useCallback(async () => {
     if (isEditing) {
       AuthenticationModal.show({
@@ -91,16 +94,17 @@ export function SelectAddressSheetModal({
         cancelText: t('global.Cancel'),
         title: t('component.Contact.ListModal.authModal.title'),
         validationHandler: async (password: string) =>
-          keyringService.verifyPassword(password),
+          apisLock.throwErrorIfInvalidPwd(password),
         onFinished() {
           setWhitelist(localWhiteList);
           setEditing(!isEditing);
         },
+        needPassword: isUseCustomPwd,
       });
     } else {
       setEditing(!isEditing);
     }
-  }, [t, isEditing, setEditing, setWhitelist, localWhiteList]);
+  }, [t, isEditing, setEditing, setWhitelist, localWhiteList, isUseCustomPwd]);
 
   const onModalDismiss = useCallback(() => {
     if (isEditing) {

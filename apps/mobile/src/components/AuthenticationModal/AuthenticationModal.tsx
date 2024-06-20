@@ -12,6 +12,7 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BottomSheetInput } from '../Input';
 import { CheckItem } from './CheckItem';
+import { apisLock } from '@/core/apis';
 
 export interface AuthenticationModalProps {
   validationHandler?(password: string): Promise<void>;
@@ -98,7 +99,6 @@ export const AuthenticationModal = ({
               returnKeyLabel={t('global.Confirm')}
               value={password}
               onChangeText={setPassword}
-              onSubmitEditing={handleSubmit}
               placeholderTextColor={colors['neutral-foot']}
               customStyle={StyleSheet.flatten([
                 styles.input,
@@ -135,12 +135,23 @@ export const AuthenticationModal = ({
   );
 };
 
-AuthenticationModal.show = (props: AuthenticationModalProps) => {
+/**
+ * @description It's recommended to set `needPassword` property explicitly,
+ * whatever it's true or false. If not, it will fetch the lock info from the device.
+ *
+ */
+AuthenticationModal.show = async (props: AuthenticationModalProps) => {
+  let needPassword = props.needPassword;
+  if (typeof needPassword !== 'boolean') {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    needPassword = lockInfo.isUseCustomPwd;
+  }
   const id = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
     },
+    needPassword,
     ...props,
     onCancel() {
       props.onCancel?.();
@@ -165,6 +176,7 @@ const getStyle = createGetStyles(colors => {
       fontSize: 14,
       lineHeight: 20,
       marginBottom: 16,
+      textAlign: 'center',
     },
     buttonGroup: {
       paddingHorizontal: 20,

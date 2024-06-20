@@ -23,7 +23,7 @@ import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
 import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '../HDSetting/SettingHDKering';
+import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;

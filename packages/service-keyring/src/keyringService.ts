@@ -916,6 +916,7 @@ export class KeyringService extends RNEventEmitter {
           address: account.address,
           brandName: account.brandName,
           type: accountGroup.type,
+          byImport: accountGroup.byImport,
         })),
       );
     });
@@ -932,6 +933,7 @@ export class KeyringService extends RNEventEmitter {
           address: account.address,
           brandName: account.brandName,
           type: accountGroup.type,
+          byImport: accountGroup.byImport,
         })),
       );
     });

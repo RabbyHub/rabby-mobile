@@ -1,7 +1,7 @@
 import { apisLock } from '@/core/apis';
-import { PasswordStatus, RabbyMobileLockInfo } from '@/core/apis/lock';
+import { useLoadLockInfo } from '@/hooks/useLock';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export type ManagePasswordViewType =
   | 'unknown'
@@ -52,48 +52,6 @@ export function useManagePasswordUI() {
 
     isShowManagePassword,
     setIsShowManagePassword,
-  };
-}
-
-const lockInfoAtom = atom<RabbyMobileLockInfo>({
-  pwdStatus: PasswordStatus.Unknown,
-});
-
-export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
-  const [lockInfo, setLockInfo] = useAtom(lockInfoAtom);
-  const isLoadingRef = useRef(false);
-
-  const { autoFetch } = options || {};
-
-  const fetchLockInfo = useCallback(async () => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-
-    try {
-      const response = await apisLock.getRabbyLockInfo();
-
-      setLockInfo({
-        pwdStatus: response.pwdStatus,
-      });
-
-      return response;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isLoadingRef.current = false;
-    }
-  }, [setLockInfo]);
-
-  useEffect(() => {
-    if (autoFetch) {
-      fetchLockInfo();
-    }
-  }, [autoFetch, fetchLockInfo]);
-
-  return {
-    isLoading: isLoadingRef.current,
-    lockInfo,
-    fetchLockInfo,
   };
 }
 

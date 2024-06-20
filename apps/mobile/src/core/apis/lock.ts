@@ -8,10 +8,6 @@ export const enum PasswordStatus {
   Custom = 11,
 }
 
-export type RabbyMobileLockInfo = {
-  pwdStatus: PasswordStatus;
-};
-
 function getInitError(password: string) {
   if (password === RABBY_MOBILE_KR_PWD) {
     return {
@@ -36,8 +32,17 @@ async function safeVerifyPassword(password: string) {
 }
 
 const ERRORS = {
+  INCORRECT_PASSWORD: 'Incorrect password',
   CURRENT_IS_INCORRET: 'Current password is incorrect',
 };
+
+export async function throwErrorIfInvalidPwd(password: string) {
+  try {
+    await keyringService.verifyPassword(password);
+  } catch (error) {
+    throw new Error(ERRORS.INCORRECT_PASSWORD);
+  }
+}
 
 export async function setupWalletPassword(newPassword: string) {
   const result = getInitError(newPassword);
@@ -101,8 +106,10 @@ export async function clearCustomPassword(currentPassword: string) {
 }
 
 export async function getRabbyLockInfo() {
-  const info: RabbyMobileLockInfo = {
+  const info = {
     pwdStatus: PasswordStatus.Unknown,
+    isUseBuiltInPwd: false,
+    isUseCustomPwd: false,
   };
 
   try {
@@ -114,30 +121,29 @@ export async function getRabbyLockInfo() {
     info.pwdStatus = PasswordStatus.Unknown;
   }
 
+  info.isUseBuiltInPwd = info.pwdStatus === PasswordStatus.UseBuiltIn;
+  info.isUseCustomPwd = info.pwdStatus === PasswordStatus.Custom;
+
   return info;
 }
 
 export async function tryAutoUnlockRabbyMobile() {
-  const isBooted = keyringService.isBooted();
   // // leave here for debugging
-  console.debug(
-    'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
-    RABBY_MOBILE_KR_PWD,
-  );
-
-  if (!isBooted) {
-    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  if (__DEV__) {
+    console.debug(
+      'tryAutoUnlockRabbyMobile:: RABBY_MOBILE_KR_PWD',
+      RABBY_MOBILE_KR_PWD,
+    );
   }
 
+  if (!keyringService.isBooted()) {
+    await keyringService.boot(RABBY_MOBILE_KR_PWD);
+  }
   const lockInfo = await getRabbyLockInfo();
 
-  const useBuiltInPwd = lockInfo.pwdStatus === PasswordStatus.UseBuiltIn;
   try {
-    if (useBuiltInPwd) {
-      const isUnlocked = keyringService.isUnlocked();
-      if (!isUnlocked) {
-        await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
-      }
+    if (lockInfo.isUseBuiltInPwd && !keyringService.isUnlocked()) {
+      await keyringService.submitPassword(RABBY_MOBILE_KR_PWD);
     }
   } catch (e) {
     console.error('[tryAutoUnlockRabbyMobile]');
@@ -145,7 +151,7 @@ export async function tryAutoUnlockRabbyMobile() {
   }
 
   return {
-    useBuiltInPwd,
+    lockInfo,
   };
 }
 
