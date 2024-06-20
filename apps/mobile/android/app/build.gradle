@@ -77,6 +77,11 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.debank.rabbymobile"
+    // productFlavors {
+    //   create("debug") {
+    //     applicationIdSuffix ".debug"
+    //   }
+    // }
     defaultConfig {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -116,6 +121,8 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            applicationIdSuffix ".debug"
+            // debuggable true
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
