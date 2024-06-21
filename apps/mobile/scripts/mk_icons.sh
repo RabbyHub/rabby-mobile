@@ -61,11 +61,23 @@ mk_android_icons() {
   $project_dir/node_modules/.bin/s2v \
     -t "#FFF" \
     -i $script_dir/bundles/splash-logo.svg \
-    -o $project_dir/android/app/src/main/res/drawable/ic_brand_logo.xml
+    -o $project_dir/android/app/src/main/res/drawable/ic_launch_screen.xml
 
-  local android_icons_dir=$project_dir/android/app/src/main/res;
+  # replace #FF000000 with #FFFFFF
+  sed -i '' 's/#FF000000/#FFFFFF/g' $project_dir/android/app/src/main/res/drawable/ic_launch_screen.xml
+
+  # launcher icon
+  $project_dir/node_modules/.bin/s2v \
+    -t "#FFF" \
+    -i $script_dir/bundles/ic_launcher.svg \
+    -o $script_dir/bundles/ic_launcher_logo_core.xml
+
+  # replace #FF000000 with #FFFFFF
+  sed -i '' 's/#FF000000/#FFFFFF/g' $script_dir/bundles/ic_launcher_logo_core.xml
 
   echo "[mk_android_icons] generate app's logo by Image Assets in Android Studio."
+
+  # local android_icons_dir=$project_dir/android/app/src/main/res;
 
   # if [ "$os_name" == "Darwin" ]; then
   #   # app logos

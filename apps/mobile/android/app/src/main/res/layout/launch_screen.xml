@@ -13,7 +13,7 @@
         android:layout_centerInParent="true"
         android:layout_marginTop="246sp"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_brand_logo"
+        android:src="@drawable/ic_launch_screen"
         android:translationX="-1sp"
         android:translationY="-40sp"
         tools:ignore="ImageContrastCheck" />
