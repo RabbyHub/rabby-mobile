@@ -104,9 +104,7 @@ export function SearchDappsScreen(): JSX.Element {
     });
   }, [dapps, data]);
 
-  const { openUrlAsDapp } = useOpenDappView();
-  const { setOpenedUrl } = useOpenUrlView();
-  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
+  const { openUrlAsDapp, showDappWebViewModal } = useOpenDappView();
   const isDomain = isPossibleDomain(debouncedSearchValue);
   const [isFocus, setIsFocus] = useState(false);
 
@@ -170,9 +168,9 @@ export function SearchDappsScreen(): JSX.Element {
             <LinkCard
               url={debouncedSearchValue}
               onPress={generalUrl => {
+                showDappWebViewModal();
                 // TODO: should we validate the url?
                 openUrlAsDapp(generalUrl);
-                toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
                 Keyboard.dismiss();
               }}
             />
@@ -185,8 +183,8 @@ export function SearchDappsScreen(): JSX.Element {
               empty={<SearchEmpty isDomain={isDomain} />}
               total={data?.page?.total}
               onPress={dapp => {
+                showDappWebViewModal();
                 openUrlAsDapp(dapp.origin);
-                toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
                 Keyboard.dismiss();
               }}
               onFavoritePress={dapp => {

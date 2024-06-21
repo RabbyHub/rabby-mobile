@@ -56,6 +56,7 @@ export function useSheetWebViewTester() {
   const openMetaMaskTestDapp = React.useCallback(() => {
     makeSureTestDapp();
 
+    showDappWebViewModal();
     openUrlAsDapp(
       {
         origin: DAPP_METAMASK_TEST_DAPP.origin,
@@ -65,7 +66,6 @@ export function useSheetWebViewTester() {
       },
       { isActiveDapp: true },
     );
-    showDappWebViewModal();
   }, [makeSureTestDapp, openUrlAsDapp, showDappWebViewModal]);
 
   return {
