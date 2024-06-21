@@ -56,6 +56,9 @@ const getStyles = (colors: AppColorsVariants) =>
     tabContainerView: {
       padding: 15,
     },
+    tabContentText: {
+      color: colors['neutral-title1'],
+    },
   });
 
 export const ViewRawDetail = ({
@@ -84,17 +87,17 @@ export const ViewRawDetail = ({
         onChange={setIndex}>
         {raw && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{stringify(raw)}</Text>
+            <Text style={styles.tabContentText}>{stringify(raw)}</Text>
           </TabView.Item>
         )}
         {abi && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{abi}</Text>
+            <Text style={styles.tabContentText}>{abi}</Text>
           </TabView.Item>
         )}
         {raw?.data && raw?.data !== '0x' && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{raw?.data}</Text>
+            <Text style={styles.tabContentText}>{raw?.data}</Text>
           </TabView.Item>
         )}
       </TabView>
