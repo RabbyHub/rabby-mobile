@@ -47,7 +47,7 @@ type MemStoreState = {
 type OnSetAddressAlias = (
   keyring: KeyringInstance | KeyringIntf,
   account: AccountItemWithBrandQueryResult,
-  contactService: any,
+  contactService?: ContactBookService,
 ) => Promise<void>;
 
 type OnCreateKeyring = (
@@ -56,9 +56,9 @@ type OnCreateKeyring = (
 
 export type KeyringServiceOptions = {
   encryptor?: EncryptorAdapter;
-  keyringClasses: KeyringClassType[];
-  onSetAddressAlias: OnSetAddressAlias;
-  onCreateKeyring: OnCreateKeyring;
+  keyringClasses?: KeyringClassType[];
+  onSetAddressAlias?: OnSetAddressAlias;
+  onCreateKeyring?: OnCreateKeyring;
 };
 
 export class KeyringService extends RNEventEmitter {
@@ -67,13 +67,7 @@ export class KeyringService extends RNEventEmitter {
   //
   keyrings: KeyringInstance[];
 
-  keyringClasses: KeyringClassType[];
-
-  onSetAddressAlias!: OnSetAddressAlias;
-
-  onCreateKeyring!: OnCreateKeyring;
-
-  contactService: ContactBookService;
+  keyringClasses: KeyringClassType[] = [];
 
   get keyringTypes() {
     return this.keyringClasses;
@@ -90,22 +84,26 @@ export class KeyringService extends RNEventEmitter {
   password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
+  private readonly contactService?: ContactBookService;
+  private onSetAddressAlias?: OnSetAddressAlias;
+  private onCreateKeyring?: OnCreateKeyring;
 
   constructor(
-    options: KeyringServiceOptions & {
-      contactService: ContactBookService;
+    options?: KeyringServiceOptions & {
+      contactService?: ContactBookService;
     },
   ) {
     super();
-
-    this.contactService = options.contactService;
 
     const {
       encryptor: inputEncryptor = nodeEncryptor,
       keyringClasses = keyringSdks,
       onSetAddressAlias,
       onCreateKeyring,
+      contactService,
     } = options || {};
+
+    this.contactService = contactService;
 
     this.encryptor = inputEncryptor;
     this.keyringClasses = Object.values(keyringClasses);
@@ -186,14 +184,14 @@ export class KeyringService extends RNEventEmitter {
         keyring = _keyring;
         const [address] = await keyring.getAccounts();
         const keyrings = await this.getAllTypedAccounts();
-        if (!this.contactService.getContactByAddress(address)) {
+        if (!this.contactService?.getContactByAddress(address)) {
           const alias = generateAliasName({
             keyringType: KEYRING_TYPE.SimpleKeyring,
             keyringCount:
               keyrings.filter(k => k.type === KEYRING_TYPE.SimpleKeyring)
                 .length - 1,
           });
-          this.contactService.updateAlias({
+          this.contactService?.updateAlias({
             address,
             name: alias,
           });
@@ -404,7 +402,7 @@ export class KeyringService extends RNEventEmitter {
    * @param options.onAddedAddress
    */
   addNewAccount(
-    selectedKeyring: KeyringInstance | KeyringIntf,
+    selectedKeyring: KeyringInstance | KeyringIntf
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -436,7 +434,7 @@ export class KeyringService extends RNEventEmitter {
         return Promise.all(
           allAccounts.map(async account => {
             this.emit('newAccount', account.address);
-            return this.onSetAddressAlias(
+            return this.onSetAddressAlias?.(
               selectedKeyring,
               account,
               this.contactService,
@@ -727,7 +725,7 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = this.onCreateKeyring(Keyring);
+    const keyring = typeof this.onCreateKeyring === 'function' ? this.onCreateKeyring(Keyring) : new Keyring({});
     await keyring.deserialize(data);
 
     // getAccounts also validates the accounts for some keyrings

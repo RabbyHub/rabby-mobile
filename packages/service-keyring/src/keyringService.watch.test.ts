@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { KeyringService } from '../src/keyringService';
 import mockEncryptor from '../test/mock-encryptor';
+import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
 
 const password = 'password123';
 
@@ -69,13 +70,13 @@ describe('keyringService support eth-keyring-watch', () => {
       expect(spy.calledOnce).toBe(false);
       expect(spyCallback.calledOnce).toBe(false);
 
-      let keyring = await keyringService.addNewKeyring('Watch Address');
+      let keyring = await keyringService.addNewKeyring('Watch Address' as KeyringTypeName);
 
       keyring.setAccountToAdd(TEST_ADDR);
 
-      await keyringService.addNewAccount(keyring, {
-        onAddedAddress: spyCallback,
-      });
+      keyringService.addListener('newAccount', spyCallback);
+
+      await keyringService.addNewAccount(keyring);
       expect(spy.calledOnce).toBe(true);
       expect(spyCallback.calledOnce).toBe(true);
     });
