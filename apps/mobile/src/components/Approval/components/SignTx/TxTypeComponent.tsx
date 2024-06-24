@@ -17,6 +17,8 @@ export const TxTypeComponent = ({
   isSpeedUp,
   engineResults,
   txDetail,
+  origin,
+  originLogo,
 }: {
   actionRequireData: ActionRequireData;
   actionData: ParsedActionData;
@@ -27,6 +29,8 @@ export const TxTypeComponent = ({
   onChange(data: Record<string, any>): void;
   isSpeedUp: boolean;
   engineResults: Result[];
+  origin?: string;
+  originLogo?: string;
 }) => {
   if (!isReady) {
     return <Loading />;
@@ -43,6 +47,8 @@ export const TxTypeComponent = ({
         raw={raw}
         onChange={onChange}
         isSpeedUp={isSpeedUp}
+        origin={origin}
+        originLogo={originLogo}
       />
     );
   }

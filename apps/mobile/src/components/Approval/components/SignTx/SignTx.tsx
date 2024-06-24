@@ -1285,6 +1285,8 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 onChange={handleTxChange}
                 isSpeedUp={isSpeedUp}
                 engineResults={engineResults}
+                origin={origin}
+                originLogo={params.session.icon}
               />
             )}
             {isGnosisAccount ? (

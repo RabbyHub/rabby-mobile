@@ -49,6 +49,9 @@ import { CommonAction } from '../CommonAction';
 import { Tip } from '@/components/Tip';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
+import { Card } from './components/Card';
+import { OriginInfo } from '../OriginInfo';
+import { Divide } from './components/Divide';
 
 export const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -69,13 +72,13 @@ export const getStyle = (colors: AppColorsVariants) =>
       flex: 1,
     },
     leftText: {
-      fontSize: 18,
-      lineHeight: 21,
+      fontSize: 16,
+      lineHeight: 18,
       color: colors['neutral-title-1'],
     },
     speedUpIcon: {
-      width: 10,
-      marginRight: 6,
+      width: 16,
+      marginRight: 2,
     },
     rightText: {
       fontSize: 14,
@@ -83,28 +86,14 @@ export const getStyle = (colors: AppColorsVariants) =>
       color: '#999999',
     },
     actionWrapper: {
-      backgroundColor: colors['neutral-bg-1'],
-      borderRadius: 8,
+      gap: 12,
     },
     actionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      backgroundColor: colors['blue-default'],
-      padding: 13,
       alignItems: 'center',
-      borderTopLeftRadius: 8,
-      borderTopRightRadius: 8,
-    },
-    left: {
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 19,
-      color: '#fff',
-    },
-    right: {
-      fontSize: 14,
-      lineHeight: 16,
-      position: 'relative',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     decodeTooltip: {
       maxWidth: 358,
@@ -135,13 +124,14 @@ export const getStyle = (colors: AppColorsVariants) =>
       color: '#999999',
     },
     viewRawText: {
-      fontSize: 12,
+      fontSize: 13,
       lineHeight: 16,
       color: colors['neutral-foot'],
     },
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      float: 'right',
     },
     tipContent: {
       maxWidth: 358,
@@ -160,8 +150,11 @@ export const getStyle = (colors: AppColorsVariants) =>
       position: 'relative',
     },
     icon: {
-      width: 24,
-      height: 24,
+      width: 14,
+      height: 14,
+      marginRight: 2,
+      marginTop: 2,
+      color: colors['neutral-foot'],
     },
     signTitleLeft: {
       flexDirection: 'row',
@@ -178,6 +171,8 @@ const Actions = ({
   raw,
   onChange,
   isSpeedUp,
+  origin,
+  originLogo,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -187,6 +182,8 @@ const Actions = ({
   raw: Record<string, string | number>;
   onChange(tx: Record<string, any>): void;
   isSpeedUp: boolean;
+  origin?: string;
+  originLogo?: string;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -205,36 +202,38 @@ const Actions = ({
   const isUnknown = data?.contractCall;
 
   return (
-    <>
-      <View style={styles.signTitle}>
-        <View style={styles.signTitleLeft}>
-          {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
-          <Text style={styles.signTitleText}>
-            {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.signTitleRight}
-          onPress={handleViewRawClick}>
-          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
-          <RcIconArrowRight />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.actionWrapper}>
+    <View style={styles.actionWrapper}>
+      <Card>
+        <OriginInfo
+          chain={chain}
+          origin={origin}
+          originLogo={originLogo}
+          engineResults={engineResults}
+        />
+        <Divide />
+        <BalanceChange
+          version={txDetail.pre_exec_version}
+          data={txDetail.balance_change}
+        />
+      </Card>
+
+      <Card>
         <View
           style={{
             ...styles.actionHeader,
             ...(isUnknown ? styles.isUnknown : {}),
           }}>
           <View>
-            <Text style={styles.left}>{actionName}</Text>
-          </View>
-          <View style={styles.actionHeaderRight}>
-            <Tip
-              placement="bottom"
-              isLight
-              content={
-                isUnknown ? (
+            {isSpeedUp && (
+              <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
+                <IconSpeedUp style={styles.speedUpIcon} />
+              </Tip>
+            )}
+            <Text style={styles.leftText}>{actionName}</Text>
+            {isUnknown && (
+              <Tip
+                placement="bottom"
+                content={
                   <NoActionAlert
                     data={{
                       chainId: chain.serverId,
@@ -245,21 +244,53 @@ const Actions = ({
                       selector: raw.data.toString(),
                     }}
                   />
-                ) : (
-                  <View style={styles.tipContent}>
-                    <RcIconCheck style={styles.tipContentIcon} />
-                    <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </View>
-                )
-              }>
-              {isUnknown ? (
+                }>
                 <IconQuestionMark style={styles.icon} />
-              ) : (
-                <IconRabbyDecoded style={styles.icon} />
-              )}
-            </Tip>
+              </Tip>
+            )}
           </View>
+          <TouchableOpacity
+            style={styles.signTitleRight}
+            onPress={handleViewRawClick}>
+            <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
+            <RcIconArrowRight />
+          </TouchableOpacity>
+
+          {/* <View>
+              <Text style={styles.left}>{actionName}</Text>
+            </View>
+            <View style={styles.actionHeaderRight}>
+              <Tip
+                placement="bottom"
+                isLight
+                content={
+                  isUnknown ? (
+                    <NoActionAlert
+                      data={{
+                        chainId: chain.serverId,
+                        contractAddress:
+                          requireData && 'id' in requireData
+                            ? requireData.id
+                            : txDetail.type_call?.contract,
+                        selector: raw.data.toString(),
+                      }}
+                    />
+                  ) : (
+                    <View style={styles.tipContent}>
+                      <RcIconCheck style={styles.tipContentIcon} />
+                      <Text>{t('page.signTx.decodedTooltip')}</Text>
+                    </View>
+                  )
+                }>
+                {isUnknown ? (
+                  <IconQuestionMark style={styles.icon} />
+                ) : (
+                  <IconRabbyDecoded style={styles.icon} />
+                )}
+              </Tip>
+            </View> */}
         </View>
+
         <View style={styles.container}>
           {data.swap && (
             <Swap
@@ -419,12 +450,8 @@ const Actions = ({
             />
           )}
         </View>
-      </View>
-      <BalanceChange
-        version={txDetail.pre_exec_version}
-        data={txDetail.balance_change}
-      />
-    </>
+      </Card>
+    </View>
   );
 };
 

@@ -1,0 +1,109 @@
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeStyles } from '@/hooks/theme';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Divide } from './Divide';
+import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+
+const getStyle = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      borderColor: colors['neutral-card-1'],
+      borderWidth: 1,
+      borderStyle: 'solid',
+    },
+    cardTitle: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: 12,
+      alignItems: 'center',
+    },
+    headline: {
+      color: colors['neutral-title-1'],
+      fontSize: 13,
+      fontWeight: '500',
+      lineHeight: 16,
+    },
+    icon: {
+      marginTop: 1,
+    },
+    action: {
+      alignItems: 'center',
+    },
+    actionText: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+  });
+
+interface CardProps {
+  headline?: string;
+  actionText?: string;
+  onAction?: () => void;
+  hasDivider?: boolean;
+  children: React.ReactNode;
+  onPressCard?: () => void;
+}
+
+const CardInner: React.FC<CardProps> = ({
+  headline,
+  actionText,
+  onAction,
+  hasDivider,
+  children,
+  onPressCard,
+}) => {
+  const { styles } = useThemeStyles(getStyle);
+
+  return (
+    <View style={styles.card}>
+      {headline && (
+        <>
+          <CardTitle
+            headline={headline}
+            actionText={actionText}
+            onAction={onAction}
+            hasAction={!!onAction || !!onPressCard || !!actionText}
+          />
+          {hasDivider && <Divide />}
+        </>
+      )}
+      {children}
+    </View>
+  );
+};
+
+export const Card: React.FC<CardProps> = ({ onPressCard, ...props }) => {
+  if (onPressCard) {
+    return (
+      <TouchableOpacity onPress={onPressCard}>
+        <CardInner {...props} />
+      </TouchableOpacity>
+    );
+  }
+
+  return <CardInner {...props} />;
+};
+
+export const CardTitle: React.FC<
+  Pick<CardProps, 'headline' | 'actionText' | 'onAction'> & {
+    hasAction: boolean;
+  }
+> = ({ headline, actionText, onAction, hasAction }) => {
+  const { styles } = useThemeStyles(getStyle);
+
+  return (
+    <TouchableOpacity style={styles.cardTitle} onPress={onAction}>
+      <Text style={styles.headline}>{headline}</Text>
+      {hasAction && (
+        <View style={styles.action}>
+          <Text style={styles.actionText}>{actionText}</Text>
+          <RcIconArrowRight style={styles.icon} />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
