@@ -211,9 +211,7 @@ export function OpenedDappWebViewStub() {
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${
-            dappInfo.maybeDappInfo?.chainId || 'ETH'
-          }-${idx}`;
+          const key = `${dappInfo.origin}-${idx}`;
 
           return (
             <DappWebViewControl
