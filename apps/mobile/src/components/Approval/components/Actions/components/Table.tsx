@@ -25,7 +25,6 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     notTitle: {
       textAlign: 'right',
-      textOverflow: 'ellipsis',
       justifyContent: 'flex-end',
     },
     title: {

@@ -43,12 +43,10 @@ import {
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
-import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
 import { Tip } from '@/components/Tip';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
-import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
 import { Card } from './components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from './components/Divide';
@@ -75,6 +73,7 @@ export const getStyle = (colors: AppColorsVariants) =>
       fontSize: 16,
       lineHeight: 18,
       color: colors['neutral-title-1'],
+      fontWeight: '500',
     },
     speedUpIcon: {
       width: 16,
@@ -255,42 +254,8 @@ const Actions = ({
             <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
             <RcIconArrowRight />
           </TouchableOpacity>
-
-          {/* <View>
-              <Text style={styles.left}>{actionName}</Text>
-            </View>
-            <View style={styles.actionHeaderRight}>
-              <Tip
-                placement="bottom"
-                isLight
-                content={
-                  isUnknown ? (
-                    <NoActionAlert
-                      data={{
-                        chainId: chain.serverId,
-                        contractAddress:
-                          requireData && 'id' in requireData
-                            ? requireData.id
-                            : txDetail.type_call?.contract,
-                        selector: raw.data.toString(),
-                      }}
-                    />
-                  ) : (
-                    <View style={styles.tipContent}>
-                      <RcIconCheck style={styles.tipContentIcon} />
-                      <Text>{t('page.signTx.decodedTooltip')}</Text>
-                    </View>
-                  )
-                }>
-                {isUnknown ? (
-                  <IconQuestionMark style={styles.icon} />
-                ) : (
-                  <IconRabbyDecoded style={styles.icon} />
-                )}
-              </Tip>
-            </View> */}
         </View>
-
+        <Divide />
         <View style={styles.container}>
           {data.swap && (
             <Swap

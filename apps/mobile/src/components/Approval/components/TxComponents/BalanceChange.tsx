@@ -19,12 +19,13 @@ import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
-import NoBalanceSVG from '@/assets/icons/sign/no-balance.svg';
+import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
+import NFTDefaultSVG from '@/assets/nft-default.svg';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     tokenBalanceChange: {
-      marginTop: 14,
+      marginTop: 16,
       paddingHorizontal: 16,
     },
     titleText: {
@@ -39,10 +40,10 @@ const getStyle = (colors: AppColorsVariants) =>
       fontSize: 14,
     },
     iconAlert: {
-      width: 15,
-      marginRight: 6,
-      color: colors['neutral-body'],
-      top: 2,
+      width: 16,
+      marginTop: 2,
+      marginRight: 4,
+      color: colors['orange-default'],
       position: 'relative',
     },
     headline: {
@@ -53,6 +54,12 @@ const getStyle = (colors: AppColorsVariants) =>
       display: 'flex',
       alignItems: 'center',
       color: colors['neutral-title-1'],
+    },
+    nftIcon: {
+      marginRight: 8,
+      width: 24,
+      height: 24,
+      borderRadius: 2,
     },
   });
 
@@ -66,53 +73,47 @@ const NFTBalanceChange = ({
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   const colors = useThemeColors();
-  const {
-    hasReceives,
-    receiveNftList,
-    hasTransferedOut,
-    sendNftList,
-    hasSendToken,
-    hasReceiveToken,
-  } = React.useMemo(() => {
-    const sendNftList = data.send_nft_list.slice(0);
-    const countSendNft = sendNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0,
-    );
-    const hasTransferedOut = sendNftList.length > 0;
+  const styles = getStyle(colors);
+  const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
+    React.useMemo(() => {
+      const sendNftList = data.send_nft_list.slice(0);
+      const countSendNft = sendNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasTransferedOut = sendNftList.length > 0;
 
-    const receiveNftList = data.receive_nft_list.slice(0);
-    const countReceives = receiveNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0,
-    );
-    const hasReceives = receiveNftList.length > 0;
-    const hasReceiveToken = data.receive_token_list.length > 0;
-    const hasSendToken = data.send_token_list.length > 0;
+      const receiveNftList = data.receive_nft_list.slice(0);
+      const countReceives = receiveNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasReceives = receiveNftList.length > 0;
 
-    return {
-      hasReceives,
-      countReceives,
-      receiveNftList,
-      hasTransferedOut,
-      countSendNft,
-      sendNftList,
-      hasReceiveToken,
-      hasSendToken,
-    };
-  }, [data]);
+      return {
+        hasReceives,
+        countReceives,
+        receiveNftList,
+        hasTransferedOut,
+        countSendNft,
+        sendNftList,
+      };
+    }, [data]);
 
   if (type === 'receive' && hasReceives) {
     return (
       <Col>
-        <Row isTitle>
-          <Text style={commonStyle.rowTitleText}>{t('page.signTx.nftIn')}</Text>
-        </Row>
-        <View className="flex-1 overflow-hidden">
-          {receiveNftList.map((item, index) => (
-            <Row key={`${item.id}-${item.inner_id}`}>
+        <View
+          style={StyleSheet.flatten({
+            flex: 1,
+            overflow: 'hidden',
+            gap: 10,
+          })}>
+          {receiveNftList.map(item => (
+            <Row isTitle key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
                 <View style={commonStyle.rowFlexCenterItem}>
+                  <NFTDefaultSVG style={styles.nftIcon} />
                   <Text
                     style={{
                       ...commonStyle.primaryText,
@@ -120,7 +121,11 @@ const NFTBalanceChange = ({
                     }}>
                     + {item.amount}{' '}
                   </Text>
-                  <Text style={commonStyle.primaryText}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['green-default'],
+                    }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
@@ -140,19 +145,18 @@ const NFTBalanceChange = ({
   }
   if (type === 'send' && hasTransferedOut) {
     return (
-      <Col last first={!hasReceives && !hasSendToken && !hasReceiveToken}>
-        <Row isTitle>
-          <Text style={commonStyle.rowTitleText}>
-            {t('page.signTx.balanceChange.nftOut')}
-          </Text>
-        </Row>
-        <View style={{ flex: 1 }}>
-          {sendNftList.map((item, index) => (
-            <Row
-              hasBottomBorder={index < sendNftList.length - 1}
-              key={`${item.id}-${item.inner_id}`}>
+      <Col>
+        <View
+          style={StyleSheet.flatten({
+            flex: 1,
+            overflow: 'hidden',
+            gap: 10,
+          })}>
+          {sendNftList.map(item => (
+            <Row isTitle key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
                 <View style={commonStyle.rowFlexCenterItem}>
+                  <NFTDefaultSVG style={styles.nftIcon} />
                   <Text
                     style={{
                       ...commonStyle.primaryText,
@@ -160,7 +164,11 @@ const NFTBalanceChange = ({
                     }}>
                     - {item.amount}{' '}
                   </Text>
-                  <Text style={commonStyle.primaryText}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['red-default'],
+                    }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
@@ -243,23 +251,37 @@ const BalanceChange = ({
     );
   }
 
-  // TODO
+  version = 'v1';
+  data = {
+    error: {},
+  } as any;
+
   if (version === 'v1' && data.error) {
     return (
       <View style={styles.tokenBalanceChange}>
-        <Row>
-          <Text style={styles.titleText}>
-            {isSuccess
-              ? t('page.signTx.balanceChange.successTitle')
-              : t('page.signTx.balanceChange.failedTitle')}
-          </Text>
-        </Row>
+        <Text style={styles.headline}>
+          {isSuccess
+            ? t('page.signTx.balanceChange.successTitle')
+            : t('page.signTx.balanceChange.failedTitle')}
+        </Text>
 
-        <Row>
-          <Text className="text-r-neutral-title-1 font-medium">
-            {t('page.signTx.balanceChange.errorTitle')}
-          </Text>
-        </Row>
+        <Table>
+          <Col
+            style={StyleSheet.flatten({
+              paddingVertical: 10,
+            })}>
+            <Row isTitle>
+              <Text
+                style={StyleSheet.flatten({
+                  fontSize: 14,
+                  color: colors['neutral-title-1'],
+                  fontWeight: '500',
+                })}>
+                {t('page.signTx.balanceChange.errorTitle')}
+              </Text>
+            </Row>
+          </Col>
+        </Table>
       </View>
     );
   }
@@ -278,9 +300,7 @@ const BalanceChange = ({
           },
         ])}>
         <Text style={styles.titleText}>
-          {isSuccess
-            ? t('page.signTx.balanceChange.successTitle')
-            : t('page.signTx.balanceChange.failedTitle')}
+          {t('page.signTx.balanceChange.successTitle')}
         </Text>
         {showUsdValueDiff && (
           <Text style={styles.usdValueDiff}>
@@ -294,10 +314,17 @@ const BalanceChange = ({
         <Table>
           {!hasChange && isSuccess && (
             <Col
-              style={{
-                borderBottomWidth: 0,
-              }}>
-              <Row>
+              style={StyleSheet.flatten({
+                paddingVertical: 10,
+              })}>
+              <Row
+                isTitle
+                style={StyleSheet.flatten({
+                  gap: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                })}>
+                <NoBalanceSVG color={colors['neutral-body']} />
                 <Text style={styles.titleText}>
                   {t('page.signTx.balanceChange.noBalanceChange')}
                 </Text>
@@ -306,20 +333,31 @@ const BalanceChange = ({
           )}
           {data.error && (
             <Col
-              style={{
-                borderBottomWidth: 0,
-              }}>
-              <Row>
-                <View style={commonStyle.rowFlexCenterItem}>
-                  <RcIconAlert style={styles.iconAlert} />
+              style={StyleSheet.flatten({
+                paddingVertical: 10,
+              })}>
+              <Row
+                isTitle
+                style={StyleSheet.flatten({
+                  ...commonStyle.rowFlexCenterItem,
+                  width: '100%',
+                  alignItems: 'flex-start',
+                })}>
+                <RcIconAlert style={styles.iconAlert} />
+                <Text
+                  style={StyleSheet.flatten({
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: colors['neutral-title-1'],
+                  })}>
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                    }}>
-                    {data.error.msg} #{data.error.code}
-                  </Text>
-                </View>
+                    style={StyleSheet.flatten({
+                      color: colors['orange-default'],
+                    })}>
+                    {t('page.signTx.balanceChange.failedTitle')}
+                  </Text>{' '}
+                  ({data.error.msg} #{data.error.code})
+                </Text>
               </Row>
             </Col>
           )}

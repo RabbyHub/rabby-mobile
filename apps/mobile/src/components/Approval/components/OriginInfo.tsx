@@ -25,6 +25,7 @@ const getStyle = (colors: AppColorsVariants) =>
     dappIcon: {
       width: 24,
       height: 24,
+      backgroundColor: 'red',
     },
     requestOrigin: {
       position: 'relative',
@@ -37,7 +38,6 @@ const getStyle = (colors: AppColorsVariants) =>
     originText: {
       color: colors['neutral-title-1'],
       overflow: 'hidden',
-      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       fontSize: 16,
       lineHeight: 18,
@@ -133,21 +133,16 @@ export const OriginInfo: React.FC<Props> = ({
 
   return (
     <View style={styles.requestOrigin}>
-      {originLogo && (
-        <View style={styles.originLogo}>
-          <DappIcon
-            origin={origin}
-            source={{ uri: originLogo }}
-            style={styles.dappIcon}
-          />
-          <Tip content={<Text>{currentChain.name}</Text>}>
-            <Image
-              style={styles.chainLogo}
-              source={{ uri: currentChain.logo }}
-            />
-          </Tip>
-        </View>
-      )}
+      <View style={styles.originLogo}>
+        <DappIcon
+          origin={origin}
+          source={{ uri: originLogo }}
+          style={styles.dappIcon}
+        />
+        <Tip content={<Text>{currentChain.name}</Text>}>
+          <Image style={styles.chainLogo} source={{ uri: currentChain.logo }} />
+        </Tip>
+      </View>
       <Text style={styles.originText}>{displayOrigin}</Text>
       {engineResultMap['1088'] && (
         <SecurityLevelTagNoText
