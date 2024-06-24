@@ -42,7 +42,7 @@ import {
 } from './utils';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
-import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
 import { Tip } from '@/components/Tip';
@@ -51,7 +51,7 @@ import { Card } from './components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from './components/Divide';
 
-export const getStyle = (colors: AppColorsVariants) =>
+export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     signTitle: {
       flexDirection: 'row',
@@ -77,7 +77,7 @@ export const getStyle = (colors: AppColorsVariants) =>
     },
     speedUpIcon: {
       width: 16,
-      marginRight: 2,
+      marginRight: 4,
     },
     rightText: {
       fontSize: 14,
@@ -97,8 +97,9 @@ export const getStyle = (colors: AppColorsVariants) =>
     decodeTooltip: {
       maxWidth: 358,
     },
-    isUnknown: {
-      backgroundColor: colors['neutral-foot'],
+    isUnknown: {},
+    isUnknownText: {
+      color: colors['neutral-foot'],
     },
     container: {
       padding: 14,
@@ -189,7 +190,7 @@ const Actions = ({
   }, [data]);
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const styles = getActionsStyle(colors);
 
   const handleViewRawClick = () => {
     ViewRawModal.open({
@@ -222,16 +223,27 @@ const Actions = ({
             ...styles.actionHeader,
             ...(isUnknown ? styles.isUnknown : {}),
           }}>
-          <View>
+          <View
+            style={StyleSheet.flatten({
+              flexDirection: 'row',
+              alignItems: 'center',
+            })}>
             {isSpeedUp && (
               <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
                 <IconSpeedUp style={styles.speedUpIcon} />
               </Tip>
             )}
-            <Text style={styles.leftText}>{actionName}</Text>
+            <Text
+              style={StyleSheet.flatten({
+                ...styles.leftText,
+                ...(isUnknown ? styles.isUnknownText : {}),
+              })}>
+              {actionName}
+            </Text>
             {isUnknown && (
               <Tip
                 placement="bottom"
+                isLight
                 content={
                   <NoActionAlert
                     data={{
@@ -244,7 +256,12 @@ const Actions = ({
                     }}
                   />
                 }>
-                <IconQuestionMark style={styles.icon} />
+                <IconQuestionMark
+                  width={styles.icon.width}
+                  height={styles.icon.height}
+                  color={styles.icon.color}
+                  style={styles.icon}
+                />
               </Tip>
             )}
           </View>

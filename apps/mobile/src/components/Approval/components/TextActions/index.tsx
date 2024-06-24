@@ -15,94 +15,18 @@ import {
 } from 'react-native';
 import { Tip } from '@/components/Tip';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
-import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
-import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
+import { Card } from '../Actions/components/Card';
+import { OriginInfo } from '../OriginInfo';
+import { Divide } from '../Actions/components/Divide';
+import { getActionsStyle } from '../Actions';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    signTitle: {
-      justifyContent: 'space-between',
-      marginBottom: 15,
-      flexDirection: 'row',
-      marginTop: 15,
-    },
-    signTitleLeft: {
-      fontSize: 18,
-      lineHeight: 21,
-      color: colors['neutral-title-1'],
-    },
-    signTitleRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    iconSpeedup: {
-      width: 10,
-      marginRight: 6,
-    },
-    viewRawText: {
-      fontSize: 12,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-    },
-    viewRawIcon: {
-      width: 16,
-      height: 16,
-      color: colors['neutral-foot'],
-    },
-    actionWrapper: {
-      borderRadius: 8,
-      marginBottom: 8,
-      backgroundColor: colors['neutral-card-1'],
-    },
-    actionHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      flexDirection: 'row',
-      backgroundColor: colors['blue-default'],
-      padding: 13,
-      alignItems: 'center',
-      borderTopRightRadius: 8,
-      borderTopLeftRadius: 8,
-    },
-    isUnknown: {
-      backgroundColor: colors['neutral-foot'],
-    },
-    actionHeaderLeft: {
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-2'],
-    },
-    actionHeaderRight: {
-      fontSize: 14,
-      lineHeight: 16,
-      position: 'relative',
-    },
-    tipContent: {
-      maxWidth: 358,
-      padding: 12,
-      alignItems: 'center',
-      flexDirection: 'row',
-    },
-    tipContentIcon: {
-      width: 12,
-      height: 12,
-      marginRight: 4,
-    },
-    icon: {
-      width: 24,
-      height: 24,
-    },
-    container: {
-      padding: 14,
-      borderBottomLeftRadius: 6,
-      borderBottomRightRadius: 6,
-    },
     messageWrapper: {},
     messageTitleWrapper: {
       position: 'relative',
@@ -157,13 +81,6 @@ const getStyles = (colors: AppColorsVariants) =>
       padding: 15,
       flex: 1,
     },
-    indicator: {
-      backgroundColor: colors['blue-default'],
-      color: colors['blue-default'],
-    },
-    indicatorText: {
-      color: colors['blue-default'],
-    },
   });
 
 const Actions = ({
@@ -172,12 +89,14 @@ const Actions = ({
   raw,
   message,
   origin,
+  originLogo,
 }: {
   data: TextActionData | null;
   engineResults: Result[];
   raw: string;
   message: string;
   origin: string;
+  originLogo?: string;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -186,6 +105,7 @@ const Actions = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const actionStyles = getActionsStyle(colors);
 
   const handleViewRawClick = () => {
     ViewRawModal.open({
@@ -196,65 +116,88 @@ const Actions = ({
   const isUnknown = !data;
   return (
     <View>
-      <View style={styles.signTitle}>
-        <Text style={styles.signTitleLeft}>{t('page.signText.title')}</Text>
-        <TouchableOpacity
-          style={styles.signTitleRight}
-          onPress={handleViewRawClick}>
-          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
-          <RcIconArrowRight style={styles.viewRawIcon} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.actionWrapper}>
-        <View
-          style={StyleSheet.flatten([
-            styles.actionHeader,
-            isUnknown ? styles.isUnknown : {},
-          ])}>
-          <Text style={styles.actionHeaderLeft}>{actionName}</Text>
-          <View style={styles.actionHeaderRight}>
-            <Tip
-              placement="bottom"
-              isLight
-              content={
-                isUnknown ? (
-                  <NoActionAlert
-                    data={{
-                      origin,
-                      text: message,
-                    }}
+      <View style={actionStyles.actionWrapper}>
+        <Card>
+          <OriginInfo
+            origin={origin}
+            originLogo={originLogo}
+            engineResults={engineResults}
+          />
+        </Card>
+        <Card>
+          <View
+            style={{
+              ...actionStyles.actionHeader,
+              ...(isUnknown ? actionStyles.isUnknown : {}),
+            }}>
+            <View
+              style={StyleSheet.flatten({
+                flexDirection: 'row',
+                alignItems: 'center',
+              })}>
+              <Text
+                style={StyleSheet.flatten({
+                  ...actionStyles.leftText,
+                  ...(isUnknown ? actionStyles.isUnknownText : {}),
+                })}>
+                {actionName}
+              </Text>
+              {isUnknown && (
+                <Tip
+                  placement="bottom"
+                  isLight
+                  content={
+                    <NoActionAlert
+                      data={{
+                        origin,
+                        text: message,
+                      }}
+                    />
+                  }>
+                  <IconQuestionMark
+                    width={actionStyles.icon.width}
+                    height={actionStyles.icon.height}
+                    color={actionStyles.icon.color}
+                    style={actionStyles.icon}
                   />
-                ) : (
-                  <View style={styles.tipContent}>
-                    <RcIconCheck style={styles.tipContentIcon} />
-                    <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </View>
-                )
-              }>
-              {isUnknown ? (
-                <IconQuestionMark style={styles.icon} />
-              ) : (
-                <IconRabbyDecoded style={styles.icon} />
+                </Tip>
               )}
-            </Tip>
+            </View>
+            <TouchableOpacity
+              style={actionStyles.signTitleRight}
+              onPress={handleViewRawClick}>
+              <Text style={actionStyles.viewRawText}>
+                {t('page.signTx.viewRaw')}
+              </Text>
+              <RcIconArrowRight />
+            </TouchableOpacity>
           </View>
-        </View>
-        {data && (
-          <View style={styles.container}>
-            {data.createKey && (
-              <CreateKey data={data.createKey} engineResults={engineResults} />
-            )}
-            {data.verifyAddress && (
-              <VerifyAddress
-                data={data.verifyAddress}
-                engineResults={engineResults}
-              />
-            )}
-            {data.common && (
-              <CommonAction data={data.common} engineResults={engineResults} />
-            )}
-          </View>
-        )}
+
+          {data && <Divide />}
+
+          {data && (
+            <View style={actionStyles.container}>
+              {data.createKey && (
+                <CreateKey
+                  data={data.createKey}
+                  engineResults={engineResults}
+                />
+              )}
+              {data.verifyAddress && (
+                <VerifyAddress
+                  data={data.verifyAddress}
+                  engineResults={engineResults}
+                />
+              )}
+              {data.common && (
+                <CommonAction
+                  data={data.common}
+                  engineResults={engineResults}
+                />
+              )}
+            </View>
+          )}
+        </Card>
       </View>
       <View>
         <View style={styles.messageTitleWrapper}>

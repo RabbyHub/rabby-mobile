@@ -25,7 +25,6 @@ const getStyle = (colors: AppColorsVariants) =>
     dappIcon: {
       width: 24,
       height: 24,
-      backgroundColor: 'red',
     },
     requestOrigin: {
       position: 'relative',

@@ -251,11 +251,6 @@ const BalanceChange = ({
     );
   }
 
-  version = 'v1';
-  data = {
-    error: {},
-  } as any;
-
   if (version === 'v1' && data.error) {
     return (
       <View style={styles.tokenBalanceChange}>

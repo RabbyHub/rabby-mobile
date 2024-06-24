@@ -341,6 +341,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
             raw={hexData}
             message={signText}
             origin={params.session.origin}
+            originLogo={params.session.icon}
           />
         )}
       </ScrollView>
