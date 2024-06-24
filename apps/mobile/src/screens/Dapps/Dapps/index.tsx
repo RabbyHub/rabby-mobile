@@ -55,8 +55,8 @@ export function DappsScreenRaw(): JSX.Element {
 
   const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
     useDappsHome();
-  const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
-  const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
+  const { openUrlAsDapp, showDappWebViewModal, closeOpenedDapp } =
+    useOpenDappView();
   // todo refresh dapps when webview close
 
   return (
@@ -65,8 +65,8 @@ export function DappsScreenRaw(): JSX.Element {
         <DappCardList
           sections={dappSections}
           onPress={dapp => {
+            showDappWebViewModal();
             openUrlAsDapp(dapp.origin);
-            toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
           }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.origin, !dapp.isFavorite);

@@ -1,5 +1,7 @@
-import { Image, Platform } from 'react-native';
+import { Image, Platform, NativeModules } from 'react-native';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
+import { stringUtils } from '@rabby-wallet/base-utils';
+
 import { CHAINS_ENUM } from './chains';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
@@ -58,10 +60,16 @@ export const APP_URLS = {
   })!,
 };
 
-// TODO: add native method to get bundler id
+const androidPackageName = !NativeModules.RNVersionCheck.packageName
+  ? 'com.debank.rabbymobile'
+  : stringUtils.unSuffix(
+      stringUtils.unSuffix(NativeModules.RNVersionCheck.packageName, '.debug'),
+      '.reg',
+    );
+
 export const APPLICATION_ID =
   Platform.OS == 'android'
-    ? 'com.debank.rabbymobile'
+    ? androidPackageName
     : __DEV__
     ? 'com.debank.rabby-mobile-debug'
     : 'com.debank.rabby-mobile';

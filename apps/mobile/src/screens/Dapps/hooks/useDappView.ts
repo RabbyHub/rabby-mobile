@@ -34,6 +34,10 @@ export function useHasActiveOpenedDapp() {
   return !!activeDappOrigin;
 }
 
+export const OPEN_DAPP_VIEW_INDEXES = {
+  expanded: 1,
+  collapsed: 0,
+};
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
   const [activeDappOrigin, setActiveDappOrigin] = useAtom(activeDappOriginAtom);
@@ -44,6 +48,24 @@ export function useOpenDappView() {
   const [openedDappRecords, setOpenedOriginsDapps] = useAtom(
     openedDappRecordsAtom,
   );
+
+  const showDappWebViewModal = useCallback(() => {
+    toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+  }, [toggleShowSheetModal]);
+
+  const expandDappWebViewModal = useCallback(() => {
+    toggleShowSheetModal(
+      'openedDappWebviewSheetModalRef',
+      OPEN_DAPP_VIEW_INDEXES.expanded,
+    );
+  }, [toggleShowSheetModal]);
+
+  const collapseDappWebViewModal = useCallback(() => {
+    toggleShowSheetModal(
+      'openedDappWebviewSheetModalRef',
+      OPEN_DAPP_VIEW_INDEXES.collapsed,
+    );
+  }, [toggleShowSheetModal]);
 
   const openUrlAsDapp = useCallback(
     (
@@ -117,14 +139,6 @@ export function useOpenDappView() {
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 
-  const closeActiveOpenedDapp = useCallback(() => {
-    if (activeDappOrigin) {
-      removeOpenedDapp(activeDappOrigin);
-    }
-
-    hideActiveDapp();
-  }, [hideActiveDapp, removeOpenedDapp, activeDappOrigin]);
-
   const closeOpenedDapp = useCallback(
     (dappOrigin: DappInfo['origin']) => {
       removeOpenedDapp(dappOrigin);
@@ -132,9 +146,19 @@ export function useOpenDappView() {
     [removeOpenedDapp],
   );
 
-  const showDappWebViewModal = useCallback(() => {
-    toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-  }, [toggleShowSheetModal]);
+  const closeActiveOpenedDapp = useCallback(() => {
+    if (activeDappOrigin) {
+      removeOpenedDapp(activeDappOrigin);
+    }
+
+    collapseDappWebViewModal();
+    hideActiveDapp();
+  }, [
+    hideActiveDapp,
+    collapseDappWebViewModal,
+    removeOpenedDapp,
+    activeDappOrigin,
+  ]);
 
   const { openedDappItems, activeDapp } = useMemo(() => {
     const retOpenedDapps = [] as OpenedDappItem[];
@@ -171,6 +195,9 @@ export function useOpenDappView() {
     openedDappItems,
 
     showDappWebViewModal,
+    expandDappWebViewModal,
+    collapseDappWebViewModal,
+
     openUrlAsDapp,
     removeOpenedDapp,
     closeOpenedDapp,

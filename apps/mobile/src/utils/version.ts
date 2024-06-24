@@ -1,9 +1,8 @@
-import { Linking, Platform, NativeModules } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import VersionCheck from 'react-native-version-check';
 import Toast from 'react-native-root-toast';
 import semver from 'semver';
 import RNFS from 'react-native-fs';
-import { stringUtils } from '@rabby-wallet/base-utils';
 
 import { toast } from '@/components/Toast';
 import { devLog } from './logger';
@@ -100,13 +99,6 @@ export async function downloadLatestApk(options?: {
   });
 }
 
-const androidPackageName = !NativeModules.RNVersionCheck.packageName
-  ? 'com.debank.rabbymobile'
-  : stringUtils.unSuffix(
-      stringUtils.unSuffix(NativeModules.RNVersionCheck.packageName, '.debug'),
-      '.reg',
-    );
-
 export async function getUpgradeInfo() {
   // use version from package.json on devlopment
   const localVersion = APP_VERSIONS.forCheckUpgrade;
@@ -116,7 +108,7 @@ export async function getUpgradeInfo() {
     VersionCheck.getLatestVersion({
       ...(isAndroid && {
         provider: 'playStore',
-        packageName: androidPackageName,
+        packageName: APPLICATION_ID,
       }),
       // {
       //   provider: 'appStore',
