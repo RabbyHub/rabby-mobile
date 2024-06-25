@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ContractRequireData, TypedDataActionData } from './utils';
@@ -11,14 +10,14 @@ import ViewMore from '../Actions/components/ViewMore';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import LogoWithText from '../Actions/components/LogoWithText';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
-import { formatAmount, formatUsdValue } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@/constant/chains';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { Text, View } from 'react-native';
-import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { SubCol, SubRow, SubTable } from '../Actions/components/SubTable';
 const { isSameAddress } = addressUtils;
 
 const ApproveNFT = ({
@@ -81,6 +80,9 @@ const ApproveNFT = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const sellNftReceiverRef = React.useRef(null);
+  const sellNftAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -91,18 +93,14 @@ const ApproveNFT = ({
             </Text>
           </Row>
           <Row>
-            <NFTWithName nft={actionData.pay_nft} />
-            <View className="desc-list">
-              <DescItem>
-                <ViewMore
-                  type="nft"
-                  data={{
-                    nft: actionData.pay_nft,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="nft"
+              data={{
+                nft: actionData.pay_nft,
+                chain,
+              }}>
+              <NFTWithName nft={actionData.pay_nft} />
+            </ViewMore>
           </Row>
         </Col>
         <Col>
@@ -112,62 +110,48 @@ const ApproveNFT = ({
             </Text>
           </Row>
           <Row>
-            <View className="relative">
-              <LogoWithText
-                logo={actionData.receive_token.logo_url}
-                text={
-                  <Text style={commonStyle.primaryText}>{`${formatAmount(
-                    actionData.receive_token.amount,
-                  )} ${ellipsisTokenSymbol(
-                    getTokenSymbol(actionData.receive_token),
-                  )}`}</Text>
+            <LogoWithText
+              logo={actionData.receive_token.logo_url}
+              text={
+                <Text style={commonStyle.primaryText}>{`${formatAmount(
+                  actionData.receive_token.amount,
+                )} ${ellipsisTokenSymbol(
+                  getTokenSymbol(actionData.receive_token),
+                )}`}</Text>
+              }
+              logoRadius={16}
+              icon={
+                <Values.TokenLabel
+                  isFake={actionData.receive_token.is_verified === false}
+                  isScam={
+                    actionData.receive_token.is_verified !== false &&
+                    !!actionData.receive_token.is_suspicious
+                  }
+                />
+              }
+            />
+            {engineResultMap['1083'] && (
+              <SecurityLevelTagNoText
+                enable={engineResultMap['1083'].enable}
+                level={
+                  processedRules.includes('1083')
+                    ? 'proceed'
+                    : engineResultMap['1083'].level
                 }
-                logoRadius={16}
-                icon={
-                  <Values.TokenLabel
-                    isFake={actionData.receive_token.is_verified === false}
-                    isScam={
-                      actionData.receive_token.is_verified !== false &&
-                      !!actionData.receive_token.is_suspicious
-                    }
-                  />
-                }
+                onClick={() => handleClickRule('1083')}
               />
-              {engineResultMap['1083'] && (
-                <SecurityLevelTagNoText
-                  enable={engineResultMap['1083'].enable}
-                  level={
-                    processedRules.includes('1083')
-                      ? 'proceed'
-                      : engineResultMap['1083'].level
-                  }
-                  onClick={() => handleClickRule('1083')}
-                />
-              )}
-              {engineResultMap['1084'] && (
-                <SecurityLevelTagNoText
-                  enable={engineResultMap['1084'].enable}
-                  level={
-                    processedRules.includes('1084')
-                      ? 'proceed'
-                      : engineResultMap['1084'].level
-                  }
-                  onClick={() => handleClickRule('1084')}
-                />
-              )}
-            </View>
-            <View className="desc-list">
-              <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(actionData.receive_token.amount)
-                      .times(actionData.receive_token.price)
-                      .toFixed(),
-                  )}
-                </Text>
-              </DescItem>
-            </View>
+            )}
+            {engineResultMap['1084'] && (
+              <SecurityLevelTagNoText
+                enable={engineResultMap['1084'].enable}
+                level={
+                  processedRules.includes('1084')
+                    ? 'proceed'
+                    : engineResultMap['1084'].level
+                }
+                onClick={() => handleClickRule('1084')}
+              />
+            )}
           </Row>
         </Col>
         <Col>
@@ -194,94 +178,115 @@ const ApproveNFT = ({
               </Text>
             </Row>
             <Row>
-              <View className="relative">
-                <Values.Address address={actionData.takers[0]} chain={chain} />
-                {engineResultMap['1081'] && (
-                  <SecurityLevelTagNoText
-                    enable={engineResultMap['1081'].enable}
-                    level={
-                      processedRules.includes('1081')
-                        ? 'proceed'
-                        : engineResultMap['1081'].level
-                    }
-                    onClick={() => handleClickRule('1081')}
-                  />
-                )}
-              </View>
+              <Values.AddressWithCopy
+                address={actionData.takers[0]}
+                chain={chain}
+              />
+              {engineResultMap['1081'] && (
+                <SecurityLevelTagNoText
+                  enable={engineResultMap['1081'].enable}
+                  level={
+                    processedRules.includes('1081')
+                      ? 'proceed'
+                      : engineResultMap['1081'].level
+                  }
+                  onClick={() => handleClickRule('1081')}
+                />
+              )}
             </Row>
           </Col>
         )}
         {hasReceiver && (
-          <Col>
-            <Row isTitle>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.swap.receiver')}
-              </Text>
-            </Row>
-            <Row>
-              <Values.Address address={actionData.receiver} chain={chain} />
+          <>
+            <Col>
+              <Row isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.swap.receiver')}
+                </Text>
+              </Row>
+              <Row>
+                <View ref={sellNftReceiverRef}>
+                  <Values.AddressWithCopy
+                    address={actionData.receiver}
+                    chain={chain}
+                  />
+                </View>
+              </Row>
+            </Col>
+            <SubTable target={sellNftReceiverRef}>
               <SecurityListItem
                 id="1082"
                 engineResult={engineResultMap['1082']}
                 dangerText={t('page.signTx.swap.notPaymentAddress')}
               />
-            </Row>
-          </Col>
+            </SubTable>
+          </>
         )}
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTypedData.buyNFT.listOn')}
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              {isInWhitelist && (
-                <DescItem>
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsTrust')}
-                  </Text>
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-
-              <DescItem>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    ...requireData,
-                    address: requireData.id,
-                    chain,
-                    title: t('page.signTypedData.buyNFT.listOn'),
-                  }}
-                />
-              </DescItem>
+            <View ref={sellNftAddressRef}>
+              <ViewMore
+                type="contract"
+                data={{
+                  ...requireData,
+                  address: requireData.id,
+                  chain,
+                  title: t('page.signTypedData.buyNFT.listOn'),
+                }}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </ViewMore>
             </View>
           </Row>
         </Col>
+        <SubTable target={sellNftAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

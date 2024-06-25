@@ -20,6 +20,7 @@ export const TokenAmountItem: React.FC<Props> = ({
   const colors = useThemeColors();
   return (
     <TouchableOpacity
+      disabled={!onEdit}
       onPress={onEdit}
       style={StyleSheet.flatten({
         borderRadius: 4,

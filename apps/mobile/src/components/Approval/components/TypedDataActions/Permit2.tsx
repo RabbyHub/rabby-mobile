@@ -9,13 +9,15 @@ import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@/constant/chains';
 import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { TokenAmountItem } from '../Actions/components/TokenAmountItem';
+import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 
 const Permit2 = ({
   data,
@@ -52,60 +54,46 @@ const Permit2 = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const permit2TokenRef = React.useRef(null);
+  const permit2AddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.tokenApprove.approveToken')}
             </Text>
           </Row>
           <Row>
-            <LogoWithText
-              logo={actionData.token.logo_url}
-              text={
-                <View
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'row',
-                  }}>
-                  <Values.TokenAmount
-                    value={actionData.token.amount}
-                    style={commonStyle.primaryText}
-                  />
-                  <Values.TokenSymbol
-                    token={requireData.token}
-                    style={{
-                      marginLeft: 2,
-                      ...commonStyle.primaryText,
-                    }}
-                  />
-                </View>
-              }
-              logoRadius={16}
-              textStyle={{
-                flex: 1,
-              }}
+            <TokenAmountItem
+              amount={actionData.token.amount}
+              logoUrl={actionData.token.logo_url}
             />
-            <View>
-              <DescItem>
-                <View style={commonStyle.rowFlexCenterItem}>
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.myBalance')}{' '}
-                  </Text>
-                  <Text style={commonStyle.secondaryText}>
-                    {formatAmount(tokenBalance)}{' '}
-                  </Text>
-                  <Text style={commonStyle.secondaryText}>
-                    {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-                  </Text>
-                </View>
-              </DescItem>
-            </View>
           </Row>
         </Col>
+
+        <SubTable target={permit2TokenRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.tokenApprove.myBalance')}
+              </Text>
+            </SubRow>
+            <SubRow
+              style={StyleSheet.flatten({
+                flexDirection: 'row',
+                gap: 4,
+              })}>
+              <Values.TokenAmount value={tokenBalance} />
+              <Text style={commonStyle.subRowText}>
+                {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+              </Text>
+            </SubRow>
+          </SubCol>
+        </SubTable>
+
         <Col>
           <Row isTitle tip={t('page.signTypedData.permit2.sigExpireTimeTip')}>
             <Text style={commonStyle.rowTitleText}>
@@ -145,98 +133,101 @@ const Permit2 = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={actionData.spender} chain={chain} />
-            </View>
-            <View className="desc-list">
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1071"
-                engineResult={engineResultMap['1071']}
-                dangerText="EOA address"
-              />
-
-              <SecurityListItem
-                id="1074"
-                engineResult={engineResultMap['1074']}
-                warningText={
-                  <Values.Interacted
-                    value={false}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                }
-                defaultText={
-                  <Values.Interacted
-                    value={requireData.hasInteraction}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                }
-              />
-
-              <SecurityListItem
-                id="1072"
-                engineResult={engineResultMap['1072']}
-                dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
-                  value: '$10,000',
-                })}
-                warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
-                  value: '$100,000',
-                })}
-              />
-
-              <SecurityListItem
-                id="1073"
-                engineResult={engineResultMap['1073']}
-                warningText={t('page.signTx.tokenApprove.deployTimeLessThan', {
-                  value: '3',
-                })}
-              />
-
-              <SecurityListItem
-                id="1075"
-                engineResult={engineResultMap['1075']}
-                dangerText={t('page.signTx.tokenApprove.flagByRabby')}
-              />
-
-              <SecurityListItem
-                id="1134"
-                engineResult={engineResultMap['1134']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1136"
-                engineResult={engineResultMap['1136']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1133"
-                engineResult={engineResultMap['1133']}
-                safeText={t('page.signTx.markAsTrust')}
-              />
-
-              <DescItem>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="spender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+              }}>
+              <View ref={permit2AddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={permit2AddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+
+          <SecurityListItem
+            id="1071"
+            engineResult={engineResultMap['1071']}
+            dangerText={t('page.signTx.tokenApprove.eoaAddress')}
+            title={t('page.signTx.addressTypeTitle')}
+          />
+
+          <SecurityListItem
+            id="1074"
+            engineResult={engineResultMap['1074']}
+            warningText={<Values.Interacted value={false} />}
+            defaultText={
+              <Values.Interacted value={requireData.hasInteraction} />
+            }
+            title={t('page.signTx.interacted')}
+          />
+
+          <SecurityListItem
+            tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
+            id="1072"
+            engineResult={engineResultMap['1072']}
+            dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$10,000',
+            })}
+            warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$100,000',
+            })}
+            title={t('page.signTx.trustValueTitle')}
+          />
+
+          <SecurityListItem
+            id="1073"
+            engineResult={engineResultMap['1073']}
+            warningText={t('page.signTx.tokenApprove.deployTimeLessThan', {
+              value: '3',
+            })}
+            title={t('page.signTx.deployTimeTitle')}
+          />
+
+          <SecurityListItem
+            id="1075"
+            engineResult={engineResultMap['1075']}
+            title={t('page.signTx.tokenApprove.flagByRabby')}
+            dangerText={t('page.signTx.yes')}
+          />
+
+          <SecurityListItem
+            id="1134"
+            engineResult={engineResultMap['1134']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1136"
+            engineResult={engineResultMap['1136']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1133"
+            engineResult={engineResultMap['1133']}
+            safeText={t('page.signTx.markAsTrust')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

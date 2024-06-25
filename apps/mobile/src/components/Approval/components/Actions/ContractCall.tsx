@@ -84,38 +84,6 @@ const ContractCall = ({
                 <Values.Address address={requireData.id} chain={chain} />
               </View>
             </ViewMore>
-            {/* {requireData.protocol && (
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
-            )}
-            <DescItem>
-              <Values.Interacted
-                value={requireData.hasInteraction}
-                textStyle={commonStyle.secondaryText}
-              />
-            </DescItem>
-
-            {isInWhitelist && (
-              <DescItem>
-                <Text>{t('page.signTx.markAsTrust')}</Text>
-              </DescItem>
-            )}
-
-            <SecurityListItem
-              id="1135"
-              engineResult={engineResultMap['1135']}
-              forbiddenText={t('page.signTx.markAsBlock')}
-            />
-
-            <SecurityListItem
-              id="1137"
-              engineResult={engineResultMap['1137']}
-              warningText={t('page.signTx.markAsBlock')}
-            /> */}
           </Row>
         </Col>
         <SubTable target={contractCallAddressRef}>
@@ -182,7 +150,9 @@ const ContractCall = ({
                 flexDirection: 'row',
                 alignItems: 'center',
               })}>
-              <Text>{requireData.call.func || '-'}</Text>
+              <Text style={commonStyle.primaryText}>
+                {requireData.call.func || '-'}
+              </Text>
               <Tip
                 content={
                   requireData.call.func

@@ -1,4 +1,10 @@
-import { LayoutRectangle, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  Dimensions,
+  LayoutRectangle,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import React, { ReactNode } from 'react';
 import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { useThemeColors } from '@/hooks/theme';
@@ -50,7 +56,7 @@ export const SubTable = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  const [left, setLeft] = React.useState(0);
+  const [left, setLeft] = React.useState(Dimensions.get('window').width - 100);
   const [visible, setVisible] = React.useState(true);
 
   React.useEffect(() => {

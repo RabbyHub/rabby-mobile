@@ -9,8 +9,8 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Chain } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { Text, View } from 'react-native';
-import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 
 const PushMultiSig = ({
   data,
@@ -45,6 +45,8 @@ const PushMultiSig = ({
     }
   }, [requireData, chain]);
 
+  const addressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -55,33 +57,47 @@ const PushMultiSig = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address
+            <View ref={addressRef}>
+              <Values.AddressWithCopy
                 address={data.multisig_id}
                 chain={multiSigInfo?.chain}
               />
-              <View>
-                <DescItem>
-                  <Values.AddressMemo
-                    address={data.multisig_id}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                </DescItem>
-                {multiSigInfo && (
-                  <DescItem>
-                    <LogoWithText
-                      logo={multiSigInfo.logo_url}
-                      text={multiSigInfo.name}
-                      logoSize={14}
-                      logoRadius={16}
-                      textStyle={commonStyle.secondaryText}
-                    />
-                  </DescItem>
-                )}
-              </View>
             </View>
           </Row>
         </Col>
+
+        <SubTable target={addressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.addressNote')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.AddressMemo
+                textStyle={commonStyle.subRowText}
+                address={data.multisig_id}
+              />
+            </SubRow>
+          </SubCol>
+          {multiSigInfo && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.label')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <LogoWithText
+                  logo={multiSigInfo.logo_url}
+                  text={multiSigInfo.name}
+                  logoSize={14}
+                  textStyle={commonStyle.subRowText}
+                />
+              </SubRow>
+            </SubCol>
+          )}
+        </SubTable>
       </Table>
     </View>
   );
