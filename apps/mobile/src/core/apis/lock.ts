@@ -1,11 +1,17 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
+import RNKeychain from 'react-native-keychain';
 
 export const enum PasswordStatus {
   Unknown = -1,
   UseBuiltIn = 1,
   Custom = 11,
+}
+
+export const enum PasswordChoice {
+  password = 1,
+  biometrics = 2,
 }
 
 function getInitError(password: string) {
@@ -18,7 +24,8 @@ function getInitError(password: string) {
   return { error: '' };
 }
 
-async function safeVerifyPassword(password: string) {
+/* ===================== Password:start ===================== */
+export async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
     await keyringService.verifyPassword(password);
@@ -105,11 +112,14 @@ export async function clearCustomPassword(currentPassword: string) {
   return result;
 }
 
+/* ===================== Password:end ===================== */
+
 export async function getRabbyLockInfo() {
   const info = {
     pwdStatus: PasswordStatus.Unknown,
     isUseBuiltInPwd: false,
     isUseCustomPwd: false,
+    isUseBiometrics: false,
   };
 
   try {

@@ -84,10 +84,11 @@ function BlockItem({
 
   children = children || (
     <Text
-      className="font-normal text-[14] "
       numberOfLines={1}
       style={{
         color: colors['neutral-title-1'],
+        fontWeight: 'normal',
+        fontSize: 14,
       }}>
       {label}
     </Text>
@@ -96,14 +97,14 @@ function BlockItem({
   const MaybeIconEle = icon as React.FC<SvgProps>;
 
   const iconNode = isValidElementType(icon) ? (
-    <View className="mr-[12]">
-      <MaybeIconEle className="w-[20] h-[20]" />
+    <View style={{ marginRight: 12 }}>
+      <MaybeIconEle style={{ width: 20, height: 20 }} />
     </View>
   ) : (
     (icon as React.ReactNode)
   );
 
-  const rightIconNode = <RcIconRight className="w-[20] h-[20]" />;
+  const rightIconNode = <RcIconRight style={{ width: 20, height: 20 }} />;
 
   if (typeof rightNode === 'function') {
     rightNode = rightNode({ colors, rightIconNode });

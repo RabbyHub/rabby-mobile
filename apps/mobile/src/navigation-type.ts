@@ -105,6 +105,7 @@ export type SettingNavigatorParamList = {
       | typeof RootNames.ImportPrivateKey
       | typeof RootNames.ImportMnemonic;
   };
+  [RootNames.SetBiometricsAuthentication]: {};
 };
 
 export type FavoritePopularDappsNavigatorParamList = {

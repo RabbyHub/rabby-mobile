@@ -25,6 +25,11 @@ check_build_params() {
     echo "RABBY_MOBILE_KR_PWD is not set"
     exit 1;
   fi
+
+  if [ -z $RABBY_MOBILE_CODE ]; then
+    echo "RABBY_MOBILE_CODE is not set"
+    exit 1;
+  fi
 }
 
 check_s3_params() {

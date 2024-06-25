@@ -86,9 +86,16 @@ void devLog(NSString *format, ...) {}
 // #endif
   [FIRApp configure];
   self.moduleName = @"RabbyMobile";
+
+  NSString *rabbitCodeFromBundle = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"rabbit_code"];
+  NSString *rabbitCode;
+
+  if(rabbitCodeFromBundle != nil){ rabbitCode = rabbitCodeFromBundle; }
+  else { rabbitCode = @"RABBY_MOBILE_CODE_DEV"; }
+
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.
-  self.initialProps = @{};
+  self.initialProps = @{ @"rabbitCode": rabbitCode };
 
   // RCTBridge *bridge = [self.reactDelegate createBridgeWithDelegate:self launchOptions:launchOptions];
   // RCTRootView *rootView = [self.reactDelegate createRootViewWithBridge:bridge

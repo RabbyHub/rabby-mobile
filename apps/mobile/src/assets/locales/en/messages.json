@@ -2024,6 +2024,29 @@
     },
     "testnetCheckModal": {
       "title": "Please turn on \"Enable Testnets\" under \"More\" before sign on testnets"
+    },
+    "AuthenticationModals": {
+      "biometrics": {
+        "enable": "Enable Biometrics",
+        "disable": "Disable Biometrics",
+        "enableTip": "Enable biometrics to unlock Rabby",
+        "disableTip": "Disable biometrics to unlock Rabby"
+      }
+    }
+  },
+  "native": {
+    "biometrics": {
+      "enable_touchid": "Unlock with Touch ID?",
+      "enable_faceid": "Unlock with Face ID?",
+      "enable_fingerprint": "Unlock with Fingerprint?",
+      "enable_biometrics": "Unlock with Biometrics?",
+      "enable_device_passcode_ios": "Unlock with device passcode?",
+      "enable_device_passcode_android": "Unlock with device PIN?"
+    },
+    "authentication": {
+      "auth_prompt_title": "Authentication required",
+      "auth_prompt_desc": "Please authenticate in order to use Rabby",
+      "auth_prompt_cancel": "Cancel"
     }
   },
   "global": {

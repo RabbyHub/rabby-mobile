@@ -36,7 +36,7 @@ const tryAutoUnlockPromiseRef = {
 /**
  * @description only use this hooks on the top level of your app
  */
-export function useTryUnlockAppOnTop() {
+export function useTryUnlockAppWithBuiltinOnTop() {
   const { setAppLock } = useAppUnlocked();
 
   const getTriedUnlock = React.useCallback(async () => {
@@ -170,4 +170,20 @@ export function useSecureOnBackground() {
       };
     }
   }, [setAppStatus]);
+}
+
+const hasLeftFromUnlockAtom = atom(false);
+export function useHasLeftFromUnlock() {
+  const [hasLeftFromUnlock, setHasLeftFromUnlock] = useAtom(
+    hasLeftFromUnlockAtom,
+  );
+
+  const afterLeaveFromUnlock = useCallback(() => {
+    setHasLeftFromUnlock(true);
+  }, [setHasLeftFromUnlock]);
+
+  return {
+    hasLeftFromUnlock,
+    afterLeaveFromUnlock,
+  };
 }

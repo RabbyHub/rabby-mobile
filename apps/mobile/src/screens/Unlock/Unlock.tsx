@@ -1,6 +1,6 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import * as Yup from 'yup';
 
@@ -13,7 +13,7 @@ import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
 import { toast, toastWithIcon } from '@/components/Toast';
-import { apisLock } from '@/core/apis';
+import { apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationToHome,
   usePreventGoBack,
@@ -21,6 +21,12 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
+import { APP_TEST_PWD } from '@/constant';
+import {
+  RequestGenericPurpose,
+  isAuthenticatedByBiometrics,
+} from '@/core/apis/keychain';
+import { useHasLeftFromUnlock } from '@/hooks/useLock';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -28,6 +34,17 @@ const LAYOUTS = {
 };
 
 const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
+
+function toastUnlocking() {
+  return toastWithIcon(() => <ActivityIndicator style={{ marginRight: 6 }} />)(
+    `Unlocking`,
+    {
+      duration: 1e6,
+      position: toast.positions.CENTER,
+      hideOnPress: false,
+    },
+  );
+}
 
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
@@ -38,7 +55,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   }, [t]);
 
   const formik = useFormik({
-    initialValues: { password: '' },
+    initialValues: { password: __DEV__ ? (APP_TEST_PWD as string) : '' },
     validationSchema: yupSchema,
     validateOnMount: false,
     validateOnBlur: true,
@@ -47,13 +64,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const toastHide = toastWithIcon(() => (
-        <ActivityIndicator style={{ marginRight: 6 }} />
-      ))(`Unlocking`, {
-        duration: 1e6,
-        position: toast.positions.CENTER,
-        hideOnPress: false,
-      });
+      const hideToast = toastUnlocking();
 
       try {
         const result = await apisLock.unlockWallet(values.password);
@@ -64,7 +75,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
           resetNavigationToHome(navigation);
         }
       } finally {
-        toastHide();
+        hideToast();
       }
     },
   });
@@ -80,7 +91,6 @@ export default function UnlockScreen() {
 
   const navigation = useRabbyAppNavigation();
   const { formik, shouldDisabled } = useUnlockForm(navigation);
-  const { setFieldValue, errors, handleSubmit } = formik;
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -88,19 +98,40 @@ export default function UnlockScreen() {
     nextButtonContainerHeight: LAYOUTS.footerButtonHeight,
   });
 
+  const { hasLeftFromUnlock, afterLeaveFromUnlock } = useHasLeftFromUnlock();
+
   const passwordInputRef = React.useRef<TextInput>(null);
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
-  useEffect(() => {
-    if (__DEV__ && STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV) {
-      console.debug('UnlockScreen::useEffect skipped on DEV mode.');
-      return;
-    }
-
+  const detectUnlocked = useCallback(() => {
     if (!apisLock.isUnlocked()) return;
 
     resetNavigationToHome(navigation);
-  }, [navigation]);
+    afterLeaveFromUnlock();
+  }, [navigation, afterLeaveFromUnlock]);
+
+  useLayoutEffect(() => {
+    if (__DEV__ && STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV) {
+      console.debug('UnlockScreen::useLayoutEffect skipped on DEV mode.');
+      return;
+    }
+
+    (async () => {
+      if (!hasLeftFromUnlock && isAuthenticatedByBiometrics()) {
+        const hideToast = toastUnlocking();
+        try {
+          await apisKeychain.requestGenericPassword({
+            purpose: RequestGenericPurpose.UNLOCK_WALLET,
+          });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          hideToast();
+        }
+      }
+      detectUnlocked();
+    })();
+  }, [hasLeftFromUnlock, detectUnlocked]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -130,7 +161,7 @@ export default function UnlockScreen() {
             ref={passwordInputRef}
             style={styles.inputContainer}
             inputStyle={styles.input}
-            errorText={errors.password}
+            errorText={formik.errors.password}
             inputProps={{
               value: formik.values.password,
               secureTextEntry: true,
@@ -143,7 +174,7 @@ export default function UnlockScreen() {
                 // delete nextErrors.password;
                 // formik.setErrors(nextErrors);
                 formik.setFieldError('password', undefined);
-                setFieldValue('password', text);
+                formik.setFieldValue('password', text);
               },
             }}
           />
@@ -164,7 +195,7 @@ export default function UnlockScreen() {
             title={'Next'}
             onPress={evt => {
               evt.stopPropagation();
-              handleSubmit();
+              formik.handleSubmit();
             }}
           />
         </View>

@@ -2,10 +2,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enLocale from '@/assets/locales/en/messages.json';
 
-export const fetchLocale = async locale => {
-  const res = enLocale;
-  return res;
-};
+export function getLocale(locale: string) {
+  // ONLY support en for now
+  return enLocale;
+}
 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
@@ -22,14 +22,16 @@ i18n
 
 export const I18N_NS = 'translations';
 
-export const addResourceBundle = async (locale: string) => {
-  if (i18n.hasResourceBundle(locale, I18N_NS)) {
-    return;
-  }
-  const bundle = await fetchLocale(locale);
+export function strings(...args: Parameters<typeof i18n.t>) {
+  return i18n.t(...args);
+}
+
+export function addResourceBundle(locale: string) {
+  if (i18n.hasResourceBundle(locale, I18N_NS)) return;
+  const bundle = getLocale(locale);
 
   i18n.addResourceBundle(locale, I18N_NS, bundle);
-};
+}
 
 addResourceBundle('en');
 

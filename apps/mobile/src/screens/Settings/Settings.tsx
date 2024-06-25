@@ -18,6 +18,7 @@ import {
   RcFeedback,
   RcLockWallet,
   RcManagePassword,
+  RcIconFingerprint,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -33,6 +34,7 @@ import { BUILD_CHANNEL } from '@/constant/env';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
 import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
+import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
@@ -49,6 +51,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
+import { useIsAuthBiometrics } from '@/hooks/biometrics';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -78,6 +81,8 @@ export default function SettingsScreen(): JSX.Element {
     requestLockWallet,
     openManagePasswordSheetModal,
   } = useManagePasswordOnSettings();
+
+  const { biometricsEnabled } = useIsAuthBiometrics();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -137,6 +142,14 @@ export default function SettingsScreen(): JSX.Element {
       settings: {
         label: 'Settings',
         items: [
+          {
+            label: biometricsEnabled
+              ? 'Disable Biometrics'
+              : 'Enable Biometrics',
+            icon: RcIconFingerprint,
+            rightNode: SwitchBiometricsAuthentication,
+            visible: hasSetupCustomPassword,
+          },
           {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
@@ -200,18 +213,6 @@ export default function SettingsScreen(): JSX.Element {
               Linking.openURL('https://discord.gg/AvYmaTjrBu');
             },
           },
-          {
-            label: 'Build Hash',
-            icon: RcInfo,
-            onPress: () => {},
-            rightNode: (
-              <Text style={{ color: colors['neutral-body'] }}>
-                {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
-              </Text>
-            ),
-            // TODO: only show in non-production mode
-            visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
-          },
           // TODO: in the future
           // {
           //   label: 'Support Chains',
@@ -238,6 +239,18 @@ export default function SettingsScreen(): JSX.Element {
         testkits: {
           label: 'Test Kits (Not present on production package)',
           items: [
+            {
+              label: 'Build Hash',
+              icon: RcInfo,
+              // onPress: () => {},
+              rightNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+            },
             // only valid if custom password given
             {
               label: 'Lock Wallet',
@@ -253,10 +266,9 @@ export default function SettingsScreen(): JSX.Element {
                 : 'Set Up Password',
               icon: RcManagePassword,
               onPress: () => {
-                // TODO: on password setup
                 openManagePasswordSheetModal();
               },
-              visible: isSelfhostRegPkg,
+              visible: !biometricsEnabled,
             },
           ],
         },

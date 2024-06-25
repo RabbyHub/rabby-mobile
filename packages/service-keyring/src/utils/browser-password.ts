@@ -168,11 +168,11 @@ export async function encryptWithKey<R>(
  * @param encryptionKey - The key to decrypt with.
  * @returns The decrypted data.
  */
-export async function decrypt(
+export async function decrypt<T = any>(
   password: string,
   text: string,
   encryptionKey?: EncryptionKey | CryptoKey,
-): Promise<unknown> {
+): Promise<T> {
   const payload = JSON.parse(text);
   const { salt, keyMetadata } = payload;
   const cryptoKey = unwrapKey(
@@ -180,8 +180,7 @@ export async function decrypt(
       (await keyFromPassword(password, salt, false, keyMetadata)),
   );
 
-  const result = await decryptWithKey(cryptoKey, payload);
-  return result;
+  return decryptWithKey<T>(cryptoKey, payload);
 }
 
 /**

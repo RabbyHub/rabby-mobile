@@ -35,10 +35,17 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected ReactActivityDelegate createReactActivityDelegate() {
-    return new DefaultReactActivityDelegate(
-      this,
-      getMainComponentName(),
-      // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-      DefaultNewArchitectureEntryPoint.getFabricEnabled());
+    return new ReactActivityDelegate(this, getMainComponentName()) {
+      @Override
+      protected Bundle getLaunchOptions() {
+        Bundle initialProperties = new Bundle();
+        if (BuildConfig.rabbitCode != null) {
+          initialProperties.putString("rabbitCode", BuildConfig.rabbitCode);
+        } else {
+          initialProperties.putString("rabbitCode", "RABBY_MOBILE_CODE_DEV");
+        }
+        return initialProperties;
+      }
+    };
   }
 }

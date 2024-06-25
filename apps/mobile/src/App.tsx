@@ -24,6 +24,7 @@ import { useSecureOnBackground } from './hooks/useLock';
 import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
+import { AppProvider } from './hooks/global';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -36,9 +37,11 @@ const rneuiTheme = createTheme({
   },
 });
 
-function MainScreen() {
+type AppProps = { rabbitCode: string };
+
+function MainScreen({ rabbitCode }: AppProps) {
   const { isAppUnlocked } = useInitializeAppOnTop();
-  const { couldRender } = useBootstrapApp();
+  const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
   useSetupServiceStub();
@@ -61,13 +64,17 @@ function MainScreen() {
   }, [isAppUnlocked, initAccounts]);
 
   return (
-    <BottomSheetModalProvider>
-      {couldRender && <AppNavigation colorScheme={binaryTheme} />}
-    </BottomSheetModalProvider>
+    <AppProvider value={{ securityChain: securityChainOnTop }}>
+      <BottomSheetModalProvider>
+        {couldRender && <AppNavigation colorScheme={binaryTheme} />}
+      </BottomSheetModalProvider>
+    </AppProvider>
   );
 }
 
-function App(): JSX.Element {
+function App({ rabbitCode }: { rabbitCode: string }): JSX.Element {
+  // TODO: throw error if rabbitCode not provided on production
+
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>
@@ -76,7 +83,10 @@ function App(): JSX.Element {
             <Suspense fallback={null}>
               {/* TODO: measure to check if memory leak occured when refresh on iOS */}
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <MainScreen />
+                {/* read from native bundle on production */}
+                <MainScreen
+                  rabbitCode={__DEV__ ? 'RABBY_MOBILE_CODE_DEV' : rabbitCode}
+                />
               </GestureHandlerRootView>
               {/* <MainScreen /> */}
               <JotaiNexus />

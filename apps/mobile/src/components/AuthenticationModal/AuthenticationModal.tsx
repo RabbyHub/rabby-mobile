@@ -15,6 +15,12 @@ import { CheckItem } from './CheckItem';
 import { apisLock } from '@/core/apis';
 
 export interface AuthenticationModalProps {
+  /**
+   * @description external-defined validatie password user input.
+   * Throw an error to interrupt the post process, and `error.message` will be shown.
+   *
+   * @param password
+   */
   validationHandler?(password: string): Promise<void>;
   confirmText?: string;
   cancelText?: string;
@@ -22,7 +28,7 @@ export interface AuthenticationModalProps {
   description?: string;
   checklist?: string[];
   placeholder?: string;
-  onFinished?(...args: any[]): void;
+  onFinished?(ctx: { validatedPassword: string }): void;
   onCancel?(): void;
   needPassword?: boolean;
 }
@@ -55,7 +61,7 @@ export const AuthenticationModal = ({
       if (needPassword) {
         await validationHandler?.(password);
       }
-      onFinished?.();
+      onFinished?.({ validatedPassword: password });
     } catch (err: any) {
       console.error(err);
       setError(err.message);
@@ -157,8 +163,8 @@ AuthenticationModal.show = async (props: AuthenticationModalProps) => {
       props.onCancel?.();
       removeGlobalBottomSheetModal(id);
     },
-    onFinished() {
-      props.onFinished?.();
+    onFinished(ctx) {
+      props.onFinished?.(ctx);
       removeGlobalBottomSheetModal(id);
     },
   });

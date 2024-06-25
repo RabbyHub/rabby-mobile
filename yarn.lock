@@ -27674,6 +27674,7 @@ __metadata:
     react-native-get-random-values: ^1.10.0
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-keyboard-aware-scroll-view: ^0.9.5
+    react-native-keychain: 8.0.0
     react-native-linear-gradient: ^2.8.3
     react-native-mmkv: ^2.11.0
     react-native-pager-view: ^6.2.3
@@ -28298,6 +28299,13 @@ __metadata:
   peerDependencies:
     react-native: ">=0.48.4"
   checksum: 5eec2aedb886213dfed4c8428a443b565dce80ba9fcf5897171e4c8829d4dd64c5011ac004d93f29adfc83ad6f88c2838d1a5b45255dc4a49bd1c0a169245800
+  languageName: node
+  linkType: hard
+
+"react-native-keychain@npm:8.0.0":
+  version: 8.0.0
+  resolution: "react-native-keychain@npm:8.0.0"
+  checksum: cbab1cef8565743072f919663068727df20fc0ef5edd53b0aa96fac74c11fcd0daa197968b06cabed4f1b3f8e5e5ae73b6db8543ed9adbecc13662c38958c9ce
   languageName: node
   linkType: hard
 
