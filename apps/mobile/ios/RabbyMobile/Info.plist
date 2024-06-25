@@ -100,6 +100,6 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
   <key>rabbit_code</key>
-	<string>$(MM_FOX_CODE)</string>
+	<string>$(RABBY_MOBILE_CODE)</string>
 </dict>
 </plist>
