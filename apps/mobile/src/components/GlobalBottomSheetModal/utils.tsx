@@ -115,7 +115,10 @@ export function makeBottomSheetProps(ctx: {
     };
   }
 
-  if (ctx.params?.name === 'APPROVAL') {
+  if (
+    ctx.params?.name === MODAL_NAMES.APPROVAL ||
+    ctx.params?.name === MODAL_NAMES.VIEW_RAW_DETAILS
+  ) {
     if (
       [
         APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,

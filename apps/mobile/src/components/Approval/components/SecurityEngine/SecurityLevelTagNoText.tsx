@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   showText: {
     maxWidth: 170,
-    whiteSpace: 'nowrap',
+    // whiteSpace: 'nowrap',
   },
   safe: {
     color: '#27c193',

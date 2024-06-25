@@ -14,6 +14,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     hasTip: {
       flexDirection: 'row',
+      justifyContent: 'flex-start',
       alignItems: 'center',
     },
 
@@ -21,7 +22,7 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'relative',
       fontWeight: '500',
       alignItems: 'flex-start',
-      whiteSpace: 'nowrap',
+      // whiteSpace: 'nowrap',
     },
     notTitle: {
       textAlign: 'right',

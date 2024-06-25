@@ -37,7 +37,7 @@ const getStyle = (colors: AppColorsVariants) =>
     originText: {
       color: colors['neutral-title-1'],
       overflow: 'hidden',
-      whiteSpace: 'nowrap',
+      // whiteSpace: 'nowrap',
       fontSize: 16,
       lineHeight: 18,
       fontWeight: '500',
