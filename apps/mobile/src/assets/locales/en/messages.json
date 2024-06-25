@@ -1531,12 +1531,17 @@
     },
     "unlock": {
       "btn": {
-        "unlock": "Unlock"
+        "unlock": "Unlock",
+        "switchtype_pwd": "Unlock with Password",
+        "switchtype_fingerprint": "Unlock with Fingerprint"
       },
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
         "error": "Incorrect password"
+      },
+      "biometrics": {
+        "cancelled": "Cancelled"
       }
     },
     "addToken": {

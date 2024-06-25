@@ -1,13 +1,16 @@
 import { AppSwitch } from '@/components';
-import { useBiometricsInfo } from '@/hooks/biometrics';
+import { useBiometrics } from '@/hooks/biometrics';
 import { useThemeColors } from '@/hooks/theme';
+import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 
 export const SwitchBiometricsAuthentication = () => {
-  const { biometrics, requestToggleBiometricsEnabled } = useBiometricsInfo();
+  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics();
+  const { hasSetupCustomPassword } = useWalletPasswordInfo();
   const colors = useThemeColors();
 
   return (
     <AppSwitch
+      disabled={!hasSetupCustomPassword || !biometrics.supportedBiometryType}
       value={!!biometrics.authEnabled}
       changeValueImmediately={false}
       onValueChange={requestToggleBiometricsEnabled}

@@ -16,13 +16,13 @@ const biometricsInfo = atom({
   // encryptedVault: '',
 });
 
-export function useIsAuthBiometrics() {
-  const { authEnabled } = useAtomValue(biometricsInfo);
+export function useBiometricsInfo() {
+  const { authEnabled, supportedBiometryType } = useAtomValue(biometricsInfo);
 
-  return { biometricsEnabled: authEnabled };
+  return { isBiometricsEnabled: authEnabled, supportedBiometryType };
 }
 
-export function useBiometricsInfo(options?: { autoFetch?: boolean }) {
+export function useBiometrics(options?: { autoFetch?: boolean }) {
   const [biometrics, setBiometrics] = useAtom(biometricsInfo);
 
   const fetchBiometrics = useCallback(async () => {
@@ -83,6 +83,7 @@ export function useBiometricsInfo(options?: { autoFetch?: boolean }) {
 
   return {
     biometrics,
+    fetchBiometrics,
     requestToggleBiometricsEnabled,
   };
 }

@@ -5,7 +5,7 @@ import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
 import { strings } from '@/utils/i18n';
-import { safeVerifyPassword, unlockWallet } from './lock';
+import { clearCustomPassword, safeVerifyPassword, unlockWallet } from './lock';
 
 const storage = new MMKV({
   id: 'mmkv.keychain',
@@ -136,8 +136,8 @@ type PlainUserCredentials = RNKeychain.UserCredentials & {
 };
 export enum RequestGenericPurpose {
   VERIFY_PWD = 1,
-  UNLOCK_WALLET = 2,
-  RETURN_PWD = 11,
+  // UNLOCK_WALLET = 2,
+  DECRYPT_PWD = 11,
 }
 function onRequestReturn(instance: SKCls) {
   instance.isAuthenticating = false;
@@ -146,17 +146,19 @@ function onRequestReturn(instance: SKCls) {
 type DefaultRet = false | (PlainUserCredentials & { actionSuccess?: boolean });
 /**
  * @description request generic password from keychain,
- * on purpose VERIFY_PWD, it will return the decrypted password.
- * on purpose RETURN_PWD, it will return the encrypted password.
  *
  * @warning Use corresponding purpose for your scenario instead.
  *
  */
 export async function requestGenericPassword<
   T extends RequestGenericPurpose,
->(options: { purpose?: T }): Promise<null | DefaultRet> {
+>(options: {
+  purpose?: T;
+  onPlainPassword?: (password: string) => void | Promise<void>;
+}): Promise<null | DefaultRet> {
   const instance = await waitInstance();
-  const { purpose = RequestGenericPurpose.VERIFY_PWD as T } = options;
+  const { purpose = RequestGenericPurpose.VERIFY_PWD as T, onPlainPassword } =
+    options;
 
   try {
     instance.isAuthenticating = true;
@@ -177,17 +179,9 @@ export async function requestGenericPassword<
           onRequestReturn(instance);
           return { ...keychainObject, actionSuccess: verifyResult.success };
         }
-        case RequestGenericPurpose.RETURN_PWD: {
-          keychainObject.rawPassword = decrypted.password;
+        case RequestGenericPurpose.DECRYPT_PWD: {
+          await onPlainPassword?.(decrypted.password);
           onRequestReturn(instance);
-          return keychainObject;
-        }
-        case RequestGenericPurpose.UNLOCK_WALLET: {
-          const unlockResult = await unlockWallet(decrypted.password);
-
-          if (unlockResult.error) {
-            throw new Error(unlockResult.error);
-          }
           return { ...keychainObject, actionSuccess: true };
         }
         default: {
@@ -203,7 +197,7 @@ export async function requestGenericPassword<
     return keychainObject;
   } catch (error: any) {
     instance.isAuthenticating = false;
-    throw new Error(error.message);
+    throw error instanceof Error ? error : new Error(error);
   }
 }
 
@@ -244,3 +238,18 @@ export async function setGenericPassword(
 }
 
 /* ===================== Biometrics:end ===================== */
+
+export async function clearApplicationPassword(password: string) {
+  return Promise.allSettled([
+    clearCustomPassword(password),
+    resetGenericPassword(),
+  ]).then(([appPwdResult, genericPwdResult]) => {
+    return {
+      clearCustomPasswordError:
+        appPwdResult.status === 'rejected'
+          ? new Error('Failed to clear custom password')
+          : appPwdResult.value.error,
+      clearGenericPasswordSuccess: genericPwdResult.status === 'fulfilled',
+    };
+  });
+}

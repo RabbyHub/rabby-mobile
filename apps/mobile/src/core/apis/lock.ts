@@ -1,17 +1,11 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
-import RNKeychain from 'react-native-keychain';
 
 export const enum PasswordStatus {
   Unknown = -1,
   UseBuiltIn = 1,
   Custom = 11,
-}
-
-export const enum PasswordChoice {
-  password = 1,
-  biometrics = 2,
 }
 
 function getInitError(password: string) {

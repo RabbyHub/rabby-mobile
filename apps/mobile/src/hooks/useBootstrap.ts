@@ -16,7 +16,7 @@ import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
-import { useBiometricsInfo } from './biometrics';
+import { useBiometrics } from './biometrics';
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -162,7 +162,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
   useLoadLockInfo({ autoFetch: true });
-  useBiometricsInfo({ autoFetch: true });
+  useBiometrics({ autoFetch: true });
 
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {

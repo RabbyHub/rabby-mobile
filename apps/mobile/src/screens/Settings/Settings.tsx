@@ -51,7 +51,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
-import { useIsAuthBiometrics } from '@/hooks/biometrics';
+import { useBiometricsInfo } from '@/hooks/biometrics';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -82,7 +82,7 @@ export default function SettingsScreen(): JSX.Element {
     openManagePasswordSheetModal,
   } = useManagePasswordOnSettings();
 
-  const { biometricsEnabled } = useIsAuthBiometrics();
+  const { isBiometricsEnabled } = useBiometricsInfo();
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -143,12 +143,13 @@ export default function SettingsScreen(): JSX.Element {
         label: 'Settings',
         items: [
           {
-            label: biometricsEnabled
-              ? 'Disable Biometrics'
-              : 'Enable Biometrics',
+            label: isBiometricsEnabled
+              ? 'Biometrics enabled'
+              : 'Biometrics disabled',
             icon: RcIconFingerprint,
             rightNode: SwitchBiometricsAuthentication,
-            visible: hasSetupCustomPassword,
+            disabled: !hasSetupCustomPassword,
+            // visible: hasSetupCustomPassword,
           },
           {
             label: 'Enable whitelist for sending assets',
@@ -268,7 +269,7 @@ export default function SettingsScreen(): JSX.Element {
               onPress: () => {
                 openManagePasswordSheetModal();
               },
-              visible: !biometricsEnabled,
+              // visible: !isBiometricsEnabled,
             },
           ],
         },

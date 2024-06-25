@@ -3,14 +3,14 @@ import { atom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useWalletLockInfo } from './useManagePassword';
+import { useWalletPasswordInfo } from './useManagePassword';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { StackActions } from '@react-navigation/native';
 import { apisLock } from '@/core/apis';
 import { toast } from '@/components/Toast';
-import { useBiometricsInfo } from '@/hooks/biometrics';
+import { useBiometrics } from '@/hooks/biometrics';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { strings } from '@/utils/i18n';
 
@@ -29,7 +29,7 @@ export function useManagePasswordOnSettings() {
   const { toggleShowSheetModal } = useSheetModalsForManagingPassword();
   const navigation = useRabbyAppNavigation();
 
-  const { lockInfo } = useWalletLockInfo();
+  const { hasSetupCustomPassword, lockInfo } = useWalletPasswordInfo();
   const openManagePasswordSheetModal = useCallback(() => {
     if (lockInfo.pwdStatus === PasswordStatus.Custom) {
       toggleShowSheetModal('clearPasswordModalRef', true);
@@ -46,8 +46,6 @@ export function useManagePasswordOnSettings() {
       );
     }
   }, [toggleShowSheetModal, navigation, lockInfo.pwdStatus]);
-
-  const hasSetupCustomPassword = lockInfo.pwdStatus === PasswordStatus.Custom;
 
   const requestLockWallet = useCallback(async () => {
     if (!hasSetupCustomPassword) return;
@@ -68,7 +66,7 @@ export function useManagePasswordOnSettings() {
 }
 
 export function useBiometricsOnSettings() {
-  const { biometrics, requestToggleBiometricsEnabled } = useBiometricsInfo();
+  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics();
 
   const navigation = useRabbyAppNavigation();
   const redirectToEnableBiometricsAuthentication = useCallback(() => {

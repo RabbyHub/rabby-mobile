@@ -73,8 +73,6 @@ function MainScreen({ rabbitCode }: AppProps) {
 }
 
 function App({ rabbitCode }: { rabbitCode: string }): JSX.Element {
-  // TODO: throw error if rabbitCode not provided on production
-
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>

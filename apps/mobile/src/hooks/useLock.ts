@@ -171,19 +171,3 @@ export function useSecureOnBackground() {
     }
   }, [setAppStatus]);
 }
-
-const hasLeftFromUnlockAtom = atom(false);
-export function useHasLeftFromUnlock() {
-  const [hasLeftFromUnlock, setHasLeftFromUnlock] = useAtom(
-    hasLeftFromUnlockAtom,
-  );
-
-  const afterLeaveFromUnlock = useCallback(() => {
-    setHasLeftFromUnlock(true);
-  }, [setHasLeftFromUnlock]);
-
-  return {
-    hasLeftFromUnlock,
-    afterLeaveFromUnlock,
-  };
-}
