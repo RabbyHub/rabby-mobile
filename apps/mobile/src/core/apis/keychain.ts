@@ -111,7 +111,7 @@ const cancelStr = strings('native.authentication.auth_prompt_cancel');
 const DEFAULT_OPTIONS: RNKeychain.Options = {
   service: 'com.debank',
   authenticationPrompt: {
-    title: strings('native.authentication.auth_prompt_desc'),
+    title: strings('native.authentication.auth_prompt_title'),
     // subtitle: '',
     description: strings('native.authentication.auth_prompt_desc'),
     cancel: strings('native.authentication.auth_prompt_cancel'),
