@@ -30,6 +30,7 @@
       "testnet": "Testnets"
     },
     "signTx": {
+      "typedDataMessage": "Sign Typed Data",
       "nftIn": "NFT in",
       "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted",
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.",

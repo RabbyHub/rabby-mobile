@@ -1,7 +1,14 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeStyles } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { Divide } from './Divide';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 
@@ -46,6 +53,7 @@ interface CardProps {
   hasDivider?: boolean;
   children: React.ReactNode;
   onPressCard?: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 const CardInner: React.FC<CardProps> = ({
@@ -55,11 +63,12 @@ const CardInner: React.FC<CardProps> = ({
   hasDivider,
   children,
   onPressCard,
+  style,
 }) => {
   const { styles } = useThemeStyles(getStyle);
 
   return (
-    <View style={styles.card}>
+    <View style={StyleSheet.flatten([styles.card, style])}>
       {headline && (
         <>
           <CardTitle
@@ -76,16 +85,16 @@ const CardInner: React.FC<CardProps> = ({
   );
 };
 
-export const Card: React.FC<CardProps> = ({ onPressCard, ...props }) => {
+export const Card: React.FC<CardProps> = ({ onPressCard, style, ...props }) => {
   if (onPressCard) {
     return (
-      <TouchableOpacity onPress={onPressCard}>
+      <TouchableOpacity style={style} onPress={onPressCard}>
         <CardInner {...props} />
       </TouchableOpacity>
     );
   }
 
-  return <CardInner {...props} />;
+  return <CardInner style={style} {...props} />;
 };
 
 export const CardTitle: React.FC<

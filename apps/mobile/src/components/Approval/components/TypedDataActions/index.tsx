@@ -26,10 +26,10 @@ import BatchPermit2 from './BatchPermit2';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
-import { AppColorsVariants } from '@/constant/theme';
 import { Chain } from '@/constant/chains';
 import {
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -46,80 +46,7 @@ import { getActionsStyle } from '../Actions';
 import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    messageWrapper: {},
-    messageTitleWrapper: {
-      position: 'relative',
-      height: 16,
-      marginVertical: 10,
-    },
-    messageTitle: {
-      position: 'relative',
-      fontSize: 14,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-      textAlign: 'center',
-      backgroundColor: colors['neutral-bg-2'],
-      alignSelf: 'center',
-      paddingHorizontal: 12,
-    },
-    messageTitleLine: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      height: 1,
-      top: 6,
-      borderStyle: 'dashed',
-      borderTopWidth: 1,
-      borderColor: colors['neutral-line'],
-      zIndex: -1,
-    },
-    messageContent: {
-      padding: 15,
-      wordBreak: 'break-all',
-      whiteSpace: 'pre-wrap',
-      backgroundColor: colors['neutral-card-1'],
-      borderColor: colors['neutral-line'],
-      borderWidth: 1,
-      borderRadius: 6,
-      fontSize: 13,
-      lineHeight: 16,
-      fontWeight: '500',
-      color: colors['neutral-body'],
-      // height: 320,
-    },
-    noAction: {
-      backgroundColor: colors['neutral-card-3'],
-    },
-    tabView: {
-      backgroundColor: colors['neutral-card-2'],
-      padding: 15,
-      marginVertical: 15,
-      flex: 1,
-    },
-    popupView: {
-      padding: 15,
-      flex: 1,
-    },
-    indicator: {
-      backgroundColor: colors['blue-default'],
-      color: colors['blue-default'],
-    },
-    indicatorText: {
-      color: colors['blue-default'],
-    },
-    testnetMessage: {
-      padding: 15,
-      fontSize: 13,
-      flexWrap: 'wrap',
-      lineHeight: 16,
-      color: colors['neutral-body'],
-      height: 260,
-      fontWeight: '500',
-    },
-  });
+import { getMessageStyles } from '../TextActions';
 
 const Actions = ({
   data,
@@ -142,7 +69,7 @@ const Actions = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const actionStyles = getActionsStyle(colors);
 
   const actionName = useMemo(() => {
@@ -344,28 +271,31 @@ const Actions = ({
           )}
         </Card>
       </View>
-      <View>
-        <View style={styles.messageTitleWrapper}>
-          <Text style={styles.messageTitle}>{t('page.signText.message')}</Text>
-          <View
-            style={StyleSheet.flatten([
-              styles.messageTitleLine,
-              Platform.select({
-                ios: {
-                  borderStyle: 'solid',
-                },
-              }),
-            ])}
-          />
-        </View>
-        <View
+      <Card style={styles.messageCard}>
+        <ScrollView
           style={StyleSheet.flatten([
             styles.messageContent,
             data ? {} : styles.noAction,
           ])}>
-          <Text>{message}</Text>
-        </View>
-      </View>
+          <View style={styles.messageTitle}>
+            <Text
+              style={styles.dashLine}
+              ellipsizeMode="clip"
+              accessible={false}
+              numberOfLines={1}>
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            </Text>
+
+            <Text style={styles.messageTitleText}>
+              {t('page.signTx.typedDataMessage')}
+            </Text>
+          </View>
+          <Text style={styles.messageText}>{message}</Text>
+        </ScrollView>
+      </Card>
     </View>
   );
 };
