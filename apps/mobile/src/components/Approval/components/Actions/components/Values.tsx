@@ -379,6 +379,7 @@ const AddressWithCopy = ({
     Clipboard.setString(address);
     toast.success(t('global.copied'));
   };
+  const widthNum = parseInt(iconWidth, 10);
   return (
     <View
       ref={ref}
@@ -399,8 +400,8 @@ const AddressWithCopy = ({
       </Text>
       <IconAddressCopy
         onPress={handleCopyContractAddress}
-        width={iconWidth}
-        height={iconWidth}
+        width={widthNum}
+        height={widthNum}
       />
     </View>
   );

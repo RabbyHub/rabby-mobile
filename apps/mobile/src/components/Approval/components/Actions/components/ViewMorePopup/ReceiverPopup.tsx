@@ -98,35 +98,36 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         <Text style={styles.titleText}>
           {data.title || t('page.signTx.send.sendTo')}
         </Text>
-        <Values.Address
+        <Values.AddressWithCopy
           address={data.address}
           chain={data.chain}
           iconWidth="14px"
+          style={styles.valueAddress}
         />
       </View>
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressNote')}
             </Text>
           </Row>
           <Row>
             <Values.AddressMemo
               address={data.address}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressTypeTitle')}
             </Text>
           </Row>
           <Row>
             <View>
-              <Text style={commonStyle.primaryText}>{receiverType}</Text>
+              <Text style={commonStyle.detailPrimaryText}>{receiverType}</Text>
               {((data.contract && !contractOnCurrentChain) ||
                 data.name ||
                 contractOnCurrentChain?.multisig) && (
@@ -198,7 +199,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         {data.cex && (
           <Col>
             <Row style={styles.firstRow}>
-              <Text style={commonStyle.rowTitleText}>
+              <Text style={commonStyle.detailRowTitleText}>
                 {t('page.signTx.send.cexAddress')}
               </Text>
             </Row>
@@ -207,7 +208,9 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
                 <LogoWithText
                   logo={data.cex.logo}
                   text={
-                    <Text style={commonStyle.primaryText}>{data.cex.name}</Text>
+                    <Text style={commonStyle.detailPrimaryText}>
+                      {data.cex.name}
+                    </Text>
                   }
                 />
                 {(!data.cex.isDeposit || !data.cex.supportToken) && (
@@ -240,53 +243,56 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         {data.isTokenContract && (
           <Col>
             <Row style={styles.firstRow}>
-              <Text style={commonStyle.rowTitleText}>
+              <Text style={commonStyle.detailRowTitleText}>
                 {t('page.signTx.send.receiverIsTokenAddress')}
               </Text>
             </Row>
             <Row>
               <Values.Boolean
                 value={data.isTokenContract}
-                style={commonStyle.primaryText}
+                style={commonStyle.detailPrimaryText}
               />
             </Row>
           </Col>
         )}
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {data.contract
                 ? t('page.signTx.deployTimeTitle')
                 : t('page.signTx.firstOnChain')}
             </Text>
           </Row>
           <Row>
-            <Values.TimeSpan value={bornAt} style={commonStyle.primaryText} />
+            <Values.TimeSpan
+              value={bornAt}
+              style={commonStyle.detailPrimaryText}
+            />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.send.addressBalanceTitle')}
             </Text>
           </Row>
           <Row>
             <Values.USDValue
               value={data.usd_value}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.transacted')}
             </Text>
           </Row>
           <Row>
             <Values.Boolean
               value={data.hasTransfer}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
@@ -295,12 +301,12 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
             borderBottomWidth: 0,
           }}>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.send.whitelistTitle')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.onTransferWhitelist
                 ? t('page.signTx.send.onMyWhitelist')
                 : t('page.signTx.send.notOnWhitelist')}

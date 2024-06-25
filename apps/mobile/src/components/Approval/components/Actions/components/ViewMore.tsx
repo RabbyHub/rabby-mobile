@@ -94,7 +94,8 @@ const ViewMore = (
       <AppBottomSheetModal
         ref={modalRef}
         onDismiss={() => setPopupVisible(false)}
-        snapPoints={[height]}>
+        handleStyle={styles.handle}
+        enableDynamicSizing>
         <BottomSheetView style={styles.mainView}>
           <View style={styles.popupContainer}>
             {props.type === 'contract' && <ContractPopup data={props.data} />}

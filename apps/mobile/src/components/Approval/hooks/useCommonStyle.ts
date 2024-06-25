@@ -24,6 +24,17 @@ const useCommonStyle = () => {
         fontWeight: '500',
         color: colors['neutral-title-1'],
       },
+      detailRowTitleText: {
+        color: colors['neutral-body'],
+        fontSize: 14,
+        lineHeight: 17,
+      },
+      detailPrimaryText: {
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 17,
+        color: colors['neutral-title-1'],
+      },
       subRowTitleText: {
         fontSize: 14,
         lineHeight: 17,
