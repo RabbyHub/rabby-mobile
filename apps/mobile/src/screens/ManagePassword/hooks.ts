@@ -66,7 +66,9 @@ export function useManagePasswordOnSettings() {
 }
 
 export function useBiometricsOnSettings() {
-  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics();
+  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics({
+    autoFetch: true,
+  });
 
   const navigation = useRabbyAppNavigation();
   const redirectToEnableBiometricsAuthentication = useCallback(() => {

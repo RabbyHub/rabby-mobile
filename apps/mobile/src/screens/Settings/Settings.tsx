@@ -51,7 +51,8 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
-import { useBiometricsInfo } from '@/hooks/biometrics';
+import { useBiometrics } from '@/hooks/biometrics';
+import { useFocusEffect } from '@react-navigation/native';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -82,7 +83,14 @@ export default function SettingsScreen(): JSX.Element {
     openManagePasswordSheetModal,
   } = useManagePasswordOnSettings();
 
-  const { isBiometricsEnabled } = useBiometricsInfo();
+  const {
+    computed: { couldSetupBiometrics, isBiometricsEnabled },
+    fetchBiometrics,
+  } = useBiometrics();
+
+  useFocusEffect(() => {
+    fetchBiometrics();
+  });
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -148,7 +156,7 @@ export default function SettingsScreen(): JSX.Element {
               : 'Biometrics disabled',
             icon: RcIconFingerprint,
             rightNode: SwitchBiometricsAuthentication,
-            disabled: !hasSetupCustomPassword,
+            disabled: !couldSetupBiometrics || !hasSetupCustomPassword,
             // visible: hasSetupCustomPassword,
           },
           {

@@ -4,14 +4,17 @@ import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 
 export const SwitchBiometricsAuthentication = () => {
-  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics();
+  const {
+    computed: { isBiometricsEnabled, couldSetupBiometrics },
+    requestToggleBiometricsEnabled,
+  } = useBiometrics({ autoFetch: true });
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
   const colors = useThemeColors();
 
   return (
     <AppSwitch
-      disabled={!hasSetupCustomPassword || !biometrics.supportedBiometryType}
-      value={!!biometrics.authEnabled}
+      disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
+      value={!!isBiometricsEnabled}
       changeValueImmediately={false}
       onValueChange={requestToggleBiometricsEnabled}
       backgroundActive={colors['green-default']}

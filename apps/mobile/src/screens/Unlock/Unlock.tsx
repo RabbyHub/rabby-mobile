@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, Alert } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -30,10 +30,10 @@ import {
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
 import { APP_TEST_PWD } from '@/constant';
-import { RequestGenericPurpose } from '@/core/apis/keychain';
+import { RequestGenericPurpose, isCancelledByUser } from '@/core/apis/keychain';
 import { useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint } from './icons';
-import { useBiometricsInfo } from '@/hooks/biometrics';
+import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 
 const LAYOUTS = {
@@ -90,13 +90,14 @@ export default function UnlockScreen() {
 
   const navigation = useRabbyAppNavigation();
   const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
-  const { isBiometricsEnabled, supportedBiometryType } = useBiometricsInfo();
+  const {
+    computed: { isBiometricsEnabled, supportedBiometryType },
+  } = useBiometrics({ autoFetch: true });
   const { unlockApp } = useUnlockApp();
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
-  const couldSwitchingAuthentication =
-    isBiometricsEnabled && !!supportedBiometryType;
-  const usePassword = !usingBiometrics || !isBiometricsEnabled;
+  const couldSwitchingAuthentication = isBiometricsEnabled;
+  const usingPassword = !usingBiometrics || !isBiometricsEnabled;
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -120,11 +121,41 @@ export default function UnlockScreen() {
       });
     } catch (error: any) {
       if (__DEV__) console.error(error);
+
+      // leave here for debug
+      console.debug(
+        'error.code: %s; error.message: %s',
+        error.code,
+        error.message,
+      );
+
       if (error.code == 'E_CRYPTO_FAILED') {
-        // maybe means user cancelled
-        toast.info(t('page.unlock.biometrics.cancelled'));
+        if (isCancelledByUser(error.message)) {
+          // maybe means user cancelled
+          toast.info(t('page.unlock.biometrics.cancelled'));
+        } else {
+          Alert.alert(
+            t('page.unlock.biometrics.failedAndResetTitle'),
+            t('page.unlock.biometrics.failedAndReset'),
+            [
+              {
+                text: t('global.ok'),
+                style: 'cancel',
+              },
+              {
+                text: t('page.unlock.biometrics.usePassword'),
+                style: 'cancel',
+                onPress: () => {
+                  setUsingBiometrics(false);
+                },
+              },
+            ],
+          );
+        }
       } else {
-        toast.show(error?.message);
+        toast.info(
+          __DEV__ ? error?.message : t('page.unlock.biometrics.failed'),
+        );
       }
     }
   }, [unlockApp, t]);
@@ -170,7 +201,7 @@ export default function UnlockScreen() {
         <Text style={styles.title1}>Rabby Wallet</Text>
       </View>
       <View style={styles.bodyContainer}>
-        {usePassword ? (
+        {usingPassword ? (
           <View style={styles.formWrapper}>
             <FormInput
               clearable

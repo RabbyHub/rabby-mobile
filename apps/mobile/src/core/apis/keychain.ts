@@ -24,14 +24,13 @@ function getAuthenticationType() {
     KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD
   );
 }
+const authTypeRef = { current: getAuthenticationType() };
 function setAuthenticationType(type?: KEYCHAIN_AUTH_TYPES) {
-  storage.set(
-    KEYCHAIN_AUTH_TYPES_KEY,
-    type || KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD,
-  );
+  authTypeRef.current = type || KEYCHAIN_AUTH_TYPES.APPLICATION_PASSWORD;
+  storage.set(KEYCHAIN_AUTH_TYPES_KEY, authTypeRef.current);
 }
 export function isAuthenticatedByBiometrics() {
-  return getAuthenticationType() === KEYCHAIN_AUTH_TYPES.BIOMETRICS;
+  return authTypeRef.current === KEYCHAIN_AUTH_TYPES.BIOMETRICS;
 }
 
 const privates = new WeakMap();
@@ -98,7 +97,7 @@ const gen = (function* genSecureKeychainInstance() {
 
 async function waitInstance() {
   while (!gen.next().value) {
-    await sleep(50);
+    await sleep(200);
   }
 
   if (!SKCls.instance) {
@@ -108,9 +107,9 @@ async function waitInstance() {
 }
 
 /* ===================== Biometrics:start ===================== */
-const DEFAULT_OPTIONS: Partial<RNKeychain.Options> = {
+const cancelStr = strings('native.authentication.auth_prompt_cancel');
+const DEFAULT_OPTIONS: RNKeychain.Options = {
   service: 'com.debank',
-  // authenticationPromptTitle: strings('native.authentication.auth_prompt_title'),
   authenticationPrompt: {
     title: strings('native.authentication.auth_prompt_desc'),
     // subtitle: '',
@@ -118,6 +117,10 @@ const DEFAULT_OPTIONS: Partial<RNKeychain.Options> = {
     cancel: strings('native.authentication.auth_prompt_cancel'),
   },
 };
+
+export function isCancelledByUser(message?: string) {
+  return !!message && message.includes(`msg: ${cancelStr}`);
+}
 
 const GENERIC_USER = 'rabbymobile-user';
 export async function resetGenericPassword() {
@@ -164,6 +167,8 @@ export async function requestGenericPassword<
     instance.isAuthenticating = true;
     const keychainObject: DefaultRet = await RNKeychain.getGenericPassword({
       ...DEFAULT_OPTIONS,
+      // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
+      // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
     });
 
     if (!keychainObject) {
@@ -202,7 +207,7 @@ export async function requestGenericPassword<
 }
 
 export function getSupportedBiometryType() {
-  return RNKeychain.getSupportedBiometryType({ ...DEFAULT_OPTIONS });
+  return RNKeychain.getSupportedBiometryType();
 }
 
 export async function setGenericPassword(
@@ -224,7 +229,7 @@ export async function setGenericPassword(
       console.warn('setGenericPassword: Invalid type', type);
     }
     // Setting a password without a type does not save it
-    return await resetGenericPassword();
+    return resetGenericPassword();
   }
 
   const instance = await waitInstance();

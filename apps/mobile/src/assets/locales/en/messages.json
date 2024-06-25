@@ -1541,7 +1541,11 @@
         "error": "Incorrect password"
       },
       "biometrics": {
-        "cancelled": "Cancelled"
+        "failed": "Unlock failed",
+        "failedAndResetTitle": "Unlock failed",
+        "failedAndReset": "Biometric data invalid, please use password to unlock, you can re-set biometry in Settings later",
+        "cancelled": "Cancelled",
+        "usePassword": "Use Password"
       }
     },
     "addToken": {

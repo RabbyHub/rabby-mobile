@@ -56,6 +56,14 @@ mk_ios_icons() {
   done
 }
 
+android_splash_icons=(
+  mipmap-mdpi splash_logo.png
+  mipmap-hdpi splash_logo@2x.png
+  mipmap-xhdpi splash_logo@3x.png
+  mipmap-xxhdpi splash_logo@3x.png
+  mipmap-xxxhdpi splash_logo@3x.png
+)
+
 mk_android_icons() {
   # launch screen
   $project_dir/node_modules/.bin/s2v \
@@ -65,6 +73,14 @@ mk_android_icons() {
 
   # replace #FF000000 with #FFFFFF
   sed -i '' 's/#FF000000/#FFFFFF/g' $project_dir/android/app/src/main/res/drawable/ic_launch_screen.xml
+
+  for ((i=0;i<${#android_splash_icons[@]};i+=2))
+  do
+      local targetdir=${android_splash_icons[i]}
+      local srcfile=${android_splash_icons[i+1]}
+
+      cp $image_godfile_dir/android/$srcfile $project_dir/android/app/src/main/res/$targetdir/splash_logo.png
+  done
 
   # launcher icon
   $project_dir/node_modules/.bin/s2v \

@@ -154,6 +154,12 @@ const hideSplashScreen = () => {
   splashScreenVisibleRef.current = false;
 };
 
+// export function useHideSplash() {
+//   React.useEffect(() => {
+//     hideSplashScreen();
+//   }, []);
+// }
+
 /**
  * @description only call this hook on the top level component
  */
@@ -174,7 +180,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
 
   React.useEffect(() => {
-    Promise.allSettled([getTriedUnlock(), loadSecurityChain])
+    Promise.allSettled([getTriedUnlock(), loadSecurityChain({ rabbitCode })])
       .then(async ([_unlockResult, _securityChain]) => {
         setBootstrap({ couldRender: true });
       })
@@ -185,7 +191,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       .finally(() => {
         setTimeout(hideSplashScreen, 1000);
       });
-  }, [getTriedUnlock, setBootstrap]);
+  }, [getTriedUnlock, setBootstrap, rabbitCode]);
 
   return {
     couldRender,
