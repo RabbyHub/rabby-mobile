@@ -47,11 +47,14 @@ export function useSheetWebViewTester() {
     console.debug('Now add DAPP_METAMASK_TEST_DAPP to dapps');
   }, [dapps, addDapp, updateFavorite]);
 
-  console.debug(
-    '[debug] useSheetWebViewTester:: dapps',
-    Object.keys(dapps),
-    dapps[DAPP_METAMASK_TEST_DAPP.origin],
-  );
+  // // leave here for debug
+  // if (__DEV__) {
+  //   console.debug(
+  //     '[debug] useSheetWebViewTester:: dapps',
+  //     Object.keys(dapps),
+  //     dapps[DAPP_METAMASK_TEST_DAPP.origin],
+  //   )
+  // }
 
   const openMetaMaskTestDapp = React.useCallback(() => {
     makeSureTestDapp();
