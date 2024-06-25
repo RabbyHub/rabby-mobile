@@ -33,7 +33,11 @@ type Props =
   | NFTPopupProps
   | CollectionPopupProps;
 
-const ViewMore = (props: Props) => {
+const ViewMore = (
+  props: Props & {
+    children?: React.ReactNode;
+  },
+) => {
   const [popupVisible, setPopupVisible] = useState(false);
   const { t } = useTranslation();
   const modalRef = React.useRef<AppBottomSheetModal>(null);
@@ -73,14 +77,18 @@ const ViewMore = (props: Props) => {
 
   return (
     <>
-      <Text
-        style={{
-          ...commonStyle.secondaryText,
-          textDecorationLine: 'underline',
-        }}
-        onPress={handleClickViewMore}>
-        {t('page.approvals.component.ViewMore.text')}
-      </Text>
+      {props.children ? (
+        <View onTouchEnd={handleClickViewMore}>{props.children}</View>
+      ) : (
+        <Text
+          style={StyleSheet.flatten({
+            ...commonStyle.secondaryText,
+            textDecorationLine: 'underline',
+          })}
+          onPress={handleClickViewMore}>
+          {t('page.approvals.component.ViewMore.text')}
+        </Text>
+      )}
       <AppBottomSheetModal
         ref={modalRef}
         onDismiss={() => setPopupVisible(false)}

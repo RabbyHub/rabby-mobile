@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Chain } from '@/constant/chains';
 import { ContractDesc, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Table, Col, Row } from '../Table';
@@ -11,6 +11,8 @@ import { getStyle } from '../getStyle';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DescItem from '../DescItem';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
 export interface ReceiverData {
   title?: string;
@@ -35,6 +37,11 @@ export interface ReceiverData {
   name: string | null;
   onTransferWhitelist: boolean;
   token?: TokenItem;
+  isLabelAddress?: boolean;
+  labelAddressLogo?: string;
+  hasReceiverMnemonicInWallet?: boolean;
+  hasReceiverPrivateKeyInWallet?: boolean;
+  rank?: number;
 }
 
 export interface Props {
@@ -80,6 +87,10 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
     if (data.eoa) return data.eoa.bornAt;
     return null;
   }, [data, contractOnCurrentChain]);
+
+  const isLabelAddress =
+    data.isLabelAddress ||
+    !!(data.name && Object.values(ALIAS_ADDRESS).includes(data.name));
 
   return (
     <View>
@@ -145,6 +156,45 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
             </View>
           </Row>
         </Col>
+        {data.hasReceiverMnemonicInWallet && (
+          <Col>
+            <Row>
+              <Text>{t('page.signTx.addressSource')}</Text>
+            </Row>
+            <Row>
+              <Text>{t('page.signTx.send.fromMySeedPhrase')}</Text>
+            </Row>
+          </Col>
+        )}
+        {data.hasReceiverPrivateKeyInWallet && (
+          <Col>
+            <Row>
+              <Text>{t('page.signTx.addressSource')}</Text>
+            </Row>
+            <Row>
+              <Text>{t('page.signTx.send.fromMyPrivateKey')}</Text>
+            </Row>
+          </Col>
+        )}
+        {data.name && isLabelAddress && (
+          <Col>
+            <Row>
+              <Text>{t('page.signTx.label')}</Text>
+            </Row>
+            <Row>
+              <LogoWithText
+                text={data.name}
+                logo={data.labelAddressLogo || INTERNAL_REQUEST_SESSION.icon}
+                logoRadius={16}
+                logoSize={14}
+                textStyle={StyleSheet.flatten({
+                  fontSize: 13,
+                  color: colors['neutral-body'],
+                })}
+              />
+            </Row>
+          </Col>
+        )}
         {data.cex && (
           <Col>
             <Row style={styles.firstRow}>
@@ -172,6 +222,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
                     {!data.cex.supportToken && (
                       <DescItem>
                         <Text style={commonStyle.secondaryText}>
+                          {/* @ts-ignore */}
                           {t('page.signTx.send.tokenNotSupport', [
                             data.token
                               ? ellipsisTokenSymbol(getTokenSymbol(data.token))

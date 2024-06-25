@@ -2,7 +2,7 @@ import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Col, Row, Table } from '../Actions/components/Table';
-import { getStyle } from '../Actions';
+import { getActionsStyle } from '../Actions';
 import { useThemeColors } from '@/hooks/theme';
 
 const rowStyles = StyleSheet.create({
@@ -82,7 +82,7 @@ const RowLoading: React.FC<{
 
 const Loading = () => {
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyle(colors), [colors]);
+  const styles = React.useMemo(() => getActionsStyle(colors), [colors]);
 
   return (
     <>

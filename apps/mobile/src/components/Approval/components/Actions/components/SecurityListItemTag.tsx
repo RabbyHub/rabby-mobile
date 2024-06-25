@@ -6,9 +6,14 @@ import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEng
 export interface Props {
   id: string;
   engineResult: Result;
+  inSubTable?: boolean;
 }
 
-export const SecurityListItemTag: React.FC<Props> = ({ id, engineResult }) => {
+export const SecurityListItemTag: React.FC<Props> = ({
+  id,
+  engineResult,
+  inSubTable,
+}) => {
   const { rules, currentTx, userData, openRuleDrawer } =
     useApprovalSecurityEngine();
   const handleClickRule = (id: string) => {
@@ -32,6 +37,7 @@ export const SecurityListItemTag: React.FC<Props> = ({ id, engineResult }) => {
         currentTx.processedRules.includes(id) ? 'proceed' : engineResult.level
       }
       onClick={() => handleClickRule(id)}
+      inSubTable={inSubTable}
     />
   );
 };

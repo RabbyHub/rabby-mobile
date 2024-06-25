@@ -24,6 +24,7 @@ import {
   CrossTokenAction,
   CrossSwapAction,
   RevokePermit2Action,
+  SwapOrderAction,
 } from '@rabby-wallet/rabby-api/dist/types';
 import {
   ContextActionData,
@@ -47,9 +48,14 @@ import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
-import { apiSecurityEngine } from '@/core/apis';
+import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import i18n from '@/utils/i18n';
 import { ReceiverData } from './components/ViewMorePopup/ReceiverPopup';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import {
+  ContractRequireData,
+  fetchContractRequireData,
+} from '../TypedDataActions/utils';
 
 const { isSameAddress } = addressUtils;
 export interface ReceiveTokenItem extends TokenItem {
@@ -140,11 +146,22 @@ export interface ParsedActionData {
     nonce: string;
   };
   pushMultiSig?: PushMultiSigAction;
+  assetOrder?: {
+    payTokenList: TokenItem[];
+    payNFTList: NFTItem[];
+    receiveTokenList: TokenItem[];
+    receiveNFTList: NFTItem[];
+    takers: string[];
+    receiver: string | null;
+    expireAt: string | null;
+  };
   common?: {
     title: string;
     desc: string;
     is_asset_changed: boolean;
     is_involving_privacy: boolean;
+    receiver?: string;
+    from: string;
   };
 }
 
@@ -409,7 +426,32 @@ export const parseAction = (
   }
   if (data?.type === null) {
     return {
-      common: data as any,
+      common: {
+        from: tx.from,
+        ...(data as any),
+      },
+    };
+  }
+  if (data?.type === 'swap_order') {
+    const {
+      pay_token_list,
+      pay_nft_list,
+      receive_nft_list,
+      receive_token_list,
+      receiver,
+      takers,
+      expire_at,
+    } = data.data as SwapOrderAction;
+    return {
+      assetOrder: {
+        payTokenList: pay_token_list,
+        payNFTList: pay_nft_list,
+        receiveNFTList: receive_nft_list,
+        receiveTokenList: receive_token_list,
+        receiver,
+        takers,
+        expireAt: expire_at,
+      },
     };
   }
   return {
@@ -456,6 +498,9 @@ export interface SendRequireData {
   name: string | null;
   onTransferWhitelist: boolean;
   whitelistEnable: boolean;
+  receiverIsSpoofing: boolean;
+  hasReceiverPrivateKeyInWallet: boolean;
+  hasReceiverMnemonicInWallet: boolean;
 }
 
 export interface SendNFTRequireData extends SendRequireData {
@@ -521,6 +566,7 @@ export interface ContractCallRequireData {
   payNativeTokenAmount: string;
   nativeTokenSymbol: string;
   unexpectedAddr: ReceiverData | null;
+  receiverInWallet: boolean;
 }
 
 export interface ApproveNFTRequireData {
@@ -549,6 +595,10 @@ export interface PushMultiSigRequireData {
   id: string;
 }
 
+export interface AssetOrderRequireData extends ContractRequireData {
+  sender: string;
+}
+
 export type ActionRequireData =
   | SwapRequireData
   | ApproveTokenRequireData
@@ -561,6 +611,7 @@ export type ActionRequireData =
   | CancelTxRequireData
   | WrapTokenRequireData
   | PushMultiSigRequireData
+  | AssetOrderRequireData
   | null;
 
 export const waitQueueFinished = (q: PQueue) => {
@@ -704,7 +755,7 @@ export const fetchActionRequiredData = async ({
   chainId: string;
   address: string;
   tx: Tx;
-  origin: string;
+  origin?: string;
 }): Promise<ActionRequireData> => {
   if (actionData.deployContract) {
     return {};
@@ -801,7 +852,19 @@ export const fetchActionRequiredData = async ({
       name: null,
       onTransferWhitelist: false,
       whitelistEnable: false,
+      receiverIsSpoofing: false,
+      hasReceiverPrivateKeyInWallet: false,
+      hasReceiverMnemonicInWallet: false,
     };
+    const hasPrivateKeyInWallet = await apiKeyring.hasPrivateKeyInWallet(
+      actionData.send.to,
+    );
+    if (hasPrivateKeyInWallet) {
+      result.hasReceiverPrivateKeyInWallet =
+        hasPrivateKeyInWallet === KEYRING_TYPE.SimpleKeyring;
+      result.hasReceiverMnemonicInWallet =
+        hasPrivateKeyInWallet === KEYRING_TYPE.HdKeyring;
+    }
     queue.add(async () => {
       const { has_transfer } = await apiProvider.hasTransfer(
         chainId,
@@ -857,6 +920,13 @@ export const fetchActionRequiredData = async ({
       );
       result.usedChains = usedChainList;
     });
+    queue.add(async () => {
+      const { is_spoofing } = await apiProvider.checkSpoofing({
+        from: address,
+        to: actionData.send!.to,
+      });
+      result.receiverIsSpoofing = is_spoofing;
+    });
     const whitelist = await whitelistService.getWhitelist();
     const whitelistEnable = await whitelistService.isWhitelistEnabled();
     result.whitelistEnable = whitelistEnable;
@@ -869,31 +939,31 @@ export const fetchActionRequiredData = async ({
   if (actionData.approveToken) {
     const { token, spender } = actionData.approveToken;
     return await fetchTokenApproveRequireData({
+      apiProvider,
       chainId,
       address,
       token,
       spender,
-      apiProvider,
     });
   }
   if (actionData.revokePermit2) {
     const { token, spender } = actionData.revokePermit2;
     return await fetchTokenApproveRequireData({
+      apiProvider,
       chainId,
       address,
       token,
       spender,
-      apiProvider,
     });
   }
   if (actionData.revokeToken) {
     const { token, spender } = actionData.revokeToken;
     return await fetchTokenApproveRequireData({
+      apiProvider,
       chainId,
       address,
       token,
       spender,
-      apiProvider,
     });
   }
   if (actionData.cancelTx) {
@@ -908,7 +978,7 @@ export const fetchActionRequiredData = async ({
       );
       return {
         pendingTxs,
-      } as any;
+      };
     } else {
       return {
         pendingTxs: [],
@@ -928,7 +998,19 @@ export const fetchActionRequiredData = async ({
       name: null,
       onTransferWhitelist: false,
       whitelistEnable: false,
+      receiverIsSpoofing: false,
+      hasReceiverPrivateKeyInWallet: false,
+      hasReceiverMnemonicInWallet: false,
     };
+    const hasPrivateKeyInWallet = await apiKeyring.hasPrivateKeyInWallet(
+      actionData.sendNFT.to,
+    );
+    if (hasPrivateKeyInWallet) {
+      result.hasReceiverPrivateKeyInWallet =
+        hasPrivateKeyInWallet === KEYRING_TYPE.SimpleKeyring;
+      result.hasReceiverMnemonicInWallet =
+        hasPrivateKeyInWallet === KEYRING_TYPE.HdKeyring;
+    }
     queue.add(async () => {
       const { has_transfer } = await apiProvider.hasTransfer(
         chainId,
@@ -980,6 +1062,13 @@ export const fetchActionRequiredData = async ({
       );
       result.usedChains = usedChainList;
     });
+    queue.add(async () => {
+      const { is_spoofing } = await apiProvider.checkSpoofing({
+        from: address,
+        to: actionData.sendNFT!.to,
+      });
+      result.receiverIsSpoofing = is_spoofing;
+    });
     const whitelist = await whitelistService.getWhitelist();
     const whitelistEnable = await whitelistService.isWhitelistEnabled();
     result.whitelistEnable = whitelistEnable;
@@ -993,32 +1082,32 @@ export const fetchActionRequiredData = async ({
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      spender: actionData.approveNFT.spender,
       apiProvider,
+      spender: actionData.approveNFT.spender,
     });
   }
   if (actionData.revokeNFT) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      spender: actionData.revokeNFT.spender,
       apiProvider,
+      spender: actionData.revokeNFT.spender,
     });
   }
   if (actionData.approveNFTCollection) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      spender: actionData.approveNFTCollection.spender,
       apiProvider,
+      spender: actionData.approveNFTCollection.spender,
     });
   }
   if (actionData.revokeNFTCollection) {
     return fetchNFTApproveRequiredData({
       address,
       chainId,
-      spender: actionData.revokeNFTCollection.spender,
       apiProvider,
+      spender: actionData.revokeNFTCollection.spender,
     });
   }
   if (actionData.pushMultiSig) {
@@ -1034,6 +1123,19 @@ export const fetchActionRequiredData = async ({
     }
     return result;
   }
+
+  if (actionData.assetOrder) {
+    const requireData = await fetchContractRequireData(
+      tx.to,
+      chainId,
+      address,
+      apiProvider,
+    );
+    return {
+      ...requireData,
+      sender: address,
+    };
+  }
   if ((actionData.contractCall || actionData.common) && contractCall) {
     const chain = findChainByServerID(chainId);
     const result: ContractCallRequireData = {
@@ -1047,6 +1149,7 @@ export const fetchActionRequiredData = async ({
       payNativeTokenAmount: tx.value || '0x0',
       nativeTokenSymbol: chain?.nativeTokenSymbol || 'ETH',
       unexpectedAddr: null,
+      receiverInWallet: false,
     };
     queue.add(async () => {
       const credit = await apiProvider.getContractCredit(
@@ -1074,14 +1177,20 @@ export const fetchActionRequiredData = async ({
       result.hasInteraction = hasInteraction.has_interaction;
     });
     queue.add(async () => {
-      const unexpectedAddrList = await apiProvider.unexpectedAddrList({
-        chainId,
-        tx,
-        origin: origin || '',
-        addr: address,
-      });
-      if (unexpectedAddrList.length > 0) {
-        const addr = unexpectedAddrList[0].id;
+      let addr = actionData.common?.receiver;
+
+      if (!addr) {
+        const unexpectedAddrList = await apiProvider.unexpectedAddrList({
+          chainId,
+          tx,
+          origin: origin || '',
+          addr: address,
+        });
+        addr = unexpectedAddrList[0]?.id;
+      }
+
+      if (addr) {
+        result.receiverInWallet = await keyringService.hasAddress(addr);
         const receiverData: ReceiverData = {
           address: addr,
           chain: chain!,
@@ -1251,6 +1360,9 @@ export const formatSecurityEngineCtx = ({
         onTransferWhitelist: data.whitelistEnable
           ? data.onTransferWhitelist
           : false,
+        receiverIsSpoofing: data.receiverIsSpoofing,
+        hasReceiverMnemonicInWallet: data.hasReceiverMnemonicInWallet,
+        hasReceiverPrivateKeyInWallet: data.hasReceiverPrivateKeyInWallet,
       },
     };
   }
@@ -1278,6 +1390,9 @@ export const formatSecurityEngineCtx = ({
         onTransferWhitelist: data.whitelistEnable
           ? data.onTransferWhitelist
           : false,
+        receiverIsSpoofing: data.receiverIsSpoofing,
+        hasReceiverMnemonicInWallet: data.hasReceiverMnemonicInWallet,
+        hasReceiverPrivateKeyInWallet: data.hasReceiverPrivateKeyInWallet,
       },
     };
   }
@@ -1370,12 +1485,36 @@ export const formatSecurityEngineCtx = ({
       },
     };
   }
+  if (actionData.assetOrder) {
+    const { takers, receiver, receiveNFTList, receiveTokenList } =
+      actionData.assetOrder;
+    const data = requireData as AssetOrderRequireData;
+    return {
+      assetOrder: {
+        specificBuyer: takers[0],
+        from: data.sender,
+        receiver: receiver || '',
+        chainId,
+        id: data.id,
+        hasReceiveAssets: receiveNFTList.length + receiveTokenList.length > 0,
+      },
+    };
+  }
   if (actionData.contractCall) {
     const data = requireData as ContractCallRequireData;
     return {
       contractCall: {
         chainId,
         id: data.id,
+      },
+    };
+  }
+  if (actionData.common) {
+    return {
+      common: {
+        ...actionData.common,
+        receiverInWallet: (requireData as ContractCallRequireData)
+          .receiverInWallet,
       },
     };
   }
@@ -1465,6 +1604,9 @@ export const getActionTypeText = (data: ParsedActionData) => {
   if (data.revokePermit2) {
     return t('page.signTx.revokePermit2.title');
   }
+  if (data.assetOrder) {
+    return t('page.signTx.assetOrder.title');
+  }
   if (data?.common) {
     return data.common.title;
   }
@@ -1493,6 +1635,7 @@ export const getActionTypeTextByType = (type: string) => {
     cancel_tx: t('page.signTx.cancelTx.title'),
     push_multisig: t('page.signTx.submitMultisig.title'),
     contract_call: t('page.signTx.contractCall.title'),
+    swap_order: t('page.signTx.assetOrder.title'),
   };
 
   return dict[type] || t('page.signTx.unknownAction');

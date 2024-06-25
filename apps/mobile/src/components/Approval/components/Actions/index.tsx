@@ -50,6 +50,9 @@ import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import { Card } from './components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from './components/Divide';
+import { Col, Row } from './components/Table';
+import LogoWithText from './components/LogoWithText';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -191,6 +194,7 @@ const Actions = ({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = getActionsStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const handleViewRawClick = () => {
     ViewRawModal.open({
@@ -274,6 +278,21 @@ const Actions = ({
         </View>
         <Divide />
         <View style={styles.container}>
+          <Col>
+            <Row isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.chain')}
+              </Text>
+            </Row>
+            <Row>
+              <LogoWithText
+                textStyle={commonStyle.primaryText}
+                logo={chain.logo}
+                text={chain.name}
+              />
+            </Row>
+          </Col>
+
           {data.swap && (
             <Swap
               data={data.swap}

@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,10 @@ import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import DescItem from './components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { SubCol, SubRow, SubTable } from './components/SubTable';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { useThemeColors } from '@/hooks/theme';
 
 const Send = ({
   data,
@@ -31,6 +35,7 @@ const Send = ({
   const { init } = useApprovalSecurityEngine();
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
+  const colors = useThemeColors();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -45,6 +50,10 @@ const Send = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isLabelAddress =
+    requireData.name && Object.values(ALIAS_ADDRESS).includes(requireData.name);
+
+  const sendContractRef = React.useRef<View>(null);
   return (
     <View>
       <Table>
@@ -70,16 +79,6 @@ const Send = ({
               }
               logoRadius={16}
             />
-            <DescItem>
-              <Text style={commonStyle.secondaryText}>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(actionData.token.price)
-                    .times(actionData.token.amount)
-                    .toFixed(),
-                )}
-              </Text>
-            </DescItem>
           </Row>
         </Col>
         <Col>
@@ -90,8 +89,31 @@ const Send = ({
           </Row>
           <Row>
             <View>
-              <Values.Address address={actionData.to} chain={chain} />
-              <View>
+              <ViewMore
+                type="receiver"
+                data={{
+                  token: actionData.token,
+                  address: actionData.to,
+                  chain,
+                  eoa: requireData.eoa,
+                  cex: requireData.cex,
+                  contract: requireData.contract,
+                  usd_value: requireData.usd_value,
+                  hasTransfer: requireData.hasTransfer,
+                  isTokenContract: requireData.isTokenContract,
+                  name: requireData.name,
+                  onTransferWhitelist: requireData.onTransferWhitelist,
+                  hasReceiverMnemonicInWallet:
+                    requireData.hasReceiverMnemonicInWallet,
+                  hasReceiverPrivateKeyInWallet:
+                    requireData.hasReceiverPrivateKeyInWallet,
+                }}>
+                <View ref={sendContractRef}>
+                  <Values.Address address={actionData.to} chain={chain} />
+                </View>
+              </ViewMore>
+
+              {/* <View>
                 <DescItem>
                   <Values.AddressMemo
                     address={actionData.to}
@@ -135,6 +157,7 @@ const Send = ({
                     />
                     <SecurityListItem
                       engineResult={engineResultMap['1020']}
+                      // @ts-ignore
                       dangerText={t('page.signTx.send.tokenNotSupport', [
                         ellipsisTokenSymbol(getTokenSymbol(actionData.token)),
                       ])}
@@ -170,10 +193,135 @@ const Send = ({
                     }}
                   />
                 </DescItem>
-              </View>
+              </View> */}
             </View>
           </Row>
         </Col>
+        <SubTable target={sendContractRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.addressNote')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.AddressMemo address={actionData.to} />
+            </SubRow>
+          </SubCol>
+          {!!requireData.contract && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.addressTypeTitle')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text>{t('page.signTx.contract')}</Text>
+              </SubRow>
+            </SubCol>
+          )}
+          {!!requireData.name && (
+            <SubCol nested={!isLabelAddress}>
+              <SubRow isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {isLabelAddress ? t('page.signTx.label') : ' '}
+                </Text>
+              </SubRow>
+              <SubRow>
+                {isLabelAddress ? (
+                  <LogoWithText
+                    text={requireData.name}
+                    logo={INTERNAL_REQUEST_SESSION.icon}
+                    textStyle={StyleSheet.flatten({
+                      fontSize: 13,
+                      color: colors['neutral-body'],
+                    })}
+                  />
+                ) : (
+                  <Text>
+                    {requireData.name.replace(/^Token: /, 'Token ') +
+                      ' contract address'}
+                  </Text>
+                )}
+              </SubRow>
+            </SubCol>
+          )}
+          <SecurityListItem
+            engineResult={engineResultMap['1019']}
+            dangerText={t('page.signTx.send.contractNotOnThisChain')}
+            noTitle
+            id="1019"
+          />
+          <SecurityListItem
+            title={t('page.signTx.addressSource')}
+            engineResult={engineResultMap['1142']}
+            safeText={
+              requireData.hasReceiverMnemonicInWallet
+                ? t('page.signTx.send.fromMySeedPhrase')
+                : t('page.signTx.send.fromMyPrivateKey')
+            }
+            id="1142"
+          />
+          <SecurityListItem
+            engineResult={engineResultMap['1016']}
+            dangerText={t('page.signTx.yes')}
+            title={t('page.signTx.send.receiverIsTokenAddress')}
+            id="1016"
+          />
+          {requireData.cex && (
+            <>
+              <SubCol>
+                <SubRow isTitle>
+                  <Text>{t('page.signTx.send.cexAddress')}</Text>
+                </SubRow>
+                <SubRow>
+                  <LogoWithText
+                    logo={requireData.cex.logo}
+                    text={requireData.cex.name}
+                    textStyle={StyleSheet.flatten({
+                      fontSize: 13,
+                      lineHeight: 15,
+                      color: colors['neutral-body'],
+                    })}
+                  />
+                </SubRow>
+              </SubCol>
+              <SecurityListItem
+                noTitle
+                engineResult={engineResultMap['1021']}
+                dangerText={t('page.signTx.send.notTopupAddress')}
+                id="1021"
+              />
+              <SecurityListItem
+                noTitle
+                engineResult={engineResultMap['1020']}
+                // @ts-ignore
+                dangerText={t('page.signTx.send.tokenNotSupport', [
+                  ellipsisTokenSymbol(getTokenSymbol(actionData.token)),
+                ])}
+                id="1020"
+              />
+            </>
+          )}
+          <SecurityListItem
+            title={t('page.signTx.transacted')}
+            engineResult={engineResultMap['1018']}
+            warningText={<Values.Transacted value={false} />}
+            id="1018"
+          />
+          <SecurityListItem
+            title={t('page.signTx.tokenApprove.flagByRabby')}
+            engineResult={engineResultMap['1143']}
+            dangerText={t('page.signTx.send.scamAddress')}
+            id="1143"
+          />
+          <SecurityListItem
+            title={t('page.signTx.send.whitelistTitle')}
+            engineResult={engineResultMap['1033']}
+            safeText={t('page.signTx.send.onMyWhitelist')}
+            id="1033"
+          />
+        </SubTable>
       </Table>
     </View>
   );

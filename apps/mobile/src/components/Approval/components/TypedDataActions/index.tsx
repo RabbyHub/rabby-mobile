@@ -47,6 +47,9 @@ import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
 import { getMessageStyles } from '../TextActions';
+import LogoWithText from '../Actions/components/LogoWithText';
+import { Col, Row } from '../Actions/components/Table';
+import useCommonStyle from '../../hooks/useCommonStyle';
 
 const Actions = ({
   data,
@@ -71,6 +74,7 @@ const Actions = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
   const actionStyles = getActionsStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -152,6 +156,23 @@ const Actions = ({
           ) : (
             (data?.actionType || data?.actionType === null) && (
               <View style={actionStyles.container}>
+                {chain && (
+                  <Col>
+                    <Row isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.signTx.chain')}
+                      </Text>
+                    </Row>
+                    <Row>
+                      <LogoWithText
+                        textStyle={commonStyle.primaryText}
+                        logo={chain.logo}
+                        text={chain.name}
+                      />
+                    </Row>
+                  </Col>
+                )}
+
                 {data.permit && chain && (
                   <Permit
                     data={data.permit}

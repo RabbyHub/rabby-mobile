@@ -1,4 +1,4 @@
-import { KeyringTypeName } from '@rabby-wallet/keyring-utils';
+import { KeyringTypeName, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { keyringService, preferenceService } from '../services';
 import { ethErrors } from 'eth-rpc-errors';
@@ -126,4 +126,29 @@ export const addKeyring = async (
   } else {
     throw new Error(t('background.error.addKeyring404'));
   }
+};
+
+export const hasPrivateKeyInWallet = async (address: string) => {
+  let pk: any = null;
+  try {
+    pk = await keyringService.getKeyringForAccount(
+      address,
+      KEYRING_TYPE.SimpleKeyring,
+    );
+  } catch (e) {
+    // just ignore the error
+  }
+  let mnemonic: any = null;
+  try {
+    mnemonic = await keyringService.getKeyringForAccount(
+      address,
+      KEYRING_TYPE.HdKeyring,
+    );
+  } catch (e) {
+    // just ignore the error
+  }
+  if (!pk && !mnemonic) {
+    return false;
+  }
+  return pk?.type || mnemonic?.type;
 };

@@ -226,7 +226,7 @@ export interface ContractRequireData {
   rank: number | null;
 }
 
-const fetchContractRequireData = async (
+export const fetchContractRequireData = async (
   id: string,
   chainId: string,
   sender: string,

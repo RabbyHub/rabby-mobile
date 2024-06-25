@@ -119,6 +119,7 @@ const SecurityLevelTag = ({
   onClick,
   right = -13,
   style,
+  inSubTable,
 }: {
   enable: boolean;
   level: Level | 'proceed';
@@ -126,7 +127,13 @@ const SecurityLevelTag = ({
   onClick?(): void;
   right?: number;
   style?: StyleProp<ViewStyle>;
+  // adjust position for sub table
+  inSubTable?: boolean;
 }) => {
+  if (inSubTable) {
+    right = right - 12;
+  }
+
   const wrapperStyles = StyleSheet.flatten([
     styles.wrapper,
     translucent && styles.translucent,

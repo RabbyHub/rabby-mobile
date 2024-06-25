@@ -4,13 +4,13 @@ import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { Tip } from '@/components/Tip';
+import IconTableArrow from '@/assets/icons/sign/table-arrow.svg';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     colWrapper: {
       flexDirection: 'row',
-      alignItems: 'stretch',
-      paddingVertical: 12,
+      justifyContent: 'space-between',
     },
     hasTip: {
       flexDirection: 'row',
@@ -20,7 +20,6 @@ const getStyles = (colors: AppColorsVariants) =>
     rowWrapper: {
       position: 'relative',
       fontWeight: '500',
-      alignItems: 'flex-start',
       whiteSpace: 'nowrap',
     },
     notTitle: {
@@ -31,24 +30,64 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       flexShrink: 0,
     },
+    table: {
+      borderRadius: 6,
+      backgroundColor: colors['neutral-card3'],
+      padding: 12,
+      rowGap: 12,
+      flexDirection: 'column',
+      marginBottom: 12,
+    },
   });
 
-const Table = ({
+export const SubTable = ({
   children,
   style,
+  target,
 }: {
   children: ReactNode;
   style?: ViewStyle;
+  target: React.RefObject<View>;
 }) => {
-  return <View style={{ ...style }}>{children}</View>;
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  const [left, setLeft] = React.useState(0);
+
+  React.useEffect(() => {
+    if (target.current) {
+      target.current.measure((x, y, w, h, pX, pY) => {
+        setLeft(pX + w / 2 - 30);
+      });
+    }
+  }, [target]);
+
+  return (
+    <View
+      style={StyleSheet.flatten({
+        position: 'relative',
+        ...style,
+      })}>
+      <View style={styles.table}>{children}</View>
+      <IconTableArrow
+        color={colors['neutral-card3']}
+        style={StyleSheet.flatten({
+          position: 'absolute',
+          left: left,
+          top: -8,
+        })}
+      />
+    </View>
+  );
 };
 
-const Col = ({
+export const SubCol = ({
   children,
   style,
+  nested,
 }: {
   children: ReactNode;
   style?: ViewStyle;
+  nested?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
@@ -57,6 +96,7 @@ const Col = ({
     <View
       style={{
         ...styles.colWrapper,
+        ...(nested ? { marginTop: -6 } : {}),
         ...(style || {}),
       }}>
       {children}
@@ -64,7 +104,7 @@ const Col = ({
   );
 };
 
-const Row = ({
+export const SubRow = ({
   children,
   isTitle = false,
   tip,
@@ -103,5 +143,3 @@ const Row = ({
     </View>
   );
 };
-
-export { Table, Col, Row };
