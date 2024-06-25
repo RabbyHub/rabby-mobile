@@ -9,22 +9,20 @@ const DeployContract = () => {
   const commonStyle = useCommonStyle();
 
   return (
-    <View>
-      <Table>
-        <Col>
-          <Row isTitle>
-            <Text style={commonStyle.rowTitleText}>
-              {t('page.signTx.deployContract.descriptionTitle')}
-            </Text>
-          </Row>
-          <Row>
-            <Text style={commonStyle.primaryText}>
-              {t('page.signTx.deployContract.description')}
-            </Text>
-          </Row>
-        </Col>
-      </Table>
-    </View>
+    <Table>
+      <Col>
+        <Row isTitle>
+          <Text style={commonStyle.rowTitleText}>
+            {t('page.signTx.deployContract.descriptionTitle')}
+          </Text>
+        </Row>
+        <Row>
+          <Text style={commonStyle.primaryText}>
+            {t('page.signTx.deployContract.description')}
+          </Text>
+        </Row>
+      </Col>
+    </Table>
   );
 };
 

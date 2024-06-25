@@ -117,7 +117,7 @@ const SecurityLevelTag = ({
   level,
   translucent,
   onClick,
-  right = -13,
+  right = -28,
   style,
   inSubTable,
 }: {

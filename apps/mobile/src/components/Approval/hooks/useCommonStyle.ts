@@ -24,6 +24,18 @@ const useCommonStyle = () => {
         fontWeight: '500',
         color: colors['neutral-title-1'],
       },
+      subRowTitleText: {
+        fontSize: 14,
+        lineHeight: 17,
+        fontWeight: '400',
+        color: colors['neutral-body'],
+      },
+      subRowText: {
+        fontSize: 14,
+        lineHeight: 17,
+        fontWeight: '500',
+        color: colors['neutral-title-1'],
+      },
       rowFlexCenterItem: {
         display: 'flex',
         flexDirection: 'row',

@@ -86,7 +86,7 @@ const Row = ({
           ...(isTitle ? styles.title : styles.notTitle),
           ...styles.rowWrapper,
           ...(tip ? styles.hasTip : {}),
-          ...(itemsCenter ? { alignItems: 'center' } : {}),
+          ...(itemsCenter ? { justifyContent: 'center' } : {}),
         },
         style,
       ])}>

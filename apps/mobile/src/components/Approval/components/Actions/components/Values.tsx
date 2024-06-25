@@ -72,7 +72,6 @@ const styles = StyleSheet.create({
   tokenAmountWrapper: {
     flex: 0,
     flexShrink: 0,
-    maxWidth: '80%',
   },
 });
 
@@ -337,7 +336,7 @@ const Address = ({
       style={StyleSheet.flatten({
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
+        borderWidth: 0.5,
         borderColor: colors['neutral-line'],
         paddingHorizontal: 6,
         paddingVertical: 3,
@@ -444,37 +443,15 @@ const DisplayChain = ({
   );
 };
 
-const Interacted = ({
-  value,
-  textStyle,
-}: {
-  value: boolean;
-  textStyle?: TextStyle;
-}) => {
+const Interacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   return (
     <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
-        <>
-          <IconInteracted
-            style={{
-              marginRight: 4,
-              width: 14,
-            }}
-          />
-          <Text style={textStyle}>{t('page.signTx.interacted')}</Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.yes')}</Text>
       ) : (
-        <>
-          <IconNotInteracted
-            style={{
-              marginRight: 4,
-              width: 14,
-            }}
-          />
-          <Text style={textStyle}>{t('page.signTx.neverInteracted')}</Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.no')}</Text>
       )}
     </View>
   );
@@ -486,27 +463,9 @@ const Transacted = ({ value }: { value: boolean }) => {
   return (
     <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
-        <>
-          <IconInteracted
-            style={{
-              marginRight: 6,
-            }}
-          />
-          <Text style={commonStyle.secondaryText}>
-            {t('page.signTx.transacted')}
-          </Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.yes')}</Text>
       ) : (
-        <>
-          <IconNotInteracted
-            style={{
-              marginRight: 6,
-            }}
-          />
-          <Text style={commonStyle.secondaryText}>
-            {t('page.signTx.neverTransacted')}
-          </Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.no')}</Text>
       )}
     </View>
   );

@@ -1,4 +1,4 @@
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { LayoutRectangle, StyleSheet, View, ViewStyle } from 'react-native';
 import React, { ReactNode } from 'react';
 import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { useThemeColors } from '@/hooks/theme';
@@ -19,7 +19,6 @@ const getStyles = (colors: AppColorsVariants) =>
 
     rowWrapper: {
       position: 'relative',
-      fontWeight: '500',
       whiteSpace: 'nowrap',
     },
     notTitle: {
@@ -47,22 +46,33 @@ export const SubTable = ({
 }: {
   children: ReactNode;
   style?: ViewStyle;
-  target: React.RefObject<View>;
+  target?: React.RefObject<View>;
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const [left, setLeft] = React.useState(0);
+  const [visible, setVisible] = React.useState(true);
 
   React.useEffect(() => {
-    if (target.current) {
+    if (target?.current) {
       target.current.measure((x, y, w, h, pX, pY) => {
         setLeft(pX + w / 2 - 30);
       });
     }
   }, [target]);
 
+  const handleLayout = (layout: LayoutRectangle) => {
+    // padding * 2 + marginBottom = 36
+    setVisible(layout.height > 36);
+  };
+
+  if (!visible) {
+    return null;
+  }
+
   return (
     <View
+      onLayout={event => handleLayout(event.nativeEvent.layout)}
       style={StyleSheet.flatten({
         position: 'relative',
         ...style,

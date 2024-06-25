@@ -11,7 +11,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import ViewMore from './components/ViewMore';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const TokenApprove = ({
   data,
@@ -35,6 +35,8 @@ const TokenApprove = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const revokeTokenAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -48,7 +50,7 @@ const TokenApprove = ({
             <LogoWithText
               logo={actionData.token.logo_url}
               text={<Values.TokenSymbol token={requireData.token} />}
-              logoRadius={16}
+              textStyle={commonStyle.primaryText}
             />
           </Row>
         </Col>
@@ -59,30 +61,35 @@ const TokenApprove = ({
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-              <DescItem>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                    isRevoke: true,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="spender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+                isRevoke: true,
+              }}>
+              <View ref={revokeTokenAddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={revokeTokenAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+        </SubTable>
       </Table>
     </View>
   );

@@ -44,7 +44,7 @@ export const SecurityListItem: React.FC<Props> = ({
   return (
     <SubCol nested={!hasTitle}>
       <SubRow tip={tip} isTitle>
-        <Text style={commonStyle.rowTitleText}>
+        <Text style={commonStyle.subRowTitleText}>
           {noTitle ? '' : displayTitle}
         </Text>
       </SubRow>
@@ -53,28 +53,28 @@ export const SecurityListItem: React.FC<Props> = ({
           <View>
             {engineResult.level === Level.DANGER ? (
               typeof dangerText === 'string' ? (
-                <Text style={commonStyle.secondaryText}>{dangerText}</Text>
+                <Text style={commonStyle.subRowText}>{dangerText}</Text>
               ) : (
                 dangerText
               )
             ) : null}
             {engineResult.level === Level.WARNING ? (
               typeof warningText === 'string' ? (
-                <Text style={commonStyle.secondaryText}>{warningText}</Text>
+                <Text style={commonStyle.subRowText}>{warningText}</Text>
               ) : (
                 warningText
               )
             ) : null}
             {engineResult.level === Level.SAFE ? (
               typeof safeText === 'string' ? (
-                <Text style={commonStyle.secondaryText}>{safeText}</Text>
+                <Text style={commonStyle.subRowText}>{safeText}</Text>
               ) : (
                 safeText
               )
             ) : null}
             {engineResult.level === Level.FORBIDDEN ? (
               typeof forbiddenText === 'string' ? (
-                <Text style={commonStyle.secondaryText}>{forbiddenText}</Text>
+                <Text style={commonStyle.subRowText}>{forbiddenText}</Text>
               ) : (
                 forbiddenText
               )
@@ -87,7 +87,7 @@ export const SecurityListItem: React.FC<Props> = ({
             />
           </View>
         ) : (
-          <Text style={commonStyle.secondaryText}>{defaultText}</Text>
+          <Text style={commonStyle.subRowText}>{defaultText}</Text>
         )}
       </SubRow>
     </SubCol>

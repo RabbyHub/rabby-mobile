@@ -1,6 +1,6 @@
 import React from 'react';
 import LogoWithText from './LogoWithText';
-import { TextStyle, View } from 'react-native';
+import { Text, TextStyle, View } from 'react-native';
 
 export interface Props {
   protocol: {
@@ -21,7 +21,7 @@ export interface Props {
 
 export const ProtocolListItem: React.FC<Props> = ({ protocol, style }) => {
   if (!protocol) {
-    return null;
+    return <Text style={style}>-</Text>;
   }
 
   return (
