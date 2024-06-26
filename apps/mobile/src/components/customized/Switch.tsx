@@ -21,3 +21,7 @@ export const AppSwitch = React.forwardRef<Switch, SwitchProps>((props, ref) => {
     />
   );
 });
+
+export type SwitchToggleType = {
+  toggle: (enabled?: boolean) => void;
+};

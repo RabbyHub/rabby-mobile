@@ -54,6 +54,7 @@ import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect } from '@react-navigation/native';
+import { SwitchToggleType } from '@/components';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -100,6 +101,11 @@ export default function SettingsScreen(): JSX.Element {
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
+
+  const [switchWhitelistRef, switchBiometricsRef] = [
+    useRef<SwitchToggleType>(null),
+    useRef<SwitchToggleType>(null),
+  ];
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -164,14 +170,22 @@ export default function SettingsScreen(): JSX.Element {
               ? 'Biometrics enabled'
               : 'Biometrics disabled',
             icon: isIOS ? RcIconFaceId : RcIconFingerprint,
-            rightNode: <SwitchBiometricsAuthentication />,
+            rightNode: (
+              <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
+            ),
+            onPress: () => {
+              switchBiometricsRef.current?.toggle();
+            },
             disabled: disabledBiometrics,
             // visible: hasSetupCustomPassword,
           },
           {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
-            rightNode: <SwitchWhitelistEnable />,
+            onPress: () => {
+              switchWhitelistRef.current?.toggle();
+            },
+            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
             label: 'Custom RPC',

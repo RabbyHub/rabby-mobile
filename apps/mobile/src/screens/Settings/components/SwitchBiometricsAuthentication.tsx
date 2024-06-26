@@ -1,16 +1,26 @@
-import { AppSwitch } from '@/components';
+import React from 'react';
+
+import { AppSwitch, SwitchToggleType } from '@/components';
 import { useToggleBiometricsEnabled } from '@/hooks/biometrics';
 import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 
-export const SwitchBiometricsAuthentication = (
-  props: React.ComponentProps<typeof AppSwitch>,
-) => {
+export const SwitchBiometricsAuthentication = React.forwardRef<
+  SwitchToggleType,
+  React.ComponentProps<typeof AppSwitch>
+>((props, ref) => {
   const {
     isBiometricsEnabled,
     couldSetupBiometrics,
     requestToggleBiometricsEnabled,
   } = useToggleBiometricsEnabled();
+
+  React.useImperativeHandle(ref, () => ({
+    toggle: async (enabled?: boolean) => {
+      await requestToggleBiometricsEnabled(enabled ?? !isBiometricsEnabled);
+    },
+  }));
+
   const { hasSetupCustomPassword } = useWalletPasswordInfo();
   const colors = useThemeColors();
 
@@ -26,4 +36,4 @@ export const SwitchBiometricsAuthentication = (
       circleBorderActiveColor={colors['green-default']}
     />
   );
-};
+});
