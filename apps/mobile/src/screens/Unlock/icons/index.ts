@@ -1,7 +1,5 @@
-import {
-  RcIconKeychainFaceIdCC,
-  RcIconKeychainFingerprintCC,
-} from '@/assets/icons/lock';
+import { RcIconKeychainFingerprintCC } from '@/assets/icons/lock';
+import RcIconKeychainFaceIdCC from './keychain-faceid-light-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
 export const RcIconFaceId = makeThemeIconFromCC(
@@ -11,5 +9,5 @@ export const RcIconFaceId = makeThemeIconFromCC(
 
 export const RcIconFingerprint = makeThemeIconFromCC(
   RcIconKeychainFingerprintCC,
-  'neutral-body',
+  '#FF2D55',
 );

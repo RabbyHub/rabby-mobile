@@ -95,6 +95,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 }
 
 const isIOS = Platform.OS === 'ios';
+const BiometricsIconSize = 56;
 export default function UnlockScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -283,11 +284,17 @@ export default function UnlockScreen() {
                 style={styles.biometricsBtn}
                 onPress={onPressBiometricsButton}>
                 {isIOS ? (
-                  <RcIconFaceId width={40} height={40} />
+                  <RcIconFaceId
+                    strokeWidth={2}
+                    width={BiometricsIconSize}
+                    height={BiometricsIconSize}
+                  />
                 ) : (
-                  <RcIconFingerprint width={40} height={40} />
+                  <RcIconFingerprint
+                    width={BiometricsIconSize}
+                    height={BiometricsIconSize}
+                  />
                 )}
-                {/* <RcIconFingerprint width={40} height={40} /> */}
               </TouchableView>
             </View>
           </View>
@@ -411,8 +418,8 @@ const getStyles = createGetStyles(colors => {
       // ...makeDebugBorder('yellow'),
     },
     biometricsBtn: {
-      width: 40,
-      height: 40,
+      width: BiometricsIconSize,
+      height: BiometricsIconSize,
     },
     switchingAuthTypeButtonWrapper: {
       width: '100%',
