@@ -107,7 +107,7 @@ async function waitInstance() {
 }
 
 /* ===================== Biometrics:start ===================== */
-const cancelStr = strings('native.authentication.auth_prompt_cancel');
+const CANCELSTR = strings('native.authentication.auth_prompt_cancel');
 const DEFAULT_OPTIONS: RNKeychain.Options = {
   service: 'com.debank',
   authenticationPrompt: {
@@ -121,9 +121,17 @@ const DEFAULT_OPTIONS: RNKeychain.Options = {
   // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
 };
 
+const MsgCanceledByUsers = ['code: 10', 'code: 13', `msg: ${CANCELSTR}`];
 export function parseKeychainError(error: any | Error) {
   const message = error instanceof Error ? error.message : error;
-  const isCancelledByUser = !!message && message.includes(`msg: ${cancelStr}`);
+  // let codeInMessage ='';
+  // try {
+  //   const result = message.match(/code:\s?(\d+)/) || [];
+  //   codeInMessage = result?.[1];
+  // } catch (error) {}
+
+  const isCancelledByUser =
+    !!message && MsgCanceledByUsers.some(slug => message.includes(slug));
 
   return {
     isCancelledByUser,

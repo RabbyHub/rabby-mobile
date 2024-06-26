@@ -103,9 +103,14 @@ export default function UnlockScreen() {
   const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
   const {
     computed: { isBiometricsEnabled, supportedBiometryType },
+    fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
-  console.debug('[feat] supportedBiometryType', supportedBiometryType);
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
 
   const { unlockApp } = useUnlockApp();
 
@@ -136,23 +141,30 @@ export default function UnlockScreen() {
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
-      // // leave here for debug
-      // console.debug(
-      //   'error.code: %s; error.message: %s',
-      //   error.code,
-      //   error.message,
-      // );
+      // leave here for debug
+      __DEV__ &&
+        console.debug(
+          'error.code: %s; error.name: %s; error.message: %s',
+          error.code,
+          error.name,
+          error.message,
+        );
 
       if (error.code == 'E_CRYPTO_FAILED') {
         const parsedInfo = parseKeychainError(error);
-        if (parsedInfo.isCancelledByUser || (__DEV__ && parsedInfo.sysMessage))
+        if (
+          parsedInfo.isCancelledByUser ||
+          (__DEV__ && parsedInfo.sysMessage)
+        ) {
           toast.info(parsedInfo.sysMessage);
-        else toast.info(t('page.unlock.biometrics.failed'));
+        } else {
+          toast.info(t('page.unlock.biometrics.failed'));
+        }
 
         if (!parsedInfo.isCancelledByUser) {
           Alert.alert(
-            t('page.unlock.biometrics.failedAndResetTitle'),
-            t('page.unlock.biometrics.failedAndReset'),
+            t('page.unlock.biometrics.failedAndTipTitle'),
+            t('page.unlock.biometrics.failedAndTip'),
             [
               {
                 text: t('global.ok'),

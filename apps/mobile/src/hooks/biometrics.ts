@@ -9,6 +9,7 @@ import {
   KEYCHAIN_AUTH_TYPES,
   RequestGenericPurpose,
   isAuthenticatedByBiometrics,
+  parseKeychainError,
 } from '@/core/apis/keychain';
 import { strings } from '@/utils/i18n';
 import { useAtomCallback } from 'jotai/utils';
@@ -17,6 +18,7 @@ import {
   parseValidationBehavior,
 } from '@/core/apis/lock';
 import { Vibration } from 'react-native';
+import { IExtractFromPromise } from '@/utils/type';
 
 const biometricsInfo = atom({
   authEnabled: isAuthenticatedByBiometrics(),
@@ -173,14 +175,37 @@ export function useVerifyByBiometrics() {
       const { validationHandler, onFinished = defaultFinished } =
         parseValidationBehavior(behaviors);
 
+      let rawPassword = '';
+      let verifyResult: IExtractFromPromise<
+        ReturnType<typeof apisKeychain.requestGenericPassword>
+      > = null;
       try {
-        let rawPassword = '';
-        const verifyResult = await apisKeychain.requestGenericPassword({
+        verifyResult = await apisKeychain.requestGenericPassword({
           purpose: RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: password => {
             rawPassword = password;
           },
         });
+      } catch (error) {
+        __DEV__ && console.debug(error);
+        const parsedInfo = parseKeychainError(error);
+        if (
+          parsedInfo.isCancelledByUser ||
+          (__DEV__ && parsedInfo.sysMessage)
+        ) {
+          toast.info(parsedInfo.sysMessage);
+        } else {
+          toast.info(
+            strings(
+              'component.AuthenticationModals.processBiometrics.authFailed',
+            ),
+          );
+        }
+        // vibration here
+        if (error) Vibration.vibrate([100], false);
+      }
+
+      try {
         if (!verifyResult || !verifyResult.actionSuccess || !rawPassword) {
           setState(prev => ({ ...prev, status: 'failed' }));
         } else {
@@ -189,11 +214,7 @@ export function useVerifyByBiometrics() {
           onFinished?.({ validatedPassword: rawPassword });
         }
       } catch (error) {
-        __DEV__ && console.debug(error);
-        // vibration here
-        if (error) Vibration.vibrate([100], false);
         setState(prev => ({ ...prev, status: 'failed' }));
-      } finally {
       }
     },
     [isBiometricsEnabled, getAtomValue, setState],

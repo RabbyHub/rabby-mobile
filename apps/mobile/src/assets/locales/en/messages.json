@@ -1543,8 +1543,8 @@
       "biometrics": {
         "failed": "Unlock failed",
         "failedIOS": "Unlock failed, make sure allow Rabby to use Face ID/Touch ID",
-        "failedAndResetTitle": "Unlock failed",
-        "failedAndReset": "Biometric data invalid, please use password to unlock, you can re-set biometry in Settings later",
+        "failedAndTipTitle": "Unlock failed",
+        "failedAndTip": "Biometric authentication failed, please use password to unlock.",
         "usePassword": "Use Password"
       }
     },
@@ -2045,7 +2045,8 @@
         "title": "Biometrics Authentication",
         "desc": "Please use Fingerprint/FaceID to unlock",
         "cancel": "Cancel",
-        "notEnabled": "Biometrics is not enabled"
+        "notEnabled": "Biometrics is not enabled",
+        "authFailed": "Biometrics authentication failed"
       }
     }
   },

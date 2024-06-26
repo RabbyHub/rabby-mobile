@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, ScrollView, Linking, Platform } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -87,9 +87,11 @@ export default function SettingsScreen(): JSX.Element {
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
-  useFocusEffect(() => {
-    fetchBiometrics();
-  });
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
 
   const { startBiometricsVerification, abortBiometricsVerification } =
     useVerifyByBiometrics();
