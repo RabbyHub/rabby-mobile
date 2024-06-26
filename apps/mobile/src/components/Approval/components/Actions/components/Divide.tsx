@@ -12,8 +12,8 @@ const getStyle = (colors: AppColorsVariants) =>
     },
   });
 
-export const Divide: React.FC<any> = props => {
+export const Divide: React.FC<any> = ({ style, ...props }) => {
   const { styles } = useThemeStyles(getStyle);
 
-  return <View style={styles.div} {...props} />;
+  return <View style={StyleSheet.flatten([styles.div, style])} {...props} />;
 };

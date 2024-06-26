@@ -1,11 +1,11 @@
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { GasLevel, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
-import { GasSelectPanel } from './GasSelectPanel';
 import {
+  Image,
   NativeSyntheticEvent,
   StyleSheet,
   Text,
@@ -20,7 +20,6 @@ import {
   L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
-import { GasSelectorSkeleton } from './GasSelectorSkeleton';
 import { getStyles } from './styles';
 import { useThemeColors } from '@/hooks/theme';
 import SecurityLevelTagNoText from '../../SecurityEngine/SecurityLevelTagNoText';
@@ -31,21 +30,20 @@ import {
 } from '@/components';
 import { formatTokenAmount } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
-import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import clsx from 'clsx';
-import IconAlertCC from '@/assets/icons/sign/alert-currentcolor-cc.svg';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { ModalLayouts } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
 import GasLogoSVG from '@/assets/icons/sign/tx/gas-logo-cc.svg';
 import { calcGasEstimated } from '@/utils/time';
 import { GasMenuButton } from './GasMenuButton';
 import { INPUT_NUMBER_RE } from '@/constant/regexp';
 import { openapi } from '@/core/request';
+import { RcIconUnknown } from '@/screens/Approvals/icons';
+import { Divide } from '../../Actions/components/Divide';
+import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -125,7 +123,6 @@ export const GasSelectorHeader = ({
   chainId,
   onChange,
   isReady,
-  recommendGasLimit,
   recommendNonce,
   nonce = '0',
   disableNonce,
@@ -136,8 +133,6 @@ export const GasSelectorHeader = ({
   version,
   gasCalcMethod,
   disabled,
-  manuallyChangeGasLimit,
-  errors,
   engineResults = [],
   nativeTokenBalance,
   gasPriceMedian,
@@ -353,11 +348,6 @@ export const GasSelectorHeader = ({
         level: gas?.level,
       });
     }
-  };
-
-  const handlePanelSelection = (e, gas: GasLevel) => {
-    if (disabled) return;
-    return panelSelection(e, gas);
   };
 
   const externalPanelSelection = (gas: GasLevel) => {
@@ -692,6 +682,185 @@ export const GasSelectorHeader = ({
           showCustomGasPrice={changedCustomGas}
         />
       </View>
+
+      <AppBottomSheetModal
+        enableDynamicSizing
+        keyboardBlurBehavior="restore"
+        ref={modalRef}
+        handleStyle={{
+          backgroundColor: colors['neutral-bg2'],
+        }}
+        onDismiss={() => setModalVisible(false)}>
+        <BottomSheetView style={styles.modalWrap}>
+          <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
+          <View style={styles.gasSelectorModalTop}>
+            {disabled ? (
+              <Text style={styles.gasSelectorModalAmount}>
+                {t('page.signTx.noGasRequired')}
+              </Text>
+            ) : gas.error || !gas.success ? (
+              <>
+                <Text style={styles.gasSelectorModalError}>
+                  {t('page.signTx.failToFetchGasCost')}
+                </Text>
+                {version === 'v2' && gas.error ? (
+                  <View style={styles.gasSelectorModalErrorDesc}>
+                    <Text style={styles.gasSelectorModalErrorDescText}>
+                      {gas.error.msg}{' '}
+                    </Text>
+                    <Text>#{gas.error.code}</Text>
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <View>
+                <Text style={styles.gasSelectorModalAmount}>
+                  {gasCostUsdStr}
+                </Text>
+                <View style={styles.gasSelectorModalUsdWrap}>
+                  {chain.nativeTokenLogo ? (
+                    <Image
+                      source={{ uri: chain.nativeTokenLogo }}
+                      width={16}
+                      height={16}
+                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                    />
+                  ) : (
+                    <RcIconUnknown
+                      width={16}
+                      height={16}
+                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                    />
+                  )}
+                  <Text style={styles.gasSelectorModalUsd}>
+                    {gasCostAmountStr}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+          <View style={styles.cardContainer}>
+            <Text
+              style={StyleSheet.flatten([
+                styles.cardContainerTitle,
+                disabled && styles.cardContainerTitleDisabled,
+              ])}>
+              {t('page.signTx.gasPriceTitle')}
+            </Text>
+            <Tip
+              content={
+                disabled
+                  ? t('page.signTx.gasNotRequireForSafeTransaction')
+                  : undefined
+              }>
+              <GasSelectContainer
+                isSelectCustom={isSelectCustom}
+                gasList={gasList}
+                selectedGas={selectedGas}
+                panelSelection={panelSelection}
+                customGas={customGas}
+                customGasConfirm={customGasConfirm}
+                handleCustomGasChange={handleCustomGasChange}
+                disabled={disabled}
+                notSelectCustomGasAndIsNil={notSelectCustomGasAndIsNil}
+                isLoadingGas={isLoadingGas}
+                customGasEstimated={customGasEstimated}
+              />
+            </Tip>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.gasPriceDesc}>
+              <View style={styles.gasPriceDescItem}>
+                <Text style={styles.gasPriceDescText}>
+                  {t('page.signTx.myNativeTokenBalance')}
+                </Text>
+                <Text style={styles.gasPriceDescBoldText}>
+                  {formatTokenAmount(
+                    new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                    4,
+                    true,
+                  )}{' '}
+                  {chain.nativeTokenSymbol}
+                </Text>
+              </View>
+              {gasPriceMedian !== null && (
+                <View style={styles.gasPriceDescItem}>
+                  <Text style={styles.gasPriceDescText}>
+                    {t('page.signTx.gasPriceMedian')}
+                  </Text>
+                  <Text style={styles.gasPriceDescBoldText}>
+                    {new BigNumber(gasPriceMedian).div(1e9).toFixed()} Gwei
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.feeContainer}>
+            {is1559 && (
+              <>
+                <Divide style={styles.feeDivider} />
+
+                <View
+                  style={StyleSheet.flatten([
+                    styles.feeHeader,
+                    maxPriorityFee === undefined ? { opacity: 0.5 } : {},
+                  ])}>
+                  <Text style={styles.feeHeaderText}>
+                    {t('page.signTx.maxPriorityFee')}
+                  </Text>
+                  <Tip
+                    content={
+                      <View style={styles.feeTip}>
+                        <Text style={styles.feeTipText}>
+                          {t('page.signTx.eip1559Desc1')}
+                        </Text>
+                        <Text style={styles.feeTipText}>
+                          {t('page.signTx.eip1559Desc2')}
+                        </Text>
+                      </View>
+                    }>
+                    <IconInfoSVG
+                      color={colors['neutral-foot']}
+                      width={14}
+                      height={14}
+                    />
+                  </Tip>
+                </View>
+
+                <Tip
+                  content={
+                    isSelectCustom && isNilCustomGas
+                      ? t('page.signTx.maxPriorityFeeDisabledAlert')
+                      : undefined
+                  }>
+                  <BottomSheetTextInput
+                    style={styles.feeInput}
+                    value={maxPriorityFee?.toString()}
+                    onChange={e =>
+                      handleMaxPriorityFeeChange(e.nativeEvent.text)
+                    }
+                  />
+                </Tip>
+              </>
+            )}
+            {isReal1559 && isHardware && (
+              <Text className="hardware-1559-tip">
+                {t('page.signTx.hardwareSupport1559Alert')}
+              </Text>
+            )}
+          </View>
+
+          <FooterButton
+            footerStyle={styles.footer}
+            type="primary"
+            onPress={handleModalConfirmGas}
+            disabled={!isReady || validateStatus.customGas.status === 'error'}
+            title={t('global.confirm')}
+          />
+        </BottomSheetView>
+      </AppBottomSheetModal>
     </>
   );
 };

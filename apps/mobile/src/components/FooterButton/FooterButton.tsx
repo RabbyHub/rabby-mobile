@@ -1,15 +1,16 @@
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { ButtonProps, Button } from '../Button';
 
 export const FooterButton: React.FC<
   ButtonProps & {
     width?: number;
+    footerStyle?: StyleProp<ViewStyle>;
   }
 > = props => {
   const colors = useThemeColors();
-  const { width } = props;
+  const { width, footerStyle } = props;
   const styles = React.useMemo(
     () =>
       StyleSheet.create({
@@ -59,6 +60,7 @@ export const FooterButton: React.FC<
     <View
       style={[
         styles.footer,
+        footerStyle,
         width
           ? // eslint-disable-next-line react-native/no-inline-styles
             {

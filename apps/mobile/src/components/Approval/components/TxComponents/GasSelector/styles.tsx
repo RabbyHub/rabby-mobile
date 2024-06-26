@@ -128,7 +128,6 @@ export const getStyles = (colors: AppColorsVariants) =>
       marginRight: 8,
     },
     gasSelectorModalTop: {
-      paddingTop: 12,
       paddingBottom: 24,
     },
     gasSelectorModalAmount: {
@@ -156,9 +155,15 @@ export const getStyles = (colors: AppColorsVariants) =>
       textAlign: 'center',
       color: colors['neutral-body'],
     },
+    gasSelectorModalUsdWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+    },
     gasSelectorModalUsd: {
-      fontSize: 16,
-      lineHeight: 19,
+      fontSize: 15,
+      lineHeight: 18,
       textAlign: 'center',
       color: colors['neutral-body'],
     },
@@ -169,9 +174,9 @@ export const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
     },
     cardContainerTitle: {
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 16,
-      color: colors['neutral-body'],
+      color: colors['neutral-title-1'],
       marginBottom: 8,
     },
     cardContainerTitleDisabled: {
@@ -180,6 +185,7 @@ export const getStyles = (colors: AppColorsVariants) =>
     modalWrap: {
       position: 'relative',
       flex: 1,
+      backgroundColor: colors['neutral-bg2'],
     },
     gasLimitLabel: {
       flexDirection: 'row',
@@ -223,5 +229,63 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     button: {
       backgroundColor: colors['blue-default'],
+    },
+    gasPriceDesc: {
+      marginTop: 20,
+      gap: 12,
+    },
+    gasPriceDescText: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+    gasPriceDescBoldText: {
+      color: colors['neutral-title1'],
+      fontSize: 13,
+      lineHeight: 16,
+      fontWeight: '500',
+    },
+    gasPriceDescItem: {
+      flexDirection: 'row',
+    },
+    feeDivider: {
+      backgroundColor: colors['neutral-line'],
+      marginVertical: 20,
+    },
+    feeHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    feeHeaderText: {
+      color: colors['neutral-title1'],
+      fontSize: 13,
+      lineHeight: 16,
+      marginRight: 2,
+    },
+    feeTipText: {
+      color: colors['neutral-title2'],
+      fontSize: 12,
+    },
+    feeTip: {
+      padding: 10,
+      gap: 10,
+    },
+    feeInput: {
+      padding: 16,
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+      borderWidth: 1,
+      borderColor: colors['neutral-line'],
+    },
+    feeContainer: {
+      marginHorizontal: 20,
+      marginBottom: 32,
+    },
+    footer: {
+      backgroundColor: colors['neutral-bg2'],
     },
   });
