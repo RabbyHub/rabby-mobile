@@ -10,7 +10,8 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { RcIconRightCC } from '@/assets/icons/common';
 import { ThemeColors } from '@/constant/theme';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
   onLight: ThemeColors.light['neutral-foot'],
@@ -80,7 +81,7 @@ function BlockItem({
   visible?: boolean;
   disabled?: boolean;
 }>) {
-  const colors = useThemeColors();
+  const { colors, styles } = useThemeStyles(getBlockItemStyles);
 
   children = children || (
     <Text
@@ -133,26 +134,11 @@ function BlockItem({
   return (
     <TouchableView
       // disabled={disabled}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        height: 52,
-        padding: 16,
-        opacity: disabled ? 0.6 : 1,
-      }}
+      style={[styles.container, { opacity: disabled ? 0.6 : 1 }]}
       disabled={disabled ? !onDisabledPress : !onPress}
       onPress={evt => (disabled ? onDisabledPress?.(evt) : onPress?.(evt))}>
       {/* left area */}
-      <View
-        style={{
-          flexDirection: 'row',
-          flexShrink: 1,
-          alignItems: 'center',
-          flex: 1,
-          overflow: 'hidden',
-        }}>
+      <View style={styles.leftArea}>
         <View>{iconNode || null}</View>
         <View
           style={{
@@ -162,17 +148,40 @@ function BlockItem({
         </View>
       </View>
       {/* right area */}
-      <View
-        style={{
-          flexDirection: 'row',
-          flexShrink: 0,
-          alignItems: 'center',
-        }}>
-        {rightNode || null}
-      </View>
+      <View style={styles.rightArea}>{rightNode || null}</View>
     </TouchableView>
   );
 }
+
+const getBlockItemStyles = createGetStyles(colors => {
+  return {
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      height: 52,
+      paddingVertical: 0,
+      paddingHorizontal: 16,
+      // ...makeDebugBorder('yellow'),
+    },
+    leftArea: {
+      flexDirection: 'row',
+      flexShrink: 1,
+      alignItems: 'center',
+      flex: 1,
+      overflow: 'hidden',
+      height: '100%',
+    },
+    rightArea: {
+      flexDirection: 'row',
+      flexShrink: 0,
+      alignItems: 'center',
+      height: '100%',
+      // ...makeDebugBorder(),
+    },
+  };
+});
 
 Block.Item = BlockItem;
 

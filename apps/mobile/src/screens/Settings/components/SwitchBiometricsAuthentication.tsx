@@ -3,7 +3,9 @@ import { useToggleBiometricsEnabled } from '@/hooks/biometrics';
 import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 
-export const SwitchBiometricsAuthentication = () => {
+export const SwitchBiometricsAuthentication = (
+  props: React.ComponentProps<typeof AppSwitch>,
+) => {
   const {
     isBiometricsEnabled,
     couldSetupBiometrics,
@@ -14,6 +16,8 @@ export const SwitchBiometricsAuthentication = () => {
 
   return (
     <AppSwitch
+      {...props}
+      circleSize={20}
       disabled={!hasSetupCustomPassword || !couldSetupBiometrics}
       value={!!isBiometricsEnabled}
       changeValueImmediately={false}

@@ -164,14 +164,14 @@ export default function SettingsScreen(): JSX.Element {
               ? 'Biometrics enabled'
               : 'Biometrics disabled',
             icon: isIOS ? RcIconFaceId : RcIconFingerprint,
-            rightNode: SwitchBiometricsAuthentication,
+            rightNode: <SwitchBiometricsAuthentication />,
             disabled: disabledBiometrics,
             // visible: hasSetupCustomPassword,
           },
           {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
-            rightNode: SwitchWhitelistEnable,
+            rightNode: <SwitchWhitelistEnable />,
           },
           {
             label: 'Custom RPC',
