@@ -150,7 +150,11 @@ export default function UnlockScreen() {
           error.message,
         );
 
-      if (error.code == 'E_CRYPTO_FAILED') {
+      if (
+        ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+          error.code,
+        )
+      ) {
         const parsedInfo = parseKeychainError(error);
         if (
           parsedInfo.isCancelledByUser ||
@@ -186,6 +190,7 @@ export default function UnlockScreen() {
             ? t('page.unlock.biometrics.failedIOS')
             : t('page.unlock.biometrics.failed'),
         );
+        setUsingBiometrics(false);
       }
     }
   }, [unlockApp, t]);

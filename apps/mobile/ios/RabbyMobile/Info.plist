@@ -70,7 +70,7 @@
 	<string>This allows Rabby to find and pair a Ledger Nano X</string>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs camera access to scan QR codes.</string>
-  <key>NSFaceIDUsageDescription</key>
+	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs to authenticate</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string/>
@@ -99,7 +99,7 @@
 	<string>Automatic</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-  <key>rabbit_code</key>
+	<key>rabbit_code</key>
 	<string>$(RABBY_MOBILE_CODE)</string>
 </dict>
 </plist>

@@ -72,7 +72,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   );
 }
 
-function App({ rabbitCode }: { rabbitCode: string }): JSX.Element {
+function App({ rabbitCode }: AppProps): JSX.Element {
   return (
     <AppErrorBoundary>
       <ThemeProvider theme={rneuiTheme}>

@@ -1541,8 +1541,8 @@
         "error": "Incorrect password"
       },
       "biometrics": {
-        "failed": "Unlock failed",
-        "failedIOS": "Unlock failed, make sure allow Rabby to use Face ID/Touch ID",
+        "failed": "Unlock failed, please use password to unlock.",
+        "failedIOS": "Unlock failed, please use password to unlock.",
         "failedAndTipTitle": "Unlock failed",
         "failedAndTip": "Biometric authentication failed, please use password to unlock.",
         "usePassword": "Use Password"
