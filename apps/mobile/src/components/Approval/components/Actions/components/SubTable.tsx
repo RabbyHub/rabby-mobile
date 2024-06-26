@@ -45,6 +45,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const WIDTH = Dimensions.get('window').width;
 export const SubTable = ({
   children,
   style,
@@ -56,7 +57,7 @@ export const SubTable = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  const [left, setLeft] = React.useState(Dimensions.get('window').width - 100);
+  const [left, setLeft] = React.useState(WIDTH - 100);
   const [visible, setVisible] = React.useState(true);
 
   React.useEffect(() => {

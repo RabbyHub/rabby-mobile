@@ -19,13 +19,17 @@ import {
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
-      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
-      height: '100%',
+      paddingBottom: 20,
+    },
+    inputView: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
     },
   });
 
@@ -97,12 +101,12 @@ const AddressMemo = ({
         ref={modalRef}
         onDismiss={() => setVisible(false)}
         keyboardBlurBehavior="restore"
-        snapPoints={['30%']}>
+        enableDynamicSizing>
         <BottomSheetView style={styles.mainView}>
           <AppBottomSheetModalTitle
             title={t('component.Contact.EditModal.title')}
           />
-          <View className="pt-[4px]">
+          <View style={styles.inputView}>
             <BottomSheetInput
               onChangeText={handleTextChange}
               maxLength={50}
@@ -111,24 +115,11 @@ const AddressMemo = ({
               placeholder="Please input address note"
             />
             <Text className="mt-[10] text-r-red-default">{errorMessage}</Text>
-            <View className="flex flex-row justify-center mt-[40]">
-              <Button
-                buttonStyle={{
-                  width: 200,
-                  backgroundColor: colors['blue-default'],
-                  height: 44,
-                  padding: 10,
-                }}
-                titleStyle={{
-                  color: '#fff',
-                  fontSize: 15,
-                }}
-                disabled={!canSubmit}
-                onPress={handleConfirm}
-                title={t('global.confirm')}
-              />
-            </View>
           </View>
+          <FooterButtonGroup
+            onCancel={() => setVisible(false)}
+            onConfirm={handleConfirm}
+          />
         </BottomSheetView>
       </AppBottomSheetModal>
     </View>
