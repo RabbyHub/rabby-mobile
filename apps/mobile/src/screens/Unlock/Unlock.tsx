@@ -27,7 +27,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationToHome,
@@ -37,7 +37,10 @@ import {
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
 import { APP_TEST_PWD } from '@/constant';
-import { RequestGenericPurpose, isCancelledByUser } from '@/core/apis/keychain';
+import {
+  RequestGenericPurpose,
+  parseKeychainError,
+} from '@/core/apis/keychain';
 import { useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
@@ -102,6 +105,8 @@ export default function UnlockScreen() {
     computed: { isBiometricsEnabled, supportedBiometryType },
   } = useBiometrics({ autoFetch: true });
 
+  console.debug('[feat] supportedBiometryType', supportedBiometryType);
+
   const { unlockApp } = useUnlockApp();
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
@@ -131,18 +136,20 @@ export default function UnlockScreen() {
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
-      // leave here for debug
-      console.debug(
-        'error.code: %s; error.message: %s',
-        error.code,
-        error.message,
-      );
+      // // leave here for debug
+      // console.debug(
+      //   'error.code: %s; error.message: %s',
+      //   error.code,
+      //   error.message,
+      // );
 
       if (error.code == 'E_CRYPTO_FAILED') {
-        if (isCancelledByUser(error.message)) {
-          // maybe means user cancelled
-          toast.info(t('page.unlock.biometrics.cancelled'));
-        } else {
+        const parsedInfo = parseKeychainError(error);
+        if (parsedInfo.isCancelledByUser || (__DEV__ && parsedInfo.sysMessage))
+          toast.info(parsedInfo.sysMessage);
+        else toast.info(t('page.unlock.biometrics.failed'));
+
+        if (!parsedInfo.isCancelledByUser) {
           Alert.alert(
             t('page.unlock.biometrics.failedAndResetTitle'),
             t('page.unlock.biometrics.failedAndReset'),

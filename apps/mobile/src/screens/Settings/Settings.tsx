@@ -66,9 +66,6 @@ export default function SettingsScreen(): JSX.Element {
   const { styles, colors } = useThemeStyles(getStyles);
   const { appThemeText } = useAppTheme();
 
-  const { openMetaMaskTestDapp } = useSheetWebViewTester();
-  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-
   const navigation = useRabbyAppNavigation();
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
@@ -88,16 +85,19 @@ export default function SettingsScreen(): JSX.Element {
   const {
     computed: { couldSetupBiometrics, isBiometricsEnabled },
     fetchBiometrics,
-  } = useBiometrics();
-
-  const { startBiometricsVerification, abortBiometricsVerification } =
-    useVerifyByBiometrics();
-
-  const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
+  } = useBiometrics({ autoFetch: true });
 
   useFocusEffect(() => {
     fetchBiometrics();
   });
+
+  const { startBiometricsVerification, abortBiometricsVerification } =
+    useVerifyByBiometrics();
+
+  const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
+
+  const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {

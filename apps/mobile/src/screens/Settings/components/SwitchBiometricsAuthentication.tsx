@@ -1,5 +1,5 @@
 import { AppSwitch } from '@/components';
-import { useBiometrics, useToggleBiometricsEnabled } from '@/hooks/biometrics';
+import { useToggleBiometricsEnabled } from '@/hooks/biometrics';
 import { useThemeColors } from '@/hooks/theme';
 import { useWalletPasswordInfo } from '@/screens/ManagePassword/useManagePassword';
 

@@ -38,11 +38,11 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
         console.error(error);
       }
       setBiometrics(prev => {
-        if (prev.authEnabled && !supportedType) {
-          toast.info(
-            'Biometrics authentication disabled because no valid biometric data found.',
-          );
-        }
+        // if (prev.authEnabled && !supportedType) {
+        //   toast.info(
+        //     'Biometrics authentication disabled because no valid biometric data found.',
+        //   );
+        // }
         return {
           ...prev,
           supportedBiometryType: supportedType,

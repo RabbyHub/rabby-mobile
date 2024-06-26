@@ -116,10 +116,19 @@ const DEFAULT_OPTIONS: RNKeychain.Options = {
     description: strings('native.authentication.auth_prompt_desc'),
     cancel: strings('native.authentication.auth_prompt_cancel'),
   },
+  authenticationType: RNKeychain.AUTHENTICATION_TYPE.BIOMETRICS,
+  // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
+  // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
 };
 
-export function isCancelledByUser(message?: string) {
-  return !!message && message.includes(`msg: ${cancelStr}`);
+export function parseKeychainError(error: any | Error) {
+  const message = error instanceof Error ? error.message : error;
+  const isCancelledByUser = !!message && message.includes(`msg: ${cancelStr}`);
+
+  return {
+    isCancelledByUser,
+    sysMessage: message.split(`msg:`)?.[1]?.trim() || '',
+  };
 }
 
 const GENERIC_USER = 'rabbymobile-user';
@@ -175,8 +184,6 @@ export async function requestGenericPassword<
     instance.isAuthenticating = true;
     const keychainObject: DefaultRet = await RNKeychain.getGenericPassword({
       ...DEFAULT_OPTIONS,
-      // accessControl: RNKeychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
-      // rules: RNKeychain.SECURITY_RULES.AUTOMATIC_UPGRADE,
     });
 
     if (!keychainObject) {
@@ -217,6 +224,7 @@ export async function requestGenericPassword<
 }
 
 export function getSupportedBiometryType() {
+  // @see https://github.com/oblador/react-native-keychain?tab=readme-ov-file#getsupportedbiometrytype
   return RNKeychain.getSupportedBiometryType();
 }
 
