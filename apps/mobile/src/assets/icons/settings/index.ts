@@ -69,8 +69,13 @@ export const RcManagePassword = makeThemeIconFromCC(
   'neutral-body',
 );
 
-import { RcIconKeychainFingerprintCC } from '../lock';
+import { RcIconKeychainFaceIdCC, RcIconKeychainFingerprintCC } from '../lock';
 export const RcIconFingerprint = makeThemeIconFromCC(
   RcIconKeychainFingerprintCC,
   '#FF2D55',
+);
+
+export const RcIconFaceId = makeThemeIconFromCC(
+  RcIconKeychainFaceIdCC,
+  'neutral-body',
 );

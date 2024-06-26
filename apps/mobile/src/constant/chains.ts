@@ -2,7 +2,6 @@ import { CHAINS_ENUM, Chain } from '@debank/common';
 
 export type { Chain } from '@debank/common';
 export { CHAINS_ENUM };
-import { openapi } from '@/core/request';
 import { MMKV } from 'react-native-mmkv';
 import { keyBy } from 'lodash';
 import { DEFAULT_CHAIN_LIST } from './default-chain-data';

@@ -19,6 +19,7 @@ import {
   RcLockWallet,
   RcManagePassword,
   RcIconFingerprint,
+  RcIconFaceId,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -60,6 +61,7 @@ const LAYOUTS = {
 
 const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 
+const isIOS = Platform.OS === 'ios';
 export default function SettingsScreen(): JSX.Element {
   const { styles, colors } = useThemeStyles(getStyles);
   const { appThemeText } = useAppTheme();
@@ -154,7 +156,7 @@ export default function SettingsScreen(): JSX.Element {
             label: isBiometricsEnabled
               ? 'Biometrics enabled'
               : 'Biometrics disabled',
-            icon: RcIconFingerprint,
+            icon: isIOS ? RcIconFaceId : RcIconFingerprint,
             rightNode: SwitchBiometricsAuthentication,
             disabled: !couldSetupBiometrics || !hasSetupCustomPassword,
             // visible: hasSetupCustomPassword,

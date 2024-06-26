@@ -7,7 +7,14 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Platform,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -84,6 +91,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   return { formik, shouldDisabled, checkUnlocked };
 }
 
+const isIOS = Platform.OS === 'ios';
 export default function UnlockScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -93,6 +101,7 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, supportedBiometryType },
   } = useBiometrics({ autoFetch: true });
+
   const { unlockApp } = useUnlockApp();
 
   const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
@@ -154,7 +163,9 @@ export default function UnlockScreen() {
         }
       } else {
         toast.info(
-          __DEV__ ? error?.message : t('page.unlock.biometrics.failed'),
+          isIOS
+            ? t('page.unlock.biometrics.failedIOS')
+            : t('page.unlock.biometrics.failed'),
         );
       }
     }
@@ -253,13 +264,13 @@ export default function UnlockScreen() {
               <TouchableView
                 style={styles.biometricsBtn}
                 onPress={onPressBiometricsButton}>
-                <RcIconFingerprint width={40} height={40} />
+                {isIOS ? (
+                  <RcIconFaceId width={40} height={40} />
+                ) : (
+                  <RcIconFingerprint width={40} height={40} />
+                )}
+                {/* <RcIconFingerprint width={40} height={40} /> */}
               </TouchableView>
-              {/* <TouchableView
-                style={styles.biometricsBtn}
-                onPress={onPressBiometricsButton}>
-                <RcIconFaceId width={40} height={40} />
-              </TouchableView> */}
             </View>
           </View>
         )}
