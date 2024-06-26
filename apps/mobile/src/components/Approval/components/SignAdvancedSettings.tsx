@@ -74,7 +74,6 @@ export const SignAdvancedSettings = ({
 
   const modalRef = React.useRef<AppBottomSheetModal>(null);
   React.useEffect(() => {
-    console.log('visible', visible);
     if (visible) {
       modalRef.current?.present();
     } else {
