@@ -130,6 +130,8 @@ export const OriginInfo: React.FC<Props> = ({
     return null;
   }
 
+  const ChainLogo = currentChain.logo as any;
+
   return (
     <View style={styles.requestOrigin}>
       <View style={styles.originLogo}>
@@ -139,7 +141,12 @@ export const OriginInfo: React.FC<Props> = ({
           style={styles.dappIcon}
         />
         <Tip content={<Text>{currentChain.name}</Text>}>
-          <Image style={styles.chainLogo} source={{ uri: currentChain.logo }} />
+          {ChainLogo &&
+            (typeof ChainLogo === 'string' ? (
+              <Image style={styles.chainLogo} source={{ uri: ChainLogo }} />
+            ) : (
+              <ChainLogo style={styles.chainLogo} />
+            ))}
         </Tip>
       </View>
       <Text style={styles.originText}>{displayOrigin}</Text>

@@ -24,6 +24,7 @@ import {
   waitQueueFinished,
   getProtocol,
   calcUSDValueChange,
+  fetchContractRequireData,
 } from '../Actions/utils';
 import { isTestnetChainId } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
@@ -225,45 +226,6 @@ export interface ContractRequireData {
   hasInteraction: boolean;
   rank: number | null;
 }
-
-export const fetchContractRequireData = async (
-  id: string,
-  chainId: string,
-  sender: string,
-  apiProvider: OpenApiService,
-) => {
-  const queue = new PQueue();
-  const result: ContractRequireData = {
-    id,
-    protocol: null,
-    bornAt: 0,
-    hasInteraction: false,
-    rank: null,
-  };
-  queue.add(async () => {
-    const credit = await apiProvider.getContractCredit(id, chainId);
-    result.rank = credit.rank_at;
-  });
-  queue.add(async () => {
-    const { desc } = await apiProvider.addrDesc(id);
-    if (desc.contract && desc.contract[chainId]) {
-      result.bornAt = desc.contract[chainId].create_at;
-    } else {
-      result.bornAt = desc.born_at;
-    }
-    result.protocol = getProtocol(desc.protocol, chainId);
-  });
-  queue.add(async () => {
-    const hasInteraction = await apiProvider.hasInteraction(
-      sender,
-      chainId,
-      id,
-    );
-    result.hasInteraction = hasInteraction.has_interaction;
-  });
-  await waitQueueFinished(queue);
-  return result;
-};
 
 export interface ApproveTokenRequireData {
   isEOA: boolean;

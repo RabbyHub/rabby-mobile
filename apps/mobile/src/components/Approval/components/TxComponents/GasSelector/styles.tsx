@@ -3,6 +3,22 @@ import { StyleSheet } from 'react-native';
 
 export const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+      height: 24,
+    },
+
+    gasView: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      maxWidth: 220,
+      flex: 1,
+      position: 'relative',
+    },
+
     gasSelector: {
       marginTop: 15,
       backgroundColor: colors['neutral-card-1'],
@@ -68,8 +84,14 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     gasSelectorCardAmountLabel: {
       color: colors['blue-default'],
-      fontSize: 15,
+      fontSize: 16,
       fontWeight: '500',
+    },
+    gasCostAmount: {
+      color: colors['neutral-body'],
+      marginTop: 2,
+      flexShrink: 0,
+      fontSize: 14,
     },
     gasMore: {
       flexDirection: 'row',

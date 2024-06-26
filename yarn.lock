@@ -6738,6 +6738,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-menu/menu@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@react-native-menu/menu@npm:1.1.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3c2733f70de25a560b99396d06a70d74a6e47ce165395f333c3ee56b0e71ef71257979a32c61c91669e5e108429bee91986211b3d47dd86f716edb3bc3ca891a
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:^0.72.0":
   version: 0.72.0
   resolution: "@react-native/assets-registry@npm:0.72.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40react-native%2Fassets-registry%2F-%2Fassets-registry-0.72.0.tgz"
@@ -27589,6 +27599,7 @@ __metadata:
     "@react-native-firebase/analytics": ^18.8.0
     "@react-native-firebase/app": ^18.8.0
     "@react-native-masked-view/masked-view": ^0.3.1
+    "@react-native-menu/menu": ^1.1.2
     "@react-native/eslint-config": ^0.72.2
     "@react-native/metro-config": ^0.72.11
     "@react-navigation/bottom-tabs": ^6.5.11

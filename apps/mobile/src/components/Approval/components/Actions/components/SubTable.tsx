@@ -63,7 +63,10 @@ export const SubTable = ({
   React.useEffect(() => {
     if (target?.current) {
       target.current.measure((x, y, w, h, pX, pY) => {
-        setLeft(pX + w / 2 - 30);
+        const num = pX + w / 2 - 30;
+        if (!isNaN(num)) {
+          setLeft(num);
+        }
       });
     }
   }, [target]);
@@ -89,7 +92,7 @@ export const SubTable = ({
         color={colors['neutral-card3']}
         style={StyleSheet.flatten({
           position: 'absolute',
-          left: left,
+          left,
           top: -8,
         })}
       />
