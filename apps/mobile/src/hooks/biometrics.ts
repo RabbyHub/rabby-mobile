@@ -70,6 +70,7 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
       isBiometricsEnabled: authEnabled && !!supportedBiometryType,
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
+      isFaceID: supportedBiometryType === BIOMETRY_TYPE.FACE_ID,
     };
   }, [biometrics]);
 

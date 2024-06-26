@@ -1,20 +1,7 @@
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  Platform,
-} from 'react-native';
+import { createGetStyles } from '@/utils/styles';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { View, Text, TextInput, Alert, Platform } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -52,6 +39,23 @@ const LAYOUTS = {
 };
 
 const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
+
+const isIOS = Platform.OS === 'ios';
+const BiometricsIconSize = 56;
+
+function BiometricsIcon(props: { isFaceID?: boolean }) {
+  const { isFaceID = isIOS } = props;
+
+  return isFaceID ? (
+    <RcIconFaceId
+      strokeWidth={2}
+      width={BiometricsIconSize}
+      height={BiometricsIconSize}
+    />
+  ) : (
+    <RcIconFingerprint width={BiometricsIconSize} height={BiometricsIconSize} />
+  );
+}
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
@@ -94,8 +98,6 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   return { formik, shouldDisabled, checkUnlocked };
 }
 
-const isIOS = Platform.OS === 'ios';
-const BiometricsIconSize = 56;
 export default function UnlockScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -103,7 +105,7 @@ export default function UnlockScreen() {
   const navigation = useRabbyAppNavigation();
   const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
   const {
-    computed: { isBiometricsEnabled, supportedBiometryType },
+    computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -283,18 +285,7 @@ export default function UnlockScreen() {
               <TouchableView
                 style={styles.biometricsBtn}
                 onPress={onPressBiometricsButton}>
-                {isIOS ? (
-                  <RcIconFaceId
-                    strokeWidth={2}
-                    width={BiometricsIconSize}
-                    height={BiometricsIconSize}
-                  />
-                ) : (
-                  <RcIconFingerprint
-                    width={BiometricsIconSize}
-                    height={BiometricsIconSize}
-                  />
-                )}
+                <BiometricsIcon isFaceID={isFaceID} />
               </TouchableView>
             </View>
           </View>

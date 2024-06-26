@@ -32,8 +32,8 @@ import {
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
+import { RootNames } from '@/constant/layout';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
@@ -84,7 +84,7 @@ export default function SettingsScreen(): JSX.Element {
   } = useManagePasswordOnSettings();
 
   const {
-    computed: { couldSetupBiometrics, isBiometricsEnabled },
+    computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
 
@@ -169,7 +169,7 @@ export default function SettingsScreen(): JSX.Element {
             label: isBiometricsEnabled
               ? 'Biometrics enabled'
               : 'Biometrics disabled',
-            icon: isIOS ? RcIconFaceId : RcIconFingerprint,
+            icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
@@ -335,7 +335,7 @@ export default function SettingsScreen(): JSX.Element {
             },
             {
               label: 'Test Biometrics',
-              icon: isIOS ? RcIconFaceId : RcIconFingerprint,
+              icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
               onPress: () => {
                 startBiometricsVerification({
                   onFinished: () => {
