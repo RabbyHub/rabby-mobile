@@ -102,6 +102,7 @@ export type SettingNavigatorParamList = {
   [RootNames.SetPassword]?: {
     replaceStack: typeof RootNames.StackAddress;
     replaceScreen:
+      | typeof RootNames.CreateMnemonic
       | typeof RootNames.ImportPrivateKey
       | typeof RootNames.ImportMnemonic;
   };

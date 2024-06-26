@@ -8,6 +8,10 @@ import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
+import { useRabbyAppNavigation } from './navigation';
+import { useFocusEffect } from '@react-navigation/native';
+import { SettingNavigatorParamList } from '@/navigation-type';
+import { RootNames } from '@/constant/layout';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -175,4 +179,38 @@ export function useSecureOnBackground() {
       };
     }
   }, [setAppStatus]);
+}
+
+export function useSetPasswordFirst() {
+  const navigation = useRabbyAppNavigation();
+  const { lockInfo, fetchLockInfo } = useLoadLockInfo();
+  useFocusEffect(
+    useCallback(() => {
+      fetchLockInfo();
+    }, [fetchLockInfo]),
+  );
+  const shouldRedirectToSetPasswordBefore = React.useCallback(
+    (
+      screen: (SettingNavigatorParamList['SetPassword'] &
+        object)['replaceScreen'],
+    ) => {
+      if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
+        navigation.push(RootNames.StackSettings, {
+          screen: RootNames.SetPassword,
+          params: {
+            replaceStack: RootNames.StackAddress,
+            replaceScreen: screen,
+          },
+        });
+        return true;
+      }
+
+      return false;
+    },
+    [navigation, lockInfo],
+  );
+
+  return {
+    shouldRedirectToSetPasswordBefore,
+  };
 }
