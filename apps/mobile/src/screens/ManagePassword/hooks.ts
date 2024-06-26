@@ -10,9 +10,6 @@ import { RootNames } from '@/constant/layout';
 import { StackActions } from '@react-navigation/native';
 import { apisLock } from '@/core/apis';
 import { toast } from '@/components/Toast';
-import { useBiometrics } from '@/hooks/biometrics';
-import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
-import { strings } from '@/utils/i18n';
 
 const sheetModalRefAtom = atom({
   setupPasswordModalRef: React.createRef<BottomSheetModal>(),
@@ -62,29 +59,5 @@ export function useManagePasswordOnSettings() {
     hasSetupCustomPassword,
     requestLockWallet,
     openManagePasswordSheetModal,
-  };
-}
-
-export function useBiometricsOnSettings() {
-  const { biometrics, requestToggleBiometricsEnabled } = useBiometrics({
-    autoFetch: true,
-  });
-
-  const navigation = useRabbyAppNavigation();
-  const redirectToEnableBiometricsAuthentication = useCallback(() => {
-    if (!biometrics.authEnabled) {
-      navigation.push(RootNames.StackSettings, {
-        screen: RootNames.SetBiometricsAuthentication,
-        params: {},
-      });
-    } else {
-      // TODO: validate biometrics and cancel biometrics
-    }
-  }, [biometrics.authEnabled, navigation]);
-
-  return {
-    authEnabled: biometrics.authEnabled,
-    requestToggleBiometricsEnabled,
-    redirectToEnableBiometricsAuthentication,
   };
 }

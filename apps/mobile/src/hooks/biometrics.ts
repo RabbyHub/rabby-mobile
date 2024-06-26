@@ -7,9 +7,16 @@ import { toast, toastLoading } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   KEYCHAIN_AUTH_TYPES,
+  RequestGenericPurpose,
   isAuthenticatedByBiometrics,
 } from '@/core/apis/keychain';
 import { strings } from '@/utils/i18n';
+import { useAtomCallback } from 'jotai/utils';
+import {
+  ValidationBehaviorProps,
+  parseValidationBehavior,
+} from '@/core/apis/lock';
+import { Vibration } from 'react-native';
 
 const biometricsInfo = atom({
   authEnabled: isAuthenticatedByBiometrics(),
@@ -48,6 +55,32 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
       isFetchingBiometricsRef.current = false;
     }
   }, [setBiometrics]);
+
+  useEffect(() => {
+    if (options?.autoFetch) {
+      fetchBiometrics();
+    }
+  }, [options?.autoFetch, fetchBiometrics]);
+
+  const computed = useMemo(() => {
+    const { authEnabled, supportedBiometryType } = biometrics;
+    return {
+      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
+      couldSetupBiometrics: !!supportedBiometryType,
+      supportedBiometryType,
+    };
+  }, [biometrics]);
+
+  return {
+    biometrics,
+    computed,
+    fetchBiometrics,
+  };
+}
+
+export function useToggleBiometricsEnabled() {
+  const [, setBiometrics] = useAtom(biometricsInfo);
+  const { computed, fetchBiometrics } = useBiometrics();
 
   const requestToggleBiometricsEnabled = useCallback(
     async (nextEnabled: boolean) => {
@@ -89,25 +122,110 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
     [setBiometrics, fetchBiometrics],
   );
 
-  useEffect(() => {
-    if (options?.autoFetch) {
-      fetchBiometrics();
-    }
-  }, [options?.autoFetch, fetchBiometrics]);
+  return {
+    isBiometricsEnabled: computed.isBiometricsEnabled,
+    couldSetupBiometrics: computed.couldSetupBiometrics,
+    requestToggleBiometricsEnabled,
+  };
+}
 
-  const computed = useMemo(() => {
-    const { authEnabled, supportedBiometryType } = biometrics;
+const biometricsStubModalStateAtom = atom<{
+  status: 'idle' | 'preparing' | 'processing' | 'success' | 'failed';
+  lastStubBehaviors: ValidationBehaviorProps | null;
+}>({
+  status: 'idle',
+  lastStubBehaviors: {},
+});
+export function useVerifyByBiometrics() {
+  const [{ status: biometricsStatus }, setState] = useAtom(
+    biometricsStubModalStateAtom,
+  );
+  const getAtomValue = useAtomCallback(get =>
+    get(biometricsStubModalStateAtom),
+  );
+
+  const {
+    computed: { isBiometricsEnabled },
+  } = useBiometrics();
+
+  const verifyByBiometrics = useCallback(
+    async (options?: ValidationBehaviorProps) => {
+      if (!isBiometricsEnabled) {
+        toast.info(
+          strings(
+            'component.AuthenticationModals.processBiometrics.notEnabled',
+          ),
+        );
+        return;
+      }
+
+      const atomValue = getAtomValue();
+
+      if (atomValue.status === 'processing') return;
+      setState(prev => ({ ...prev, status: 'processing' }));
+
+      const behaviors = options || { ...atomValue.lastStubBehaviors };
+      const defaultFinished = () => {
+        setTimeout(() => {
+          setState(prev => ({ ...prev, status: 'idle' }));
+        }, 250);
+      };
+      const { validationHandler, onFinished = defaultFinished } =
+        parseValidationBehavior(behaviors);
+
+      try {
+        let rawPassword = '';
+        const verifyResult = await apisKeychain.requestGenericPassword({
+          purpose: RequestGenericPurpose.DECRYPT_PWD,
+          onPlainPassword: password => {
+            rawPassword = password;
+          },
+        });
+        if (!verifyResult || !verifyResult.actionSuccess || !rawPassword) {
+          setState(prev => ({ ...prev, status: 'failed' }));
+        } else {
+          await validationHandler?.(rawPassword);
+          setState(prev => ({ ...prev, status: 'success' }));
+          onFinished?.({ validatedPassword: rawPassword });
+        }
+      } catch (error) {
+        __DEV__ && console.debug(error);
+        // vibration here
+        if (error) Vibration.vibrate([100], false);
+        setState(prev => ({ ...prev, status: 'failed' }));
+      } finally {
+      }
+    },
+    [isBiometricsEnabled, getAtomValue, setState],
+  );
+
+  const abortBiometricsVerification = useCallback(() => {
+    setState(prev => ({ ...prev, status: 'idle' }));
+  }, [setState]);
+
+  const startBiometricsVerification = useCallback(
+    (options?: ValidationBehaviorProps) => {
+      setState(prev => ({
+        ...prev,
+        lastStubBehaviors: { ...options },
+        status: 'preparing',
+      }));
+    },
+    [setState],
+  );
+
+  const { isProcessBiometrics, shouldShowStubModal } = useMemo(() => {
     return {
-      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
-      couldSetupBiometrics: !!supportedBiometryType,
-      supportedBiometryType,
+      isProcessBiometrics: biometricsStatus === 'processing',
+      shouldShowStubModal: biometricsStatus !== 'idle',
     };
-  }, [biometrics]);
+  }, [biometricsStatus]);
 
   return {
-    biometrics,
-    computed,
-    fetchBiometrics,
-    requestToggleBiometricsEnabled,
+    isProcessBiometrics,
+    shouldShowStubModal,
+    verifyByBiometrics,
+    startBiometricsVerification,
+    abortBiometricsVerification,
   };
 }

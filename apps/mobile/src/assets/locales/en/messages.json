@@ -2041,6 +2041,12 @@
         "disable": "Disable Biometrics",
         "enableTip": "Enable biometrics to unlock Rabby",
         "disableTip": "Disable biometrics to unlock Rabby"
+      },
+      "processBiometrics": {
+        "title": "Biometrics Authentication",
+        "desc": "Please use Fingerprint/FaceID to unlock",
+        "cancel": "Cancel",
+        "notEnabled": "Biometrics is not enabled"
       }
     }
   },

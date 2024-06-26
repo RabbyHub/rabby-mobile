@@ -21,10 +21,15 @@ appLockAtom.onMount = setAppLock => {
 };
 
 export function useAppUnlocked() {
-  const [{ appUnlocked }, setAppLock] = useAtom(appLockAtom);
+  const [{ appUnlocked, pwdStatus }, setAppLock] = useAtom(appLockAtom);
+
+  // const hasSetupCustomPassword = useMemo(() => {
+  //   return pwdStatus === PasswordStatus.Custom;
+  // }, [pwdStatus]);
 
   return {
     isAppUnlocked: appUnlocked,
+    // hasSetupCustomPassword,
     setAppLock,
   };
 }

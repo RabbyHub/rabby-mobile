@@ -3,8 +3,6 @@ import React from 'react';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
 import type { SvgProps } from 'react-native-svg';
 
-import { ViewProps } from 'react-native-svg/lib/typescript/fabric/utils';
-
 export type ThemeIconType = FastImageProps['source'] | React.FC<SvgProps>;
 
 export default function ThemeIcon<T extends ThemeIconType>({

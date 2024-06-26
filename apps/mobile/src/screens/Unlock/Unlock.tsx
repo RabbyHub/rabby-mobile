@@ -182,13 +182,7 @@ export default function UnlockScreen() {
     }
 
     checkUnlocked();
-    (async () => {
-      // if (!hasLeftFromUnlock && isAuthenticatedByBiometrics()) {
-      //   await unlockWithBiometrics();
-      // }
-      // checkUnlocked();
-    })();
-  }, [/* hasLeftFromUnlock, unlockWithBiometrics, */ checkUnlocked]);
+  }, [checkUnlocked]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -390,6 +384,7 @@ const getStyles = createGetStyles(colors => {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 24,
+      // ...makeDebugBorder('yellow'),
     },
     biometricsBtn: {
       width: 40,
@@ -404,6 +399,10 @@ const getStyles = createGetStyles(colors => {
       color: colors['blue-default'],
       fontSize: 16,
       fontWeight: '400',
+      // ...makeDebugBorder('yellow'),
+      paddingTop: 12,
+      paddingBottom: 4,
+      paddingHorizontal: 10,
     },
   };
 });

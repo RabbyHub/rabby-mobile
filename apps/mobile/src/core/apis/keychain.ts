@@ -138,7 +138,7 @@ type PlainUserCredentials = RNKeychain.UserCredentials & {
   rawPassword?: string;
 };
 export enum RequestGenericPurpose {
-  VERIFY_PWD = 1,
+  VERIFY = 1,
   // UNLOCK_WALLET = 2,
   DECRYPT_PWD = 11,
 }
@@ -146,7 +146,12 @@ function onRequestReturn(instance: SKCls) {
   instance.isAuthenticating = false;
   return null;
 }
-type DefaultRet = false | (PlainUserCredentials & { actionSuccess?: boolean });
+type DefaultRet =
+  | false
+  | (Omit<PlainUserCredentials, 'password'> & {
+      password?: PlainUserCredentials['password'];
+      actionSuccess?: boolean;
+    });
 /**
  * @description request generic password from keychain,
  *
@@ -157,10 +162,13 @@ export async function requestGenericPassword<
   T extends RequestGenericPurpose,
 >(options: {
   purpose?: T;
+  /**
+   * @description will be called and AWAIT on purpose `DECRYPT_PWD`
+   */
   onPlainPassword?: (password: string) => void | Promise<void>;
 }): Promise<null | DefaultRet> {
   const instance = await waitInstance();
-  const { purpose = RequestGenericPurpose.VERIFY_PWD as T, onPlainPassword } =
+  const { purpose = RequestGenericPurpose.VERIFY as T, onPlainPassword } =
     options;
 
   try {
@@ -175,10 +183,12 @@ export async function requestGenericPassword<
       return onRequestReturn(instance);
     } else if (keychainObject.password) {
       const encryptedPassword = keychainObject.password;
+      delete keychainObject.password;
+
       const decrypted = await instance.decryptPassword(encryptedPassword);
 
       switch (purpose) {
-        case RequestGenericPurpose.VERIFY_PWD: {
+        case RequestGenericPurpose.VERIFY: {
           const verifyResult = await safeVerifyPassword(decrypted.password);
 
           onRequestReturn(instance);

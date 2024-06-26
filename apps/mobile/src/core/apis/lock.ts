@@ -8,6 +8,29 @@ export const enum PasswordStatus {
   Custom = 11,
 }
 
+export type ValidationBehaviorProps = {
+  /**
+   * @description external-defined validatie password user input.
+   * Throw an error to interrupt the post process, and `error.message` will be shown.
+   *
+   * @param password
+   */
+  validationHandler?(password: string): void | Promise<void>;
+  onFinished?(ctx: { validatedPassword: string }): void;
+};
+
+const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
+  object = throwErrorIfInvalidPwd;
+const noop = () => {};
+
+export function parseValidationBehavior(props?: ValidationBehaviorProps) {
+  const { validationHandler, onFinished } = props || {};
+  return {
+    validationHandler: validationHandler || DefaultValidationPassword,
+    onFinished: onFinished || noop.bind(null),
+  };
+}
+
 function getInitError(password: string) {
   if (password === RABBY_MOBILE_KR_PWD) {
     return {

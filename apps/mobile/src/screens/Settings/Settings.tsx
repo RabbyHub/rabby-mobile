@@ -52,7 +52,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
-import { useBiometrics } from '@/hooks/biometrics';
+import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect } from '@react-navigation/native';
 
 const LAYOUTS = {
@@ -89,6 +89,11 @@ export default function SettingsScreen(): JSX.Element {
     computed: { couldSetupBiometrics, isBiometricsEnabled },
     fetchBiometrics,
   } = useBiometrics();
+
+  const { startBiometricsVerification, abortBiometricsVerification } =
+    useVerifyByBiometrics();
+
+  const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
 
   useFocusEffect(() => {
     fetchBiometrics();
@@ -158,7 +163,7 @@ export default function SettingsScreen(): JSX.Element {
               : 'Biometrics disabled',
             icon: isIOS ? RcIconFaceId : RcIconFingerprint,
             rightNode: SwitchBiometricsAuthentication,
-            disabled: !couldSetupBiometrics || !hasSetupCustomPassword,
+            disabled: disabledBiometrics,
             // visible: hasSetupCustomPassword,
           },
           {
@@ -311,6 +316,18 @@ export default function SettingsScreen(): JSX.Element {
                   screen: RootNames.ProviderControllerTester,
                 });
               },
+            },
+            {
+              label: 'Test Biometrics',
+              icon: isIOS ? RcIconFaceId : RcIconFingerprint,
+              onPress: () => {
+                startBiometricsVerification({
+                  onFinished: () => {
+                    abortBiometricsVerification();
+                  },
+                });
+              },
+              disabled: disabledBiometrics || !isBiometricsEnabled,
             },
           ],
         },

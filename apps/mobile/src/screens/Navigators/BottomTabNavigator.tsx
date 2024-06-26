@@ -30,6 +30,7 @@ import { useSafeSizes } from '@/hooks/useAppLayout';
 import { makeDebugBorder } from '@/utils/styles';
 import ApprovalTokenDetailSheetModalStub from '@/components/TokenDetailPopup/ApprovalTokenDetailSheetModalStub';
 import { toast } from '@/components/Toast';
+import BiometricsStubModal from '@/components/AuthenticationModal/BiometricsStubModal';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamsList>();
 
@@ -244,6 +245,8 @@ export default function BottomTabNavigator() {
           )}
         />
       </BottomTab.Navigator>
+
+      <BiometricsStubModal />
 
       <OpenedDappWebViewStub />
       {/* <OpenedWebViewsStub /> */}
