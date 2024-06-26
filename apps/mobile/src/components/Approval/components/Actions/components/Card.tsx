@@ -26,6 +26,7 @@ const getStyle = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       padding: 12,
       alignItems: 'center',
+      flexDirection: 'row',
     },
     headline: {
       color: colors['neutral-title-1'],
@@ -38,6 +39,7 @@ const getStyle = (colors: AppColorsVariants) =>
     },
     action: {
       alignItems: 'center',
+      flexDirection: 'row',
     },
     actionText: {
       color: colors['neutral-body'],
@@ -52,7 +54,6 @@ interface CardProps {
   onAction?: () => void;
   hasDivider?: boolean;
   children: React.ReactNode;
-  onPressCard?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -62,7 +63,6 @@ const CardInner: React.FC<CardProps> = ({
   onAction,
   hasDivider,
   children,
-  onPressCard,
   style,
 }) => {
   const { styles } = useThemeStyles(getStyle);
@@ -75,7 +75,7 @@ const CardInner: React.FC<CardProps> = ({
             headline={headline}
             actionText={actionText}
             onAction={onAction}
-            hasAction={!!onAction || !!onPressCard || !!actionText}
+            hasAction={!!onAction || !!actionText}
           />
           {hasDivider && <Divide />}
         </>
@@ -85,11 +85,11 @@ const CardInner: React.FC<CardProps> = ({
   );
 };
 
-export const Card: React.FC<CardProps> = ({ onPressCard, style, ...props }) => {
-  if (onPressCard) {
+export const Card: React.FC<CardProps> = ({ onAction, style, ...props }) => {
+  if (onAction) {
     return (
-      <TouchableOpacity style={style} onPress={onPressCard}>
-        <CardInner {...props} />
+      <TouchableOpacity style={style} onPress={onAction}>
+        <CardInner onAction={onAction} {...props} />
       </TouchableOpacity>
     );
   }
@@ -105,7 +105,7 @@ export const CardTitle: React.FC<
   const { styles } = useThemeStyles(getStyle);
 
   return (
-    <TouchableOpacity style={styles.cardTitle} onPress={onAction}>
+    <View style={styles.cardTitle}>
       <Text style={styles.headline}>{headline}</Text>
       {hasAction && (
         <View style={styles.action}>
@@ -113,6 +113,6 @@ export const CardTitle: React.FC<
           <RcIconArrowRight style={styles.icon} />
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };

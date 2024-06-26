@@ -188,20 +188,21 @@ export const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-bg2'],
     },
     gasLimitLabel: {
-      flexDirection: 'row',
+      paddingHorizontal: 20,
     },
     gasLimitLabelText: {
       lineHeight: 16,
-      color: colors['neutral-body'],
-      marginTop: 24,
+      color: colors['neutral-title1'],
+      fontSize: 13,
     },
     gasLimitLabelTextDisabled: {
       opacity: 0.5,
     },
     nonceTitle: {
       lineHeight: 16,
-      color: colors['neutral-body'],
+      color: colors['neutral-title1'],
       marginTop: 20,
+      fontSize: 13,
     },
     tip: {
       color: colors['neutral-foot'],
@@ -218,10 +219,11 @@ export const getStyles = (colors: AppColorsVariants) =>
       textDecorationLine: 'underline',
     },
     gasLimitInput: {
-      width: '100%',
       padding: 15,
-      borderRadius: 6,
-      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      borderColor: colors['neutral-line'],
+      borderWidth: 1,
       fontSize: 15,
       fontWeight: '500',
       color: colors['neutral-title-1'],
@@ -288,4 +290,20 @@ export const getStyles = (colors: AppColorsVariants) =>
     footer: {
       backgroundColor: colors['neutral-bg2'],
     },
+    cardBody: {
+      padding: 12,
+    },
+    cardBodyText: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-body'],
+    },
+    cardModal: {
+      backgroundColor: colors['neutral-bg2'],
+    },
+    cardMain: {
+      paddingHorizontal: 20,
+      marginBottom: 32,
+    },
+    cardItem: {},
   });

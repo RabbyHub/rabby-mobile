@@ -27,7 +27,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -38,11 +38,6 @@ import {
   parseAction,
 } from '../Actions/utils';
 import { openapi } from '@/core/request';
-import { useSignPermissionCheck } from '../../hooks/useSignPermissionCheck';
-import { useTestnetCheck } from '../../hooks/useTestnetCheck';
-import GasSelector, {
-  GasSelectorResponse,
-} from '../TxComponents/GasSelector/GasSelector';
 import { apiProvider, apiSecurityEngine } from '@/core/apis';
 import {
   DEFAULT_GAS_LIMIT_RATIO,
@@ -58,7 +53,6 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 import { toast } from '@/components/Toast';
-import { BroadcastMode } from '../BroadcastMode';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import { FooterBar } from '../FooterBar/FooterBar';
 import {
@@ -82,7 +76,11 @@ import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
-import { GasSelectorHeader } from '../TxComponents/GasSelector/GasSelectorHeader';
+import {
+  GasSelectorHeader,
+  GasSelectorResponse,
+} from '../TxComponents/GasSelector/GasSelectorHeader';
+import { SignAdvancedSettings } from '../SignAdvancedSettings';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -811,7 +809,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     });
     if (gas.level === 'custom') {
       setGasList(
-        gasList.map(item => {
+        (gasList || []).map(item => {
           if (item.level === 'custom') return gas;
           return item;
         }),
@@ -839,8 +837,37 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     if (Number(gasLimit) !== gas.gasLimit) {
       setManuallyChangeGasLimit(true);
     }
-    setRealNonce(afterNonce);
+  };
 
+  const handleAdvancedSettingsChange = (gas: GasSelectorResponse) => {
+    const beforeNonce = realNonce || tx.nonce;
+    const afterNonce = intToHex(gas.nonce);
+    if (support1559) {
+      setTx({
+        ...tx,
+        gas: intToHex(gas.gasLimit),
+        nonce: afterNonce,
+      });
+    } else {
+      setTx({
+        ...tx,
+        gas: intToHex(gas.gasLimit),
+        nonce: afterNonce,
+      });
+    }
+    setGasLimit(intToHex(gas.gasLimit));
+    if (Number(gasLimit) !== gas.gasLimit) {
+      setManuallyChangeGasLimit(true);
+    }
+    if (!isGnosisAccount) {
+      setRealNonce(afterNonce);
+    } else {
+      if (safeInfo && safeInfo.nonce <= gas.nonce) {
+        setRealNonce(afterNonce);
+      } else {
+        safeInfo && setRealNonce(`0x${safeInfo.nonce.toString(16)}`);
+      }
+    }
     if (beforeNonce !== afterNonce) {
       setNonceChanged(true);
     }
@@ -1270,7 +1297,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     <BottomSheetView style={styles.wrapper}>
       <ScrollView style={styles.approvalTx}>
         {txDetail && (
-          <View>
+          <View
+            style={StyleSheet.flatten({
+              rowGap: 12,
+            })}>
             {txDetail && (
               <TxTypeComponent
                 isReady={isReady}
@@ -1304,6 +1334,20 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 }}
               />
             )}
+
+            {!isGnosisAccount && !isCoboArugsAccount && txDetail && isReady ? (
+              <SignAdvancedSettings
+                disabled={isGnosisAccount || isCoboArugsAccount}
+                isReady={isReady}
+                gasLimit={gasLimit}
+                recommendGasLimit={recommendGasLimit}
+                recommendNonce={recommendNonce}
+                onChange={handleAdvancedSettingsChange}
+                nonce={realNonce || tx.nonce}
+                disableNonce={isSpeedUp || isCancel}
+                manuallyChangeGasLimit={manuallyChangeGasLimit}
+              />
+            ) : null}
           </View>
         )}
         {/* <BroadcastMode
@@ -1320,6 +1364,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             setPushInfo(value);
           }}
         /> */}
+
         {isGnosisAccount && safeInfo ? (
           <GnosisDrawer
             visible={drawerVisible}
