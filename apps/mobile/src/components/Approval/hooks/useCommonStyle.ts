@@ -7,7 +7,7 @@ const useCommonStyle = () => {
   const style = useMemo(() => {
     return StyleSheet.create({
       primaryText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '500',
         lineHeight: 18,
         color: colors['neutral-title-1'],
@@ -19,9 +19,9 @@ const useCommonStyle = () => {
         fontWeight: '400',
       },
       rowTitleText: {
-        fontSize: 15,
+        fontSize: 14,
         lineHeight: 18,
-        fontWeight: '500',
+        fontWeight: '400',
         color: colors['neutral-title-1'],
       },
       detailRowTitleText: {

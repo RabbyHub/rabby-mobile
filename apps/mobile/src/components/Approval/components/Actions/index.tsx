@@ -39,6 +39,8 @@ import {
   SwapRequireData,
   WrapTokenRequireData,
   getActionTypeText,
+  ContractRequireData,
+  AssetOrderRequireData,
 } from './utils';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
@@ -53,6 +55,7 @@ import { Divide } from './components/Divide';
 import { Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import AssetOrder from './AssetOrder';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -298,7 +301,6 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
           {data.crossToken && (
             <CrossToken
               data={data.crossToken}
@@ -315,7 +317,6 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
           {data.wrapToken && (
             <WrapToken
               data={data.wrapToken}
@@ -370,6 +371,16 @@ const Actions = ({
               raw={raw}
             />
           )}
+          {data.cancelTx && (
+            <CancelTx
+              data={data.cancelTx}
+              requireData={requireData as CancelTxRequireData}
+              chain={chain}
+              engineResults={engineResults}
+              onChange={onChange}
+              raw={raw}
+            />
+          )}
           {data?.sendNFT && (
             <SendNFT
               data={data.sendNFT}
@@ -378,7 +389,14 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
+          {data?.approveNFT && (
+            <ApproveNFT
+              data={data.approveNFT}
+              requireData={requireData as ApproveNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
           {data?.revokeNFT && (
             <RevokeNFT
               data={data.revokeNFT}
@@ -395,6 +413,14 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
+          {data?.approveNFTCollection && (
+            <ApproveNFTCollection
+              data={data.approveNFTCollection}
+              requireData={requireData as RevokeNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
           {data?.deployContract && <DeployContract />}
           {data?.pushMultiSig && (
             <PushMultiSig
@@ -403,30 +429,13 @@ const Actions = ({
               chain={chain}
             />
           )}
-          {data.cancelTx && (
-            <CancelTx
-              data={data.cancelTx}
-              requireData={requireData as CancelTxRequireData}
+          {data?.assetOrder && (
+            <AssetOrder
+              data={data.assetOrder}
+              requireData={requireData as ContractRequireData}
               chain={chain}
               engineResults={engineResults}
-              onChange={onChange}
-              raw={raw}
-            />
-          )}
-          {data?.approveNFT && (
-            <ApproveNFT
-              data={data.approveNFT}
-              requireData={requireData as ApproveNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
-            />
-          )}
-          {data?.approveNFTCollection && (
-            <ApproveNFTCollection
-              data={data.approveNFTCollection}
-              requireData={requireData as RevokeNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
+              sender={(requireData as AssetOrderRequireData).sender}
             />
           )}
           {data.contractCall && (
@@ -442,7 +451,7 @@ const Actions = ({
           {data.common && (
             <CommonAction
               data={data.common}
-              requireData={requireData as SwapRequireData}
+              requireData={requireData as ContractCallRequireData}
               chain={chain}
               engineResults={engineResults}
             />

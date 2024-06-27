@@ -67,12 +67,12 @@ const CoboSafeModificationRule = ({
         </SubTable>
 
         <Col>
-          <Row isTitle>
+          <Row isTitle style={{ flex: 0, marginRight: 10 }}>
             <Text>
               {t('page.signTx.coboSafeModificationRole.descriptionTitle')}
             </Text>
           </Row>
-          <Row>
+          <Row style={{ flex: 1 }}>
             <Text style={commonStyle.primaryText}>{actionData.desc}</Text>
           </Row>
         </Col>

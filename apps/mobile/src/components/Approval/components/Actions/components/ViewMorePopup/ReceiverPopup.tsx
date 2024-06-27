@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
-import { Chain } from '@/constant/chains';
-import { ContractDesc, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import LogoWithText from '../LogoWithText';
@@ -13,36 +11,7 @@ import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DescItem from '../DescItem';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-
-export interface ReceiverData {
-  title?: string;
-  address: string;
-  chain: Chain;
-  eoa: {
-    id: string;
-    bornAt: number;
-  } | null;
-  cex: {
-    id: string;
-    name: string;
-    logo: string;
-    bornAt: number;
-    isDeposit: boolean;
-    supportToken?: boolean;
-  } | null;
-  contract: Record<string, ContractDesc> | null;
-  usd_value: number;
-  hasTransfer: boolean;
-  isTokenContract: boolean;
-  name: string | null;
-  onTransferWhitelist: boolean;
-  token?: TokenItem;
-  isLabelAddress?: boolean;
-  labelAddressLogo?: string;
-  hasReceiverMnemonicInWallet?: boolean;
-  hasReceiverPrivateKeyInWallet?: boolean;
-  rank?: number;
-}
+import { ReceiverData } from '../../utils';
 
 export interface Props {
   data: ReceiverData;

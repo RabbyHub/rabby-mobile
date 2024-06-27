@@ -50,6 +50,15 @@ import { getMessageStyles } from '../TextActions';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import RevokePermit2 from '../Actions/RevokePermit2';
+import {
+  ApproveNFTRequireData,
+  RevokeTokenApproveRequireData,
+  SendRequireData,
+} from '../Actions/utils';
+import ApproveNFT from '../Actions/ApproveNFT';
+import Send from '../Actions/Send';
+import AssetOrder from '../Actions/AssetOrder';
 
 const Actions = ({
   data,
@@ -173,10 +182,18 @@ const Actions = ({
                   </Col>
                 )}
 
-                {data.permit && chain && (
+                {data.permit && (
                   <Permit
                     data={data.permit}
                     requireData={requireData as ApproveTokenRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.revokePermit && chain && (
+                  <RevokePermit2
+                    data={data.revokePermit}
+                    requireData={requireData as RevokeTokenApproveRequireData}
                     chain={chain}
                     engineResults={engineResults}
                   />
@@ -185,6 +202,14 @@ const Actions = ({
                   <Permit2
                     data={data.permit2}
                     requireData={requireData as ApproveTokenRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.approveNFT && chain && (
+                  <ApproveNFT
+                    data={data.approveNFT}
+                    requireData={requireData as ApproveNFTRequireData}
                     chain={chain}
                     engineResults={engineResults}
                   />
@@ -232,10 +257,27 @@ const Actions = ({
                     sender={data.sender}
                   />
                 )}
+                {data.assetOrder && chain && (
+                  <AssetOrder
+                    data={data.assetOrder}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    sender={data.sender}
+                  />
+                )}
                 {data.signMultiSig && (
                   <SignMultisig
                     data={data.signMultiSig}
                     requireData={requireData as MultiSigRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.send && chain && (
+                  <Send
+                    data={data.send}
+                    requireData={requireData as SendRequireData}
                     chain={chain}
                     engineResults={engineResults}
                   />

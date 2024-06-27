@@ -487,7 +487,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         {isLoading && (
           <Skeleton
             style={{
-              width: 358,
+              width: '100%',
               height: 400,
             }}
           />

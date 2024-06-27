@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -16,7 +16,6 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { useThemeColors } from '@/hooks/theme';
 
 const Send = ({
   data,
@@ -33,7 +32,6 @@ const Send = ({
   const { init } = useApprovalSecurityEngine();
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
-  const colors = useThemeColors();
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};

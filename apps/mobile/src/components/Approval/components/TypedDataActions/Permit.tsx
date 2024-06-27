@@ -24,7 +24,7 @@ const Permit = ({
 }: {
   data: TypedDataActionData['permit'];
   requireData: ApproveTokenRequireData;
-  chain: Chain;
+  chain?: Chain;
   engineResults: Result[];
 }) => {
   const actionData = data!;

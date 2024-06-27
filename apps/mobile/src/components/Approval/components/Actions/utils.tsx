@@ -50,13 +50,44 @@ import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import i18n from '@/utils/i18n';
-import { ReceiverData } from './components/ViewMorePopup/ReceiverPopup';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { TypedDataActionData } from '../TypedDataActions/utils';
+import { Chain } from '@/constant/chains';
 
 const { isSameAddress } = addressUtils;
 export interface ReceiveTokenItem extends TokenItem {
   min_amount: number;
   min_raw_amount: string;
+}
+
+export interface ReceiverData {
+  title?: string;
+  address: string;
+  chain: Chain;
+  eoa: {
+    id: string;
+    bornAt: number;
+  } | null;
+  cex: {
+    id: string;
+    name: string;
+    logo: string;
+    bornAt: number;
+    isDeposit: boolean;
+    supportToken?: boolean;
+  } | null;
+  contract: Record<string, ContractDesc> | null;
+  usd_value: number;
+  hasTransfer: boolean;
+  isTokenContract: boolean;
+  name: string | null;
+  onTransferWhitelist: boolean;
+  token?: TokenItem;
+  isLabelAddress?: boolean;
+  labelAddressLogo?: string;
+  hasReceiverMnemonicInWallet?: boolean;
+  hasReceiverPrivateKeyInWallet?: boolean;
+  rank?: number;
 }
 
 export interface ParsedActionData {
@@ -600,6 +631,8 @@ export interface ContractRequireData {
   bornAt: number;
   hasInteraction: boolean;
   rank: number | null;
+  unexpectedAddr: ReceiverData | null;
+  receiverInWallet: boolean;
 }
 
 export const fetchContractRequireData = async (
@@ -607,6 +640,7 @@ export const fetchContractRequireData = async (
   chainId: string,
   sender: string,
   apiProvider: OpenApiService,
+  actionData?: TypedDataActionData,
 ) => {
   const queue = new PQueue();
   const result: ContractRequireData = {
@@ -615,6 +649,8 @@ export const fetchContractRequireData = async (
     bornAt: 0,
     hasInteraction: false,
     rank: null,
+    unexpectedAddr: null,
+    receiverInWallet: false,
   };
   queue.add(async () => {
     const credit = await apiProvider.getContractCredit(id, chainId);
@@ -637,6 +673,76 @@ export const fetchContractRequireData = async (
     );
     result.hasInteraction = hasInteraction.has_interaction;
   });
+  if (actionData) {
+    if (actionData.contractCall || actionData.common) {
+      const chain = findChainByServerID(chainId);
+
+      queue.add(async () => {
+        const addr = actionData.common?.receiver;
+
+        if (addr) {
+          result.receiverInWallet = await keyringService.hasAddress(addr);
+          const receiverData: ReceiverData = {
+            address: addr,
+            chain: chain!,
+            eoa: null,
+            cex: null,
+            contract: null,
+            usd_value: 0,
+            hasTransfer: false,
+            isTokenContract: false,
+            name: null,
+            onTransferWhitelist: false,
+          };
+
+          const { has_transfer } = await apiProvider.hasTransfer(
+            chainId,
+            sender,
+            addr,
+          );
+          receiverData.hasTransfer = has_transfer;
+
+          const { desc } = await apiProvider.addrDesc(addr);
+          if (desc.cex?.id) {
+            receiverData.cex = {
+              id: desc.cex.id,
+              logo: desc.cex.logo_url,
+              name: desc.cex.name,
+              bornAt: desc.born_at,
+              isDeposit: desc.cex.is_deposit,
+            };
+          }
+          if (desc.contract && Object.keys(desc.contract).length > 0) {
+            receiverData.contract = desc.contract;
+          }
+          if (!receiverData.cex && !receiverData.contract) {
+            receiverData.eoa = {
+              id: addr,
+              bornAt: desc.born_at,
+            };
+          }
+          receiverData.usd_value = desc.usd_value;
+          if (id) {
+            const { is_token } = await apiProvider.isTokenContract(
+              chainId,
+              addr,
+            );
+            receiverData.isTokenContract = is_token;
+          }
+          receiverData.name = desc.name;
+          if (ALIAS_ADDRESS[addr.toLowerCase()]) {
+            receiverData.name = ALIAS_ADDRESS[addr.toLowerCase()];
+          }
+
+          const whitelist = await whitelistService.getWhitelist();
+          receiverData.onTransferWhitelist = whitelist.includes(
+            addr.toLowerCase(),
+          );
+          result.unexpectedAddr = receiverData;
+        }
+      });
+    }
+  }
   await waitQueueFinished(queue);
   return result;
 };
@@ -668,7 +774,7 @@ export const waitQueueFinished = (q: PQueue) => {
   });
 };
 
-const fetchNFTApproveRequiredData = async ({
+export const fetchNFTApproveRequiredData = async ({
   spender,
   address,
   chainId,
