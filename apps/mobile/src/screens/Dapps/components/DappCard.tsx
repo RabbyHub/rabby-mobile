@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
+import FastImage from 'react-native-fast-image';
 import { DappIcon } from './DappIcon';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { CHAINS } from '@/constant/chains';
@@ -47,7 +48,7 @@ export const DappCardListBy = ({
             {data.map(item => {
               return (
                 <View style={styles.tooltipListItem} key={item.logo_url}>
-                  <Image
+                  <FastImage
                     style={styles.tooltipListItemIcon}
                     source={{ uri: item.logo_url }}
                   />
@@ -112,6 +113,7 @@ export const DappCard = ({
               data?.info?.logo_url
                 ? {
                     uri: data.info?.logo_url,
+                    priority: 'low',
                   }
                 : undefined
             }
@@ -121,7 +123,7 @@ export const DappCard = ({
           {isActive ? <View style={styles.dappIconCircle} /> : null}
           <>
             {data?.isConnected && chain ? (
-              <Image
+              <FastImage
                 source={{
                   uri: chain?.logo,
                 }}
