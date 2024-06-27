@@ -106,9 +106,6 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     },
     container: {
       padding: 14,
-      borderBottomLeftRadius: 6,
-      borderBottomRightRadius: 6,
-      backgroundColor: colors['neutral-card1'],
     },
     header: {
       flexDirection: 'row',

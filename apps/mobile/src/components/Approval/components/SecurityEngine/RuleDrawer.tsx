@@ -41,6 +41,7 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       paddingVertical: 20,
       position: 'relative',
       marginHorizontal: 20,
+      marginBottom: 20,
     },
     text: {
       fontSize: 15,
@@ -300,7 +301,7 @@ const getStyles = (colors: AppColorsVariants) =>
       textAlign: 'center',
     },
     footer: {
-      marginVertical: 20,
+      marginBottom: 20,
     },
   });
 

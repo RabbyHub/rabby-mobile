@@ -25,7 +25,7 @@ const getStyles = (colors: AppColorsVariants) =>
 
     rowWrapper: {
       position: 'relative',
-      whiteSpace: 'nowrap',
+      // whiteSpace: 'nowrap',
     },
     notTitle: {
       textAlign: 'right',

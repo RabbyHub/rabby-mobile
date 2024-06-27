@@ -52,12 +52,12 @@ const ViewMore = (
   const height = React.useMemo(() => {
     switch (props.type) {
       case 'contract':
-        return 380;
+        return 350;
       case 'spender':
       case 'nftSpender':
-        return 475;
+        return 405;
       case 'receiver':
-        return 450;
+        return 380;
       case 'nft':
         return 250;
       case 'collection':
@@ -95,7 +95,7 @@ const ViewMore = (
         ref={modalRef}
         onDismiss={() => setPopupVisible(false)}
         handleStyle={styles.handle}
-        enableDynamicSizing>
+        snapPoints={[height]}>
         <BottomSheetView style={styles.mainView}>
           <View style={styles.popupContainer}>
             {props.type === 'contract' && <ContractPopup data={props.data} />}
