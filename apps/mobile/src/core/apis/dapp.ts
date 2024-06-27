@@ -35,9 +35,11 @@ export const connect = ({
 }) => {
   const dapp = dappService.getDapp(origin);
   if (dapp) {
-    dappService.patchDapp(origin, {
-      chainId,
-      isConnected: true,
+    dappService.patchDapps({
+      [origin]: {
+        chainId,
+        isConnected: true,
+      },
     });
     return;
   }
@@ -106,16 +108,23 @@ export const syncBasicDappInfo = async (origin: string | string[]) => {
     .filter(item => !!item)
     .map(item => item.replace(/^https?:\/\//, ''));
 
-  if (!ids.length) {
-    return;
-  }
+  if (!ids.length) return;
 
   const res = await openapi.getDappsInfo({
     ids: ids,
   });
-  res.forEach(item => {
-    dappService.patchDapp(stringUtils.ensurePrefix(item.id, 'https://'), {
-      info: item,
-    });
-  });
+
+  dappService.patchDapps(
+    res.reduce((accu, item) => {
+      if (item.id) {
+        const dappOrigin = stringUtils.ensurePrefix(item.id, 'https://');
+        if (dappOrigin) {
+          accu[dappOrigin] = { info: item };
+        }
+      }
+      return accu;
+    }, {} as Record<DappInfo['origin'], Partial<DappInfo>>),
+  );
+
+  return dappService.getDapps();
 };
