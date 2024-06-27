@@ -9,7 +9,6 @@ export const PrivateKeyActions: React.FC<Props> = props => {
 
   const handleSubmit = React.useCallback(() => {
     props.onSubmit();
-    console.log('Private key sign2');
   }, [props]);
 
   return (
