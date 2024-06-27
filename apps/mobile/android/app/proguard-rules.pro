@@ -23,14 +23,14 @@
    *;
 }
 
-# react-native-svg https://github.com/react-native-svg/react-native-svg#problems-with-proguard
-# https://github.com/software-mansion/react-native-svg/blob/main/android/proguard-rules.pro
-% -keep public class com.horcrux.svg.** {*;}
+# # react-native-svg https://github.com/react-native-svg/react-native-svg#problems-with-proguard
+# # https://github.com/software-mansion/react-native-svg/blob/main/android/proguard-rules.pro
+# -keep public class com.horcrux.svg.** {*;}
 
-# react-native-reanimated https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/installation
-# https://github.com/software-mansion/react-native-reanimated/blob/main/packages/react-native-reanimated/android/proguard-rules.pro
-% -keep class com.swmansion.reanimated.** { *; }
-% -keep class com.facebook.react.turbomodule.** { *; }
+# # react-native-reanimated https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/installation
+# # https://github.com/software-mansion/react-native-reanimated/blob/main/packages/react-native-reanimated/android/proguard-rules.pro
+# -keep class com.swmansion.reanimated.** { *; }
+# -keep class com.facebook.react.turbomodule.** { *; }
 
 # https://github.com/DylanVann/react-native-fast-image?tab=readme-ov-file#are-you-using-proguard
 -keep public class com.dylanvann.fastimage.* {*;}
