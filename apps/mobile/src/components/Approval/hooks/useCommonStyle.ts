@@ -47,6 +47,11 @@ const useCommonStyle = () => {
         fontWeight: '500',
         color: colors['neutral-title-1'],
       },
+      subRowNestedText: {
+        fontSize: 14,
+        lineHeight: 17,
+        color: colors['neutral-foot'],
+      },
       rowFlexCenterItem: {
         display: 'flex',
         flexDirection: 'row',

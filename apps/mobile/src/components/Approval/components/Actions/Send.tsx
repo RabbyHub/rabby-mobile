@@ -153,10 +153,10 @@ const Send = ({
                   <LogoWithText
                     text={requireData.name}
                     logo={INTERNAL_REQUEST_SESSION.icon}
-                    textStyle={commonStyle.subRowText}
+                    textStyle={commonStyle.subRowNestedText}
                   />
                 ) : (
-                  <Text style={commonStyle.subRowText}>
+                  <Text style={commonStyle.subRowNestedText}>
                     {requireData.name.replace(/^Token: /, 'Token ') +
                       ' contract address'}
                   </Text>

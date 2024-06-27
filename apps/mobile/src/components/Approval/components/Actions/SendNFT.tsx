@@ -149,7 +149,7 @@ const SendNFT = ({
             <SubCol nested>
               <SubRow> </SubRow>
               <SubRow>
-                <Text style={commonStyle.subRowText}>
+                <Text style={commonStyle.subRowNestedText}>
                   {requireData.name.replace(/^Token: /, 'Token ') +
                     ' contract address'}
                 </Text>
