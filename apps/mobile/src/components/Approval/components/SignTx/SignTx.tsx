@@ -81,6 +81,7 @@ import {
   GasSelectorResponse,
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
+import { BroadcastMode } from '../BroadcastMode';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -1348,22 +1349,21 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 manuallyChangeGasLimit={manuallyChangeGasLimit}
               />
             ) : null}
+
+            {isReady && (
+              <BroadcastMode
+                chain={chain.enum}
+                value={pushInfo}
+                isCancel={isCancel}
+                isSpeedUp={isSpeedUp}
+                isGasTopUp={isGasTopUp}
+                onChange={value => {
+                  setPushInfo(value);
+                }}
+              />
+            )}
           </View>
         )}
-        {/* <BroadcastMode
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            marginTop: 12,
-          }}
-          chain={chain.enum}
-          value={pushInfo}
-          isCancel={isCancel}
-          isSpeedUp={isSpeedUp}
-          isGasTopUp={isGasTopUp}
-          onChange={value => {
-            setPushInfo(value);
-          }}
-        /> */}
 
         {isGnosisAccount && safeInfo ? (
           <GnosisDrawer
@@ -1373,7 +1373,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             onConfirm={handleGnosisConfirm}
           />
         ) : null}
-
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}
           visible={currentTx.ruleDrawer.visible}
@@ -1469,15 +1468,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           }
         />
       )}
-      {/* TODO */}
-      {/* <TokenDetailPopup
-        token={tokenDetail.selectToken}
-        visible={tokenDetail.popupVisible}
-        onClose={() => dispatch.sign.closeTokenDetailPopup()}
-        canClickToken={false}
-        hideOperationButtons
-        variant="add"
-      /> */}
     </BottomSheetView>
   );
 };

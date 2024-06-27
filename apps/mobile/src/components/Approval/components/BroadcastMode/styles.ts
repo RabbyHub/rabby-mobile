@@ -8,37 +8,9 @@ export const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       paddingHorizontal: 12,
     },
-    broadcastMode: {},
-    broadcastModeHeader: {
-      display: 'flex',
-      padding: 16,
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors['neutral-line'],
-      flexDirection: 'row',
-    },
-    broadcastModeTitle: {
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '400',
-      lineHeight: 18,
-    },
-    broadcastModeExtra: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-      marginLeft: 'auto',
-      flexDirection: 'row',
-    },
-    broadcastModeExtraText: {
-      color: colors['neutral-title-1'],
-      fontSize: 15,
-      fontWeight: '400',
-      lineHeight: 18,
-    },
     broadcastModeBody: {
       paddingVertical: 12,
+      paddingHorizontal: 16,
     },
     broadcastModeBodyUl: {
       marginTop: 0,
@@ -93,5 +65,54 @@ export const getStyles = (colors: AppColorsVariants) =>
       fontSize: 13,
       fontWeight: '400',
       lineHeight: 16,
+      textAlign: 'center',
+    },
+    optionList: {},
+    modal: {
+      backgroundColor: colors['neutral-bg-2'],
+    },
+    optionTitle: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+    },
+    optionDesc: {
+      fontSize: 13,
+      color: colors['neutral-body'],
+    },
+    footer: {
+      gap: 12,
+      paddingHorizontal: 20,
+      marginBottom: 40,
+    },
+    footerItem: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      position: 'relative',
+      flexDirection: 'row',
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    footerRadio: {
+      justifyContent: 'space-between',
+    },
+    radioIcon: {
+      width: 20,
+      height: 20,
+    },
+    footerItemText: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '500',
+    },
+    checked: {
+      borderColor: colors['blue-default'],
+      backgroundColor: colors['blue-light1'],
+    },
+    disabled: {
+      opacity: 0.5,
     },
   });

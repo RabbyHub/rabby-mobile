@@ -118,7 +118,6 @@ export const SafeNonceSelector = ({
 const getStyles = createGetStyles(colors => ({
   wrapper: {
     backgroundColor: colors['neutral-card-1'],
-    marginTop: 12,
     paddingTop: 16,
     paddingHorizontal: 12,
     paddingBottom: 12,
