@@ -684,8 +684,8 @@ export const GasSelectorHeader = ({
       </View>
 
       <AppBottomSheetModal
-        enableDynamicSizing
         keyboardBlurBehavior="restore"
+        snapPoints={isReal1559 && isHardware ? [500] : [450]}
         ref={modalRef}
         handleStyle={{
           backgroundColor: colors['neutral-bg2'],
@@ -845,10 +845,13 @@ export const GasSelectorHeader = ({
                 </Tip>
               </>
             )}
+
             {isReal1559 && isHardware && (
-              <Text className="hardware-1559-tip">
-                {t('page.signTx.hardwareSupport1559Alert')}
-              </Text>
+              <View style={styles.gasPriceDesc}>
+                <Text style={styles.gasPriceDescText}>
+                  {t('page.signTx.hardwareSupport1559Alert')}
+                </Text>
+              </View>
             )}
           </View>
 

@@ -67,6 +67,7 @@ const getStyles = (colors: AppColorsVariants) =>
       fontWeight: '500',
       margin: 0,
       height: 18,
+      padding: 0,
       marginTop: 6,
     },
     cardItemTextActive: {
