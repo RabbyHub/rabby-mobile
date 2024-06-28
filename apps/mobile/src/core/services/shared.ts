@@ -1,4 +1,8 @@
-import { makeAppStorage } from '../storage/mmkv';
+import {
+  appStorage,
+  keyringStorage,
+  normalizeKeyringState,
+} from '../storage/mmkv';
 
 import { ContactBookService } from '@rabby-wallet/service-address';
 
@@ -15,10 +19,7 @@ import { SessionService } from './session';
 import WatchKeyring from '@rabby-wallet/eth-keyring-watch';
 import { GnosisKeyring } from '@rabby-wallet/eth-keyring-gnosis';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
-import {
-  EncryptorAdapter,
-  KeyringService,
-} from '@rabby-wallet/service-keyring';
+import { KeyringService } from '@rabby-wallet/service-keyring';
 import RNEncryptor from './encryptor';
 import { onCreateKeyring, onSetAddressAlias } from './keyringParams';
 import { RabbyPointsService } from './rabbyPoints';
@@ -30,8 +31,7 @@ import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 import { HDKeyringService } from './hdKeyringService';
 
-export const appStorage = makeAppStorage();
-const keyringState = appStorage.getItem('keyringState');
+const keyringState = normalizeKeyringState().keyringData;
 
 // TODO: add other keyring classes
 const keyringClasses = [
@@ -57,9 +57,17 @@ export const keyringService = new KeyringService({
   contactService,
 });
 keyringService.loadStore(keyringState || {});
-keyringService.store.subscribe(value =>
-  appStorage.setItem('keyringState', value),
-);
+
+keyringService.store.subscribe(value => {
+  // leave here to test migrate legacyData to keyringData
+  if (__DEV__) {
+    appStorage.setItem('keyringState', value);
+  }
+
+  keyringStorage.clearAll();
+  // keyringStorage.flushToDisk?.();
+  keyringStorage.setItem('keyringState', value);
+});
 
 export const dappService = new DappService({
   storageAdapter: appStorage,

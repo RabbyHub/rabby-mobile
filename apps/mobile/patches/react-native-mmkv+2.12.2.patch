@@ -1,0 +1,137 @@
+diff --git a/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp b/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
+index 1ffbdc2..ce8da60 100644
+--- a/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
++++ b/node_modules/react-native-mmkv/android/src/main/cpp/MmkvHostObject.cpp
+@@ -52,6 +52,7 @@ std::vector<jsi::PropNameID> MmkvHostObject::getPropertyNames(jsi::Runtime& rt)
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("getAllKeys")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("deleteAll")));
+   result.push_back(jsi::PropNameID::forUtf8(rt, std::string("recrypt")));
++  result.push_back(jsi::PropNameID::forUtf8(rt, std::string("trim")));
+   return result;
+ }
+ 
+@@ -286,5 +287,18 @@ jsi::Value MmkvHostObject::get(jsi::Runtime& runtime, const jsi::PropNameID& pro
+         });
+   }
+ 
++  if (propName == "trim") {
++    // MMKV.trim()
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, propName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          instance->clearMemoryCache();
++          instance->trim();
++
++          return jsi::Value::undefined();
++        });
++  }
++
+   return jsi::Value::undefined();
+ }
+diff --git a/node_modules/react-native-mmkv/lib/module/MMKV.js b/node_modules/react-native-mmkv/lib/module/MMKV.js
+index c7b6cdd..77651d9 100644
+--- a/node_modules/react-native-mmkv/lib/module/MMKV.js
++++ b/node_modules/react-native-mmkv/lib/module/MMKV.js
+@@ -83,6 +83,10 @@ export class MMKV {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  trim() {
++    const func = this.getFunctionFromCache('trim');
++    return func();
++  }
+   toString() {
+     return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
+   }
+diff --git a/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts b/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
+index 98de6b8..269e933 100644
+--- a/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
++++ b/node_modules/react-native-mmkv/lib/typescript/MMKV.d.ts
+@@ -100,6 +100,16 @@ interface MMKVInterface {
+      * Encryption keys can have a maximum length of 16 bytes.
+      */
+     recrypt: (key: string | undefined) => void;
++    /**
++     * Trims the storage space and clears memory cache.
++     *
++     * Since MMKV does not resize itself after deleting keys, you can call `trim()`
++     * after deleting a bunch of keys to manually trim the memory- and
++     * disk-file to reduce storage and memory usage.
++     *
++     * In most applications, this is not needed at all.
++     */
++    trim: () => void;
+     /**
+      * Adds a value changed listener. The Listener will be called whenever any value
+      * in this storage instance changes (set or delete).
+@@ -108,7 +118,7 @@ interface MMKVInterface {
+      */
+     addOnValueChangedListener: (onValueChanged: (key: string) => void) => Listener;
+ }
+-export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt'>;
++export type NativeMMKV = Pick<MMKVInterface, 'clearAll' | 'contains' | 'delete' | 'getAllKeys' | 'getBoolean' | 'getNumber' | 'getString' | 'getBuffer' | 'set' | 'recrypt' | 'trim'>;
+ /**
+  * A single MMKV instance.
+  */
+@@ -134,6 +144,7 @@ export declare class MMKV implements MMKVInterface {
+     getAllKeys(): string[];
+     clearAll(): void;
+     recrypt(key: string | undefined): void;
++    trim(): void;
+     toString(): string;
+     toJSON(): object;
+     addOnValueChangedListener(onValueChanged: (key: string) => void): Listener;
+diff --git a/node_modules/react-native-mmkv/src/MMKV.ts b/node_modules/react-native-mmkv/src/MMKV.ts
+index 973a5e7..6f36a9d 100644
+--- a/node_modules/react-native-mmkv/src/MMKV.ts
++++ b/node_modules/react-native-mmkv/src/MMKV.ts
+@@ -106,6 +106,16 @@ interface MMKVInterface {
+    * Encryption keys can have a maximum length of 16 bytes.
+    */
+   recrypt: (key: string | undefined) => void;
++  /**
++   * Trims the storage space and clears memory cache.
++   *
++   * Since MMKV does not resize itself after deleting keys, you can call `trim()`
++   * after deleting a bunch of keys to manually trim the memory- and
++   * disk-file to reduce storage and memory usage.
++   *
++   * In most applications, this is not needed at all.
++   */
++  trim: () => void;
+   /**
+    * Adds a value changed listener. The Listener will be called whenever any value
+    * in this storage instance changes (set or delete).
+@@ -129,6 +139,7 @@ export type NativeMMKV = Pick<
+   | 'getBuffer'
+   | 'set'
+   | 'recrypt'
++  | 'trim'
+ >;
+ 
+ const onValueChangedListeners = new Map<string, ((key: string) => void)[]>();
+@@ -227,6 +238,10 @@ export class MMKV implements MMKVInterface {
+     const func = this.getFunctionFromCache('recrypt');
+     return func(key);
+   }
++  trim() {
++    const func = this.getFunctionFromCache('trim');
++    return func();
++  }
+ 
+   toString(): string {
+     return `MMKV (${this.id}): [${this.getAllKeys().join(', ')}]`;
+diff --git a/node_modules/react-native-mmkv/src/createMMKV.mock.ts b/node_modules/react-native-mmkv/src/createMMKV.mock.ts
+index c81bb57..29ebc91 100644
+--- a/node_modules/react-native-mmkv/src/createMMKV.mock.ts
++++ b/node_modules/react-native-mmkv/src/createMMKV.mock.ts
+@@ -29,5 +29,8 @@ export const createMockMMKV = (): NativeMMKV => {
+     recrypt: () => {
+       console.warn('Encryption is not supported in mocked MMKV instances!');
+     },
++    trim: () => {
++      console.warn('trim() is not supported in mocked MMKV instances!');
++    }
+   };
+ };
