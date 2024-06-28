@@ -75,11 +75,21 @@ export class DappService extends StoreServiceBase<DappStore, 'dapps'> {
     this.store.dapps = { ...this.store.dapps };
   }
 
-  patchDapp(dappOrigin: string, dapp: Partial<DappInfo>) {
-    this.store.dapps[dappOrigin] = {
-      ...this.store.dapps[dappOrigin],
-      ...dapp,
-    };
+  // patchDapp(dappOrigin: string, dapp: Partial<DappInfo>) {
+  //   this.store.dapps[dappOrigin] = {
+  //     ...this.store.dapps[dappOrigin],
+  //     ...dapp,
+  //   };
+  //   this.store.dapps = { ...this.store.dapps };
+  // }
+
+  patchDapps(dapps: Record<string, Partial<DappInfo>>) {
+    Object.keys(dapps).forEach(origin => {
+      this.store.dapps[origin] = {
+        ...this.store.dapps[origin],
+        ...dapps[origin],
+      };
+    });
     this.store.dapps = { ...this.store.dapps };
   }
 
