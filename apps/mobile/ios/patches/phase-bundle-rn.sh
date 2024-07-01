@@ -21,8 +21,12 @@ echo "[RabbyMobileBuild] NODE_BINARY is $NODE_BINARY"
 echo "[RabbyMobileBuild] customize build environment vars"
 echo "[RabbyMobileBuild] CONFIGURATION is $CONFIGURATION"
 if [[ "$CONFIGURATION" == "Release" ]]; then
-    [ -z $BUILD_ENV ] && export BUILD_ENV="production"
-    [ -z $buildchannel ] && export buildchannel="appstore"
+  [ -z $BUILD_ENV ] && export BUILD_ENV="production"
+  [ -z $buildchannel ] && export buildchannel="appstore"
+  if [ -z $RABBY_MOBILE_CODE ]; then
+    echo "[RabbyMobileBuild] no RABBY_MOBILE_CODE set, abort bundle"
+    exit 1;
+  fi
 fi
 echo "[RabbyMobileBuild] buildchannel is $buildchannel"
 

@@ -31,10 +31,10 @@ import { useNavigationState } from '@react-navigation/native';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { useLoadLockInfo } from '@/hooks/useLock';
+import { APP_TEST_PWD } from '@/constant';
 
-const TEST_PWD = __DEV__ ? '11111111' : '';
 const INIT_FORM_DATA = __DEV__
-  ? { password: TEST_PWD, confirmPassword: TEST_PWD, checked: true }
+  ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
   : { password: '', confirmPassword: '', checked: true };
 
 const LAYOUTS = {

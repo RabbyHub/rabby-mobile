@@ -49,6 +49,8 @@ export const contactService = new ContactBookService({
   storageAdapter: appStorage,
 });
 
+export const appEncryptor = new RNEncryptor();
+
 export const keyringService = new KeyringService({
   encryptor: new RNEncryptor(),
   keyringClasses,

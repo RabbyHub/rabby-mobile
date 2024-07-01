@@ -5,6 +5,7 @@
 declare module '@env' {
   declare const Env: {
     RABBY_MOBILE_KR_PWD: string;
+    RABBY_MOBILE_CODE: string;
     DEV_CONSOLE_URL: string;
   };
 

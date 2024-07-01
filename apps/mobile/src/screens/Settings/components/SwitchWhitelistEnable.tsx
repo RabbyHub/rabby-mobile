@@ -1,9 +1,14 @@
-import { AppSwitch } from '@/components';
+import React from 'react';
+
+import { AppSwitch, SwitchToggleType } from '@/components';
 import { useThemeColors } from '@/hooks/theme';
 import { useWhitelist } from '@/hooks/whitelist';
 import { useTranslation } from 'react-i18next';
 
-export const SwitchWhitelistEnable = () => {
+export const SwitchWhitelistEnable = React.forwardRef<
+  SwitchToggleType,
+  React.ComponentProps<typeof AppSwitch>
+>((props, ref) => {
   const { enable, toggleWhitelist } = useWhitelist();
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -12,8 +17,16 @@ export const SwitchWhitelistEnable = () => {
     await toggleWhitelist(value);
   };
 
+  React.useImperativeHandle(ref, () => ({
+    toggle: async (enabled?: boolean) => {
+      await handleWhitelistEnableChange(enabled ?? !enable);
+    },
+  }));
+
   return (
     <AppSwitch
+      {...props}
+      circleSize={20}
       value={!!enable}
       changeValueImmediately={false}
       onValueChange={() => {
@@ -23,4 +36,4 @@ export const SwitchWhitelistEnable = () => {
       circleBorderActiveColor={colors['green-default']}
     />
   );
-};
+});

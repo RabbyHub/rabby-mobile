@@ -74,6 +74,8 @@ export const APPLICATION_ID =
     ? 'com.debank.rabby-mobile-debug'
     : 'com.debank.rabby-mobile';
 
+export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
+
 export const GNOSIS_SUPPORT_CHAINS = [
   CHAINS_ENUM.ETH,
   CHAINS_ENUM.BSC,

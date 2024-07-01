@@ -14,12 +14,12 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import * as Yup from 'yup';
 
 import { AppBottomSheetModal, Button } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useSheetModalsForManagingPassword } from '../hooks';
 
-import { useWalletLockInfo } from '../useManagePassword';
+import { useWalletPasswordInfo } from '../useManagePassword';
 
 import { default as RcNoPassword } from '../icons/no-password.svg';
 import { default as RcHasPassword } from '../icons/has-password.svg';
@@ -28,8 +28,9 @@ import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components/Toast';
-import { apisLock } from '@/core/apis';
+import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
+import { useBiometrics } from '@/hooks/biometrics';
 
 type Props = {
   height?: number;
@@ -104,7 +105,8 @@ function useClearPasswordForm() {
     });
   }, [t]);
 
-  const { fetchLockInfo } = useWalletLockInfo();
+  const { fetchLockInfo } = useWalletPasswordInfo();
+  const { fetchBiometrics } = useBiometrics();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },
@@ -125,17 +127,17 @@ function useClearPasswordForm() {
       });
 
       try {
-        const result = await apisLock.clearCustomPassword(
+        const result = await apisKeychain.clearApplicationPassword(
           values.currentPassword,
         );
-        if (result.error) {
-          toast.show(result.error);
+        if (result.clearCustomPasswordError) {
+          toast.show(result.clearCustomPasswordError);
         } else {
           toast.success('Clear Password Successfully');
           toggleShowSheetModal('clearPasswordModalRef', false);
         }
       } finally {
-        fetchLockInfo();
+        Promise.allSettled([fetchLockInfo(), fetchBiometrics()]);
         toastHide();
       }
     },
@@ -153,8 +155,7 @@ const CancelPasswordSheetModal = (props: Props) => {
     useSheetModalsForManagingPassword();
   const insets = useSafeAreaInsets();
 
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { colors, styles } = useThemeStyles(getStyles);
   const cancel = useCallback(() => {
     formik.resetForm();
     toggleShowSheetModal('clearPasswordModalRef', false);
@@ -236,7 +237,7 @@ const CancelPasswordSheetModal = (props: Props) => {
 };
 
 export function ManagePasswordSheetModal(props: Props) {
-  const { lockInfo } = useWalletLockInfo({ autoFetch: true });
+  const { lockInfo } = useWalletPasswordInfo({ autoFetch: true });
 
   if (lockInfo.pwdStatus === PasswordStatus.Custom) {
     return <CancelPasswordSheetModal {...props} />;

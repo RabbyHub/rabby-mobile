@@ -46,6 +46,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
+import DeviceUtils from '@/core/utils/device';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -207,9 +208,6 @@ export function OpenedDappWebViewStub() {
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
-      containerStyle={{
-        backgroundColor: 'transparent',
-      }}
       backgroundStyle={{
         backgroundColor: colors['neutral-bg1'],
       }}
@@ -374,9 +372,12 @@ const getWebViewStubStyles = createGetStyles(colors => {
     bsView: {
       alignItems: 'center',
       justifyContent: 'center',
-      height: Dimensions.get('window').height,
+      /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
+      height: DeviceUtils.isAndroid()
+        ? Dimensions.get('window').height
+        : '100%',
       minHeight: 20,
-      backgroundColor: colors['neutral-bg1'],
+      backgroundColor: 'transparent',
     },
     bsViewOpened: {
       height: '100%',

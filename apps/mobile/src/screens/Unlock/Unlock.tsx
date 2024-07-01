@@ -1,7 +1,7 @@
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { createGetStyles } from '@/utils/styles';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { View, Text, TextInput, Alert, Platform } from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -10,10 +10,12 @@ import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { FormInput } from '@/components/Form/Input';
 import { useTranslation } from 'react-i18next';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import { SilentTouchableView } from '@/components/Touchable/TouchableView';
+import TouchableView, {
+  SilentTouchableView,
+} from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast, toastWithIcon } from '@/components/Toast';
-import { apisLock } from '@/core/apis';
+import { toast } from '@/components/Toast';
+import { apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationToHome,
   usePreventGoBack,
@@ -21,6 +23,15 @@ import {
 } from '@/hooks/navigation';
 import { getFormikErrorsCount } from '@/utils/patch';
 import { useFocusEffect } from '@react-navigation/native';
+import { APP_TEST_PWD } from '@/constant';
+import {
+  RequestGenericPurpose,
+  parseKeychainError,
+} from '@/core/apis/keychain';
+import { useUnlockApp } from './hooks';
+import { RcIconFaceId, RcIconFingerprint } from './icons';
+import { useBiometrics } from '@/hooks/biometrics';
+import TouchableText from '@/components/Touchable/TouchableText';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -29,6 +40,24 @@ const LAYOUTS = {
 
 const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
 
+const isIOS = Platform.OS === 'ios';
+const BiometricsIconSize = 56;
+
+function BiometricsIcon(props: { isFaceID?: boolean }) {
+  const { isFaceID = isIOS } = props;
+
+  return isFaceID ? (
+    <RcIconFaceId
+      strokeWidth={2}
+      width={BiometricsIconSize}
+      height={BiometricsIconSize}
+    />
+  ) : (
+    <RcIconFingerprint width={BiometricsIconSize} height={BiometricsIconSize} />
+  );
+}
+
+const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
 function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
@@ -36,9 +65,17 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       password: Yup.string().required(t('page.unlock.password.required')),
     });
   }, [t]);
+  const { isUnlocking, unlockApp, afterLeaveFromUnlock } = useUnlockApp();
+
+  const checkUnlocked = useCallback(() => {
+    if (!apisLock.isUnlocked()) return;
+
+    resetNavigationToHome(navigation);
+    afterLeaveFromUnlock();
+  }, [navigation, afterLeaveFromUnlock]);
 
   const formik = useFormik({
-    initialValues: { password: '' },
+    initialValues: INIT_DATA,
     validationSchema: yupSchema,
     validateOnMount: false,
     validateOnBlur: true,
@@ -47,31 +84,18 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const toastHide = toastWithIcon(() => (
-        <ActivityIndicator style={{ marginRight: 6 }} />
-      ))(`Unlocking`, {
-        duration: 1e6,
-        position: toast.positions.CENTER,
-        hideOnPress: false,
-      });
-
-      try {
-        const result = await apisLock.unlockWallet(values.password);
-        if (result.error) {
-          helpers.setFieldError('password', t('page.unlock.password.error'));
-          toast.show(result.error);
-        } else {
-          resetNavigationToHome(navigation);
-        }
-      } finally {
-        toastHide();
+      const result = await unlockApp(values.password, { showLoading: true });
+      if (result.error) {
+        helpers?.setFieldError('password', t('page.unlock.password.error'));
+        toast.show(result.error);
       }
+      checkUnlocked();
     },
   });
 
-  const shouldDisabled = !formik.values.password;
+  const shouldDisabled = isUnlocking || !formik.values.password;
 
-  return { formik, shouldDisabled };
+  return { formik, shouldDisabled, checkUnlocked };
 }
 
 export default function UnlockScreen() {
@@ -79,8 +103,23 @@ export default function UnlockScreen() {
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
-  const { formik, shouldDisabled } = useUnlockForm(navigation);
-  const { setFieldValue, errors, handleSubmit } = formik;
+  const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
+  const {
+    computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
+    fetchBiometrics,
+  } = useBiometrics({ autoFetch: true });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
+
+  const { unlockApp } = useUnlockApp();
+
+  const [usingBiometrics, setUsingBiometrics] = useState(isBiometricsEnabled);
+  const couldSwitchingAuthentication = isBiometricsEnabled;
+  const usingPassword = !usingBiometrics || !isBiometricsEnabled;
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -91,16 +130,86 @@ export default function UnlockScreen() {
   const passwordInputRef = React.useRef<TextInput>(null);
   const { onTouchInputAway } = useInputBlurOnTouchaway(passwordInputRef);
 
-  useEffect(() => {
+  const unlockWithBiometrics = useCallback(async () => {
+    try {
+      await apisKeychain.requestGenericPassword({
+        purpose: RequestGenericPurpose.DECRYPT_PWD,
+        onPlainPassword: async password => {
+          const result = await unlockApp(password, { showLoading: false });
+          if (result.error) {
+            throw new Error(result.error);
+          }
+        },
+      });
+    } catch (error: any) {
+      if (__DEV__) console.error(error);
+
+      // leave here for debug
+      __DEV__ &&
+        console.debug(
+          'error.code: %s; error.name: %s; error.message: %s',
+          error.code,
+          error.name,
+          error.message,
+        );
+
+      if (
+        ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+          error.code,
+        )
+      ) {
+        const parsedInfo = parseKeychainError(error);
+        if (
+          parsedInfo.isCancelledByUser ||
+          (__DEV__ && parsedInfo.sysMessage)
+        ) {
+          toast.info(parsedInfo.sysMessage);
+        } else {
+          toast.info(t('page.unlock.biometrics.failed'));
+        }
+
+        if (!parsedInfo.isCancelledByUser) {
+          Alert.alert(
+            t('page.unlock.biometrics.failedAndTipTitle'),
+            t('page.unlock.biometrics.failedAndTip'),
+            [
+              {
+                text: t('global.ok'),
+                style: 'cancel',
+              },
+              {
+                text: t('page.unlock.biometrics.usePassword'),
+                style: 'cancel',
+                onPress: () => {
+                  setUsingBiometrics(false);
+                },
+              },
+            ],
+          );
+        }
+      } else {
+        toast.info(
+          isIOS
+            ? t('page.unlock.biometrics.failedIOS')
+            : t('page.unlock.biometrics.failed'),
+        );
+        setUsingBiometrics(false);
+      }
+    }
+  }, [unlockApp, t]);
+
+  const onPressBiometricsButton = useCallback(async () => {
+    await unlockWithBiometrics().finally(() => checkUnlocked());
+  }, [unlockWithBiometrics, checkUnlocked]);
+
+  useLayoutEffect(() => {
     if (__DEV__ && STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV) {
-      console.debug('UnlockScreen::useEffect skipped on DEV mode.');
+      console.debug('UnlockScreen::useLayoutEffect skipped on DEV mode.');
       return;
     }
 
-    if (!apisLock.isUnlocked()) return;
-
-    resetNavigationToHome(navigation);
-  }, [navigation]);
+    checkUnlocked();
+  }, [checkUnlocked]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -124,50 +233,78 @@ export default function UnlockScreen() {
         <Text style={styles.title1}>Rabby Wallet</Text>
       </View>
       <View style={styles.bodyContainer}>
-        <View style={styles.formWrapper}>
-          <FormInput
-            clearable
-            ref={passwordInputRef}
-            style={styles.inputContainer}
-            inputStyle={styles.input}
-            errorText={errors.password}
-            inputProps={{
-              value: formik.values.password,
-              secureTextEntry: true,
-              inputMode: 'text',
-              returnKeyType: 'done',
-              placeholder: t('page.unlock.password.placeholder'),
-              placeholderTextColor: colors['neutral-foot'],
-              onChangeText(text) {
-                // const nextErrors = { ...formik.errors };
-                // delete nextErrors.password;
-                // formik.setErrors(nextErrors);
-                formik.setFieldError('password', undefined);
-                setFieldValue('password', text);
-              },
-            }}
-          />
-        </View>
-        <View
-          style={[
-            styles.unlockButtonWrapper,
-            { height: safeSizes.footerHeight },
-          ]}>
-          <Button
-            disabled={shouldDisabled}
-            type="primary"
-            buttonStyle={[styles.buttonShadow]}
-            containerStyle={[
-              styles.nextButtonContainer,
-              { height: safeSizes.nextButtonContainerHeight },
-            ]}
-            title={'Next'}
-            onPress={evt => {
-              evt.stopPropagation();
-              handleSubmit();
-            }}
-          />
-        </View>
+        {usingPassword ? (
+          <View style={styles.formWrapper}>
+            <FormInput
+              clearable
+              ref={passwordInputRef}
+              style={styles.inputContainer}
+              inputStyle={styles.input}
+              errorText={formik.errors.password}
+              inputProps={{
+                value: formik.values.password,
+                secureTextEntry: true,
+                inputMode: 'text',
+                returnKeyType: 'done',
+                placeholder: t('page.unlock.password.placeholder'),
+                placeholderTextColor: colors['neutral-foot'],
+                onChangeText(text) {
+                  // const nextErrors = { ...formik.errors };
+                  // delete nextErrors.password;
+                  // formik.setErrors(nextErrors);
+                  formik.setFieldError('password', undefined);
+                  formik.setFieldValue('password', text);
+                },
+              }}
+            />
+            <View
+              style={[
+                styles.unlockButtonWrapper,
+                { height: safeSizes.footerHeight },
+              ]}>
+              <Button
+                disabled={shouldDisabled}
+                type="primary"
+                buttonStyle={[styles.buttonShadow]}
+                containerStyle={[
+                  styles.nextButtonContainer,
+                  { height: safeSizes.nextButtonContainerHeight },
+                ]}
+                title={'Next'}
+                onPress={evt => {
+                  evt.stopPropagation();
+                  formik.handleSubmit();
+                  checkUnlocked();
+                }}
+              />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.biometricsWrapper}>
+            <View style={styles.biometricsBtns}>
+              <TouchableView
+                style={styles.biometricsBtn}
+                onPress={onPressBiometricsButton}>
+                <BiometricsIcon isFaceID={isFaceID} />
+              </TouchableView>
+            </View>
+          </View>
+        )}
+
+        {couldSwitchingAuthentication && (
+          <View style={styles.switchingAuthTypeButtonWrapper}>
+            <TouchableText
+              disabled={shouldDisabled}
+              style={styles.switchingAuthTypeButton}
+              onPress={() => {
+                setUsingBiometrics(prev => !prev);
+              }}>
+              {usingBiometrics
+                ? t('page.unlock.btn.switchtype_pwd')
+                : t('page.unlock.btn.switchtype_fingerprint')}
+            </TouchableText>
+          </View>
+        )}
       </View>
     </SilentTouchableView>
   );
@@ -207,7 +344,8 @@ const getStyles = createGetStyles(colors => {
       paddingTop: 32,
       paddingBottom: 24,
       backgroundColor: colors['neutral-bg1'],
-      // ...makeDebugBorder()
+      justifyContent: 'space-between',
+      // ...makeDebugBorder(),
     },
     formWrapper: {
       width: '100%',
@@ -239,7 +377,8 @@ const getStyles = createGetStyles(colors => {
     unlockButtonWrapper: {
       marginTop: 60,
       height: LAYOUTS.footerButtonHeight,
-      paddingHorizontal: LAYOUTS.containerPadding,
+      width: '100%',
+      paddingHorizontal: 0,
     },
     nextButtonContainer: {
       width: '100%',
@@ -251,6 +390,41 @@ const getStyles = createGetStyles(colors => {
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 1,
       shadowRadius: 16,
+    },
+
+    biometricsWrapper: {
+      width: '100%',
+      paddingHorizontal: LAYOUTS.containerPadding,
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      // ...makeDebugBorder('yellow'),
+    },
+
+    biometricsBtns: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 24,
+      // ...makeDebugBorder('yellow'),
+    },
+    biometricsBtn: {
+      width: BiometricsIconSize,
+      height: BiometricsIconSize,
+    },
+    switchingAuthTypeButtonWrapper: {
+      width: '100%',
+      // marginTop: 60,
+      alignItems: 'center',
+    },
+    switchingAuthTypeButton: {
+      color: colors['blue-default'],
+      fontSize: 16,
+      fontWeight: '400',
+      // ...makeDebugBorder('yellow'),
+      paddingTop: 12,
+      paddingBottom: 4,
+      paddingHorizontal: 10,
     },
   };
 });

@@ -82,7 +82,7 @@ export const ImportWatchAddressScreen = () => {
           brandName: KEYRING_CLASS.WATCH,
         },
       });
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === 'DuplicateAccountError') {
         duplicateAddressModal.show({
           address: err.message,

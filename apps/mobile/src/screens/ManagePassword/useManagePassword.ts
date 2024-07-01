@@ -1,4 +1,5 @@
 import { apisLock } from '@/core/apis';
+import { PasswordStatus } from '@/core/apis/lock';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
@@ -55,7 +56,7 @@ export function useManagePasswordUI() {
   };
 }
 
-export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
+export function useWalletPasswordInfo(options?: { autoFetch?: boolean }) {
   const { isLoading, lockInfo, fetchLockInfo } = useLoadLockInfo();
 
   const setupPassword = useCallback(
@@ -85,32 +86,23 @@ export function useWalletLockInfo(options?: { autoFetch?: boolean }) {
     [fetchLockInfo],
   );
 
-  const cancelPassword = useCallback(
-    async (oldPassword: string) => {
-      const result = await apisLock.clearCustomPassword(oldPassword);
-      await fetchLockInfo();
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-    },
-    [fetchLockInfo],
-  );
-
   useEffect(() => {
     if (options?.autoFetch) {
       fetchLockInfo();
     }
   }, [options?.autoFetch, fetchLockInfo]);
 
+  const hasSetupCustomPassword = lockInfo.pwdStatus === PasswordStatus.Custom;
+
   return {
+    hasSetupCustomPassword,
+
     isLoading,
     lockInfo,
     fetchLockInfo,
 
     setupPassword,
     updatePassword,
-    cancelPassword,
   };
 }
 

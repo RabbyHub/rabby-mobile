@@ -13,16 +13,15 @@ import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BottomSheetInput } from '../Input';
 import { CheckItem } from './CheckItem';
 import { apisLock } from '@/core/apis';
+import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
-export interface AuthenticationModalProps {
-  validationHandler?(password: string): Promise<void>;
+export interface AuthenticationModalProps extends ValidationBehaviorProps {
   confirmText?: string;
   cancelText?: string;
   title: string;
   description?: string;
   checklist?: string[];
   placeholder?: string;
-  onFinished?(...args: any[]): void;
   onCancel?(): void;
   needPassword?: boolean;
 }
@@ -48,14 +47,11 @@ export const AuthenticationModal = ({
   const colors = useThemeColors();
 
   const handleSubmit = React.useCallback(async () => {
-    if (isDisabled) {
-      return;
-    }
+    if (isDisabled) return;
+
     try {
-      if (needPassword) {
-        await validationHandler?.(password);
-      }
-      onFinished?.();
+      if (needPassword) await validationHandler?.(password);
+      onFinished?.({ validatedPassword: password });
     } catch (err: any) {
       console.error(err);
       setError(err.message);
@@ -157,8 +153,8 @@ AuthenticationModal.show = async (props: AuthenticationModalProps) => {
       props.onCancel?.();
       removeGlobalBottomSheetModal(id);
     },
-    onFinished() {
-      props.onFinished?.();
+    onFinished(ctx) {
+      props.onFinished?.(ctx);
       removeGlobalBottomSheetModal(id);
     },
   });

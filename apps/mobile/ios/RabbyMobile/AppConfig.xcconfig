@@ -1,0 +1,11 @@
+//
+//  AppConfig.xcconfig
+//  RabbyMobile
+//
+//  Created by richardo2016x on 2024/6/27.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+RABBY_MOBILE_CODE = RABBY_MOBILE_CODE_DEV

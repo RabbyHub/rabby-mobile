@@ -9,10 +9,11 @@ import {
 } from '@/assets/icons/address';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useLoadLockInfo } from '@/hooks/useLock';
+import { useLoadLockInfo, useSetPasswordFirst } from '@/hooks/useLock';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useFocusEffect } from '@react-navigation/native';
+import { SettingNavigatorParamList } from '@/navigation-type';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -24,32 +25,12 @@ const styles = StyleSheet.create({
 });
 
 export const ImportAddressList = () => {
-  const { lockInfo, fetchLockInfo } = useLoadLockInfo();
-  useFocusEffect(
-    useCallback(() => {
-      fetchLockInfo();
-    }, [fetchLockInfo]),
-  );
-
   const navigation = useRabbyAppNavigation();
 
-  const shouldRedirectToSetPasswordBefore = React.useCallback(() => {
-    if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
-      navigation.push(RootNames.StackSettings, {
-        screen: RootNames.SetPassword,
-        params: {
-          replaceStack: RootNames.StackAddress,
-          replaceScreen: RootNames.ImportPrivateKey,
-        },
-      });
-      return true;
-    }
-
-    return false;
-  }, [navigation, lockInfo]);
+  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
 
   const handlePrivateKey = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore()) return;
+    if (shouldRedirectToSetPasswordBefore(RootNames.ImportPrivateKey)) return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
@@ -57,7 +38,7 @@ export const ImportAddressList = () => {
   }, [shouldRedirectToSetPasswordBefore]);
 
   const handleSeedPhrase = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore()) return;
+    if (shouldRedirectToSetPasswordBefore(RootNames.ImportMnemonic)) return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,

@@ -27674,8 +27674,9 @@ __metadata:
     react-native-get-random-values: ^1.10.0
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-keyboard-aware-scroll-view: ^0.9.5
+    react-native-keychain: 8.0.0
     react-native-linear-gradient: ^2.8.3
-    react-native-mmkv: ^2.11.0
+    react-native-mmkv: ^2.12.2
     react-native-pager-view: ^6.2.3
     react-native-permissions: ^4.1.2
     react-native-progress: ^5.0.1
@@ -28301,6 +28302,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-keychain@npm:8.0.0":
+  version: 8.0.0
+  resolution: "react-native-keychain@npm:8.0.0"
+  checksum: cbab1cef8565743072f919663068727df20fc0ef5edd53b0aa96fac74c11fcd0daa197968b06cabed4f1b3f8e5e5ae73b6db8543ed9adbecc13662c38958c9ce
+  languageName: node
+  linkType: hard
+
 "react-native-linear-gradient@npm:^2.8.3":
   version: 2.8.3
   resolution: "react-native-linear-gradient@npm:2.8.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-linear-gradient%2F-%2Freact-native-linear-gradient-2.8.3.tgz"
@@ -28311,13 +28319,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-mmkv@npm:^2.11.0":
-  version: 2.11.0
-  resolution: "react-native-mmkv@npm:2.11.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-mmkv%2F-%2Freact-native-mmkv-2.11.0.tgz"
+"react-native-mmkv@npm:^2.12.2":
+  version: 2.12.2
+  resolution: "react-native-mmkv@npm:2.12.2"
   peerDependencies:
     react: "*"
     react-native: ">=0.71.0"
-  checksum: 23ba624db8a4c530532aaab78705b58d1c9eefc3173dae3b1f86c8cb4d0e5abe3d175079c263251bfed406dc9f6ccda3657f138177916866ea0c0dc8fa3d2389
+  checksum: 8c79504a89fefd7f9c290a4a6bb24f1f9ef9e2a69d20d0f7d882b89f3943556e9c919c9d46583e44ab698f25213489277fccb6d4c856cce310267c5f907388f1
   languageName: node
   linkType: hard
 
@@ -28614,8 +28622,8 @@ __metadata:
   linkType: hard
 
 "react-native-vision-camera@npm:^3.6.17":
-  version: 3.7.0
-  resolution: "react-native-vision-camera@npm:3.7.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-vision-camera%2F-%2Freact-native-vision-camera-3.7.0.tgz"
+  version: 3.9.2
+  resolution: "react-native-vision-camera@npm:3.9.2"
   peerDependencies:
     react: "*"
     react-native: "*"
@@ -28623,7 +28631,7 @@ __metadata:
   peerDependenciesMeta:
     react-native-worklets-core:
       optional: true
-  checksum: 55d979230a8d07373181976cf87e01c68bc0f84dfa55e24f5f72b8361e3e3fe83603d2e87503cd80258c1f515ecb2211bf334a42768a1e12d61c1480cd742756
+  checksum: b69beca5bcc486c6e4f9b11199ba46cc8552be2bb46a8b1f74851c9563f88eedf851d9c61299e2d3e507029398281a7fcbc4e2183af3ee39d75a6194bcfaf757
   languageName: node
   linkType: hard
 

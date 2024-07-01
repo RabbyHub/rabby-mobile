@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, ScrollView, Linking, Platform } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -18,6 +18,8 @@ import {
   RcFeedback,
   RcLockWallet,
   RcManagePassword,
+  RcIconFingerprint,
+  RcIconFaceId,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -30,9 +32,10 @@ import {
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
-import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
+import { RootNames } from '@/constant/layout';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
+import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
@@ -49,6 +52,9 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
+import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
+import { useFocusEffect } from '@react-navigation/native';
+import { SwitchToggleType } from '@/components';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -56,12 +62,10 @@ const LAYOUTS = {
 
 const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 
+const isIOS = Platform.OS === 'ios';
 export default function SettingsScreen(): JSX.Element {
   const { styles, colors } = useThemeStyles(getStyles);
   const { appThemeText } = useAppTheme();
-
-  const { openMetaMaskTestDapp } = useSheetWebViewTester();
-  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const navigation = useRabbyAppNavigation();
 
@@ -78,6 +82,30 @@ export default function SettingsScreen(): JSX.Element {
     requestLockWallet,
     openManagePasswordSheetModal,
   } = useManagePasswordOnSettings();
+
+  const {
+    computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
+    fetchBiometrics,
+  } = useBiometrics({ autoFetch: true });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
+
+  const { startBiometricsVerification, abortBiometricsVerification } =
+    useVerifyByBiometrics();
+
+  const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
+
+  const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
+
+  const [switchWhitelistRef, switchBiometricsRef] = [
+    useRef<SwitchToggleType>(null),
+    useRef<SwitchToggleType>(null),
+  ];
 
   const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -138,9 +166,26 @@ export default function SettingsScreen(): JSX.Element {
         label: 'Settings',
         items: [
           {
+            label: isBiometricsEnabled
+              ? 'Biometrics enabled'
+              : 'Biometrics disabled',
+            icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+            rightNode: (
+              <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
+            ),
+            onPress: () => {
+              switchBiometricsRef.current?.toggle();
+            },
+            disabled: disabledBiometrics,
+            // visible: hasSetupCustomPassword,
+          },
+          {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
-            rightNode: SwitchWhitelistEnable,
+            onPress: () => {
+              switchWhitelistRef.current?.toggle();
+            },
+            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
             label: 'Custom RPC',
@@ -200,18 +245,6 @@ export default function SettingsScreen(): JSX.Element {
               Linking.openURL('https://discord.gg/AvYmaTjrBu');
             },
           },
-          {
-            label: 'Build Hash',
-            icon: RcInfo,
-            onPress: () => {},
-            rightNode: (
-              <Text style={{ color: colors['neutral-body'] }}>
-                {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
-              </Text>
-            ),
-            // TODO: only show in non-production mode
-            visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
-          },
           // TODO: in the future
           // {
           //   label: 'Support Chains',
@@ -238,6 +271,18 @@ export default function SettingsScreen(): JSX.Element {
         testkits: {
           label: 'Test Kits (Not present on production package)',
           items: [
+            {
+              label: 'Build Hash',
+              icon: RcInfo,
+              // onPress: () => {},
+              rightNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  {BUILD_CHANNEL} - {process.env.BUILD_GIT_HASH}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+            },
             // only valid if custom password given
             {
               label: 'Lock Wallet',
@@ -253,10 +298,9 @@ export default function SettingsScreen(): JSX.Element {
                 : 'Set Up Password',
               icon: RcManagePassword,
               onPress: () => {
-                // TODO: on password setup
                 openManagePasswordSheetModal();
               },
-              visible: isSelfhostRegPkg,
+              // visible: !isBiometricsEnabled,
             },
           ],
         },
@@ -288,6 +332,18 @@ export default function SettingsScreen(): JSX.Element {
                   screen: RootNames.ProviderControllerTester,
                 });
               },
+            },
+            {
+              label: 'Test Biometrics',
+              icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+              onPress: () => {
+                startBiometricsVerification({
+                  onFinished: () => {
+                    abortBiometricsVerification();
+                  },
+                });
+              },
+              disabled: disabledBiometrics || !isBiometricsEnabled,
             },
           ],
         },

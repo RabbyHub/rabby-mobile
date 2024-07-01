@@ -1531,12 +1531,21 @@
     },
     "unlock": {
       "btn": {
-        "unlock": "Unlock"
+        "unlock": "Unlock",
+        "switchtype_pwd": "Unlock with Password",
+        "switchtype_fingerprint": "Unlock with Fingerprint"
       },
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
         "error": "Incorrect password"
+      },
+      "biometrics": {
+        "failed": "Unlock failed, please use password to unlock.",
+        "failedIOS": "Unlock failed, please use password to unlock.",
+        "failedAndTipTitle": "Unlock failed",
+        "failedAndTip": "Biometric authentication failed, please use password to unlock.",
+        "usePassword": "Use Password"
       }
     },
     "addToken": {
@@ -2024,6 +2033,36 @@
     },
     "testnetCheckModal": {
       "title": "Please turn on \"Enable Testnets\" under \"More\" before sign on testnets"
+    },
+    "AuthenticationModals": {
+      "biometrics": {
+        "enable": "Enable Biometrics",
+        "disable": "Disable Biometrics",
+        "enableTip": "Enable biometrics to unlock Rabby",
+        "disableTip": "Disable biometrics to unlock Rabby"
+      },
+      "processBiometrics": {
+        "title": "Biometrics Authentication",
+        "desc": "Please use Fingerprint/FaceID to unlock",
+        "cancel": "Cancel",
+        "notEnabled": "Biometrics is not enabled",
+        "authFailed": "Biometrics authentication failed"
+      }
+    }
+  },
+  "native": {
+    "biometrics": {
+      "enable_touchid": "Unlock with Touch ID?",
+      "enable_faceid": "Unlock with Face ID?",
+      "enable_fingerprint": "Unlock with Fingerprint?",
+      "enable_biometrics": "Unlock with Biometrics?",
+      "enable_device_passcode_ios": "Unlock with device passcode?",
+      "enable_device_passcode_android": "Unlock with device PIN?"
+    },
+    "authentication": {
+      "auth_prompt_title": "Authentication required",
+      "auth_prompt_desc": "Please authenticate in order to use Rabby",
+      "auth_prompt_cancel": "Cancel"
     }
   },
   "global": {

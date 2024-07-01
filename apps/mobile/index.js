@@ -1,12 +1,12 @@
-if (__DEV__) {
-  import("./ReactotronConfig").then(() => console.log("Reactotron Configured"));
-}
 /**
  * @format
  */
 import 'react-native-gesture-handler';
 import './global';
 import './src/setup-app';
+if (__DEV__) {
+  import('./ReactotronConfig').then(() => console.log('Reactotron Configured'));
+}
 
 import { enableScreens } from 'react-native-screens';
 import { AppRegistry } from 'react-native';
