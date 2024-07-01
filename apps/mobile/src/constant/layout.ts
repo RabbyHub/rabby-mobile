@@ -41,6 +41,7 @@ export const RootNames = {
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   SetPassword: 'SetPassword',
+  SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -180,6 +181,7 @@ function makeScreenSpecConfig() {
       GasTopUp: blueLightConf,
 
       SetPassword: blueLightConf,
+      SetBiometricsAuthentication: bg1DefaultConf,
       Scanner: blueLightConf,
       // Settings: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
     };

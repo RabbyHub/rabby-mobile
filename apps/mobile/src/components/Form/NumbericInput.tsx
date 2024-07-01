@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { TextInput, TextInputProps } from 'react-native';
+import { StyleSheet, TextInput, TextInputProps, TextStyle } from 'react-native';
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
@@ -8,18 +8,19 @@ import {
   coerceFloat,
   formatSpeicalAmount,
 } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { useThemeStyles } from '@/hooks/theme';
 
 type BottomSheetTextInputProps = React.ComponentProps<
   typeof BottomSheetTextInput
 >;
 
-type NumericInputProps = RNViewProps &
-  Omit<TextInputProps, 'onChangeText'> & {
-    value?: string | number;
-    onChangeText?: (value: string) => void;
-    min?: number;
-    max?: number;
-  };
+type NumericInputProps = Omit<TextInputProps, 'onChangeText'> & {
+  value?: string | number;
+  onChangeText?: (value: string) => void;
+  min?: number;
+  max?: number;
+};
 
 function correctInputToNumber<T extends number | string>(
   numericValue: T,
@@ -41,18 +42,20 @@ function correctInputToNumber<T extends number | string>(
   return numericValue;
 }
 
+const getInputStyles = createGetStyles(colors => {
+  return {
+    input: {
+      color: colors['neutral-title1'],
+    } as TextStyle,
+  };
+});
+
 export const NumericInput = React.forwardRef<TextInput, NumericInputProps>(
   (
-    {
-      style,
-      value = '',
-      onChangeText,
-      min,
-      max,
-      ...props
-    }: RNViewProps & NumericInputProps,
+    { style, value = '', onChangeText, min, max, ...props }: NumericInputProps,
     ref,
   ) => {
+    const { styles } = useThemeStyles(getInputStyles);
     const [internalValue, setInternalValue] = useState(
       correctInputToNumber(value, { min, max }).toString(),
     );
@@ -77,7 +80,7 @@ export const NumericInput = React.forwardRef<TextInput, NumericInputProps>(
         keyboardType="number-pad"
         {...props}
         ref={ref}
-        style={style}
+        style={StyleSheet.flatten([styles.input, style])}
         value={internalValue}
         onChangeText={handleChange}
       />

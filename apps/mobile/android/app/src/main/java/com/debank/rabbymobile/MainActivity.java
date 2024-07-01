@@ -11,9 +11,11 @@ import org.devio.rn.splashscreen.SplashScreen;
 public class MainActivity extends ReactActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    // SplashScreen.show(this);
     // https://github.com/crazycodeboy/react-native-splash-screen/blob/b47197626804a742b8569cad50d5e0ed92fc765c/android/src/main/java/org/devio/rn/splashscreen/SplashScreen.java#L25
     SplashScreen.show(this, R.style.SplashScreenTheme, true);
 
+    // super.onCreate(savedInstanceState);
     // fix: https://sentry.io/organizations/debank/issues/?groupStatsPeriod=24h&page=0&project=6312337&query=is%3Aunresolved&referrer=issue-list&statsPeriod=14d
     // https://github.com/software-mansion/react-native-screens#android
     super.onCreate(null);
@@ -35,10 +37,17 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected ReactActivityDelegate createReactActivityDelegate() {
-    return new DefaultReactActivityDelegate(
-      this,
-      getMainComponentName(),
-      // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-      DefaultNewArchitectureEntryPoint.getFabricEnabled());
+    return new ReactActivityDelegate(this, getMainComponentName()) {
+      @Override
+      protected Bundle getLaunchOptions() {
+        Bundle initialProperties = new Bundle();
+        if (BuildConfig.rabbitCode != null) {
+          initialProperties.putString("rabbitCode", BuildConfig.rabbitCode);
+        } else {
+          initialProperties.putString("rabbitCode", "RABBY_MOBILE_CODE_DEV");
+        }
+        return initialProperties;
+      }
+    };
   }
 }

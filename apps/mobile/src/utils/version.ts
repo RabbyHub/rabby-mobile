@@ -106,10 +106,11 @@ export async function getUpgradeInfo() {
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
     VersionCheck.getLatestVersion({
-      // ...isAndroid ? {
-      //   provider: 'playStore',
-      //   packageName: 'com.debank.rabbymobile'
-      // } : {
+      ...(isAndroid && {
+        provider: 'playStore',
+        packageName: APPLICATION_ID,
+      }),
+      // {
       //   provider: 'appStore',
       //   packageName: 'com.debank.rabby-mobile',
       // },

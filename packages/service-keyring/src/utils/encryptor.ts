@@ -2,8 +2,8 @@ import * as browserPasswordor from './browser-password';
 
 type EncryptorPayload = { iv: string, encryptedData: string, salt: string };
 export interface EncryptorAdapter {
-  encrypt(password: string, data: string | Buffer): Promise<string>;
-  decrypt(password: string, encryptedData: string | EncryptorPayload): Promise<unknown>;
+  encrypt<T extends object>(password: string, data: string | T | Buffer): Promise<string>;
+  decrypt<T = any>(password: string, encryptedData: string | EncryptorPayload): Promise<T>;
 }
 
 export const nodeEncryptor: EncryptorAdapter = {

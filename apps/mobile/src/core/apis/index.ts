@@ -1,4 +1,5 @@
 export * as apisLock from './lock';
+export * as apisKeychain from './keychain';
 export * as apisDapp from './dapp';
 export * as apisAddress from './address';
 export * as apisWalletConnect from './walletconnect';

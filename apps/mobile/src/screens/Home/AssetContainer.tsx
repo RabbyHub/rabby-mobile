@@ -1,5 +1,5 @@
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import {
@@ -11,6 +11,7 @@ import {
 import { DefiScreen } from './DefiScreen';
 import { NFTScreen } from './NFTScreen';
 import { TokenScreen } from './TokenScreen';
+import { createGetStyles } from '@/utils/styles';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -24,39 +25,7 @@ export const AssetContainer: React.FC<Props> = ({
   onRefresh,
 }) => {
   const { currentAccount } = useCurrentAccount();
-  const colors = useThemeColors();
-  const styles = React.useMemo(
-    () =>
-      StyleSheet.create({
-        container: {
-          backgroundColor: colors['neutral-bg-1'],
-        },
-        tabBarWrap: {
-          backgroundColor: colors['neutral-bg-1'],
-          shadowColor: 'transparent',
-          borderColor: colors['neutral-line'],
-          borderWidth: StyleSheet.hairlineWidth,
-        },
-        tabBar: {
-          height: 36,
-        },
-        label: {
-          fontSize: 16,
-          fontWeight: '500',
-          textTransform: 'none',
-        },
-        indicator: {
-          backgroundColor: colors['blue-default'],
-          height: 2,
-        },
-        tabBarIndicator: {
-          flexDirection: 'row',
-          justifyContent: 'center',
-          backgroundColor: 'transparent',
-        },
-      }),
-    [colors],
-  );
+  const { colors, styles } = useThemeStyles(getSyles);
 
   const renderTabItem = React.useCallback(
     (props: any) => (
@@ -119,3 +88,34 @@ export const AssetContainer: React.FC<Props> = ({
     </Tabs.Container>
   );
 };
+
+const getSyles = createGetStyles(colors => {
+  return {
+    container: {
+      backgroundColor: colors['neutral-bg-1'],
+    },
+    tabBarWrap: {
+      backgroundColor: colors['neutral-bg-1'],
+      shadowColor: 'transparent',
+      borderColor: colors['neutral-line'],
+      borderWidth: StyleSheet.hairlineWidth,
+    },
+    tabBar: {
+      height: 36,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '500',
+      textTransform: 'none',
+    },
+    indicator: {
+      backgroundColor: colors['blue-default'],
+      height: 2,
+    },
+    tabBarIndicator: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      backgroundColor: 'transparent',
+    },
+  };
+});

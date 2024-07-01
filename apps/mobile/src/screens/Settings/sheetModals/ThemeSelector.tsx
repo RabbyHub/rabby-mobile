@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text } from 'react-native';
 import { RcIconCheckmarkCC } from '@/assets/icons/common';
 
@@ -57,12 +57,17 @@ export default function ThemeSelectorModal({
 
   const { appTheme, toggleThemeMode } = useAppTheme();
 
+  const handleCancel = useCallback(() => {
+    setThemeSelectorModalVisible(false);
+    onCancel?.();
+  }, [setThemeSelectorModalVisible, onCancel]);
+
   return (
     <AppBottomSheetModal
       ref={modalRef}
       index={0}
       snapPoints={[300]}
-      onDismiss={onCancel}
+      onDismiss={handleCancel}
       enableContentPanningGesture={false}>
       <View style={styles.container}>
         {ThemeModeOptions.map(item => {

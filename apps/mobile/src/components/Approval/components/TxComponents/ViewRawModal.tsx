@@ -69,6 +69,9 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 4,
       color: colors['blue-default'],
     },
+    tabContentText: {
+      color: colors['neutral-title1'],
+    },
   });
 
 export const ViewRawDetail = ({
@@ -117,17 +120,17 @@ export const ViewRawDetail = ({
         onChange={setIndex}>
         {hasRaw && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{stringify(raw)}</Text>
+            <Text style={styles.tabContentText}>{stringify(raw)}</Text>
           </TabView.Item>
         )}
         {hasAbi && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{abi}</Text>
+            <Text style={styles.tabContentText}>{abi}</Text>
           </TabView.Item>
         )}
         {hasHex && (
           <TabView.Item style={styles.tabContainerView}>
-            <Text>{raw?.data}</Text>
+            <Text style={styles.tabContentText}>{raw?.data}</Text>
           </TabView.Item>
         )}
       </TabView>

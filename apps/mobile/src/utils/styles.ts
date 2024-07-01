@@ -2,12 +2,16 @@ import { AppColorsVariants } from '@/constant/theme';
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
+type CreateStylesOptions = { isLight?: boolean };
 export const createGetStyles =
   <T extends NamedStyles<T> | NamedStyles<any>>(
-    styles: (colors: AppColorsVariants) => T | NamedStyles<T>,
+    styles: (
+      colors: AppColorsVariants,
+      options: CreateStylesOptions,
+    ) => T | NamedStyles<T>,
   ) =>
-  (colors: AppColorsVariants) =>
-    StyleSheet.create(styles(colors));
+  (colors: AppColorsVariants, options: CreateStylesOptions) =>
+    StyleSheet.create(styles(colors, options));
 
 type TriAngleConf = {
   dir?: 'up' | 'down' | 'left' | 'right';

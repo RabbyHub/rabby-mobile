@@ -3,7 +3,7 @@ import { atom, useAtomValue } from 'jotai';
 
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useWalletLockInfo } from './useManagePassword';
+import { useWalletPasswordInfo } from './useManagePassword';
 import { PasswordStatus } from '@/core/apis/lock';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
@@ -26,7 +26,7 @@ export function useManagePasswordOnSettings() {
   const { toggleShowSheetModal } = useSheetModalsForManagingPassword();
   const navigation = useRabbyAppNavigation();
 
-  const { lockInfo } = useWalletLockInfo();
+  const { hasSetupCustomPassword, lockInfo } = useWalletPasswordInfo();
   const openManagePasswordSheetModal = useCallback(() => {
     if (lockInfo.pwdStatus === PasswordStatus.Custom) {
       toggleShowSheetModal('clearPasswordModalRef', true);
@@ -43,8 +43,6 @@ export function useManagePasswordOnSettings() {
       );
     }
   }, [toggleShowSheetModal, navigation, lockInfo.pwdStatus]);
-
-  const hasSetupCustomPassword = lockInfo.pwdStatus === PasswordStatus.Custom;
 
   const requestLockWallet = useCallback(async () => {
     if (!hasSetupCustomPassword) return;

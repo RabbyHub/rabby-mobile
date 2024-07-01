@@ -5,11 +5,12 @@ import React, {
   useState,
   useRef,
 } from 'react';
-import { Platform } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import {
   useOpenUrlView,
   useOpenDappView,
   useActiveViewSheetModalRefs,
+  OPEN_DAPP_VIEW_INDEXES,
 } from '../../hooks/useDappView';
 import { BottomSheetContent } from './DappWebViewControlWidgets';
 import SheetGeneralWebView from './SheetGeneralWebView';
@@ -42,6 +43,10 @@ import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle'
 import { OpenedDappBottomSheetModal } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
+import { createGetStyles } from '@/utils/styles';
+import { useThemeStyles } from '@/hooks/theme';
+import { useRefState } from '@/hooks/common/useRefState';
+import DeviceUtils from '@/core/utils/device';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
@@ -103,36 +108,40 @@ const isIOS = Platform.OS === 'ios';
 function useForceExpandOnceOnBootstrap(
   sheetModalRef: React.RefObject<OpenedDappBottomSheetModal> | null,
 ) {
-  const [firstTouched, setFirstTouched] = useState(false);
-  const haventOpenedRef = useRef(true);
+  const { stateRef: firstTouchedRef, setRefState: setFirstTouched } =
+    useRefState(false);
+
   useEffect(() => {
-    if (haventOpenedRef.current && INDEX_AS_EXPANDED > 0) {
+    if (!firstTouchedRef.current && OPEN_DAPP_VIEW_INDEXES.expanded > 0) {
       sheetModalRef?.current?.present();
-      sheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
+      sheetModalRef?.current?.snapToIndex(OPEN_DAPP_VIEW_INDEXES.expanded);
+
+      firstTouchedRef.current = true;
+
       setTimeout(() => {
         sheetModalRef?.current?.forceClose();
-        haventOpenedRef.current = false;
         sheetModalRef?.current?.dismiss();
-        setFirstTouched(true);
+
+        setFirstTouched(true, true);
       }, 200);
     }
-  }, [sheetModalRef]);
-
-  return {
-    firstTouched,
-  };
+  }, [firstTouchedRef, setFirstTouched, sheetModalRef]);
 }
 
 const DEFAULT_RANGES = ['1%', '100%'];
-const INDEX_AS_EXPANDED = 1;
-const INDEX_AS_COLLAPSED = 0;
 export function OpenedDappWebViewStub() {
-  const { openedDappItems, activeDapp, hideActiveDapp, closeActiveOpenedDapp } =
-    useOpenDappView();
+  const { colors, styles } = useThemeStyles(getWebViewStubStyles);
+  const {
+    openedDappItems,
+    expandDappWebViewModal,
+    collapseDappWebViewModal,
+    activeDapp,
+    hideActiveDapp,
+    closeActiveOpenedDapp,
+  } = useOpenDappView();
 
   const {
     sheetModalRefs: { openedDappWebviewSheetModalRef },
-    toggleShowSheetModal,
   } = useActiveViewSheetModalRefs();
 
   const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
@@ -147,43 +156,45 @@ export function OpenedDappWebViewStub() {
   const { isDappConnected, disconnectDapp } = useDapps();
 
   const hideDappSheetModal = useCallback(() => {
-    openedDappWebviewSheetModalRef?.current?.snapToIndex(0);
+    collapseDappWebViewModal();
     hideActiveDapp();
-  }, [openedDappWebviewSheetModalRef, hideActiveDapp]);
+  }, [collapseDappWebViewModal, hideActiveDapp]);
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
-      if (index <= INDEX_AS_COLLAPSED) {
-        /**
-         * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
-         * it will umount children component of BottomSheetModal
-         */
-        hideDappSheetModal();
-      }
+      // if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
+      //   /**
+      //    * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
+      //    * it will umount children component of BottomSheetModal
+      //    */
+      //   hideDappSheetModal();
+      // }
     },
-    [hideDappSheetModal],
+    [
+      /* hideDappSheetModal */
+    ],
   );
 
   useEffect(() => {
     if (activeDapp) {
       // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
       // openedDappWebviewSheetModalRef?.current?.present();
-      toggleShowSheetModal('openedDappWebviewSheetModalRef', INDEX_AS_EXPANDED);
+      expandDappWebViewModal();
       // toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
     }
-  }, [toggleShowSheetModal, activeDapp]);
+  }, [expandDappWebViewModal, activeDapp]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
       const control = activeDappWebViewControlRef.current;
       if (control?.getWebViewState().canGoBack) {
         control?.getWebViewActions().handleGoBack();
-      } else {
-        // hideDappSheetModal();
+      } else if (activeDapp) {
+        hideDappSheetModal();
       }
       return !activeDapp;
-    }, [activeDapp]),
+    }, [activeDapp, hideDappSheetModal]),
   );
   useFocusEffect(onHardwareBackHandler);
 
@@ -192,28 +203,27 @@ export function OpenedDappWebViewStub() {
 
   return (
     <OpenedDappBottomSheetModal
-      index={INDEX_AS_COLLAPSED}
+      index={OPEN_DAPP_VIEW_INDEXES.collapsed}
       {...(isIOS && { detached: false })}
       // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
+      backgroundStyle={{
+        backgroundColor: colors['neutral-bg1'],
+      }}
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleBottomSheetChanges}>
       <BottomSheetView
-        style={{
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          minHeight: 20,
-        }}>
+        style={[
+          styles.bsView,
+          !!openedDappItems.length && styles.bsViewOpened,
+        ]}>
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${
-            dappInfo.maybeDappInfo?.chainId || 'ETH'
-          }-${idx}`;
+          const key = `${dappInfo.origin}-${idx}`;
 
           return (
             <DappWebViewControl
@@ -356,6 +366,24 @@ export function OpenedDappWebViewStub() {
     </OpenedDappBottomSheetModal>
   );
 }
+
+const getWebViewStubStyles = createGetStyles(colors => {
+  return {
+    bsView: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
+      height: DeviceUtils.isAndroid()
+        ? Dimensions.get('window').height
+        : '100%',
+      minHeight: 20,
+      backgroundColor: 'transparent',
+    },
+    bsViewOpened: {
+      height: '100%',
+    },
+  };
+});
 
 /**
  * @deprecated

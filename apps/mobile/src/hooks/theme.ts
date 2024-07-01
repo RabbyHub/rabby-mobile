@@ -131,18 +131,17 @@ export const useThemeColors = (): AppColorsVariants => {
 export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   getStyle: T,
 ) {
-  const binaryTheme = useGetBinaryMode();
-  const colors = ThemeColors[binaryTheme] as AppColorsVariants;
-
   const appThemeMode = useGetBinaryMode();
+  const colors = ThemeColors[appThemeMode] as AppColorsVariants;
+
   const isLight = appThemeMode === 'light';
 
   const cs = React.useMemo(() => {
     return {
       colors,
-      styles: getStyle(colors) as ReturnType<T>,
+      styles: getStyle(colors, { isLight }) as ReturnType<T>,
     };
-  }, [colors, getStyle]);
+  }, [colors, getStyle, isLight]);
 
   return {
     ...cs,

@@ -51,6 +51,7 @@ done
 
 build_appstore() {
   cd $project_dir;
+  sh ./ios/patches/override-xcconfig-release.sh;
   yarn;
   yarn syncrnversion;
   cd $project_dir/ios;

@@ -1,5 +1,5 @@
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
-import { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
+import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',

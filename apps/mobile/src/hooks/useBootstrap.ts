@@ -10,12 +10,13 @@ import { syncChainList } from '@/constant/chains';
 import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
-import { useGlobal } from './global';
-import { useAppUnlocked, useTryUnlockAppOnTop } from './useLock';
+import { loadSecurityChain, useGlobal } from './global';
+import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
 import { useLoadLockInfo } from '@/hooks/useLock';
+import { useBiometrics } from './biometrics';
 
 const bootstrapAtom = atom({
   couldRender: false,
@@ -153,14 +154,21 @@ const hideSplashScreen = () => {
   splashScreenVisibleRef.current = false;
 };
 
+// export function useHideSplash() {
+//   React.useEffect(() => {
+//     hideSplashScreen();
+//   }, []);
+// }
+
 /**
  * @description only call this hook on the top level component
  */
-export function useBootstrapApp() {
+export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   const [{ couldRender }, setBootstrap] = useAtom(bootstrapAtom);
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
   useLoadLockInfo({ autoFetch: true });
+  useBiometrics({ autoFetch: true });
 
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
@@ -169,11 +177,11 @@ export function useBootstrapApp() {
     }
   }, [appNavigationReady]);
 
-  const { getTriedUnlock } = useTryUnlockAppOnTop();
+  const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
 
   React.useEffect(() => {
-    getTriedUnlock()
-      .then(async result => {
+    Promise.allSettled([getTriedUnlock(), loadSecurityChain({ rabbitCode })])
+      .then(async ([_unlockResult, _securityChain]) => {
         setBootstrap({ couldRender: true });
       })
       .catch(err => {
@@ -183,9 +191,10 @@ export function useBootstrapApp() {
       .finally(() => {
         setTimeout(hideSplashScreen, 1000);
       });
-  }, [getTriedUnlock, setBootstrap]);
+  }, [getTriedUnlock, setBootstrap, rabbitCode]);
 
   return {
     couldRender,
+    securityChainOnTop: couldRender ? loadSecurityChain({ rabbitCode }) : null,
   };
 }

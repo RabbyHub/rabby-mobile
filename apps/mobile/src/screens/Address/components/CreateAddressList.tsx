@@ -6,10 +6,11 @@ import {
 import { RootNames } from '@/constant/layout';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { navigate } from '@/utils/navigation';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -23,6 +24,7 @@ const styles = StyleSheet.create({
 export const CreateAddressList = () => {
   const { seedPhraseList } = useSeedPhrase();
 
+  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
   const handleAddSeedPhrase = React.useCallback(() => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.AddMnemonic,
@@ -30,10 +32,12 @@ export const CreateAddressList = () => {
   }, []);
 
   const handleSeedPhrase = React.useCallback(() => {
+    if (shouldRedirectToSetPasswordBefore(RootNames.CreateMnemonic)) return;
+
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonic,
     });
-  }, []);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const hadSeedPhrase = seedPhraseList.length > 0;
 

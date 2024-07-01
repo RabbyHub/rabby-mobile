@@ -5,6 +5,7 @@ import WebView from 'react-native-webview';
 import MarkdownIt from 'markdown-it';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
+import { WEBVIEW_BUILTIN_FONT_CSS } from '@/constant/webviewCss';
 
 const dMarkdownit = MarkdownIt({ typographer: true });
 
@@ -14,45 +15,9 @@ const TestRunFirst = `
   true; // note: this is required, or you'll sometimes get silent failures
 `;
 
-const fontUrls = {
-  antonRegulr: Platform.select({
-    ios: 'Anton-Regular.ttf',
-    android: 'file:///android_asset/fonts/Anton-Regular.ttf',
-  }),
-  sfPro: Platform.select({
-    ios: 'SF-Pro-Text-Regular.ttf',
-    android: 'file:///android_asset/fonts/SF-Pro-Text-Regular.ttf',
-  }),
-};
-
-const fontCss = `
-@font-face {
-  font-family: 'Anton-Regular';
-  src: url('${fontUrls.antonRegulr}') format('truetype')
-}
-
-@font-face {
-  font-family: 'SF-Pro';
-  src: url('${fontUrls.sfPro}') format('truetype')
-}
-
-@font-face {
-  font-family: 'SF Pro';
-  src: url('${fontUrls.sfPro}') format('truetype')
-}
-
-:root {
-  --default-font: 'SF Pro', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
-
-html, body {
-  font-family: 'SF Pro', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
-`;
-
 const getMarkdownPageStyle = createGetStyles(colors => {
   return `
-  ${fontCss}
+  ${WEBVIEW_BUILTIN_FONT_CSS}
 
   html, body {
     height: '100%';
@@ -66,6 +31,7 @@ const getMarkdownPageStyle = createGetStyles(colors => {
     overflow: hidden;
     overflow-y: auto;
     overflow-y: overlay;
+    background-color: ${colors['neutral-bg-1']};
     // outline: 1px solid blue;
   }
 
@@ -132,13 +98,13 @@ export function MarkdownInWebView({
   const webviewHtml = useMemo(() => {
     const renderedHtml = markdownit.render(markdown);
 
-    const style = getMarkdownPageStyle(colors);
+    const webviewCss = getMarkdownPageStyle(colors);
 
     return `
   <html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <style>${style}</style>
+      <style>${webviewCss}</style>
       ${htmlInnerStyle ? `<style>${htmlInnerStyle}</style>` : ''}
     </head>
     <body>
@@ -180,6 +146,7 @@ const getStyles = createGetStyles(colors => {
       maxHeight: '100%',
       height: '100%',
       width: '100%',
+      backgroundColor: colors['neutral-bg-1'],
       // ...makeDebugBorder('orange'),
     },
   };
