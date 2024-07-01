@@ -1,44 +1,89 @@
 // https://github.com/mrousavy/react-native-mmkv/blob/master/docs/WRAPPER_JOTAI.md
 // AsyncStorage 有 bug，会闪白屏
 
+import { MMKV, MMKVConfiguration } from 'react-native-mmkv';
+
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
-import { MMKV } from 'react-native-mmkv';
 
-const storage = new MMKV();
+export function makeAppStorage(options?: MMKVConfiguration) {
+  const mmkv = new MMKV(options);
 
-function getItem<T>(key: string): T | null {
-  const value = storage.getString(key);
-  return value ? JSON.parse(value) : null;
-}
-
-function setItem<T>(key: string, value: T): void {
-  storage.set(key, JSON.stringify(value));
-}
-
-function removeItem(key: string): void {
-  storage.delete(key);
-}
-
-function clearAll(): void {
-  storage.clearAll();
-}
-
-let appStorage: StorageAdapater;
-export function makeAppStorage() {
-  if (!appStorage) {
-    appStorage = {
-      getItem: (key: string) => getItem(key),
-      setItem: (key: string, value: any) => {
-        setItem(key, value);
-      },
-      clearAll: () => clearAll(),
-    };
+  function getItem<T>(key: string): T | null {
+    const value = mmkv.getString(key);
+    return value ? JSON.parse(value) : null;
   }
 
-  return appStorage;
+  function setItem<T>(key: string, value: T): void {
+    mmkv.set(key, JSON.stringify(value));
+  }
+
+  function removeItem(key: string): void {
+    mmkv.delete(key);
+  }
+
+  function clearAll(): void {
+    mmkv.clearAll();
+  }
+
+  const storage: StorageAdapater = {
+    getItem,
+    setItem,
+    removeItem,
+    clearAll,
+    flushToDisk: () => {
+      mmkv.trim();
+    },
+  };
+
+  const methods = {
+    getItem,
+    setItem,
+    removeItem,
+    clearAll,
+  };
+
+  return {
+    storage,
+    methods,
+    mmkv,
+  };
 }
+
+const {
+  storage: appStorage,
+  methods: appMethods,
+  mmkv: appMMKV,
+} = makeAppStorage();
+const { storage: keyringStorage } = makeAppStorage({
+  id: 'mmkv.keyring',
+  encryptionKey: 'keyring',
+});
+
+export function normalizeKeyringState() {
+  const legacyData = appStorage.getItem('keyringState');
+  const result = {
+    legacyData,
+    keyringData: keyringStorage.getItem('keyringState') || legacyData,
+  };
+
+  if (legacyData) appMMKV.trim();
+
+  // console.debug('result.legacyData', result.legacyData);
+  // console.debug('result.keyringData', result.keyringData);
+  if (!result.legacyData) return result;
+
+  keyringStorage.setItem('keyringState', result.legacyData);
+  result.keyringData = result.legacyData;
+
+  appStorage.removeItem('keyringState');
+  appMMKV.trim();
+
+  return result;
+}
+
+export { appStorage, keyringStorage };
 
 export const atomByMMKV = <T = any>(
   key: string,
@@ -50,10 +95,10 @@ export const atomByMMKV = <T = any>(
   },
 ) => {
   const jsonStore = createJSONStorage<T>(() => ({
-    getItem,
-    setItem,
-    removeItem,
-    clearAll,
+    getItem: appMethods.getItem,
+    setItem: appMethods.setItem,
+    removeItem: appMethods.removeItem,
+    clearAll: appStorage.clearAll,
   }));
 
   if (typeof options?.setupSubscribe === 'function') {
