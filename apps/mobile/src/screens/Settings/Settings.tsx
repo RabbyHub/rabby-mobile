@@ -39,7 +39,7 @@ import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAut
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
-import { APP_URLS, APP_VERSIONS } from '@/constant';
+import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
 import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { useCurrentAccount } from '@/hooks/account';
@@ -100,7 +100,10 @@ export default function SettingsScreen(): JSX.Element {
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
-  const disabledBiometrics = !couldSetupBiometrics || !hasSetupCustomPassword;
+  const disabledBiometrics =
+    !couldSetupBiometrics ||
+    !hasSetupCustomPassword ||
+    APP_FEATURE_SWITCH.biometricsAuth;
 
   const [switchWhitelistRef, switchBiometricsRef] = [
     useRef<SwitchToggleType>(null),
@@ -177,7 +180,7 @@ export default function SettingsScreen(): JSX.Element {
               switchBiometricsRef.current?.toggle();
             },
             disabled: disabledBiometrics,
-            // visible: hasSetupCustomPassword,
+            visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
           {
             label: 'Enable whitelist for sending assets',
@@ -300,7 +303,8 @@ export default function SettingsScreen(): JSX.Element {
               onPress: () => {
                 openManagePasswordSheetModal();
               },
-              // visible: !isBiometricsEnabled,
+              visible:
+                APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
             },
           ],
         },

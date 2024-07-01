@@ -76,6 +76,13 @@ export const APPLICATION_ID =
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 
+export const APP_FEATURE_SWITCH = {
+  customizePassword: false,
+  get biometricsAuth() {
+    return !!this.customizePassword;
+  },
+};
+
 export const GNOSIS_SUPPORT_CHAINS = [
   CHAINS_ENUM.ETH,
   CHAINS_ENUM.BSC,
