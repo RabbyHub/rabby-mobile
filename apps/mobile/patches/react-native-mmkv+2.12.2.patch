@@ -29,6 +29,28 @@ index 1ffbdc2..ce8da60 100644
 +
    return jsi::Value::undefined();
  }
+diff --git a/node_modules/react-native-mmkv/ios/MmkvHostObject.mm b/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
+index 16045fd..580e95b 100644
+--- a/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
++++ b/node_modules/react-native-mmkv/ios/MmkvHostObject.mm
+@@ -291,5 +291,17 @@
+         });
+   }
+ 
++  if (propName == "trim") {
++    // MMKV.trim()
++    return jsi::Function::createFromHostFunction(
++        runtime, jsi::PropNameID::forAscii(runtime, funcName), 0,
++        [this](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments,
++               size_t count) -> jsi::Value {
++          [instance clearMemoryCache];
++          [instance trim];
++          return jsi::Value::undefined();
++        });
++  }
++
+   return jsi::Value::undefined();
+ }
 diff --git a/node_modules/react-native-mmkv/lib/module/MMKV.js b/node_modules/react-native-mmkv/lib/module/MMKV.js
 index c7b6cdd..77651d9 100644
 --- a/node_modules/react-native-mmkv/lib/module/MMKV.js
