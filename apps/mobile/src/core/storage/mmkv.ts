@@ -68,7 +68,7 @@ export function normalizeKeyringState() {
     keyringData: keyringStorage.getItem('keyringState') || legacyData,
   };
 
-  appMMKV.trim();
+  if (legacyData) appMMKV.trim();
 
   // console.debug('result.legacyData', result.legacyData);
   // console.debug('result.keyringData', result.keyringData);
