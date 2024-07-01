@@ -31,7 +31,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { AppRootName, RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { useLoadLockInfo } from '@/hooks/useLock';
-import { APP_TEST_PWD } from '@/constant';
+import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -111,9 +111,10 @@ function useSetupPasswordForm() {
   const shouldDisabled =
     !formik.values.checked || !!getFormikErrorsCount(formik.errors);
 
-  return { formik, shouldDisabled };
+  return { formik, shouldDisabled: shouldDisabled || DISABLE_SET_PASSWORD };
 }
 
+const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 export default function SetPasswordScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -166,6 +167,10 @@ export default function SetPasswordScreen() {
                 style={styles.inputContainer}
                 inputStyle={styles.input}
                 inputProps={{
+                  ...(DISABLE_SET_PASSWORD && {
+                    editable: false,
+                    selectTextOnFocus: false,
+                  }),
                   value: formik.values.password,
                   secureTextEntry: true,
                   inputMode: 'text',
@@ -184,6 +189,10 @@ export default function SetPasswordScreen() {
                 style={[styles.inputContainer, { marginTop: 20 }]}
                 inputStyle={styles.input}
                 inputProps={{
+                  ...(DISABLE_SET_PASSWORD && {
+                    editable: false,
+                    selectTextOnFocus: false,
+                  }),
                   value: formik.values.confirmPassword,
                   secureTextEntry: true,
                   inputMode: 'text',
