@@ -18,6 +18,7 @@ import { WalletHeadline } from './components/WalletHeadline';
 import { WalletItem } from './components/WalletItem';
 import { ImportAddressList } from './components/ImportAddressList';
 import { CreateAddressList } from './components/CreateAddressList';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -28,12 +29,16 @@ function MainListBlocks() {
 
   return (
     <View style={[styles.blockView]}>
-      <View style={styles.section}>
-        <CreateAddressList />
-      </View>
-      <View style={styles.section}>
-        <ImportAddressList />
-      </View>
+      {APP_FEATURE_SWITCH.customizePassword && (
+        <>
+          <View style={styles.section}>
+            <CreateAddressList />
+          </View>
+          <View style={styles.section}>
+            <ImportAddressList />
+          </View>
+        </>
+      )}
       <View style={styles.section}>
         <HardwareDeviceList />
       </View>

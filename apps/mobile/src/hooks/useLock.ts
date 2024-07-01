@@ -12,6 +12,7 @@ import { useRabbyAppNavigation } from './navigation';
 import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
+import { APP_FEATURE_SWITCH } from '@/constant';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -194,6 +195,8 @@ export function useSetPasswordFirst() {
       screen: (SettingNavigatorParamList['SetPassword'] &
         object)['replaceScreen'],
     ) => {
+      if (APP_FEATURE_SWITCH.customizePassword) return false;
+
       if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
         navigation.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,
