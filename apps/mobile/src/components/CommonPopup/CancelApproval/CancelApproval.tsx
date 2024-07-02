@@ -39,6 +39,7 @@ export const CancelApproval = () => {
 
   const handleCancelAll = () => {
     notificationService.rejectAllApprovals();
+    handleCancel();
   };
 
   const handleBlockedRequestApproval = () => {
