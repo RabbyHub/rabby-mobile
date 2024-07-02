@@ -135,7 +135,7 @@ export function useOpenDappView() {
     [setOpenedOriginsDapps, activeDappOrigin, setActiveDappOrigin],
   );
 
-  const hideActiveDapp = useCallback(() => {
+  const onHideActiveDapp = useCallback(() => {
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 
@@ -152,9 +152,9 @@ export function useOpenDappView() {
     }
 
     collapseDappWebViewModal();
-    hideActiveDapp();
+    onHideActiveDapp();
   }, [
-    hideActiveDapp,
+    onHideActiveDapp,
     collapseDappWebViewModal,
     removeOpenedDapp,
     activeDappOrigin,
@@ -202,7 +202,7 @@ export function useOpenDappView() {
     removeOpenedDapp,
     closeOpenedDapp,
 
-    hideActiveDapp,
+    onHideActiveDapp,
     closeActiveOpenedDapp,
   };
 }
