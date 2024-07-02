@@ -67,6 +67,7 @@ const RowLoading: React.FC<{
     <>
       {Array.from({ length: itemCount }).map((_, index) => (
         <View
+          key={index}
           style={StyleSheet.flatten({
             flexDirection: 'row',
             alignItems: 'center',
