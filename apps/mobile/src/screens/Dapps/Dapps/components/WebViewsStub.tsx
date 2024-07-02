@@ -136,7 +136,7 @@ export function OpenedDappWebViewStub() {
     expandDappWebViewModal,
     collapseDappWebViewModal,
     activeDapp,
-    hideActiveDapp,
+    onHideActiveDapp,
     closeActiveOpenedDapp,
   } = useOpenDappView();
 
@@ -157,23 +157,21 @@ export function OpenedDappWebViewStub() {
 
   const hideDappSheetModal = useCallback(() => {
     collapseDappWebViewModal();
-    hideActiveDapp();
-  }, [collapseDappWebViewModal, hideActiveDapp]);
+    onHideActiveDapp();
+  }, [collapseDappWebViewModal, onHideActiveDapp]);
 
   const handleBottomSheetChanges = useCallback(
     (index: number) => {
       devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
-      // if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
-      //   /**
-      //    * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
-      //    * it will umount children component of BottomSheetModal
-      //    */
-      //   hideDappSheetModal();
-      // }
+      if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
+        /**
+         * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
+         * it will umount children component of BottomSheetModal
+         */
+        onHideActiveDapp();
+      }
     },
-    [
-      /* hideDappSheetModal */
-    ],
+    [onHideActiveDapp],
   );
 
   useEffect(() => {
