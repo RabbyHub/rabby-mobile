@@ -62,7 +62,11 @@ const NFTWithName = ({
   return (
     <>
       <View style={styles.wrapper}>
-        <TouchableOpacity onPress={() => setFocusingNFT(nft)}>
+        <TouchableOpacity
+          onPress={event => {
+            event.stopPropagation();
+            setFocusingNFT(nft);
+          }}>
           <Media
             failedPlaceholder={<IconDefaultNFT width="100%" height="100%" />}
             type={nft?.content_type}
@@ -77,7 +81,7 @@ const NFTWithName = ({
           style={StyleSheet.flatten([
             styles.name,
             textStyle,
-            showTokenLabel ? {} : { flex: 1 },
+            // showTokenLabel ? {} : { flex: 1 },
           ])}>
           {showTokenLabel
             ? ellipsisTokenSymbol(nft?.name || '-', 15)

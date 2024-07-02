@@ -329,7 +329,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
         {isLoading && (
           <Skeleton
             style={{
-              width: 358,
+              width: '100%',
               height: 400,
             }}
           />
@@ -341,6 +341,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
             raw={hexData}
             message={signText}
             origin={params.session.origin}
+            originLogo={params.session.icon}
           />
         )}
       </ScrollView>

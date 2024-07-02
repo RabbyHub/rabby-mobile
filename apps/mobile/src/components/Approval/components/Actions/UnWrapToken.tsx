@@ -14,7 +14,8 @@ import { SecurityListItem } from './components/SecurityListItem';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { ProtocolListItem } from './components/ProtocolListItem';
 
 const { isSameAddress } = addressUtils;
 
@@ -78,6 +79,9 @@ const UnWrapToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const unwrapTokenReceiverRef = React.useRef(null);
+  const unwrapTokenAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -96,7 +100,6 @@ const UnWrapToken = ({
                   <Values.TokenSymbol token={payToken} />
                 </View>
               }
-              logoRadius={16}
             />
           </Row>
         </Col>
@@ -133,91 +136,120 @@ const UnWrapToken = ({
           </Row>
         </Col>
         {hasReceiver && (
-          <Col>
-            <Row isTitle>{t('page.signTx.swap.receiver')}</Row>
-            <Row>
-              <Values.Address address={receiver} chain={chain} />
-              <View>
-                <SecurityListItem
-                  engineResult={engineResultMap['1093']}
-                  id="1093"
-                  warningText={t('page.signTx.swap.unknownAddress')}
-                />
-                {!engineResultMap['1093'] && (
-                  <>
-                    <DescItem>
+          <>
+            <Col>
+              <Row isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.swap.receiver')}
+                </Text>
+              </Row>
+              <Row>
+                <View ref={unwrapTokenReceiverRef}>
+                  <Values.AddressWithCopy address={receiver} chain={chain} />
+                </View>
+              </Row>
+            </Col>
+            <SubTable target={unwrapTokenReceiverRef}>
+              <SecurityListItem
+                engineResult={engineResultMap['1093']}
+                id="1093"
+                warningText={t('page.signTx.swap.unknownAddress')}
+              />
+              {!engineResultMap['1093'] && (
+                <>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.signTx.address')}</SubRow>
+                    <SubRow>
                       <Values.AccountAlias address={receiver} />
-                    </DescItem>
-                    <DescItem>
+                    </SubRow>
+                  </SubCol>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.addressDetail.source')}</SubRow>
+                    <SubRow>
                       <Values.KnownAddress address={receiver} />
-                    </DescItem>
-                  </>
-                )}
-              </View>
-            </Row>
-          </Col>
+                    </SubRow>
+                  </SubCol>
+                </>
+              )}
+            </SubTable>
+          </>
         )}
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.interactContract')}
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
-            <View className="desc-list">
-              {requireData.protocol && (
-                <DescItem>
-                  <Values.Protocol
-                    value={requireData.protocol}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-              <DescItem>
-                <Values.Interacted
-                  value={requireData.hasInteraction}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
-
-              {isInWhitelist && (
-                <DescItem>
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsTrust')}
-                  </Text>
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-              <DescItem>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    hasInteraction: requireData.hasInteraction,
-                    bornAt: requireData.bornAt,
-                    protocol: requireData.protocol,
-                    rank: requireData.rank,
-                    address: requireData.id,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="contract"
+              data={{
+                hasInteraction: requireData.hasInteraction,
+                bornAt: requireData.bornAt,
+                protocol: requireData.protocol,
+                rank: requireData.rank,
+                address: requireData.id,
+                chain,
+              }}>
+              <View ref={unwrapTokenAddressRef}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={unwrapTokenAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

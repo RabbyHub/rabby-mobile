@@ -10,7 +10,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import ViewMore from './components/ViewMore';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import DescItem from './components/DescItem';
+import { SubCol, SubRow, SubTable } from './components/SubTable';
 
 const RevokeNFTCollection = ({
   data,
@@ -32,6 +32,8 @@ const RevokeNFTCollection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const revokeCollectionAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -42,18 +44,16 @@ const RevokeNFTCollection = ({
             </Text>
           </Row>
           <Row>
-            <Text>{actionData?.collection?.name}</Text>
-            <View>
-              <DescItem>
-                <ViewMore
-                  type="collection"
-                  data={{
-                    collection: actionData.collection,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="collection"
+              data={{
+                collection: actionData.collection,
+                chain,
+              }}>
+              <Text style={commonStyle.primaryText}>
+                {actionData?.collection?.name}
+              </Text>
+            </ViewMore>
           </Row>
         </Col>
         <Col>
@@ -63,31 +63,35 @@ const RevokeNFTCollection = ({
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <DescItem>
-                <ViewMore
-                  type="nftSpender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                    isRevoke: true,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="nftSpender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+                isRevoke: true,
+              }}>
+              <View ref={revokeCollectionAddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={revokeCollectionAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+        </SubTable>
       </Table>
     </View>
   );

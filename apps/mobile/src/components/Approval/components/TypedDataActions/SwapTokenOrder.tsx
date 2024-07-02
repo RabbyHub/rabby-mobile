@@ -14,9 +14,10 @@ import { Chain } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { formatAmount, formatUsdValue } from '@/utils/number';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 const { isSameAddress } = addressUtils;
 
 const SwapTokenOrder = ({
@@ -84,6 +85,10 @@ const SwapTokenOrder = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const swapTokenOrderReceiverRef = React.useRef(null);
+  const swapTokenOrderAddressRef = React.useRef(null);
+  const swapTokenOrderReceiveRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -98,10 +103,10 @@ const SwapTokenOrder = ({
               logo={payToken.logo_url}
               text={
                 <View
-                  style={{
-                    ...commonStyle.rowFlexCenterItem,
-                    flex: 1,
-                  }}>
+                  style={StyleSheet.flatten({
+                    flexDirection: 'row',
+                    gap: 4,
+                  })}>
                   <Values.TokenAmount
                     value={payToken.amount}
                     style={commonStyle.primaryText}
@@ -112,23 +117,8 @@ const SwapTokenOrder = ({
                   />
                 </View>
               }
-              logoRadius={16}
-              textStyle={{
-                flex: 1,
-              }}
+              textStyle={commonStyle.primaryText}
             />
-            <View className="desc-list">
-              <DescItem>
-                <Text>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(payToken.amount)
-                      .times(payToken.price)
-                      .toFixed(),
-                  )}
-                </Text>
-              </DescItem>
-            </View>
           </Row>
         </Col>
         <Col>
@@ -138,16 +128,15 @@ const SwapTokenOrder = ({
             </Text>
           </Row>
           <Row>
-            <View className="flex relative pr-10 flex-row">
+            <View>
               <LogoWithText
                 logo={receiveToken.logo_url}
-                logoRadius={16}
                 text={
                   <View
-                    style={{
-                      ...commonStyle.rowFlexCenterItem,
-                      flex: 1,
-                    }}>
+                    style={StyleSheet.flatten({
+                      flexDirection: 'row',
+                      gap: 4,
+                    })}>
                     <Values.TokenAmount
                       value={receiveToken.amount}
                       style={commonStyle.primaryText}
@@ -191,64 +180,27 @@ const SwapTokenOrder = ({
                 />
               )}
             </View>
-            <View className="relative">
-              <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(receiveToken.amount)
-                      .times(receiveToken.price)
-                      .toFixed(),
-                  )}
-                </Text>
-              </DescItem>
-              <View className="relative">
-                <SecurityListItem
-                  engineResult={engineResultMap['1095']}
-                  id="1095"
-                  dangerText={
-                    <View
-                      style={{
-                        ...commonStyle.rowFlexCenterItem,
-                        flexWrap: 'wrap',
-                      }}>
-                      <Text style={commonStyle.secondaryText}>
-                        {t('page.signTx.swap.valueDiff')}{' '}
-                      </Text>
-                      <Values.Percentage
-                        value={usdValuePercentage!}
-                        style={commonStyle.secondaryText}
-                      />
-                      <Text style={commonStyle.secondaryText}>
-                        {' '}
-                        ({formatUsdValue(usdValueDiff || '')})
-                      </Text>
-                    </View>
-                  }
-                  warningText={
-                    <View
-                      style={{
-                        ...commonStyle.rowFlexCenterItem,
-                        flexWrap: 'wrap',
-                      }}>
-                      <Text style={commonStyle.secondaryText}>
-                        {t('page.signTx.swap.valueDiff')}{' '}
-                      </Text>
-                      <Values.Percentage
-                        value={usdValuePercentage!}
-                        style={commonStyle.secondaryText}
-                      />
-                      <Text style={commonStyle.secondaryText}>
-                        {' '}
-                        ({formatUsdValue(usdValueDiff || '')})
-                      </Text>
-                    </View>
-                  }
-                />
-              </View>
-            </View>
           </Row>
         </Col>
+        <SubTable target={swapTokenOrderReceiveRef}>
+          <SecurityListItem
+            engineResult={engineResultMap['1095']}
+            id="1095"
+            dangerText={
+              <Text style={commonStyle.subRowText}>
+                <Values.Percentage value={usdValuePercentage!} /> (
+                {formatUsdValue(usdValueDiff || '')})
+              </Text>
+            }
+            warningText={
+              <Text style={commonStyle.subRowText}>
+                <Values.Percentage value={usdValuePercentage!} /> (
+                {formatUsdValue(usdValueDiff || '')})
+              </Text>
+            }
+            title={t('page.signTx.swap.valueDiff')}
+          />
+        </SubTable>
         {expireAt && (
           <Col>
             <Row isTitle>
@@ -265,99 +217,93 @@ const SwapTokenOrder = ({
           </Col>
         )}
         {hasReceiver && (
-          <Col>
-            <Row isTitle>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.swap.receiver')}
-              </Text>
-            </Row>
-            <Row>
-              <Values.Address address={receiver} chain={chain} />
-              <View>
-                <SecurityListItem
-                  engineResult={engineResultMap['1094']}
-                  id="1094"
-                  warningText={t('page.signTx.swap.unknownAddress')}
-                />
-                {!engineResultMap['1094'] && (
-                  <View>
-                    <DescItem>
-                      <Values.AccountAlias address={receiver} />
-                    </DescItem>
-                    <DescItem>
-                      <Values.KnownAddress
-                        address={receiver}
-                        textStyle={commonStyle.secondaryText}
-                      />
-                    </DescItem>
-                  </View>
-                )}
-              </View>
-            </Row>
-          </Col>
+          <>
+            <Col>
+              <Row isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.swap.receiver')}
+                </Text>
+              </Row>
+              <Row>
+                <View ref={swapTokenOrderReceiverRef}>
+                  <Values.AddressWithCopy address={receiver} chain={chain} />
+                </View>
+              </Row>
+            </Col>
+            <SubTable target={swapTokenOrderReceiverRef}>
+              <SecurityListItem
+                id="1094"
+                engineResult={engineResultMap['1094']}
+                dangerText={t('page.signTx.swap.notPaymentAddress')}
+              />
+            </SubTable>
+          </>
         )}
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTypedData.buyNFT.listOn')}
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={requireData.id} chain={chain} />
-            </View>
-            <View className="desc-list">
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-              <DescItem>
-                <Values.Interacted
-                  value={requireData.hasInteraction}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
-
-              {isInWhitelist && (
-                <DescItem>
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsTrust')}
-                  </Text>
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-              <DescItem>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    hasInteraction: requireData.hasInteraction,
-                    bornAt: requireData.bornAt,
-                    protocol: requireData.protocol,
-                    rank: requireData.rank,
-                    address: requireData.id,
-                    chain,
-                    title: t('page.signTypedData.buyNFT.listOn'),
-                  }}
-                />
-              </DescItem>
+            <View ref={swapTokenOrderAddressRef}>
+              <ViewMore
+                type="contract"
+                data={{
+                  ...requireData,
+                  address: requireData.id,
+                  chain,
+                  title: t('page.signTypedData.buyNFT.listOn'),
+                }}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </ViewMore>
             </View>
           </Row>
         </Col>
+        <SubTable target={swapTokenOrderAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

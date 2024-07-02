@@ -6,8 +6,11 @@ export const getStyle = (colors: AppColorsVariants) =>
     mainView: {
       paddingHorizontal: 20,
       paddingTop: 20,
-      backgroundColor: colors['neutral-bg-1'],
+      backgroundColor: colors['neutral-bg2'],
       height: '100%',
+    },
+    handle: {
+      backgroundColor: colors['neutral-bg2'],
     },
     popupContainer: {},
     title: {
@@ -19,14 +22,18 @@ export const getStyle = (colors: AppColorsVariants) =>
     titleText: {
       fontSize: 16,
       lineHeight: 19,
-      color: colors['neutral-title-1'],
+      color: colors['neutral-body'],
       marginRight: 6,
     },
     valueAddress: {
-      fontWeight: '500',
-      marginLeft: 7,
+      fontSize: 16,
+      color: colors['neutral-title-1'],
     },
-    viewMoreTable: {},
+    viewMoreTable: {
+      backgroundColor: colors['neutral-card1'],
+      borderRadius: 8,
+      paddingHorizontal: 16,
+    },
     row: {
       minHeight: 48,
       flexDirection: 'row',
@@ -34,10 +41,7 @@ export const getStyle = (colors: AppColorsVariants) =>
       fontSize: 15,
     },
     firstRow: {
-      maxWidth: 140,
-      borderRightWidth: 0.5,
-      borderRightColor: colors['neutral-line'],
-      backgroundColor: colors['neutral-card-3'],
       flexShrink: 0,
+      flex: 1,
     },
   });

@@ -11,7 +11,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import ViewMore from './components/ViewMore';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const RevokeNFT = ({
   data,
@@ -33,6 +33,8 @@ const RevokeNFT = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const revokeNftAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -43,18 +45,17 @@ const RevokeNFT = ({
             </Text>
           </Row>
           <Row>
-            <NFTWithName nft={actionData?.nft}></NFTWithName>
-            <View>
-              <DescItem>
-                <ViewMore
-                  type="nft"
-                  data={{
-                    nft: actionData.nft,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="nft"
+              data={{
+                nft: actionData.nft,
+                chain,
+              }}>
+              <NFTWithName
+                textStyle={commonStyle.primaryText}
+                nft={actionData?.nft}
+              />
+            </ViewMore>
           </Row>
         </Col>
         <Col>
@@ -64,30 +65,35 @@ const RevokeNFT = ({
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.primaryText}
-                  />
-                </DescItem>
-              )}
-              <DescItem>
-                <ViewMore
-                  type="nftSpender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                    isRevoke: true,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="nftSpender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+                isRevoke: true,
+              }}>
+              <View ref={revokeNftAddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={revokeNftAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+        </SubTable>
       </Table>
     </View>
   );

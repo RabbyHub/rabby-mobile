@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   showText: {
     maxWidth: 170,
-    whiteSpace: 'nowrap',
+    // whiteSpace: 'nowrap',
   },
   safe: {
     color: '#27c193',
@@ -117,8 +117,9 @@ const SecurityLevelTag = ({
   level,
   translucent,
   onClick,
-  right = -13,
+  right = -28,
   style,
+  inSubTable,
 }: {
   enable: boolean;
   level: Level | 'proceed';
@@ -126,7 +127,13 @@ const SecurityLevelTag = ({
   onClick?(): void;
   right?: number;
   style?: StyleProp<ViewStyle>;
+  // adjust position for sub table
+  inSubTable?: boolean;
 }) => {
+  if (inSubTable) {
+    right = right - 12;
+  }
+
   const wrapperStyles = StyleSheet.flatten([
     styles.wrapper,
     translucent && styles.translucent,

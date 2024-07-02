@@ -1,9 +1,11 @@
 import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Col, Row, Table } from '../Actions/components/Table';
-import { getStyle } from '../Actions';
+import { getActionsStyle } from '../Actions';
 import { useThemeColors } from '@/hooks/theme';
+import { Card } from '../Actions/components/Card';
+import { Divide } from '../Actions/components/Divide';
+import { SubTable } from '../Actions/components/SubTable';
 
 const rowStyles = StyleSheet.create({
   title: {
@@ -21,11 +23,12 @@ const rowStyles = StyleSheet.create({
   item1: {
     width: 16,
     height: 16,
+    borderRadius: 16,
   },
   item2: {
-    width: 113,
-    height: 15,
-    borderRadius: 6,
+    width: 140,
+    height: 16,
+    borderRadius: 2,
   },
   titleItem: {
     width: 220,
@@ -61,63 +64,99 @@ const RowLoading: React.FC<{
   itemCount?: number;
 }> = ({ itemCount = 1, ...props }) => {
   return (
-    <Col {...props}>
-      <Row isTitle>
-        <Skeleton style={rowStyles.title} />
-      </Row>
-      <Row style={rowStyles.row}>
-        <View style={rowStyles.rowLine}>
-          <Skeleton style={rowStyles.item1} />
+    <>
+      {Array.from({ length: itemCount }).map((_, index) => (
+        <View
+          style={StyleSheet.flatten({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          })}>
+          <Skeleton width={80} height={16} />
           <Skeleton style={rowStyles.item2} />
         </View>
-        {Array.from({ length: itemCount }).map((_, index) => (
-          <View key={index}>
-            <Skeleton style={rowStyles.item2} />
-          </View>
-        ))}
-      </Row>
-    </Col>
+      ))}
+    </>
   );
 };
 
 const Loading = () => {
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyle(colors), [colors]);
+  const styles = React.useMemo(() => getActionsStyle(colors), [colors]);
 
   return (
     <>
-      <View style={styles.signTitle}>
-        <View>
-          <Skeleton style={rowStyles.titleItem} />
-        </View>
-        <View style={styles.signTitleRight}>
-          <Skeleton style={rowStyles.titleRightItem} />
-        </View>
-      </View>
       <View style={styles.actionWrapper}>
-        <View style={styles.actionHeader}>
-          <View>
-            <Skeleton style={rowStyles.leftItem} />
+        <Card>
+          <View
+            style={StyleSheet.flatten({
+              flexDirection: 'row',
+              gap: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 10,
+            })}>
+            <Skeleton style={rowStyles.item1} />
+            <Skeleton style={rowStyles.item2} />
           </View>
-          <View style={styles.actionHeaderRight}>
-            <Skeleton style={rowStyles.headerRightItem} />
-          </View>
-        </View>
-        <View style={styles.container}>
-          <Table>
-            <RowLoading itemCount={1} />
-            <RowLoading itemCount={2} />
-          </Table>
+          <Divide />
+          <View
+            style={StyleSheet.flatten({
+              gap: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            })}>
+            <Skeleton width={100} height={16} />
 
-          <Table style={rowStyles.tokenBalanceChange}>
-            <Col key="1">
-              <Row>
-                <Skeleton style={rowStyles.tableItem} />
-              </Row>
-            </Col>
-            <RowLoading key="2" itemCount={0} />
-          </Table>
-        </View>
+            <View style={rowStyles.rowLine}>
+              <Skeleton style={rowStyles.item1} />
+              <Skeleton style={rowStyles.item2} />
+            </View>
+            <View style={rowStyles.rowLine}>
+              <Skeleton style={rowStyles.item1} />
+              <Skeleton style={rowStyles.item2} />
+            </View>
+          </View>
+        </Card>
+        <Card>
+          <View
+            style={StyleSheet.flatten({
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            })}>
+            <Skeleton style={rowStyles.item2} />
+          </View>
+          <Divide />
+          <View
+            style={StyleSheet.flatten({
+              gap: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            })}>
+            <RowLoading itemCount={5} />
+            <SubTable>
+              <RowLoading itemCount={2} />
+            </SubTable>
+          </View>
+        </Card>
+        <Card>
+          <View
+            style={StyleSheet.flatten({
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            })}>
+            <Skeleton style={rowStyles.item2} />
+          </View>
+        </Card>
+        <Card>
+          <View
+            style={StyleSheet.flatten({
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            })}>
+            <Skeleton style={rowStyles.item2} />
+          </View>
+        </Card>
       </View>
     </>
   );

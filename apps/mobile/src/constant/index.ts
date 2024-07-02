@@ -15,8 +15,9 @@ export const INTERNAL_REQUEST_ORIGIN =
 export const INTERNAL_REQUEST_SESSION = {
   name: 'Rabby',
   origin: INTERNAL_REQUEST_ORIGIN,
-  icon: Image.resolveAssetSource(require('@/assets/images/rabby-site-logo.png'))
-    .uri,
+  icon: Image.resolveAssetSource(
+    require('@/assets/images/rabby-chain-logo.png'),
+  ).uri,
 };
 
 export enum CANCEL_TX_TYPE {
@@ -75,6 +76,13 @@ export const APPLICATION_ID =
     : 'com.debank.rabby-mobile';
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
+
+export const APP_FEATURE_SWITCH = {
+  customizePassword: false,
+  get biometricsAuth() {
+    return !!this.customizePassword;
+  },
+};
 
 export const GNOSIS_SUPPORT_CHAINS = [
   CHAINS_ENUM.ETH,

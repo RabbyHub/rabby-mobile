@@ -41,20 +41,33 @@ const getStyles = (colors: AppColorsVariants) =>
     popupView: {
       padding: 15,
       flex: 1,
+      backgroundColor: colors['neutral-bg2'],
     },
     indicator: {
-      backgroundColor: colors['blue-default'],
-      color: colors['blue-default'],
+      backgroundColor: 'transparent',
     },
     indicatorText: {
-      color: colors['blue-default'],
+      fontSize: 13,
+      fontWeight: '500',
+      padding: 0,
     },
     tabView: {
       overflow: 'hidden',
-      backgroundColor: colors['neutral-card-3'],
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
     },
     tabContainerView: {
-      padding: 15,
+      padding: 12,
+    },
+    tab: {
+      backgroundColor: colors['neutral-line'],
+      borderRadius: 6,
+      marginBottom: 12,
+    },
+    tabContainer: {
+      margin: 2,
+      borderRadius: 4,
+      color: colors['blue-default'],
     },
     tabContentText: {
       color: colors['neutral-title1'],
@@ -69,33 +82,53 @@ export const ViewRawDetail = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [index, setIndex] = React.useState(0);
+  const hasRaw = !!raw;
+  const hasAbi = !!abi;
+  const hasHex = !!(raw?.data && raw?.data !== '0x');
+  const num = Number(hasRaw) + Number(hasAbi) + Number(hasHex);
+
   return (
     <BottomSheetView style={styles.popupView}>
       <Tab
         value={index}
         onChange={setIndex}
         dense
+        style={StyleSheet.flatten([
+          styles.tab,
+          {
+            width: num * 72,
+          },
+        ])}
         indicatorStyle={styles.indicator}
-        titleStyle={styles.indicatorText}>
-        {raw && <Tab.Item title="DATA" />}
-        {abi && <Tab.Item title="ABI" />}
-        {raw?.data && raw?.data !== '0x' && <Tab.Item title="HEX" />}
+        containerStyle={active => ({
+          ...styles.tabContainer,
+          backgroundColor: active
+            ? colors['neutral-bg1']
+            : colors['neutral-line'],
+        })}
+        titleStyle={active => ({
+          ...styles.indicatorText,
+          color: active ? colors['blue-default'] : colors['neutral-body'],
+        })}>
+        {hasRaw && <Tab.Item title="DATA" />}
+        {hasAbi && <Tab.Item title="ABI" />}
+        {hasHex && <Tab.Item title="HEX" />}
       </Tab>
       <TabView
         containerStyle={styles.tabView}
         value={index}
         onChange={setIndex}>
-        {raw && (
+        {hasRaw && (
           <TabView.Item style={styles.tabContainerView}>
             <Text style={styles.tabContentText}>{stringify(raw)}</Text>
           </TabView.Item>
         )}
-        {abi && (
+        {hasAbi && (
           <TabView.Item style={styles.tabContainerView}>
             <Text style={styles.tabContentText}>{abi}</Text>
           </TabView.Item>
         )}
-        {raw?.data && raw?.data !== '0x' && (
+        {hasHex && (
           <TabView.Item style={styles.tabContainerView}>
             <Text style={styles.tabContentText}>{raw?.data}</Text>
           </TabView.Item>

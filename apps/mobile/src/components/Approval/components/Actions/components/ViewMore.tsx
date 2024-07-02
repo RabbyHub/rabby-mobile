@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { SpenderPopup, SpenderPopupProps } from './ViewMorePopup/SpenderPopup';
@@ -33,7 +33,11 @@ type Props =
   | NFTPopupProps
   | CollectionPopupProps;
 
-const ViewMore = (props: Props) => {
+const ViewMore = (
+  props: Props & {
+    children?: React.ReactNode;
+  },
+) => {
   const [popupVisible, setPopupVisible] = useState(false);
   const { t } = useTranslation();
   const modalRef = React.useRef<AppBottomSheetModal>(null);
@@ -48,12 +52,12 @@ const ViewMore = (props: Props) => {
   const height = React.useMemo(() => {
     switch (props.type) {
       case 'contract':
-        return 380;
+        return 350;
       case 'spender':
       case 'nftSpender':
-        return 475;
+        return 405;
       case 'receiver':
-        return 450;
+        return 380;
       case 'nft':
         return 250;
       case 'collection':
@@ -73,17 +77,24 @@ const ViewMore = (props: Props) => {
 
   return (
     <>
-      <Text
-        style={{
-          ...commonStyle.secondaryText,
-          textDecorationLine: 'underline',
-        }}
-        onPress={handleClickViewMore}>
-        {t('page.approvals.component.ViewMore.text')}
-      </Text>
+      {props.children ? (
+        <TouchableOpacity onPress={handleClickViewMore}>
+          {props.children}
+        </TouchableOpacity>
+      ) : (
+        <Text
+          style={StyleSheet.flatten({
+            ...commonStyle.secondaryText,
+            textDecorationLine: 'underline',
+          })}
+          onPress={handleClickViewMore}>
+          {t('page.approvals.component.ViewMore.text')}
+        </Text>
+      )}
       <AppBottomSheetModal
         ref={modalRef}
         onDismiss={() => setPopupVisible(false)}
+        handleStyle={styles.handle}
         snapPoints={[height]}>
         <BottomSheetView style={styles.mainView}>
           <View style={styles.popupContainer}>

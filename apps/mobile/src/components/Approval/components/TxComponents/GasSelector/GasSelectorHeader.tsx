@@ -1,11 +1,11 @@
 import BigNumber from 'bignumber.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
-import { GasSelectPanel } from './GasSelectPanel';
+import { GasLevel, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import {
+  Image,
   NativeSyntheticEvent,
   StyleSheet,
   Text,
@@ -20,7 +20,6 @@ import {
   L2_ENUMS,
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
-import { GasSelectorSkeleton } from './GasSelectorSkeleton';
 import { getStyles } from './styles';
 import { useThemeColors } from '@/hooks/theme';
 import SecurityLevelTagNoText from '../../SecurityEngine/SecurityLevelTagNoText';
@@ -31,15 +30,20 @@ import {
 } from '@/components';
 import { formatTokenAmount } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
-import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import clsx from 'clsx';
-import IconAlertCC from '@/assets/icons/sign/alert-currentcolor-cc.svg';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { TextInput } from 'react-native-gesture-handler';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { ModalLayouts } from '@/constant/layout';
+import { Skeleton } from '@rneui/themed';
+import GasLogoSVG from '@/assets/icons/sign/tx/gas-logo-cc.svg';
+import { calcGasEstimated } from '@/utils/time';
+import { GasMenuButton } from './GasMenuButton';
+import { INPUT_NUMBER_RE } from '@/constant/regexp';
+import { openapi } from '@/core/request';
+import { RcIconUnknown } from '@/screens/Approvals/icons';
+import { Divide } from '../../Actions/components/Divide';
+import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -87,6 +91,7 @@ interface GasSelectorProps {
   engineResults?: Result[];
   nativeTokenBalance: string;
   gasPriceMedian: number | null;
+  pushType?: TxPushType;
 }
 
 const useExplainGas = ({
@@ -112,13 +117,12 @@ const useExplainGas = ({
   return result;
 };
 
-const GasSelector = ({
+export const GasSelectorHeader = ({
   gasLimit = '0',
   gas,
   chainId,
   onChange,
   isReady,
-  recommendGasLimit,
   recommendNonce,
   nonce = '0',
   disableNonce,
@@ -129,8 +133,6 @@ const GasSelector = ({
   version,
   gasCalcMethod,
   disabled,
-  manuallyChangeGasLimit,
-  errors,
   engineResults = [],
   nativeTokenBalance,
   gasPriceMedian,
@@ -147,7 +149,7 @@ const GasSelector = ({
   const [selectedGas, setSelectedGas] = useState<GasLevel | null>(
     rawSelectedGas,
   );
-  const [maxPriorityFee, setMaxPriorityFee] = useState<number>(
+  const [maxPriorityFee, setMaxPriorityFee] = useState<number | undefined>(
     selectedGas
       ? (selectedGas.priority_price === null
           ? selectedGas.price
@@ -174,12 +176,26 @@ const GasSelector = ({
     },
   });
   const chain = Object.values(CHAINS).find(item => item.id === chainId)!;
+  const hasCustomPriorityFee = useRef(false);
+  const [customGasEstimated, setCustomGasEstimated] = useState<number>(0);
 
   const {
     rules,
     currentTx: { processedRules },
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
+
+  const loadCustomGasData = React.useCallback(
+    async (custom?: number): Promise<GasLevel> => {
+      const list = await openapi.gasMarket(
+        chain.serverId,
+        custom && custom > 0 ? custom : undefined,
+      );
+      return list.find(item => item.level === 'custom')!;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};
@@ -188,12 +204,6 @@ const GasSelector = ({
     });
     return map;
   }, [engineResults]);
-
-  const handleSetRecommendTimes = () => {
-    if (disabled) return;
-    const value = new BigNumber(recommendGasLimit).times(1.5).toFixed(0);
-    setGasLimit(value);
-  };
 
   const formValidator = () => {
     if (!afterGasLimit) {
@@ -217,7 +227,7 @@ const GasSelector = ({
         ...validateStatus,
         nonce: {
           status: 'error',
-          // @ts-expect-error
+          // @ts-ignore
           message: t('page.signTx.nonceLowerThanExpect', [
             new BigNumber(recommendNonce).toString(),
           ]),
@@ -256,7 +266,7 @@ const GasSelector = ({
         gasLimit: Number(afterGasLimit),
         nonce: Number(customNonce),
         level: selectedGas.level,
-        maxPriorityFee: maxPriorityFee * 1e9,
+        maxPriorityFee: (maxPriorityFee ?? 0) * 1e9,
       });
     } else {
       onChange({
@@ -264,7 +274,7 @@ const GasSelector = ({
         gasLimit: Number(afterGasLimit),
         nonce: Number(customNonce),
         level: selectedGas.level,
-        maxPriorityFee: maxPriorityFee * 1e9,
+        maxPriorityFee: (maxPriorityFee ?? 0) * 1e9,
       });
     }
   };
@@ -274,55 +284,64 @@ const GasSelector = ({
     setModalVisible(false);
   };
 
+  const [changedCustomGas, setChangedCustomGas] = useState(false);
+
   const handleCustomGasChange = (
     e: NativeSyntheticEvent<TextInputChangeEventData>,
   ) => {
     e.stopPropagation();
-    if (/^\d*(\.\d*)?$/.test(e.nativeEvent.text)) {
+    if (INPUT_NUMBER_RE.test(e.nativeEvent.text)) {
       setCustomGas(e.nativeEvent.text);
+      setChangedCustomGas(e.nativeEvent.text === '' ? false : true);
     }
   };
 
-  const handleGasLimitChange = (
-    e: NativeSyntheticEvent<TextInputChangeEventData>,
-  ) => {
-    if (/^\d*$/.test(e.nativeEvent.text)) {
-      setGasLimit(e.nativeEvent.text);
-    }
-  };
+  const hiddenCustomGas = useMemo(() => {
+    return customGas === '0' && !changedCustomGas;
+  }, [customGas, changedCustomGas]);
 
-  const handleCustomNonceChange = (
-    e: NativeSyntheticEvent<TextInputChangeEventData>,
-  ) => {
-    if (/^\d*$/.test(e.nativeEvent.text)) {
-      setCustomNonce(Number(e.nativeEvent.text));
-    }
-  };
-
+  const [isSelectCustom, setIsSelectCustom] = useState(false);
   const handleClickEdit = () => {
     setModalVisible(true);
-    setSelectedGas(rawSelectedGas);
-    setGasLimit(Number(gasLimit));
-    setCustomNonce(Number(nonce));
+    if (rawSelectedGas?.level !== 'custom') {
+      setSelectedGas(rawSelectedGas);
+      setGasLimit(Number(gasLimit));
+      setCustomNonce(Number(nonce));
+      setIsSelectCustom(true);
+    }
     matomoRequestEvent({
       category: 'Transaction',
       action: 'EditGas',
       label: chain?.serverId,
     });
+    setTimeout(() => {
+      customerInputRef.current?.focus();
+    }, 50);
   };
+
+  const [prevSelectedNotCustomGas, setPrevSelectedNotCustomGas] =
+    useState<GasLevel | null>(null);
 
   const panelSelection = (e, gas: GasLevel) => {
     e.stopPropagation();
     const target = gas;
 
-    if (gas.level === selectedGas?.level) return;
+    // if (gas.level === selectedGas?.level) return;
+    setIsSelectCustom(gas.level === 'custom');
 
     if (gas.level === 'custom') {
+      setTimeout(() => {
+        customerInputRef.current?.focus();
+      }, 50);
+
+      if (!changedCustomGas) {
+        return;
+      }
+
       setSelectedGas({
         ...target,
         level: 'custom',
       });
-      customerInputRef.current?.focus();
     } else {
       setSelectedGas({
         ...gas,
@@ -331,15 +350,11 @@ const GasSelector = ({
     }
   };
 
-  const handlePanelSelection = (e, gas: GasLevel) => {
-    if (disabled) return;
-    return panelSelection(e, gas);
-  };
-
-  const externalPanelSelection = (e, gas: GasLevel) => {
-    e.stopPropagation();
+  const externalPanelSelection = (gas: GasLevel) => {
     const target = gas;
+
     if (gas.level === 'custom') {
+      if (!changedCustomGas) return;
       onChange({
         ...target,
         level: 'custom',
@@ -369,50 +384,11 @@ const GasSelector = ({
     }
   };
 
-  const externalHandleCustomGasChange = (
-    e: NativeSyntheticEvent<TextInputChangeEventData>,
-  ) => {
-    e.stopPropagation();
-
-    if (/^\d*(\.\d*)?$/.test(e.nativeEvent.text)) {
-      let value = e?.nativeEvent.text || '';
-      if (value.trim() === '.') {
-        value = '0.';
-      }
-      setCustomGas(value);
-
-      const gasObj = {
-        level: 'custom',
-        front_tx_count: 0,
-        estimated_seconds: 0,
-        base_fee: gasList[0].base_fee,
-        priority_price: 0,
-      };
-
-      const currentObj = {
-        ...gasObj,
-        ...rawSelectedGas,
-        front_tx_count: 0,
-        estimated_seconds: 0,
-        base_fee: gasList[0].base_fee,
-        price: Number(value) * 1e9,
-        level: 'custom',
-        gasLimit: Number(afterGasLimit),
-        nonce: Number(customNonce),
-        maxPriorityFee: Number(value) * 1e9,
-      };
-      onChange(currentObj);
-    }
-  };
-
   const customGasConfirm = e => {
+    const customGas = gasList.find(item => item.level === 'custom')!;
     const gas = {
-      level: 'custom',
-      price: Number(e?.nativeEvent.text),
-      front_tx_count: 0,
-      estimated_seconds: 0,
-      base_fee: gasList[0].base_fee,
-      priority_price: null,
+      ...customGas,
+      price: Number(e?.target?.value),
     };
     setSelectedGas({
       ...gas,
@@ -421,7 +397,26 @@ const GasSelector = ({
     });
   };
 
-  const handleMaxPriorityFeeChange = (val: number) => {
+  let priorityFeeMax = selectedGas ? selectedGas.price / 1e9 : 0;
+  const handleMaxPriorityFeeChange = (val: any) => {
+    if (
+      selectedGas?.level === 'custom' &&
+      changedCustomGas &&
+      customGas !== undefined
+    ) {
+      priorityFeeMax = Number(customGas);
+    }
+    if (val === '') {
+      setMaxPriorityFee(undefined);
+      return;
+    }
+    const number = Number(val);
+    if (number < 0) return;
+    if (number > priorityFeeMax) {
+      setMaxPriorityFee(priorityFeeMax);
+      return;
+    }
+    hasCustomPriorityFee.current = true; // flag user has customized priorityFee
     setMaxPriorityFee(val);
   };
 
@@ -436,19 +431,30 @@ const GasSelector = ({
       ignored: processedRules.includes(id),
     });
   };
+  const [loadingGasEstimated, setLoadingGasEstimated] = useState(false);
+
+  // reset loading state when custom gas change
+  useEffect(() => {
+    setLoadingGasEstimated(true);
+  }, [customGas]);
 
   useEffect(() => {
     setTimeout(() => {
-      (isReady || !isFirstTimeLoad) &&
-        setSelectedGas(gas => ({
-          ...gas,
-          level: 'custom',
-          price: Number(customGas) * 1e9,
-          front_tx_count: 0,
-          estimated_seconds: 0,
-          priority_price: null,
-          base_fee: gasList[0].base_fee,
-        }));
+      if (isReady || !isFirstTimeLoad) {
+        loadCustomGasData(Number(customGas) * 1e9).then(data => {
+          if (data) setCustomGasEstimated(data.estimated_seconds);
+          setSelectedGas(gas => ({
+            ...gas,
+            level: 'custom',
+            price: Number(customGas) * 1e9,
+            front_tx_count: 0,
+            estimated_seconds: data?.estimated_seconds ?? 0,
+            priority_price: null,
+            base_fee: data?.base_fee ?? 0,
+          }));
+          setLoadingGasEstimated(false);
+        });
+      }
     }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customGas]);
@@ -496,6 +502,8 @@ const GasSelector = ({
         setIsReal1559(false);
       }
     } else if (selectedGas) {
+      setPrevSelectedNotCustomGas(selectedGas);
+
       if (selectedGas?.price / 1e9 !== maxPriorityFee) {
         setIsReal1559(true);
       } else {
@@ -504,8 +512,17 @@ const GasSelector = ({
     }
   }, [maxPriorityFee, selectedGas, customGas, is1559]);
 
+  const isNilCustomGas = customGas === undefined || customGas === '';
+  const notSelectCustomGasAndIsNil = !isSelectCustom && isNilCustomGas;
+  const isLoadingGas = loadingGasEstimated || isNilCustomGas;
+
   useEffect(() => {
+    if (hasCustomPriorityFee.current) return; // use custom priorityFee if user changed custom field
     if (isReady && selectedGas && chainId === 1) {
+      if (isSelectCustom && isNilCustomGas) {
+        setMaxPriorityFee(undefined);
+        return;
+      }
       if (selectedGas.priority_price && selectedGas.priority_price !== null) {
         setMaxPriorityFee(selectedGas.priority_price / 1e9);
       } else {
@@ -521,7 +538,15 @@ const GasSelector = ({
       setMaxPriorityFee(selectedGas.price / 1e9);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gasList, selectedGas, isReady, chainId]);
+  }, [gasList, selectedGas, isReady, chainId, isSelectCustom, isNilCustomGas]);
+
+  useEffect(() => {
+    const customGas = gasList.find(item => item.level === 'custom');
+    if (customGas) {
+      setCustomGasEstimated(customGas.estimated_seconds);
+    }
+  }, [gasList]);
+
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const modalRef = useRef<AppBottomSheetModal>(null);
@@ -533,128 +558,138 @@ const GasSelector = ({
     }
   }, [modalVisible]);
 
+  const gasCostUsdStr = useMemo(() => {
+    const bn = new BigNumber(modalExplainGas?.gasCostUsd);
+    let value;
+
+    if (bn.gt(1)) {
+      value = bn.toFixed(2);
+    } else if (bn.gt(0.0001)) {
+      value = bn.toFixed(4);
+    } else {
+      value = '0.0001';
+    }
+
+    return `$${formatTokenAmount(value)}`;
+  }, [modalExplainGas?.gasCostUsd]);
+
+  const gasCostAmountStr = useMemo(() => {
+    return `${formatTokenAmount(
+      new BigNumber(modalExplainGas.gasCostAmount).toString(10),
+      6,
+    )} ${chain.nativeTokenSymbol}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalExplainGas?.gasCostAmount]);
+
+  const [isGasHovering, setIsGasHovering] = useState(false);
+
   if (!isReady && isFirstTimeLoad) {
-    return <GasSelectorSkeleton />;
+    return (
+      <View style={styles.header}>
+        <Skeleton style={StyleSheet.flatten({ width: 130, height: 20 })} />
+        <Skeleton style={StyleSheet.flatten({ width: 130, height: 20 })} />
+      </View>
+    );
+  }
+
+  if (disabled) {
+    return null;
   }
 
   return (
-    <View>
-      <View style={styles.gasSelector}>
-        <View
-          style={StyleSheet.flatten([
-            styles.gasSelectorCard,
-            gas.error || !gas.success
-              ? styles.gasSuccess
-              : styles.gasSuccessFalse,
-          ])}>
-          <View style={styles.gasSelectorCardMain}>
-            <Text style={styles.gasSelectorCardTitle}>
-              {t('page.signTx.gasSelectorTitle')}
-            </Text>
-            <View style={styles.gasSelectorCardContent}>
-              {disabled ? (
-                <Text style={styles.gasSelectorCardContentText}>
-                  {t('page.signTx.noGasRequired')}
+    <>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => setIsGasHovering(!isGasHovering)}
+          style={styles.gasView}>
+          <GasLogoSVG
+            color={colors['neutral-foot']}
+            style={StyleSheet.flatten({
+              flexShrink: 0,
+            })}
+          />
+
+          <View style={styles.gasSelectorCardContent}>
+            {disabled ? (
+              <Text style={styles.gasSelectorCardContentText}>
+                {t('page.signTx.noGasRequired')}
+              </Text>
+            ) : gas.error || !gas.success ? (
+              <>
+                <Text style={styles.gasSelectorCardErrorText}>
+                  {t('page.signTx.failToFetchGasCost')}
                 </Text>
-              ) : gas.error || !gas.success ? (
-                <>
-                  <Text style={styles.gasSelectorCardErrorText}>
-                    {t('page.signTx.failToFetchGasCost')}
+              </>
+            ) : (
+              <View style={styles.gasSelectorCardContentItem}>
+                <View style={styles.gasSelectorCardAmount}>
+                  <Text
+                    style={StyleSheet.flatten([
+                      styles.gasSelectorCardAmountLabel,
+                      !processedRules.includes('1118') &&
+                      engineResultMap['1118']?.level === 'danger'
+                        ? { color: colors['red-default'] }
+                        : {},
+                      !processedRules.includes('1118') &&
+                      engineResultMap['1118']?.level === 'warning'
+                        ? { color: colors['orange-default'] }
+                        : {},
+                    ])}>
+                    {gasCostUsdStr}
                   </Text>
-                </>
-              ) : (
-                <View style={styles.gasSelectorCardContentItem}>
-                  <View style={styles.gasSelectorCardAmount}>
-                    <Text style={styles.gasSelectorCardAmountLabel}>
-                      {formatTokenAmount(
-                        new BigNumber(gas.gasCostAmount).toString(10),
-                        6,
-                      )}{' '}
-                      {chain.nativeTokenSymbol}
-                    </Text>
-                    <Text style={styles.gasSelectorCardAmountText}>
-                      &nbsp; ≈${new BigNumber(gas.gasCostUsd).toFixed(2)}
-                    </Text>
-                    {L2_ENUMS.includes(chain.enum) &&
-                      !CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum) && (
-                        <View
-                          style={{
-                            position: 'relative',
-                            marginLeft: 6,
-                          }}>
-                          <Tip content={t('page.signTx.l2GasEstimateTooltip')}>
-                            <IconQuestionMark style={{ width: 14 }} />
-                          </Tip>
-                        </View>
-                      )}
-                  </View>
+                  {L2_ENUMS.includes(chain.enum) &&
+                    !CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum) && (
+                      <View
+                        style={StyleSheet.flatten({
+                          position: 'relative',
+                          marginLeft: 6,
+                        })}>
+                        <Tip content={t('page.signTx.l2GasEstimateTooltip')}>
+                          <IconQuestionMark width={14} />
+                        </Tip>
+                      </View>
+                    )}
                 </View>
-              )}
-            </View>
-            {engineResultMap['1118'] && (
-              <SecurityLevelTagNoText
-                enable={engineResultMap['1118'].enable}
-                level={
-                  processedRules.includes('1118')
-                    ? 'proceed'
-                    : engineResultMap['1118'].level
-                }
-                onClick={() => handleClickRule('1118')}
-                right={-40}
-                // className="security-level-tag"
-              />
+              </View>
             )}
           </View>
-          <View
-            style={{
-              flex: 1,
-            }}
-          />
-          <TouchableOpacity
-            style={styles.gasMore}
-            role="button"
-            onPress={handleClickEdit}>
-            <Text style={styles.gasMoreText}>
-              {t('page.signTx.gasMoreButton')}
+
+          {gas.success && (
+            <Text style={styles.gasCostAmount}>
+              {isGasHovering
+                ? calcGasEstimated(selectedGas?.estimated_seconds)
+                : `~${gasCostAmountStr}`}
             </Text>
-            <IconArrowRight />
-          </TouchableOpacity>
-        </View>
-        <GasSelectPanel
+          )}
+          {engineResultMap['1118'] && (
+            <SecurityLevelTagNoText
+              enable={engineResultMap['1118'].enable}
+              level={
+                processedRules.includes('1118')
+                  ? 'proceed'
+                  : engineResultMap['1118'].level
+              }
+              onClick={() => handleClickRule('1118')}
+              right={-46}
+            />
+          )}
+        </TouchableOpacity>
+        <GasMenuButton
           gasList={gasList}
-          selectedGas={rawSelectedGas}
-          panelSelection={externalPanelSelection}
-          customGas={customGas}
-          handleCustomGasChange={externalHandleCustomGasChange}
-          disabled={disabled}
-          chain={chain}
-          nativeTokenBalance={nativeTokenBalance}
-          gasPriceMedian={gasPriceMedian}
+          selectedGas={selectedGas}
+          onSelect={externalPanelSelection}
+          onCustom={handleClickEdit}
+          showCustomGasPrice={changedCustomGas}
         />
-        {manuallyChangeGasLimit && (
-          <Text style={styles.manuallySetGasLimitAlert}>
-            {t('page.signTx.manuallySetGasLimitAlert')} {Number(gasLimit)}
-          </Text>
-        )}
-        {errors.length > 0 && (
-          <View style={styles.errorWrap}>
-            {errors.map(error => (
-              <View style={styles.errorWrapItem} key={error.code}>
-                <IconAlertCC
-                  style={styles.errorWrapIcon}
-                  color={colors['neutral-body']}
-                />
-                <Text className="flex-1">
-                  {error.msg} #{error.code}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
       </View>
+
       <AppBottomSheetModal
-        snapPoints={[ModalLayouts.defaultHeightPercentText]}
+        keyboardBlurBehavior="restore"
+        snapPoints={isReal1559 && isHardware ? [500] : [450]}
         ref={modalRef}
+        handleStyle={{
+          backgroundColor: colors['neutral-bg2'],
+        }}
         onDismiss={() => setModalVisible(false)}>
         <BottomSheetView style={styles.modalWrap}>
           <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
@@ -680,15 +715,27 @@ const GasSelector = ({
             ) : (
               <View>
                 <Text style={styles.gasSelectorModalAmount}>
-                  {formatTokenAmount(
-                    new BigNumber(modalExplainGas.gasCostAmount).toString(10),
-                    6,
-                  )}{' '}
-                  {chain.nativeTokenSymbol}
+                  {gasCostUsdStr}
                 </Text>
-                <Text style={styles.gasSelectorModalUsd}>
-                  ≈${modalExplainGas.gasCostUsd.toFixed(2)}
-                </Text>
+                <View style={styles.gasSelectorModalUsdWrap}>
+                  {chain.nativeTokenLogo ? (
+                    <Image
+                      source={{ uri: chain.nativeTokenLogo }}
+                      width={16}
+                      height={16}
+                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                    />
+                  ) : (
+                    <RcIconUnknown
+                      width={16}
+                      height={16}
+                      style={StyleSheet.flatten({ borderRadius: 16 })}
+                    />
+                  )}
+                  <Text style={styles.gasSelectorModalUsd}>
+                    {gasCostAmountStr}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -707,6 +754,7 @@ const GasSelector = ({
                   : undefined
               }>
               <GasSelectContainer
+                isSelectCustom={isSelectCustom}
                 gasList={gasList}
                 selectedGas={selectedGas}
                 panelSelection={panelSelection}
@@ -714,150 +762,101 @@ const GasSelector = ({
                 customGasConfirm={customGasConfirm}
                 handleCustomGasChange={handleCustomGasChange}
                 disabled={disabled}
+                notSelectCustomGasAndIsNil={notSelectCustomGasAndIsNil}
+                isLoadingGas={isLoadingGas}
+                customGasEstimated={customGasEstimated}
               />
             </Tip>
           </View>
+
           <View style={styles.formContainer}>
-            {/* TODO: 目前只支持 WalletConnect，所以 is1559 一直为 false */}
-            {/* {is1559 && (
-              <View className="priority-slider">
-                <Text className="priority-slider-header">
-                  {t('page.signTx.maxPriorityFee')}
-                  <Tip
-                    content={
-                      <View className="list-decimal list-outside pl-[12px] mb-0">
-                        <Text>{t('page.signTx.eip1559Desc1')}</Text>
-                        <Text>{t('page.signTx.eip1559Desc2')}</Text>
-                      </View>
-                    }>
-                    <IconInfo className="icon icon-info" />
-                  </Tip>
+            <View style={styles.gasPriceDesc}>
+              <View style={styles.gasPriceDescItem}>
+                <Text style={styles.gasPriceDescText}>
+                  {t('page.signTx.myNativeTokenBalance')}
                 </Text>
-                <View className="priority-slider-body">
-                  <Slider
-                    min={0}
-                    max={selectedGas ? selectedGas.price / 1e9 : 0}
-                    onChange={handleMaxPriorityFeeChange}
-                    value={maxPriorityFee}
-                    step={0.01}
-                  />
-                  <p className="priority-slider__mark">
-                    <span>0</span>
-                    <span>{selectedGas ? selectedGas.price / 1e9 : 0}</span>
-                  </p>
-                </View>
-              </View>
-            )} */}
-            {/* {isReal1559 && isHardware && (
-              <div className="hardware-1559-tip">
-                {t('page.signTx.hardwareSupport1559Alert')}
-              </div>
-            )} */}
-            <View>
-              <View style={styles.gasLimitLabel}>
-                <Text
-                  style={StyleSheet.flatten([
-                    styles.gasLimitLabelText,
-                    disabled && styles.gasLimitLabelTextDisabled,
-                  ])}>
-                  {t('page.signTx.gasLimitTitle')}
+                <Text style={styles.gasPriceDescBoldText}>
+                  {formatTokenAmount(
+                    new BigNumber(nativeTokenBalance).div(1e18).toFixed(),
+                    4,
+                    true,
+                  )}{' '}
+                  {chain.nativeTokenSymbol}
                 </Text>
               </View>
-              <View>
-                <Tip
-                  content={
-                    disabled
-                      ? t('page.signTx.gasNotRequireForSafeTransaction')
-                      : undefined
-                  }>
-                  {/* <Form.Item
-                    className={clsx('gas-limit-panel mb-0', {
-                      disabled: disabled,
-                    })}
-                    validateStatus={validateStatus.gasLimit.status}> */}
-                  <BottomSheetTextInput
-                    keyboardType="number-pad"
-                    style={styles.gasLimitInput}
-                    value={afterGasLimit.toString()}
-                    onChange={handleGasLimitChange}
-                    // disabled={disabled}
-                  />
-                </Tip>
-                {validateStatus.gasLimit.message ? (
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.tip,
-                      {
-                        color: colors['red-default'],
-                      },
-                    ])}>
-                    {validateStatus.gasLimit.message}
+              {gasPriceMedian !== null && (
+                <View style={styles.gasPriceDescItem}>
+                  <Text style={styles.gasPriceDescText}>
+                    {t('page.signTx.gasPriceMedian')}
                   </Text>
-                ) : (
-                  <View className="flex flex-row items-baseline">
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.tip,
-                        disabled && styles.tipDisabled,
-                      ])}>
-                      <Trans
-                        i18nKey="page.signTx.recommendGasLimitTip"
-                        values={{
-                          est: Number(recommendGasLimit),
-                          current: new BigNumber(afterGasLimit)
-                            .div(recommendGasLimit)
-                            .toFixed(1),
-                        }}
-                      />
-                    </Text>
-                    <TouchableOpacity onPress={handleSetRecommendTimes}>
-                      <Text
-                        style={StyleSheet.flatten([
-                          styles.tip,
-                          styles.recommendTimes,
-                          disabled && styles.tipDisabled,
-                        ])}>
-                        1.5x
-                      </Text>
-                    </TouchableOpacity>
-                    <Text>.</Text>
-                  </View>
-                )}
-                <View
-                  style={{
-                    opacity: disableNonce ? 0.5 : 1,
-                  }}>
-                  <Text style={styles.nonceTitle}>
-                    {t('page.signTx.nonceTitle')}
+                  <Text style={styles.gasPriceDescBoldText}>
+                    {new BigNumber(gasPriceMedian).div(1e9).toFixed()} Gwei
                   </Text>
-                  <BottomSheetTextInput
-                    keyboardType="number-pad"
-                    style={styles.gasLimitInput}
-                    value={customNonce.toString()}
-                    onChange={handleCustomNonceChange}
-                    // disabled={disableNonce}
-                  />
-                  {validateStatus.nonce.message ? (
-                    <Text
-                      style={StyleSheet.flatten([
-                        styles.tip,
-                        {
-                          color: colors['red-default'],
-                        },
-                      ])}>
-                      {validateStatus.nonce.message}
-                    </Text>
-                  ) : (
-                    <Text style={styles.tip}>
-                      {t('page.signTx.gasLimitModifyOnlyNecessaryAlert')}
-                    </Text>
-                  )}
                 </View>
-              </View>
+              )}
             </View>
           </View>
-          <View className="flex-1" />
+
+          <View style={styles.feeContainer}>
+            {is1559 && (
+              <>
+                <Divide style={styles.feeDivider} />
+
+                <View
+                  style={StyleSheet.flatten([
+                    styles.feeHeader,
+                    maxPriorityFee === undefined ? { opacity: 0.5 } : {},
+                  ])}>
+                  <Text style={styles.feeHeaderText}>
+                    {t('page.signTx.maxPriorityFee')}
+                  </Text>
+                  <Tip
+                    content={
+                      <View style={styles.feeTip}>
+                        <Text style={styles.feeTipText}>
+                          {t('page.signTx.eip1559Desc1')}
+                        </Text>
+                        <Text style={styles.feeTipText}>
+                          {t('page.signTx.eip1559Desc2')}
+                        </Text>
+                      </View>
+                    }>
+                    <IconInfoSVG
+                      color={colors['neutral-foot']}
+                      width={14}
+                      height={14}
+                    />
+                  </Tip>
+                </View>
+
+                <Tip
+                  content={
+                    isSelectCustom && isNilCustomGas
+                      ? t('page.signTx.maxPriorityFeeDisabledAlert')
+                      : undefined
+                  }>
+                  <BottomSheetTextInput
+                    style={styles.feeInput}
+                    value={maxPriorityFee?.toString()}
+                    onChange={e =>
+                      handleMaxPriorityFeeChange(e.nativeEvent.text)
+                    }
+                  />
+                </Tip>
+              </>
+            )}
+
+            {isReal1559 && isHardware && (
+              <View style={styles.gasPriceDesc}>
+                <Text style={styles.gasPriceDescText}>
+                  {t('page.signTx.hardwareSupport1559Alert')}
+                </Text>
+              </View>
+            )}
+          </View>
+
           <FooterButton
+            footerStyle={styles.footer}
             type="primary"
             onPress={handleModalConfirmGas}
             disabled={!isReady || validateStatus.customGas.status === 'error'}
@@ -865,8 +864,6 @@ const GasSelector = ({
           />
         </BottomSheetView>
       </AppBottomSheetModal>
-    </View>
+    </>
   );
 };
-
-export default GasSelector;

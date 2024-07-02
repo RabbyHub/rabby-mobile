@@ -27,7 +27,7 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import BigNumber from 'bignumber.js';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
@@ -38,11 +38,6 @@ import {
   parseAction,
 } from '../Actions/utils';
 import { openapi } from '@/core/request';
-import { useSignPermissionCheck } from '../../hooks/useSignPermissionCheck';
-import { useTestnetCheck } from '../../hooks/useTestnetCheck';
-import GasSelector, {
-  GasSelectorResponse,
-} from '../TxComponents/GasSelector/GasSelector';
 import { apiProvider, apiSecurityEngine } from '@/core/apis';
 import {
   DEFAULT_GAS_LIMIT_RATIO,
@@ -58,7 +53,6 @@ import {
   transactionHistoryService,
 } from '@/core/services';
 import { toast } from '@/components/Toast';
-import { BroadcastMode } from '../BroadcastMode';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
 import { FooterBar } from '../FooterBar/FooterBar';
 import {
@@ -82,6 +76,12 @@ import { GnosisDrawer } from '../TxComponents/GnosisDrawer';
 import { SafeNonceSelector } from '../TxComponents/SafeNonceSelector';
 import { useMemoizedFn } from 'ahooks';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import {
+  GasSelectorHeader,
+  GasSelectorResponse,
+} from '../TxComponents/GasSelector/GasSelectorHeader';
+import { SignAdvancedSettings } from '../SignAdvancedSettings';
+import { BroadcastMode } from '../BroadcastMode';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -810,7 +810,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     });
     if (gas.level === 'custom') {
       setGasList(
-        gasList.map(item => {
+        (gasList || []).map(item => {
           if (item.level === 'custom') return gas;
           return item;
         }),
@@ -838,8 +838,37 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     if (Number(gasLimit) !== gas.gasLimit) {
       setManuallyChangeGasLimit(true);
     }
-    setRealNonce(afterNonce);
+  };
 
+  const handleAdvancedSettingsChange = (gas: GasSelectorResponse) => {
+    const beforeNonce = realNonce || tx.nonce;
+    const afterNonce = intToHex(gas.nonce);
+    if (support1559) {
+      setTx({
+        ...tx,
+        gas: intToHex(gas.gasLimit),
+        nonce: afterNonce,
+      });
+    } else {
+      setTx({
+        ...tx,
+        gas: intToHex(gas.gasLimit),
+        nonce: afterNonce,
+      });
+    }
+    setGasLimit(intToHex(gas.gasLimit));
+    if (Number(gasLimit) !== gas.gasLimit) {
+      setManuallyChangeGasLimit(true);
+    }
+    if (!isGnosisAccount) {
+      setRealNonce(afterNonce);
+    } else {
+      if (safeInfo && safeInfo.nonce <= gas.nonce) {
+        setRealNonce(afterNonce);
+      } else {
+        safeInfo && setRealNonce(`0x${safeInfo.nonce.toString(16)}`);
+      }
+    }
     if (beforeNonce !== afterNonce) {
       setNonceChanged(true);
     }
@@ -1269,7 +1298,10 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
     <BottomSheetView style={styles.wrapper}>
       <ScrollView style={styles.approvalTx}>
         {txDetail && (
-          <View>
+          <View
+            style={StyleSheet.flatten({
+              rowGap: 12,
+            })}>
             {txDetail && (
               <TxTypeComponent
                 isReady={isReady}
@@ -1285,9 +1317,12 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 onChange={handleTxChange}
                 isSpeedUp={isSpeedUp}
                 engineResults={engineResults}
+                origin={origin}
+                originLogo={params.session.icon}
               />
             )}
-            {isGnosisAccount ? (
+
+            {isGnosisAccount && (
               <SafeNonceSelector
                 disabled={isViewGnosisSafe}
                 isReady={isReady}
@@ -1299,64 +1334,37 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                   setNonceChanged(true);
                 }}
               />
-            ) : (
-              <GasSelector
-                disabled={false}
+            )}
+
+            {!isGnosisAccount && !isCoboArugsAccount && txDetail && isReady ? (
+              <SignAdvancedSettings
+                disabled={isGnosisAccount || isCoboArugsAccount}
                 isReady={isReady}
                 gasLimit={gasLimit}
-                noUpdate={isCancel || isSpeedUp}
-                gasList={gasList}
-                selectedGas={selectedGas}
-                version={txDetail.pre_exec_version}
-                gas={{
-                  error: txDetail.gas.error,
-                  success: txDetail.gas.success,
-                  gasCostUsd: gasExplainResponse.gasCostUsd,
-                  gasCostAmount: gasExplainResponse.gasCostAmount,
-                }}
-                gasCalcMethod={price => {
-                  return explainGas({
-                    gasUsed,
-                    gasPrice: price,
-                    chainId,
-                    nativeTokenPrice: txDetail?.native_token.price || 0,
-                    tx,
-                    gasLimit,
-                  });
-                }}
                 recommendGasLimit={recommendGasLimit}
                 recommendNonce={recommendNonce}
-                chainId={chainId}
-                onChange={handleGasChange}
+                onChange={handleAdvancedSettingsChange}
                 nonce={realNonce || tx.nonce}
                 disableNonce={isSpeedUp || isCancel}
-                isSpeedUp={isSpeedUp}
-                isCancel={isCancel}
-                is1559={support1559}
-                isHardware={isHardware}
                 manuallyChangeGasLimit={manuallyChangeGasLimit}
-                errors={checkErrors}
-                engineResults={engineResults}
-                nativeTokenBalance={nativeTokenBalance}
-                gasPriceMedian={gasPriceMedian}
+              />
+            ) : null}
+
+            {isReady && (
+              <BroadcastMode
+                chain={chain.enum}
+                value={pushInfo}
+                isCancel={isCancel}
+                isSpeedUp={isSpeedUp}
+                isGasTopUp={isGasTopUp}
+                onChange={value => {
+                  setPushInfo(value);
+                }}
               />
             )}
           </View>
         )}
-        {/* <BroadcastMode
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{
-            marginTop: 12,
-          }}
-          chain={chain.enum}
-          value={pushInfo}
-          isCancel={isCancel}
-          isSpeedUp={isSpeedUp}
-          isGasTopUp={isGasTopUp}
-          onChange={value => {
-            setPushInfo(value);
-          }}
-        /> */}
+
         {isGnosisAccount && safeInfo ? (
           <GnosisDrawer
             visible={drawerVisible}
@@ -1365,7 +1373,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
             onConfirm={handleGnosisConfirm}
           />
         ) : null}
-
         <RuleDrawer
           selectRule={currentTx.ruleDrawer.selectRule}
           visible={currentTx.ruleDrawer.visible}
@@ -1378,6 +1385,49 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       </ScrollView>
       {txDetail && (
         <FooterBar
+          Header={
+            <GasSelectorHeader
+              pushType={pushInfo.type}
+              disabled={isGnosisAccount || isCoboArugsAccount}
+              isReady={isReady}
+              gasLimit={gasLimit}
+              noUpdate={isCancel || isSpeedUp}
+              gasList={gasList}
+              selectedGas={selectedGas}
+              version={txDetail.pre_exec_version}
+              gas={{
+                error: txDetail.gas.error,
+                success: txDetail.gas.success,
+                gasCostUsd: gasExplainResponse.gasCostUsd,
+                gasCostAmount: gasExplainResponse.gasCostAmount,
+              }}
+              gasCalcMethod={price => {
+                return explainGas({
+                  gasUsed,
+                  gasPrice: price,
+                  chainId,
+                  nativeTokenPrice: txDetail?.native_token.price || 0,
+                  tx,
+                  gasLimit,
+                });
+              }}
+              recommendGasLimit={recommendGasLimit}
+              recommendNonce={recommendNonce}
+              chainId={chainId}
+              onChange={handleGasChange}
+              nonce={realNonce || tx.nonce}
+              disableNonce={isSpeedUp || isCancel}
+              isSpeedUp={isSpeedUp}
+              isCancel={isCancel}
+              is1559={support1559}
+              isHardware={isHardware}
+              manuallyChangeGasLimit={manuallyChangeGasLimit}
+              errors={checkErrors}
+              engineResults={engineResults}
+              nativeTokenBalance={nativeTokenBalance}
+              gasPriceMedian={gasPriceMedian}
+            />
+          }
           isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
           gasLessFailedReason={gasLessFailedReason}
           canUseGasLess={canUseGasLess}
@@ -1418,15 +1468,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
           }
         />
       )}
-      {/* TODO */}
-      {/* <TokenDetailPopup
-        token={tokenDetail.selectToken}
-        visible={tokenDetail.popupVisible}
-        onClose={() => dispatch.sign.closeTokenDetailPopup()}
-        canClickToken={false}
-        hideOperationButtons
-        variant="add"
-      /> */}
     </BottomSheetView>
   );
 };

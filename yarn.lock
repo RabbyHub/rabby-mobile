@@ -6120,9 +6120,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.15":
-  version: 0.7.15
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.15"
+"@rabby-wallet/rabby-api@npm:0.7.21":
+  version: 0.7.21
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.21"
   dependencies:
     "@rabby-wallet/rabby-sign": ^0.3.3
     axios: ^0.27.2
@@ -6133,7 +6133,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: d516a3546cd367264890f957b386442391386e4d1df701c1cd70f26b0a42fa9c8d1b35889a93b9d353a09014425c1f2dd68fe9eaa7fcec8c544b9604a7a74c89
+  checksum: bd6ccb609f068fec496dc8e9223b45bf250bd735d50fbd012278adc4d63b643fd8035bc1094adbb690c60696750345226f3eaa00e8a88fe8df28a33059683dba
   languageName: node
   linkType: hard
 
@@ -6154,13 +6154,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-security-engine@npm:^1.1.17":
-  version: 1.1.17
-  resolution: "@rabby-wallet/rabby-security-engine@npm:1.1.17::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-security-engine%2F-%2Frabby-security-engine-1.1.17.tgz"
+"@rabby-wallet/rabby-security-engine@npm:2.0.3":
+  version: 2.0.3
+  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.3"
   peerDependencies:
     "@debank/common": ^0.3.5
     "@rabby-wallet/rabby-api": ^0.6.9
-  checksum: 7fa19886ef50617af4b3cf273c2749a8b25271af83564614d6007d16e6d511fc17ef3908a1606c502a11caaf27555017c8e45b59b79c23af45b397737d1efe81
+  checksum: 8c8d5d65ec455c631ae8bbdc1d540e8d5610bba0b7ceadcb2b66ac95d7a50adaa4530ddc4ff8f04cae0d935f1ce0991dd7872583f5303e44d3ea8c55b0519c7b
   languageName: node
   linkType: hard
 
@@ -6735,6 +6735,16 @@ __metadata:
     react: ">=16"
     react-native: ">=0.57"
   checksum: 880059020709ce856c448657c2d67a905f2ebcd3f42c1c4d344d732761cb2de98efb600172df5591d943f562393dbca42802e8a903b974aa2b038b441c5718fb
+  languageName: node
+  linkType: hard
+
+"@react-native-menu/menu@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@react-native-menu/menu@npm:1.1.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3c2733f70de25a560b99396d06a70d74a6e47ce165395f333c3ee56b0e71ef71257979a32c61c91669e5e108429bee91986211b3d47dd86f716edb3bc3ca891a
   languageName: node
   linkType: hard
 
@@ -27575,8 +27585,8 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": ^1.3.6
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.15
-    "@rabby-wallet/rabby-security-engine": ^1.1.17
+    "@rabby-wallet/rabby-api": 0.7.21
+    "@rabby-wallet/rabby-security-engine": 2.0.3
     "@rabby-wallet/rabby-swap": 0.0.36
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
@@ -27589,6 +27599,7 @@ __metadata:
     "@react-native-firebase/analytics": ^18.8.0
     "@react-native-firebase/app": ^18.8.0
     "@react-native-masked-view/masked-view": ^0.3.1
+    "@react-native-menu/menu": ^1.1.2
     "@react-native/eslint-config": ^0.72.2
     "@react-native/metro-config": ^0.72.11
     "@react-navigation/bottom-tabs": ^6.5.11

@@ -3,6 +3,22 @@ import { StyleSheet } from 'react-native';
 
 export const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+      height: 24,
+    },
+
+    gasView: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      maxWidth: 220,
+      flex: 1,
+      position: 'relative',
+    },
+
     gasSelector: {
       marginTop: 15,
       backgroundColor: colors['neutral-card-1'],
@@ -68,8 +84,14 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     gasSelectorCardAmountLabel: {
       color: colors['blue-default'],
-      fontSize: 15,
+      fontSize: 16,
       fontWeight: '500',
+    },
+    gasCostAmount: {
+      color: colors['neutral-body'],
+      marginTop: 2,
+      flexShrink: 0,
+      fontSize: 14,
     },
     gasMore: {
       flexDirection: 'row',
@@ -106,7 +128,6 @@ export const getStyles = (colors: AppColorsVariants) =>
       marginRight: 8,
     },
     gasSelectorModalTop: {
-      paddingTop: 12,
       paddingBottom: 24,
     },
     gasSelectorModalAmount: {
@@ -134,9 +155,15 @@ export const getStyles = (colors: AppColorsVariants) =>
       textAlign: 'center',
       color: colors['neutral-body'],
     },
+    gasSelectorModalUsdWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+    },
     gasSelectorModalUsd: {
-      fontSize: 16,
-      lineHeight: 19,
+      fontSize: 15,
+      lineHeight: 18,
       textAlign: 'center',
       color: colors['neutral-body'],
     },
@@ -147,9 +174,9 @@ export const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
     },
     cardContainerTitle: {
-      fontSize: 14,
+      fontSize: 13,
       lineHeight: 16,
-      color: colors['neutral-body'],
+      color: colors['neutral-title-1'],
       marginBottom: 8,
     },
     cardContainerTitleDisabled: {
@@ -158,22 +185,24 @@ export const getStyles = (colors: AppColorsVariants) =>
     modalWrap: {
       position: 'relative',
       flex: 1,
+      backgroundColor: colors['neutral-bg2'],
     },
     gasLimitLabel: {
-      flexDirection: 'row',
+      paddingHorizontal: 20,
     },
     gasLimitLabelText: {
       lineHeight: 16,
-      color: colors['neutral-body'],
-      marginTop: 24,
+      color: colors['neutral-title1'],
+      fontSize: 13,
     },
     gasLimitLabelTextDisabled: {
       opacity: 0.5,
     },
     nonceTitle: {
       lineHeight: 16,
-      color: colors['neutral-body'],
+      color: colors['neutral-title1'],
       marginTop: 20,
+      fontSize: 13,
     },
     tip: {
       color: colors['neutral-foot'],
@@ -190,10 +219,11 @@ export const getStyles = (colors: AppColorsVariants) =>
       textDecorationLine: 'underline',
     },
     gasLimitInput: {
-      width: '100%',
       padding: 15,
-      borderRadius: 6,
-      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      borderColor: colors['neutral-line'],
+      borderWidth: 1,
       fontSize: 15,
       fontWeight: '500',
       color: colors['neutral-title-1'],
@@ -202,4 +232,78 @@ export const getStyles = (colors: AppColorsVariants) =>
     button: {
       backgroundColor: colors['blue-default'],
     },
+    gasPriceDesc: {
+      marginTop: 20,
+      gap: 12,
+    },
+    gasPriceDescText: {
+      color: colors['neutral-body'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+    gasPriceDescBoldText: {
+      color: colors['neutral-title1'],
+      fontSize: 13,
+      lineHeight: 16,
+      fontWeight: '500',
+    },
+    gasPriceDescItem: {
+      flexDirection: 'row',
+    },
+    feeDivider: {
+      backgroundColor: colors['neutral-line'],
+      marginVertical: 20,
+    },
+    feeHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    feeHeaderText: {
+      color: colors['neutral-title1'],
+      fontSize: 13,
+      lineHeight: 16,
+      marginRight: 2,
+    },
+    feeTipText: {
+      color: colors['neutral-title2'],
+      fontSize: 12,
+    },
+    feeTip: {
+      padding: 10,
+      gap: 10,
+    },
+    feeInput: {
+      padding: 16,
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
+      borderWidth: 1,
+      borderColor: colors['neutral-line'],
+    },
+    feeContainer: {
+      marginHorizontal: 20,
+      marginBottom: 32,
+    },
+    footer: {
+      backgroundColor: colors['neutral-bg2'],
+    },
+    cardBody: {
+      padding: 12,
+    },
+    cardBodyText: {
+      fontSize: 13,
+      lineHeight: 15,
+      color: colors['neutral-body'],
+    },
+    cardModal: {
+      backgroundColor: colors['neutral-bg2'],
+    },
+    cardMain: {
+      paddingHorizontal: 20,
+      marginBottom: 32,
+    },
+    cardItem: {},
   });

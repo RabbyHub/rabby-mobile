@@ -39,18 +39,25 @@ import {
   SwapRequireData,
   WrapTokenRequireData,
   getActionTypeText,
+  ContractRequireData,
+  AssetOrderRequireData,
 } from './utils';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
-import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
-import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import ViewRawModal from '../TxComponents/ViewRawModal';
 import { CommonAction } from '../CommonAction';
 import { Tip } from '@/components/Tip';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
-import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
+import { Card } from './components/Card';
+import { OriginInfo } from '../OriginInfo';
+import { Divide } from './components/Divide';
+import { Col, Row } from './components/Table';
+import LogoWithText from './components/LogoWithText';
+import useCommonStyle from '../../hooks/useCommonStyle';
+import AssetOrder from './AssetOrder';
 
-export const getStyle = (colors: AppColorsVariants) =>
+export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     signTitle: {
       flexDirection: 'row',
@@ -69,13 +76,14 @@ export const getStyle = (colors: AppColorsVariants) =>
       flex: 1,
     },
     leftText: {
-      fontSize: 18,
-      lineHeight: 21,
+      fontSize: 16,
+      lineHeight: 18,
       color: colors['neutral-title-1'],
+      fontWeight: '500',
     },
     speedUpIcon: {
-      width: 10,
-      marginRight: 6,
+      width: 16,
+      marginRight: 4,
     },
     rightText: {
       fontSize: 14,
@@ -83,40 +91,24 @@ export const getStyle = (colors: AppColorsVariants) =>
       color: '#999999',
     },
     actionWrapper: {
-      backgroundColor: colors['neutral-bg-1'],
-      borderRadius: 8,
+      gap: 12,
     },
     actionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      backgroundColor: colors['blue-default'],
-      padding: 13,
       alignItems: 'center',
-      borderTopLeftRadius: 8,
-      borderTopRightRadius: 8,
-    },
-    left: {
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 19,
-      color: '#fff',
-    },
-    right: {
-      fontSize: 14,
-      lineHeight: 16,
-      position: 'relative',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     decodeTooltip: {
       maxWidth: 358,
     },
-    isUnknown: {
-      backgroundColor: colors['neutral-foot'],
+    isUnknown: {},
+    isUnknownText: {
+      color: colors['neutral-foot'],
     },
     container: {
       padding: 14,
-      borderBottomLeftRadius: 6,
-      borderBottomRightRadius: 6,
-      backgroundColor: colors['neutral-card1'],
     },
     header: {
       flexDirection: 'row',
@@ -135,13 +127,14 @@ export const getStyle = (colors: AppColorsVariants) =>
       color: '#999999',
     },
     viewRawText: {
-      fontSize: 12,
+      fontSize: 13,
       lineHeight: 16,
       color: colors['neutral-foot'],
     },
     signTitleRight: {
       flexDirection: 'row',
       alignItems: 'center',
+      float: 'right',
     },
     tipContent: {
       maxWidth: 358,
@@ -160,8 +153,11 @@ export const getStyle = (colors: AppColorsVariants) =>
       position: 'relative',
     },
     icon: {
-      width: 24,
-      height: 24,
+      width: 14,
+      height: 14,
+      marginRight: 2,
+      marginTop: 2,
+      color: colors['neutral-foot'],
     },
     signTitleLeft: {
       flexDirection: 'row',
@@ -178,6 +174,8 @@ const Actions = ({
   raw,
   onChange,
   isSpeedUp,
+  origin,
+  originLogo,
 }: {
   data: ParsedActionData;
   requireData: ActionRequireData;
@@ -187,13 +185,16 @@ const Actions = ({
   raw: Record<string, string | number>;
   onChange(tx: Record<string, any>): void;
   isSpeedUp: boolean;
+  origin?: string;
+  originLogo?: string;
 }) => {
   const actionName = useMemo(() => {
     return getActionTypeText(data);
   }, [data]);
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const styles = getActionsStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const handleViewRawClick = () => {
     ViewRawModal.open({
@@ -205,36 +206,49 @@ const Actions = ({
   const isUnknown = data?.contractCall;
 
   return (
-    <>
-      <View style={styles.signTitle}>
-        <View style={styles.signTitleLeft}>
-          {isSpeedUp && <IconSpeedUp style={styles.speedUpIcon} />}
-          <Text style={styles.signTitleText}>
-            {t('page.signTx.signTransactionOnChain', { chain: chain.name })}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.signTitleRight}
-          onPress={handleViewRawClick}>
-          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
-          <RcIconArrowRight />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.actionWrapper}>
+    <View style={styles.actionWrapper}>
+      <Card>
+        <OriginInfo
+          chain={chain}
+          origin={origin}
+          originLogo={originLogo}
+          engineResults={engineResults}
+        />
+        <Divide />
+        <BalanceChange
+          version={txDetail.pre_exec_version}
+          data={txDetail.balance_change}
+        />
+      </Card>
+
+      <Card>
         <View
           style={{
             ...styles.actionHeader,
             ...(isUnknown ? styles.isUnknown : {}),
           }}>
-          <View>
-            <Text style={styles.left}>{actionName}</Text>
-          </View>
-          <View style={styles.actionHeaderRight}>
-            <Tip
-              placement="bottom"
-              isLight
-              content={
-                isUnknown ? (
+          <View
+            style={StyleSheet.flatten({
+              flexDirection: 'row',
+              alignItems: 'center',
+            })}>
+            {isSpeedUp && (
+              <Tip placement="bottom" content={t('page.signTx.speedUpTooltip')}>
+                <IconSpeedUp style={styles.speedUpIcon} />
+              </Tip>
+            )}
+            <Text
+              style={StyleSheet.flatten({
+                ...styles.leftText,
+                ...(isUnknown ? styles.isUnknownText : {}),
+              })}>
+              {actionName}
+            </Text>
+            {isUnknown && (
+              <Tip
+                placement="bottom"
+                isLight
+                content={
                   <NoActionAlert
                     data={{
                       chainId: chain.serverId,
@@ -245,22 +259,40 @@ const Actions = ({
                       selector: raw.data.toString(),
                     }}
                   />
-                ) : (
-                  <View style={styles.tipContent}>
-                    <RcIconCheck style={styles.tipContentIcon} />
-                    <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </View>
-                )
-              }>
-              {isUnknown ? (
-                <IconQuestionMark style={styles.icon} />
-              ) : (
-                <IconRabbyDecoded style={styles.icon} />
-              )}
-            </Tip>
+                }>
+                <IconQuestionMark
+                  width={styles.icon.width}
+                  height={styles.icon.height}
+                  color={styles.icon.color}
+                  style={styles.icon}
+                />
+              </Tip>
+            )}
           </View>
+          <TouchableOpacity
+            style={styles.signTitleRight}
+            onPress={handleViewRawClick}>
+            <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
+            <RcIconArrowRight />
+          </TouchableOpacity>
         </View>
+        <Divide />
         <View style={styles.container}>
+          <Col>
+            <Row isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.chain')}
+              </Text>
+            </Row>
+            <Row>
+              <LogoWithText
+                textStyle={commonStyle.primaryText}
+                logo={chain.logo}
+                text={chain.name}
+              />
+            </Row>
+          </Col>
+
           {data.swap && (
             <Swap
               data={data.swap}
@@ -269,7 +301,6 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
           {data.crossToken && (
             <CrossToken
               data={data.crossToken}
@@ -286,7 +317,6 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
           {data.wrapToken && (
             <WrapToken
               data={data.wrapToken}
@@ -341,6 +371,16 @@ const Actions = ({
               raw={raw}
             />
           )}
+          {data.cancelTx && (
+            <CancelTx
+              data={data.cancelTx}
+              requireData={requireData as CancelTxRequireData}
+              chain={chain}
+              engineResults={engineResults}
+              onChange={onChange}
+              raw={raw}
+            />
+          )}
           {data?.sendNFT && (
             <SendNFT
               data={data.sendNFT}
@@ -349,7 +389,14 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
-
+          {data?.approveNFT && (
+            <ApproveNFT
+              data={data.approveNFT}
+              requireData={requireData as ApproveNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
           {data?.revokeNFT && (
             <RevokeNFT
               data={data.revokeNFT}
@@ -366,6 +413,14 @@ const Actions = ({
               engineResults={engineResults}
             />
           )}
+          {data?.approveNFTCollection && (
+            <ApproveNFTCollection
+              data={data.approveNFTCollection}
+              requireData={requireData as RevokeNFTRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
           {data?.deployContract && <DeployContract />}
           {data?.pushMultiSig && (
             <PushMultiSig
@@ -374,30 +429,13 @@ const Actions = ({
               chain={chain}
             />
           )}
-          {data.cancelTx && (
-            <CancelTx
-              data={data.cancelTx}
-              requireData={requireData as CancelTxRequireData}
+          {data?.assetOrder && (
+            <AssetOrder
+              data={data.assetOrder}
+              requireData={requireData as ContractRequireData}
               chain={chain}
               engineResults={engineResults}
-              onChange={onChange}
-              raw={raw}
-            />
-          )}
-          {data?.approveNFT && (
-            <ApproveNFT
-              data={data.approveNFT}
-              requireData={requireData as ApproveNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
-            />
-          )}
-          {data?.approveNFTCollection && (
-            <ApproveNFTCollection
-              data={data.approveNFTCollection}
-              requireData={requireData as RevokeNFTRequireData}
-              chain={chain}
-              engineResults={engineResults}
+              sender={(requireData as AssetOrderRequireData).sender}
             />
           )}
           {data.contractCall && (
@@ -413,18 +451,14 @@ const Actions = ({
           {data.common && (
             <CommonAction
               data={data.common}
-              requireData={requireData as SwapRequireData}
+              requireData={requireData as ContractCallRequireData}
               chain={chain}
               engineResults={engineResults}
             />
           )}
         </View>
-      </View>
-      <BalanceChange
-        version={txDetail.pre_exec_version}
-        data={txDetail.balance_change}
-      />
-    </>
+      </Card>
+    </View>
   );
 };
 

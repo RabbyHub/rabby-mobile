@@ -11,7 +11,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import ViewMore from './components/ViewMore';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const RevokePermit2 = ({
   data,
@@ -21,9 +21,9 @@ const RevokePermit2 = ({
   data: ParsedActionData['approveToken'];
   requireData: ApproveTokenRequireData;
   chain: Chain;
-  raw: Record<string, string | number>;
+  raw?: Record<string, string | number>;
   engineResults: Result[];
-  onChange(tx: Record<string, any>): void;
+  onChange?(tx: Record<string, any>): void;
 }) => {
   const actionData = data!;
   const commonStyle = useCommonStyle();
@@ -34,6 +34,8 @@ const RevokePermit2 = ({
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const revokePermit2AddressRef = React.useRef(null);
 
   return (
     <View>
@@ -53,42 +55,45 @@ const RevokePermit2 = ({
                   style={commonStyle.primaryText}
                 />
               }
-              logoRadius={16}
             />
           </Row>
         </Col>
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.revokeTokenApprove.revokeFrom')}
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View className="desc-list">
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <DescItem>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                    isRevoke: true,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="spender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+                isRevoke: true,
+              }}>
+              <View ref={revokePermit2AddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={revokePermit2AddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+        </SubTable>
       </Table>
     </View>
   );

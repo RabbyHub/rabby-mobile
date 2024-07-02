@@ -13,7 +13,6 @@ import { useThemeColors } from '@/hooks/theme';
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     button: {
-      width: 108,
       height: 48,
       borderColor: colors['blue-default'],
       borderWidth: 1,
@@ -29,6 +28,7 @@ const getStyles = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       marginTop: 12,
       justifyContent: 'space-between',
+      gap: 12,
     },
     cancelWrapper: {
       flexDirection: 'row',
@@ -92,8 +92,12 @@ export const ActionsContainer: React.FC<
   return (
     <View style={styles.wrapper}>
       {children}
+
       <Button
         type="clear"
+        containerStyle={{
+          flex: 1,
+        }}
         buttonStyle={styles.button}
         titleStyle={styles.buttonText}
         onPress={displayPopup ? activeCancelPopup : onCancel}

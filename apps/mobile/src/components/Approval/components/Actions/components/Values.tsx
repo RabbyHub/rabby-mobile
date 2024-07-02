@@ -50,6 +50,7 @@ import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEng
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
+import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 
 const { isSameAddress } = addressUtils;
 
@@ -71,7 +72,6 @@ const styles = StyleSheet.create({
   tokenAmountWrapper: {
     flex: 0,
     flexShrink: 0,
-    maxWidth: '80%',
   },
 });
 
@@ -330,6 +330,47 @@ const Address = ({
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
+
+  return (
+    <View
+      style={StyleSheet.flatten({
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 0.5,
+        borderColor: colors['neutral-line'],
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+        borderRadius: 900,
+      })}>
+      <Text
+        style={StyleSheet.flatten({
+          fontSize: 14,
+          fontWeight: '500',
+          color: colors['neutral-title1'],
+          ...style,
+        })}>
+        {ellipsis(address)}
+      </Text>
+      <IconArrowRight />
+    </View>
+  );
+};
+
+const AddressWithCopy = ({
+  address,
+  chain,
+  iconWidth = '12px',
+  style,
+  ref,
+}: {
+  address: string;
+  chain?: Chain;
+  iconWidth?: string;
+  style?: TextStyle;
+  ref?: any;
+}) => {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const handleClickContractId = () => {
     if (!chain) return;
     // openInTab(chain.scanLink.replace(/tx\/_s_/, `address/${address}`), false);
@@ -338,8 +379,10 @@ const Address = ({
     Clipboard.setString(address);
     toast.success(t('global.copied'));
   };
+  const widthNum = parseInt(iconWidth, 10);
   return (
     <View
+      ref={ref}
       style={{
         display: 'flex',
         flexDirection: 'row',
@@ -347,7 +390,7 @@ const Address = ({
       }}>
       <Text
         style={{
-          fontSize: 15,
+          fontSize: 14,
           marginRight: 6,
           fontWeight: '500',
           color: colors['neutral-title1'],
@@ -355,20 +398,10 @@ const Address = ({
         }}>
         {ellipsis(address)}
       </Text>
-      {/* {chain && (
-        <IconExternal
-          onPress={handleClickContractId}
-          width={iconWidth}
-          height={iconWidth}
-          style={{
-            marginRight: 6,
-          }}
-        />
-      )} */}
       <IconAddressCopy
         onPress={handleCopyContractAddress}
-        width={iconWidth}
-        height={iconWidth}
+        width={widthNum}
+        height={widthNum}
       />
     </View>
   );
@@ -411,37 +444,15 @@ const DisplayChain = ({
   );
 };
 
-const Interacted = ({
-  value,
-  textStyle,
-}: {
-  value: boolean;
-  textStyle?: TextStyle;
-}) => {
+const Interacted = ({ value }: { value: boolean }) => {
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   return (
     <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
-        <>
-          <IconInteracted
-            style={{
-              marginRight: 4,
-              width: 14,
-            }}
-          />
-          <Text style={textStyle}>{t('page.signTx.interacted')}</Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.yes')}</Text>
       ) : (
-        <>
-          <IconNotInteracted
-            style={{
-              marginRight: 4,
-              width: 14,
-            }}
-          />
-          <Text style={textStyle}>{t('page.signTx.neverInteracted')}</Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.no')}</Text>
       )}
     </View>
   );
@@ -453,27 +464,9 @@ const Transacted = ({ value }: { value: boolean }) => {
   return (
     <View style={commonStyle.rowFlexCenterItem}>
       {value ? (
-        <>
-          <IconInteracted
-            style={{
-              marginRight: 6,
-            }}
-          />
-          <Text style={commonStyle.secondaryText}>
-            {t('page.signTx.transacted')}
-          </Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.yes')}</Text>
       ) : (
-        <>
-          <IconNotInteracted
-            style={{
-              marginRight: 6,
-            }}
-          />
-          <Text style={commonStyle.secondaryText}>
-            {t('page.signTx.neverTransacted')}
-          </Text>
-        </>
+        <Text style={commonStyle.subRowText}>{t('page.signTx.no')}</Text>
       )}
     </View>
   );
@@ -555,4 +548,5 @@ export {
   TokenSymbol,
   AccountAlias,
   KnownAddress,
+  AddressWithCopy,
 };

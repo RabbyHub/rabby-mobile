@@ -38,6 +38,7 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   canUseGasLess?: boolean;
   gasLessFailedReason?: string;
   isWatchAddr?: boolean;
+  Header?: React.ReactNode;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -171,6 +172,7 @@ export const FooterBar: React.FC<Props> = ({
   canUseGasLess = false,
   onIgnoreAllRules,
   enableGasLess,
+  Header,
   gasLessFailedReason,
   isWatchAddr,
   ...props
@@ -268,63 +270,7 @@ export const FooterBar: React.FC<Props> = ({
         className={clsx({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
-        {origin && (
-          <View style={styles.requestOrigin}>
-            <Tip content={currentChain.name}>
-              <View style={styles.dappIconWrapper}>
-                <DappIcon
-                  /**
-                   * @why though the originLogo equals to INTERNAL_REQUEST_SESSION.icon now,
-                   * we may change the INTERNAL_REQUEST_SESSION.icon and get originLogo from persisted storage
-                   * in the future (maybe? we don't know)
-                   */
-                  source={{
-                    uri: isInternalRequest
-                      ? INTERNAL_REQUEST_SESSION.icon
-                      : originLogo,
-                  }}
-                  origin={origin}
-                  style={styles.dappIcon}
-                />
-                <Image
-                  source={{ uri: currentChain.logo }}
-                  style={styles.chainLogo}
-                />
-              </View>
-            </Tip>
-
-            <Text style={styles.origin}>{displayOrigin}</Text>
-            <Text style={styles.right}>
-              {t('page.signFooterBar.requestFrom')}
-            </Text>
-            {engineResultMap['1088'] && (
-              <SecurityLevelTagNoText
-                enable={engineResultMap['1088'].enable}
-                level={
-                  processedRules.includes('1088')
-                    ? 'proceed'
-                    : engineResultMap['1088'].level
-                }
-                onClick={() => handleClickRule('1088')}
-                right={0}
-                style={styles.securityLevelTag}
-              />
-            )}
-            {engineResultMap['1089'] && (
-              <SecurityLevelTagNoText
-                enable={engineResultMap['1089'].enable}
-                level={
-                  processedRules.includes('1089')
-                    ? 'proceed'
-                    : engineResultMap['1089'].level
-                }
-                onClick={() => handleClickRule('1089')}
-                style={styles.securityLevelTag}
-              />
-            )}
-            <View style={styles.requestOriginBorder} />
-          </View>
-        )}
+        {Header}
         <AccountInfo
           chain={props.chain}
           account={account}

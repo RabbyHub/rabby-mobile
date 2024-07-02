@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -14,9 +14,9 @@ import { SecurityListItem } from './components/SecurityListItem';
 import IconQuestionMark from '@/assets/icons/sign/tx/question-mark.svg';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { Tip } from '@/components';
 
 const { isSameAddress } = addressUtils;
 
@@ -58,6 +58,8 @@ const ContractCall = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const contractCallAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -68,55 +70,74 @@ const ContractCall = ({
             </Text>
           </Row>
           <Row>
-            <Values.Address address={requireData.id} chain={chain} />
-
-            {requireData.protocol && (
-              <DescItem>
-                <ProtocolListItem
-                  protocol={requireData.protocol}
-                  style={commonStyle.secondaryText}
-                />
-              </DescItem>
-            )}
-            <DescItem>
-              <Values.Interacted
-                value={requireData.hasInteraction}
-                textStyle={commonStyle.secondaryText}
-              />
-            </DescItem>
-
-            {isInWhitelist && (
-              <DescItem>
-                <Text>{t('page.signTx.markAsTrust')}</Text>
-              </DescItem>
-            )}
-
-            <SecurityListItem
-              id="1135"
-              engineResult={engineResultMap['1135']}
-              forbiddenText={t('page.signTx.markAsBlock')}
-            />
-
-            <SecurityListItem
-              id="1137"
-              engineResult={engineResultMap['1137']}
-              warningText={t('page.signTx.markAsBlock')}
-            />
-            <DescItem>
-              <ViewMore
-                type="contract"
-                data={{
-                  hasInteraction: requireData.hasInteraction,
-                  bornAt: requireData.bornAt,
-                  protocol: requireData.protocol,
-                  rank: requireData.rank,
-                  address: requireData.id,
-                  chain,
-                }}
-              />
-            </DescItem>
+            <ViewMore
+              type="contract"
+              data={{
+                hasInteraction: requireData.hasInteraction,
+                bornAt: requireData.bornAt,
+                protocol: requireData.protocol,
+                rank: requireData.rank,
+                address: requireData.id,
+                chain,
+              }}>
+              <View ref={contractCallAddressRef}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={contractCallAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
         <Col>
           <Row isTitle>
             <Text style={commonStyle.rowTitleText}>
@@ -124,9 +145,28 @@ const ContractCall = ({
             </Text>
           </Row>
           <Row>
-            <View className="relative flex items-center flex-row">
-              <Text>{requireData.call.func || '-'}</Text>
-              <IconQuestionMark className="w-[12] ml-[6]" />
+            <View
+              style={StyleSheet.flatten({
+                flexDirection: 'row',
+                alignItems: 'center',
+              })}>
+              <Text style={commonStyle.primaryText}>
+                {requireData.call.func || '-'}
+              </Text>
+              <Tip
+                content={
+                  requireData.call.func
+                    ? t('page.signTx.contractCall.operationABIDesc')
+                    : t('page.signTx.contractCall.operationCantDecode')
+                }>
+                <IconQuestionMark
+                  style={StyleSheet.flatten({
+                    width: 16,
+                    height: 16,
+                    marginLeft: 6,
+                  })}
+                />
+              </Tip>
             </View>
           </Row>
         </Col>
