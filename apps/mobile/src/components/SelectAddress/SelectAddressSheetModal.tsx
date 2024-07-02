@@ -157,19 +157,21 @@ export function SelectAddressSheetModal({
         enableDismissOnClose={true}
         backdropComponent={renderBackdrop}
         onDismiss={onModalDismiss}
-        footerComponent={() => (
-          <View style={[styles.footerContainer, styles.innerBlock]}>
-            <Button
-              containerStyle={styles.footerButtonContainer}
-              title={
-                isEditing
-                  ? `Save to Whitelist (${localWhiteList.length})`
-                  : 'Edit Whitelist'
-              }
-              onPress={onPressSaveButton}
-            />
-          </View>
-        )}
+        footerComponent={() =>
+          !whitelistEnabled ? null : (
+            <View style={[styles.footerContainer, styles.innerBlock]}>
+              <Button
+                containerStyle={styles.footerButtonContainer}
+                title={
+                  isEditing
+                    ? `Save to Whitelist (${localWhiteList.length})`
+                    : 'Edit Whitelist'
+                }
+                onPress={onPressSaveButton}
+              />
+            </View>
+          )
+        }
         enableContentPanningGesture={false}>
         <BottomSheetView style={[styles.container]}>
           <BottomSheetHandlableView
