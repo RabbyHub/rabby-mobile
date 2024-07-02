@@ -13,6 +13,8 @@ import { SecurityListItem } from './components/SecurityListItem';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubCol, SubRow, SubTable } from './components/SubTable';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { INTERNAL_REQUEST_SESSION } from '@/constant';
 
 const SendNFT = ({
   data,
@@ -45,6 +47,8 @@ const SendNFT = ({
 
   const sendNftRef = React.useRef(null);
   const sendNftAddressRef = React.useRef(null);
+  const isLabelAddress =
+    requireData.name && Object.values(ALIAS_ADDRESS).includes(requireData.name);
 
   return (
     <View>
@@ -146,13 +150,22 @@ const SendNFT = ({
             </SubCol>
           )}
           {!!requireData.name && (
-            <SubCol nested>
-              <SubRow> </SubRow>
+            <SubCol nested={!isLabelAddress}>
+              <SubRow>{isLabelAddress ? t('page.signTx.label') : ' '}</SubRow>
               <SubRow>
-                <Text style={commonStyle.subRowNestedText}>
-                  {requireData.name.replace(/^Token: /, 'Token ') +
-                    ' contract address'}
-                </Text>
+                {isLabelAddress ? (
+                  <LogoWithText
+                    text={requireData.name}
+                    logo={INTERNAL_REQUEST_SESSION.icon}
+                    logoSize={14}
+                    textStyle={commonStyle.subRowNestedText}
+                  />
+                ) : (
+                  <Text style={commonStyle.subRowNestedText}>
+                    {requireData.name.replace(/^Token: /, 'Token ') +
+                      ' contract address'}
+                  </Text>
+                )}
               </SubRow>
             </SubCol>
           )}

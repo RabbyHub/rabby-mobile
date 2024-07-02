@@ -5,6 +5,7 @@ import * as Values from './Values';
 import { StyleSheet, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { TouchableOpacity } from 'react-native';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 interface Props {
   amount: number;
@@ -17,6 +18,7 @@ export const TokenAmountItem: React.FC<Props> = ({
   logoUrl,
   onEdit,
 }) => {
+  const commonStyle = useCommonStyle();
   const colors = useThemeColors();
   return (
     <TouchableOpacity
@@ -41,7 +43,10 @@ export const TokenAmountItem: React.FC<Props> = ({
               overflow: 'hidden',
             })}>
             <View>
-              <Values.TokenAmount value={amount} />
+              <Values.TokenAmount
+                style={commonStyle.subRowText}
+                value={amount}
+              />
             </View>
             {onEdit ? (
               <IconEditPenSVG
