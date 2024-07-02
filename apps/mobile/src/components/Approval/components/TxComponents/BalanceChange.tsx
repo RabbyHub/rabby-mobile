@@ -21,6 +21,7 @@ import useCommonStyle from '../../hooks/useCommonStyle';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
 import NFTDefaultSVG from '@/assets/nft-default.svg';
+import TouchableText from '@/components/Touchable/TouchableText';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -377,15 +378,18 @@ const BalanceChange = ({
                         })}>
                         - {formatAmount(token.amount)}{' '}
                       </Text>
-                      <Text
+                      <TouchableText
                         onPress={() => handleClickToken(token)}
-                        style={StyleSheet.flatten({
-                          ...commonStyle.primaryText,
-                          color: colors['red-default'],
-                          fontSize: 16,
-                        })}>
+                        style={StyleSheet.flatten([
+                          {
+                            ...commonStyle.primaryText,
+                            color: colors['red-default'],
+                            fontSize: 16,
+                          },
+                          commonStyle.clickableTokenText,
+                        ])}>
                         {getTokenSymbol(token)}
-                      </Text>
+                      </TouchableText>
                     </View>
                   }
                   logoRadius={16}

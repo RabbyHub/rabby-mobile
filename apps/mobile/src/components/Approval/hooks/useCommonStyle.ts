@@ -57,6 +57,10 @@ const useCommonStyle = () => {
         flexDirection: 'row',
         alignItems: 'center',
       },
+      clickableTokenText: {
+        textDecorationLine: 'underline',
+        textDecorationStyle: 'dashed',
+      },
     });
   }, [colors]);
 

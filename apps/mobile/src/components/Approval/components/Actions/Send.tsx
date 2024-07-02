@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -69,7 +69,10 @@ const Send = ({
                   </Text>
                   <Values.TokenSymbol
                     token={actionData.token}
-                    style={commonStyle.primaryText}
+                    style={StyleSheet.flatten([
+                      commonStyle.primaryText,
+                      commonStyle.clickableTokenText,
+                    ])}
                   />
                 </View>
               }
