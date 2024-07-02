@@ -196,6 +196,33 @@ const Actions = ({
   const styles = getActionsStyle(colors);
   const commonStyle = useCommonStyle();
 
+  const notShowBalanceChange = useMemo(() => {
+    if (
+      data.approveNFT ||
+      data.approveNFTCollection ||
+      data.approveToken ||
+      data.cancelTx ||
+      data.deployContract ||
+      data.pushMultiSig ||
+      data.revokeNFT ||
+      data.revokeNFTCollection ||
+      data.revokeToken
+    ) {
+      const balanceChange = txDetail.balance_change;
+      if (!txDetail.pre_exec.success) return false;
+      if (
+        balanceChange.receive_nft_list.length +
+          balanceChange.receive_token_list.length +
+          balanceChange.send_nft_list.length +
+          balanceChange.send_nft_list.length <=
+        0
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [data, txDetail]);
+
   const handleViewRawClick = () => {
     ViewRawModal.open({
       raw,
@@ -214,11 +241,15 @@ const Actions = ({
           originLogo={originLogo}
           engineResults={engineResults}
         />
-        <Divide />
-        <BalanceChange
-          version={txDetail.pre_exec_version}
-          data={txDetail.balance_change}
-        />
+        {!notShowBalanceChange && (
+          <>
+            <Divide />
+            <BalanceChange
+              version={txDetail.pre_exec_version}
+              data={txDetail.balance_change}
+            />
+          </>
+        )}
       </Card>
 
       <Card>
