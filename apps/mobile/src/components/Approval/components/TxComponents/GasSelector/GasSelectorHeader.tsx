@@ -494,6 +494,9 @@ export const GasSelectorHeader = ({
   }, []);
 
   useEffect(() => {
+    if (selectedGas) {
+      setPrevSelectedNotCustomGas(selectedGas);
+    }
     if (!is1559) return;
     if (selectedGas?.level === 'custom') {
       if (Number(customGas) !== maxPriorityFee) {
@@ -502,8 +505,6 @@ export const GasSelectorHeader = ({
         setIsReal1559(false);
       }
     } else if (selectedGas) {
-      setPrevSelectedNotCustomGas(selectedGas);
-
       if (selectedGas?.price / 1e9 !== maxPriorityFee) {
         setIsReal1559(true);
       } else {
@@ -582,6 +583,13 @@ export const GasSelectorHeader = ({
   }, [modalExplainGas?.gasCostAmount]);
 
   const [isGasHovering, setIsGasHovering] = useState(false);
+
+  const handleClosePopup = () => {
+    if (maxPriorityFee === undefined) {
+      setSelectedGas(prevSelectedNotCustomGas);
+    }
+    setModalVisible(false);
+  };
 
   if (!isReady && isFirstTimeLoad) {
     return (
@@ -685,12 +693,12 @@ export const GasSelectorHeader = ({
 
       <AppBottomSheetModal
         keyboardBlurBehavior="restore"
-        snapPoints={isReal1559 && isHardware ? [500] : [450]}
+        snapPoints={isReal1559 && isHardware ? [650] : [600]}
         ref={modalRef}
         handleStyle={{
           backgroundColor: colors['neutral-bg2'],
         }}
-        onDismiss={() => setModalVisible(false)}>
+        onDismiss={handleClosePopup}>
         <BottomSheetView style={styles.modalWrap}>
           <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
           <View style={styles.gasSelectorModalTop}>

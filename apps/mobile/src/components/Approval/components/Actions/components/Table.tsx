@@ -10,7 +10,7 @@ const getStyles = (colors: AppColorsVariants) =>
     colWrapper: {
       flexDirection: 'row',
       alignItems: 'stretch',
-      paddingVertical: 12,
+      paddingVertical: 11,
     },
     hasTip: {
       flexDirection: 'row',

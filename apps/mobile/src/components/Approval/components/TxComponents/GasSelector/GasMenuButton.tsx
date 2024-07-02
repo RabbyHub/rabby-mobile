@@ -92,6 +92,7 @@ export const GasMenuButton: React.FC<Props> = ({
     },
     [gasList, onCustom, onSelect],
   );
+  const customGasInfo = gasList.find(g => g.level === 'custom')!;
 
   return (
     <MenuView
@@ -102,13 +103,21 @@ export const GasMenuButton: React.FC<Props> = ({
       onPressAction={onPressAction}>
       {selectedGas ? (
         <TouchableOpacity style={styles.menuButton}>
-          <Text>{t(getGasLevelI18nKey(selectedGas.level ?? 'slow'))}</Text>
+          <Text style={styles.levelText}>
+            {t(getGasLevelI18nKey(selectedGas.level ?? 'slow'))}
+          </Text>
           {(selectedGas.level !== 'custom' || showCustomGasPrice) && (
             <>
               <View style={styles.dot} />
 
               <Text style={styles.gwei}>
-                {new BigNumber(selectedGas.price / 1e9).toFixed().slice(0, 8)}
+                {new BigNumber(
+                  (selectedGas.level === 'custom'
+                    ? customGasInfo.price
+                    : selectedGas.price) / 1e9,
+                )
+                  .toFixed()
+                  .slice(0, 8)}
               </Text>
             </>
           )}
@@ -144,6 +153,12 @@ const getStyle = createGetStyles((colors: AppColorsVariants) => ({
   gwei: {
     color: colors['neutral-foot'],
     alignItems: 'center',
+  },
+  levelText: {
+    color: colors['neutral-body'],
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '500',
   },
   dot: {
     width: 2,

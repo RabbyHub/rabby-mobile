@@ -101,7 +101,7 @@ const AddressMemo = ({
         ref={modalRef}
         onDismiss={() => setVisible(false)}
         keyboardBlurBehavior="restore"
-        enableDynamicSizing>
+        snapPoints={[300]}>
         <BottomSheetView style={styles.mainView}>
           <AppBottomSheetModalTitle
             title={t('component.Contact.EditModal.title')}

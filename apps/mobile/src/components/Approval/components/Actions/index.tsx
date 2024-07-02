@@ -108,7 +108,7 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-foot'],
     },
     container: {
-      padding: 14,
+      paddingHorizontal: 16,
     },
     header: {
       flexDirection: 'row',

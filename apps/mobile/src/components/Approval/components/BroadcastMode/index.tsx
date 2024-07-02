@@ -179,16 +179,6 @@ export const BroadcastMode = ({
       <View>
         <View style={styles.broadcastModeBody}>
           <View style={styles.broadcastModeBodyUl}>
-            <View
-              style={StyleSheet.flatten([
-                styles.broadcastModeBodyLi,
-                styles.broadcastModeBodyLiFirst,
-              ])}>
-              <View style={styles.broadcastModeBodyLiBefore} />
-              <Text style={styles.broadcastModeBodyLiText}>
-                {selectedOption?.desc}
-              </Text>
-            </View>
             {value.type === 'low_gas' ? (
               <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
                 <View style={styles.broadcastModeBodyLiBefore} />
