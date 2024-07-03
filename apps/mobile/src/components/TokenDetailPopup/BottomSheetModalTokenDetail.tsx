@@ -409,7 +409,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
     // });
 
     type LoadData = {
-      last?: TxDisplayItem['time_at'] | undefined;
+      earliest?: TxDisplayItem['time_at'] | undefined;
       tokenId?: AbstractPortfolioToken['_tokenId'] | null;
       list: TxDisplayItem[];
     };
@@ -421,8 +421,10 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       reloadAsync,
     } = useInfiniteScroll<LoadData>(
       async currentData => {
+        const lastEarliestTime =
+          currentData?.earliest ?? last(currentData?.list)?.time_at;
         const tickResult: LoadData = {
-          last: currentData?.last ?? undefined,
+          earliest: lastEarliestTime ?? undefined,
           tokenId: token?._tokenId,
           list: [],
         };
@@ -431,12 +433,11 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           return tickResult;
         }
 
-        const startTime = tickResult.last;
         try {
           const res: TxHistoryResult = await openapi.listTxHisotry({
             id: currentAccount?.address,
             chain_id: token?.chain,
-            start_time: startTime ?? undefined,
+            start_time: lastEarliestTime ?? undefined,
             page_count: PAGE_COUNT,
             token_id: token?._tokenId,
           });
@@ -446,6 +447,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             token_dict,
             history_list: list,
           } = res;
+          // descendent order by time_at
           const displayList: TxDisplayItem[] = list
             .map(item => ({
               ...item,
@@ -455,23 +457,14 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             }))
             .sort((v1, v2) => v2.time_at - v1.time_at);
 
-          tickResult.last = last(displayList)?.time_at;
-          const limitStart = startTime ?? last(currentData?.list)?.time_at;
+          tickResult.earliest = last(displayList)?.time_at;
 
-          tickResult.list = !limitStart
+          tickResult.list = !lastEarliestTime
             ? displayList
-            : displayList.filter(item => item.time_at > limitStart);
-
-          // setLatestData(prev => {
-          //   tickResult.list = !limitStart
-          //     ? displayList
-          //     : displayList.filter(item => item.time_at > limitStart);
-
-          //   return {
-          //     ...tickResult,
-          //     list: [...prev.list, ...tickResult.list],
-          //   };
-          // });
+            : // find out the items that are earlier than the earliest item in current list
+              displayList.filter(
+                item => !item.time_at || item.time_at <= lastEarliestTime,
+              );
 
           return tickResult;
         } catch (error) {
@@ -483,7 +476,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         // manual: true,
         reloadDeps: [token, token?._tokenId],
         isNoMore: d => {
-          return !d?.last || (d?.list.length || 0) < PAGE_COUNT;
+          return !d?.earliest || (d?.list.length || 0) < PAGE_COUNT;
         },
       },
     );
@@ -553,8 +546,8 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       [isLoadingFirst, canClickToken],
     );
 
-    const keyExtractor = useCallback((item: TxDisplayItem, idx: number) => {
-      return `${item.chain}/${item.cate_id}/${item.id}/${idx}`;
+    const keyExtractor = useCallback((item: TxDisplayItem) => {
+      return `${item.chain}/${item.cate_id}/${item.id}/${item.time_at || '-'}`;
     }, []);
 
     const navigation = useRabbyAppNavigation();
