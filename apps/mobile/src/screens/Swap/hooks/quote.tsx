@@ -356,6 +356,7 @@ export const useQuoteMethods = () => {
                     : Number(feeAfterDiscount) || 0,
                 chain,
                 gasPrice,
+                fee: true,
               },
               walletOpenapi,
             ),
