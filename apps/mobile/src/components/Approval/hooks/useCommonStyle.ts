@@ -58,8 +58,8 @@ const useCommonStyle = () => {
         alignItems: 'center',
       },
       clickableTokenText: {
-        textDecorationLine: 'underline',
-        textDecorationStyle: 'dashed',
+        // textDecorationLine: 'underline',
+        // textDecorationStyle: 'dashed',
       },
     });
   }, [colors]);
