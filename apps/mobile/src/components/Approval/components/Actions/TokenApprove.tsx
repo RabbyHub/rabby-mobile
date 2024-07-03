@@ -156,7 +156,7 @@ const ApproveAmountModal = ({
           <BottomSheetInput
             value={customAmount}
             onChange={e => handleChange(e.nativeEvent.text)}
-            autoFocus
+            // autoFocus
             style={styles.inputText}
             addonAfter={
               <Text style={styles.addonText}>

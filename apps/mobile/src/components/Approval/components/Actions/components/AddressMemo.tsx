@@ -115,7 +115,7 @@ const AddressMemo = ({
             <BottomSheetInput
               onChangeText={handleTextChange}
               maxLength={50}
-              autoFocus
+              // autoFocus
               value={inputText}
               placeholder="Please input address note"
             />
