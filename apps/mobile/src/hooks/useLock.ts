@@ -195,7 +195,7 @@ export function useSetPasswordFirst() {
       screen: (SettingNavigatorParamList['SetPassword'] &
         object)['replaceScreen'],
     ) => {
-      if (APP_FEATURE_SWITCH.customizePassword) return false;
+      if (!APP_FEATURE_SWITCH.customizePassword) return false;
 
       if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
         navigation.push(RootNames.StackSettings, {
