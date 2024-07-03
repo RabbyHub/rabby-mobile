@@ -413,7 +413,7 @@ const Swap = () => {
                       <Text style={styles.afterLabel}>
                         {t('page.swap.rabby-fee')}
                       </Text>
-                      <Text style={styles.afterValue}>0%</Text>
+                      <Text style={styles.afterValue}>0.25%</Text>
                     </View>
                   </View>
                 )}

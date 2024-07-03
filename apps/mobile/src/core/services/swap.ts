@@ -49,6 +49,7 @@ export class SwapService {
           viewList: {} as SwapServiceStore['viewList'],
           tradeList: {} as SwapServiceStore['tradeList'],
           preferMEVGuarded: false,
+          sortIncludeGasFee: true,
         },
       },
       {
@@ -196,7 +197,7 @@ export class SwapService {
   };
 
   getSwapSortIncludeGasFee = () => {
-    return this.store.sortIncludeGasFee || false;
+    return this.store.sortIncludeGasFee ?? true;
   };
 
   setSwapSortIncludeGasFee = (bool: boolean) => {
@@ -236,7 +237,7 @@ export class SwapService {
   };
 
   getSwapPreferMEVGuarded = () => {
-    return this.store.preferMEVGuarded || false;
+    return this.store.preferMEVGuarded ?? false;
   };
 
   setSwapPreferMEVGuarded = (bool: boolean) => {
