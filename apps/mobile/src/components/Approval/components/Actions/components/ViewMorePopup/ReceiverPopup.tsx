@@ -29,15 +29,15 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
 
   const receiverType = useMemo(() => {
     if (data.contract) {
-      return 'Contract';
+      return t('page.signTx.contract');
     }
     if (data.eoa) {
-      return 'EOA';
+      return t('page.signTx.tokenApprove.eoaAddress');
     }
     if (data.cex) {
-      return 'EOA';
+      return t('page.signTx.tokenApprove.eoaAddress');
     }
-  }, [data]);
+  }, [data, t]);
 
   const contractOnCurrentChain = useMemo(() => {
     if (!data.contract || !data.contract[data.chain.serverId]) return null;
