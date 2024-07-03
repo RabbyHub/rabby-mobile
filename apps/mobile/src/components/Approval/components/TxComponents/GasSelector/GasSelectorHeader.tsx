@@ -593,6 +593,19 @@ export const GasSelectorHeader = ({
     setModalVisible(false);
   };
 
+  const hasTip = isReal1559 && isHardware;
+  const hasFee = is1559;
+  const snapPoint = React.useMemo(() => {
+    let v = 500;
+    if (hasTip) {
+      v += 50;
+    }
+    if (hasFee) {
+      v += 100;
+    }
+    return v;
+  }, [hasFee, hasTip]);
+
   if (!isReady && isFirstTimeLoad) {
     return (
       <View style={styles.header}>
@@ -695,7 +708,7 @@ export const GasSelectorHeader = ({
 
       <AppBottomSheetModal
         keyboardBlurBehavior="restore"
-        snapPoints={isReal1559 && isHardware ? [650] : [600]}
+        snapPoints={[snapPoint]}
         ref={modalRef}
         handleStyle={{
           backgroundColor: colors['neutral-bg2'],
@@ -808,7 +821,7 @@ export const GasSelectorHeader = ({
           </View>
 
           <View style={styles.feeContainer}>
-            {is1559 && (
+            {hasFee && (
               <>
                 <Divide style={styles.feeDivider} />
 
@@ -856,7 +869,7 @@ export const GasSelectorHeader = ({
               </>
             )}
 
-            {isReal1559 && isHardware && (
+            {hasTip && (
               <View style={styles.gasPriceDesc}>
                 <Text style={styles.gasPriceDescText}>
                   {t('page.signTx.hardwareSupport1559Alert')}
