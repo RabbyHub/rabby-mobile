@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -28,6 +28,7 @@ import { BottomSheetInput } from '@/components/Input';
 import { TokenAmountItem } from './components/TokenAmountItem';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { RcIconUnknownToken } from '@/screens/Approvals/icons';
 
 interface ApproveAmountModalProps {
   amount: number | string;
@@ -167,6 +168,26 @@ const ApproveAmountModal = ({
                 )}
               </Text>
             }
+            addonBefore={
+              token.logo_url ? (
+                <Image
+                  source={{ uri: token.logo_url }}
+                  style={StyleSheet.flatten({
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                  })}
+                />
+              ) : (
+                <RcIconUnknownToken
+                  width={20}
+                  height={20}
+                  style={StyleSheet.flatten({
+                    marginRight: 8,
+                  })}
+                />
+              )
+            }
           />
           <View style={styles.approveAmountFooter}>
             {balance && (
@@ -180,23 +201,6 @@ const ApproveAmountModal = ({
               </Text>
             )}
           </View>
-          {/* <View style={styles.approveAmountButton}>
-              <Button
-                buttonStyle={{
-                  width: 200,
-                  backgroundColor: colors['blue-default'],
-                  height: 44,
-                  padding: 10,
-                }}
-                titleStyle={{
-                  color: '#fff',
-                  fontSize: 15,
-                }}
-                onPress={handleSubmit}
-                title={t('global.confirmButton')}
-                disabled={!canSubmit}
-              />
-            </View> */}
         </View>
 
         <FooterButtonGroup onCancel={onCancel} onConfirm={handleSubmit} />
