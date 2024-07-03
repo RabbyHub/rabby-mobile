@@ -182,6 +182,7 @@ export const GasSelectContainer = ({
                   // autoFocus={selectedGas?.level === item.level}
                   // disabled={disabled}
                   placeholder="0"
+                  selectTextOnFocus
                 />
               )
             ) : (
