@@ -3,6 +3,7 @@
 
 import { MMKV, MMKVConfiguration } from 'react-native-mmkv';
 
+import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
@@ -12,7 +13,10 @@ export function makeAppStorage(options?: MMKVConfiguration) {
 
   function getItem<T>(key: string): T | null {
     const value = mmkv.getString(key);
-    return value ? JSON.parse(value) : null;
+
+    return !value
+      ? null
+      : stringUtils.safeParseJSON(value, { defaultValue: null });
   }
 
   function setItem<T>(key: string, value: T): void {
