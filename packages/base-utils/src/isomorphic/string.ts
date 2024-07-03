@@ -21,3 +21,11 @@ export function unSuffix(str = '', suffix = '/') {
 export function isStringOrNumber(data: any) {
   return typeof data === 'string' || typeof data === 'number';
 }
+
+export function safeParseJSON<T = any>(json: string, options?: { defaultValue?: any }): T | null {
+  try {
+    return JSON.parse(json);
+  } catch (error) {
+    return options?.defaultValue ?? null;
+  }
+}
