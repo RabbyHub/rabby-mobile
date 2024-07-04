@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { isValidElementType } from 'react-is';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
