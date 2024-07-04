@@ -586,10 +586,11 @@ const getStyles = createGetStyles(colors => ({
   afterWrapper: {
     marginTop: 12,
     gap: 12,
+    paddingHorizontal: 12,
   },
   afterLabel: {
     fontSize: 13,
-    color: colors['neutral-foot'],
+    color: colors['neutral-body'],
   },
   afterValue: {
     fontSize: 13,

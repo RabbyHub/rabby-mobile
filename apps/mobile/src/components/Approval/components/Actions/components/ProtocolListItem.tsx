@@ -1,6 +1,7 @@
 import React from 'react';
 import LogoWithText from './LogoWithText';
 import { Text, TextStyle, View } from 'react-native';
+import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 
 export interface Props {
   protocol: {
@@ -10,18 +11,19 @@ export interface Props {
   style?: TextStyle;
 }
 
-// const LogoWithTextStyled = styled(LogoWithText)`
-//   .text {
-//     font-size: inherit;
-//     font-weight: inherit;
-//     color: inherit;
-//     line-height: inherit;
-//   }
-// `;
-
 export const ProtocolListItem: React.FC<Props> = ({ protocol, style }) => {
+  const commonStyle = useCommonStyle();
+
   if (!protocol) {
-    return <Text style={style}>-</Text>;
+    return (
+      <Text
+        style={{
+          ...commonStyle.subRowText,
+          ...style,
+        }}>
+        -
+      </Text>
+    );
   }
 
   return (
@@ -30,7 +32,10 @@ export const ProtocolListItem: React.FC<Props> = ({ protocol, style }) => {
         logo={protocol.logo_url}
         text={protocol.name}
         logoRadius={16}
-        textStyle={style}
+        textStyle={{
+          ...commonStyle.subRowText,
+          ...style,
+        }}
       />
     </View>
   );

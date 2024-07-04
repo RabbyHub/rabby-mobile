@@ -20,6 +20,7 @@ const getStyle = (colors: AppColorsVariants) =>
       borderRadius: 6,
       padding: 12,
       position: 'relative',
+      marginBottom: 16,
     },
     internalTransaction: {
       padding: 0,

@@ -1336,6 +1336,19 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
               />
             )}
 
+            {!isGnosisAccount && !isCoboArugsAccount && isReady ? (
+              <BroadcastMode
+                chain={chain.enum}
+                value={pushInfo}
+                isCancel={isCancel}
+                isSpeedUp={isSpeedUp}
+                isGasTopUp={isGasTopUp}
+                onChange={value => {
+                  setPushInfo(value);
+                }}
+              />
+            ) : null}
+
             {!isGnosisAccount && !isCoboArugsAccount && txDetail && isReady ? (
               <SignAdvancedSettings
                 disabled={isGnosisAccount || isCoboArugsAccount}
@@ -1349,19 +1362,6 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                 manuallyChangeGasLimit={manuallyChangeGasLimit}
               />
             ) : null}
-
-            {isReady && (
-              <BroadcastMode
-                chain={chain.enum}
-                value={pushInfo}
-                isCancel={isCancel}
-                isSpeedUp={isSpeedUp}
-                isGasTopUp={isGasTopUp}
-                onChange={value => {
-                  setPushInfo(value);
-                }}
-              />
-            )}
           </View>
         )}
 

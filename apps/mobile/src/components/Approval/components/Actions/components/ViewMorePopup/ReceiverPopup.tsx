@@ -29,15 +29,15 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
 
   const receiverType = useMemo(() => {
     if (data.contract) {
-      return 'Contract';
+      return t('page.signTx.contract');
     }
     if (data.eoa) {
-      return 'EOA';
+      return t('page.signTx.tokenApprove.eoaAddress');
     }
     if (data.cex) {
-      return 'EOA';
+      return t('page.signTx.tokenApprove.eoaAddress');
     }
-  }, [data]);
+  }, [data, t]);
 
   const contractOnCurrentChain = useMemo(() => {
     if (!data.contract || !data.contract[data.chain.serverId]) return null;
@@ -89,13 +89,13 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
           </Row>
         </Col>
         <Col>
-          <Row style={styles.firstRow}>
+          <Row isTitle style={styles.firstRow}>
             <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressTypeTitle')}
             </Text>
           </Row>
           <Row>
-            <View>
+            <View style={StyleSheet.flatten({ alignItems: 'flex-end' })}>
               <Text style={commonStyle.detailPrimaryText}>{receiverType}</Text>
               {((data.contract && !contractOnCurrentChain) ||
                 data.name ||
@@ -116,9 +116,12 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
                       </Text>
                     </DescItem>
                   )}
-                  {data.name && (
+                  {data.name && !isLabelAddress && (
                     <DescItem>
-                      <Text style={commonStyle.secondaryText}>{data.name}</Text>
+                      <Text style={commonStyle.secondaryText}>
+                        {data.name.replace(/^Token: /, 'Token ') +
+                          ' contract address'}
+                      </Text>
                     </DescItem>
                   )}
                 </View>
@@ -148,8 +151,10 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         )}
         {data.name && isLabelAddress && (
           <Col>
-            <Row>
-              <Text>{t('page.signTx.label')}</Text>
+            <Row isTitle>
+              <Text style={commonStyle.detailRowTitleText}>
+                {t('page.signTx.label')}
+              </Text>
             </Row>
             <Row>
               <LogoWithText
@@ -167,7 +172,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         )}
         {data.cex && (
           <Col>
-            <Row style={styles.firstRow}>
+            <Row isTitle style={styles.firstRow}>
               <Text style={commonStyle.detailRowTitleText}>
                 {t('page.signTx.send.cexAddress')}
               </Text>

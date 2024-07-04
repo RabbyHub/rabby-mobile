@@ -6,23 +6,21 @@ import { AppColorsVariants } from '@/constant/theme';
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     descItem: {
-      position: 'relative',
       paddingRight: 0,
       paddingLeft: 10,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       marginTop: 4,
+      justifyContent: 'flex-end',
     },
     ball: {
-      position: 'absolute',
-      left: 3,
       width: 3,
       height: 3,
       backgroundColor: colors['neutral-body'],
       borderRadius: 3,
-      top: '50%',
-      marginTop: -1.5,
+      marginRight: 6,
+      marginTop: 1.5,
     },
   });
 

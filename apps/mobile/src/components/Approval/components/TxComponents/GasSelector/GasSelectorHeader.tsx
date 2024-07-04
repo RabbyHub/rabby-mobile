@@ -475,6 +475,8 @@ export const GasSelectorHeader = ({
     setCustomGas(e =>
       Number(e) * 1e9 === rawSelectedGas.price ? e : rawSelectedGas.price / 1e9,
     );
+    setChangedCustomGas(true);
+    setLoadingGasEstimated(false);
   }, [rawSelectedGas]);
 
   useEffect(() => {
@@ -494,6 +496,9 @@ export const GasSelectorHeader = ({
   }, []);
 
   useEffect(() => {
+    if (selectedGas) {
+      setPrevSelectedNotCustomGas(selectedGas);
+    }
     if (!is1559) return;
     if (selectedGas?.level === 'custom') {
       if (Number(customGas) !== maxPriorityFee) {
@@ -502,8 +507,6 @@ export const GasSelectorHeader = ({
         setIsReal1559(false);
       }
     } else if (selectedGas) {
-      setPrevSelectedNotCustomGas(selectedGas);
-
       if (selectedGas?.price / 1e9 !== maxPriorityFee) {
         setIsReal1559(true);
       } else {
@@ -582,6 +585,26 @@ export const GasSelectorHeader = ({
   }, [modalExplainGas?.gasCostAmount]);
 
   const [isGasHovering, setIsGasHovering] = useState(false);
+
+  const handleClosePopup = () => {
+    if (maxPriorityFee === undefined) {
+      setSelectedGas(prevSelectedNotCustomGas);
+    }
+    setModalVisible(false);
+  };
+
+  const hasTip = isReal1559 && isHardware;
+  const hasFee = is1559;
+  const snapPoint = React.useMemo(() => {
+    let v = 500;
+    if (hasTip) {
+      v += 50;
+    }
+    if (hasFee) {
+      v += 100;
+    }
+    return v;
+  }, [hasFee, hasTip]);
 
   if (!isReady && isFirstTimeLoad) {
     return (
@@ -685,12 +708,12 @@ export const GasSelectorHeader = ({
 
       <AppBottomSheetModal
         keyboardBlurBehavior="restore"
-        snapPoints={isReal1559 && isHardware ? [500] : [450]}
+        snapPoints={[snapPoint]}
         ref={modalRef}
         handleStyle={{
           backgroundColor: colors['neutral-bg2'],
         }}
-        onDismiss={() => setModalVisible(false)}>
+        onDismiss={handleClosePopup}>
         <BottomSheetView style={styles.modalWrap}>
           <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
           <View style={styles.gasSelectorModalTop}>
@@ -706,9 +729,8 @@ export const GasSelectorHeader = ({
                 {version === 'v2' && gas.error ? (
                   <View style={styles.gasSelectorModalErrorDesc}>
                     <Text style={styles.gasSelectorModalErrorDescText}>
-                      {gas.error.msg}{' '}
+                      {gas.error.msg} #{gas.error.code}
                     </Text>
-                    <Text>#{gas.error.code}</Text>
                   </View>
                 ) : null}
               </>
@@ -798,7 +820,7 @@ export const GasSelectorHeader = ({
           </View>
 
           <View style={styles.feeContainer}>
-            {is1559 && (
+            {hasFee && (
               <>
                 <Divide style={styles.feeDivider} />
 
@@ -846,7 +868,7 @@ export const GasSelectorHeader = ({
               </>
             )}
 
-            {isReal1559 && isHardware && (
+            {hasTip && (
               <View style={styles.gasPriceDesc}>
                 <Text style={styles.gasPriceDescText}>
                   {t('page.signTx.hardwareSupport1559Alert')}
