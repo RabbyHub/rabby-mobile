@@ -579,7 +579,7 @@
         "error": "Failed to add to contacts"
       },
       "allowTransferModal": {
-        "title": "Confirm to allow sending",
+        "title": "Confirm to allow transaction",
         "error": "incorrect password",
         "placeholder": "Enter the Password to Confirm",
         "validator__empty": "Please input password",
