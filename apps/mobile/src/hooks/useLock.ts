@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
-
-const isAndroid = Platform.OS === 'android';
-const isIOS = Platform.OS === 'ios';
-
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
@@ -13,6 +10,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import { androidBlockScreen, androidUnblockScreen } from '@/core/utils/device';
+
+const isAndroid = Platform.OS === 'android';
+const isIOS = Platform.OS === 'ios';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -141,7 +142,7 @@ export function useIsOnBackground() {
       ].includes(appState.status);
     }
 
-    return appState.status === 'background';
+    return ['inactive', 'background'].includes(appState.status);
   }, [appState.status]);
 
   return {
@@ -159,11 +160,15 @@ export function useSecureOnBackground() {
     if (!AppState.isAvailable) return;
 
     if (isAndroid) {
-      const subBlur = AppState.addEventListener('blur', nextStatus => {
-        setAppStatus({ status: nextStatus });
+      /** @see https://reactnative.dev/docs/appstate#blur-android */
+      const subBlur = AppState.addEventListener('blur', () => {
+        androidBlockScreen();
+        setAppStatus({ status: 'inactive' });
       });
-      const subFocus = AppState.addEventListener('focus', nextStatus => {
-        setAppStatus({ status: nextStatus });
+      /** @see https://reactnative.dev/docs/appstate#focus-android */
+      const subFocus = AppState.addEventListener('focus', () => {
+        androidUnblockScreen();
+        setAppStatus({ status: 'active' });
       });
 
       return () => {
@@ -171,6 +176,7 @@ export function useSecureOnBackground() {
         subFocus.remove();
       };
     } else if (isIOS) {
+      /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
         setAppStatus({ status: nextStatus });
       });
