@@ -45,6 +45,7 @@
     "@ledgerhq/types-devices": "^6.23.0",
     "@metamask/auto-changelog": "^3.4.3",
     "@types/jest": "^27.4.1",
+    "@types/node": "^20.14.8",
     "@types/sinon": "^9.0.10",
     "@types/w3c-web-hid": "^1.0.6",
     "deepmerge": "^4.2.2",

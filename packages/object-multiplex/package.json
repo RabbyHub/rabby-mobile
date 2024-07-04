@@ -37,6 +37,7 @@
   "devDependencies": {
     "@metamask/auto-changelog": "^3.4.3",
     "@types/jest": "^27.4.1",
+    "@types/node": "^17.0.34",
     "@types/once": "^1.4.0",
     "@types/readable-stream": "4.0.0",
     "@types/sinon": "^9.0.10",

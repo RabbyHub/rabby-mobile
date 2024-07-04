@@ -1,0 +1,13 @@
+diff --git a/node_modules/@keystonehq/metamask-airgapped-keyring/dist/MetaMaskKeyring.d.ts b/node_modules/@keystonehq/metamask-airgapped-keyring/dist/MetaMaskKeyring.d.ts
+index d040673..2cfcf4f 100644
+--- a/node_modules/@keystonehq/metamask-airgapped-keyring/dist/MetaMaskKeyring.d.ts
++++ b/node_modules/@keystonehq/metamask-airgapped-keyring/dist/MetaMaskKeyring.d.ts
+@@ -8,7 +8,7 @@ export declare class MetaMaskKeyring extends BaseKeyring {
+     resetStore: () => void;
+     getMemStore: () => import("./MetaMaskInteractionProvider").IMemState;
+     signTransaction(address: string, tx: any): Promise<any>;
+-    removeAccount: (address: any) => void;
++    removeAccount (address: any): void;
+     forgetDevice: () => void;
+     submitCryptoHDKey: (cbor: string) => void;
+     submitCryptoAccount: (cbor: string) => void;
