@@ -10,17 +10,16 @@ export const getStyles = (colors: AppColorsVariants) =>
     },
     broadcastModeBody: {},
     broadcastModeBodyUl: {
-      marginTop: 0,
-      marginBottom: 0,
+      marginTop: 16,
+      marginBottom: 8,
     },
     broadcastModeBodyLi: {
-      marginVertical: 12,
       marginHorizontal: 16,
       position: 'relative',
-      marginTop: 8,
       paddingLeft: 12,
       flexDirection: 'row',
       alignItems: 'center',
+      marginBottom: 8,
       gap: 6,
     },
     broadcastModeBodyLiBefore: {
