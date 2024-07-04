@@ -170,7 +170,7 @@ const getStyles = createGetStyles(colors => ({
   },
   text: {
     fontSize: 13,
-    color: colors['neutral-foot'],
+    color: colors['neutral-body'],
   },
   valueContainer: {
     flexDirection: 'row',
