@@ -6738,13 +6738,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-menu/menu@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@react-native-menu/menu@npm:1.0.3"
+"@react-native-menu/menu@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@react-native-menu/menu@npm:1.1.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 9bb99535eec852240123d4188abe1fead405fc4b719e19f5df3843ecbbc585d656c4b0fbc1b2b29c69237db8bd0ea5a2b967a63d32cde271a01701f1fdafac2f
+  checksum: 3c2733f70de25a560b99396d06a70d74a6e47ce165395f333c3ee56b0e71ef71257979a32c61c91669e5e108429bee91986211b3d47dd86f716edb3bc3ca891a
   languageName: node
   linkType: hard
 
@@ -27599,7 +27599,7 @@ __metadata:
     "@react-native-firebase/analytics": ^18.8.0
     "@react-native-firebase/app": ^18.8.0
     "@react-native-masked-view/masked-view": ^0.3.1
-    "@react-native-menu/menu": 1.0.3
+    "@react-native-menu/menu": ^1.1.2
     "@react-native/eslint-config": ^0.72.2
     "@react-native/metro-config": ^0.72.11
     "@react-navigation/bottom-tabs": ^6.5.11
