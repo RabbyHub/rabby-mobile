@@ -67,8 +67,8 @@ export const GasMenuButton: React.FC<Props> = ({
   const { styles } = useThemeStyles(getStyle);
   const { t } = useTranslation();
   const colors = useThemeColors();
-  let actions = React.useMemo(() => {
-    return gasList.map(gas => {
+  const actions = React.useMemo(() => {
+    const list = gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
       return {
         id: gas.level,
@@ -79,6 +79,12 @@ export const GasMenuButton: React.FC<Props> = ({
         state: gas.level === selectedGas?.level ? 'on' : 'off',
       } as MenuAction;
     });
+
+    if (Platform.OS === 'android') {
+      return list.reverse();
+    }
+
+    return list;
   }, [colors, gasList, selectedGas?.level, t]);
   const onPressAction = React.useCallback(
     ({ nativeEvent: { event } }) => {
@@ -94,10 +100,6 @@ export const GasMenuButton: React.FC<Props> = ({
     [gasList, onCustom, onSelect],
   );
   const customGasInfo = gasList.find(g => g.level === 'custom')!;
-
-  if (Platform.OS === 'android') {
-    actions = actions.reverse();
-  }
 
   return (
     <MenuView
