@@ -10,6 +10,7 @@ import {
   Text,
   Touchable,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import {
   useGetBinaryMode,
@@ -66,7 +67,7 @@ export const GasMenuButton: React.FC<Props> = ({
   const { styles } = useThemeStyles(getStyle);
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const actions = React.useMemo(() => {
+  let actions = React.useMemo(() => {
     return gasList.map(gas => {
       const gwei = new BigNumber(gas.price / 1e9).toFixed().slice(0, 8);
       return {
@@ -93,6 +94,10 @@ export const GasMenuButton: React.FC<Props> = ({
     [gasList, onCustom, onSelect],
   );
   const customGasInfo = gasList.find(g => g.level === 'custom')!;
+
+  if (Platform.OS === 'android') {
+    actions = actions.reverse();
+  }
 
   return (
     <MenuView
@@ -144,15 +149,11 @@ const getStyle = createGetStyles((colors: AppColorsVariants) => ({
     borderStyle: 'solid',
     flexDirection: 'row',
   },
-  menuButtonText: {
-    fontSize: 14,
-    color: colors['neutral-body'],
-    fontWeight: '500',
-    lineHeight: 16,
-  },
   gwei: {
     color: colors['neutral-foot'],
     alignItems: 'center',
+    fontSize: 14,
+    lineHeight: 16,
   },
   levelText: {
     color: colors['neutral-body'],

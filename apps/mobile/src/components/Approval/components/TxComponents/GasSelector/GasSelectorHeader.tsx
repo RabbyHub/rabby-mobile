@@ -729,9 +729,8 @@ export const GasSelectorHeader = ({
                 {version === 'v2' && gas.error ? (
                   <View style={styles.gasSelectorModalErrorDesc}>
                     <Text style={styles.gasSelectorModalErrorDescText}>
-                      {gas.error.msg}{' '}
+                      {gas.error.msg} #{gas.error.code}
                     </Text>
-                    <Text>#{gas.error.code}</Text>
                   </View>
                 ) : null}
               </>

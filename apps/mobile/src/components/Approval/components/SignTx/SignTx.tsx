@@ -1336,7 +1336,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
               />
             )}
 
-            {isReady && (
+            {!isGnosisAccount && !isCoboArugsAccount && isReady ? (
               <BroadcastMode
                 chain={chain.enum}
                 value={pushInfo}
@@ -1347,7 +1347,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
                   setPushInfo(value);
                 }}
               />
-            )}
+            ) : null}
 
             {!isGnosisAccount && !isCoboArugsAccount && txDetail && isReady ? (
               <SignAdvancedSettings

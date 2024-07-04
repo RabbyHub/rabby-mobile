@@ -181,7 +181,7 @@ const ContractCall = ({
             </Row>
             {
               <Row>
-                <Text>
+                <Text style={commonStyle.primaryText}>
                   {formatTokenAmount(
                     new BigNumber(requireData.payNativeTokenAmount)
                       .div(1e18)
