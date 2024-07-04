@@ -10,7 +10,6 @@ import {
 import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { Button } from '@/components/Button';
 import { useAlias } from '@/hooks/alias';
 import IconEdit from '@/assets/icons/approval/editpen.svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -19,13 +18,18 @@ import {
   AppBottomSheetModalTitle,
 } from '@/components/customized/BottomSheet';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
+import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { useApprovalAlias } from '@/components/Approval/hooks/useApprovalAlias';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
-      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
-      height: '100%',
+      paddingBottom: 20,
+    },
+    inputView: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
     },
   });
 
@@ -36,7 +40,8 @@ const AddressMemo = ({
   address: string;
   textStyle?: TextStyle;
 }) => {
-  const [addressAlias, updateAlias] = useAlias(address);
+  const alias = useApprovalAlias();
+  const addressAlias = alias.accountMap[address]?.alias;
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState(addressAlias || '');
   const [errorMessage, setErrorMessage] = useState('');
@@ -51,7 +56,7 @@ const AddressMemo = ({
     if (!inputText) {
       setErrorMessage('Please input address note');
     }
-    updateAlias(inputText);
+    alias.update(address, inputText);
     setVisible(false);
   };
 
@@ -62,6 +67,10 @@ const AddressMemo = ({
   const handleTextChange = (text: string) => {
     setInputText(text);
   };
+
+  useEffect(() => {
+    alias.add(address);
+  }, [address, alias]);
 
   useEffect(() => {
     setInputText(addressAlias || '');
@@ -97,38 +106,25 @@ const AddressMemo = ({
         ref={modalRef}
         onDismiss={() => setVisible(false)}
         keyboardBlurBehavior="restore"
-        snapPoints={['30%']}>
+        snapPoints={[300]}>
         <BottomSheetView style={styles.mainView}>
           <AppBottomSheetModalTitle
             title={t('component.Contact.EditModal.title')}
           />
-          <View className="pt-[4px]">
+          <View style={styles.inputView}>
             <BottomSheetInput
               onChangeText={handleTextChange}
               maxLength={50}
-              autoFocus
+              // autoFocus
               value={inputText}
               placeholder="Please input address note"
             />
             <Text className="mt-[10] text-r-red-default">{errorMessage}</Text>
-            <View className="flex flex-row justify-center mt-[40]">
-              <Button
-                buttonStyle={{
-                  width: 200,
-                  backgroundColor: colors['blue-default'],
-                  height: 44,
-                  padding: 10,
-                }}
-                titleStyle={{
-                  color: '#fff',
-                  fontSize: 15,
-                }}
-                disabled={!canSubmit}
-                onPress={handleConfirm}
-                title={t('global.confirm')}
-              />
-            </View>
           </View>
+          <FooterButtonGroup
+            onCancel={() => setVisible(false)}
+            onConfirm={handleConfirm}
+          />
         </BottomSheetView>
       </AppBottomSheetModal>
     </View>

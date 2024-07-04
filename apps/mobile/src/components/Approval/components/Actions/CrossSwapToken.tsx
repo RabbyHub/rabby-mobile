@@ -1,6 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
 import { View, Text } from 'react-native';
-import { BigNumber } from 'bignumber.js';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { useTranslation } from 'react-i18next';
 import { Table, Col, Row } from './components/Table';
@@ -16,7 +15,7 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const { isSameAddress } = addressUtils;
 
@@ -77,6 +76,11 @@ const CrossSwapToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const crossSwapTokenPayRef = React.useRef(null);
+  const crossSwapTokenReceiveRef = React.useRef(null);
+  const crossSwapTokenReceiverRef = React.useRef(null);
+  const crossSwapTokenAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -87,41 +91,42 @@ const CrossSwapToken = ({
             </Text>
           </Row>
           <Row>
-            <LogoWithText
-              logo={payToken.logo_url}
-              text={
-                <View style={commonStyle.rowFlexCenterItem}>
-                  <Text style={commonStyle.primaryText}>
-                    {formatAmount(payToken.amount)}{' '}
-                  </Text>
-                  <Values.TokenSymbol
-                    token={payToken}
-                    style={commonStyle.primaryText}
-                  />
-                </View>
-              }
-              logoRadius={16}
-            />
-            <View>
-              <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(payToken.amount)
-                      .times(payToken.price)
-                      .toFixed(),
-                  )}
-                </Text>
-              </DescItem>
-              <DescItem>
-                <Values.DisplayChain
-                  chainServerId={payToken.chain}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
+            <View ref={crossSwapTokenPayRef}>
+              <LogoWithText
+                logo={payToken.logo_url}
+                text={
+                  <View style={commonStyle.rowFlexCenterItem}>
+                    <Text style={commonStyle.primaryText}>
+                      {formatAmount(payToken.amount)}{' '}
+                    </Text>
+                    <Values.TokenSymbol
+                      token={payToken}
+                      style={commonStyle.primaryText}
+                    />
+                  </View>
+                }
+                logoRadius={16}
+              />
             </View>
           </Row>
         </Col>
+
+        <SubTable target={crossSwapTokenPayRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.chain')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.DisplayChain
+                chainServerId={payToken.chain}
+                textStyle={commonStyle.subRowText}
+              />
+            </SubRow>
+          </SubCol>
+        </SubTable>
+
         <Col>
           <Row isTitle>
             <Text style={commonStyle.rowTitleText}>
@@ -129,192 +134,215 @@ const CrossSwapToken = ({
             </Text>
           </Row>
           <Row>
-            <View className="flex flex-row relative pr-[10]">
-              <LogoWithText
-                logo={receiveToken.logo_url}
-                logoRadius={16}
-                text={
-                  <View style={commonStyle.rowFlexCenterItem}>
-                    <Text style={commonStyle.primaryText}>
-                      {formatAmount(receiveToken.min_amount)}{' '}
-                    </Text>
-                    <Values.TokenSymbol
-                      token={receiveToken}
-                      style={commonStyle.primaryText}
-                    />
-                  </View>
-                }
-                icon={
-                  <Values.TokenLabel
-                    isFake={receiveToken.is_verified === false}
-                    isScam={
-                      receiveToken.is_verified !== false &&
-                      !!receiveToken.is_suspicious
-                    }
+            <LogoWithText
+              logo={receiveToken.logo_url}
+              logoRadius={16}
+              text={
+                <View style={commonStyle.rowFlexCenterItem}>
+                  <Text
+                    ref={crossSwapTokenReceiveRef}
+                    style={commonStyle.primaryText}>
+                    {formatAmount(receiveToken.min_amount)}{' '}
+                  </Text>
+                  <Values.TokenSymbol
+                    token={receiveToken}
+                    style={commonStyle.primaryText}
                   />
-                }
-              />
-              {engineResultMap['1107'] && (
-                <SecurityLevelTagNoText
-                  enable={engineResultMap['1107'].enable}
-                  level={
-                    processedRules.includes('1107')
-                      ? 'proceed'
-                      : engineResultMap['1107'].level
+                </View>
+              }
+              icon={
+                <Values.TokenLabel
+                  isFake={receiveToken.is_verified === false}
+                  isScam={
+                    receiveToken.is_verified !== false &&
+                    !!receiveToken.is_suspicious
                   }
-                  onClick={() => handleClickRule('1107')}
                 />
-              )}
-              {engineResultMap['1108'] && (
-                <SecurityLevelTagNoText
-                  enable={engineResultMap['1108'].enable}
-                  level={
-                    processedRules.includes('1108')
-                      ? 'proceed'
-                      : engineResultMap['1108'].level
-                  }
-                  onClick={() => handleClickRule('1108')}
-                />
-              )}
-            </View>
-            <View>
-              <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(receiveToken.min_amount)
-                      .times(receiveToken.price)
-                      .toFixed(),
-                  )}
-                </Text>
-              </DescItem>
-              <DescItem>
-                <Values.DisplayChain
-                  chainServerId={receiveToken.chain}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
-              <SecurityListItem
-                engineResult={engineResultMap['1104']}
-                id="1104"
-                dangerText={
-                  <View style={commonStyle.rowFlexCenterItem}>
-                    <Text style={commonStyle.secondaryText}>
-                      {t('page.signTx.swap.valueDiff')}{' '}
-                    </Text>
-                    <Values.Percentage
-                      value={usdValuePercentage!}
-                      style={commonStyle.secondaryText}
-                    />
-                    <Text style={commonStyle.secondaryText}>
-                      ({formatUsdValue(usdValueDiff || '')})
-                    </Text>
-                  </View>
+              }
+            />
+            {engineResultMap['1107'] && (
+              <SecurityLevelTagNoText
+                enable={engineResultMap['1107'].enable}
+                level={
+                  processedRules.includes('1107')
+                    ? 'proceed'
+                    : engineResultMap['1107'].level
                 }
-                warningText={
-                  <>
-                    <Text style={commonStyle.secondaryText}>
-                      {t('page.signTx.swap.valueDiff')}{' '}
-                    </Text>
-                    <Values.Percentage
-                      value={usdValuePercentage!}
-                      style={commonStyle.secondaryText}
-                    />{' '}
-                    <Text style={commonStyle.secondaryText}>
-                      ({formatUsdValue(usdValueDiff || '')})
-                    </Text>
-                  </>
-                }
+                onClick={() => handleClickRule('1107')}
               />
-            </View>
+            )}
+            {engineResultMap['1108'] && (
+              <SecurityLevelTagNoText
+                enable={engineResultMap['1108'].enable}
+                level={
+                  processedRules.includes('1108')
+                    ? 'proceed'
+                    : engineResultMap['1108'].level
+                }
+                onClick={() => handleClickRule('1108')}
+              />
+            )}
           </Row>
         </Col>
-        {hasReceiver && (
-          <Col>
-            <Row isTitle>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.swap.receiver')}
+
+        <SubTable target={crossSwapTokenReceiveRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.chain')}
               </Text>
-            </Row>
-            <Row>
-              <Values.Address address={receiver} chain={chain} />
-              <View>
-                <SecurityListItem
-                  engineResult={engineResultMap['1096']}
-                  id="1096"
-                  warningText={t('page.signTx.swap.unknownAddress')}
-                />
-                {!engineResultMap['1096'] && (
-                  <>
-                    <DescItem>
+            </SubRow>
+            <SubRow>
+              <Values.DisplayChain
+                textStyle={commonStyle.subRowText}
+                chainServerId={receiveToken.chain}
+              />
+            </SubRow>
+          </SubCol>
+          <SecurityListItem
+            engineResult={engineResultMap['1104']}
+            id="1104"
+            dangerText={
+              <>
+                <Values.Percentage value={usdValuePercentage!} /> (
+                <Text>{formatUsdValue(usdValueDiff || '')})</Text>
+              </>
+            }
+            warningText={
+              <>
+                <Values.Percentage
+                  style={commonStyle.subRowText}
+                  value={usdValuePercentage!}
+                />{' '}
+                (
+                <Text style={commonStyle.subRowText}>
+                  {formatUsdValue(usdValueDiff || '')})
+                </Text>
+              </>
+            }
+            title={t('page.signTx.swap.valueDiff')}
+          />
+        </SubTable>
+
+        {hasReceiver && (
+          <>
+            <Col>
+              <Row isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.swap.receiver')}
+                </Text>
+              </Row>
+              <Row>
+                <View ref={crossSwapTokenReceiverRef}>
+                  <Values.AddressWithCopy
+                    style={commonStyle.subRowText}
+                    address={receiver}
+                    chain={chain}
+                  />
+                </View>
+              </Row>
+            </Col>
+            <SubTable target={crossSwapTokenReceiverRef}>
+              <SecurityListItem
+                engineResult={engineResultMap['1096']}
+                id="1096"
+                dangerText={t('page.signTx.swap.unknownAddress')}
+              />
+              {!engineResultMap['1096'] && (
+                <>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.signTx.address')}</SubRow>
+                    <SubRow>
                       <Values.AccountAlias address={receiver} />
-                    </DescItem>
-                    <DescItem>
+                    </SubRow>
+                  </SubCol>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.addressDetail.source')}</SubRow>
+                    <SubRow>
                       <Values.KnownAddress address={receiver} />
-                    </DescItem>
-                  </>
-                )}
-              </View>
-            </Row>
-          </Col>
+                    </SubRow>
+                  </SubCol>
+                </>
+              )}
+            </SubTable>
+          </>
         )}
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.interactContract')}
             </Text>
           </Row>
           <Row>
-            <Values.Address address={requireData.id} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-              <DescItem>
-                <Values.Interacted
-                  value={requireData.hasInteraction}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
-
-              {isInWhitelist && (
-                <DescItem>
-                  <Text>{t('page.signTx.markAsTrust')}</Text>
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-              <DescItem>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    hasInteraction: requireData.hasInteraction,
-                    bornAt: requireData.bornAt,
-                    protocol: requireData.protocol,
-                    rank: requireData.rank,
-                    address: requireData.id,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="contract"
+              data={{
+                hasInteraction: requireData.hasInteraction,
+                bornAt: requireData.bornAt,
+                protocol: requireData.protocol,
+                rank: requireData.rank,
+                address: requireData.id,
+                chain,
+              }}>
+              <View ref={crossSwapTokenAddressRef}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={crossSwapTokenAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

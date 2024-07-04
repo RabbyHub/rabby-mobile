@@ -20,6 +20,7 @@ const getStyle = (colors: AppColorsVariants) =>
       borderRadius: 6,
       padding: 12,
       position: 'relative',
+      marginBottom: 16,
     },
     internalTransaction: {
       padding: 0,
@@ -69,6 +70,11 @@ const getStyle = (colors: AppColorsVariants) =>
       lineHeight: 16,
       color: '#333333',
       marginTop: 15,
+    },
+    gasPriceTipText: {
+      color: '#333333',
+      fontSize: 14,
+      lineHeight: 16,
     },
   });
 
@@ -149,8 +155,13 @@ const CancelTx = ({
           </View>
           {pendingTx && !canCancel && (
             <View style={styles.gasPriceTip}>
-              <IconAlert className="w-[15px] mr-10" />
-              <Text>
+              <IconAlert
+                style={{
+                  marginRight: 10,
+                }}
+                width={15}
+              />
+              <Text style={styles.gasPriceTipText}>
                 {t('page.signTx.cancelTx.gasPriceAlert', {
                   value: pendingTx.gasPrice / 1e9,
                 })}

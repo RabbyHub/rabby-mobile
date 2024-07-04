@@ -31,14 +31,16 @@ import { Radio } from '@/components/Radio';
 import { Button } from '@/components';
 import { Switch } from '@rneui/themed';
 import { ScreenLayouts } from '@/constant/layout';
+import { Divide } from '../Actions/components/Divide';
 
 const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       borderRadius: 8,
-      padding: 16,
-      height: 300,
+      paddingHorizontal: 16,
+      paddingVertical: 20,
       position: 'relative',
+      marginHorizontal: 20,
       marginBottom: 20,
     },
     text: {
@@ -123,14 +125,13 @@ const getRuleDrawerWrapperStyles = (colors: AppColorsVariants) =>
       color: '#13141a',
     },
     buttonIgnore: {
-      padding: 12,
-      width: '100%',
-      height: 40,
+      padding: 13,
       fontWeight: '500',
+      borderRadius: 6,
     },
     buttonIgnoreText: {
-      fontSize: 13,
-      lineHeight: 15,
+      fontSize: 15,
+      lineHeight: 18,
       textAlign: 'center',
       color: '#ffffff',
     },
@@ -257,7 +258,6 @@ const getLevelStyles = (
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
-      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
     },
     ruleFooter: {
@@ -292,6 +292,16 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     placeholder: {
       height: 30,
+    },
+    description: {
+      color: colors['neutral-title-1'],
+      fontSize: 13,
+      fontWeight: '500',
+      marginTop: 6,
+      textAlign: 'center',
+    },
+    footer: {
+      marginBottom: 20,
     },
   });
 
@@ -330,118 +340,6 @@ const RuleDrawer = ({
     return selectRule.level;
   }, [selectRule]);
 
-  const displayValue = useMemo(() => {
-    if (!selectRule) return '';
-    const { value, ruleConfig } = selectRule;
-    switch (ruleConfig.valueDefine.type) {
-      case 'boolean':
-        if (value === true) return t('page.securityEngine.yes');
-        return t('page.securityEngine.no');
-      case 'enum':
-        return ruleConfig.valueDefine.display[value as string];
-      case 'percent':
-        return `${(value as number).toFixed(2)}%`;
-      case 'int':
-        return Math.floor(value as number);
-      case 'float':
-        return (value as number).toFixed(2);
-      default:
-        return value;
-    }
-  }, [selectRule]);
-
-  const displayThreshold = useMemo(() => {
-    if (!selectRule) return '';
-    const { level, ruleConfig, value } = selectRule;
-    if (!level || !ruleConfig.enable || level === Level.ERROR) return '';
-    const threshold = {
-      ...ruleConfig.defaultThreshold,
-      ...ruleConfig.customThreshold,
-    };
-    const levelThreshold = threshold[level];
-    switch (ruleConfig.valueDefine.type) {
-      case 'boolean':
-        if (value === true) return 'Yes';
-        return 'No';
-      case 'float':
-      case 'percent':
-      case 'int': {
-        const { max: valueMax, min: valueMin } = ruleConfig.valueDefine;
-        const { max, min, maxIncluded, minIncluded } =
-          levelThreshold as NumberDefine;
-        const arr: string[] = [];
-        if (min !== null) {
-          if (minIncluded) {
-            if (min === valueMax) {
-              arr.push(min.toString());
-            } else {
-              arr.push(
-                `≥${min}${
-                  ruleConfig.valueDefine.type === 'percent' ? '%' : ''
-                }`,
-              );
-            }
-          } else {
-            arr.push(
-              `>${min}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`,
-            );
-          }
-        }
-        if (max !== null) {
-          if (maxIncluded) {
-            if (max === valueMin) {
-              arr.push(max.toString());
-            } else {
-              arr.push(
-                `≤${max}${
-                  ruleConfig.valueDefine.type === 'percent' ? '%' : ''
-                }`,
-              );
-            }
-          } else {
-            arr.push(
-              `<${max}${ruleConfig.valueDefine.type === 'percent' ? '%' : ''}`,
-            );
-          }
-        } else {
-          arr.push('∞');
-        }
-        return arr.join(' ; ');
-      }
-      case 'enum':
-        return (levelThreshold as string[])
-          .map(item => (ruleConfig.valueDefine as EnumDefine).display[item])
-          .join(' or ');
-      default:
-        return '';
-    }
-  }, [selectRule]);
-
-  const ruleLevels = useMemo(() => {
-    if (!selectRule) return '';
-    const { ruleConfig } = selectRule;
-    const threshold = {
-      ...ruleConfig.defaultThreshold,
-      ...ruleConfig.customThreshold,
-    };
-
-    return sortBy(Object.keys(threshold), key => {
-      return SecurityEngineLevelOrder.findIndex(k => k === key);
-    })
-      .map(level => SecurityEngineLevel[level]?.text)
-      .join('/');
-  }, [selectRule]);
-
-  const ignoreButtonDisabled = useMemo(() => {
-    if (!selectRule) return true;
-    if (selectRule.level === Level.FORBIDDEN) return true;
-    if (selectRule.ignored) {
-      return !isHovering;
-    }
-    if (selectRule.level === Level.DANGER && !accepted) return true;
-    return false;
-  }, [selectRule, accepted, isHovering]);
-
   const ignoreButtonContent = useMemo(() => {
     if (!selectRule) return { color: null, text: '' };
     let text = '';
@@ -461,24 +359,16 @@ const RuleDrawer = ({
       text,
       color,
     };
-  }, [selectRule, isHovering]);
+  }, [selectRule, isHovering, t]);
 
   const handleIgnore = () => {
-    if (!selectRule || selectRule.level === Level.FORBIDDEN) return;
+    if (!selectRule) return;
     onIgnore(selectRule.ruleConfig.id);
   };
 
   const handleUndoIgnore = () => {
     if (!selectRule) return;
     onUndo(selectRule.ruleConfig.id);
-  };
-
-  const handleEnableStatusChange = async (value: boolean) => {
-    if (!selectRule) return;
-    await onRuleEnableStatusChange(selectRule.ruleConfig.id, value);
-    setEnabled(value);
-    setChanged(true);
-    onClose(true);
   };
 
   const handleClose = () => {
@@ -500,38 +390,26 @@ const RuleDrawer = ({
       modalRef.current?.present();
     }
   }, [visible]);
+  const currentDescription = useMemo(() => {
+    if (!selectRule) return '';
+    const { ruleConfig, level } = selectRule;
+    if (!level) return ruleConfig.valueDescription;
+    return ruleConfig.descriptions?.[level] || ruleConfig.valueDescription;
+  }, [selectRule]);
   const colors = useThemeColors();
+  const levelStyles = getLevelStyles(colors, currentLevel);
   const ruleDrawerWrapperStyles = getRuleDrawerWrapperStyles(colors);
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   const content = () => {
     if (!selectRule) return null;
-    if (!selectRule.ruleConfig.enable) {
-      return (
-        <View
-          style={[
-            StyleSheet.flatten([
-              ruleDrawerWrapperStyles.container,
-              ruleDrawerWrapperStyles.error,
-            ]),
-          ]}>
-          <IconDisable />
-          <Text
-            style={[
-              ruleDrawerWrapperStyles.text,
-              // eslint-disable-next-line react-native/no-inline-styles
-              {
-                marginTop: 4,
-              },
-            ]}>
-            {t('page.securityEngine.ruleDisabled')}
-          </Text>
-        </View>
-      );
-    } else if (selectRule.level === Level.ERROR) {
+    if (selectRule.level === Level.ERROR) {
       return (
         <View
           style={StyleSheet.flatten([
             ruleDrawerWrapperStyles.container,
             ruleDrawerWrapperStyles[selectRule.level],
+            { marginBottom: 30 },
           ])}>
           <IconError />
           <Text
@@ -549,7 +427,6 @@ const RuleDrawer = ({
     } else {
       const valueTooltip = selectRule.ruleConfig.valueTooltip;
       const Icon = currentLevel && SecurityEngineLevel[currentLevel].icon;
-      const levelStyles = getLevelStyles(colors, currentLevel);
       return (
         <View
           style={StyleSheet.flatten([
@@ -558,171 +435,88 @@ const RuleDrawer = ({
               ? ruleDrawerWrapperStyles.proceed
               : selectRule.level && ruleDrawerWrapperStyles[selectRule.level],
           ])}>
-          <View style={ruleDrawerWrapperStyles.valueDesc}>
-            <Text style={ruleDrawerWrapperStyles.descTitle}>Description:</Text>
+          {currentLevel && (
             <View
-              style={{
-                display: 'flex',
+              style={StyleSheet.flatten({
                 flexDirection: 'row',
-                flex: 1,
-                position: 'relative',
-              }}>
-              <Text>{selectRule.ruleConfig.valueDescription}</Text>
-              {valueTooltip ? (
-                <Tip content={valueTooltip}>
-                  <IconQuestionMark
-                    style={{
-                      marginLeft: 3,
-                    }}
-                  />
-                </Tip>
-              ) : null}
-            </View>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={ruleDrawerWrapperStyles.threshold}>
-              {t('page.securityEngine.alertTriggerReason')}
-            </Text>
-            <View
-              style={StyleSheet.flatten([
-                ruleDrawerWrapperStyles.ruleThreshold,
-                levelStyles.ruleThreshold,
-              ])}>
+                alignItems: 'center',
+                justifyContent: 'center',
+              })}>
               {Icon && <Icon style={ruleDrawerWrapperStyles.levelIcon} />}
               {selectRule.level && (
                 <Text
-                  style={StyleSheet.flatten([
-                    ruleDrawerWrapperStyles.levelText,
-                    levelStyles.levelText,
-                  ])}>
-                  {SecurityEngineLevel[selectRule.level].text}:
+                  style={StyleSheet.flatten({
+                    ...levelStyles.levelText,
+                    fontWeight: '500',
+                  })}>
+                  {SecurityEngineLevel[selectRule.level].text}
                 </Text>
               )}
-              <View>
-                <Text style={ruleDrawerWrapperStyles.thresholdText}>
-                  {t('page.securityEngine.whenTheValueIs', {
-                    value: displayThreshold,
-                  })}
-                </Text>
-                <Text style={ruleDrawerWrapperStyles.currentValue}>
-                  {t('page.securityEngine.currentValueIs', {
-                    value: displayThreshold,
-                  })}
-                </Text>
-              </View>
             </View>
-            {selectRule.level !== 'safe' && (
-              <View style={ruleDrawerWrapperStyles.ruleThresholdFooter}>
-                {selectRule.level === Level.DANGER && (
-                  <View
-                    style={[
-                      ruleDrawerWrapperStyles.riskConfirm,
-                      // eslint-disable-next-line react-native/no-inline-styles
-                      {
-                        opacity: selectRule.ignored ? 0.5 : 1,
-                      },
-                    ]}>
-                    <Radio
-                      title={t('page.securityEngine.understandRisk')}
-                      checked={selectRule.ignored || accepted}
-                      onPress={() =>
-                        setAccepted(!(selectRule.ignored || accepted))
-                      }
-                    />
-                  </View>
-                )}
-                {selectRule.level === Level.FORBIDDEN && (
-                  <Text style={ruleDrawerWrapperStyles.forbiddenTip}>
-                    {t('page.securityEngine.forbiddenCantIgnore')}
-                  </Text>
-                )}
-                <View>
-                  <Button
-                    type="primary"
-                    buttonStyle={StyleSheet.flatten([
-                      {
-                        backgroundColor: ignoreButtonContent.color as any,
-                      },
-                      ruleDrawerWrapperStyles.buttonIgnore,
-                      levelStyles.buttonIgnore,
-                    ])}
-                    titleStyle={ruleDrawerWrapperStyles.buttonIgnoreText}
-                    onPress={
-                      selectRule.ignored ? handleUndoIgnore : handleIgnore
-                    }
-                    disabledStyle={StyleSheet.flatten([
-                      {
-                        backgroundColor: ignoreButtonContent.color as any,
-                      },
-                      levelStyles.buttonIgnore,
-                    ])}
-                    disabledTitleStyle={{
-                      color: colors['neutral-title-1'],
-                    }}
-                    disabled={ignoreButtonDisabled}
-                    title={ignoreButtonContent.text}
-                  />
-                </View>
-              </View>
-            )}
+          )}
+
+          <View className="relative">
+            <Text style={styles.description}>{currentDescription}</Text>
+            {valueTooltip ? (
+              <Tip content={valueTooltip}>
+                <IconQuestionMark
+                  style={StyleSheet.flatten({ marginLeft: 3 })}
+                />
+              </Tip>
+            ) : null}
           </View>
         </View>
       );
     }
   };
 
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
   return (
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={handleClose}
-      snapPoints={['60%']}>
+      enableDynamicSizing>
       <BottomSheetScrollView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.securityEngine.ruleDetailTitle')}
         />
 
-        {selectRule && (
-          <>
-            {content()}
-            <View style={styles.ruleFooter}>
-              <View style={styles.ruleFooterItem}>
-                <Text>{t('page.securityEngine.enableRule')}</Text>
-                <View style={styles.ruleFooterItemRight}>
-                  <Switch
-                    value={
-                      enabled === null ? selectRule.ruleConfig.enable : enabled
-                    }
-                    onChange={_ =>
-                      handleEnableStatusChange(
-                        !(enabled === null
-                          ? selectRule.ruleConfig.enable
-                          : enabled),
-                      )
-                    }
-                  />
-                </View>
+        {selectRule && content()}
+
+        {selectRule &&
+          selectRule.level !== 'safe' &&
+          selectRule.level !== 'error' && (
+            <View style={styles.footer}>
+              <Divide
+                style={{
+                  marginBottom: 20,
+                }}
+              />
+              <View style={{ marginHorizontal: 20 }}>
+                <Button
+                  type="primary"
+                  buttonStyle={StyleSheet.flatten([
+                    {
+                      backgroundColor: ignoreButtonContent.color as any,
+                    },
+                    ruleDrawerWrapperStyles.buttonIgnore,
+                    levelStyles.buttonIgnore,
+                  ])}
+                  titleStyle={ruleDrawerWrapperStyles.buttonIgnoreText}
+                  onPress={selectRule.ignored ? handleUndoIgnore : handleIgnore}
+                  disabledStyle={StyleSheet.flatten([
+                    {
+                      backgroundColor: ignoreButtonContent.color as any,
+                    },
+                    levelStyles.buttonIgnore,
+                  ])}
+                  disabledTitleStyle={{
+                    color: colors['neutral-title-1'],
+                  }}
+                  title={ignoreButtonContent.text}
+                />
               </View>
-              <TouchableOpacity
-                style={styles.ruleFooterItem}
-                onPress={() => setRuleDetailDrawerVisible(true)}>
-                <Text>{t('page.securityEngine.viewRiskLevel')}</Text>
-                <View style={styles.ruleFooterItemRight}>
-                  <Text>{ruleLevels}</Text>
-                  <RcIconArrowRight style={styles.iconRight} />
-                </View>
-              </TouchableOpacity>
             </View>
-          </>
-        )}
-        {selectRule && (
-          <RuleDetailDrawer
-            visible={ruleDetailDrawerVisible}
-            rule={selectRule.ruleConfig}
-            onCancel={() => setRuleDetailDrawerVisible(false)}
-          />
-        )}
-        <View style={styles.placeholder} />
+          )}
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );

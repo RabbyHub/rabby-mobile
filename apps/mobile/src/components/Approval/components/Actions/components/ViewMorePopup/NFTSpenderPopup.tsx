@@ -67,7 +67,7 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
             : t('page.signTx.tokenApprove.approveTo')}
         </Text>
 
-        <Values.Address
+        <Values.AddressWithCopy
           address={data.spender}
           chain={data.chain}
           iconWidth="14px"
@@ -76,32 +76,32 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.protocolTitle')}
             </Text>
           </Row>
           <Row>
             <Values.Protocol
               value={data.protocol}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressTypeTitle')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.isEOA ? 'EOA' : 'Contract'}
             </Text>
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {data.isEOA
                 ? t('page.signTx.firstOnChain')
                 : t('page.signTx.deployTimeTitle')}
@@ -110,7 +110,7 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
           <Row>
             <Values.TimeSpan
               value={data.bornAt}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
@@ -118,31 +118,32 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
           <Row
             tip={t('page.signTx.nftApprove.nftContractTrustValueTip')}
             style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.trustValue')}
             </Text>
           </Row>
           <Row>
             {data.riskExposure === null ? (
-              <Text style={commonStyle.primaryText}>-</Text>
+              <Text style={commonStyle.detailPrimaryText}>-</Text>
             ) : (
               <Values.USDValue
                 value={data.riskExposure}
-                style={commonStyle.primaryText}
+                style={commonStyle.detailPrimaryText}
               />
             )}
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.popularity')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.rank
-                ? t('page.signTx.contractPopularity', [
+                ? // @ts-ignore
+                  t('page.signTx.contractPopularity', [
                     data.rank,
                     data.chain.name,
                   ])
@@ -152,33 +153,33 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.interacted')}
             </Text>
           </Row>
           <Row>
             <Values.Boolean
               value={data.hasInteraction}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressNote')}
             </Text>
           </Row>
           <Row>
             <Values.AddressMemo
               address={data.spender}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.myMark')}
             </Text>
           </Row>
@@ -190,7 +191,7 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
               onBlacklist={isInBlackList}
               onWhitelist={isInWhiteList}
               onChange={() => null}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
@@ -202,7 +203,7 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
             <Row>
               <Values.Boolean
                 value={!!data.isDanger}
-                style={commonStyle.primaryText}
+                style={commonStyle.detailPrimaryText}
               />
             </Row>
           </Col>

@@ -15,37 +15,52 @@ import * as Values from '../Actions/components/Values';
 import RcIconAlert from '@/assets/icons/sign/tx/alert-currentcolor.svg';
 import { formatNumber, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import DescItem from '../Actions/components/DescItem';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
+import NoBalanceSVG from '@/assets/icons/sign/no-balance-cc.svg';
+import NFTDefaultSVG from '@/assets/nft-default.svg';
+import TouchableText from '@/components/Touchable/TouchableText';
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     tokenBalanceChange: {
-      marginTop: 14,
-      backgroundColor: colors['neutral-card-1'],
-      borderRadius: 8,
-      padding: 15,
+      marginTop: 16,
+      paddingHorizontal: 16,
     },
     titleText: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors['neutral-title-1'],
       fontWeight: '500',
     },
     usdValueDiff: {
       flex: 1,
-      color: colors['neutral-body'],
+      color: colors['neutral-title-1'],
       textAlign: 'right',
-      fontSize: 13,
+      fontSize: 14,
     },
     iconAlert: {
-      width: 15,
-      marginRight: 6,
-      color: colors['neutral-body'],
-      top: 2,
+      width: 16,
+      marginTop: 2,
+      marginRight: 4,
+      color: colors['orange-default'],
       position: 'relative',
+    },
+    headline: {
+      fontSize: 14,
+      lineHeight: 16,
+      fontWeight: '500',
+      marginBottom: 8,
+      display: 'flex',
+      alignItems: 'center',
+      color: colors['neutral-title-1'],
+    },
+    nftIcon: {
+      marginRight: 8,
+      width: 24,
+      height: 24,
+      borderRadius: 2,
     },
   });
 
@@ -59,57 +74,47 @@ const NFTBalanceChange = ({
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();
   const colors = useThemeColors();
-  const {
-    hasReceives,
-    receiveNftList,
-    hasTransferedOut,
-    sendNftList,
-    hasSendToken,
-    hasReceiveToken,
-  } = React.useMemo(() => {
-    const sendNftList = data.send_nft_list.slice(0);
-    const countSendNft = sendNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0,
-    );
-    const hasTransferedOut = sendNftList.length > 0;
+  const styles = getStyle(colors);
+  const { hasReceives, receiveNftList, hasTransferedOut, sendNftList } =
+    React.useMemo(() => {
+      const sendNftList = data.send_nft_list.slice(0);
+      const countSendNft = sendNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasTransferedOut = sendNftList.length > 0;
 
-    const receiveNftList = data.receive_nft_list.slice(0);
-    const countReceives = receiveNftList.reduce(
-      (accu, item) => accu + (item.amount || 0),
-      0,
-    );
-    const hasReceives = receiveNftList.length > 0;
-    const hasReceiveToken = data.receive_token_list.length > 0;
-    const hasSendToken = data.send_token_list.length > 0;
+      const receiveNftList = data.receive_nft_list.slice(0);
+      const countReceives = receiveNftList.reduce(
+        (accu, item) => accu + (item.amount || 0),
+        0,
+      );
+      const hasReceives = receiveNftList.length > 0;
 
-    return {
-      hasReceives,
-      countReceives,
-      receiveNftList,
-      hasTransferedOut,
-      countSendNft,
-      sendNftList,
-      hasReceiveToken,
-      hasSendToken,
-    };
-  }, [data]);
+      return {
+        hasReceives,
+        countReceives,
+        receiveNftList,
+        hasTransferedOut,
+        countSendNft,
+        sendNftList,
+      };
+    }, [data]);
 
   if (type === 'receive' && hasReceives) {
     return (
-      <Col
-        first={!hasSendToken && !hasReceiveToken}
-        last={sendNftList.length <= 0}>
-        <Row isTitle>
-          <Text style={commonStyle.rowTitleText}>{t('page.signTx.nftIn')}</Text>
-        </Row>
-        <View className="flex-1 overflow-hidden">
-          {receiveNftList.map((item, index) => (
-            <Row
-              hasBottomBorder={index < receiveNftList.length - 1}
-              key={`${item.id}-${item.inner_id}`}>
+      <Col>
+        <View
+          style={StyleSheet.flatten({
+            flex: 1,
+            overflow: 'hidden',
+            gap: 10,
+          })}>
+          {receiveNftList.map(item => (
+            <Row isTitle key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
                 <View style={commonStyle.rowFlexCenterItem}>
+                  <NFTDefaultSVG style={styles.nftIcon} />
                   <Text
                     style={{
                       ...commonStyle.primaryText,
@@ -117,7 +122,11 @@ const NFTBalanceChange = ({
                     }}>
                     + {item.amount}{' '}
                   </Text>
-                  <Text style={commonStyle.primaryText}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['green-default'],
+                    }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
@@ -137,19 +146,18 @@ const NFTBalanceChange = ({
   }
   if (type === 'send' && hasTransferedOut) {
     return (
-      <Col last first={!hasReceives && !hasSendToken && !hasReceiveToken}>
-        <Row isTitle>
-          <Text style={commonStyle.rowTitleText}>
-            {t('page.signTx.balanceChange.nftOut')}
-          </Text>
-        </Row>
-        <View style={{ flex: 1 }}>
-          {sendNftList.map((item, index) => (
-            <Row
-              hasBottomBorder={index < sendNftList.length - 1}
-              key={`${item.id}-${item.inner_id}`}>
+      <Col>
+        <View
+          style={StyleSheet.flatten({
+            flex: 1,
+            overflow: 'hidden',
+            gap: 10,
+          })}>
+          {sendNftList.map(item => (
+            <Row isTitle key={`${item.id}-${item.inner_id}`}>
               <View style={commonStyle.rowFlexCenterItem}>
                 <View style={commonStyle.rowFlexCenterItem}>
+                  <NFTDefaultSVG style={styles.nftIcon} />
                   <Text
                     style={{
                       ...commonStyle.primaryText,
@@ -157,7 +165,11 @@ const NFTBalanceChange = ({
                     }}>
                     - {item.amount}{' '}
                   </Text>
-                  <Text style={commonStyle.primaryText}>
+                  <Text
+                    style={{
+                      ...commonStyle.primaryText,
+                      color: colors['red-default'],
+                    }}>
                     {item.collection ? item.collection.name : item.name}
                   </Text>
                 </View>
@@ -225,18 +237,17 @@ const BalanceChange = ({
 
   if (version === 'v0') {
     return (
-      <View style={styles.tokenBalanceChange}>
-        <View>
-          <Table>
-            <Col>
-              <Row>
-                <Text style={styles.titleText}>
-                  {t('page.signTx.balanceChange.notSupport')}
-                </Text>
-              </Row>
-            </Col>
-          </Table>
-        </View>
+      <View
+        style={StyleSheet.flatten([
+          styles.tokenBalanceChange,
+          {
+            marginTop: 10,
+            paddingBottom: 10,
+          },
+        ])}>
+        <Text style={styles.headline}>
+          {t('page.signTx.balanceChange.notSupport')}
+        </Text>
       </View>
     );
   }
@@ -244,37 +255,48 @@ const BalanceChange = ({
   if (version === 'v1' && data.error) {
     return (
       <View style={styles.tokenBalanceChange}>
-        <View>
-          <Table>
-            <Col>
-              <Row>
-                <Text style={styles.titleText}>
-                  {isSuccess
-                    ? t('page.signTx.balanceChange.successTitle')
-                    : t('page.signTx.balanceChange.failedTitle')}
-                </Text>
-              </Row>
-            </Col>
-            <Col>
-              <Row>
-                <Text className="text-r-neutral-title-1 font-medium">
-                  {t('page.signTx.balanceChange.errorTitle')}
-                </Text>
-              </Row>
-            </Col>
-          </Table>
-        </View>
+        <Text style={styles.headline}>
+          {isSuccess
+            ? t('page.signTx.balanceChange.successTitle')
+            : t('page.signTx.balanceChange.failedTitle')}
+        </Text>
+
+        <Table>
+          <Col
+            style={StyleSheet.flatten({
+              paddingVertical: 10,
+            })}>
+            <Row isTitle>
+              <Text
+                style={StyleSheet.flatten({
+                  fontSize: 14,
+                  color: colors['neutral-title-1'],
+                  fontWeight: '500',
+                })}>
+                {t('page.signTx.balanceChange.errorTitle')}
+              </Text>
+            </Row>
+          </Col>
+        </Table>
       </View>
     );
   }
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <View style={styles.tokenBalanceChange}>
-      <View style={{ ...commonStyle.rowFlexCenterItem, marginBottom: 12 }}>
+      <View
+        style={StyleSheet.flatten([
+          commonStyle.rowFlexCenterItem,
+          {
+            marginBottom: 8,
+          },
+        ])}>
         <Text style={styles.titleText}>
-          {isSuccess
-            ? t('page.signTx.balanceChange.successTitle')
-            : t('page.signTx.balanceChange.failedTitle')}
+          {t('page.signTx.balanceChange.successTitle')}
         </Text>
         {showUsdValueDiff && (
           <Text style={styles.usdValueDiff}>
@@ -288,10 +310,17 @@ const BalanceChange = ({
         <Table>
           {!hasChange && isSuccess && (
             <Col
-              style={{
-                borderBottomWidth: 0,
-              }}>
-              <Row>
+              style={StyleSheet.flatten({
+                paddingVertical: 10,
+              })}>
+              <Row
+                isTitle
+                style={StyleSheet.flatten({
+                  gap: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                })}>
+                <NoBalanceSVG color={colors['neutral-body']} />
                 <Text style={styles.titleText}>
                   {t('page.signTx.balanceChange.noBalanceChange')}
                 </Text>
@@ -300,141 +329,151 @@ const BalanceChange = ({
           )}
           {data.error && (
             <Col
-              style={{
-                borderBottomWidth: 0,
-              }}>
-              <Row>
-                <View style={commonStyle.rowFlexCenterItem}>
-                  <RcIconAlert style={styles.iconAlert} />
+              style={StyleSheet.flatten({
+                paddingVertical: 10,
+              })}>
+              <Row
+                isTitle
+                style={StyleSheet.flatten({
+                  ...commonStyle.rowFlexCenterItem,
+                  width: '100%',
+                  alignItems: 'flex-start',
+                })}>
+                <RcIconAlert style={styles.iconAlert} />
+                <Text
+                  style={StyleSheet.flatten({
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: colors['neutral-title-1'],
+                  })}>
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '500',
-                    }}>
-                    {data.error.msg} #{data.error.code}
-                  </Text>
-                </View>
-              </Row>
-            </Col>
-          )}
-          {sendTokenList && sendTokenList.length > 0 && (
-            <Col first>
-              <Row isTitle>
-                <Text style={commonStyle.rowTitleText}>
-                  {t('page.signTx.balanceChange.tokenOut')}
+                    style={StyleSheet.flatten({
+                      color: colors['orange-default'],
+                    })}>
+                    {t('page.signTx.balanceChange.failedTitle')}
+                  </Text>{' '}
+                  ({data.error.msg} #{data.error.code})
                 </Text>
               </Row>
-              <View className="flex-1 overflow-hidden">
-                {sendTokenList.map((token, index) => (
-                  <Row
-                    hasBottomBorder={index < sendTokenList.length - 1}
-                    key={token.id}>
-                    <LogoWithText
-                      logo={token.logo_url}
-                      text={
-                        <View style={commonStyle.rowFlexCenterItem}>
-                          <Text
-                            style={{
-                              ...commonStyle.primaryText,
-                              color: colors['red-default'],
-                            }}>
-                            - {formatAmount(token.amount)}{' '}
-                          </Text>
-                          <Text
-                            onPress={() => handleClickToken(token)}
-                            style={commonStyle.primaryText}>
-                            {getTokenSymbol(token)}
-                          </Text>
-                        </View>
-                      }
-                      key={token.id}
-                      logoRadius={16}
-                      icon={
-                        <Values.TokenLabel
-                          isFake={token.is_verified === false}
-                          isScam={
-                            token.is_verified !== false && !!token.is_suspicious
-                          }
-                        />
-                      }
-                    />
-
-                    <DescItem>
-                      <Text style={commonStyle.secondaryText}>
-                        ≈{' '}
-                        {formatUsdValue(
-                          new BigNumber(token.amount)
-                            .times(token.price)
-                            .toFixed(),
-                        )}
-                      </Text>
-                    </DescItem>
-                  </Row>
-                ))}
-              </View>
             </Col>
           )}
-          {receiveTokenList && receiveTokenList.length > 0 && (
+          {sendTokenList?.map(token => (
             <Col
-              last={
-                data.receive_nft_list.length <= 0 &&
-                data.send_nft_list.length <= 0
-              }
-              first={sendTokenList.length <= 0}>
+              style={StyleSheet.flatten({
+                paddingVertical: 12,
+                alignItems: 'center',
+              })}
+              key={token.id}>
               <Row isTitle>
-                <Text style={commonStyle.rowTitleText}>
-                  {t('page.signTx.balanceChange.tokenIn')}
-                </Text>
-              </Row>
-              <View className="flex-1 overflow-hidden">
-                {receiveTokenList.map((token, index) => (
-                  <Row
-                    hasBottomBorder={index < receiveTokenList.length - 1}
-                    key={token.id}>
-                    <LogoWithText
-                      logo={token.logo_url}
-                      text={
-                        <View style={commonStyle.rowFlexCenterItem}>
-                          <Text
-                            style={{
-                              ...commonStyle.primaryText,
-                              color: colors['green-default'],
-                            }}>
-                            + {formatAmount(token.amount)}{' '}
-                          </Text>
-                          <Text
-                            style={commonStyle.primaryText}
-                            onPress={() => handleClickToken(token)}>
-                            {getTokenSymbol(token)}
-                          </Text>
-                        </View>
-                      }
-                      key={token.id}
-                      logoRadius={16}
-                      icon={
-                        <Values.TokenLabel
-                          isFake={token.is_verified === false}
-                          isScam={
-                            token.is_verified !== false && !!token.is_suspicious
-                          }
-                        />
+                <LogoWithText
+                  logoSize={24}
+                  logo={token.logo_url}
+                  text={
+                    <View style={commonStyle.rowFlexCenterItem}>
+                      <Text
+                        style={StyleSheet.flatten({
+                          ...commonStyle.primaryText,
+                          color: colors['red-default'],
+                          fontSize: 16,
+                        })}>
+                        - {formatAmount(token.amount)}{' '}
+                      </Text>
+                      <TouchableText
+                        onPress={() => handleClickToken(token)}
+                        style={StyleSheet.flatten([
+                          {
+                            ...commonStyle.primaryText,
+                            color: colors['red-default'],
+                            fontSize: 16,
+                          },
+                          commonStyle.clickableTokenText,
+                        ])}>
+                        {getTokenSymbol(token)}
+                      </TouchableText>
+                    </View>
+                  }
+                  logoRadius={16}
+                  icon={
+                    <Values.TokenLabel
+                      isFake={token.is_verified === false}
+                      isScam={
+                        token.is_verified !== false && !!token.is_suspicious
                       }
                     />
-                    <DescItem>
-                      <Text>
-                        ≈{' '}
-                        {formatUsdValue(
-                          new BigNumber(token.amount)
-                            .times(token.price)
-                            .toFixed(),
-                        )}
-                      </Text>
-                    </DescItem>
-                  </Row>
-                ))}
-              </View>
+                  }
+                />
+              </Row>
+              <Row>
+                <Text
+                  style={StyleSheet.flatten({
+                    ...commonStyle.secondaryText,
+                    fontSize: 14,
+                  })}>
+                  ≈{' '}
+                  {formatUsdValue(
+                    new BigNumber(token.amount).times(token.price).toFixed(),
+                  )}
+                </Text>
+              </Row>
             </Col>
-          )}
+          ))}
+          {receiveTokenList?.map(token => (
+            <Col
+              style={StyleSheet.flatten({
+                paddingVertical: 12,
+                alignItems: 'center',
+              })}
+              key={token.id}>
+              <Row isTitle>
+                <LogoWithText
+                  logoSize={24}
+                  logo={token.logo_url}
+                  text={
+                    <View style={commonStyle.rowFlexCenterItem}>
+                      <Text
+                        style={StyleSheet.flatten({
+                          ...commonStyle.primaryText,
+                          color: colors['green-default'],
+                          fontSize: 16,
+                        })}>
+                        + {formatAmount(token.amount)}{' '}
+                      </Text>
+                      <Text
+                        style={StyleSheet.flatten({
+                          ...commonStyle.primaryText,
+                          color: colors['green-default'],
+                          fontSize: 16,
+                        })}
+                        onPress={() => handleClickToken(token)}>
+                        {getTokenSymbol(token)}
+                      </Text>
+                    </View>
+                  }
+                  logoRadius={16}
+                  icon={
+                    <Values.TokenLabel
+                      isFake={token.is_verified === false}
+                      isScam={
+                        token.is_verified !== false && !!token.is_suspicious
+                      }
+                    />
+                  }
+                />
+              </Row>
+              <Row>
+                <Text
+                  style={StyleSheet.flatten({
+                    ...commonStyle.secondaryText,
+                    fontSize: 14,
+                  })}>
+                  ≈{' '}
+                  {formatUsdValue(
+                    new BigNumber(token.amount).times(token.price).toFixed(),
+                  )}
+                </Text>
+              </Row>
+            </Col>
+          ))}
           <NFTBalanceChange type="send" data={data} />
           <NFTBalanceChange type="receive" data={data} />
         </Table>

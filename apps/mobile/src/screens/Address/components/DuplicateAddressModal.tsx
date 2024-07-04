@@ -3,8 +3,7 @@ import { createGetStyles } from '@/utils/styles';
 import { atom, useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, StyleSheet, Text, View } from 'react-native';
-import { Button } from '@/components';
+import { Modal, Text, View } from 'react-native';
 import {
   KeyringAccountWithAlias,
   useAccounts,
@@ -14,6 +13,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { AddressItemInner } from './AddressItemInner';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
 
 const { isSameAddress } = addressUtils;
 
@@ -94,24 +94,7 @@ export const DuplicateAddressModal: React.FC = () => {
             )}
           </View>
 
-          <View style={styles.buttonGroup}>
-            <Button
-              title={t('global.Cancel')}
-              containerStyle={styles.btnContainer}
-              buttonStyle={styles.cancelStyle}
-              titleStyle={styles.cancelTitleStyle}
-              onPress={onCancel}
-            />
-            <View style={styles.btnGap} />
-
-            <Button
-              title={t('global.Confirm')}
-              containerStyle={styles.btnContainer}
-              buttonStyle={styles.confirmStyle}
-              titleStyle={styles.confirmTitleStyle}
-              onPress={onConfirm}
-            />
-          </View>
+          <FooterButtonGroup onCancel={onCancel} onConfirm={onConfirm} />
         </View>
       </View>
     </Modal>
@@ -146,53 +129,5 @@ const getStyles = createGetStyles(colors => ({
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-  },
-  buttonGroup: {
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopColor: colors['neutral-line'],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 20,
-    marginTop: 28,
-  },
-
-  btnContainer: {
-    flex: 1,
-    height: 50,
-  },
-
-  cancelStyle: {
-    backgroundColor: colors['neutral-card-1'],
-    borderColor: colors['blue-default'],
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderRadius: 8,
-    height: '100%',
-    width: '100%',
-  },
-  cancelTitleStyle: {
-    fontSize: 15,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors['blue-default'],
-    flex: 1,
-  },
-  btnGap: {
-    width: 13,
-  },
-  confirmStyle: {
-    backgroundColor: colors['blue-default'],
-    borderRadius: 8,
-    width: '100%',
-    height: '100%',
-  },
-  confirmTitleStyle: {
-    fontSize: 15,
-    lineHeight: 18,
-    fontWeight: '500',
-    color: colors['neutral-title2'],
-    flex: 1,
   },
 }));

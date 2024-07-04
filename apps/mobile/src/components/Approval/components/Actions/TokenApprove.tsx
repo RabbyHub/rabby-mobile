@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -11,14 +11,12 @@ import { ellipsisOverflowedText } from '@/utils/text';
 import { getCustomTxParamsData } from '@/utils/transaction';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { Table, Col, Row } from './components/Table';
-import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
 import { SecurityListItem } from './components/SecurityListItem';
 import { ProtocolListItem } from './components/ProtocolListItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import DescItem from './components/DescItem';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
   AppBottomSheetModal,
@@ -27,7 +25,10 @@ import {
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetInput } from '@/components/Input';
-import { Button } from '@/components/Button';
+import { TokenAmountItem } from './components/TokenAmountItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { RcIconUnknownToken } from '@/screens/Approvals/icons';
 
 interface ApproveAmountModalProps {
   amount: number | string;
@@ -41,14 +42,13 @@ interface ApproveAmountModalProps {
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
-      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
     approveAmountFooter: {
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       marginTop: 12,
     },
     approveAmountFooterLeft: {
@@ -57,11 +57,11 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-foot'],
     },
     approveAmountFooterBalance: {
-      fontSize: 12,
-      lineHeight: 14,
+      fontSize: 15,
+      lineHeight: 18,
       textAlign: 'right',
       textDecorationLine: 'underline',
-      color: colors['neutral-foot'],
+      color: colors['neutral-body'],
     },
     approveAmountButton: {
       display: 'flex',
@@ -74,6 +74,19 @@ const getStyle = (colors: AppColorsVariants) =>
       fontWeight: '500',
       marginLeft: 4,
       color: colors['blue-default'],
+    },
+    addonText: {
+      fontSize: 13,
+      lineHeight: 16,
+      color: colors['neutral-foot'],
+    },
+    inputText: {
+      fontSize: 15,
+      color: colors['neutral-title-1'],
+      flex: 1,
+    },
+    container: {
+      paddingHorizontal: 20,
     },
   });
 
@@ -133,60 +146,64 @@ const ApproveAmountModal = ({
       ref={modalRef}
       keyboardBlurBehavior="restore"
       onDismiss={onCancel}
-      snapPoints={['30%']}>
+      snapPoints={[300]}>
       <BottomSheetView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.signTx.tokenApprove.amountPopupTitle')}
         />
-        <View>
-          <View>
-            <BottomSheetInput
-              value={customAmount}
-              onChange={e => handleChange(e.nativeEvent.text)}
-              autoFocus
-              addonAfter={
-                <Text>{ellipsisTokenSymbol(getTokenSymbol(token), 4)}</Text>
-              }
-            />
-            <View style={styles.approveAmountFooter}>
-              <Text style={styles.approveAmountFooterLeft}>
-                ≈
+
+        <View style={styles.container}>
+          <BottomSheetInput
+            value={customAmount}
+            onChange={e => handleChange(e.nativeEvent.text)}
+            // autoFocus
+            style={styles.inputText}
+            addonAfter={
+              <Text style={styles.addonText}>
+                ≈{' '}
                 {ellipsisOverflowedText(
                   formatUsdValue(new BigNumber(tokenPrice).toFixed()),
                   18,
                   true,
                 )}
               </Text>
-              {balance && (
-                <Text
-                  style={styles.approveAmountFooterBalance}
-                  onPress={() => {
-                    setCustomAmount(balance);
-                  }}>
-                  {t('global.Balance')}:{' '}
-                  {formatAmount(new BigNumber(balance).toFixed(4))}
-                </Text>
-              )}
-            </View>
-            <View style={styles.approveAmountButton}>
-              <Button
-                buttonStyle={{
-                  width: 200,
-                  backgroundColor: colors['blue-default'],
-                  height: 44,
-                  padding: 10,
-                }}
-                titleStyle={{
-                  color: '#fff',
-                  fontSize: 15,
-                }}
-                onPress={handleSubmit}
-                title={t('global.confirmButton')}
-                disabled={!canSubmit}
-              />
-            </View>
+            }
+            addonBefore={
+              token.logo_url ? (
+                <Image
+                  source={{ uri: token.logo_url }}
+                  style={StyleSheet.flatten({
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                  })}
+                />
+              ) : (
+                <RcIconUnknownToken
+                  width={20}
+                  height={20}
+                  style={StyleSheet.flatten({
+                    marginRight: 8,
+                  })}
+                />
+              )
+            }
+          />
+          <View style={styles.approveAmountFooter}>
+            {balance && (
+              <Text
+                style={styles.approveAmountFooterBalance}
+                onPress={() => {
+                  setCustomAmount(balance);
+                }}>
+                {t('global.Balance')}:{' '}
+                {formatAmount(new BigNumber(balance).toFixed(4))}
+              </Text>
+            )}
           </View>
         </View>
+
+        <FooterButtonGroup onCancel={onCancel} onConfirm={handleSubmit} />
       </BottomSheetView>
     </AppBottomSheetModal>
   );
@@ -258,177 +275,155 @@ const TokenApprove = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const tokenApproveBalanceRef = useRef(null);
+  const tokenApproveAddressRef = useRef(null);
+
   return (
     <View>
       <Table>
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.tokenApprove.approveToken')}
             </Text>
           </Row>
           <Row>
-            <LogoWithText
-              logo={actionData.token.logo_url}
-              text={
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <View
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'row',
-                      overflow: 'hidden',
-                    }}>
-                    <Values.TokenAmount
-                      value={actionData.token.amount}
-                      style={{ ...commonStyle.primaryText, maxWidth: '60%' }}
-                    />
-                    <Values.TokenSymbol
-                      token={requireData.token}
-                      style={{
-                        marginLeft: 2,
-                        flex: 0,
-                        flexShrink: 0,
-                        maxWidth: '40%',
-                        ...commonStyle.primaryText,
-                      }}
-                    />
-                  </View>
-                  <View style={commonStyle.rowFlexCenterItem}>
-                    <Text
-                      style={styles.editButton}
-                      onPress={() => setEditApproveModalVisible(true)}>
-                      {t('global.editButton')}
-                    </Text>
-                  </View>
-                </View>
-              }
-              logoRadius={16}
-              textStyle={{
-                flex: 1,
-              }}
-            />
-            <View className="desc-list">
-              <DescItem>
-                <View className="flex flex-row">
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.myBalance')}{' '}
-                  </Text>
-                  <Text
-                    style={{
-                      ...commonStyle.secondaryText,
-                      textDecorationLine: new BigNumber(approveAmount).gt(
-                        tokenBalance,
-                      )
-                        ? 'underline'
-                        : 'none',
-                    }}
-                    onPress={handleClickTokenBalance}>
-                    {formatAmount(tokenBalance)}{' '}
-                  </Text>
-                  <Text style={commonStyle.secondaryText}>
-                    {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
-                  </Text>
-                </View>
-              </DescItem>
+            <View ref={tokenApproveBalanceRef}>
+              <TokenAmountItem
+                amount={actionData.token.amount}
+                logoUrl={actionData.token.logo_url}
+                onEdit={() => setEditApproveModalVisible(true)}
+              />
             </View>
           </Row>
         </Col>
+
+        <SubTable target={tokenApproveBalanceRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.tokenApprove.myBalance')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <TouchableOpacity onPress={handleClickTokenBalance}>
+                <Text
+                  style={StyleSheet.flatten({
+                    ...commonStyle.subRowText,
+                    color: colors['blue-default'],
+                    textDecorationLine: new BigNumber(approveAmount).gt(
+                      tokenBalance,
+                    )
+                      ? 'underline'
+                      : 'none',
+                  })}>
+                  {formatAmount(tokenBalance)}{' '}
+                  {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
+                </Text>
+              </TouchableOpacity>
+            </SubRow>
+          </SubCol>
+        </SubTable>
+
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.tokenApprove.approveTo')}
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1022"
-                engineResult={engineResultMap['1022']}
-                dangerText={t('page.signTx.tokenApprove.eoaAddress')}
-              />
-
-              <SecurityListItem
-                id="1025"
-                engineResult={engineResultMap['1025']}
-                warningText={<Values.Interacted value={false} />}
-                defaultText={
-                  <Values.Interacted value={requireData.hasInteraction} />
-                }
-              />
-
-              <SecurityListItem
-                id="1023"
-                engineResult={engineResultMap['1023']}
-                dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
-                  value: '$10,000',
-                })}
-                warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
-                  value: '$100,000',
-                })}
-              />
-
-              <SecurityListItem
-                id="1024"
-                engineResult={engineResultMap['1024']}
-                warningText={t('page.signTx.tokenApprove.deployTimeLessThan', {
-                  value: '3',
-                })}
-              />
-
-              <SecurityListItem
-                id="1029"
-                engineResult={engineResultMap['1029']}
-                dangerText="Flagged by Rabby"
-              />
-
-              <SecurityListItem
-                id="1134"
-                engineResult={engineResultMap['1134']}
-                forbiddenText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1136"
-                engineResult={engineResultMap['1136']}
-                warningText={t('page.signTx.markAsBlock')}
-              />
-
-              <SecurityListItem
-                id="1133"
-                engineResult={engineResultMap['1133']}
-                safeText={t('page.signTx.markAsTrust')}
-              />
-
-              <DescItem>
-                <ViewMore
-                  type="spender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="spender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+              }}>
+              <View ref={tokenApproveAddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={tokenApproveAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+
+          <SecurityListItem
+            id="1022"
+            engineResult={engineResultMap['1022']}
+            dangerText={t('page.signTx.tokenApprove.eoaAddress')}
+            title={t('page.signTx.addressTypeTitle')}
+          />
+
+          <SecurityListItem
+            id="1025"
+            title={t('page.signTx.interacted')}
+            engineResult={engineResultMap['1025']}
+            warningText={<Values.Interacted value={false} />}
+            defaultText={
+              <Values.Interacted value={requireData.hasInteraction} />
+            }
+          />
+
+          <SecurityListItem
+            tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
+            id="1023"
+            engineResult={engineResultMap['1023']}
+            dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$10,000',
+            })}
+            warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$50,000',
+            })}
+            title={t('page.signTx.trustValueTitle')}
+          />
+
+          <SecurityListItem
+            id="1024"
+            engineResult={engineResultMap['1024']}
+            warningText={t('page.signTx.tokenApprove.deployTimeLessThan', {
+              value: '3',
+            })}
+            title={t('page.signTx.deployTimeTitle')}
+          />
+
+          <SecurityListItem
+            id="1029"
+            engineResult={engineResultMap['1029']}
+            title={t('page.signTx.tokenApprove.flagByRabby')}
+            dangerText={t('page.signTx.yes')}
+          />
+
+          <SecurityListItem
+            id="1134"
+            engineResult={engineResultMap['1134']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+          />
+
+          <SecurityListItem
+            id="1136"
+            engineResult={engineResultMap['1136']}
+            warningText={t('page.signTx.markAsBlock')}
+          />
+
+          <SecurityListItem
+            id="1133"
+            engineResult={engineResultMap['1133']}
+            safeText={t('page.signTx.markAsTrust')}
+          />
+        </SubTable>
       </Table>
       <ApproveAmountModal
         balance={tokenBalance}

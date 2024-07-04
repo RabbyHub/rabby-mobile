@@ -487,7 +487,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         {isLoading && (
           <Skeleton
             style={{
-              width: 358,
+              width: '100%',
               height: 400,
             }}
           />
@@ -501,6 +501,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             raw={isSignTypedDataV1 ? data[0] : signTypedData || data[1]}
             message={parsedMessage}
             origin={params.session.origin}
+            originLogo={params.session.icon}
           />
         )}
       </ScrollView>

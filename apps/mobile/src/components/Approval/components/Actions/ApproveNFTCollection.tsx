@@ -11,7 +11,7 @@ import { SecurityListItem } from './components/SecurityListItem';
 import ViewMore from './components/ViewMore';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const ApproveNFTCollection = ({
   data,
@@ -42,6 +42,7 @@ const ApproveNFTCollection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const approveNftCollectionAddressRef = React.useRef(null);
   return (
     <View>
       <Table>
@@ -52,150 +53,121 @@ const ApproveNFTCollection = ({
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
-              {actionData?.collection?.name || '-'}
-            </Text>
-            <View>
-              <DescItem>
-                <ViewMore
-                  type="collection"
-                  data={{
-                    collection: actionData.collection,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="collection"
+              data={{
+                collection: actionData.collection,
+                chain,
+              }}>
+              <Text style={commonStyle.primaryText}>
+                {actionData?.collection?.name || '-'}
+              </Text>
+            </ViewMore>
           </Row>
         </Col>
 
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.tokenApprove.approveTo')}
             </Text>
           </Row>
           <Row>
-            <Values.Address address={actionData.spender} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1053"
-                engineResult={engineResultMap['1053']}
-                dangerText={
-                  <Text>{t('page.signTx.tokenApprove.eoaAddress')}</Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1056"
-                engineResult={engineResultMap['1056']}
-                warningText={
-                  <Values.Interacted
-                    value={false}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                }
-                defaultText={
-                  <Values.Interacted
-                    value={requireData.hasInteraction}
-                    textStyle={commonStyle.secondaryText}
-                  />
-                }
-              />
-
-              <SecurityListItem
-                id="1054"
-                engineResult={engineResultMap['1054']}
-                dangerText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.trustValueLessThan', {
-                      value: '$10,000',
-                    })}
-                  </Text>
-                }
-                warningText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.trustValueLessThan', {
-                      value: '$100,000',
-                    })}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1055"
-                engineResult={engineResultMap['1055']}
-                warningText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.deployTimeLessThan', {
-                      value: '3',
-                    })}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1060"
-                engineResult={engineResultMap['1060']}
-                dangerText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.tokenApprove.flagByRabby')}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1134"
-                engineResult={engineResultMap['1134']}
-                forbiddenText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsBlock')}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1136"
-                engineResult={engineResultMap['1136']}
-                warningText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsBlock')}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1133"
-                engineResult={engineResultMap['1133']}
-                safeText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsTrust')}
-                  </Text>
-                }
-              />
-
-              <DescItem>
-                <ViewMore
-                  type="nftSpender"
-                  data={{
-                    ...requireData,
-                    spender: actionData.spender,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="nftSpender"
+              data={{
+                ...requireData,
+                spender: actionData.spender,
+                chain,
+              }}>
+              <View ref={approveNftCollectionAddressRef}>
+                <Values.Address address={actionData.spender} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={approveNftCollectionAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+
+          <SecurityListItem
+            id="1053"
+            engineResult={engineResultMap['1053']}
+            dangerText={t('page.signTx.tokenApprove.eoaAddress')}
+            title={t('page.signTx.addressTypeTitle')}
+          />
+
+          <SecurityListItem
+            id="1056"
+            engineResult={engineResultMap['1056']}
+            warningText={<Values.Interacted value={false} />}
+            defaultText={
+              <Values.Interacted value={requireData.hasInteraction} />
+            }
+            title={t('page.signTx.interacted')}
+          />
+
+          <SecurityListItem
+            tip={t('page.signTx.nftApprove.nftContractTrustValueTip')}
+            id="1054"
+            engineResult={engineResultMap['1054']}
+            dangerText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$10,000',
+            })}
+            warningText={t('page.signTx.tokenApprove.trustValueLessThan', {
+              value: '$100,000',
+            })}
+            title={t('page.signTx.trustValueTitle')}
+          />
+
+          <SecurityListItem
+            id="1055"
+            engineResult={engineResultMap['1055']}
+            warningText={t('page.signTx.tokenApprove.deployTimeLessThan', {
+              value: '3',
+            })}
+            title={t('page.signTx.deployTimeTitle')}
+          />
+
+          <SecurityListItem
+            id="1060"
+            engineResult={engineResultMap['1060']}
+            title={t('page.signTx.tokenApprove.flagByRabby')}
+            dangerText={t('page.signTx.yes')}
+          />
+
+          <SecurityListItem
+            id="1134"
+            engineResult={engineResultMap['1134']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1136"
+            engineResult={engineResultMap['1136']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1133"
+            engineResult={engineResultMap['1133']}
+            safeText={t('page.signTx.markAsTrust')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

@@ -34,29 +34,29 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
     <View>
       <View style={styles.title}>
         <Text style={styles.titleText}>NFT</Text>
-        <NFTWithName nft={data.nft} textStyle={commonStyle.primaryText} />
+        <NFTWithName nft={data.nft} textStyle={commonStyle.detailPrimaryText} />
       </View>
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.collectionTitle')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.nft.collection ? data.nft.collection.name : '-'}
             </Text>
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.floorPrice')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.nft?.collection?.floor_price
                 ? `${formatAmount(data?.nft?.collection?.floor_price)} ETH`
                 : '-'}
@@ -65,7 +65,7 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.contractAddress')}
             </Text>
           </Row>

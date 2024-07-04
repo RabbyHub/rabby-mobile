@@ -115,7 +115,10 @@ export function makeBottomSheetProps(ctx: {
     };
   }
 
-  if (ctx.params?.name === 'APPROVAL') {
+  if (
+    ctx.params?.name === MODAL_NAMES.APPROVAL ||
+    ctx.params?.name === MODAL_NAMES.VIEW_RAW_DETAILS
+  ) {
     if (
       [
         APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
@@ -135,7 +138,7 @@ export function makeBottomSheetProps(ctx: {
     }
     return {
       handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-2'],
+        backgroundColor: ctx.colors['neutral-bg-4'],
       },
       handleIndicatorStyle: {
         backgroundColor: ctx.colors['neutral-line'],

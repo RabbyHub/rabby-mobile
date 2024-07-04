@@ -25,14 +25,11 @@ import BatchSellNFT from './BatchSellNFT';
 import BatchPermit2 from './BatchPermit2';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import IconQuestionMark from '@/assets/icons/sign/question-mark-24.svg';
-import IconRabbyDecoded from '@/assets/icons/sign/rabby-decoded.svg';
-import RcIconCheck from '@/assets/icons/approval/icon-check.svg';
-import { AppColorsVariants } from '@/constant/theme';
+import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { Chain } from '@/constant/chains';
 import {
-  Image,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -45,148 +42,23 @@ import CoboSafeModificationDelegatedAddress from './CoboSafeModificationDelegate
 import CoboSafeModificationRule from './CoboSafeModificationRule';
 import CoboSafeModificationTokenApproval from './CoboSafeModificationTokenApproval';
 import { CommonAction } from '../CommonAction';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    signTitle: {
-      justifyContent: 'space-between',
-      marginBottom: 15,
-      flexDirection: 'row',
-      marginTop: 15,
-    },
-    signTitleLeft: {
-      fontSize: 18,
-      lineHeight: 21,
-      color: colors['neutral-title-1'],
-    },
-    signTitleRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    iconSpeedup: {
-      width: 10,
-      marginRight: 6,
-    },
-    viewRawText: {
-      fontSize: 12,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-    },
-    viewRawIcon: {
-      width: 16,
-      height: 16,
-      color: colors['neutral-foot'],
-    },
-    actionWrapper: {
-      borderRadius: 8,
-      marginBottom: 8,
-      backgroundColor: colors['neutral-card-1'],
-    },
-    actionHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      flexDirection: 'row',
-      backgroundColor: colors['blue-default'],
-      padding: 13,
-      alignItems: 'center',
-      borderRadius: 8,
-    },
-    isUnknown: {
-      backgroundColor: colors['neutral-foot'],
-    },
-    actionHeaderLeft: {
-      fontWeight: '500',
-      fontSize: 16,
-      lineHeight: 19,
-      color: colors['neutral-title-2'],
-    },
-    actionHeaderRight: {
-      fontSize: 14,
-      lineHeight: 16,
-      position: 'relative',
-    },
-    tipContent: {
-      maxWidth: 358,
-      padding: 12,
-      alignItems: 'center',
-      flexDirection: 'row',
-    },
-    tipContentIcon: {
-      width: 12,
-      height: 12,
-      marginRight: 4,
-    },
-    icon: {
-      width: 24,
-      height: 24,
-    },
-    container: {
-      padding: 14,
-      borderBottomLeftRadius: 6,
-      borderBottomRightRadius: 6,
-    },
-    messageWrapper: {},
-    messageTitleWrapper: {
-      position: 'relative',
-      height: 16,
-      marginVertical: 10,
-    },
-    messageTitle: {
-      position: 'relative',
-      fontSize: 14,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-      textAlign: 'center',
-      backgroundColor: colors['neutral-bg-2'],
-      alignSelf: 'center',
-      paddingHorizontal: 12,
-    },
-    messageTitleLine: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      height: 1,
-      top: 6,
-      borderStyle: 'dashed',
-      borderTopWidth: 1,
-      borderColor: colors['neutral-line'],
-      zIndex: -1,
-    },
-    messageContent: {
-      padding: 15,
-      wordBreak: 'break-all',
-      whiteSpace: 'pre-wrap',
-      backgroundColor: colors['neutral-card-1'],
-      borderColor: colors['neutral-line'],
-      borderWidth: 1,
-      borderRadius: 6,
-      fontSize: 13,
-      lineHeight: 16,
-      fontWeight: '500',
-      color: colors['neutral-body'],
-      // height: 320,
-    },
-    noAction: {
-      backgroundColor: colors['neutral-card-3'],
-    },
-    tabView: {
-      backgroundColor: colors['neutral-card-2'],
-      padding: 15,
-      marginVertical: 15,
-      flex: 1,
-    },
-    popupView: {
-      padding: 15,
-      flex: 1,
-    },
-    indicator: {
-      backgroundColor: colors['blue-default'],
-      color: colors['blue-default'],
-    },
-    indicatorText: {
-      color: colors['blue-default'],
-    },
-  });
+import { getActionsStyle } from '../Actions';
+import { Card } from '../Actions/components/Card';
+import { OriginInfo } from '../OriginInfo';
+import { Divide } from '../Actions/components/Divide';
+import { getMessageStyles } from '../TextActions';
+import LogoWithText from '../Actions/components/LogoWithText';
+import { Col, Row } from '../Actions/components/Table';
+import useCommonStyle from '../../hooks/useCommonStyle';
+import RevokePermit2 from '../Actions/RevokePermit2';
+import {
+  ApproveNFTRequireData,
+  RevokeTokenApproveRequireData,
+  SendRequireData,
+} from '../Actions/utils';
+import ApproveNFT from '../Actions/ApproveNFT';
+import Send from '../Actions/Send';
+import AssetOrder from '../Actions/AssetOrder';
 
 const Actions = ({
   data,
@@ -196,6 +68,7 @@ const Actions = ({
   raw,
   message,
   origin,
+  originLogo,
 }: {
   data: TypedDataActionData | null;
   requireData: TypedDataRequireData;
@@ -204,10 +77,13 @@ const Actions = ({
   raw: Record<string, any>;
   message: string;
   origin: string;
+  originLogo?: string;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const styles = React.useMemo(() => getMessageStyles(colors), [colors]);
+  const actionStyles = getActionsStyle(colors);
+  const commonStyle = useCommonStyle();
 
   const actionName = useMemo(() => {
     return getActionTypeText(data);
@@ -223,200 +99,266 @@ const Actions = ({
 
   return (
     <View>
-      <View style={styles.signTitle}>
-        <Text style={styles.signTitleLeft}>
-          {t('page.signTypedData.signTypeDataOnChain', {
-            chain: chain ? chain.name : '',
-          })
-            .trim()
-            .replace(/\s+/g, ' ')}
-        </Text>
-        <TouchableOpacity
-          style={styles.signTitleRight}
-          onPress={handleViewRawClick}>
-          <Text style={styles.viewRawText}>{t('page.signTx.viewRaw')}</Text>
-          <RcIconArrowRight style={styles.viewRawIcon} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.actionWrapper}>
-        <View
-          style={StyleSheet.flatten([
-            styles.actionHeader,
-            isUnknown ? styles.isUnknown : {},
-          ])}>
-          <View className="left flex items-center">
-            {data?.brand ? (
-              <Image
-                source={{ uri: data?.brand?.logo_url }}
-                className="mr-8 w-20 h-20 rounded-full object-cover"
-              />
-            ) : null}
-            <Text style={styles.actionHeaderLeft}>{actionName}</Text>
-          </View>
-          <View style={styles.actionHeaderRight}>
-            <Tip
-              placement="bottom"
-              isLight
-              content={
-                isUnknown ? (
-                  <NoActionAlert
-                    data={{
-                      origin,
-                      text: message,
-                    }}
-                  />
-                ) : (
-                  <View style={styles.tipContent}>
-                    <RcIconCheck style={styles.tipContentIcon} />
-                    <Text>{t('page.signTx.decodedTooltip')}</Text>
-                  </View>
-                )
-              }>
-              {isUnknown ? (
-                <IconQuestionMark style={styles.icon} />
-              ) : (
-                <IconRabbyDecoded style={styles.icon} />
-              )}
-            </Tip>
-          </View>
-        </View>
-        {(data?.actionType || data?.actionType === null) && (
-          <View style={styles.container}>
-            {data.permit && chain && (
-              <Permit
-                data={data.permit}
-                requireData={requireData as ApproveTokenRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-            {data.permit2 && chain && (
-              <Permit2
-                data={data.permit2}
-                requireData={requireData as ApproveTokenRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-            {data.batchPermit2 && chain && (
-              <BatchPermit2
-                data={data.batchPermit2}
-                requireData={requireData as BatchApproveTokenRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-            {data.swapTokenOrder && chain && (
-              <SwapTokenOrder
-                data={data.swapTokenOrder}
-                requireData={requireData as SwapTokenOrderRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-            {data.buyNFT && chain && (
-              <BuyNFT
-                data={data.buyNFT}
-                requireData={requireData as ContractRequireData}
-                chain={chain}
-                engineResults={engineResults}
-                sender={data.sender}
-              />
-            )}
-            {data.batchSellNFT && chain && (
-              <BatchSellNFT
-                data={data.batchSellNFT}
-                requireData={requireData as ContractRequireData}
-                chain={chain}
-                engineResults={engineResults}
-                sender={data.sender}
-              />
-            )}
-            {data.sellNFT && chain && (
-              <SellNFT
-                data={data.sellNFT}
-                requireData={requireData as ContractRequireData}
-                chain={chain}
-                engineResults={engineResults}
-                sender={data.sender}
-              />
-            )}
-            {data.signMultiSig && (
-              <SignMultisig
-                data={data.signMultiSig}
-                requireData={requireData as MultiSigRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-            {data.createKey && (
-              <CreateKey data={data.createKey} engineResults={engineResults} />
-            )}
-            {data.verifyAddress && (
-              <VerifyAddress
-                data={data.verifyAddress}
-                engineResults={engineResults}
-              />
-            )}
-            {data.contractCall && chain && (
-              <ContractCall
-                data={data.permit}
-                requireData={requireData as ContractRequireData}
-                chain={chain}
-                engineResults={engineResults}
-                raw={raw}
-              />
-            )}
-            {data.coboSafeCreate && (
-              <CoboSafeCreate data={data.coboSafeCreate} />
-            )}
-            {data.coboSafeModificationRole && (
-              <CoboSafeModificationRule data={data.coboSafeModificationRole} />
-            )}
-            {data.coboSafeModificationDelegatedAddress && (
-              <CoboSafeModificationDelegatedAddress
-                data={data.coboSafeModificationDelegatedAddress}
-              />
-            )}
-            {data.coboSafeModificationTokenApproval && (
-              <CoboSafeModificationTokenApproval
-                data={data.coboSafeModificationTokenApproval}
-              />
-            )}
-            {data.common && (
-              <CommonAction
-                data={data.common}
-                requireData={requireData as ContractRequireData}
-                chain={chain}
-                engineResults={engineResults}
-              />
-            )}
-          </View>
-        )}
-      </View>
-      <View>
-        <View style={styles.messageTitleWrapper}>
-          <Text style={styles.messageTitle}>{t('page.signText.message')}</Text>
-          <View
-            style={StyleSheet.flatten([
-              styles.messageTitleLine,
-              Platform.select({
-                ios: {
-                  borderStyle: 'solid',
-                },
-              }),
-            ])}
+      <View style={actionStyles.actionWrapper}>
+        <Card>
+          <OriginInfo
+            origin={origin}
+            originLogo={originLogo}
+            engineResults={engineResults}
           />
-        </View>
-        <View
+        </Card>
+
+        <Card>
+          <View
+            style={{
+              ...actionStyles.actionHeader,
+              ...(isUnknown ? actionStyles.isUnknown : {}),
+            }}>
+            <View
+              style={StyleSheet.flatten({
+                flexDirection: 'row',
+                alignItems: 'center',
+              })}>
+              <Text
+                style={StyleSheet.flatten({
+                  ...actionStyles.leftText,
+                  ...(isUnknown ? actionStyles.isUnknownText : {}),
+                })}>
+                {actionName}
+              </Text>
+              {isUnknown && (
+                <Tip
+                  placement="bottom"
+                  isLight
+                  content={
+                    <NoActionAlert
+                      data={{
+                        origin,
+                        text: message,
+                      }}
+                    />
+                  }>
+                  <IconQuestionMark
+                    width={actionStyles.icon.width}
+                    height={actionStyles.icon.height}
+                    color={actionStyles.icon.color}
+                    style={actionStyles.icon}
+                  />
+                </Tip>
+              )}
+            </View>
+            <TouchableOpacity
+              style={actionStyles.signTitleRight}
+              onPress={handleViewRawClick}>
+              <Text style={actionStyles.viewRawText}>
+                {t('page.signTx.viewRaw')}
+              </Text>
+              <RcIconArrowRight />
+            </TouchableOpacity>
+          </View>
+          {data && <Divide />}
+
+          {chain?.isTestnet ? (
+            <Text style={styles.testnetMessage}>
+              {JSON.stringify(raw, null, 2)}
+            </Text>
+          ) : (
+            (data?.actionType || data?.actionType === null) && (
+              <View style={actionStyles.container}>
+                {chain && (
+                  <Col>
+                    <Row isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.signTx.chain')}
+                      </Text>
+                    </Row>
+                    <Row>
+                      <LogoWithText
+                        textStyle={commonStyle.primaryText}
+                        logo={chain.logo}
+                        text={chain.name}
+                      />
+                    </Row>
+                  </Col>
+                )}
+
+                {data.permit && (
+                  <Permit
+                    data={data.permit}
+                    requireData={requireData as ApproveTokenRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.revokePermit && chain && (
+                  <RevokePermit2
+                    data={data.revokePermit}
+                    requireData={requireData as RevokeTokenApproveRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.permit2 && chain && (
+                  <Permit2
+                    data={data.permit2}
+                    requireData={requireData as ApproveTokenRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.approveNFT && chain && (
+                  <ApproveNFT
+                    data={data.approveNFT}
+                    requireData={requireData as ApproveNFTRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.batchPermit2 && chain && (
+                  <BatchPermit2
+                    data={data.batchPermit2}
+                    requireData={requireData as BatchApproveTokenRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.swapTokenOrder && chain && (
+                  <SwapTokenOrder
+                    data={data.swapTokenOrder}
+                    requireData={requireData as SwapTokenOrderRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.buyNFT && chain && (
+                  <BuyNFT
+                    data={data.buyNFT}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    sender={data.sender}
+                  />
+                )}
+                {data.batchSellNFT && chain && (
+                  <BatchSellNFT
+                    data={data.batchSellNFT}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    sender={data.sender}
+                  />
+                )}
+                {data.sellNFT && chain && (
+                  <SellNFT
+                    data={data.sellNFT}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    sender={data.sender}
+                  />
+                )}
+                {data.assetOrder && chain && (
+                  <AssetOrder
+                    data={data.assetOrder}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    sender={data.sender}
+                  />
+                )}
+                {data.signMultiSig && (
+                  <SignMultisig
+                    data={data.signMultiSig}
+                    requireData={requireData as MultiSigRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.send && chain && (
+                  <Send
+                    data={data.send}
+                    requireData={requireData as SendRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.createKey && (
+                  <CreateKey
+                    data={data.createKey}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.verifyAddress && (
+                  <VerifyAddress
+                    data={data.verifyAddress}
+                    engineResults={engineResults}
+                  />
+                )}
+                {data.contractCall && chain && (
+                  <ContractCall
+                    data={data.permit}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    raw={raw}
+                  />
+                )}
+                {data.coboSafeCreate && (
+                  <CoboSafeCreate data={data.coboSafeCreate} />
+                )}
+                {data.coboSafeModificationRole && (
+                  <CoboSafeModificationRule
+                    data={data.coboSafeModificationRole}
+                  />
+                )}
+                {data.coboSafeModificationDelegatedAddress && (
+                  <CoboSafeModificationDelegatedAddress
+                    data={data.coboSafeModificationDelegatedAddress}
+                  />
+                )}
+                {data.coboSafeModificationTokenApproval && (
+                  <CoboSafeModificationTokenApproval
+                    data={data.coboSafeModificationTokenApproval}
+                  />
+                )}
+                {data.common && (
+                  <CommonAction
+                    data={data.common}
+                    requireData={requireData as ContractRequireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                  />
+                )}
+              </View>
+            )
+          )}
+        </Card>
+      </View>
+      <Card style={styles.messageCard}>
+        <ScrollView
           style={StyleSheet.flatten([
             styles.messageContent,
             data ? {} : styles.noAction,
           ])}>
-          <Text>{message}</Text>
-        </View>
-      </View>
+          <View style={styles.messageTitle}>
+            <Text
+              style={styles.dashLine}
+              ellipsizeMode="clip"
+              accessible={false}
+              numberOfLines={1}>
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            </Text>
+
+            <Text style={styles.messageTitleText}>
+              {t('page.signTx.typedDataMessage')}
+            </Text>
+          </View>
+          <Text style={styles.messageText}>{message}</Text>
+        </ScrollView>
+      </Card>
     </View>
   );
 };

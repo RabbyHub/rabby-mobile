@@ -1,7 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
-import { BigNumber } from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, Text } from 'react-native';
+import { View, Text } from 'react-native';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
@@ -16,30 +15,10 @@ import { ProtocolListItem } from './components/ProtocolListItem';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
 import { useThemeColors } from '@/hooks/theme';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const { isSameAddress } = addressUtils;
-
-const styles = StyleSheet.create({
-  wrapper: {},
-  header: {
-    marginTop: 15,
-  },
-  iconEditAlias: {
-    width: 13,
-    height: 13,
-    cursor: 'pointer',
-  },
-  iconScamToken: {
-    marginLeft: 4,
-    width: 13,
-  },
-  iconFakeToken: {
-    marginLeft: 4,
-    width: 13,
-  },
-});
 
 const Swap = ({
   data,
@@ -108,6 +87,11 @@ const Swap = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const swapReceiveRef = React.useRef(null);
+  const swapMinRef = React.useRef(null);
+  const swapReceiverRef = React.useRef(null);
+  const swapContractRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -131,18 +115,7 @@ const Swap = ({
                   />
                 </View>
               }
-              logoRadius={16}
             />
-            <DescItem>
-              <Text style={commonStyle.secondaryText}>
-                ≈
-                {formatUsdValue(
-                  new BigNumber(payToken.amount)
-                    .times(payToken.price)
-                    .toFixed(),
-                )}
-              </Text>
-            </DescItem>
           </Row>
         </Col>
         <Col>
@@ -152,14 +125,15 @@ const Swap = ({
             </Text>
           </Row>
           <Row>
-            <View className="flex relative pr-[10]">
+            <View>
               <LogoWithText
                 logo={receiveToken.logo_url}
-                logoRadius={16}
                 text={
                   balanceChange.success && balanceChange.support ? (
                     <View className="flex flex-row">
-                      <Text style={commonStyle.primaryText}>
+                      <Text
+                        ref={swapReceiveRef}
+                        style={commonStyle.primaryText}>
                         {formatAmount(receiveToken.amount)}{' '}
                       </Text>
                       <Values.TokenSymbol
@@ -206,52 +180,61 @@ const Swap = ({
                 />
               )}
             </View>
-            <View>
-              {balanceChange.success && balanceChange.support && (
-                <>
-                  <DescItem>
-                    <Text style={commonStyle.secondaryText}>
-                      ≈
-                      {formatUsdValue(
-                        new BigNumber(receiveToken.amount)
-                          .times(receiveToken.price)
-                          .toFixed(),
-                      )}
-                    </Text>
-                  </DescItem>
-                  <SecurityListItem
-                    engineResult={engineResultMap['1012']}
-                    id="1012"
-                    dangerText={
-                      <Text style={commonStyle.secondaryText}>
-                        {t('page.signTx.swap.valueDiff')}{' '}
-                        <Values.Percentage value={usdValuePercentage!} /> (
-                        {formatUsdValue(usdValueDiff || '')})
-                      </Text>
-                    }
-                    warningText={
-                      <Text style={commonStyle.secondaryText}>
-                        {t('page.signTx.swap.valueDiff')}{' '}
-                        <Values.Percentage value={usdValuePercentage!} /> (
-                        {formatUsdValue(usdValueDiff || '')})
-                      </Text>
-                    }
-                  />
-                </>
-              )}
-              {balanceChange.support && !balanceChange.success && (
-                <DescItem>
-                  <Text>{t('page.signTx.swap.simulationFailed')}</Text>
-                </DescItem>
-              )}
-              {!balanceChange.support && (
-                <DescItem>
-                  <Text>{t('page.signTx.swap.simulationNotSupport')}</Text>
-                </DescItem>
-              )}
-            </View>
           </Row>
         </Col>
+
+        <SubTable target={swapReceiveRef}>
+          {balanceChange.success && balanceChange.support && (
+            <SecurityListItem
+              title={t('page.signTx.swap.valueDiff')}
+              engineResult={engineResultMap['1012']}
+              id="1012"
+              dangerText={
+                <Text style={commonStyle.secondaryText}>
+                  {t('page.signTx.swap.valueDiff')}{' '}
+                  <Values.Percentage value={usdValuePercentage!} /> (
+                  {formatUsdValue(usdValueDiff || '')})
+                </Text>
+              }
+              warningText={
+                <Text style={commonStyle.secondaryText}>
+                  {t('page.signTx.swap.valueDiff')}{' '}
+                  <Values.Percentage value={usdValuePercentage!} /> (
+                  {formatUsdValue(usdValueDiff || '')})
+                </Text>
+              }
+            />
+          )}
+          {balanceChange.support && !balanceChange.success && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.swap.valueDiff')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.swap.simulationFailed')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+          {!balanceChange.support && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.swap.valueDiff')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.swap.simulationNotSupport')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+        </SubTable>
+
         <Col>
           <Row isTitle>
             <Text style={commonStyle.rowTitleText}>
@@ -264,7 +247,7 @@ const Swap = ({
                 logo={minReceive.logo_url}
                 logoRadius={16}
                 text={
-                  <Text style={commonStyle.primaryText}>
+                  <Text ref={swapMinRef} style={commonStyle.primaryText}>
                     {formatAmount(minReceive.amount)}{' '}
                     <Values.TokenSymbol
                       token={minReceive}
@@ -274,35 +257,43 @@ const Swap = ({
                 }
               />
             </View>
-            <View>
-              <DescItem>
-                <Text style={commonStyle.secondaryText}>
-                  ≈
-                  {formatUsdValue(
-                    new BigNumber(minReceive.amount)
-                      .times(minReceive.price)
-                      .toFixed(),
-                  )}
+          </Row>
+        </Col>
+        <SubTable target={swapMinRef}>
+          {slippageTolerance === null && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.swap.slippageTolerance')}
                 </Text>
-              </DescItem>
-              <DescItem>
-                {slippageTolerance === null && (
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.swap.slippageFailToLoad')}
-                  </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.swap.slippageFailToLoad')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+          {slippageTolerance !== null && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.swap.slippageTolerance')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                {hasReceiver ? (
+                  <Text>-</Text>
+                ) : (
+                  <Values.Percentage
+                    style={commonStyle.subRowText}
+                    value={slippageTolerance}
+                  />
                 )}
-                {slippageTolerance !== null && (
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.swap.slippageTolerance')}{' '}
-                    {hasReceiver ? (
-                      '-'
-                    ) : (
-                      <Values.Percentage value={slippageTolerance} />
-                    )}
-                  </Text>
-                )}
+
                 {engineResultMap['1011'] && (
                   <SecurityLevelTagNoText
+                    inSubTable
                     enable={engineResultMap['1011'].enable}
                     level={
                       currentTx.processedRules.includes('1011')
@@ -312,107 +303,125 @@ const Swap = ({
                     onClick={() => handleClickRule('1011')}
                   />
                 )}
-              </DescItem>
-            </View>
-          </Row>
-        </Col>
+              </SubRow>
+            </SubCol>
+          )}
+        </SubTable>
         {hasReceiver && (
-          <Col>
-            <Row isTitle>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.swap.receiver')}
-              </Text>
-            </Row>
-            <Row>
-              <Values.Address address={receiver} chain={chain} />
-              <View>
-                <SecurityListItem
-                  engineResult={engineResultMap['1069']}
-                  id="1069"
-                  warningText={t('page.signTx.swap.unknownAddress')}
-                />
-                {!engineResultMap['1069'] && (
-                  <>
-                    <DescItem>
+          <>
+            <Col>
+              <Row isTitle>
+                <Text style={commonStyle.rowTitleText}>
+                  {t('page.signTx.swap.receiver')}
+                </Text>
+              </Row>
+              <Row>
+                <View ref={swapReceiverRef}>
+                  <Values.AddressWithCopy address={receiver} chain={chain} />
+                </View>
+              </Row>
+            </Col>
+            <SubTable target={swapReceiverRef}>
+              <SecurityListItem
+                engineResult={engineResultMap['1069']}
+                id="1069"
+                warningText={t('page.signTx.swap.unknownAddress')}
+              />
+              {!engineResultMap['1069'] && (
+                <>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.signTx.address')}</SubRow>
+                    <SubRow>
                       <Values.AccountAlias address={receiver} />
-                    </DescItem>
-                    <DescItem>
+                    </SubRow>
+                  </SubCol>
+                  <SubCol>
+                    <SubRow isTitle>{t('page.addressDetail.source')}</SubRow>
+                    <SubRow>
                       <Values.KnownAddress address={receiver} />
-                    </DescItem>
-                  </>
-                )}
-              </View>
-            </Row>
-          </Col>
+                    </SubRow>
+                  </SubCol>
+                </>
+              )}
+            </SubTable>
+          </>
         )}
         <Col>
-          <Row isTitle>
+          <Row isTitle itemsCenter>
             <Text style={commonStyle.rowTitleText}>
               {t('page.signTx.interactContract')}
             </Text>
           </Row>
           <Row>
-            <Values.Address address={requireData.id} chain={chain} />
-            <View>
-              {requireData.protocol && (
-                <DescItem>
-                  <ProtocolListItem
-                    protocol={requireData.protocol}
-                    style={commonStyle.secondaryText}
-                  />
-                </DescItem>
-              )}
-
-              <DescItem>
-                <Values.Interacted
-                  value={requireData.hasInteraction}
-                  textStyle={commonStyle.secondaryText}
-                />
-              </DescItem>
-
-              {isInWhitelist && (
-                <DescItem>
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsTrust')}
-                  </Text>
-                </DescItem>
-              )}
-
-              <SecurityListItem
-                id="1135"
-                engineResult={engineResultMap['1135']}
-                forbiddenText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsBlock')}
-                  </Text>
-                }
-              />
-
-              <SecurityListItem
-                id="1137"
-                engineResult={engineResultMap['1137']}
-                warningText={
-                  <Text style={commonStyle.secondaryText}>
-                    {t('page.signTx.markAsBlock')}
-                  </Text>
-                }
-              />
-              <DescItem>
-                <ViewMore
-                  type="contract"
-                  data={{
-                    hasInteraction: requireData.hasInteraction,
-                    bornAt: requireData.bornAt,
-                    protocol: requireData.protocol,
-                    rank: requireData.rank,
-                    address: requireData.id,
-                    chain,
-                  }}
-                />
-              </DescItem>
-            </View>
+            <ViewMore
+              type="contract"
+              data={{
+                hasInteraction: requireData.hasInteraction,
+                bornAt: requireData.bornAt,
+                protocol: requireData.protocol,
+                rank: requireData.rank,
+                address: requireData.id,
+                chain,
+              }}>
+              <View ref={swapContractRef}>
+                <Values.Address address={requireData.id} chain={chain} />
+              </View>
+            </ViewMore>
           </Row>
         </Col>
+        <SubTable target={swapContractRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.protocol')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <ProtocolListItem
+                style={commonStyle.subRowText}
+                protocol={requireData.protocol}
+              />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+          {isInWhitelist && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.myMark')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Text style={commonStyle.subRowText}>
+                  {t('page.signTx.trusted')}
+                </Text>
+              </SubRow>
+            </SubCol>
+          )}
+
+          <SecurityListItem
+            id="1135"
+            engineResult={engineResultMap['1135']}
+            forbiddenText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+
+          <SecurityListItem
+            id="1137"
+            engineResult={engineResultMap['1137']}
+            warningText={t('page.signTx.markAsBlock')}
+            title={t('page.signTx.myMark')}
+          />
+        </SubTable>
       </Table>
     </View>
   );

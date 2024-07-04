@@ -16,6 +16,8 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { TextInput } from 'react-native-gesture-handler';
+import { Skeleton } from '@rneui/themed';
+import { calcGasEstimated } from '@/utils/time';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -31,40 +33,61 @@ const getStyles = (colors: AppColorsVariants) =>
       gap: 8,
     },
     card: {
-      width: 76,
-      height: 52,
+      flex: 1,
       backgroundColor: colors['neutral-card-3'],
-      borderRadius: 4,
+      borderRadius: 8,
       borderColor: 'transparent',
       borderWidth: 1,
+      paddingTop: 14,
+      paddingBottom: 12,
+      shadowColor: colors['neutral-black'],
+      shadowOffset: {
+        width: 2,
+        height: 4,
+      },
+      shadowOpacity: 0.1,
     },
     cardActive: {
       backgroundColor: colors['blue-light-1'],
       borderColor: colors['blue-default'],
+      shadowColor: 'transparent',
     },
-    cardItem: {
-      marginTop: 4,
-    },
+    cardItem: {},
     cardItemTitle: {
       color: colors['neutral-body'],
       fontSize: 12,
-      marginTop: 8,
       textAlign: 'center',
       lineHeight: 14,
+      fontWeight: '500',
     },
     cardItemText: {
-      color: colors['neutral-title-1'],
+      color: colors['neutral-body'],
       textAlign: 'center',
-      padding: 0,
-      fontSize: 13,
+      fontSize: 15,
       fontWeight: '500',
       margin: 0,
       height: 18,
+      padding: 0,
+      marginTop: 6,
     },
     cardItemTextActive: {
       // color: colors['blue-default'],
     },
     cardBodyDisabled: {},
+    cardTime: {
+      marginTop: 2,
+    },
+    cardTimeText: {
+      fontSize: 12,
+      lineHeight: 14,
+      color: colors['neutral-foot'],
+      textAlign: 'center',
+      marginTop: 2,
+    },
+    cardTimeLoader: {
+      marginTop: 2,
+      alignItems: 'center',
+    },
   });
 
 export const GasSelectContainer = ({
@@ -75,6 +98,10 @@ export const GasSelectContainer = ({
   customGasConfirm = () => null,
   handleCustomGasChange,
   disabled,
+  isSelectCustom,
+  notSelectCustomGasAndIsNil,
+  isLoadingGas,
+  customGasEstimated,
 }: {
   gasList: GasLevel[];
   selectedGas: GasLevel | null;
@@ -90,6 +117,10 @@ export const GasSelectContainer = ({
     e: NativeSyntheticEvent<TextInputChangeEventData>,
   ) => void;
   disabled?: boolean;
+  isSelectCustom?: boolean;
+  notSelectCustomGasAndIsNil?: boolean;
+  isLoadingGas?: boolean;
+  customGasEstimated: number;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -111,7 +142,9 @@ export const GasSelectContainer = ({
           key={`gas-item-${item.level}-${idx}`}
           style={StyleSheet.flatten([
             styles.card,
-            selectedGas?.level === item.level && styles.cardActive,
+            (isSelectCustom
+              ? item.level === 'custom'
+              : selectedGas?.level === item.level) && styles.cardActive,
           ])}
           onPress={e => {
             handlePanelSelection(e, item);
@@ -126,22 +159,32 @@ export const GasSelectContainer = ({
           </Text>
           <View style={styles.cardItem}>
             {item.level === 'custom' ? (
-              <BottomSheetTextInput
-                keyboardType="numeric"
-                style={StyleSheet.flatten([
-                  styles.cardItemText,
-                  selectedGas?.level === item.level &&
-                    styles.cardItemTextActive,
-                ])}
-                defaultValue={customGas.toString()}
-                onChange={handleCustomGasChange}
-                // onSubmitEditing={customGasConfirm}
-                onFocus={e => handlePanelSelection(e, item)}
-                ref={customerInputRef}
-                // autoFocus={selectedGas?.level === item.level}
-                // disabled={disabled}
-                placeholder="0"
-              />
+              notSelectCustomGasAndIsNil ? (
+                <Text
+                  style={StyleSheet.flatten({
+                    textAlign: 'center',
+                  })}>
+                  -
+                </Text>
+              ) : (
+                <BottomSheetTextInput
+                  keyboardType="numeric"
+                  style={StyleSheet.flatten([
+                    styles.cardItemText,
+                    selectedGas?.level === item.level &&
+                      styles.cardItemTextActive,
+                  ])}
+                  defaultValue={customGas.toString()}
+                  onChange={handleCustomGasChange}
+                  // onSubmitEditing={customGasConfirm}
+                  onFocus={e => handlePanelSelection(e, item)}
+                  ref={customerInputRef}
+                  // autoFocus={selectedGas?.level === item.level}
+                  // disabled={disabled}
+                  placeholder="0"
+                  selectTextOnFocus
+                />
+              )
             ) : (
               <Text
                 style={StyleSheet.flatten([
@@ -152,6 +195,24 @@ export const GasSelectContainer = ({
                 {new BigNumber(item.price / 1e9).toFixed()}
               </Text>
             )}
+
+            <View style={styles.cardTime}>
+              {item.level === 'custom' ? (
+                notSelectCustomGasAndIsNil ? null : isLoadingGas ? (
+                  <View style={styles.cardTimeLoader}>
+                    <Skeleton width={44} height={12} />
+                  </View>
+                ) : (
+                  <Text style={styles.cardTimeText}>
+                    {calcGasEstimated(customGasEstimated)}
+                  </Text>
+                )
+              ) : (
+                <Text style={styles.cardTimeText}>
+                  {calcGasEstimated(item.estimated_seconds)}
+                </Text>
+              )}
+            </View>
           </View>
         </TouchableOpacity>
       ))}

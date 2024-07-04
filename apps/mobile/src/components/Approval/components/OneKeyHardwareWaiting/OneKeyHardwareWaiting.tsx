@@ -108,7 +108,7 @@ export const OneKeyHardwareWaiting = ({
 
   const handleRetry = async (showToast = true) => {
     if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
-      toast.success(t('page.signFooterBar.ledger.resubmitted'));
+      toast.success(t('page.signFooterBar.ledger.resubmited'));
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);

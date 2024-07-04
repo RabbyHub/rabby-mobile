@@ -56,19 +56,19 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
         <Text style={viewMoreStyles.titleText}>
           {t('page.signTx.nftCollection')}
         </Text>
-        <Text style={{ ...styles.right, ...commonStyle.primaryText }}>
+        <Text style={{ ...styles.right, ...commonStyle.detailPrimaryText }}>
           {data.collection.name}
         </Text>
       </View>
       <Table style={viewMoreStyles.viewMoreTable}>
         <Col>
           <Row style={viewMoreStyles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.floorPrice')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.collection.floor_price !== null
                 ? `${formatAmount(data.collection.floor_price)} ETH`
                 : '-'}
@@ -77,7 +77,7 @@ export const CollectionPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={viewMoreStyles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.contractAddress')}
             </Text>
           </Row>

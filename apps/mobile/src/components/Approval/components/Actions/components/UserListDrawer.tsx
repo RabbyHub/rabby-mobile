@@ -15,8 +15,8 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
       paddingHorizontal: 20,
-      backgroundColor: colors['neutral-bg-1'],
-      height: '100%',
+      backgroundColor: colors['neutral-bg-2'],
+      paddingBottom: 40,
     },
     origin: {
       display: 'flex',
@@ -36,24 +36,35 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       overflow: 'hidden',
     },
+    modal: {
+      backgroundColor: colors['neutral-bg-2'],
+    },
     footer: {
-      backgroundColor: colors['neutral-card-2'],
-      borderRadius: 6,
+      gap: 12,
     },
     footerItem: {
       display: 'flex',
       justifyContent: 'flex-end',
       alignItems: 'center',
-      fontWeight: 500,
-      fontSize: 13,
-      lineHeight: 15,
-      color: colors['neutral-title-1'],
       position: 'relative',
       flexDirection: 'row',
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     radioIcon: {
       width: 20,
       height: 20,
+    },
+    footerItemText: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '500',
+    },
+    checked: {
+      borderColor: colors['blue-default'],
+      backgroundColor: colors['blue-light1'],
     },
   });
 
@@ -97,7 +108,8 @@ const UserListDrawer = ({
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={onClose}
-      snapPoints={['30%']}>
+      enableDynamicSizing
+      handleStyle={styles.modal}>
       <BottomSheetView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.signTx.myMarkWithContract', {
@@ -106,16 +118,20 @@ const UserListDrawer = ({
         />
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.footerItem}
+            style={StyleSheet.flatten([
+              styles.footerItem,
+              !onWhitelist && !onBlacklist ? styles.checked : {},
+            ])}
             onPress={() =>
               onChange({ onBlacklist: false, onWhitelist: false })
             }>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['neutral-title-1'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                {
+                  color: colors['neutral-title-1'],
+                },
+                styles.footerItemText,
+              ])}
               iconStyle={styles.radioIcon}
               right
               iconRight
@@ -127,14 +143,18 @@ const UserListDrawer = ({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.footerItem}
+            style={StyleSheet.flatten([
+              styles.footerItem,
+              onWhitelist && !onBlacklist ? styles.checked : {},
+            ])}
             onPress={() => onChange({ onBlacklist: false, onWhitelist: true })}>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['green-default'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                {
+                  color: colors['green-default'],
+                },
+                styles.footerItemText,
+              ])}
               iconStyle={styles.radioIcon}
               right
               iconRight
@@ -146,14 +166,18 @@ const UserListDrawer = ({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.footerItem}
+            style={StyleSheet.flatten([
+              styles.footerItem,
+              !onWhitelist && onBlacklist ? styles.checked : {},
+            ])}
             onPress={() => onChange({ onBlacklist: true, onWhitelist: false })}>
             <Radio
-              // eslint-disable-next-line react-native/no-inline-styles
-              textStyle={{
-                color: colors['red-default'],
-                flex: 1,
-              }}
+              textStyle={StyleSheet.flatten([
+                {
+                  color: colors['red-default'],
+                },
+                styles.footerItemText,
+              ])}
               iconStyle={styles.radioIcon}
               right
               iconRight

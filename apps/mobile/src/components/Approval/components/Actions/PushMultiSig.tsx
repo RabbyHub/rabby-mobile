@@ -8,7 +8,7 @@ import { Chain } from '@/constant/chains';
 import { PushMultiSigRequireData } from './utils';
 import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import DescItem from './components/DescItem';
+import { SubTable, SubCol, SubRow } from './components/SubTable';
 
 const PushMultiSig = ({
   data,
@@ -28,6 +28,8 @@ const PushMultiSig = ({
     }
   }, [requireData, chain]);
 
+  const multiSignAddressRef = React.useRef(null);
+
   return (
     <View>
       <Table>
@@ -38,32 +40,47 @@ const PushMultiSig = ({
             </Text>
           </Row>
           <Row>
-            <View>
-              <Values.Address address={data.multisig_id} chain={chain} />
-              <View>
-                <DescItem>
-                  <Values.AddressMemo address={data.multisig_id} />
-                </DescItem>
-                {multiSigInfo && (
-                  <DescItem>
-                    <LogoWithText
-                      logo={multiSigInfo.logo_url}
-                      text={multiSigInfo.name}
-                      logoSize={14}
-                      logoRadius={14}
-                      textStyle={{
-                        fontWeight: 'normal',
-                        fontSize: 13,
-                        lineHeight: 15,
-                        color: '#4B4D59',
-                      }}
-                    />
-                  </DescItem>
-                )}
-              </View>
+            <View ref={multiSignAddressRef}>
+              <Values.AddressWithCopy
+                address={data.multisig_id}
+                chain={chain}
+              />
             </View>
           </Row>
         </Col>
+
+        <SubTable target={multiSignAddressRef}>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.addressNote')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.AddressMemo
+                textStyle={commonStyle.subRowText}
+                address={data.multisig_id}
+              />
+            </SubRow>
+          </SubCol>
+          {multiSigInfo && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.label')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <LogoWithText
+                  logo={multiSigInfo.logo_url}
+                  text={multiSigInfo.name}
+                  logoSize={14}
+                  textStyle={commonStyle.subRowText}
+                />
+              </SubRow>
+            </SubCol>
+          )}
+        </SubTable>
       </Table>
     </View>
   );

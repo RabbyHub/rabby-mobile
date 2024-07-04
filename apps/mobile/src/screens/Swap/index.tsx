@@ -413,7 +413,7 @@ const Swap = () => {
                       <Text style={styles.afterLabel}>
                         {t('page.swap.rabby-fee')}
                       </Text>
-                      <Text style={styles.afterValue}>0%</Text>
+                      <Text style={styles.afterValue}>0.25%</Text>
                     </View>
                   </View>
                 )}
@@ -586,10 +586,11 @@ const getStyles = createGetStyles(colors => ({
   afterWrapper: {
     marginTop: 12,
     gap: 12,
+    paddingHorizontal: 12,
   },
   afterLabel: {
     fontSize: 13,
-    color: colors['neutral-foot'],
+    color: colors['neutral-body'],
   },
   afterValue: {
     fontSize: 13,

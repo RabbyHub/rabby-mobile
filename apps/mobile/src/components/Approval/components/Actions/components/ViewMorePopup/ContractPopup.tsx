@@ -61,62 +61,64 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
         <Text style={styles.titleText}>
           {data.title || t('page.signTx.interactContract')}
         </Text>
-        <Values.Address
+        <Values.AddressWithCopy
           address={data.address}
           chain={data.chain}
           iconWidth="14px"
+          style={styles.valueAddress}
         />
       </View>
       <Table style={styles.viewMoreTable}>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.protocolTitle')}
             </Text>
           </Row>
           <Row>
             <Values.Protocol
               value={data.protocol}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.interacted')}
             </Text>
           </Row>
           <Row>
             <Values.Boolean
               value={data.hasInteraction}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.deployTimeTitle')}
             </Text>
           </Row>
           <Row>
             <Values.TimeSpan
               value={data.bornAt}
-              style={commonStyle.primaryText}
+              style={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.popularity')}
             </Text>
           </Row>
           <Row>
-            <Text style={commonStyle.primaryText}>
+            <Text style={commonStyle.detailPrimaryText}>
               {data.rank
-                ? t('page.signTx.contractPopularity', [
+                ? // @ts-ignore
+                  t('page.signTx.contractPopularity', [
                     data.rank,
                     data.chain.name,
                   ])
@@ -126,26 +128,26 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressNote')}
             </Text>
           </Row>
           <Row>
             <Values.AddressMemo
               address={data.address}
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
             />
           </Row>
         </Col>
         <Col>
           <Row style={styles.firstRow}>
-            <Text style={commonStyle.rowTitleText}>
+            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.myMark')}
             </Text>
           </Row>
           <Row>
             <Values.AddressMark
-              textStyle={commonStyle.primaryText}
+              textStyle={commonStyle.detailPrimaryText}
               isContract
               address={data.address}
               chain={data.chain}

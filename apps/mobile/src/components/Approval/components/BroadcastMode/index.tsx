@@ -2,17 +2,9 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
-import clsx from 'clsx';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewProps,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
@@ -21,55 +13,11 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { Tip } from '@/components/Tip';
-import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
-import IconChecked from '@/assets/icons/common/box-checked.svg';
-import IconUnChecked from '@/assets/icons/common/box-unchecked.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { getStyles } from './styles';
 import { TouchableOpacity } from 'react-native';
-
-// const OptionList = styled.div`
-//   margin-bottom: -12px;
-//   .option {
-//     padding: 12px 16px;
-//     border-radius: 6px;
-//     background: var(--r-neutral-card-2, #f2f4f7);
-//     border: 1px solid transparent;
-//     cursor: pointer;
-
-//     & + .option {
-//       margin-top: 12px;
-//     }
-
-//     &.is-selected {
-//       border: 1px solid var(--r-blue-default, #7084ff);
-//       background: var(--r-blue-light-1, #eef1ff);
-//     }
-//     &:not(.is-disabled):hover {
-//       border: 1px solid var(--r-blue-default, #7084ff);
-//     }
-
-//     &.is-disabled {
-//       cursor: not-allowed;
-//       opacity: 0.5;
-//     }
-
-//     &-title {
-//       color: var(--r-neutral-title-1, #192945);
-//       font-size: 15px;
-//       font-weight: 500;
-//       line-height: 18px;
-//       margin-bottom: 4px;
-//     }
-
-//     &-desc {
-//       color: var(--r-neutral-body, #3e495e);
-//       font-size: 13px;
-//       font-weight: 400;
-//       line-height: 16px;
-//     }
-//   }
-// `;
+import { Card } from '../Actions/components/Card';
+import { Radio } from '@/components/Radio';
 
 interface BroadcastModeProps {
   value: {
@@ -220,41 +168,26 @@ export const BroadcastMode = ({
   }, [drawerVisible]);
 
   return (
-    <View style={StyleSheet.flatten([styles.wrapper, style])}>
+    <Card
+      style={style}
+      onAction={() => {
+        setDrawerVisible(true);
+      }}
+      headline={t('page.signTx.BroadcastMode.title')}
+      actionText={selectedOption?.title}
+      hasDivider={value.type !== 'default'}>
       <View>
-        <View style={styles.broadcastModeHeader}>
-          <Text style={styles.broadcastModeTitle}>
-            {t('page.signTx.BroadcastMode.title')}
-          </Text>
-          <TouchableOpacity
-            style={styles.broadcastModeExtra}
-            onPress={() => {
-              setDrawerVisible(true);
-            }}>
-            <Text style={styles.broadcastModeExtraText}>
-              {selectedOption?.title}
-            </Text>
-            <IconArrowRight />
-          </TouchableOpacity>
-        </View>
         <View style={styles.broadcastModeBody}>
           <View style={styles.broadcastModeBodyUl}>
-            <View
-              style={StyleSheet.flatten([
-                styles.broadcastModeBodyLi,
-                styles.broadcastModeBodyLiFirst,
-              ])}>
+            <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
               <View style={styles.broadcastModeBodyLiBefore} />
+
               <Text style={styles.broadcastModeBodyLiText}>
                 {selectedOption?.desc}
               </Text>
             </View>
-            {/* TODO: 当前不需要，WalletConnect 不支持 */}
-            {/* {value.type === 'low_gas' ? (
-              <View
-                style={StyleSheet.flatten([
-                  styles.broadcastModeBodyLi,
-                ])}>
+            {value.type === 'low_gas' ? (
+              <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
                 <View style={styles.broadcastModeBodyLiBefore} />
 
                 <Text style={styles.broadcastModeBodyLiText}>
@@ -284,29 +217,56 @@ export const BroadcastMode = ({
                   })}
                 </View>
               </View>
-            ) : null} */}
+            ) : null}
           </View>
         </View>
       </View>
-      {/* TODO: 当前不需要，WalletConnect 不支持 */}
-      {/* <AppBottomSheetModal
+      <AppBottomSheetModal
         ref={modalRef}
-        snapPoints={['50%']}
+        enableDynamicSizing
+        handleStyle={styles.modal}
         onDismiss={() => setDrawerVisible(false)}>
-        <BottomSheetView>
+        <BottomSheetView style={styles.modal}>
           <AppBottomSheetModalTitle
             title={t('page.signTx.BroadcastMode.title')}
           />
-          <OptionList>
+          <View style={styles.footer}>
             {options.map(option => (
-              <Tip content={option.tips || ''} key={option.value}>
-                <div
-                  className={clsx(
-                    'option',
-                    option.value === value.type && 'is-selected',
-                    option.disabled && 'is-disabled',
-                  )}
-                  onClick={() => {
+              <View
+                key={option.value}
+                style={StyleSheet.flatten([
+                  styles.footerItem,
+                  option.value === value.type ? styles.checked : {},
+                  option.disabled ? styles.disabled : {},
+                ])}>
+                <Radio
+                  containerStyle={styles.footerRadio}
+                  textStyle={styles.footerItemText}
+                  iconStyle={styles.radioIcon}
+                  right
+                  iconRight
+                  title={
+                    option.disabled ? (
+                      <Tip
+                        parentWrapperStyle={StyleSheet.flatten({
+                          flex: 1,
+                        })}
+                        content={option.tips}>
+                        <Text style={styles.optionTitle}>{option.title}</Text>
+                        <Text style={styles.optionDesc}>{option.desc}</Text>
+                      </Tip>
+                    ) : (
+                      <View
+                        style={StyleSheet.flatten({
+                          flex: 1,
+                        })}>
+                        <Text style={styles.optionTitle}>{option.title}</Text>
+                        <Text style={styles.optionDesc}>{option.desc}</Text>
+                      </View>
+                    )
+                  }
+                  checked={option.value === value.type}
+                  onPress={e => {
                     if (option.disabled) {
                       return;
                     }
@@ -318,24 +278,13 @@ export const BroadcastMode = ({
                           : undefined,
                     });
                     setDrawerVisible(false);
-                  }}>
-                  <div className="flex items-center gap-[4px]">
-                    <div className="mr-auto">
-                      <div className="option-title">{option.title}</div>
-                      <div className="option-desc">{option.desc}</div>
-                    </div>
-                    {option.value === value.type ? (
-                      <IconChecked />
-                    ) : (
-                      <IconUnChecked />
-                    )}
-                  </div>
-                </div>
-              </Tip>
+                  }}
+                />
+              </View>
             ))}
-          </OptionList>
+          </View>
         </BottomSheetView>
-      </AppBottomSheetModal> */}
-    </View>
+      </AppBottomSheetModal>
+    </Card>
   );
 };
