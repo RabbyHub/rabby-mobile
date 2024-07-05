@@ -119,7 +119,9 @@ export class TransactionHistoryService {
       draft: TransactionHistoryItem[],
     ) => TransactionHistoryItem[] | void,
   ) => {
-    this.store.transactions = produce(this.store.transactions, recipe);
+    // this.store.transactions = produce(this.store.transactions, recipe);
+    this.store.transactions =
+      recipe(this.store.transactions) || this.store.transactions;
   };
 
   getPendingCount(address: string) {
