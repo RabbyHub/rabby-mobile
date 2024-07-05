@@ -126,11 +126,11 @@ function tryGetAppStatus() {
   }
 }
 
-const appStatusAtom = atom<{
-  status: AppStateStatus;
+const appStateAtom = atom<{
+  current: AppStateStatus;
   // iosStatus: AppStateStatus;
 }>({
-  status: tryGetAppStatus(),
+  current: tryGetAppStatus(),
   // iosStatus: FALLBACK_STATE,
 });
 
@@ -143,15 +143,15 @@ function isInactive(appStatus: AppStateStatus) {
 }
 
 export function useIsOnBackground() {
-  const appState = useAtomValue(appStatusAtom);
+  const appState = useAtomValue(appStateAtom);
 
   const isOnBackground = useMemo(() => {
     if (isIOS) {
-      return isInactive(appState.status);
+      return isInactive(appState.current);
     }
 
-    return isInactive(appState.status);
-  }, [appState.status]);
+    return isInactive(appState.current);
+  }, [appState]);
 
   return {
     isOnBackground,
@@ -162,19 +162,19 @@ export function useIsOnBackground() {
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  const setAppStatus = useSetAtom(appStatusAtom);
+  const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
     if (!AppState.isAvailable) return;
 
     if (isAndroid) {
       const subBlur = AppState.addEventListener('blur', () => {
-        nativeBlockScreen();
-        setAppStatus({ status: 'inactive' });
+        // nativeBlockScreen();
+        setAppStatus({ current: 'inactive' });
       });
       const subFocus = AppState.addEventListener('focus', () => {
-        nativeUnblockScreen();
-        setAppStatus({ status: 'active' });
+        // nativeUnblockScreen();
+        setAppStatus({ current: 'active' });
       });
 
       return () => {
@@ -183,10 +183,10 @@ export function useSecureOnBackground() {
       };
     } else if (isIOS) {
       const subChange = AppState.addEventListener('change', nextStatus => {
-        if (isInactive(nextStatus)) nativeBlockScreen();
-        else nativeUnblockScreen();
+        // if (isInactive(nextStatus)) nativeBlockScreen();
+        // else nativeUnblockScreen();
 
-        setAppStatus({ status: nextStatus });
+        setAppStatus({ current: nextStatus });
       });
 
       return () => {

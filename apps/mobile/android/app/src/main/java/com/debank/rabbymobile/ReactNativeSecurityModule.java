@@ -8,7 +8,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 import android.view.WindowManager;
 
-public class ReactNativeSecurityModule extends ReactNativeSecuritySpec {
+public class ReactNativeSecurityModule extends SimplePackageSpec {
   public static final String NAME = "ReactNativeSecurity";
 
   ReactNativeSecurityModule(ReactApplicationContext context) {

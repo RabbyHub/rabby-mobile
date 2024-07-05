@@ -1,12 +1,28 @@
-import { NativeModules, Platform } from 'react-native';
+import {
+  EmitterSubscription,
+  NativeEventEmitter,
+  NativeModule,
+  NativeModules,
+  Platform,
+} from 'react-native';
 
 const isTurboModuleEnabled = global.__turboModuleProxy != null;
 
 interface NativeModulesStatic {
-  ReactNativeSecurity: {
+  ReactNativeSecurity: /* NativeModule &  */ {
     blockScreen(): void;
     unblockScreen(): void;
   };
+  RNScreenshotPrevent: NativeModule & {
+    togglePreventScreenshot: (isPrevent: boolean) => void;
+    enableSecureView: (imagePath?: string) => void;
+    disableSecureView: () => void;
+    iosProtectFromScreenRecording(): void;
+    iosUnprotectFromScreenRecording(): void;
+  };
+  // ScreenShieldRN: {
+  //   protectScreenRecording(): void;
+  // }
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
@@ -38,4 +54,18 @@ export function resolveNativeModule<T extends keyof NativeModulesStatic>(
   } as {
     [P in T]: NativeModulesStatic[T];
   };
+}
+
+type Listener = (resp?: any) => void;
+
+export function makeRnEEClass<Listeners extends Record<string, Listener>>() {
+  type EE = typeof NativeEventEmitter & {
+    addListener<T extends keyof Listeners & string>(
+      eventType: T,
+      listener: Listeners[T],
+      context?: Object,
+    ): EmitterSubscription;
+  };
+
+  return { NativeEventEmitter: NativeEventEmitter as EE };
 }
