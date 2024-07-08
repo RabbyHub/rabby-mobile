@@ -1626,7 +1626,9 @@
       "btn": {
         "unlock": "Unlock",
         "switchtype_pwd": "Unlock with Password",
-        "switchtype_fingerprint": "Unlock with Fingerprint"
+        "switchtype_fingerprint": "Unlock with Fingerprint",
+        "switchtype_touchid": "Unlock with Touch ID",
+        "switchtype_faceid": "Unlock with Face ID"
       },
       "password": {
         "required": "Enter the Password to Unlock",
