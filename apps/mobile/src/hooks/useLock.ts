@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
-
-const isAndroid = Platform.OS === 'android';
-const isIOS = Platform.OS === 'ios';
-
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
@@ -13,6 +10,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+
+const isAndroid = Platform.OS === 'android';
+const isIOS = Platform.OS === 'ios';
 
 import {
   nativeBlockScreen,
@@ -182,6 +182,7 @@ export function useSecureOnBackground() {
         subFocus.remove();
       };
     } else if (isIOS) {
+      /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
         // if (isInactive(nextStatus)) nativeBlockScreen();
         // else nativeUnblockScreen();
@@ -209,7 +210,7 @@ export function useSetPasswordFirst() {
       screen: (SettingNavigatorParamList['SetPassword'] &
         object)['replaceScreen'],
     ) => {
-      if (APP_FEATURE_SWITCH.customizePassword) return false;
+      if (!APP_FEATURE_SWITCH.customizePassword) return false;
 
       if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
         navigation.push(RootNames.StackSettings, {

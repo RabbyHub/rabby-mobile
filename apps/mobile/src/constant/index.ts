@@ -78,7 +78,7 @@ export const APPLICATION_ID =
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 
 export const APP_FEATURE_SWITCH = {
-  customizePassword: false,
+  customizePassword: true,
   get biometricsAuth() {
     return !!this.customizePassword;
   },

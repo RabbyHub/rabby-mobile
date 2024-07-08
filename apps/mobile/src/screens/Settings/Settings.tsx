@@ -110,7 +110,7 @@ export default function SettingsScreen(): JSX.Element {
   const disabledBiometrics =
     !couldSetupBiometrics ||
     !hasSetupCustomPassword ||
-    APP_FEATURE_SWITCH.biometricsAuth;
+    !APP_FEATURE_SWITCH.biometricsAuth;
 
   const [switchWhitelistRef, switchBiometricsRef, switchAllowScreenshotRef] = [
     useRef<SwitchToggleType>(null),

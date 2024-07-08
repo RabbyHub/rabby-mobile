@@ -116,20 +116,34 @@ export function useRabbyAppNavigation<
   return useNavigation<K>();
 }
 
-export function resetNavigationToHome(
+export function resetNavigationTo(
   navigation: ReturnType<typeof useRabbyAppNavigation>,
+  type: 'Home' | 'Unlock' = 'Home',
 ) {
-  navigation.reset({
-    index: 0,
-    routes: [
-      {
-        name: RootNames.StackRoot,
-        params: {
-          screen: RootNames.Home,
-        },
-      },
-    ],
-  });
+  switch (type) {
+    default:
+    case 'Home': {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackRoot,
+            params: {
+              screen: RootNames.Home,
+            },
+          },
+        ],
+      });
+      break;
+    }
+    case 'Unlock': {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: RootNames.Unlock, params: {} }],
+      });
+      break;
+    }
+  }
 }
 
 export function usePreventGoBack({
