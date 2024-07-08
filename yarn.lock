@@ -27710,7 +27710,7 @@ __metadata:
     react-native-vision-camera: ^3.6.17
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
-    react-native-webview: ^13.6.3
+    react-native-webview: ^13.10.5
     react-test-renderer: 18.2.0
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -28678,16 +28678,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webview@npm:^13.6.3":
-  version: 13.6.4
-  resolution: "react-native-webview@npm:13.6.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-webview%2F-%2Freact-native-webview-13.6.4.tgz"
+"react-native-webview@npm:^13.10.5":
+  version: 13.10.5
+  resolution: "react-native-webview@npm:13.10.5"
   dependencies:
     escape-string-regexp: 2.0.0
     invariant: 2.2.4
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 72df9422ededdcf2de6232629bb447932e63c824904ef5eba0aa0a082d0899148f4e5bda713de931336d23204c7dd025b80221aa8c9bc10306f3d8948ebd0dcb
+  checksum: fa4bd3885a405236474d2baf455d81bddc024874ec012884fbded02f47303c47c00edaf8ef7072eb52e6fb8c68f1f2fd2abe6ca5890ae217102e7742ab97f3f8
   languageName: node
   linkType: hard
 

@@ -1,7 +1,8 @@
 {
   "files.associations": {
     "*.yarnrc": "yaml",
-    "*.pro": "proguard"
+    "*.pro": "proguard",
+    "**/apps/mobile/ios/**/*.h": "objective-c",
   },
   "i18n-ally.localesPaths": ["apps/mobile/src/assets/locales"],
   "i18n-ally.keystyle": "nested",

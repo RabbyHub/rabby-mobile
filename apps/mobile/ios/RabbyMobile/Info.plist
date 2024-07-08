@@ -73,7 +73,9 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs to authenticate</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string />
+	<string/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Rabby needs microphone access to record audio</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Anton-Regular.ttf</string>
