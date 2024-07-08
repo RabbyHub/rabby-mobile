@@ -112,7 +112,6 @@ void devLog(NSString *format, ...) {}
   // self.window.rootViewController = rootViewController;
   // [self.window makeKeyAndVisible];
 
-  [super application:application didFinishLaunchingWithOptions:launchOptions];
   NSString * userAgent = [self makeUserAgent];
 
   // set RCTSetCustomNSURLSessionConfigurationProvider
@@ -124,9 +123,10 @@ void devLog(NSString *format, ...) {}
     return configuration;
   });
 
+  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
   [RNSplashScreen show]; // react-native-splash-screen
 
-  return true;
+  return didFinish;
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

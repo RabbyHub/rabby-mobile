@@ -79,3 +79,12 @@ export const RcIconFaceId = makeThemeIconFromCC(
   RcIconKeychainFaceIdCC,
   'neutral-body',
 );
+
+import { default as RcScreenshotCC } from './screenshot-cc.svg';
+export const RcScreenshot = makeThemeIconFromCC(RcScreenshotCC, 'neutral-body');
+
+import { default as RcScreenRecordCC } from './screenrecord-cc.svg';
+export const RcScreenRecord = makeThemeIconFromCC(
+  RcScreenRecordCC,
+  'neutral-body',
+);

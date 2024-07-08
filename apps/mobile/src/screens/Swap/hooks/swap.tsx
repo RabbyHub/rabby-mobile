@@ -12,6 +12,7 @@ import { sendRequest } from '@/core/apis/provider';
 import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { sleep } from '@/utils/async';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -114,6 +115,7 @@ export const dexSwap = async (
   if (!account) {
     throw new Error(i18n.t('background.error.noCurrentAccount'));
   }
+
   const chainObj = findChainByEnum(chain);
   if (!chainObj) {
     throw new Error(i18n.t('background.error.notFindChain', { chain }));
@@ -121,6 +123,7 @@ export const dexSwap = async (
   try {
     if (shouldTwoStepApprove) {
       // unTriggerTxCounter.increase(3);
+
       await approveToken(
         chainObj.serverId,
         pay_token_id,
@@ -135,6 +138,9 @@ export const dexSwap = async (
         gasPrice,
         { isSwap: true, swapPreferMEVGuarded },
       );
+
+      await sleep(200);
+
       // unTriggerTxCounter.decrease();
     }
 
@@ -156,14 +162,16 @@ export const dexSwap = async (
         gasPrice,
         { isSwap: true, swapPreferMEVGuarded },
       );
+
+      await sleep(200);
+
       // unTriggerTxCounter.decrease();
     }
-
-    console.log('pre sendRequest');
 
     if (postSwapParams) {
       swapService.addTx(chain, quote.tx.data, postSwapParams);
     }
+
     await sendRequest(
       {
         $ctx:
@@ -201,8 +209,8 @@ export const dexSwap = async (
           }),
         );
       })
-      .catch(() => {
-        console.log('swap error');
+      .catch(error => {
+        console.log('swap error', error);
       });
 
     console.log('after sendRequest');

@@ -6176,9 +6176,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-swap@npm:0.0.36":
-  version: 0.0.36
-  resolution: "@rabby-wallet/rabby-swap@npm:0.0.36"
+"@rabby-wallet/rabby-swap@npm:0.0.37":
+  version: 0.0.37
+  resolution: "@rabby-wallet/rabby-swap@npm:0.0.37"
   dependencies:
     "@ethersproject/abi": ^5.7.0
     axios: ^0.27.2
@@ -6187,7 +6187,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ">=0.3.21"
     "@rabby-wallet/rabby-api": ">=0.6.13"
-  checksum: dba8e040aa1d3825441b539d56340967775fc07ccd32478d209e26a1f851220272b4deea989e19ff44ab1389ffecaf6455a2f712816701a781aead5ec0ac261c
+  checksum: 1c5f3b419044284864131f2c1b41c7d2b63bd476705c0e5c74858d14789d56ace6bb0c168904ba1b78b7874f96c68fd047e6256547cde5a95a5393515c6ca313
   languageName: node
   linkType: hard
 
@@ -27587,7 +27587,7 @@ __metadata:
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.21
     "@rabby-wallet/rabby-security-engine": 2.0.3
-    "@rabby-wallet/rabby-swap": 0.0.36
+    "@rabby-wallet/rabby-swap": 0.0.37
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"
     "@react-native-async-storage/async-storage": ^1.21.0
@@ -27711,7 +27711,7 @@ __metadata:
     react-native-vision-camera: ^3.6.17
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
-    react-native-webview: ^13.6.3
+    react-native-webview: ^13.10.5
     react-test-renderer: 18.2.0
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -28689,16 +28689,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webview@npm:^13.6.3":
-  version: 13.6.4
-  resolution: "react-native-webview@npm:13.6.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-webview%2F-%2Freact-native-webview-13.6.4.tgz"
+"react-native-webview@npm:^13.10.5":
+  version: 13.10.5
+  resolution: "react-native-webview@npm:13.10.5"
   dependencies:
     escape-string-regexp: 2.0.0
     invariant: 2.2.4
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 72df9422ededdcf2de6232629bb447932e63c824904ef5eba0aa0a082d0899148f4e5bda713de931336d23204c7dd025b80221aa8c9bc10306f3d8948ebd0dcb
+  checksum: fa4bd3885a405236474d2baf455d81bddc024874ec012884fbded02f47303c47c00edaf8ef7072eb52e6fb8c68f1f2fd2abe6ca5890ae217102e7742ab97f3f8
   languageName: node
   linkType: hard
 

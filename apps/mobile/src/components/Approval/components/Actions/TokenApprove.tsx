@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
@@ -25,9 +25,10 @@ import {
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { BottomSheetInput } from '@/components/Input';
-import { Button } from '@/components/Button';
 import { TokenAmountItem } from './components/TokenAmountItem';
 import { SubTable, SubCol, SubRow } from './components/SubTable';
+import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { RcIconUnknownToken } from '@/screens/Approvals/icons';
 
 interface ApproveAmountModalProps {
   amount: number | string;
@@ -41,14 +42,13 @@ interface ApproveAmountModalProps {
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
     mainView: {
-      paddingHorizontal: 20,
       backgroundColor: colors['neutral-bg-1'],
       height: '100%',
     },
     approveAmountFooter: {
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       marginTop: 12,
     },
     approveAmountFooterLeft: {
@@ -57,11 +57,11 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-foot'],
     },
     approveAmountFooterBalance: {
-      fontSize: 12,
-      lineHeight: 14,
+      fontSize: 15,
+      lineHeight: 18,
       textAlign: 'right',
       textDecorationLine: 'underline',
-      color: colors['neutral-foot'],
+      color: colors['neutral-body'],
     },
     approveAmountButton: {
       display: 'flex',
@@ -74,6 +74,19 @@ const getStyle = (colors: AppColorsVariants) =>
       fontWeight: '500',
       marginLeft: 4,
       color: colors['blue-default'],
+    },
+    addonText: {
+      fontSize: 13,
+      lineHeight: 16,
+      color: colors['neutral-foot'],
+    },
+    inputText: {
+      fontSize: 15,
+      color: colors['neutral-title-1'],
+      flex: 1,
+    },
+    container: {
+      paddingHorizontal: 20,
     },
   });
 
@@ -133,60 +146,64 @@ const ApproveAmountModal = ({
       ref={modalRef}
       keyboardBlurBehavior="restore"
       onDismiss={onCancel}
-      snapPoints={['30%']}>
+      snapPoints={[300]}>
       <BottomSheetView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.signTx.tokenApprove.amountPopupTitle')}
         />
-        <View>
-          <View>
-            <BottomSheetInput
-              value={customAmount}
-              onChange={e => handleChange(e.nativeEvent.text)}
-              autoFocus
-              addonAfter={
-                <Text>{ellipsisTokenSymbol(getTokenSymbol(token), 4)}</Text>
-              }
-            />
-            <View style={styles.approveAmountFooter}>
-              <Text style={styles.approveAmountFooterLeft}>
-                ≈
+
+        <View style={styles.container}>
+          <BottomSheetInput
+            value={customAmount}
+            onChange={e => handleChange(e.nativeEvent.text)}
+            // autoFocus
+            style={styles.inputText}
+            addonAfter={
+              <Text style={styles.addonText}>
+                ≈{' '}
                 {ellipsisOverflowedText(
                   formatUsdValue(new BigNumber(tokenPrice).toFixed()),
                   18,
                   true,
                 )}
               </Text>
-              {balance && (
-                <Text
-                  style={styles.approveAmountFooterBalance}
-                  onPress={() => {
-                    setCustomAmount(balance);
-                  }}>
-                  {t('global.Balance')}:{' '}
-                  {formatAmount(new BigNumber(balance).toFixed(4))}
-                </Text>
-              )}
-            </View>
-            <View style={styles.approveAmountButton}>
-              <Button
-                buttonStyle={{
-                  width: 200,
-                  backgroundColor: colors['blue-default'],
-                  height: 44,
-                  padding: 10,
-                }}
-                titleStyle={{
-                  color: '#fff',
-                  fontSize: 15,
-                }}
-                onPress={handleSubmit}
-                title={t('global.confirmButton')}
-                disabled={!canSubmit}
-              />
-            </View>
+            }
+            addonBefore={
+              token.logo_url ? (
+                <Image
+                  source={{ uri: token.logo_url }}
+                  style={StyleSheet.flatten({
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                  })}
+                />
+              ) : (
+                <RcIconUnknownToken
+                  width={20}
+                  height={20}
+                  style={StyleSheet.flatten({
+                    marginRight: 8,
+                  })}
+                />
+              )
+            }
+          />
+          <View style={styles.approveAmountFooter}>
+            {balance && (
+              <Text
+                style={styles.approveAmountFooterBalance}
+                onPress={() => {
+                  setCustomAmount(balance);
+                }}>
+                {t('global.Balance')}:{' '}
+                {formatAmount(new BigNumber(balance).toFixed(4))}
+              </Text>
+            )}
           </View>
         </View>
+
+        <FooterButtonGroup onCancel={onCancel} onConfirm={handleSubmit} />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

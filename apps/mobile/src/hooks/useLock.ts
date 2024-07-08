@@ -15,6 +15,11 @@ import { androidBlockScreen, androidUnblockScreen } from '@/core/utils/device';
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
+import {
+  nativeBlockScreen,
+  nativeUnblockScreen,
+} from '@/core/native/ReactNativeSecurity';
+
 const appLockAtom = atom({
   appUnlocked: false,
   pwdStatus: PasswordStatus.Unknown,
@@ -122,28 +127,32 @@ function tryGetAppStatus() {
   }
 }
 
-const appStatusAtom = atom<{
-  status: AppStateStatus;
+const appStateAtom = atom<{
+  current: AppStateStatus;
   // iosStatus: AppStateStatus;
 }>({
-  status: tryGetAppStatus(),
+  current: tryGetAppStatus(),
   // iosStatus: FALLBACK_STATE,
 });
 
+function isInactive(appStatus: AppStateStatus) {
+  return [
+    'inactive',
+    /* not possible for our ios app, but just write here */
+    'background',
+  ].includes(appStatus);
+}
+
 export function useIsOnBackground() {
-  const appState = useAtomValue(appStatusAtom);
+  const appState = useAtomValue(appStateAtom);
 
   const isOnBackground = useMemo(() => {
     if (isIOS) {
-      return [
-        'inactive',
-        /* not possible for our app, but just write here */
-        'background',
-      ].includes(appState.status);
+      return isInactive(appState.current);
     }
 
-    return ['inactive', 'background'].includes(appState.status);
-  }, [appState.status]);
+    return isInactive(appState.current);
+  }, [appState]);
 
   return {
     isOnBackground,
@@ -154,21 +163,19 @@ export function useIsOnBackground() {
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  const setAppStatus = useSetAtom(appStatusAtom);
+  const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
     if (!AppState.isAvailable) return;
 
     if (isAndroid) {
-      /** @see https://reactnative.dev/docs/appstate#blur-android */
       const subBlur = AppState.addEventListener('blur', () => {
-        androidBlockScreen();
-        setAppStatus({ status: 'inactive' });
+        // nativeBlockScreen();
+        setAppStatus({ current: 'inactive' });
       });
-      /** @see https://reactnative.dev/docs/appstate#focus-android */
       const subFocus = AppState.addEventListener('focus', () => {
-        androidUnblockScreen();
-        setAppStatus({ status: 'active' });
+        // nativeUnblockScreen();
+        setAppStatus({ current: 'active' });
       });
 
       return () => {
@@ -178,7 +185,10 @@ export function useSecureOnBackground() {
     } else if (isIOS) {
       /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
-        setAppStatus({ status: nextStatus });
+        // if (isInactive(nextStatus)) nativeBlockScreen();
+        // else nativeUnblockScreen();
+
+        setAppStatus({ current: nextStatus });
       });
 
       return () => {

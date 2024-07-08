@@ -138,7 +138,7 @@ export function makeBottomSheetProps(ctx: {
     }
     return {
       handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-2'],
+        backgroundColor: ctx.colors['neutral-bg-4'],
       },
       handleIndicatorStyle: {
         backgroundColor: ctx.colors['neutral-line'],

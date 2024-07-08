@@ -179,12 +179,9 @@ export const BroadcastMode = ({
       <View>
         <View style={styles.broadcastModeBody}>
           <View style={styles.broadcastModeBodyUl}>
-            <View
-              style={StyleSheet.flatten([
-                styles.broadcastModeBodyLi,
-                styles.broadcastModeBodyLiFirst,
-              ])}>
+            <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
               <View style={styles.broadcastModeBodyLiBefore} />
+
               <Text style={styles.broadcastModeBodyLiText}>
                 {selectedOption?.desc}
               </Text>
@@ -235,42 +232,55 @@ export const BroadcastMode = ({
           />
           <View style={styles.footer}>
             {options.map(option => (
-              <Tip content={option.tips || ''} key={option.value}>
-                <View
-                  style={StyleSheet.flatten([
-                    styles.footerItem,
-                    option.value === value.type ? styles.checked : {},
-                    option.disabled ? styles.disabled : {},
-                  ])}>
-                  <Radio
-                    containerStyle={styles.footerRadio}
-                    textStyle={styles.footerItemText}
-                    iconStyle={styles.radioIcon}
-                    right
-                    iconRight
-                    title={
-                      <View style={{ flex: 1 }}>
+              <View
+                key={option.value}
+                style={StyleSheet.flatten([
+                  styles.footerItem,
+                  option.value === value.type ? styles.checked : {},
+                  option.disabled ? styles.disabled : {},
+                ])}>
+                <Radio
+                  containerStyle={styles.footerRadio}
+                  textStyle={styles.footerItemText}
+                  iconStyle={styles.radioIcon}
+                  right
+                  iconRight
+                  title={
+                    option.disabled ? (
+                      <Tip
+                        parentWrapperStyle={StyleSheet.flatten({
+                          flex: 1,
+                        })}
+                        content={option.tips}>
+                        <Text style={styles.optionTitle}>{option.title}</Text>
+                        <Text style={styles.optionDesc}>{option.desc}</Text>
+                      </Tip>
+                    ) : (
+                      <View
+                        style={StyleSheet.flatten({
+                          flex: 1,
+                        })}>
                         <Text style={styles.optionTitle}>{option.title}</Text>
                         <Text style={styles.optionDesc}>{option.desc}</Text>
                       </View>
+                    )
+                  }
+                  checked={option.value === value.type}
+                  onPress={e => {
+                    if (option.disabled) {
+                      return;
                     }
-                    checked={option.value === value.type}
-                    onPress={() => {
-                      if (option.disabled) {
-                        return;
-                      }
-                      onChange?.({
-                        type: option.value,
-                        lowGasDeadline:
-                          option.value === 'low_gas'
-                            ? deadlineOptions[1]?.value
-                            : undefined,
-                      });
-                      setDrawerVisible(false);
-                    }}
-                  />
-                </View>
-              </Tip>
+                    onChange?.({
+                      type: option.value,
+                      lowGasDeadline:
+                        option.value === 'low_gas'
+                          ? deadlineOptions[1]?.value
+                          : undefined,
+                    });
+                    setDrawerVisible(false);
+                  }}
+                />
+              </View>
             ))}
           </View>
         </BottomSheetView>

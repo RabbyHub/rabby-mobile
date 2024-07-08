@@ -10,7 +10,6 @@ import {
 import { BottomSheetInput } from '@/components/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { Button } from '@/components/Button';
 import { useAlias } from '@/hooks/alias';
 import IconEdit from '@/assets/icons/approval/editpen.svg';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -20,6 +19,7 @@ import {
 } from '@/components/customized/BottomSheet';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { useApprovalAlias } from '@/components/Approval/hooks/useApprovalAlias';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -40,7 +40,8 @@ const AddressMemo = ({
   address: string;
   textStyle?: TextStyle;
 }) => {
-  const [addressAlias, updateAlias] = useAlias(address);
+  const alias = useApprovalAlias();
+  const addressAlias = alias.accountMap[address]?.alias;
   const [visible, setVisible] = useState(false);
   const [inputText, setInputText] = useState(addressAlias || '');
   const [errorMessage, setErrorMessage] = useState('');
@@ -55,7 +56,7 @@ const AddressMemo = ({
     if (!inputText) {
       setErrorMessage('Please input address note');
     }
-    updateAlias(inputText);
+    alias.update(address, inputText);
     setVisible(false);
   };
 
@@ -66,6 +67,10 @@ const AddressMemo = ({
   const handleTextChange = (text: string) => {
     setInputText(text);
   };
+
+  useEffect(() => {
+    alias.add(address);
+  }, [address, alias]);
 
   useEffect(() => {
     setInputText(addressAlias || '');
@@ -101,7 +106,7 @@ const AddressMemo = ({
         ref={modalRef}
         onDismiss={() => setVisible(false)}
         keyboardBlurBehavior="restore"
-        enableDynamicSizing>
+        snapPoints={[300]}>
         <BottomSheetView style={styles.mainView}>
           <AppBottomSheetModalTitle
             title={t('component.Contact.EditModal.title')}
@@ -110,7 +115,7 @@ const AddressMemo = ({
             <BottomSheetInput
               onChangeText={handleTextChange}
               maxLength={50}
-              autoFocus
+              // autoFocus
               value={inputText}
               placeholder="Please input address note"
             />

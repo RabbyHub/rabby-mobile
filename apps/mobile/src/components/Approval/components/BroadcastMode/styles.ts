@@ -8,20 +8,18 @@ export const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-1'],
       paddingHorizontal: 12,
     },
-    broadcastModeBody: {
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-    },
+    broadcastModeBody: {},
     broadcastModeBodyUl: {
-      marginTop: 0,
-      marginBottom: 0,
+      marginTop: 16,
+      marginBottom: 8,
     },
     broadcastModeBodyLi: {
+      marginHorizontal: 16,
       position: 'relative',
-      marginTop: 8,
       paddingLeft: 12,
       flexDirection: 'row',
       alignItems: 'center',
+      marginBottom: 8,
       gap: 6,
     },
     broadcastModeBodyLiBefore: {
