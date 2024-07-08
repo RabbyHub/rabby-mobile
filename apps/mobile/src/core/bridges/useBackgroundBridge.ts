@@ -8,6 +8,7 @@ import { dappService, sessionService } from '../services/shared';
 import {
   allowLinkOpen,
   getAlertMessage,
+  detectPhishingUrl,
   protocolAllowList,
   trustedProtocolToDeeplink,
 } from '@/constant/dappView';
@@ -57,10 +58,13 @@ type OnLoadStart = import('react-native-webview').WebViewProps['onLoadStart'] &
 type OnMessage = import('react-native-webview').WebViewProps['onMessage'] &
   Function;
 
+export type OnSelfClose = (reason: 'phishing') => void;
+
 export function useSetupWebview({
   dappOrigin,
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
+  onSelfClose,
 }: {
   dappOrigin: string;
   siteInfoRefs: {
@@ -69,6 +73,7 @@ export function useSetupWebview({
     iconRef: React.MutableRefObject<string | undefined>;
   };
   webviewRef: React.MutableRefObject<WebView | null>;
+  onSelfClose?: OnSelfClose;
 }) {
   const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
     useBackgroundBridges();
@@ -175,38 +180,53 @@ export function useSetupWebview({
    *  Function that allows custom handling of any web view requests.
    *  Return `true` to continue loading the request and `false` to stop loading.
    */
-  const onShouldStartLoadWithRequest = useCallback(({ url }) => {
-    // Continue request loading it the protocol is whitelisted
-    const { protocol } = new URL(url);
-    if (protocolAllowList.includes(protocol)) return true;
+  const onShouldStartLoadWithRequest = useCallback(
+    ({ url }) => {
+      // Continue request loading it the protocol is whitelisted
+      const { protocol, isPhishing } = detectPhishingUrl(url);
 
-    // If it is a trusted deeplink protocol, do not show the
-    // warning alert. Allow the OS to deeplink the URL
-    // and stop the webview from loading it.
-    if (trustedProtocolToDeeplink.includes(protocol)) {
-      allowLinkOpen(url);
+      if (isPhishing) {
+        Alert.alert('Warning', 'This website has been blocked from loading', [
+          {
+            text: 'OK',
+            onPress: () => null,
+            style: 'cancel',
+          },
+        ]);
+        onSelfClose?.('phishing');
+        return false;
+      }
+      if (protocolAllowList.includes(protocol)) return true;
+
+      // If it is a trusted deeplink protocol, do not show the
+      // warning alert. Allow the OS to deeplink the URL
+      // and stop the webview from loading it.
+      if (trustedProtocolToDeeplink.includes(protocol)) {
+        allowLinkOpen(url);
+        return false;
+      }
+
+      const alertMsg = getAlertMessage(protocol);
+
+      // Pop up an alert dialog box to prompt the user for permission
+      // to execute the request
+      Alert.alert('Warning', alertMsg, [
+        {
+          text: 'Ignore',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        {
+          text: 'Allow',
+          onPress: () => allowLinkOpen(url),
+          style: 'default',
+        },
+      ]);
+
       return false;
-    }
-
-    const alertMsg = getAlertMessage(protocol);
-
-    // Pop up an alert dialog box to prompt the user for permission
-    // to execute the request
-    Alert.alert('Warning', alertMsg, [
-      {
-        text: 'Ignore',
-        onPress: () => null,
-        style: 'cancel',
-      },
-      {
-        text: 'Allow',
-        onPress: () => allowLinkOpen(url),
-        style: 'default',
-      },
-    ]);
-
-    return false;
-  }, []);
+    },
+    [onSelfClose],
+  );
 
   return {
     onLoadStart,

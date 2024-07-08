@@ -1,4 +1,6 @@
 import { Linking } from 'react-native';
+import checkForPhishing from 'eth-phishing-detect';
+import { urlUtils } from '@rabby-wallet/base-utils';
 
 /**
  *
@@ -36,6 +38,19 @@ export const getAlertMessage = (protocol: string) => {
       return 'This website has been blocked from automatically opening an external application';
   }
 };
+
+/**
+ * @description detect if the url is a phishing url
+ *
+ */
+export function detectPhishingUrl(url: string) {
+  const urlInfo = urlUtils.safeParseURL(url?.toLowerCase() || '');
+  return {
+    isPhishing: !!urlInfo?.hostname && checkForPhishing(urlInfo?.hostname),
+    protocol: urlInfo?.protocol || '',
+    urlInfo,
+  };
+}
 
 /**
  * Promps the Operating System for its ability

@@ -139,13 +139,6 @@ export function useOpenDappView() {
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 
-  const closeOpenedDapp = useCallback(
-    (dappOrigin: DappInfo['origin']) => {
-      removeOpenedDapp(dappOrigin);
-    },
-    [removeOpenedDapp],
-  );
-
   const closeActiveOpenedDapp = useCallback(() => {
     if (activeDappOrigin) {
       removeOpenedDapp(activeDappOrigin);
@@ -159,6 +152,18 @@ export function useOpenDappView() {
     removeOpenedDapp,
     activeDappOrigin,
   ]);
+
+  const closeOpenedDapp = useCallback(
+    (dappOrigin: DappInfo['origin']) => {
+      removeOpenedDapp(dappOrigin);
+      if (activeDappOrigin === dappOrigin) {
+        closeActiveOpenedDapp();
+      } else {
+        removeOpenedDapp(dappOrigin);
+      }
+    },
+    [activeDappOrigin, removeOpenedDapp, closeActiveOpenedDapp],
+  );
 
   const { openedDappItems, activeDapp } = useMemo(() => {
     const retOpenedDapps = [] as OpenedDappItem[];
