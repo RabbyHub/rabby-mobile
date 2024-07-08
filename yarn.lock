@@ -27672,7 +27672,6 @@ __metadata:
     react-native-aes-crypto: ^3.0.1
     react-native-animateable-text: 0.11.0
     react-native-asset: ^2.1.1
-    react-native-background-secure: ^0.2.0
     react-native-ble-manager: 8
     react-native-ble-plx: 2.0.3
     react-native-collapsible-tab-view: ^6.2.1
@@ -28126,16 +28125,6 @@ __metadata:
   bin:
     react-native-asset: lib/cli.js
   checksum: 6c7dcc0b359b14e46de9872bceadfc1fdd68174787a1243ea53285577dcba7a028fd19a89be3e1ecbbc30817ec38c2ebb822d4d57d096d724c56e0ef9c61d587
-  languageName: node
-  linkType: hard
-
-"react-native-background-secure@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "react-native-background-secure@npm:0.2.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: e9f103d61cb14eebcecd19a94ad6bc78914b6a1b20331bb85865951679cf000d178123cee8e7e7f57630478a7c4cb217f5f1b7719dd25b46ff52d6d1be998988
   languageName: node
   linkType: hard
 

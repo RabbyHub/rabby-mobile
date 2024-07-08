@@ -121,7 +121,6 @@
     "react-native": "0.72.7",
     "react-native-aes-crypto": "^3.0.1",
     "react-native-animateable-text": "0.11.0",
-    "react-native-background-secure": "^0.2.0",
     "react-native-ble-manager": "8",
     "react-native-ble-plx": "2.0.3",
     "react-native-collapsible-tab-view": "^6.2.1",

@@ -1,11 +1,6 @@
 import { Dimensions, Platform } from 'react-native';
 import { hasNotch, getApiLevel } from 'react-native-device-info';
 
-import {
-  blockScreen as RNBSBlockScree,
-  unblockScreen as RNBSUnBlockScree,
-} from 'react-native-background-secure';
-
 export default class DeviceUtils {
   static getDeviceWidth() {
     return Dimensions.get('window').width;
@@ -96,19 +91,5 @@ export default class DeviceUtils {
   static async getDeviceAPILevel() {
     const apiLevel = await getApiLevel();
     return apiLevel;
-  }
-}
-
-const IS_ANDROID = DeviceUtils.isAndroid();
-
-export function androidBlockScreen() {
-  if (IS_ANDROID) {
-    RNBSBlockScree();
-  }
-}
-
-export function androidUnblockScreen() {
-  if (IS_ANDROID) {
-    RNBSUnBlockScree();
   }
 }

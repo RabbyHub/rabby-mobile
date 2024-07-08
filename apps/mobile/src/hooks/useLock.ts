@@ -10,7 +10,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
-import { androidBlockScreen, androidUnblockScreen } from '@/core/utils/device';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
