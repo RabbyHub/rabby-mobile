@@ -52,6 +52,7 @@ if (__DEV__) {
   });
   // nativeModule.iosProtectFromScreenRecording();
 }
+
 /**
  *
  * @see https://github.com/killserver/react-native-screenshot-prevent/issues/23
@@ -61,24 +62,6 @@ const RNScreenshotPrevent = Object.freeze({
   ...nativeModule,
   onPreventScreenshotChanged,
   iosOnUserDidTakeScreenshot,
-  enableSecureView(imagePath: string = '') {
-    if (DeviceUtils.isIOS()) {
-      console.warn(
-        'RNScreenshotPrevent.enableSecureView not work correctly on iOS',
-      );
-      return;
-    }
-    return nativeModule.enableSecureView(imagePath);
-  },
-  disableSecureView() {
-    if (DeviceUtils.isIOS()) {
-      console.warn(
-        'RNScreenshotPrevent.disableSecureView not work correctly on iOS',
-      );
-      return;
-    }
-    return nativeModule.disableSecureView();
-  },
 });
 
 export default RNScreenshotPrevent;

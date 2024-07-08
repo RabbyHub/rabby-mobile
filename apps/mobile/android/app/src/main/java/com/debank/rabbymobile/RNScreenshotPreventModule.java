@@ -86,44 +86,6 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   }
 
   @ReactMethod
-  public void enableSecureView(String imagePath) {
-    if (this.reactContext.hasCurrentActivity()) {
-      final Activity activity = this.reactContext.getCurrentActivity();
-      if (activity != null) {
-        if (overlayLayout == null) {
-          createOverlay(activity, imagePath);
-        }
-        activity.runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            RNScreenshotPreventModule.setSecure(activity);
-          }
-        });
-      }
-    }
-  }
-
-  @ReactMethod
-  public void disableSecureView() {
-    if (this.reactContext.hasCurrentActivity()) {
-      final Activity activity = this.reactContext.getCurrentActivity();
-      if (activity != null) {
-        activity.runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            if (overlayLayout != null) {
-              ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView().getRootView();
-              rootView.removeView(overlayLayout);
-              overlayLayout = null;
-            }
-            RNScreenshotPreventModule.cancelSecure(activity);
-          }
-        });
-      }
-    }
-  }
-
-  @ReactMethod
   public void iosProtectFromScreenRecording() {
     // Noop for Android
   }

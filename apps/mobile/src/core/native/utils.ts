@@ -15,14 +15,9 @@ interface NativeModulesStatic {
   };
   RNScreenshotPrevent: NativeModule & {
     togglePreventScreenshot: (isPrevent: boolean) => void;
-    enableSecureView: (imagePath?: string) => void;
-    disableSecureView: () => void;
     iosProtectFromScreenRecording(): void;
     iosUnprotectFromScreenRecording(): void;
   };
-  // ScreenShieldRN: {
-  //   protectScreenRecording(): void;
-  // }
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
