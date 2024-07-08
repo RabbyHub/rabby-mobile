@@ -183,16 +183,20 @@ export function useSetupWebview({
   const onShouldStartLoadWithRequest = useCallback(
     ({ url }) => {
       // Continue request loading it the protocol is whitelisted
-      const { protocol, isPhishing } = detectPhishingUrl(url);
+      const { protocol, hostname, isPhishing } = detectPhishingUrl(url);
 
       if (isPhishing) {
-        Alert.alert('Warning', 'This website has been blocked from loading', [
-          {
-            text: 'OK',
-            onPress: () => null,
-            style: 'cancel',
-          },
-        ]);
+        Alert.alert(
+          'Warning',
+          `This phishing website '${hostname}' has been blocked.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => null,
+              style: 'cancel',
+            },
+          ],
+        );
         onSelfClose?.('phishing');
         return false;
       }

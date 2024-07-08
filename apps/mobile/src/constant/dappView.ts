@@ -48,6 +48,7 @@ export function detectPhishingUrl(url: string) {
   return {
     isPhishing: !!urlInfo?.hostname && checkForPhishing(urlInfo?.hostname),
     protocol: urlInfo?.protocol || '',
+    hostname: urlInfo?.hostname || '',
     urlInfo,
   };
 }
