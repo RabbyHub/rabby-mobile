@@ -6,7 +6,11 @@ import { MMKV, MMKVConfiguration } from 'react-native-mmkv';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { StorageAdapater } from '@rabby-wallet/persist-store';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import { SyncStorage } from 'jotai/vanilla/utils/atomWithStorage';
+import {
+  AsyncStringStorage,
+  SyncStorage,
+  SyncStringStorage,
+} from 'jotai/vanilla/utils/atomWithStorage';
 
 export function makeAppStorage(options?: MMKVConfiguration) {
   const mmkv = new MMKV(options);
@@ -93,17 +97,21 @@ export const atomByMMKV = <T = any>(
   key: string,
   initialValue: T,
   options?: {
-    setupSubscribe(ctx: {
+    storage?: /* AsyncStringStorage |  */ SyncStringStorage;
+    setupSubscribe?(ctx: {
       jsonStore: SyncStorage<T>;
     }): /* subscribe */ SyncStorage<T>['subscribe'] & Function;
   },
 ) => {
-  const jsonStore = createJSONStorage<T>(() => ({
-    getItem: appMethods.getItem,
-    setItem: appMethods.setItem,
-    removeItem: appMethods.removeItem,
-    clearAll: appStorage.clearAll,
-  }));
+  const { storage } = options || {};
+  const jsonStore = storage
+    ? createJSONStorage<T>(() => storage)
+    : createJSONStorage<T>(() => ({
+        getItem: appMethods.getItem,
+        setItem: appMethods.setItem,
+        removeItem: appMethods.removeItem,
+        clearAll: appMethods.clearAll,
+      }));
 
   if (typeof options?.setupSubscribe === 'function') {
     jsonStore.subscribe = options?.setupSubscribe({ jsonStore });
