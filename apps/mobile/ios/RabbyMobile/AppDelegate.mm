@@ -63,10 +63,10 @@ void devLog(NSString *format, ...) {}
   }
   NSDictionary * deviceInfo = [rnDeviveInfo constantsToExport];
   NSString * userAgent =
-    [NSString stringWithFormat:@"%@/%@.%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
+    [NSString stringWithFormat:@"%@/%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
       self.moduleName,
       deviceInfo[@"appVersion"],
-      deviceInfo[@"buildNumber"],
+      // deviceInfo[@"buildNumber"],
       cfnVersion,
       [self _getDarwinVersion],
       deviceInfo[@"model"],
