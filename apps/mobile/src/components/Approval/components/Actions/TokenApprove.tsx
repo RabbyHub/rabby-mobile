@@ -308,15 +308,15 @@ const TokenApprove = ({
             <SubRow>
               <TouchableOpacity onPress={handleClickTokenBalance}>
                 <Text
-                  style={StyleSheet.flatten({
-                    ...commonStyle.subRowText,
-                    color: colors['blue-default'],
-                    textDecorationLine: new BigNumber(approveAmount).gt(
-                      tokenBalance,
-                    )
-                      ? 'underline'
-                      : 'none',
-                  })}>
+                  style={StyleSheet.flatten([
+                    commonStyle.subRowText,
+                    new BigNumber(approveAmount).gt(tokenBalance)
+                      ? {
+                          color: colors['blue-default'],
+                          textDecorationLine: 'underline',
+                        }
+                      : {},
+                  ])}>
                   {formatAmount(tokenBalance)}{' '}
                   {ellipsisTokenSymbol(getTokenSymbol(actionData.token))}
                 </Text>
