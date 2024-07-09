@@ -40,7 +40,6 @@ export function useSetupServiceStub() {
 
   useMount(() => {
     eventBus.on(EVENT_SWITCH_ACCOUNT, (v: any) => {
-      console.log('vvvvvv', v);
       setCurrentAccount(v);
     });
   });
