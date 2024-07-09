@@ -305,6 +305,7 @@ export default function SettingsScreen(): JSX.Element {
               onPress: () => {
                 switchAllowScreenshotRef.current?.toggle();
               },
+              visible: __DEV__,
             },
             // only valid if custom password given
             {

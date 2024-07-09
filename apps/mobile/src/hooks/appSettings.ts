@@ -3,7 +3,6 @@ import { useCallback, useEffect } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
-import useMount from 'react-use/lib/useMount';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 
 const isIOS = DeviceUtils.isIOS();
@@ -18,8 +17,8 @@ const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
    *
    * for iOS, change it need restart the app
    */
-  androidAllowScreenCapture: !!__DEV__,
-  iosAllowScreenRecord: false,
+  androidAllowScreenCapture: !__DEV__,
+  iosAllowScreenRecord: !__DEV__,
 });
 
 const KEY = isIOS ? 'iosAllowScreenRecord' : 'androidAllowScreenCapture';
@@ -73,12 +72,12 @@ export function useAllowScreenshot() {
 /**
  * @description call this hook only once on the top level of your app
  */
-export function useAppPreventScreenshot() {
+export function useGlobalAppPreventScreenshotOnDev() {
   const { allowScreenshot } = useIsAllowScreenshot();
-  usePreventScreenshot(!allowScreenshot);
+  usePreventScreenshot(__DEV__ && !allowScreenshot);
 
   useEffect(() => {
-    if (!isIOS) return;
+    if (!isIOS && !__DEV__) return;
 
     if (!allowScreenshot) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();

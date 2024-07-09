@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 
@@ -17,6 +17,9 @@ import { useNavigation } from '@react-navigation/native';
 import { makeThemeIconFromCC } from './makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
 import type { RootStackParamsList } from '@/navigation-type';
+import { usePreventScreenshot } from './native/security';
+import DeviceUtils from '@/core/utils/device';
+import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 
 const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
   onLight: ThemeColors.light['neutral-body'],
@@ -185,4 +188,38 @@ export function usePreventGoBack({
   return {
     registerPreventEffect,
   };
+}
+
+const isIOS = DeviceUtils.isIOS();
+const PROTECTED_SCREENS: {
+  [P in AppRootName]?: boolean;
+} = {
+  [RootNames.CreateMnemonic]: true,
+  [RootNames.ImportMnemonic]: true,
+  [RootNames.ImportPrivateKey]: true,
+
+  [RootNames.BackupMnemonic]: true,
+  [RootNames.BackupPrivateKey]: true,
+};
+/**
+ * @description call this hook only once on the top level of your app
+ */
+export function useAppPreventScreenshotOnScreen() {
+  const currentRouteName = useAtomValue(currentRouteNameAtom);
+  const shouldPreventScreenshot = useMemo(() => {
+    return !!currentRouteName && PROTECTED_SCREENS[currentRouteName];
+  }, [currentRouteName]);
+
+  // for Android
+  usePreventScreenshot(shouldPreventScreenshot);
+
+  useEffect(() => {
+    if (!isIOS) return;
+
+    if (shouldPreventScreenshot) {
+      RNScreenshotPrevent.iosProtectFromScreenRecording();
+    } else {
+      RNScreenshotPrevent.iosUnprotectFromScreenRecording();
+    }
+  }, [shouldPreventScreenshot]);
 }
