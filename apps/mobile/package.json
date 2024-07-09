@@ -100,7 +100,6 @@
     "ethers": "5.4.2",
     "formik": "^2.4.5",
     "i18next": "^23.7.14",
-    "immer": "^10.0.3",
     "interval-promise": "^1.4.0",
     "intl-pluralrules": "^2.0.1",
     "jotai": "^2.6.0",

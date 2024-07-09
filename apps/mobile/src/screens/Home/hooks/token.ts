@@ -27,6 +27,7 @@ import {
 } from '../utils/token';
 import { log } from './usePortfolio';
 import { clone } from 'lodash';
+import { produce } from '@/core/utils/produce';
 
 export const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -150,19 +151,13 @@ export const useTokens = (
 
     setLoading(true);
     log('======Start-Tokens======', userAddr);
-    // let _data = produce(walletProject, draft => {
-    //   draft.netWorth = 0;
-    //   draft._netWorth = '$0';
-    //   draft._netWorthChange = '-';
-    //   draft.netWorthChange = 0;
-    //   draft._netWorthChangePercent = '';
-    // });
-    let _data = clone(walletProject);
-    _data.netWorth = 0;
-    _data._netWorth = '$0';
-    _data._netWorthChange = '-';
-    _data.netWorthChange = 0;
-    _data._netWorthChangePercent = '';
+    let _data = produce(walletProject, draft => {
+      draft.netWorth = 0;
+      draft._netWorth = '$0';
+      draft._netWorthChange = '-';
+      draft.netWorthChange = 0;
+      draft._netWorthChangePercent = '';
+    });
 
     console.log('_data', _data);
     let _tokens: AbstractPortfolioToken[] = [];
@@ -192,12 +187,9 @@ export const useTokens = (
 
         return m;
       }, {} as Record<string, TokenItem[]>);
-      // _data = produce(_data, draft => {
-      //   setWalletTokens(draft, chainTokens);
-      // });
-      const temp = clone(_data);
-      setWalletTokens(temp, chainTokens);
-      _data = temp;
+      _data = produce(_data, draft => {
+        setWalletTokens(draft, chainTokens);
+      });
 
       setData(_data);
       _tokens = sortWalletTokens(_data);
@@ -322,12 +314,9 @@ export const useTokens = (
       tokensDict[token.chain].push(token);
     });
 
-    // _data = produce(_data, draft => {
-    //   setWalletTokens(draft, tokensDict);
-    // });
-    const temp = clone(_data);
-    setWalletTokens(temp, tokensDict);
-    _data = temp;
+    _data = produce(_data, draft => {
+      setWalletTokens(draft, tokensDict);
+    });
 
     setData(_data);
     _tokens = sortWalletTokens(_data);
@@ -411,12 +400,9 @@ export const useTokens = (
       }
     });
 
-    // _data = produce(_data, draft => {
-    //   draft.patchHistory(historyPortfolios);
-    // });
-    const temp = clone(_data);
-    temp.patchHistory(historyPortfolios);
-    _data = temp;
+    _data = produce(_data, draft => {
+      draft.patchHistory(historyPortfolios);
+    });
 
     const tokenList = sortWalletTokens(_data);
     if (isTestnet) {
@@ -460,28 +446,17 @@ export const useTokens = (
       return;
     }
 
-    // _data = produce(_data, draft => {
-    //   Object.entries(priceDicts).forEach(([c, dict]) => {
-    //     if (!draft._portfolioDict[c]._historyPatched) {
-    //       draft._portfolioDict[c].patchPrice(dict);
-    //       if (draft._portfolioDict[c].netWorthChange) {
-    //         draft.netWorthChange += draft._portfolioDict[c].netWorthChange;
-    //       }
-    //     }
-    //     draft.afterHistoryPatched();
-    //   });
-    // }) as DisplayedProject;
-    const temp2 = clone(_data);
-    Object.entries(priceDicts).forEach(([c, dict]) => {
-      if (!temp2._portfolioDict[c]._historyPatched) {
-        temp2._portfolioDict[c].patchPrice(dict);
-        if (temp2._portfolioDict[c].netWorthChange) {
-          temp2.netWorthChange += temp2._portfolioDict[c].netWorthChange;
+    _data = produce(_data, draft => {
+      Object.entries(priceDicts).forEach(([c, dict]) => {
+        if (!draft._portfolioDict[c]._historyPatched) {
+          draft._portfolioDict[c].patchPrice(dict);
+          if (draft._portfolioDict[c].netWorthChange) {
+            draft.netWorthChange += draft._portfolioDict[c].netWorthChange;
+          }
         }
-      }
-      temp2.afterHistoryPatched();
-    });
-    _data = temp2;
+        draft.afterHistoryPatched();
+      });
+    }) as DisplayedProject;
 
     if (currentAbort.signal.aborted) {
       setLoading(false);

@@ -19,6 +19,7 @@ import {
   getMissedTokenPrice,
 } from '../utils/portfolio';
 import { DisplayedProject } from '../utils/project';
+import { produce } from '@/core/utils/produce';
 
 const chunkSize = 5;
 const { isSameAddress } = addressUtils;
@@ -175,12 +176,9 @@ export const usePortfolios = (
         projects.forEach(project => {
           if (!currentAbort.signal.aborted && projectDict.current) {
             log('#####################REALTIME###############################');
-            // projectDict.current = produce(projectDict.current, draft => {
-            //   portfolio2Display(project, draft);
-            // });
-            const temp = clone(projectDict.current);
-            portfolio2Display(project!, temp);
-            projectDict.current = temp;
+            projectDict.current = produce(projectDict.current, draft => {
+              portfolio2Display(project, draft);
+            });
           }
         });
       }),
@@ -237,12 +235,9 @@ export const usePortfolios = (
 
         projects.forEach(project => {
           if (!currentAbort.signal.aborted && projectDict.current) {
-            // projectDict.current = produce(projectDict.current, draft => {
-            //   patchPortfolioHistory(project, draft);
-            // });
-            const temp = clone(projectDict.current);
-            patchPortfolioHistory(project!, temp);
-            projectDict.current = temp;
+            projectDict.current = produce(projectDict.current, draft => {
+              patchPortfolioHistory(project, draft);
+            });
           }
         });
       }),
@@ -295,20 +290,13 @@ export const usePortfolios = (
       return;
     }
 
-    // projectDict.current = produce(projectDict.current, draft => {
-    //   notSuportHistoryProjects?.forEach(pId => {
-    //     if (priceDicts?.[draft[pId].chain!]) {
-    //       draft[pId].patchPrice(priceDicts?.[draft[pId].chain!]);
-    //     }
-    //   });
-    // });
-    const temp = clone(projectDict.current);
-    notSuportHistoryProjects?.forEach(pId => {
-      if (priceDicts?.[temp[pId].chain!]) {
-        temp[pId].patchPrice(priceDicts?.[temp[pId].chain!]);
-      }
+    projectDict.current = produce(projectDict.current, draft => {
+      notSuportHistoryProjects?.forEach(pId => {
+        if (priceDicts?.[draft[pId].chain!]) {
+          draft[pId].patchPrice(priceDicts?.[draft[pId].chain!]);
+        }
+      });
     });
-    projectDict.current = temp;
 
     if (currentAbort.signal.aborted) {
       return;
