@@ -94,6 +94,7 @@ jobs:
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
           RABBY_MOBILE_BUILD_BUCKET: ${{ secrets.RABBY_MOBILE_BUILD_BUCKET }}
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
+          RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
           RABBY_MOBILE_ANDROID_KEY_PASSWORD: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_PASSWORD }}
           RABBY_MOBILE_ANDROID_KEY_ALIAS: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_ALIAS }}

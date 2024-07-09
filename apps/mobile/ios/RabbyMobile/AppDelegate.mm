@@ -63,10 +63,10 @@ void devLog(NSString *format, ...) {}
   }
   NSDictionary * deviceInfo = [rnDeviveInfo constantsToExport];
   NSString * userAgent =
-    [NSString stringWithFormat:@"%@/%@.%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
+    [NSString stringWithFormat:@"%@/%@ CFNetwork/%@ Darwin/%@ (%@ %@/%@)",
       self.moduleName,
       deviceInfo[@"appVersion"],
-      deviceInfo[@"buildNumber"],
+      // deviceInfo[@"buildNumber"],
       cfnVersion,
       [self _getDarwinVersion],
       deviceInfo[@"model"],
@@ -113,7 +113,6 @@ void devLog(NSString *format, ...) {}
   // [self.window makeKeyAndVisible];
 
   // [super application:application didFinishLaunchingWithOptions:launchOptions];
-  // self.window
   // [RNSplashScreen showSplash:@"LaunchScreen" inRootView:self.rootView]; // react-native-splash-screen
 
   NSString * userAgent = [self makeUserAgent];
@@ -127,8 +126,7 @@ void devLog(NSString *format, ...) {}
     return configuration;
   });
 
-  bool didFinish=[super application:application didFinishLaunchingWithOptions:launchOptions];
-  // will block thread, make sure call it after super's didFinishLaunchingWithOptions
+  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
   [RNSplashScreen show]; // react-native-splash-screen
 
   return didFinish;

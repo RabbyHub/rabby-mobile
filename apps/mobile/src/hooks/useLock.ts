@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
-
-const isAndroid = Platform.OS === 'android';
-const isIOS = Platform.OS === 'ios';
-
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+
 import { keyringService } from '@/core/services';
 import { apisLock } from '@/core/apis';
 import { PasswordStatus } from '@/core/apis/lock';
@@ -13,6 +10,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+
+const isAndroid = Platform.OS === 'android';
+const isIOS = Platform.OS === 'ios';
+
+import {
+  nativeBlockScreen,
+  nativeUnblockScreen,
+} from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -121,28 +126,32 @@ function tryGetAppStatus() {
   }
 }
 
-const appStatusAtom = atom<{
-  status: AppStateStatus;
+const appStateAtom = atom<{
+  current: AppStateStatus;
   // iosStatus: AppStateStatus;
 }>({
-  status: tryGetAppStatus(),
+  current: tryGetAppStatus(),
   // iosStatus: FALLBACK_STATE,
 });
 
+function isInactive(appStatus: AppStateStatus) {
+  return [
+    'inactive',
+    /* not possible for our ios app, but just write here */
+    'background',
+  ].includes(appStatus);
+}
+
 export function useIsOnBackground() {
-  const appState = useAtomValue(appStatusAtom);
+  const appState = useAtomValue(appStateAtom);
 
   const isOnBackground = useMemo(() => {
     if (isIOS) {
-      return [
-        'inactive',
-        /* not possible for our app, but just write here */
-        'background',
-      ].includes(appState.status);
+      return isInactive(appState.current);
     }
 
-    return appState.status === 'background';
-  }, [appState.status]);
+    return isInactive(appState.current);
+  }, [appState]);
 
   return {
     isOnBackground,
@@ -153,17 +162,19 @@ export function useIsOnBackground() {
  * @description call this hooks on the top level of your app to handle background state
  */
 export function useSecureOnBackground() {
-  const setAppStatus = useSetAtom(appStatusAtom);
+  const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
     if (!AppState.isAvailable) return;
 
     if (isAndroid) {
-      const subBlur = AppState.addEventListener('blur', nextStatus => {
-        setAppStatus({ status: nextStatus });
+      const subBlur = AppState.addEventListener('blur', () => {
+        // nativeBlockScreen();
+        setAppStatus({ current: 'inactive' });
       });
-      const subFocus = AppState.addEventListener('focus', nextStatus => {
-        setAppStatus({ status: nextStatus });
+      const subFocus = AppState.addEventListener('focus', () => {
+        // nativeUnblockScreen();
+        setAppStatus({ current: 'active' });
       });
 
       return () => {
@@ -171,8 +182,12 @@ export function useSecureOnBackground() {
         subFocus.remove();
       };
     } else if (isIOS) {
+      /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
-        setAppStatus({ status: nextStatus });
+        // if (isInactive(nextStatus)) nativeBlockScreen();
+        // else nativeUnblockScreen();
+
+        setAppStatus({ current: nextStatus });
       });
 
       return () => {
@@ -195,7 +210,7 @@ export function useSetPasswordFirst() {
       screen: (SettingNavigatorParamList['SetPassword'] &
         object)['replaceScreen'],
     ) => {
-      if (APP_FEATURE_SWITCH.customizePassword) return false;
+      if (!APP_FEATURE_SWITCH.customizePassword) return false;
 
       if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
         navigation.push(RootNames.StackSettings, {

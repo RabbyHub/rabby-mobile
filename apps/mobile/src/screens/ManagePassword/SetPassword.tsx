@@ -20,10 +20,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import {
-  resetNavigationToHome,
-  useRabbyAppNavigation,
-} from '@/hooks/navigation';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowTipTermOfUseModal } from './components/TipTermOfUseModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
@@ -95,7 +92,7 @@ function useSetupPasswordForm() {
           toast.success('Setup Password Successfully');
           await fetchLockInfo();
           if (!navState?.replaceScreen) {
-            resetNavigationToHome(navigation);
+            resetNavigationTo(navigation, 'Home');
           } else {
             navigation.replace(navState.replaceStack, {
               screen: navState.replaceScreen,

@@ -20,6 +20,8 @@ import {
   RcManagePassword,
   RcIconFingerprint,
   RcIconFaceId,
+  RcScreenshot,
+  RcScreenRecord,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -34,8 +36,12 @@ import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import { BUILD_CHANNEL } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+
+import { SwitchToggleType } from '@/components';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
+import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
+
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
@@ -54,7 +60,7 @@ import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect } from '@react-navigation/native';
-import { SwitchToggleType } from '@/components';
+import { useIsAllowScreenshot } from '@/hooks/appSettings';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -97,15 +103,17 @@ export default function SettingsScreen(): JSX.Element {
   const { startBiometricsVerification, abortBiometricsVerification } =
     useVerifyByBiometrics();
 
+  const { allowScreenshot } = useIsAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
 
   const disabledBiometrics =
     !couldSetupBiometrics ||
     !hasSetupCustomPassword ||
-    APP_FEATURE_SWITCH.biometricsAuth;
+    !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const [switchWhitelistRef, switchBiometricsRef] = [
+  const [switchWhitelistRef, switchBiometricsRef, switchAllowScreenshotRef] = [
+    useRef<SwitchToggleType>(null),
     useRef<SwitchToggleType>(null),
     useRef<SwitchToggleType>(null),
   ];
@@ -285,6 +293,18 @@ export default function SettingsScreen(): JSX.Element {
               ),
               // TODO: only show in non-production mode
               visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+            },
+            {
+              label: allowScreenshot
+                ? `Allow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`
+                : `Disallow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`,
+              icon: isIOS ? RcScreenRecord : RcScreenshot,
+              rightNode: (
+                <SwitchAllowScreenshot ref={switchAllowScreenshotRef} />
+              ),
+              onPress: () => {
+                switchAllowScreenshotRef.current?.toggle();
+              },
             },
             // only valid if custom password given
             {

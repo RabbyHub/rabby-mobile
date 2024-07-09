@@ -17,7 +17,7 @@ import { useFormik } from 'formik';
 import { toast } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
-  resetNavigationToHome,
+  resetNavigationTo,
   usePreventGoBack,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
@@ -70,7 +70,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const checkUnlocked = useCallback(() => {
     if (!apisLock.isUnlocked()) return;
 
-    resetNavigationToHome(navigation);
+    resetNavigationTo(navigation, 'Home');
     afterLeaveFromUnlock();
   }, [navigation, afterLeaveFromUnlock]);
 
@@ -301,7 +301,10 @@ export default function UnlockScreen() {
               }}>
               {usingBiometrics
                 ? t('page.unlock.btn.switchtype_pwd')
-                : t('page.unlock.btn.switchtype_fingerprint')}
+                : Platform.select({
+                    ios: t('page.unlock.btn.switchtype_faceid'),
+                    android: t('page.unlock.btn.switchtype_fingerprint'),
+                  }) || t('page.unlock.btn.switchtype_fingerprint')}
             </TouchableText>
           </View>
         )}

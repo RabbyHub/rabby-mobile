@@ -37,22 +37,17 @@ function useQuestionsCheck() {
       {
         index: 1 as const,
         content: t('page.newAddress.seedPhrase.importQuestion1'),
-        checked: true,
+        checked: false,
       },
       {
         index: 2 as const,
         content: t('page.newAddress.seedPhrase.importQuestion2'),
-        checked: true,
+        checked: false,
       },
       {
         index: 3 as const,
         content: t('page.newAddress.seedPhrase.importQuestion3'),
-        checked: true,
-      },
-      {
-        index: 4 as const,
-        content: t('page.newAddress.seedPhrase.importQuestion4'),
-        checked: true,
+        checked: false,
       },
     ];
   }, [t]);
@@ -102,8 +97,7 @@ export const CreateSeedPhraseRickCheckScreen = () => {
       onPressButton={handleConfirm}>
       <View style={styles.tipsWarper}>
         <Text style={styles.tips}>
-          Before you start, please read and keep the following security tips in
-          mind.
+          {t('page.newAddress.seedPhrase.riskTips')}
         </Text>
       </View>
       <View style={styles.list}>

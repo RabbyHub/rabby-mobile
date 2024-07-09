@@ -136,6 +136,7 @@ export function OpenedDappWebViewStub() {
     expandDappWebViewModal,
     collapseDappWebViewModal,
     activeDapp,
+    closeOpenedDapp,
     onHideActiveDapp,
     closeActiveOpenedDapp,
   } = useOpenDappView();
@@ -230,6 +231,11 @@ export function OpenedDappWebViewStub() {
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
               initialUrl={dappInfo.$openParams?.initialUrl}
+              onSelfClose={reason => {
+                if (reason === 'phishing') {
+                  closeOpenedDapp(dappInfo.origin);
+                }
+              }}
               webviewProps={{
                 /**
                  * @platform ios

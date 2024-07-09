@@ -56,6 +56,14 @@ react {
  */
 def enableProguardInReleaseBuilds = true
 
+def isNewArchitectureEnabled() {
+  return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
+}
+
+if (isNewArchitectureEnabled()) {
+  apply plugin: "com.facebook.react"
+}
+
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
@@ -86,7 +94,7 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 19
+        versionCode 21
         versionName "0.2.1"
     }
     splits {
@@ -136,9 +144,24 @@ android {
     buildTypes.each {
 		  it.buildConfigField 'String', 'rabbitCode', "\"$System.env.RABBY_MOBILE_CODE\""
     }
+    sourceSets {
+      main {
+        if (isNewArchitectureEnabled()) {
+          java.srcDirs += [
+            "src/newarch",
+            // This is needed to build Kotlin project with NewArch enabled
+            "${project.buildDir}/generated/source/codegen/java"
+          ]
+        } else {
+          java.srcDirs += ["src/oldarch"]
+        }
+      }
+    }
 }
 
 dependencies {
+    implementation "com.facebook.react:react-native:+"
+
     implementation 'com.google.firebase:firebase-analytics:17.4.1'
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

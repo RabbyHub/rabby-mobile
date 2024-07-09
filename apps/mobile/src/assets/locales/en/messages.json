@@ -1258,10 +1258,13 @@
           "answer": "Yes, it will be stored locally on your phone and only accessible to you."
         },
         "importError": "[CreateMnemonics] unexpected step {{0}}",
-        "importQuestion1": "If I lose my seed phrase, my assets will be lost forever.",
-        "importQuestion2": "If I share my seed phrase with others, my assets will be stolen.",
-        "importQuestion3": "The seed phrase is only stored on my phone, and Rabby has no access to it.",
-        "importQuestion4": "If I uninstall Rabby without backing up the seed phrase, Rabby cannot retrieve it for me.",
+        "importQuestion1Legacy": "If I lose my seed phrase, my assets will be lost forever.",
+        "importQuestion2Legacy": "If I share my seed phrase with others, my assets will be stolen.",
+        "importQuestion3Legacy": "The seed phrase is only stored on my phone, and Rabby has no access to it.",
+        "importQuestion4Legacy": "If I uninstall Rabby without backing up the seed phrase, Rabby cannot retrieve it for me.",
+        "importQuestion1": "If I lose my seed phrase or share it with others, my assets will be lost forever.",
+        "importQuestion2": "The seed phrase is only stored on my phone, and Rabby has no access to it.",
+        "importQuestion3": "If I do not back up the seed phrase, and the app is unintentionally deleted, the device is lost, or reinstallation is required, Rabby cannot retrieve it for me.",
         "riskTips": "Before you start, please read and keep the following security tips in mind.",
         "showSeedPhrase": "Show Seed Phrase",
         "backup": "Backup Seed Phrase",
@@ -1623,7 +1626,9 @@
       "btn": {
         "unlock": "Unlock",
         "switchtype_pwd": "Unlock with Password",
-        "switchtype_fingerprint": "Unlock with Fingerprint"
+        "switchtype_fingerprint": "Unlock with Fingerprint",
+        "switchtype_touchid": "Unlock with Touch ID",
+        "switchtype_faceid": "Unlock with Face ID"
       },
       "password": {
         "required": "Enter the Password to Unlock",

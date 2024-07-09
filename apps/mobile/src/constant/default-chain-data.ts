@@ -14,7 +14,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "eth",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/token/logo_url/eth/935ae4e4d1d12d59a99717a24f2540b5.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/eth/42ba589cd077e7bdd97db6480b0ff61d.png",
@@ -112,11 +112,11 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
   "op": {
     "id": "op",
     "community_id": 10,
-    "name": "Optimism",
+    "name": "OP",
     "native_token": {
       "id": "op",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/op_token/logo_url/op/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/op/01ae734fe781c9c2ae6a4cc7e9244056.png",
@@ -133,7 +133,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "arb",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/arb_token/logo_url/arb/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/arb/854f629937ce94bebeb2cd38fb336de7.png",
@@ -201,7 +201,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "boba",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/boba_token/logo_url/boba/b1947b38a90e559eb950453965714be4.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/boba/e43d79cd8088ceb3ea3e4a240a75728f.png",
@@ -252,7 +252,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "aurora",
       "symbol": "AETH",
-      "logo": "https://static.debank.com/image/aurora_token/logo_url/aurora/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/aurora/da491099bb44690eda122cdd67c5c610.png",
@@ -507,7 +507,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "nova",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/nova_token/logo_url/nova/fa2f1f04a6761644701860eea7c4a47a.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/nova/06eb2b7add8ba443d5b219c04089c326.png",
@@ -660,7 +660,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "era",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/era/2cfcd0c8436b05d811b03935f6c1d7da.png",
@@ -694,7 +694,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "pze",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/pze_token/logo_url/pze/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/pze/a2276dce2d6a200c6148fb975f0eadd3.png",
@@ -702,23 +702,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "eip_1559": false,
     "is_disabled": false,
     "explorer_host": "https://zkevm.polygonscan.com",
-    "need_estimate_gas": false
-  },
-  "eos": {
-    "id": "eos",
-    "community_id": 17777,
-    "name": "EOS EVM",
-    "native_token": {
-      "id": "eos",
-      "symbol": "EOS",
-      "logo": "https://static.debank.com/image/eos_token/logo_url/eos/3b72a264baa8cefd45b37e0520f13e6f.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/eos/7e3122a9ce6f9d522e6d5519d43b6a72.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/eos/017f8f3d4666311422524cb5da717f2e.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.evm.eosnetwork.com",
     "need_estimate_gas": false
   },
   "core": {
@@ -881,7 +864,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "zora",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/zora/de39f62c4489a2359d5e1198a8e02ef1.png",
@@ -898,7 +881,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "base",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/base/ccc1513e4f390542c4fb2f4b88ce9579.png",
@@ -915,7 +898,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "linea",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/coin/logo_url/eth/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/linea/32d4ff2cf92c766ace975559c232179c.png",
@@ -983,7 +966,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "manta",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/manta_token/logo_url/manta/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/manta/0e25a60b96a29d6a5b9e524be7565845.png",
@@ -1000,7 +983,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "scrl",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/scrl_token/logo_url/scrl/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/scrl/1fa5c7e0bfd353ed0a97c1476c9c42d2.png",
@@ -1085,7 +1068,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "mode",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/mode_token/logo_url/mode/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/mode/466e6e12f4fd827f8f497cceb0601a5e.png",
@@ -1110,23 +1093,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://subnets.avax.network/beam",
-    "need_estimate_gas": false
-  },
-  "pego": {
-    "id": "pego",
-    "community_id": 20201022,
-    "name": "Pego",
-    "native_token": {
-      "id": "pego",
-      "symbol": "PG",
-      "logo": "https://static.debank.com/image/pego_token/logo_url/pego/6b81cf47fdc1b86707d3fbf02f90cf18.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/pego/6b81cf47fdc1b86707d3fbf02f90cf18.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/pego/ee47a1dcfc1b990090e1894221496c8f.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://scan.pego.network",
     "need_estimate_gas": false
   },
   "fon": {
@@ -1161,23 +1127,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "eip_1559": false,
     "is_disabled": false,
     "explorer_host": "https://scan.zkfair.io",
-    "need_estimate_gas": false
-  },
-  "neon": {
-    "id": "neon",
-    "community_id": 245022934,
-    "name": "Neon EVM",
-    "native_token": {
-      "id": "neon",
-      "symbol": "NEON",
-      "logo": "https://static.debank.com/image/neon_token/logo_url/neon/26d28c0b4fdce16112743c227428f42c.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/neon/6b7108186e8445e364f0ac0a96764012.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/neon/b8a665a02ac6fd90890cc220a91ada48.png",
-    "eip_1559": false,
-    "is_disabled": false,
-    "explorer_host": "https://neon.blockscout.com",
     "need_estimate_gas": false
   },
   "alot": {
@@ -1231,23 +1180,6 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://explorer.xai-chain.net",
     "need_estimate_gas": false
   },
-  "hubble": {
-    "id": "hubble",
-    "community_id": 1992,
-    "name": "Hubble",
-    "native_token": {
-      "id": "hubble",
-      "symbol": "USDC",
-      "logo": "https://static.debank.com/image/hubble_token/logo_url/hubble/35ab0987153a8355a454223aae371ac7.png",
-      "decimals": 18
-    },
-    "logo_url": "https://static.debank.com/image/chain/logo_url/hubble/dc3b830260f712058db0d70bc073dfda.png",
-    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/hubble/5af24266877401ea8d086ccb08155c4e.png",
-    "eip_1559": true,
-    "is_disabled": false,
-    "explorer_host": "https://explorer.hubble.exchange",
-    "need_estimate_gas": false
-  },
   "zeta": {
     "id": "zeta",
     "community_id": 7000,
@@ -1272,7 +1204,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "rari",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/rari_token/logo_url/rari/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/rari/67fc6abba5cfc6bb3a57bb6afcf5afee.png",
@@ -1323,7 +1255,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "blast",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/blast_token/logo_url/blast/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/blast/15132294afd38ce980639a381ee30149.png",
@@ -1476,7 +1408,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "karak",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/karak_token/logo_url/karak/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/karak/a9e47f00f6eeb2c9cc8f9551cff5fe68.png",
@@ -1493,7 +1425,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "aze",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/aze_token/logo_url/aze/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/aze/6def6ac081a37e94ed0106da2cefeaf4.png",
@@ -1527,7 +1459,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "lumio",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/lumio_token/logo_url/lumio/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/lumio/be6cd376260e0e214d8486f2300a4fb9.png",
@@ -1544,7 +1476,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "apex",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/apex_token/logo_url/apex/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/apex/f60665106aba5b08563e26b4ba4baf83.png",
@@ -1578,7 +1510,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "kroma",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/kroma_token/logo_url/kroma/389dd9a835250219889e01d5a31a75f1.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/kroma/7c88e9e0e2488172fc1fcb9da3096a70.png",
@@ -1646,7 +1578,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "zklink",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/zklink_token/logo_url/zklink/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/zklink/b3a4000979cc4f3701135a5f565ffeb0.png",
@@ -1731,13 +1663,13 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "bob",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/bob_token/logo_url/bob/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/bob/4e0029be99877775664327213a8da60e.png",
     "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/bob/7f61e1ed6fae04833ee21d83c9998d22.png",
     "eip_1559": true,
-    "is_disabled": true,
+    "is_disabled": false,
     "explorer_host": "https://explorer.gobob.xyz",
     "need_estimate_gas": false
   },
@@ -1748,7 +1680,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "reya",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/reya_token/logo_url/reya/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/reya/20d71aad4279c33229297da1f00d8ae1.png",
@@ -1792,6 +1724,23 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "explorer_host": "https://mainnet-explorer.anvm.io",
     "need_estimate_gas": false
   },
+  "sanko": {
+    "id": "sanko",
+    "community_id": 1996,
+    "name": "Sanko",
+    "native_token": {
+      "id": "sanko",
+      "symbol": "DMT",
+      "logo": "https://static.debank.com/image/sanko_token/logo_url/sanko/a3ab5461c7afa714c877cf57fbb033ad.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/sanko/a3ab5461c7afa714c877cf57fbb033ad.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/sanko/596ade63d11b1a8eafcffc9ecac32632.png",
+    "eip_1559": true,
+    "is_disabled": true,
+    "explorer_host": "https://explorer.sanko.xyz",
+    "need_estimate_gas": false
+  },
   "taiko": {
     "id": "taiko",
     "community_id": 167000,
@@ -1799,7 +1748,7 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "native_token": {
       "id": "taiko",
       "symbol": "ETH",
-      "logo": "https://static.debank.com/image/taiko_token/logo_url/taiko/d61441782d4a08a7479d54aea211679e.png",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
       "decimals": 18
     },
     "logo_url": "https://static.debank.com/image/chain/logo_url/taiko/7723fbdb38ef181cd07a8b8691671e6b.png",
@@ -1807,6 +1756,74 @@ const SupportedChainsByServerId: Record<SupportedChain['id'], SupportedChain> = 
     "eip_1559": true,
     "is_disabled": false,
     "explorer_host": "https://taikoscan.io",
+    "need_estimate_gas": false
+  },
+  "cyber": {
+    "id": "cyber",
+    "community_id": 7560,
+    "name": "Cyber",
+    "native_token": {
+      "id": "cyber",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/coin/logo_url/eth/6443cdccced33e204d90cb723c632917.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/cyber/3a3c0c5da5fa8876c8c338afae0db478.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/cyber/239566559dc0c5fd5f5e2d76b85c6490.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://cyberscan.co",
+    "need_estimate_gas": false
+  },
+  "sei": {
+    "id": "sei",
+    "community_id": 1329,
+    "name": "Sei",
+    "native_token": {
+      "id": "sei",
+      "symbol": "SEI",
+      "logo": "https://static.debank.com/image/sei_token/logo_url/sei/34ddf58f678be2db5b2636b59c9828b5.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/sei/34ddf58f678be2db5b2636b59c9828b5.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/sei/632af17fefaa435817bd6bc3c549280d.png",
+    "eip_1559": false,
+    "is_disabled": false,
+    "explorer_host": "https://seitrace.com",
+    "need_estimate_gas": false
+  },
+  "strax": {
+    "id": "strax",
+    "community_id": 105105,
+    "name": "Stratis",
+    "native_token": {
+      "id": "strax",
+      "symbol": "STRAX",
+      "logo": "https://static.debank.com/image/strax_token/logo_url/strax/62929cc22496a34349782a0c685377dd.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/strax/7675d16c026442847faf6bbe7708bf9c.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/strax/01db3348ae950906fec6ec74966b59f9.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://explorer.stratisevm.com",
+    "need_estimate_gas": false
+  },
+  "mint": {
+    "id": "mint",
+    "community_id": 185,
+    "name": "Mint",
+    "native_token": {
+      "id": "mint",
+      "symbol": "ETH",
+      "logo": "https://static.debank.com/image/mint_token/logo_url/mint/48bfb74adddd170e936578aec422836d.png",
+      "decimals": 18
+    },
+    "logo_url": "https://static.debank.com/image/chain/logo_url/mint/86404f93cd4e51eafcc2e244d417c03f.png",
+    "white_logo_url": "https://static.debank.com/image/chain/white_logo_url/mint/1bc50cbf5ec022d40efe48c4ec68c25d.png",
+    "eip_1559": true,
+    "is_disabled": false,
+    "explorer_host": "https://mintscan.org",
     "need_estimate_gas": false
   }
 };

@@ -1,4 +1,3 @@
-import { immerable } from 'immer';
 import PQueue from 'p-queue/dist/index';
 
 import {
@@ -23,7 +22,7 @@ export const pQueue = new PQueue({
 });
 
 export class DisplayedProject implements AbstractProject {
-  [immerable] = true;
+  // [immerable] = true;
   id: string;
   name: string;
   logo?: string;
@@ -158,7 +157,7 @@ export class DisplayedProject implements AbstractProject {
 }
 
 class DisplayedPortfolio implements AbstractPortfolio {
-  [immerable] = true;
+  // [immerable] = true;
   id: string;
   name?: string;
   type?: string;
@@ -302,7 +301,7 @@ class DisplayedPortfolio implements AbstractPortfolio {
 }
 
 export class DisplayedToken implements AbstractPortfolioToken {
-  [immerable] = true;
+  // [immerable] = true;
   id: string;
   _tokenId: string;
   chain: string;

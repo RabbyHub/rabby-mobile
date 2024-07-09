@@ -26,6 +26,7 @@ import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
+import { useAppPreventScreenshot } from './hooks/appSettings';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -48,6 +49,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
   useSecureOnBackground();
+  useAppPreventScreenshot();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

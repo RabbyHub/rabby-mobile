@@ -9,9 +9,13 @@
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* RabbyMobileTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RabbyMobileTests.m */; };
 		014102622BF348FE00629679 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */; };
+		01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */; };
+		01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */; };
+		01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BBE01E2C3889BB0033D12B /* ScreenShield.swift */; };
 		01C69DD92C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01C69DDA2C2C93CA007C7A6E /* AppConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */; };
 		01E584B62C370990007F3280 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 01E584B52C370990007F3280 /* LaunchScreen.xib */; };
+		01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */ = {isa = PBXBuildFile; fileRef = 01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
@@ -40,8 +44,15 @@
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* RabbyMobileTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RabbyMobileTests.m; sourceTree = "<group>"; };
 		014102612BF348FE00629679 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIImage+ImageEffects.m"; path = "RabbyMobile/UIImage+ImageEffects.m"; sourceTree = "<group>"; };
+		01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNScreenshotPrevent.m; path = RabbyMobile/RNScreenshotPrevent.m; sourceTree = "<group>"; };
+		01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNScreenshotPrevent.h; path = RabbyMobile/RNScreenshotPrevent.h; sourceTree = "<group>"; };
+		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
+		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
 		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
 		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
+		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
+		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* RabbyMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RabbyMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = RabbyMobile/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = RabbyMobile/AppDelegate.mm; sourceTree = "<group>"; };
@@ -104,6 +115,13 @@
 			isa = PBXGroup;
 			children = (
 				01E584B52C370990007F3280 /* LaunchScreen.xib */,
+				01BBE01E2C3889BB0033D12B /* ScreenShield.swift */,
+				01BBE0182C387B8C0033D12B /* RNScreenshotPrevent.h */,
+				01BBE0132C3879380033D12B /* RNScreenshotPrevent.m */,
+				01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */,
+				01BBE0122C3879380033D12B /* UIImage+ImageEffects.m */,
+				01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */,
+				01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -242,7 +260,7 @@
 						TestTargetID = 13B07F861A680F5B00A75B9A;
 					};
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1120;
+						LastSwiftMigration = 1520;
 					};
 				};
 			};
@@ -483,8 +501,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01BBE0162C3879380033D12B /* UIImage+ImageEffects.m in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				01EF41AA2C36CB00009D8053 /* ReactNativeSecurity.mm in Sources */,
+				01BBE0212C3889BB0033D12B /* ScreenShield.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				01BBE0172C3879380033D12B /* RNScreenshotPrevent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -503,6 +525,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-RabbyMobile-RabbyMobileTests.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -530,6 +553,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-RabbyMobile-RabbyMobileTests.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = RabbyMobileTests/Info.plist;
@@ -565,6 +589,7 @@
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -581,6 +606,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -603,6 +629,7 @@
 				INFOPLIST_FILE = RabbyMobile/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Rabby Wallet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -619,6 +646,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";

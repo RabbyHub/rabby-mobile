@@ -19,7 +19,7 @@ import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 import { Text } from '../Text';
 
 import { ScreenLayouts } from '@/constant/layout';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 
 import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
@@ -38,9 +38,10 @@ import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
 import { APP_UA_PARIALS } from '@/constant';
+import { createGetStyles } from '@/utils/styles';
 
 function errorLog(...info: any) {
-  devLog('[DappWebViewControl::error]', ...info);
+  // devLog('[DappWebViewControl::error]', ...info);
 }
 
 const BUILTIN_SPECIAL_URLS = [BLANK_PAGE];
@@ -118,6 +119,8 @@ type DappWebViewControlProps = {
     | React.ReactNode
     | ((ctx: { webview: React.ReactNode | null }) => React.ReactNode);
   style?: StyleProp<ViewStyle>;
+
+  onSelfClose?: (reason: 'phishing') => void;
 };
 
 function useDefaultNodes({
@@ -131,8 +134,7 @@ function useDefaultNodes({
   webviewState: WebViewState;
   webviewActions: ReturnType<typeof useWebViewControl>['webviewActions'];
 }) {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useThemeStyles(getStyles);
   const defaultHeaderLeft = useMemo(() => {
     return (
       <View style={[styles.touchableHeadWrapper]}>
@@ -197,11 +199,11 @@ const DappWebViewControl = React.forwardRef<
       webviewProps,
       webviewNode,
       style,
+      onSelfClose,
     },
     ref,
   ) => {
-    const colors = useThemeColors();
-    const styles = getStyles(colors);
+    const { styles, colors } = useThemeStyles(getStyles);
 
     const {
       webviewRef,
@@ -323,6 +325,7 @@ const DappWebViewControl = React.forwardRef<
         titleRef,
         iconRef,
       },
+      onSelfClose,
     });
 
     const initialUrl = useMemo(() => {
@@ -371,7 +374,11 @@ const DappWebViewControl = React.forwardRef<
             webviewProps?.onLoadStart?.(nativeEvent);
             onLoadStart(nativeEvent);
           }}
-          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          onShouldStartLoadWithRequest={nativeEvent => {
+            const result = onShouldStartLoadWithRequest(nativeEvent);
+
+            return result;
+          }}
           onError={errorLog}
           onMessage={event => {
             // // leave here for debug
@@ -446,7 +453,7 @@ const DappWebViewControl = React.forwardRef<
   },
 );
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const getStyles = createGetStyles(colors =>
   StyleSheet.create({
     dappWebViewControl: {
       position: 'relative',
@@ -508,6 +515,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       opacity: 1,
       overflow: 'hidden',
     },
-  });
+  }),
+);
 
 export default DappWebViewControl;
