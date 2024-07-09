@@ -1,11 +1,13 @@
-import { Colors } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { isPossibleDomain } from '@/utils/url';
-import React from 'react';
-import { StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleProp, Text, ViewStyle } from 'react-native';
 import RcIconGlobe from '@/assets/icons/dapp/icon-globe.svg';
 import RcIconJump from '@/assets/icons/dapp/icon-jump.svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
+import { createGetStyles } from '@/utils/styles';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 export const LinkCard = ({
   url,
@@ -16,15 +18,21 @@ export const LinkCard = ({
   style?: StyleProp<ViewStyle>;
   onPress?: (origin: string) => void;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useThemeStyles(getStyles);
 
-  const str = url.trim().toLowerCase();
-  const _url = isPossibleDomain(str)
-    ? /^\w+:\/\//.test(str)
-      ? str
-      : `https://${str}`
-    : '';
+  const _url = useMemo(() => {
+    const str = url.trim().toLowerCase();
+    if (!str) return null;
+    const parsedResult = urlUtils.safeParseURL(str);
+    if (
+      parsedResult?.protocol &&
+      !isOrHasWithAllowedProtocol(parsedResult?.protocol)
+    )
+      return null;
+
+    if (isPossibleDomain(str)) return stringUtils.ensurePrefix(str, 'https://');
+  }, [url]);
+
   if (_url) {
     return (
       <TouchableOpacity
@@ -42,8 +50,8 @@ export const LinkCard = ({
   return null;
 };
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
+const getStyles = createGetStyles(
+  (colors: ReturnType<typeof useThemeColors>) => ({
     card: {
       flexDirection: 'row',
       gap: 6,
@@ -61,4 +69,5 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       lineHeight: 17,
       color: colors['neutral-body'],
     },
-  });
+  }),
+);

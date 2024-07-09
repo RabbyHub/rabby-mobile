@@ -7,6 +7,10 @@ import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
+import {
+  isOrHasWithAllowedProtocol,
+  protocolAllowList,
+} from '@/constant/dappView';
 
 const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
 
@@ -70,12 +74,25 @@ export function useOpenDappView() {
   const openUrlAsDapp = useCallback(
     (
       dappUrl: DappInfo['origin'] | OpenedDappItem,
-      options?: { isActiveDapp?: boolean },
+      options?: {
+        /** @default {true} */
+        isActiveDapp?: boolean;
+        /** @default {false} */
+        showSheetModalFirst?: boolean;
+      },
     ) => {
+      const { isActiveDapp = true, showSheetModalFirst = false } =
+        options || {};
+
       const item = typeof dappUrl === 'string' ? { origin: dappUrl } : dappUrl;
 
       const itemUrl = item.origin;
-      item.origin = canoicalizeDappUrl(itemUrl).origin;
+      const { origin: targetOrigin, urlInfo } = canoicalizeDappUrl(itemUrl);
+      if (!isOrHasWithAllowedProtocol(urlInfo?.protocol)) return false;
+
+      if (showSheetModalFirst) showDappWebViewModal();
+
+      item.origin = targetOrigin;
 
       if (!dapps[item.origin]) {
         addDapp(
@@ -113,13 +130,19 @@ export function useOpenDappView() {
         return [...prev];
       });
 
-      const { isActiveDapp = true } = options || {};
-
       if (isActiveDapp) {
         setActiveDappOrigin(item.origin);
       }
+
+      return true;
     },
-    [dapps, setOpenedOriginsDapps, addDapp, setActiveDappOrigin],
+    [
+      showDappWebViewModal,
+      dapps,
+      setOpenedOriginsDapps,
+      addDapp,
+      setActiveDappOrigin,
+    ],
   );
 
   const removeOpenedDapp = useCallback(
@@ -199,7 +222,6 @@ export function useOpenDappView() {
     activeDapp,
     openedDappItems,
 
-    showDappWebViewModal,
     expandDappWebViewModal,
     collapseDappWebViewModal,
 

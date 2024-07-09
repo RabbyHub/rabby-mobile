@@ -8,6 +8,14 @@ import { urlUtils } from '@rabby-wallet/base-utils';
  */
 export const protocolAllowList = ['about:', 'http:', 'https:'];
 
+export function isOrHasWithAllowedProtocol(input?: string) {
+  if (!input) return false;
+  if (protocolAllowList.includes(input)) return true;
+
+  const { protocol } = urlUtils.safeParseURL(input) || {};
+  return !!protocol && protocolAllowList.includes(protocol);
+}
+
 /**
  *
  * List of all trusted protocols for OS Linker to handle

@@ -35,7 +35,7 @@ export const DAPP_METAMASK_TEST_DAPP: DappInfo = {
 export function useSheetWebViewTester() {
   const { dapps, addDapp, updateFavorite } = useDapps();
 
-  const { openUrlAsDapp, showDappWebViewModal } = useOpenDappView();
+  const { openUrlAsDapp } = useOpenDappView();
 
   const makeSureTestDapp = React.useCallback(() => {
     if (dapps[DAPP_METAMASK_TEST_DAPP.origin]) {
@@ -59,7 +59,6 @@ export function useSheetWebViewTester() {
   const openMetaMaskTestDapp = React.useCallback(() => {
     makeSureTestDapp();
 
-    showDappWebViewModal();
     openUrlAsDapp(
       {
         origin: DAPP_METAMASK_TEST_DAPP.origin,
@@ -67,9 +66,9 @@ export function useSheetWebViewTester() {
           initialUrl: 'https://metamask.github.io/test-dapp',
         },
       },
-      { isActiveDapp: true },
+      { isActiveDapp: true, showSheetModalFirst: true },
     );
-  }, [makeSureTestDapp, openUrlAsDapp, showDappWebViewModal]);
+  }, [makeSureTestDapp, openUrlAsDapp]);
 
   return {
     makeSureTestDapp,
