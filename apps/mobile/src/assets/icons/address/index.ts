@@ -64,8 +64,8 @@ export const PrivateKeySVG = makeThemeIconFromCC(PrivateKeyCC, {
 });
 
 export const PrivateKeySVGLight = makeThemeIconFromCC(PrivateKeyCC, {
-  onLight: ThemeColors.dark['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
+  onLight: '#ffffff',
+  onDark: '#ffffff',
 });
 
 export const SeedPhraseSVG = makeThemeIconFromCC(SeedPhraseCC, {
@@ -74,6 +74,6 @@ export const SeedPhraseSVG = makeThemeIconFromCC(SeedPhraseCC, {
 });
 
 export const SeedPhraseSVGLight = makeThemeIconFromCC(SeedPhraseCC, {
-  onLight: ThemeColors.dark['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
+  onLight: '#ffffff',
+  onDark: '#ffffff',
 });

@@ -58,6 +58,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
 
 const getStyle = createGetStyles(colors => ({
   main: {
+    flex: 1,
     backgroundColor: colors['neutral-card-2'],
     borderRadius: 4,
     padding: 8,
