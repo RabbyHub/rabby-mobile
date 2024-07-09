@@ -14,7 +14,7 @@ import TouchableView, {
   SilentTouchableView,
 } from '@/components/Touchable/TouchableView';
 import { useFormik } from 'formik';
-import { toast } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import {
   resetNavigationTo,
@@ -29,9 +29,10 @@ import {
   parseKeychainError,
 } from '@/core/apis/keychain';
 import { useUnlockApp } from './hooks';
-import { RcIconFaceId, RcIconFingerprint } from './icons';
+import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -42,6 +43,8 @@ const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
 
 const isIOS = Platform.OS === 'ios';
 const BiometricsIconSize = 56;
+
+const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
@@ -165,7 +168,7 @@ export default function UnlockScreen() {
         ) {
           toast.info(parsedInfo.sysMessage);
         } else {
-          toast.info(t('page.unlock.biometrics.failed'));
+          toastBiometricsFailed(t('page.unlock.biometrics.failed'));
         }
 
         if (!parsedInfo.isCancelledByUser) {
@@ -188,7 +191,7 @@ export default function UnlockScreen() {
           );
         }
       } else {
-        toast.info(
+        toastBiometricsFailed(
           isIOS
             ? t('page.unlock.biometrics.failedIOS')
             : t('page.unlock.biometrics.failed'),
