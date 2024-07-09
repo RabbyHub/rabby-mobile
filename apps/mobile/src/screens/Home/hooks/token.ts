@@ -1,5 +1,4 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { produce } from 'immer';
 import { Dayjs } from 'dayjs';
 
 import { AbstractPortfolioToken } from '../types';
@@ -27,6 +26,7 @@ import {
   batchQueryHistoryTokens,
 } from '../utils/token';
 import { log } from './usePortfolio';
+import { produce } from '@/core/utils/produce';
 
 export const walletProject = new DisplayedProject({
   id: 'Wallet',

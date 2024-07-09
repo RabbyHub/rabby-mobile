@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { produce } from 'immer';
 import { Dayjs } from 'dayjs';
 // import { atom, useSetAtom } from 'jotai';
 
@@ -20,6 +19,7 @@ import {
   getMissedTokenPrice,
 } from '../utils/portfolio';
 import { DisplayedProject } from '../utils/project';
+import { produce } from '@/core/utils/produce';
 
 const chunkSize = 5;
 const { isSameAddress } = addressUtils;
@@ -70,6 +70,7 @@ export const usePortfolios = (
         timer = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible]);
 
   useEffect(() => {

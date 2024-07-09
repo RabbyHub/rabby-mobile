@@ -19336,13 +19336,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^10.0.3":
-  version: 10.0.3
-  resolution: "immer@npm:10.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmer%2F-%2Fimmer-10.0.3.tgz"
-  checksum: 76acabe6f40e752028313762ba477a5d901e57b669f3b8fb406b87b9bb9b14e663a6fbbf5a6d1ab323737dd38f4b2494a4e28002045b88948da8dbf482309f28
-  languageName: node
-  linkType: hard
-
 "immer@npm:^9.0.7":
   version: 9.0.21
   resolution: "immer@npm:9.0.21::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmer%2F-%2Fimmer-9.0.21.tgz"
@@ -27651,7 +27644,6 @@ __metadata:
     ethers: 5.4.2
     formik: ^2.4.5
     i18next: ^23.7.14
-    immer: ^10.0.3
     interval-promise: ^1.4.0
     intl-pluralrules: ^2.0.1
     jest: ^27.5.1
