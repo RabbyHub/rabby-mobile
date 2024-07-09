@@ -270,7 +270,7 @@ export default function UnlockScreen() {
                   styles.nextButtonContainer,
                   { height: safeSizes.nextButtonContainerHeight },
                 ]}
-                title={'Next'}
+                title={t('page.unlock.btn.unlock')}
                 onPress={evt => {
                   evt.stopPropagation();
                   formik.handleSubmit();
