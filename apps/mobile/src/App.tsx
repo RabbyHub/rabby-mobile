@@ -7,13 +7,16 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme } from '@/hooks/theme';
+import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  GestureHandlerRootView,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNames } from './constant/layout';

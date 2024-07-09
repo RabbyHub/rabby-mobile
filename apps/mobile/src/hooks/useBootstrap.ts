@@ -70,7 +70,7 @@ export function useInitializeAppOnTop() {
   const { fetchAccounts } = useAccounts({ disableAutoFetch: true });
   React.useEffect(() => {
     const onUnlock = () => {
-      console.debug('onUnlock::');
+      console.debug('useBootstrap::onUnlock');
       setAppLock(prev => ({ ...prev, appUnlocked: true }));
       sendUserAddressEvent();
 
@@ -168,7 +168,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   useJavaScriptBeforeContentLoaded({ isTop: true });
   useGlobal();
   useLoadLockInfo({ autoFetch: true });
-  useBiometrics({ autoFetch: true });
+  const { fetchBiometrics } = useBiometrics({ autoFetch: false });
 
   const { appNavigationReady } = useNavigationReady();
   React.useEffect(() => {
@@ -180,7 +180,11 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
   const { getTriedUnlock } = useTryUnlockAppWithBuiltinOnTop();
 
   React.useEffect(() => {
-    Promise.allSettled([getTriedUnlock(), loadSecurityChain({ rabbitCode })])
+    Promise.allSettled([
+      getTriedUnlock(),
+      loadSecurityChain({ rabbitCode }),
+      fetchBiometrics(),
+    ])
       .then(async ([_unlockResult, _securityChain]) => {
         setBootstrap({ couldRender: true });
       })
@@ -191,7 +195,7 @@ export function useBootstrapApp({ rabbitCode }: { rabbitCode: string }) {
       .finally(() => {
         setTimeout(hideSplashScreen, 1000);
       });
-  }, [getTriedUnlock, setBootstrap, rabbitCode]);
+  }, [getTriedUnlock, setBootstrap, fetchBiometrics, rabbitCode]);
 
   return {
     couldRender,

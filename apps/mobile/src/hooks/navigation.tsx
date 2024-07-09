@@ -7,32 +7,38 @@ import {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { useThemeColors } from '@/hooks/theme';
-import { navigationRef } from '@/utils/navigation';
+import { getReadyNavigationInstance, navigationRef } from '@/utils/navigation';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
 import { AppRootName, RootNames, makeHeadersPresets } from '@/constant/layout';
-import { useNavigation } from '@react-navigation/native';
+import {
+  NavigationContainerRef,
+  useNavigation,
+} from '@react-navigation/native';
 
-import { makeThemeIconFromCC } from './makeThemeIcon';
-import { ThemeColors } from '@/constant/theme';
 import type { RootStackParamsList } from '@/navigation-type';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import { apisLock } from '@/core/apis';
 
-const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
-});
+// const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
+//   onLight: ThemeColors.light['neutral-body'],
+//   onDark: ThemeColors.dark['neutral-body'],
+// });
 
 const currentRouteNameAtom = atom<AppRootName | string | undefined>(undefined);
-export function useCurrentRouteNameInAppStatusBar() {
-  return useAtomValue(currentRouteNameAtom);
+export function useCurrentRouteName() {
+  return {
+    currentRouteName: useAtomValue(currentRouteNameAtom),
+  };
 }
 
 export function useSetCurrentRouteName() {
-  return useSetAtom(currentRouteNameAtom);
+  return {
+    setCurrentRouteName: useSetAtom(currentRouteNameAtom),
+  };
 }
 
 const navigationReadyAtom = atom<boolean>(false);
@@ -120,7 +126,9 @@ export function useRabbyAppNavigation<
 }
 
 export function resetNavigationTo(
-  navigation: ReturnType<typeof useRabbyAppNavigation>,
+  navigation:
+    | NativeStackScreenProps<RootStackParamsList>['navigation']
+    | NavigationContainerRef<RootStackParamsList>,
   type: 'Home' | 'Unlock' = 'Home',
 ) {
   switch (type) {
@@ -147,6 +155,20 @@ export function resetNavigationTo(
       break;
     }
   }
+}
+
+export async function requestLockWalletAndBackToUnlockScreen() {
+  const isUnlocked = apisLock.isUnlocked();
+  if (isUnlocked) {
+    const lockInfo = await apisLock.getRabbyLockInfo();
+    if (!lockInfo.isUseCustomPwd) return;
+
+    await apisLock.lockWallet();
+  }
+
+  console.debug('will back to unlock screen');
+  const navigation = getReadyNavigationInstance();
+  if (navigation) resetNavigationTo(navigation, 'Unlock');
 }
 
 export function usePreventGoBack({

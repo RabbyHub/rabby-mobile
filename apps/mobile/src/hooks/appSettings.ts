@@ -4,6 +4,8 @@ import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import { autoLockEvent } from '@/core/apis/autoLock';
+import { apisAutoLock } from '@/core/apis';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -85,4 +87,26 @@ export function useGlobalAppPreventScreenshotOnDev() {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
   }, [allowScreenshot]);
+}
+
+const autoLockTimeoutAtom = atom(-1);
+autoLockTimeoutAtom.onMount = setter => {
+  autoLockEvent.addListener('change', value => {
+    setter(value);
+  });
+};
+
+export function useAutoLockTimeout() {
+  const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
+
+  const fetchTimeout = useCallback(() => {
+    const value = apisAutoLock.getAutoLockTime();
+    setTimeout(value);
+    return value;
+  }, [setTimeout]);
+
+  return {
+    autoLockTimeout: timeout,
+    fetchTimeout,
+  };
 }

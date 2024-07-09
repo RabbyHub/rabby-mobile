@@ -1,4 +1,4 @@
-import 'react-native-gesture-handler';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import {
@@ -6,7 +6,7 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, View } from 'react-native';
+import { ColorSchemeName, PanResponder, View } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 
@@ -51,6 +51,7 @@ import {
   useTuneStatusBarOnRouteChange,
 } from './components/AppStatusBar';
 import usePrevious from 'ahooks/lib/usePrevious';
+import AutoLockView from './components/AutoLockView';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -80,7 +81,7 @@ export default function AppNavigation({
   const { isAppUnlocked } = useAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
-  const setCurrentRouteName = useSetCurrentRouteName();
+  const { setCurrentRouteName } = useSetCurrentRouteName();
   const { tuneOnRouteChange } = useTuneStatusBarOnRouteChange();
 
   const onRouteChange = useCallback(
@@ -151,7 +152,7 @@ export default function AppNavigation({
   // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
+    <AutoLockView style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <NavigationContainer
@@ -276,7 +277,7 @@ export default function AppNavigation({
         </RootStack.Navigator>
       </NavigationContainer>
       <BackgroundSecureBlurView />
-    </View>
+    </AutoLockView>
   );
 }
 
