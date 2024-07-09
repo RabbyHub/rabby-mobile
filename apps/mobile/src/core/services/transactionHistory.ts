@@ -7,7 +7,6 @@ import {
   TxPushType,
   TxRequest,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { produce } from 'immer';
 import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
@@ -115,11 +114,9 @@ export class TransactionHistoryService {
   }
 
   setStore = (
-    recipe: (
-      draft: TransactionHistoryItem[],
-    ) => TransactionHistoryItem[] | void,
+    recipe: (draft: TransactionHistoryItem[]) => TransactionHistoryItem[],
   ) => {
-    this.store.transactions = produce(this.store.transactions, recipe);
+    this.store.transactions = recipe(this.store.transactions || []);
   };
 
   getPendingCount(address: string) {
@@ -241,7 +238,7 @@ export class TransactionHistoryService {
       return;
     }
     this.setStore(draft => {
-      draft.push(tx);
+      return [...draft, tx];
     });
   }
 
@@ -308,6 +305,7 @@ export class TransactionHistoryService {
       if (index !== -1) {
         draft[index] = { ...tx };
       }
+      return [...draft];
     });
   }
 
