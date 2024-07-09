@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import {
