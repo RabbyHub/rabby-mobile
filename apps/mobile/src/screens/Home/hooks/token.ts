@@ -26,7 +26,6 @@ import {
   batchQueryHistoryTokens,
 } from '../utils/token';
 import { log } from './usePortfolio';
-import { clone } from 'lodash';
 import { produce } from '@/core/utils/produce';
 
 export const walletProject = new DisplayedProject({
@@ -159,7 +158,6 @@ export const useTokens = (
       draft._netWorthChangePercent = '';
     });
 
-    console.log('_data', _data);
     let _tokens: AbstractPortfolioToken[] = [];
     setData(_data);
     const snapshot = await queryTokensCache(userAddr, isTestnet);

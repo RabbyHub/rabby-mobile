@@ -6,7 +6,7 @@ import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
-import { chunk, clone } from 'lodash';
+import { chunk } from 'lodash';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   loadTestnetPortfolioSnapshot,
