@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { produce } from 'immer';
 import { Dayjs } from 'dayjs';
 // import { atom, useSetAtom } from 'jotai';
 
@@ -7,7 +6,7 @@ import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
-import { chunk } from 'lodash';
+import { chunk, clone } from 'lodash';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import {
   loadTestnetPortfolioSnapshot,
@@ -70,6 +69,7 @@ export const usePortfolios = (
         timer = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAddr, visible]);
 
   useEffect(() => {
@@ -175,9 +175,12 @@ export const usePortfolios = (
         projects.forEach(project => {
           if (!currentAbort.signal.aborted && projectDict.current) {
             log('#####################REALTIME###############################');
-            projectDict.current = produce(projectDict.current, draft => {
-              portfolio2Display(project, draft);
-            });
+            // projectDict.current = produce(projectDict.current, draft => {
+            //   portfolio2Display(project, draft);
+            // });
+            const temp = clone(projectDict.current);
+            portfolio2Display(project!, temp);
+            projectDict.current = temp;
           }
         });
       }),
@@ -234,9 +237,12 @@ export const usePortfolios = (
 
         projects.forEach(project => {
           if (!currentAbort.signal.aborted && projectDict.current) {
-            projectDict.current = produce(projectDict.current, draft => {
-              patchPortfolioHistory(project, draft);
-            });
+            // projectDict.current = produce(projectDict.current, draft => {
+            //   patchPortfolioHistory(project, draft);
+            // });
+            const temp = clone(projectDict.current);
+            patchPortfolioHistory(project!, temp);
+            projectDict.current = temp;
           }
         });
       }),
@@ -289,13 +295,20 @@ export const usePortfolios = (
       return;
     }
 
-    projectDict.current = produce(projectDict.current, draft => {
-      notSuportHistoryProjects?.forEach(pId => {
-        if (priceDicts?.[draft[pId].chain!]) {
-          draft[pId].patchPrice(priceDicts?.[draft[pId].chain!]);
-        }
-      });
+    // projectDict.current = produce(projectDict.current, draft => {
+    //   notSuportHistoryProjects?.forEach(pId => {
+    //     if (priceDicts?.[draft[pId].chain!]) {
+    //       draft[pId].patchPrice(priceDicts?.[draft[pId].chain!]);
+    //     }
+    //   });
+    // });
+    const temp = clone(projectDict.current);
+    notSuportHistoryProjects?.forEach(pId => {
+      if (priceDicts?.[temp[pId].chain!]) {
+        temp[pId].patchPrice(priceDicts?.[temp[pId].chain!]);
+      }
     });
+    projectDict.current = temp;
 
     if (currentAbort.signal.aborted) {
       return;
