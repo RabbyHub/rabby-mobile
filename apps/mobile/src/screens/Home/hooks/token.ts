@@ -157,13 +157,6 @@ export const useTokens = (
     //   draft.netWorthChange = 0;
     //   draft._netWorthChangePercent = '';
     // });
-    // let _data = Object.assign({}, walletProject, {
-    //   netWorth: 0,
-    //   _netWorth: '$0',
-    //   _netWorthChange: '-',
-    //   netWorthChange: 0,
-    //   _netWorthChangePercent: '',
-    // });
     let _data = clone(walletProject);
     _data.netWorth = 0;
     _data._netWorth = '$0';
