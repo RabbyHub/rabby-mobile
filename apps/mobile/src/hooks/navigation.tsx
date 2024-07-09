@@ -18,10 +18,7 @@ import {
 } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import {
-  useIOSScreenCapture,
-  useAndroidPreventScreenshot,
-} from './native/security';
+import { useIOSScreenCapture, usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
@@ -290,8 +287,8 @@ export function useAtSensitiveScreen() {
 export function useAppPreventScreenshotOnScreen() {
   const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
 
-  // for Android
-  useAndroidPreventScreenshot(atSensitiveScreen);
+  usePreventScreenshot(atSensitiveScreen);
+
   const { isBeingCaptured } = useIOSScreenCapture({ isTop: true });
 
   useEffect(() => {

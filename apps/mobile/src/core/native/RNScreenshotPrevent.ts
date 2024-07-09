@@ -7,6 +7,7 @@ const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
 type Listeners = {
   userDidTakeScreenshot: () => any;
   screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
+  /** @description pointless now */
   preventScreenshotChanged: (ret: {
     isPrevent: boolean;
     success: boolean;

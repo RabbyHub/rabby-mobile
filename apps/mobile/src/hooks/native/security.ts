@@ -9,17 +9,17 @@ import { atom, useAtom } from 'jotai';
  * @description Prevents the user from taking a screenshot,
  * call this hook on top of your App
  */
-export function useAndroidPreventScreenshot(prevent = true) {
+export function usePreventScreenshot(prevent = true) {
   useEffect(() => {
     if (!prevent) {
-      RNScreenshotPrevent.androidTogglePreventScreenshot(false);
+      RNScreenshotPrevent.togglePreventScreenshot(false);
       return;
     }
 
-    RNScreenshotPrevent.androidTogglePreventScreenshot(true);
+    RNScreenshotPrevent.togglePreventScreenshot(true);
 
     return () => {
-      RNScreenshotPrevent.androidTogglePreventScreenshot(false);
+      RNScreenshotPrevent.togglePreventScreenshot(false);
     };
   }, [prevent]);
 }

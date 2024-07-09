@@ -56,7 +56,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   }
 
   @ReactMethod
-  public void androidTogglePreventScreenshot(boolean isPrevent) {
+  public void togglePreventScreenshot(boolean isPrevent) {
     WritableMap params = Arguments.createMap();
     params.putBoolean("isPrevent", isPrevent);
     params.putBoolean("success", false);
@@ -91,6 +91,8 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     if (BuildConfig.DEBUG) {
       promise.reject("Not implemented for Android");
     }
+
+    this.togglePreventScreenshot(true);
   }
 
   @ReactMethod
@@ -98,6 +100,8 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     if (BuildConfig.DEBUG) {
       promise.reject("Not implemented for Android");
     }
+
+    this.togglePreventScreenshot(false);
   }
 
   @ReactMethod

@@ -26,7 +26,7 @@ import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
-import { useGlobalAppPreventScreenshotOnDev } from './hooks/appSettings';
+import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
 import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
 
 const rneuiTheme = createTheme({
@@ -50,7 +50,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
   useSecureOnBackground();
-  useGlobalAppPreventScreenshotOnDev();
+  useGlobalAppPreventScreenrecordOnDev();
   useAppPreventScreenshotOnScreen();
 
   const initAccounts = useMemoizedFn(async () => {

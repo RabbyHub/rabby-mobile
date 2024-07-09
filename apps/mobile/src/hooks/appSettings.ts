@@ -1,6 +1,6 @@
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
-import { useAndroidPreventScreenshot } from './native/security';
+import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
@@ -74,9 +74,9 @@ export function useAllowScreenshot() {
 /**
  * @description call this hook only once on the top level of your app
  */
-export function useGlobalAppPreventScreenshotOnDev() {
+export function useGlobalAppPreventScreenrecordOnDev() {
   const { allowScreenshot } = useIsAllowScreenshot();
-  useAndroidPreventScreenshot(__DEV__ && !allowScreenshot);
+  usePreventScreenshot(__DEV__ && !allowScreenshot);
 
   useEffect(() => {
     if (!isIOS && !__DEV__) return;
