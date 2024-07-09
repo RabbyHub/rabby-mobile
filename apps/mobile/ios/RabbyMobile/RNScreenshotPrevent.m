@@ -140,9 +140,9 @@ RCT_EXPORT_MODULE();
 
 - (void) handleScreenCapturedNotification {
     BOOL isCaptured = [UIScreen mainScreen].isCaptured;
-    if (DEBUG) {
-        NSLog(@"AppStart: Main Screen is captured: %@", [UIScreen mainScreen].isCaptured ? @"YES" : @"NO");
-    }
+#if DEBUG
+    NSLog(@"AppStart: Main Screen is captured: %@", [UIScreen mainScreen].isCaptured ? @"YES" : @"NO");
+#endif
     // only send events when we have some listeners
     if(hasListeners) {
         [self sendEventWithName:@"screenCapturedChanged" body:@{@"isBeingCaptured": @(isCaptured)}];
