@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 // https://github.com/react-navigation/react-navigation/blob/7b761f1cc0/packages/native-stack/src/navigators/createNativeStackNavigator.tsx
 import {
   createNavigatorFactory,

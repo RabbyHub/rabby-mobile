@@ -97,20 +97,23 @@ void devLog(NSString *format, ...) {}
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{ @"rabbitCode": rabbitCode };
 
-  // RCTBridge *bridge = [self.reactDelegate createBridgeWithDelegate:self launchOptions:launchOptions];
-  // RCTRootView *rootView = [self.reactDelegate createRootViewWithBridge:bridge
+  // RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
+  // RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
   //                                                  moduleName:@"RabbyMobile"
-  //                                           initialProperties:nil];
+  //                                           initialProperties:self.initialProps];
   // if (@available(iOS 13.0, *)) {
   //     rootView.backgroundColor = [UIColor systemBackgroundColor];
   // } else {
   //     rootView.backgroundColor = [UIColor whiteColor];
   // }
   // self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-  // UIViewController *rootViewController = [self.reactDelegate createRootViewController];
+  // UIViewController *rootViewController = [UIViewController new];
   // rootViewController.view = rootView;
   // self.window.rootViewController = rootViewController;
   // [self.window makeKeyAndVisible];
+
+  // [super application:application didFinishLaunchingWithOptions:launchOptions];
+  // [RNSplashScreen showSplash:@"LaunchScreen" inRootView:self.rootView]; // react-native-splash-screen
 
   NSString * userAgent = [self makeUserAgent];
 
