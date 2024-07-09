@@ -1,6 +1,4 @@
-import { EmitterSubscription } from 'react-native';
 import { makeRnEEClass, resolveNativeModule } from './utils';
-import DeviceUtils from '../utils/device';
 
 const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
   'RNScreenshotPrevent',
@@ -8,6 +6,7 @@ const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
 
 type Listeners = {
   userDidTakeScreenshot: () => any;
+  screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
   preventScreenshotChanged: (ret: {
     isPrevent: boolean;
     success: boolean;
@@ -16,12 +15,7 @@ type Listeners = {
 const { NativeEventEmitter } = makeRnEEClass<Listeners>();
 const eventEmitter = new NativeEventEmitter(nativeModule);
 
-/**
- * subscribes to userDidTakeScreenshot event
- */
-function iosOnUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']): {
-  readonly remove: EmitterSubscription['remove'];
-} {
+function makeDefaultHandler<T extends keyof Listeners>(fn: Listeners[T]) {
   if (typeof fn !== 'function') {
     console.error(
       'RNScreenshotPrevent: addListener requires valid callback function',
@@ -35,17 +29,40 @@ function iosOnUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']): {
       },
     };
   }
+}
+// type DefaulHandle = {
+//   readonly remove: EmitterSubscription['remove'];
+// };
+/**
+ * subscribes to userDidTakeScreenshot event
+ */
+function iosOnUserDidTakeScreenshot(fn: Listeners['userDidTakeScreenshot']) {
+  const handler = makeDefaultHandler<'userDidTakeScreenshot'>(fn);
+  if (handler) return handler;
 
   return eventEmitter.addListener('userDidTakeScreenshot', fn);
 }
 
+function iosOnScreenCaptureChanged(fn: Listeners['screenCapturedChanged']) {
+  const handler = makeDefaultHandler<'screenCapturedChanged'>(fn);
+  if (handler) return handler;
+
+  return eventEmitter.addListener('screenCapturedChanged', fn);
+}
+
 function onPreventScreenshotChanged(fn: Listeners['preventScreenshotChanged']) {
+  const handler = makeDefaultHandler<'preventScreenshotChanged'>(fn);
+  if (handler) return handler;
+
   return eventEmitter.addListener('preventScreenshotChanged', fn);
 }
 
 if (__DEV__) {
   iosOnUserDidTakeScreenshot(() => {
     console.debug('userDidTakeScreenshot');
+  });
+  iosOnScreenCaptureChanged(params => {
+    console.debug('screenCapturedChanged', params);
   });
   onPreventScreenshotChanged(params => {
     console.debug('preventScreenshotChanged', params);
@@ -61,6 +78,10 @@ if (__DEV__) {
 const RNScreenshotPrevent = Object.freeze({
   ...nativeModule,
   onPreventScreenshotChanged,
+  // iosToggleBlurView(bool: boolean) {
+  //   nativeModule.iosToggleBlurView(!!bool);
+  // },
+  iosOnScreenCaptureChanged,
   iosOnUserDidTakeScreenshot,
 });
 

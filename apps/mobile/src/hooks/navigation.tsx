@@ -18,10 +18,17 @@ import {
 } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import { usePreventScreenshot } from './native/security';
+import {
+  useIOSScreenCapture,
+  useAndroidPreventScreenshot,
+} from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
+
+type NavigationInstance =
+  | NativeStackScreenProps<RootStackParamsList>['navigation']
+  | NavigationContainerRef<RootStackParamsList>;
 
 // const LeftBackIcon = makeThemeIconFromCC(RcIconHeaderBack, {
 //   onLight: ThemeColors.light['neutral-body'],
@@ -126,9 +133,7 @@ export function useRabbyAppNavigation<
 }
 
 export function resetNavigationTo(
-  navigation:
-    | NativeStackScreenProps<RootStackParamsList>['navigation']
-    | NavigationContainerRef<RootStackParamsList>,
+  navigation: NavigationInstance,
   type: 'Home' | 'Unlock' = 'Home',
 ) {
   switch (type) {
@@ -213,35 +218,90 @@ export function usePreventGoBack({
 }
 
 const isIOS = DeviceUtils.isIOS();
-const PROTECTED_SCREENS: {
-  [P in AppRootName]?: boolean;
-} = {
-  [RootNames.CreateMnemonic]: true,
-  [RootNames.ImportMnemonic]: true,
-  [RootNames.ImportPrivateKey]: true,
+export const enum ProtectetType {
+  DefaultBlur = 1,
+  SafeTipModal = 2,
+}
 
-  [RootNames.BackupMnemonic]: true,
-  [RootNames.BackupPrivateKey]: true,
+type ProtectedConf = {
+  iosBlurType: ProtectetType | null;
+  onCancel?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
+const defaultProtectedConf: ProtectedConf = {
+  iosBlurType: ProtectetType.DefaultBlur,
+  onCancel: ctx => {
+    ctx.navigation?.goBack();
+  },
+};
+const PROTECTED_SCREENS: {
+  [P in AppRootName]?: ProtectedConf;
+} = {
+  [RootNames.CreateMnemonic]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+  [RootNames.ImportMnemonic]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+  [RootNames.ImportPrivateKey]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+
+  [RootNames.BackupMnemonic]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+  [RootNames.BackupPrivateKey]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+};
+
+export function useAtSensitiveScreen() {
+  const currentRouteName = useAtomValue(currentRouteNameAtom);
+
+  return useMemo(() => {
+    const result = {
+      $routeName: currentRouteName,
+      $protectedConf: { ...defaultProtectedConf },
+      atSensitiveScreen: false,
+      // protectedBySafeTipModal: false,
+      // protectedByIOSBlurView: false,
+    };
+
+    if (!currentRouteName || !PROTECTED_SCREENS[currentRouteName])
+      return result;
+
+    result.$protectedConf.iosBlurType =
+      PROTECTED_SCREENS[currentRouteName]?.iosBlurType ??
+      ProtectetType.DefaultBlur;
+    result.atSensitiveScreen = !!PROTECTED_SCREENS[currentRouteName];
+    // result.protectedBySafeTipModal = result.$protectedConf.iosBlurType === ProtectetType.SafeTipModal;
+    // result.protectedByIOSBlurView = result.$protectedConf.iosBlurType === ProtectetType.DefaultBlur;
+
+    return result;
+  }, [currentRouteName]);
+}
 /**
  * @description call this hook only once on the top level of your app
  */
 export function useAppPreventScreenshotOnScreen() {
-  const currentRouteName = useAtomValue(currentRouteNameAtom);
-  const shouldPreventScreenshot = useMemo(() => {
-    return !!currentRouteName && PROTECTED_SCREENS[currentRouteName];
-  }, [currentRouteName]);
+  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
 
   // for Android
-  usePreventScreenshot(shouldPreventScreenshot);
+  useAndroidPreventScreenshot(atSensitiveScreen);
+  const { isBeingCaptured } = useIOSScreenCapture({ isTop: true });
 
   useEffect(() => {
     if (!isIOS) return;
+    if ($protectedConf.iosBlurType !== ProtectetType.DefaultBlur) return;
 
-    if (shouldPreventScreenshot) {
+    if (isBeingCaptured && atSensitiveScreen) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [shouldPreventScreenshot]);
+  }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
 }

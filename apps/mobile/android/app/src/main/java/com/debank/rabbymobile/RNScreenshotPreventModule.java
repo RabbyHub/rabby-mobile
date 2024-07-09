@@ -13,6 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.ImageView;
 
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -55,7 +56,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   }
 
   @ReactMethod
-  public void togglePreventScreenshot(boolean isPrevent) {
+  public void androidTogglePreventScreenshot(boolean isPrevent) {
     WritableMap params = Arguments.createMap();
     params.putBoolean("isPrevent", isPrevent);
     params.putBoolean("success", false);
@@ -86,13 +87,26 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   }
 
   @ReactMethod
-  public void iosProtectFromScreenRecording() {
-    // Noop for Android
+  public void iosProtectFromScreenRecording(final Promise promise) {
+    if (BuildConfig.DEBUG) {
+      promise.reject("Not implemented for Android");
+    }
   }
 
   @ReactMethod
-  public void iosUnprotectFromScreenRecording() {
-    // Noop for Android
+  public void iosUnprotectFromScreenRecording(final Promise promise) {
+    if (BuildConfig.DEBUG) {
+      promise.reject("Not implemented for Android");
+    }
+  }
+
+  @ReactMethod
+  public void iosIsBeingCaptured(final Promise promise) {
+    if (BuildConfig.DEBUG) {
+      // promise.reject("Not implemented for Android");
+    }
+    promise.resolve(false);
+    return;
   }
 
   private void createOverlay(Activity activity, String imagePath) {

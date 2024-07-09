@@ -23,25 +23,40 @@ public class ScreenShield: NSObject {
     }
 
     public func protectFromScreenRecording() {
+        if (UIScreen.main.isCaptured) {
+            self.toggleBlurView(isProtected: true)
+        }
+
+        if recordingObservation != nil {
+            return
+        }
         recordingObservation =  UIScreen.main.observe(\UIScreen.isCaptured, options: [.new]) { [weak self] screen, change in
             let isRecording = change.newValue ?? false
 
-            if isRecording {
-                self?.addBlurView()
-            } else {
-                self?.removeBlurView()
-            }
+            self?.toggleBlurView(isProtected: isRecording)
         }
     }
 
     public func unprotectFromScreenRecording() {
-      // invalid on dev
-      recordingObservation?.invalidate()
-      recordingObservation = nil
-      removeBlurView()
+        // invalid on dev
+        recordingObservation?.invalidate()
+        recordingObservation = nil
+        removeBlurView()
+    }
+
+    private func toggleBlurView(isProtected: Bool) {
+        if isProtected {
+            self.addBlurView()
+        } else {
+            self.removeBlurView()
+        }
     }
 
     private func addBlurView() {
+        // avoid adding multiple blur views
+        if blurView != nil {
+            return
+        }
         let blurEffect = UIBlurEffect(style: .regular)
         let blurView = UIVisualEffectView(effect: blurEffect)
         blurView.frame = UIScreen.main.bounds

@@ -14,6 +14,7 @@ RCT_EXPORT_MODULE();
 - (NSArray<NSString *> *)supportedEvents {
     return @[
       @"userDidTakeScreenshot",
+      @"screenCapturedChanged",
       @"preventScreenshotChanged"
     ];
 }
@@ -38,6 +39,10 @@ RCT_EXPORT_MODULE();
     // handle screenshot taken event
     [center addObserver:self selector:@selector(handleAppScreenshotNotification)
                             name:UIApplicationUserDidTakeScreenshotNotification
+                            object:nil];
+
+    [center addObserver:self selector:@selector(handleScreenCapturedNotification)
+                            name:UIScreenCapturedDidChangeNotification
                             object:nil];
 
     hasListeners = TRUE;
@@ -92,6 +97,19 @@ RCT_EXPORT_MODULE();
     }
 }
 
+- (void) handleScreenCapturedNotification {
+    // only send events when we have some listeners
+    //    UIScreen *screen = notification.object;
+    BOOL isCaptured = [UIScreen mainScreen].isCaptured;
+    if (DEBUG) {
+        NSLog(@"AppStart: Main Screen is captured: %@", [UIScreen mainScreen].isCaptured ? @"YES" : @"NO");
+        // NSLog(@"AppStart: Current Screen is captured: %@", screen.isCaptured ? @"YES" : @"NO");
+    }
+    if(hasListeners) {
+        [self sendEventWithName:@"screenCapturedChanged" body:@{@"isBeingCaptured": @(isCaptured)}];
+    }
+}
+
 +(BOOL) requiresMainQueueSetup
 {
   return YES;
@@ -123,10 +141,15 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
 
 #pragma mark - Public API
 
-RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL) isPrevent) {
+// pointless now
+RCT_EXPORT_METHOD(androidTogglePreventScreenshot:(BOOL) isPrevent) {
     self->enabled = isPrevent;
     [self sendEventWithName:@"preventScreenshotChanged" body:@{@"isPrevent": @(isPrevent), @"success": @YES}];
 }
+
+// RCT_EXPORT_METHOD(iosToggleBlurView:(BOOL) isProtected) {
+//     [[ScreenShield shared] toggleBlurViewWithIsProtected:isProtected];
+// }
 
 RCT_EXPORT_METHOD(iosProtectFromScreenRecording) {
     [[ScreenShield shared] protectFromScreenRecording];
@@ -134,6 +157,11 @@ RCT_EXPORT_METHOD(iosProtectFromScreenRecording) {
 
 RCT_EXPORT_METHOD(iosUnprotectFromScreenRecording) {
     [[ScreenShield shared] unprotectFromScreenRecording];
+}
+
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(iosIsBeingCaptured) {
+    BOOL isCaptured = [UIScreen mainScreen].isCaptured;
+    return @(isCaptured);
 }
 
 /** adds secure textfield view */

@@ -13,10 +13,7 @@ import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
 import { withExpoSnack } from 'nativewind';
 import React, { Suspense, useEffect } from 'react';
-import {
-  GestureHandlerRootView,
-  TouchableWithoutFeedback,
-} from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNames } from './constant/layout';

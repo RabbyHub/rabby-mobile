@@ -1,4 +1,4 @@
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { useMemo } from 'react';
 import { Modal, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
@@ -17,8 +17,7 @@ export const SwapModal = ({
   modalStyle?: StyleProp<ViewStyle>;
   overlayStyle?: StyleProp<ViewStyle>;
 }>) => {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useThemeStyles(getStyles);
   return (
     <Modal
       transparent

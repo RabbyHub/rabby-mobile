@@ -35,3 +35,22 @@ export function BackgroundSecureBlurView() {
     </BlurView>
   );
 }
+
+export function SafeTipModalBlurView() {
+  const { styles } = useThemeStyles(getBlurModalStyles);
+
+  const appThemeMode = useGetBinaryMode();
+
+  const { isOnBackground } = useIsOnBackground();
+
+  if (!isOnBackground) return null;
+
+  return (
+    <BlurView
+      style={styles.container}
+      blurType={appThemeMode ?? 'light'}
+      blurAmount={10}>
+      {/* <Text>Modal with blur background</Text> */}
+    </BlurView>
+  );
+}
