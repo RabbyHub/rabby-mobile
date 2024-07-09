@@ -284,7 +284,7 @@ function AutoLockCountDownLabel() {
 
   const [spinner, setSpinner] = React.useState(false);
   useInterval(() => {
-    if (__DEV__) {
+    if (NEED_DEVSETTINGBLOCKS) {
       // trigger countDown re-calculated
       setSpinner(prev => !prev);
     }
