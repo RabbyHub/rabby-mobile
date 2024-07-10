@@ -65,8 +65,8 @@ jobs:
       - name: Install dependencies && Build app
         shell: bash
         run: |
+          yarn install;
           cd apps/mobile;
-          yarn;
           yarn prepare-archive;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db
