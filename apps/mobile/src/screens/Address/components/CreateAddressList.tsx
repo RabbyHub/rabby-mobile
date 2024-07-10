@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
 import { useSetPasswordFirst } from '@/hooks/useLock';
+import { useTranslation } from 'react-i18next';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -22,6 +23,7 @@ const styles = StyleSheet.create({
 });
 
 export const CreateAddressList = () => {
+  const { t } = useTranslation();
   const { seedPhraseList } = useSeedPhrase();
 
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
@@ -56,7 +58,7 @@ export const CreateAddressList = () => {
       <WalletItem
         style={styles.walletItem}
         Icon={RcIconCreateSeed}
-        title="Create New Seed Phrase"
+        title={t('page.newAddress.createNewSeedPhrase')}
         onPress={handleSeedPhrase}
       />
     </View>

@@ -16735,6 +16735,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eth-phishing-detect@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "eth-phishing-detect@npm:1.2.0"
+  dependencies:
+    fast-levenshtein: ^2.0.6
+  checksum: 66a6a7c249ec8494e0360663596ce980ca75747cd202c47732eca0bfc7a97c6debbae359842e4f3e4ac7e6c44ab1f7f091c3aa7baa330449d3c1b7cc58608b71
+  languageName: node
+  linkType: hard
+
 "eth-query@npm:^2.1.2":
   version: 2.1.2
   resolution: "eth-query@npm:2.1.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Feth-query%2F-%2Feth-query-2.1.2.tgz"
@@ -19324,13 +19333,6 @@ __metadata:
   version: 3.0.6
   resolution: "immediate@npm:3.0.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmediate%2F-%2Fimmediate-3.0.6.tgz"
   checksum: f9b3486477555997657f70318cc8d3416159f208bec4cca3ff3442fd266bc23f50f0c9bd8547e1371a6b5e82b821ec9a7044a4f7b944798b25aa3cc6d5e63e62
-  languageName: node
-  linkType: hard
-
-"immer@npm:^10.0.3":
-  version: 10.0.3
-  resolution: "immer@npm:10.0.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fimmer%2F-%2Fimmer-10.0.3.tgz"
-  checksum: 76acabe6f40e752028313762ba477a5d901e57b669f3b8fb406b87b9bb9b14e663a6fbbf5a6d1ab323737dd38f4b2494a4e28002045b88948da8dbf482309f28
   languageName: node
   linkType: hard
 
@@ -27637,11 +27639,11 @@ __metadata:
     eth-json-rpc-errors: ^2.0.2
     eth-json-rpc-filters: ^6.0.1
     eth-json-rpc-middleware: ^9.0.1
+    eth-phishing-detect: ^1.2.0
     eth-rpc-errors: ^4.0.3
     ethers: 5.4.2
     formik: ^2.4.5
     i18next: ^23.7.14
-    immer: ^10.0.3
     interval-promise: ^1.4.0
     intl-pluralrules: ^2.0.1
     jest: ^27.5.1
@@ -27710,7 +27712,7 @@ __metadata:
     react-native-vision-camera: ^3.6.17
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
-    react-native-webview: ^13.6.3
+    react-native-webview: ^13.10.5
     react-test-renderer: 18.2.0
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -28678,16 +28680,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webview@npm:^13.6.3":
-  version: 13.6.4
-  resolution: "react-native-webview@npm:13.6.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freact-native-webview%2F-%2Freact-native-webview-13.6.4.tgz"
+"react-native-webview@npm:^13.10.5":
+  version: 13.10.5
+  resolution: "react-native-webview@npm:13.10.5"
   dependencies:
     escape-string-regexp: 2.0.0
     invariant: 2.2.4
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 72df9422ededdcf2de6232629bb447932e63c824904ef5eba0aa0a082d0899148f4e5bda713de931336d23204c7dd025b80221aa8c9bc10306f3d8948ebd0dcb
+  checksum: fa4bd3885a405236474d2baf455d81bddc024874ec012884fbded02f47303c47c00edaf8ef7072eb52e6fb8c68f1f2fd2abe6ca5890ae217102e7742ab97f3f8
   languageName: node
   linkType: hard
 

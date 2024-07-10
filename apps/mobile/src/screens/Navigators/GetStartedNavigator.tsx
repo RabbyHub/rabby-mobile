@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { RootNames } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';

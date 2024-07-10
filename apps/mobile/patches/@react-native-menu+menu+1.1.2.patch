@@ -1,0 +1,13 @@
+diff --git a/node_modules/@react-native-menu/menu/android/build.gradle b/node_modules/@react-native-menu/menu/android/build.gradle
+index 90facf0..30dfdbc 100644
+--- a/node_modules/@react-native-menu/menu/android/build.gradle
++++ b/node_modules/@react-native-menu/menu/android/build.gradle
+@@ -56,7 +56,7 @@ android {
+   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+ 
+   defaultConfig {
+-    minSdkVersion 23
++    minSdkVersion 21
+     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+     buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+     versionCode 1

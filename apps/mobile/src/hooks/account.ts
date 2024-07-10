@@ -39,7 +39,7 @@ accountsAtom.onMount = setAtom => {
   });
 };
 
-const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
+export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);
 
 const pinAddressesAtom = atom<IPinAddress[]>([]);
 

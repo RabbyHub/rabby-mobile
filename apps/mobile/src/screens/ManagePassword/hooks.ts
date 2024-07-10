@@ -5,7 +5,7 @@ import { useSheetModals } from '@/hooks/useSheetModal';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useWalletPasswordInfo } from './useManagePassword';
 import { PasswordStatus } from '@/core/apis/lock';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 import { StackActions } from '@react-navigation/native';
 import { apisLock } from '@/core/apis';
@@ -49,7 +49,7 @@ export function useManagePasswordOnSettings() {
 
     try {
       await apisLock.lockWallet();
-      navigation.dispatch(StackActions.replace(RootNames.Unlock));
+      resetNavigationTo(navigation, 'Unlock');
     } catch (error: any) {
       toast.show(error?.message || 'Lock Wallet failed');
     }
