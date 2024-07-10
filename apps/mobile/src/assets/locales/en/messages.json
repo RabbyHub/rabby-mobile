@@ -1310,7 +1310,7 @@
           "question": "What is a private key?",
           "answer": "A string of letters and numbers used to control your assets."
         },
-        "repeatImportTips": "The address has been imported, do you want to switch to this address?",
+        "repeatImportTips": "This address has been imported. Do you want to switch to this address?",
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
           "answer": "Yes, it will be stored locally on your phone and only accessible to you."

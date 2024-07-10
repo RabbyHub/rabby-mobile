@@ -85,8 +85,7 @@ export const DuplicateAddressModal: React.FC = () => {
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>
-            The address has been imported, do you want to switch to this
-            address?
+            {t('page.newAddress.privateKey.repeatImportTips')}
           </Text>
           <View style={styles.body}>
             {currentAccount && (

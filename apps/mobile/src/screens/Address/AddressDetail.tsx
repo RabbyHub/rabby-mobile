@@ -333,7 +333,9 @@ const AddressInfo = (props: AddressInfoProps) => {
               paddingVertical: 10,
             },
           ]}>
-          <Text style={styles.labelText}>Address</Text>
+          <Text style={styles.labelText}>
+            {t('page.addressDetail.address')}
+          </Text>
           <TouchableOpacity
             onPress={useCallback(() => {
               Clipboard.setString(account.address);
@@ -355,7 +357,9 @@ const AddressInfo = (props: AddressInfoProps) => {
         </View>
 
         <View style={styles.itemView}>
-          <Text style={styles.labelText}>Address Note</Text>
+          <Text style={styles.labelText}>
+            {t('page.addressDetail.address-note')}
+          </Text>
           <TouchableOpacity
             style={styles.valueView}
             onPress={handlePresentInputModalPress}>
@@ -365,14 +369,16 @@ const AddressInfo = (props: AddressInfoProps) => {
         </View>
 
         <View style={styles.itemView}>
-          <Text style={styles.labelText}>Assets</Text>
+          <Text style={styles.labelText}>{t('page.addressDetail.assets')}</Text>
           <View style={styles.valueView}>
             <Text style={styles.valueText}>{useValue}</Text>
           </View>
         </View>
 
         <View style={styles.itemView}>
-          <Text style={styles.labelText}>QR Code</Text>
+          <Text style={styles.labelText}>
+            {t('page.addressDetail.qr-code')}
+          </Text>
           <View style={styles.valueView}>
             <TouchableItem onPress={handlePresentCodeModalPress}>
               <QRCode value={account.address} size={30} />
@@ -388,7 +394,9 @@ const AddressInfo = (props: AddressInfoProps) => {
           }}>
           <View
             style={[styles.itemView, styles.noBOrderBottom, { minHeight: 0 }]}>
-            <Text style={styles.labelText}>Source</Text>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.source')}
+            </Text>
             <View
               style={StyleSheet.compose(styles.valueView, {
                 alignItems: 'center',
@@ -419,7 +427,15 @@ const AddressInfo = (props: AddressInfoProps) => {
             </View>
           )}
           {account.type === KEYRING_TYPE.HdKeyring && (
-            <View>
+            <View
+              style={StyleSheet.flatten([
+                styles.itemView,
+                {
+                  minHeight: 0,
+                  paddingBottom: 20,
+                  marginBottom: -20,
+                },
+              ])}>
               <SeedPhraseBar address={account.address} />
             </View>
           )}
@@ -436,7 +452,9 @@ const AddressInfo = (props: AddressInfoProps) => {
 
         {accountInfo && (
           <View style={styles.itemView}>
-            <Text style={styles.labelText}>HD Path</Text>
+            <Text style={styles.labelText}>
+              {t('page.addressDetail.hd-path')}
+            </Text>
             <View style={styles.valueView}>
               <Text
                 style={
@@ -653,7 +671,7 @@ const AddressInfo = (props: AddressInfoProps) => {
       <View style={styles.view}>
         {account.type === KEYRING_TYPE.HdKeyring && (
           <TouchableOpacity
-            style={StyleSheet.flatten([styles.itemView, styles.noBOrderBottom])}
+            style={StyleSheet.flatten([styles.itemView])}
             onPress={handlePressBackupSeedPhrase}>
             <Text style={styles.labelText}>
               {t('page.addressDetail.backup-seed-phrase')}
@@ -741,7 +759,6 @@ const getStyles = (colors: AppColorsVariants) =>
     itemView: {
       minHeight: 60,
       width: '100%',
-      display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignContent: 'center',
