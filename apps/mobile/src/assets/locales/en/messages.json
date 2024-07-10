@@ -1636,11 +1636,9 @@
         "error": "Incorrect password"
       },
       "biometrics": {
-        "failed": "Unlock failed, please use password to unlock.",
-        "failedIOS": "Unlock failed, please use password to unlock.",
         "failedAndTipTitle": "Unlock failed",
         "failedAndTip": "Biometric authentication failed, please use password to unlock.",
-        "usePassword": "Use Password"
+        "usePassword": "Switched to use password to unlock."
       }
     },
     "addToken": {

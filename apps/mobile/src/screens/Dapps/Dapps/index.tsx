@@ -5,7 +5,7 @@ import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { RootNames } from '@/constant/layout';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 import { useNavigation } from '@react-navigation/native';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -20,14 +20,14 @@ import {
 } from '../hooks/useDappView';
 import { EmptyDapps } from './components/EmptyDapps';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { createGetStyles } from '@/utils/styles';
 
 export const DappsScreen = () => {
   return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
 };
 
 export function DappsScreenRaw(): JSX.Element {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useThemeStyles(getStyles);
 
   const getHeaderTitle = React.useCallback(() => {
     return <HeaderTitleText>Dapps</HeaderTitleText>;
@@ -55,8 +55,7 @@ export function DappsScreenRaw(): JSX.Element {
 
   const { dappSections, updateFavorite, removeDapp, disconnectDapp } =
     useDappsHome();
-  const { openUrlAsDapp, showDappWebViewModal, closeOpenedDapp } =
-    useOpenDappView();
+  const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
   // todo refresh dapps when webview close
 
   return (
@@ -65,8 +64,7 @@ export function DappsScreenRaw(): JSX.Element {
         <DappCardList
           sections={dappSections}
           onPress={dapp => {
-            showDappWebViewModal();
-            openUrlAsDapp(dapp.origin);
+            openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
           }}
           onFavoritePress={dapp => {
             updateFavorite(dapp.origin, !dapp.isFavorite);
@@ -89,8 +87,8 @@ export function DappsScreenRaw(): JSX.Element {
   );
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
+const getStyles = createGetStyles((colors: AppColorsVariants) => {
+  return {
     page: {
       backgroundColor: colors['neutral-bg-2'],
     },
@@ -104,4 +102,5 @@ const getStyles = (colors: AppColorsVariants) =>
     searchIcon: {
       color: colors['neutral-body'],
     },
-  });
+  };
+});

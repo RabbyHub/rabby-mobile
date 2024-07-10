@@ -22,6 +22,7 @@ import {
   RcIconFaceId,
   RcScreenshot,
   RcScreenRecord,
+  RcCountdown,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -29,6 +30,7 @@ import { type SettingConfBlock, Block } from './Block';
 import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
+  useThemeColors,
   useThemeStyles,
 } from '@/hooks/theme';
 import { useSheetWebViewTester } from './sheetModals/hooks';
@@ -54,40 +56,34 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { createGetStyles } from '@/utils/styles';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import {
+  requestLockWalletAndBackToUnlockScreen,
+  useRabbyAppNavigation,
+} from '@/hooks/navigation';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect } from '@react-navigation/native';
-import { useIsAllowScreenshot } from '@/hooks/appSettings';
+import { useAutoLockTimeout, useIsAllowScreenshot } from '@/hooks/appSettings';
+import { formatTimeFromNow } from '../Approvals/utils';
+import useInterval from 'react-use/lib/useInterval';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
 
 const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
-
 const isIOS = Platform.OS === 'ios';
-export default function SettingsScreen(): JSX.Element {
-  const { styles, colors } = useThemeStyles(getStyles);
-  const { appThemeText } = useAppTheme();
 
-  const navigation = useRabbyAppNavigation();
+function SettingsBlocks() {
+  const { styles, colors } = useThemeStyles(getStyles);
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
 
-  const { currentAccount } = useCurrentAccount();
-
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
-  const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
-
-  const {
-    hasSetupCustomPassword,
-    requestLockWallet,
-    openManagePasswordSheetModal,
-  } = useManagePasswordOnSettings();
+  const { hasSetupCustomPassword } = useManagePasswordOnSettings();
 
   const {
     computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
@@ -100,25 +96,17 @@ export default function SettingsScreen(): JSX.Element {
     }, [fetchBiometrics]),
   );
 
-  const { startBiometricsVerification, abortBiometricsVerification } =
-    useVerifyByBiometrics();
-
-  const { allowScreenshot } = useIsAllowScreenshot();
-  const { openMetaMaskTestDapp } = useSheetWebViewTester();
-  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-
   const disabledBiometrics =
     !couldSetupBiometrics ||
     !hasSetupCustomPassword ||
     !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const [switchWhitelistRef, switchBiometricsRef, switchAllowScreenshotRef] = [
-    useRef<SwitchToggleType>(null),
+  const [switchWhitelistRef, switchBiometricsRef] = [
     useRef<SwitchToggleType>(null),
     useRef<SwitchToggleType>(null),
   ];
 
-  const SettingsBlocks: Record<string, SettingConfBlock> = (() => {
+  const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       features: {
         label: 'Features',
@@ -150,36 +138,13 @@ export default function SettingsScreen(): JSX.Element {
               toast.show('Coming Soon :)');
             },
           },
-          {
-            visible: SHOULD_SUPPORT_DARK_MODE,
-            label: 'Switch Theme',
-            icon: RcThemeMode,
-            onPress: () => {
-              setThemeSelectorModalVisible(true);
-            },
-            rightTextNode: ctx => {
-              return (
-                <Text
-                  style={{
-                    fontWeight: '400',
-                    fontSize: 14,
-                    color: colors['neutral-title-1'],
-                    marginRight: 6,
-                  }}>
-                  {appThemeText} Mode
-                </Text>
-              );
-            },
-          },
-        ].filter(Boolean) as SettingConfBlock['items'],
+        ],
       },
       settings: {
         label: 'Settings',
         items: [
           {
-            label: isBiometricsEnabled
-              ? 'Biometrics enabled'
-              : 'Biometrics disabled',
+            label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
             icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
@@ -278,6 +243,123 @@ export default function SettingsScreen(): JSX.Element {
           },
         ].filter(Boolean),
       },
+    };
+  })();
+
+  return (
+    <>
+      {Object.entries(settingsBlocks).map(([key, block], idx) => {
+        const l1key = `${key}-${idx}`;
+
+        return (
+          <Block
+            key={l1key}
+            label={block.label}
+            style={[
+              idx > 0 && {
+                marginTop: 16,
+              },
+            ]}>
+            {block.items.map((item, idx_l2) => {
+              return (
+                <Block.Item
+                  key={`${l1key}-${item.label}-${idx_l2}`}
+                  {...item}
+                />
+              );
+            })}
+          </Block>
+        );
+      })}
+    </>
+  );
+}
+
+function AutoLockCountDownLabel() {
+  const { autoLockTimeout } = useAutoLockTimeout();
+
+  const colors = useThemeColors();
+
+  const [spinner, setSpinner] = React.useState(false);
+  useInterval(() => {
+    if (NEED_DEVSETTINGBLOCKS) {
+      // trigger countDown re-calculated
+      setSpinner(prev => !prev);
+    }
+  }, 500);
+
+  const { text: countDown, secs } = React.useMemo(() => {
+    spinner;
+    const diffMs = Math.max(autoLockTimeout - Date.now(), 0);
+    const secs = Math.floor(diffMs / 1000);
+    const mins = Math.floor(secs / 60);
+    const secsAfterMins = Math.floor(secs % 60);
+
+    return {
+      secs,
+      text:
+        secs > 60
+          ? [`${mins} min(s)`, secsAfterMins ? `${secsAfterMins} sec(s)` : '']
+              .filter(Boolean)
+              .join(' ')
+          : secs > 0
+          ? `${secs} sec(s)`
+          : 'Done',
+    };
+  }, [autoLockTimeout, spinner]);
+
+  return (
+    <Text
+      style={{
+        color: countDown
+          ? colors['green-default']
+          : secs > 5
+          ? colors['orange-default']
+          : colors['red-default'],
+      }}>
+      {countDown}
+    </Text>
+  );
+}
+
+const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
+function DevSettingsBlocks() {
+  const { colors } = useThemeStyles(getStyles);
+  const navigation = useRabbyAppNavigation();
+
+  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
+    useManagePasswordOnSettings();
+
+  const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
+  const { appThemeText } = useAppTheme();
+
+  const {
+    computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
+    fetchBiometrics,
+  } = useBiometrics({ autoFetch: true });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
+
+  const { startBiometricsVerification, abortBiometricsVerification } =
+    useVerifyByBiometrics();
+
+  const { allowScreenshot } = useIsAllowScreenshot();
+  const { openMetaMaskTestDapp } = useSheetWebViewTester();
+  const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
+
+  const disabledBiometrics =
+    !couldSetupBiometrics ||
+    !hasSetupCustomPassword ||
+    !APP_FEATURE_SWITCH.biometricsAuth;
+
+  const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
+
+  const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
+    return {
       ...(isSelfhostRegPkg && {
         testkits: {
           label: 'Test Kits (Not present on production package)',
@@ -295,6 +377,27 @@ export default function SettingsScreen(): JSX.Element {
               visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
             },
             {
+              visible: SHOULD_SUPPORT_DARK_MODE,
+              label: 'Switch Theme',
+              icon: RcThemeMode,
+              onPress: () => {
+                setThemeSelectorModalVisible(true);
+              },
+              rightTextNode: ctx => {
+                return (
+                  <Text
+                    style={{
+                      fontWeight: '400',
+                      fontSize: 14,
+                      color: colors['neutral-title-1'],
+                      marginRight: 6,
+                    }}>
+                    {appThemeText} Mode
+                  </Text>
+                );
+              },
+            },
+            {
               label: allowScreenshot
                 ? `Allow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`
                 : `Disallow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`,
@@ -305,6 +408,7 @@ export default function SettingsScreen(): JSX.Element {
               onPress: () => {
                 switchAllowScreenshotRef.current?.toggle();
               },
+              visible: __DEV__,
             },
             // only valid if custom password given
             {
@@ -312,8 +416,18 @@ export default function SettingsScreen(): JSX.Element {
               icon: RcLockWallet,
               disabled: !hasSetupCustomPassword,
               onPress: () => {
-                requestLockWallet();
+                requestLockWalletAndBackToUnlockScreen();
               },
+            },
+            {
+              label: 'Auto Lock Countdown',
+              icon: RcCountdown,
+              // onPress: () => {},
+              rightNode: (
+                <Text>
+                  <AutoLockCountDownLabel />
+                </Text>
+              ),
             },
             {
               label: hasSetupCustomPassword
@@ -375,6 +489,53 @@ export default function SettingsScreen(): JSX.Element {
     };
   })();
 
+  return (
+    <>
+      {Object.entries(devSettingsBlocks).map(([key, block], idx) => {
+        const l1key = `${key}-${idx}`;
+
+        return (
+          <Block
+            key={l1key}
+            label={block.label}
+            style={[
+              {
+                marginTop: 16,
+              },
+            ]}>
+            {block.items.map((item, idx_l2) => {
+              return (
+                <Block.Item
+                  key={`${l1key}-${item.label}-${idx_l2}`}
+                  {...item}
+                />
+              );
+            })}
+          </Block>
+        );
+      })}
+    </>
+  );
+}
+
+export default function SettingsScreen(): JSX.Element {
+  const { styles } = useThemeStyles(getStyles);
+
+  const clearPendingRef = useRef<BottomSheetModal>(null);
+
+  const { currentAccount } = useCurrentAccount();
+
+  const {
+    computed: { couldSetupBiometrics },
+    fetchBiometrics,
+  } = useBiometrics({ autoFetch: true });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBiometrics();
+    }, [fetchBiometrics]),
+  );
+
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
   });
@@ -391,29 +552,8 @@ export default function SettingsScreen(): JSX.Element {
       <ScrollView
         style={[styles.scrollableView]}
         contentContainerStyle={[styles.scrollableContentStyle]}>
-        {Object.entries(SettingsBlocks).map(([key, block], idx) => {
-          const l1key = `${key}-${idx}`;
-
-          return (
-            <Block
-              key={l1key}
-              label={block.label}
-              style={[
-                idx > 0 && {
-                  marginTop: 16,
-                },
-              ]}>
-              {block.items.map((item, idx_l2) => {
-                return (
-                  <Block.Item
-                    key={`${l1key}-${item.label}-${idx_l2}`}
-                    {...item}
-                  />
-                );
-              })}
-            </Block>
-          );
-        })}
+        <SettingsBlocks />
+        {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
         <View style={[styles.bottomFooter]}>
           <RcFooterLogo />
         </View>

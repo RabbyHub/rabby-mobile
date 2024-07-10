@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import { Appearance, Platform, StatusBar } from 'react-native';
 
-import {
-  useCurrentRouteNameInAppStatusBar,
-  useRabbyAppNavigation,
-} from '@/hooks/navigation';
+import { useCurrentRouteName, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useGetBinaryMode } from '@/hooks/theme';
 import { useHasActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
 import {
@@ -123,12 +120,12 @@ export function useTuneStatusBarOnRouteChange() {
 }
 
 export function useScreenAppStatusBarConf(expectedRoute?: string) {
-  const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
+  const { currentRouteName: currentRouteNameOrig } = useCurrentRouteName();
   const currentRouteName = useMemo(() => {
     return expectedRoute || getLatestNavigationName() || currentRouteNameOrig;
   }, [currentRouteNameOrig, expectedRoute]);
 
-  // const currentRouteNameOrig = useCurrentRouteNameInAppStatusBar();
+  // const currentRouteNameOrig = useCurrentRouteName();
   // const currentRouteName = useMemo(() => {
   //   return getLatestNavigationName() || currentRouteNameOrig;
   // }, [currentRouteNameOrig]);

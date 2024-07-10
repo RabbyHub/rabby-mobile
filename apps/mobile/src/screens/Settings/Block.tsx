@@ -72,7 +72,7 @@ function BlockItem({
   visible = true,
   disabled = false,
 }: React.PropsWithChildren<{
-  label?: string;
+  label?: React.ReactNode;
   icon?: React.ReactNode | React.FC<SvgProps>;
   rightTextNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);
   rightNode?: React.ReactNode | ((ctx: GenerateNodeCtx) => React.ReactNode);

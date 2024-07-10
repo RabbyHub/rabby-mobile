@@ -56,7 +56,9 @@ export default function CurrentAddressScreen(): JSX.Element {
   React.useEffect(() => {
     return () => {
       if (navState?.backToDappOnClose) {
-        openUrlAsDapp(navState?.backToDappOnClose);
+        openUrlAsDapp(navState?.backToDappOnClose, {
+          showSheetModalFirst: false,
+        });
       }
     };
   }, [navState, openUrlAsDapp]);

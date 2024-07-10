@@ -7,6 +7,7 @@
     BOOL enabled;
     UIImageView *obfuscatingView;
     UITextField *secureField;
+    // UIImageView *imageView;
 }
 
 // To export a module named RNScreenshotPrevent
@@ -14,6 +15,7 @@ RCT_EXPORT_MODULE();
 - (NSArray<NSString *> *)supportedEvents {
     return @[
       @"userDidTakeScreenshot",
+      @"screenCapturedChanged",
       @"preventScreenshotChanged"
     ];
 }
@@ -27,6 +29,11 @@ RCT_EXPORT_MODULE();
 
 - (void) startObserving {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];
+
+    // TODO: allow configure that
+    BOOL getScreenShotPath = FALSE;
+
     // handle inactive event
     [center addObserver:self selector:@selector(handleAppStateResignActive)
                             name:UIApplicationWillResignActiveNotification
@@ -35,9 +42,48 @@ RCT_EXPORT_MODULE();
     [center addObserver:self selector:@selector(handleAppStateActive)
                             name:UIApplicationDidBecomeActiveNotification
                             object:nil];
+
     // handle screenshot taken event
-    [center addObserver:self selector:@selector(handleAppScreenshotNotification)
-                            name:UIApplicationUserDidTakeScreenshotNotification
+    // [center addObserver:self selector:@selector(handleAppScreenshotNotification)
+    //                         name:UIApplicationUserDidTakeScreenshotNotification
+    //                         // queue:mainQueue
+    //                         object:nil];
+
+    [center addObserverForName:UIApplicationUserDidTakeScreenshotNotification
+                            object:nil
+                            queue:mainQueue
+                            usingBlock:^(NSNotification *notification) {
+      if (hasListeners && getScreenShotPath) {
+          UIViewController *presentedViewController = RCTPresentedViewController();
+
+          UIImage *image = [self convertViewToImage:presentedViewController.view.superview];
+          NSData *data = UIImagePNGRepresentation(image);
+          if (!data) {
+              [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
+            // reject(@"error", @"Failed to convert image to PNG", nil);
+            return;
+          }
+
+          NSString *tempDir = NSTemporaryDirectory();
+          NSString *fileName = [[NSUUID UUID] UUIDString];
+          NSString *filePath = [tempDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.png", fileName]];
+
+          NSError *error = nil;
+          NSDictionary *result;
+          BOOL success = [data writeToFile:filePath options:NSDataWritingAtomic error:&error];
+          if (!success) {
+              result = @{@"path": @"Error retrieving file", @"name": @"", @"type": @""};
+          } else {
+            result = @{@"path": filePath, @"name": fileName, @"type": @"PNG"};
+          }
+          [self sendEventWithName:@"userDidTakeScreenshot" body: result];
+      } else if (hasListeners) {
+          [self sendEventWithName:@"userDidTakeScreenshot" body: nil];
+      }
+    }];
+
+    [center addObserver:self selector:@selector(handleScreenCapturedNotification)
+                            name:UIScreenCapturedDidChangeNotification
                             object:nil];
 
     hasListeners = TRUE;
@@ -92,6 +138,17 @@ RCT_EXPORT_MODULE();
     }
 }
 
+- (void) handleScreenCapturedNotification {
+    BOOL isCaptured = [UIScreen mainScreen].isCaptured;
+#if DEBUG
+    NSLog(@"AppStart: Main Screen is captured: %@", [UIScreen mainScreen].isCaptured ? @"YES" : @"NO");
+#endif
+    // only send events when we have some listeners
+    if(hasListeners) {
+        [self sendEventWithName:@"screenCapturedChanged" body:@{@"isBeingCaptured": @(isCaptured)}];
+    }
+}
+
 +(BOOL) requiresMainQueueSetup
 {
   return YES;
@@ -121,11 +178,86 @@ CGSize CGSizeAspectFill(const CGSize aspectRatio, const CGSize minimumSize)
     return aspectFillSize;
 }
 
+- (void)secureViewWithBackgroundColor: (NSString *)color {
+  if (@available(iOS 13.0, *)) {
+    if (secureField == nil) {
+      [self initTextField];
+    }
+    [secureField setSecureTextEntry: TRUE];
+    [secureField setBackgroundColor: [self colorFromHexString: color]];
+  } else return;
+}
+
+- (void) initTextField {
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    secureField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, screenRect.size.width, screenRect.size.height)];
+    secureField.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [secureField setTextAlignment:NSTextAlignmentCenter];
+    [secureField setUserInteractionEnabled: NO];
+
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    [window makeKeyAndVisible];
+    [window.layer.superlayer addSublayer:secureField.layer];
+
+    if (secureField.layer.sublayers.firstObject) {
+        [secureField.layer.sublayers.firstObject addSublayer: window.layer];
+    }
+}
+
+- (void)removeScreenShot {
+  UIWindow *window = [UIApplication sharedApplication].keyWindow;
+  if (secureField != nil) {
+      // if (imageView != nil) {
+      //     [imageView setImage: nil];
+      //     [imageView removeFromSuperview];
+      // }
+      // if (scrollView != nil) {
+      //     [scrollView removeFromSuperview];
+      // }
+    [secureField setSecureTextEntry: FALSE];
+    [secureField setBackgroundColor: [UIColor clearColor]];
+    [secureField setBackground: nil];
+    CALayer *secureFieldLayer = secureField.layer.sublayers.firstObject;
+    if ([window.layer.superlayer.sublayers containsObject:secureFieldLayer]) {
+       [secureFieldLayer removeFromSuperlayer];
+    }
+  }
+}
+
+- (UIColor *)colorFromHexString:(NSString *)hexString {
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    [scanner setScanLocation:1]; // bypass '#' character
+    [scanner scanHexInt:&rgbValue];
+    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
+}
+
+- (UIImage *)convertViewToImage:(UIView *)view {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0);
+    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
 #pragma mark - Public API
 
 RCT_EXPORT_METHOD(togglePreventScreenshot:(BOOL) isPrevent) {
     self->enabled = isPrevent;
     [self sendEventWithName:@"preventScreenshotChanged" body:@{@"isPrevent": @(isPrevent), @"success": @YES}];
+
+    if (isPrevent) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+          [self secureViewWithBackgroundColor: @"#7084FF"];
+      });
+    } else {
+      dispatch_async(dispatch_get_main_queue(), ^{
+          [self removeScreenShot];
+          [[NSNotificationCenter defaultCenter]removeObserver:UIApplicationUserDidTakeScreenshotNotification];
+          // [[NSNotificationCenter defaultCenter]removeObserver:UIScreenCapturedDidChangeNotification];
+      });
+    }
 }
 
 RCT_EXPORT_METHOD(iosProtectFromScreenRecording) {
@@ -136,14 +268,9 @@ RCT_EXPORT_METHOD(iosUnprotectFromScreenRecording) {
     [[ScreenShield shared] unprotectFromScreenRecording];
 }
 
-/** adds secure textfield view */
-RCT_EXPORT_METHOD(enableSecureView: (NSString *)imagePath) {
-    // no-op on iOS
-}
-
-/** removes secure textfield from the view */
-RCT_EXPORT_METHOD(disableSecureView) {
-    // no-op on iOS
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(iosIsBeingCaptured) {
+    BOOL isCaptured = [UIScreen mainScreen].isCaptured;
+    return @(isCaptured);
 }
 
 @end

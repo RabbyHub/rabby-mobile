@@ -27,6 +27,9 @@ export const RcPrivacyPolicy = makeThemeIconFromCC(
 import { default as RcLockCC } from './lock-cc.svg';
 export const RcLock = makeThemeIconFromCC(RcLockCC, 'neutral-body');
 
+import { default as RcCountdownCC } from './countdown-cc.svg';
+export const RcCountdown = makeThemeIconFromCC(RcCountdownCC, 'neutral-body');
+
 import { default as RcManageAddressCC } from './manage-address-cc.svg';
 export const RcManageAddress = makeThemeIconFromCC(
   RcManageAddressCC,

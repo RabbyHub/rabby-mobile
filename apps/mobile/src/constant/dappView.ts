@@ -1,5 +1,4 @@
 import { Linking } from 'react-native';
-import checkForPhishing from 'eth-phishing-detect';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
 /**
@@ -7,6 +6,14 @@ import { urlUtils } from '@rabby-wallet/base-utils';
  * List of all protocols that our webview load unconditionally
  */
 export const protocolAllowList = ['about:', 'http:', 'https:'];
+
+export function isOrHasWithAllowedProtocol(input?: string) {
+  if (!input) return false;
+  if (protocolAllowList.includes(input)) return true;
+
+  const { protocol } = urlUtils.safeParseURL(input) || {};
+  return !!protocol && protocolAllowList.includes(protocol);
+}
 
 /**
  *
@@ -38,20 +45,6 @@ export const getAlertMessage = (protocol: string) => {
       return 'This website has been blocked from automatically opening an external application';
   }
 };
-
-/**
- * @description detect if the url is a phishing url
- *
- */
-export function detectPhishingUrl(url: string) {
-  const urlInfo = urlUtils.safeParseURL(url?.toLowerCase() || '');
-  return {
-    isPhishing: !!urlInfo?.hostname && checkForPhishing(urlInfo?.hostname),
-    protocol: urlInfo?.protocol || '',
-    hostname: urlInfo?.hostname || '',
-    urlInfo,
-  };
-}
 
 /**
  * Promps the Operating System for its ability

@@ -3,8 +3,9 @@ import { useCallback, useEffect } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
-import useMount from 'react-use/lib/useMount';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import { autoLockEvent } from '@/core/apis/autoLock';
+import { apisAutoLock } from '@/core/apis';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -18,8 +19,8 @@ const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
    *
    * for iOS, change it need restart the app
    */
-  androidAllowScreenCapture: !!__DEV__,
-  iosAllowScreenRecord: false,
+  androidAllowScreenCapture: !__DEV__,
+  iosAllowScreenRecord: !__DEV__,
 });
 
 const KEY = isIOS ? 'iosAllowScreenRecord' : 'androidAllowScreenCapture';
@@ -73,12 +74,12 @@ export function useAllowScreenshot() {
 /**
  * @description call this hook only once on the top level of your app
  */
-export function useAppPreventScreenshot() {
+export function useGlobalAppPreventScreenrecordOnDev() {
   const { allowScreenshot } = useIsAllowScreenshot();
-  usePreventScreenshot(!allowScreenshot);
+  usePreventScreenshot(__DEV__ && !allowScreenshot);
 
   useEffect(() => {
-    if (!isIOS) return;
+    if (!isIOS && !__DEV__) return;
 
     if (!allowScreenshot) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
@@ -86,4 +87,26 @@ export function useAppPreventScreenshot() {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
   }, [allowScreenshot]);
+}
+
+const autoLockTimeoutAtom = atom(-1);
+autoLockTimeoutAtom.onMount = setter => {
+  autoLockEvent.addListener('change', value => {
+    setter(value);
+  });
+};
+
+export function useAutoLockTimeout() {
+  const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
+
+  const fetchTimeout = useCallback(() => {
+    const value = apisAutoLock.getAutoLockTime();
+    setTimeout(value);
+    return value;
+  }, [setTimeout]);
+
+  return {
+    autoLockTimeout: timeout,
+    fetchTimeout,
+  };
 }

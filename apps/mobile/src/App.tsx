@@ -7,7 +7,7 @@ import 'react-native-gesture-handler';
  */
 import AppNavigation from '@/AppNavigation';
 import AppErrorBoundary from '@/components/ErrorBoundary';
-import { useAppTheme } from '@/hooks/theme';
+import { useAppTheme, useThemeColors } from '@/hooks/theme';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, createTheme } from '@rneui/themed';
 import { useMemoizedFn } from 'ahooks';
@@ -26,7 +26,8 @@ import { replace } from './utils/navigation';
 import JotaiNexus from './components/JotaiNexus';
 import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
-import { useAppPreventScreenshot } from './hooks/appSettings';
+import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
+import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -49,7 +50,8 @@ function MainScreen({ rabbitCode }: AppProps) {
   useSetupServiceStub();
   useUpgradeInfo({ isTop: true });
   useSecureOnBackground();
-  useAppPreventScreenshot();
+  useGlobalAppPreventScreenrecordOnDev();
+  useAppPreventScreenshotOnScreen();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

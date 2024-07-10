@@ -58,8 +58,7 @@ export function DappsIOSScreen(): JSX.Element {
     dapps,
     addDapp,
   } = useDappsHome();
-  const { openUrlAsDapp, showDappWebViewModal, closeOpenedDapp } =
-    useOpenDappView();
+  const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
 
   const ref = React.useRef<any>(null);
   const [chain, setChain] = React.useState<CHAINS_ENUM>();
@@ -181,8 +180,7 @@ export function DappsIOSScreen(): JSX.Element {
             <DappCardList
               sections={dappSections}
               onPress={dapp => {
-                showDappWebViewModal();
-                openUrlAsDapp(dapp.origin);
+                openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
               }}
               onFavoritePress={dapp => {
                 updateFavorite(dapp.origin, !dapp.isFavorite);
@@ -208,9 +206,8 @@ export function DappsIOSScreen(): JSX.Element {
                 <LinkCard
                   url={debouncedSearchValue}
                   onPress={generalUrl => {
-                    showDappWebViewModal();
                     // TODO: should we validate the url?
-                    openUrlAsDapp(generalUrl);
+                    openUrlAsDapp(generalUrl, { showSheetModalFirst: true });
                     Keyboard.dismiss();
                   }}
                 />
@@ -223,8 +220,7 @@ export function DappsIOSScreen(): JSX.Element {
                   empty={<SearchEmpty isDomain={isDomain} />}
                   total={data?.page?.total}
                   onPress={dapp => {
-                    showDappWebViewModal();
-                    openUrlAsDapp(dapp.origin);
+                    openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
                     Keyboard.dismiss();
                   }}
                   onFavoritePress={dapp => {

@@ -20,13 +20,18 @@ import {
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
 
-const biometricsInfo = atom({
+const biometricsInfoAtom = atom({
   authEnabled: isAuthenticatedByBiometrics(),
   supportedBiometryType: null as BIOMETRY_TYPE | null,
 });
+biometricsInfoAtom.onMount = setter => {
+  apisKeychain.getSupportedBiometryType().then(supportedType => {
+    setter(prev => ({ ...prev, supportedBiometryType: supportedType }));
+  });
+};
 const isFetchingBiometricsRef = { current: false };
 export function useBiometrics(options?: { autoFetch?: boolean }) {
-  const [biometrics, setBiometrics] = useAtom(biometricsInfo);
+  const [biometrics, setBiometrics] = useAtom(biometricsInfoAtom);
 
   const fetchBiometrics = useCallback(async () => {
     if (isFetchingBiometricsRef.current) return;
@@ -82,7 +87,7 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
 }
 
 export function useToggleBiometricsEnabled() {
-  const [, setBiometrics] = useAtom(biometricsInfo);
+  const [, setBiometrics] = useAtom(biometricsInfoAtom);
   const { computed, fetchBiometrics } = useBiometrics();
 
   const requestToggleBiometricsEnabled = useCallback(
