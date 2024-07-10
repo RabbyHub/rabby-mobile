@@ -144,9 +144,7 @@ function SettingsBlocks() {
         label: 'Settings',
         items: [
           {
-            label: isBiometricsEnabled
-              ? 'Biometrics enabled'
-              : 'Biometrics disabled',
+            label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
             icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />

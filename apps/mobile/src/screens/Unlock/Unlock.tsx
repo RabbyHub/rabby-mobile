@@ -191,11 +191,7 @@ export default function UnlockScreen() {
           );
         }
       } else {
-        toastBiometricsFailed(
-          isIOS
-            ? t('page.unlock.biometrics.failedIOS')
-            : t('page.unlock.biometrics.failed'),
-        );
+        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
         setUsingBiometrics(false);
       }
     }
