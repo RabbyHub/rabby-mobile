@@ -3,6 +3,9 @@ import { atom, useAtom } from 'jotai';
 
 import { dappService, swapService } from '../services/shared';
 import { FieldNilable } from '@rabby-wallet/base-utils';
+import { currentAccountAtom } from '@/hooks/account';
+import { useMount } from 'ahooks';
+import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 
 const dappServiceAtom = atom<FieldNilable<typeof dappService.store>>(
   dappService.store,
@@ -21,6 +24,7 @@ export const dappsAtom = atom(
  */
 export function useSetupServiceStub() {
   const [, setDappServices] = useAtom(dappServiceAtom);
+  const [, setCurrentAccount] = useAtom(currentAccountAtom);
 
   useEffect(() => {
     const disposes: Function[] = [];
@@ -33,4 +37,10 @@ export function useSetupServiceStub() {
       disposes.forEach(dispose => dispose());
     };
   }, [setDappServices]);
+
+  useMount(() => {
+    eventBus.on(EVENT_SWITCH_ACCOUNT, (v: any) => {
+      setCurrentAccount(v);
+    });
+  });
 }
