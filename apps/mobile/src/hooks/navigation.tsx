@@ -245,7 +245,14 @@ const PROTECTED_SCREENS: {
     ...defaultProtectedConf.onCancel,
     iosBlurType: ProtectetType.SafeTipModal,
   },
-
+  [RootNames.CreateMnemonicBackup]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
+  [RootNames.CreateMnemonicVerify]: {
+    ...defaultProtectedConf.onCancel,
+    iosBlurType: ProtectetType.SafeTipModal,
+  },
   [RootNames.BackupMnemonic]: {
     ...defaultProtectedConf.onCancel,
     iosBlurType: ProtectetType.SafeTipModal,
