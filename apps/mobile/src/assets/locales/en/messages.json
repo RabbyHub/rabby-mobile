@@ -1310,7 +1310,7 @@
           "question": "What is a private key?",
           "answer": "A string of letters and numbers used to control your assets."
         },
-        "repeatImportTips": "The address has been imported, do you want to switch to this address?",
+        "repeatImportTips": "This address has been imported. Do you want to switch to this address?",
         "isItSafeToImportItInRabby": {
           "question": "Is it safe to import it in Rabby?",
           "answer": "Yes, it will be stored locally on your phone and only accessible to you."
@@ -1824,7 +1824,7 @@
     },
     "backupSeedPhrase": {
       "title": "Backup Seed Phrase",
-      "alert": "This Seed Phrase is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
+      "alert": "This seed phrase  is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
       "clickToShow": "Click to show Seed Phrase",
       "copySeedPhrase": "Copy seed phrase",
       "showQrCode": "Show QR Code",

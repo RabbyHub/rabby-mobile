@@ -8,6 +8,7 @@ import providerController from '@/core/controllers/provider';
 import { findChain } from '@/utils/chain';
 import { sendRequest } from './provider';
 import { setGlobalProvider } from './globalProvider';
+import { EVENT_SWITCH_ACCOUNT, eventBus } from '@/utils/events';
 
 interface StateProvider {
   accounts: string[] | null;
@@ -128,6 +129,7 @@ export class EthereumProvider extends EventEmitter {
           INTERNAL_REQUEST_SESSION,
         ).finally(() => {
           preferenceService.setCurrentAccount(currentAccount);
+          eventBus.emit(EVENT_SWITCH_ACCOUNT, currentAccount);
         });
       }
       case 'eth_chainId':
