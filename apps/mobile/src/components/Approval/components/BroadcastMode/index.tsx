@@ -176,51 +176,53 @@ export const BroadcastMode = ({
       headline={t('page.signTx.BroadcastMode.title')}
       actionText={selectedOption?.title}
       hasDivider={value.type !== 'default'}>
-      <View>
-        <View style={styles.broadcastModeBody}>
-          <View style={styles.broadcastModeBodyUl}>
-            <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
-              <View style={styles.broadcastModeBodyLiBefore} />
-
-              <Text style={styles.broadcastModeBodyLiText}>
-                {selectedOption?.desc}
-              </Text>
-            </View>
-            {value.type === 'low_gas' ? (
+      {value.type !== 'default' && (
+        <View>
+          <View style={styles.broadcastModeBody}>
+            <View style={styles.broadcastModeBodyUl}>
               <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
                 <View style={styles.broadcastModeBodyLiBefore} />
 
                 <Text style={styles.broadcastModeBodyLiText}>
-                  {t('page.signTx.BroadcastMode.lowGasDeadline.label')}
+                  {selectedOption?.desc}
                 </Text>
-                <View style={styles.deadlineOptions}>
-                  {deadlineOptions.map(item => {
-                    return (
-                      <TouchableOpacity
-                        key={item.value}
-                        style={StyleSheet.flatten([
-                          styles.deadlineOption,
-                          item.value === value.lowGasDeadline &&
-                            styles.deadlineOptionSelected,
-                        ])}
-                        onPress={() => {
-                          onChange?.({
-                            type: value.type,
-                            lowGasDeadline: item.value,
-                          });
-                        }}>
-                        <Text style={styles.deadlineOptionText}>
-                          {item.title}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
               </View>
-            ) : null}
+              {value.type === 'low_gas' ? (
+                <View style={StyleSheet.flatten([styles.broadcastModeBodyLi])}>
+                  <View style={styles.broadcastModeBodyLiBefore} />
+
+                  <Text style={styles.broadcastModeBodyLiText}>
+                    {t('page.signTx.BroadcastMode.lowGasDeadline.label')}
+                  </Text>
+                  <View style={styles.deadlineOptions}>
+                    {deadlineOptions.map(item => {
+                      return (
+                        <TouchableOpacity
+                          key={item.value}
+                          style={StyleSheet.flatten([
+                            styles.deadlineOption,
+                            item.value === value.lowGasDeadline &&
+                              styles.deadlineOptionSelected,
+                          ])}
+                          onPress={() => {
+                            onChange?.({
+                              type: value.type,
+                              lowGasDeadline: item.value,
+                            });
+                          }}>
+                          <Text style={styles.deadlineOptionText}>
+                            {item.title}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
-      </View>
+      )}
       <AppBottomSheetModal
         ref={modalRef}
         enableDynamicSizing

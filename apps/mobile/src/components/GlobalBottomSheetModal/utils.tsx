@@ -115,10 +115,18 @@ export function makeBottomSheetProps(ctx: {
     };
   }
 
-  if (
-    ctx.params?.name === MODAL_NAMES.APPROVAL ||
-    ctx.params?.name === MODAL_NAMES.VIEW_RAW_DETAILS
-  ) {
+  if (ctx.params?.name === MODAL_NAMES.VIEW_RAW_DETAILS) {
+    return {
+      handleStyle: {
+        backgroundColor: ctx.colors['neutral-bg-2'],
+      },
+      handleIndicatorStyle: {
+        backgroundColor: ctx.colors['neutral-line'],
+      },
+    };
+  }
+
+  if (ctx.params?.name === MODAL_NAMES.APPROVAL) {
     if (
       [
         APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
