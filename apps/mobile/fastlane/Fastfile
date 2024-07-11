@@ -79,9 +79,9 @@ platform :ios do
         export_options: {
           method: "app-store",
           signingStyle: 'manual',
-          # provisioningProfiles: {
-          #   "com.debank.rabby-mobile": "RabbyMobileAppStore"
-          # }
+          provisioningProfiles: {
+            "com.debank.rabby-mobile": "RabbyMobileAppStore"
+          }
         })
       pilot(
         apple_id: '6474381673',
