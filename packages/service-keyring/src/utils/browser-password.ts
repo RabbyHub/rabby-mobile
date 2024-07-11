@@ -20,6 +20,8 @@ export type PBKDF2Params = {
 };
 
 export type KeyDerivationOptions = {
+  derivedKeyFormat?: 'AES-CBC' | 'AES-GCM';
+  ivFormat?: 'hex' | 'base64';
   algorithm: 'PBKDF2';
   params: PBKDF2Params;
 };
@@ -49,20 +51,35 @@ export type DetailedDecryptResult = {
 };
 
 const EXPORT_FORMAT = 'jwk';
-const DERIVED_KEY_FORMAT = 'AES-GCM';
+const DERIVED_KEY_FORMAT = 'AES-CBC';
 const STRING_ENCODING = 'utf-8';
 const OLD_DERIVATION_PARAMS: KeyDerivationOptions = {
+  derivedKeyFormat: 'AES-CBC',
   algorithm: 'PBKDF2',
   params: {
     iterations: 10_000,
   },
 };
 const DEFAULT_DERIVATION_PARAMS: KeyDerivationOptions = {
+  derivedKeyFormat: 'AES-CBC',
   algorithm: 'PBKDF2',
   params: {
     iterations: 900_000,
   },
 };
+
+function restrainIvFormat(ivFormat?: KeyDerivationOptions['ivFormat']) {
+  return !['hex', 'base64'].includes(ivFormat || '') ? 'hex' : ivFormat;
+}
+
+function filterPersistedKeyDerivationOptions(derivationOptions: KeyDerivationOptions) {
+  const obj = JSON.parse(JSON.stringify(derivationOptions));
+  if (obj?.ivFormat === 'hex') {
+    delete obj.ivFormat;
+  }
+
+  return obj
+}
 
 /**
  * Encrypts a data object that can be any serializable value using
@@ -78,13 +95,22 @@ const DEFAULT_DERIVATION_PARAMS: KeyDerivationOptions = {
 export async function encrypt<R>(
   password: string,
   dataObj: R,
-  key?: EncryptionKey | CryptoKey,
-  salt: string = generateSalt(),
-  keyDerivationOptions = DEFAULT_DERIVATION_PARAMS,
+  options?: EncryptionOptions & {
+    key?: EncryptionKey | CryptoKey,
+    salt?: string,
+    keyDerivationOptions?: KeyDerivationOptions,
+  }
 ): Promise<string> {
+  const {
+    key,
+    vector,
+    salt = generateSalt(),
+    keyDerivationOptions = DEFAULT_DERIVATION_PARAMS
+  } = options || {};
+
   const cryptoKey =
     key || (await keyFromPassword(password, salt, false, keyDerivationOptions));
-  const payload = await encryptWithKey(cryptoKey, dataObj);
+  const payload = await encryptWithKey(cryptoKey, dataObj, { vector, keyDerivationOptions });
   payload.salt = salt;
   return JSON.stringify(payload);
 }
@@ -107,7 +133,7 @@ export async function encryptWithDetail<R>(
 ): Promise<DetailedEncryptionResult> {
   const key = await keyFromPassword(password, salt, true, keyDerivationOptions);
   const exportedKeyString = await exportKey(key);
-  const vault = await encrypt(password, dataObj, key, salt);
+  const vault = await encrypt(password, dataObj, { key, salt });
 
   return {
     vault,
@@ -115,6 +141,9 @@ export async function encryptWithDetail<R>(
   };
 }
 
+type EncryptionOptions = {
+  vector?: Uint8Array;
+};
 /**
  * Encrypts the provided serializable javascript object using the
  * provided CryptoKey and returns an object containing the cypher text and
@@ -127,17 +156,21 @@ export async function encryptWithDetail<R>(
 export async function encryptWithKey<R>(
   encryptionKey: EncryptionKey | CryptoKey,
   dataObj: R,
+  options?: EncryptionOptions & {
+    keyDerivationOptions?: KeyDerivationOptions,
+  }
 ): Promise<EncryptionResult> {
   const { webcrypto } = getWebCrypto();
 
   const data = JSON.stringify(dataObj);
   const dataBuffer = Buffer.from(data, STRING_ENCODING);
-  const vector = webcrypto.getRandomValues(new Uint8Array(16));
+  const { derivedKeyFormat = DERIVED_KEY_FORMAT, ivFormat = 'hex' } = options?.keyDerivationOptions || {};
+  const vector = options?.vector || webcrypto.getRandomValues(new Uint8Array(16));
   const key = unwrapKey(encryptionKey);
 
   const buf = await webcrypto.subtle.encrypt(
     {
-      name: DERIVED_KEY_FORMAT,
+      name: derivedKeyFormat,
       iv: vector,
     },
     key,
@@ -145,7 +178,7 @@ export async function encryptWithKey<R>(
   );
 
   const buffer = new Uint8Array(buf);
-  const vectorStr = Buffer.from(vector).toString('base64');
+  const vectorStr = Buffer.from(vector).toString(restrainIvFormat(ivFormat));
   const vaultStr = Buffer.from(buffer).toString('base64');
   const encryptionResult: EncryptionResult = {
     data: vaultStr,
@@ -153,7 +186,7 @@ export async function encryptWithKey<R>(
   };
 
   if (isEncryptionKey(encryptionKey)) {
-    encryptionResult.keyMetadata = encryptionKey.derivationOptions;
+    encryptionResult.keyMetadata = filterPersistedKeyDerivationOptions(encryptionKey.derivationOptions);
   }
 
   return encryptionResult;
@@ -208,6 +241,8 @@ export async function decryptWithDetail(
   };
 }
 
+type DecryptionOptions = Pick<KeyDerivationOptions, 'derivedKeyFormat'>;
+
 /**
  * Given a CryptoKey and an EncryptionResult object containing the initialization
  * vector (iv) and data to decrypt, return the resulting decrypted value.
@@ -219,17 +254,20 @@ export async function decryptWithDetail(
 export async function decryptWithKey<R>(
   encryptionKey: EncryptionKey | CryptoKey,
   payload: EncryptionResult,
+  options?: DecryptionOptions
 ): Promise<R> {
-  const encryptedData = Buffer.from(payload.data, 'base64');
-  const vector = Buffer.from(payload.iv, 'base64');
-  const key = unwrapKey(encryptionKey);
-
   let decryptedObj;
   try {
     const { webcrypto } = getWebCrypto();
 
+    const { derivedKeyFormat = DERIVED_KEY_FORMAT } = options || {};
+
+    const encryptedData = Buffer.from(payload.data, 'base64');
+    const vector = Buffer.from(payload.iv, restrainIvFormat(payload.keyMetadata?.ivFormat));
+    const key = unwrapKey(encryptionKey);
+
     const result = await webcrypto.subtle.decrypt(
-      { name: DERIVED_KEY_FORMAT, iv: vector },
+      { name: derivedKeyFormat, iv: vector },
       key,
       encryptedData,
     );
@@ -238,6 +276,7 @@ export async function decryptWithKey<R>(
     const decryptedStr = Buffer.from(decryptedData).toString(STRING_ENCODING);
     decryptedObj = JSON.parse(decryptedStr);
   } catch (e) {
+    console.error(e);
     throw new Error('Incorrect password');
   }
 
@@ -255,9 +294,11 @@ export async function decryptWithKey<R>(
  */
 export async function importKey(
   keyString: string,
+  options?: Pick<KeyDerivationOptions, 'derivedKeyFormat'>,
 ): Promise<EncryptionKey | CryptoKey> {
   const exportedEncryptionKey = JSON.parse(keyString);
   const { webcrypto } = getWebCrypto();
+  const { derivedKeyFormat = DERIVED_KEY_FORMAT } = options || {};
 
   if (isExportedEncryptionKey(exportedEncryptionKey)) {
 
@@ -265,7 +306,7 @@ export async function importKey(
       key: await webcrypto.subtle.importKey(
         EXPORT_FORMAT,
         exportedEncryptionKey.key,
-        DERIVED_KEY_FORMAT,
+        derivedKeyFormat,
         true,
         ['encrypt', 'decrypt'],
       ),
@@ -276,7 +317,7 @@ export async function importKey(
   return await webcrypto.subtle.importKey(
     EXPORT_FORMAT,
     exportedEncryptionKey,
-    DERIVED_KEY_FORMAT,
+    derivedKeyFormat,
     true,
     ['encrypt', 'decrypt'],
   );
@@ -309,6 +350,30 @@ export async function exportKey(
   );
 }
 
+// const algorithms_pbkdf2 = { name: 'PBKDF2', hash: 'SHA-256' } as const;
+export async function keyArrayFromPassword(password: string, saltBase64: string) {
+  const { webcrypto } = getWebCrypto();
+
+  const passBuffer = Uint8Array.from(Buffer.from(password));
+  const saltBuffer = Uint8Array.from(Buffer.from(saltBase64));
+
+  const keyMaterial = await webcrypto.subtle.importKey(
+    'raw', // Format of the key material
+    passBuffer, // Key data
+    { name: 'PBKDF2', hash: 'SHA-256' }, // Algorithm to use for key derivation
+    false, // Not extractable
+    ['deriveBits'] // Key usages
+  );
+
+  const derivedKey = await webcrypto.subtle.deriveBits({
+    name: 'PBKDF2',
+    salt: saltBuffer,
+    iterations: 5000,
+    hash: { name: 'SHA-256' }
+  }, keyMaterial, 256); // Length in bits (32 bytes * 8 bits per byte)
+
+  return new Uint8Array(derivedKey);
+}
 /**
  * Generate a CryptoKey from a password and random salt.
  *
@@ -342,21 +407,21 @@ export async function keyFromPassword(
 // eslint-disable-next-line jsdoc/require-jsdoc
 export async function keyFromPassword(
   password: string,
-  salt: string,
+  saltBase64: string,
   exportable = false,
   opts: KeyDerivationOptions = OLD_DERIVATION_PARAMS,
 ): Promise<CryptoKey | EncryptionKey> {
-  const passBuffer = Buffer.from(password, STRING_ENCODING);
-  const saltBuffer = Buffer.from(salt, 'base64');
+  const passBuffer = Uint8Array.from(Buffer.from(password));
+  const saltBuffer = Uint8Array.from(Buffer.from(saltBase64));
 
   const { webcrypto } = getWebCrypto();
 
-  const key = await webcrypto.subtle.importKey(
+  const keyMaterial = await webcrypto.subtle.importKey(
     'raw',
     passBuffer,
-    { name: 'PBKDF2' },
+    { name: 'PBKDF2', hash: 'SHA-256' },
     false,
-    ['deriveBits', 'deriveKey'],
+    ['deriveKey'],
   );
 
   const derivedKey = await webcrypto.subtle.deriveKey(
@@ -366,7 +431,7 @@ export async function keyFromPassword(
       iterations: opts.params.iterations,
       hash: 'SHA-256',
     },
-    key,
+    keyMaterial,
     { name: DERIVED_KEY_FORMAT, length: 256 },
     exportable,
     ['encrypt', 'decrypt'],
@@ -471,9 +536,9 @@ export async function updateVault(
   return encrypt(
     password,
     await decrypt(password, vault),
-    undefined,
-    undefined,
-    targetDerivationParams,
+    {
+      keyDerivationOptions: targetDerivationParams
+    },
   );
 }
 
