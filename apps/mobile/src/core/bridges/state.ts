@@ -2,7 +2,7 @@ import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { urlUtils } from '@rabby-wallet/base-utils';
 
 const activeDappOriginRef = { current: null as string | null };
-function getActiveDappOrigin() {
+export function getActiveDappOrigin() {
   return activeDappOriginRef.current;
 }
 
@@ -12,10 +12,10 @@ export function setGlobalActiveDappOrigin(origin: string | null) {
 
 export function shouldAllowApprovePopup({
   dappOrigin = '',
-  currentOrigin = getActiveDappOrigin(),
+  currentOrigin,
 }: {
   dappOrigin?: string;
-  currentOrigin?: string | null;
+  currentOrigin: string | null;
 }) {
   if (dappOrigin === INTERNAL_REQUEST_ORIGIN) return true;
   if (!currentOrigin || !dappOrigin) return false;

@@ -4,7 +4,7 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { shouldAllowApprovePopup } from '../state';
+import { getActiveDappOrigin, shouldAllowApprovePopup } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 
 let appVersion = '';
@@ -85,7 +85,10 @@ RPCMethodsMiddleParameters) =>
     };
 
     const srcOrigin = req.origin;
-    const notAllowedNow = !shouldAllowApprovePopup({ dappOrigin: srcOrigin });
+    const notAllowedNow = !shouldAllowApprovePopup({
+      dappOrigin: srcOrigin,
+      currentOrigin: getActiveDappOrigin(),
+    });
 
     const rpcMethods = {
       ['@reject']: async () => {
