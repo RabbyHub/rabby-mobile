@@ -12,6 +12,8 @@ import { default as RcIconSwapCheckedCC } from './check-cc.svg';
 import { default as RcIconSwapGasCC } from './gas-cc.svg';
 import { default as RcIconSwitchQuoteCC } from './switch-cc.svg';
 import { default as RcIconArrowUpCC } from './arrow-up-cc.svg';
+import { default as RcIconSwapInfoCC } from './warning-cc.svg';
+import { default as RcIconSwapHiddenArrowCC } from './hidden-arrow-cc.svg';
 
 export const RcIconSwapHistory = makeThemeIconFromCC(
   RcIconHeaderSwapHistoryCC,
@@ -64,6 +66,11 @@ export const RcIconSwapGas = makeThemeIconFromCC(RcIconSwapGasCC, {
   onDark: ThemeColors.dark['neutral-foot'],
 });
 
+export const RcIconSwapGasRed = makeThemeIconFromCC(RcIconSwapGasCC, {
+  onLight: ThemeColors.light['red-default'],
+  onDark: ThemeColors.dark['red-default'],
+});
+
 export const RcIconSwitchQuote = makeThemeIconFromCC(RcIconSwitchQuoteCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
@@ -73,3 +80,16 @@ export const RcIconArrowUp = makeThemeIconFromCC(RcIconArrowUpCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });
+
+export const RcIconSwapInfo = makeThemeIconFromCC(RcIconSwapInfoCC, {
+  onLight: ThemeColors.light['neutral-title-2'],
+  onDark: ThemeColors.light['neutral-title-2'],
+});
+
+export const RcIconSwapHiddenArrow = makeThemeIconFromCC(
+  RcIconSwapHiddenArrowCC,
+  {
+    onLight: ThemeColors.light['neutral-foot'],
+    onDark: ThemeColors.dark['neutral-foot'],
+  },
+);

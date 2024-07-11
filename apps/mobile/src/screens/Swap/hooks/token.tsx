@@ -17,6 +17,7 @@ import { useSwapSettings } from './settings';
 import { QuoteProvider, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatSpeicalAmount } from '@/utils/number';
+import { getTokenSymbol } from '@/utils/token';
 
 const { isSameAddress } = addressUtils;
 
@@ -244,18 +245,12 @@ export const useTokenPair = (userAddress: string) => {
       return [
         res,
         isSameAddress(payToken?.id, WrapTokenAddressMap[chain])
-          ? payToken.symbol
-          : receiveToken.symbol,
+          ? getTokenSymbol(payToken)
+          : getTokenSymbol(receiveToken),
       ];
     }
     return [false, ''];
-  }, [
-    payToken?.id,
-    payToken?.symbol,
-    receiveToken?.id,
-    receiveToken?.symbol,
-    chain,
-  ]);
+  }, [payToken, receiveToken, chain]);
 
   const inSufficient = useMemo(
     () =>
@@ -266,17 +261,7 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   useEffect(() => {
-    // if (isWrapToken) {
-    //   setFeeRate('0');
-    // } else if (isStableCoin) {
-    //   setFeeRate('0.1');
-    // } else {
-    //   setFeeRate('0.3');
-    // }
-
-    if (isStableCoin) {
-      setSlippage('0.05');
-    }
+    setSlippage(isStableCoin ? '0.05 ' : '0.1');
   }, [isWrapToken, isStableCoin, setSlippage]);
 
   const [quoteList, setQuotesList] = useState<

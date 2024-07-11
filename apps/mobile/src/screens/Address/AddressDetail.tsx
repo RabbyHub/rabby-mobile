@@ -538,9 +538,8 @@ const AddressInfo = (props: AddressInfoProps) => {
                   color: colors['neutral-title-1'],
                   backgroundColor: colors['neutral-card-2'],
                 }}
-                value={aliasPendingName}
+                defaultValue={aliasPendingName}
                 onChangeText={setAliasPendingName}
-                // autoFocus
                 ref={inputRef}
               />
             </View>

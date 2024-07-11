@@ -152,7 +152,7 @@ export const dexSwap = async (
         chainObj.serverId,
         pay_token_id,
         spender,
-        unlimited ? MAX_UNSIGNED_256_INT : quote.fromTokenAmount,
+        quote.fromTokenAmount,
         {
           ga: {
             ...$ctx?.ga,

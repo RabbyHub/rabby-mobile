@@ -5,7 +5,7 @@ import React, {
   ComponentProps,
   useMemo,
 } from 'react';
-import { View, Text, TouchableWithoutFeedback } from 'react-native';
+import { View, Text } from 'react-native';
 
 import { uniqBy } from 'lodash';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
@@ -14,7 +14,7 @@ import { isSwapTokenType } from '@/components/Token/TokenSelectorSheetModal';
 import useAsync from 'react-use/lib/useAsync';
 import { useSortToken, useTokens } from '@/hooks/chainAndToken/useToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { abstractTokenToTokenItem } from '@/utils/token';
+import { abstractTokenToTokenItem, getTokenSymbol } from '@/utils/token';
 import useSearchToken from '@/hooks/chainAndToken/useSearchToken';
 import { openapi } from '@/core/request';
 import { SWAP_SUPPORT_CHAINS } from '@/constant/swap';
@@ -23,6 +23,7 @@ import { RcIconSwapBottomArrow } from '@/assets/icons/swap';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { AssetAvatar } from '@/components';
+import TouchableView from '@/components/Touchable/TouchableView';
 
 interface TokenSelectProps {
   token?: TokenItem;
@@ -67,28 +68,6 @@ const TokenSelect = ({
   });
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
   const [updateNonce, setUpdateNonce] = useState(0);
-
-  const handleCurrentTokenChange = token => {
-    onChange && onChange('');
-    onTokenChange(token);
-    setTokenSelectorVisible(false);
-    setQueryConds(prev => ({ ...prev, chainServerId: token.chain }));
-  };
-
-  const handleTokenSelectorClose = () => {
-    setTokenSelectorVisible(false);
-    setQueryConds(prev => ({
-      ...prev,
-      chainServerId: chainId,
-    }));
-  };
-
-  const handleSelectToken = () => {
-    if (allDisplayTokens.length > 0) {
-      setUpdateNonce(updateNonce + 1);
-    }
-    setTokenSelectorVisible(true);
-  };
 
   const isSwapType = isSwapTokenType(type);
 
@@ -173,6 +152,26 @@ const TokenSelect = ({
     [setQueryConds],
   );
 
+  const handleCurrentTokenChange = useCallback(
+    token => {
+      onChange && onChange('');
+      onTokenChange(token);
+      setTokenSelectorVisible(false);
+    },
+    [onChange, onTokenChange],
+  );
+
+  const handleTokenSelectorClose = useCallback(() => {
+    setTokenSelectorVisible(false);
+  }, []);
+
+  const handleSelectToken = useCallback(() => {
+    if (allDisplayTokens.length > 0) {
+      setUpdateNonce(updateNonce + 1);
+    }
+    setTokenSelectorVisible(true);
+  }, [allDisplayTokens, updateNonce]);
+
   useEffect(() => {
     setQueryConds(prev => ({
       ...prev,
@@ -186,7 +185,7 @@ const TokenSelect = ({
 
   return (
     <>
-      <TouchableWithoutFeedback onPress={handleSelectToken}>
+      <TouchableView onPress={handleSelectToken}>
         <View style={styles.wrapper}>
           {token ? (
             <>
@@ -198,7 +197,7 @@ const TokenSelect = ({
                   chainSize={0}
                 />
                 <Text numberOfLines={1} style={styles.tokenSymbol}>
-                  {token.symbol}
+                  {getTokenSymbol(token)}
                 </Text>
               </View>
               <RcIconSwapBottomArrow />
@@ -212,7 +211,7 @@ const TokenSelect = ({
             </>
           )}
         </View>
-      </TouchableWithoutFeedback>
+      </TouchableView>
 
       <TokenSelectorSheetModal
         visible={tokenSelectorVisible}

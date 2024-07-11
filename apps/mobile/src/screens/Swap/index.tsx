@@ -3,8 +3,6 @@ import { createGetStyles } from '@/utils/styles';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useNavigationState } from '@react-navigation/native';
-import { RootStackParamsList } from '@/navigation-type';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SwapHeader } from './components/Header';
 import { useThemeStyles } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
@@ -13,13 +11,13 @@ import { RcIconSwapArrow } from '@/assets/icons/swap';
 import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
 import { useCurrentAccount } from '@/hooks/account';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS, CHAINS_ENUM, Chain } from '@debank/common';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import TokenSelect from './components/TokenSelect';
 import { getTokenSymbol } from '@/utils/token';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
-import { AppSwitch, Button } from '@/components';
+import { Button } from '@/components';
 import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -32,16 +30,11 @@ import { Slippage } from './components/Slippage';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
 import { dexSwap } from './hooks/swap';
 import { colord } from 'colord';
-import { RootNames, getScreenStatusBarConf } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import useMount from 'react-use/lib/useMount';
-import { useSetNavigationReady } from '@/hooks/navigation';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
-type SwapProps = NativeStackScreenProps<
-  RootStackParamsList,
-  'StackTransaction'
->;
 const Swap = () => {
   const { t } = useTranslation();
   const { colors, styles } = useThemeStyles(getStyles);
@@ -60,8 +53,7 @@ const Swap = () => {
 
   const [visible, setVisible] = useQuoteVisible();
 
-  const [unlimitedAllowance, setUnlimitedAllowance] =
-    useSwapUnlimitedAllowance();
+  const [unlimitedAllowance] = useSwapUnlimitedAllowance();
 
   const userAddress = currentAccount?.address;
 
@@ -78,7 +70,6 @@ const Swap = () => {
     handleAmountChange,
     handleBalance,
     payAmount,
-    payTokenIsNativeToken,
     isWrapToken,
     inSufficient,
     slippageChanged,
@@ -105,7 +96,9 @@ const Swap = () => {
     | undefined;
 
   useMount(() => {
-    if (!navState?.chainEnum) return;
+    if (!navState?.chainEnum) {
+      return;
+    }
 
     const chainItem = findChainByEnum(navState?.chainEnum, { fallback: true });
     switchChain(chainItem?.enum || CHAINS_ENUM.ETH, {
@@ -150,9 +143,7 @@ const Swap = () => {
       return t('page.swap.price-expired-refresh-quote');
     }
     if (activeProvider?.shouldApproveToken) {
-      return t('page.swap.approve-x-symbol', {
-        symbol: getTokenSymbol(payToken),
-      });
+      return t('page.swap.approve-and-swap', { name: DexDisplayName });
     }
     if (activeProvider?.name) {
       return t('page.swap.swap-via-x', {
@@ -166,7 +157,6 @@ const Swap = () => {
     activeProvider,
     expired,
     t,
-    payToken,
     isWrapToken,
     DexDisplayName,
   ]);
@@ -278,7 +268,6 @@ const Swap = () => {
                 excludeTokens={
                   receiveToken?.id ? [receiveToken?.id] : undefined
                 }
-                // tokenRender={p => <TokenRender {...p} />}
               />
             </View>
             <TouchableItem onPress={exchangeToken}>
@@ -371,18 +360,17 @@ const Swap = () => {
                   <View style={styles.afterWrapper}>
                     <View style={styles.flexRow}>
                       <Text style={styles.afterLabel}>
-                        {t('page.swap.rabby-fee')}
+                        {t('page.swap.slippage-tolerance')}
                       </Text>
-                      <Text className="font-medium text-r-neutral-title-1">
-                        0%
+                      <Text style={styles.afterValue}>
+                        {t('page.swap.no-slippage-for-wrap')}
                       </Text>
                     </View>
                     <View style={styles.flexRow}>
                       <Text style={styles.afterLabel}>
-                        {t(
-                          'page.swap.there-is-no-fee-and-slippage-for-this-trade',
-                        )}
+                        {t('page.swap.rabby-fee')}
                       </Text>
+                      <Text style={styles.afterValue}>0%</Text>
                     </View>
                   </View>
                 ) : (
@@ -438,24 +426,6 @@ const Swap = () => {
             paddingBottom: Math.max(bottom, 20),
           },
         ]}>
-        {!expired && activeProvider && activeProvider.shouldApproveToken && (
-          <View style={styles.approveContainer}>
-            <View>
-              <Text style={styles.approveText}>
-                {t('page.swap.approve-tips')}
-              </Text>
-            </View>
-            <View style={styles.approveSwitchContainer}>
-              <Text style={styles.unlimitedText}>
-                {t('page.swap.unlimited-allowance')}
-              </Text>
-              <AppSwitch
-                value={unlimitedAllowance}
-                onValueChange={setUnlimitedAllowance}
-              />
-            </View>
-          </View>
-        )}
         <Button
           onPress={() => {
             if (!activeProvider || expired || slippageChanged) {
@@ -514,8 +484,7 @@ const getStyles = createGetStyles(colors => ({
   },
   content: {
     minHeight: 300,
-    paddingHorizontal: 12,
-    paddingVertical: 20,
+    padding: 12,
     marginHorizontal: 20,
     borderRadius: 8,
     backgroundColor: colors['neutral-card-1'],
@@ -563,7 +532,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     height: 52,
     borderRadius: 4,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors['neutral-line'],
     paddingHorizontal: 12,
     alignItems: 'center',
@@ -593,7 +562,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-body'],
   },
   afterValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
