@@ -35,8 +35,7 @@ import {
 } from '@/assets/icons/swap';
 import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
 
-// const GAS_USE_AMOUNT_LIMIT = 2_000_000;
-const GAS_USE_AMOUNT_LIMIT = 2_000_00;
+const GAS_USE_AMOUNT_LIMIT = 2_000_000;
 
 export interface QuoteItemProps {
   quote: QuoteResult | null;
