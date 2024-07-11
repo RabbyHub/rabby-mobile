@@ -5,6 +5,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import * as ApprovalComponent from './components';
+import { shouldAllowApprovePopup } from '@/core/bridges/state';
 
 export const Approval = () => {
   const [getApproval, ,] = useApproval();
@@ -44,6 +45,11 @@ export const Approval = () => {
   }
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
+
+  if (!shouldAllowApprovePopup({ dappOrigin: origin })) {
+    return <View />;
+  }
+
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 
