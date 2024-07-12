@@ -1,7 +1,14 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Text, TextInput, Alert, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -33,6 +40,7 @@ import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { sleep } from '@/utils/async';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -87,18 +95,19 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const result = await unlockApp(values.password, { showLoading: true });
+      const result = await unlockApp(values.password, { showLoading: false });
       if (result.error) {
         helpers?.setFieldError('password', t('page.unlock.password.error'));
         toast.show(result.error);
       }
+
       checkUnlocked();
     },
   });
 
-  const shouldDisabled = isUnlocking || !formik.values.password;
+  const shouldDisabled = !formik.values.password;
 
-  return { formik, shouldDisabled, checkUnlocked };
+  return { isUnlocking, formik, shouldDisabled, checkUnlocked };
 }
 
 export default function UnlockScreen() {
@@ -106,7 +115,8 @@ export default function UnlockScreen() {
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
-  const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
+    useUnlockForm(navigation);
   const {
     computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
@@ -138,7 +148,7 @@ export default function UnlockScreen() {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
-          const result = await unlockApp(password, { showLoading: false });
+          const result = await unlockApp(password, { showLoading: true });
           if (result.error) {
             throw new Error(result.error);
           }
@@ -262,6 +272,7 @@ export default function UnlockScreen() {
                 { height: safeSizes.footerHeight },
               ]}>
               <Button
+                loading={isUnlocking}
                 disabled={shouldDisabled}
                 type="primary"
                 buttonStyle={[styles.buttonShadow]}
