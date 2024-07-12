@@ -160,11 +160,11 @@ export function resetNavigationTo(
 }
 
 export async function requestLockWalletAndBackToUnlockScreen() {
+  const lockInfo = await apisLock.getRabbyLockInfo();
+  if (!lockInfo.isUseCustomPwd) return;
+
   const isUnlocked = apisLock.isUnlocked();
   if (isUnlocked) {
-    const lockInfo = await apisLock.getRabbyLockInfo();
-    if (!lockInfo.isUseCustomPwd) return;
-
     await apisLock.lockWallet();
   }
 

@@ -7,10 +7,8 @@ import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
-import {
-  isOrHasWithAllowedProtocol,
-  protocolAllowList,
-} from '@/constant/dappView';
+import { setGlobalActiveDappOrigin } from '@/core/bridges/state';
+import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
 
 const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
 
@@ -32,10 +30,13 @@ export function useActiveViewSheetModalRefs() {
   return useSheetModals(useAtomValue(activeWebViewSheetModalRefs));
 }
 
-export function useHasActiveOpenedDapp() {
+export function useCurrentActiveOpenedDapp() {
   const [activeDappOrigin] = useAtom(activeDappOriginAtom);
 
-  return !!activeDappOrigin;
+  return {
+    activeDappOrigin,
+    hasActiveDapp: !!activeDappOrigin,
+  };
 }
 
 export const OPEN_DAPP_VIEW_INDEXES = {
@@ -44,7 +45,16 @@ export const OPEN_DAPP_VIEW_INDEXES = {
 };
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
-  const [activeDappOrigin, setActiveDappOrigin] = useAtom(activeDappOriginAtom);
+  const [activeDappOrigin, _setActiveDappOrigin] =
+    useAtom(activeDappOriginAtom);
+
+  const setActiveDappOrigin = useCallback(
+    (origin: DappInfo['origin'] | null) => {
+      setGlobalActiveDappOrigin(origin);
+      _setActiveDappOrigin(origin);
+    },
+    [_setActiveDappOrigin],
+  );
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 

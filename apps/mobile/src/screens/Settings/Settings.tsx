@@ -79,6 +79,8 @@ const isIOS = Platform.OS === 'ios';
 function SettingsBlocks() {
   const { styles, colors } = useThemeStyles(getStyles);
 
+  const { currentAccount } = useCurrentAccount();
+
   const clearPendingRef = useRef<BottomSheetModal>(null);
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
@@ -271,6 +273,36 @@ function SettingsBlocks() {
           </Block>
         );
       })}
+
+      <ConfirmBottomSheetModal
+        ref={clearPendingRef}
+        height={422}
+        title={'Clear Pending'}
+        onConfirm={() => {
+          if (currentAccount?.address) {
+            clearPendingTxs(currentAccount.address);
+          }
+          toast.success('Pending transaction cleared');
+        }}
+        descStyle={{
+          textAlign: 'left',
+          fontSize: 16,
+          lineHeight: 22,
+          fontWeight: Platform.OS === 'ios' ? '500' : '400',
+        }}
+        desc={
+          <Text>
+            This will clear all your pending transactions. This can help you
+            solve the problem that in some cases the state of the transaction in
+            Rabby does not match the state on-chain.
+            {'\n'}
+            {'\n'}
+            This will not change the balances in your accounts or require you to
+            re-enter your seed phrase. All your assets and accounts information
+            will remain secure.
+          </Text>
+        }
+      />
     </>
   );
 }
@@ -521,10 +553,6 @@ function DevSettingsBlocks() {
 export default function SettingsScreen(): JSX.Element {
   const { styles } = useThemeStyles(getStyles);
 
-  const clearPendingRef = useRef<BottomSheetModal>(null);
-
-  const { currentAccount } = useCurrentAccount();
-
   const {
     computed: { couldSetupBiometrics },
     fetchBiometrics,
@@ -560,36 +588,6 @@ export default function SettingsScreen(): JSX.Element {
       </ScrollView>
 
       <ThemeSelectorModal />
-
-      <ConfirmBottomSheetModal
-        ref={clearPendingRef}
-        height={422}
-        title={'Clear Pending'}
-        onConfirm={() => {
-          if (currentAccount?.address) {
-            clearPendingTxs(currentAccount.address);
-          }
-          toast.success('Pending transaction cleared');
-        }}
-        descStyle={{
-          textAlign: 'left',
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: Platform.OS === 'ios' ? '500' : '400',
-        }}
-        desc={
-          <Text>
-            This will clear all your pending transactions. This can help you
-            solve the problem that in some cases the state of the transaction in
-            Rabby does not match the state on-chain.
-            {'\n'}
-            {'\n'}
-            This will not change the balances in your accounts or require you to
-            re-enter your seed phrase. All your assets and accounts information
-            will remain secure.
-          </Text>
-        }
-      />
 
       <ManagePasswordSheetModal height={422} />
 

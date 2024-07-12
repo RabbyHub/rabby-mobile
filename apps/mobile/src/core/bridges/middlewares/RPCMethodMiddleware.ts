@@ -4,7 +4,8 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { urlUtils } from '@rabby-wallet/base-utils';
+import { getActiveDappOrigin, shouldAllowApprovePopup } from '../state';
+import { ethErrors } from 'eth-rpc-errors';
 
 let appVersion = '';
 
@@ -83,7 +84,18 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
     };
 
-    const rpcMethods: any = {
+    const srcOrigin = req.origin;
+    const notAllowedNow = !shouldAllowApprovePopup({
+      dappOrigin: srcOrigin,
+      currentOrigin: getActiveDappOrigin(),
+    });
+
+    const rpcMethods = {
+      ['@reject']: async () => {
+        throw ethErrors.provider.userRejectedRequest({
+          message: 'Not Allowed',
+        });
+      },
       // wallet_getPermissions: async () => new Promise<any>(resolve => {}),
       // wallet_requestPermissions: async () => {
       //   res.result = [
@@ -150,7 +162,14 @@ RPCMethodsMiddleParameters) =>
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.REQUEST_SEND
       }
-      if (rpcMethods[req.method]) {
+      if (notAllowedNow) {
+        if (__DEV__) {
+          console.debug(
+            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) not allowed now`,
+          );
+        }
+        await rpcMethods['@reject']();
+      } else if (rpcMethods[req.method]) {
         if (__DEV__) {
           console.debug(
             `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
