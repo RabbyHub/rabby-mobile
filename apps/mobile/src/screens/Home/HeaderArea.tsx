@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -42,22 +42,27 @@ export default function HomeHeaderArea() {
   const styles = useMemo(() => getStyles(colors, width), [colors, width]);
   const navigation = useRabbyAppNavigation();
   const { currentAccount } = useCurrentAccount();
+  const WalletIcon = useMemo(
+    () =>
+      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
+    [currentAccount],
+  );
+
   const {
     balance,
     balanceLoading,
     balanceFromCache,
     balanceUpdating,
     missingList,
-  } = useCurrentBalance(currentAccount?.address, true, false);
-  const WalletIcon = useMemo(
-    () =>
-      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
-    [currentAccount],
-  );
+  } = useCurrentBalance(currentAccount?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
+
   const {
     result: curveData,
     isLoading,
-    refresh: refreshCurve,
+    refresh: refreshCurveData,
   } = useCurve(currentAccount?.address, 0, balance);
 
   const usd = useMemo(
@@ -76,7 +81,10 @@ export default function HomeHeaderArea() {
     latestPercent,
     () => previousAddr !== currentAccount?.address,
   );
-  const percent = latestPercent || previousPercent || null;
+  const percent = useMemo(() => {
+    return latestPercent || previousPercent;
+  }, [latestPercent, previousPercent]);
+
   const isDecrease = !!curveData?.isLoss;
 
   const name = useMemo(
@@ -124,14 +132,14 @@ export default function HomeHeaderArea() {
 
   const { remoteVersion } = useUpgradeInfo();
 
-  const curveBottomSheetModalRef = useRef<BottomSheetModal>();
+  const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-  const openChart = React.useCallback(() => {
+  const handlePressBalanceSection = React.useCallback(() => {
     curveBottomSheetModalRef.current?.dismiss();
     curveBottomSheetModalRef.current?.present();
 
-    refreshCurve();
-  }, [refreshCurve]);
+    refreshCurveData();
+  }, [refreshCurveData]);
 
   return (
     <View
@@ -186,7 +194,9 @@ export default function HomeHeaderArea() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.textBox} onPress={openChart}>
+      <TouchableOpacity
+        style={styles.textBox}
+        onPress={handlePressBalanceSection}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
           <Text style={styles.usdText}>
             {(balanceLoading && !balanceFromCache) ||
