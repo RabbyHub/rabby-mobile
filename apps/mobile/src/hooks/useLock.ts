@@ -14,10 +14,10 @@ import { APP_FEATURE_SWITCH } from '@/constant';
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
-import {
-  nativeBlockScreen,
-  nativeUnblockScreen,
-} from '@/core/native/ReactNativeSecurity';
+// import {
+//   nativeBlockScreen,
+//   nativeUnblockScreen,
+// } from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
   appUnlocked: false,
