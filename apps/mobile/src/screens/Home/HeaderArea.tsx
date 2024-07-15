@@ -32,6 +32,7 @@ import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
 import { CurveBottomSheetModal } from './components/CurveBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import usePrevious from 'ahooks/lib/usePrevious';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -53,23 +54,29 @@ export default function HomeHeaderArea() {
       currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
     [currentAccount],
   );
-  const { result: curveData, isLoading } = useCurve(
-    currentAccount?.address,
-    0,
-    balance,
-  );
+  const {
+    result: curveData,
+    isLoading,
+    refresh: refreshCurve,
+  } = useCurve(currentAccount?.address, 0, balance);
 
   const usd = useMemo(
     () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
     [balance],
   );
-  const percent = useMemo(
+  const latestPercent = useMemo(
     () =>
       !curveData?.changePercent
         ? ''
         : (curveData?.isLoss ? '-' : '+') + curveData?.changePercent,
     [curveData?.changePercent, curveData?.isLoss],
   );
+  const previousAddr = usePrevious(currentAccount?.address);
+  const previousPercent = usePrevious(
+    latestPercent,
+    () => previousAddr !== currentAccount?.address,
+  );
+  const percent = latestPercent || previousPercent || null;
   const isDecrease = !!curveData?.isLoss;
 
   const name = useMemo(
@@ -122,7 +129,9 @@ export default function HomeHeaderArea() {
   const openChart = React.useCallback(() => {
     curveBottomSheetModalRef.current?.dismiss();
     curveBottomSheetModalRef.current?.present();
-  }, []);
+
+    refreshCurve();
+  }, [refreshCurve]);
 
   return (
     <View
@@ -190,7 +199,7 @@ export default function HomeHeaderArea() {
             )}
           </Text>
 
-          {!isLoading && (
+          {!!percent && (
             <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
               <Text
                 style={StyleSheet.compose(
@@ -207,7 +216,7 @@ export default function HomeHeaderArea() {
                   isDecrease ? colors['red-default'] : colors['green-default']
                 }
               />
-              {missingList?.length ? (
+              {!isLoading && missingList?.length ? (
                 <Tip
                   content={t('page.dashboard.home.missingDataTooltip', {
                     text:
