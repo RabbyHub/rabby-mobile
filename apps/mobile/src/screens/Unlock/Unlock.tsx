@@ -39,8 +39,7 @@ import { useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-import { sleep } from '@/utils/async';
+import { IS_IOS } from '@/core/native/utils';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -95,7 +94,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const result = await unlockApp(values.password, { showLoading: false });
+      const result = await unlockApp(values.password, { showLoading: IS_IOS });
       if (result.error) {
         helpers?.setFieldError('password', t('page.unlock.password.error'));
         toast.show(result.error);
@@ -272,7 +271,9 @@ export default function UnlockScreen() {
                 { height: safeSizes.footerHeight },
               ]}>
               <Button
-                loading={isUnlocking}
+                {...(!IS_IOS && {
+                  loading: isUnlocking,
+                })}
                 disabled={shouldDisabled}
                 type="primary"
                 buttonStyle={[styles.buttonShadow]}
