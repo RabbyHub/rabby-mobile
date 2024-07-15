@@ -1,5 +1,11 @@
 import React, { useCallback, useRef } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
 import * as Yup from 'yup';
@@ -285,10 +291,12 @@ const getStyles = createGetStyles(colors => {
       height: 320,
       width: '100%',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'flex-end',
       alignItems: 'center',
       padding: 20,
+      paddingBottom: 30,
       flexShrink: 0,
+      // ...makeDebugBorder()
     },
     title1: {
       color: colors['neutral-title2'],
@@ -368,12 +376,12 @@ const getStyles = createGetStyles(colors => {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: colors['neutral-bg2'],
+      backgroundColor: colors['neutral-bg1'],
       height: LAYOUTS.fixedFooterHeight,
       paddingVertical: LAYOUTS.fixedFooterPaddingVertical,
       paddingHorizontal: LAYOUTS.fixedFooterPaddingHorizontal,
-      borderTopWidth: 1,
-      borderTopColor: colors['neutral-line'],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors['neutral-foot'],
     },
     nextButtonContainer: {
       width: '100%',
