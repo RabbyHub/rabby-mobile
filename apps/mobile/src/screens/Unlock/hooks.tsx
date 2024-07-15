@@ -5,6 +5,7 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { ActivityIndicator } from 'react-native';
 import { useAtomRefState } from '@/hooks/common/useRefState';
 import { sleep } from '@/utils/async';
+import { IS_ANDROID } from '@/core/native/utils';
 
 function toastUnlocking() {
   return toastWithIcon(() => <ActivityIndicator style={{ marginRight: 6 }} />)(
@@ -45,7 +46,7 @@ export function useUnlockApp() {
       try {
         return Promise.all([
           await apisLock.unlockWallet(password),
-          showLoading ? sleep(1500) : null,
+          showLoading && IS_ANDROID ? sleep(1500) : null,
         ]).then(([res]) => res);
       } finally {
         hideToast?.();
