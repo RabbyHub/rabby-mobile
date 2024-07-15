@@ -16,7 +16,10 @@ export type ValidationBehaviorProps = {
    * @param password
    */
   validationHandler?(password: string): void | Promise<void>;
-  onFinished?(ctx: { validatedPassword: string }): void;
+  onFinished?(ctx: {
+    hasSetupCustomPassword?: boolean;
+    validatedPassword: string;
+  }): void;
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &

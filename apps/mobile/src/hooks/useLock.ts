@@ -44,6 +44,16 @@ export function useAppUnlocked() {
   };
 }
 
+export function usePasswordStatus() {
+  const { pwdStatus } = useAtomValue(appLockAtom);
+
+  return {
+    pwdStatus,
+    isUseBuiltinPwd: pwdStatus === PasswordStatus.UseBuiltIn,
+    isUseCustomPwd: pwdStatus === PasswordStatus.Custom,
+  };
+}
+
 const tryAutoUnlockPromiseRef = {
   current: apisLock.tryAutoUnlockRabbyMobile(),
 };

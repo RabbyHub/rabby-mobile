@@ -8,6 +8,7 @@ import {
   APPROVAL_MODAL_NAMES,
   CreateParams,
   EVENT_NAMES,
+  GlobalSheetModalListeners,
   MODAL_NAMES,
 } from './types';
 
@@ -41,7 +42,9 @@ export const GlobalBottomSheetModal = () => {
     }, {} as Record<string, ModalData['ref']>);
   }, [modals]);
 
-  const handlePresent = React.useCallback((key: string) => {
+  const handlePresent = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
+  >((key: string) => {
     const currentModal = modalRefs.current[key];
 
     if (!currentModal) {
@@ -53,8 +56,10 @@ export const GlobalBottomSheetModal = () => {
 
   const [getApproval] = useApproval();
 
-  const handleCreate = React.useCallback(
-    async (id: string, params: CreateParams) => {
+  const handleCreate = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.CREATE]
+  >(
+    async (id, params) => {
       const _approval = await getApproval();
       const approvalComponent = _approval?.data
         ?.approvalComponent as APPROVAL_MODAL_NAMES;
@@ -82,9 +87,11 @@ export const GlobalBottomSheetModal = () => {
     [getApproval, handlePresent],
   );
 
-  const handleRemove = React.useCallback((key: string) => {
+  const handleRemove = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
+  >((key: string, params) => {
     if (modalRefs.current[key]) {
-      modalRefs.current[key].current?.close();
+      modalRefs.current[key].current?.close({ ...params });
     }
     delete modalRefs.current[key];
     // const modalInst = modals.find(modal => modal.id === key);
@@ -93,9 +100,13 @@ export const GlobalBottomSheetModal = () => {
     setModals(prev => {
       return prev.filter(modal => modal.id !== key);
     });
+
+    events.emit(EVENT_NAMES.CLOSED, key);
   }, []);
 
-  const handleDismiss = React.useCallback(
+  const handleDismiss = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
+  >(
     (key: string) => {
       events.emit(EVENT_NAMES.DISMISS, key);
       handleRemove(key);
@@ -103,7 +114,9 @@ export const GlobalBottomSheetModal = () => {
     [handleRemove],
   );
 
-  const handleSnapToIndex = React.useCallback((key: string, index: number) => {
+  const handleSnapToIndex = React.useCallback<
+    GlobalSheetModalListeners[EVENT_NAMES.SNAP_TO_INDEX]
+  >((key, index) => {
     const currentModal = modalRefs.current[key];
 
     if (!currentModal) {
