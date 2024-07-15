@@ -82,7 +82,6 @@ export const CommonAction = ({
 
   const commonActionAddressRef = React.useRef(null);
   const commonActionReceiverRef = React.useRef(null);
-  const commonActionExpectReceiverRef = React.useRef(null);
 
   return (
     <Table>
@@ -267,61 +266,6 @@ export const CommonAction = ({
                 />
               }
             />
-          </SubTable>
-        </>
-      )}
-      {!hasReceiver && !actionData.receiver && addressInfo && (
-        <>
-          <Col>
-            <Row isTitle itemsCenter>
-              <Text style={commonStyle.rowTitleText}>
-                {t('page.signTx.contractCall.suspectedReceiver')}
-              </Text>
-            </Row>
-            <Row>
-              <ViewMore
-                type="receiver"
-                data={{
-                  title: t('page.signTx.contractCall.suspectedReceiver'),
-                  address: addressInfo.address,
-                  chain: addressInfo.chain,
-                  eoa: addressInfo.eoa,
-                  cex: addressInfo.cex,
-                  contract: addressInfo.contract,
-                  usd_value: addressInfo.usd_value,
-                  hasTransfer: addressInfo.hasTransfer,
-                  isTokenContract: addressInfo.isTokenContract,
-                  name: addressInfo.name,
-                  onTransferWhitelist: addressInfo.onTransferWhitelist,
-                }}>
-                <View ref={commonActionExpectReceiverRef}>
-                  <Values.Address address={addressInfo.address} chain={chain} />
-                </View>
-              </ViewMore>
-            </Row>
-          </Col>
-          <SubTable target={commonActionExpectReceiverRef}>
-            <SubCol>
-              <SubRow isTitle>
-                <Text style={commonStyle.subRowTitleText}>
-                  {t('page.signTx.addressNote')}
-                </Text>
-              </SubRow>
-              <SubRow>
-                <Values.AddressMemo address={addressInfo.address} />
-              </SubRow>
-            </SubCol>
-
-            {addressInfo.name && (
-              <SubCol>
-                <SubRow> </SubRow>
-                <SubRow>
-                  <Text style={commonStyle.subRowNestedText}>
-                    {addressInfo.name}
-                  </Text>
-                </SubRow>
-              </SubCol>
-            )}
           </SubTable>
         </>
       )}

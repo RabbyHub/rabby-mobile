@@ -4,6 +4,8 @@ import { apisLock } from '@/core/apis';
 import { toast, toastWithIcon } from '@/components/Toast';
 import { ActivityIndicator } from 'react-native';
 import { useAtomRefState } from '@/hooks/common/useRefState';
+import { sleep } from '@/utils/async';
+import { IS_ANDROID } from '@/core/native/utils';
 
 function toastUnlocking() {
   return toastWithIcon(() => <ActivityIndicator style={{ marginRight: 6 }} />)(
@@ -39,10 +41,13 @@ export function useUnlockApp() {
 
       const { showLoading = true } = options || {};
 
-      const hideToast = showLoading ? null : toastUnlocking();
+      const hideToast = !showLoading ? null : toastUnlocking();
 
       try {
-        return await apisLock.unlockWallet(password);
+        return Promise.all([
+          await apisLock.unlockWallet(password),
+          showLoading && IS_ANDROID ? sleep(1500) : null,
+        ]).then(([res]) => res);
       } finally {
         hideToast?.();
         setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));

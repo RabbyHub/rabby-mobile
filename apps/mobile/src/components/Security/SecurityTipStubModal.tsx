@@ -11,7 +11,7 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Button } from '../Button';
 import { useIOSScreenIsBeingCaptured } from '@/hooks/native/security';
 import {
-  ProtectetType,
+  ProtectType,
   useAtSensitiveScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
@@ -30,7 +30,7 @@ function useGlobalSecurityTip() {
     shouldShowSecurityTip:
       atSensitiveScreen &&
       isBeingCaptured &&
-      $protectedConf.iosBlurType === ProtectetType.SafeTipModal,
+      $protectedConf.iosBlurType === ProtectType.SafeTipModal,
     onCancel: $protectedConf.onCancel,
   };
 }

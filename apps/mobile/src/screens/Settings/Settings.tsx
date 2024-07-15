@@ -146,6 +146,14 @@ function SettingsBlocks() {
         label: 'Settings',
         items: [
           {
+            label: 'Enable whitelist for sending assets',
+            icon: RcWhitelist,
+            onPress: () => {
+              switchWhitelistRef.current?.toggle();
+            },
+            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
+          },
+          {
             label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
             icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
             rightNode: (
@@ -156,14 +164,6 @@ function SettingsBlocks() {
             },
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
-          },
-          {
-            label: 'Enable whitelist for sending assets',
-            icon: RcWhitelist,
-            onPress: () => {
-              switchWhitelistRef.current?.toggle();
-            },
-            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
             label: 'Custom RPC',

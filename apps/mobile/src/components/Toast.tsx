@@ -92,9 +92,14 @@ const info = toastWithIcon(IconCommonInfo);
 
 const success = toastWithIcon(IconTick);
 
+const showLoading = toastWithIcon(() => (
+  <ActivityIndicator style={{ marginRight: 6 }} />
+));
+
 export const toast = {
   show,
   info,
+  showLoading,
   success,
   positions: Toast.positions,
 };
