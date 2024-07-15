@@ -46,9 +46,9 @@ export const WarningOrChecked = ({
           : t('page.swap.by-transaction-simulation-the-quote-is-valid')
       }>
       {quoteWarning ? (
-        <ImgWarning width={14} height={14} />
+        <ImgWarning width={16} height={16} />
       ) : (
-        <ImgVerified width={14} height={14} />
+        <ImgVerified width={16} height={16} />
       )}
     </Tip>
   );
