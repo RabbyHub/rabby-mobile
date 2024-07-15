@@ -506,7 +506,7 @@ export const DexQuoteItem = (
             <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
             {!!preExecResult?.shouldApproveToken && (
               <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
-                <ImgLock width={14} height={14} />
+                <ImgLock width={16} height={16} />
               </Tip>
             )}
           </View>
@@ -552,9 +552,13 @@ export const DexQuoteItem = (
             {!disabled && !inSufficient && (
               <>
                 {gasFeeTooHight ? (
-                  <RcIconSwapGasRed width={14} height={14} />
+                  <RcIconSwapGasRed
+                    viewBox="0 0 16 16"
+                    width={16}
+                    height={16}
+                  />
                 ) : (
-                  <RcIconSwapGas width={14} height={14} />
+                  <RcIconSwapGas viewBox="0 0 16 16" width={16} height={16} />
                 )}
                 <Text
                   style={[
@@ -621,9 +625,9 @@ export function WarningOrChecked({
           : t('page.swap.by-transaction-simulation-the-quote-is-valid')
       }>
       {quoteWarning ? (
-        <ImgWarning width={14} height={14} />
+        <ImgWarning width={16} height={16} />
       ) : (
-        <ImgVerified width={14} height={14} />
+        <ImgVerified width={16} height={16} />
       )}
     </Tip>
   );

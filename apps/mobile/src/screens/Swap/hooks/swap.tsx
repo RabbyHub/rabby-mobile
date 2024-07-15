@@ -139,7 +139,7 @@ export const dexSwap = async (
         { isSwap: true, swapPreferMEVGuarded },
       );
 
-      await sleep(200);
+      await sleep(1000);
 
       // unTriggerTxCounter.decrease();
     }
@@ -163,7 +163,7 @@ export const dexSwap = async (
         { isSwap: true, swapPreferMEVGuarded },
       );
 
-      await sleep(200);
+      await sleep(1000);
 
       // unTriggerTxCounter.decrease();
     }

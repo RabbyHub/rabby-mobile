@@ -9,7 +9,6 @@ import {
 } from 'react';
 import ImgVerified from '@/assets/icons/swap/verified.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
-import ImgInfo from '@/assets/icons/swap/info-outline.svg';
 import ImgLock from '@/assets/icons/swap/lock.svg';
 
 import React from 'react';
@@ -24,7 +23,11 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { DEX } from '@/constant/swap';
-import { RcIconSwapGas, RcIconSwitchQuote } from '@/assets/icons/swap';
+import {
+  RcIconSwapGas,
+  RcIconSwapReceiveInfo,
+  RcIconSwitchQuote,
+} from '@/assets/icons/swap';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
   i18n.t('page.swap.QuoteLessWarning', { receive, diff });
@@ -117,7 +120,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
           ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
           : formatAmount(rateBn.toString(10)),
         sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
-        diff: cut.abs().toFixed(2),
+        diff: cut.abs().toFixed(2) + '%',
         showLoss: cut.lte(-5),
       };
     }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
@@ -204,7 +207,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
                     }>{`Est Difference ${sign}${diff}%`}</Text>
                 </View>
               }>
-              <ImgInfo />
+              <RcIconSwapReceiveInfo width={16} height={16} />
             </Tip>
           </View>
         </View>
@@ -290,8 +293,6 @@ const getStyles = createGetStyles(colors => ({
   gasImage: {
     width: 14,
     height: 14,
-    position: 'relative',
-    top: -1,
   },
   titleText: {
     fontSize: 16,

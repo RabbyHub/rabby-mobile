@@ -440,7 +440,6 @@ const Swap = () => {
           }}
           title={btnText}
           titleStyle={styles.btnTitle}
-          disabledTitleStyle={styles.btnDisabledTitle}
           disabled={
             !payToken || !receiveToken || !payAmount || Number(payAmount) === 0
           }
@@ -611,9 +610,6 @@ const getStyles = createGetStyles(colors => ({
   },
   btnTitle: {
     color: colors['neutral-title-2'],
-  },
-  btnDisabledTitle: {
-    color: colord(colors['neutral-title-2']).alpha(0.5).toHex(),
   },
 }));
 

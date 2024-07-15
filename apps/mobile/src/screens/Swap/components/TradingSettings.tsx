@@ -234,7 +234,6 @@ function EnableTrading({
           containerStyle={styles.btnC}
           buttonStyle={styles.confirmStyle}
           titleStyle={styles.confirmTitleStyle}
-          disabledTitleStyle={styles.confirmTitleDisabledStyle}
           onPress={onConfirm}
         />
       </View>
@@ -406,8 +405,5 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     color: colors['neutral-title2'],
     flex: 1,
-  },
-  confirmTitleDisabledStyle: {
-    color: colord(colors['neutral-title2']).alpha(0.5).toHex(),
   },
 }));

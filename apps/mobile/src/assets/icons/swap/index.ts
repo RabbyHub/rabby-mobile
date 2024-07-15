@@ -14,6 +14,7 @@ import { default as RcIconSwitchQuoteCC } from './switch-cc.svg';
 import { default as RcIconArrowUpCC } from './arrow-up-cc.svg';
 import { default as RcIconSwapInfoCC } from './warning-cc.svg';
 import { default as RcIconSwapHiddenArrowCC } from './hidden-arrow-cc.svg';
+import { default as RcIconSwapReceiveInfoCC } from './info-outline-cc.svg';
 
 export const RcIconSwapHistory = makeThemeIconFromCC(
   RcIconHeaderSwapHistoryCC,
@@ -88,6 +89,14 @@ export const RcIconSwapInfo = makeThemeIconFromCC(RcIconSwapInfoCC, {
 
 export const RcIconSwapHiddenArrow = makeThemeIconFromCC(
   RcIconSwapHiddenArrowCC,
+  {
+    onLight: ThemeColors.light['neutral-foot'],
+    onDark: ThemeColors.dark['neutral-foot'],
+  },
+);
+
+export const RcIconSwapReceiveInfo = makeThemeIconFromCC(
+  RcIconSwapReceiveInfoCC,
   {
     onLight: ThemeColors.light['neutral-foot'],
     onDark: ThemeColors.dark['neutral-foot'],

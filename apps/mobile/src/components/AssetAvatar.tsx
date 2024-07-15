@@ -1,6 +1,6 @@
 import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { useSwitch } from '@/hooks/useSwitch';
 import { Chain } from '@debank/common';
 import { memo, ReactNode, useMemo } from 'react';
@@ -102,7 +102,12 @@ export const AssetAvatar = memo(
           {!logo || on ? (
             <DefaultToken size={size} style={avatarStyle} />
           ) : (
-            <FastImage source={source} style={avatarStyle} onError={turnOn} />
+            <FastImage
+              source={source}
+              style={avatarStyle}
+              onError={turnOn}
+              key={logo}
+            />
           )}
         </View>
         {chainLogo ? <FastImage source={chainLogo} style={chainStyle} /> : null}
