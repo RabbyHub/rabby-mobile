@@ -18,6 +18,7 @@ export const Approval = () => {
 
   const init = React.useCallback(
     async (winId?: string) => {
+      setApproval(null);
       const _approval = await getApproval();
       if (!_approval) {
         removeGlobalBottomSheetModal(winId);
