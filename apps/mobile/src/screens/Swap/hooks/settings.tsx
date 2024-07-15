@@ -29,7 +29,9 @@ export const useSwapSettingsVisible = () => {
 const swapSupportedDexList = atom<string[]>(Object.keys(DEX));
 
 swapSupportedDexList.onMount = setAtom => {
-  openapi.getSupportedDEXList().then(s => setAtom(s.dex_list));
+  openapi.getSupportedDEXList().then(s => {
+    setAtom(s.dex_list);
+  });
 };
 
 const getSettings = () => ({

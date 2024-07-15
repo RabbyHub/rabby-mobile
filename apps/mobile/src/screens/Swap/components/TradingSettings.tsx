@@ -41,15 +41,14 @@ const list = [...Object.values(DEX), ...Object.values(CEX)] as {
 
 export const TradingSettings = () => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  // const snapPoints = useMemo(() => [480], []);
   const { visible, setVisible } = useSwapSettingsVisible();
-  const supportedDexList = useSwapSupportedDexList();
+  const [supportedDexList] = useSwapSupportedDexList();
 
   const { height: screenHeight } = useWindowDimensions();
 
   const height = useMemo(() => {
     const min = 340;
-    const max = Math.min(480, screenHeight * 0.9);
+    const max = Math.min(500, screenHeight * 0.9);
 
     const h = 132 + supportedDexList.length * 68;
 

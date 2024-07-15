@@ -668,7 +668,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     gap: 4,
   },
   nameText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
@@ -677,7 +677,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
   },
   gasUsd: {
     color: colors['neutral-foot'],
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
   },
   middleContainer: {
@@ -692,7 +692,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
   },
   middleDefaultText: {
     width: 'auto',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },

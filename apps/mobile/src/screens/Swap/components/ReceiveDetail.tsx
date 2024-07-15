@@ -294,13 +294,13 @@ const getStyles = createGetStyles(colors => ({
     top: -1,
   },
   titleText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     marginRight: 2,
   },
   amountText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     maxWidth: 170,
@@ -309,8 +309,8 @@ const getStyles = createGetStyles(colors => ({
     marginRight: 4,
   },
   diffText: {
-    fontSize: 12,
-    fontWeight: 'normal',
+    fontSize: 13,
+    fontWeight: '400',
     color: colors['neutral-foot'],
   },
   warning: {

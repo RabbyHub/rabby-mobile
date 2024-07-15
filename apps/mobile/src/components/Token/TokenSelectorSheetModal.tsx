@@ -9,6 +9,7 @@ import { View, Text } from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
+  BottomSheetFlatList,
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
@@ -32,6 +33,7 @@ import ChainFilterItem from './ChainFilterItem';
 import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts } from '@/constant/layout';
+import { Skeleton } from '@rneui/themed';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -79,6 +81,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
       onSearch,
       supportChains,
       disabledTips,
+      isLoading,
     },
     ref,
   ) => {
@@ -93,7 +96,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     }, [visible, toggleShowSheetModal]);
 
     const colors = useThemeColors();
-    const styles = getStyles(colors);
+    const styles = useMemo(() => getStyles(colors), [colors]);
 
     const [query, setQuery] = useState('');
     const [isInputActive, setIsInputActive] = useState(false);
@@ -264,63 +267,106 @@ export const TokenSelectorSheetModal = React.forwardRef<
             </View>
           )}
 
-          <BottomSheetScrollView
+          <BottomSheetFlatList
             keyboardShouldPersistTaps="handled"
-            style={[styles.scrollView, styles.internalBlock]}>
-            {tokens.map(token => {
-              const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
-              const currentChainItem = findChainByServerID(token._chain);
-              const disabled =
-                !!supportChains?.length &&
-                currentChainItem &&
-                !supportChains.includes(currentChainItem.enum);
-
-              return (
-                <TouchableView
-                  key={token_key}
-                  onPress={() => {
-                    if (disabled) {
-                      disabledTips && toast.info(disabledTips);
-                      return;
+            style={[styles.scrollView, styles.internalBlock]}
+            data={tokens}
+            windowSize={5}
+            keyExtractor={token =>
+              `${token.id}-${token._symbol}-${token._chain}`
+            }
+            ListHeaderComponent={useMemo(
+              () =>
+                isLoading
+                  ? () => {
+                      return (
+                        <>
+                          {Array.from({ length: 10 }).map((_, index) => (
+                            <LoadingItem key={index} />
+                          ))}
+                        </>
+                      );
                     }
-                    onConfirm(token.$origin);
-                    toggleShowSheetModal('collapse');
-                  }}
-                  style={[
-                    styles.tokenItem,
-                    disabled && styles.tokenItemDisabled,
-                  ]}>
-                  <View style={styles.tokenLeft}>
-                    <AssetAvatar
-                      logo={token?._logo}
-                      size={36}
-                      chain={token?._chain}
-                      chainSize={16}
-                    />
-                    <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
-                      <Text style={styles.tokenName} numberOfLines={1}>
-                        {token?._symbol}
+                  : null,
+              [isLoading],
+            )}
+            extraData={isLoading}
+            renderItem={useCallback(
+              ({ item: token }) => {
+                if (isLoading) {
+                  return null;
+                }
+                const token_key = `${token.$origin.id}-${token._symbol}-${token._chain}`;
+                const currentChainItem = findChainByServerID(token._chain);
+                const disabled =
+                  !!supportChains?.length &&
+                  currentChainItem &&
+                  !supportChains.includes(currentChainItem.enum);
+
+                return (
+                  <TouchableView
+                    key={token_key}
+                    onPress={() => {
+                      if (disabled) {
+                        disabledTips && toast.info(disabledTips);
+                        return;
+                      }
+                      onConfirm(token.$origin);
+                      toggleShowSheetModal('collapse');
+                    }}
+                    style={[
+                      styles.tokenItem,
+                      disabled && styles.tokenItemDisabled,
+                    ]}>
+                    <View style={styles.tokenLeft}>
+                      <AssetAvatar
+                        logo={token?._logo}
+                        size={36}
+                        chain={token?._chain}
+                        chainSize={16}
+                      />
+                      <View style={[styles.tokenInfoCol, { marginLeft: 12 }]}>
+                        <Text style={styles.tokenName} numberOfLines={1}>
+                          {token?._symbol}
+                        </Text>
+                        <Text
+                          style={[styles.tokenPrice, { marginTop: 4 }]}
+                          numberOfLines={1}>
+                          {token._price}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
+                      <Text style={styles.tokenHeaderAmount}>
+                        {token._amount}
                       </Text>
                       <Text
-                        style={[styles.tokenPrice, { marginTop: 4 }]}
-                        numberOfLines={1}>
-                        {token._price}
+                        style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
+                        {token._netWorthStr}
                       </Text>
                     </View>
-                  </View>
-                  <View style={[styles.tokenInfoCol, styles.tokenInfoColRight]}>
-                    <Text style={styles.tokenHeaderAmount}>
-                      {token._amount}
-                    </Text>
-                    <Text
-                      style={[styles.tokenHeaderNetworth, { marginTop: 4 }]}>
-                      {token._netWorthStr}
-                    </Text>
-                  </View>
-                </TouchableView>
-              );
-            })}
-          </BottomSheetScrollView>
+                  </TouchableView>
+                );
+              },
+              [
+                isLoading,
+                supportChains,
+                disabledTips,
+                onConfirm,
+                toggleShowSheetModal,
+                styles.tokenItem,
+                styles.tokenItemDisabled,
+                styles.tokenLeft,
+                styles.tokenInfoCol,
+                styles.tokenName,
+                styles.tokenPrice,
+                styles.tokenInfoColRight,
+                styles.tokenHeaderAmount,
+                styles.tokenHeaderNetworth,
+              ],
+            )}
+          />
         </BottomSheetView>
       </AppBottomSheetModal>
     );
@@ -416,3 +462,25 @@ const getStyles = createGetStyles(colors => {
     },
   };
 });
+
+function LoadingItem() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  return (
+    <View style={[styles.tokenItem]}>
+      <View style={styles.tokenLeft}>
+        <Skeleton circle width={36} height={36} />
+
+        <View style={[styles.tokenInfoCol, { marginLeft: 12, gap: 8 }]}>
+          <Skeleton width={34} height={20} />
+
+          <Skeleton width={70} height={20} />
+        </View>
+      </View>
+      <View style={[styles.tokenInfoCol, styles.tokenInfoColRight, { gap: 8 }]}>
+        <Skeleton width={34} height={18} />
+        <Skeleton width={70} height={18} />
+      </View>
+    </View>
+  );
+}
