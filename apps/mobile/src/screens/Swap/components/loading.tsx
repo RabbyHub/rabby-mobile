@@ -3,7 +3,7 @@ import { QuoteLogo } from './QuoteLogo';
 import { useSwapSettings, useSwapSupportedDexList } from '../hooks';
 import { StyleSheet, Text, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
-import { CEX, DEX } from '@/constant/swap';
+import { DEX } from '@/constant/swap';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 
@@ -121,7 +121,7 @@ const getStyles = createGetStyles(colors => ({
   },
   text: {
     marginLeft: 8,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     width: 100,

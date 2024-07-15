@@ -647,12 +647,6 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     shadowRadius: 12,
     height: 80,
   },
-  cexContainer: {
-    flexDirection: 'row',
-    borderColor: colors['neutral-line'],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-  },
   rightPercentText: {
     fontSize: 13,
     fontWeight: '500',
@@ -662,41 +656,25 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '400',
     color: colors['neutral-body'],
   },
-  providerNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
+
   nameText: {
     fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
-  flexRow: {
-    flexDirection: 'row',
-  },
+
   gasUsd: {
     color: colors['neutral-foot'],
     fontSize: 13,
     fontWeight: '400',
   },
-  middleContainer: {
-    gap: 4,
-    flex: 1,
-    paddingRight: 4,
-  },
-  middleTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
+
   middleDefaultText: {
     width: 'auto',
     fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
-  rightContainer: { gap: 4, justifyContent: 'flex-end' },
 
   disabledContentWrapper: {
     position: 'absolute',
@@ -708,6 +686,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     backgroundColor: colors['neutral-black'],
     justifyContent: 'center',
   },
+
   disabledContentView: {
     flexDirection: 'row',
     gap: 4,
@@ -725,9 +704,5 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '500',
     textAlign: 'left',
     paddingLeft: 12 + 12 + 4,
-  },
-  flex1: {
-    // flex: 1,
-    marginLeft: 'auto',
   },
 }));
