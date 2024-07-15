@@ -1,16 +1,9 @@
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+import AppFastImage from '@/components/Image/AppFastImage';
 import { useThemeColors } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
-import { Image } from '@rneui/themed';
-import React, { useMemo } from 'react';
-import {
-  // Image,
-  ImageStyle,
-  ImageURISource,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
 
 const bgColorList = [
   '#F69373',
@@ -31,10 +24,9 @@ export const DappIcon = ({
   origin,
   style,
   source,
-}: {
-  style?: StyleProp<ImageStyle>;
+  ...rest
+}: React.ComponentProps<typeof AppFastImage> & {
   origin: string;
-  source?: ImageURISource;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -57,9 +49,15 @@ export const DappIcon = ({
     </View>
   );
 
-  if (source?.uri) {
+  if (source) {
     return (
-      <Image source={source} style={style} PlaceholderContent={Placeholder} />
+      <AppFastImage
+        source={source}
+        style={style}
+        fallback={false}
+        {...rest}
+        PlaceholderContent={Placeholder}
+      />
     );
   }
 
