@@ -162,7 +162,10 @@ const TokenSelect = ({
   );
 
   const handleTokenSelectorClose = useCallback(() => {
-    setTokenSelectorVisible(false);
+    //FIXME: snap to close will retrigger render
+    setTimeout(() => {
+      setTokenSelectorVisible(false);
+    }, 0);
   }, []);
 
   const handleSelectToken = useCallback(() => {
