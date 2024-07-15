@@ -35,6 +35,7 @@ import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
+import { IS_IOS } from '@/core/native/utils';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -45,7 +46,11 @@ const LAYOUTS = {
   fixedFooterPaddingHorizontal: 20,
   fixedFooterPaddingVertical: 20,
   get fixedFooterHeight() {
-    return this.footerButtonHeight + this.fixedFooterPaddingVertical * 2;
+    return (
+      this.footerButtonHeight +
+      this.fixedFooterPaddingVertical * 2 +
+      (IS_IOS ? 12 : 0)
+    );
   },
 };
 
