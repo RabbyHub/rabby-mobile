@@ -1,5 +1,11 @@
-import React, { useRef } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
 import * as Yup from 'yup';
@@ -25,10 +31,11 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowTipTermOfUseModal } from './components/TipTermOfUseModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 import { useNavigationState } from '@react-navigation/native';
-import { AppRootName, RootNames } from '@/constant/layout';
+import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
+import { IS_IOS } from '@/core/native/utils';
 
 const INIT_FORM_DATA = __DEV__
   ? { password: APP_TEST_PWD, confirmPassword: APP_TEST_PWD, checked: true }
@@ -39,7 +46,11 @@ const LAYOUTS = {
   fixedFooterPaddingHorizontal: 20,
   fixedFooterPaddingVertical: 20,
   get fixedFooterHeight() {
-    return this.footerButtonHeight + this.fixedFooterPaddingVertical * 2;
+    return (
+      this.footerButtonHeight +
+      this.fixedFooterPaddingVertical * 2 +
+      (IS_IOS ? 12 : 0)
+    );
   },
 };
 
@@ -48,15 +59,22 @@ function useSetupPasswordForm() {
   const yupSchema = React.useMemo(() => {
     return Yup.object({
       password: Yup.string()
+        .default(INIT_FORM_DATA.password)
         .required(t('page.createPassword.passwordRequired'))
         .min(8, t('page.createPassword.passwordMin')),
       confirmPassword: Yup.string()
-        .required(t('page.createPassword.confirmRequired'))
-        .oneOf(
-          [Yup.ref('password'), ''],
-          t('page.createPassword.confirmError'),
-        ),
-      checked: Yup.boolean().oneOf([true]),
+        .default(INIT_FORM_DATA.confirmPassword)
+        .when('password', {
+          is: (val: string) => val && val.length >= 8,
+          then: schema =>
+            schema
+              .required(t('page.createPassword.confirmRequired'))
+              .oneOf(
+                [Yup.ref('password')],
+                t('page.createPassword.confirmError'),
+              ),
+        }),
+      checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
   }, [t]);
 
@@ -67,10 +85,11 @@ function useSetupPasswordForm() {
   const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useFormik({
-    initialValues: INIT_FORM_DATA,
+    initialValues: yupSchema.getDefault(),
     validationSchema: yupSchema,
     validateOnMount: false,
     validateOnBlur: true,
+    validateOnChange: false,
     onSubmit: async (values, helpers) => {
       let errors = await helpers.validateForm();
 
@@ -89,7 +108,7 @@ function useSetupPasswordForm() {
         if (result.error) {
           toast.show(result.error);
         } else {
-          toast.success('Setup Password Successfully');
+          // toast.success('Setup Password Successfully');
           await fetchLockInfo();
           if (!navState?.replaceScreen) {
             resetNavigationTo(navigation, 'Home');
@@ -175,7 +194,7 @@ export default function SetPasswordScreen() {
                   placeholder: t('page.createPassword.passwordPlaceholder'),
                   placeholderTextColor: colors['neutral-foot'],
                   onChangeText(text) {
-                    formik.setFieldValue('password', text);
+                    formik.setFieldValue('password', text, true);
                   },
                 }}
                 errorText={formik.errors.password}
@@ -199,7 +218,7 @@ export default function SetPasswordScreen() {
                   ),
                   placeholderTextColor: colors['neutral-foot'],
                   onChangeText(text) {
-                    formik.setFieldValue('confirmPassword', text);
+                    formik.setFieldValue('confirmPassword', text, true);
                   },
                 }}
                 errorText={formik.errors.confirmPassword}
@@ -208,7 +227,7 @@ export default function SetPasswordScreen() {
             <TouchableView
               style={styles.agreementWrapper}
               onPress={() => {
-                formik.setFieldValue('checked', !formik.values.checked);
+                formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
               <View>
                 <CheckBoxCircled checked={formik.values.checked} />
@@ -246,7 +265,10 @@ export default function SetPasswordScreen() {
               { height: safeSizes.nextButtonContainerHeight },
             ]}
             title={'Next'}
-            onPress={() => {
+            onPress={async () => {
+              const validationResult = await formik.validateForm();
+              if (getFormikErrorsCount(validationResult)) return;
+
               setConfirmModalVisible(true);
             }}
           />
@@ -274,10 +296,12 @@ const getStyles = createGetStyles(colors => {
       height: 320,
       width: '100%',
       flexDirection: 'column',
-      justifyContent: 'center',
+      justifyContent: 'flex-end',
       alignItems: 'center',
       padding: 20,
+      paddingBottom: 30,
       flexShrink: 0,
+      // ...makeDebugBorder()
     },
     title1: {
       color: colors['neutral-title2'],
@@ -357,12 +381,12 @@ const getStyles = createGetStyles(colors => {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: colors['neutral-bg2'],
+      backgroundColor: colors['neutral-bg1'],
       height: LAYOUTS.fixedFooterHeight,
       paddingVertical: LAYOUTS.fixedFooterPaddingVertical,
       paddingHorizontal: LAYOUTS.fixedFooterPaddingHorizontal,
-      borderTopWidth: 1,
-      borderTopColor: colors['neutral-line'],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors['neutral-foot'],
     },
     nextButtonContainer: {
       width: '100%',

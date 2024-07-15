@@ -14,10 +14,10 @@ import { APP_FEATURE_SWITCH } from '@/constant';
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
 
-import {
-  nativeBlockScreen,
-  nativeUnblockScreen,
-} from '@/core/native/ReactNativeSecurity';
+// import {
+//   nativeBlockScreen,
+//   nativeUnblockScreen,
+// } from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
   appUnlocked: false,
@@ -41,6 +41,16 @@ export function useAppUnlocked() {
     isAppUnlocked: appUnlocked,
     // hasSetupCustomPassword,
     setAppLock,
+  };
+}
+
+export function usePasswordStatus() {
+  const { pwdStatus } = useAtomValue(appLockAtom);
+
+  return {
+    pwdStatus,
+    isUseBuiltinPwd: pwdStatus === PasswordStatus.UseBuiltIn,
+    isUseCustomPwd: pwdStatus === PasswordStatus.Custom,
   };
 }
 

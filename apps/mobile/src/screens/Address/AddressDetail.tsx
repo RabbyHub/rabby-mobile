@@ -259,8 +259,8 @@ const AddressInfo = (props: AddressInfoProps) => {
           await invokeEnterPassphrase(account.address);
         }
       },
-      onFinished() {
-        if (!data) {
+      onFinished(ctx) {
+        if (ctx.hasSetupCustomPassword && !data) {
           return;
         }
         navigate(RootNames.StackAddress, {
@@ -287,8 +287,8 @@ const AddressInfo = (props: AddressInfoProps) => {
           await invokeEnterPassphrase(account.address);
         }
       },
-      onFinished() {
-        if (!data) {
+      onFinished(ctx) {
+        if (ctx.hasSetupCustomPassword && !data) {
           return;
         }
         navigate(RootNames.StackAddress, {

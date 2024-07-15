@@ -1,5 +1,6 @@
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
+import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -77,10 +78,27 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 
+export type RemoveParams = Partial<
+  Parameters<BottomSheetMethods['close']>[0]
+> & {
+  duration?: number;
+};
+
 export enum EVENT_NAMES {
   CREATE = 'CREATE',
   REMOVE = 'REMOVE',
   DISMISS = 'DISMISS',
+  CLOSED = 'CLOSED',
   PRESENT = 'PRESENT',
   SNAP_TO_INDEX = 'SNAP_TO_INDEX',
 }
+
+export type GlobalSheetModalListeners = {
+  [EVENT_NAMES.CREATE]: (id: string, params: CreateParams) => any;
+  [EVENT_NAMES.REMOVE]: (key: string, params?: RemoveParams) => any;
+  [EVENT_NAMES.CLOSED]: (key: string) => any;
+  [EVENT_NAMES.PRESENT]: (key: string) => any;
+  [EVENT_NAMES.DISMISS]: (key: string) => any;
+
+  [EVENT_NAMES.SNAP_TO_INDEX]: (key: string, index: number) => any;
+};
