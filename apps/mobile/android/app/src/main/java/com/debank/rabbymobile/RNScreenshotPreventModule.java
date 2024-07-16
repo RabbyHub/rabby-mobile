@@ -108,7 +108,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   public boolean iosIsBeingCaptured() {
     if (BuildConfig.DEBUG) {
       // promise.reject("Not implemented for Android");
-      throw new Exception("Not implemented for Android");
+      System.out.println("Not implemented for Android");
     }
     return false;
   }
