@@ -52,7 +52,9 @@ const BiometricsIconSize = 56;
 const hasAutoUnlockByBiometricsRef = { current: false };
 
 const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
-const toastLoading = toastWithIcon(() => <ActivityIndicator />);
+const toastLoading = toastWithIcon(() => (
+  <ActivityIndicator style={{ marginRight: 6 }} />
+));
 const toastUnlocking = () => toastLoading('Unlocking');
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
