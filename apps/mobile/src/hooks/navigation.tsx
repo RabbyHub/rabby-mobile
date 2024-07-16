@@ -18,7 +18,11 @@ import {
 } from '@react-navigation/native';
 
 import type { RootStackParamsList } from '@/navigation-type';
-import { useIOSScreenCapture, usePreventScreenshot } from './native/security';
+import {
+  useIOSScreenRecording,
+  useIOSScreenshotted,
+  usePreventScreenshot,
+} from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
@@ -220,12 +224,13 @@ export const enum ProtectType {
   SafeTipModal = 1,
 }
 
-type ProtectedConf = {
+export type ProtectedConf = {
   iosBlurType: ProtectType | null;
   alertOnScreenShot?: {
     title: string;
     message: string;
   };
+  warningScreenshotBackup: boolean;
   onCancel?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
 const defaultProtectedConf: ProtectedConf = {
@@ -233,22 +238,11 @@ const defaultProtectedConf: ProtectedConf = {
   onCancel: ctx => {
     ctx.navigation?.goBack();
   },
+  warningScreenshotBackup: false,
 };
 const protectedConfForBackup = {
   ...defaultProtectedConf,
-  alertOnScreenShot: {
-    title: strings('component.tipScreenshot.title', 'Screenshot taken'),
-    message: [
-      strings(
-        'component.tipScreenshot.paragraph1',
-        'Taking a screenshot is not a secure way to store your private key mnemonic phrase. Please store it in a place that is not an online backup, to ensure the safety of your account.',
-      ),
-      strings(
-        'component.tipScreenshot.paragraph2',
-        'For better security, consider writing it down on paper and keeping it in a secure physical location, such as a safe or a locked filing cabinet. This will protect your account from potential online threats.',
-      ),
-    ].join('\n\n'),
-  },
+  warningScreenshotBackup: true,
 };
 const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
@@ -291,11 +285,11 @@ export function useAtSensitiveScreen() {
     if (!currentRouteName || !PROTECTED_SCREENS[currentRouteName])
       return result;
 
-    result.$protectedConf.iosBlurType =
-      PROTECTED_SCREENS[currentRouteName]?.iosBlurType ??
-      ProtectType.SafeTipModal;
-    result.$protectedConf.alertOnScreenShot =
-      PROTECTED_SCREENS[currentRouteName]?.alertOnScreenShot;
+    result.$protectedConf = {
+      ...defaultProtectedConf,
+      ...PROTECTED_SCREENS[currentRouteName],
+    };
+
     result.atSensitiveScreen = !!PROTECTED_SCREENS[currentRouteName];
 
     return result;
@@ -309,7 +303,8 @@ export function useAppPreventScreenshotOnScreen() {
 
   usePreventScreenshot(atSensitiveScreen);
 
-  const { isBeingCaptured } = useIOSScreenCapture({ isTop: true });
+  const { isBeingCaptured } = useIOSScreenRecording({ isTop: true });
+  useIOSScreenshotted({ isTop: true });
 
   // protect from screen recording
   useEffect(() => {
@@ -322,21 +317,4 @@ export function useAppPreventScreenshotOnScreen() {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
   }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
-
-  // protect from screen capture on iOS
-  useEffect(() => {
-    if (!isIOS) return;
-
-    const alertConf = $protectedConf.alertOnScreenShot;
-
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
-      if (!alertConf) return;
-      const alertTitle = alertConf?.title || '';
-      const alertMessage = alertConf?.message;
-
-      Alert.alert(alertTitle, alertMessage);
-    });
-
-    return () => remove();
-  }, [$protectedConf.alertOnScreenShot]);
 }

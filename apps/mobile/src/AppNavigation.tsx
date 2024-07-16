@@ -52,7 +52,7 @@ import {
 } from './components/AppStatusBar';
 import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
-import SecurityTipStubModal from './components/Security/SecurityTipStubModal';
+import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -277,7 +277,7 @@ export default function AppNavigation({
           />
         </RootStack.Navigator>
       </NavigationContainer>
-      <SecurityTipStubModal />
+      <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
     </AutoLockView>
   );
