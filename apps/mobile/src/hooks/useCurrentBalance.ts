@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { atom, useAtom } from 'jotai';
 import {
   DisplayChainWithWhiteLogo,
@@ -11,20 +11,36 @@ const balanceAtom = atom<number | null>(null);
 const testnetBalanceAtom = atom<string | null>(null);
 const balanceUpdateNonceAtom = atom<number>(0);
 
-export const useUpdateNonce = () => {
-  const [nonce, setNonce] = useAtom(balanceUpdateNonceAtom);
-  return [nonce, setNonce] as const;
+export const useTriggerHomeBalanceUpdate = () => {
+  /**
+   * @description in the future, only nonce >= 0, the fetching will be triggered
+   */
+  const [balanceNonce, setNonce] = useAtom(balanceUpdateNonceAtom);
+
+  const triggerUpdate = useCallback(() => {
+    setNonce(n => n + 1);
+  }, [setNonce]);
+
+  return { balanceNonce, triggerUpdate };
 };
 
 export default function useCurrentBalance(
   account: string | undefined,
-  update = false,
-  noNeedBalance = false,
-  includeTestnet = false,
+  opts?: {
+    noNeedBalance?: boolean;
+    update?: boolean;
+    includeTestnet?: boolean;
+  },
 ) {
+  const {
+    update = false,
+    noNeedBalance = false,
+    includeTestnet = false,
+  } = opts || {};
+
   const [balance, setBalance] = useAtom(balanceAtom);
   const [success, setSuccess] = useState(true);
-  const [nonce] = useUpdateNonce();
+  const { balanceNonce } = useTriggerHomeBalanceUpdate();
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceUpdating, setBalanceUpdating] = useState(false);
   const [balanceFromCache, setBalanceFromCache] = useState(false);
@@ -139,10 +155,10 @@ export default function useCurrentBalance(
   };
 
   useEffect(() => {
-    if (nonce > 0) {
+    if (balanceNonce > 0) {
       setBalanceUpdating(true);
     }
-  }, [nonce]);
+  }, [balanceNonce]);
 
   useEffect(() => {
     getCurrentBalance();
@@ -161,7 +177,7 @@ export default function useCurrentBalance(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       isCanceled = true;
     };
-  }, [account, nonce]);
+  }, [account, balanceNonce]);
   return {
     balance,
     chainBalances,
