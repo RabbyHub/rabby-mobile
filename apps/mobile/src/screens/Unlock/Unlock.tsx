@@ -39,8 +39,6 @@ import { useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { IS_IOS } from '@/core/native/utils';
-import { strings } from '@/utils/i18n';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -53,8 +51,7 @@ const BiometricsIconSize = 56;
 const hasAutoUnlockByBiometricsRef = { current: false };
 
 const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
-const toastUnlocking = () =>
-  toast.showLoading(strings('page.unlock.password.unlocking'));
+const toastUnlocking = toastWithIcon(() => <ActivityIndicator />);
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
