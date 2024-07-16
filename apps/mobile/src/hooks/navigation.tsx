@@ -23,10 +23,9 @@ import {
   useIOSScreenshotted,
   usePreventScreenshot,
 } from './native/security';
-import DeviceUtils from '@/core/utils/device';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
-import { strings } from '@/utils/i18n';
+import { IS_IOS } from '@/core/native/utils';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -219,8 +218,8 @@ export function usePreventGoBack({
   };
 }
 
-const isIOS = DeviceUtils.isIOS();
 export const enum ProtectType {
+  NONE = 0,
   SafeTipModal = 1,
 }
 
@@ -231,69 +230,66 @@ export type ProtectedConf = {
     message: string;
   };
   warningScreenshotBackup: boolean;
-  onCancel?: (ctx: { navigation?: NavigationInstance | null }) => void;
+  onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
 const defaultProtectedConf: ProtectedConf = {
-  iosBlurType: ProtectType.SafeTipModal,
-  onCancel: ctx => {
+  iosBlurType: ProtectType.NONE,
+  onOk: ctx => {
     ctx.navigation?.goBack();
   },
   warningScreenshotBackup: false,
 };
-const protectedConfForBackup = {
-  ...defaultProtectedConf,
-  warningScreenshotBackup: true,
-};
+function getProtectedConf() {
+  return {
+    ...defaultProtectedConf,
+    iosBlurType: ProtectType.SafeTipModal,
+  };
+}
+
 const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
 } = {
-  [RootNames.CreateMnemonic]: {
-    ...defaultProtectedConf,
-  },
-  [RootNames.ImportMnemonic]: {
-    ...defaultProtectedConf,
-  },
-  [RootNames.ImportPrivateKey]: {
-    ...defaultProtectedConf,
-  },
-  [RootNames.CreateMnemonicBackup]: {
-    ...defaultProtectedConf,
-  },
-  [RootNames.CreateMnemonicVerify]: {
-    ...defaultProtectedConf,
-  },
+  [RootNames.CreateMnemonic]: getProtectedConf(),
+  [RootNames.ImportMnemonic]: getProtectedConf(),
+  [RootNames.ImportPrivateKey]: getProtectedConf(),
+  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
+  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
   [RootNames.BackupMnemonic]: {
-    ...protectedConfForBackup,
+    ...getProtectedConf(),
+    warningScreenshotBackup: true,
   },
   [RootNames.BackupPrivateKey]: {
-    ...protectedConfForBackup,
+    ...getProtectedConf(),
+    warningScreenshotBackup: true,
   },
 };
+
+function getAtSensitveScreenInfo(routeName: string | undefined) {
+  const result = {
+    $routeName: routeName,
+    $protectedConf: { ...defaultProtectedConf },
+    atSensitiveScreen: false,
+  };
+
+  if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
+
+  result.$protectedConf = {
+    ...defaultProtectedConf,
+    ...PROTECTED_SCREENS[routeName],
+  };
+
+  result.atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
+
+  return result;
+}
 
 export function useAtSensitiveScreen() {
   const currentRouteName = useAtomValue(currentRouteNameAtom);
 
-  return useMemo(() => {
-    const result = {
-      $routeName: currentRouteName,
-      $protectedConf: { ...defaultProtectedConf },
-      atSensitiveScreen: false,
-      // protectedBySafeTipModal: false,
-      // protectedByIOSBlurView: false,
-    };
-
-    if (!currentRouteName || !PROTECTED_SCREENS[currentRouteName])
-      return result;
-
-    result.$protectedConf = {
-      ...defaultProtectedConf,
-      ...PROTECTED_SCREENS[currentRouteName],
-    };
-
-    result.atSensitiveScreen = !!PROTECTED_SCREENS[currentRouteName];
-
-    return result;
-  }, [currentRouteName]);
+  return useMemo(
+    () => getAtSensitveScreenInfo(currentRouteName),
+    [currentRouteName],
+  );
 }
 /**
  * @description call this hook only once on the top level of your app
@@ -303,12 +299,14 @@ export function useAppPreventScreenshotOnScreen() {
 
   usePreventScreenshot(atSensitiveScreen);
 
-  const { isBeingCaptured } = useIOSScreenRecording({ isTop: true });
+  const { isBeingCaptured } = useIOSScreenRecording({
+    isTop: true,
+  });
   useIOSScreenshotted({ isTop: true });
 
   // protect from screen recording
   useEffect(() => {
-    if (!isIOS) return;
+    if (!IS_IOS) return;
     if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
 
     if (isBeingCaptured && atSensitiveScreen) {

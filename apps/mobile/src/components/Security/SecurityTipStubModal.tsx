@@ -27,12 +27,12 @@ const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
  */
 export default function SecurityTipStubModal({
   visible = false,
-  onCancel,
+  onOk,
 }: {
   visible?: boolean;
-  onCancel?: ProtectedConf['onCancel'];
+  onOk?: ProtectedConf['onOk'];
 }) {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles } = useThemeStyles(getStyles);
 
   const { t } = useTranslation();
 
@@ -63,7 +63,7 @@ export default function SecurityTipStubModal({
                 buttonStyle={styles.button}
                 title={t('global.ok')}
                 onPress={() =>
-                  onCancel?.({ navigation: getReadyNavigationInstance() })
+                  onOk?.({ navigation: getReadyNavigationInstance() })
                 }
               />
             </View>
@@ -83,7 +83,7 @@ function useGlobalSecurityTipForScreenCapture() {
       atSensitiveScreen &&
       isBeingCaptured &&
       $protectedConf.iosBlurType === ProtectType.SafeTipModal,
-    onCancel: $protectedConf.onCancel,
+    onOk: $protectedConf.onOk,
   };
 }
 function useGlobalSecurityTipForScreenShot() {
@@ -100,20 +100,17 @@ function useGlobalSecurityTipForScreenShot() {
 }
 
 export function GlobalSecurityTipStubModal() {
-  const { shouldShowSecurityTip, onCancel } =
+  const { shouldShowSecurityTip, onOk } =
     useGlobalSecurityTipForScreenCapture();
   const { shouldShowBackupWarning, clearScreenshotJustNow } =
     useGlobalSecurityTipForScreenShot();
 
   return (
     <>
-      <SecurityTipStubModal
-        visible={shouldShowSecurityTip}
-        onCancel={onCancel}
-      />
+      <SecurityTipStubModal visible={shouldShowSecurityTip} onOk={onOk} />
       <SecurityTipStubModal
         visible={!shouldShowSecurityTip && shouldShowBackupWarning}
-        onCancel={clearScreenshotJustNow}
+        onOk={clearScreenshotJustNow}
       />
     </>
   );
