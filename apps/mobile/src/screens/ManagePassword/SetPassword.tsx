@@ -19,7 +19,7 @@ import { FormInput } from '@/components/Form/Input';
 
 import { default as RcPasswordLockCC } from './icons/password-lock-cc.svg';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
-import { getFormikErrorsCount } from '@/utils/patch';
+import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components/Toast';
 import { apisLock } from '@/core/apis';
 import TouchableView, {
@@ -64,15 +64,15 @@ function useSetupPasswordForm() {
         .min(8, t('page.createPassword.passwordMin')),
       confirmPassword: Yup.string()
         .default(INIT_FORM_DATA.confirmPassword)
-        .when('password', {
+        .when(['password'], {
           is: (val: string) => val && val.length >= 8,
           then: schema =>
-            schema
-              .required(t('page.createPassword.confirmRequired'))
-              .oneOf(
-                [Yup.ref('password')],
-                t('page.createPassword.confirmError'),
-              ),
+            schema.oneOf(
+              [Yup.ref('password')],
+              t('page.createPassword.confirmError'),
+            ),
+          otherwise: schema =>
+            schema.required(t('page.createPassword.confirmRequired')),
         }),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
@@ -84,14 +84,13 @@ function useSetupPasswordForm() {
   ) as SettingNavigatorParamList['SetPassword'] | undefined;
   const { fetchLockInfo } = useLoadLockInfo();
 
-  const formik = useFormik({
+  const formik = useAppFormik({
     initialValues: yupSchema.getDefault(),
     validationSchema: yupSchema,
     validateOnMount: false,
-    validateOnBlur: true,
     validateOnChange: false,
     onSubmit: async (values, helpers) => {
-      let errors = await helpers.validateForm();
+      const errors = formik.validateFormValues();
 
       if (getFormikErrorsCount(errors)) return;
 
@@ -125,7 +124,8 @@ function useSetupPasswordForm() {
   });
 
   const shouldDisabled =
-    !formik.values.checked || !!getFormikErrorsCount(formik.errors);
+    !formik.values.checked ||
+    !!getFormikErrorsCount(formik.validateFormValues());
 
   return { formik, shouldDisabled: shouldDisabled || DISABLE_SET_PASSWORD };
 }
@@ -266,7 +266,7 @@ export default function SetPasswordScreen() {
             ]}
             title={'Next'}
             onPress={async () => {
-              const validationResult = await formik.validateForm();
+              const validationResult = formik.validateFormValues();
               if (getFormikErrorsCount(validationResult)) return;
 
               setConfirmModalVisible(true);

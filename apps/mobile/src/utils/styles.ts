@@ -7,11 +7,11 @@ export const createGetStyles =
   <T extends NamedStyles<T> | NamedStyles<any>>(
     styles: (
       colors: AppColorsVariants,
-      options: CreateStylesOptions,
+      options?: CreateStylesOptions,
     ) => T | NamedStyles<T>,
   ) =>
   (colors: AppColorsVariants, options?: CreateStylesOptions) =>
-    StyleSheet.create(styles(colors, options || {}));
+    StyleSheet.create(styles(colors, options));
 
 type TriAngleConf = {
   dir?: 'up' | 'down' | 'left' | 'right';

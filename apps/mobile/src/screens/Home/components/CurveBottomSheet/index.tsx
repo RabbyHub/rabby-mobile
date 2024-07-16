@@ -1,8 +1,7 @@
 import { AppBottomSheetModal } from '@/components';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Dimensions, Text } from 'react-native';
 import { View } from 'react-native';
@@ -14,7 +13,6 @@ import {
   useTimeMachineData,
 } from '../../hooks/useCurve';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import { LineChart } from 'react-native-wagmi-charts';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
@@ -30,13 +28,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-dayjs.extend(utc);
-
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
 function Inner() {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { colors, styles } = useThemeStyles(getStyles);
 
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
   const {
@@ -174,8 +169,7 @@ function Chart({
   showSupportChainList: boolean;
   xOffset: SharedValue<number>;
 }) {
-  const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
+  const { colors, styles } = useThemeStyles(getStyles);
 
   return (
     <LineChart.Provider data={data}>
@@ -239,13 +233,23 @@ function Chart({
 
 export const CurveBottomSheetModal = forwardRef<
   BottomSheetModal,
-  BottomSheetModalMethods
->((props, ref) => {
+  {
+    onHide?: () => any;
+  }
+>(({ onHide }, ref) => {
   const { bottom } = useSafeAreaInsets();
   const snapPoints = useMemo(() => [393 + bottom], [bottom]);
 
   return (
-    <AppBottomSheetModal snapPoints={snapPoints} ref={ref} enableDismissOnClose>
+    <AppBottomSheetModal
+      snapPoints={snapPoints}
+      ref={ref}
+      enableDismissOnClose
+      onChange={index => {
+        if (index <= 0) {
+          onHide?.();
+        }
+      }}>
       <Inner />
     </AppBottomSheetModal>
   );

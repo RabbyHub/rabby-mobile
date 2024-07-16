@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
 import { isNil } from 'lodash';
+
+dayjs.extend(utc);
 
 export const formatSeconds = (secs: number) => {
   if (secs < 60) return `${secs} sec`;

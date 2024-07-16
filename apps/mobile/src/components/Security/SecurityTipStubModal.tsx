@@ -5,48 +5,39 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
-import DeviceUtils from '@/core/utils/device';
 import { default as RcTipCC } from './icons/tip-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Button } from '../Button';
-import { useIOSScreenIsBeingCaptured } from '@/hooks/native/security';
 import {
+  useIOSScreenIsBeingCaptured,
+  useIOSScreenshotted,
+} from '@/hooks/native/security';
+import {
+  ProtectedConf,
   ProtectType,
   useAtSensitiveScreen,
-  useRabbyAppNavigation,
 } from '@/hooks/navigation';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
 
 const RcTip = makeThemeIconFromCC(RcTipCC, 'orange-default');
 
-const isIOS = DeviceUtils.isIOS();
-
-function useGlobalSecurityTip() {
-  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
-  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
-
-  return {
-    shouldShowSecurityTip:
-      atSensitiveScreen &&
-      isBeingCaptured &&
-      $protectedConf.iosBlurType === ProtectType.SafeTipModal,
-    onCancel: $protectedConf.onCancel,
-  };
-}
-
 /**
  * @description stub component for security tip
  */
-export default function SecurityTipStubModal() {
-  const { styles, colors } = useThemeStyles(getStyles);
+export default function SecurityTipStubModal({
+  visible = false,
+  onOk,
+}: {
+  visible?: boolean;
+  onOk?: ProtectedConf['onOk'];
+}) {
+  const { styles } = useThemeStyles(getStyles);
 
   const { t } = useTranslation();
 
-  const { shouldShowSecurityTip, onCancel } = useGlobalSecurityTip();
-
   return (
-    <Modal visible={shouldShowSecurityTip} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade">
       <BlurView style={styles.overlay}>
         <TouchableOpacity
           activeOpacity={1}
@@ -72,7 +63,7 @@ export default function SecurityTipStubModal() {
                 buttonStyle={styles.button}
                 title={t('global.ok')}
                 onPress={() =>
-                  onCancel?.({ navigation: getReadyNavigationInstance() })
+                  onOk?.({ navigation: getReadyNavigationInstance() })
                 }
               />
             </View>
@@ -80,6 +71,48 @@ export default function SecurityTipStubModal() {
         </TouchableOpacity>
       </BlurView>
     </Modal>
+  );
+}
+
+function useGlobalSecurityTipForScreenCapture() {
+  const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
+  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
+
+  return {
+    shouldShowSecurityTip:
+      atSensitiveScreen &&
+      isBeingCaptured &&
+      $protectedConf.iosBlurType === ProtectType.SafeTipModal,
+    onOk: $protectedConf.onOk,
+  };
+}
+function useGlobalSecurityTipForScreenShot() {
+  const { isScreenshotJustNow, clearScreenshotJustNow } = useIOSScreenshotted({
+    isTop: false,
+  });
+  const { $protectedConf } = useAtSensitiveScreen();
+
+  return {
+    shouldShowBackupWarning:
+      isScreenshotJustNow && $protectedConf.warningScreenshotBackup,
+    clearScreenshotJustNow,
+  };
+}
+
+export function GlobalSecurityTipStubModal() {
+  const { shouldShowSecurityTip, onOk } =
+    useGlobalSecurityTipForScreenCapture();
+  const { shouldShowBackupWarning, clearScreenshotJustNow } =
+    useGlobalSecurityTipForScreenShot();
+
+  return (
+    <>
+      <SecurityTipStubModal visible={shouldShowSecurityTip} onOk={onOk} />
+      <SecurityTipStubModal
+        visible={!shouldShowSecurityTip && shouldShowBackupWarning}
+        onOk={clearScreenshotJustNow}
+      />
+    </>
   );
 }
 

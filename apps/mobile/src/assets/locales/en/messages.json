@@ -1637,7 +1637,8 @@
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
-        "error": "Incorrect password"
+        "error": "Incorrect password",
+        "unlocking": "Unlocking"
       },
       "biometrics": {
         "failedAndTipTitle": "Unlock failed",
@@ -2214,11 +2215,6 @@
         "notEnabled": "Biometrics is not enabled",
         "authFailed": "Biometrics authentication failed"
       }
-    },
-    "tipScreenshot": {
-      "title": "Screenshot taken",
-      "paragraph1": "Taking a screenshot is not a secure way to store your private key mnemonic phrase. Please store it in a place that is not an online backup, to ensure the safety of your account.",
-      "paragraph2": "For better security, consider writing it down on paper and keeping it in a secure physical location, such as a safe or a locked filing cabinet. This will protect your account from potential online threats."
     }
   },
   "native": {
