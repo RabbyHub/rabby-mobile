@@ -87,10 +87,28 @@ function useGlobalSecurityTipForScreenCapture() {
   };
 }
 function useGlobalSecurityTipForScreenShot() {
+  const { $protectedConf } = useAtSensitiveScreen();
+  const onIsScreenshottedJustNow = React.useCallback<
+    (Parameters<typeof useIOSScreenshotted>[0] &
+      object)['onIsScreenshottedJustNow'] &
+      object
+  >(
+    ctx => {
+      ctx.setScreenshotted(!!$protectedConf.warningScreenshotBackup);
+    },
+    [$protectedConf.warningScreenshotBackup],
+  );
+
   const { isScreenshotJustNow, clearScreenshotJustNow } = useIOSScreenshotted({
     isTop: false,
+    onIsScreenshottedJustNow,
   });
-  const { $protectedConf } = useAtSensitiveScreen();
+
+  React.useEffect(() => {
+    if (!$protectedConf.warningScreenshotBackup) {
+      clearScreenshotJustNow();
+    }
+  }, [$protectedConf.warningScreenshotBackup, clearScreenshotJustNow]);
 
   return {
     shouldShowBackupWarning:

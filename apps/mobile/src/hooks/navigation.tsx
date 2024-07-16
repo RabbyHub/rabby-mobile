@@ -225,10 +225,10 @@ export const enum ProtectType {
 
 export type ProtectedConf = {
   iosBlurType: ProtectType | null;
-  alertOnScreenShot?: {
-    title: string;
-    message: string;
-  };
+  // alertOnScreenShot?: {
+  //   title: string;
+  //   message: string;
+  // };
   warningScreenshotBackup: boolean;
   onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
@@ -249,11 +249,20 @@ function getProtectedConf() {
 const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
 } = {
-  [RootNames.CreateMnemonic]: getProtectedConf(),
+  [RootNames.CreateMnemonic]: {
+    ...getProtectedConf(),
+    warningScreenshotBackup: true,
+  },
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
-  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
+  [RootNames.CreateMnemonicBackup]: {
+    ...getProtectedConf(),
+    warningScreenshotBackup: true,
+  },
+  [RootNames.CreateMnemonicVerify]: {
+    ...getProtectedConf(),
+    warningScreenshotBackup: true,
+  },
   [RootNames.BackupMnemonic]: {
     ...getProtectedConf(),
     warningScreenshotBackup: true,

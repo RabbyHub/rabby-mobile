@@ -69,30 +69,32 @@ export function useIOSScreenRecording(options?: {
 
 export function useIOSScreenshotted(options?: {
   isTop?: boolean;
-  onIsScreenshottedJustNow?: () => void;
+  onIsScreenshottedJustNow?: (ctx: {
+    setScreenshotted: (isScreenshotJustNow: boolean) => void;
+  }) => void;
 }) {
   const [{ isScreenshotJustNow }, setIOSScreenCapture] =
     useAtom(iosScreenCaptureAtom);
 
   const { onIsScreenshottedJustNow, isTop } = options || {};
 
+  const clearScreenshotJustNow = useCallback(() => {
+    setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: false }));
+  }, [setIOSScreenCapture]);
+
   useEffect(() => {
-    if (!isTop) return;
     if (!IS_IOS) return;
 
     const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
-      setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: true }));
-      onIsScreenshottedJustNow?.();
+      const setScreenshotted = (val?: boolean) =>
+        setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
+      onIsScreenshottedJustNow?.({ setScreenshotted });
     });
 
     return () => {
       remove();
     };
-  }, [isTop, setIOSScreenCapture, onIsScreenshottedJustNow]);
-
-  const clearScreenshotJustNow = useCallback(() => {
-    setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: false }));
-  }, [setIOSScreenCapture]);
+  }, [setIOSScreenCapture, onIsScreenshottedJustNow]);
 
   return {
     isScreenshotJustNow,
