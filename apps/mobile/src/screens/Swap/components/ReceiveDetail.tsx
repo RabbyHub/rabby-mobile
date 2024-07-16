@@ -204,7 +204,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
                   <Text
                     style={
                       styles.tooltipText
-                    }>{`Est Difference ${sign}${diff}%`}</Text>
+                    }>{`Est Difference ${sign}${diff}`}</Text>
                 </View>
               }>
               <RcIconSwapReceiveInfo width={16} height={16} />
