@@ -193,10 +193,10 @@ const AddressInfo = (props: AddressInfoProps) => {
         : 1;
     const title =
       account.type === KEYRING_TYPE.SimpleKeyring
-        ? 'Delete address and Private Key'
+        ? 'Delete Address and Private Key'
         : account.type === KEYRING_TYPE.HdKeyring && count <= 1
-        ? 'Delete address and Seed Phrase'
-        : 'Delete address';
+        ? 'Delete Address and Seed Phrase'
+        : 'Delete Address';
     const needPassword =
       account.type === KEYRING_TYPE.SimpleKeyring ||
       (account.type === KEYRING_TYPE.HdKeyring && count <= 1);
