@@ -75,6 +75,11 @@ export async function setupWalletPassword(newPassword: string) {
   const result = getInitError(newPassword);
   if (result.error) return result;
 
+  if (!newPassword) {
+    result.error = 'Password cannot be empty';
+    return result;
+  }
+
   try {
     const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);
     if (r.error) {

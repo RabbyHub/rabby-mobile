@@ -40,18 +40,21 @@ import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { IS_IOS } from '@/core/native/utils';
+import { strings } from '@/utils/i18n';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
   containerPadding: 20,
 };
 
-const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
-
 const isIOS = Platform.OS === 'ios';
 const BiometricsIconSize = 56;
 
+const hasAutoUnlockByBiometricsRef = { current: false };
+
 const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
+const toastUnlocking = () =>
+  toast.showLoading(strings('page.unlock.password.unlocking'));
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
@@ -94,13 +97,20 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const result = await unlockApp(values.password, { showLoading: IS_IOS });
-      if (result.error) {
-        helpers?.setFieldError('password', t('page.unlock.password.error'));
-        toast.show(result.error);
+      const hideToast = toastUnlocking();
+      try {
+        const result = await unlockApp(values.password);
+        if (result.error) {
+          helpers?.setFieldError('password', t('page.unlock.password.error'));
+          toast.show(result.error);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        checkUnlocked();
+        hideToast();
+        hasAutoUnlockByBiometricsRef.current = true;
       }
-
-      checkUnlocked();
     },
   });
 
@@ -147,7 +157,7 @@ export default function UnlockScreen() {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
-          const result = await unlockApp(password, { showLoading: true });
+          const result = await unlockApp(password);
           if (result.error) {
             throw new Error(result.error);
           }
@@ -206,18 +216,22 @@ export default function UnlockScreen() {
     }
   }, [unlockApp, t]);
 
-  const onPressBiometricsButton = useCallback(async () => {
+  const triggerUnlockWithBiometrics = useCallback(async () => {
+    const hideToast = toastUnlocking();
     await unlockWithBiometrics().finally(() => checkUnlocked());
+    hideToast();
   }, [unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
-    if (__DEV__ && STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV) {
-      console.debug('UnlockScreen::useLayoutEffect skipped on DEV mode.');
-      return;
-    }
+    (async () => {
+      if (hasAutoUnlockByBiometricsRef.current) return;
+      if (!isBiometricsEnabled) return;
 
-    checkUnlocked();
-  }, [checkUnlocked]);
+      await triggerUnlockWithBiometrics().finally(() => {
+        hasAutoUnlockByBiometricsRef.current = true;
+      });
+    })();
+  }, [isBiometricsEnabled, triggerUnlockWithBiometrics]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -271,9 +285,7 @@ export default function UnlockScreen() {
                 { height: safeSizes.footerHeight },
               ]}>
               <Button
-                {...(!IS_IOS && {
-                  loading: isUnlocking,
-                })}
+                loading={isUnlocking}
                 disabled={shouldDisabled}
                 type="primary"
                 buttonStyle={[styles.buttonShadow]}
@@ -295,7 +307,7 @@ export default function UnlockScreen() {
             <View style={styles.biometricsBtns}>
               <TouchableView
                 style={styles.biometricsBtn}
-                onPress={onPressBiometricsButton}>
+                onPress={triggerUnlockWithBiometrics}>
                 <BiometricsIcon isFaceID={isFaceID} />
               </TouchableView>
             </View>
