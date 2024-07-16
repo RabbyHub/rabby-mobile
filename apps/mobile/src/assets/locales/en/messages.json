@@ -1637,8 +1637,7 @@
       "password": {
         "required": "Enter the Password to Unlock",
         "placeholder": "Enter the Password to Unlock",
-        "error": "Incorrect password",
-        "unlocking": "Unlocking"
+        "error": "Incorrect password"
       },
       "biometrics": {
         "failedAndTipTitle": "Unlock failed",
