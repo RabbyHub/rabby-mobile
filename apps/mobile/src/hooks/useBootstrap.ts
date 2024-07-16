@@ -90,6 +90,12 @@ export function useInitializeAppOnTop() {
     };
   }, [setAppLock, doInitializeApis, fetchAccounts]);
 
+  React.useEffect(() => {
+    if (isAppUnlocked) {
+      doInitializeApis();
+    }
+  }, [doInitializeApis, isAppUnlocked]);
+
   return { isAppUnlocked };
 }
 
