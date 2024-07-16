@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,9 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 import * as Yup from 'yup';
-import { useFormik } from 'formik';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -57,22 +56,25 @@ const LAYOUTS = {
 function useSetupPasswordForm() {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
+    const passSchema = Yup.string()
+      .default(INIT_FORM_DATA.password)
+      .required(t('page.createPassword.passwordRequired'))
+      .min(8, t('page.createPassword.passwordMin'));
     return Yup.object({
-      password: Yup.string()
-        .default(INIT_FORM_DATA.password)
-        .required(t('page.createPassword.passwordRequired'))
-        .min(8, t('page.createPassword.passwordMin')),
+      password: passSchema,
       confirmPassword: Yup.string()
         .default(INIT_FORM_DATA.confirmPassword)
-        .when(['password'], {
-          is: (val: string) => val && val.length >= 8,
+        .when('password', {
+          is: (password: string) => {
+            return passSchema.isValidSync(password);
+          },
           then: schema =>
-            schema.oneOf(
-              [Yup.ref('password')],
-              t('page.createPassword.confirmError'),
-            ),
-          otherwise: schema =>
-            schema.required(t('page.createPassword.confirmRequired')),
+            schema
+              .required(t('page.createPassword.confirmRequired'))
+              .oneOf(
+                [Yup.ref('password')],
+                t('page.createPassword.confirmError'),
+              ),
         }),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
