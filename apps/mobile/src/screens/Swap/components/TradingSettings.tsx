@@ -11,10 +11,15 @@ import {
   Image,
   StyleSheet,
   ImageSourcePropType,
+  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CEX, DEX } from '@/constant/swap';
-import { useSwapSettings, useSwapSettingsVisible } from '../hooks';
+import {
+  useSwapSettings,
+  useSwapSettingsVisible,
+  useSwapSupportedDexList,
+} from '../hooks';
 import { CHAINS_ENUM } from '@debank/common';
 import { Radio } from '@/components/Radio';
 import { useThemeColors } from '@/hooks/theme';
@@ -25,7 +30,7 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { colord } from 'colord';
-import { ModalLayouts } from '@/constant/layout';
+// import { ModalLayouts } from '@/constant/layout';
 
 const list = [...Object.values(DEX), ...Object.values(CEX)] as {
   id: keyof typeof DEX | keyof typeof CEX;
@@ -36,8 +41,27 @@ const list = [...Object.values(DEX), ...Object.values(CEX)] as {
 
 export const TradingSettings = () => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
-  const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapSettingsVisible();
+  const [supportedDexList] = useSwapSupportedDexList();
+
+  const { height: screenHeight } = useWindowDimensions();
+
+  const height = useMemo(() => {
+    const min = 340;
+    const max = Math.min(500, screenHeight * 0.9);
+
+    const h = 132 + supportedDexList.length * 68;
+
+    if (h < min) {
+      return min;
+    }
+    if (h > max) {
+      return max;
+    }
+    return h;
+  }, [supportedDexList.length, screenHeight]);
+
+  const snapPoints = useMemo(() => [height], [height]);
 
   const onDismiss = useCallback(() => {
     setVisible(false);
@@ -71,6 +95,8 @@ const TradingSettingsInner = ({ onClose }: { onClose: () => void }) => {
   const { swapViewList, swapTradeList, setSwapView, setSwapTrade } =
     useSwapSettings();
 
+  const [supportedDEXList] = useSwapSupportedDexList();
+
   const onConfirm = () => {
     if (id) {
       setSwapTrade(id, true);
@@ -103,54 +129,59 @@ const TradingSettingsInner = ({ onClose }: { onClose: () => void }) => {
       </View>
 
       <View style={{ paddingBottom: 20 + bottom }}>
-        {list.map(item => (
-          <View key={item.name} style={styles.itemContainer}>
-            <View style={[styles.item, styles.first]}>
-              <Image source={item.logo} style={styles.logo} />
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.type}>
+        {list.map(item => {
+          if (!supportedDEXList.includes(item.id)) {
+            return null;
+          }
+          return (
+            <View key={item.name} style={styles.itemContainer}>
+              <View style={[styles.item, styles.first]}>
+                <Image source={item.logo} style={styles.logo} />
+                <Text style={styles.name}>{item.name}</Text>
+                {/* <Text style={styles.type}>
                 {item?.chains ? t('page.swap.dex') : t('page.swap.cex')}
-              </Text>
+              </Text> */}
+              </View>
+              <View style={styles.second}>
+                <AppSwitch
+                  backgroundActive={colors['green-default']}
+                  circleBorderActiveColor={colors['green-default']}
+                  changeValueImmediately={false}
+                  value={swapViewList?.[item.id] ?? true}
+                  onValueChange={checked => {
+                    setSwapView(item.id, checked);
+                    if (!checked && DEX[item.id]) {
+                      setSwapTrade(item.id, checked);
+                    }
+                  }}
+                />
+              </View>
+              <View style={styles.last}>
+                <AppSwitch
+                  backgroundActive={colors['green-default']}
+                  circleBorderActiveColor={colors['green-default']}
+                  changeValueImmediately={false}
+                  onValueChange={checked => {
+                    if (checked) {
+                      setId(item.id);
+                      setOpen(true);
+                    } else {
+                      setSwapTrade(item.id, checked);
+                    }
+                  }}
+                  value={!!swapTradeList?.[item.id]}
+                  disabled={swapViewList?.[item.id] === false || !!CEX[item.id]}
+                  containerStyle={{
+                    opacity:
+                      swapViewList?.[item.id] === false || !!CEX[item.id]
+                        ? 0.5
+                        : 1,
+                  }}
+                />
+              </View>
             </View>
-            <View style={styles.second}>
-              <AppSwitch
-                backgroundActive={colors['green-default']}
-                circleBorderActiveColor={colors['green-default']}
-                changeValueImmediately={false}
-                value={swapViewList?.[item.id] ?? true}
-                onValueChange={checked => {
-                  setSwapView(item.id, checked);
-                  if (!checked && DEX[item.id]) {
-                    setSwapTrade(item.id, checked);
-                  }
-                }}
-              />
-            </View>
-            <View style={styles.last}>
-              <AppSwitch
-                backgroundActive={colors['green-default']}
-                circleBorderActiveColor={colors['green-default']}
-                changeValueImmediately={false}
-                onValueChange={checked => {
-                  if (checked) {
-                    setId(item.id);
-                    setOpen(true);
-                  } else {
-                    setSwapTrade(item.id, checked);
-                  }
-                }}
-                value={!!swapTradeList?.[item.id]}
-                disabled={swapViewList?.[item.id] === false || !!CEX[item.id]}
-                containerStyle={{
-                  opacity:
-                    swapViewList?.[item.id] === false || !!CEX[item.id]
-                      ? 0.5
-                      : 1,
-                }}
-              />
-            </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
 
       <SwapModal visible={open} onCancel={onCancel}>
@@ -203,7 +234,6 @@ function EnableTrading({
           containerStyle={styles.btnC}
           buttonStyle={styles.confirmStyle}
           titleStyle={styles.confirmTitleStyle}
-          disabledTitleStyle={styles.confirmTitleDisabledStyle}
           onPress={onConfirm}
         />
       </View>
@@ -375,8 +405,5 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     color: colors['neutral-title2'],
     flex: 1,
-  },
-  confirmTitleDisabledStyle: {
-    color: colord(colors['neutral-title2']).alpha(0.5).toHex(),
   },
 }));

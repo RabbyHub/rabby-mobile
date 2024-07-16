@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { QuoteLogo } from './QuoteLogo';
-import { useSwapSettings } from '../hooks';
+import { useSwapSettings, useSwapSupportedDexList } from '../hooks';
 import { StyleSheet, Text, View } from 'react-native';
 import { Skeleton } from '@rneui/themed';
-import { CEX, DEX } from '@/constant/swap';
+import { DEX } from '@/constant/swap';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 
@@ -23,24 +23,40 @@ export const QuoteLoading = ({
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const viewStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        height: isCex ? 48 : 66,
+        borderWidth: isCex ? 0 : StyleSheet.hairlineWidth,
+        paddingHorizontal: isCex ? 0 : 16,
+      },
+    ],
+    [isCex, styles.container],
+  );
+  if (isCex) {
+    return (
+      <View style={viewStyle}>
+        <QuoteLogo isLoading={true} logo={logo} />
+        <Text style={styles.text}>{name}</Text>
+        <Skeleton style={styles.skeleton4} />
+      </View>
+    );
+  }
 
   return (
-    <View
-      style={useMemo(
-        () => [
-          styles.container,
-          {
-            height: isCex ? 48 : 66,
-            borderWidth: isCex ? 0 : StyleSheet.hairlineWidth,
-            paddingHorizontal: isCex ? 0 : 12,
-          },
-        ],
-        [isCex, styles.container],
-      )}>
-      <QuoteLogo isLoading={true} logo={logo} />
-      <Text style={styles.text}>{name}</Text>
-      <Skeleton style={styles.skeleton1} />
-      <Skeleton style={styles.skeleton2} />
+    <View style={styles.dexLoading}>
+      <View style={styles.column}>
+        <View style={styles.dexNameColumn}>
+          <QuoteLogo isLoading={true} logo={logo} />
+          <Text style={styles.text}>{name}</Text>
+        </View>
+        <Skeleton style={styles.skeleton3} />
+      </View>
+      <View style={styles.column}>
+        <Skeleton style={styles.skeleton4} />
+        <Skeleton style={styles.skeleton4} />
+      </View>
     </View>
   );
 };
@@ -50,9 +66,10 @@ export const QuoteListLoading = ({
   isCex,
 }: QuoteListLoadingProps) => {
   const { swapViewList } = useSwapSettings();
+  const [supportedDexList] = useSwapSupportedDexList();
   return (
     <>
-      {Object.entries(isCex ? CEX : DEX).map(([key, value]) => {
+      {supportedDexList.map(key => {
         if (
           (dataList && dataList.includes(key)) ||
           swapViewList?.[key] === false
@@ -61,9 +78,9 @@ export const QuoteListLoading = ({
         }
         return (
           <QuoteLoading
-            logo={value.logo}
+            logo={DEX?.[key]?.logo}
             key={key}
-            name={value.name}
+            name={DEX?.[key]?.name}
             isCex={isCex}
           />
         );
@@ -81,9 +98,30 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
     borderColor: colors['neutral-line'],
   },
+  dexLoading: {
+    flexDirection: 'column',
+    width: '100%',
+    height: 80,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 6,
+    borderColor: colors['neutral-line'],
+  },
+  column: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dexNameColumn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   text: {
     marginLeft: 8,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     width: 100,
@@ -98,5 +136,15 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 2,
     width: 57,
     height: 20,
+  },
+  skeleton3: {
+    borderRadius: 2,
+    width: 132,
+    height: 20,
+  },
+  skeleton4: {
+    borderRadius: 2,
+    width: 90,
+    height: 16,
   },
 }));

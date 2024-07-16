@@ -2,13 +2,12 @@ import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { QuoteLogo } from './QuoteLogo';
 import BigNumber from 'bignumber.js';
 import ImgLock from '@/assets/icons/swap/lock.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
 import ImgVerified from '@/assets/icons/swap/verified.svg';
-import ImgWhiteWarning from '@/assets/icons/swap/warning-white.svg';
 
 import {
   useSetQuoteVisible,
@@ -25,12 +24,18 @@ import { formatAmount, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import i18n from '@/utils/i18n';
-import { Tip } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import useDebounce from 'react-use/lib/useDebounce';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { RcIconSwapGas } from '@/assets/icons/swap';
+import {
+  RcIconSwapGas,
+  RcIconSwapGasRed,
+  RcIconSwapInfo,
+} from '@/assets/icons/swap';
 import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
+
+const GAS_USE_AMOUNT_LIMIT = 2_000_000;
 
 export interface QuoteItemProps {
   quote: QuoteResult | null;
@@ -58,6 +63,8 @@ export interface QuoteItemProps {
 export const DexQuoteItem = (
   props: QuoteItemProps & {
     preExecResult: QuotePreExecResultInfo;
+    onErrQuote?: React.Dispatch<React.SetStateAction<string[]>>;
+    onlyShowErrorQuote?: boolean;
   },
 ) => {
   const {
@@ -80,6 +87,8 @@ export const DexQuoteItem = (
     preExecResult,
     quoteProviderInfo,
     setActiveProvider: updateActiveQuoteProvider,
+    onlyShowErrorQuote,
+    onErrQuote,
   } = props;
 
   const colors = useThemeColors();
@@ -118,139 +127,128 @@ export const DexQuoteItem = (
 
   const halfBetterRateString = '';
 
-  const [
-    middleContent,
-    rightContent,
-    disabled,
-    receivedTokenUsd,
-    diffReceivedTokenUsd,
-  ] = useMemo(() => {
-    let center: React.ReactNode = <Text>-</Text>;
-    let right: React.ReactNode = '';
-    let disable = false;
-    let receivedUsd = '0';
-    let diffUsd = '0';
+  const [middleContent, rightContent, disabled, receivedTokenUsd] =
+    useMemo(() => {
+      let center: React.ReactNode = <Text>-</Text>;
+      let right: React.ReactNode = null;
+      let disable = false;
+      let receivedUsd: React.ReactNode = null;
+      let diffUsd: React.ReactNode = null;
 
-    const actualReceiveAmount = inSufficient
-      ? new BigNumber(quote?.toTokenAmount || 0)
-          .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
-          .toString()
-      : preExecResult?.swapPreExecTx.balance_change.receive_token_list[0]
-          ?.amount;
-    if (actualReceiveAmount || dexId === 'WrapToken') {
-      const receiveAmount =
-        actualReceiveAmount || (dexId === 'WrapToken' ? payAmount : 0);
-      const bestQuoteAmountBn = new BigNumber(bestQuoteAmount);
-      const receivedTokeAmountBn = new BigNumber(receiveAmount);
+      const actualReceiveAmount = inSufficient
+        ? new BigNumber(quote?.toTokenAmount || 0)
+            .div(10 ** (quote?.toTokenDecimals || receiveToken.decimals))
+            .toString()
+        : preExecResult?.swapPreExecTx.balance_change.receive_token_list[0]
+            ?.amount;
+      if (actualReceiveAmount || dexId === 'WrapToken') {
+        const receiveAmount =
+          actualReceiveAmount || (dexId === 'WrapToken' ? payAmount : 0);
+        const bestQuoteAmountBn = new BigNumber(bestQuoteAmount);
+        const receivedTokeAmountBn = new BigNumber(receiveAmount);
 
-      const receivedUsdBn = receivedTokeAmountBn
-        .times(receiveToken.price)
-        .minus(sortIncludeGasFee ? preExecResult?.gasUsdValue || 0 : 0);
+        const receivedUsdBn = receivedTokeAmountBn
+          .times(receiveToken.price)
+          .minus(sortIncludeGasFee ? preExecResult?.gasUsdValue || 0 : 0);
 
-      const bestQuoteUsdBn = bestQuoteAmountBn
-        .times(receiveToken.price)
-        .minus(sortIncludeGasFee ? bestQuoteGasUsd : 0);
+        const bestQuoteUsdBn = bestQuoteAmountBn
+          .times(receiveToken.price)
+          .minus(sortIncludeGasFee ? bestQuoteGasUsd : 0);
 
-      let percent = receivedUsdBn
-        .minus(bestQuoteUsdBn)
-        .div(bestQuoteUsdBn)
-        .abs()
-        .times(100);
-
-      if (!receiveToken.price) {
-        percent = receivedTokeAmountBn
-          .minus(bestQuoteAmountBn)
-          .div(bestQuoteAmountBn)
+        let percent = receivedUsdBn
+          .minus(bestQuoteUsdBn)
+          .div(bestQuoteUsdBn)
           .abs()
           .times(100);
+
+        if (!receiveToken.price) {
+          percent = receivedTokeAmountBn
+            .minus(bestQuoteAmountBn)
+            .div(bestQuoteAmountBn)
+            .abs()
+            .times(100);
+        }
+
+        receivedUsd = formatUsdValue(
+          receivedTokeAmountBn.times(receiveToken.price || 0).toString(10),
+        );
+
+        diffUsd = formatUsdValue(
+          receivedUsdBn.minus(bestQuoteUsdBn).toString(10),
+        );
+
+        const s = formatAmount(receivedTokeAmountBn.toString(10));
+        center = <Text style={styles.middleDefaultText}>{s}</Text>;
+
+        right = (
+          <Text
+            style={[
+              styles.rightPercentText,
+              {
+                color: !isBestQuote
+                  ? colors['red-default']
+                  : colors['green-default'],
+              },
+            ]}>
+            {isBestQuote
+              ? t('page.swap.best')
+              : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
+          </Text>
+        );
       }
 
-      receivedUsd = formatUsdValue(
-        receivedTokeAmountBn.times(receiveToken.price || 0).toString(10),
-      );
-
-      diffUsd = formatUsdValue(
-        receivedUsdBn.minus(bestQuoteUsdBn).toString(10),
-      );
-
-      const s = formatAmount(receivedTokeAmountBn.toString(10));
-      const receiveTokenSymbol = getTokenSymbol(receiveToken);
-      center = (
-        <Text>
-          {s}{' '}
-          <Text style={{ color: colors['neutral-foot'] }}>
-            {receiveTokenSymbol}
-          </Text>
-        </Text>
-      );
-
-      right = (
-        <Text
-          style={[
-            styles.rightPercentText,
-            {
-              color: !isBestQuote
-                ? colors['red-default']
-                : colors['green-default'],
-            },
-          ]}>
-          {isBestQuote
-            ? t('page.swap.best')
-            : `-${percent.toFixed(2, BigNumber.ROUND_DOWN)}%`}
-        </Text>
-      );
-    }
-
-    if (!quote?.toTokenAmount) {
-      right = (
-        <Text style={styles.failedTipText}>
-          {t('page.swap.unable-to-fetch-the-price')}
-        </Text>
-      );
-      center = <Text>-</Text>;
-      disable = true;
-    }
-
-    if (quote?.toTokenAmount) {
-      if (!preExecResult && !inSufficient) {
-        center = <Text>-</Text>;
-        right = (
+      if (!quote?.toTokenAmount) {
+        right = null;
+        center = (
           <Text style={styles.failedTipText}>
-            {t('page.swap.fail-to-simulate-transaction')}
+            {t('page.swap.unable-to-fetch-the-price')}
           </Text>
         );
         disable = true;
       }
-    }
 
-    if (!isSdkDataPass) {
-      disable = true;
-      center = <Text>-</Text>;
-      right = (
-        <Text style={styles.failedTipText}>
-          {t('page.swap.security-verification-failed')}
-        </Text>
-      );
-    }
-    return [center, right, disable, receivedUsd, diffUsd];
-  }, [
-    inSufficient,
-    quote?.toTokenAmount,
-    quote?.toTokenDecimals,
-    receiveToken,
-    preExecResult,
-    dexId,
-    isSdkDataPass,
-    payAmount,
-    bestQuoteAmount,
-    sortIncludeGasFee,
-    bestQuoteGasUsd,
-    colors,
-    styles.rightPercentText,
-    styles.failedTipText,
-    isBestQuote,
-    t,
-  ]);
+      if (quote?.toTokenAmount) {
+        if (!preExecResult && !inSufficient) {
+          center = (
+            <Text style={styles.failedTipText}>
+              {t('page.swap.fail-to-simulate-transaction')}
+            </Text>
+          );
+          right = null;
+          disable = true;
+        }
+      }
+
+      if (!isSdkDataPass) {
+        disable = true;
+        center = (
+          <Text style={styles.failedTipText}>
+            {t('page.swap.security-verification-failed')}
+          </Text>
+        );
+        right = null;
+      }
+      return [center, right, disable, receivedUsd, diffUsd];
+    }, [
+      inSufficient,
+      quote?.toTokenAmount,
+      quote?.toTokenDecimals,
+      receiveToken.decimals,
+      receiveToken.price,
+      preExecResult,
+      dexId,
+      isSdkDataPass,
+      payAmount,
+      bestQuoteAmount,
+      sortIncludeGasFee,
+      bestQuoteGasUsd,
+      styles.middleDefaultText,
+      styles.rightPercentText,
+      styles.failedTipText,
+      isBestQuote,
+      colors,
+      t,
+    ]);
 
   const quoteWarning = useMemo(() => {
     if (!quote?.toTokenAmount || !preExecResult) {
@@ -311,7 +309,20 @@ export const DexQuoteItem = (
 
   const [disabledTradeTipsOpen, setDisabledTradeTipsOpen] = useState(false);
 
+  const [inSufficientTapTip, setInSufficientTapTip] = useState(false);
+
+  const gasFeeTooHight = useMemo(() => {
+    return (
+      new BigNumber(preExecResult?.swapPreExecTx?.gas?.gas_used || 0).gte(
+        GAS_USE_AMOUNT_LIMIT,
+      ) && chain === CHAINS_ENUM.ETH
+    );
+  }, [preExecResult, chain]);
+
   const handleClick = useCallback(() => {
+    if (gasFeeTooHight) {
+      return;
+    }
     if (disabledTrade) {
       return;
     }
@@ -339,6 +350,7 @@ export const DexQuoteItem = (
 
     openSwapQuote(false);
   }, [
+    gasFeeTooHight,
     disabledTrade,
     inSufficient,
     active,
@@ -383,124 +395,216 @@ export const DexQuoteItem = (
     ],
   );
 
+  const isErrorQuote = useMemo(
+    () =>
+      !isSdkDataPass ||
+      !quote?.toTokenAmount ||
+      !!(quote?.toTokenAmount && !preExecResult && !inSufficient),
+    [isSdkDataPass, quote, preExecResult, inSufficient],
+  );
+
+  useEffect(() => {
+    if (isErrorQuote && onlyShowErrorQuote) {
+      onErrQuote?.(e => {
+        return e.includes(dexId) ? e : [...e, dexId];
+      });
+    }
+    if (!onlyShowErrorQuote && !isErrorQuote) {
+      onErrQuote?.(e => (e.includes(dexId) ? e.filter(e => e !== dexId) : e));
+    }
+  }, [dexId, isErrorQuote, onErrQuote, onlyShowErrorQuote]);
+
+  if (!isErrorQuote && onlyShowErrorQuote) {
+    return null;
+  }
+
+  if (!props.onlyShowErrorQuote && isErrorQuote) {
+    return null;
+  }
+
   return (
-    <TouchableOpacity
-      activeOpacity={disabledTrade || inSufficient ? 1 : 0.2}
-      style={[
-        styles.dexContainer,
-        {
-          backgroundColor: !(disabledTrade || disabled || inSufficient)
-            ? colors['neutral-card-1']
-            : 'transparent',
-          borderColor: !(disabledTrade || disabled || inSufficient)
-            ? 'transparent'
-            : colors['neutral-line'],
-        },
-      ]}
-      onPress={() => {
-        if (disabledTrade && !inSufficient && quote && preExecResult) {
-          setDisabledTradeTipsOpen(true);
+    <Tip
+      content={
+        gasFeeTooHight
+          ? t('page.swap.gas-fee-too-high')
+          : t('page.swap.insufficient-balance')
+      }
+      isVisible={inSufficientTapTip}
+      onClose={() => setInSufficientTapTip(false)}
+      tooltipStyle={{
+        transform: [{ translateY: 20 }],
+      }}>
+      <TouchableOpacity
+        activeOpacity={
+          disabledTrade || inSufficient || gasFeeTooHight ? 1 : 0.2
         }
-        handleClick();
-      }}
-      // onMouseEnter={() => {
-      //   if (disabledTrade && !inSufficient && quote && preExecResult) {
-      //     setDisabledTradeTipsOpen(true);
-      //   }
-      // }}
-      // onMouseLeave={() => {
-      //   setDisabledTradeTipsOpen(false);
-      // }}
-      // onClick={handleClick}
-      // className={clsx(
-      //   active && 'active',
-      //   (disabledTrade || disabled) && 'disabled error',
-      //   inSufficient && !disabled && 'disabled inSufficient',
-      // )}
-    >
-      <QuoteLogo loaded logo={quoteProviderInfo.logo} isLoading={isLoading} />
-      <View
-        style={{
-          gap: 6,
-          width: 94,
-          paddingLeft: 8,
-          marginRight: 4,
+        style={[
+          styles.dexContainer,
+          {
+            position: 'relative',
+            backgroundColor: !(
+              disabledTrade ||
+              disabled ||
+              inSufficient ||
+              gasFeeTooHight
+            )
+              ? colors['neutral-card-1']
+              : 'transparent',
+            borderColor: !(
+              disabledTrade ||
+              disabled ||
+              inSufficient ||
+              gasFeeTooHight
+            )
+              ? 'transparent'
+              : colors['neutral-line'],
+          },
+          isErrorQuote && {
+            height: 52,
+          },
+        ]}
+        onPress={() => {
+          if (gasFeeTooHight) {
+            setInSufficientTapTip(true);
+            return;
+          }
+          if (inSufficient && !disabled) {
+            setInSufficientTapTip(true);
+          }
+          if (disabledTrade && !inSufficient && quote && preExecResult) {
+            setDisabledTradeTipsOpen(true);
+          }
+          handleClick();
         }}>
-        <View style={styles.providerNameContainer}>
-          <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
-          {!!preExecResult?.shouldApproveToken && (
-            <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
-              <ImgLock width={14} height={14} />
-            </Tip>
-          )}
-        </View>
-
-        {!(disabled && !inSufficient) && (
-          <View
-            style={
-              (styles.flexRow,
-              { flexDirection: 'row', gap: 2, alignItems: 'center' })
-            }>
-            <RcIconSwapGas width={14} height={14} />
-            <Text style={styles.gasUsd}>{preExecResult?.gasUsd}</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.middleContainer}>
-        <View style={styles.middleTop}>
-          <Text numberOfLines={1} style={styles.middleDefaultText}>
-            {middleContent}
-          </Text>
-          <CheckIcon />
-        </View>
-        {!disabled && <Text style={styles.gasUsd}>≈{receivedTokenUsd}</Text>}
-      </View>
-
-      <View style={styles.rightContainer}>
-        <Text
+        <View
           style={{
-            textAlign: 'right',
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}>
-          {rightContent}
-        </Text>
-        {!disabled && !isBestQuote && (
-          <Text
+          {/* top left */}
+          {inSufficient && !disabled && <View />}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              ...(inSufficient && !disabled
+                ? {
+                    position: 'absolute',
+                    top: 40 - 12 - 14,
+                    left: 0,
+                  }
+                : {}),
+            }}>
+            <QuoteLogo
+              loaded
+              logo={quoteProviderInfo.logo}
+              isLoading={isLoading}
+            />
+            <Text style={styles.nameText}>{quoteProviderInfo.name}</Text>
+            {!!preExecResult?.shouldApproveToken && (
+              <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
+                <ImgLock width={16} height={16} />
+              </Tip>
+            )}
+          </View>
+          {/* top left end */}
+
+          {/* top right */}
+          <View
             style={[
-              styles.gasUsd,
               {
-                textAlign: 'right',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
               },
             ]}>
-            {diffReceivedTokenUsd}
-          </Text>
-        )}
-      </View>
-
-      <View
-        style={[
-          styles.disabledContentWrapper,
-          {
-            display: disabledTradeTipsOpen ? 'flex' : 'none',
-          },
-        ]}>
-        <View style={styles.disabledContentView}>
-          <ImgWhiteWarning width={12} height={12} />
-          <Text style={styles.disabledContentText}>
-            {t('page.swap.this-exchange-is-not-enabled-to-trade-by-you')}
-          </Text>
+            {!disabled && (
+              <AssetAvatar size={20} logo={receiveToken.logo_url} />
+            )}
+            <Text numberOfLines={1} style={styles.middleDefaultText}>
+              {middleContent}
+            </Text>
+            <CheckIcon />
+          </View>
         </View>
-        <TouchableOpacityGesture
-          onPress={() => {
-            openSwapSettings(true);
-            setDisabledTradeTipsOpen(false);
-          }}>
-          <Text style={styles.disabledContentBtnText}>
-            {t('page.swap.enable-it')}
-          </Text>
-        </TouchableOpacityGesture>
-      </View>
-    </TouchableOpacity>
+
+        <View
+          style={
+            disabled
+              ? { display: 'none' }
+              : {
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }
+          }>
+          <View
+            style={[
+              { flexDirection: 'row', gap: 4, alignItems: 'center' },
+              gasFeeTooHight && {
+                backgroundColor: colors['red-light'],
+              },
+            ]}>
+            {!disabled && !inSufficient && (
+              <>
+                {gasFeeTooHight ? (
+                  <RcIconSwapGasRed
+                    viewBox="0 0 16 16"
+                    width={16}
+                    height={16}
+                  />
+                ) : (
+                  <RcIconSwapGas viewBox="0 0 16 16" width={16} height={16} />
+                )}
+                <Text
+                  style={[
+                    styles.gasUsd,
+                    gasFeeTooHight && { color: colors['red-default'] },
+                  ]}>
+                  {preExecResult?.gasUsd}
+                </Text>
+              </>
+            )}
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            {!disabled && (
+              <Text style={styles.gasUsd}>≈{receivedTokenUsd}</Text>
+            )}
+
+            {rightContent}
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.disabledContentWrapper,
+            {
+              display: disabledTradeTipsOpen ? 'flex' : 'none',
+            },
+          ]}>
+          <View style={styles.disabledContentView}>
+            <RcIconSwapInfo width={14} height={14} />
+            <Text style={styles.disabledContentText}>
+              {t('page.swap.this-exchange-is-not-enabled-to-trade-by-you')}
+            </Text>
+          </View>
+          <TouchableOpacityGesture
+            onPress={() => {
+              openSwapSettings(true);
+              setDisabledTradeTipsOpen(false);
+            }}>
+            <Text style={styles.disabledContentBtnText}>
+              {t('page.swap.enable-it')}
+            </Text>
+          </TouchableOpacityGesture>
+        </View>
+      </TouchableOpacity>
+    </Tip>
   );
 };
 
@@ -521,9 +625,9 @@ export function WarningOrChecked({
           : t('page.swap.by-transaction-simulation-the-quote-is-valid')
       }>
       {quoteWarning ? (
-        <ImgWarning width={14} height={14} />
+        <ImgWarning width={16} height={16} />
       ) : (
-        <ImgVerified width={14} height={14} />
+        <ImgVerified width={16} height={16} />
       )}
     </Tip>
   );
@@ -533,10 +637,10 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
   dexContainer: {
     position: 'relative',
     borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'center',
     borderRadius: 6,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
     shadowOffset: {
@@ -545,14 +649,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     },
     shadowOpacity: 1,
     shadowRadius: 12,
-    // elevation: 2,
-    height: 66,
-  },
-  cexContainer: {
-    flexDirection: 'row',
-    borderColor: colors['neutral-line'],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
+    height: 80,
   },
   rightPercentText: {
     fontSize: 13,
@@ -563,41 +660,25 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '400',
     color: colors['neutral-body'],
   },
-  providerNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
+
   nameText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
-  flexRow: {
-    flexDirection: 'row',
-  },
+
   gasUsd: {
     color: colors['neutral-foot'],
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
   },
-  middleContainer: {
-    gap: 4,
-    flex: 1,
-    paddingRight: 4,
-  },
-  middleTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
+
   middleDefaultText: {
     width: 'auto',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },
-  rightContainer: { gap: 4, justifyContent: 'flex-end' },
 
   disabledContentWrapper: {
     position: 'absolute',
@@ -609,6 +690,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     backgroundColor: colors['neutral-black'],
     justifyContent: 'center',
   },
+
   disabledContentView: {
     flexDirection: 'row',
     gap: 4,
@@ -626,8 +708,5 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '500',
     textAlign: 'left',
     paddingLeft: 12 + 12 + 4,
-  },
-  flex1: {
-    flex: 1,
   },
 }));

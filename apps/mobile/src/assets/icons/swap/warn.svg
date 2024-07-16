@@ -1,5 +1,12 @@
-<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="7" cy="7" r="6.5" fill="#FFB020" stroke="#FFB020" />
-    <path d="M7 3V8" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-    <circle cx="7" cy="10.5" r="1" fill="white" />
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <path
+    d="M14.4001 7.99961C14.4001 11.5342 11.5347 14.3996 8.0001 14.3996C4.46547 14.3996 1.6001 11.5342 1.6001 7.99961C1.6001 4.46499 4.46547 1.59961 8.0001 1.59961C11.5347 1.59961 14.4001 4.46499 14.4001 7.99961Z"
+    stroke="#6A7587" stroke-linecap="round" stroke-linejoin="round" />
+  <path fill-rule="evenodd" clip-rule="evenodd"
+    d="M7.99984 3.66797C8.46007 3.66797 8.83317 4.04107 8.83317 4.5013C8.83317 4.96154 8.46007 5.33464 7.99984 5.33464C7.5396 5.33464 7.1665 4.96154 7.1665 4.5013C7.1665 4.04107 7.5396 3.66797 7.99984 3.66797Z"
+    fill="#6A7587" />
+  <path d="M8.16667 11.3346V6.66797H7.83333H7.5" fill="#6A7587" />
+  <path d="M8.16667 11.3346V6.66797H7.83333H7.5" stroke="#6A7587" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M7 11.332H9.33333H7Z" fill="#6A7587" />
+  <path d="M7 11.332H9.33333" stroke="#6A7587" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

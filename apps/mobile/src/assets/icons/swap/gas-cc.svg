@@ -1,17 +1,10 @@
-<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g clip-path="url(#clip0_61321_42642)">
-    <path
-      d="M8.27344 6.37657H8.89875C9.23044 6.37657 9.54854 6.50833 9.78308 6.74287C10.0176 6.97741 10.1494 7.29551 10.1494 7.6272V9.50314C10.1494 9.7519 10.2482 9.99048 10.4241 10.1664C10.6 10.3423 10.8386 10.4411 11.0873 10.4411C11.3361 10.4411 11.5747 10.3423 11.7506 10.1664C11.9265 9.99048 12.0253 9.7519 12.0253 9.50314V5.12594L10.1494 3.25"
-      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-    <path
-      d="M2.02344 12.005V3.25063C2.02344 2.91894 2.1552 2.60084 2.38974 2.3663C2.62428 2.13176 2.94238 2 3.27407 2H7.02595C7.35764 2 7.67574 2.13176 7.91028 2.3663C8.14481 2.60084 8.27658 2.91894 8.27658 3.25063V12.005"
-      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M1.39062 12H8.89439" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M4 6L6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-  </g>
-  <defs>
-    <clipPath id="clip0_61321_42642">
-      <rect width="14" height="14" fill="white" />
-    </clipPath>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <path
+    d="M2.69995 13.5V3.5C2.69995 3.23478 2.80531 2.98043 2.99284 2.79289C3.18038 2.60536 3.43473 2.5 3.69995 2.5H8.69995C8.96517 2.5 9.21952 2.60536 9.40706 2.79289C9.59459 2.98043 9.69995 3.23478 9.69995 3.5V13.5"
+    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1.19995 13.5H11.1999" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M9.69995 7H11.2C11.4652 7 11.7195 7.10536 11.9071 7.29289C12.0946 7.48043 12.2 7.73478 12.2 8V10.5C12.2 10.7652 12.3053 11.0196 12.4928 11.2071C12.6804 11.3946 12.9347 11.5 13.2 11.5C13.4652 11.5 13.7195 11.3946 13.9071 11.2071C14.0946 11.0196 14.2 10.7652 14.2 10.5V5.41437C14.2 5.28297 14.1741 5.15285 14.1238 5.03145C14.0735 4.91006 13.9998 4.79976 13.9068 4.70687L12.7 3.5"
+    stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M7.69995 7H4.69995" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
