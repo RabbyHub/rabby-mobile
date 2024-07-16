@@ -205,7 +205,9 @@ const AddressInfo = (props: AddressInfoProps) => {
       confirmText: t('page.manageAddress.confirm'),
       cancelText: t('page.manageAddress.cancel'),
       title,
-      description: t('page.manageAddress.delete-desc'),
+      description: needPassword
+        ? t('page.addressDetail.delete-desc-needpassword')
+        : t('page.addressDetail.delete-desc'),
       checklist: needPassword
         ? [
             t('page.manageAddress.delete-checklist-1'),

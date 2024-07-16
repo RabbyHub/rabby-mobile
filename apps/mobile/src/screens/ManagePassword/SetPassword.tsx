@@ -386,7 +386,7 @@ const getStyles = createGetStyles(colors => {
       paddingVertical: LAYOUTS.fixedFooterPaddingVertical,
       paddingHorizontal: LAYOUTS.fixedFooterPaddingHorizontal,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors['neutral-foot'],
+      borderTopColor: colors['neutral-line'],
     },
     nextButtonContainer: {
       width: '100%',

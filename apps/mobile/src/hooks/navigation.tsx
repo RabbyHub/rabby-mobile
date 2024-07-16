@@ -242,6 +242,7 @@ const defaultProtectedConf: ProtectedConf = {
 function getProtectedConf() {
   return {
     ...defaultProtectedConf,
+    warningScreenshotBackup: true,
     iosBlurType: ProtectType.SafeTipModal,
   };
 }
@@ -249,28 +250,13 @@ function getProtectedConf() {
 const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
 } = {
-  [RootNames.CreateMnemonic]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
+  [RootNames.CreateMnemonic]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
-  [RootNames.CreateMnemonicBackup]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
-  [RootNames.CreateMnemonicVerify]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
-  [RootNames.BackupMnemonic]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
-  [RootNames.BackupPrivateKey]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
+  [RootNames.CreateMnemonicBackup]: getProtectedConf(),
+  [RootNames.CreateMnemonicVerify]: getProtectedConf(),
+  [RootNames.BackupMnemonic]: getProtectedConf(),
+  [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
 function getAtSensitveScreenInfo(routeName: string | undefined) {
