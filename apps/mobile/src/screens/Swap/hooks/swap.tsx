@@ -12,7 +12,6 @@ import { sendRequest } from '@/core/apis/provider';
 import { navigationRef } from '@/utils/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import { sleep } from '@/utils/async';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
@@ -139,8 +138,6 @@ export const dexSwap = async (
         { isSwap: true, swapPreferMEVGuarded },
       );
 
-      await sleep(1000);
-
       // unTriggerTxCounter.decrease();
     }
 
@@ -162,8 +159,6 @@ export const dexSwap = async (
         gasPrice,
         { isSwap: true, swapPreferMEVGuarded },
       );
-
-      await sleep(1000);
 
       // unTriggerTxCounter.decrease();
     }
