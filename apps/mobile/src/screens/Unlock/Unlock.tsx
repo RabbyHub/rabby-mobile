@@ -51,7 +51,12 @@ const BiometricsIconSize = 56;
 
 const hasAutoUnlockByBiometricsRef = { current: false };
 
-const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
+const prevFailedRef = { hide: null as (() => void) | null };
+const toastFailed = toastWithIcon(RcIconInfoForToast);
+const toastBiometricsFailed = (message?: string) => {
+  prevFailedRef.hide?.();
+  prevFailedRef.hide = toastFailed(message);
+};
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
@@ -120,6 +125,22 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   return { isUnlocking, formik, shouldDisabled, checkUnlocked };
 }
 
+const unlockFailedRef = { current: 0 };
+function incToReset(isOnMount = false) {
+  // always reset to 0 on production
+  if (!__DEV__) return 0;
+
+  if (!isOnMount) {
+    unlockFailedRef.current += 1;
+    if (unlockFailedRef.current >= 3) {
+      unlockFailedRef.current = 0;
+    }
+  } else {
+    unlockFailedRef.current = 0;
+  }
+
+  return unlockFailedRef.current;
+}
 export default function UnlockScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -167,8 +188,15 @@ export default function UnlockScreen() {
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
+      if (incToReset() === 0) {
+        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+        setUsingBiometrics(false);
+      } else {
+        toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
+      }
+
       // leave here for debug
-      __DEV__ &&
+      if (__DEV__) {
         console.debug(
           'error.code: %s; error.name: %s; error.message: %s',
           error.code,
@@ -176,43 +204,18 @@ export default function UnlockScreen() {
           error.message,
         );
 
-      if (
-        ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
-          error.code,
-        )
-      ) {
-        const parsedInfo = parseKeychainError(error);
         if (
-          parsedInfo.isCancelledByUser ||
-          (__DEV__ && parsedInfo.sysMessage)
+          ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+            error.code,
+          )
         ) {
-          toast.info(parsedInfo.sysMessage);
-        } else {
-          toastBiometricsFailed(t('page.unlock.biometrics.failed'));
+          const parsedInfo = parseKeychainError(error);
+          if (__DEV__ && parsedInfo.sysMessage) {
+            parsedInfo.isCancelledByUser
+              ? console.warn(parsedInfo.sysMessage)
+              : console.error(parsedInfo.sysMessage);
+          }
         }
-
-        if (!parsedInfo.isCancelledByUser) {
-          Alert.alert(
-            t('page.unlock.biometrics.failedAndTipTitle'),
-            t('page.unlock.biometrics.failedAndTip'),
-            [
-              {
-                text: t('global.ok'),
-                style: 'cancel',
-              },
-              {
-                text: t('page.unlock.biometrics.usePassword'),
-                style: 'cancel',
-                onPress: () => {
-                  setUsingBiometrics(false);
-                },
-              },
-            ],
-          );
-        }
-      } else {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
       }
     }
   }, [unlockApp, t]);
@@ -224,6 +227,8 @@ export default function UnlockScreen() {
   }, [unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
+    incToReset(true);
+
     (async () => {
       // wait screen rendered
       await sleep(500);
