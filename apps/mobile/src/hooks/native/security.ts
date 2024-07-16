@@ -24,7 +24,7 @@ export function usePreventScreenshot(prevent = true) {
 }
 
 const iosScreenCaptureAtom = atom({
-  isBeingCaptured: RNScreenshotPrevent.iosIsBeingCaptured(),
+  isBeingCaptured: IS_IOS ? RNScreenshotPrevent.iosIsBeingCaptured() : false,
   isScreenshotJustNow: false,
 });
 
