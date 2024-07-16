@@ -406,7 +406,7 @@ const AddressInfo = (props: AddressInfoProps) => {
               <WalletIcon
                 width={20}
                 height={20}
-                style={{ width: 20, height: 20, marginRight: 6 }}
+                style={{ width: 20, height: 20 }}
               />
               <Text
                 style={{
@@ -453,7 +453,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         </View>
 
         {accountInfo && (
-          <View style={styles.itemView}>
+          <View style={[styles.itemView, { borderBottomWidth: 0 }]}>
             <Text style={styles.labelText}>
               {t('page.addressDetail.hd-path')}
             </Text>

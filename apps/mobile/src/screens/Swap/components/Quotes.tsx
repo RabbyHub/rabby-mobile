@@ -342,7 +342,7 @@ export const QuoteList = (props: QuotesProps) => {
     const min = 333;
     const max = Math.min(605, screenHeight * 0.9);
 
-    const h = 64 + 24 + ViewDexIdList.length * 92;
+    const h = 64 + 24 + 30 + ViewDexIdList.length * 92;
 
     if (h < min) {
       return min;
