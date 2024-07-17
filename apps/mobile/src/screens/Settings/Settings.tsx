@@ -64,7 +64,7 @@ import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePas
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
-import { useFocusEffect } from '@react-navigation/native';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useAutoLockTimeout, useIsAllowScreenshot } from '@/hooks/appSettings';
 import { formatTimeFromNow } from '../Approvals/utils';
 import useInterval from 'react-use/lib/useInterval';
@@ -107,6 +107,8 @@ function SettingsBlocks() {
     useRef<SwitchToggleType>(null),
     useRef<SwitchToggleType>(null),
   ];
+
+  const navigation = useRabbyAppNavigation();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -164,6 +166,28 @@ function SettingsBlocks() {
             },
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
+          },
+          {
+            label: 'Enable whitelist for sending assets',
+            icon: RcWhitelist,
+            onPress: () => {
+              switchWhitelistRef.current?.toggle();
+            },
+            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
+          },
+          {
+            label: 'Add Custom Network',
+            icon: RcWhitelist,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.CustomTestnet,
+                  params: {
+                    source: 'settings',
+                  },
+                }),
+              );
+            },
           },
           {
             label: 'Custom RPC',

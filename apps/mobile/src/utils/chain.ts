@@ -338,3 +338,8 @@ export const getChain = (chainId?: string) => {
   }
   return chainsDict[chainId];
 };
+
+// todo
+export const updateChainStore = (args: any) => {
+  return null;
+};

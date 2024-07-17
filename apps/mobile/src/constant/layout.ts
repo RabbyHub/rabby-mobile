@@ -41,6 +41,7 @@ export const RootNames = {
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   SetPassword: 'SetPassword',
+  CustomTestnet: 'CustomTestnet',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
