@@ -85,6 +85,11 @@ export function ModalConfirmAllowTransfer({
   const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
   const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
 
+  const handleCancel = useCallback(() => {
+    onCancel?.();
+    formik.resetForm();
+  }, [onCancel, formik]);
+
   const handleSubmit = useCallback<
     React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
       object
@@ -130,7 +135,7 @@ export function ModalConfirmAllowTransfer({
       <BottomSheetModalConfirmContainer
         ref={sheetModalRef}
         onConfirm={handleSubmit}
-        onCancel={onCancel}
+        onCancel={handleCancel}
         height={isUseCustomPwd ? 332 : 279}
         confirmButtonProps={{
           type: 'primary',
