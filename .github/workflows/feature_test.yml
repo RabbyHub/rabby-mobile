@@ -133,7 +133,7 @@ jobs:
       #   with:
       #     name: rabbymobile-${{ steps.actionvars.outputs.flatten_refname }}-${{ steps.actionvars.outputs.trigger_date }}
       #     path: |
-      #       ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+      #       ./apps/mobile/android/app/build/outputs/apk/regression/release/app-regression-release.apk
       #       ./apps/mobile/ios/Package/adhoc/*.ipa
       #       ./apps/mobile/ios/Package/adhoc/manifest.plist
       #       ./apps/mobile/ios/Package/adhoc/*.zip

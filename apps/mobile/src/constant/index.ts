@@ -65,7 +65,7 @@ const androidPackageName = !NativeModules.RNVersionCheck.packageName
   ? 'com.debank.rabbymobile'
   : stringUtils.unSuffix(
       stringUtils.unSuffix(NativeModules.RNVersionCheck.packageName, '.debug'),
-      '.reg',
+      '.regression',
     );
 
 export const APPLICATION_ID =
