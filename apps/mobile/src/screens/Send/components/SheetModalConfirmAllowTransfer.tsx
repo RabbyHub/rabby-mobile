@@ -71,20 +71,19 @@ export function ModalConfirmAllowTransfer({
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const [confirmToAddToWhitelist, setConfirmToAddToWhitelist] = useState(false);
 
-  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
-  const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
-  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
-
   useEffect(() => {
     toggleShowSheetModal(visible || 'destroy');
 
     setConfirmToAddToWhitelist(false);
-    formik.setFieldValue('password', '');
-  }, [toggleShowSheetModal, formik, visible]);
+  }, [toggleShowSheetModal, visible]);
 
   const { addWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
+
+  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
+  const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
+  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
 
   const handleSubmit = useCallback<
     React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
