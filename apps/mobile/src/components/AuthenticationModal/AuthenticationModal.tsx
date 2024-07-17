@@ -1,8 +1,14 @@
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+
+import { apisLock } from '@/core/apis';
+import { IS_IOS } from '@/core/native/utils';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { usePasswordStatus } from '@/hooks/useLock';
+import { createGetStyles } from '@/utils/styles';
+import type { ValidationBehaviorProps } from '@/core/apis/lock';
+
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import {
   createGlobalBottomSheetModal,
@@ -11,10 +17,8 @@ import {
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { BottomSheetInput } from '../Input';
 import { CheckItem } from './CheckItem';
-import { apisLock } from '@/core/apis';
 import { FooterButtonGroup } from '../FooterButton/FooterButtonGroup';
 import { noop } from 'lodash';
-import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
 export interface AuthenticationModalProps extends ValidationBehaviorProps {
   confirmText?: string;
@@ -35,7 +39,7 @@ export const AuthenticationModal = ({
   placeholder,
   onCancel,
   checklist,
-  needPassword = true,
+  needPassword: propNeedPassword = undefined,
 }: AuthenticationModalProps) => {
   const { t } = useTranslation();
   const { styles } = useThemeStyles(getStyle);
@@ -47,17 +51,32 @@ export const AuthenticationModal = ({
   const isDisabled = checklistState.includes(false);
   const colors = useThemeColors();
 
+  const { isUseCustomPwd } = usePasswordStatus();
+
+  const needPassword =
+    typeof propNeedPassword === 'boolean' ? propNeedPassword : isUseCustomPwd;
+
   const handleSubmit = React.useCallback(async () => {
     if (isDisabled) return;
 
     try {
       if (needPassword) await validationHandler?.(password);
-      onFinished?.({ validatedPassword: password });
+      onFinished?.({
+        hasSetupCustomPassword: isUseCustomPwd,
+        validatedPassword: password,
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.message);
     }
-  }, [isDisabled, needPassword, onFinished, password, validationHandler]);
+  }, [
+    isDisabled,
+    needPassword,
+    isUseCustomPwd,
+    onFinished,
+    password,
+    validationHandler,
+  ]);
 
   React.useEffect(() => {
     setError('');
@@ -126,8 +145,13 @@ export const AuthenticationModal = ({
  * whatever it's true or false. If not, it will fetch the lock info from the device.
  *
  */
-AuthenticationModal.show = async (props: AuthenticationModalProps) => {
-  let needPassword = props.needPassword;
+AuthenticationModal.show = async (
+  showConfig: AuthenticationModalProps & {
+    closeDuration?: number;
+  },
+) => {
+  const { closeDuration = IS_IOS ? 0 : 300, ...props } = showConfig;
+  let needPassword = showConfig.needPassword;
   if (typeof needPassword !== 'boolean') {
     const lockInfo = await apisLock.getRabbyLockInfo();
     needPassword = lockInfo.isUseCustomPwd;
@@ -137,18 +161,22 @@ AuthenticationModal.show = async (props: AuthenticationModalProps) => {
     bottomSheetModalProps: {
       enableDynamicSizing: true,
     },
-    needPassword,
     ...props,
+    needPassword,
     onCancel() {
       props.onCancel?.();
-      removeGlobalBottomSheetModal(id);
+      hideModal();
     },
     onFinished(ctx) {
+      hideModal();
       props.onFinished?.(ctx);
-      removeGlobalBottomSheetModal(id);
     },
   });
-  return null;
+
+  const hideModal = () => {
+    return removeGlobalBottomSheetModal(id, { duration: closeDuration });
+  };
+  return { hideModal };
 };
 
 const getStyle = createGetStyles(colors => {

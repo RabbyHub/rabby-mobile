@@ -1,7 +1,14 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Text, TextInput, Alert, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import * as Yup from 'yup';
 
 import { default as RcRabbyLogo } from './icons/rabby-logo.svg';
@@ -32,19 +39,28 @@ import { useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { sleep } from '@/utils/async';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
   containerPadding: 20,
 };
 
-const STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV = false;
-
 const isIOS = Platform.OS === 'ios';
 const BiometricsIconSize = 56;
 
-const toastBiometricsFailed = toastWithIcon(RcIconInfoForToast);
+const hasAutoUnlockByBiometricsRef = { current: false };
+
+const prevFailedRef = { hide: null as (() => void) | null };
+const toastFailed = toastWithIcon(RcIconInfoForToast);
+const toastBiometricsFailed = (message?: string) => {
+  prevFailedRef.hide?.();
+  prevFailedRef.hide = toastFailed(message);
+};
+const toastLoading = toastWithIcon(() => (
+  <ActivityIndicator style={{ marginRight: 6 }} />
+));
+const toastUnlocking = () => toastLoading('Unlocking');
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
@@ -87,26 +103,51 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const result = await unlockApp(values.password, { showLoading: true });
-      if (result.error) {
-        helpers?.setFieldError('password', t('page.unlock.password.error'));
-        toast.show(result.error);
+      const hideToast = toastUnlocking();
+      try {
+        const result = await unlockApp(values.password);
+        if (result.error) {
+          helpers?.setFieldError('password', t('page.unlock.password.error'));
+          toast.show(result.error);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        checkUnlocked();
+        hideToast();
+        hasAutoUnlockByBiometricsRef.current = true;
       }
-      checkUnlocked();
     },
   });
 
-  const shouldDisabled = isUnlocking || !formik.values.password;
+  const shouldDisabled = !formik.values.password;
 
-  return { formik, shouldDisabled, checkUnlocked };
+  return { isUnlocking, formik, shouldDisabled, checkUnlocked };
 }
 
+const unlockFailedRef = { current: 0 };
+function incToReset(isOnMount = false) {
+  // always reset to 0 on production
+  if (!__DEV__) return 0;
+
+  if (!isOnMount) {
+    unlockFailedRef.current += 1;
+    if (unlockFailedRef.current >= 3) {
+      unlockFailedRef.current = 0;
+    }
+  } else {
+    unlockFailedRef.current = 0;
+  }
+
+  return unlockFailedRef.current;
+}
 export default function UnlockScreen() {
   const { styles, colors } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
-  const { formik, shouldDisabled, checkUnlocked } = useUnlockForm(navigation);
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
+    useUnlockForm(navigation);
   const {
     computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
@@ -138,7 +179,7 @@ export default function UnlockScreen() {
       await apisKeychain.requestGenericPassword({
         purpose: RequestGenericPurpose.DECRYPT_PWD,
         onPlainPassword: async password => {
-          const result = await unlockApp(password, { showLoading: false });
+          const result = await unlockApp(password);
           if (result.error) {
             throw new Error(result.error);
           }
@@ -147,8 +188,15 @@ export default function UnlockScreen() {
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
+      if (incToReset() === 0) {
+        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
+        setUsingBiometrics(false);
+      } else {
+        toastBiometricsFailed(t('page.unlock.biometrics.failedAndTipTitle'));
+      }
+
       // leave here for debug
-      __DEV__ &&
+      if (__DEV__) {
         console.debug(
           'error.code: %s; error.name: %s; error.message: %s',
           error.code,
@@ -156,59 +204,42 @@ export default function UnlockScreen() {
           error.message,
         );
 
-      if (
-        ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
-          error.code,
-        )
-      ) {
-        const parsedInfo = parseKeychainError(error);
         if (
-          parsedInfo.isCancelledByUser ||
-          (__DEV__ && parsedInfo.sysMessage)
+          ['decrypt_fail' /* iOS */, 'E_CRYPTO_FAILED' /* Android */].includes(
+            error.code,
+          )
         ) {
-          toast.info(parsedInfo.sysMessage);
-        } else {
-          toastBiometricsFailed(t('page.unlock.biometrics.failed'));
+          const parsedInfo = parseKeychainError(error);
+          if (__DEV__ && parsedInfo.sysMessage) {
+            parsedInfo.isCancelledByUser
+              ? console.warn(parsedInfo.sysMessage)
+              : console.error(parsedInfo.sysMessage);
+          }
         }
-
-        if (!parsedInfo.isCancelledByUser) {
-          Alert.alert(
-            t('page.unlock.biometrics.failedAndTipTitle'),
-            t('page.unlock.biometrics.failedAndTip'),
-            [
-              {
-                text: t('global.ok'),
-                style: 'cancel',
-              },
-              {
-                text: t('page.unlock.biometrics.usePassword'),
-                style: 'cancel',
-                onPress: () => {
-                  setUsingBiometrics(false);
-                },
-              },
-            ],
-          );
-        }
-      } else {
-        toastBiometricsFailed(t('page.unlock.biometrics.usePassword'));
-        setUsingBiometrics(false);
       }
     }
   }, [unlockApp, t]);
 
-  const onPressBiometricsButton = useCallback(async () => {
+  const triggerUnlockWithBiometrics = useCallback(async () => {
+    const hideToast = toastUnlocking();
     await unlockWithBiometrics().finally(() => checkUnlocked());
+    hideToast();
   }, [unlockWithBiometrics, checkUnlocked]);
 
   useLayoutEffect(() => {
-    if (__DEV__ && STOP_REDIRECT_TO_HOME_ON_UNLOCKED_ON_DEV) {
-      console.debug('UnlockScreen::useLayoutEffect skipped on DEV mode.');
-      return;
-    }
+    incToReset(true);
 
-    checkUnlocked();
-  }, [checkUnlocked]);
+    (async () => {
+      // wait screen rendered
+      await sleep(500);
+      if (hasAutoUnlockByBiometricsRef.current) return;
+      if (!isBiometricsEnabled) return;
+
+      await triggerUnlockWithBiometrics().finally(() => {
+        hasAutoUnlockByBiometricsRef.current = true;
+      });
+    })();
+  }, [isBiometricsEnabled, triggerUnlockWithBiometrics]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -262,6 +293,7 @@ export default function UnlockScreen() {
                 { height: safeSizes.footerHeight },
               ]}>
               <Button
+                loading={isUnlocking}
                 disabled={shouldDisabled}
                 type="primary"
                 buttonStyle={[styles.buttonShadow]}
@@ -283,7 +315,7 @@ export default function UnlockScreen() {
             <View style={styles.biometricsBtns}>
               <TouchableView
                 style={styles.biometricsBtn}
-                onPress={onPressBiometricsButton}>
+                onPress={triggerUnlockWithBiometrics}>
                 <BiometricsIcon isFaceID={isFaceID} />
               </TouchableView>
             </View>

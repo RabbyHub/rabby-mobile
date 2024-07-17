@@ -1,6 +1,7 @@
-import { CreateParams, EVENT_NAMES, MODAL_NAMES } from './types';
+import { CreateParams, EVENT_NAMES, MODAL_NAMES, RemoveParams } from './types';
 import { uniqueId } from 'lodash';
 import { events } from './event';
+import { sleep } from '@/utils/async';
 
 export const createGlobalBottomSheetModal = <
   T extends MODAL_NAMES = MODAL_NAMES,
@@ -13,15 +14,30 @@ export const createGlobalBottomSheetModal = <
   return id;
 };
 
-export const removeGlobalBottomSheetModal = (key?: string | null) => {
+export async function removeGlobalBottomSheetModal(
+  key?: string | null,
+  params?: RemoveParams & {
+    waitMaxtime?: number;
+  },
+) {
   if (typeof key !== 'string') {
     return;
   }
-  events.emit(EVENT_NAMES.REMOVE, key);
-};
+  const { waitMaxtime, ...removeParams } = params ?? {};
+  const promise = new Promise<string | null>(resolve => {
+    events.once(EVENT_NAMES.CLOSED, () => {
+      resolve(key);
+    });
+  });
+  events.emit(EVENT_NAMES.REMOVE, key, removeParams);
+
+  return Promise.all([promise, waitMaxtime ? sleep(waitMaxtime) : null]).then(
+    ([r]) => r,
+  );
+}
 
 export const globalBottomSheetModalAddListener = (
-  eventName: 'DISMISS',
+  eventName: EVENT_NAMES.DISMISS /*  | EVENT_NAMES.CLOSED */,
   callback: (key: string) => void,
   once?: boolean,
 ) => {

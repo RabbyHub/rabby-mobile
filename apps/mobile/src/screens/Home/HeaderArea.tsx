@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -32,6 +32,7 @@ import RcInfoCC from '@/assets/icons/home/info-cc.svg';
 import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
 import { CurveBottomSheetModal } from './components/CurveBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import usePrevious from 'ahooks/lib/usePrevious';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -41,35 +42,49 @@ export default function HomeHeaderArea() {
   const styles = useMemo(() => getStyles(colors, width), [colors, width]);
   const navigation = useRabbyAppNavigation();
   const { currentAccount } = useCurrentAccount();
+  const WalletIcon = useMemo(
+    () =>
+      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
+    [currentAccount],
+  );
+
   const {
     balance,
     balanceLoading,
     balanceFromCache,
     balanceUpdating,
     missingList,
-  } = useCurrentBalance(currentAccount?.address, true, false);
-  const WalletIcon = useMemo(
-    () =>
-      currentAccount ? getWalletIcon(currentAccount.brandName) : () => null,
-    [currentAccount],
-  );
-  const { result: curveData, isLoading } = useCurve(
-    currentAccount?.address,
-    0,
-    balance,
-  );
+  } = useCurrentBalance(currentAccount?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
+
+  const {
+    result: curveData,
+    isLoading,
+    refresh: refreshCurveData,
+  } = useCurve(currentAccount?.address, 0, balance);
 
   const usd = useMemo(
     () => '$' + splitNumberByStep((balance || 0).toFixed(2)),
     [balance],
   );
-  const percent = useMemo(
+  const latestPercent = useMemo(
     () =>
       !curveData?.changePercent
         ? ''
         : (curveData?.isLoss ? '-' : '+') + curveData?.changePercent,
     [curveData?.changePercent, curveData?.isLoss],
   );
+  const previousAddr = usePrevious(currentAccount?.address);
+  const previousPercent = usePrevious(
+    latestPercent,
+    () => previousAddr !== currentAccount?.address,
+  );
+  const percent = useMemo(() => {
+    return latestPercent || previousPercent;
+  }, [latestPercent, previousPercent]);
+
   const isDecrease = !!curveData?.isLoss;
 
   const name = useMemo(
@@ -117,12 +132,14 @@ export default function HomeHeaderArea() {
 
   const { remoteVersion } = useUpgradeInfo();
 
-  const curveBottomSheetModalRef = useRef<BottomSheetModal>();
+  const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-  const openChart = React.useCallback(() => {
+  const handlePressBalanceSection = React.useCallback(() => {
     curveBottomSheetModalRef.current?.dismiss();
     curveBottomSheetModalRef.current?.present();
-  }, []);
+
+    refreshCurveData();
+  }, [refreshCurveData]);
 
   return (
     <View
@@ -177,7 +194,9 @@ export default function HomeHeaderArea() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.textBox} onPress={openChart}>
+      <TouchableOpacity
+        style={styles.textBox}
+        onPress={handlePressBalanceSection}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
           <Text style={styles.usdText}>
             {(balanceLoading && !balanceFromCache) ||
@@ -190,7 +209,7 @@ export default function HomeHeaderArea() {
             )}
           </Text>
 
-          {!isLoading && (
+          {!!percent && (
             <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
               <Text
                 style={StyleSheet.compose(
@@ -207,7 +226,7 @@ export default function HomeHeaderArea() {
                   isDecrease ? colors['red-default'] : colors['green-default']
                 }
               />
-              {missingList?.length ? (
+              {!isLoading && missingList?.length ? (
                 <Tip
                   content={t('page.dashboard.home.missingDataTooltip', {
                     text:

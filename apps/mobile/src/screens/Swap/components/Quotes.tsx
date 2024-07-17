@@ -1,33 +1,40 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DexQuoteItem, QuoteItemProps } from './QuoteItem';
 import {
   TCexQuoteData,
   TDexQuoteData,
   useSwapSettings,
-  useSwapSettingsVisible,
+  useSwapSupportedDexList,
+  useSwapViewDexIdList,
 } from '../hooks';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { CEX, DEX, DEX_WITH_WRAP } from '@/constant/swap';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { DEX_WITH_WRAP } from '@/constant/swap';
 import { useSetAtom } from 'jotai';
 import { refreshIdAtom } from '../hooks/atom';
 import { AppBottomSheetModal } from '@/components';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import { Radio } from '@/components/Radio';
-import { RcIconSwapChecked, RcIconSwapUnchecked } from '@/assets/icons/swap';
+import {
+  RcIconSwapChecked,
+  RcIconSwapHiddenArrow,
+  RcIconSwapUnchecked,
+} from '@/assets/icons/swap';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import TouchableItem from '@/components/Touchable/TouchableItem';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import { getTokenSymbol } from '@/utils/token';
-import { CexQuoteItem } from './CexQuoteItem';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SwapRefreshBtn } from './SwapRefreshBtn';
-
-const exchangeCount = Object.keys(DEX).length + Object.keys(CEX).length;
 
 interface QuotesProps
   extends Omit<
@@ -53,42 +60,10 @@ export const Quotes = ({
   ...other
 }: QuotesProps) => {
   const colors = useThemeColors();
-  const styles = useMemo(() => getStyles(colors), [colors]);
 
   const { t } = useTranslation();
-  const { swapViewList, swapTradeList, sortIncludeGasFee } = useSwapSettings();
+  const { sortIncludeGasFee } = useSwapSettings();
 
-  const viewCount = useMemo(() => {
-    if (swapViewList) {
-      const DexList = Object.keys(DEX);
-      const CEXList = Object.keys(CEX);
-
-      const availableList = [...DexList, ...CEXList];
-
-      return (
-        exchangeCount -
-        Object.entries(swapViewList).filter(
-          ([name, e]) => e === false && availableList.includes(name),
-        ).length
-      );
-    }
-    return exchangeCount;
-  }, [swapViewList]);
-
-  const tradeCount = useMemo(() => {
-    if (swapTradeList) {
-      const TradeDexList = Object.keys(DEX);
-      return Object.entries(swapTradeList).filter(
-        ([name, enable]) => enable === true && TradeDexList.includes(name),
-      ).length;
-    }
-    return 0;
-  }, [swapTradeList]);
-
-  const { setVisible: setSettings } = useSwapSettingsVisible();
-  const openSettings = React.useCallback(() => {
-    setSettings(true);
-  }, [setSettings]);
   const sortedList = useMemo(
     () => [
       ...(list?.sort((a, b) => {
@@ -139,6 +114,10 @@ export const Quotes = ({
     ],
   );
 
+  const [hiddenError, setHiddenError] = useState(true);
+  const [errorQuoteDEXs, setErrorQuoteDEXs] = useState<string[]>([]);
+  const ViewDexIdList = useSwapViewDexIdList();
+
   const [bestQuoteAmount, bestQuoteGasUsd] = useMemo(() => {
     const bestQuote = sortedList?.[0];
 
@@ -163,10 +142,6 @@ export const Quotes = ({
   }, [inSufficient, other?.receiveToken?.decimals, sortedList]);
 
   const fetchedList = useMemo(() => list?.map(e => e.name) || [], [list]);
-
-  const noCex = useMemo(() => {
-    return Object.keys(CEX).every(e => swapViewList?.[e] === false);
-  }, [swapViewList]);
 
   if (isSwapWrapToken(other.payToken.id, other.receiveToken.id, other.chain)) {
     const dex = sortedList.find(e => e.isDex) as TDexQuoteData | undefined;
@@ -224,6 +199,7 @@ export const Quotes = ({
           }
           return (
             <DexQuoteItem
+              onErrQuote={setErrorQuoteDEXs}
               key={name}
               inSufficient={inSufficient}
               preExecResult={params.preExecResult}
@@ -243,44 +219,91 @@ export const Quotes = ({
         })}
         <QuoteListLoading fetchedList={fetchedList} />
       </View>
-      {!noCex && (
-        <>
-          <Text style={styles.cexTip}>{t('page.swap.rates-from-cex')}</Text>
-
-          <View style={styles.cexList}>
-            {sortedList.map((params, idx) => {
-              const { name, data, isDex } = params;
-              if (isDex) {
-                return null;
-              }
-              return (
-                <>
-                  <CexQuoteItem
-                    key={name}
-                    name={name}
-                    data={data as unknown as any}
-                    bestQuoteAmount={`${bestQuoteAmount}`}
-                    bestQuoteGasUsd={bestQuoteGasUsd}
-                    isBestQuote={idx === 0}
-                    isLoading={params.loading}
-                    inSufficient={inSufficient}
-                  />
-                </>
-              );
-            })}
-            <QuoteListLoading fetchedList={fetchedList} isCex />
+      <View>
+        <TouchableOpacity
+          style={[
+            {
+              width: 'auto',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: 24,
+              gap: 4,
+            },
+            errorQuoteDEXs.length === 0 ||
+            errorQuoteDEXs?.length === ViewDexIdList?.length
+              ? { display: 'none' }
+              : { marginBottom: 12 },
+          ]}
+          onPress={() => {
+            setHiddenError(e => !e);
+          }}>
+          <View
+            style={{
+              width: 'auto',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                fontSize: 13,
+                color: colors['neutral-foot'],
+              }}>
+              {t('page.swap.hidden-no-quote-rates', {
+                count: errorQuoteDEXs.length,
+              })}
+            </Text>
+            <RcIconSwapHiddenArrow
+              width={14}
+              height={14}
+              viewBox="0 0 14 14"
+              style={{
+                position: 'relative',
+                top: 2,
+                transform: [{ rotate: hiddenError ? '0deg' : '180deg' }],
+              }}
+            />
           </View>
-        </>
-      )}
-
-      <View style={styles.foot}>
-        <Text style={styles.footText}>
-          {t('page.swap.tradingSettingTips', { viewCount, tradeCount })}
-        </Text>
-
-        <TouchableItem onPress={openSettings}>
-          <Text style={styles.edit}>{t('page.swap.edit')}</Text>
-        </TouchableItem>
+        </TouchableOpacity>
+      </View>
+      <View
+        style={[
+          { gap: 12, overflow: 'hidden' },
+          hiddenError && errorQuoteDEXs?.length !== ViewDexIdList?.length
+            ? {
+                maxHeight: 0,
+                height: 0,
+              }
+            : {},
+          errorQuoteDEXs.length === 0 ? { display: 'none' } : {},
+        ]}>
+        {sortedList.map((params, idx) => {
+          const { name, data, isDex } = params;
+          if (!isDex) {
+            return null;
+          }
+          return (
+            <DexQuoteItem
+              key={name}
+              onErrQuote={setErrorQuoteDEXs}
+              onlyShowErrorQuote
+              inSufficient={inSufficient}
+              preExecResult={params.preExecResult}
+              quote={data as unknown as any}
+              name={name}
+              isBestQuote={idx === 0}
+              bestQuoteAmount={`${bestQuoteAmount}`}
+              bestQuoteGasUsd={bestQuoteGasUsd}
+              active={activeName === name}
+              isLoading={params.loading}
+              quoteProviderInfo={
+                DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
+              }
+              {...other}
+            />
+          );
+        })}
       </View>
     </View>
   );
@@ -311,9 +334,30 @@ export const QuoteList = (props: QuotesProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
+  const ViewDexIdList = useSwapViewDexIdList();
+
+  const { height: screenHeight } = useWindowDimensions();
+
+  const height = useMemo(() => {
+    const min = 333;
+    const max = Math.min(605, screenHeight * 0.9);
+
+    const h = 64 + 24 + 30 + ViewDexIdList.length * 92;
+
+    if (h < min) {
+      return min;
+    }
+    if (h > max) {
+      return max;
+    }
+    return h;
+  }, [ViewDexIdList.length, screenHeight]);
+
+  const snapPoints = useMemo(() => [height], [height]);
+
   return (
     <AppBottomSheetModal
-      snapPoints={[580]}
+      snapPoints={snapPoints}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose

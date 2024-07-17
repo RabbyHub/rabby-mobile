@@ -9,22 +9,25 @@ import {
 } from 'react';
 import ImgVerified from '@/assets/icons/swap/verified.svg';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
-import ImgInfo from '@/assets/icons/swap/info-outline.svg';
 import ImgLock from '@/assets/icons/swap/lock.svg';
 
 import React from 'react';
 import { QuoteProvider, useSetQuoteVisible } from '../hooks';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/utils/i18n';
-import { Tip } from '@/components';
+import { AssetAvatar, Tip } from '@/components';
 import { Skeleton, SkeletonProps } from '@rneui/themed';
 import { formatAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import { DEX } from '@/constant/swap';
-import { RcIconSwapGas, RcIconSwitchQuote } from '@/assets/icons/swap';
+import {
+  RcIconSwapGas,
+  RcIconSwapReceiveInfo,
+  RcIconSwitchQuote,
+} from '@/assets/icons/swap';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
   i18n.t('page.swap.QuoteLessWarning', { receive, diff });
@@ -43,9 +46,9 @@ export const WarningOrChecked = ({
           : t('page.swap.by-transaction-simulation-the-quote-is-valid')
       }>
       {quoteWarning ? (
-        <ImgWarning width={14} height={14} />
+        <ImgWarning width={16} height={16} />
       ) : (
-        <ImgVerified width={14} height={14} />
+        <ImgVerified width={16} height={16} />
       )}
     </Tip>
   );
@@ -117,7 +120,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
           ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
           : formatAmount(rateBn.toString(10)),
         sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
-        diff: cut.abs().toFixed(2),
+        diff: cut.abs().toFixed(2) + '%',
         showLoss: cut.lte(-5),
       };
     }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
@@ -130,77 +133,82 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     <View style={styles.receiveWrapper}>
       <View style={styles.column}>
         <View style={styles.flexRow}>
-          <Image
-            style={styles.tokenImage}
-            source={
-              isWrapToken
-                ? { uri: receiveToken.logo_url }
-                : DEX[activeProvider?.name]?.logo
-            }
-          />
-          <View style={[styles.flexCol, styles.gap4]}>
-            <View style={styles.flexRow}>
-              <Text style={styles.titleText}>
-                {isWrapToken
-                  ? t('page.swap.wrap-contract')
-                  : DEX[activeProvider?.name]?.name}
-              </Text>
-              {!!activeProvider.shouldApproveToken && (
-                <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
-                  {/* <Image source={ImgLock} style={styles.lockImage} /> */}
-                  <ImgLock style={styles.lockImage} />
-                </Tip>
-              )}
-            </View>
+          <View style={styles.flexRow}>
+            <Image
+              style={styles.tokenImage}
+              source={
+                isWrapToken
+                  ? { uri: receiveToken.logo_url }
+                  : DEX[activeProvider?.name]?.logo
+              }
+            />
+            <Text style={styles.titleText}>
+              {isWrapToken
+                ? t('page.swap.wrap-contract')
+                : DEX[activeProvider?.name]?.name}
+            </Text>
+            {!!activeProvider.shouldApproveToken && (
+              <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
+                {/* <Image source={ImgLock} style={styles.lockImage} /> */}
+                <ImgLock style={styles.lockImage} />
+              </Tip>
+            )}
+          </View>
+
+          <View style={styles.flexRow}>
+            <AssetAvatar logo={receiveToken.logo_url} size={20} />
+            <Text style={styles.amountText}>
+              {loading ? '' : `${receiveNum}`}
+            </Text>
+            <WarningOrChecked quoteWarning={quoteWarning} />
+          </View>
+        </View>
+
+        <View style={styles.flexRow}>
+          <View style={styles.flexRow}>
             {!!activeProvider?.gasUsd && (
               <View style={styles.flexRow}>
                 <RcIconSwapGas style={styles.gasImage} />
-                <Text style={styles.diffText}>{activeProvider?.gasUsd}</Text>
+                <Text style={[styles.diffText, { marginLeft: 4 }]}>
+                  {activeProvider?.gasUsd}
+                </Text>
               </View>
             )}
           </View>
-          <View
-            style={[
-              styles.gap4,
-              {
-                marginLeft: 'auto',
-              },
-            ]}>
-            <View
-              style={[
-                styles.flexRow,
-                styles.gap6,
-                { justifyContent: 'flex-end' },
-              ]}>
-              <Text style={styles.amountText}>
-                {loading ? '' : `${receiveNum} ${receiveTokenSymbol}`}
-              </Text>
-              <WarningOrChecked quoteWarning={quoteWarning} />
-            </View>
-            <View style={[styles.flexRow, styles.gap6]}>
-              <Text style={styles.diffText}>
-                {loading ? '' : `≈ $${receiveUsd} (${sign}${diff}%)`}
-              </Text>
-              <Tip
-                content={
-                  <View style={styles.tooltipContent}>
-                    <Text
-                      style={
-                        styles.tooltipText
-                      }>{`Est Payment ${payAmount} ${payTokenSymbol} ≈ $${payUsd}`}</Text>
-                    <Text
-                      style={
-                        styles.tooltipText
-                      }>{`Est Receiving ${receiveNum} ${receiveTokenSymbol} ≈ $${receiveUsd}`}</Text>
-                    <Text
-                      style={
-                        styles.tooltipText
-                      }>{`Est Difference ${sign}${diff}%`}</Text>
-                  </View>
-                }>
-                <ImgInfo />
-              </Tip>
-            </View>
+
+          <View style={[styles.flexRow, styles.gap6]}>
+            <Text style={styles.diffText}>
+              {loading ? (
+                ''
+              ) : (
+                <>
+                  ≈ {receiveUsd}{' '}
+                  <Text style={sign === '-' ? styles.red : styles.green}>
+                    ({sign}
+                    {diff})
+                  </Text>
+                </>
+              )}
+            </Text>
+            <Tip
+              content={
+                <View style={styles.tooltipContent}>
+                  <Text
+                    style={
+                      styles.tooltipText
+                    }>{`Est Payment ${payAmount} ${payTokenSymbol} ≈ $${payUsd}`}</Text>
+                  <Text
+                    style={
+                      styles.tooltipText
+                    }>{`Est Receiving ${receiveNum} ${receiveTokenSymbol} ≈ $${receiveUsd}`}</Text>
+                  <Text
+                    style={
+                      styles.tooltipText
+                    }>{`Est Difference ${sign}${diff}`}</Text>
+                </View>
+              }>
+              <RcIconSwapReceiveInfo width={16} height={16} />
+            </Tip>
           </View>
         </View>
       </View>
@@ -213,7 +221,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
       )}
       {!loading && showLoss && (
         <View style={styles.warning}>
-          <Text style={styles.rateText}>
+          <Text style={styles.warningText}>
             {t(
               'page.swap.selected-offer-differs-greatly-from-current-rate-may-cause-big-losses',
             )}
@@ -251,7 +259,7 @@ const getStyles = createGetStyles(colors => ({
   receiveWrapper: {
     position: 'relative',
     marginTop: 24,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors['neutral-line'],
     borderRadius: 4,
     padding: 12,
@@ -260,6 +268,7 @@ const getStyles = createGetStyles(colors => ({
   },
   column: {
     paddingBottom: 12,
+    gap: 10,
   },
   flexRow: {
     flexDirection: 'row',
@@ -284,25 +293,25 @@ const getStyles = createGetStyles(colors => ({
   gasImage: {
     width: 14,
     height: 14,
-    position: 'relative',
-    top: -1,
   },
   titleText: {
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     color: colors['neutral-title-1'],
     marginRight: 2,
   },
   amountText: {
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     color: colors['neutral-title-1'],
     maxWidth: 170,
     overflow: 'hidden',
+    marginLeft: 8,
+    marginRight: 4,
   },
   diffText: {
-    fontSize: 12,
-    fontWeight: 'normal',
+    fontSize: 13,
+    fontWeight: '400',
     color: colors['neutral-foot'],
   },
   warning: {
@@ -314,21 +323,23 @@ const getStyles = createGetStyles(colors => ({
   },
   warningText: {
     fontWeight: '400',
-    fontSize: 12,
+    fontSize: 13,
     color: colors['orange-default'],
   },
   footer: {
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors['neutral-line'],
     paddingTop: 8,
   },
   rateText: {
     color: colors['neutral-body'],
     fontSize: 14,
+    fontWeight: '400',
   },
   rateValue: {
     maxWidth: 182,
     fontSize: 14,
+    fontWeight: '400',
     color: colors['neutral-body'],
   },
   quoteProvider: {
@@ -344,7 +355,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-body'],
     backgroundColor: colors['blue-light-2'],
     borderRadius: 4,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'transparent',
   },
   switchImage: {
@@ -364,5 +375,13 @@ const getStyles = createGetStyles(colors => ({
   gap4: {
     gap: 4,
   },
+
   gap6: { gap: 6 },
+
+  red: {
+    color: colors['red-default'],
+  },
+  green: {
+    color: colors['green-default'],
+  },
 }));

@@ -7,9 +7,9 @@ const MILLISECS_PER_SEC = 1e3;
 /** @warning never set the duration two short to avoid re-lock on unlocking */
 // const CHECK_DURATION = __DEV__ ? 5 * MILLISECS_PER_SEC : 30 * MILLISECS_PER_SEC
 const AUTO_LOCK_SECS = {
-  ERROR_DELTA: __DEV__ ? 1 * MILLISECS_PER_SEC : 5 * MILLISECS_PER_SEC,
+  ERROR_DELTA: __DEV__ ? 3 * MILLISECS_PER_SEC : 5 * MILLISECS_PER_SEC,
   TIMEOUT_MILLISECS: Math.floor(
-    __DEV__ ? 1.5 * MILLISECS_PER_MIN : 5 * MILLISECS_PER_MIN,
+    __DEV__ ? 60 * MILLISECS_PER_MIN : 5 * MILLISECS_PER_MIN,
   ),
   // CHECK_DURATION,
 };

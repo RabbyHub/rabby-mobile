@@ -28,6 +28,7 @@ import { preferenceService, swapService } from '@/core/services';
 import { formatUsdValue } from '@/utils/number';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { stats } from '@/utils/stats';
+import { useSwapSupportedDexList } from './settings';
 
 const { isSameAddress } = addressUtils;
 
@@ -480,7 +481,9 @@ export const useQuoteMethods = () => {
     [walletOpenapi],
   );
 
-  const swapViewList = swapService.getSwapViewList(); //useRabbySelector(s => s.swap.viewList);
+  const swapViewList = swapService.getSwapViewList();
+
+  const [supportedDEXList] = useSwapSupportedDexList();
 
   const getAllQuotes = React.useCallback(
     async (
@@ -504,7 +507,7 @@ export const useQuoteMethods = () => {
       return Promise.all([
         ...(
           Object.keys(DEX).filter(
-            e => swapViewList?.[e] !== false,
+            e => swapViewList?.[e] !== false && supportedDEXList.includes(e),
           ) as DEX_ENUM[]
         ).map(dexId => getDexQuote({ ...params, dexId })),
         ...Object.keys(CEX)
@@ -521,7 +524,7 @@ export const useQuoteMethods = () => {
           ),
       ]);
     },
-    [getDexQuote, swapViewList, getCexQuote],
+    [getDexQuote, swapViewList, supportedDEXList, getCexQuote],
   );
 
   return {

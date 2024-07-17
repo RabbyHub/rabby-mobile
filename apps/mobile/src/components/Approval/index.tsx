@@ -5,6 +5,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import * as ApprovalComponent from './components';
+import { shouldAllowApprovePopup } from '@/core/bridges/state';
+import { useCurrentActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
 
 export const Approval = () => {
   const [getApproval, ,] = useApproval();
@@ -16,6 +18,7 @@ export const Approval = () => {
 
   const init = React.useCallback(
     async (winId?: string) => {
+      setApproval(null);
       const _approval = await getApproval();
       if (!_approval) {
         removeGlobalBottomSheetModal(winId);
@@ -39,11 +42,24 @@ export const Approval = () => {
     };
   }, [init]);
 
+  const { activeDappOrigin } = useCurrentActiveOpenedDapp();
+
   if (!approval) {
     return <View />;
   }
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
+
+  const sourceOrigin = origin || params.origin;
+  if (
+    !shouldAllowApprovePopup({
+      dappOrigin: sourceOrigin,
+      currentOrigin: activeDappOrigin,
+    })
+  ) {
+    return <View />;
+  }
+
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;
 

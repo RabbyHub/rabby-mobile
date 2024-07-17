@@ -53,7 +53,7 @@ type ToastRenderCtx = {
 export const toastWithIcon =
   (Icon: React.FC<SvgProps>) =>
   (
-    message: string | ((ctx: ToastRenderCtx) => React.ReactNode),
+    message?: string | ((ctx: ToastRenderCtx) => React.ReactNode),
     _config?: Partial<ToastOptions>,
   ) => {
     const msgNode =

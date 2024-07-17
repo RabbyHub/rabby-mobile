@@ -17,7 +17,7 @@ import { HomeTopArea } from './components/HomeTopArea';
 import { useMemoizedFn } from 'ahooks';
 import { keyringService } from '@/core/services';
 import { RootNames } from '@/constant/layout';
-import { useUpdateNonce } from '@/hooks/useCurrentBalance';
+import { useTriggerHomeBalanceUpdate } from '@/hooks/useCurrentBalance';
 import { useCurrentAccount } from '@/hooks/account';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
@@ -26,7 +26,7 @@ import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 function HomeScreen(): JSX.Element {
   const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
   const { styles, colors } = useThemeStyles(getStyles);
-  const [nonce, setNonce] = useUpdateNonce();
+  const { triggerUpdate } = useTriggerHomeBalanceUpdate();
   const { currentAccount } = useCurrentAccount({
     disableAutoFetch: true,
   });
@@ -66,10 +66,6 @@ function HomeScreen(): JSX.Element {
     }
   });
 
-  const handleRefresh = () => {
-    setNonce(nonce + 1);
-  };
-
   useFocusEffect(
     useCallback(() => {
       init();
@@ -82,7 +78,7 @@ function HomeScreen(): JSX.Element {
       <SafeAreaView style={styles.safeView}>
         <AssetContainer
           renderHeader={() => <HomeTopArea />}
-          onRefresh={handleRefresh}
+          onRefresh={triggerUpdate}
         />
       </SafeAreaView>
     </RootScreenContainer>

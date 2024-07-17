@@ -16,7 +16,10 @@ export type ValidationBehaviorProps = {
    * @param password
    */
   validationHandler?(password: string): void | Promise<void>;
-  onFinished?(ctx: { validatedPassword: string }): void;
+  onFinished?(ctx: {
+    hasSetupCustomPassword?: boolean;
+    validatedPassword: string;
+  }): void;
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
@@ -71,6 +74,11 @@ export async function throwErrorIfInvalidPwd(password: string) {
 export async function setupWalletPassword(newPassword: string) {
   const result = getInitError(newPassword);
   if (result.error) return result;
+
+  if (!newPassword) {
+    result.error = 'Password cannot be empty';
+    return result;
+  }
 
   try {
     const r = await safeVerifyPassword(RABBY_MOBILE_KR_PWD);

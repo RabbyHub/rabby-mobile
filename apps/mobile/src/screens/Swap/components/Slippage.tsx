@@ -189,7 +189,7 @@ const getStyles = createGetStyles(colors => ({
     marginTop: 8,
   },
   input: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: colors['neutral-title-1'],
   },

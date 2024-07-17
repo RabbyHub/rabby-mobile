@@ -564,8 +564,7 @@
     },
     "receive": {
       "title": "Receive {{token}} on {{chain}}",
-      "watchModeAlert1": "This is a Watch Mode address.",
-      "watchModeAlert2": "Are you sure to use it to receive assets?"
+      "watchModeAlert": "This is a Watch Mode address. Are you sure to use it to receive assets?"
     },
     "sendToken": {
       "addressNotInContract": "Not on address list. <1></1><2>Add to contacts</2>",
@@ -804,6 +803,9 @@
       "slippage-adjusted-refresh-quote": "Slippage adjusted. Refresh quote.",
       "price-expired-refresh-quote": "Price expired. Refresh quote.",
       "approve-x-symbol": "Approve {{symbol}}",
+      "approve-and-swap": "Approve and Swap via {{name}}",
+      "no-slippage-for-wrap": "No slippage for Wrap",
+
       "swap-via-x": "Swap via {{name}}",
       "get-quotes": "Get quotes",
       "chain": "Chain",
@@ -813,6 +815,8 @@
       "amount-in": "Amount in {{symbol}}",
       "unlimited-allowance": "Unlimited allowance",
       "insufficient-balance": "Insufficient balance",
+      "hidden-no-quote-rates": "Hidden {{count}} no-quote rates",
+      "gas-fee-too-high": "Gas fee too high",
       "rabby-fee": "Rabby fee",
       "preferMEV": "Prefer MEV Guarded",
       "preferMEVTip": "Enable \"MEV Guarded\" feature for Ethereum swaps to reduce sandwich attack risks. Note: this feature is not supported if you use a custom RPC or wallet connect address",
@@ -873,8 +877,8 @@
       "whitelisted-address": "Whitelisted address",
       "addressTypeTip": "Imported by {{type}}",
       "delete-desc": "Before you delete, keep the following points in mind to understand how to protect your assets.",
-      "delete-checklist-1": "I understand that if I delete this address, the corresponding Private Key & Seed Phrase of this address will be deleted and Rabby will NOT be able to recover it.",
-      "delete-checklist-2": "I confirm that I have backuped the private key or Seed Phrase and I'm ready to delete it now.",
+      "delete-checklist-1": "I understand that if I delete this address, the corresponding private key and seed phrase will be deleted, and Rabby will NOT be able to recover them.",
+      "delete-checklist-2": "I confirm that I have backed up the private key or seed phrase and am ready to delete it now.",
       "confirm": "Confirm",
       "cancel": "Cancel",
       "delete-private-key-modal-title_one": "Delete {{count}} private key address",
@@ -1734,7 +1738,8 @@
       "backup-private-key": "Backup Private Key",
       "backup-seed-phrase": "Backup Seed Phrase",
       "delete-address": "Delete address",
-      "delete-desc": "Before you delete, keep the following points in mind to understand how to protect your assets.",
+      "delete-desc-needpassword": "Before you delete, keep the following points in mind to understand how to protect your assets.",
+      "delete-desc": "Are you sure you want to delete this address?",
       "direct-delete-desc": "This address is a {{renderBrand}} address, Rabby does not store the private key or seed phrase for this address, you can just delete it",
       "admins": "Admins",
       "tx-requires": "Any transaction requires <2>{{num}}</2> confirmations",
@@ -1824,7 +1829,7 @@
     },
     "backupSeedPhrase": {
       "title": "Backup Seed Phrase",
-      "alert": "This seed phrase  is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
+      "alert": "This seed phrase is the credential to your assets. DO NOT lose it or reveal it to others, otherwise you might lose your assets forever. Please view it in a secure environment and keep it carefully.",
       "clickToShow": "Click to show Seed Phrase",
       "copySeedPhrase": "Copy seed phrase",
       "showQrCode": "Show QR Code",

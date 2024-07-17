@@ -4,6 +4,8 @@ import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import { useGetBinaryMode, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { useIsOnBackground } from '@/hooks/useLock';
+import { useCurrentRouteName } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 const getBlurModalStyles = createGetStyles(colors => {
   return {
@@ -17,14 +19,22 @@ const getBlurModalStyles = createGetStyles(colors => {
   };
 });
 
+const BLUR_FREE_ROOT_NAMES = [RootNames.Unlock] as const;
+
 export function BackgroundSecureBlurView() {
   const { styles } = useThemeStyles(getBlurModalStyles);
 
   const appThemeMode = useGetBinaryMode();
 
+  const { currentRouteName } = useCurrentRouteName();
   const { isOnBackground } = useIsOnBackground();
 
   if (!isOnBackground) return null;
+  if (
+    currentRouteName &&
+    BLUR_FREE_ROOT_NAMES.includes(currentRouteName as any)
+  )
+    return null;
 
   return (
     <BlurView

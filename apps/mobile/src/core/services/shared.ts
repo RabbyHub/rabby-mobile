@@ -61,10 +61,10 @@ export const keyringService = new KeyringService({
 keyringService.loadStore(keyringState || {});
 
 keyringService.store.subscribe(value => {
-  // leave here to test migrate legacyData to keyringData
-  if (__DEV__) {
-    appStorage.setItem('keyringState', value);
-  }
+  // // leave here to test migrate legacyData to keyringData
+  // if (__DEV__) {
+  //   appStorage.setItem('keyringState', value);
+  // }
 
   keyringStorage.clearAll();
   // keyringStorage.flushToDisk?.();

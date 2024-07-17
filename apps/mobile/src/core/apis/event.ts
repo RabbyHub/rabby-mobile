@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-type Listener = (resp?: any) => void;
+type Listener = (...args: any[]) => void;
 export function makeEEClass<Listeners extends Record<string, Listener>>() {
   class EE extends EventEmitter {
     addListener<T extends keyof Listeners & string>(

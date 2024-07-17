@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { useCallback, useEffect } from 'react';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import DeviceUtils from '@/core/utils/device';
+import { IS_IOS } from '@/core/native/utils';
 import { atom, useAtom } from 'jotai';
 
 /**
@@ -24,58 +23,81 @@ export function usePreventScreenshot(prevent = true) {
   }, [prevent]);
 }
 
-export function useSubscribeUserTookScreenShotOnIOS() {
-  useEffect(() => {
-    if (!DeviceUtils.isIOS()) return;
+const iosScreenCaptureAtom = atom({
+  isBeingCaptured: IS_IOS ? RNScreenshotPrevent.iosIsBeingCaptured() : false,
+  isScreenshotJustNow: false,
+});
 
-    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
-      // alert user
-      console.debug('User took screenshot');
-      Alert.alert(
-        'Screenshot taken',
-        `You have taken a screenshot, notice data security.`,
-      );
-    });
-
-    return () => {
-      remove();
-    };
-  }, []);
-}
-
-const iosScreenIsCapturedAtom = atom(RNScreenshotPrevent.iosIsBeingCaptured());
 export function useIOSScreenIsBeingCaptured() {
-  const [isBeingCaptured] = useAtom(iosScreenIsCapturedAtom);
+  const [{ isBeingCaptured }] = useAtom(iosScreenCaptureAtom);
 
   return {
     isBeingCaptured,
   };
 }
-export function useIOSScreenCapture(options?: {
+
+export function useIOSScreenRecording(options?: {
   isTop?: boolean;
   onIsBeingCapturedChanged?: (ctx: { isBeingCaptured: boolean }) => void;
 }) {
-  const [isBeingCaptured, setIsBeingCaptured] = useAtom(
-    iosScreenIsCapturedAtom,
-  );
+  const [{ isBeingCaptured }, setIOSScreenCapture] =
+    useAtom(iosScreenCaptureAtom);
 
   const { onIsBeingCapturedChanged, isTop } = options || {};
 
   useEffect(() => {
     if (!isTop) return;
-    if (!DeviceUtils.isIOS()) return;
+    if (!IS_IOS) return;
 
     const { remove } = RNScreenshotPrevent.iosOnScreenCaptureChanged(ctx => {
-      setIsBeingCaptured(ctx.isBeingCaptured);
+      setIOSScreenCapture(prev => ({
+        ...prev,
+        isBeingCaptured: ctx.isBeingCaptured,
+      }));
       onIsBeingCapturedChanged?.(ctx);
     });
 
     return () => {
       remove();
     };
-  }, [isTop, setIsBeingCaptured, onIsBeingCapturedChanged]);
+  }, [isTop, setIOSScreenCapture, onIsBeingCapturedChanged]);
 
   return {
     isBeingCaptured,
+  };
+}
+
+export function useIOSScreenshotted(options?: {
+  isTop?: boolean;
+  onIsScreenshottedJustNow?: (ctx: {
+    setScreenshotted: (isScreenshotJustNow: boolean) => void;
+  }) => void;
+}) {
+  const [{ isScreenshotJustNow }, setIOSScreenCapture] =
+    useAtom(iosScreenCaptureAtom);
+
+  const { onIsScreenshottedJustNow, isTop } = options || {};
+
+  const clearScreenshotJustNow = useCallback(() => {
+    setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: false }));
+  }, [setIOSScreenCapture]);
+
+  useEffect(() => {
+    if (!IS_IOS) return;
+
+    const { remove } = RNScreenshotPrevent.iosOnUserDidTakeScreenshot(() => {
+      const setScreenshotted = (val?: boolean) =>
+        setIOSScreenCapture(prev => ({ ...prev, isScreenshotJustNow: !!val }));
+      onIsScreenshottedJustNow?.({ setScreenshotted });
+    });
+
+    return () => {
+      remove();
+    };
+  }, [setIOSScreenCapture, onIsScreenshottedJustNow]);
+
+  return {
+    isScreenshotJustNow,
+    clearScreenshotJustNow,
   };
 }

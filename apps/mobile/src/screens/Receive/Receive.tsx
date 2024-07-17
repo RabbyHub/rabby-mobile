@@ -68,7 +68,10 @@ function ReceiveScreen(): JSX.Element {
   const { on: isShowAccount, toggle: toggleShowAccount } = useSwitch(true);
   const { currentAccount: account } = useCurrentAccount();
 
-  const { balance } = useCurrentBalance(account?.address, true, false);
+  const { balance } = useCurrentBalance(account?.address, {
+    update: true,
+    noNeedBalance: false,
+  });
   const isWatchMode = useMemo(
     () => account?.type === KEYRING_CLASS.WATCH,
     [account?.type],
@@ -115,7 +118,7 @@ function ReceiveScreen(): JSX.Element {
   }, [account?.address, clickedCopy, copyAddress, setClickedCopy, t]);
 
   const WalletIcon = useMemo(
-    () => (account ? getWalletIcon(account.brandName) : () => null),
+    () => (account ? getWalletIcon(account.brandName, true) : () => null),
     [account],
   );
 
