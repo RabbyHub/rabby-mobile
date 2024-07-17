@@ -32,7 +32,7 @@ const fullVersionNumber = `${fromNative}.${buildNumber}`;
 export const APP_VERSIONS = {
   fromJs,
   fromNative,
-  forSentry: fullVersionNumber,
+  forSentry: fromNative,
   forCheckUpgrade: __DEV__ ? fromJs : fromNative,
 };
 
