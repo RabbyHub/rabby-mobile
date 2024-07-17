@@ -19,6 +19,7 @@ import { WalletItem } from './components/WalletItem';
 import { ImportAddressList } from './components/ImportAddressList';
 import { CreateAddressList } from './components/CreateAddressList';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import { makeDebugBorder } from '@/utils/styles';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -95,13 +96,14 @@ function ImportNewAddressScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  blockView: { width: '100%', marginTop: 20 },
+  blockView: { width: '100%', marginTop: 0 },
   section: {
     marginBottom: 20,
   },
   scrollView: {
     paddingHorizontal: 20,
     marginBottom: 20,
+    // ...makeDebugBorder()
   },
 });
 

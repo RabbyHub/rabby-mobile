@@ -201,7 +201,7 @@ export default function CurrentAddressScreen(): JSX.Element {
                   style={styles.importView}
                   onPress={gotoAddAddress}>
                   <RcIconButtonAddAccount style={styles.addAddressIcon} />
-                  <Text style={styles.importText}>Import New Address</Text>
+                  <Text style={styles.importText}>Add an Address</Text>
                 </TouchableOpacity>
               </View>
             );

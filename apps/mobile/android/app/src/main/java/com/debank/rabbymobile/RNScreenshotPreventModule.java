@@ -104,13 +104,13 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     this.togglePreventScreenshot(false);
   }
 
-  @ReactMethod
-  public void iosIsBeingCaptured(final Promise promise) {
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  public boolean iosIsBeingCaptured() {
     if (BuildConfig.DEBUG) {
       // promise.reject("Not implemented for Android");
+      System.out.println("Not implemented for Android");
     }
-    promise.resolve(false);
-    return;
+    return false;
   }
 
   private void createOverlay(Activity activity, String imagePath) {

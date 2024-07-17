@@ -9,7 +9,7 @@ import { BottomSheetModalConfirmContainer } from '@/components/customized/Bottom
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '../icons';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
@@ -66,25 +66,25 @@ export function ModalConfirmAllowTransfer({
 }) {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { colors, styles } = useThemeStyles(getStyles);
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const [confirmToAddToWhitelist, setConfirmToAddToWhitelist] = useState(false);
+
+  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
+  const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
+  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
 
   useEffect(() => {
     toggleShowSheetModal(visible || 'destroy');
 
     setConfirmToAddToWhitelist(false);
-  }, [toggleShowSheetModal, visible]);
+    formik.setFieldValue('password', '');
+  }, [toggleShowSheetModal, formik, visible]);
 
   const { addWhitelist } = useWhitelist({
     disableAutoFetch: true,
   });
-
-  const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
-  const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
-  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
 
   const handleSubmit = useCallback<
     React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
@@ -106,7 +106,7 @@ export function ModalConfirmAllowTransfer({
     }
 
     if (toAddr && confirmToAddToWhitelist) {
-      await addWhitelist(toAddr);
+      await addWhitelist(toAddr, { hasValidated: isUseCustomPwd });
     }
 
     onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
