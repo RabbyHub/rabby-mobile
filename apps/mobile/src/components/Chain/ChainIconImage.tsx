@@ -1,31 +1,14 @@
-import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { findChain } from '@/utils/chain';
 import React, { useMemo } from 'react';
-import { Image, ImageProps, StyleSheet } from 'react-native';
+import { Image, ImageProps } from 'react-native';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
-
-function useChainIcon({
-  chainServerId,
-  chainEnum,
-}: {
-  chainServerId?: Chain['serverId'];
-  chainEnum?: CHAINS_ENUM | string;
-}) {
-  const chainLogoUri = useMemo(() => {
-    if (chainServerId) {
-      const foundChain = findChainByServerID(chainServerId);
-      if (foundChain) return foundChain.logo;
-    }
-
-    return findChainByEnum(chainEnum, { fallback: CHAINS_ENUM.ETH })!.logo;
-  }, [chainServerId, chainEnum]);
-
-  return chainLogoUri;
-}
+import { SvgXml } from 'react-native-svg';
+import { TestnetChainLogo } from './TestnetChainLogo';
 
 export default function ChainIconImage({
   chainEnum,
   chainServerId,
+  chainId,
   source,
   size = 20,
   ...props
@@ -35,16 +18,29 @@ export default function ChainIconImage({
     size?: number;
     chainEnum?: string;
     chainServerId?: string;
+    chainId?: number;
   }
 >) {
-  const chainLogoUri = useChainIcon({ chainServerId, chainEnum });
+  const chain = useMemo(() => {
+    return findChain({
+      id: chainId,
+      enum: chainEnum,
+      serverId: chainServerId,
+    });
+  }, [chainEnum, chainId, chainServerId]);
+
+  if (chain?.isTestnet) {
+    return (
+      <TestnetChainLogo size={size} style={props.style} name={chain.name} />
+    );
+  }
 
   return (
     <Image
       width={size}
       height={size}
       {...props}
-      source={source || { uri: chainLogoUri }}
+      source={source || { uri: chain?.logo }}
       style={[{ height: size, width: size }, props.style]}
     />
   );
@@ -53,6 +49,7 @@ export default function ChainIconImage({
 export function ChainIconFastImage({
   chainEnum,
   chainServerId,
+  chainId,
   source,
   size = 20,
   ...props
@@ -60,13 +57,26 @@ export function ChainIconFastImage({
   size?: number;
   chainEnum?: string;
   chainServerId?: string;
+  chainId?: number;
 } & FastImageProps) {
-  const chainLogoUri = useChainIcon({ chainServerId, chainEnum });
+  const chain = useMemo(() => {
+    return findChain({
+      id: chainId,
+      enum: chainEnum,
+      serverId: chainServerId,
+    });
+  }, [chainEnum, chainId, chainServerId]);
+
+  // if (chain?.isTestnet) {
+  //   return (
+  //     <TestnetChainLogo size={size} style={props.style} name={chain.name} />
+  //   );
+  // }
 
   return (
     <FastImage
       {...props}
-      source={source || { uri: chainLogoUri }}
+      source={source || { uri: chain?.logo }}
       style={[{ height: size, width: size }, props.style]}
     />
   );

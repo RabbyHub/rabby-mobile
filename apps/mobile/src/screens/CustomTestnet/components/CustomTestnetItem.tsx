@@ -14,13 +14,31 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { TestnetChain } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
+import { useMemoizedFn } from 'ahooks';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import {
+  Animated,
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
+import {
+  RectButton,
+  Swipeable,
+  TouchableOpacity,
+} from 'react-native-gesture-handler';
+import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
+import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 
 export const CustomTestnetItem = ({
-  className,
+  style,
+  containerStyle,
   item,
   onEdit,
   onRemove,
@@ -28,7 +46,8 @@ export const CustomTestnetItem = ({
   editable,
   disabled,
 }: {
-  className?: string;
+  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
   item: TestnetChain;
   onEdit?: (item: TestnetChain) => void;
   onRemove?: (item: TestnetChain) => void;
@@ -40,65 +59,164 @@ export const CustomTestnetItem = ({
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const { t } = useTranslation();
-  return (
+
+  const renderRightActions = useMemoizedFn(
+    (
+      progress: Animated.AnimatedInterpolation<number>,
+      dragX: Animated.AnimatedInterpolation<number>,
+    ) => {
+      const trans = [128, 64].map(x => {
+        return progress.interpolate({
+          inputRange: [0, 1],
+          outputRange: [x, 0],
+        });
+      });
+
+      return (
+        <Animated.View
+          style={[
+            styles.actionContainer,
+            // eslint-disable-next-line react-native/no-inline-styles
+            {
+              width: 128,
+            },
+          ]}>
+          <Animated.View
+            style={{
+              transform: [{ translateX: trans[0] }],
+            }}>
+            <RectButton
+              style={[styles.action, styles.actionEdit]}
+              onPress={() => {
+                onEdit?.(item);
+              }}>
+              <RcIconEdit color={colors['neutral-title-2']} />
+            </RectButton>
+          </Animated.View>
+
+          <Animated.View
+            style={{
+              transform: [{ translateX: trans[1] }],
+            }}>
+            <RectButton
+              style={[styles.action, styles.actionDelete]}
+              onPress={() => {
+                onRemove?.(item);
+              }}>
+              <RcIconDelete color={colors['neutral-title-2']} />
+            </RectButton>
+          </Animated.View>
+        </Animated.View>
+      );
+    },
+  );
+
+  const Content = (
     <TouchableOpacity
       onPress={() => {
         onPress?.(item);
       }}>
-      <View style={styles.item}>
-        {/* <TestnetChainLogo name={item.name} className="flex-shrink-0" /> */}
-        {/* <Image
-          style={styles.logo}
-          source={{
-            uri: item.logo,
-          }}
-        /> */}
-        <View className="min-w-0">
-          <Text className="text-[15px] leading-[18px] mb-[2px] font-medium text-r-neutral-title1">
-            {item.name}
-          </Text>
-          <View className="flex items-center gap-[16px]">
-            <Text className="text-[12px] leading-[14px] text-r-neutral-foot">
+      <View
+        style={[
+          styles.item,
+          editable
+            ? {
+                borderRadius: 0,
+              }
+            : null,
+          style,
+        ]}>
+        <TestnetChainLogo name={item.name} size={32} />
+        <View style={styles.content}>
+          <Text style={styles.name}>{item.name}</Text>
+          <View style={styles.footer}>
+            <Text style={styles.info}>
               {t('page.customTestnet.currency')}:{' '}
-              <Text className="text-r-neutral-body">
-                {item.nativeTokenSymbol}
-              </Text>
+              <Text style={styles.infoValue}>{item.nativeTokenSymbol}</Text>
             </Text>
-            <Text className="text-[12px] leading-[14px] text-r-neutral-foot">
+            <Text style={styles.info}>
               {t('page.customTestnet.id')}:{' '}
-              <Text className="text-r-neutral-body">{item.id}</Text>
+              <Text style={styles.infoValue}>{item.id}</Text>
             </Text>
           </View>
         </View>
-        {/* {editable ? (
-        <div className="group-hover:visible flex items-center gap-[12px] ml-auto invisible">
-          <ThemeIcon
-            src={RcIconEdit}
-            className="cursor-pointer"
-            onClick={() => {
-              onEdit?.(item);
-            }}></ThemeIcon>
-          <div className="cursor-pointer text-r-red-default">
-            <RcIconDelete
-              onClick={() => {
-                onRemove?.(item);
-              }}
-            />
-          </div>
-        </div>
-      ) : null} */}
       </View>
     </TouchableOpacity>
   );
+  if (editable) {
+    return (
+      <Swipeable
+        // ref={swipeRef}
+        renderRightActions={renderRightActions}
+        rightThreshold={40}
+        overshootRight={false}
+        containerStyle={[styles.swipeContainer, containerStyle]}>
+        {Content}
+      </Swipeable>
+    );
+  } else {
+    return Content;
+  }
 };
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     item: {
       flexDirection: 'row',
+      borderRadius: 8,
+      backgroundColor: colors['neutral-card-1'],
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 12,
+      alignItems: 'center',
     },
     logo: {
       width: 32,
       height: 32,
+    },
+    content: {
+      minWidth: 0,
+      flex: 1,
+    },
+    name: {
+      fontSize: 16,
+      lineHeight: 19,
+      color: colors['neutral-title-1'],
+      fontWeight: '500',
+      marginBottom: 4,
+    },
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    info: {
+      fontSize: 13,
+      lineHeight: 16,
+      color: colors['neutral-foot'],
+    },
+    infoValue: {
+      color: colors['neutral-body'],
+    },
+
+    swipeContainer: {
+      borderRadius: 8,
+    },
+    actionContainer: {
+      flexDirection: 'row',
+      width: 128,
+      alignItems: 'stretch',
+    },
+    action: {
+      paddingHorizontal: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    },
+    actionEdit: {
+      backgroundColor: colors['blue-default'],
+    },
+    actionDelete: {
+      backgroundColor: colors['red-default'],
     },
   });

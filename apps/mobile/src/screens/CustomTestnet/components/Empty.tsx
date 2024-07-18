@@ -1,20 +1,26 @@
-import RcIconEmpty from '@/assets/icons/customTestnet/empty-cc.svg';
+import RcIconEmpty from '@/assets/icons/custom-testnet/empty-cc.svg';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-export const Empty = () => {
+export const Empty = ({
+  description,
+  style,
+}: {
+  description: string;
+  style?: StyleProp<ViewStyle>;
+}) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.empty}>
         <RcIconEmpty style={styles.image} color={colors['neutral-body']} />
-        <Text style={styles.desc}>No Custom Network</Text>
+        <Text style={styles.desc}>{description}</Text>
       </View>
     </View>
   );

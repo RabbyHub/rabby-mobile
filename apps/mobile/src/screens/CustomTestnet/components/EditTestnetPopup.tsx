@@ -14,9 +14,14 @@ import { useThemeColors } from '@/hooks/theme';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, Touchable, View } from 'react-native';
 import { CustomTestnetForm } from './CustomTestnetForm';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
+import { AddFromChainList } from './AddFromChainList';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import RcIconFlash from '@/assets/icons/custom-testnet/flash-cc.svg';
+import RcIconRight from '@/assets/icons/custom-testnet/right-cc.svg';
+import { matomoRequestEvent } from '@/utils/analytics';
 
 export const EditCustomTestnetPopup = ({
   data,
@@ -128,7 +133,20 @@ export const EditCustomTestnetPopup = ({
       <AppBottomSheetModalTitle
         title={t('page.customRpc.EditCustomTestnetModal.title')}
       />
-      <CustomTestnetForm formik={formik} />
+      <View style={styles.main}>
+        <TouchableOpacity
+          onPress={() => {
+            setIsShowAddFromChainList(true);
+          }}
+          style={styles.quickAdd}>
+          <RcIconFlash color={colors['neutral-body']} />
+          <Text style={styles.quickAddText}>
+            {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
+          </Text>
+          <RcIconRight color={colors['neutral-body']} />
+        </TouchableOpacity>
+        <CustomTestnetForm formik={formik} isEdit={isEdit} />
+      </View>
       <View style={styles.footer}>
         <Button
           onPress={onCancel}
@@ -136,21 +154,40 @@ export const EditCustomTestnetPopup = ({
           buttonStyle={[styles.buttonStyle]}
           titleStyle={styles.btnCancelTitle}
           type="white"
-          containerStyle={[styles.btnContainer, styles.btnCancelContainer]}>
-          Cancel
-        </Button>
+          containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
+        />
         <Button
           title={'Confirm'}
           buttonStyle={[
             styles.buttonStyle,
             { backgroundColor: colors['blue-default'] },
           ]}
+          style={{
+            width: '100%',
+          }}
           titleStyle={styles.btnConfirmTitle}
           onPress={handleSubmit}
-          containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}>
-          Confirm
-        </Button>
+          loading={loading}
+          containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+        />
       </View>
+      <AddFromChainList
+        visible={isShowAddFromChainList}
+        onClose={() => {
+          setIsShowAddFromChainList(false);
+        }}
+        onSelect={item => {
+          formik.resetForm();
+          formik.setValues(item);
+          setIsShowAddFromChainList(false);
+          const source = ctx?.ga?.source || 'setting';
+          matomoRequestEvent({
+            category: 'Custom Network',
+            action: 'Choose ChainList Network',
+            label: `${source}_${String(item.id)}`,
+          });
+        }}
+      />
     </AppBottomSheetModal>
   );
 };
@@ -170,6 +207,10 @@ const getStyles = (colors: AppColorsVariants) =>
       paddingHorizontal: 20,
       paddingBottom: 35,
     },
+    main: {
+      paddingHorizontal: 20,
+      flex: 1,
+    },
     btnContainer: {
       flexShrink: 1,
       display: 'flex',
@@ -179,6 +220,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 8,
       flex: 1,
       maxWidth: '100%',
+      minWidth: 0,
     },
 
     buttonStyle: {
@@ -197,5 +239,21 @@ const getStyles = (colors: AppColorsVariants) =>
     btnConfirmTitle: {
       color: colors['neutral-title-2'],
       flex: 1,
+    },
+    quickAdd: {
+      borderRadius: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 16,
+      backgroundColor: colors['blue-light-1'],
+      marginBottom: 20,
+    },
+    quickAddText: {
+      flex: 1,
+      fontSize: 16,
+      lineHeight: 19,
+      fontWeight: '500',
+      color: colors['neutral-title-1'],
     },
   });

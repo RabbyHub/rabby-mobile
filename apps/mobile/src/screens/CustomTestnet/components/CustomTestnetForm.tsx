@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
+import { isNumber } from 'lodash';
 
 const FormItem = ({
   disabled,
@@ -30,12 +31,15 @@ const FormItem = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const formInputRef = useRef<TextInput>(null);
+  const val = formik.values[name];
+  const value = isNumber(val) ? val.toString() : val;
 
   return (
     <View style={[styles.formItem, style]}>
       <Text style={styles.formLabel}>{label}</Text>
       <FormInput
-        style={styles.input}
+        style={disabled ? { borderWidth: 0 } : null}
+        inputStyle={[styles.input, disabled ? styles.inputDisabled : null]}
         // className="mt-[8]"
         // containerStyle={styles.inputContainer}
         ref={formInputRef}
@@ -46,7 +50,8 @@ const FormItem = ({
           // ...inputProps,
           numberOfLines: 1,
           multiline: false,
-          value: formik.values[name],
+          value: value,
+          editable: !disabled,
           onChangeText: value => {
             formik.setFieldValue(name, value);
             setTimeout(() => {
@@ -103,26 +108,31 @@ export const CustomTestnetForm = ({
           name="id"
           label={t('page.customTestnet.CustomTestnetForm.id')}
           formik={formik}
+          disabled={disabled || isEdit}
         />
         <FormItem
           label={t('page.customTestnet.CustomTestnetForm.name')}
           name="name"
           formik={formik}
+          disabled={disabled}
         />
         <FormItem
           label={t('page.customTestnet.CustomTestnetForm.rpcUrl')}
           name="rpcUrl"
           formik={formik}
+          disabled={disabled}
         />
         <FormItem
           label={t('page.customTestnet.CustomTestnetForm.nativeTokenSymbol')}
           name="nativeTokenSymbol"
           formik={formik}
+          disabled={disabled}
         />
         <FormItem
           label={t('page.customTestnet.CustomTestnetForm.blockExplorerUrl')}
           name="scanLink"
           formik={formik}
+          disabled={disabled}
         />
       </View>
     </ScrollView>
@@ -131,11 +141,19 @@ export const CustomTestnetForm = ({
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
-    container: {
-      paddingHorizontal: 20,
-    },
+    container: {},
     input: {
       height: 52,
+      borderRadius: 6,
+      color: colors['neutral-title-1'],
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 19,
+    },
+    inputDisabled: {
+      backgroundColor: colors['neutral-card-2'],
+      borderWidth: 0,
+      color: colors['neutral-foot'],
     },
     formItem: {
       marginBottom: 20,

@@ -8,6 +8,7 @@ import { DEFAULT_CHAIN_LIST } from './default-chain-data';
 import { supportedChainToChain } from '@/isomorphic/chain';
 import axios from 'axios';
 import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
+import { TestnetChain } from '@/core/services/customTestnetService';
 
 const storage = new MMKV({
   id: 'mmkv.chains',
@@ -92,4 +93,36 @@ const replaceArray = <V extends any>(target: V[], source: V[]) => {
   source.forEach(item => {
     target.push(item);
   });
+};
+
+const store = {
+  mainnetList: getChainsFromStorage() || DEFAULT_CHAIN_LIST,
+  testnetList: [] as TestnetChain[],
+};
+
+export const updateChainStore = (params: Partial<typeof store>) => {
+  Object.assign(store, params);
+  console.log(store);
+  // eventBus.emit(EVENTS.broadcastToUI, {
+  //   method: 'syncChainList',
+  //   params,
+  // });
+};
+
+export const getTestnetChainList = () => {
+  return store.testnetList;
+};
+
+export const getMainnetChainList = () => {
+  return store.mainnetList;
+};
+
+export const getChainList = (net?: 'mainnet' | 'testnet') => {
+  if (net === 'mainnet') {
+    return store.mainnetList;
+  }
+  if (net === 'testnet') {
+    return store.testnetList;
+  }
+  return [...store.mainnetList, ...store.testnetList];
 };

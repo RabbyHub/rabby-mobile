@@ -3,6 +3,7 @@ import {
   CHAINS_BY_NET,
   CHAINS_ENUM,
   CHAINS_LIST,
+  getChainList,
 } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
 import {
@@ -24,7 +25,7 @@ export const findChain = (params: {
       id: +chainEnum.replace('CUSTOM_', ''),
     });
   }
-  const chain = [...CHAINS_LIST].find(
+  const chain = [...getChainList('mainnet'), ...getChainList('testnet')].find(
     item =>
       item.enum === chainEnum ||
       (id && +item.id === +id) ||
@@ -337,9 +338,4 @@ export const getChain = (chainId?: string) => {
     return null;
   }
   return chainsDict[chainId];
-};
-
-// todo
-export const updateChainStore = (args: any) => {
-  return null;
 };

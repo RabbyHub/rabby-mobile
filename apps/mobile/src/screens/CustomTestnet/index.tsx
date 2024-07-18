@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
+import { toast } from '@/components/Toast';
 
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -73,18 +74,7 @@ export function CustomTestnetScreen(): JSX.Element {
 
   const handleRemoveClick = useMemoizedFn(async (item: TestnetChain) => {
     await apiCustomTestnet.removeCustomTestnet(item.id);
-    // message.success({
-    //   duration: 0.5,
-    //   icon: <i />,
-    //   content: (
-    //     <div>
-    //       <div className="flex gap-4 mb-4">
-    //         <img src={IconSuccess} alt="" />
-    //         {t('global.Deleted')}
-    //       </div>
-    //     </div>
-    //   ),
-    // });
+    toast.success(t('global.Deleted'));
     const list = await runGetCustomTestnetList();
     // updateChainStore({
     //   testnetList: list,
@@ -97,17 +87,13 @@ export function CustomTestnetScreen(): JSX.Element {
       current: item,
       isEdit: true,
     };
+    console.log(item);
     setState(next);
   });
 
   return (
     <>
-      <NormalScreenContainer
-        style={
-          {
-            // paddingBottom: bottom,
-          }
-        }>
+      <NormalScreenContainer>
         <View style={styles.descContainer}>
           <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
         </View>
@@ -116,10 +102,25 @@ export function CustomTestnetScreen(): JSX.Element {
             style={styles.list}
             data={list}
             renderItem={({ item }) => {
-              return <CustomTestnetItem item={item} onEdit={handleEditClick} />;
+              return (
+                <CustomTestnetItem
+                  item={item}
+                  onEdit={handleEditClick}
+                  onRemove={handleRemoveClick}
+                  editable
+                  containerStyle={styles.item}
+                />
+              );
             }}
             keyExtractor={item => item.enum}
-            ListEmptyComponent={<Empty />}
+            ListEmptyComponent={
+              <Empty
+                description={t('page.customTestnet.empty')}
+                style={{
+                  paddingTop: 200,
+                }}
+              />
+            }
           />
         </View>
         <FooterButton
@@ -164,5 +165,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     list: {
       paddingHorizontal: 20,
+      height: '100%',
+    },
+    item: {
+      marginBottom: 12,
     },
   });

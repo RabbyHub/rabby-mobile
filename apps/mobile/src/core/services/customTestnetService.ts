@@ -2,7 +2,7 @@ import {
   customTestnetTokenToTokenItem,
   isSameTestnetToken,
 } from '@/utils/token';
-import { findChain, updateChainStore } from '@/utils/chain';
+import { findChain } from '@/utils/chain';
 import { CHAINS_ENUM } from '@debank/common';
 import { BigNumber } from 'bignumber.js';
 import { intToHex } from 'ethereumjs-util';
@@ -29,6 +29,7 @@ import axios from 'axios';
 import createPersistStore, {
   StorageAdapaterOptions,
 } from '@rabby-wallet/persist-store';
+import { updateChainStore } from '@/constant/chains';
 
 // todo
 const matomoRequestEvent = (args: any) => {
