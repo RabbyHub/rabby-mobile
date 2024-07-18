@@ -21,9 +21,12 @@ if [[ "$BUILD_TYPE" == "buildAppStore" ]]; then
   # aab
   ./gradlew bundleRelease $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/bundle/release/app-release.aab"
+elif [[ "$BUILD_TYPE" == "buildRegApk" ]]; then
+  echo "[android-build] build regression apk"
+  ./gradlew assembleRegressionRelease $RM_BUILD_FLAGS --parallel
+  export android_export_target="$project_dir/app/build/outputs/apk/regression/release/app-regression-release.apk"
 elif [[ "$BUILD_TYPE" == "buildApk" ]]; then
-  echo "[android-build] build apk"
-  # apk
+  echo "[android-build] build release apk"
   ./gradlew assembleRelease $RM_BUILD_FLAGS --parallel
   export android_export_target="$project_dir/app/build/outputs/apk/release/app-release.apk"
 fi

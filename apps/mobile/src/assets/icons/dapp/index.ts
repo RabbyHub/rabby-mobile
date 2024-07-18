@@ -4,8 +4,10 @@ import {
 } from '@/hooks/makeThemeIcon';
 
 import { default as RcIconDisconnectCC } from './icon-disconnect-cc.svg';
-import { themeColors } from '@/constant/theme-colors';
-export const RcIconDisconnect = makeActiveIconFromCC(RcIconDisconnectCC, {
-  activeColor: themeColors.light['red-default'],
-  inactiveColor: themeColors.light['neutral-line'],
-});
+export const RcIconDisconnect = makeActiveIconFromCC(
+  RcIconDisconnectCC,
+  colors => ({
+    activeColor: colors['red-default'],
+    inactiveColor: colors['neutral-line'],
+  }),
+);

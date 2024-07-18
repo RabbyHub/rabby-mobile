@@ -193,10 +193,10 @@ const AddressInfo = (props: AddressInfoProps) => {
         : 1;
     const title =
       account.type === KEYRING_TYPE.SimpleKeyring
-        ? 'Delete address and Private Key'
+        ? 'Delete Address and Private Key'
         : account.type === KEYRING_TYPE.HdKeyring && count <= 1
-        ? 'Delete address and Seed Phrase'
-        : 'Delete address';
+        ? 'Delete Address and Seed Phrase'
+        : 'Delete Address';
     const needPassword =
       account.type === KEYRING_TYPE.SimpleKeyring ||
       (account.type === KEYRING_TYPE.HdKeyring && count <= 1);
@@ -205,7 +205,9 @@ const AddressInfo = (props: AddressInfoProps) => {
       confirmText: t('page.manageAddress.confirm'),
       cancelText: t('page.manageAddress.cancel'),
       title,
-      description: t('page.manageAddress.delete-desc'),
+      description: needPassword
+        ? t('page.addressDetail.delete-desc-needpassword')
+        : t('page.addressDetail.delete-desc'),
       checklist: needPassword
         ? [
             t('page.manageAddress.delete-checklist-1'),
@@ -404,7 +406,7 @@ const AddressInfo = (props: AddressInfoProps) => {
               <WalletIcon
                 width={20}
                 height={20}
-                style={{ width: 20, height: 20, marginRight: 6 }}
+                style={{ width: 20, height: 20 }}
               />
               <Text
                 style={{
@@ -451,7 +453,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         </View>
 
         {accountInfo && (
-          <View style={styles.itemView}>
+          <View style={[styles.itemView, { borderBottomWidth: 0 }]}>
             <Text style={styles.labelText}>
               {t('page.addressDetail.hd-path')}
             </Text>

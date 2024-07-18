@@ -35,17 +35,21 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 build_selfhost() {
   yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
-    bundle exec fastlane android alpha
+    bundle exec fastlane android selfhost
   else
     echo "[deploy-android] run build.sh script directly."
-    sh $project_dir/android/build.sh buildApk
+    if [ $buildchannel == "selfhost" ]; then
+      sh $project_dir/android/build.sh buildApk
+    else
+      sh $project_dir/android/build.sh buildRegApk
+    fi
   fi
 }
 
 build_appstore() {
   yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
-    bundle exec fastlane android appstore
+    bundle exec fastlane android playstore
   else
     echo "[deploy-android] run build.sh script directly."
     sh $project_dir/android/build.sh buildAppStore
@@ -88,7 +92,8 @@ else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
   if [ $buildchannel == "selfhost-reg" ]; then
-    android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
+    android_export_target="$project_dir/android/app/build/outputs/apk/regression/release/app-regression-release.apk"
+
     [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
 
     if [ ! -f $android_export_target ]; then
@@ -146,8 +151,10 @@ if [ "$REALLY_UPLOAD" == "true" ]; then
 
   if [ $buildchannel == 'selfhost-reg' ]; then
     echo "[deploy-android] will public at $staging_s3_dir, served as $staging_cdn_baseurl"
+    [ -z $CI ] && echo "[deploy-android] open $apk_url to download"
     aws s3 sync $backup_s3_dir/ $staging_s3_dir/ --acl $staging_acl --exact-timestamps
   else
+    echo "[deploy-android] will public as $apk_url"
     aws s3 sync $backup_s3_dir/ $release_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
   fi
 

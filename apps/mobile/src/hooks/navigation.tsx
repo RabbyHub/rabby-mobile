@@ -225,10 +225,10 @@ export const enum ProtectType {
 
 export type ProtectedConf = {
   iosBlurType: ProtectType | null;
-  alertOnScreenShot?: {
-    title: string;
-    message: string;
-  };
+  // alertOnScreenShot?: {
+  //   title: string;
+  //   message: string;
+  // };
   warningScreenshotBackup: boolean;
   onOk?: (ctx: { navigation?: NavigationInstance | null }) => void;
 };
@@ -242,6 +242,7 @@ const defaultProtectedConf: ProtectedConf = {
 function getProtectedConf() {
   return {
     ...defaultProtectedConf,
+    warningScreenshotBackup: true,
     iosBlurType: ProtectType.SafeTipModal,
   };
 }
@@ -254,14 +255,8 @@ const PROTECTED_SCREENS: {
   [RootNames.ImportPrivateKey]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
-  [RootNames.BackupMnemonic]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
-  [RootNames.BackupPrivateKey]: {
-    ...getProtectedConf(),
-    warningScreenshotBackup: true,
-  },
+  [RootNames.BackupMnemonic]: getProtectedConf(),
+  [RootNames.BackupPrivateKey]: getProtectedConf(),
 };
 
 function getAtSensitveScreenInfo(routeName: string | undefined) {

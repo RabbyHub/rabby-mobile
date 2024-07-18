@@ -50,7 +50,7 @@ export const TradingSettings = () => {
     const min = 340;
     const max = Math.min(500, screenHeight * 0.9);
 
-    const h = 132 + supportedDexList.length * 68;
+    const h = 162 + supportedDexList.length * 68;
 
     if (h < min) {
       return min;

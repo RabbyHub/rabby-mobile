@@ -22,17 +22,25 @@ export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   }, [setWL]);
 
   const addWhitelist = React.useCallback(
-    async (address: string) => {
-      AuthenticationModal.show({
-        title: t('page.addressDetail.add-to-whitelist'),
-        onFinished: async () => {
-          await whitelistService.addWhitelist(address);
-          getWhitelist();
-        },
-        validationHandler(password) {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-      });
+    async (address: string, options?: { hasValidated?: boolean }) => {
+      const { hasValidated = false } = options || {};
+
+      const onFinished = async () => {
+        await whitelistService.addWhitelist(address);
+        getWhitelist();
+      };
+
+      if (hasValidated) {
+        onFinished();
+      } else {
+        AuthenticationModal.show({
+          title: t('page.addressDetail.add-to-whitelist'),
+          onFinished,
+          validationHandler(password) {
+            return apisLock.throwErrorIfInvalidPwd(password);
+          },
+        });
+      }
     },
     [getWhitelist, t],
   );

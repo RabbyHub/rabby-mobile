@@ -9,7 +9,7 @@ import { BottomSheetModalConfirmContainer } from '@/components/customized/Bottom
 import { useWhitelist } from '@/hooks/whitelist';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '../icons';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
@@ -66,8 +66,7 @@ export function ModalConfirmAllowTransfer({
 }) {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { colors, styles } = useThemeStyles(getStyles);
 
   const { sheetModalRef, toggleShowSheetModal } = useSheetModal();
   const [confirmToAddToWhitelist, setConfirmToAddToWhitelist] = useState(false);
@@ -85,6 +84,11 @@ export function ModalConfirmAllowTransfer({
   const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
   const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
   const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
+
+  const handleCancel = useCallback(() => {
+    onCancel?.();
+    formik.resetForm();
+  }, [onCancel, formik]);
 
   const handleSubmit = useCallback<
     React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
@@ -106,7 +110,7 @@ export function ModalConfirmAllowTransfer({
     }
 
     if (toAddr && confirmToAddToWhitelist) {
-      await addWhitelist(toAddr);
+      await addWhitelist(toAddr, { hasValidated: isUseCustomPwd });
     }
 
     onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
@@ -127,78 +131,74 @@ export function ModalConfirmAllowTransfer({
   useFocusEffect(onHardwareBackHandler);
 
   return (
-    <>
-      <BottomSheetModalConfirmContainer
-        ref={sheetModalRef}
-        onConfirm={handleSubmit}
-        onCancel={onCancel}
-        height={isUseCustomPwd ? 332 : 279}
-        confirmButtonProps={{
-          type: 'primary',
-          disabled: shouldDisabled,
-        }}
-        bottomSheetModalProps={{
-          keyboardBehavior: 'interactive',
-          keyboardBlurBehavior: 'restore',
-        }}>
-        <View style={styles.mainContainer}>
-          <Text style={styles.title}>
-            {t('page.sendToken.allowTransferModal.title')}
-          </Text>
+    <BottomSheetModalConfirmContainer
+      ref={sheetModalRef}
+      onConfirm={handleSubmit}
+      onCancel={handleCancel}
+      height={isUseCustomPwd ? 332 : 279}
+      confirmButtonProps={{
+        type: 'primary',
+        disabled: shouldDisabled,
+      }}
+      bottomSheetModalProps={{
+        keyboardBehavior: 'interactive',
+        keyboardBlurBehavior: 'restore',
+      }}>
+      <View style={styles.mainContainer}>
+        <Text style={styles.title}>
+          {t('page.sendToken.allowTransferModal.title')}
+        </Text>
 
-          <View style={styles.contentContainer}>
-            <View style={styles.formInputContainer}>
-              {isUseCustomPwd && (
-                <FormInput
-                  clearable
-                  errorText={formik.errors.password}
-                  fieldErrorContainerStyle={styles.fieldErrorContainerStyle}
-                  as={'BottomSheetTextInput'}
-                  style={styles.inputContainer}
-                  inputStyle={styles.input}
-                  inputProps={{
-                    value: formik.values.password,
-                    onChangeText: text => {
-                      formik.setFieldError('password', undefined);
-                      formik.setFieldValue('password', text);
-                    },
-                    placeholder: t(
-                      'page.sendToken.allowTransferModal.placeholder',
-                    ),
-                    placeholderTextColor: colors['neutral-foot'],
-                    secureTextEntry: true,
-                  }}
-                />
-              )}
-            </View>
-            {showAddToWhitelist && (
-              <TouchableView
-                style={styles.confirmTextBtn}
-                onPress={() => {
-                  setConfirmToAddToWhitelist(prev => !prev);
-                }}>
-                <ThemeIcon
-                  src={
-                    confirmToAddToWhitelist
-                      ? RcIconCheckedFilledCC
-                      : RcIconUnCheckCC
-                  }
-                  style={styles.checkboxIcon}
-                  color={
-                    confirmToAddToWhitelist
-                      ? colors['blue-default']
-                      : colors['neutral-title1']
-                  }
-                />
-                <Text>
-                  {t('page.sendToken.allowTransferModal.addWhitelist')}
-                </Text>
-              </TouchableView>
+        <View style={styles.contentContainer}>
+          <View style={styles.formInputContainer}>
+            {isUseCustomPwd && (
+              <FormInput
+                clearable
+                errorText={formik.errors.password}
+                fieldErrorContainerStyle={styles.fieldErrorContainerStyle}
+                as={'BottomSheetTextInput'}
+                style={styles.inputContainer}
+                inputStyle={styles.input}
+                inputProps={{
+                  value: formik.values.password,
+                  onChangeText: text => {
+                    formik.setFieldError('password', undefined);
+                    formik.setFieldValue('password', text);
+                  },
+                  placeholder: t(
+                    'page.sendToken.allowTransferModal.placeholder',
+                  ),
+                  placeholderTextColor: colors['neutral-foot'],
+                  secureTextEntry: true,
+                }}
+              />
             )}
           </View>
+          {showAddToWhitelist && (
+            <TouchableView
+              style={styles.confirmTextBtn}
+              onPress={() => {
+                setConfirmToAddToWhitelist(prev => !prev);
+              }}>
+              <ThemeIcon
+                src={
+                  confirmToAddToWhitelist
+                    ? RcIconCheckedFilledCC
+                    : RcIconUnCheckCC
+                }
+                style={styles.checkboxIcon}
+                color={
+                  confirmToAddToWhitelist
+                    ? colors['blue-default']
+                    : colors['neutral-title1']
+                }
+              />
+              <Text>{t('page.sendToken.allowTransferModal.addWhitelist')}</Text>
+            </TouchableView>
+          )}
         </View>
-      </BottomSheetModalConfirmContainer>
-    </>
+      </View>
+    </BottomSheetModalConfirmContainer>
   );
 }
 

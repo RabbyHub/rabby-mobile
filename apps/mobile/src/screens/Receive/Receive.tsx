@@ -118,7 +118,7 @@ function ReceiveScreen(): JSX.Element {
   }, [account?.address, clickedCopy, copyAddress, setClickedCopy, t]);
 
   const WalletIcon = useMemo(
-    () => (account ? getWalletIcon(account.brandName) : () => null),
+    () => (account ? getWalletIcon(account.brandName, true) : () => null),
     [account],
   );
 
