@@ -48,7 +48,7 @@ import BaseController from './base';
 import { Account } from '../services/preference';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
@@ -1064,11 +1064,6 @@ class ProviderController extends BaseController {
         params: [chainParams],
       },
       session,
-    }: {
-      data: {
-        params: [AddEthereumChainParams];
-      };
-      session: Session;
     }) => {
       if (!chainParams) {
         throw ethErrors.rpc.invalidParams('params is required but got []');
@@ -1077,13 +1072,15 @@ class ProviderController extends BaseController {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
       const connected = dappService.getConnectedDapp(session.origin);
+
       if (connected) {
-        if (Number(chainParams.chainId) === CHAINS[connected.chainId].id) {
+        // if rabby supported this chain, do not show popup
+        if (findChain({ id: chainParams.chainId })) {
           return true;
         }
       }
     },
-    { height: 650 },
+    // { height: 650 },
   ])
   walletAddEthereumChain = ({
     data: {
@@ -1107,11 +1104,12 @@ class ProviderController extends BaseController {
     if (typeof chainId === 'number') {
       chainId = intToHex(chainId).toLowerCase();
     } else {
-      chainId = chainId.toLowerCase();
+      chainId = `0x${new BigNumber(chainId).toString(16).toLowerCase()}`;
     }
-    const chain = Object.values(CHAINS).find(value =>
-      new BigNumber(value.hex).isEqualTo(chainId),
-    );
+
+    const chain = findChain({
+      hex: chainId,
+    });
 
     if (!chain) {
       throw new Error('This chain is not supported by Rabby yet.');
@@ -1132,24 +1130,6 @@ class ProviderController extends BaseController {
       chainId: chain.enum,
     });
 
-    // rabby:chainChanged event must be sent before chainChanged event
-    // TODO: sessionService
-    // sessionService.broadcastEvent(
-    //   'rabby:chainChanged',
-    //   {
-    //     ...chain,
-    //     prev,
-    //   },
-    //   origin,
-    // );
-    // sessionService.broadcastEvent(
-    //   'chainChanged',
-    //   {
-    //     chain: chain.hex,
-    //     networkVersion: chain.network,
-    //   },
-    //   origin,
-    // )
     sessionService.broadcastEvent(
       BroadcastEvent.chainChanged,
       {
@@ -1162,7 +1142,7 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', [
-    'AddChain',
+    'SwitchChain',
     ({
       data,
       session,
@@ -1184,6 +1164,10 @@ class ProviderController extends BaseController {
         if (Number(chainId) === CHAINS[connected.chainId].id) {
           return true;
         }
+        throw ethErrors.provider.custom({
+          code: 4902,
+          message: `Unrecognized chain ID "${chainId}". Try adding the chain using wallet_switchEthereumChain first.`,
+        });
       }
     },
     { height: 650 },
@@ -1205,12 +1189,17 @@ class ProviderController extends BaseController {
     } else {
       chainId = chainId.toLowerCase();
     }
-    const chain = Object.values(CHAINS).find(value =>
-      new BigNumber(value.hex).isEqualTo(chainId),
-    );
+    const chain = findChain({ hex: chainId });
 
     if (!chain) {
       throw new Error('This chain is not supported by Rabby yet.');
+    }
+
+    if (!chain) {
+      throw ethErrors.provider.custom({
+        code: 4902,
+        message: `Unrecognized chain ID "${chainId}". Try adding the chain using wallet_switchEthereumChain first.`,
+      });
     }
 
     const connectSite = dappService.getConnectedDapp(origin);

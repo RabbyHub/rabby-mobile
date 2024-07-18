@@ -87,10 +87,8 @@ export const EditCustomTestnetPopup = ({
 
   const handleSubmit = async () => {
     const values = formik.values as any;
-    console.log(values);
     const errors = await formik.validateForm();
     const isValid = Object.keys(errors || {}).length === 0;
-    console.log('v', errors, isValid);
     if (!isValid) {
       return;
     }

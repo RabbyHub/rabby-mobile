@@ -1,3 +1,4 @@
+import { AddChain } from './../Approval/components/AddChain/AddChain';
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
@@ -44,6 +45,7 @@ export enum APPROVAL_MODAL_NAMES {
   'PrivatekeyWaiting' = 'PrivatekeyWaiting',
   'ETHSign' = 'ETHSign',
   'Unknown' = 'Unknown',
+  'AddChain' = 'AddChain',
 }
 
 export type MODAL_CREATE_PARAMS = {
