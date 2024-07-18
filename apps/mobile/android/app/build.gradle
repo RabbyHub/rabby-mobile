@@ -85,11 +85,6 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.debank.rabbymobile"
-    // productFlavors {
-    //   create("debug") {
-    //     applicationIdSuffix ".debug"
-    //   }
-    // }
     defaultConfig {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -125,6 +120,13 @@ android {
                 keyPassword System.getenv("RABBY_MOBILE_ANDROID_KEY_PASSWORD")
             }
         }
+    }
+    flavorDimensions "default"
+    productFlavors {
+      create("regression") {
+        applicationIdSuffix ".regression"
+        // resValue "string", "app_name", "Reg Rabby Wallet"
+      }
     }
     buildTypes {
         debug {
