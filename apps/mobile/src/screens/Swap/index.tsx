@@ -77,6 +77,7 @@ const Swap = () => {
     slippageState,
     slippage,
     setSlippage,
+    payTokenIsNativeToken,
 
     feeRate,
 
@@ -299,17 +300,11 @@ const Swap = () => {
                 symbol: payToken ? getTokenSymbol(payToken) : '',
               })}
             </Text>
-            <TouchableItem
-              onPress={() => {
-                // if (!payTokenIsNativeToken) {
-                handleBalance();
-                // }
-              }}>
+            <TouchableItem onPress={handleBalance}>
               <Text
                 style={[
                   styles.label,
-                  // !payTokenIsNativeToken &&
-                  {
+                  !payTokenIsNativeToken && {
                     textDecorationLine: 'underline',
                   },
                 ]}>
