@@ -51,6 +51,9 @@ export interface Props {
   chain?: Chain;
   submitText?: string;
   gasLess?: boolean;
+  /**
+   * @deprecated will be removed in the next version
+   */
   needHolding?: boolean;
   isPrimary?: boolean;
 }
