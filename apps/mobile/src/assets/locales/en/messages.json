@@ -2156,8 +2156,8 @@
     },
     "PillsSwitch": {
       "NetSwitchTabs": {
-        "mainnet": "Mainnets",
-        "testnet": "Testnets"
+        "mainnet": "Integrated Network",
+        "testnet": "Custom Network"
       }
     },
     "ChainSelectorModal": {

@@ -44,7 +44,12 @@ export default function SelectSortedChainModal({
       backgroundStyle={styles.sheet}
       onDismiss={onCancel}
       enableContentPanningGesture={false}>
-      <SelectSortedChain {...props} />
+      <SelectSortedChain
+        {...props}
+        onClose={() => {
+          toggleShowSheetModal('selectAddress', 'destroy');
+        }}
+      />
     </AppBottomSheetModal>
   );
 }

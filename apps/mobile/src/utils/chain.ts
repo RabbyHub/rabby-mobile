@@ -210,6 +210,8 @@ export function varyAndSortChainItems(deps: {
     [x: string]: DisplayChainWithWhiteLogo | undefined;
   };
   netTabKey?: 'mainnet' | 'testnet';
+  mainnetList?: Chain[];
+  testnetList?: Chain[];
 }) {
   const {
     supportChains,
@@ -217,6 +219,8 @@ export function varyAndSortChainItems(deps: {
     pinned,
     matteredChainBalances,
     netTabKey,
+    mainnetList = getChainList('mainnet'),
+    testnetList = getChainList('testnet'),
   } = deps;
 
   const unpinnedListGroup = {
@@ -231,7 +235,7 @@ export function varyAndSortChainItems(deps: {
   };
 
   const _all = (
-    (netTabKey ? CHAINS_BY_NET[netTabKey] : CHAINS_BY_NET.mainnet) ||
+    (netTabKey === 'testnet' ? testnetList : mainnetList) ||
     CHAINS_BY_NET.mainnet
   ).sort((a: { name: string }, b: { name: any }) =>
     a.name.localeCompare(b.name),

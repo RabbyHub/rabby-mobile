@@ -9,6 +9,8 @@ import { supportedChainToChain } from '@/isomorphic/chain';
 import axios from 'axios';
 import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
 import { TestnetChain } from '@/core/services/customTestnetService';
+import { eventBus } from '@rabby-wallet/keyring-utils';
+import { EVENT_UPDATE_CHAIN_LIST, EVENTS } from '@/utils/events';
 
 const storage = new MMKV({
   id: 'mmkv.chains',
@@ -59,7 +61,7 @@ export const syncChainList = async () => {
     const list: Chain[] = chains
       .filter(item => !item.is_disabled)
       .map(item => {
-        const chain: Chain = supportedChainToChain(item, chainServerIdDict);
+        const chain: Chain = supportedChainToChain(item);
         CHAIN_ID_LIST.set(chain.serverId, {
           ...chain,
           isSupportHistory: false,
@@ -103,10 +105,7 @@ const store = {
 export const updateChainStore = (params: Partial<typeof store>) => {
   Object.assign(store, params);
   console.log(store);
-  // eventBus.emit(EVENTS.broadcastToUI, {
-  //   method: 'syncChainList',
-  //   params,
-  // });
+  eventBus.emit(EVENT_UPDATE_CHAIN_LIST, params);
 };
 
 export const getTestnetChainList = () => {
