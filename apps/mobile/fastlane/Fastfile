@@ -121,7 +121,7 @@ platform :android do
     gradle(task: 'clean', project_dir: './android')
     build_channel = ENV['buildchannel'] || 'regression'
     if build_channel == 'regression'
-      build_rabbymobile_app(tasks: ['assembleRegressionRelease'])
+      build_rabbymobile_app(tasks: ['assembleRegression'])
     else
       build_rabbymobile_app(tasks: ['assembleRelease'])
     end

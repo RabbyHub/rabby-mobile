@@ -121,13 +121,13 @@ android {
             }
         }
     }
-    flavorDimensions "default"
-    productFlavors {
-      create("regression") {
-        applicationIdSuffix ".regression"
-        // resValue "string", "app_name", "Reg Rabby Wallet"
-      }
-    }
+    // flavorDimensions "default"
+    // productFlavors {
+    //   regression {
+    //     applicationIdSuffix ".regression"
+    //     // resValue "string", "app_name", "Reg Rabby Wallet"
+    //   }
+    // }
     buildTypes {
         debug {
             defaultConfig.minSdkVersion 24
@@ -142,6 +142,10 @@ android {
             // shrinkResources enableProguardInReleaseBuilds
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        regression {
+            initWith release
+            applicationIdSuffix ".regression"
         }
     }
     buildTypes.each {
