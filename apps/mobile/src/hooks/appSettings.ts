@@ -1,11 +1,13 @@
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { apisAutoLock } from '@/core/apis';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { preferenceService } from '@/core/services';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -108,5 +110,36 @@ export function useAutoLockTimeout() {
   return {
     autoLockTimeout: timeout,
     fetchTimeout,
+  };
+}
+
+const autoLockMinutesAtom = atom<number>(DEFAULT_AUTO_LOCK_MINUTES);
+autoLockMinutesAtom.onMount = setAutoLockMinutes => {
+  const times = apisAutoLock.getPersistedAutoLockTimes();
+  setAutoLockMinutes(times.minutes);
+};
+export function useAutoLockTimeMs() {
+  const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
+
+  const autoLockMs = useMemo(
+    () => autoLockMinutes * 60 * 1000,
+    [autoLockMinutes],
+  );
+
+  const onAutoLockTimeMsChange = useCallback(
+    (ms: number) => {
+      const minutes = Math.floor(ms / 60000);
+      setAutoLockMinutes(minutes);
+      preferenceService.setPreference({
+        autoLockTime: minutes,
+      });
+    },
+    [setAutoLockMinutes],
+  );
+
+  return {
+    autoLockMs,
+    // autoLockMinutes,
+    onAutoLockTimeMsChange,
   };
 }

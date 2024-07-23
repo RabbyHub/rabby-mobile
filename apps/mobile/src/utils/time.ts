@@ -47,6 +47,20 @@ export function getTimeSpan(times: number) {
   };
 }
 
+export function getTimeSpanByMs(ms: number) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+
+  return {
+    d,
+    h: h % 24,
+    m: m % 60,
+    s: s % 60,
+  };
+}
+
 export const formatTimeReadable = (timeElapse: number) => {
   let timeStr = '';
   const { d, h, m, s } = getTimeSpan(timeElapse);
