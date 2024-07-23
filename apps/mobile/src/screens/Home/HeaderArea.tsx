@@ -209,37 +209,41 @@ export default function HomeHeaderArea() {
             )}
           </Text>
 
-          {!!percent && (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text
-                style={StyleSheet.compose(
-                  styles.percent,
-                  isDecrease && styles.decrease,
-                )}>
-                {'  '}
-                {percent}
-              </Text>
-              <RcArrowRightCC
-                width={16}
-                height={16}
-                color={
-                  isDecrease ? colors['red-default'] : colors['green-default']
-                }
-              />
-              {!isLoading && missingList?.length ? (
-                <Tip
-                  content={t('page.dashboard.home.missingDataTooltip', {
-                    text:
-                      missingList.join(t('page.dashboard.home.chain')) +
-                      t('page.dashboard.home.chainEnd'),
-                  })}>
-                  <RcInfoCC
-                    style={{ marginLeft: 4 }}
-                    color={colors['neutral-foot']}
-                  />
-                </Tip>
-              ) : null}
-            </View>
+          {balanceLoading ? (
+            <Skeleton style={{ marginLeft: 1 }} width={50} height={16} />
+          ) : (
+            !!percent && (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                <Text
+                  style={StyleSheet.compose(
+                    styles.percent,
+                    isDecrease && styles.decrease,
+                  )}>
+                  {'  '}
+                  {percent}
+                </Text>
+                <RcArrowRightCC
+                  width={16}
+                  height={16}
+                  color={
+                    isDecrease ? colors['red-default'] : colors['green-default']
+                  }
+                />
+                {!isLoading && missingList?.length ? (
+                  <Tip
+                    content={t('page.dashboard.home.missingDataTooltip', {
+                      text:
+                        missingList.join(t('page.dashboard.home.chain')) +
+                        t('page.dashboard.home.chainEnd'),
+                    })}>
+                    <RcInfoCC
+                      style={{ marginLeft: 4 }}
+                      color={colors['neutral-foot']}
+                    />
+                  </Tip>
+                ) : null}
+              </View>
+            )
           )}
         </View>
       </TouchableOpacity>
