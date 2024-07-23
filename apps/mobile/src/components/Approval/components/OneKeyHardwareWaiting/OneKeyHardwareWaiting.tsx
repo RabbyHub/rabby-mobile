@@ -116,6 +116,7 @@ export const OneKeyHardwareWaiting = ({
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
+    emitSignComponentAmounted();
   };
 
   const init = async () => {

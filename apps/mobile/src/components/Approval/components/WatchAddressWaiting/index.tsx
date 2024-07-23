@@ -102,6 +102,7 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
     await apisWalletConnect.resendWalletConnect(account);
     openWalletByBrandName(account.brandName);
     toast.success(t('page.signFooterBar.walletConnect.requestSuccessToast'));
+    emitSignComponentAmounted();
   };
 
   const init = async () => {
