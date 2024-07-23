@@ -13,3 +13,6 @@ export function getSentryEnv() {
 }
 
 export const SENTRY_DEBUG = APP_RUNTIME_ENV === 'development';
+
+export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
+export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
