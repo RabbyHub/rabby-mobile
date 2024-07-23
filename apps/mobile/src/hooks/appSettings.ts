@@ -133,6 +133,7 @@ export function useAutoLockTimeMs() {
       preferenceService.setPreference({
         autoLockTime: minutes,
       });
+      apisAutoLock.refreshAutolockTimeout();
     },
     [setAutoLockMinutes],
   );
