@@ -119,9 +119,9 @@ platform :android do
   lane :selfhost do
     write_key_store
     gradle(task: 'clean', project_dir: './android')
-    build_channel = ENV['buildchannel'] || 'regression'
-    if build_channel == 'regression'
-      build_rabbymobile_app(tasks: ['assembleRegressionRelease'])
+    build_channel = ENV['buildchannel'] || 'selfhost-reg'
+    if build_channel == 'selfhost-reg'
+      build_rabbymobile_app(tasks: ['assembleRegression'])
     else
       build_rabbymobile_app(tasks: ['assembleRelease'])
     end

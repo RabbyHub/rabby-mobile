@@ -1,4 +1,5 @@
-import EventEmitter from 'events';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { preferenceService } from '../services';
 import { makeEEClass } from './event';
 
 const MILLISECS_PER_MIN = 60 * 1e3;
@@ -9,12 +10,13 @@ const MILLISECS_PER_SEC = 1e3;
 const AUTO_LOCK_SECS = {
   ERROR_DELTA: __DEV__ ? 3 * MILLISECS_PER_SEC : 5 * MILLISECS_PER_SEC,
   TIMEOUT_MILLISECS: Math.floor(
-    __DEV__ ? 60 * MILLISECS_PER_MIN : 5 * MILLISECS_PER_MIN,
+    __DEV__
+      ? 60 * MILLISECS_PER_MIN
+      : DEFAULT_AUTO_LOCK_MINUTES * MILLISECS_PER_MIN,
   ),
-  // CHECK_DURATION,
 };
-function calc() {
-  return Date.now() + AUTO_LOCK_SECS.TIMEOUT_MILLISECS;
+function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
+  return Date.now() + ms;
 }
 
 const autoLockTimeoutRef = {
@@ -49,6 +51,18 @@ export function getAutoLockTime() {
   return autoLockTimeoutRef.current;
 }
 
+export function getPersistedAutoLockTimes() {
+  // enforce zero to default value
+  const minutes =
+    preferenceService.getPreference('autoLockTime') ||
+    DEFAULT_AUTO_LOCK_MINUTES;
+
+  return {
+    minutes,
+    ms: minutes * MILLISECS_PER_MIN,
+  };
+}
+
 export function refreshAutolockTimeout(type?: 'clear') {
   const dispose = () => {
     if (autoLockTimeoutRef.timer) {
@@ -61,7 +75,7 @@ export function refreshAutolockTimeout(type?: 'clear') {
   if (type === 'clear') {
     setAutoLockTime(-1);
   } else {
-    setAutoLockTime(calc());
+    setAutoLockTime(calc(getPersistedAutoLockTimes().ms));
     autoLockTimeoutRef.timer = setTimeout(() => {
       const timeoutValue = getAutoLockTime();
       const diff = Date.now() - timeoutValue;

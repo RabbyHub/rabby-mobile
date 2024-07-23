@@ -1,0 +1,182 @@
+import {
+  forwardRef,
+  useRef,
+  useMemo,
+  useImperativeHandle,
+  useCallback,
+} from 'react';
+import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+
+import { AppBottomSheetModal, Button } from '@/components';
+import { useThemeColors } from '@/hooks/theme';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import {
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import { TIME_SETTINGS } from '@/constant/autoLock';
+import { RcIconCheckmarkCC } from '@/assets/icons/common';
+import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { useAutoLockTimeMs } from '@/hooks/appSettings';
+
+const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
+
+const FULL_HEIGHT = 538;
+const SIZES = {
+  FULL_HEIGHT: FULL_HEIGHT,
+  HANDLE_HEIGHT: 8,
+  CONTENT_HEIGHT: FULL_HEIGHT /* full */ - 8 /* handleHeight */,
+};
+export const SelectAutolockTimeBottomSheetModal = forwardRef<
+  BottomSheetModal,
+  {
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }
+>((props, ref) => {
+  const { onConfirm, onCancel } = props;
+  const sheetModalRef = useRef<BottomSheetModal>(null);
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    sheetHeight: SIZES.FULL_HEIGHT,
+    containerPaddingBottom: 20,
+  });
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
+  const { autoLockMs, onAutoLockTimeMsChange } = useAutoLockTimeMs();
+
+  const handleConfirm = useCallback(
+    (ms: number) => {
+      onAutoLockTimeMsChange(ms);
+      onConfirm?.();
+      sheetModalRef.current?.dismiss();
+    },
+    [onAutoLockTimeMsChange, onConfirm],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => sheetModalRef?.current || ({} as BottomSheetModalMethods),
+  );
+  return (
+    <AppBottomSheetModal
+      backgroundStyle={styles.sheet}
+      index={0}
+      ref={sheetModalRef}
+      handleStyle={styles.handleStyle}
+      snapPoints={[safeSizes.sheetHeight]}
+      onChange={index => {
+        if (index <= 0) {
+          onCancel?.();
+        }
+      }}>
+      <BottomSheetView
+        // scrollEnabled={false}
+        style={[
+          styles.container,
+          { paddingBottom: safeSizes.containerPaddingBottom },
+        ]}>
+        <Text style={styles.title}>Auto lock time</Text>
+        <View style={styles.mainContainer}>
+          {TIME_SETTINGS.map((item, idx) => {
+            const itemKey = `timesetting-${item.label}-${item.milliseconds}`;
+            const isSelected = autoLockMs === item.milliseconds;
+
+            return (
+              <TouchableView
+                style={[styles.settingItem, idx > 0 && styles.notFirstOne]}
+                key={itemKey}
+                onPress={() => {
+                  handleConfirm(item.milliseconds);
+                }}>
+                <Text style={styles.settingItemLabel}>{item.label}</Text>
+                {isSelected && (
+                  <View>
+                    <RcIconCheckmark style={{ width: 24, height: 24 }} />
+                  </View>
+                )}
+              </TouchableView>
+            );
+          })}
+        </View>
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+});
+
+const getStyles = createGetStyles(colors => ({
+  sheet: {
+    // backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: colors['neutral-bg-2'],
+    // height: SIZES.FULL_HEIGHT,
+  },
+  handleStyle: {
+    height: SIZES.HANDLE_HEIGHT,
+    backgroundColor: colors['neutral-bg-2'],
+    // ...makeDebugBorder(),
+  },
+  container: {
+    flex: 1,
+    paddingVertical: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    // ...makeDebugBorder('yellow'),
+    // height: SIZES.CONTENT_HEIGHT,
+    // backgroundColor: colors['neutral-bg-2'],
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+    textAlign: 'center',
+
+    marginBottom: 16,
+    // ...makeDebugBorder('red'),
+  },
+
+  mainContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+
+  settingItem: {
+    width: '100%',
+    height: 60,
+    paddingTop: 18,
+    paddingBottom: 18,
+    paddingHorizontal: 20,
+    backgroundColor: colors['neutral-bg-1'],
+    borderRadius: 8,
+
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notFirstOne: {
+    marginTop: 12,
+  },
+  settingItemLabel: {
+    // color: var(--r-neutral-title1, #192945);
+    color: colors['neutral-title-1'],
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+  },
+
+  border: {
+    height: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors['neutral-bg1'],
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+}));

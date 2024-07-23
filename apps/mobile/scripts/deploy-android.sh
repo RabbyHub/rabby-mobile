@@ -35,6 +35,7 @@ rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 build_selfhost() {
   yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
+    echo "[deploy-android] build with fastlane."
     bundle exec fastlane android selfhost
   else
     echo "[deploy-android] run build.sh script directly."
@@ -49,6 +50,7 @@ build_selfhost() {
 build_appstore() {
   yarn;
   if [ $RABBY_HOST_OS != "Windows" ]; then
+    echo "[deploy-android] build with fastlane."
     bundle exec fastlane android playstore
   else
     echo "[deploy-android] run build.sh script directly."
@@ -92,7 +94,8 @@ else
   version_bundle_suffix=".apk"
   staging_dir_suffix=""
   if [ $buildchannel == "selfhost-reg" ]; then
-    android_export_target="$project_dir/android/app/build/outputs/apk/regression/release/app-regression-release.apk"
+    # android_export_target="$project_dir/android/app/build/outputs/apk/release/app-release.apk"
+    android_export_target="$project_dir/android/app/build/outputs/apk/regression/app-regression.apk"
 
     [[ -z $SKIP_BUILD || ! -f $android_export_target ]] && build_selfhost;
 
