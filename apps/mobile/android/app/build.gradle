@@ -121,10 +121,12 @@ android {
             }
         }
     }
-    // flavorDimensions "default"
+    // flavorDimensions "buildchannel"
     // productFlavors {
     //   regression {
+    //     dimension "buildchannel"
     //     applicationIdSuffix ".regression"
+    //     versionNameSuffix "-regression"
     //     // resValue "string", "app_name", "Reg Rabby Wallet"
     //   }
     // }
@@ -146,6 +148,7 @@ android {
         regression {
             initWith release
             applicationIdSuffix ".regression"
+            matchingFallbacks = ['release']
         }
     }
     buildTypes.each {
