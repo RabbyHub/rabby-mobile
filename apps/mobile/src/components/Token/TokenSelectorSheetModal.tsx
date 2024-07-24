@@ -27,6 +27,7 @@ import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -277,6 +278,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   : null,
               [isLoading],
             )}
+            ListEmptyComponent={
+              <NotMatchedHolder
+                style={{
+                  height: 400,
+                }}
+                text="No tokens"
+              />
+            }
             extraData={isLoading}
             getItemLayout={(_, index) => ({
               length: ITEM_HEIGHT,
