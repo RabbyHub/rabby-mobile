@@ -277,6 +277,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       paddingRight: 20,
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
       flexShrink: 0,
       backgroundColor: colors['neutral-bg-1'],
     },

@@ -147,6 +147,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 20,
   },
   chainTextWrapper: {
     flexDirection: 'row',
@@ -171,7 +172,6 @@ const getStyles = createGetStyles(colors => ({
   date: {
     color: colors['neutral-foot'],
     fontSize: 13,
-    height: 20,
   },
   balanceChangeWrapper: {
     flexDirection: 'row',
