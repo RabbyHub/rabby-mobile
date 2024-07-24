@@ -73,6 +73,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useIsAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockCountDownLabel } from './components/AutoLockCountDownLabel';
+import { useResetHasTipedUserEnableBiometrics } from '../Unlock/hooks';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,

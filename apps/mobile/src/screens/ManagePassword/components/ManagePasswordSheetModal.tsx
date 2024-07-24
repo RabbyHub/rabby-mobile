@@ -31,6 +31,7 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
+import { useResetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
 
 type Props = {
   height?: number;
@@ -107,6 +108,8 @@ function useClearPasswordForm() {
 
   const { fetchLockInfo } = useWalletPasswordInfo();
   const { fetchBiometrics } = useBiometrics();
+  const { resetHasTipedUserEnableBiometrics } =
+    useResetHasTipedUserEnableBiometrics();
 
   const formik = useFormik({
     initialValues: { currentPassword: '' },
@@ -134,6 +137,7 @@ function useClearPasswordForm() {
           toast.show(result.clearCustomPasswordError);
         } else {
           toast.success('Clear Password Successfully');
+          resetHasTipedUserEnableBiometrics();
           toggleShowSheetModal('clearPasswordModalRef', false);
         }
       } finally {
@@ -163,7 +167,7 @@ const CancelPasswordSheetModal = (props: Props) => {
 
   const passwordInputRef = React.useRef<TextInput>(null);
 
-  const { onTouchInputAway } = useInputBlurOnTouchaway([passwordInputRef]);
+  // const { onTouchInputAway } = useInputBlurOnTouchaway([passwordInputRef]);
 
   return (
     <AppBottomSheetModal

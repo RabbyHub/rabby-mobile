@@ -15,7 +15,7 @@ type ESettings = {
   androidAllowScreenCapture: boolean;
   iosAllowScreenRecord: boolean;
 };
-const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
+const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
   /**
    * @description means screen-capture/screen-recording on Android, or screen-recording on iOS
    *

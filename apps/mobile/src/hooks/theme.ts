@@ -42,7 +42,7 @@ function appThemeToColorScheme(appTheme: AppThemeScheme): ColorSchemeName {
     : 'light';
 }
 
-const ThemeStoreBase = atomByMMKV('AppTheme', 'light' as AppThemeScheme);
+const ThemeStoreBase = atomByMMKV('@AppTheme', 'light' as AppThemeScheme);
 
 const ThemeModeStore = atom(
   get => get(ThemeStoreBase),

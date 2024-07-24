@@ -35,7 +35,7 @@ import {
   RequestGenericPurpose,
   parseKeychainError,
 } from '@/core/apis/keychain';
-import { useUnlockApp } from './hooks';
+import { useTipedUserEnableBiometrics, useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
@@ -93,6 +93,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     afterLeaveFromUnlock();
   }, [navigation, afterLeaveFromUnlock]);
 
+  const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
+
   const formik = useFormik({
     initialValues: INIT_DATA,
     validationSchema: yupSchema,
@@ -102,6 +104,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       let errors = await helpers.validateForm();
 
       if (getFormikErrorsCount(errors)) return;
+
+      await tipEnableBiometrics(values.password);
 
       const hideToast = toastUnlocking();
       try {
