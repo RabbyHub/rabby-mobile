@@ -67,6 +67,7 @@ export const DataHeaderInfo = ({
     if (data?.[currentIndex?.value]) {
       return {
         ...styles.percent,
+        display: isLoading ? 'none' : 'unset',
         color: data?.[currentIndex?.value]?.isLoss
           ? colors['red-default']
           : colors['green-default'],
@@ -74,9 +75,10 @@ export const DataHeaderInfo = ({
     }
     return {
       ...styles.percent,
+      display: isLoading ? 'none' : 'unset',
       color: currentIsLoss ? colors['red-default'] : colors['green-default'],
     };
-  }, [currentIsLoss, data, currentIndex, colors, styles]);
+  }, [currentIsLoss, data, currentIndex, colors, styles, isLoading]);
 
   const [tipOpen, setTipOpen] = useState(false);
 
