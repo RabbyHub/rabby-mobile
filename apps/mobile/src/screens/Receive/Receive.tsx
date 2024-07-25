@@ -134,7 +134,7 @@ function ReceiveScreen(): JSX.Element {
     }
   }, []);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     setNavigationOptions({
       headerStyle: {
         backgroundColor: colors['blue-default'],

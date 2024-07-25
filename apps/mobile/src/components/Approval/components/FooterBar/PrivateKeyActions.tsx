@@ -14,7 +14,6 @@ export const PrivateKeyActions: React.FC<Props> = props => {
   return (
     <ProcessActions
       {...props}
-      needHolding
       isPrimary
       onSubmit={handleSubmit}
       submitText={t('page.signFooterBar.privateKeySign')}

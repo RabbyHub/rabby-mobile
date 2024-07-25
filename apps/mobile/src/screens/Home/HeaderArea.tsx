@@ -33,6 +33,7 @@ import RcArrowRightCC from '@/assets/icons/home/arrow-right-cc.svg';
 import { CurveBottomSheetModal } from './components/CurveBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import usePrevious from 'ahooks/lib/usePrevious';
+import useCachedValue from '@/hooks/common/useCachedValue';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -85,7 +86,7 @@ export default function HomeHeaderArea() {
     return latestPercent || previousPercent;
   }, [latestPercent, previousPercent]);
 
-  const isDecrease = !!curveData?.isLoss;
+  const isDecrease = useCachedValue(curveData, 'isLoss');
 
   const name = useMemo(
     () => currentAccount?.aliasName || currentAccount?.brandName,
@@ -194,55 +195,63 @@ export default function HomeHeaderArea() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.textBox}
-        onPress={handlePressBalanceSection}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-          <Text style={styles.usdText}>
-            {(balanceLoading && !balanceFromCache) ||
-            balance === null ||
-            (balanceFromCache && balance === 0) ||
-            balanceUpdating ? (
-              <Skeleton width={140} height={38} />
-            ) : (
-              usd
-            )}
-          </Text>
+      <View style={styles.opacityWrapper}>
+        <TouchableOpacity
+          style={styles.textBox}
+          onPress={handlePressBalanceSection}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <Text style={styles.usdText}>
+              {(balanceLoading && !balanceFromCache) ||
+              balance === null ||
+              (balanceFromCache && balance === 0) ||
+              balanceUpdating ? (
+                <Skeleton width={140} height={38} />
+              ) : (
+                usd
+              )}
+            </Text>
 
-          {!!percent && (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <Text
-                style={StyleSheet.compose(
-                  styles.percent,
-                  isDecrease && styles.decrease,
-                )}>
-                {'  '}
-                {percent}
-              </Text>
-              <RcArrowRightCC
-                width={16}
-                height={16}
-                color={
-                  isDecrease ? colors['red-default'] : colors['green-default']
-                }
-              />
-              {!isLoading && missingList?.length ? (
-                <Tip
-                  content={t('page.dashboard.home.missingDataTooltip', {
-                    text:
-                      missingList.join(t('page.dashboard.home.chain')) +
-                      t('page.dashboard.home.chainEnd'),
-                  })}>
-                  <RcInfoCC
-                    style={{ marginLeft: 4 }}
-                    color={colors['neutral-foot']}
+            {balanceLoading ? (
+              <Skeleton style={{ marginLeft: 1 }} width={50} height={16} />
+            ) : (
+              !!percent && (
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                  <Text
+                    style={StyleSheet.compose(
+                      styles.percent,
+                      isDecrease && styles.decrease,
+                    )}>
+                    {'  '}
+                    {percent}
+                  </Text>
+                  <RcArrowRightCC
+                    width={16}
+                    height={16}
+                    color={
+                      isDecrease
+                        ? colors['red-default']
+                        : colors['green-default']
+                    }
                   />
-                </Tip>
-              ) : null}
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+                  {!isLoading && missingList?.length ? (
+                    <Tip
+                      content={t('page.dashboard.home.missingDataTooltip', {
+                        text:
+                          missingList.join(t('page.dashboard.home.chain')) +
+                          t('page.dashboard.home.chainEnd'),
+                      })}>
+                      <RcInfoCC
+                        style={{ marginLeft: 4 }}
+                        color={colors['neutral-foot']}
+                      />
+                    </Tip>
+                  ) : null}
+                </View>
+              )
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
       {currentAccount?.address && (
         <CurveBottomSheetModal
           key={currentAccount?.address}
@@ -273,6 +282,7 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
       paddingRight: 20,
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
       flexShrink: 0,
       backgroundColor: colors['neutral-bg-1'],
     },
@@ -349,12 +359,14 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     hideReddot: {
       display: 'none',
     },
+    opacityWrapper: {
+      backgroundColor: colors['neutral-bg-1'],
+    },
     textBox: {
       height: 90,
       paddingHorizontal: 20,
       marginTop: 0,
       paddingTop: Platform.OS === 'android' ? 20 : 28,
-      backgroundColor: colors['neutral-bg-1'],
     },
     usdText: {
       color: colors['neutral-title-1'],

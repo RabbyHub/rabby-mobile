@@ -102,6 +102,7 @@ export const GlobalBottomSheetModal = () => {
     });
 
     events.emit(EVENT_NAMES.CLOSED, key);
+    events.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
   const handleDismiss = React.useCallback<

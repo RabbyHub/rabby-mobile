@@ -145,9 +145,9 @@ export default function useCurrentBalance(
         setBalanceLoading(false);
       }
     } else {
-      getAddressBalance(account.toLowerCase(), { force });
+      await getAddressBalance(account.toLowerCase(), { force });
       if (includeTestnet) {
-        getTestnetBalance(account.toLowerCase(), { force });
+        await getTestnetBalance(account.toLowerCase(), { force });
       }
       setBalanceLoading(false);
       setBalanceFromCache(false);

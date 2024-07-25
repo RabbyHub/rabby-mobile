@@ -6163,13 +6163,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-security-engine@npm:2.0.3":
-  version: 2.0.3
-  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.3"
+"@rabby-wallet/rabby-security-engine@npm:2.0.4":
+  version: 2.0.4
+  resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.4"
   peerDependencies:
     "@debank/common": ^0.3.5
     "@rabby-wallet/rabby-api": ^0.6.9
-  checksum: 8c8d5d65ec455c631ae8bbdc1d540e8d5610bba0b7ceadcb2b66ac95d7a50adaa4530ddc4ff8f04cae0d935f1ce0991dd7872583f5303e44d3ea8c55b0519c7b
+  checksum: 5d7ae33ba4059b565ad0e1e78294384f0744eb2530e7915b8cf37b331ceca920f3be71aa48f3694fa9d3f883ae157b9b993a96a94e20f33939c0c2d88d03dd6a
   languageName: node
   linkType: hard
 
@@ -27623,7 +27623,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.23-beta.1
-    "@rabby-wallet/rabby-security-engine": 2.0.3
+    "@rabby-wallet/rabby-security-engine": 2.0.4
     "@rabby-wallet/rabby-swap": 0.0.38-beta.1
     "@rabby-wallet/service-address": "workspace:^"
     "@rabby-wallet/service-keyring": "workspace:^"

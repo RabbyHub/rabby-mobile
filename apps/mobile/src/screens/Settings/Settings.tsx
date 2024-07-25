@@ -17,12 +17,13 @@ import {
   RcEarth,
   RcFeedback,
   RcLockWallet,
+  RcAutoLockTime,
+  RcCountdown,
   RcManagePassword,
   RcIconFingerprint,
   RcIconFaceId,
   RcScreenshot,
   RcScreenRecord,
-  RcCountdown,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -35,7 +36,11 @@ import {
 } from '@/hooks/theme';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
-import { BUILD_CHANNEL } from '@/constant/env';
+import {
+  BUILD_CHANNEL,
+  isSelfhostRegPkg,
+  NEED_DEVSETTINGBLOCKS,
+} from '@/constant/env';
 import { RootNames } from '@/constant/layout';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
@@ -68,12 +73,13 @@ import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { useAutoLockTimeout, useIsAllowScreenshot } from '@/hooks/appSettings';
 import { formatTimeFromNow } from '../Approvals/utils';
 import useInterval from 'react-use/lib/useInterval';
+import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
+import { AutoLockCountDownLabel } from './components/AutoLockCountDownLabel';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
 };
 
-const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
 const isIOS = Platform.OS === 'ios';
 
 function SettingsBlocks() {
@@ -82,6 +88,7 @@ function SettingsBlocks() {
   const { currentAccount } = useCurrentAccount();
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
+  const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
 
@@ -112,38 +119,38 @@ function SettingsBlocks() {
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
-      features: {
-        label: 'Features',
-        items: [
-          {
-            label: 'Signature Record',
-            icon: RcSignatureRecord,
+      // features: {
+      //   label: 'Features',
+      //   items: [
+      //     {
+      //       label: 'Signature Record',
+      //       icon: RcSignatureRecord,
 
-            disabled: true,
-            onDisabledPress: () => {
-              toast.show('Coming Soon :)');
-            },
-          },
-          {
-            label: 'Manage Address',
-            icon: RcManageAddress,
-            onPress: () => {},
-            disabled: true,
-            onDisabledPress: () => {
-              toast.show('Coming Soon :)');
-            },
-          },
-          {
-            label: `Connect ${Platform.OS === 'ios' ? 'Websites' : 'Dapps'}`,
-            icon: RcConnectedDapp,
-            onPress: () => {},
-            disabled: true,
-            onDisabledPress: () => {
-              toast.show('Coming Soon :)');
-            },
-          },
-        ],
-      },
+      //       disabled: true,
+      //       onDisabledPress: () => {
+      //         toast.show('Coming Soon :)');
+      //       },
+      //     },
+      //     {
+      //       label: 'Manage Address',
+      //       icon: RcManageAddress,
+      //       onPress: () => {},
+      //       disabled: true,
+      //       onDisabledPress: () => {
+      //         toast.show('Coming Soon :)');
+      //       },
+      //     },
+      //     {
+      //       label: `Connect ${Platform.OS === 'ios' ? 'Websites' : 'Dapps'}`,
+      //       icon: RcConnectedDapp,
+      //       onPress: () => {},
+      //       disabled: true,
+      //       onDisabledPress: () => {
+      //         toast.show('Coming Soon :)');
+      //       },
+      //     },
+      //   ],
+      // },
       settings: {
         label: 'Settings',
         items: [
@@ -167,6 +174,20 @@ function SettingsBlocks() {
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
+          // {
+          //   label: 'Custom RPC',
+          //   icon: RcCustomRpc,
+          //   onPress: () => {},
+          //   disabled: true,
+          //   visible: !!__DEV__,
+          // },
+          {
+            label: 'Auto lock time',
+            icon: RcAutoLockTime,
+            onPress: () => {
+              selectAutolockTimeRef.current?.present();
+            },
+          },
           {
             label: 'Enable whitelist for sending assets',
             icon: RcWhitelist,
@@ -188,13 +209,6 @@ function SettingsBlocks() {
                 }),
               );
             },
-          },
-          {
-            label: 'Custom RPC',
-            icon: RcCustomRpc,
-            onPress: () => {},
-            disabled: true,
-            visible: !!__DEV__,
           },
           {
             label: 'Clear Pending',
@@ -327,58 +341,12 @@ function SettingsBlocks() {
           </Text>
         }
       />
+
+      <SelectAutolockTimeBottomSheetModal ref={selectAutolockTimeRef} />
     </>
   );
 }
 
-function AutoLockCountDownLabel() {
-  const { autoLockTimeout } = useAutoLockTimeout();
-
-  const colors = useThemeColors();
-
-  const [spinner, setSpinner] = React.useState(false);
-  useInterval(() => {
-    if (NEED_DEVSETTINGBLOCKS) {
-      // trigger countDown re-calculated
-      setSpinner(prev => !prev);
-    }
-  }, 500);
-
-  const { text: countDown, secs } = React.useMemo(() => {
-    spinner;
-    const diffMs = Math.max(autoLockTimeout - Date.now(), 0);
-    const secs = Math.floor(diffMs / 1000);
-    const mins = Math.floor(secs / 60);
-    const secsAfterMins = Math.floor(secs % 60);
-
-    return {
-      secs,
-      text:
-        secs > 60
-          ? [`${mins} min(s)`, secsAfterMins ? `${secsAfterMins} sec(s)` : '']
-              .filter(Boolean)
-              .join(' ')
-          : secs > 0
-          ? `${secs} sec(s)`
-          : 'Done',
-    };
-  }, [autoLockTimeout, spinner]);
-
-  return (
-    <Text
-      style={{
-        color: countDown
-          ? colors['green-default']
-          : secs > 5
-          ? colors['orange-default']
-          : colors['red-default'],
-      }}>
-      {countDown}
-    </Text>
-  );
-}
-
-const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
 function DevSettingsBlocks() {
   const { colors } = useThemeStyles(getStyles);
   const navigation = useRabbyAppNavigation();

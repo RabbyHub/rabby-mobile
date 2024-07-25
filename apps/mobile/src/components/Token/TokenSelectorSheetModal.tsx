@@ -1,16 +1,9 @@
-import React, {
-  useMemo,
-  useRef,
-  useEffect,
-  useCallback,
-  useState,
-} from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { View, Text } from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetFlatList,
-  BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import useDebounce from 'react-use/lib/useDebounce';
@@ -34,9 +27,12 @@ import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
+
+const ITEM_HEIGHT = 68;
 
 interface SearchCallbackCtx {
   chainServerId?: Chain['serverId'] | null;
@@ -71,7 +67,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
 >(
   (
     {
-      type,
       visible,
       list,
       chainServerId,
@@ -135,13 +130,6 @@ export const TokenSelectorSheetModal = React.forwardRef<
     useEffect(() => {
       if (!visible) setQuery('');
     }, [visible]);
-
-    const isEmpty = list.length <= 0;
-    const isSwapType = useMemo(() => isSwapTokenType(type), [type]);
-    const isSearchAddr = useMemo(() => {
-      const v = query?.trim() || '';
-      return v.length === 42 && v.toLowerCase().startsWith('0x');
-    }, [query]);
 
     const displayList = useMemo(() => {
       if (!supportChains?.length) {
@@ -290,7 +278,20 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   : null,
               [isLoading],
             )}
+            ListEmptyComponent={
+              <NotMatchedHolder
+                style={{
+                  height: 400,
+                }}
+                text="No tokens"
+              />
+            }
             extraData={isLoading}
+            getItemLayout={(_, index) => ({
+              length: ITEM_HEIGHT,
+              offset: ITEM_HEIGHT * index,
+              index,
+            })}
             renderItem={useCallback(
               ({ item: token }) => {
                 if (isLoading) {
@@ -414,7 +415,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      height: 68,
+      height: ITEM_HEIGHT,
 
       // // leave here for debug
       // borderWidth: 1,

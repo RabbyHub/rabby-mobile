@@ -13,6 +13,7 @@ import createPersistStore, {
 import { KeyringAccountWithAlias } from '@/hooks/account';
 import { BroadcastEvent } from '@/constant/event';
 import KeyringService from '@rabby-wallet/service-keyring';
+import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
 
 const { isSameAddress } = addressUtils;
 
@@ -137,7 +138,7 @@ export class PreferenceService {
           collectionStarred: [],
           hiddenBalance: false,
           isShowTestnet: false,
-          autoLockTime: 0,
+          autoLockTime: DEFAULT_AUTO_LOCK_MINUTES,
           // themeMode: DARK_MODE_TYPE.light,
           addressSortStore: {
             ...defaultAddressSortStore,
@@ -151,12 +152,16 @@ export class PreferenceService {
     );
   }
 
-  getPreference = (key?: keyof PreferenceStore) => {
+  /* eslint-disable no-dupe-class-members */
+  getPreference(): PreferenceStore;
+  getPreference<T extends keyof PreferenceStore>(key: T): PreferenceStore[T];
+  getPreference(key?: keyof PreferenceStore) {
     if (!key || ['search', 'lastCurrent'].includes(key)) {
       this.resetAddressSortStoreExpiredValue();
     }
-    return key ? this.store[key] : this.store;
-  };
+    return key ? this.store[key as any] : this.store;
+  }
+  /* enable-enable no-dupe-class-members */
 
   setPreference = (params: Partial<PreferenceStore>) => {
     Object.assign(this.store, params);

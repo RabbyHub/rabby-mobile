@@ -104,6 +104,7 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
     setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
     await notificationService.callCurrentRequestDeferFn();
     toast.success(t('page.signFooterBar.ledger.resent'));
+    emitSignComponentAmounted();
   };
 
   const handleCancel = () => {
