@@ -1,14 +1,10 @@
 import { bindWalletConnectEvents } from '@/utils/wc';
-import { CHAINS_LIST } from '@/constant/chains';
+import { getChainList } from '@/constant/chains';
 import { WalletConnectKeyring } from '@rabby-wallet/eth-walletconnect-keyring';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { keyringService } from '../services';
 import { Account } from '../services/preference';
 import { getKeyring } from './keyring';
-
-const allChainIds = CHAINS_LIST.map(
-  chain => !chain.isTestnet && chain.id,
-).filter(Boolean) as number[];
 
 export async function initWalletConnectKeyring() {
   return getKeyring<WalletConnectKeyring>(
@@ -32,6 +28,8 @@ export async function getUri(
     const keyring = await getKeyring<WalletConnectKeyring>(
       KEYRING_TYPE.WalletConnectKeyring,
     );
+
+    const allChainIds = getChainList('mainnet').map(item => item.id);
 
     const res = await keyring.initConnector(brandName, allChainIds, account);
     uri = res.uri;

@@ -66,7 +66,6 @@ function useLoadTokenList({
 
   const handleCurrentTokenChange = useCallback(
     (token: TokenItem) => {
-      console.log('handleCurrentTokenChange', token);
       onChange?.('');
       onTokenChange?.(token);
       setTokenSelectorVisible(false);

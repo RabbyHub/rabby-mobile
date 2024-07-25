@@ -4,19 +4,19 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { RcIconAddCircle } from '@/assets/icons/address';
 import { RcIconEmptyCC } from '@/assets/icons/gnosis';
-import { AppBottomSheetModal } from '@/components';
+import { AppBottomSheetModal, Button } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiCustomTestnet } from '@/core/apis';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { Dialog } from '@rneui/themed';
+import { useMemoizedFn } from 'ahooks';
 import { AbstractPortfolioToken } from '../types';
-import { DisplayedToken } from '../utils/project';
 import { TokenList } from './TokenList';
+import { useChainList } from '@/hooks/useChainList';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 type Props = {
   tokens?: AbstractPortfolioToken[];
@@ -37,6 +37,7 @@ export const CustomTokenListPopup = ({
   const colors = useThemeColors();
   const styles = useMemo(() => getStyle(colors), [colors]);
   const { t } = useTranslation();
+  const [isShowDialog, setIsShowDialog] = React.useState(false);
 
   const {
     sheetModalRefs: { modalRef },
@@ -58,39 +59,79 @@ export const CustomTokenListPopup = ({
       : `${count} custom tokens`;
   }, [tokens?.length, isTestnet]);
 
+  const { testnetList } = useChainList();
+
   return (
-    <AppBottomSheetModal
-      ref={modalRef}
-      snapPoints={['70%']}
-      onDismiss={onClose}>
-      <TokenList
-        isTestnet={true}
-        onTokenPress={onTokenPress}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.desc}>
-              The token in this list will not be added to total balance
-            </Text>
-          </View>
-        }
-        data={tokens || []}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <RcIconEmptyCC
-              color={colors['neutral-body']}
-              style={styles.emptyImage}
-            />
-            <Text style={styles.emptyText}>No custom network tokens</Text>
-          </View>
-        }
-      />
-      <FooterButton
-        title={'Add Token'}
-        onPress={onAddTokenPress}
-        icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
-      />
-    </AppBottomSheetModal>
+    <>
+      <AppBottomSheetModal
+        ref={modalRef}
+        snapPoints={['70%']}
+        onDismiss={onClose}>
+        <TokenList
+          isTestnet={true}
+          onTokenPress={onTokenPress}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.desc}>
+                The token in this list will not be added to total balance
+              </Text>
+            </View>
+          }
+          data={tokens || []}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <RcIconEmptyCC
+                color={colors['neutral-body']}
+                style={styles.emptyImage}
+              />
+              <Text style={styles.emptyText}>No custom network tokens</Text>
+            </View>
+          }
+        />
+        <FooterButton
+          title={'Add Token'}
+          onPress={() => {
+            if (isTestnet && !testnetList?.length) {
+              setIsShowDialog(true);
+              return;
+            }
+            onAddTokenPress?.();
+          }}
+          icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
+        />
+      </AppBottomSheetModal>
+      <Dialog
+        overlayStyle={styles.dialog}
+        backdropStyle={styles.dialogMask}
+        onBackdropPress={() => {
+          setIsShowDialog(false);
+        }}
+        isVisible={isShowDialog}>
+        <View style={styles.dialogHeader}>
+          <Text style={styles.dialogTitle}>
+            Please add custom network first
+          </Text>
+        </View>
+        <View style={styles.dialogBody}>
+          <Text style={styles.dialogContent}>
+            You need to add the token after adding the custom network
+          </Text>
+        </View>
+        <View style={styles.dialogFooter}>
+          <Button
+            title="Add Custom Network"
+            onPress={() => {
+              setIsShowDialog(false);
+              onClose?.();
+              navigate(RootNames.StackSettings, {
+                screen: RootNames.CustomTestnet,
+              });
+            }}
+          />
+        </View>
+      </Dialog>
+    </>
   );
 };
 
@@ -141,5 +182,43 @@ const getStyle = (colors: AppColorsVariants) =>
       fontSize: 14,
       lineHeight: 17,
       color: colors['neutral-body'],
+    },
+
+    dialog: {
+      borderRadius: 16,
+      padding: 0,
+      backgroundColor: colors['neutral-bg-1'],
+      width: 353,
+      maxWidth: '100%',
+    },
+    dialogMask: {
+      backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    dialogHeader: {
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      marginBottom: 16,
+    },
+    dialogTitle: {
+      color: colors['neutral-title-1'],
+      fontSize: 20,
+      fontWeight: '500',
+      lineHeight: 24,
+      textAlign: 'center',
+    },
+    dialogBody: {
+      paddingHorizontal: 20,
+      minHeight: 85,
+    },
+    dialogContent: {
+      color: colors['neutral-body'],
+      fontSize: 14,
+      lineHeight: 20,
+      textAlign: 'center',
+    },
+    dialogFooter: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors['neutral-line'],
+      padding: 20,
     },
   });

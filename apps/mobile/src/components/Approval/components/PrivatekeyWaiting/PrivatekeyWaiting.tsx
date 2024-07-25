@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components/Toast';
-import { CHAINS } from '@/constant/chains';
 import {
   notificationService,
   preferenceService,

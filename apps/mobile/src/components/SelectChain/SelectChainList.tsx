@@ -1,4 +1,3 @@
-import { CHAINS_LIST } from '@/constant/chains';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { FlatList, View } from 'react-native';
 import { SelectChainItem } from './SelectChainItem';

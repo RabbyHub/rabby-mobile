@@ -6,7 +6,6 @@ import { ethErrors } from 'eth-rpc-errors';
 // } from 'background/service';
 import { dappService, keyringService, notificationService } from '../services';
 import PromiseFlow from '@/utils/promiseFlow';
-import { CHAINS } from '@/constant/chains';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
 import { ProviderRequest } from './type';

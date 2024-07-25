@@ -4,14 +4,13 @@ import { apiCustomTestnet } from '@/core/apis';
 import { useCurrentAccount } from '@/hooks/account';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useMemoizedFn } from 'ahooks';
-import { useManageTokenList } from '../hooks/useManageToken';
+import { useManageTestnetTokenList } from '../hooks/useManageTestnetToken';
 import { AbstractPortfolioToken } from '../types';
 import { DisplayedToken } from '../utils/project';
 import {
   AddCustomTokenPopup,
   AddCustomTokenPopupProps,
 } from './AddCustomTokenPopup';
-import { useManageTestnetTokenList } from '../hooks/useManageTestnetToken';
 
 export const AddTestnetCustomTokenPopup = (
   props: Pick<AddCustomTokenPopupProps, 'visible' | 'onClose' | 'onAddToken'>,

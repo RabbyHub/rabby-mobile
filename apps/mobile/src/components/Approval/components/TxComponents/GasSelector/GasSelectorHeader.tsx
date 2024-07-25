@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { CHAINS } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import {
   CAN_ESTIMATE_L1_FEE_CHAINS,

@@ -120,7 +120,6 @@ export function useSendTokenScreenChainToken() {
 
   const loadCurrentToken = useCallback(
     async (id: string, chainId: string, address: string) => {
-      console.log('loadCurrentToken', id, chainId);
       const chain = findChain({
         serverId: chainId,
       });

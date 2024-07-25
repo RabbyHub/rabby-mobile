@@ -36,11 +36,10 @@ import {
   AssetOrderRequireData,
   ReceiverData,
 } from '../Actions/utils';
-import { isTestnetChainId } from '@/utils/chain';
+import { findChain, isTestnetChainId } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { Chain } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import i18n from '@/utils/i18n';
 import { getTimeSpan } from '@/utils/time';
 import { keyringService, whitelistService } from '@/core/services';
@@ -586,9 +585,10 @@ export const fetchRequireData = async (
 ): Promise<TypedDataRequireData> => {
   let chain: Chain | undefined;
   if (actionData.chainId) {
-    chain = Object.values(CHAINS).find(
-      item => item.id === Number(actionData.chainId),
-    );
+    chain =
+      findChain({
+        id: Number(actionData.chainId),
+      }) || undefined;
   }
   const apiProvider = isTestnetChainId(actionData.chainId)
     ? testOpenapi

@@ -43,7 +43,6 @@ import { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../services/rpcCache';
 // import Wallet from '../wallet';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';
 import { Account } from '../services/preference';
@@ -230,7 +229,7 @@ class ProviderController extends BaseController {
     }
 
     const site = dappService.getDapp(origin);
-    let chainServerId = CHAINS[CHAINS_ENUM.ETH].serverId;
+    let chainServerId = findChain({ enum: CHAINS_ENUM.ETH })!.serverId;
     if (site) {
       chainServerId =
         findChain({ enum: site.chainId })?.serverId || chainServerId;

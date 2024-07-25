@@ -18,11 +18,11 @@ import {
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { CHAINS } from '@/constant/chains';
 import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
 import { makeTriangleStyle } from '@/utils/styles';
 import { Tip } from '@/components';
+import { findChain } from '@/utils/chain';
 
 export const DappCardListBy = ({
   data,
@@ -97,7 +97,7 @@ export const DappCard = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
-  const chain = CHAINS[data.chainId];
+  const chain = findChain({ enum: data.chainId });
 
   return (
     <TouchableOpacity

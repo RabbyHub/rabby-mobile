@@ -1,17 +1,9 @@
-import {
-  Chain,
-  CHAINS_BY_NET,
-  CHAINS_ENUM,
-  CHAINS_LIST,
-  getChainList,
-} from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
+import { Chain, CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { TestnetChain } from '@/core/services/customTestnetService';
 import {
   ChainWithBalance,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { keyBy } from 'lodash';
 
 export const findChain = (
   params: {
@@ -152,9 +144,9 @@ export interface DisplayChainWithWhiteLogo extends ChainWithBalance {
 export function formatChainToDisplay(
   item: ChainWithBalance,
 ): DisplayChainWithWhiteLogo {
-  const chainsArray = Object.values(CHAINS);
-  const chain = chainsArray.find(chain => chain.id === item.community_id);
-
+  const chain = findChain({
+    id: item.community_id,
+  });
   return {
     ...item,
     logo: chain?.logo || item.logo_url,
@@ -254,8 +246,7 @@ export function varyAndSortChainItems(deps: {
   };
 
   const _all = (
-    (netTabKey === 'testnet' ? testnetList : mainnetList) ||
-    CHAINS_BY_NET.mainnet
+    (netTabKey === 'testnet' ? testnetList : mainnetList) || mainnetList
   ).sort((a: { name: string }, b: { name: any }) =>
     a.name.localeCompare(b.name),
   );
@@ -326,8 +317,9 @@ export function varyAndSortChainItems(deps: {
 export const formatChain = (
   item: ChainWithBalance,
 ): DisplayChainWithWhiteLogo => {
-  const chainsArray = Object.values(CHAINS);
-  const chain = chainsArray.find(chain => chain.id === item.community_id);
+  const chain = findChain({
+    id: item.community_id,
+  });
 
   return {
     ...item,
@@ -355,10 +347,11 @@ export function makeTokenFromChain(chain: Chain): TokenItem {
   };
 }
 
-const chainsDict = keyBy(CHAINS, 'serverId');
 export const getChain = (chainId?: string) => {
   if (!chainId) {
     return null;
   }
-  return chainsDict[chainId];
+  return findChain({
+    serverId: chainId,
+  });
 };

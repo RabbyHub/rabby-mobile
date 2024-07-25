@@ -13,7 +13,6 @@ import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
 import { openapi, testOpenapi } from '../request';
-import { CHAINS } from '@/constant/chains';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   ActionRequireData,
@@ -21,6 +20,7 @@ import {
 } from '@/components/Approval/components/Actions/utils';
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
+import { findChain } from '@/utils/chain';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -356,9 +356,9 @@ export class TransactionHistoryService {
     //     [key]: target,
     //   },
     // });
-    const chain = Object.values(CHAINS).find(
-      item => item.id === Number(target.chainId),
-    );
+    const chain = findChain({
+      id: Number(target.chainId),
+    });
     if (chain) {
       // TODO $ctx
       stats.report('completeTransaction', {
@@ -397,7 +397,9 @@ export class TransactionHistoryService {
       return;
     }
 
-    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    const chain = findChain({
+      id: chainId,
+    })!;
     const { txs } = target;
 
     const broadcastedTxs = txs.filter(
@@ -504,7 +506,9 @@ export class TransactionHistoryService {
     const key = `${chainId}-${nonce}`;
     const from = address.toLowerCase();
     const target = this.store.transactions[from][key];
-    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    const chain = findChain({
+      id: chainId,
+    })!;
     console.log('reloadTxRequest', target);
     if (!target) {
       return;

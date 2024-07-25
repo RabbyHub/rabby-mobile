@@ -1,6 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CHAINS, CHAINS_LIST } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { WaitingSignMessageComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
@@ -196,7 +195,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
-        return CHAINS[site.chainId].id;
+        return findChain({
+          enum: site?.chainId,
+        })?.id;
       }
     } else {
       return chain?.id;
@@ -388,7 +389,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
-        data.chainId = CHAINS[site.chainId].id.toString();
+        data.chainId = findChain({
+          enum: site.chainId,
+        })?.id?.toString();
       }
     }
     if (currentAccount) {

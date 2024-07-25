@@ -19,12 +19,12 @@ import GasReserved from './components/GasReserved';
 import GasSelectorBottomSheetModal from './components/GasSelector';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
-import { CHAINS } from '@/constant/chains';
-import { findChainByServerID } from '@/utils/chain';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { default as RcMaxButton } from './icons/max-button.svg';
 import { useTranslation } from 'react-i18next';
 import { useFindChain } from '@/hooks/useFindChain';
+import { CHAINS_ENUM } from '@debank/common';
+import { findChain } from '@/utils/chain';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -206,7 +206,12 @@ export function BalanceSection({ style }: RNViewProps) {
         onClose={() => {
           putScreenState({ gasSelectorVisible: false });
         }}
-        chainId={chainItem?.id || CHAINS.ETH.id}
+        chainId={
+          chainItem?.id ||
+          findChain({
+            enum: CHAINS_ENUM.ETH,
+          })!.id
+        }
         onChange={val => {
           putScreenState({ gasSelectorVisible: false });
           handleGasChange(val);

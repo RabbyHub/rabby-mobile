@@ -4,7 +4,6 @@ import { Dayjs } from 'dayjs';
 import { AbstractPortfolioToken } from '../types';
 import { useSafeState } from '@/hooks/useSafeState';
 import { Token } from '@/core/services/preference';
-import { CHAINS } from '@/constant/chains';
 import {
   findChain,
   findChainByEnum,

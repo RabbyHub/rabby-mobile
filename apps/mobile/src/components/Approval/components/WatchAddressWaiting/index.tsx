@@ -5,7 +5,6 @@ import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { useSessionStatus } from '@/hooks/useSessionStatus';
 import { eventBus, EVENTS } from '@/utils/events';
-import { CHAINS } from '@/constant/chains';
 import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast } from '@/components/Toast';
 import { preferenceService, transactionHistoryService } from '@/core/services';
@@ -14,7 +13,7 @@ import { apisWalletConnect } from '@/core/apis';
 import { View } from 'react-native';
 import { useValidWalletServices } from '@/hooks/walletconnect/useValidWalletServices';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { stats } from '@/utils/stats';
 import { adjustV } from '@/utils/gnosis';
@@ -44,9 +43,9 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
 
   const [result, setResult] = useState('');
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const chain = Object.values(CHAINS).find(
-    item => item.id === (params.chainId || 1),
-  )!.enum;
+  const chain = findChain({
+    id: params.chainId || 1,
+  })!.enum;
   const isSignTextRef = useRef(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const explainRef = useRef<any | null>(null);
