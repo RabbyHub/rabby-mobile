@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Linking, Platform } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -69,13 +69,16 @@ import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePas
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { useIsAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
   AutoLockSettingLabel,
 } from './components/AutoLock';
+import { SettingNavigatorParamList } from '@/navigation-type';
+import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
+import useMount from 'react-use/lib/useMount';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -83,17 +86,25 @@ const LAYOUTS = {
 
 const isIOS = Platform.OS === 'ios';
 
+const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
   const colors = useThemeColors();
 
   const { currentAccount } = useCurrentAccount();
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
-  const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
+
+  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
+  // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
+  const startSelectAutolockTime = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
+    )
+      return;
+    selectAutolockTimeRef.current?.present();
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
-
-  const { hasSetupCustomPassword } = useManagePasswordOnSettings();
 
   const {
     computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
@@ -107,14 +118,40 @@ function SettingsBlocks() {
   );
 
   const disabledBiometrics =
-    !couldSetupBiometrics ||
-    !hasSetupCustomPassword ||
-    !APP_FEATURE_SWITCH.biometricsAuth;
+    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const [switchWhitelistRef, switchBiometricsRef] = [
-    useRef<SwitchToggleType>(null),
-    useRef<SwitchToggleType>(null),
-  ];
+  const switchWhitelistRef = useRef<SwitchToggleType>(null);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    )
+      return;
+    switchBiometricsRef.current?.toggle();
+  }, [shouldRedirectToSetPasswordBefore]);
+
+  const navParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.Settings)?.params,
+  ) as SettingNavigatorParamList['Settings'];
+
+  // useMount(() => {
+  //   console.log(
+  //     '[feat] navParams?.enterActionType',
+  //     navParams?.enterActionType,
+  //   );
+  //   switch (navParams?.enterActionType) {
+  //     default:
+  //       break;
+  //     case 'setAutoLockTime': {
+  //       startSelectAutolockTime();
+  //       break;
+  //     }
+  //     case 'setBiometrics': {
+  //       startSwitchBiometrics();
+  //       break;
+  //     }
+  //   }
+  // });
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -168,7 +205,7 @@ function SettingsBlocks() {
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
             onPress: () => {
-              switchBiometricsRef.current?.toggle();
+              startSwitchBiometrics();
             },
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
@@ -184,7 +221,7 @@ function SettingsBlocks() {
             label: 'Auto lock time',
             icon: RcAutoLockTime,
             onPress: () => {
-              selectAutolockTimeRef.current?.present();
+              startSelectAutolockTime();
             },
             rightTextNode: <AutoLockSettingLabel />,
           },

@@ -5,6 +5,7 @@ import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavig
 import SettingsScreen from '../Settings/Settings';
 import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
 import SetPasswordScreen from '../ManagePassword/SetPassword';
+import { useSetPasswordFirstState } from '@/hooks/useLock';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
@@ -46,6 +47,10 @@ export function SettingNavigator() {
           headerTitleStyle: {
             color: colors['neutral-title2'],
           },
+          animation: 'fade_from_bottom',
+          animationTypeForReplace: 'pop',
+          // ...(isOnSettingsWaiting && {
+          // }),
         }}
       />
       {__DEV__ && (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -32,7 +32,11 @@ import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { SettingNavigatorParamList } from '@/navigation-type';
-import { useLoadLockInfo } from '@/hooks/useLock';
+import {
+  sheetModalRefsNeedLock,
+  useLoadLockInfo,
+  useSetPasswordFirstState,
+} from '@/hooks/useLock';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 
@@ -81,9 +85,12 @@ function useSetupPasswordForm() {
   }, [t]);
 
   const navigation = useRabbyAppNavigation();
-  const navState = useNavigationState(
+  const navParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SetPassword)?.params,
   ) as SettingNavigatorParamList['SetPassword'] | undefined;
+
+  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
+
   const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useAppFormik({
@@ -111,12 +118,32 @@ function useSetupPasswordForm() {
         } else {
           // toast.success('Setup Password Successfully');
           await fetchLockInfo();
-          if (!navState?.replaceScreen) {
-            resetNavigationTo(navigation, 'Home');
-          } else {
-            navigation.replace(navState.replaceStack, {
-              screen: navState.replaceScreen,
-            });
+          switch (navParams?.actionAfterSetup) {
+            case 'backScreen': {
+              if (!navParams?.replaceScreen) {
+                resetNavigationTo(navigation, 'Home');
+              } else {
+                navigation.replace(navParams.replaceStack, {
+                  screen: navParams.replaceScreen,
+                });
+              }
+              break;
+            }
+            case 'onSettings': {
+              // updateSetPasswordFirst({ isOnSettingsWaiting: false });
+              if (navParams.actionType === 'setBiometrics') {
+                sheetModalRefsNeedLock.switchBiometricsRef.current?.toggle();
+              } else if (navParams.actionType === 'setAutoLockTime') {
+                sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
+              }
+              navigation.replace(RootNames.StackSettings, {
+                screen: RootNames.Settings,
+                params: {},
+              });
+              break;
+            }
+            default:
+              break;
           }
         }
       } finally {
