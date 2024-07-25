@@ -79,43 +79,49 @@ export function useTipedUserEnableBiometrics() {
 
   const tipEnableBiometrics = useCallback(
     async (password: string) => {
-      const result = { success: false, passed: false };
+      const result = {
+        needAlert: shouldTipedUserEnableBiometrics,
+        success: false,
+        passed: false,
+      };
       if (!shouldTipedUserEnableBiometrics) return result;
 
-      const promise = new Promise<typeof result>((resolve, reject) => {
+      const action = async () => {
+        try {
+          await apisLock.throwErrorIfInvalidPwd(password);
+          toggleBiometrics(true, {
+            validatedPassword: password,
+          });
+          setHasTipedUserEnableBiometrics(true);
+          return { ...result, passed: true };
+        } catch (error: any) {
+          toast.show(error?.message || 'Invalid password');
+          return result;
+        }
+      };
+
+      return new Promise<typeof result>((resolve, reject) => {
         Alert.alert(
           `Enable ${computed.defaultTypeLabel}`,
-          IS_IOS ? '' : `You can also enable it on Settings later`,
+          `You can also enable it on Settings later`,
           [
             {
               text: 'No',
               style: 'cancel',
               onPress: () => {
+                setHasTipedUserEnableBiometrics(true);
                 resolve({ ...result, passed: true });
               },
             },
             {
               text: 'Yes',
               onPress: async () => {
-                try {
-                  await apisLock.throwErrorIfInvalidPwd(password);
-                  toggleBiometrics(true, {
-                    validatedPassword: password,
-                  });
-                  resolve({ ...result, passed: true });
-                } catch (error: any) {
-                  toast.show(error?.message || 'Invalid password');
-                  resolve(result);
-                }
+                resolve(action());
               },
             },
           ],
         );
       });
-
-      return promise.then(
-        result => result.passed && setHasTipedUserEnableBiometrics(true),
-      );
     },
     [
       shouldTipedUserEnableBiometrics,
