@@ -440,7 +440,7 @@ export class CustomTestnetService {
     this.store.customTokenList = [...this.store.customTokenList, params];
   };
 
-  removeToken = (params: CustomTestnetTokenBase) => {
+  removeToken = (params: Pick<CustomTestnetTokenBase, 'chainId' | 'id'>) => {
     this.store.customTokenList = this.store.customTokenList.filter(item => {
       return !isSameTestnetToken(item, params);
     });

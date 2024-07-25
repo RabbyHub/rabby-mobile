@@ -12,6 +12,7 @@ import { createGetStyles } from '@/utils/styles';
 import { findChainByEnum } from '@/utils/chain';
 import SelectSortedChainModal from '@/components/SelectSortedChain/SheetModal';
 import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { useFindChain } from '@/hooks/useFindChain';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -50,21 +51,29 @@ export function ChainInfo({
   onChange,
   supportChains,
   disabledTips,
+  hideMainnetTab,
+  hideTestnetTab,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
     supportChains?: SelectSortedChainProps['supportChains'];
     disabledTips?: SelectSortedChainProps['disabledTips'];
+    hideMainnetTab?: SelectSortedChainProps['hideMainnetTab'];
+    hideTestnetTab?: SelectSortedChainProps['hideTestnetTab'];
   }
 >) {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
   const [showSelectorModal, setShowSelectorModal] = useState(false);
-  const chainItem = useMemo(() => {
-    return findChainByEnum(chainEnum, { fallback: true })!;
-  }, [chainEnum]);
+  // const chainItem = useMemo(() => {
+  //   return findChainByEnum(chainEnum, { fallback: true })!;
+  // }, [chainEnum]);
+
+  const chainItem = useFindChain({
+    enum: chainEnum,
+  });
 
   return (
     <>
@@ -91,6 +100,8 @@ export function ChainInfo({
         }}
         supportChains={supportChains}
         disabledTips={disabledTips}
+        hideMainnetTab={hideMainnetTab}
+        hideTestnetTab={hideTestnetTab}
         onChange={chain => {
           setShowSelectorModal(false);
           onChange?.(chain);

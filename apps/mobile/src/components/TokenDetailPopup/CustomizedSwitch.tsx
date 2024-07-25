@@ -12,7 +12,7 @@ export interface Props {
   onClose(): void;
 }
 
-export const BlockedButton: React.FC<Props> = ({
+export const CustomizedSwitch: React.FC<Props> = ({
   selected,
   onOpen,
   onClose,
@@ -20,16 +20,12 @@ export const BlockedButton: React.FC<Props> = ({
   const { t } = useTranslation();
   const { styles, colors } = useThemeStyles(getStyles);
   return (
-    <View
-      style={[
-        styles.container,
-        selected ? styles.selected : styles.notSelected,
-      ]}>
-      {selected ? (
-        <Text style={styles.tip} numberOfLines={2}>
-          {t('page.dashboard.tokenDetail.blockedTip')}
-        </Text>
-      ) : null}
+    <View style={[styles.container]}>
+      <Text style={styles.tip} numberOfLines={3}>
+        {selected
+          ? t('page.dashboard.tokenDetail.selectedCustom')
+          : t('page.dashboard.tokenDetail.notSelectedCustom')}
+      </Text>
 
       <View style={styles.switchLabel}>
         <AppSwitch
@@ -41,11 +37,11 @@ export const BlockedButton: React.FC<Props> = ({
               onClose();
             }
           }}
-          backgroundActive={colors['red-default']}
-          circleBorderActiveColor={colors['red-default']}
+          backgroundActive={colors['green-default']}
+          circleBorderActiveColor={colors['green-default']}
         />
         <Text style={styles.switchText}>
-          {t('page.dashboard.tokenDetail.blocked')}
+          {t('page.dashboard.tokenDetail.customized')}
         </Text>
       </View>
     </View>
@@ -60,18 +56,10 @@ const getStyles = createGetStyles(colors => {
       alignItems: 'center',
       borderRadius: 4,
       gap: 30,
-    },
-    selected: {
       paddingHorizontal: 12,
       paddingVertical: 10,
       backgroundColor: colors['orange-light'],
       marginBottom: 16,
-    },
-    notSelected: {
-      position: 'absolute',
-      right: 0,
-      top: 4,
-      zIndex: 1,
     },
     tip: {
       minWidth: 0,

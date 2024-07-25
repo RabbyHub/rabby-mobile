@@ -6,26 +6,37 @@ import {
   getChainList,
 } from '@/constant/chains';
 import { CHAINS } from '@/constant/chains';
+import { TestnetChain } from '@/core/services/customTestnetService';
 import {
   ChainWithBalance,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
 import { keyBy } from 'lodash';
 
-export const findChain = (params: {
-  enum?: CHAINS_ENUM | string | null;
-  id?: number | null;
-  serverId?: string | null;
-  hex?: string | null;
-  networkId?: string | null;
-}): Chain | null | undefined => {
+export const findChain = (
+  params: {
+    enum?: CHAINS_ENUM | string | null;
+    id?: number | null;
+    serverId?: string | null;
+    hex?: string | null;
+    networkId?: string | null;
+  },
+  _chainList?: (Chain | TestnetChain)[],
+): Chain | null | undefined => {
+  const chainList = _chainList || [
+    ...getChainList('mainnet'),
+    ...getChainList('testnet'),
+  ];
   const { enum: chainEnum, id, serverId, hex, networkId } = params;
   if (chainEnum && chainEnum.startsWith('CUSTOM_')) {
-    return findChain({
-      id: +chainEnum.replace('CUSTOM_', ''),
-    });
+    return findChain(
+      {
+        id: +chainEnum.replace('CUSTOM_', ''),
+      },
+      chainList,
+    );
   }
-  const chain = [...getChainList('mainnet'), ...getChainList('testnet')].find(
+  const chain = chainList.find(
     item =>
       item.enum === chainEnum ||
       (id && +item.id === +id) ||
@@ -59,7 +70,11 @@ export function findChainByEnum(
     return toFallbackChain;
   }
 
-  return CHAINS[chainEnum as CHAINS_ENUM] || toFallbackChain;
+  return (
+    findChain({
+      enum: chainEnum,
+    }) || toFallbackChain
+  );
 }
 
 export function filterChainEnum(chainEnum: CHAINS_ENUM) {
@@ -89,18 +104,22 @@ export function ensureChainListValid<T extends CHAINS_ENUM[]>(list: T) {
  * @description safe find chain
  */
 export function findChainByID(chainId: Chain['id']): Chain | null {
-  return !chainId
-    ? null
-    : CHAINS_LIST.find(chain => chain.id === chainId) || null;
+  return (
+    findChain({
+      id: chainId,
+    }) || null
+  );
 }
 
 /**
  * @description safe find chain by serverId
  */
 export function findChainByServerID(chainId: Chain['serverId']): Chain | null {
-  return !chainId
-    ? null
-    : CHAINS_LIST.find(chain => chain.serverId === chainId) || null;
+  return (
+    findChain({
+      serverId: chainId,
+    }) || null
+  );
 }
 
 export function isTestnet(chainServerId?: string) {

@@ -44,6 +44,7 @@ import { openapi } from '@/core/request';
 import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { Divide } from '../../Actions/components/Divide';
 import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
+import { useFindChain } from '@/hooks/useFindChain';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -175,7 +176,9 @@ export const GasSelectorHeader = ({
       message: null,
     },
   });
-  const chain = Object.values(CHAINS).find(item => item.id === chainId)!;
+  const chain = useFindChain({
+    id: chainId,
+  })!;
   const hasCustomPriorityFee = useRef(false);
   const [customGasEstimated, setCustomGasEstimated] = useState<number>(0);
 

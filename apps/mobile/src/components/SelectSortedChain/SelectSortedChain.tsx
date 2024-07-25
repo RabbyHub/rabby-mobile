@@ -129,7 +129,7 @@ export default function SelectSortedChain({
     useChainSeletorList({
       // set undefined to allow all main chains
       supportChains: supportChains,
-      netTabKey: selectedTab,
+      netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
     });
 
   return (

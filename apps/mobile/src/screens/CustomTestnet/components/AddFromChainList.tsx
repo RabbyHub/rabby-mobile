@@ -24,7 +24,7 @@ import { findChain } from '@/utils/chain';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import { SearchBar } from '@rneui/themed';
+import { Input, SearchBar } from '@rneui/themed';
 import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
 import { AppBottomSheetModalTitle, Tip } from '@/components';
@@ -159,43 +159,24 @@ export const AddFromChainList = ({
             title={t('page.customRpc.EditCustomTestnetModal.title')}
           />
         </View>
-        <SearchBar
-          ref={ref}
-          platform="ios"
-          placeholder={t('page.customTestnet.AddFromChainList.search')}
-          placeholderTextColor={colors['neutral-foot']}
-          containerStyle={styles.searchContainer}
+        <Input
+          leftIcon={
+            <RcIconSearch
+              color={colors['neutral-foot']}
+              width={20}
+              height={20}
+            />
+          }
+          containerStyle={[styles.inputContainer, styles.innerBlock]}
           inputContainerStyle={[
-            styles.searchInputContainer,
+            styles.inputContainerStyle,
             isFocus ? styles.searchInputContainerFocus : null,
           ]}
-          inputStyle={styles.searchInput}
-          searchIcon={
-            <RcIconSearch style={styles.searchIcon} width={16} height={16} />
-          }
-          clearIcon={
-            <TouchableWithoutFeedback
-              onPress={() => {
-                ref?.current?.clear();
-              }}>
-              <RcIconClose />
-            </TouchableWithoutFeedback>
-          }
+          style={styles.searchInput}
+          placeholder="Search chain"
           value={_search}
-          onChangeText={v => {
-            setSearch(v);
-            // runSearch(v);
-          }}
-          showCancel={false}
-          showLoading={loading}
-          cancelButtonProps={{
-            buttonTextStyle: styles.cancelButton,
-          }}
-          // onClear={() => {
-          //   setSearchText('');
-          // }}
-          onCancel={() => {
-            // navigation.goBack();
+          onChangeText={text => {
+            setSearch(text);
           }}
           onFocus={() => {
             setIsFocus(true);
@@ -330,7 +311,6 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     searchInputContainerFocus: {
       borderColor: colors['blue-default'],
-      marginRight: 58,
     },
     searchInput: {
       color: colors['neutral-title-1'],
@@ -418,5 +398,18 @@ const getStyles = (colors: AppColorsVariants) =>
     skeletonContainer: {
       borderRadius: 6,
       backgroundColor: colors['neutral-card-2'],
+    },
+    innerBlock: {},
+    inputContainer: {
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+      marginBottom: -8,
+      flexShrink: 0,
+    },
+    inputContainerStyle: {
+      borderWidth: 1,
+      borderRadius: 8,
+      borderColor: colors['neutral-line'],
+      paddingHorizontal: 16,
     },
   });

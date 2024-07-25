@@ -29,6 +29,8 @@ import { AssetAvatar } from '../AssetAvatar';
 import { useSortTokenPure } from '@/screens/Home/hooks/useSortTokens';
 import { formatSpeicalAmount, splitNumberByStep } from '@/utils/number';
 import { NumericInput } from '../Form/NumbericInput';
+import { useSearchTestnetToken } from '@/hooks/chainAndToken/useSearchTestnetToken';
+import { useFindChain } from '@/hooks/useFindChain';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -56,8 +58,15 @@ function useLoadTokenList({
   const [updateNonce, setUpdateNonce] = useState(0);
   const [tokenSelectorVisible, setTokenSelectorVisible] = useState(false);
 
+  const chainItem =
+    useFindChain({
+      serverId: chainServerId,
+    }) || null;
+  const isTestnet = chainItem?.isTestnet;
+
   const handleCurrentTokenChange = useCallback(
     (token: TokenItem) => {
+      console.log('handleCurrentTokenChange', token);
       onChange?.('');
       onTokenChange?.(token);
       setTokenSelectorVisible(false);
@@ -80,6 +89,15 @@ function useLoadTokenList({
     updateNonce,
     chainServerId,
   );
+
+  const { loading: isSearchTestnetLoading, testnetTokenList } =
+    useSearchTestnetToken({
+      address: currentAccount?.address,
+      withBalance: keyword ? false : true,
+      chainId: chainItem?.id,
+      q: keyword,
+      enabled: isTestnet,
+    });
 
   const allDisplayTokens = useMemo(() => {
     return allTokens.map(abstractTokenToTokenItem);
@@ -112,7 +130,18 @@ function useLoadTokenList({
 
   const { sortedList: displayTokenList } = useSortTokenPure(availableToken);
 
-  const isListLoading = keyword ? isSearchLoading : isLoadingAllTokens;
+  const isListLoading = useMemo(() => {
+    if (isTestnet) {
+      return isSearchTestnetLoading;
+    }
+    return keyword ? isSearchLoading : isLoadingAllTokens;
+  }, [
+    keyword,
+    isSearchLoading,
+    isLoadingAllTokens,
+    isSearchTestnetLoading,
+    isTestnet,
+  ]);
 
   const handleSearchTokens: TokenSelectorProps['onSearch'] = React.useCallback(
     ctx => {
@@ -145,6 +174,11 @@ function useLoadTokenList({
     handleSearchTokens,
 
     chainServerId,
+    chainItem,
+
+    isSearchTestnetLoading,
+    testnetTokenList,
+    isTestnet,
   };
 }
 
@@ -207,6 +241,8 @@ export const TokenAmountInput = React.forwardRef<
       handleTokenSelectorClose,
       handleSearchTokens,
       chainServerId,
+      testnetTokenList,
+      isTestnet,
     } = useLoadTokenList({
       externalChainServerId,
       excludeTokens,
@@ -297,7 +333,7 @@ export const TokenAmountInput = React.forwardRef<
 
         <TokenSelectorSheetModal
           visible={tokenSelectorVisible}
-          list={displayTokenList}
+          list={isTestnet ? testnetTokenList : displayTokenList}
           onConfirm={handleCurrentTokenChange}
           onCancel={handleTokenSelectorClose}
           onSearch={handleSearchTokens}

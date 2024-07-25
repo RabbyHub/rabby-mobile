@@ -40,6 +40,7 @@ import { toast } from '@/components/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { apisKeyring } from '@/core/apis/keyring';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import { TestnetTag } from './TestnetTag';
 
 interface SignTypedDataProps {
   method: string;
@@ -219,8 +220,10 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         : await preferenceService.getCurrentAccount();
 
       const chainId = signTypedData?.domain?.chainId;
-      const apiProvider = isTestnetChainId(chainId) ? testOpenapi : openapi;
-      return await apiProvider.parseTypedData({
+      if (isTestnetChainId(chainId)) {
+        return null;
+      }
+      return await openapi.parseTypedData({
         typedData: signTypedData,
         address: currentAccount!.address,
         origin: session.origin,
@@ -504,6 +507,14 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             originLogo={params.session.icon}
           />
         )}
+        {chain?.isTestnet ? (
+          <TestnetTag
+            style={{
+              right: 0,
+              top: 320,
+            }}
+          />
+        ) : null}
       </ScrollView>
 
       <FooterBar

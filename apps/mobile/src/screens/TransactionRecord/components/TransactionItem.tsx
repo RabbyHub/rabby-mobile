@@ -30,6 +30,8 @@ import { toast } from '@/components/Toast';
 import { useCurrentAccount } from '@/hooks/account';
 import { TransactionAction } from './TransactionAction';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { apiCustomTestnet } from '@/core/apis';
+import { useFindChain } from '@/hooks/useFindChain';
 
 export const TransactionItem = ({
   data,
@@ -42,9 +44,9 @@ export const TransactionItem = ({
 }) => {
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  const chain = useMemo(() => {
-    return findChainByID(data.chainId);
-  }, [data.chainId]);
+  const chain = useFindChain({
+    id: data.chainId,
+  });
   const { t } = useTranslation();
   const isCanceled =
     data.isCompleted &&
@@ -61,8 +63,12 @@ export const TransactionItem = ({
     const maxGasPrice = Number(
       maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
     );
-    const chainServerId = findChainByID(data.chainId)?.serverId!;
-    const gasLevels: GasLevel[] = await openapi.gasMarket(chainServerId);
+
+    const gasLevels: GasLevel[] = chain?.isTestnet
+      ? await apiCustomTestnet.getCustomTestnetGasMarket({
+          chainId: chain?.id!,
+        })
+      : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
 
     await sendRequest(
@@ -132,8 +138,11 @@ export const TransactionItem = ({
     const maxGasPrice = Number(
       maxGasTx.rawTx.gasPrice || maxGasTx.rawTx.maxFeePerGas || 0,
     );
-    const chainServerId = findChainByID(data.chainId)?.serverId!;
-    const gasLevels: GasLevel[] = await openapi.gasMarket(chainServerId);
+    const gasLevels: GasLevel[] = chain?.isTestnet
+      ? await apiCustomTestnet.getCustomTestnetGasMarket({
+          chainId: chain?.id!,
+        })
+      : await openapi.gasMarket(chain?.serverId!);
     const maxGasMarketPrice = maxBy(gasLevels, level => level.price)!.price;
     await sendRequest(
       {

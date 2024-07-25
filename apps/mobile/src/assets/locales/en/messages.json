@@ -1108,8 +1108,10 @@
         "send": "Send",
         "receive": "Receive",
         "noTransactions": "No Transactions",
-        "customizedButton": "customized",
-        "blockedButton": "blocked"
+        "customizedButton": "custom token",
+        "customizedButtons": "custom tokens",
+        "blockedButton": "blocked token",
+        "blockedButtons": "blocked tokens"
       },
       "assets": {
         "usdValue": "USD VALUE",

@@ -1,13 +1,19 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
+import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
+import NetSwitchTabs, {
+  useSwitchNetTab,
+} from '@/components/PillsSwitch/NetSwitchTabs';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { findChain, findChainByServerID } from '@/utils/chain';
+import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
   useInterval,
@@ -16,22 +22,18 @@ import {
   useRequest,
 } from 'ahooks';
 import { last } from 'lodash';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { HistoryList } from './components/HistoryList';
-import { Empty } from './components/Empty';
-import { findChainByServerID } from '@/utils/chain';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EVENTS, eventBus } from '@/utils/events';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { Empty } from './components/Empty';
+import { HistoryList } from './components/HistoryList';
 const PAGE_COUNT = 10;
 
-function HistoryScreen(): JSX.Element {
+function MainnetHistoryScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
   const navigation = useRabbyAppNavigation();
-  const { bottom } = useSafeAreaInsets();
 
   const fetchData = async (startTime = 0) => {
     const address = account?.address;
@@ -76,9 +78,13 @@ function HistoryScreen(): JSX.Element {
     if (!account?.address) {
       return [];
     }
-    const { pendings, completeds } = transactionHistoryService.getList(
-      account.address,
-    );
+    const { pendings: _pendings, completeds } =
+      transactionHistoryService.getList(account.address);
+
+    // todo
+    const pendings = _pendings.filter(item => {
+      return !findChain({ id: item.chainId })?.isTestnet;
+    });
 
     return [
       ...pendings,
@@ -132,10 +138,7 @@ function HistoryScreen(): JSX.Element {
   }
 
   return (
-    <NormalScreenContainer
-      style={{
-        paddingBottom: bottom,
-      }}>
+    <View>
       <TouchableOpacity
         onPress={() => {
           navigation.push(RootNames.StackTransaction, {
@@ -155,9 +158,38 @@ function HistoryScreen(): JSX.Element {
         loadMore={loadMore}
         onRefresh={refresh}
       />
-    </NormalScreenContainer>
+    </View>
   );
 }
+
+const HistoryScreen = () => {
+  const { selectedTab, onTabChange } = useSwitchNetTab();
+  const { bottom } = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  return (
+    <NormalScreenContainer
+      style={{
+        paddingBottom: bottom,
+      }}>
+      <NetSwitchTabs
+        value={selectedTab}
+        onTabChange={onTabChange}
+        style={styles.netTabs}
+      />
+      {selectedTab === 'mainnet' ? (
+        <MainnetHistoryScreen />
+      ) : (
+        <View style={styles.notFound}>
+          <RcIconNotFindCC color={colors['neutral-body']} />
+          <Text style={styles.notFoundText}>
+            Not supported for custom network
+          </Text>
+        </View>
+      )}
+    </NormalScreenContainer>
+  );
+};
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -177,6 +209,21 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 18,
       fontWeight: '500',
       color: colors['neutral-body'],
+    },
+    netTabs: {
+      marginBottom: 12,
+    },
+    notFound: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '80%',
+    },
+    notFoundText: {
+      fontSize: 14,
+      lineHeight: 17,
+      color: colors['neutral-body'],
+      marginTop: 16,
     },
   });
 

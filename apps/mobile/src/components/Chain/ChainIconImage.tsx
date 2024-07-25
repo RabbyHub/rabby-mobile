@@ -67,11 +67,15 @@ export function ChainIconFastImage({
     });
   }, [chainEnum, chainId, chainServerId]);
 
-  // if (chain?.isTestnet) {
-  //   return (
-  //     <TestnetChainLogo size={size} style={props.style} name={chain.name} />
-  //   );
-  // }
+  if (chain?.isTestnet) {
+    return (
+      <TestnetChainLogo
+        size={size}
+        style={props.style as any}
+        name={chain.name}
+      />
+    );
+  }
 
   return (
     <FastImage

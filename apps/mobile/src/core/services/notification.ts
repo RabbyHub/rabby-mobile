@@ -15,6 +15,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { stats } from '@/utils/stats';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { findChain } from '@/utils/chain';
 
 export interface Approval {
   id: string;
@@ -232,13 +233,18 @@ export class NotificationService extends Events {
         ? this.transactionHistoryService.getSigningTx(signingTxId)
         : null;
       const explain = signingTx?.explain;
+      const chain = findChain({
+        id: signingTx?.rawTx.chainId,
+      });
 
-      if (explain && currentAccount) {
+      if ((explain || chain?.isTestnet) && currentAccount) {
         stats.report('preExecTransaction', {
           type: currentAccount.brandName,
           category: KEYRING_CATEGORY_MAP[currentAccount.type],
-          chainId: explain.native_token.chain,
-          success: explain.calcSuccess && explain.pre_exec.success,
+          chainId: chain?.serverId || '',
+          success: explain
+            ? explain.calcSuccess && explain.pre_exec.success
+            : true,
           createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
           source: data?.params.$ctx?.ga?.source || '',
           trigger: data?.params.$ctx?.ga?.trigger || '',

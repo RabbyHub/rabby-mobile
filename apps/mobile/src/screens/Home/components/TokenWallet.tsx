@@ -34,15 +34,29 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { RefreshControl } from 'react-native-gesture-handler';
 import { useSheetModals } from '@/hooks/useSheetModal';
-import { SMALL_TOKEN_ID } from '@/utils/token';
+import { customTestnetTokenToTokenItem, SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { makeDebugBorder } from '@/utils/styles';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
+import { TokenWalletFooter } from './TokenWalletFooter';
+import { AddCustomTokenPopup } from './AddCustomTokenPopup';
+import { CustomTokenListPopup } from './CustomTokenListPopup';
+import { useRequest, useSetState } from 'ahooks';
+import { useManageTokenList } from '../hooks/useManageToken';
+import { AddMainnetCustomTokenPopup } from './AddMainnetCustomTokenPopup';
+import { useCurrentAccount } from '@/hooks/account';
+import { apiCustomTestnet } from '@/core/apis';
+import { DisplayedToken } from '../utils/project';
+import { AddTestnetCustomTokenPopup } from './AddTestnetCustomTokenPopup';
+import { BlockedTokenListPopup } from './BlockedTokenListPopup';
 
 const ITEM_HEIGHT = 68;
 
 type TokenWalletProps = {
   tokens?: AbstractPortfolioToken[];
+  testnetTokens?: AbstractPortfolioToken[];
+  customizeTokens?: AbstractPortfolioToken[];
+  blockedTokens?: AbstractPortfolioToken[];
   showHistory?: boolean;
   isTokensLoading?: boolean;
   hasTokens?: boolean;
@@ -134,6 +148,9 @@ const TokenRow = memo(
 
 export const TokenWallet = ({
   tokens,
+  testnetTokens,
+  customizeTokens,
+  blockedTokens,
   showHistory,
   isTokensLoading,
   hasTokens,
@@ -152,6 +169,15 @@ export const TokenWallet = ({
     }
   }, [isPortfoliosLoading, tokens]);
 
+  const [customState, setCustomState] = useSetState({
+    isTestnet: false,
+    isShowMainnetAddPopup: false,
+    isShowTestnetAddPopup: false,
+    isShowBlockedPopup: false,
+    isShowCustomPopup: false,
+    isShowCustomTestnetPopup: false,
+  });
+
   const {
     sheetModalRefs: { smallTokenModalRef },
     toggleShowSheetModal,
@@ -164,6 +190,7 @@ export const TokenWallet = ({
     openTokenDetailPopup,
     cleanFocusingToken,
     focusingToken,
+    isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
 
   const handleOpenSmallToken = React.useCallback(() => {
@@ -222,7 +249,33 @@ export const TokenWallet = ({
     <>
       <Tabs.FlatList
         ListHeaderComponent={<View style={{ height: 12 }} />}
-        ListFooterComponent={<View style={{ height: 24 }} />}
+        ListFooterComponent={
+          isTokensLoading || refreshing ? null : (
+            <TokenWalletFooter
+              onPress={type => {
+                setCustomState({
+                  isShowBlockedPopup: type === 'blocked',
+                  isShowCustomPopup: type === 'custom',
+                  isShowCustomTestnetPopup: type === 'customTestnet',
+                });
+              }}
+              list={[
+                {
+                  type: 'custom',
+                  label: `${customizeTokens?.length || 0} customized tokens`,
+                },
+                {
+                  type: 'blocked',
+                  label: `${blockedTokens?.length || 0} blocked token`,
+                },
+                {
+                  type: 'customTestnet',
+                  label: `${testnetTokens?.length || 0} custom network tokens`,
+                },
+              ]}
+            />
+          )
+        }
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         data={mainTokens}
@@ -256,20 +309,83 @@ export const TokenWallet = ({
           style={styles.scrollView}
         />
       </AppBottomSheetModal>
-
       <BottomSheetModalTokenDetail
         ref={tokenDetailModalRef}
         token={focusingToken}
+        isTestnet={isTestnetToken}
         onDismiss={() => {
           cleanFocusingToken({ noNeedCloseModal: true });
         }}
         onTriggerDismissFromInternal={ctx => {
           if (ctx?.reason === 'redirect-to') {
             toggleShowSheetModal('smallTokenModalRef', false);
+            setCustomState({
+              isShowCustomPopup: false,
+              isShowBlockedPopup: false,
+              isShowCustomTestnetPopup: false,
+            });
           }
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
         }}
+      />
+      <CustomTokenListPopup
+        tokens={customizeTokens}
+        visible={customState.isShowCustomPopup}
+        isTestnet={false}
+        onTokenPress={handleOpenTokenDetail}
+        onClose={() => {
+          setCustomState({
+            isShowCustomPopup: false,
+          });
+        }}
+        onAddTokenPress={() => {
+          setCustomState({
+            isShowMainnetAddPopup: true,
+          });
+        }}
+      />
+      <CustomTokenListPopup
+        tokens={testnetTokens}
+        visible={customState.isShowCustomTestnetPopup}
+        isTestnet={true}
+        onTokenPress={handleOpenTokenDetail}
+        onClose={() => {
+          setCustomState({
+            isShowCustomTestnetPopup: false,
+          });
+        }}
+        onAddTokenPress={() => {
+          setCustomState({
+            isShowTestnetAddPopup: true,
+          });
+        }}
+      />
+      <AddMainnetCustomTokenPopup
+        visible={customState.isShowMainnetAddPopup}
+        onClose={() => {
+          setCustomState({
+            isShowMainnetAddPopup: false,
+          });
+        }}
+      />
+      <AddTestnetCustomTokenPopup
+        visible={customState.isShowTestnetAddPopup}
+        onClose={() => {
+          setCustomState({
+            isShowTestnetAddPopup: false,
+          });
+        }}
+      />
+      <BlockedTokenListPopup
+        tokens={blockedTokens}
+        visible={customState.isShowBlockedPopup}
+        onClose={() => {
+          setCustomState({
+            isShowBlockedPopup: false,
+          });
+        }}
+        onTokenPress={handleOpenTokenDetail}
       />
     </>
   );
