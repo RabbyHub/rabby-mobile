@@ -76,7 +76,7 @@ export default function AppNavigation({
   colorScheme: ColorSchemeName;
 }) {
   const routeNameRef = useRef<string>();
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
 
   const { isAppUnlocked } = useAppUnlocked();
@@ -184,8 +184,7 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.Unlock}
             component={UnlockScreen}
-            options={{
-              ...screenOptions,
+            options={mergeScreenOptions({
               title: '',
               // another valid composition
               // animationTypeForReplace: isSlideFromGetStarted ? 'push' : 'pop',
@@ -200,13 +199,12 @@ export default function AppNavigation({
               headerStyle: {
                 backgroundColor: colors['neutral-bg1'],
               },
-            }}
+            })}
           />
           <RootStack.Screen
             name={RootNames.NotFound}
             component={NotFoundScreen}
-            options={{
-              ...screenOptions,
+            options={mergeScreenOptions({
               title: 'Rabby Wallet',
               headerShadowVisible: false,
               headerShown: true,
@@ -214,7 +212,7 @@ export default function AppNavigation({
               headerStyle: {
                 backgroundColor: colors['neutral-bg1'],
               },
-            }}
+            })}
           />
           <RootStack.Screen
             name={RootNames.AccountTransaction}
@@ -244,8 +242,7 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.NftDetail}
             component={NFTDetailScreen}
-            options={{
-              ...screenOptions,
+            options={mergeScreenOptions({
               title: 'NFT Detail',
               headerShadowVisible: false,
               headerShown: true,
@@ -256,13 +253,12 @@ export default function AppNavigation({
                 color: colors['neutral-title-1'],
                 fontWeight: 'normal',
               },
-            }}
+            })}
           />
           <RootStack.Screen
             name={RootNames.Scanner}
             component={ScannerScreen}
-            options={{
-              ...screenOptions,
+            options={mergeScreenOptions({
               title: 'Scan',
               headerShadowVisible: false,
               headerShown: true,
@@ -273,7 +269,7 @@ export default function AppNavigation({
                 color: colors['neutral-title-2'],
                 fontWeight: 'normal',
               },
-            }}
+            })}
           />
         </RootStack.Navigator>
       </NavigationContainer>
@@ -284,14 +280,13 @@ export default function AppNavigation({
 }
 
 function AccountNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== AccountsNavigator Render =========');
 
   return (
     <AccountStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -301,7 +296,7 @@ function AccountNavigator() {
           color: colors['neutral-title-1'],
           fontWeight: 'normal',
         },
-      }}>
+      })}>
       <AccountStack.Screen
         name={RootNames.MyBundle}
         component={MyBundleScreen}
@@ -314,14 +309,13 @@ function AccountNavigator() {
 }
 
 function FavoritePopularDappsNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (
     <FavoritePopularDappsStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -332,7 +326,7 @@ function FavoritePopularDappsNavigator() {
           fontWeight: 'normal',
         },
         headerTintColor: colors['neutral-title-1'],
-      }}>
+      })}>
       <FavoritePopularDappsStack.Screen
         name={RootNames.FavoritePopularDapps}
         component={FavoritePopularDappsScreen}
@@ -345,14 +339,13 @@ function FavoritePopularDappsNavigator() {
 }
 
 function SearchDappsNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (
     <SearchDappsStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         headerShown: false,
         gestureEnabled: false,
         headerTitleAlign: 'center',
@@ -364,7 +357,7 @@ function SearchDappsNavigator() {
           fontWeight: 'normal',
         },
         headerTintColor: colors['neutral-title-1'],
-      }}>
+      })}>
       <SearchDappsStack.Screen
         name={RootNames.SearchDapps}
         component={SearchDappsScreen}

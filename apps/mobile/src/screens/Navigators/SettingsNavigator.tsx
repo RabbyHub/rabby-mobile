@@ -9,14 +9,13 @@ import SetPasswordScreen from '../ManagePassword/SetPassword';
 const SettingsStack = createCustomNativeStackNavigator();
 
 export function SettingNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
 
   return (
     <SettingsStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -28,7 +27,7 @@ export function SettingNavigator() {
         },
         headerTitle: 'Settings',
         headerTintColor: colors['neutral-title-1'],
-      }}>
+      })}>
       <SettingsStack.Screen
         name={RootNames.Settings}
         component={SettingsScreen}

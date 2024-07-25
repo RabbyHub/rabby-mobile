@@ -36,14 +36,13 @@ const hitSlop = {
 };
 
 export function AddressNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
 
   return (
     <AddressStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -51,11 +50,10 @@ export function AddressNavigator() {
         },
         headerTintColor: colors['neutral-title-1'],
         headerTitleStyle: {
-          ...screenOptions.headerTitleStyle,
           color: colors['neutral-title-1'],
         },
         headerTitle: '',
-      }}>
+      })}>
       <AddressStack.Screen
         name={RootNames.CurrentAddress}
         component={CurrentAddressScreen}
