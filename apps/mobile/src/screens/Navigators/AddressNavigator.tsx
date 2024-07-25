@@ -51,6 +51,7 @@ export function AddressNavigator() {
         },
         headerTintColor: colors['neutral-title-1'],
         headerTitleStyle: {
+          ...screenOptions.headerTitleStyle,
           color: colors['neutral-title-1'],
         },
         headerTitle: '',

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Text } from 'react-native';
 
-import { useAutoLockTimeout } from '@/hooks/appSettings';
+import {
+  useAutoLockTimeout,
+  useCurrentAutoLockLabel,
+} from '@/hooks/appSettings';
 import { useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
@@ -47,6 +50,23 @@ export function AutoLockCountDownLabel() {
           : colors['red-default'],
       }}>
       {countDown}
+    </Text>
+  );
+}
+
+export function AutoLockSettingLabel() {
+  const settingLabel = useCurrentAutoLockLabel();
+
+  const colors = useThemeColors();
+
+  return (
+    <Text
+      style={{
+        color: colors['neutral-title1'],
+        fontWeight: 'normal',
+        fontSize: 14,
+      }}>
+      {settingLabel}
     </Text>
   );
 }

@@ -68,7 +68,12 @@ const hitSlop = {
   right: 10,
 };
 
-export const useStackScreenConfig = (): NativeStackNavigationOptions => {
+export const useStackScreenConfig = (): Omit<
+  NativeStackNavigationOptions,
+  'headerTitleStyle'
+> & {
+  headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
+} => {
   const colors = useThemeColors();
 
   const navBack = useCallback(() => {
@@ -113,10 +118,6 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
 };
 
 const styles = StyleSheet.create({
-  headerTitleStyle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   backButtonStyle: {
     // width: 56,
     // height: 56,

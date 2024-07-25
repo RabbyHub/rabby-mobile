@@ -230,7 +230,7 @@ export function makeHeadersPresets({
       headerBackVisible: false,
       headerTitleStyle: {
         fontWeight: '600',
-        fontSize: 17,
+        fontSize: 20,
       },
     } as NativeStackNavigationOptions,
     withBgCard2: {

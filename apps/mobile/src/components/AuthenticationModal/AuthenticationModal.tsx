@@ -28,7 +28,7 @@ export interface AuthenticationModalProps extends ValidationBehaviorProps {
   checklist?: string[];
   placeholder?: string;
   onCancel?(): void;
-  needPassword?: boolean;
+  disableValidation?: boolean;
 }
 
 export const AuthenticationModal = ({
@@ -39,7 +39,7 @@ export const AuthenticationModal = ({
   placeholder,
   onCancel,
   checklist,
-  needPassword: propNeedPassword = undefined,
+  disableValidation: propNeedPassword = !validationHandler,
 }: AuthenticationModalProps) => {
   const { t } = useTranslation();
   const { styles } = useThemeStyles(getStyle);
@@ -53,14 +53,14 @@ export const AuthenticationModal = ({
 
   const { isUseCustomPwd } = usePasswordStatus();
 
-  const needPassword =
+  const disableValidation =
     typeof propNeedPassword === 'boolean' ? propNeedPassword : isUseCustomPwd;
 
   const handleSubmit = React.useCallback(async () => {
     if (isDisabled) return;
 
     try {
-      if (needPassword) await validationHandler?.(password);
+      if (!disableValidation) await validationHandler?.(password);
       onFinished?.({
         hasSetupCustomPassword: isUseCustomPwd,
         validatedPassword: password,
@@ -71,7 +71,7 @@ export const AuthenticationModal = ({
     }
   }, [
     isDisabled,
-    needPassword,
+    disableValidation,
     isUseCustomPwd,
     onFinished,
     password,
@@ -108,7 +108,7 @@ export const AuthenticationModal = ({
           </View>
         )}
 
-        {needPassword && (
+        {!disableValidation && (
           <>
             <BottomSheetInput
               secureTextEntry
@@ -140,29 +140,28 @@ export const AuthenticationModal = ({
   );
 };
 
-/**
- * @description It's recommended to set `needPassword` property explicitly,
- * whatever it's true or false. If not, it will fetch the lock info from the device.
- *
- */
 AuthenticationModal.show = async (
   showConfig: AuthenticationModalProps & {
     closeDuration?: number;
   },
 ) => {
   const { closeDuration = IS_IOS ? 0 : 300, ...props } = showConfig;
-  let needPassword = showConfig.needPassword;
-  if (typeof needPassword !== 'boolean') {
-    const lockInfo = await apisLock.getRabbyLockInfo();
-    needPassword = lockInfo.isUseCustomPwd;
+  let disableValidation = showConfig.disableValidation;
+  const lockInfo = await apisLock.getRabbyLockInfo();
+  if (!lockInfo.isUseCustomPwd) {
+    // enforce disableValidation to be false if the app doesn't have a custom password
+    disableValidation = true;
+  } else if (typeof showConfig.disableValidation !== 'boolean') {
+    disableValidation = false;
   }
+
   const id = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
     },
     ...props,
-    needPassword,
+    disableValidation,
     onCancel() {
       props.onCancel?.();
       hideModal();

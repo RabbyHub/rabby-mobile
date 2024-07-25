@@ -85,8 +85,6 @@ export function SelectAddressSheetModal({
     });
   }, [whitelistEnabled, accountsList, whitelist]);
 
-  const { isUseCustomPwd } = useLoadLockInfo();
-
   const onPressSaveButton = useCallback(async () => {
     if (isEditing) {
       AuthenticationModal.show({
@@ -99,12 +97,11 @@ export function SelectAddressSheetModal({
           setWhitelist(localWhiteList);
           setEditing(!isEditing);
         },
-        needPassword: isUseCustomPwd,
       });
     } else {
       setEditing(!isEditing);
     }
-  }, [t, isEditing, setEditing, setWhitelist, localWhiteList, isUseCustomPwd]);
+  }, [t, isEditing, setEditing, setWhitelist, localWhiteList]);
 
   const onModalDismiss = useCallback(() => {
     if (isEditing) {

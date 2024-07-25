@@ -72,8 +72,10 @@ import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect } from '@react-navigation/native';
 import { useIsAllowScreenshot } from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
-import { AutoLockCountDownLabel } from './components/AutoLockCountDownLabel';
-import { useResetHasTipedUserEnableBiometrics } from '../Unlock/hooks';
+import {
+  AutoLockCountDownLabel,
+  AutoLockSettingLabel,
+} from './components/AutoLock';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -82,7 +84,7 @@ const LAYOUTS = {
 const isIOS = Platform.OS === 'ios';
 
 function SettingsBlocks() {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const colors = useThemeColors();
 
   const { currentAccount } = useCurrentAccount();
 
@@ -184,6 +186,7 @@ function SettingsBlocks() {
             onPress: () => {
               selectAutolockTimeRef.current?.present();
             },
+            rightTextNode: <AutoLockSettingLabel />,
           },
           {
             label: 'Clear Pending',

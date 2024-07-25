@@ -65,12 +65,15 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
   }, [setBiometrics]);
 
   const toggleBiometrics = useCallback(
-    async (nextEnabled: boolean, input: { validatedPassword: string }) => {
-      const hideToast = toastLoading(
-        `${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`,
-      );
+    async (
+      nextEnabled: boolean,
+      input: { validatedPassword: string; tipLoading?: boolean },
+    ) => {
+      const { validatedPassword, tipLoading } = input;
 
-      const validatedPassword = input.validatedPassword;
+      const hideToast = !tipLoading
+        ? null
+        : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
 
       try {
         if (nextEnabled) {
@@ -90,7 +93,7 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
       } catch (error: any) {
         toast.show(error?.message);
       } finally {
-        hideToast();
+        hideToast?.();
         await fetchBiometrics();
       }
     },
@@ -142,11 +145,15 @@ export function useToggleBiometricsEnabled() {
         description: nextEnabled
           ? strings('component.AuthenticationModals.biometrics.enableTip')
           : strings('component.AuthenticationModals.biometrics.disableTip'),
+        disableValidation: !nextEnabled,
         validationHandler: async (password: string) => {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
         async onFinished({ validatedPassword }) {
-          toggleBiometrics(nextEnabled, { validatedPassword });
+          toggleBiometrics(nextEnabled, {
+            validatedPassword,
+            tipLoading: true,
+          });
         },
       });
     },
