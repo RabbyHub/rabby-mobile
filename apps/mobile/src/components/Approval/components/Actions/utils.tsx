@@ -190,6 +190,10 @@ export interface ParsedActionData {
     receiver?: string;
     from: string;
   };
+  permit2BatchRevokeToken?: {
+    permit2_id: string;
+    revoke_list: RevokeTokenApproveAction[];
+  };
 }
 
 export const getProtocol = (
@@ -479,6 +483,11 @@ export const parseAction = (
         takers,
         expireAt: expire_at,
       },
+    };
+  }
+  if (data?.type === 'permit2_batch_revoke_token') {
+    return {
+      permit2BatchRevokeToken: data.data as any,
     };
   }
   return {
@@ -1392,6 +1401,17 @@ export const fetchActionRequiredData = async ({
     await waitQueueFinished(queue);
     return result;
   }
+  if (actionData.permit2BatchRevokeToken) {
+    const { token, spender } =
+      actionData.permit2BatchRevokeToken.revoke_list[0];
+    return await fetchTokenApproveRequireData({
+      apiProvider,
+      chainId,
+      address,
+      token,
+      spender,
+    });
+  }
   return null;
 };
 
@@ -1752,6 +1772,9 @@ export const getActionTypeText = (data: ParsedActionData) => {
   if (data?.common) {
     return data.common.title;
   }
+  if (data.permit2BatchRevokeToken) {
+    return t('page.signTx.batchRevokePermit2.title');
+  }
   return t('page.signTx.unknownAction');
 };
 
@@ -1778,6 +1801,7 @@ export const getActionTypeTextByType = (type: string) => {
     push_multisig: t('page.signTx.submitMultisig.title'),
     contract_call: t('page.signTx.contractCall.title'),
     swap_order: t('page.signTx.assetOrder.title'),
+    permit2_batch_revoke_token: t('page.signTx.batchRevokePermit2.title'),
   };
 
   return dict[type] || t('page.signTx.unknownAction');

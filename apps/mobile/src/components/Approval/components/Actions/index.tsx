@@ -56,6 +56,7 @@ import { Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import AssetOrder from './AssetOrder';
+import { BatchRevokePermit2 } from './BatchRevokePermit2';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -483,6 +484,14 @@ const Actions = ({
             <CommonAction
               data={data.common}
               requireData={requireData as ContractCallRequireData}
+              chain={chain}
+              engineResults={engineResults}
+            />
+          )}
+          {data.permit2BatchRevokeToken && (
+            <BatchRevokePermit2
+              data={data.permit2BatchRevokeToken}
+              requireData={requireData as RevokeTokenApproveRequireData}
               chain={chain}
               engineResults={engineResults}
             />
