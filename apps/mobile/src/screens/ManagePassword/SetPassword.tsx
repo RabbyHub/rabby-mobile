@@ -119,6 +119,7 @@ function useSetupPasswordForm() {
           // toast.success('Setup Password Successfully');
           await fetchLockInfo();
           switch (navParams?.actionAfterSetup) {
+            default:
             case 'backScreen': {
               if (!navParams?.replaceScreen) {
                 resetNavigationTo(navigation, 'Home');
@@ -142,8 +143,6 @@ function useSetupPasswordForm() {
               });
               break;
             }
-            default:
-              break;
           }
         }
       } finally {
