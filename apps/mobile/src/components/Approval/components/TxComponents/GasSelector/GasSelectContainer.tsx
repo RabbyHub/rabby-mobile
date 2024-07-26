@@ -109,7 +109,7 @@ export const GasSelectContainer = ({
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     item: GasLevel,
   ) => void;
-  customGas: string | number;
+  customGas: string | number | undefined;
   customGasConfirm?: (
     e: NativeSyntheticEvent<TextInputSubmitEditingEventData>,
   ) => void;
@@ -174,7 +174,7 @@ export const GasSelectContainer = ({
                     selectedGas?.level === item.level &&
                       styles.cardItemTextActive,
                   ])}
-                  defaultValue={customGas.toString()}
+                  defaultValue={customGas ? customGas.toString() : ''}
                   onChange={handleCustomGasChange}
                   // onSubmitEditing={customGasConfirm}
                   onFocus={e => handlePanelSelection(e, item)}
