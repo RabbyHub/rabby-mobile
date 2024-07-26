@@ -372,7 +372,7 @@ export const AddAsset = ({ params }: { params: AddAssetProps }) => {
     <View style={styles.container}>
       <AppBottomSheetModalTitle title={t('page.addToken.title')} />
       <View style={styles.main}>
-        <View className="token">
+        <View>
           {token ? (
             <>
               <View style={[styles.tokenDetailHeaderWrap]}>
