@@ -6120,23 +6120,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rabby-wallet/rabby-api@npm:0.7.23-beta.1":
-  version: 0.7.23-beta.1
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.23-beta.1"
-  dependencies:
-    "@rabby-wallet/rabby-sign": ^0.3.3
-    axios: ^0.27.2
-    axios-rate-limit: ^1.3.0
-    eth-rpc-errors: ^4.0.3
-    lodash: ^4.17.21
-    qss: ^2.0.3
-  peerDependencies:
-    "@debank/common": ^0.3.9
-    "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: 1b140211fd3213f815e6a1adf82582dd7562342aec7002ce682db1031d188ec65fa45807b42e664b2ec1ca78b3e1bd24325807ee7424949ecb0ed4d32266c9fa
-  languageName: node
-  linkType: hard
-
 "@rabby-wallet/rabby-api@npm:0.7.7":
   version: 0.7.7
   resolution: "@rabby-wallet/rabby-api@npm:0.7.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40rabby-wallet%2Frabby-api%2F-%2Frabby-api-0.7.7.tgz"
@@ -6151,6 +6134,23 @@ __metadata:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 1eae94f82deec09fff280531fd5426d7bfd1dd5dfb1f901636da8979d301c583b880c8f2ac9baeeb2773f49d9936517587675ee3119df3bffa34fb6cb75ffa1f
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-api@npm:alpha":
+  version: 0.7.24-alpha.2
+  resolution: "@rabby-wallet/rabby-api@npm:0.7.24-alpha.2"
+  dependencies:
+    "@rabby-wallet/rabby-sign": ^0.3.3
+    axios: ^0.27.2
+    axios-rate-limit: ^1.3.0
+    eth-rpc-errors: ^4.0.3
+    lodash: ^4.17.21
+    qss: ^2.0.3
+  peerDependencies:
+    "@debank/common": ^0.3.9
+    "@rabby-wallet/rabby-sign": ">= 0.3"
+  checksum: a22c8c3a498040833d6f3dd81982f329b8af435def5236659d5e7980889a92b45d084450235d89be8c86abf3ed0711078a1e6d784d6ffec9fbd2e4563045d409
   languageName: node
   linkType: hard
 
@@ -27578,7 +27578,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": ^1.3.6
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
-    "@rabby-wallet/rabby-api": 0.7.23-beta.1
+    "@rabby-wallet/rabby-api": alpha
     "@rabby-wallet/rabby-security-engine": 2.0.4
     "@rabby-wallet/rabby-swap": 0.0.38-beta.1
     "@rabby-wallet/service-address": "workspace:^"

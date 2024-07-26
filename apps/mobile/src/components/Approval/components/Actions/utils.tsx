@@ -838,7 +838,7 @@ export const fetchNFTApproveRequiredData = async ({
     result.hasInteraction = hasInteraction.has_interaction;
   });
   queue.add(async () => {
-    const { usd_value } = await openapi.getTokenNFTExposure(chainId, spender);
+    const { usd_value } = await openapi.getTokenNFTTrustValue(chainId, spender);
     result.riskExposure = usd_value;
   });
   await waitQueueFinished(queue);
@@ -878,7 +878,10 @@ const fetchTokenApproveRequireData = async ({
     result.rank = credit.rank_at;
   });
   queue.add(async () => {
-    const { usd_value } = await openapi.tokenApproveExposure(spender, chainId);
+    const { usd_value } = await openapi.tokenApproveTrustValue(
+      spender,
+      chainId,
+    );
     result.riskExposure = usd_value;
   });
   if (token) {
