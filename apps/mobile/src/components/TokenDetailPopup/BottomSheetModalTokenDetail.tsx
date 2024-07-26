@@ -115,8 +115,6 @@ const TokenDetailHeader = React.memo(
 
     const isNativeToken = !/^0x.{40}$/.test(token?._tokenId || '');
 
-    console.log(chainItem, isNativeToken);
-
     const copyAddressIconRef = React.useRef<CopyAddressIconType>(null);
 
     const [isAdded, setIsAdded] = React.useState(false);

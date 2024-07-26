@@ -37,9 +37,9 @@ export const PillsSwitch = <T extends readonly Option[] | Option[]>({
               onPress={() => {
                 onTabChange?.(item.key);
               }}
+              key={`pills-switch-${item.key}`}
               style={[styles.item, isActive && styles.itemActive, itemStyle]}>
               <Text
-                key={`pills-switch-${item.key}`}
                 style={[styles.itemText, isActive && styles.itemActiveText]}>
                 {item.label}
               </Text>

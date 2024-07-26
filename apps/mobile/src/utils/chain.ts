@@ -56,7 +56,9 @@ export function findChainByEnum(
   const toFallbackEnum: CHAINS_ENUM | null = fallbackIdx
     ? CHAINS_ENUM[fallbackIdx] || CHAINS_ENUM.ETH
     : null;
-  const toFallbackChain = toFallbackEnum ? CHAINS[toFallbackEnum] : null;
+  const toFallbackChain = toFallbackEnum
+    ? findChain({ enum: toFallbackEnum }) || null
+    : null;
 
   if (!chainEnum) {
     return toFallbackChain;

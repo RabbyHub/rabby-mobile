@@ -29,13 +29,20 @@ import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryList';
 const PAGE_COUNT = 10;
 
-function MainnetHistoryScreen(): JSX.Element {
+function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
   const navigation = useRabbyAppNavigation();
+  const { bottom } = useSafeAreaInsets();
 
   const fetchData = async (startTime = 0) => {
+    if (isTestnet) {
+      return {
+        last: 0,
+        list: [],
+      };
+    }
     const address = account?.address;
     if (!address) {
       throw new Error('no account');
@@ -78,38 +85,45 @@ function MainnetHistoryScreen(): JSX.Element {
     if (!account?.address) {
       return [];
     }
-    const { pendings: _pendings, completeds } =
+    const { pendings: _pendings, completeds: _completeds } =
       transactionHistoryService.getList(account.address);
 
-    // todo
     const pendings = _pendings.filter(item => {
-      return !findChain({ id: item.chainId })?.isTestnet;
+      const chain = findChain({ id: item.chainId });
+      return isTestnet ? chain?.isTestnet : !chain?.isTestnet;
+    });
+
+    const completeds = _completeds.filter(item => {
+      const chain = findChain({ id: item.chainId });
+      return isTestnet ? chain?.isTestnet : !chain?.isTestnet;
     });
 
     return [
       ...pendings,
-      ...completeds.filter(item => {
-        const isSynced =
-          !!data?.list?.find(tx => {
+      ...(isTestnet
+        ? completeds
+        : completeds.filter(item => {
+            const isSynced =
+              !!data?.list?.find(tx => {
+                return (
+                  tx.id === item.maxGasTx.hash &&
+                  findChainByServerID(tx.chain)?.id === item.chainId
+                );
+              }) || item.isSynced;
+
+            if (isSynced && !item.isSynced) {
+              transactionHistoryService.updateTx({
+                ...item.maxGasTx,
+                isSynced: true,
+              });
+            }
+
             return (
-              tx.id === item.maxGasTx.hash &&
-              findChainByServerID(tx.chain)?.id === item.chainId
+              item.createdAt >= Date.now() - 3600000 &&
+              !item.isSubmitFailed &&
+              !isSynced
             );
-          }) || item.isSynced;
-
-        if (isSynced && !item.isSynced) {
-          transactionHistoryService.updateTx({
-            ...item.maxGasTx,
-            isSynced: true,
-          });
-        }
-
-        return (
-          item.createdAt >= Date.now() - 3600000 &&
-          !item.isSubmitFailed &&
-          !isSynced
-        );
-      }),
+          })),
     ];
   });
 
@@ -138,18 +152,20 @@ function MainnetHistoryScreen(): JSX.Element {
   }
 
   return (
-    <View>
-      <TouchableOpacity
-        onPress={() => {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.HistoryFilterScam,
-            params: {},
-          });
-        }}
-        style={styles.link}>
-        <Text style={styles.linkText}>Hide scam transactions</Text>
-        <RcIconRight />
-      </TouchableOpacity>
+    <View style={{ flex: 1, paddingBottom: bottom }}>
+      {isTestnet ? null : (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.HistoryFilterScam,
+              params: {},
+            });
+          }}
+          style={styles.link}>
+          <Text style={styles.linkText}>Hide scam transactions</Text>
+          <RcIconRight />
+        </TouchableOpacity>
+      )}
       <HistoryList
         list={[...(groups || []), ...(data?.list || [])]}
         localTxList={groups}
@@ -164,28 +180,26 @@ function MainnetHistoryScreen(): JSX.Element {
 
 const HistoryScreen = () => {
   const { selectedTab, onTabChange } = useSwitchNetTab();
-  const { bottom } = useSafeAreaInsets();
+
   const colors = useThemeColors();
   const styles = getStyles(colors);
   return (
-    <NormalScreenContainer
-      style={{
-        paddingBottom: bottom,
-      }}>
+    <NormalScreenContainer style={styles.page}>
       <NetSwitchTabs
         value={selectedTab}
         onTabChange={onTabChange}
         style={styles.netTabs}
       />
       {selectedTab === 'mainnet' ? (
-        <MainnetHistoryScreen />
+        <History isTestnet={false} key={'mainnet'} />
       ) : (
-        <View style={styles.notFound}>
-          <RcIconNotFindCC color={colors['neutral-body']} />
-          <Text style={styles.notFoundText}>
-            Not supported for custom network
-          </Text>
-        </View>
+        <History isTestnet={true} key={'testnet'} />
+        // <View style={styles.notFound}>
+        //   <RcIconNotFindCC color={colors['neutral-body']} />
+        //   <Text style={styles.notFoundText}>
+        //     Not supported for custom network
+        //   </Text>
+        // </View>
       )}
     </NormalScreenContainer>
   );
@@ -193,6 +207,9 @@ const HistoryScreen = () => {
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    page: {
+      backgroundColor: colors['neutral-bg-2'],
+    },
     link: {
       marginHorizontal: 20,
       marginBottom: 12,

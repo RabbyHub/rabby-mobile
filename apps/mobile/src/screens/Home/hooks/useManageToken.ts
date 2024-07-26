@@ -41,7 +41,6 @@ export const useManageTokenList = () => {
 
   const addBlockedToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      console.log('token', token);
       await preferenceService.addBlockedToken({
         address: token._tokenId,
         chain: token.chain,

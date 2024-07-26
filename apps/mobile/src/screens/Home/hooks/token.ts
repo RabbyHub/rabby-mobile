@@ -316,7 +316,6 @@ export const useTokens = (
         });
       })
       .then(tokens => {
-        console.log(tokens);
         setTestnetTokens({
           list: tokens,
         });

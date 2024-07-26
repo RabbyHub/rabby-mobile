@@ -54,9 +54,7 @@ export const EditCustomTestnetPopup = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
   const formik = useCustomTestnetForm({
-    onSubmit(values) {
-      console.log(values);
-    },
+    onSubmit(values) {},
   });
 
   const resetForm = useMemoizedFn(() => {

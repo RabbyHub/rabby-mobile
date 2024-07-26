@@ -55,7 +55,7 @@ export const BlockedTokenListPopup = ({
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      snapPoints={['70%']}
+      snapPoints={['80%']}
       onDismiss={onClose}>
       <TokenList
         isTestnet={true}

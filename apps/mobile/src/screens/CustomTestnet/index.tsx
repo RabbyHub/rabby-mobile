@@ -87,7 +87,6 @@ export function CustomTestnetScreen(): JSX.Element {
       current: item,
       isEdit: true,
     };
-    console.log(item);
     setState(next);
   });
 

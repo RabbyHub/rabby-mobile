@@ -292,7 +292,7 @@ export const TokenWallet = ({
           />
         }
       />
-      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['70%']}>
+      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['80%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
           ListHeaderComponent={

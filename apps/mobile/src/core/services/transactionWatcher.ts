@@ -1,4 +1,4 @@
-import { findChainByEnum, findChainByID } from '@/utils/chain';
+import { findChain, findChainByEnum, findChainByID } from '@/utils/chain';
 import { CHAINS_ENUM } from '@/constant/chains';
 import createPersistStore, {
   StorageAdapaterOptions,
@@ -9,6 +9,7 @@ import { EVENTS, eventBus } from '@/utils/events';
 import interval from 'interval-promise';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 import type { TransactionHistoryService } from './transactionHistory';
+import { customTestnetService } from './customTestnetService';
 
 class Transaction {
   createdTime = 0;
@@ -52,6 +53,8 @@ export class TransactionWatcherService {
       this.store.pendingTx = {};
     }
 
+    console.log(this.store.pendingTx);
+
     // this._populateAvailableTxs();
   }
 
@@ -87,9 +90,20 @@ export class TransactionWatcherService {
       return;
     }
     const { hash, chain } = this.store.pendingTx[id];
-    const chainItem = findChainByEnum(chain);
+    const chainItem = findChain({ enum: chain });
     if (!chainItem || !hash) {
       return;
+    }
+
+    console.log('checkStatus', hash, chainItem);
+
+    if (chainItem.isTestnet) {
+      return customTestnetService
+        .getTransactionReceipt({
+          chainId: chainItem.id,
+          hash,
+        })
+        .catch(() => null);
     }
 
     return openapi
@@ -169,11 +183,13 @@ export class TransactionWatcherService {
         return aNonce > bNonce ? 1 : -1;
       });
 
+      console.log('idQueue', idQueue);
       return this._queryList(idQueue);
     }, 5000);
   };
 
   _queryList = async (ids: string[]) => {
+    console.log('queryList', ids);
     for (const id of ids) {
       try {
         const txReceipt = await this.checkStatus(id);

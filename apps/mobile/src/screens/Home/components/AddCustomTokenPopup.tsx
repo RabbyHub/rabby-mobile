@@ -150,7 +150,7 @@ export const AddCustomTokenPopup = ({
   return (
     <AppBottomSheetModal
       ref={modalRef}
-      snapPoints={['70%']}
+      snapPoints={['80%']}
       onDismiss={onClose}>
       <AppBottomSheetModalTitle title="Add Custom Token" />
       <View style={styles.main}>

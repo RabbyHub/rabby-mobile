@@ -45,39 +45,27 @@ interface PortfolioChain extends Chain {
 
 // chainid 如果有值, 资产页面会发起请求
 
-// export const syncChainList = async () => {
-//   try {
-//     const chains: SupportedChain[] = await axios
-//       .get('https://static.debank.com/supported_chains.json')
-//       .then(res => res.data);
+export const syncMainChainList = async () => {
+  try {
+    const chains: SupportedChain[] = await axios
+      .get('https://static.debank.com/supported_chains.json')
+      .then(res => res.data);
 
-//     const chainServerIdDict = keyBy(CHAINS_LIST, 'serverId');
+    const list: Chain[] = chains
+      .filter(item => !item.is_disabled)
+      .map(item => {
+        const chain: Chain = supportedChainToChain(item);
 
-//     const list: Chain[] = chains
-//       .filter(item => !item.is_disabled)
-//       .map(item => {
-//         const chain: Chain = supportedChainToChain(item);
-//         CHAIN_ID_LIST.set(chain.serverId, {
-//           ...chain,
-//           isSupportHistory: false,
-//         });
-//         return chain;
-//       });
-//     replaceArray(CHAINS_LIST, list);
-//     replaceObject(CHAINS, keyBy(CHAINS_LIST, 'enum'));
-//     replaceArray(
-//       MAINNET_CHAINS_LIST,
-//       CHAINS_LIST.filter(chain => !chain.isTestnet),
-//     );
-//     replaceArray(
-//       TESTNET_CHAINS_LIST,
-//       CHAINS_LIST.filter(chain => chain.isTestnet),
-//     );
-//     storage.set('chains', JSON.stringify(list));
-//   } catch (e) {
-//     console.error('fetch chain list error: ', e);
-//   }
-// };
+        return chain;
+      });
+    updateChainStore({
+      mainnetList: list,
+    });
+    storage.set('chains', JSON.stringify(list));
+  } catch (e) {
+    console.error('fetch chain list error: ', e);
+  }
+};
 
 // const replaceObject = (target: object, source: object) => {
 //   const keys = Object.keys(target);

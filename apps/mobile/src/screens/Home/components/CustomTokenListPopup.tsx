@@ -65,7 +65,7 @@ export const CustomTokenListPopup = ({
     <>
       <AppBottomSheetModal
         ref={modalRef}
-        snapPoints={['70%']}
+        snapPoints={['80%']}
         onDismiss={onClose}>
         <TokenList
           isTestnet={true}
