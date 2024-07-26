@@ -33,8 +33,6 @@ export const SelectChain = ({
     return getChainList('mainnet');
   }, [search]);
 
-  console.log({ list: list.length });
-
   return (
     <View className="h-full px-[20] pt-[10] pb-[32]">
       <Input

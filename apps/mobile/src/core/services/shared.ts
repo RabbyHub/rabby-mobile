@@ -123,17 +123,13 @@ const syncPendingTxs = () => {
     .getTransactionGroups()
     .filter(item => item.isPending);
 
-  console.log('pending', pendings);
-
   pendings.forEach(item => {
     const chain = findChainByID(item.chainId);
-    console.log(0, chain, item.maxGasTx.hash);
     if (!chain || !item.maxGasTx.hash) {
       return;
     }
     const key = `${item.address}_${item.nonce}_${chain?.enum}`;
 
-    console.log('1', transactionWatcherService.store);
     if (transactionWatcherService.hasTx(key)) {
       return;
     }
@@ -143,7 +139,6 @@ const syncPendingTxs = () => {
       hash: item.maxGasTx.hash,
       chain: chain.enum,
     });
-    console.log('2', transactionWatcherService.store);
   });
 };
 

@@ -53,8 +53,6 @@ export class TransactionWatcherService {
       this.store.pendingTx = {};
     }
 
-    console.log(this.store.pendingTx);
-
     // this._populateAvailableTxs();
   }
 
@@ -94,8 +92,6 @@ export class TransactionWatcherService {
     if (!chainItem || !hash) {
       return;
     }
-
-    console.log('checkStatus', hash, chainItem);
 
     if (chainItem.isTestnet) {
       return customTestnetService
@@ -183,13 +179,11 @@ export class TransactionWatcherService {
         return aNonce > bNonce ? 1 : -1;
       });
 
-      console.log('idQueue', idQueue);
       return this._queryList(idQueue);
     }, 5000);
   };
 
   _queryList = async (ids: string[]) => {
-    console.log('queryList', ids);
     for (const id of ids) {
       try {
         const txReceipt = await this.checkStatus(id);
