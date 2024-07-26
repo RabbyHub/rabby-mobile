@@ -1,15 +1,3 @@
-// import { TestnetChainBase } from '@/background/service/customTestnet';
-// import { CustomTestnetForm } from '@/ui/views/CustomTestnet/components/CustomTestnetForm';
-// import { useMount, useRequest } from 'ahooks';
-// import { Button } from 'antd';
-// import { useForm } from 'antd/lib/form/Form';
-// import clsx from 'clsx';
-// import React, { useEffect } from 'react';
-// import { useTranslation } from 'react-i18next';
-// import { useApproval, useWallet } from 'ui/utils';
-// import { AddEthereumChainParams } from './type';
-// import { matomoRequestEvent } from '@/utils/matomo-request';
-
 import { useApproval } from '@/hooks/useApproval';
 import { AddEthereumChainParams } from './type';
 import { useTranslation } from 'react-i18next';
@@ -109,7 +97,7 @@ export const AddChain = ({ params }: { params: AddChainProps }) => {
   };
 
   return (
-    <View className="h-[100vh] relative flex flex-col" style={styles.container}>
+    <View style={styles.container}>
       <AppBottomSheetModalTitle title={t('page.addChain.title')} />
       <View style={styles.main}>
         <Text style={styles.desc}>{t('page.addChain.desc')}</Text>

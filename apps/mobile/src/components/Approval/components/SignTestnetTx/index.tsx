@@ -427,6 +427,7 @@ export const SignTestnetTx = ({ params, origin }: SignTxProps) => {
     setIsReady(true);
   };
 
+  console.log('gas', selectedGas, gasList);
   useMount(() => {
     init();
   });

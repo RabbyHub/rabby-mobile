@@ -10,3 +10,4 @@ export { PrivatekeyWaiting } from './PrivatekeyWaiting/PrivatekeyWaiting';
 export { ETHSign } from './ETHSign/ETHSign';
 export { Unknown } from './Unknown/Unknown';
 export { AddChain } from './AddChain/AddChain';
+export { AddAsset } from './AddAsset/AddAsset';

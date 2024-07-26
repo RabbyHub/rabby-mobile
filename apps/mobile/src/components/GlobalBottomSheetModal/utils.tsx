@@ -70,6 +70,7 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.ETHSign]: [300],
   [APPROVAL_MODAL_NAMES.Unknown]: [300],
   [APPROVAL_MODAL_NAMES.AddChain]: ['90%'],
+  [APPROVAL_MODAL_NAMES.AddAsset]: ['90%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {

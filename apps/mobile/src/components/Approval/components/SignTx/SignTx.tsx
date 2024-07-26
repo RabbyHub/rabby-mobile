@@ -10,7 +10,6 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,

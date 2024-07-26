@@ -61,6 +61,7 @@ import { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
 import { bytesToHex } from '@ethereumjs/util';
+import { CustomTestnetTokenBase } from '../services/customTestnetService';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -1296,13 +1297,25 @@ class ProviderController extends BaseController {
   walletWatchAsset = ({
     approvalRes,
   }: {
-    approvalRes: { id: string; chain: string };
+    approvalRes: { id: string; chain: string } & CustomTestnetTokenBase;
   }) => {
-    const { id, chain } = approvalRes;
-    preferenceService.addCustomizedToken({
-      address: id,
-      chain,
+    const { id, chain, chainId, symbol, decimals } = approvalRes;
+    const chainInfo = findChain({
+      serverId: chain,
     });
+    if (chainInfo?.isTestnet) {
+      customTestnetService.addToken({
+        chainId,
+        symbol,
+        decimals,
+        id,
+      });
+    } else {
+      preferenceService.addCustomizedToken({
+        address: id,
+        chain,
+      });
+    }
   };
 
   walletRequestPermissions = ({

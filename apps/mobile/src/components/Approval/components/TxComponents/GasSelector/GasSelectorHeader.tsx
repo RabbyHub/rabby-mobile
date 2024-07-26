@@ -44,6 +44,8 @@ import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { Divide } from '../../Actions/components/Divide';
 import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
 import { useFindChain } from '@/hooks/useFindChain';
+import { isTestnet } from '@/utils/chain';
+import { useMemoizedFn } from 'ahooks';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -187,16 +189,17 @@ export const GasSelectorHeader = ({
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
 
-  const loadCustomGasData = React.useCallback(
-    async (custom?: number): Promise<GasLevel> => {
+  const loadCustomGasData = useMemoizedFn(
+    async (custom?: number): Promise<GasLevel | null> => {
+      if (chain?.isTestnet) {
+        return null;
+      }
       const list = await openapi.gasMarket(
         chain.serverId,
         custom && custom > 0 ? custom : undefined,
       );
       return list.find(item => item.level === 'custom')!;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
   );
 
   const engineResultMap = useMemo(() => {
@@ -444,6 +447,9 @@ export const GasSelectorHeader = ({
     setTimeout(() => {
       if (isReady || !isFirstTimeLoad) {
         loadCustomGasData(Number(customGas) * 1e9).then(data => {
+          if (!data) {
+            return;
+          }
           if (data) setCustomGasEstimated(data.estimated_seconds);
           setSelectedGas(gas => ({
             ...gas,

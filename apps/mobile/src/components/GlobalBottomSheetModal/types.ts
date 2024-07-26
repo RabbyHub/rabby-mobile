@@ -46,6 +46,7 @@ export enum APPROVAL_MODAL_NAMES {
   'ETHSign' = 'ETHSign',
   'Unknown' = 'Unknown',
   'AddChain' = 'AddChain',
+  'AddAsset' = 'AddAsset',
 }
 
 export type MODAL_CREATE_PARAMS = {

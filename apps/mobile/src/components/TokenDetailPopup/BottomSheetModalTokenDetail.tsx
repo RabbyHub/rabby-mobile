@@ -1015,7 +1015,7 @@ const getStyles = createGetStyles(colors => {
     },
     emptyHolderContainer: {
       // ...makeDebugBorder('yellow'),
-      height: SIZES.maxEmptyHeight * 0.8,
+      // height: SIZES.maxEmptyHeight * 0.8,
       maxHeight: '100%',
       flexShrink: 1,
     },
