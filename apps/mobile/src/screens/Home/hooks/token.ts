@@ -33,6 +33,8 @@ import { log } from './usePortfolio';
 import { produce } from '@/core/utils/produce';
 import { apiCustomTestnet } from '@/core/apis';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import { useChainList } from '@/hooks/useChainList';
 
 export const walletProject = new DisplayedProject({
   id: 'Wallet',
@@ -86,6 +88,7 @@ export const useTokens = (
   const [testnetTokens, setTestnetTokens] = useAtom(testnetTokensAtom);
   const userAddrRef = useRef('');
   const chainIdRef = useRef<string | undefined>(undefined);
+  const { testnetList } = useChainList();
 
   useEffect(() => {
     if (updateNonce === 0) {
@@ -139,6 +142,36 @@ export const useTokens = (
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeAt, isLoading]);
+
+  const { runAsync: loadCustomTestnetTokens } = useRequest(
+    async () => {
+      if (!userAddr) {
+        return;
+      }
+      return apiCustomTestnet
+        .getCustomTestnetTokenList({
+          address: userAddr,
+        })
+        .then(res => {
+          return res.map(item => {
+            const tokenItem = customTestnetTokenToTokenItem(item);
+            return new DisplayedToken(tokenItem) as AbstractPortfolioToken;
+          });
+        })
+        .catch(e => {
+          console.error(e);
+        });
+    },
+    {
+      onSuccess: tokens => {
+        if (tokens) {
+          setTestnetTokens({
+            list: tokens,
+          });
+        }
+      },
+    },
+  );
 
   const loadProcess = async () => {
     if (!userAddr) {
@@ -305,24 +338,7 @@ export const useTokens = (
       };
     });
 
-    await apiCustomTestnet
-      .getCustomTestnetTokenList({
-        address: userAddr,
-      })
-      .then(res => {
-        return res.map(item => {
-          const tokenItem = customTestnetTokenToTokenItem(item);
-          return new DisplayedToken(tokenItem) as AbstractPortfolioToken;
-        });
-      })
-      .then(tokens => {
-        setTestnetTokens({
-          list: tokens,
-        });
-      })
-      .catch(e => {
-        console.error(e);
-      });
+    await loadCustomTestnetTokens();
 
     setLoading(false);
 
@@ -453,6 +469,10 @@ export const useTokens = (
       abortProcess.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    loadCustomTestnetTokens();
+  }, [testnetList, loadCustomTestnetTokens]);
 
   return {
     netWorth: data?.netWorth || 0,

@@ -1,16 +1,14 @@
-import { CHAINS_ENUM, Chain } from '@debank/common';
+import { TestnetChain } from '@/core/services/customTestnetService';
+import { supportedChainToChain } from '@/isomorphic/chain';
+import { EVENT_UPDATE_CHAIN_LIST, eventBus } from '@/utils/events';
+import { Chain, CHAINS_ENUM } from '@debank/common';
+import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
+import axios from 'axios';
+import { MMKV } from 'react-native-mmkv';
+import { DEFAULT_CHAIN_LIST } from './default-chain-data';
 
 export type { Chain } from '@debank/common';
 export { CHAINS_ENUM };
-import { MMKV } from 'react-native-mmkv';
-import { keyBy } from 'lodash';
-import { DEFAULT_CHAIN_LIST } from './default-chain-data';
-import { supportedChainToChain } from '@/isomorphic/chain';
-import axios from 'axios';
-import { SupportedChain } from '@rabby-wallet/rabby-api/dist/types';
-import { TestnetChain } from '@/core/services/customTestnetService';
-import { eventBus } from '@rabby-wallet/keyring-utils';
-import { EVENT_UPDATE_CHAIN_LIST, EVENTS } from '@/utils/events';
 
 const storage = new MMKV({
   id: 'mmkv.chains',
@@ -24,20 +22,6 @@ const getChainsFromStorage = () => {
     }
   } catch (e) {}
 };
-
-// export const CHAINS_LIST = getChainsFromStorage() || DEFAULT_CHAIN_LIST;
-
-// export const CHAINS = keyBy(CHAINS_LIST, 'enum');
-
-// export const MAINNET_CHAINS_LIST = CHAINS_LIST.filter(
-//   chain => !chain.isTestnet,
-// );
-// export const TESTNET_CHAINS_LIST = CHAINS_LIST.filter(chain => chain.isTestnet);
-
-// export const CHAINS_BY_NET = {
-//   mainnet: MAINNET_CHAINS_LIST,
-//   testnet: TESTNET_CHAINS_LIST,
-// };
 
 interface PortfolioChain extends Chain {
   isSupportHistory: boolean;
@@ -66,19 +50,6 @@ export const syncMainChainList = async () => {
     console.error('fetch chain list error: ', e);
   }
 };
-
-// const replaceObject = (target: object, source: object) => {
-//   const keys = Object.keys(target);
-//   keys.forEach(key => delete target[key]);
-//   Object.assign(target, source);
-// };
-
-// const replaceArray = <V extends any>(target: V[], source: V[]) => {
-//   target.length = 0;
-//   source.forEach(item => {
-//     target.push(item);
-//   });
-// };
 
 const store = {
   mainnetList: getChainsFromStorage() || DEFAULT_CHAIN_LIST,

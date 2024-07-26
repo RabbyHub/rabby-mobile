@@ -2,6 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React from 'react';
 
 import { FooterButton } from '@/components/FooterButton/FooterButton';
+import { toast } from '@/components/Toast';
 import { AppColorsVariants } from '@/constant/theme';
 import { apiCustomTestnet } from '@/core/apis';
 import {
@@ -17,10 +18,9 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CustomTestnetItem } from './components/CustomTestnetItem';
 import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
-import { CustomTestnetItem } from './components/CustomTestnetItem';
-import { toast } from '@/components/Toast';
 
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -66,19 +66,13 @@ export function CustomTestnetScreen(): JSX.Element {
       current: null,
       isEdit: false,
     });
-    const list = await runGetCustomTestnetList();
-    // updateChainStore({
-    //   testnetList: list,
-    // });
+    await runGetCustomTestnetList();
   });
 
   const handleRemoveClick = useMemoizedFn(async (item: TestnetChain) => {
     await apiCustomTestnet.removeCustomTestnet(item.id);
     toast.success(t('global.Deleted'));
-    const list = await runGetCustomTestnetList();
-    // updateChainStore({
-    //   testnetList: list,
-    // });
+    await runGetCustomTestnetList();
   });
 
   const handleEditClick = useMemoizedFn(async (item: TestnetChain) => {

@@ -24,6 +24,7 @@ export const TokenList = ({
   data,
   ListHeaderComponent,
   ListFooterComponent,
+  ListEmptyComponent,
   isTestnet = false,
   onTokenPress,
 }: Props) => {
@@ -48,7 +49,7 @@ export const TokenList = ({
       style={style}
       renderItem={renderItem}
       ListHeaderComponent={ListHeaderComponent}
-      ListEmptyComponent={ListFooterComponent}
+      ListEmptyComponent={ListEmptyComponent}
       ListFooterComponent={ListFooterComponent}
       data={data}
       keyExtractor={keyExtractor}

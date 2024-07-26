@@ -5,37 +5,28 @@ import {
   createTestnetChain,
 } from '@/core/services/customTestnetService';
 import { useDebounce, useInfiniteScroll, useRequest } from 'ahooks';
-import { id } from 'ethers/lib/utils';
 // import { TooltipWithMagnetArrow } from '@/ui/component/Tooltip/TooltipWithMagnetArrow';
-import { cloneDeep, range, sortBy } from 'lodash';
+import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
+import RcIconBack from '@/assets/icons/header/back-cc.svg';
+import { AppBottomSheetModalTitle, Tip } from '@/components';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { findChain } from '@/utils/chain';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
+import { Input } from '@rneui/themed';
+import { range, sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  SectionList,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  ViewStyle,
-} from 'react-native';
-import { View } from 'react-native';
-import { CustomTestnetItem } from './CustomTestnetItem';
-import { findChain } from '@/utils/chain';
-import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
-import { Input, SearchBar } from '@rneui/themed';
-import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
-import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { AppBottomSheetModalTitle, Tip } from '@/components';
-import RcIconBack from '@/assets/icons/header/back-cc.svg';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { SkeletonCard } from './SkeletonCard';
+import { CustomTestnetItem } from './CustomTestnetItem';
 import { Empty } from './Empty';
+import { SkeletonCard } from './SkeletonCard';
 
 export const AddFromChainList = ({
   visible,
@@ -230,7 +221,7 @@ const CustomTestnetList = ({
   const colors = useThemeColors();
   const styles = getStyles(colors);
   return (
-    <SectionList
+    <BottomSheetSectionList
       style={[styles.list, style]}
       sections={[
         {
