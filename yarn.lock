@@ -27747,7 +27747,6 @@ __metadata:
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
     react-native-webview: ^13.10.5
-    react-native-worklets-core: ^1.3.3
     react-test-renderer: 18.2.0
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -28726,18 +28725,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: fa4bd3885a405236474d2baf455d81bddc024874ec012884fbded02f47303c47c00edaf8ef7072eb52e6fb8c68f1f2fd2abe6ca5890ae217102e7742ab97f3f8
-  languageName: node
-  linkType: hard
-
-"react-native-worklets-core@npm:^1.3.3":
-  version: 1.3.3
-  resolution: "react-native-worklets-core@npm:1.3.3"
-  dependencies:
-    string-hash-64: ^1.0.3
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: bf2f0eb5852ac1e4f58e20fd5912bed46c0f2bd5a671dadb596b7edf2aa5816874c694f472adaaefdb9ef19e5355c05ceb2877946bfaa0cd081c9cc0c95aa404
   languageName: node
   linkType: hard
 
@@ -31181,13 +31168,6 @@ __metadata:
   version: 0.3.2
   resolution: "string-argv@npm:0.3.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fstring-argv%2F-%2Fstring-argv-0.3.2.tgz"
   checksum: 8703ad3f3db0b2641ed2adbb15cf24d3945070d9a751f9e74a924966db9f325ac755169007233e8985a39a6a292f14d4fee20482989b89b96e473c4221508a0f
-  languageName: node
-  linkType: hard
-
-"string-hash-64@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "string-hash-64@npm:1.0.3"
-  checksum: 79de8431b4fa3e85a2429cd52a34f7948221ff167b7a094e05d6bcfd0173474b232e0c9845c96f74b0d7b6b0c8bbe2c3532a4cacb21635293ef0cf3cc8e77f06
   languageName: node
   linkType: hard
 
