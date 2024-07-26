@@ -91,7 +91,10 @@ export const GlobalBottomSheetModal = () => {
     GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
   >((key: string, params) => {
     if (modalRefs.current[key]) {
-      modalRefs.current[key].current?.close({ ...params });
+      // Empty object as props causes flash, undefined is preferred
+      modalRefs.current[key].current?.close(
+        Object.keys(params || {}).length ? { ...params } : undefined,
+      );
     }
     delete modalRefs.current[key];
     // const modalInst = modals.find(modal => modal.id === key);
