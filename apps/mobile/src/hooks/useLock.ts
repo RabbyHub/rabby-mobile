@@ -180,16 +180,16 @@ export function useSecureOnBackground() {
     if (isAndroid) {
       const subBlur = AppState.addEventListener('blur', () => {
         // nativeBlockScreen();
-        setAppStatus({ current: 'inactive' });
+        // setAppStatus({ current: 'inactive' });
       });
       const subFocus = AppState.addEventListener('focus', () => {
         // nativeUnblockScreen();
-        setAppStatus({ current: 'active' });
+        // setAppStatus({ current: 'active' });
       });
 
       return () => {
-        subBlur.remove();
-        subFocus.remove();
+        // subBlur.remove();
+        // subFocus.remove();
       };
     } else if (isIOS) {
       /** @see https://reactnative.dev/docs/appstate#change */
