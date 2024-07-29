@@ -24,15 +24,18 @@ import { toast } from '@/components/Toast';
 import { useUnmountedRef } from './common/useMount';
 
 const appLocalVersion = getVersion();
-const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>('RemoteVersionMMKV', {
-  version: appLocalVersion,
-  downloadUrl: APP_URLS.DOWNLOAD_PAGE,
-  externalUrlToOpen: '',
-  storeUrl: null,
-  source: BUILD_CHANNEL,
-  couldUpgrade: false,
-  changelog: '',
-});
+const RemoteVersionAtom = atomByMMKV<MergedRemoteVersion>(
+  '@RemoteVersionMMKV',
+  {
+    version: appLocalVersion,
+    downloadUrl: APP_URLS.DOWNLOAD_PAGE,
+    externalUrlToOpen: '',
+    storeUrl: null,
+    source: BUILD_CHANNEL,
+    couldUpgrade: false,
+    changelog: '',
+  },
+);
 const localVersionAtom = atom<string>(appLocalVersion);
 
 export function useUpgradeInfo(options?: { isTop?: boolean }) {

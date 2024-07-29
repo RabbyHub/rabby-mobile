@@ -21,7 +21,7 @@ const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
 
 export default function TransactionNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   // console.log('============== TransactionNavigator Render =========');
 
   const colors = useThemeColors();
@@ -30,14 +30,13 @@ export default function TransactionNavigator() {
 
   return (
     <TransactionStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         ...headerPresets.withBgCard2,
         headerShadowVisible: false,
         headerShown: true,
-      }}>
+      })}>
       <TransactionStack.Screen
         name={RootNames.History}
         component={HistoryScreen}
@@ -49,22 +48,20 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Send',
           ...headerPresets.withBg2,
-        }}
+        })}
       />
       <TransactionStack.Screen
         name={RootNames.Receive}
         component={ReceiveScreen}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: '',
           headerShadowVisible: false,
           headerShown: true,
           headerTransparent: true,
-        }}
+        })}
       />
       <TransactionStack.Screen
         name={RootNames.HistoryFilterScam}
@@ -76,29 +73,26 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.GnosisTransactionQueue}
         component={GnosisTransactionQueue}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Queue',
           ...headerPresets.withBgCard2,
-        }}
+        })}
       />
       {/* ReceiveScreen */}
       {/* SwapScreen */}
       <TransactionStack.Screen
         name={RootNames.Swap}
         component={Swap}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Swap',
           ...headerPresets.withBg2,
-        }}
+        })}
       />
 
       <TransactionStack.Screen
         name={RootNames.GasTopUp}
         component={GasTopUp}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Instant Gas Top Up',
           ...headerPresets.withBgCard2,
           headerTintColor: colors?.['neutral-title-2'],
@@ -109,20 +103,19 @@ export default function TransactionNavigator() {
           headerStyle: {
             backgroundColor: 'transparent',
           },
-        }}
+        })}
       />
 
       <TransactionStack.Screen
         name={RootNames.Approvals}
         component={ApprovalsScreen}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Approvals',
           ...headerPresets.withBgCard2,
           headerStyle: {
             backgroundColor: colors?.['neutral-bg-2'],
           },
-        }}
+        })}
       />
     </TransactionStack.Navigator>
   );

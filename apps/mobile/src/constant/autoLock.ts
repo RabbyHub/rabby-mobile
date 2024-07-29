@@ -16,8 +16,8 @@ export const TIME_SETTINGS = [
   },
   {
     key: '1h',
-    label: '30 minutes',
-    milliseconds: 30 * 60 * 1000,
+    label: '1 hour',
+    milliseconds: 60 * 60 * 1000,
   },
   {
     key: '10m',
@@ -32,5 +32,5 @@ export const TIME_SETTINGS = [
 ] as const;
 
 export const DEFAULT_AUTO_LOCK_MINUTES = Math.floor(
-  TIME_SETTINGS.find(item => item.key === '5m')!.milliseconds / (1000 * 60),
+  TIME_SETTINGS.find(item => item.key === '24h')!.milliseconds / (1000 * 60),
 );
