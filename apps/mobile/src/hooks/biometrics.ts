@@ -152,7 +152,7 @@ export function useToggleBiometricsEnabled() {
         async onFinished({ validatedPassword }) {
           toggleBiometrics(nextEnabled, {
             validatedPassword,
-            tipLoading: true,
+            // tipLoading: true,
           });
         },
       });

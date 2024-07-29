@@ -14,11 +14,11 @@ export const TIME_SETTINGS = [
     label: '4 hours',
     milliseconds: 4 * 60 * 60 * 1000,
   },
-  // {
-  //   key: '30m',
-  //   label: '30 minutes',
-  //   milliseconds: 30 * 60 * 1000,
-  // },
+  {
+    key: '1h',
+    label: '1 hour',
+    milliseconds: 60 * 60 * 1000,
+  },
   {
     key: '10m',
     label: '10 minutes',

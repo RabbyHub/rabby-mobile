@@ -103,7 +103,7 @@ export function useTipedUserEnableBiometrics() {
       return new Promise<typeof result>((resolve, reject) => {
         Alert.alert(
           `Enable ${computed.defaultTypeLabel}`,
-          `You can also enable it on Settings later`,
+          `Enable ${computed.defaultTypeLabel} to Unlock Rabby Wallet`,
           [
             {
               text: 'No',
