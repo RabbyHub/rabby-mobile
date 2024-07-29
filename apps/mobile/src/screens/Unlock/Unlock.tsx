@@ -35,7 +35,7 @@ import {
   RequestGenericPurpose,
   parseKeychainError,
 } from '@/core/apis/keychain';
-import { useUnlockApp } from './hooks';
+import { useTipedUserEnableBiometrics, useUnlockApp } from './hooks';
 import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
@@ -93,6 +93,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
     afterLeaveFromUnlock();
   }, [navigation, afterLeaveFromUnlock]);
 
+  const { tipEnableBiometrics } = useTipedUserEnableBiometrics();
+
   const formik = useFormik({
     initialValues: INIT_DATA,
     validationSchema: yupSchema,
@@ -103,7 +105,9 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
 
       if (getFormikErrorsCount(errors)) return;
 
-      const hideToast = toastUnlocking();
+      const { needAlert } = await tipEnableBiometrics(values.password);
+
+      const hideToast = needAlert ? null : toastUnlocking();
       try {
         const result = await unlockApp(values.password);
         if (result.error) {
@@ -114,7 +118,7 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
         console.error(error);
       } finally {
         checkUnlocked();
-        hideToast();
+        hideToast?.();
         hasAutoUnlockByBiometricsRef.current = true;
       }
     },
@@ -220,7 +224,7 @@ export default function UnlockScreen() {
     }
   }, [unlockApp, t]);
 
-  const triggerUnlockWithBiometrics = useCallback(async () => {
+  const manualUnlockWithBiometrics = useCallback(async () => {
     const hideToast = toastUnlocking();
     await unlockWithBiometrics().finally(() => checkUnlocked());
     hideToast();
@@ -235,11 +239,11 @@ export default function UnlockScreen() {
       if (hasAutoUnlockByBiometricsRef.current) return;
       if (!isBiometricsEnabled) return;
 
-      await triggerUnlockWithBiometrics().finally(() => {
+      await manualUnlockWithBiometrics().finally(() => {
         hasAutoUnlockByBiometricsRef.current = true;
       });
     })();
-  }, [isBiometricsEnabled, triggerUnlockWithBiometrics]);
+  }, [isBiometricsEnabled, manualUnlockWithBiometrics]);
 
   const { registerPreventEffect } = usePreventGoBack({
     navigation,
@@ -315,7 +319,7 @@ export default function UnlockScreen() {
             <View style={styles.biometricsBtns}>
               <TouchableView
                 style={styles.biometricsBtn}
-                onPress={triggerUnlockWithBiometrics}>
+                onPress={manualUnlockWithBiometrics}>
                 <BiometricsIcon isFaceID={isFaceID} />
               </TouchableView>
             </View>
