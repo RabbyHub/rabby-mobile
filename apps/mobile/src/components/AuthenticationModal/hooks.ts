@@ -4,10 +4,7 @@ import { apisKeychain, apisLock } from '@/core/apis';
 import { useBiometricsComputed } from '@/hooks/biometrics';
 import { useRefState } from '@/hooks/common/useRefState';
 import { usePasswordStatus } from '@/hooks/useLock';
-import {
-  ValidationBehaviorOnFinishedContext,
-  ValidationBehaviorProps,
-} from '@/core/apis/lock';
+import { ValidationBehaviorOnFinishedContext } from '@/core/apis/lock';
 
 export const enum BioAuthStage {
   idle = 0,
@@ -24,6 +21,45 @@ export function coerceAuthType(
   return avaiables.includes(target) ? target : avaiables[0] || 'password';
 }
 
+export function filterAuthTypes(
+  authTypes: apisLock.UIAuthType[],
+  context: {
+    isBiometricsEnabled: boolean;
+    isUseCustomPwd: boolean;
+  },
+) {
+  const { isBiometricsEnabled, isUseCustomPwd } = context;
+  let types = authTypes.filter(type => {
+    if (type === 'none') return true;
+    if (isUseCustomPwd) {
+      return (
+        type === 'password' || (type === 'biometrics' && isBiometricsEnabled)
+      );
+    }
+
+    return false;
+  });
+
+  if (types.length === 0) {
+    console.warn('No available auth type, fallback to password');
+    types = isUseCustomPwd ? ['password'] : ['none'];
+  }
+
+  if (types.length > 1 && types.some(x => x === 'none')) {
+    console.warn(
+      '`none` authType is not allowed with other types, trimming it.',
+    );
+    types = types.filter(x => x !== 'none');
+  }
+
+  return {
+    availableAuthTypes: types,
+    disableValidation: (['biometrics', 'password'] as const).every(
+      x => !types.includes(x),
+    ),
+  };
+}
+
 export function useAuthenticationModal(options: {
   authTypes: apisLock.UIAuthType[];
 }) {
@@ -38,27 +74,11 @@ export function useAuthenticationModal(options: {
   );
 
   const { availableAuthTypes, disableValidation } = useMemo(() => {
-    let types = authTypes.filter(
-      type =>
-        type === 'none' ||
-        type === 'password' ||
-        (type === 'biometrics' && bioComputed.isBiometricsEnabled),
-    );
-
-    if (types.length > 1 && types.some(x => x === 'none')) {
-      console.warn(
-        '`none` authTypes is not allowed with other types, trimming it.',
-      );
-      types = types.filter(x => x !== 'none');
-    }
-
-    return {
-      availableAuthTypes: types,
-      disableValidation: (['biometrics', 'password'] as const).every(
-        x => !types.includes(x),
-      ),
-    };
-  }, [authTypes, bioComputed.isBiometricsEnabled]);
+    return filterAuthTypes(authTypes, {
+      isBiometricsEnabled: bioComputed.isBiometricsEnabled,
+      isUseCustomPwd,
+    });
+  }, [authTypes, isUseCustomPwd, bioComputed.isBiometricsEnabled]);
 
   const { stateRef: bioAuthRef, setRefState: setBioAuth } = useRefState({
     stage: BioAuthStage.idle,

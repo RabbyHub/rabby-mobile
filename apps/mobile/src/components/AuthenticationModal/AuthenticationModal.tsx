@@ -29,7 +29,7 @@ import { Button } from '../Button';
 import { useRefState } from '@/hooks/common/useRefState';
 import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
-import { BioAuthStage, coerceAuthType } from './hooks';
+import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -247,34 +247,11 @@ export const AuthenticationModal = ({
   );
 
   const { availableAuthTypes, disableValidation } = useMemo(() => {
-    let types = authTypes.filter(
-      type =>
-        type === 'none' ||
-        type === 'password' ||
-        (type === 'biometrics' && bioComputed.isBiometricsEnabled),
-    );
-
-    if (types.length > 1 && types.some(x => x === 'none')) {
-      console.warn(
-        '`none` authType is not allowed with other types, trimming it.',
-      );
-      types = types.filter(x => x !== 'none');
-    }
-
-    // if (checklist?.length) {
-    //   // ensure 'password' exist and is the first one
-    //   types = types.filter(x => x !== 'password');
-    //   types.unshift('password');
-    //   console.debug(`types must have 'password' as the first one on checklist`);
-    // }
-
-    return {
-      availableAuthTypes: types,
-      disableValidation: (['biometrics', 'password'] as const).every(
-        x => !types.includes(x),
-      ),
-    };
-  }, [/* checklist,  */ authTypes, bioComputed.isBiometricsEnabled]);
+    return filterAuthTypes(authTypes, {
+      isBiometricsEnabled: bioComputed.isBiometricsEnabled,
+      isUseCustomPwd,
+    });
+  }, [authTypes, isUseCustomPwd, bioComputed.isBiometricsEnabled]);
 
   const { stateRef: bioAuthRef, setRefState: setBioAuth } = useRefState({
     stage: BioAuthStage.idle,
@@ -418,9 +395,11 @@ export const AuthenticationModal = ({
       <AppBottomSheetModalTitle style={styles.modalTitle} title={title} />
 
       <View style={styles.main}>
-        <View style={styles.descWrapper}>
-          {description && <Text style={styles.description}>{description}</Text>}
-        </View>
+        {description && (
+          <View style={styles.descWrapper}>
+            <Text style={styles.description}>{description}</Text>
+          </View>
+        )}
 
         {checklist && checklist?.length > 0 && (
           <View style={styles.checklist}>
@@ -571,7 +550,9 @@ const getStyle = createGetStyles(colors => {
       minHeight: 40,
       // ...makeDebugBorder(),
     },
-    descWrapper: {},
+    descWrapper: {
+      marginTop: 16,
+    },
     inputAndBioArea: {
       // ...makeDebugBorder(),
     },
