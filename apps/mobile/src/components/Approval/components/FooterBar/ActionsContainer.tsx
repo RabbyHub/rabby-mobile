@@ -20,7 +20,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['blue-default'],
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '500',
     },
     wrapper: {
@@ -51,10 +51,6 @@ export interface Props {
   chain?: Chain;
   submitText?: string;
   gasLess?: boolean;
-  /**
-   * @deprecated will be removed in the next version
-   */
-  needHolding?: boolean;
   isPrimary?: boolean;
 }
 

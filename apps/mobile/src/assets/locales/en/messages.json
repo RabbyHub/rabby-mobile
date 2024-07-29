@@ -330,6 +330,8 @@
       "ledgerConnected": "Ledger is connected",
       "importedByLedger": "Imported by Ledger",
       "signAndSubmitButton": "Sign and Create",
+      "confirm": "Confirm",
+      "confirmWithPassword": "Confirm with Password",
       "gasless": {
         "unavailable": "Gas is not enough and not qualify for Free Gas",
         "notEnough": "Gas balance is not enough",
