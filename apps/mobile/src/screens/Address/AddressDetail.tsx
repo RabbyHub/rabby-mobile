@@ -197,7 +197,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         : account.type === KEYRING_TYPE.HdKeyring && count <= 1
         ? 'Delete Address and Seed Phrase'
         : 'Delete Address';
-    const needPassword =
+    const needAuth =
       account.type === KEYRING_TYPE.SimpleKeyring ||
       (account.type === KEYRING_TYPE.HdKeyring && count <= 1);
 
@@ -205,16 +205,18 @@ const AddressInfo = (props: AddressInfoProps) => {
       confirmText: t('page.manageAddress.confirm'),
       cancelText: t('page.manageAddress.cancel'),
       title,
-      description: needPassword
+      description: needAuth
         ? t('page.addressDetail.delete-desc-needpassword')
         : t('page.addressDetail.delete-desc'),
-      checklist: needPassword
+      checklist: needAuth
         ? [
             t('page.manageAddress.delete-checklist-1'),
             t('page.manageAddress.delete-checklist-2'),
           ]
         : undefined,
-      disableValidation: !needPassword,
+      ...(!needAuth
+        ? { authType: ['none'] }
+        : { authType: ['password', 'biometrics'] }),
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
         await apisLock.throwErrorIfInvalidPwd(password);

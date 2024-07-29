@@ -180,7 +180,7 @@ export async function requestGenericPassword<
 >(options: {
   purpose?: T;
   /**
-   * @description will be called and AWAIT on purpose `DECRYPT_PWD`
+   * @description will be called and AWAITED on purpose `DECRYPT_PWD`
    */
   onPlainPassword?: (password: string) => void | Promise<void>;
 }): Promise<null | DefaultRet> {

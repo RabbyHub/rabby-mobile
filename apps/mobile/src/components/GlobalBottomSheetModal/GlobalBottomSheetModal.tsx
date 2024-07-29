@@ -52,6 +52,7 @@ export const GlobalBottomSheetModal = () => {
     }
 
     currentModal.current?.present();
+    events.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
 
   const [getApproval] = useApproval();
@@ -165,6 +166,11 @@ export const GlobalBottomSheetModal = () => {
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
         const enableDynamicSizing = bottomSheetModalProps?.enableDynamicSizing;
 
+        const modalViewProps = {
+          ...modal.params,
+          $createParams: modal.params,
+        };
+
         return (
           <AppBottomSheetModal
             topInset={height.top}
@@ -182,10 +188,10 @@ export const GlobalBottomSheetModal = () => {
             children={
               enableDynamicSizing ? (
                 <BottomSheetView>
-                  <ModalView {...modal.params} />
+                  <ModalView {...modalViewProps} />
                 </BottomSheetView>
               ) : (
-                <ModalView {...modal.params} />
+                <ModalView {...modalViewProps} />
               )
             }
             stackBehavior="push"

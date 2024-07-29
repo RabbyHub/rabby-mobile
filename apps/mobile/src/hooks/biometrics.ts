@@ -1,4 +1,4 @@
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { BIOMETRY_TYPE } from 'react-native-keychain';
 
@@ -30,6 +30,29 @@ biometricsInfoAtom.onMount = setter => {
     setter(prev => ({ ...prev, supportedBiometryType: supportedType }));
   });
 };
+export function useBiometricsComputed() {
+  const biometrics = useAtomValue(biometricsInfoAtom);
+
+  const computed = useMemo(() => {
+    const { authEnabled, supportedBiometryType } = biometrics;
+    const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
+    return {
+      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
+      settingsAuthEnabled: authEnabled,
+      couldSetupBiometrics: !!supportedBiometryType,
+      supportedBiometryType,
+      defaultTypeLabel: isFaceID
+        ? 'Face ID'
+        : IS_IOS
+        ? 'Touch ID'
+        : 'Fingerprint',
+      isFaceID,
+    };
+  }, [biometrics]);
+
+  return computed;
+}
+
 const isFetchingBiometricsRef = { current: false };
 export function useBiometrics(options?: { autoFetch?: boolean }) {
   const [biometrics, setBiometrics] = useAtom(biometricsInfoAtom);
@@ -106,64 +129,13 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
     }
   }, [options?.autoFetch, fetchBiometrics]);
 
-  const computed = useMemo(() => {
-    const { authEnabled, supportedBiometryType } = biometrics;
-    const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
-    return {
-      isBiometricsEnabled: authEnabled && !!supportedBiometryType,
-      settingsAuthEnabled: authEnabled,
-      couldSetupBiometrics: !!supportedBiometryType,
-      supportedBiometryType,
-      defaultTypeLabel: isFaceID
-        ? 'Face ID'
-        : IS_IOS
-        ? 'Touch ID'
-        : 'Fingerprint',
-      isFaceID,
-    };
-  }, [biometrics]);
+  const computed = useBiometricsComputed();
 
   return {
     biometrics,
     computed,
     fetchBiometrics,
     toggleBiometrics,
-  };
-}
-
-export function useToggleBiometricsEnabled() {
-  const { computed, toggleBiometrics } = useBiometrics();
-
-  const requestToggleBiometricsEnabled = useCallback(
-    async (nextEnabled: boolean) => {
-      AuthenticationModal.show({
-        confirmText: strings('global.confirm'),
-        cancelText: strings('global.cancel'),
-        title: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enable')
-          : strings('component.AuthenticationModals.biometrics.disable'),
-        description: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enableTip')
-          : strings('component.AuthenticationModals.biometrics.disableTip'),
-        disableValidation: !nextEnabled,
-        validationHandler: async (password: string) => {
-          return apisLock.throwErrorIfInvalidPwd(password);
-        },
-        async onFinished({ validatedPassword }) {
-          toggleBiometrics(nextEnabled, {
-            validatedPassword,
-            // tipLoading: true,
-          });
-        },
-      });
-    },
-    [toggleBiometrics],
-  );
-
-  return {
-    isBiometricsEnabled: computed.isBiometricsEnabled,
-    couldSetupBiometrics: computed.couldSetupBiometrics,
-    requestToggleBiometricsEnabled,
   };
 }
 
@@ -247,7 +219,7 @@ export function useVerifyByBiometrics() {
         } else {
           await validationHandler?.(rawPassword);
           setState(prev => ({ ...prev, status: 'success' }));
-          onFinished?.({ validatedPassword: rawPassword });
+          onFinished?.({ getValidatedPassword: () => rawPassword });
         }
       } catch (error) {
         setState(prev => ({ ...prev, status: 'failed' }));

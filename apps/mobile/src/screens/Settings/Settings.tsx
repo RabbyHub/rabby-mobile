@@ -20,8 +20,6 @@ import {
   RcAutoLockTime,
   RcCountdown,
   RcManagePassword,
-  RcIconFingerprint,
-  RcIconFaceId,
   RcScreenshot,
   RcScreenRecord,
 } from '@/assets/icons/settings';
@@ -79,6 +77,8 @@ import {
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import useMount from 'react-use/lib/useMount';
+import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -135,8 +135,8 @@ function SettingsBlocks() {
   ) as SettingNavigatorParamList['Settings'];
 
   // useMount(() => {
-  //   console.log(
-  //     '[feat] navParams?.enterActionType',
+  //   console.debug(
+  //     'navParams?.enterActionType',
   //     navParams?.enterActionType,
   //   );
   //   switch (navParams?.enterActionType) {
@@ -200,7 +200,7 @@ function SettingsBlocks() {
           },
           {
             label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
-            icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+            icon: getBiometricsIcon(isFaceID),
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
@@ -511,17 +511,35 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Test Biometrics',
-              icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+              label: 'Test Authentication Modal',
+              icon: getBiometricsIcon(isFaceID),
               onPress: () => {
-                startBiometricsVerification({
-                  onFinished: () => {
-                    abortBiometricsVerification();
+                AuthenticationModal.show({
+                  title: 'Test Authentication Modal',
+                  authType: ['biometrics', 'password'],
+                  onFinished: ctx => {
+                    toast.show(JSON.stringify(ctx, null, 2));
+                  },
+                  onCancel: () => {
+                    toast.show(
+                      'Canceled, But this handler has beed deprecated',
+                    );
                   },
                 });
               },
-              disabled: disabledBiometrics || !isBiometricsEnabled,
             },
+            // {
+            //   label: 'Test Biometrics',
+            //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+            //   onPress: () => {
+            //     startBiometricsVerification({
+            //       onFinished: () => {
+            //         abortBiometricsVerification();
+            //       },
+            //     });
+            //   },
+            //   disabled: disabledBiometrics || !isBiometricsEnabled,
+            // },
           ],
         },
       }),
