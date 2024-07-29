@@ -279,7 +279,9 @@ export const GasSelectorHeader = ({
     }
   };
 
+  const pressedConfirmRef = useRef(false);
   const handleModalConfirmGas = () => {
+    pressedConfirmRef.current = true;
     handleConfirmGas();
     setModalVisible(false);
   };
@@ -553,6 +555,7 @@ export const GasSelectorHeader = ({
   useEffect(() => {
     if (modalVisible) {
       modalRef.current?.present();
+      pressedConfirmRef.current = false;
     } else {
       modalRef.current?.close();
     }
@@ -584,7 +587,9 @@ export const GasSelectorHeader = ({
   const [isGasHovering, setIsGasHovering] = useState(false);
 
   const handleClosePopup = () => {
-    console.log('dismiss');
+    if (pressedConfirmRef.current) {
+      return;
+    }
     setCustomGas(undefined);
     setChangedCustomGas(false);
     setSelectedGas(rawSelectedGas);
@@ -711,7 +716,6 @@ export const GasSelectorHeader = ({
         handleStyle={{
           backgroundColor: colors['neutral-bg2'],
         }}
-        enableDismissOnClose={false}
         onDismiss={handleClosePopup}>
         <BottomSheetView style={styles.modalWrap}>
           <AppBottomSheetModalTitle title={t('page.signTx.gasSelectorTitle')} />
