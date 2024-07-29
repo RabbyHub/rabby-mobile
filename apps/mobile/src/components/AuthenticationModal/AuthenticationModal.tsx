@@ -293,7 +293,7 @@ export const AuthenticationModal = ({
 
   const { stateRef: bioAuthRef, setRefState: setBioAuth } = useRefState({
     stage: BioAuthStage.idle,
-    once: false,
+    restCount: 0,
   });
   const [authState, setAuthing] = React.useState<AuthState & {}>({
     // isBioAuthenticating: false,
@@ -330,7 +330,7 @@ export const AuthenticationModal = ({
         setBioAuth(prev => ({
           ...prev,
           stage: BioAuthStage['prepare'],
-          once: false,
+          restCount: 0,
         }));
     },
     [setAuthing, setBioAuth],
@@ -340,15 +340,15 @@ export const AuthenticationModal = ({
     setError('');
   }, [password]);
 
-  useMount(() => {
-    if (authState.authType === 'biometrics' && !hasCheckFailed) {
-      setBioAuth(prev => ({
-        ...prev,
-        // stage: BioAuthStage['prepare'],
-        once: false,
-      }));
-    }
-  });
+  // useMount(() => {
+  //   if (authState.authType === 'biometrics' && !hasCheckFailed) {
+  //     setBioAuth(prev => ({
+  //       ...prev,
+  //       // stage: BioAuthStage['prepare'],
+  //       restCount: 0,
+  //     }));
+  //   }
+  // });
 
   const handleAuthWithBio = React.useCallback(async () => {
     if (hasCheckFailed) return;
@@ -382,7 +382,7 @@ export const AuthenticationModal = ({
       setBioAuth(prev => ({
         ...prev,
         stage: BioAuthStage['idle'],
-        once: true,
+        restCount: 0,
       }));
     }
   }, [
@@ -399,7 +399,7 @@ export const AuthenticationModal = ({
       setBioAuth(prev => ({
         ...prev,
         stage: BioAuthStage['prepare'],
-        once: false,
+        restCount: 1,
       }));
       setTimeout(handleAuthWithBio, 100);
     } else {
@@ -411,7 +411,7 @@ export const AuthenticationModal = ({
   React.useEffect(() => {
     if (!bioComputed.isBiometricsEnabled) return;
     if (authState.authType !== 'biometrics') return;
-    if (bioAuthRef.current.once) return;
+    if (bioAuthRef.current.restCount <= 0) return;
 
     if (prevHasCheckFailed && !hasCheckFailed) {
       setBioAuth(prev => ({ ...prev, stage: BioAuthStage['prepare'] }));
