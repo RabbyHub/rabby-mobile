@@ -11,12 +11,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { IS_IOS } from '@/core/native/utils';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
-
-type Props = {
-  color?: ColorOrVariant;
-  faceIdColor?: ColorOrVariant;
-  fingerprintColor?: ColorOrVariant;
-} & Omit<SvgProps, 'color'>;
+import { StyleSheet } from 'react-native';
 
 const DEFT_COLOR = 'neutral-body';
 
@@ -34,10 +29,18 @@ export function getBiometricsIcon(isFaceID: boolean = IS_IOS) {
   return isFaceID ? RcIconFaceId : RcIconFingerprint;
 }
 
+type Props = {
+  color?: ColorOrVariant;
+  faceIdColor?: ColorOrVariant;
+  fingerprintColor?: ColorOrVariant;
+  size?: number;
+} & Omit<SvgProps, 'color'>;
+
 export function BiometricsIcon({
   color = DEFT_COLOR,
   faceIdColor = color,
   fingerprintColor = color,
+  size = 20,
   ...svgProps
 }: Props) {
   const { isLight } = useThemeStyles(getStyles);
@@ -55,7 +58,16 @@ export function BiometricsIcon({
     };
   }, [bioComputed, isLight, color, faceIdColor, fingerprintColor]);
 
-  return <IconComp color={svgColor} {...svgProps} />;
+  return (
+    <IconComp
+      color={svgColor}
+      {...svgProps}
+      style={StyleSheet.flatten([
+        !size ? {} : { width: size, height: size },
+        svgProps.style,
+      ])}
+    />
+  );
 }
 
 const getStyles = createGetStyles(() => ({}));

@@ -46,7 +46,7 @@ export type ButtonProps = TouchableOpacityProps &
     disabledTitleStyle?: StyleProp<TextStyle>;
     ghost?: boolean;
     iconRight?: boolean;
-    icon?: ReactNode;
+    icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
     iconContainerStyle?: StyleProp<ViewStyle>;
   };
 
@@ -214,6 +214,13 @@ export const Button = ({
     busy: !!loading,
   };
 
+  const iconNode = useMemo(() => {
+    if (typeof icon === 'function') {
+      return icon({ titleStyle });
+    }
+    return icon;
+  }, [icon, titleStyle]);
+
   return (
     <View
       style={[styles.container, containerStyle]}
@@ -238,13 +245,13 @@ export const Button = ({
           )}
           {(!loading || showTitleOnLoading) && (
             <>
-              {icon && !iconRight && (
+              {iconNode && !iconRight && (
                 <View
                   style={StyleSheet.flatten([
                     styles.iconContainer,
                     iconContainerStyle,
                   ])}>
-                  {icon}
+                  {iconNode}
                 </View>
               )}
               {/* Title for Button */}
@@ -253,13 +260,13 @@ export const Button = ({
                   style: titleStyle,
                   ...titleProps,
                 })}
-              {icon && iconRight && (
+              {iconNode && iconRight && (
                 <View
                   style={StyleSheet.flatten([
                     styles.iconContainer,
                     iconContainerStyle,
                   ])}>
-                  {icon}
+                  {iconNode}
                 </View>
               )}
             </>

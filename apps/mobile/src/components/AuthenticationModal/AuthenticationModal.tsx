@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
@@ -76,13 +76,7 @@ function BioButton({
       ]}
       disabled={disabled}
       onPress={handlePress}>
-      <BiometricsIcon
-        {...iconProps}
-        style={StyleSheet.flatten([
-          { width: 20, height: 20 },
-          iconProps?.style,
-        ])}
-      />
+      <BiometricsIcon {...iconProps} size={20} />
     </TouchableView>
   );
 }
@@ -105,20 +99,24 @@ function FooterButtonGroup({
   onCancel,
   onConfirm,
   authState,
+  bioActive,
   style,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
   authState: AuthState;
+  bioActive: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const { t } = useTranslation();
-  const { styles: footerStyles } = useThemeStyles(getFooterStyle);
+  const { styles: footerStyles, colors } = useThemeStyles(getFooterStyle);
 
   const { showConfirm } = useMemo(() => {
     return {
       // showCancel: ['none', 'password', 'biometrics'].includes(authState.authType),
-      showConfirm: ['none', 'password'].includes(authState.authType),
+      showConfirm: ['none', 'password', 'biometrics'].includes(
+        authState.authType,
+      ),
     };
   }, [authState.authType]);
 
@@ -135,6 +133,14 @@ function FooterButtonGroup({
         <>
           <View style={footerStyles.btnGap} />
           <Button
+            icon={ctx =>
+              authState.authType !== 'biometrics' ? null : (
+                <BiometricsIcon
+                  size={18}
+                  color={bioActive ? '#FF2D55' : ctx.titleStyle?.color}
+                />
+              )
+            }
             title={t('global.Confirm')}
             containerStyle={footerStyles.btnContainer}
             buttonStyle={footerStyles.confirmStyle}
@@ -151,13 +157,14 @@ const getFooterStyle = createGetStyles(colors => {
   return {
     buttonGroup: {
       paddingHorizontal: 20,
+      paddingVertical: 20,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       borderTopColor: colors['neutral-line'],
-      borderTopWidth: StyleSheet.hairlineWidth,
-      // paddingTop: 20,
-      // marginTop: 28,
+      // borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopWidth: 0.5,
+      backgroundColor: colors['neutral-bg1'],
     },
 
     btnContainer: {
@@ -189,13 +196,18 @@ const getFooterStyle = createGetStyles(colors => {
       borderRadius: 8,
       width: '100%',
       height: '100%',
+      // ...makeDebugBorder(),
+      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     confirmTitleStyle: {
+      // ...makeDebugBorder('yellow'),
       fontSize: 15,
       lineHeight: 18,
       fontWeight: '500',
       color: colors['neutral-title2'],
-      flex: 1,
+      // flex: 1,
     },
   };
 });
@@ -227,7 +239,7 @@ export const AuthenticationModal = ({
   const { t } = useTranslation();
   const { styles, colors } = useThemeStyles(getStyle);
   const { safeSizes } = useSafeAndroidBottomSizes({
-    footerButtonGroupMb: 20,
+    footerButtonGroupMb: 12,
   });
 
   const { isUseCustomPwd } = usePasswordStatus();
@@ -288,7 +300,7 @@ export const AuthenticationModal = ({
     authType: coerceAuthType(availableAuthTypes[0], availableAuthTypes),
   });
 
-  const handleSubmit = React.useCallback(async () => {
+  const handleSubmitPassword = React.useCallback(async () => {
     if (hasCheckFailed) return;
 
     try {
@@ -311,11 +323,36 @@ export const AuthenticationModal = ({
     validationHandler,
   ]);
 
+  const handleSwitchToBioAndPrepare = React.useCallback(
+    (noPrepare = true) => {
+      setAuthing(prev => ({ ...prev, authType: 'biometrics' }));
+      !noPrepare &&
+        setBioAuth(prev => ({
+          ...prev,
+          stage: BioAuthStage['prepare'],
+          once: false,
+        }));
+    },
+    [setAuthing, setBioAuth],
+  );
+
+  React.useEffect(() => {
+    setError('');
+  }, [password]);
+
+  useMount(() => {
+    if (authState.authType === 'biometrics' && !hasCheckFailed) {
+      setBioAuth(prev => ({
+        ...prev,
+        // stage: BioAuthStage['prepare'],
+        once: false,
+      }));
+    }
+  });
+
   const handleAuthWithBio = React.useCallback(async () => {
     if (hasCheckFailed) return;
 
-    // if (authState.isBioAuthenticating) return;
-    // setAuthing(prev => ({ ...prev, isBioAuthenticating: true }));
     if (bioAuthRef.current.stage === BioAuthStage['authenticating']) return;
 
     setBioAuth(prev => ({ ...prev, stage: BioAuthStage['authenticating'] }));
@@ -357,28 +394,18 @@ export const AuthenticationModal = ({
     onFinished,
   ]);
 
-  const handlePressBioIcon = React.useCallback(() => {
-    setBioAuth(prev => ({
-      ...prev,
-      stage: BioAuthStage['prepare'],
-      once: false,
-    }));
-    setAuthing(prev => ({ ...prev, authType: 'biometrics' }));
-  }, [setBioAuth]);
-
-  React.useEffect(() => {
-    setError('');
-  }, [password]);
-
-  useMount(() => {
-    if (authState.authType === 'biometrics' && !hasCheckFailed) {
+  const handleConfirm = useCallback(() => {
+    if (authState.authType === 'biometrics') {
       setBioAuth(prev => ({
         ...prev,
         stage: BioAuthStage['prepare'],
         once: false,
       }));
+      setTimeout(handleAuthWithBio, 100);
+    } else {
+      handleSubmitPassword();
     }
-  });
+  }, [authState.authType, setBioAuth, handleAuthWithBio, handleSubmitPassword]);
 
   const prevHasCheckFailed = usePrevious(hasCheckFailed);
   React.useEffect(() => {
@@ -389,7 +416,6 @@ export const AuthenticationModal = ({
     if (prevHasCheckFailed && !hasCheckFailed) {
       setBioAuth(prev => ({ ...prev, stage: BioAuthStage['prepare'] }));
     }
-    // if (authState.authType !== 'biometrics') return;
 
     const timer = setTimeout(handleAuthWithBio, 250);
 
@@ -409,7 +435,7 @@ export const AuthenticationModal = ({
 
   return (
     <View>
-      <AppBottomSheetModalTitle title={title} />
+      <AppBottomSheetModalTitle style={styles.modalTitle} title={title} />
 
       <View style={styles.main}>
         <View style={styles.descWrapper}>
@@ -436,6 +462,8 @@ export const AuthenticationModal = ({
         <View
           style={[
             styles.inputAndBioArea,
+            authState.authType === 'password' && styles.inputAreaWithPwd,
+            authState.authType === 'biometrics' && styles.inputAreaWithBio,
             disableValidation && styles.noValidationArea,
           ]}>
           {!disableValidation && authState.authType === 'password' && (
@@ -458,28 +486,25 @@ export const AuthenticationModal = ({
                     t('component.AuthenticationModal.passwordPlaceholder')
                   }
                 />
-                {
-                  /* __DEV__ &&  */ bioComputed.isBiometricsEnabled && (
-                    <BioButton
-                      disabled={hasCheckFailed}
-                      handlePress={handlePressBioIcon}
-                    />
-                  )
-                }
+                {__DEV__ && bioComputed.isBiometricsEnabled && (
+                  <BioButton
+                    disabled={hasCheckFailed}
+                    handlePress={handleSwitchToBioAndPrepare}
+                  />
+                )}
               </View>
               <Text style={styles.errorText}>{error}</Text>
             </>
           )}
-          {!disableValidation && authState.authType === 'biometrics' && (
+          {/* {!disableValidation && authState.authType === 'biometrics' && (
             <View style={styles.bioIconWrapper}>
-              {/* <Text style={{ color: colors['neutral-title-1'], fontSize: 14, lineHeight: 18, flex: 1, }}>{t('component.AuthenticationModal.biometricsAuth')}</Text> */}
               <BioButton
                 disabled={hasCheckFailed}
-                handlePress={handlePressBioIcon}
+                handlePress={handleSwitchToBioAndPrepare}
                 iconProps={{
                   color:
                     bioAuthRef.current.stage !== BioAuthStage['idle']
-                      ? /* '#FF2D55' */ 'blue-default'
+                      ? 'blue-default'
                       : 'neutral-body',
                   style: {
                     height: SIZES.bioAuthButtonSize,
@@ -488,17 +513,18 @@ export const AuthenticationModal = ({
                 }}
               />
             </View>
-          )}
+          )} */}
         </View>
       </View>
       <FooterButtonGroup
         authState={authState}
+        bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
           { marginBottom: safeSizes.footerButtonGroupMb },
         ])}
         onCancel={$createParams.onCancel ?? noop}
-        onConfirm={handleSubmit}
+        onConfirm={handleConfirm}
       />
     </View>
   );
@@ -548,6 +574,7 @@ AuthenticationModal.show = async (
 
 const getStyle = createGetStyles(colors => {
   return {
+    modalTitle: { marginBottom: 0, paddingTop: 12 },
     description: {
       color: colors['neutral-body'],
       fontSize: 14,
@@ -561,13 +588,20 @@ const getStyle = createGetStyles(colors => {
     },
     main: {
       paddingHorizontal: 20,
+      minHeight: 40,
+      // ...makeDebugBorder(),
     },
     descWrapper: {},
     inputAndBioArea: {
+      // ...makeDebugBorder(),
+    },
+    inputAreaWithPwd: {
       paddingTop: 24,
       paddingBottom: 24,
       height: SIZES.inputAndBioAreaHeight,
-      // ...makeDebugBorder(),
+    },
+    inputAreaWithBio: {
+      height: 12,
     },
     noValidationArea: {
       paddingTop: 0,

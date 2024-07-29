@@ -216,7 +216,7 @@ const AddressInfo = (props: AddressInfoProps) => {
         : undefined,
       ...(!needAuth
         ? { authType: ['none'] }
-        : { authType: ['password', 'biometrics'] }),
+        : { authType: ['biometrics', 'password'] }),
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
         await apisLock.throwErrorIfInvalidPwd(password);
