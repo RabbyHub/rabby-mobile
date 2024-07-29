@@ -333,7 +333,7 @@ export const useTokens = (
         ...prev,
         list: [
           ...filterDisplayToken(_tokens, blocked),
-          ...formattedCustomTokenList,
+          // ...formattedCustomTokenList,
         ],
       };
     });

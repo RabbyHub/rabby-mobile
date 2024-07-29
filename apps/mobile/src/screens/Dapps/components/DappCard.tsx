@@ -23,6 +23,7 @@ import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
 import { makeTriangleStyle } from '@/utils/styles';
 import { Tip } from '@/components';
 import { findChain } from '@/utils/chain';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 
 export const DappCardListBy = ({
   data,
@@ -121,12 +122,20 @@ export const DappCard = ({
           {isActive ? <View style={styles.dappIconCircle} /> : null}
           <>
             {data?.isConnected && chain ? (
-              <Image
-                source={{
-                  uri: chain?.logo,
-                }}
-                style={styles.chainIcon}
-              />
+              chain.isTestnet ? (
+                <TestnetChainLogo
+                  name={chain.name}
+                  style={styles.chainIcon}
+                  size={16}
+                />
+              ) : (
+                <Image
+                  source={{
+                    uri: chain?.logo,
+                  }}
+                  style={styles.chainIcon}
+                />
+              )
             ) : null}
             {!data?.isConnected ? (
               <RcIconDisconnect style={styles.chainIcon} />
