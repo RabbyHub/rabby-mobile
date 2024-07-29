@@ -22,6 +22,7 @@ import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';
 import { customTestnetService } from './customTestnetService';
+import { id } from 'ethers/lib/utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -150,6 +151,13 @@ export class TransactionHistoryService {
         return;
       }
       if (nonce != null && tx.nonce !== nonce) {
+        return;
+      }
+      if (
+        !findChain({
+          id: tx.chainId,
+        })
+      ) {
         return;
       }
       const group = groups.find(

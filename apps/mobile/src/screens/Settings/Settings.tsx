@@ -1,80 +1,73 @@
 import React, { useCallback, useRef } from 'react';
-import { View, Text, ScrollView, Linking, Platform } from 'react-native';
+import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
+  RcAutoLockTime,
   RcClearPending,
-  RcCustomRpc,
-  RcFollowUs,
-  RcInfo,
-  RcPrivacyPolicy,
-  RcManageAddress,
-  RcSignatureRecord,
-  RcConnectedDapp,
-  RcThemeMode,
-  RcWhitelist,
+  RcCountdown,
   RcEarth,
   RcFeedback,
-  RcLockWallet,
-  RcAutoLockTime,
-  RcCountdown,
-  RcManagePassword,
-  RcIconFingerprint,
+  RcFollowUs,
   RcIconFaceId,
-  RcScreenshot,
+  RcIconFingerprint,
+  RcInfo,
+  RcLockWallet,
+  RcManagePassword,
+  RcPrivacyPolicy,
   RcScreenRecord,
+  RcScreenshot,
+  RcThemeMode,
+  RcWhitelist,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
-import { type SettingConfBlock, Block } from './Block';
-import {
-  SHOULD_SUPPORT_DARK_MODE,
-  useAppTheme,
-  useThemeColors,
-  useThemeStyles,
-} from '@/hooks/theme';
-import { useSheetWebViewTester } from './sheetModals/hooks';
-import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import {
   BUILD_CHANNEL,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
+import {
+  SHOULD_SUPPORT_DARK_MODE,
+  useAppTheme,
+  useThemeStyles,
+} from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { type SettingConfBlock, Block } from './Block';
+import { useSheetWebViewTester } from './sheetModals/hooks';
+import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchToggleType } from '@/components';
-import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
-import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
+import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
+import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 
-import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
-import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
+import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
-import { useUpgradeInfo } from '@/hooks/version';
-import ThemeSelectorModal, {
-  useThemeSelectorModalVisible,
-} from './sheetModals/ThemeSelector';
-import { createGetStyles } from '@/utils/styles';
+import { useIsAllowScreenshot } from '@/hooks/appSettings';
+import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
+import { useUpgradeInfo } from '@/hooks/version';
+import { createGetStyles } from '@/utils/styles';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { StackActions, useFocusEffect } from '@react-navigation/native';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
-import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
-import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
-import { useAutoLockTimeout, useIsAllowScreenshot } from '@/hooks/appSettings';
-import { formatTimeFromNow } from '../Approvals/utils';
-import useInterval from 'react-use/lib/useInterval';
-import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { AutoLockCountDownLabel } from './components/AutoLockCountDownLabel';
+import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
+import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
+import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
+import ThemeSelectorModal, {
+  useThemeSelectorModalVisible,
+} from './sheetModals/ThemeSelector';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -187,14 +180,6 @@ function SettingsBlocks() {
             onPress: () => {
               selectAutolockTimeRef.current?.present();
             },
-          },
-          {
-            label: 'Enable whitelist for sending assets',
-            icon: RcWhitelist,
-            onPress: () => {
-              switchWhitelistRef.current?.toggle();
-            },
-            rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
             label: 'Add Custom Network',

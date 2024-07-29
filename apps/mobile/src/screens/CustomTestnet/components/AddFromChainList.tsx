@@ -17,7 +17,14 @@ import { Input } from '@rneui/themed';
 import { range, sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  Dimensions,
+  StyleProp,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -27,6 +34,7 @@ import Animated, {
 import { CustomTestnetItem } from './CustomTestnetItem';
 import { Empty } from './Empty';
 import { SkeletonCard } from './SkeletonCard';
+import { ModalLayouts } from '@/constant/layout';
 
 export const AddFromChainList = ({
   visible,
@@ -44,7 +52,8 @@ export const AddFromChainList = ({
   const ref = React.useRef<any>(null);
   const [isFocus, setIsFocus] = React.useState(false);
   const search = useDebounce(_search, { wait: 500 });
-  const left = useSharedValue(100);
+  const { width: windowWidth } = useWindowDimensions();
+  const left = useSharedValue(windowWidth);
 
   const { loading, data, loadingMore, loadMore } = useInfiniteScroll(
     async data => {
@@ -78,22 +87,31 @@ export const AddFromChainList = ({
     },
   );
 
-  const { data: usedList, loading: isLoadingUsed } = useRequest(() => {
-    return apiCustomTestnet.getUsedCustomTestnetChainList().then(list => {
-      return sortBy(
-        list.map(item => {
-          return createTestnetChain({
-            name: item.name,
-            id: item.chain_id,
-            nativeTokenSymbol: item.native_currency.symbol,
-            rpcUrl: item.rpc || '',
-            scanLink: item.explorer || '',
-          });
-        }),
-        'name',
-      );
-    });
-  });
+  const {
+    data: usedList,
+    loading: isLoadingUsed,
+    runAsync: runGetUsedList,
+  } = useRequest(
+    () => {
+      return apiCustomTestnet.getUsedCustomTestnetChainList().then(list => {
+        return sortBy(
+          list.map(item => {
+            return createTestnetChain({
+              name: item.name,
+              id: item.chain_id,
+              nativeTokenSymbol: item.native_currency.symbol,
+              rpcUrl: item.rpc || '',
+              scanLink: item.explorer || '',
+            });
+          }),
+          'name',
+        );
+      });
+    },
+    {
+      manual: true,
+    },
+  );
 
   const isLoading = loading || isLoadingUsed;
   const list = useMemo(() => {
@@ -121,33 +139,45 @@ export const AddFromChainList = ({
         duration: 400,
       });
     } else {
-      left.value = withTiming(100, {
+      left.value = withTiming(windowWidth, {
         duration: 400,
       });
     }
-  }, [left, visible]);
+  }, [left, visible, windowWidth]);
+
+  useEffect(() => {
+    if (visible) {
+      runGetUsedList();
+    }
+  }, [runGetUsedList, visible]);
 
   const containerStyle = useAnimatedStyle(() => {
     return {
-      left: `${left.value}%`,
+      transform: [{ translateX: left.value }],
     };
   });
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
+    <Animated.View
+      style={[
+        styles.container,
+        { transform: [{ translateX: windowWidth }] },
+        containerStyle,
+      ]}>
       <View style={styles.header}>
         <View style={styles.navbar}>
           <View style={styles.navbarLeft}>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} hitSlop={6}>
               <RcIconBack
                 color={colors['neutral-body']}
-                width={20}
-                height={20}
+                width={24}
+                height={24}
               />
             </TouchableOpacity>
           </View>
           <AppBottomSheetModalTitle
-            title={t('page.customRpc.EditCustomTestnetModal.title')}
+            style={{ paddingTop: ModalLayouts.titleTopOffset }}
+            title={t('page.customTestnet.AddFromChainList.title')}
           />
         </View>
         <Input
@@ -164,7 +194,7 @@ export const AddFromChainList = ({
             isFocus ? styles.searchInputContainerFocus : null,
           ]}
           style={styles.searchInput}
-          placeholder="Search chain"
+          placeholder={t('page.customTestnet.AddFromChainList.search')}
           value={_search}
           onChangeText={text => {
             setSearch(text);
@@ -328,8 +358,7 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'absolute',
       backgroundColor: colors['neutral-bg-1'],
       top: 0,
-      left: '100%',
-      right: 0,
+      left: 0,
       bottom: 0,
       width: '100%',
     },
@@ -343,7 +372,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     navbarLeft: {
       position: 'absolute',
-      top: 24,
+      top: ModalLayouts.titleTopOffset,
       zIndex: 10,
     },
 

@@ -448,9 +448,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
     } // do not overwrite nonce if from === to(cancel transaction)
-    const { pending: pendings } = await transactionHistoryService.getList(
-      address,
-    );
+    const { pendings } = await transactionHistoryService.getList(address);
     const preExecPromise = openapi
       .preExecTx({
         tx: {
@@ -613,6 +611,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       await explainTx(currentAccount.address);
       setIsReady(true);
     } catch (e: any) {
+      console.error(e);
       toast.show(e.message || JSON.stringify(e));
     }
   };

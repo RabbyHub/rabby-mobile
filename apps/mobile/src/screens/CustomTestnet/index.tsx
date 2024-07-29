@@ -9,15 +9,22 @@ import {
   TestnetChain,
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { matomoRequestEvent } from '@/utils/analytics';
-import { useMemoizedFn, useRequest, useSetState } from 'ahooks';
+import {
+  useEventEmitter,
+  useMemoizedFn,
+  useRequest,
+  useSetState,
+} from 'ahooks';
 import { sortBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  FlatList,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 import { CustomTestnetItem } from './components/CustomTestnetItem';
 import { EditCustomTestnetPopup } from './components/EditTestnetPopup';
 import { Empty } from './components/Empty';
@@ -25,8 +32,6 @@ import { Empty } from './components/Empty';
 export function CustomTestnetScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
-  const navigation = useRabbyAppNavigation();
-  const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
 
   const [state, setState] = useSetState<{
@@ -39,6 +44,8 @@ export function CustomTestnetScreen(): JSX.Element {
     isEdit: false,
   });
 
+  const close$ = useEventEmitter<void>();
+
   const handleAddClick = useMemoizedFn(() => {
     const next = {
       isShowModal: true,
@@ -46,6 +53,7 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: false,
     };
     setState(next);
+    close$.emit();
 
     matomoRequestEvent({
       category: 'Custom Network',
@@ -66,6 +74,7 @@ export function CustomTestnetScreen(): JSX.Element {
       current: null,
       isEdit: false,
     });
+    close$.emit();
     await runGetCustomTestnetList();
   });
 
@@ -73,6 +82,7 @@ export function CustomTestnetScreen(): JSX.Element {
     await apiCustomTestnet.removeCustomTestnet(item.id);
     toast.success(t('global.Deleted'));
     await runGetCustomTestnetList();
+    close$.emit();
   });
 
   const handleEditClick = useMemoizedFn(async (item: TestnetChain) => {
@@ -82,45 +92,61 @@ export function CustomTestnetScreen(): JSX.Element {
       isEdit: true,
     };
     setState(next);
+    close$.emit();
   });
 
   return (
     <>
-      <NormalScreenContainer>
-        <View style={styles.descContainer}>
-          <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
-        </View>
-        <View style={styles.main}>
-          <FlatList
-            style={styles.list}
-            data={list}
-            renderItem={({ item }) => {
-              return (
-                <CustomTestnetItem
-                  item={item}
-                  onEdit={handleEditClick}
-                  onRemove={handleRemoveClick}
-                  editable
-                  containerStyle={styles.item}
+      <TouchableWithoutFeedback
+        onPress={() => {
+          close$.emit();
+          console.log('custom testnet screen 1');
+        }}
+        accessible={false}
+        style={{
+          height: '100%',
+        }}>
+        <NormalScreenContainer>
+          <View style={styles.descContainer}>
+            <Text style={styles.desc}>{t('page.customTestnet.desc')}</Text>
+          </View>
+          <View style={styles.main}>
+            <FlatList
+              style={styles.list}
+              data={list}
+              onScrollBeginDrag={() => close$.emit()}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => {
+                return (
+                  <CustomTestnetItem
+                    item={item}
+                    onEdit={handleEditClick}
+                    onRemove={handleRemoveClick}
+                    onPress={handleEditClick}
+                    editable
+                    containerStyle={styles.item}
+                    close$={close$}
+                  />
+                );
+              }}
+              keyExtractor={item => item.enum}
+              ListEmptyComponent={
+                <Empty
+                  description={t('page.customTestnet.empty')}
+                  style={{
+                    paddingTop: 200,
+                  }}
                 />
-              );
-            }}
-            keyExtractor={item => item.enum}
-            ListEmptyComponent={
-              <Empty
-                description={t('page.customTestnet.empty')}
-                style={{
-                  paddingTop: 200,
-                }}
-              />
-            }
+              }
+            />
+          </View>
+          <FooterButton
+            title={t('page.customTestnet.add')}
+            onPress={handleAddClick}
+            TouchableComponent={TouchableOpacity}
           />
-        </View>
-        <FooterButton
-          title={t('page.customTestnet.add')}
-          onPress={handleAddClick}
-        />
-      </NormalScreenContainer>
+        </NormalScreenContainer>
+      </TouchableWithoutFeedback>
       <EditCustomTestnetPopup
         visible={state.isShowModal}
         data={state.current}
@@ -132,7 +158,6 @@ export function CustomTestnetScreen(): JSX.Element {
             isEdit: false,
           });
         }}
-        onChange={values => {}}
         onConfirm={handleConfirm}
       />
     </>

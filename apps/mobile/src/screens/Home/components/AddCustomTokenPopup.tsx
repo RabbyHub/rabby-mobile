@@ -1,7 +1,8 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -9,34 +10,34 @@ import {
 } from 'react-native';
 
 import { RcIconAddCircle } from '@/assets/icons/address';
-import { RcIconEmptyCC } from '@/assets/icons/gnosis';
+import { RcIconCheckedCC } from '@/assets/icons/common';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
   AssetAvatar,
 } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { AppColorsVariants } from '@/constant/theme';
-import { apiCustomTestnet } from '@/core/apis';
-import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
-import { useSheetModals } from '@/hooks/useSheetModal';
-import { formatTokenAmount } from '@/utils/number';
-import { customTestnetTokenToTokenItem, getTokenSymbol } from '@/utils/token';
-import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { FormInput } from '@/components/Form/Input';
-import { ChainInfo } from '@/screens/Send/components/ChainInfo';
-import { RcIconCheckedCC } from '@/assets/icons/common';
-import { AbstractPortfolioToken } from '../types';
-import { useChainList } from '@/hooks/useChainList';
-import { findChain } from '@/utils/chain';
-import { Chain } from '@/constant/chains';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
-import { useFormik } from 'formik';
+import { FormInput } from '@/components/Form/Input';
 import { toast } from '@/components/Toast';
+import { Chain } from '@/constant/chains';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { useChainList } from '@/hooks/useChainList';
+import { useSheetModals } from '@/hooks/useSheetModal';
+import { ChainInfo } from '@/screens/Send/components/ChainInfo';
+import { findChain } from '@/utils/chain';
+import { formatTokenAmount } from '@/utils/number';
+import { getTokenSymbol } from '@/utils/token';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useRequest } from 'ahooks';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
+import { AbstractPortfolioToken } from '../types';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ModalLayouts } from '@/constant/layout';
 
 export type AddCustomTokenPopupProps = {
   visible?: boolean;
@@ -74,9 +75,6 @@ export const AddCustomTokenPopup = ({
   const [tokenId, setTokenId] = useState('');
   const [checked, setChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  const inputRef = React.useRef<TextInput>(null);
-  const { onTouchInputAway } = useInputBlurOnTouchaway(inputRef);
 
   const { data: token, loading } = useRequest(
     async () => {
@@ -152,98 +150,116 @@ export const AddCustomTokenPopup = ({
       ref={modalRef}
       snapPoints={['80%']}
       onDismiss={onClose}>
-      <AppBottomSheetModalTitle title="Add Custom Token" />
-      <View style={styles.main}>
-        <View style={styles.formItem}>
-          <View style={styles.formLabel}>
-            <Text style={styles.formLabelText}>Chain:</Text>
-          </View>
-          <View style={styles.formControl}>
-            <ChainInfo
-              // chainEnum={chainEnum}
-              // onChange={handleChainChanged}
-              chainEnum={chain?.enum}
-              onChange={e => {
-                setChain(findChain({ enum: e }));
-              }}
-              hideMainnetTab={isTestnet}
-              hideTestnetTab={!isTestnet}
-            />
-          </View>
-        </View>
-        <View style={styles.formItem}>
-          <View style={styles.formLabel}>
-            <Text style={styles.formLabelText}>Token Address:</Text>
-          </View>
-          <View style={styles.formControl}>
-            <FormInput
-              as="BottomSheetTextInput"
-              ref={inputRef}
-              style={styles.formInput}
-              inputStyle={styles.input}
-              fieldErrorTextStyle={styles.formInputError}
-              inputProps={{
-                numberOfLines: 2,
-                // bug: can not set multiline is true ?
-                // multiline: true,
-                value: tokenId,
-                onChangeText(text) {
-                  setTokenId(text);
-                },
-              }}
-              errorText={errorMessage}
-            />
-            {loading && tokenId && !errorMessage ? <ActivityIndicator /> : null}
-          </View>
-        </View>
-        {token ? (
-          <View style={styles.formItem}>
-            <View style={styles.formLabel}>
-              <Text style={styles.formLabelText}>Found Token:</Text>
+      <TouchableWithoutFeedback
+        style={{ height: '100%' }}
+        onPress={() => {
+          Keyboard.dismiss();
+        }}>
+        <AppBottomSheetModalTitle
+          title="Add Custom Token"
+          style={{ paddingTop: ModalLayouts.titleTopOffset }}
+        />
+        <KeyboardAwareScrollView
+          // style={styles.keyboardView}
+          enableOnAndroid
+          scrollEnabled={false}
+          keyboardOpeningTime={0}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.main}>
+            <View style={styles.formItem}>
+              <View style={styles.formLabel}>
+                <Text style={styles.formLabelText}>Chain:</Text>
+              </View>
+              <View style={styles.formControl}>
+                <ChainInfo
+                  chainEnum={chain?.enum}
+                  onChange={e => {
+                    setChain(findChain({ enum: e }));
+                  }}
+                  hideMainnetTab={isTestnet}
+                  hideTestnetTab={!isTestnet}
+                />
+              </View>
             </View>
-            <View>
-              <TouchableOpacity
-                onPress={() => {
-                  setChecked(v => !v);
-                }}>
-                <View style={[styles.token, checked && styles.tokenSelected]}>
-                  <View>
-                    <AssetAvatar
-                      logo={token.logo_url}
-                      chain={chain?.serverId}
-                      size={28}
-                      chainSize={16}
-                    />
-                  </View>
-                  <View style={styles.tokenContent}>
-                    <Text style={styles.tokenText}>
-                      {formatTokenAmount(token.amount)} {getTokenSymbol(token)}
-                    </Text>
-                  </View>
-                  <View style={styles.checkbox}>
-                    <RcIconCheckedCC
-                      width={20}
-                      height={20}
-                      color={
-                        checked
-                          ? colors['blue-default']
-                          : colors['neutral-line']
-                      }
-                    />
-                  </View>
+            <View style={styles.formItem}>
+              <View style={styles.formLabel}>
+                <Text style={styles.formLabelText}>Token Address:</Text>
+              </View>
+              <View style={styles.formControl}>
+                <FormInput
+                  // as="BottomSheetTextInput"
+                  as="TextInput"
+                  style={styles.formInput}
+                  inputStyle={styles.input}
+                  disableFocusingStyle
+                  fieldErrorTextStyle={styles.formInputError}
+                  inputProps={{
+                    numberOfLines: 2,
+                    // bug: can not set multiline is true ?
+                    multiline: false,
+                    value: tokenId,
+                    onChangeText: setTokenId,
+                  }}
+                  errorText={errorMessage}
+                />
+                {loading && tokenId && !errorMessage ? (
+                  <ActivityIndicator style={{ marginTop: 16 }} />
+                ) : null}
+              </View>
+            </View>
+            {token ? (
+              <View style={styles.formItem}>
+                <View style={styles.formLabel}>
+                  <Text style={styles.formLabelText}>Found Token:</Text>
                 </View>
-              </TouchableOpacity>
-            </View>
+                <View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setChecked(v => !v);
+                    }}>
+                    <View
+                      style={[styles.token, checked && styles.tokenSelected]}>
+                      <View>
+                        <AssetAvatar
+                          logo={token.logo_url}
+                          chain={chain?.serverId}
+                          size={28}
+                          chainSize={16}
+                        />
+                      </View>
+                      <View style={styles.tokenContent}>
+                        <Text style={styles.tokenText}>
+                          {formatTokenAmount(token.amount)}{' '}
+                          {getTokenSymbol(token)}
+                        </Text>
+                      </View>
+                      <View style={styles.checkbox}>
+                        <RcIconCheckedCC
+                          width={20}
+                          height={20}
+                          color={
+                            checked
+                              ? colors['blue-default']
+                              : colors['neutral-line']
+                          }
+                        />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null}
           </View>
-        ) : null}
-      </View>
-      <FooterButton
-        title={'Add Token'}
-        disabled={!token || !checked || !chain}
-        onPress={runAddToken}
-        loading={isSubmitting}
-        icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
-      />
+        </KeyboardAwareScrollView>
+        <FooterButton
+          TouchableComponent={TouchableOpacity}
+          title={'Add Token'}
+          disabled={!token || !checked || !chain}
+          onPress={runAddToken}
+          loading={isSubmitting}
+          icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
+        />
+      </TouchableWithoutFeedback>
     </AppBottomSheetModal>
   );
 };

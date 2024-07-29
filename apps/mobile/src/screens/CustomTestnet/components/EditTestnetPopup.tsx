@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
+import RcIconFlash from '@/assets/icons/custom-testnet/flash-cc.svg';
+import RcIconRight from '@/assets/icons/custom-testnet/right-cc.svg';
 import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
@@ -11,17 +13,23 @@ import {
   TestnetChainBase,
 } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
+import { matomoRequestEvent } from '@/utils/analytics';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, StyleSheet, Text, Touchable, View } from 'react-native';
-import { CustomTestnetForm } from './CustomTestnetForm';
+import {
+  Dimensions,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { AddFromChainList } from './AddFromChainList';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import RcIconFlash from '@/assets/icons/custom-testnet/flash-cc.svg';
-import RcIconRight from '@/assets/icons/custom-testnet/right-cc.svg';
-import { matomoRequestEvent } from '@/utils/analytics';
+import { CustomTestnetForm } from './CustomTestnetForm';
+import { ModalLayouts } from '@/constant/layout';
 
 export const EditCustomTestnetPopup = ({
   data,
@@ -30,8 +38,6 @@ export const EditCustomTestnetPopup = ({
   onConfirm,
   isEdit,
   onChange,
-  height,
-  maskStyle,
   ctx,
 }: {
   isEdit?: boolean;
@@ -41,7 +47,6 @@ export const EditCustomTestnetPopup = ({
   onConfirm(values: TestnetChain): void;
   onChange?: (values: Partial<TestnetChainBase>) => void;
   height?: number;
-  maskStyle?: React.CSSProperties;
   ctx?: {
     ga?: {
       source?: string;
@@ -124,72 +129,89 @@ export const EditCustomTestnetPopup = ({
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (!visible) {
+      setIsShowAddFromChainList(false);
+    }
+  }, [visible]);
+
   return (
-    <AppBottomSheetModal snapPoints={[660]} ref={modalRef} onDismiss={onCancel}>
-      <AppBottomSheetModalTitle
-        title={t('page.customRpc.EditCustomTestnetModal.title')}
-      />
-      <View style={styles.main}>
-        <TouchableOpacity
-          onPress={() => {
-            setIsShowAddFromChainList(true);
-          }}
-          style={styles.quickAdd}>
-          <RcIconFlash color={colors['neutral-body']} />
-          <Text style={styles.quickAddText}>
-            {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
-          </Text>
-          <RcIconRight color={colors['neutral-body']} />
-        </TouchableOpacity>
-        <CustomTestnetForm formik={formik} isEdit={isEdit} />
-      </View>
-      <View style={styles.footer}>
-        <Button
-          onPress={onCancel}
-          title={'Cancel'}
-          buttonStyle={[styles.buttonStyle]}
-          titleStyle={styles.btnCancelTitle}
-          type="white"
-          containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
-        />
-        <Button
-          title={'Confirm'}
-          buttonStyle={[
-            styles.buttonStyle,
-            { backgroundColor: colors['blue-default'] },
-          ]}
-          style={{
-            width: '100%',
-          }}
-          titleStyle={styles.btnConfirmTitle}
-          onPress={handleSubmit}
-          loading={loading}
-          containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
-        />
-      </View>
-      <AddFromChainList
-        visible={isShowAddFromChainList}
-        onClose={() => {
-          setIsShowAddFromChainList(false);
-        }}
-        onSelect={item => {
-          formik.resetForm();
-          formik.setValues(item);
-          setIsShowAddFromChainList(false);
-          const source = ctx?.ga?.source || 'setting';
-          matomoRequestEvent({
-            category: 'Custom Network',
-            action: 'Choose ChainList Network',
-            label: `${source}_${String(item.id)}`,
-          });
-        }}
-      />
+    <AppBottomSheetModal
+      snapPoints={['80%']}
+      ref={modalRef}
+      onDismiss={onCancel}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={styles.container}>
+          <AppBottomSheetModalTitle
+            style={{ paddingTop: ModalLayouts.titleTopOffset }}
+            title={t('page.customRpc.EditCustomTestnetModal.title')}
+          />
+          <View style={styles.main}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsShowAddFromChainList(true);
+              }}
+              style={styles.quickAdd}>
+              <RcIconFlash color={colors['neutral-body']} />
+              <Text style={styles.quickAddText}>
+                {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
+              </Text>
+              <RcIconRight color={colors['neutral-body']} />
+            </TouchableOpacity>
+            <CustomTestnetForm formik={formik} isEdit={isEdit} />
+          </View>
+          <View style={styles.footer}>
+            <Button
+              onPress={onCancel}
+              title={'Cancel'}
+              buttonStyle={[styles.buttonStyle]}
+              titleStyle={styles.btnCancelTitle}
+              type="white"
+              containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
+            />
+            <Button
+              title={'Confirm'}
+              buttonStyle={[
+                styles.buttonStyle,
+                { backgroundColor: colors['blue-default'] },
+              ]}
+              style={{
+                width: '100%',
+              }}
+              titleStyle={styles.btnConfirmTitle}
+              onPress={handleSubmit}
+              loading={loading}
+              containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+            />
+          </View>
+          <AddFromChainList
+            visible={isShowAddFromChainList}
+            onClose={() => {
+              setIsShowAddFromChainList(false);
+            }}
+            onSelect={item => {
+              formik.resetForm();
+              formik.setValues(item);
+              setIsShowAddFromChainList(false);
+              const source = ctx?.ga?.source || 'setting';
+              matomoRequestEvent({
+                category: 'Custom Network',
+                action: 'Choose ChainList Network',
+                label: `${source}_${String(item.id)}`,
+              });
+            }}
+          />
+        </View>
+      </TouchableWithoutFeedback>
     </AppBottomSheetModal>
   );
 };
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    container: {
+      height: '100%',
+    },
     footer: {
       width: '100%',
       maxWidth: Dimensions.get('window').width,

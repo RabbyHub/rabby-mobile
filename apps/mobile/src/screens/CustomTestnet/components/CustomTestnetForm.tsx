@@ -1,6 +1,7 @@
 import { FormInput } from '@/components/Form/Input';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import { isNumber } from 'lodash';
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,9 +12,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
-import { isNumber } from 'lodash';
 
 const FormItem = ({
   disabled,
@@ -21,12 +21,14 @@ const FormItem = ({
   style,
   name,
   label,
+  autoFocus,
 }: {
   disabled?: boolean;
   formik: ReturnType<typeof useCustomTestnetForm>;
   style?: StyleProp<ViewStyle>;
   name: string;
   label?: string;
+  autoFocus?: boolean;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -48,6 +50,7 @@ const FormItem = ({
         hasError={!!formik.errors[name]}
         inputProps={{
           // ...inputProps,
+          autoFocus,
           numberOfLines: 1,
           multiline: false,
           value: value,
@@ -59,7 +62,6 @@ const FormItem = ({
             }, 20);
           },
           onBlur: e => {
-            console.log('blur', name);
             formik.handleBlur(name)(e);
             formik.validateField(name);
           },
@@ -102,13 +104,19 @@ export const CustomTestnetForm = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <ScrollView style={styles.container}>
+    <KeyboardAwareScrollView
+      style={styles.container}
+      enableOnAndroid
+      scrollEnabled
+      keyboardOpeningTime={0}
+      keyboardShouldPersistTaps="handled">
       <View>
         <FormItem
           name="id"
           label={t('page.customTestnet.CustomTestnetForm.id')}
           formik={formik}
-          disabled={disabled || isEdit}
+          disabled={disabled || isEdit || idDisabled}
+          autoFocus
         />
         <FormItem
           label={t('page.customTestnet.CustomTestnetForm.name')}
@@ -135,7 +143,7 @@ export const CustomTestnetForm = ({
           disabled={disabled}
         />
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -148,7 +156,8 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       fontWeight: '500',
       fontSize: 16,
-      lineHeight: 19,
+      textAlign: undefined,
+      lineHeight: undefined,
     },
     inputDisabled: {
       backgroundColor: colors['neutral-card-2'],

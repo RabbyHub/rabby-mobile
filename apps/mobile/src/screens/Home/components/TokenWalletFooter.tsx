@@ -73,7 +73,7 @@ const getStyle = (colors: AppColorsVariants) =>
       flexDirection: 'row',
       alignItems: 'center',
       borderRadius: 4,
-      backgroundColor: colors['neutral-bg-4'],
+      backgroundColor: colors['neutral-card-2'],
       padding: 10,
     },
     itemText: {

@@ -1,25 +1,15 @@
-// import { Chain } from '@debank/common';
-// import { Form, Input } from 'antd';
-// import clsx from 'clsx';
-// import React from 'react';
-// import styled from 'styled-components';
-// import { ReactComponent as RcIconEdit } from '@/ui/assets/custom-testnet/icon-edit.svg';
-// import { ReactComponent as RcIconDelete } from '@/ui/assets/custom-testnet/cc-delete.svg';
-// import ThemeIcon from '@/ui/component/ThemeMode/ThemeIcon';
-// import {
-//   TestnetChain,
-//   TestnetChainBase,
-// } from '@/background/service/customTestnet';
-// import { TestnetChainLogo } from '@/ui/component/TestnetChainLogo';
+import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
+import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { AppColorsVariants } from '@/constant/theme';
 import { TestnetChain } from '@/core/services/customTestnetService';
 import { useThemeColors } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
-import { useMemo } from 'react';
+import { EventEmitter } from 'ahooks/lib/useEventEmitter';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Image,
   StyleProp,
   StyleSheet,
   Text,
@@ -31,10 +21,6 @@ import {
   Swipeable,
   TouchableOpacity,
 } from 'react-native-gesture-handler';
-import RcIconEdit from '@/assets/icons/custom-testnet/edit-cc.svg';
-import RcIconDelete from '@/assets/icons/custom-testnet/delete-cc.svg';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 
 export const CustomTestnetItem = ({
   style,
@@ -45,6 +31,7 @@ export const CustomTestnetItem = ({
   onPress,
   editable,
   disabled,
+  close$,
 }: {
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
@@ -54,11 +41,18 @@ export const CustomTestnetItem = ({
   onPress?: (item: TestnetChain) => void;
   editable?: boolean;
   disabled?: boolean;
+  close$?: EventEmitter<void>;
 }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const { t } = useTranslation();
+
+  const swipeRef = useRef<any>(null);
+
+  close$?.useSubscription(() => {
+    swipeRef.current?.close();
+  });
 
   const renderRightActions = useMemoizedFn(
     (
@@ -146,7 +140,7 @@ export const CustomTestnetItem = ({
   if (editable) {
     return (
       <Swipeable
-        // ref={swipeRef}
+        ref={swipeRef}
         renderRightActions={renderRightActions}
         rightThreshold={40}
         overshootRight={false}
