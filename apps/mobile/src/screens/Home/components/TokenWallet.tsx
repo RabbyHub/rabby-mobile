@@ -241,7 +241,7 @@ export const TokenWallet = ({
     return isTokensLoading ? (
       <PositionLoader space={8} />
     ) : hasTokens ? null : (
-      <EmptyHolder text="No tokens" type="protocol" />
+      <EmptyHolder text="No Tokens" type="protocol" />
     );
   }, [isTokensLoading, hasTokens]);
 
