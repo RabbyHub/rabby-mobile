@@ -29,6 +29,7 @@ import { Button } from '../Button';
 import { useRefState } from '@/hooks/common/useRefState';
 import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
+import { BioAuthStage, coerceAuthType } from './hooks';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -81,17 +82,7 @@ function BioButton({
   );
 }
 
-function coerceAuthType(
-  target: apisLock.UIAuthType,
-  avaiables: apisLock.UIAuthType[],
-): apisLock.UIAuthType {
-  if (!avaiables.length) return 'password';
-
-  return avaiables.includes(target) ? target : avaiables[0] || 'password';
-}
-
 type AuthState = {
-  // isBioAuthenticating: boolean;
   authType: apisLock.UIAuthType;
 };
 
@@ -113,7 +104,7 @@ function FooterButtonGroup({
 
   const { showConfirm } = useMemo(() => {
     return {
-      // showCancel: ['none', 'password', 'biometrics'].includes(authState.authType),
+      // showCancel: ['none', 'password', 'biometrics'].includes(currentAuthType),
       showConfirm: ['none', 'password', 'biometrics'].includes(
         authState.authType,
       ),
@@ -212,12 +203,6 @@ const getFooterStyle = createGetStyles(colors => {
   };
 });
 
-const enum BioAuthStage {
-  idle = 0,
-  prepare = 1,
-  authenticating = 2,
-}
-
 const DFLT_VALIDATE = async (password: string) => {
   return apisLock.throwErrorIfInvalidPwd(password);
 };
@@ -231,7 +216,10 @@ export const AuthenticationModal = ({
   $createParams,
   checklist,
   // disableValidation: propNoValidation = !validationHandler,
-  authType = /* propNoValidation ? ['none'] :  */ ['biometrics', 'password'],
+  authType: authTypes = /* propNoValidation ? ['none'] :  */ [
+    'biometrics',
+    'password',
+  ],
 }: GlobalModalViewProps<
   MODAL_NAMES.AUTHENTICATION,
   AuthenticationModalProps
@@ -253,16 +241,13 @@ export const AuthenticationModal = ({
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string>();
 
-  // const disableValidation =
-  //   typeof propNoValidation === 'boolean' ? propNoValidation : !isUseCustomPwd;
-
   const onFinishedReturnBase = useMemo(
     () => ({ hasSetupCustomPassword: isUseCustomPwd }),
     [isUseCustomPwd],
   );
 
   const { availableAuthTypes, disableValidation } = useMemo(() => {
-    let types = authType.filter(
+    let types = authTypes.filter(
       type =>
         type === 'none' ||
         type === 'password' ||
@@ -289,18 +274,17 @@ export const AuthenticationModal = ({
         x => !types.includes(x),
       ),
     };
-  }, [/* checklist,  */ authType, bioComputed.isBiometricsEnabled]);
+  }, [/* checklist,  */ authTypes, bioComputed.isBiometricsEnabled]);
 
   const { stateRef: bioAuthRef, setRefState: setBioAuth } = useRefState({
     stage: BioAuthStage.idle,
     restCount: 0,
   });
-  const [authState, setAuthing] = React.useState<AuthState & {}>({
-    // isBioAuthenticating: false,
-    authType: coerceAuthType(availableAuthTypes[0], availableAuthTypes),
-  });
+  const [currentAuthType, setCurrentAuthType] = React.useState<
+    AuthState['authType']
+  >(coerceAuthType(availableAuthTypes[0], availableAuthTypes));
 
-  const handleSubmitPassword = React.useCallback(async () => {
+  const handleSubmitForm = React.useCallback(async () => {
     if (hasCheckFailed) return;
 
     try {
@@ -325,7 +309,7 @@ export const AuthenticationModal = ({
 
   const handleSwitchToBioAndPrepare = React.useCallback(
     (noPrepare = true) => {
-      setAuthing(prev => ({ ...prev, authType: 'biometrics' }));
+      setCurrentAuthType('biometrics');
       !noPrepare &&
         setBioAuth(prev => ({
           ...prev,
@@ -333,7 +317,7 @@ export const AuthenticationModal = ({
           restCount: 0,
         }));
     },
-    [setAuthing, setBioAuth],
+    [setCurrentAuthType, setBioAuth],
   );
 
   React.useEffect(() => {
@@ -341,7 +325,7 @@ export const AuthenticationModal = ({
   }, [password]);
 
   // useMount(() => {
-  //   if (authState.authType === 'biometrics' && !hasCheckFailed) {
+  //   if (currentAuthType === 'biometrics' && !hasCheckFailed) {
   //     setBioAuth(prev => ({
   //       ...prev,
   //       // stage: BioAuthStage['prepare'],
@@ -350,7 +334,7 @@ export const AuthenticationModal = ({
   //   }
   // });
 
-  const handleAuthWithBio = React.useCallback(async () => {
+  const handleAuthWithBiometrics = React.useCallback(async () => {
     if (hasCheckFailed) return;
 
     if (bioAuthRef.current.stage === BioAuthStage['authenticating']) return;
@@ -370,13 +354,9 @@ export const AuthenticationModal = ({
           },
         });
       }
-      setAuthing(prev => ({ ...prev /* isBioAuthenticating: false */ }));
     } catch (err: any) {
       console.error(err);
-      setAuthing(prev => ({
-        ...prev,
-        authType: 'password' /* isBioAuthenticating: false */,
-      }));
+      setCurrentAuthType('password');
       // setError(err.message);
     } finally {
       setBioAuth(prev => ({
@@ -395,29 +375,29 @@ export const AuthenticationModal = ({
   ]);
 
   const handleConfirm = useCallback(() => {
-    if (authState.authType === 'biometrics') {
+    if (currentAuthType === 'biometrics') {
       setBioAuth(prev => ({
         ...prev,
         stage: BioAuthStage['prepare'],
         restCount: 1,
       }));
-      setTimeout(handleAuthWithBio, 100);
+      setTimeout(handleAuthWithBiometrics, 100);
     } else {
-      handleSubmitPassword();
+      handleSubmitForm();
     }
-  }, [authState.authType, setBioAuth, handleAuthWithBio, handleSubmitPassword]);
+  }, [currentAuthType, setBioAuth, handleAuthWithBiometrics, handleSubmitForm]);
 
   const prevHasCheckFailed = usePrevious(hasCheckFailed);
   React.useEffect(() => {
     if (!bioComputed.isBiometricsEnabled) return;
-    if (authState.authType !== 'biometrics') return;
+    if (currentAuthType !== 'biometrics') return;
     if (bioAuthRef.current.restCount <= 0) return;
 
     if (prevHasCheckFailed && !hasCheckFailed) {
       setBioAuth(prev => ({ ...prev, stage: BioAuthStage['prepare'] }));
     }
 
-    const timer = setTimeout(handleAuthWithBio, 250);
+    const timer = setTimeout(handleAuthWithBiometrics, 250);
 
     return () => {
       clearTimeout(timer);
@@ -425,8 +405,8 @@ export const AuthenticationModal = ({
   }, [
     bioAuthRef,
     bioComputed.isBiometricsEnabled,
-    authState.authType,
-    handleAuthWithBio,
+    currentAuthType,
+    handleAuthWithBiometrics,
 
     prevHasCheckFailed,
     hasCheckFailed,
@@ -462,11 +442,11 @@ export const AuthenticationModal = ({
         <View
           style={[
             styles.inputAndBioArea,
-            authState.authType === 'password' && styles.inputAreaWithPwd,
-            authState.authType === 'biometrics' && styles.inputAreaWithBio,
+            currentAuthType === 'password' && styles.inputAreaWithPwd,
+            currentAuthType === 'biometrics' && styles.inputAreaWithBio,
             disableValidation && styles.noValidationArea,
           ]}>
-          {!disableValidation && authState.authType === 'password' && (
+          {!disableValidation && currentAuthType === 'password' && (
             <>
               <View style={styles.inputWrapper}>
                 <BottomSheetTextInput
@@ -496,7 +476,7 @@ export const AuthenticationModal = ({
               <Text style={styles.errorText}>{error}</Text>
             </>
           )}
-          {/* {!disableValidation && authState.authType === 'biometrics' && (
+          {/* {!disableValidation && currentAuthType === 'biometrics' && (
             <View style={styles.bioIconWrapper}>
               <BioButton
                 disabled={hasCheckFailed}
@@ -517,7 +497,7 @@ export const AuthenticationModal = ({
         </View>
       </View>
       <FooterButtonGroup
-        authState={authState}
+        authState={{ authType: currentAuthType }}
         bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,

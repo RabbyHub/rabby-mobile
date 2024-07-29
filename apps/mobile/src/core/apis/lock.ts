@@ -9,6 +9,11 @@ export const enum PasswordStatus {
 }
 
 export type UIAuthType = 'none' | 'password' | 'biometrics';
+export type ValidationBehaviorOnFinishedContext = {
+  hasSetupCustomPassword?: boolean;
+  authType?: UIAuthType;
+  getValidatedPassword: () => string;
+};
 export type ValidationBehaviorProps = {
   /**
    * @description external-defined validatie password user input.
@@ -17,12 +22,7 @@ export type ValidationBehaviorProps = {
    * @param password
    */
   validationHandler?(password: string): void | Promise<void>;
-  onFinished?(ctx: {
-    hasSetupCustomPassword?: boolean;
-    authType?: UIAuthType;
-    // validatedPassword?: '******';
-    getValidatedPassword: () => string;
-  }): void;
+  onFinished?(ctx: ValidationBehaviorOnFinishedContext): void;
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
