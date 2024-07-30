@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Dimensions,
   Keyboard,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ import {
   AppBottomSheetModal,
   AppBottomSheetModalTitle,
   AssetAvatar,
+  Button,
 } from '@/components';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
@@ -252,14 +254,33 @@ export const AddCustomTokenPopup = ({
             ) : null}
           </View>
         </KeyboardAwareScrollView>
-        <FooterButton
-          TouchableComponent={TouchableOpacity}
-          title={'Add Token'}
-          disabled={!token || !checked || !chain}
-          onPress={runAddToken}
-          loading={isSubmitting}
-          icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
-        />
+        <View style={styles.footer}>
+          <Button
+            TouchableComponent={TouchableOpacity}
+            onPress={onClose}
+            title={'Cancel'}
+            buttonStyle={[styles.buttonStyle]}
+            titleStyle={styles.btnCancelTitle}
+            type="white"
+            containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
+          />
+          <Button
+            TouchableComponent={TouchableOpacity}
+            title={'Confirm'}
+            buttonStyle={[
+              styles.buttonStyle,
+              { backgroundColor: colors['blue-default'] },
+            ]}
+            style={{
+              width: '100%',
+            }}
+            titleStyle={styles.btnConfirmTitle}
+            disabled={!token || !checked || !chain}
+            onPress={runAddToken}
+            loading={isSubmitting}
+            containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+          />
+        </View>
       </TouchableWithoutFeedback>
     </AppBottomSheetModal>
   );
@@ -321,5 +342,47 @@ const getStyle = (colors: AppColorsVariants) =>
     },
     checkbox: {
       flexShrink: 0,
+    },
+    footer: {
+      width: '100%',
+      maxWidth: Dimensions.get('window').width,
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 16,
+      justifyContent: 'space-between',
+      borderTopColor: colors['neutral-line'],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      paddingTop: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 35,
+    },
+    btnContainer: {
+      flexShrink: 1,
+      display: 'flex',
+      height: 52,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 8,
+      flex: 1,
+      maxWidth: '100%',
+      minWidth: 0,
+    },
+
+    buttonStyle: {
+      width: '100%',
+      height: '100%',
+    },
+    btnCancelContainer: {
+      borderColor: colors['blue-default'],
+      borderWidth: StyleSheet.hairlineWidth,
+    },
+    btnCancelTitle: {
+      color: colors['blue-default'],
+      flex: 1,
+    },
+    btnConfirmContainer: {},
+    btnConfirmTitle: {
+      color: colors['neutral-title-2'],
+      flex: 1,
     },
   });

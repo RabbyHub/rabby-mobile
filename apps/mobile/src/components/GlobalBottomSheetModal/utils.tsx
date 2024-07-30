@@ -137,6 +137,8 @@ export function makeBottomSheetProps(ctx: {
         APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
         APPROVAL_MODAL_NAMES.WatchAddressWaiting,
         APPROVAL_MODAL_NAMES.ETHSign,
+        APPROVAL_MODAL_NAMES.AddAsset,
+        APPROVAL_MODAL_NAMES.AddChain,
         APPROVAL_MODAL_NAMES.Unknown,
       ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)
     ) {

@@ -89,7 +89,13 @@ export const CustomTokenListPopup = ({
                 color={colors['neutral-body']}
                 style={styles.emptyImage}
               />
-              <Text style={styles.emptyText}>No custom network tokens</Text>
+              {isTestnet ? (
+                <Text style={styles.emptyText}>No custom network tokens</Text>
+              ) : (
+                <Text style={styles.emptyText}>
+                  Custom token added by you will be shown here
+                </Text>
+              )}
             </View>
           }
         />

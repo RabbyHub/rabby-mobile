@@ -16,6 +16,8 @@ import { TestnetChainBase } from '@/core/services/customTestnetService';
 import { apiCustomTestnet } from '@/core/apis';
 import { dappService } from '@/core/services';
 import { toast } from '@/components/Toast';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ModalLayouts } from '@/constant/layout';
 
 interface AddChainProps {
   data: AddEthereumChainParams[];
@@ -98,10 +100,19 @@ export const AddChain = ({ params }: { params: AddChainProps }) => {
 
   return (
     <View style={styles.container}>
-      <AppBottomSheetModalTitle title={t('page.addChain.title')} />
+      <AppBottomSheetModalTitle
+        title={t('page.addChain.title')}
+        style={{ paddingTop: ModalLayouts.titleTopOffset }}
+      />
       <View style={styles.main}>
         <Text style={styles.desc}>{t('page.addChain.desc')}</Text>
-        <CustomTestnetForm formik={formik} idDisabled />
+        <KeyboardAwareScrollView
+          enableOnAndroid
+          scrollEnabled
+          keyboardOpeningTime={0}
+          keyboardShouldPersistTaps="handled">
+          <CustomTestnetForm formik={formik} idDisabled />
+        </KeyboardAwareScrollView>
       </View>
       <View style={styles.footer}>
         <Button

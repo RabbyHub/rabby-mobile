@@ -18,6 +18,7 @@ import { HistoryItem } from '@/components/TokenDetailPopup/HistoryItem';
 import { SkeletonHistoryListOfTokenDetail } from '@/components/TokenDetailPopup/Skeleton';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
+import { ModalLayouts } from '@/constant/layout';
 import { apiCustomTestnet } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { dappService, preferenceService } from '@/core/services';
@@ -370,7 +371,10 @@ export const AddAsset = ({ params }: { params: AddAssetProps }) => {
 
   return (
     <View style={styles.container}>
-      <AppBottomSheetModalTitle title={t('page.addToken.title')} />
+      <AppBottomSheetModalTitle
+        title={t('page.addToken.title')}
+        style={{ paddingTop: ModalLayouts.titleTopOffset }}
+      />
       <View style={styles.main}>
         <View>
           {token ? (

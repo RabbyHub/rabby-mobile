@@ -92,58 +92,44 @@ export const CustomTestnetForm = ({
   formik: ReturnType<typeof useCustomTestnetForm>;
 }) => {
   const { t } = useTranslation();
-  // const inputRef = React.useRef<Input>(null);
-
-  // useMount(() => {
-  //   setTimeout(() => {
-  //     inputRef?.current?.focus();
-  //   });
-  // });
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.container}
-      enableOnAndroid
-      scrollEnabled
-      keyboardOpeningTime={0}
-      keyboardShouldPersistTaps="handled">
-      <View>
-        <FormItem
-          name="id"
-          label={t('page.customTestnet.CustomTestnetForm.id')}
-          formik={formik}
-          disabled={disabled || isEdit || idDisabled}
-          autoFocus
-        />
-        <FormItem
-          label={t('page.customTestnet.CustomTestnetForm.name')}
-          name="name"
-          formik={formik}
-          disabled={disabled}
-        />
-        <FormItem
-          label={t('page.customTestnet.CustomTestnetForm.rpcUrl')}
-          name="rpcUrl"
-          formik={formik}
-          disabled={disabled}
-        />
-        <FormItem
-          label={t('page.customTestnet.CustomTestnetForm.nativeTokenSymbol')}
-          name="nativeTokenSymbol"
-          formik={formik}
-          disabled={disabled}
-        />
-        <FormItem
-          label={t('page.customTestnet.CustomTestnetForm.blockExplorerUrl')}
-          name="scanLink"
-          formik={formik}
-          disabled={disabled}
-        />
-      </View>
-    </KeyboardAwareScrollView>
+    <View>
+      <FormItem
+        name="id"
+        label={t('page.customTestnet.CustomTestnetForm.id')}
+        formik={formik}
+        disabled={disabled || isEdit || idDisabled}
+        autoFocus
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.name')}
+        name="name"
+        formik={formik}
+        disabled={disabled}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.rpcUrl')}
+        name="rpcUrl"
+        formik={formik}
+        disabled={disabled}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.nativeTokenSymbol')}
+        name="nativeTokenSymbol"
+        formik={formik}
+        disabled={disabled}
+      />
+      <FormItem
+        label={t('page.customTestnet.CustomTestnetForm.blockExplorerUrl')}
+        name="scanLink"
+        formik={formik}
+        disabled={disabled}
+      />
+    </View>
   );
 };
 

@@ -30,6 +30,7 @@ import { useCustomTestnetForm } from '../hooks/useCustomTestnetForm';
 import { AddFromChainList } from './AddFromChainList';
 import { CustomTestnetForm } from './CustomTestnetForm';
 import { ModalLayouts } from '@/constant/layout';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export const EditCustomTestnetPopup = ({
   data,
@@ -146,20 +147,27 @@ export const EditCustomTestnetPopup = ({
             style={{ paddingTop: ModalLayouts.titleTopOffset }}
             title={t('page.customRpc.EditCustomTestnetModal.title')}
           />
-          <View style={styles.main}>
-            <TouchableOpacity
-              onPress={() => {
-                setIsShowAddFromChainList(true);
-              }}
-              style={styles.quickAdd}>
-              <RcIconFlash color={colors['neutral-body']} />
-              <Text style={styles.quickAddText}>
-                {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
-              </Text>
-              <RcIconRight color={colors['neutral-body']} />
-            </TouchableOpacity>
-            <CustomTestnetForm formik={formik} isEdit={isEdit} />
-          </View>
+          <KeyboardAwareScrollView
+            style={styles.container}
+            enableOnAndroid
+            scrollEnabled
+            keyboardOpeningTime={0}
+            keyboardShouldPersistTaps="handled">
+            <View style={styles.main}>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsShowAddFromChainList(true);
+                }}
+                style={styles.quickAdd}>
+                <RcIconFlash color={colors['neutral-body']} />
+                <Text style={styles.quickAddText}>
+                  {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
+                </Text>
+                <RcIconRight color={colors['neutral-body']} />
+              </TouchableOpacity>
+              <CustomTestnetForm formik={formik} isEdit={isEdit} />
+            </View>
+          </KeyboardAwareScrollView>
           <View style={styles.footer}>
             <Button
               onPress={onCancel}
