@@ -11,6 +11,7 @@ import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -48,7 +49,9 @@ export const AppBottomSheetModalTitle: React.FC<{
 
 export const AppBottomSheetModal = forwardRef<
   BottomSheetModal,
-  React.ComponentProps<typeof BottomSheetModal>
+  React.ComponentProps<typeof BottomSheetModal> & {
+    backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
+  }
 >((props, ref) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
@@ -65,14 +68,15 @@ export const AppBottomSheetModal = forwardRef<
     React.ComponentProps<typeof BottomSheetModal>['backdropComponent'] &
       Function
   >(
-    props => (
+    _props => (
       <BottomSheetBackdrop
-        {...props}
+        {..._props}
+        {...props.backdropProps}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
       />
     ),
-    [],
+    [props.backdropProps],
   );
 
   return (

@@ -145,7 +145,7 @@ export const GasSelectorHeader = ({
     Number(gasLimit),
   );
   const [modalVisible, setModalVisible] = useState(false);
-  const [customGas, setCustomGas] = useState<string | number>('0');
+  const [customGas, setCustomGas] = useState<string | number | undefined>();
   const [selectedGas, setSelectedGas] = useState<GasLevel | null>(
     rawSelectedGas,
   );
@@ -279,7 +279,9 @@ export const GasSelectorHeader = ({
     }
   };
 
+  const pressedConfirmRef = useRef(false);
   const handleModalConfirmGas = () => {
+    pressedConfirmRef.current = true;
     handleConfirmGas();
     setModalVisible(false);
   };
@@ -296,13 +298,10 @@ export const GasSelectorHeader = ({
     }
   };
 
-  const hiddenCustomGas = useMemo(() => {
-    return customGas === '0' && !changedCustomGas;
-  }, [customGas, changedCustomGas]);
-
   const [isSelectCustom, setIsSelectCustom] = useState(false);
   const handleClickEdit = () => {
     setModalVisible(true);
+    modalRef.current?.expand();
     if (rawSelectedGas?.level !== 'custom') {
       setSelectedGas(rawSelectedGas);
       setGasLimit(Number(gasLimit));
@@ -318,9 +317,6 @@ export const GasSelectorHeader = ({
       customerInputRef.current?.focus();
     }, 50);
   };
-
-  const [prevSelectedNotCustomGas, setPrevSelectedNotCustomGas] =
-    useState<GasLevel | null>(null);
 
   const panelSelection = (e, gas: GasLevel) => {
     e.stopPropagation();
@@ -341,6 +337,7 @@ export const GasSelectorHeader = ({
       setSelectedGas({
         ...target,
         level: 'custom',
+        price: Number(customGas) * 1e9,
       });
     } else {
       setSelectedGas({
@@ -441,6 +438,7 @@ export const GasSelectorHeader = ({
   useEffect(() => {
     setTimeout(() => {
       if (isReady || !isFirstTimeLoad) {
+        if (customGas === undefined) return;
         loadCustomGasData(Number(customGas) * 1e9).then(data => {
           if (data) setCustomGasEstimated(data.estimated_seconds);
           setSelectedGas(gas => ({
@@ -449,7 +447,7 @@ export const GasSelectorHeader = ({
             price: Number(customGas) * 1e9,
             front_tx_count: 0,
             estimated_seconds: data?.estimated_seconds ?? 0,
-            priority_price: null,
+            priority_price: gas?.priority_price ?? null,
             base_fee: data?.base_fee ?? 0,
           }));
           setLoadingGasEstimated(false);
@@ -496,9 +494,6 @@ export const GasSelectorHeader = ({
   }, []);
 
   useEffect(() => {
-    if (selectedGas) {
-      setPrevSelectedNotCustomGas(selectedGas);
-    }
     if (!is1559) return;
     if (selectedGas?.level === 'custom') {
       if (Number(customGas) !== maxPriorityFee) {
@@ -520,26 +515,30 @@ export const GasSelectorHeader = ({
   const isLoadingGas = loadingGasEstimated || isNilCustomGas;
 
   useEffect(() => {
-    if (hasCustomPriorityFee.current) return; // use custom priorityFee if user changed custom field
-    if (isReady && selectedGas && chainId === 1) {
-      if (isSelectCustom && isNilCustomGas) {
-        setMaxPriorityFee(undefined);
-        return;
-      }
-      if (selectedGas.priority_price && selectedGas.priority_price !== null) {
-        setMaxPriorityFee(selectedGas.priority_price / 1e9);
-      } else {
-        const priorityFee = calcMaxPriorityFee(
-          gasList,
-          selectedGas,
-          chainId,
-          isSpeedUp || isCancel,
-        );
-        setMaxPriorityFee(priorityFee / 1e9);
-      }
-    } else if (selectedGas) {
-      setMaxPriorityFee(selectedGas.price / 1e9);
+    if (!isReady || !selectedGas) {
+      return;
     }
+
+    // reset maxPriorityFee when user select custom gas and not input
+    if (isSelectCustom && isNilCustomGas && !hasCustomPriorityFee.current) {
+      setMaxPriorityFee(undefined);
+      return;
+    }
+
+    let priorityPrice = calcMaxPriorityFee(
+      gasList,
+      selectedGas,
+      chainId,
+      isSpeedUp || isCancel,
+    );
+
+    setMaxPriorityFee((prevFee = priorityPrice / 1e9) => {
+      // Compare with selectedGas.price to avoid customMaxPriorityFee is more than maxGasFee
+      if (hasCustomPriorityFee.current) {
+        priorityPrice = Math.min(selectedGas.price, prevFee * 1e9);
+      }
+      return priorityPrice / 1e9;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gasList, selectedGas, isReady, chainId, isSelectCustom, isNilCustomGas]);
 
@@ -556,6 +555,7 @@ export const GasSelectorHeader = ({
   useEffect(() => {
     if (modalVisible) {
       modalRef.current?.present();
+      pressedConfirmRef.current = false;
     } else {
       modalRef.current?.close();
     }
@@ -587,9 +587,12 @@ export const GasSelectorHeader = ({
   const [isGasHovering, setIsGasHovering] = useState(false);
 
   const handleClosePopup = () => {
-    if (maxPriorityFee === undefined) {
-      setSelectedGas(prevSelectedNotCustomGas);
+    if (pressedConfirmRef.current) {
+      return;
     }
+    setCustomGas(undefined);
+    setChangedCustomGas(false);
+    setSelectedGas(rawSelectedGas);
     setModalVisible(false);
   };
 
