@@ -19,6 +19,7 @@ import {
 } from '@/core/apis/lock';
 import { Vibration } from 'react-native';
 import { IExtractFromPromise } from '@/utils/type';
+import { IS_IOS } from '@/core/native/utils';
 
 const biometricsInfoAtom = atom({
   authEnabled: isAuthenticatedByBiometrics(),
@@ -63,6 +64,42 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
     }
   }, [setBiometrics]);
 
+  const toggleBiometrics = useCallback(
+    async (
+      nextEnabled: boolean,
+      input: { validatedPassword: string; tipLoading?: boolean },
+    ) => {
+      const { validatedPassword, tipLoading } = input;
+
+      const hideToast = !tipLoading
+        ? null
+        : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
+
+      try {
+        if (nextEnabled) {
+          await apisKeychain.setGenericPassword(
+            validatedPassword,
+            KEYCHAIN_AUTH_TYPES.BIOMETRICS,
+          );
+        } else {
+          await apisKeychain.resetGenericPassword();
+        }
+        const requestResult = await apisKeychain.requestGenericPassword({
+          purpose: RequestGenericPurpose.VERIFY,
+        });
+        if (requestResult && requestResult.actionSuccess) {
+          setBiometrics(prev => ({ ...prev, authEnabled: nextEnabled }));
+        }
+      } catch (error: any) {
+        toast.show(error?.message);
+      } finally {
+        hideToast?.();
+        await fetchBiometrics();
+      }
+    },
+    [setBiometrics, fetchBiometrics],
+  );
+
   useEffect(() => {
     if (options?.autoFetch) {
       fetchBiometrics();
@@ -71,11 +108,18 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
 
   const computed = useMemo(() => {
     const { authEnabled, supportedBiometryType } = biometrics;
+    const isFaceID = supportedBiometryType === BIOMETRY_TYPE.FACE_ID;
     return {
       isBiometricsEnabled: authEnabled && !!supportedBiometryType,
+      settingsAuthEnabled: authEnabled,
       couldSetupBiometrics: !!supportedBiometryType,
       supportedBiometryType,
-      isFaceID: supportedBiometryType === BIOMETRY_TYPE.FACE_ID,
+      defaultTypeLabel: isFaceID
+        ? 'Face ID'
+        : IS_IOS
+        ? 'Touch ID'
+        : 'Fingerprint',
+      isFaceID,
     };
   }, [biometrics]);
 
@@ -83,12 +127,12 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
     biometrics,
     computed,
     fetchBiometrics,
+    toggleBiometrics,
   };
 }
 
 export function useToggleBiometricsEnabled() {
-  const [, setBiometrics] = useAtom(biometricsInfoAtom);
-  const { computed, fetchBiometrics } = useBiometrics();
+  const { computed, toggleBiometrics } = useBiometrics();
 
   const requestToggleBiometricsEnabled = useCallback(
     async (nextEnabled: boolean) => {
@@ -101,33 +145,19 @@ export function useToggleBiometricsEnabled() {
         description: nextEnabled
           ? strings('component.AuthenticationModals.biometrics.enableTip')
           : strings('component.AuthenticationModals.biometrics.disableTip'),
+        disableValidation: !nextEnabled,
         validationHandler: async (password: string) => {
           return apisLock.throwErrorIfInvalidPwd(password);
         },
         async onFinished({ validatedPassword }) {
-          const hideToast = toastLoading(
-            `${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`,
-          );
-          try {
-            if (nextEnabled) {
-              await apisKeychain.setGenericPassword(
-                validatedPassword,
-                KEYCHAIN_AUTH_TYPES.BIOMETRICS,
-              );
-            } else {
-              await apisKeychain.resetGenericPassword();
-            }
-            setBiometrics(prev => ({ ...prev, authEnabled: nextEnabled }));
-          } catch (error: any) {
-            toast.show(error?.message);
-          } finally {
-            hideToast();
-            await fetchBiometrics();
-          }
+          toggleBiometrics(nextEnabled, {
+            validatedPassword,
+            // tipLoading: true,
+          });
         },
       });
     },
-    [setBiometrics, fetchBiometrics],
+    [toggleBiometrics],
   );
 
   return {

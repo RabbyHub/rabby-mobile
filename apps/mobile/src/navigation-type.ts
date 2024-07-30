@@ -97,15 +97,24 @@ export type TransactionNavigatorParamList = {
 };
 
 export type SettingNavigatorParamList = {
-  [RootNames.Settings]?: {};
-  [RootNames.ProviderControllerTester]?: {};
-  [RootNames.SetPassword]?: {
-    replaceStack: typeof RootNames.StackAddress;
-    replaceScreen:
-      | typeof RootNames.CreateMnemonic
-      | typeof RootNames.ImportPrivateKey
-      | typeof RootNames.ImportMnemonic;
+  [RootNames.Settings]?: {
+    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
   };
+  [RootNames.ProviderControllerTester]?: {};
+  [RootNames.SetPassword]?:
+    | {
+        actionAfterSetup: 'backScreen';
+        replaceStack: typeof RootNames.StackAddress;
+        replaceScreen:
+          | typeof RootNames.CreateMnemonic
+          | typeof RootNames.ImportPrivateKey
+          | typeof RootNames.ImportMnemonic;
+      }
+    | {
+        actionAfterSetup: 'onSettings';
+        // actionType: (SettingNavigatorParamList['Settings'] & object)['enterActionType'];
+        actionType: 'setBiometrics' | 'setAutoLockTime';
+      };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};
 };

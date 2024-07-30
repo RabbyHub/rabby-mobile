@@ -18,17 +18,27 @@ export const makeThemeIcon = (
     return isLight ? <LightIcon {...props} /> : <DarkIcon {...props} />;
   });
 
+type ThemeVariants =
+  | ColorOrVariant
+  | {
+      onLight: ColorOrVariant;
+      onDark?: ColorOrVariant;
+    };
 export function makeThemeIconFromCC(
   IconCC: React.FC<SvgProps>,
-  input:
-    | ColorOrVariant
-    | {
-        onLight: ColorOrVariant;
-        onDark?: ColorOrVariant;
-      },
+  colorsOrGetColors:
+    | ThemeVariants
+    | ((colors: AppColorsVariants) => ThemeVariants),
 ) {
   return memo((props: SvgProps) => {
     const isLight = useGetBinaryMode() === 'light';
+    const colors = useThemeColors();
+
+    const input = useMemo(() => {
+      return typeof colorsOrGetColors === 'function'
+        ? colorsOrGetColors(colors)
+        : colorsOrGetColors;
+    }, [colors]);
 
     return <IconCC {...props} color={pickColorVariants(input, isLight)} />;
   });
@@ -46,8 +56,8 @@ export function makeActiveIconFromCC(
 ) {
   return memo((props: SvgProps & { isActive?: boolean }) => {
     const { isActive, ...otherProps } = props;
-
     const colors = useThemeColors();
+
     const { activeColor, inactiveColor } = useMemo(() => {
       return typeof colorsOrGetColors === 'function'
         ? colorsOrGetColors(colors)

@@ -8,7 +8,7 @@ import GetStartedScreen from '../GetStarted/GetStarted';
 const Stack = createCustomNativeStackNavigator();
 
 export function GetStartedNavigator() {
-  const screenOptions = useStackScreenConfig();
+  // const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
 

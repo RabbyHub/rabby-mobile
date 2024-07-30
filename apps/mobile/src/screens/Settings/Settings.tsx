@@ -32,6 +32,7 @@ import { RootNames } from '@/constant/layout';
 import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
+  useThemeColors,
   useThemeStyles,
 } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
@@ -55,13 +56,22 @@ import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
+import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { useUpgradeInfo } from '@/hooks/version';
+import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { StackActions, useFocusEffect } from '@react-navigation/native';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigationState,
+} from '@react-navigation/native';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
-import { AutoLockCountDownLabel } from './components/AutoLockCountDownLabel';
+import {
+  AutoLockCountDownLabel,
+  AutoLockSettingLabel,
+} from './components/AutoLock';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
@@ -75,17 +85,25 @@ const LAYOUTS = {
 
 const isIOS = Platform.OS === 'ios';
 
+const { switchBiometricsRef, selectAutolockTimeRef } = sheetModalRefsNeedLock;
 function SettingsBlocks() {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const colors = useThemeColors();
 
   const { currentAccount } = useCurrentAccount();
 
   const clearPendingRef = useRef<BottomSheetModal>(null);
-  const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
+
+  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
+  // const selectAutolockTimeRef = useRef<BottomSheetModal>(null);
+  const startSelectAutolockTime = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setAutoLockTime' })
+    )
+      return;
+    selectAutolockTimeRef.current?.present();
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const { localVersion, remoteVersion, triggerCheckVersion } = useUpgradeInfo();
-
-  const { hasSetupCustomPassword } = useManagePasswordOnSettings();
 
   const {
     computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
@@ -99,14 +117,40 @@ function SettingsBlocks() {
   );
 
   const disabledBiometrics =
-    !couldSetupBiometrics ||
-    !hasSetupCustomPassword ||
-    !APP_FEATURE_SWITCH.biometricsAuth;
+    !couldSetupBiometrics || !APP_FEATURE_SWITCH.biometricsAuth;
 
-  const [switchWhitelistRef, switchBiometricsRef] = [
-    useRef<SwitchToggleType>(null),
-    useRef<SwitchToggleType>(null),
-  ];
+  const switchWhitelistRef = useRef<SwitchToggleType>(null);
+
+  const startSwitchBiometrics = useCallback(() => {
+    if (
+      shouldRedirectToSetPasswordBefore({ onSettingsAction: 'setBiometrics' })
+    )
+      return;
+    switchBiometricsRef.current?.toggle();
+  }, [shouldRedirectToSetPasswordBefore]);
+
+  const navParams = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.Settings)?.params,
+  ) as SettingNavigatorParamList['Settings'];
+
+  // useMount(() => {
+  //   console.log(
+  //     '[feat] navParams?.enterActionType',
+  //     navParams?.enterActionType,
+  //   );
+  //   switch (navParams?.enterActionType) {
+  //     default:
+  //       break;
+  //     case 'setAutoLockTime': {
+  //       startSelectAutolockTime();
+  //       break;
+  //     }
+  //     case 'setBiometrics': {
+  //       startSwitchBiometrics();
+  //       break;
+  //     }
+  //   }
+  // });
 
   const navigation = useRabbyAppNavigation();
 
@@ -162,7 +206,7 @@ function SettingsBlocks() {
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
             onPress: () => {
-              switchBiometricsRef.current?.toggle();
+              startSwitchBiometrics();
             },
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
@@ -178,8 +222,9 @@ function SettingsBlocks() {
             label: 'Auto lock time',
             icon: RcAutoLockTime,
             onPress: () => {
-              selectAutolockTimeRef.current?.present();
+              startSelectAutolockTime();
             },
+            rightTextNode: <AutoLockSettingLabel />,
           },
           {
             label: 'Add Custom Network',

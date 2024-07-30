@@ -214,7 +214,7 @@ const AddressInfo = (props: AddressInfoProps) => {
             t('page.manageAddress.delete-checklist-2'),
           ]
         : undefined,
-      needPassword,
+      disableValidation: !needPassword,
       onFinished: handleDelete,
       validationHandler: async (password: string) => {
         await apisLock.throwErrorIfInvalidPwd(password);

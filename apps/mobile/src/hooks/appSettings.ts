@@ -1,4 +1,4 @@
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
@@ -6,8 +6,9 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { apisAutoLock } from '@/core/apis';
-import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { DEFAULT_AUTO_LOCK_MINUTES, TIME_SETTINGS } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
+import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 
 const isIOS = DeviceUtils.isIOS();
 
@@ -15,7 +16,7 @@ type ESettings = {
   androidAllowScreenCapture: boolean;
   iosAllowScreenRecord: boolean;
 };
-const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
+const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
   /**
    * @description means screen-capture/screen-recording on Android, or screen-recording on iOS
    *
@@ -143,4 +144,26 @@ export function useAutoLockTimeMs() {
     // autoLockMinutes,
     onAutoLockTimeMsChange,
   };
+}
+
+export function useCurrentAutoLockLabel() {
+  const autoLockMinutes = useAtomValue(autoLockMinutesAtom);
+
+  return useMemo(() => {
+    const minutes = autoLockMinutes;
+
+    const preset = TIME_SETTINGS.find(
+      setting => setting.milliseconds === minutes * 60 * 1000,
+    );
+    if (preset?.label) return preset?.label;
+
+    const timeSpans = getTimeSpan(minutes);
+
+    return [
+      timeSpans.d ? `${timeSpans.d} Day(s)` : '',
+      timeSpans.h ? `${timeSpans.h} Hour(s)` : '',
+      timeSpans.m ? `${timeSpans.m} Minute(s)` : '',
+      // timeSpans.s ? `${timeSpans.s} Sec(s)` : '',
+    ].join(' ');
+  }, [autoLockMinutes]);
 }

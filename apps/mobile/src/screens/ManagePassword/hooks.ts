@@ -31,7 +31,6 @@ export function useManagePasswordOnSettings() {
       toggleShowSheetModal('clearPasswordModalRef', true);
     } else {
       // toggleShowSheetModal('setupPasswordModalRef', true);
-
       navigation.dispatch(
         StackActions.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,

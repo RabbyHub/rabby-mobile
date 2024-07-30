@@ -75,7 +75,10 @@ export const GasMenuButton: React.FC<Props> = ({
         title: t(getGasLevelI18nKey(gas.level)),
         titleColor: colors['neutral-body'],
         imageColor: colors['neutral-body'],
-        subtitle: `${gwei} Gwei`,
+        subtitle:
+          gas.level !== 'custom' || showCustomGasPrice
+            ? `${gwei} Gwei`
+            : undefined,
         state: gas.level === selectedGas?.level ? 'on' : 'off',
       } as MenuAction;
     });
@@ -85,7 +88,7 @@ export const GasMenuButton: React.FC<Props> = ({
     }
 
     return list;
-  }, [colors, gasList, selectedGas?.level, t]);
+  }, [colors, gasList, selectedGas?.level, showCustomGasPrice, t]);
   const onPressAction = React.useCallback(
     ({ nativeEvent: { event } }) => {
       const id = event;

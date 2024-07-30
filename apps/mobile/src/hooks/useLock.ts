@@ -10,6 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -207,27 +208,76 @@ export function useSecureOnBackground() {
   }, [setAppStatus]);
 }
 
+type SwitchToggleType =
+  import('@/components/customized/Switch').SwitchToggleType;
+export const sheetModalRefsNeedLock = {
+  switchBiometricsRef: React.createRef<SwitchToggleType>(),
+  selectAutolockTimeRef: React.createRef<BottomSheetModal>(),
+};
+const setPasswordFirstAtom = atom({
+  isOnSettingsWaiting: false,
+});
+export function useSetPasswordFirstState() {
+  const [{ isOnSettingsWaiting }, updateSetPasswordFirst] =
+    useAtom(setPasswordFirstAtom);
+
+  // const updateSetPasswordFirst = useCallback(
+  //   (state: { isOnSettingsWaiting: boolean }) => {
+  //     _updateSetPasswordFirst(prev => ({
+  //       ...prev,
+  //       ...state,
+  //     }));
+  //   },
+  //   [navigation, _updateSetPasswordFirst],
+  // );
+
+  return {
+    isOnSettingsWaiting,
+    updateSetPasswordFirst,
+  };
+}
 export function useSetPasswordFirst() {
   const navigation = useRabbyAppNavigation();
   const { lockInfo, fetchLockInfo } = useLoadLockInfo();
+  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
+
   useFocusEffect(
     useCallback(() => {
       fetchLockInfo();
     }, [fetchLockInfo]),
   );
   const shouldRedirectToSetPasswordBefore = React.useCallback(
-    (
-      screen: (SettingNavigatorParamList['SetPassword'] &
-        object)['replaceScreen'],
-    ) => {
+    ({
+      screen,
+      onSettingsAction,
+    }: {
+      screen?: (SettingNavigatorParamList['SetPassword'] & {
+        actionAfterSetup: 'backScreen';
+      })['replaceScreen'];
+      onSettingsAction?: (SettingNavigatorParamList['SetPassword'] & {
+        actionAfterSetup: 'onSettings';
+      })['actionType'];
+    }) => {
       if (!APP_FEATURE_SWITCH.customizePassword) return false;
+      if (lockInfo.pwdStatus === PasswordStatus.Custom) return false;
 
-      if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
+      if (screen) {
         navigation.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,
           params: {
+            actionAfterSetup: 'backScreen',
             replaceStack: RootNames.StackAddress,
             replaceScreen: screen,
+          },
+        });
+        return true;
+      } else if (onSettingsAction) {
+        // updateSetPasswordFirst({ isOnSettingsWaiting: true });
+        navigation.push(RootNames.StackSettings, {
+          screen: RootNames.SetPassword,
+          params: {
+            actionAfterSetup: 'onSettings',
+            actionType: onSettingsAction,
           },
         });
         return true;
