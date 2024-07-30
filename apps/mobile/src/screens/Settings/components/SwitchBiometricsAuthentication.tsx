@@ -21,11 +21,9 @@ function useToggleBiometricsEnabled() {
         description: nextEnabled
           ? strings('component.AuthenticationModals.biometrics.enableTip')
           : strings('component.AuthenticationModals.biometrics.disableTip'),
-        ...(!nextEnabled && {
-          authType: ['none'],
-        }),
+        authType: nextEnabled ? ['password'] : ['none'],
         async onFinished({ getValidatedPassword }) {
-          toggleBiometrics(nextEnabled, {
+          await toggleBiometrics(nextEnabled, {
             validatedPassword: getValidatedPassword(),
             // tipLoading: true,
           });

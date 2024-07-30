@@ -96,26 +96,40 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
         ? null
         : toastLoading(`${nextEnabled ? 'Enabling' : 'Disabling'} biometrics`);
 
+      const reset = async () => {
+        await apisKeychain.resetGenericPassword();
+        setBiometrics(prev => ({ ...prev, authEnabled: false }));
+      };
+
       try {
-        if (nextEnabled) {
+        if (!nextEnabled) {
+          await reset();
+        } else {
           await apisKeychain.setGenericPassword(
             validatedPassword,
             KEYCHAIN_AUTH_TYPES.BIOMETRICS,
           );
-        } else {
-          await apisKeychain.resetGenericPassword();
-        }
-        const requestResult = await apisKeychain.requestGenericPassword({
-          purpose: RequestGenericPurpose.VERIFY,
-        });
-        if (requestResult && requestResult.actionSuccess) {
-          setBiometrics(prev => ({
-            ...prev,
-            authEnabled: nextEnabled,
-          }));
+          const requestResult = await apisKeychain.requestGenericPassword({
+            purpose: RequestGenericPurpose.VERIFY,
+          });
+          if (!requestResult) {
+            await reset();
+          } else if (requestResult && requestResult.actionSuccess) {
+            setBiometrics(prev => ({ ...prev, authEnabled: true }));
+          }
         }
       } catch (error: any) {
-        toast.show(error?.message);
+        if (nextEnabled) await reset();
+
+        const parsedInfo = parseKeychainError(error);
+        if (
+          parsedInfo.isCancelledByUser ||
+          (__DEV__ && parsedInfo.sysMessage)
+        ) {
+          toast.show(parsedInfo.sysMessage);
+        } else {
+          toast.show(error?.message);
+        }
       } finally {
         hideToast?.();
         await fetchBiometrics();
