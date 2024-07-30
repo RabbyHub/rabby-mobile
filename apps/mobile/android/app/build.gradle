@@ -85,11 +85,6 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.debank.rabbymobile"
-    // productFlavors {
-    //   create("debug") {
-    //     applicationIdSuffix ".debug"
-    //   }
-    // }
     defaultConfig {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -126,6 +121,15 @@ android {
             }
         }
     }
+    // flavorDimensions "buildchannel"
+    // productFlavors {
+    //   regression {
+    //     dimension "buildchannel"
+    //     applicationIdSuffix ".regression"
+    //     versionNameSuffix "-regression"
+    //     // resValue "string", "app_name", "Reg Rabby Wallet"
+    //   }
+    // }
     buildTypes {
         debug {
             defaultConfig.minSdkVersion 24
@@ -140,6 +144,11 @@ android {
             // shrinkResources enableProguardInReleaseBuilds
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        regression {
+            initWith release
+            applicationIdSuffix ".regression"
+            matchingFallbacks = ['release']
         }
     }
     buildTypes.each {

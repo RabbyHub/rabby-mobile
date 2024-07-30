@@ -1,5 +1,4 @@
-fastlane documentation
-----
+## fastlane documentation
 
 # Installation
 
@@ -31,28 +30,27 @@ Release for the iOS adhoc
 
 Release for the iOS production
 
-----
-
+---
 
 ## Android
 
-### android alpha
+### android selfhost
 
 ```sh
-[bundle exec] fastlane android alpha
+[bundle exec] fastlane android selfhost
 ```
 
-Release for the Android alpha
+Release for the Android selfhost
 
-### android appstore
+### android playstore
 
 ```sh
-[bundle exec] fastlane android appstore
+[bundle exec] fastlane android playstore
 ```
 
-Release for the Android production
+Release for the Android playstore
 
-----
+---
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
 

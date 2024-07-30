@@ -115,15 +115,20 @@ platform :android do
     android_version_name = android_get_version_name(gradle_file: "./android/app/build.gradle")
   end
 
-  desc "Release for the Android alpha"
-  lane :alpha do
+  desc "Release for the Android selfhost"
+  lane :selfhost do
     write_key_store
     gradle(task: 'clean', project_dir: './android')
-    build_rabbymobile_app(tasks: ['assembleRelease'])
+    build_channel = ENV['buildchannel'] || 'selfhost-reg'
+    if build_channel == 'selfhost-reg'
+      build_rabbymobile_app(tasks: ['assembleRegression'])
+    else
+      build_rabbymobile_app(tasks: ['assembleRelease'])
+    end
   end
 
-  desc "Release for the Android production"
-  lane :appstore do
+  desc "Release for the Android playstore"
+  lane :playstore do
     write_key_store
     gradle(task: 'clean', project_dir: './android')
     build_rabbymobile_app(tasks: ['assembleRelease', 'bundleRelease'])
