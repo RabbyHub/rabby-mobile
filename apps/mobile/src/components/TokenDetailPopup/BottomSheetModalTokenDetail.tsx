@@ -644,7 +644,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       res.shouldRenderLoadingOnEmpty =
         isLoadingFirst ||
         (!res.dataList?.length && isLoadingMore) ||
-        lastTokenIdMatched;
+        (tokenLoad?.isLoading && lastTokenIdMatched);
 
       if (isTestnet) {
         res.shouldRenderLoadingOnEmpty = false;
@@ -655,6 +655,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       latestData?.tokenId,
       latestData?.list,
       token?._tokenId,
+      tokenLoad?.isLoading,
       isLoadingFirst,
       isLoadingMore,
       isTestnet,
