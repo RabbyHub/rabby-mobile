@@ -154,7 +154,7 @@ const getStyles = createGetStyles((colors, options) => ({
     textAlign: 'center',
 
     marginTop: SIZES.titleMt,
-    height: SIZES.titleHeight,
+    minHeight: SIZES.titleHeight,
     marginBottom: SIZES.titleMb,
     // ...makeDebugBorder('red'),
   },

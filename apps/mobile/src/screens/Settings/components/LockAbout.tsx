@@ -2,14 +2,15 @@ import React from 'react';
 import { Text } from 'react-native';
 
 import { useCurrentAutoLockLabel } from '@/hooks/appSettings';
-import { useAutoLockTimeout, useLastUnlockTime } from '@/hooks/appTimeout';
+import { useAutoLockTime, useLastUnlockTime } from '@/hooks/appTimeout';
 import { useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
 import { getTimeSpanByMs } from '@/utils/time';
+import { usePasswordStatus } from '@/hooks/useLock';
 
 export function AutoLockCountDownLabel() {
-  const { autoLockTimeout } = useAutoLockTimeout();
+  const { autoLockTime } = useAutoLockTime();
 
   const colors = useThemeColors();
 
@@ -23,7 +24,7 @@ export function AutoLockCountDownLabel() {
 
   const { text: countDown, secs } = React.useMemo(() => {
     spinner;
-    const diffMs = Math.max(autoLockTimeout - Date.now(), 0);
+    const diffMs = Math.max(autoLockTime - Date.now(), 0);
 
     const timeSpans = getTimeSpanByMs(diffMs);
 
@@ -36,7 +37,7 @@ export function AutoLockCountDownLabel() {
         timeSpans.s ? `${timeSpans.s}s` : '',
       ].join(' '),
     };
-  }, [autoLockTimeout, spinner]);
+  }, [autoLockTime, spinner]);
 
   return (
     <Text
@@ -54,8 +55,10 @@ export function AutoLockCountDownLabel() {
 
 export function AutoLockSettingLabel() {
   const settingLabel = useCurrentAutoLockLabel();
-
   const colors = useThemeColors();
+  const { isUseCustomPwd } = usePasswordStatus();
+
+  if (!isUseCustomPwd) return null;
 
   return (
     <Text

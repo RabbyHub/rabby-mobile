@@ -2,26 +2,25 @@ import { apisAutoLock, apisLock } from '@/core/apis';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { unlockTimeEvent } from '@/core/apis/lock';
 import { atom, useAtom } from 'jotai';
-import { useCallback } from 'react';
 
-const autoLockTimeoutAtom = atom(-1);
-autoLockTimeoutAtom.onMount = setter => {
+const autoLockTimeAtom = atom(-1);
+autoLockTimeAtom.onMount = setter => {
   autoLockEvent.addListener('change', value => {
     setter(value);
   });
 };
 
-export function useAutoLockTimeout() {
-  const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
+export function useAutoLockTime() {
+  const [time, setTime] = useAtom(autoLockTimeAtom);
 
   // const fetchTimeout = useCallback(() => {
   //   const value = apisAutoLock.getAutoLockTime();
-  //   setTimeout(value);
+  //   setTime(value);
   //   return value;
-  // }, [setTimeout]);
+  // }, [setTime]);
 
   return {
-    autoLockTimeout: timeout,
+    autoLockTime: time,
     // fetchTimeout,
   };
 }

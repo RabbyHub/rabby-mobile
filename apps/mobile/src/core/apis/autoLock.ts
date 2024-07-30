@@ -6,7 +6,7 @@ const MILLISECS_PER_MIN = 60 * 1e3;
 const MILLISECS_PER_SEC = 1e3;
 
 /** @warning never set the duration two short to avoid re-lock on unlocking */
-// const CHECK_DURATION = __DEV__ ? 5 * MILLISECS_PER_SEC : 30 * MILLISECS_PER_SEC
+const CHECK_DURATION = __DEV__ ? 5 * MILLISECS_PER_SEC : 10 * MILLISECS_PER_SEC;
 const AUTO_LOCK_SECS = {
   ERROR_DELTA: __DEV__ ? 3 * MILLISECS_PER_SEC : 5 * MILLISECS_PER_SEC,
   TIMEOUT_MILLISECS: Math.floor(
@@ -19,13 +19,13 @@ function calc(ms: number = AUTO_LOCK_SECS.TIMEOUT_MILLISECS) {
   return Date.now() + ms;
 }
 
-const autoLockTimeoutRef = {
+const autoLockTimeRef = {
   current: calc(),
   timer: null as NodeJS.Timer | number | null,
 };
 
 type TimeoutContext = {
-  timeoutValue: number;
+  unlockExpire: number;
   /**
    * @description the difference between the current time and the timeout value
    *
@@ -41,14 +41,22 @@ const { EventEmitter: AutoLockEvent } = makeEEClass<{
 export const autoLockEvent = new AutoLockEvent();
 
 function setAutoLockTime(time: number) {
-  autoLockTimeoutRef.current = time;
+  autoLockTimeRef.current = time;
   autoLockEvent.emit('change', time);
 
   return time;
 }
 
 export function getAutoLockTime() {
-  return autoLockTimeoutRef.current;
+  return autoLockTimeRef.current;
+}
+
+export function coerceAutoLockTimeout(ms: number) {
+  const timeoutMs = Math.max(5 * MILLISECS_PER_SEC, ms);
+  // keep decimals 2
+  const minutes = parseFloat((ms / MILLISECS_PER_MIN).toFixed(2));
+
+  return { timeoutMs, minutes };
 }
 
 export function getPersistedAutoLockTimes() {
@@ -57,16 +65,18 @@ export function getPersistedAutoLockTimes() {
     preferenceService.getPreference('autoLockTime') ||
     DEFAULT_AUTO_LOCK_MINUTES;
 
+  const timeoutMs = minutes * MILLISECS_PER_MIN;
+
   return {
-    minutes,
-    ms: minutes * MILLISECS_PER_MIN,
+    ...coerceAutoLockTimeout(timeoutMs),
+    expireTime: calc(timeoutMs),
   };
 }
 
 export function refreshAutolockTimeout(type?: 'clear') {
   const dispose = () => {
-    if (autoLockTimeoutRef.timer) {
-      clearTimeout(autoLockTimeoutRef.timer);
+    if (autoLockTimeRef.timer) {
+      clearTimeout(autoLockTimeRef.timer);
     }
   };
 
@@ -75,21 +85,22 @@ export function refreshAutolockTimeout(type?: 'clear') {
   if (type === 'clear') {
     setAutoLockTime(-1);
   } else {
-    setAutoLockTime(calc(getPersistedAutoLockTimes().ms));
-    autoLockTimeoutRef.timer = setTimeout(() => {
-      const timeoutValue = getAutoLockTime();
-      const diff = Date.now() - timeoutValue;
+    const { timeoutMs, expireTime } = getPersistedAutoLockTimes();
+    setAutoLockTime(expireTime);
+    autoLockTimeRef.timer = setTimeout(() => {
+      const unlockExpire = getAutoLockTime();
+      const diff = Date.now() - unlockExpire;
 
       console.debug(
-        'refreshAutolockTimeout:: timeoutValue: %s; diff: %s',
-        timeoutValue,
+        'refreshAutolockTimeout:: unlockExpire: %s; diff: %s',
+        unlockExpire,
         diff,
       );
-      if (timeoutValue && diff > -AUTO_LOCK_SECS.ERROR_DELTA) {
+      if (unlockExpire && diff > -AUTO_LOCK_SECS.ERROR_DELTA) {
         const delayLock = () => refreshAutolockTimeout();
-        autoLockEvent.emit('timeout', { timeoutValue, diff, delayLock });
+        autoLockEvent.emit('timeout', { unlockExpire, diff, delayLock });
       }
-    }, AUTO_LOCK_SECS.TIMEOUT_MILLISECS);
+    }, timeoutMs);
   }
 
   return { dispose };

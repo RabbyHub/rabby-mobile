@@ -106,7 +106,7 @@ export function useAutoLockTimeMs() {
 
   const onAutoLockTimeMsChange = useCallback(
     (ms: number) => {
-      const minutes = Math.floor(ms / 60000);
+      const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
       setAutoLockMinutes(minutes);
       preferenceService.setPreference({
         autoLockTime: minutes,
