@@ -156,6 +156,9 @@ export const useTokens = (
       draft._netWorthChange = '-';
       draft.netWorthChange = 0;
       draft._netWorthChangePercent = '';
+      draft._portfolioDict = {};
+      draft._portfolios = [];
+      draft._serverUpdatedAt = Math.ceil(new Date().getTime() / 1000);
     });
 
     let _tokens: AbstractPortfolioToken[] = [];
