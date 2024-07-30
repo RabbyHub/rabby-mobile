@@ -56,7 +56,7 @@ export function usePasswordStatus() {
 }
 
 const tryAutoUnlockPromiseRef = {
-  current: apisLock.tryAutoUnlockRabbyMobile(),
+  current: apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime(),
 };
 
 /**

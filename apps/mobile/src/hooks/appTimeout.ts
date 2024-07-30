@@ -14,15 +14,15 @@ autoLockTimeoutAtom.onMount = setter => {
 export function useAutoLockTimeout() {
   const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
 
-  const fetchTimeout = useCallback(() => {
-    const value = apisAutoLock.getAutoLockTime();
-    setTimeout(value);
-    return value;
-  }, [setTimeout]);
+  // const fetchTimeout = useCallback(() => {
+  //   const value = apisAutoLock.getAutoLockTime();
+  //   setTimeout(value);
+  //   return value;
+  // }, [setTimeout]);
 
   return {
     autoLockTimeout: timeout,
-    fetchTimeout,
+    // fetchTimeout,
   };
 }
 
@@ -36,14 +36,14 @@ unlockTimeAtom.onMount = setter => {
 export function useLastUnlockTime() {
   const [time, setTime] = useAtom(unlockTimeAtom);
 
-  const fetchTimeout = useCallback(() => {
-    const value = apisLock.getUnlockTime();
-    setTime(value);
-    return value;
-  }, [setTime]);
+  // const fetchLastUnlockTime = useCallback(() => {
+  //   const value = apisLock.getUnlockTime();
+  //   setTime(value);
+  //   return value;
+  // }, [setTime]);
 
   return {
     unlockTime: time,
-    fetchTimeout,
+    // fetchLastUnlockTime,
   };
 }

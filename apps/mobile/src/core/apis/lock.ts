@@ -49,7 +49,7 @@ function getInitError(password: string) {
 }
 
 /* ===================== Password:start ===================== */
-export async function safeVerifyPassword(password: string) {
+async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
     await keyringService.verifyPassword(password);
@@ -166,7 +166,7 @@ export async function getRabbyLockInfo() {
   return info;
 }
 
-export async function tryAutoUnlockRabbyMobile() {
+async function tryAutoUnlockRabbyMobile() {
   // // leave here for debugging
   if (__DEV__) {
     console.debug(
@@ -198,7 +198,7 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
-export async function unlockWallet(password: string) {
+async function unlockWallet(password: string) {
   const unlockResult = {
     error: '',
   };
@@ -240,3 +240,20 @@ export async function updateUnlockTime() {
   unlockTimeRef.current = time;
   unlockTimeEvent.emit('updated', time);
 }
+
+function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
+  fn: T,
+): T {
+  return function (...args) {
+    const res = fn(...args);
+    updateUnlockTime();
+    return res;
+  } as T;
+}
+
+export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile);
+export const unlockWalletWithUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(unlockWallet);
+export const safeVerifyPasswordAndUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(safeVerifyPassword);

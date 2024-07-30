@@ -265,7 +265,10 @@ export const AuthenticationModal = ({
     if (hasCheckFailed) return;
 
     try {
-      if (!disableValidation) await validationHandler?.(password);
+      if (!disableValidation) {
+        await validationHandler?.(password);
+        apisLock.updateUnlockTime();
+      }
       onFinished?.({
         ...onFinishedReturnBase,
         authType: 'password',
