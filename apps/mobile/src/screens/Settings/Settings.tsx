@@ -73,7 +73,8 @@ import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockT
 import {
   AutoLockCountDownLabel,
   AutoLockSettingLabel,
-} from './components/AutoLock';
+  LastUnlockTimeLabel,
+} from './components/LockAbout';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import useMount from 'react-use/lib/useMount';
@@ -460,11 +461,21 @@ function DevSettingsBlocks() {
             },
             {
               label: 'Auto Lock Countdown',
-              icon: RcCountdown,
+              icon: RcAutoLockTime,
               // onPress: () => {},
               rightNode: (
                 <Text>
                   <AutoLockCountDownLabel />
+                </Text>
+              ),
+            },
+            {
+              label: 'Last Unlock Offset',
+              icon: RcCountdown,
+              // onPress: () => {},
+              rightNode: (
+                <Text>
+                  <LastUnlockTimeLabel />
                 </Text>
               ),
             },

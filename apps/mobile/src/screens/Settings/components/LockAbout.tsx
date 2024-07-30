@@ -1,10 +1,8 @@
 import React from 'react';
 import { Text } from 'react-native';
 
-import {
-  useAutoLockTimeout,
-  useCurrentAutoLockLabel,
-} from '@/hooks/appSettings';
+import { useCurrentAutoLockLabel } from '@/hooks/appSettings';
+import { useAutoLockTimeout, useLastUnlockTime } from '@/hooks/appTimeout';
 import { useThemeColors } from '@/hooks/theme';
 import useInterval from 'react-use/lib/useInterval';
 import { NEED_DEVSETTINGBLOCKS } from '@/constant/env';
@@ -67,6 +65,51 @@ export function AutoLockSettingLabel() {
         fontSize: 14,
       }}>
       {settingLabel}
+    </Text>
+  );
+}
+
+export function LastUnlockTimeLabel() {
+  const { unlockTime } = useLastUnlockTime();
+
+  const colors = useThemeColors();
+
+  const [spinner, setSpinner] = React.useState(false);
+  useInterval(() => {
+    if (NEED_DEVSETTINGBLOCKS) {
+      // trigger countDown re-calculated
+      setSpinner(prev => !prev);
+    }
+  }, 500);
+
+  const { text: timeOffset, mins } = React.useMemo(() => {
+    spinner;
+    const diffMs = Math.max(Date.now() - unlockTime, 0);
+
+    const timeSpans = getTimeSpanByMs(diffMs);
+
+    return {
+      mins: timeSpans.m,
+      text: [
+        timeSpans.d ? `${timeSpans.d}d` : '',
+        timeSpans.h ? `${timeSpans.h}h` : '',
+        timeSpans.m ? `${timeSpans.m}m` : '',
+        timeSpans.s ? `${timeSpans.s}s` : '',
+      ].join(' '),
+    };
+  }, [unlockTime, spinner]);
+
+  return (
+    <Text
+      style={{
+        color:
+          mins < 5
+            ? colors['green-default']
+            : mins < 8
+            ? colors['orange-default']
+            : colors['red-default'],
+      }}>
+      {timeOffset}
     </Text>
   );
 }
