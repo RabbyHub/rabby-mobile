@@ -43,13 +43,9 @@ export const BlockedTokenListPopup = ({
 
   const title = useMemo(() => {
     const count = tokens?.length || 0;
-    return (
-      count +
-      ' ' +
-      (count > 1
-        ? t('page.dashboard.tokenDetail.blockedButtons')
-        : t('page.dashboard.tokenDetail.blockedButton'))
-    );
+    return t('page.dashboard.assets.table.blockedTokens', {
+      count: count,
+    });
   }, [t, tokens?.length]);
 
   return (

@@ -55,9 +55,13 @@ export const CustomTokenListPopup = ({
   const title = useMemo(() => {
     const count = tokens?.length || 0;
     return isTestnet
-      ? `${count}  custom network tokens`
-      : `${count} custom tokens`;
-  }, [tokens?.length, isTestnet]);
+      ? t('page.dashboard.assets.table.testnetTokens', {
+          count: count,
+        })
+      : t('page.dashboard.assets.table.customizeTokens', {
+          count: count,
+        });
+  }, [tokens?.length, t, isTestnet]);
 
   const { testnetList } = useChainList();
 

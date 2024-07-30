@@ -237,6 +237,34 @@ export const TokenWallet = ({
     [],
   );
 
+  const tokenWalletFooterList = useMemo(() => {
+    return [
+      {
+        type: 'custom' as const,
+        label: t('page.dashboard.assets.table.customizeTokens', {
+          count: customizeTokens?.length || 0,
+        }),
+      },
+      {
+        type: 'blocked' as const,
+        label: t('page.dashboard.assets.table.blockedTokens', {
+          count: blockedTokens?.length || 0,
+        }),
+      },
+      {
+        type: 'customTestnet' as const,
+        label: t('page.dashboard.assets.table.testnetTokens', {
+          count: testnetTokens?.length || 0,
+        }),
+      },
+    ];
+  }, [
+    t,
+    customizeTokens?.length,
+    blockedTokens?.length,
+    testnetTokens?.length,
+  ]);
+
   const ListEmptyComponent = useMemo(() => {
     return isTokensLoading ? (
       <PositionLoader space={8} />
@@ -259,20 +287,7 @@ export const TokenWallet = ({
                   isShowCustomTestnetPopup: type === 'customTestnet',
                 });
               }}
-              list={[
-                {
-                  type: 'custom',
-                  label: `${customizeTokens?.length || 0} customized tokens`,
-                },
-                {
-                  type: 'blocked',
-                  label: `${blockedTokens?.length || 0} blocked token`,
-                },
-                {
-                  type: 'customTestnet',
-                  label: `${testnetTokens?.length || 0} custom network tokens`,
-                },
-              ]}
+              list={tokenWalletFooterList}
             />
           )
         }

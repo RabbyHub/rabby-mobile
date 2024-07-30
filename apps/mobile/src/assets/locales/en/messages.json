@@ -1150,7 +1150,16 @@
           "summaryDescription": "All assets in protocols (e.g. LP tokens) are resolved to the underlying assets for statistical calculations",
           "noMatch": "No Match",
           "lowValueDescription": "Low value assets will be shown here",
-          "lowValueAssets": "{{count}} low value assets"
+          "lowValueAssets": "{{count}} low value assets",
+          "customizeTokens_zero": "{{count}} customized token",
+          "customizeTokens_one": "{{count}} customized token",
+          "customizeTokens_other": "{{count}} customized tokens",
+          "blockedTokens_zero": "{{count}} blocked token",
+          "blockedTokens_one": "{{count}} blocked token",
+          "blockedTokens_other": "{{count}} blocked Tokens",
+          "testnetTokens_zero": "{{count}} custom network token",
+          "testnetTokens_one": "{{count}} custom network token",
+          "testnetTokens_other": "{{count}} custom network tokens"
         },
         "noAssets": "No assets",
         "blockLinkText": "Search address to block token",
