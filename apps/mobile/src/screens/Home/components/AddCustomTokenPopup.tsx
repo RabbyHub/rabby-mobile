@@ -38,6 +38,7 @@ import {
 import { AbstractPortfolioToken } from '../types';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ModalLayouts } from '@/constant/layout';
+import { isAddress } from 'viem';
 
 export type AddCustomTokenPopupProps = {
   visible?: boolean;
@@ -78,7 +79,7 @@ export const AddCustomTokenPopup = ({
 
   const { data: token, loading } = useRequest(
     async () => {
-      if (!chain?.id || !tokenId) {
+      if (!chain?.id || !tokenId || !isAddress(tokenId)) {
         return null;
       }
       setErrorMessage('');
@@ -195,9 +196,9 @@ export const AddCustomTokenPopup = ({
                   fieldErrorTextStyle={styles.formInputError}
                   inputProps={{
                     numberOfLines: 2,
-                    // bug: can not set multiline is true ?
-                    multiline: false,
-                    value: tokenId,
+                    multiline: true,
+                    // react native bug, must use defaultValue
+                    defaultValue: tokenId,
                     onChangeText: setTokenId,
                   }}
                   errorText={errorMessage}
