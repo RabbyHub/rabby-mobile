@@ -77,7 +77,10 @@ function BiometricsIcon(props: { isFaceID?: boolean }) {
 }
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
+function useUnlockForm(
+  navigation: ReturnType<typeof useRabbyAppNavigation>,
+  updateLastVerifyTime,
+) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -113,6 +116,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
         if (result.error) {
           helpers?.setFieldError('password', t('page.unlock.password.error'));
           toast.show(result.error);
+        } else {
+          updateLastVerifyTime();
         }
       } catch (error) {
         console.error(error);
@@ -150,12 +155,15 @@ export default function UnlockScreen() {
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
-    useUnlockForm(navigation);
   const {
     computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
+    updateLastVerifyTime,
   } = useBiometrics({ autoFetch: true });
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
+    navigation,
+    updateLastVerifyTime,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -189,6 +197,7 @@ export default function UnlockScreen() {
           }
         },
       });
+      updateLastVerifyTime();
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
@@ -222,7 +231,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [unlockApp, t]);
+  }, [updateLastVerifyTime, unlockApp, t]);
 
   const manualUnlockWithBiometrics = useCallback(async () => {
     const hideToast = toastUnlocking();

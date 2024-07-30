@@ -24,6 +24,7 @@ import { IS_IOS } from '@/core/native/utils';
 const biometricsInfoAtom = atom({
   authEnabled: isAuthenticatedByBiometrics(),
   supportedBiometryType: null as BIOMETRY_TYPE | null,
+  lastVerifyTime: 0,
 });
 biometricsInfoAtom.onMount = setter => {
   apisKeychain.getSupportedBiometryType().then(supportedType => {
@@ -40,6 +41,7 @@ export function useBiometricsComputed() {
       isBiometricsEnabled: authEnabled && !!supportedBiometryType,
       settingsAuthEnabled: authEnabled,
       couldSetupBiometrics: !!supportedBiometryType,
+      lastVerifyTime: biometrics.lastVerifyTime,
       supportedBiometryType,
       defaultTypeLabel: isFaceID
         ? 'Face ID'
@@ -111,7 +113,11 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
           purpose: RequestGenericPurpose.VERIFY,
         });
         if (requestResult && requestResult.actionSuccess) {
-          setBiometrics(prev => ({ ...prev, authEnabled: nextEnabled }));
+          setBiometrics(prev => ({
+            ...prev,
+            authEnabled: nextEnabled,
+            lastVerifyTime: 0,
+          }));
         }
       } catch (error: any) {
         toast.show(error?.message);
@@ -131,11 +137,19 @@ export function useBiometrics(options?: { autoFetch?: boolean }) {
 
   const computed = useBiometricsComputed();
 
+  const updateLastVerifyTime = useCallback(() => {
+    setBiometrics(prev => ({
+      ...prev,
+      lastVerifyTime: Date.now(),
+    }));
+  }, [setBiometrics]);
+
   return {
     biometrics,
     computed,
     fetchBiometrics,
     toggleBiometrics,
+    updateLastVerifyTime,
   };
 }
 
