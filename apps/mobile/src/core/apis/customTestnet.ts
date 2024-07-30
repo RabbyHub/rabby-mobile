@@ -69,9 +69,7 @@ class ApiCustomTestnet {
     const ids = new Set<number>();
     Object.values(transactionHistoryService.store.transactions).forEach(
       item => {
-        Object.values(item).forEach(txGroup => {
-          ids.add(txGroup.chainId);
-        });
+        ids.add(item.chainId);
       },
     );
     const chainList = Array.from(ids).filter(
