@@ -40,6 +40,7 @@ import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { sleep } from '@/utils/async';
+import { updateUnlockTime } from '@/core/apis/lock';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -77,10 +78,7 @@ function BiometricsIcon(props: { isFaceID?: boolean }) {
 }
 
 const INIT_DATA = { password: __DEV__ ? (APP_TEST_PWD as string) : '' };
-function useUnlockForm(
-  navigation: ReturnType<typeof useRabbyAppNavigation>,
-  updateLastVerifyTime,
-) {
+function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     return Yup.object({
@@ -117,7 +115,7 @@ function useUnlockForm(
           helpers?.setFieldError('password', t('page.unlock.password.error'));
           toast.show(result.error);
         } else {
-          updateLastVerifyTime();
+          updateUnlockTime();
         }
       } catch (error) {
         console.error(error);
@@ -158,12 +156,9 @@ export default function UnlockScreen() {
   const {
     computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
-    updateLastVerifyTime,
   } = useBiometrics({ autoFetch: true });
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } = useUnlockForm(
-    navigation,
-    updateLastVerifyTime,
-  );
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
+    useUnlockForm(navigation);
 
   useFocusEffect(
     useCallback(() => {
@@ -197,7 +192,7 @@ export default function UnlockScreen() {
           }
         },
       });
-      updateLastVerifyTime();
+      updateUnlockTime();
     } catch (error: any) {
       if (__DEV__) console.error(error);
 
@@ -231,7 +226,7 @@ export default function UnlockScreen() {
         }
       }
     }
-  }, [updateLastVerifyTime, unlockApp, t]);
+  }, [unlockApp, t]);
 
   const manualUnlockWithBiometrics = useCallback(async () => {
     const hideToast = toastUnlocking();

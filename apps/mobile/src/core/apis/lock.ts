@@ -1,6 +1,7 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
+import { makeEEClass } from './event';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -219,4 +220,23 @@ export async function lockWallet() {
   await keyringService.setLocked();
   sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
   sessionService.broadcastEvent(BroadcastEvent.lock);
+}
+
+const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
+  updated: (time: number) => void;
+}>();
+export const unlockTimeEvent = new UnlockTimeEvent();
+
+const unlockTimeRef = {
+  current: 0,
+};
+
+export function getUnlockTime() {
+  return unlockTimeRef.current;
+}
+
+export async function updateUnlockTime() {
+  const time = Date.now();
+  unlockTimeRef.current = time;
+  unlockTimeEvent.emit('updated', time);
 }
