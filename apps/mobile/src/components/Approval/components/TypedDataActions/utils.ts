@@ -820,9 +820,10 @@ export const formatSecurityEngineCtx = async ({
 }): Promise<ContextActionData> => {
   let chain: Chain | undefined;
   if (actionData?.chainId) {
-    chain = Object.values(CHAINS).find(
-      item => item.id === Number(actionData.chainId),
-    );
+    chain =
+      findChain({
+        id: Number(actionData.chainId),
+      }) || undefined;
   }
   if (actionData?.chainId && isTestnetChainId(actionData?.chainId)) {
     return {};
