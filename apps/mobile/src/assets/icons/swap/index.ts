@@ -16,6 +16,8 @@ import { default as RcIconSwapInfoCC } from './warning-cc.svg';
 import { default as RcIconSwapHiddenArrowCC } from './hidden-arrow-cc.svg';
 import { default as RcIconSwapReceiveInfoCC } from './info-outline-cc.svg';
 
+export { RcIconSwitchQuoteCC };
+
 export const RcIconSwapHistory = makeThemeIconFromCC(
   RcIconHeaderSwapHistoryCC,
   {

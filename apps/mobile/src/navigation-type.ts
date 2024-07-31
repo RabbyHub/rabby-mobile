@@ -94,6 +94,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
   [RootNames.GasTopUp]?: {};
+  [RootNames.Bridge]?: {};
 };
 
 export type SettingNavigatorParamList = {

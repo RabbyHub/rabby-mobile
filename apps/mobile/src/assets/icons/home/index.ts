@@ -11,6 +11,7 @@ import { default as RcIconGasTopUpCC } from './gas-top-up-cc.svg';
 import { default as RcIconHeaderEyeCC } from './header-eye-cc.svg';
 import { default as RcIconHeaderEyeCloseCC } from './header-eye-close-cc.svg';
 import { default as RcIconQueueCC } from './queue-cc.svg';
+import { default as RcIconBridgeCC } from './bridge-cc.svg';
 
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { ThemeColors } from '@/constant/theme';
@@ -98,3 +99,8 @@ export const RcIconHeaderEyeClose = makeThemeIconFromCC(
     onDark: ThemeColors.dark['neutral-title-2'],
   },
 );
+
+export const RcIconBridge = makeThemeIconFromCC(RcIconBridgeCC, {
+  onLight: ThemeColors.light['neutral-title-1'],
+  onDark: ThemeColors.dark['neutral-title-1'],
+});
