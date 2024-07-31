@@ -51,6 +51,8 @@ export function AddressNavigator() {
         headerTintColor: colors['neutral-title-1'],
         headerTitleStyle: {
           color: colors['neutral-title-1'],
+          fontWeight: '500',
+          fontSize: 20,
         },
         headerTitle: '',
       })}>
@@ -80,10 +82,15 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
         component={ImportNewAddressScreen}
-        options={{
+        options={mergeScreenOptions({
           headerTitle: 'Add an Address',
           title: 'Add an Address',
-        }}
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            // fontWeight: '500',
+            color: colors['neutral-title-1'],
+          },
+        })}
       />
       <AddressStack.Screen
         name={RootNames.ImportSuccess}
@@ -168,9 +175,6 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Add from Current Seed Phrase',
           title: 'Add from Current Seed Phrase',
-          headerTitleStyle: {
-            fontSize: 20,
-          },
         }}
       />
       <AddressStack.Screen

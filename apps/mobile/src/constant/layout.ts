@@ -220,7 +220,12 @@ export function getScreenStatusBarConf(options: {
 export function makeHeadersPresets({
   colors,
 }: { colors?: AppColorsVariants } = {}) {
+  const navigationBarHeaderTitle = {
+    fontWeight: '500' as const,
+    fontSize: 20,
+  };
   return {
+    navigationBarHeaderTitle,
     onlyTitle: {
       headerTitleAlign: 'center',
       headerStyle: {
@@ -228,10 +233,7 @@ export function makeHeadersPresets({
       },
       headerTransparent: true,
       headerBackVisible: false,
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 20,
-      },
+      headerTitleStyle: { ...navigationBarHeaderTitle },
     } as NativeStackNavigationOptions,
     withBgCard2: {
       headerStyle: {
@@ -239,8 +241,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '500' as const,
-        fontSize: 20,
+        ...navigationBarHeaderTitle,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
@@ -250,8 +251,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '500' as const,
-        fontSize: 20,
+        ...navigationBarHeaderTitle,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },

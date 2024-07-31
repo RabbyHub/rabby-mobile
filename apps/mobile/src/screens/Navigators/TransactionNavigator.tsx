@@ -94,14 +94,17 @@ export default function TransactionNavigator() {
         component={GasTopUp}
         options={mergeScreenOptions({
           title: 'Instant Gas Top Up',
-          ...headerPresets.withBgCard2,
+          headerTitle: 'Instant Gas Top Up',
+          headerTransparent: true,
+          headerBackVisible: false,
           headerTintColor: colors?.['neutral-title-2'],
-          headerTitleStyle: {
-            ...headerPresets.withBgCard2.headerTitleStyle,
-            color: colors?.['neutral-title-2'],
-          },
           headerStyle: {
             backgroundColor: 'transparent',
+          },
+          headerTitleStyle: {
+            color: colors?.['neutral-title-2'],
+            fontSize: 20,
+            fontWeight: '500',
           },
         })}
       />
