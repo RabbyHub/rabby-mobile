@@ -10,6 +10,8 @@ import { GasLessAnimatedWrapper } from './GasLessComponents';
 import { colord, extend } from 'colord';
 import mixPlugin from 'colord/plugins/mix';
 import { useSubmitAction } from './useSubmitAction';
+import { globalBottomSheetModalAddListener } from '@/components/GlobalBottomSheetModal';
+import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 extend([mixPlugin]);
 
@@ -67,14 +69,14 @@ export const SubmitActions: React.FC<Props> = ({
   const { submitText, SubmitIcon, onPress } = useSubmitAction();
   const handlePress = React.useCallback(() => {
     setPressedConfirm(true);
-    onPress(
-      () => {
-        onSubmit();
-      },
+    globalBottomSheetModalAddListener(
+      EVENT_NAMES.DISMISS,
       () => {
         setPressedConfirm(false);
       },
+      true,
     );
+    onPress(onSubmit, () => setPressedConfirm(false));
   }, [onSubmit, setPressedConfirm, onPress]);
 
   return (

@@ -241,6 +241,7 @@ export const KeystoneHardwareWaiting = ({
       }
       setErrorMessage('');
       setStatus(QR_HARDWARE_STATUS.SIGN);
+      emitSignComponentAmounted();
     }
   };
 

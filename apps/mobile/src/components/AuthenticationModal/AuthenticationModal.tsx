@@ -92,12 +92,14 @@ function FooterButtonGroup({
   authState,
   bioActive,
   style,
+  disabled,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
   authState: AuthState;
   bioActive: boolean;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const { styles: footerStyles, colors } = useThemeStyles(getFooterStyle);
@@ -137,6 +139,7 @@ function FooterButtonGroup({
             buttonStyle={footerStyles.confirmStyle}
             titleStyle={footerStyles.confirmTitleStyle}
             onPress={onConfirm}
+            disabled={disabled}
           />
         </>
       )}
@@ -326,6 +329,7 @@ export const AuthenticationModal = ({
         await apisKeychain.requestGenericPassword({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
+            await validationHandler?.(password);
             onFinished?.({
               ...onFinishedReturnBase,
               authType: 'biometrics',
@@ -346,12 +350,13 @@ export const AuthenticationModal = ({
       }));
     }
   }, [
+    hasCheckFailed,
     bioAuthRef,
     setBioAuth,
-    hasCheckFailed,
     disableValidation,
-    onFinishedReturnBase,
+    validationHandler,
     onFinished,
+    onFinishedReturnBase,
   ]);
 
   const handleConfirm = useCallback(() => {
@@ -487,6 +492,7 @@ export const AuthenticationModal = ({
         ])}
         onCancel={$createParams.onCancel ?? noop}
         onConfirm={handleConfirm}
+        disabled={hasCheckFailed}
       />
     </View>
   );

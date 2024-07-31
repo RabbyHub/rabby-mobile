@@ -112,7 +112,7 @@ export const OneKeyHardwareWaiting = ({
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationService.callCurrentRequestDeferFn();
+    notificationService.callCurrentRequestDeferFn();
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }
