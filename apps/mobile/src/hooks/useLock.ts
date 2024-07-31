@@ -11,6 +11,7 @@ import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -139,9 +140,11 @@ function tryGetAppStatus() {
 
 const appStateAtom = atom<{
   current: AppStateStatus;
+  androidPaused: boolean;
   // iosStatus: AppStateStatus;
 }>({
   current: tryGetAppStatus(),
+  androidPaused: false,
   // iosStatus: FALLBACK_STATE,
 });
 
@@ -161,7 +164,7 @@ export function useIsOnBackground() {
       return isInactive(appState.current);
     }
 
-    return isInactive(appState.current);
+    return isInactive(appState.current) /*  && appState.androidPaused */;
   }, [appState]);
 
   return {
@@ -176,29 +179,37 @@ export function useSecureOnBackground() {
   const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
-    if (!AppState.isAvailable) return;
-
     if (isAndroid) {
+      /**
+       * @why not AppState.addEventListener('blur'|'focus', ...)
+       *
+       * because the blur and focus event will be triggered on <Modal /> component shown.
+       */
       const subBlur = AppState.addEventListener('blur', () => {
-        // nativeBlockScreen();
-        setAppStatus({ current: 'inactive' });
+        // setAppStatus(prev => ({ ...prev, current: 'inactive' }));
       });
       const subFocus = AppState.addEventListener('focus', () => {
-        // nativeUnblockScreen();
-        setAppStatus({ current: 'active' });
+        // setAppStatus(prev => ({ ...prev, current: 'active' }));
+      });
+      const subChanged = RNScreenshotPrevent.androidOnLifeCycleChanged(ret => {
+        setAppStatus(prev => ({
+          ...prev,
+          androidPaused: ['pause', 'prepaused'].includes(ret.state),
+        }));
       });
 
       return () => {
         subBlur.remove();
         subFocus.remove();
+        subChanged.remove();
       };
-    } else if (isIOS) {
+    } else if (isIOS && AppState.isAvailable) {
       /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
         // if (isInactive(nextStatus)) nativeBlockScreen();
         // else nativeUnblockScreen();
 
-        setAppStatus({ current: nextStatus });
+        setAppStatus(prev => ({ ...prev, current: nextStatus }));
       });
 
       return () => {
