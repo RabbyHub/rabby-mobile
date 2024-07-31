@@ -23,6 +23,7 @@ import {
   notificationService,
   swapService,
   customTestnetService,
+  bridgeService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -576,6 +577,7 @@ class ProviderController extends BaseController {
         const { r, s, v, ...other } = approvalRes;
         if (hash) {
           swapService.postSwap(chain, hash, other);
+          bridgeService.postBridge(chain, hash, other);
         }
 
         statsData.submit = true;

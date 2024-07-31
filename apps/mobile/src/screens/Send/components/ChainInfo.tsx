@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { StyleProp, Text, TextStyle, View } from 'react-native';
 
 import { CHAINS_ENUM } from '@/constant/chains';
 
@@ -53,6 +53,8 @@ export function ChainInfo({
   disabledTips,
   hideMainnetTab,
   hideTestnetTab,
+  rightArrowIcon,
+  titleStyle,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
@@ -61,6 +63,8 @@ export function ChainInfo({
     disabledTips?: SelectSortedChainProps['disabledTips'];
     hideMainnetTab?: SelectSortedChainProps['hideMainnetTab'];
     hideTestnetTab?: SelectSortedChainProps['hideTestnetTab'];
+    rightArrowIcon?: React.ReactNode;
+    titleStyle?: StyleProp<TextStyle>;
   }
 >) {
   const colors = useThemeColors();
@@ -84,12 +88,10 @@ export function ChainInfo({
         }}>
         <View style={styles.left}>
           <ChainIconImage size={24} chainEnum={chainEnum} />
-          <Text style={styles.chainName}>{chainItem?.name}</Text>
+          <Text style={[styles.chainName, titleStyle]}>{chainItem?.name}</Text>
         </View>
 
-        <View>
-          <RcArrowDown />
-        </View>
+        <View>{rightArrowIcon ? rightArrowIcon : <RcArrowDown />}</View>
       </TouchableView>
 
       <SelectSortedChainModal

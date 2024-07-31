@@ -57,6 +57,7 @@ export const RootNames = {
   GasTopUp: 'GasTopUp',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
+  Bridge: 'Bridge',
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',

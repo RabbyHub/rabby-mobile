@@ -32,6 +32,7 @@ import SimpleKeyring from '@rabby-wallet/eth-simple-keyring';
 import HDKeyring from '@rabby-wallet/eth-hd-keyring';
 import { HDKeyringService } from './hdKeyringService';
 export { customTestnetService } from './customTestnetService';
+import { BridgeService } from './bridge';
 
 const keyringState = normalizeKeyringState().keyringData;
 
@@ -153,5 +154,9 @@ export const swapService = new SwapService({
 });
 
 export const hdKeyringService = new HDKeyringService({
+  storageAdapter: appStorage,
+});
+
+export const bridgeService = new BridgeService({
   storageAdapter: appStorage,
 });
