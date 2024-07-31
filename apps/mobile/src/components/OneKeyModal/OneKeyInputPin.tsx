@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { FooterButton } from '../FooterButton/FooterButton';
+import AutoLockView from '../AutoLockView';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -122,7 +123,7 @@ export const OneKeyInputPin = ({
   }
 
   return (
-    <BottomSheetView style={styles.root}>
+    <AutoLockView as="BottomSheetView" style={styles.root}>
       <AppBottomSheetModalTitle
         title={t('page.newAddress.onekey.inputPin.title')}
       />
@@ -165,6 +166,6 @@ export const OneKeyInputPin = ({
           <Text>{t('page.newAddress.onekey.inputPin.onDevice')}</Text>
         </TouchableOpacity>
       </FooterButton>
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

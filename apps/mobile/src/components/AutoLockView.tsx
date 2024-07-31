@@ -11,11 +11,14 @@ import {
 import { keyringService } from '@/core/services';
 import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
-const refreshTimeout = throttle(
+export const uiRefreshTimeout = throttle(
   () => {
     const routeName = getLatestNavigationName();
     if (routeName === RootNames.Unlock) return;
+
+    if (__DEV__) console.debug('uiRefreshTimeout');
 
     return apisAutoLock.refreshAutolockTimeout();
   },
@@ -54,7 +57,7 @@ export function useRefreshAutoLockPanResponder() {
      * must return false.
      */
     const resetTimerForPanResponder = () => {
-      refreshTimeout();
+      uiRefreshTimeout();
       return false;
     };
 
@@ -70,17 +73,52 @@ export function useRefreshAutoLockPanResponder() {
   }, []);
 }
 
-export default function AutoLockView(props: ViewProps) {
+type ViewAsMap = {
+  View: typeof View;
+  BottomSheetView: typeof BottomSheetView;
+};
+export type NativeViewAs = keyof ViewAsMap;
+
+export function getViewComponentByAs<T extends NativeViewAs>(
+  as: T = 'View' as T,
+) {
+  switch (as) {
+    case 'BottomSheetView':
+      return BottomSheetView;
+    case 'View':
+    default:
+      return View;
+  }
+}
+
+type Props<T extends NativeViewAs> = {
+  as?: T;
+} & React.ComponentProps<ViewAsMap[T]>;
+export default function AutoLockView<T extends NativeViewAs = 'View'>({
+  as = 'View' as T,
+  ...props
+}: Props<T>) {
+  const { panResponder } = useRefreshAutoLockPanResponder();
+
+  const ViewComp = React.useMemo(() => getViewComponentByAs(as), [as]);
+
+  return (
+    <ViewComp {...props} {...panResponder.panHandlers}>
+      {props.children || null}
+    </ViewComp>
+  );
+}
+
+function ForAppNav(props: Props<'View'>) {
   const { currentRouteName } = useCurrentRouteName();
   useAutoLockIfTimeout(currentRouteName ?? null);
-  const { panResponder } = useRefreshAutoLockPanResponder();
 
   React.useEffect(() => {
     keyringService.on('unlock', apisAutoLock.handleUnlock);
     keyringService.on('lock', apisAutoLock.handleLock);
 
-    const hideEvent = Keyboard.addListener('keyboardDidHide', refreshTimeout);
-    const showEvent = Keyboard.addListener('keyboardDidShow', refreshTimeout);
+    const hideEvent = Keyboard.addListener('keyboardDidHide', uiRefreshTimeout);
+    const showEvent = Keyboard.addListener('keyboardDidShow', uiRefreshTimeout);
 
     // release event listeners on destruction
     return () => {
@@ -92,5 +130,7 @@ export default function AutoLockView(props: ViewProps) {
     };
   }, []);
 
-  return <View {...props} {...panResponder.panHandlers} />;
+  return <AutoLockView {...props} />;
 }
+
+AutoLockView.ForAppNav = ForAppNav;

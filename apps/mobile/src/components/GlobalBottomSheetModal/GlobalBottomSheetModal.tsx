@@ -21,6 +21,7 @@ import {
 import { events } from './event';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useRefreshAutoLockPanResponder } from '../AutoLockView';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -159,6 +160,8 @@ export const GlobalBottomSheetModal = () => {
 
   React.useEffect(onHardwareBackHandler);
 
+  const { panResponder } = useRefreshAutoLockPanResponder();
+
   return (
     <View>
       {modals.map(modal => {
@@ -187,7 +190,7 @@ export const GlobalBottomSheetModal = () => {
             name={modal.id}
             children={
               enableDynamicSizing ? (
-                <BottomSheetView>
+                <BottomSheetView {...panResponder.panHandlers}>
                   <ModalView {...modalViewProps} />
                 </BottomSheetView>
               ) : (

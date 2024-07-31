@@ -1,14 +1,18 @@
+// import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { KeyboardAvoidingView, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export type ReactNativeViewAsMap = {
   View: typeof View;
+  // BottomSheetView: typeof BottomSheetView;
   KeyboardAvoidingView: typeof KeyboardAvoidingView;
   KeyboardAwareScrollView: typeof KeyboardAwareScrollView;
 };
 export type ReactNativeViewAs = keyof ReactNativeViewAsMap;
 
-export function getViewComponentByAs(as: ReactNativeViewAs = 'View') {
+export function getViewComponentByAs<T extends ReactNativeViewAs>(
+  as: T = 'View' as T,
+) {
   switch (as) {
     case 'KeyboardAvoidingView':
       return KeyboardAvoidingView as any as React.FC<
@@ -18,6 +22,8 @@ export function getViewComponentByAs(as: ReactNativeViewAs = 'View') {
       return KeyboardAwareScrollView as any as React.FC<
         React.ComponentProps<typeof KeyboardAwareScrollView>
       >;
+    // case 'BottomSheetView':
+    //   return BottomSheetView;
     case 'View':
     default:
       return View as any as React.FC<React.ComponentProps<typeof View>>;

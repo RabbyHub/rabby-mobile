@@ -68,7 +68,10 @@ import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import { useFocusEffect, useNavigationState } from '@react-navigation/native';
-import { useIsAllowScreenshot } from '@/hooks/appSettings';
+import {
+  useIsAllowScreenshot,
+  useToggleShowAutoLockCountdown,
+} from '@/hooks/appSettings';
 import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
@@ -80,6 +83,7 @@ import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import useMount from 'react-use/lib/useMount';
 import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -397,6 +401,8 @@ function DevSettingsBlocks() {
     !APP_FEATURE_SWITCH.biometricsAuth;
 
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
+  const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
+  const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -460,13 +466,21 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Auto Lock Countdown',
-              icon: RcAutoLockTime,
-              // onPress: () => {},
-              rightNode: (
+              label: (
                 <Text>
                   <AutoLockCountDownLabel />
                 </Text>
+              ),
+              icon: RcAutoLockTime,
+              onPress: () => {
+                switchShowFloatingAutoLockCountdownRef.current?.toggle();
+              },
+              rightNode: (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <SwitchShowFloatingAutoLockCountdown
+                    ref={switchShowFloatingAutoLockCountdownRef}
+                  />
+                </View>
               ),
             },
             {

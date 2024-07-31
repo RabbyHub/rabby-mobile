@@ -14,6 +14,7 @@ import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { varyAndSortChainItems } from '@/utils/chain';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import MixedFlatChainList from './MixedFlatChainList';
+import AutoLockView from '../AutoLockView';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -104,7 +105,7 @@ export default function SelectSortedChain({
     });
 
   return (
-    <View style={styles.container}>
+    <AutoLockView style={styles.container}>
       <Input
         leftIcon={<RcIconSearch />}
         containerStyle={[styles.inputContainer, styles.innerBlock]}
@@ -134,7 +135,7 @@ export default function SelectSortedChain({
           />
         </View>
       )}
-    </View>
+    </AutoLockView>
   );
 }
 

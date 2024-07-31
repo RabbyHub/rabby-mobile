@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Tip } from '../Tip';
+import AutoLockView from '../AutoLockView';
 
 export const CancelTxPopup = ({
   tx,
@@ -51,7 +52,7 @@ export const CancelTxPopup = ({
   );
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       <Text style={styles.title}>
         {t('page.activities.signedTx.CancelTxPopup.title')}
       </Text>
@@ -83,7 +84,7 @@ export const CancelTxPopup = ({
           );
         })}
       </View>
-    </BottomSheetView>
+    </AutoLockView>
   );
 };
 

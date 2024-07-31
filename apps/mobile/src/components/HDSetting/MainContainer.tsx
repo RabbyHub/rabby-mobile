@@ -17,6 +17,7 @@ import { Spin } from '../Spin';
 import { Text } from '../Text';
 import { Account, InitAccounts } from './type';
 import { fetchAccountsInfo } from './util';
+import AutoLockView from '../AutoLockView';
 
 export const MAX_ACCOUNT_COUNT = 50;
 const HARDENED_OFFSET = 0x80000000 - 50;
@@ -192,7 +193,7 @@ export const MainContainer: React.FC<Props> = ({
 
   return (
     <Spin spinning={currentLoading}>
-      <BottomSheetView style={styles.root}>
+      <AutoLockView as="BottomSheetView" style={styles.root}>
         <AppBottomSheetModalTitle
           title={t('page.newAddress.hd.customAddressHdPath')}
         />
@@ -261,7 +262,7 @@ export const MainContainer: React.FC<Props> = ({
             });
           }}
         />
-      </BottomSheetView>
+      </AutoLockView>
     </Spin>
   );
 };

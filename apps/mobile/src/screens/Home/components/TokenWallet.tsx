@@ -38,6 +38,7 @@ import { SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { makeDebugBorder } from '@/utils/styles';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
+import AutoLockView from '@/components/AutoLockView';
 
 const ITEM_HEIGHT = 68;
 
@@ -239,22 +240,27 @@ export const TokenWallet = ({
           />
         }
       />
-      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['70%']}>
-        <BottomSheetFlatList
-          renderItem={renderItem}
-          ListHeaderComponent={
-            <View className="flex-row justify-center mt-1 mb-2">
-              <Text className="text-r-neutral-title-1 text-[20px] font-semibold">
-                {t('page.dashboard.assets.table.lowValueAssets', {
-                  count: smallTokens?.length || 0,
-                })}
-              </Text>
-            </View>
-          }
-          keyExtractor={keyExtractor}
-          data={smallTokens}
-          style={styles.scrollView}
-        />
+      <AppBottomSheetModal
+        enableContentPanningGesture={false}
+        ref={smallTokenModalRef}
+        snapPoints={['70%']}>
+        <AutoLockView as="BottomSheetView" style={{ flex: 1, height: '100%' }}>
+          <BottomSheetFlatList
+            renderItem={renderItem}
+            ListHeaderComponent={
+              <View className="flex-row justify-center mt-1 mb-2">
+                <Text className="text-r-neutral-title-1 text-[20px] font-semibold">
+                  {t('page.dashboard.assets.table.lowValueAssets', {
+                    count: smallTokens?.length || 0,
+                  })}
+                </Text>
+              </View>
+            }
+            keyExtractor={keyExtractor}
+            data={smallTokens}
+            style={styles.scrollView}
+          />
+        </AutoLockView>
       </AppBottomSheetModal>
 
       <BottomSheetModalTokenDetail

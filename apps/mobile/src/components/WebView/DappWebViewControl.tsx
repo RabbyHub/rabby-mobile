@@ -39,6 +39,7 @@ import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
+import AutoLockView from '../AutoLockView';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -423,7 +424,7 @@ const DappWebViewControl = React.forwardRef<
     ]);
 
     return (
-      <View style={[style, styles.dappWebViewControl]}>
+      <AutoLockView style={[style, styles.dappWebViewControl]}>
         {renderedHeaderNode}
 
         {/* webvbiew */}
@@ -448,7 +449,7 @@ const DappWebViewControl = React.forwardRef<
             </DappNavCardBottomSheetModal>
           </BottomSheetModalProvider>
         </BottomSheetMoreLayout>
-      </View>
+      </AutoLockView>
     );
   },
 );

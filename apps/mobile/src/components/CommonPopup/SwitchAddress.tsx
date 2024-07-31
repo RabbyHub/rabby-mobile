@@ -4,6 +4,7 @@ import { WALLET_NAME } from '@rabby-wallet/keyring-utils/src/types';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { Image, View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import AutoLockView from '../AutoLockView';
 
 export const SwitchAddress: React.FC = () => {
   const { setTitle, account, setHeight } = useCommonPopupView();
@@ -30,7 +31,7 @@ export const SwitchAddress: React.FC = () => {
   }, [account?.brandName]);
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       <Image
         source={url}
         resizeMode="contain"
@@ -39,6 +40,6 @@ export const SwitchAddress: React.FC = () => {
           height: '100%',
         }}
       />
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

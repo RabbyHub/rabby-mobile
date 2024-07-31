@@ -30,6 +30,7 @@ import { useRefState } from '@/hooks/common/useRefState';
 import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
+import AutoLockView from '../AutoLockView';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -399,7 +400,7 @@ export const AuthenticationModal = ({
   ]);
 
   return (
-    <View>
+    <AutoLockView>
       <AppBottomSheetModalTitle style={styles.modalTitle} title={title} />
 
       <View style={styles.main}>
@@ -494,7 +495,7 @@ export const AuthenticationModal = ({
         onConfirm={handleConfirm}
         disabled={hasCheckFailed}
       />
-    </View>
+    </AutoLockView>
   );
 };
 
