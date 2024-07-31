@@ -18,7 +18,7 @@ export const uiRefreshTimeout = throttle(
     const routeName = getLatestNavigationName();
     if (routeName === RootNames.Unlock) return;
 
-    if (__DEV__) console.debug('uiRefreshTimeout');
+    // if (__DEV__) console.debug('uiRefreshTimeout');
 
     return apisAutoLock.refreshAutolockTimeout();
   },
