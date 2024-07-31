@@ -217,12 +217,14 @@ export function getScreenStatusBarConf(options: {
   };
 }
 
+export const DEFAULT_NAVBAR_FONT_SIZE = 18;
+
 export function makeHeadersPresets({
   colors,
 }: { colors?: AppColorsVariants } = {}) {
   const navigationBarHeaderTitle = {
     fontWeight: '500' as const,
-    fontSize: 20,
+    fontSize: DEFAULT_NAVBAR_FONT_SIZE,
   };
   return {
     navigationBarHeaderTitle,

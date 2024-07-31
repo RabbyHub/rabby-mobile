@@ -4,7 +4,11 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  RootNames,
+  makeHeadersPresets,
+} from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 
 import HistoryScreen from '@/screens/Transaction/History';
@@ -103,7 +107,7 @@ export default function TransactionNavigator() {
           },
           headerTitleStyle: {
             color: colors?.['neutral-title-2'],
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
             fontWeight: '500',
           },
         })}
