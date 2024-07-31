@@ -257,3 +257,13 @@ export const unlockWalletWithUpdateUnlockTime =
   makeLockApiWithUpdateUnlockTime(unlockWallet);
 export const safeVerifyPasswordAndUpdateUnlockTime =
   makeLockApiWithUpdateUnlockTime(safeVerifyPassword);
+
+export function subscribeAppLock(fn: () => any) {
+  keyringService.on('locked', fn);
+
+  const dispose = () => {
+    keyringService.off('locked', fn);
+  };
+
+  return dispose;
+}

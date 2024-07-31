@@ -7,14 +7,11 @@ import * as Sentry from '@sentry/react-native';
 import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
-import {
-  createGlobalBottomSheetModal,
-  globalBottomSheetModalAddListener,
-  presentGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
+
 import { stats } from '@/utils/stats';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { appWinCaller } from './appWin';
+import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 export interface Approval {
   id: string;
@@ -95,12 +92,15 @@ export class NotificationService extends Events {
 
     this.preferenceService = preferenceService;
     this.transactionHistoryService = transactionHistoryService;
-    globalBottomSheetModalAddListener('DISMISS', windId => {
-      if (windId === this.notifyWindowId) {
-        this.notifyWindowId = null;
-        this.rejectAllApprovals();
-      }
-    });
+    appWinCaller.globalBottomSheetModalAddListener(
+      EVENT_NAMES.DISMISS,
+      windId => {
+        if (windId === this.notifyWindowId) {
+          this.notifyWindowId = null;
+          this.rejectAllApprovals();
+        }
+      },
+    );
 
     // TODO: 可能不需要
     // winMgr.event.on('windowFocusChange', (winId: number) => {
@@ -135,7 +135,7 @@ export class NotificationService extends Events {
 
       const approval = this.approvals[0];
       this.currentApproval = approval;
-      this.openNotification(approval.winProps, true);
+      await this.openNotification(approval.winProps, true);
     } catch (e) {
       Sentry.captureException(
         'activeFirstApproval failed: ' + JSON.stringify(e),
@@ -323,7 +323,7 @@ export class NotificationService extends Events {
       }
 
       if (this.notifyWindowId !== null) {
-        presentGlobalBottomSheetModal(this.notifyWindowId);
+        appWinCaller.presentGlobalBottomSheetModal(this.notifyWindowId);
       } else {
         this.openNotification(approval.winProps);
       }
@@ -335,7 +335,7 @@ export class NotificationService extends Events {
     this.currentApproval = null;
     if (this.notifyWindowId !== null && !stay) {
       try {
-        removeGlobalBottomSheetModal(this.notifyWindowId);
+        appWinCaller.removeGlobalBottomSheetModal(this.notifyWindowId);
       } catch (e) {
         // ignore error
       }
@@ -365,17 +365,18 @@ export class NotificationService extends Events {
     this.isLocked = true;
   };
 
-  openNotification = (winProps: any, ignoreLock = false) => {
+  openNotification = async (winProps: any, ignoreLock = false) => {
     // Only use ignoreLock flag when approval exist but no notification window exist
     if (!ignoreLock) {
       if (this.isLocked) return;
       this.lock();
     }
     if (this.notifyWindowId !== null) {
-      removeGlobalBottomSheetModal(this.notifyWindowId);
+      appWinCaller.removeGlobalBottomSheetModal(this.notifyWindowId);
       this.notifyWindowId = null;
     }
-    this.notifyWindowId = createGlobalBottomSheetModal(winProps);
+    this.notifyWindowId =
+      (await appWinCaller.createGlobalBottomSheetModal(winProps)) ?? null;
   };
 
   setCurrentRequestDeferFn = (fn: () => void) => {

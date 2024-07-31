@@ -12,6 +12,7 @@ import { StyleSheet, Text, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
+import { apisLock } from '@/core/apis';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -143,12 +144,28 @@ export const DappNavCardBottomSheetModal = forwardRef<
   Omit<React.ComponentProps<typeof AppBottomSheetModal>, 'snapPoints'> & {
     bottomNavH: number;
     children?: React.ReactNode;
+    /**
+     * @default false
+     */
+    keepAliveOnAppLocked?: boolean;
   }
->(({ children, bottomNavH, ...props }, ref) => {
+>(({ children, bottomNavH, keepAliveOnAppLocked = false, ...props }, ref) => {
   const { safeTop } = useSafeSizes();
   const colors = useThemeColors();
 
   const topSnapPoint = bottomNavH + safeTop;
+
+  React.useEffect(() => {
+    if (keepAliveOnAppLocked) return;
+
+    const dispose = apisLock.subscribeAppLock(() => {
+      if (keepAliveOnAppLocked) return;
+      const refI = ref as Exclude<typeof ref, Function>;
+      refI?.current?.dismiss();
+    });
+
+    return dispose;
+  }, [ref, keepAliveOnAppLocked]);
 
   return (
     <AppBottomSheetModal

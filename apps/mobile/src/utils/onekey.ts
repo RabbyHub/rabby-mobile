@@ -1,12 +1,11 @@
 import {
-  createGlobalBottomSheetModal,
-  globalBottomSheetModalAddListener,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from '@/components/GlobalBottomSheetModal/types';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';
+import { appWinCaller } from '@/core/services/appWin';
 
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;
@@ -14,12 +13,12 @@ const ONLY_IN_DEVICE = true;
 let pinModalId: string | null = null;
 let passphraseModalId: string | null = null;
 
-function createPinModal(
+async function createPinModal(
   oneKeyKeyring: OneKeyKeyring,
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  pinModalId = createGlobalBottomSheetModal({
+  pinModalId = await appWinCaller.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(pin: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePin({
@@ -29,13 +28,13 @@ function createPinModal(
     },
   });
 
-  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-    removeGlobalBottomSheetModal(pinModalId);
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
+    await appWinCaller.removeGlobalBottomSheetModal(pinModalId);
     pinModalId = null;
   });
 
-  globalBottomSheetModalAddListener(
-    'DISMISS',
+  appWinCaller.globalBottomSheetModalAddListener(
+    EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== pinModalId) {
         return;
@@ -47,12 +46,12 @@ function createPinModal(
   );
 }
 
-function createPassphraseModal(
+async function createPassphraseModal(
   oneKeyKeyring: OneKeyKeyring,
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  passphraseModalId = createGlobalBottomSheetModal({
+  passphraseModalId = await appWinCaller.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(passphrase: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePassphrase({
@@ -62,13 +61,13 @@ function createPassphraseModal(
     },
   });
 
-  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-    removeGlobalBottomSheetModal(passphraseModalId);
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
+    await appWinCaller.removeGlobalBottomSheetModal(passphraseModalId);
     passphraseModalId = null;
   });
 
-  globalBottomSheetModalAddListener(
-    'DISMISS',
+  appWinCaller.globalBottomSheetModalAddListener(
+    EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== passphraseModalId) {
         return;
