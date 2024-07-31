@@ -102,7 +102,9 @@ export function MarkdownInWebViewInner() {
   const { safeOffBottom } = useSafeSizes();
 
   return (
-    <AutoLockView style={[styles.container, { paddingBottom: safeOffBottom }]}>
+    <AutoLockView
+      as="BottomSheetView"
+      style={[styles.container, { paddingBottom: safeOffBottom }]}>
       <View style={styles.topContainer}>
         {/* <View style={styles.titleArea}>
           <Text style={styles.title}>New Version</Text>
