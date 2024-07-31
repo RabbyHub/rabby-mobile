@@ -1,125 +1,66 @@
-import { makeEEClass } from '../apis/event';
+import {
+  CreateParams,
+  EVENT_NAMES,
+  MODAL_NAMES,
+  RemoveParams,
+} from '@/components/GlobalBottomSheetModal/types';
+import { uniqueId } from 'lodash';
 
-import type {
+import { sleep } from '@/utils/async';
+import { globalSheetModalEvents } from '@/components/GlobalBottomSheetModal/event';
+
+const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
+  params: CreateParams<T>,
+) => {
+  params.name = params.name ?? MODAL_NAMES.APPROVAL;
+  const id = `${params.name}_${uniqueId(`gBm_`)}`;
+  globalSheetModalEvents.emit(EVENT_NAMES.CREATE, id, params);
+
+  return id;
+};
+
+async function removeGlobalBottomSheetModal(
+  id?: string | null,
+  params?: RemoveParams & {
+    waitMaxtime?: number;
+  },
+) {
+  if (typeof id !== 'string') {
+    return;
+  }
+  const { waitMaxtime, ...removeParams } = params ?? {};
+  const promise = new Promise<string | null>(resolve => {
+    const handler = (closedId: string) => {
+      if (closedId === id) {
+        resolve(id);
+      }
+    };
+    globalSheetModalEvents.once(EVENT_NAMES.CLOSED, handler);
+  });
+  globalSheetModalEvents.emit(EVENT_NAMES.REMOVE, id, removeParams);
+
+  return waitMaxtime ? Promise.all([promise, sleep(waitMaxtime)]) : promise;
+}
+
+const globalBottomSheetModalAddListener = (
+  eventName: EVENT_NAMES.DISMISS /*  | EVENT_NAMES.CLOSED */,
+  callback: (key: string) => void,
+  once?: boolean,
+) => {
+  if (once) {
+    globalSheetModalEvents.once(eventName, callback);
+    return;
+  }
+  globalSheetModalEvents.on(eventName, callback);
+};
+
+const presentGlobalBottomSheetModal = (key: string) => {
+  globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, key);
+};
+
+export const apisAppWin = {
   createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
   globalBottomSheetModalAddListener,
   presentGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-
-type Nextor<Return = any> = {
-  (err: Error | null, ret?: Return): void;
 };
-type Func = (...args: any[]) => any;
-export type WrapNextor<T extends Func> = T extends (...args: infer P) => infer R
-  ? (nextor: Nextor<R>, ...args: P) => void
-  : never;
-export type UnWrapNextor<T extends Func> = T extends WrapNextor<infer U>
-  ? U
-  : never;
-
-type Listeners = {
-  createGlobalBottomSheetModal: ReturnType<
-    typeof makeAsyncCallWrapper<typeof createGlobalBottomSheetModal>
-  >;
-  globalBottomSheetModalAddListener: ReturnType<
-    typeof makeAsyncCallWrapper<typeof globalBottomSheetModalAddListener>
-  >;
-  presentGlobalBottomSheetModal: ReturnType<
-    typeof makeAsyncCallWrapper<typeof presentGlobalBottomSheetModal>
-  >;
-  removeGlobalBottomSheetModal: ReturnType<
-    typeof makeAsyncCallWrapper<typeof removeGlobalBottomSheetModal>
-  >;
-};
-const { EventEmitter: AppWinEventEmitter } = makeEEClass<Listeners>();
-
-class EE extends AppWinEventEmitter {
-  static inst = new EE();
-  async createGlobalBottomSheetModal(
-    ...args: Parameters<typeof createGlobalBottomSheetModal>
-  ) {
-    type R = null | ReturnType<typeof createGlobalBottomSheetModal>;
-    const promise = new Promise<R>((resolve, reject) => {
-      const nextor: Nextor<R> = (err, ret) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(ret ?? null);
-        }
-      };
-      super.emit('createGlobalBottomSheetModal', nextor, ...args);
-    });
-
-    return promise;
-  }
-  async globalBottomSheetModalAddListener(
-    ...args: Parameters<typeof globalBottomSheetModalAddListener>
-  ) {
-    type R = null | ReturnType<typeof globalBottomSheetModalAddListener>;
-    const promise = new Promise<R>((resolve, reject) => {
-      const nextor: Nextor<R> = (err, ret) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(ret ?? null);
-        }
-      };
-      super.emit('globalBottomSheetModalAddListener', nextor, ...args);
-    });
-
-    return promise;
-  }
-  async presentGlobalBottomSheetModal(
-    ...args: Parameters<typeof presentGlobalBottomSheetModal>
-  ) {
-    type R = null | ReturnType<typeof presentGlobalBottomSheetModal>;
-    const promise = new Promise<R>((resolve, reject) => {
-      const nextor: Nextor<R> = (err, ret) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(ret ?? null);
-        }
-      };
-      super.emit('presentGlobalBottomSheetModal', nextor, ...args);
-    });
-
-    return promise;
-  }
-  async removeGlobalBottomSheetModal(
-    ...args: Parameters<typeof removeGlobalBottomSheetModal>
-  ) {
-    type R = null | ReturnType<typeof removeGlobalBottomSheetModal>;
-    const promise = new Promise<R>((resolve, reject) => {
-      const nextor: Nextor<R> = (err, ret) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(ret ?? null);
-        }
-      };
-      super.emit('removeGlobalBottomSheetModal', nextor, ...args);
-    });
-
-    return promise;
-  }
-}
-
-export const appWinCaller = EE.inst;
-
-export function makeAsyncCallWrapper<T extends Func>(fn: T) {
-  const eventCall = async (
-    nextor: Nextor<ReturnType<T>>,
-    ...args: Parameters<T>
-  ) => {
-    try {
-      const ret = await fn(...args);
-      nextor(null, ret);
-    } catch (err: any) {
-      nextor(err, undefined);
-    }
-  };
-
-  return eventCall;
-}

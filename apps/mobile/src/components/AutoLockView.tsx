@@ -13,7 +13,7 @@ import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 
-export const uiRefreshTimeout = throttle(
+const implUiRefreshTimeout = throttle(
   () => {
     const routeName = getLatestNavigationName();
     if (routeName === RootNames.Unlock) return;
@@ -25,6 +25,7 @@ export const uiRefreshTimeout = throttle(
   250 * 3,
   { leading: true },
 );
+autoLockEvent.addListener('triggerRefresh', implUiRefreshTimeout);
 
 function useAutoLockIfTimeout(currentRouteName: string | null) {
   React.useEffect(() => {
@@ -57,7 +58,7 @@ export function useRefreshAutoLockPanResponder() {
      * must return false.
      */
     const resetTimerForPanResponder = () => {
-      uiRefreshTimeout();
+      implUiRefreshTimeout();
       return false;
     };
 
@@ -117,8 +118,14 @@ function ForAppNav(props: Props<'View'>) {
     keyringService.on('unlock', apisAutoLock.handleUnlock);
     keyringService.on('lock', apisAutoLock.handleLock);
 
-    const hideEvent = Keyboard.addListener('keyboardDidHide', uiRefreshTimeout);
-    const showEvent = Keyboard.addListener('keyboardDidShow', uiRefreshTimeout);
+    const hideEvent = Keyboard.addListener(
+      'keyboardDidHide',
+      implUiRefreshTimeout,
+    );
+    const showEvent = Keyboard.addListener(
+      'keyboardDidShow',
+      implUiRefreshTimeout,
+    );
 
     // release event listeners on destruction
     return () => {

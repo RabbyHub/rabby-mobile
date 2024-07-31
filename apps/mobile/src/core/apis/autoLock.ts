@@ -37,6 +37,7 @@ type TimeoutContext = {
 const { EventEmitter: AutoLockEvent } = makeEEClass<{
   change: (time: number) => void;
   timeout: (ctx: TimeoutContext) => void;
+  triggerRefresh: () => void;
 }>();
 export const autoLockEvent = new AutoLockEvent();
 
@@ -104,6 +105,10 @@ export function refreshAutolockTimeout(type?: 'clear') {
   }
 
   return { dispose };
+}
+
+export function uiRefreshTimeout() {
+  autoLockEvent.emit('triggerRefresh');
 }
 
 export function handleUnlock() {

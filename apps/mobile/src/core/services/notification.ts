@@ -10,8 +10,8 @@ import BigNumber from 'bignumber.js';
 
 import { stats } from '@/utils/stats';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
-import { appWinCaller } from './appWin';
-import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { apisAppWin } from './appWin';
+import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 export interface Approval {
   id: string;
@@ -92,8 +92,8 @@ export class NotificationService extends Events {
 
     this.preferenceService = preferenceService;
     this.transactionHistoryService = transactionHistoryService;
-    appWinCaller.globalBottomSheetModalAddListener(
-      EVENT_NAMES.DISMISS,
+    apisAppWin.globalBottomSheetModalAddListener(
+      'DISMISS' as EVENT_NAMES.DISMISS,
       windId => {
         if (windId === this.notifyWindowId) {
           this.notifyWindowId = null;
@@ -117,7 +117,7 @@ export class NotificationService extends Events {
     // });
   }
 
-  activeFirstApproval = async () => {
+  activeFirstApproval = () => {
     try {
       // TODO 不需要
       // const windows = await browser.windows.getAll();
@@ -135,7 +135,7 @@ export class NotificationService extends Events {
 
       const approval = this.approvals[0];
       this.currentApproval = approval;
-      await this.openNotification(approval.winProps, true);
+      this.openNotification(approval.winProps, true);
     } catch (e) {
       Sentry.captureException(
         'activeFirstApproval failed: ' + JSON.stringify(e),
@@ -245,7 +245,7 @@ export class NotificationService extends Events {
         });
       }
     };
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const uuid = uuidv4();
       let signingTxId;
       if (data.approvalComponent === 'SignTx') {
@@ -323,9 +323,9 @@ export class NotificationService extends Events {
       }
 
       if (this.notifyWindowId !== null) {
-        appWinCaller.presentGlobalBottomSheetModal(this.notifyWindowId);
+        apisAppWin.presentGlobalBottomSheetModal(this.notifyWindowId);
       } else {
-        this.openNotification(approval.winProps);
+        await this.openNotification(approval.winProps);
       }
     });
   };
@@ -335,7 +335,10 @@ export class NotificationService extends Events {
     this.currentApproval = null;
     if (this.notifyWindowId !== null && !stay) {
       try {
-        appWinCaller.removeGlobalBottomSheetModal(this.notifyWindowId);
+        // some times the window is already closed, we need set a maxtime to wait
+        await apisAppWin.removeGlobalBottomSheetModal(this.notifyWindowId, {
+          waitMaxtime: 300,
+        });
       } catch (e) {
         // ignore error
       }
@@ -372,11 +375,11 @@ export class NotificationService extends Events {
       this.lock();
     }
     if (this.notifyWindowId !== null) {
-      appWinCaller.removeGlobalBottomSheetModal(this.notifyWindowId);
+      await apisAppWin.removeGlobalBottomSheetModal(this.notifyWindowId);
       this.notifyWindowId = null;
     }
     this.notifyWindowId =
-      (await appWinCaller.createGlobalBottomSheetModal(winProps)) ?? null;
+      apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
   };
 
   setCurrentRequestDeferFn = (fn: () => void) => {

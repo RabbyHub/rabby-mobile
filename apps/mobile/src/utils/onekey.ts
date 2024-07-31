@@ -5,7 +5,7 @@ import {
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';
-import { appWinCaller } from '@/core/services/appWin';
+import { apisAppWin } from '@/core/services/appWin';
 
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;
@@ -13,12 +13,12 @@ const ONLY_IN_DEVICE = true;
 let pinModalId: string | null = null;
 let passphraseModalId: string | null = null;
 
-async function createPinModal(
+function createPinModal(
   oneKeyKeyring: OneKeyKeyring,
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  pinModalId = await appWinCaller.createGlobalBottomSheetModal({
+  pinModalId = apisAppWin.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(pin: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePin({
@@ -28,12 +28,12 @@ async function createPinModal(
     },
   });
 
-  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
-    await appWinCaller.removeGlobalBottomSheetModal(pinModalId);
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
+    apisAppWin.removeGlobalBottomSheetModal(pinModalId, { waitMaxtime: 300 });
     pinModalId = null;
   });
 
-  appWinCaller.globalBottomSheetModalAddListener(
+  apisAppWin.globalBottomSheetModalAddListener(
     EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== pinModalId) {
@@ -46,12 +46,12 @@ async function createPinModal(
   );
 }
 
-async function createPassphraseModal(
+function createPassphraseModal(
   oneKeyKeyring: OneKeyKeyring,
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  passphraseModalId = await appWinCaller.createGlobalBottomSheetModal({
+  passphraseModalId = apisAppWin.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(passphrase: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePassphrase({
@@ -62,11 +62,13 @@ async function createPassphraseModal(
   });
 
   eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
-    await appWinCaller.removeGlobalBottomSheetModal(passphraseModalId);
+    apisAppWin.removeGlobalBottomSheetModal(passphraseModalId, {
+      waitMaxtime: 300,
+    });
     passphraseModalId = null;
   });
 
-  appWinCaller.globalBottomSheetModalAddListener(
+  apisAppWin.globalBottomSheetModalAddListener(
     EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== passphraseModalId) {
