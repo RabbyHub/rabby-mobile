@@ -103,7 +103,6 @@ export const CustomTestnetForm = ({
         label={t('page.customTestnet.CustomTestnetForm.id')}
         formik={formik}
         disabled={disabled || isEdit || idDisabled}
-        autoFocus
       />
       <FormItem
         label={t('page.customTestnet.CustomTestnetForm.name')}

@@ -1,6 +1,7 @@
 /** @deprecated use RcArrowRightCC directly */
 export { default as RcIconRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRightCC } from './arrow-right-cc.svg';
+export { default as RcArrowRight2CC } from './right-2-cc.svg';
 
 export { default as RcArrowDownCC } from './arrow-down-cc.svg';
 export { default as RcIconInfoCC } from './info-cc.svg';

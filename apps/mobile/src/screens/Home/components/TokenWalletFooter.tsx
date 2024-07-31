@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { RcArrowRightCC } from '@/assets/icons/common';
+import { RcArrowRight2CC } from '@/assets/icons/common';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -38,7 +38,7 @@ export const TokenWalletFooter = ({
                   onPress?.(item.type);
                 }}>
                 <Text style={styles.itemText}>{item.label}</Text>
-                <RcArrowRightCC color={colors['neutral-foot']} />
+                <RcArrowRight2CC color={colors['neutral-foot']} />
               </TouchableOpacity>
             );
           })}

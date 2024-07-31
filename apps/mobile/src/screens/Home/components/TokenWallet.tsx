@@ -1,54 +1,36 @@
-import React, {
-  useMemo,
-  memo,
-  useCallback,
-  useState,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  Image,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
   ViewStyle,
-  Text,
-  Image,
-  TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useTranslation } from 'react-i18next';
-import { toast } from '@/components/Toast';
 
-import { AbstractPortfolioToken } from '../types';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { RcArrowRight2CC } from '@/assets/icons/common';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
-import {
-  BottomSheetFlatList,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { PositionLoader } from './Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { RefreshControl } from 'react-native-gesture-handler';
-import { useSheetModals } from '@/hooks/useSheetModal';
-import { customTestnetTokenToTokenItem, SMALL_TOKEN_ID } from '@/utils/token';
 import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
-import { makeDebugBorder } from '@/utils/styles';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
-import { TokenWalletFooter } from './TokenWalletFooter';
-import { AddCustomTokenPopup } from './AddCustomTokenPopup';
-import { CustomTokenListPopup } from './CustomTokenListPopup';
-import { useRequest, useSetState } from 'ahooks';
-import { useManageTokenList } from '../hooks/useManageToken';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
+import { useSheetModals } from '@/hooks/useSheetModal';
+import { SMALL_TOKEN_ID } from '@/utils/token';
+import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useSetState } from 'ahooks';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
+import { AbstractPortfolioToken } from '../types';
 import { AddMainnetCustomTokenPopup } from './AddMainnetCustomTokenPopup';
-import { useCurrentAccount } from '@/hooks/account';
-import { apiCustomTestnet } from '@/core/apis';
-import { DisplayedToken } from '../utils/project';
 import { AddTestnetCustomTokenPopup } from './AddTestnetCustomTokenPopup';
 import { BlockedTokenListPopup } from './BlockedTokenListPopup';
+import { CustomTokenListPopup } from './CustomTokenListPopup';
+import { PositionLoader } from './Skeleton';
+import { TokenWalletFooter } from './TokenWalletFooter';
 
 const ITEM_HEIGHT = 68;
 
@@ -118,15 +100,27 @@ const TokenRow = memo(
             />
           )}
           <View style={styles.tokenRowTokenInner}>
-            <Text
-              style={StyleSheet.flatten([
-                styles.tokenSymbol,
-                data.id === SMALL_TOKEN_ID && styles.smallTokenSymbol,
-              ])}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {data.symbol}
-            </Text>
+            {data.id === SMALL_TOKEN_ID ? (
+              <View style={styles.tokenRowTokenInnerSmallToken}>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.tokenSymbol,
+                    styles.smallTokenSymbol,
+                  ])}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {data.symbol}
+                </Text>
+                <RcArrowRight2CC color={colors['neutral-foot']} />
+              </View>
+            ) : (
+              <Text
+                style={StyleSheet.flatten([styles.tokenSymbol])}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {data.symbol}
+              </Text>
+            )}
             {data._priceStr ? (
               <Text style={styles.tokenRowPrice} numberOfLines={1}>
                 {data._priceStr}
@@ -436,6 +430,11 @@ const getStyle = (colors: AppColorsVariants) =>
       flexShrink: 1,
       justifyContent: 'center',
     },
+    tokenRowTokenInnerSmallToken: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
     tokenRowPrice: {
       marginTop: 2,
       color: colors['neutral-foot'],
@@ -468,6 +467,7 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       fontSize: 13,
       fontWeight: '400',
+      width: undefined,
     },
 
     // modal
