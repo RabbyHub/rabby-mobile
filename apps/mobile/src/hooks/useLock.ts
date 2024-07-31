@@ -180,17 +180,17 @@ export function useSecureOnBackground() {
 
   React.useEffect(() => {
     if (isAndroid) {
-      /**
-       * @why not AppState.addEventListener('blur'|'focus', ...)
-       *
-       * because the blur and focus event will be triggered on <Modal /> component shown.
-       */
       const subBlur = AppState.addEventListener('blur', () => {
         // setAppStatus(prev => ({ ...prev, current: 'inactive' }));
       });
       const subFocus = AppState.addEventListener('focus', () => {
         // setAppStatus(prev => ({ ...prev, current: 'active' }));
       });
+      /**
+       * @why not AppState.addEventListener('blur'|'focus', ...)
+       *
+       * because the blur and focus event will be triggered on <Modal /> component shown.
+       */
       const subChanged = RNScreenshotPrevent.androidOnLifeCycleChanged(ret => {
         setAppStatus(prev => ({
           ...prev,
