@@ -19,10 +19,7 @@ import { RootNames, ScreenLayouts } from '@/constant/layout';
 import HomeScreen from '@/screens/Home/Home';
 
 import { DappsScreen } from '@/screens/Dapps/Dapps';
-import {
-  OpenedDappWebViewStub,
-  // OpenedWebViewsStub,
-} from '../Dapps/Dapps/components/WebViewsStub';
+import { OpenedDappWebViewStub } from '../Dapps/Dapps/components/WebViewsStub';
 import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import { PointScreen } from '../Points';
@@ -250,7 +247,6 @@ export default function BottomTabNavigator() {
       <BiometricsStubModal />
 
       <OpenedDappWebViewStub />
-      {/* <OpenedWebViewsStub /> */}
 
       <ApprovalTokenDetailSheetModalStub />
 
