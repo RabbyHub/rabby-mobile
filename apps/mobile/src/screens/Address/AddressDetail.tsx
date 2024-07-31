@@ -541,7 +541,6 @@ const AddressInfo = (props: AddressInfoProps) => {
                   fontSize: 14,
                   fontWeight: '500',
                   color: colors['neutral-title-1'],
-                  backgroundColor: colors['neutral-card-2'],
                 }}
                 defaultValue={aliasPendingName}
                 onChangeText={setAliasPendingName}
