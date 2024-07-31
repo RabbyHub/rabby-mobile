@@ -40,6 +40,7 @@ import { formatDappOriginToShow } from '@/utils/url';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '../AutoLockView';
+import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -80,7 +81,7 @@ function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => {
   return (
-    <BottomSheetBackdrop
+    <RefreshAutoLockBottomSheetBackdrop
       {...props}
       // leave here for debug
       style={[

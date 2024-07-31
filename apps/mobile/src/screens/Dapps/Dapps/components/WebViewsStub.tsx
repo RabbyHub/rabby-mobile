@@ -47,9 +47,14 @@ import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
+  <RefreshAutoLockBottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={0}
+    appearsOnIndex={1}
+  />
 );
 
 /**

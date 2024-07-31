@@ -2,7 +2,6 @@ import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
@@ -15,9 +14,14 @@ import {
   useOpenUrlView,
 } from '../../hooks/useDappView';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+  <RefreshAutoLockBottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={-1}
+    appearsOnIndex={0}
+  />
 );
 
 export default function SheetGeneralWebView({ url }: { url: string | null }) {

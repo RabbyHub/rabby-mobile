@@ -12,7 +12,9 @@ import { StyleSheet, Text, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
-import { apisLock } from '@/core/apis';
+import { apisAutoLock, apisLock } from '@/core/apis';
+import AutoLockView from '../AutoLockView';
+import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -54,7 +56,7 @@ export const AppBottomSheetModal = forwardRef<
   React.ComponentProps<typeof BottomSheetModal> & {
     backdropProps?: Partial<BottomSheetDefaultBackdropProps>;
   }
->((props, ref) => {
+>(({ onChange, ...props }, ref) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
   const backgroundStyle = useMemo(
@@ -81,12 +83,41 @@ export const AppBottomSheetModal = forwardRef<
     [props.backdropProps],
   );
 
+  type onChangeArgsType = Parameters<
+    BottomSheetModalProps['onChange'] & object
+  >;
+  const preOnChangeArgsRef = React.useRef<onChangeArgsType | null>(null);
+  const handleChange = useCallback<BottomSheetModalProps['onChange'] & object>(
+    (idx, pos, type) => {
+      onChange?.(idx, pos, type);
+
+      try {
+        const prevVal = preOnChangeArgsRef.current;
+        const curVal = [idx, pos, type] as onChangeArgsType;
+        preOnChangeArgsRef.current = curVal;
+
+        if (
+          !prevVal ||
+          prevVal[0] !== curVal[0] ||
+          prevVal[1] !== curVal[1] ||
+          prevVal[2] !== curVal[2]
+        ) {
+          apisAutoLock.uiRefreshTimeout();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [onChange],
+  );
+
   return (
     <BottomSheetModal
       backdropComponent={renderBackdrop}
       stackBehavior="push"
       enableDynamicSizing={false}
       {...props}
+      onChange={handleChange}
       backgroundStyle={backgroundStyle}
       ref={ref}
       handleStyle={StyleSheet.flatten([styles.handleStyles, props.handleStyle])}
@@ -123,7 +154,7 @@ export type OpenedDappBottomSheetModal = BottomSheetModal;
 
 const renderOpenedDappNavCardBackdrop = (props: BottomSheetBackdropProps) => {
   return (
-    <BottomSheetBackdrop
+    <RefreshAutoLockBottomSheetBackdrop
       {...props}
       // // leave here for debug
       // style={[
@@ -181,9 +212,11 @@ export const DappNavCardBottomSheetModal = forwardRef<
         backgroundColor: colors['neutral-bg-1'],
       }}
       ref={ref}>
-      <BottomSheetView className="px-[20] items-center justify-center">
+      <AutoLockView
+        as="BottomSheetView"
+        className="px-[20] items-center justify-center">
         {children || null}
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 });

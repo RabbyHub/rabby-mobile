@@ -56,6 +56,7 @@ import { useAccountInfo } from '@/hooks/useAccountInfo';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useAddressSource } from '@/hooks/useAddressSource';
 import { SeedPhraseBar } from './components/SeedPhraseBar';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 
 const BottomInput = BottomSheetTextInput;
 
@@ -235,7 +236,7 @@ const AddressInfo = (props: AddressInfoProps) => {
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
+      <RefreshAutoLockBottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}

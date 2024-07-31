@@ -23,6 +23,7 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
 import { IS_ANDROID } from '@/core/native/utils';
+import AutoLockView from '@/components/AutoLockView';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -88,7 +89,8 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
           onCancel?.();
         }
       }}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         // scrollEnabled={false}
         style={[
           styles.container,
@@ -119,7 +121,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
             );
           })}
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 });
