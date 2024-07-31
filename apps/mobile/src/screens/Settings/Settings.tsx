@@ -200,7 +200,7 @@ function SettingsBlocks() {
             rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
-            label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
+            label: `${isIOS ? 'Face ID' : 'Biometrics'}`,
             icon: getBiometricsIcon(isFaceID),
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
