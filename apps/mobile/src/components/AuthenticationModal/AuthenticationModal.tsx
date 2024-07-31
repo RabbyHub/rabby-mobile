@@ -97,7 +97,7 @@ function FooterButtonGroup({
   onCancel: () => void;
   onConfirm: () => void;
   authState: AuthState;
-  bioActive: boolean;
+  bioActive?: boolean;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
 }) {
@@ -485,7 +485,7 @@ export const AuthenticationModal = ({
       </View>
       <FooterButtonGroup
         authState={{ authType: currentAuthType }}
-        bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
+        // bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
           { marginBottom: safeSizes.footerButtonGroupMb },

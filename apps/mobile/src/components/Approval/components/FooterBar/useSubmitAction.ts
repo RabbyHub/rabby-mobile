@@ -61,10 +61,14 @@ export const useSubmitAction = () => {
     isLastUnlockTimeValid ||
     (!isUseCustomPwd && !bioComputed.isBiometricsEnabled);
 
-  const { currentAuthType, handleAuthWithBiometrics, prepareBioAuth } =
-    useAuthenticationModal({
-      authTypes: ['biometrics', 'password'],
-    });
+  const {
+    currentAuthType,
+    handleAuthWithBiometrics,
+    prepareBioAuth,
+    updateAuthType,
+  } = useAuthenticationModal({
+    authTypes: ['biometrics', 'password'],
+  });
   const onPress = React.useCallback(
     async (onFinished: () => void, onCancel: () => void) => {
       // avoid multiple click
@@ -72,6 +76,13 @@ export const useSubmitAction = () => {
         updateUnlockTime();
         onFinished();
       };
+
+      // reset auth type to biometrics
+      const handleCancel = () => {
+        updateAuthType('biometrics');
+        onCancel();
+      };
+
       // avoid multiple click
       if (disabledVerify) {
         onFinished();
@@ -83,7 +94,7 @@ export const useSubmitAction = () => {
         AuthenticationModal.show({
           title: t('page.signFooterBar.confirmWithPassword'),
           onFinished: handleFinished,
-          onCancel,
+          onCancel: handleCancel,
           authType: ['password'],
         });
       };
@@ -101,6 +112,7 @@ export const useSubmitAction = () => {
     [
       disabledVerify,
       currentAuthType,
+      updateAuthType,
       t,
       prepareBioAuth,
       handleAuthWithBiometrics,
