@@ -31,6 +31,7 @@ import { BlockedTokenListPopup } from './BlockedTokenListPopup';
 import { CustomTokenListPopup } from './CustomTokenListPopup';
 import { PositionLoader } from './Skeleton';
 import { TokenWalletFooter } from './TokenWalletFooter';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const ITEM_HEIGHT = 68;
 
@@ -301,17 +302,20 @@ export const TokenWallet = ({
           />
         }
       />
-      <AppBottomSheetModal ref={smallTokenModalRef} snapPoints={['80%']}>
+      <AppBottomSheetModal
+        enableContentPanningGesture={false}
+        ref={smallTokenModalRef}
+        snapPoints={['80%']}>
         <BottomSheetFlatList
           renderItem={renderItem}
           ListHeaderComponent={
-            <View className="flex-row justify-center mt-1 mb-2">
-              <Text className="text-r-neutral-title-1 text-[20px] font-semibold">
+            <BottomSheetHandlableView style={styles.handlableHead}>
+              <Text style={styles.titleText}>
                 {t('page.dashboard.assets.table.lowValueAssets', {
                   count: smallTokens?.length || 0,
                 })}
               </Text>
-            </View>
+            </BottomSheetHandlableView>
           }
           keyExtractor={keyExtractor}
           data={smallTokens}
@@ -402,6 +406,17 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    handlableHead: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 1,
+      marginBottom: 2,
+    },
+    titleText: {
+      color: colors['neutral-title-1'],
+      fontSize: 20,
+      fontWeight: '600',
+    },
     tokenRowWrap: {
       height: 68,
       width: '100%',
