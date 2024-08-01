@@ -9,16 +9,18 @@ export const useManageTokenList = () => {
 
   const addCustomToken = useMemoizedFn(
     async (token: AbstractPortfolioToken) => {
-      await preferenceService.addCustomizedToken({
+      const isAdded = await preferenceService.addCustomizedToken({
         address: token._tokenId,
         chain: token.chain,
       });
-      setMainnetTokens(prev => {
-        return {
-          ...prev,
-          customize: [...prev.customize, token],
-        };
-      });
+      if (isAdded) {
+        setMainnetTokens(prev => {
+          return {
+            ...prev,
+            customize: [...prev.customize, token],
+          };
+        });
+      }
     },
   );
 

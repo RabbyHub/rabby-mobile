@@ -41,6 +41,7 @@ import { AbstractPortfolioToken } from '../types';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ModalLayouts } from '@/constant/layout';
 import { isAddress } from 'viem';
+import AutoLockView from '@/components/AutoLockView';
 
 export type AddCustomTokenPopupProps = {
   visible?: boolean;
@@ -153,135 +154,137 @@ export const AddCustomTokenPopup = ({
       ref={modalRef}
       snapPoints={['80%']}
       onDismiss={onClose}>
-      <TouchableWithoutFeedback
-        style={{ height: '100%' }}
-        onPress={() => {
-          Keyboard.dismiss();
-        }}>
-        <AppBottomSheetModalTitle
-          title="Add Custom Token"
-          style={{ paddingTop: ModalLayouts.titleTopOffset }}
-        />
-        <KeyboardAwareScrollView
-          // style={styles.keyboardView}
-          enableOnAndroid
-          scrollEnabled={false}
-          keyboardOpeningTime={0}
-          keyboardShouldPersistTaps="handled">
-          <View style={styles.main}>
-            <View style={styles.formItem}>
-              <View style={styles.formLabel}>
-                <Text style={styles.formLabelText}>Chain:</Text>
-              </View>
-              <View style={styles.formControl}>
-                <ChainInfo
-                  chainEnum={chain?.enum}
-                  onChange={e => {
-                    setChain(findChain({ enum: e }));
-                  }}
-                  hideMainnetTab={isTestnet}
-                  hideTestnetTab={!isTestnet}
-                />
-              </View>
-            </View>
-            <View style={styles.formItem}>
-              <View style={styles.formLabel}>
-                <Text style={styles.formLabelText}>Token Address:</Text>
-              </View>
-              <View style={styles.formControl}>
-                <FormInput
-                  // as="BottomSheetTextInput"
-                  as="TextInput"
-                  style={styles.formInput}
-                  inputStyle={styles.input}
-                  disableFocusingStyle
-                  fieldErrorTextStyle={styles.formInputError}
-                  inputProps={{
-                    numberOfLines: 2,
-                    multiline: true,
-                    // react native bug, must use defaultValue
-                    defaultValue: tokenId,
-                    onChangeText: setTokenId,
-                  }}
-                  errorText={errorMessage}
-                />
-                {loading && tokenId && !errorMessage ? (
-                  <ActivityIndicator style={{ marginTop: 16 }} />
-                ) : null}
-              </View>
-            </View>
-            {token ? (
+      <AutoLockView style={{ height: '100%' }}>
+        <TouchableWithoutFeedback
+          style={{ height: '100%' }}
+          onPress={() => {
+            Keyboard.dismiss();
+          }}>
+          <AppBottomSheetModalTitle
+            title="Add Custom Token"
+            style={{ paddingTop: ModalLayouts.titleTopOffset }}
+          />
+          <KeyboardAwareScrollView
+            // style={styles.keyboardView}
+            enableOnAndroid
+            scrollEnabled={false}
+            keyboardOpeningTime={0}
+            keyboardShouldPersistTaps="handled">
+            <View style={styles.main}>
               <View style={styles.formItem}>
                 <View style={styles.formLabel}>
-                  <Text style={styles.formLabelText}>Found Token:</Text>
+                  <Text style={styles.formLabelText}>Chain:</Text>
                 </View>
-                <View>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setChecked(v => !v);
-                    }}>
-                    <View
-                      style={[styles.token, checked && styles.tokenSelected]}>
-                      <View>
-                        <AssetAvatar
-                          logo={token.logo_url}
-                          chain={chain?.serverId}
-                          size={28}
-                          chainSize={16}
-                        />
-                      </View>
-                      <View style={styles.tokenContent}>
-                        <Text style={styles.tokenText}>
-                          {formatTokenAmount(token.amount)}{' '}
-                          {getTokenSymbol(token)}
-                        </Text>
-                      </View>
-                      <View style={styles.checkbox}>
-                        <RcIconCheckedCC
-                          width={20}
-                          height={20}
-                          color={
-                            checked
-                              ? colors['blue-default']
-                              : colors['neutral-line']
-                          }
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
+                <View style={styles.formControl}>
+                  <ChainInfo
+                    chainEnum={chain?.enum}
+                    onChange={e => {
+                      setChain(findChain({ enum: e }));
+                    }}
+                    hideMainnetTab={isTestnet}
+                    hideTestnetTab={!isTestnet}
+                  />
                 </View>
               </View>
-            ) : null}
+              <View style={styles.formItem}>
+                <View style={styles.formLabel}>
+                  <Text style={styles.formLabelText}>Token Address:</Text>
+                </View>
+                <View style={styles.formControl}>
+                  <FormInput
+                    // as="BottomSheetTextInput"
+                    as="TextInput"
+                    style={styles.formInput}
+                    inputStyle={styles.input}
+                    disableFocusingStyle
+                    fieldErrorTextStyle={styles.formInputError}
+                    inputProps={{
+                      numberOfLines: 2,
+                      multiline: true,
+                      // react native bug, must use defaultValue
+                      defaultValue: tokenId,
+                      onChangeText: setTokenId,
+                    }}
+                    errorText={errorMessage}
+                  />
+                  {loading && tokenId && !errorMessage ? (
+                    <ActivityIndicator style={{ marginTop: 16 }} />
+                  ) : null}
+                </View>
+              </View>
+              {token ? (
+                <View style={styles.formItem}>
+                  <View style={styles.formLabel}>
+                    <Text style={styles.formLabelText}>Found Token:</Text>
+                  </View>
+                  <View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setChecked(v => !v);
+                      }}>
+                      <View
+                        style={[styles.token, checked && styles.tokenSelected]}>
+                        <View>
+                          <AssetAvatar
+                            logo={token.logo_url}
+                            chain={chain?.serverId}
+                            size={28}
+                            chainSize={16}
+                          />
+                        </View>
+                        <View style={styles.tokenContent}>
+                          <Text style={styles.tokenText}>
+                            {formatTokenAmount(token.amount)}{' '}
+                            {getTokenSymbol(token)}
+                          </Text>
+                        </View>
+                        <View style={styles.checkbox}>
+                          <RcIconCheckedCC
+                            width={20}
+                            height={20}
+                            color={
+                              checked
+                                ? colors['blue-default']
+                                : colors['neutral-line']
+                            }
+                          />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          </KeyboardAwareScrollView>
+          <View style={styles.footer}>
+            <Button
+              TouchableComponent={TouchableOpacity}
+              onPress={onClose}
+              title={'Cancel'}
+              buttonStyle={[styles.buttonStyle]}
+              titleStyle={styles.btnCancelTitle}
+              type="white"
+              containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
+            />
+            <Button
+              TouchableComponent={TouchableOpacity}
+              title={'Confirm'}
+              buttonStyle={[
+                styles.buttonStyle,
+                { backgroundColor: colors['blue-default'] },
+              ]}
+              style={{
+                width: '100%',
+              }}
+              titleStyle={styles.btnConfirmTitle}
+              disabled={!token || !checked || !chain}
+              onPress={runAddToken}
+              loading={isSubmitting}
+              containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+            />
           </View>
-        </KeyboardAwareScrollView>
-        <View style={styles.footer}>
-          <Button
-            TouchableComponent={TouchableOpacity}
-            onPress={onClose}
-            title={'Cancel'}
-            buttonStyle={[styles.buttonStyle]}
-            titleStyle={styles.btnCancelTitle}
-            type="white"
-            containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
-          />
-          <Button
-            TouchableComponent={TouchableOpacity}
-            title={'Confirm'}
-            buttonStyle={[
-              styles.buttonStyle,
-              { backgroundColor: colors['blue-default'] },
-            ]}
-            style={{
-              width: '100%',
-            }}
-            titleStyle={styles.btnConfirmTitle}
-            disabled={!token || !checked || !chain}
-            onPress={runAddToken}
-            loading={isSubmitting}
-            containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
-          />
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };

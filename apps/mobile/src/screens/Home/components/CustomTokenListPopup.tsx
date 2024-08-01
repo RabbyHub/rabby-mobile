@@ -17,6 +17,7 @@ import { TokenList } from './TokenList';
 import { useChainList } from '@/hooks/useChainList';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import AutoLockView from '@/components/AutoLockView';
 
 type Props = {
   tokens?: AbstractPortfolioToken[];
@@ -71,45 +72,47 @@ export const CustomTokenListPopup = ({
         ref={modalRef}
         snapPoints={['80%']}
         onDismiss={onClose}>
-        <TokenList
-          isTestnet={true}
-          onTokenPress={onTokenPress}
-          ListHeaderComponent={
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.desc}>
-                The token in this list will not be added to total balance
-              </Text>
-            </View>
-          }
-          data={tokens || []}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <RcIconEmptyCC
-                color={colors['neutral-body']}
-                style={styles.emptyImage}
-              />
-              {isTestnet ? (
-                <Text style={styles.emptyText}>No custom network tokens</Text>
-              ) : (
-                <Text style={styles.emptyText}>
-                  Custom token added by you will be shown here
+        <AutoLockView style={{ height: '100%' }}>
+          <TokenList
+            isTestnet={true}
+            onTokenPress={onTokenPress}
+            ListHeaderComponent={
+              <View style={styles.header}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.desc}>
+                  The token in this list will not be added to total balance
                 </Text>
-              )}
-            </View>
-          }
-        />
-        <FooterButton
-          title={'Add Token'}
-          onPress={() => {
-            if (isTestnet && !testnetList?.length) {
-              setIsShowDialog(true);
-              return;
+              </View>
             }
-            onAddTokenPress?.();
-          }}
-          icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
-        />
+            data={tokens || []}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <RcIconEmptyCC
+                  color={colors['neutral-body']}
+                  style={styles.emptyImage}
+                />
+                {isTestnet ? (
+                  <Text style={styles.emptyText}>No custom network tokens</Text>
+                ) : (
+                  <Text style={styles.emptyText}>
+                    Custom token added by you will be shown here
+                  </Text>
+                )}
+              </View>
+            }
+          />
+          <FooterButton
+            title={'Add Token'}
+            onPress={() => {
+              if (isTestnet && !testnetList?.length) {
+                setIsShowDialog(true);
+                return;
+              }
+              onAddTokenPress?.();
+            }}
+            icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
+          />
+        </AutoLockView>
       </AppBottomSheetModal>
       <Dialog
         overlayStyle={styles.dialog}

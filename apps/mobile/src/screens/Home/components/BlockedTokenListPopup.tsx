@@ -11,6 +11,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useMemoizedFn } from 'ahooks';
 import { AbstractPortfolioToken } from '../types';
 import { TokenList } from './TokenList';
+import AutoLockView from '@/components/AutoLockView';
 
 type Props = {
   tokens?: AbstractPortfolioToken[];
@@ -53,30 +54,32 @@ export const BlockedTokenListPopup = ({
       ref={modalRef}
       snapPoints={['80%']}
       onDismiss={onClose}>
-      <TokenList
-        isTestnet={true}
-        onTokenPress={onTokenPress}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.desc}>
-              The token in this list will not be added to total balance
-            </Text>
-          </View>
-        }
-        data={tokens || []}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <RcIconEmptyCC
-              color={colors['neutral-body']}
-              style={styles.emptyImage}
-            />
-            <Text style={styles.emptyText}>
-              Token blocked by you will be shown here
-            </Text>
-          </View>
-        }
-      />
+      <AutoLockView style={{ height: '100%' }}>
+        <TokenList
+          isTestnet={true}
+          onTokenPress={onTokenPress}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.desc}>
+                The token in this list will not be added to total balance
+              </Text>
+            </View>
+          }
+          data={tokens || []}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <RcIconEmptyCC
+                color={colors['neutral-body']}
+                style={styles.emptyImage}
+              />
+              <Text style={styles.emptyText}>
+                Token blocked by you will be shown here
+              </Text>
+            </View>
+          }
+        />
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };
