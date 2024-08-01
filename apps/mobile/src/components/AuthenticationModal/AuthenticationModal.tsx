@@ -135,6 +135,7 @@ function FooterButtonGroup({
                 />
               )
             }
+            iconContainerStyle={footerStyles.confirmIconStyle}
             title={t('global.Confirm')}
             containerStyle={footerStyles.btnContainer}
             buttonStyle={footerStyles.confirmStyle}
@@ -185,6 +186,11 @@ const getFooterStyle = createGetStyles(colors => {
     },
     btnGap: {
       width: 13,
+    },
+    confirmIconStyle: {
+      marginLeft: 0,
+      marginRight: 6,
+      ...makeDebugBorder(),
     },
     confirmStyle: {
       backgroundColor: colors['blue-default'],
