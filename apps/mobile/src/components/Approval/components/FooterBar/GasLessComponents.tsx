@@ -378,7 +378,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    backgroundColor: 'pink',
+    marginTop: 100,
   },
   image: {
     resizeMode: 'contain',

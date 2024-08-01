@@ -16,6 +16,7 @@ import GasTopUp from '../GasTopUp';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
+import { Bridge } from '../Bridge';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -116,6 +117,16 @@ export default function TransactionNavigator() {
             backgroundColor: colors?.['neutral-bg-2'],
           },
         })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.Bridge}
+        component={Bridge}
+        options={{
+          ...screenOptions,
+          title: 'Bridge',
+          ...headerPresets.withBgCard2,
+        }}
       />
     </TransactionStack.Navigator>
   );
