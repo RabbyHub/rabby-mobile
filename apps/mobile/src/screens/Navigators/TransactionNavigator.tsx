@@ -129,11 +129,10 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Bridge}
         component={Bridge}
-        options={{
-          ...screenOptions,
+        options={mergeScreenOptions({
           title: 'Bridge',
           ...headerPresets.withBgCard2,
-        }}
+        })}
       />
     </TransactionStack.Navigator>
   );
