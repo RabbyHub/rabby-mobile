@@ -81,6 +81,13 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 
+export type GlobalModalViewProps<
+  T extends MODAL_NAMES = MODAL_NAMES,
+  P extends object = object,
+> = CreateParams<T> & {
+  $createParams: CreateParams<T>;
+} & P;
+
 export type RemoveParams = Partial<
   Parameters<BottomSheetMethods['close']>[0]
 > & {
@@ -93,6 +100,7 @@ export enum EVENT_NAMES {
   DISMISS = 'DISMISS',
   CLOSED = 'CLOSED',
   PRESENT = 'PRESENT',
+  PRESENTED = 'PRESENTED',
   SNAP_TO_INDEX = 'SNAP_TO_INDEX',
 }
 
@@ -101,6 +109,7 @@ export type GlobalSheetModalListeners = {
   [EVENT_NAMES.REMOVE]: (key: string, params?: RemoveParams) => any;
   [EVENT_NAMES.CLOSED]: (key: string) => any;
   [EVENT_NAMES.PRESENT]: (key: string) => any;
+  [EVENT_NAMES.PRESENTED]: (key: string) => any;
   [EVENT_NAMES.DISMISS]: (key: string) => any;
 
   [EVENT_NAMES.SNAP_TO_INDEX]: (key: string, index: number) => any;

@@ -8,6 +8,7 @@ import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { CancelItem } from './CancelApproval/CancelItem';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
+import AutoLockView from '../AutoLockView';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -45,7 +46,7 @@ export const CancelConnect = () => {
   };
 
   return (
-    <BottomSheetView style={styles.wrapper}>
+    <AutoLockView as="BottomSheetView" style={styles.wrapper}>
       <AppBottomSheetModalTitle
         title={t('page.signFooterBar.cancelConnection')}
       />
@@ -62,6 +63,6 @@ export const CancelConnect = () => {
           </CancelItem>
         )}
       </View>
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

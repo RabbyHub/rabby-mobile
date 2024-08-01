@@ -20,6 +20,8 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
+import { makeDebugBorder } from '@/utils/styles';
+import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSetState } from 'ahooks';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -306,21 +308,23 @@ export const TokenWallet = ({
         enableContentPanningGesture={false}
         ref={smallTokenModalRef}
         snapPoints={['80%']}>
-        <BottomSheetFlatList
-          renderItem={renderItem}
-          ListHeaderComponent={
-            <BottomSheetHandlableView style={styles.handlableHead}>
-              <Text style={styles.titleText}>
-                {t('page.dashboard.assets.table.lowValueAssets', {
-                  count: smallTokens?.length || 0,
-                })}
-              </Text>
-            </BottomSheetHandlableView>
-          }
-          keyExtractor={keyExtractor}
-          data={smallTokens}
-          style={styles.scrollView}
-        />
+        <AutoLockView as="BottomSheetView" style={{ flex: 1, height: '100%' }}>
+          <BottomSheetFlatList
+            renderItem={renderItem}
+            ListHeaderComponent={
+              <BottomSheetHandlableView style={styles.handlableHead}>
+                <Text style={styles.titleText}>
+                  {t('page.dashboard.assets.table.lowValueAssets', {
+                    count: smallTokens?.length || 0,
+                  })}
+                </Text>
+              </BottomSheetHandlableView>
+            }
+            keyExtractor={keyExtractor}
+            data={smallTokens}
+            style={styles.scrollView}
+          />
+        </AutoLockView>
       </AppBottomSheetModal>
       <BottomSheetModalTokenDetail
         ref={tokenDetailModalRef}

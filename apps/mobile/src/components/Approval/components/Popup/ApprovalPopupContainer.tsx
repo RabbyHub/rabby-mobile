@@ -28,6 +28,7 @@ import {
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { useApprovalPopup } from '@/hooks/useApprovalPopup';
+import useDebounce from 'react-use/lib/useDebounce';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -193,17 +194,17 @@ export const ApprovalPopupContainer: React.FC<Props> = ({
   }, [status]);
   const { snapToIndexPopup } = useApprovalPopup();
 
-  React.useEffect(() => {
-    if ((status === 'FAILED' || status === 'REJECTED') && description) {
-      if (hdType === 'privatekey') {
+  useDebounce(
+    () => {
+      if ((status === 'FAILED' || status === 'REJECTED') && description) {
         snapToIndexPopup(1);
       } else {
-        snapToIndexPopup(1);
+        snapToIndexPopup(0);
       }
-    } else {
-      snapToIndexPopup(0);
-    }
-  }, [snapToIndexPopup, hdType, status, description]);
+    },
+    10,
+    [snapToIndexPopup, hdType, status, description],
+  );
   const isHD = hdType === 'ledger';
   return (
     <View style={StyleSheet.flatten([styles.wrapper, style])}>

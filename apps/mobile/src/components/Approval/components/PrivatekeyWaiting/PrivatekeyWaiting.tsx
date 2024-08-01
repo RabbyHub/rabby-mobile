@@ -96,12 +96,8 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
   const [description, setDescription] = React.useState('');
 
   const handleRetry = async () => {
-    if (connectStatus === APPROVAL_STATUS_MAP.SUBMITTING) {
-      toast.success(t('page.signFooterBar.ledger.resubmited'));
-      return;
-    }
     setConnectStatus(APPROVAL_STATUS_MAP.SUBMITTING);
-    await notificationService.callCurrentRequestDeferFn();
+    notificationService.callCurrentRequestDeferFn();
     toast.success(t('page.signFooterBar.ledger.resent'));
     emitSignComponentAmounted();
   };

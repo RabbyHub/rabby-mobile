@@ -16,6 +16,7 @@ import {
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
 import { TermOfUseMarkdown } from './TermOfUseMarkdown';
+import AutoLockView from '@/components/AutoLockView';
 
 export function useShowTipTermOfUseModal() {
   const openedModalIdRef = React.useRef<string>('');
@@ -67,7 +68,8 @@ export function TipTermOfUseModalInner() {
   const { safeOffBottom } = useSafeSizes();
 
   return (
-    <BottomSheetView
+    <AutoLockView
+      as="BottomSheetView"
       style={[styles.container, { paddingBottom: safeOffBottom }]}>
       <View style={styles.topContainer}>
         {/* <View style={styles.titleArea}>
@@ -82,7 +84,7 @@ export function TipTermOfUseModalInner() {
         </View>
       </View>
       {/* <FooterComponentForUpgrade style={[styles.footerComponent]} /> */}
-    </BottomSheetView>
+    </AutoLockView>
   );
 }
 

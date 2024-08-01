@@ -15,6 +15,7 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { varyAndSortChainItems } from '@/utils/chain';
 import NetSwitchTabs, { useSwitchNetTab } from '../PillsSwitch/NetSwitchTabs';
 import MixedFlatChainList from './MixedFlatChainList';
+import AutoLockView from '../AutoLockView';
 import { useChainList } from '@/hooks/useChainList';
 import { FooterButton } from '../FooterButton/FooterButton';
 import { RcIconAddCircle } from '@/assets/icons/address';
@@ -133,7 +134,7 @@ export default function SelectSortedChain({
     });
 
   return (
-    <View style={styles.container}>
+    <AutoLockView style={styles.container}>
       {isShowTestnet && !hideMainnetTab ? (
         <NetSwitchTabs
           value={selectedTab}
@@ -194,7 +195,7 @@ export default function SelectSortedChain({
           }}
         />
       ) : null}
-    </View>
+    </AutoLockView>
   );
 }
 

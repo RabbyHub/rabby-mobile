@@ -14,6 +14,7 @@ import { SelectDeviceScreen } from './SelectDeviceScreen';
 import { useOneKeyImport } from '@/hooks/onekey/useOneKeyImport';
 import { ConnectDeviceScreen } from './ConnectDeviceScreen';
 import { eventBus, EVENTS } from '@/utils/events';
+import AutoLockView from '../AutoLockView';
 
 export const ConnectOneKey: React.FC<{
   onDone?: () => void;
@@ -95,7 +96,7 @@ export const ConnectOneKey: React.FC<{
   }, [devices, handleScanDone]);
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}
@@ -110,6 +111,6 @@ export const ConnectOneKey: React.FC<{
       )}
       {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
       {currentScreen === 'connect' && <ConnectDeviceScreen />}
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

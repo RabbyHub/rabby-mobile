@@ -11,6 +11,7 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/typ
 import { forwardRef, useRef, useMemo, useImperativeHandle } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AutoLockView from '../AutoLockView';
 
 export const BottomSheetModalConfirmContainer = forwardRef<
   BottomSheetModal,
@@ -143,9 +144,9 @@ export const BottomSheetModalConfirmContainer = forwardRef<
           </View>
         );
       }}>
-      <BottomSheetView style={[styles.container, bodyStyle]}>
+      <AutoLockView as="BottomSheetView" style={[styles.container, bodyStyle]}>
         {children}
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 });

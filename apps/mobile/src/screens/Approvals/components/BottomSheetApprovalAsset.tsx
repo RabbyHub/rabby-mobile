@@ -23,8 +23,9 @@ import { EmptyHolder } from '@/components/EmptyHolder';
 import { BottomSheetModalFooterButton } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import { ModalLayouts } from '@/constant/layout';
+import AutoLockView from '@/components/AutoLockView';
 
-export default function BottomSheetAssetApproval({
+export default function BottomSheetApprovalAsset({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
@@ -134,7 +135,7 @@ export default function BottomSheetAssetApproval({
       snapPoints={[ModalLayouts.defaultHeightPercentText]}
       bottomInset={1}>
       {focusedAssetApproval && (
-        <BottomSheetView style={[styles.bodyContainer]}>
+        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
             <ApprovalCardAsset assetItem={focusedAssetApproval} inDetailModal />
 
@@ -174,7 +175,7 @@ export default function BottomSheetAssetApproval({
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
           />
-        </BottomSheetView>
+        </AutoLockView>
       )}
     </AppBottomSheetModal>
   );

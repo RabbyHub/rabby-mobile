@@ -58,6 +58,7 @@ import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
+import AutoLockView from '../AutoLockView';
 import { BlockedButton } from './BlockedButton';
 import { Token } from '@/core/services/preference';
 import { preferenceService } from '@/core/services';
@@ -865,7 +866,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
         onChange={useCallback(() => {}, [])}
         onDismiss={onDismiss}>
-        <BottomSheetView style={styles.container}>
+        <AutoLockView as="BottomSheetView" style={styles.container}>
           <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
             {tokenLoad?.isLoading ? (
               <SkeletonTokenDetailHeader />
@@ -896,7 +897,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             //   />
             // }
           />
-        </BottomSheetView>
+        </AutoLockView>
       </AppBottomSheetModal>
     );
   },

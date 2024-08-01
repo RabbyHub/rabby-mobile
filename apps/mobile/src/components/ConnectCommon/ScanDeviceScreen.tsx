@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import { CircleSnail } from 'react-native-progress';
 import { SvgProps } from 'react-native-svg';
+import AutoLockView from '../AutoLockView';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -49,7 +50,7 @@ export const CommonScanDeviceScreen: React.FC<Props> = ({
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <View style={styles.root}>
+    <AutoLockView style={styles.root}>
       <AppBottomSheetModalTitle title={titleText} />
       <View style={styles.main}>
         <Text style={styles.text}>{descriptionText}</Text>
@@ -62,6 +63,6 @@ export const CommonScanDeviceScreen: React.FC<Props> = ({
           />
         </View>
       </View>
-    </View>
+    </AutoLockView>
   );
 };

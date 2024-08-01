@@ -8,6 +8,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
+import AutoLockView from '../AutoLockView';
 
 export const SelectChain = ({
   value,
@@ -34,7 +35,7 @@ export const SelectChain = ({
   }, [search]);
 
   return (
-    <View className="h-full px-[20] pt-[10] pb-[32]">
+    <AutoLockView className="h-full px-[20] pt-[10] pb-[32]">
       <Input
         leftIcon={<RcIconSearch />}
         containerStyle={styles.containerStyle}
@@ -55,7 +56,7 @@ export const SelectChain = ({
           </Text>
         </View>
       )}
-    </View>
+    </AutoLockView>
   );
 };
 

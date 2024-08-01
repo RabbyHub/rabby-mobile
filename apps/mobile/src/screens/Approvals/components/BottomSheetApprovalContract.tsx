@@ -25,8 +25,9 @@ import { ApprovalsLayouts } from '../layout';
 import { parseContractApprovalListItem } from '../utils';
 import { EmptyHolder } from '@/components/EmptyHolder';
 import { ModalLayouts } from '@/constant/layout';
+import AutoLockView from '@/components/AutoLockView';
 
-export default function BottomSheetContractApproval({
+export default function BottomSheetApprovalContract({
   modalProps,
 }: {
   modalProps?: BottomSheetModalProps;
@@ -155,7 +156,7 @@ export default function BottomSheetContractApproval({
       snapPoints={[ModalLayouts.defaultHeightPercentText]}
       bottomInset={1}>
       {focusedContractApproval && (
-        <BottomSheetView style={[styles.bodyContainer]}>
+        <AutoLockView as="BottomSheetView" style={[styles.bodyContainer]}>
           <BottomSheetHandlableView style={styles.staticArea}>
             <ApprovalCardContract contract={focusedContractApproval} />
 
@@ -197,7 +198,7 @@ export default function BottomSheetContractApproval({
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
           />
-        </BottomSheetView>
+        </AutoLockView>
       )}
     </AppBottomSheetModal>
   );

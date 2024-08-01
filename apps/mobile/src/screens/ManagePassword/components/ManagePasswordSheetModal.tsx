@@ -1,15 +1,12 @@
-import React, { forwardRef, useRef, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   Text,
   View,
   StyleSheet,
   ActivityIndicator,
   TextInput,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import * as Yup from 'yup';
 
@@ -32,6 +29,7 @@ import { apisKeychain, apisLock } from '@/core/apis';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { useBiometrics } from '@/hooks/biometrics';
 import { useResetHasTipedUserEnableBiometrics } from '@/screens/Unlock/hooks';
+import AutoLockView from '@/components/AutoLockView';
 
 type Props = {
   height?: number;
@@ -58,7 +56,8 @@ const ConfirmSetupPasswordSheetModal = (props: Props) => {
       index={0}
       ref={sheetModalRefs.setupPasswordModalRef}
       snapPoints={[height + insets.bottom]}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
         <Text style={styles.title}>{'Setup Password'}</Text>
         <View style={styles.bodyContainer}>
@@ -89,7 +88,7 @@ const ConfirmSetupPasswordSheetModal = (props: Props) => {
             Confirm
           </Button>
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };
@@ -177,7 +176,8 @@ const CancelPasswordSheetModal = (props: Props) => {
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       snapPoints={[height + insets.bottom]}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         style={[styles.container, { paddingBottom: 20 + insets.bottom }]}>
         <Text style={styles.title}>{'Clear Password'}</Text>
         <View style={styles.bodyContainer}>
@@ -235,7 +235,7 @@ const CancelPasswordSheetModal = (props: Props) => {
             Confirm
           </Button>
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };

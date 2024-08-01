@@ -4,20 +4,18 @@ import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
-  RcAutoLockTime,
   RcClearPending,
-  RcCountdown,
   RcEarth,
   RcFeedback,
-  RcFollowUs,
-  RcIconFaceId,
-  RcIconFingerprint,
-  RcInfo,
   RcLockWallet,
+  RcAutoLockTime,
+  RcCountdown,
   RcManagePassword,
+  RcScreenshot,
+  RcFollowUs,
+  RcInfo,
   RcPrivacyPolicy,
   RcScreenRecord,
-  RcScreenshot,
   RcThemeMode,
   RcWhitelist,
 } from '@/assets/icons/settings';
@@ -50,13 +48,10 @@ import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
-import { useIsAllowScreenshot } from '@/hooks/appSettings';
-import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
 import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import { useUpgradeInfo } from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
@@ -68,12 +63,23 @@ import {
 } from '@react-navigation/native';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
+import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
+import {
+  useIsAllowScreenshot,
+  useToggleShowAutoLockCountdown,
+} from '@/hooks/appSettings';
+import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import {
   AutoLockCountDownLabel,
   AutoLockSettingLabel,
-} from './components/AutoLock';
+  LastUnlockTimeLabel,
+} from './components/LockAbout';
+import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
+import useMount from 'react-use/lib/useMount';
+import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
 import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
-import { SelectAutolockTimeBottomSheetModal } from './components/SelectAutolockTimeBottomSheetModal';
 import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
@@ -134,8 +140,8 @@ function SettingsBlocks() {
   ) as SettingNavigatorParamList['Settings'];
 
   // useMount(() => {
-  //   console.log(
-  //     '[feat] navParams?.enterActionType',
+  //   console.debug(
+  //     'navParams?.enterActionType',
   //     navParams?.enterActionType,
   //   );
   //   switch (navParams?.enterActionType) {
@@ -200,8 +206,8 @@ function SettingsBlocks() {
             rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
-            label: `Unlock wallet with ${isIOS ? 'Face ID' : 'Fingerprint'}`,
-            icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+            label: `${isIOS ? 'Face ID' : 'Biometrics'}`,
+            icon: getBiometricsIcon(isFaceID),
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />
             ),
@@ -411,6 +417,8 @@ function DevSettingsBlocks() {
     !APP_FEATURE_SWITCH.biometricsAuth;
 
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
+  const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
+  const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -474,12 +482,30 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Auto Lock Countdown',
+              label: (
+                <Text>
+                  <AutoLockCountDownLabel />
+                </Text>
+              ),
+              icon: RcAutoLockTime,
+              onPress: () => {
+                switchShowFloatingAutoLockCountdownRef.current?.toggle();
+              },
+              rightNode: (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <SwitchShowFloatingAutoLockCountdown
+                    ref={switchShowFloatingAutoLockCountdownRef}
+                  />
+                </View>
+              ),
+            },
+            {
+              label: 'Last Unlock Offset',
               icon: RcCountdown,
               // onPress: () => {},
               rightNode: (
                 <Text>
-                  <AutoLockCountDownLabel />
+                  <LastUnlockTimeLabel />
                 </Text>
               ),
             },
@@ -526,17 +552,35 @@ function DevSettingsBlocks() {
               },
             },
             {
-              label: 'Test Biometrics',
-              icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+              label: 'Test Authentication Modal',
+              icon: getBiometricsIcon(isFaceID),
               onPress: () => {
-                startBiometricsVerification({
-                  onFinished: () => {
-                    abortBiometricsVerification();
+                AuthenticationModal.show({
+                  title: 'Test Authentication Modal',
+                  authType: ['biometrics', 'password'],
+                  onFinished: ctx => {
+                    toast.show(JSON.stringify(ctx, null, 2));
+                  },
+                  onCancel: () => {
+                    toast.show(
+                      'Canceled, But this handler has beed deprecated',
+                    );
                   },
                 });
               },
-              disabled: disabledBiometrics || !isBiometricsEnabled,
             },
+            // {
+            //   label: 'Test Biometrics',
+            //   icon: isFaceID ? RcIconFaceId : RcIconFingerprint,
+            //   onPress: () => {
+            //     startBiometricsVerification({
+            //       onFinished: () => {
+            //         abortBiometricsVerification();
+            //       },
+            //     });
+            //   },
+            //   disabled: disabledBiometrics || !isBiometricsEnabled,
+            // },
           ],
         },
       }),

@@ -53,6 +53,7 @@ import {
 import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
+import { FloatViewAutoLockCount } from './screens/Settings/components/LockAbout';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -153,7 +154,8 @@ export default function AppNavigation({
   // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
 
   return (
-    <AutoLockView style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
+    <AutoLockView.ForAppNav
+      style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
       <NavigationContainer
@@ -275,7 +277,9 @@ export default function AppNavigation({
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
-    </AutoLockView>
+
+      <FloatViewAutoLockCount />
+    </AutoLockView.ForAppNav>
   );
 }
 

@@ -31,6 +31,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { useGnosisPendingTxs } from '@/hooks/gnosis/useGnosisPendingTxs';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useMemoizedFn } from 'ahooks';
+import AutoLockView from '@/components/AutoLockView';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -251,7 +252,7 @@ export const HomeTopArea = () => {
       <BSheetModal
         ref={moresheetModalRef}
         snapPoints={MORE_SHEET_MODAL_SNAPPOINTS}>
-        <BottomSheetView style={styles.list}>
+        <AutoLockView as="BottomSheetView" style={styles.list}>
           {moreItems.map(item => (
             <TouchableView
               style={[
@@ -280,7 +281,7 @@ export const HomeTopArea = () => {
               </View>
             </TouchableView>
           ))}
-        </BottomSheetView>
+        </AutoLockView>
       </BSheetModal>
     </>
   );
