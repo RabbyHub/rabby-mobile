@@ -23,6 +23,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import useAsync from 'react-use/lib/useAsync';
 import useDebounce from 'react-use/lib/useDebounce';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
 
 const { isSameAddress } = addressUtils;
 
@@ -164,7 +165,9 @@ export const useTokenPair = (userAddress: string) => {
     bridgeService.setSelectedToToken(receiveToken);
   }, [receiveToken]);
 
-  const [payAmount, setPayAmount] = useState('');
+  const [inputAmount, setPayAmount] = useState('');
+
+  const debouncePayAmount = useDebounceValue(inputAmount, 300);
 
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
@@ -190,9 +193,9 @@ export const useTokenPair = (userAddress: string) => {
   const inSufficient = useMemo(
     () =>
       payToken
-        ? tokenAmountBn(payToken).lt(payAmount)
-        : new BigNumber(0).lt(payAmount),
-    [payToken, payAmount],
+        ? tokenAmountBn(payToken).lt(debouncePayAmount)
+        : new BigNumber(0).lt(debouncePayAmount),
+    [payToken, debouncePayAmount],
   );
 
   const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
@@ -201,7 +204,7 @@ export const useTokenPair = (userAddress: string) => {
     setQuotesList([]);
     setSelectedBridgeQuote(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, debouncePayAmount, inSufficient]);
 
   const visible = useQuoteVisible();
 
@@ -216,6 +219,7 @@ export const useTokenPair = (userAddress: string) => {
   const aggregatorsList = useAggregatorsList();
 
   const fetchIdRef = useRef(0);
+
   const { loading: quoteLoading, error: quotesError } = useAsync(async () => {
     if (
       !inSufficient &&
@@ -224,7 +228,7 @@ export const useTokenPair = (userAddress: string) => {
       receiveToken?.id &&
       receiveToken &&
       chain &&
-      Number(payAmount) > 0 &&
+      Number(debouncePayAmount) > 0 &&
       aggregatorsList.length > 0
     ) {
       fetchIdRef.current += 1;
@@ -248,7 +252,7 @@ export const useTokenPair = (userAddress: string) => {
           from_token_id: payToken.id,
           user_addr: userAddress,
           from_chain_id: payToken.chain,
-          from_token_raw_amount: new BigNumber(payAmount)
+          from_token_raw_amount: new BigNumber(debouncePayAmount)
             .times(10 ** payToken.decimals)
             .toFixed(0, 1)
             .toString(),
@@ -265,7 +269,7 @@ export const useTokenPair = (userAddress: string) => {
               toTokenId: receiveToken.id,
               toChainId: receiveToken.chain,
               status: 'fail',
-              amount: payAmount,
+              amount: debouncePayAmount,
             });
           }
         })
@@ -312,7 +316,7 @@ export const useTokenPair = (userAddress: string) => {
                 quote.approve_contract_id,
               );
               tokenApproved = new BigNumber(allowance).gte(
-                new BigNumber(payAmount).times(10 ** payToken.decimals),
+                new BigNumber(debouncePayAmount).times(10 ** payToken.decimals),
               );
             }
             let shouldTwoStepApprove = false;
@@ -367,7 +371,7 @@ export const useTokenPair = (userAddress: string) => {
     payToken?.id,
     receiveToken?.id,
     chain,
-    payAmount,
+    debouncePayAmount,
   ]);
 
   const [bestQuoteId, setBestQuoteId] = useState<
@@ -424,7 +428,7 @@ export const useTokenPair = (userAddress: string) => {
     setExpired(false);
     setSelectedBridgeQuote(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, debouncePayAmount, inSufficient]);
 
   return {
     chain,
@@ -437,7 +441,8 @@ export const useTokenPair = (userAddress: string) => {
 
     handleAmountChange,
     handleBalance,
-    payAmount,
+    inputAmount,
+    debouncePayAmount,
 
     inSufficient,
 
