@@ -220,6 +220,8 @@ export const useTokenPair = (userAddress: string) => {
 
   const fetchIdRef = useRef(0);
 
+  const [isEmptyQuote, setIsEmptyQuote] = useState(false);
+
   const { loading: quoteLoading, error: quotesError } = useAsync(async () => {
     if (
       !inSufficient &&
@@ -234,12 +236,13 @@ export const useTokenPair = (userAddress: string) => {
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
 
-      let isEmpty = false;
+      let preQuotesIsEmpty = false;
       const result: SelectedBridgeQuote[] = [];
+      setIsEmptyQuote(false);
 
       setQuotesList(e => {
         if (!e.length) {
-          isEmpty = true;
+          preQuotesIsEmpty = true;
         }
         return e?.map(e => ({ ...e, loading: true }));
       });
@@ -261,6 +264,7 @@ export const useTokenPair = (userAddress: string) => {
         })
         .catch(err => {
           console.log('err', err);
+          setIsEmptyQuote(true);
           if (currentFetchId === fetchIdRef.current) {
             stats.report('bridgeQuoteResult', {
               aggregatorIds: aggregatorsList.map(e => e.id).join(','),
@@ -295,7 +299,7 @@ export const useTokenPair = (userAddress: string) => {
       }
 
       if (data && currentFetchId === fetchIdRef.current) {
-        if (!isEmpty) {
+        if (!preQuotesIsEmpty) {
           setQuotesList(data.map(e => ({ ...e, loading: true })));
         }
 
@@ -329,7 +333,7 @@ export const useTokenPair = (userAddress: string) => {
               shouldTwoStepApprove = true;
             }
 
-            if (isEmpty) {
+            if (preQuotesIsEmpty) {
               result.push({
                 ...quote,
                 shouldTwoStepApprove,
@@ -358,7 +362,7 @@ export const useTokenPair = (userAddress: string) => {
           }),
         );
 
-        if (isEmpty && currentFetchId === fetchIdRef.current) {
+        if (preQuotesIsEmpty && currentFetchId === fetchIdRef.current) {
           setQuotesList(result);
         }
       }
@@ -390,8 +394,22 @@ export const useTokenPair = (userAddress: string) => {
     openQuote(true);
   }, [openQuote, setRefreshId]);
 
+  const notAvailableQuote = useMemo(
+    () =>
+      !quoteLoading &&
+      !!receiveToken &&
+      Number(debouncePayAmount) > 0 &&
+      (!quoteList || !quoteList.length),
+    [debouncePayAmount, quoteList, quoteLoading, receiveToken],
+  );
+
   useEffect(() => {
-    if (!quoteLoading && receiveToken && quoteList.every(e => !e.loading)) {
+    if (
+      !quoteLoading &&
+      receiveToken &&
+      Number(debouncePayAmount) > 0 &&
+      quoteList.every(e => !e.loading)
+    ) {
       const sortedList = quoteList?.sort((b, a) => {
         return new BigNumber(a.to_token_amount)
           .times(receiveToken.price || 1)
@@ -418,11 +436,19 @@ export const useTokenPair = (userAddress: string) => {
         );
       }
     }
-  }, [quoteList, quoteLoading, receiveToken, setSelectedBridgeQuote]);
+  }, [
+    quoteList,
+    quoteLoading,
+    receiveToken,
+    setSelectedBridgeQuote,
+    debouncePayAmount,
+  ]);
 
   if (quotesError) {
     console.error('quotesError', quotesError);
   }
+
+  console.log('quoteLoading', quoteLoading);
 
   useEffect(() => {
     setExpired(false);
@@ -454,6 +480,7 @@ export const useTokenPair = (userAddress: string) => {
 
     bestQuoteId,
 
+    notAvailableQuote,
     expired,
   };
 };

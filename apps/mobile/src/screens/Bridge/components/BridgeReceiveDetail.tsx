@@ -75,10 +75,17 @@ interface ReceiveDetailsProps {
     aggregatorId: string;
   };
   openQuotesList: () => void;
+  isEmptyQuote?: boolean;
 }
 export const BridgeReceiveDetails = (props: ReceiveDetailsProps) => {
   const { t } = useTranslation();
-  const { activeProvider, bestQuoteId, openQuotesList, ...other } = props;
+  const {
+    activeProvider,
+    bestQuoteId,
+    openQuotesList,
+    isEmptyQuote,
+    ...other
+  } = props;
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -92,6 +99,9 @@ export const BridgeReceiveDetails = (props: ReceiveDetailsProps) => {
   );
 
   if (!activeProvider) {
+    if (!isEmptyQuote) {
+      return null;
+    }
     return (
       <TouchableOpacity
         style={[styles.container, styles.emptyQuote]}
