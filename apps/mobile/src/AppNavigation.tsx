@@ -194,10 +194,10 @@ export default function AppNavigation({
               headerTitle: '',
               headerBackVisible: false,
               headerShadowVisible: false,
-              headerShown: true,
+              // headerShown: true,
               headerTransparent: true,
               headerStyle: {
-                backgroundColor: colors['neutral-bg1'],
+                // backgroundColor: colors['neutral-bg1'],
               },
             })}
           />

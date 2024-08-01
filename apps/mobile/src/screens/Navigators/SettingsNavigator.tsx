@@ -26,7 +26,6 @@ export function SettingNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
         },
         headerTitle: 'Settings',
         headerTintColor: colors['neutral-title-1'],

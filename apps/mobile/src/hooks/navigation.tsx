@@ -89,39 +89,39 @@ export const useStackScreenConfig = () => {
 
   const headerPresets = makeHeadersPresets({ colors });
 
-  const screenOptions: ScreenOptions = useMemo(() => {
-    return {
-      animation: 'slide_from_right',
-      // contentStyle: {
-      //   // backgroundColor: colors.bgChat,
-      // },
-      ...headerPresets.onlyTitle,
-      headerTitleStyle: {
-        ...(headerPresets.onlyTitle.headerTitleStyle as object),
-        color: colors['neutral-title-1'],
-        fontWeight: 'normal',
-      },
-      headerTintColor: colors['neutral-bg-1'],
-      headerLeft: ({ tintColor }) => (
-        <CustomTouchableOpacity
-          style={styles.backButtonStyle}
-          hitSlop={hitSlop}
-          onPress={navBack}>
-          <RcIconHeaderBack
-            width={24}
-            height={24}
-            color={tintColor || colors['neutral-body']}
-          />
-        </CustomTouchableOpacity>
-      ),
-    };
-  }, [headerPresets, colors, navBack]);
-
   const mergeScreenOptions = useCallback(
-    (opts?: Partial<ScreenOptions>) => {
-      return merge({ ...screenOptions, ...opts });
+    (...optsList: Partial<ScreenOptions>[]) => {
+      const screenOptions: ScreenOptions = {
+        animation: 'slide_from_right',
+        ...headerPresets.onlyTitle,
+        headerTitleStyle: {
+          ...(headerPresets.onlyTitle.headerTitleStyle as object),
+          color: colors['neutral-title-1'],
+          fontWeight: '500',
+        },
+        // headerTintColor: colors['neutral-bg-1'],
+        headerTintColor: colors['neutral-title-1'],
+        headerLeft: ({ tintColor }) => (
+          <CustomTouchableOpacity
+            style={styles.backButtonStyle}
+            hitSlop={hitSlop}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
+      };
+
+      return merge(
+        {},
+        screenOptions,
+        ...optsList.map(x => ({ ...x })),
+      ) as ScreenOptions;
     },
-    [screenOptions],
+    [headerPresets, colors, navBack],
   );
 
   return { mergeScreenOptions };
