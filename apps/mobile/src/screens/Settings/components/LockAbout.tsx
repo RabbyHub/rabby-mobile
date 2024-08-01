@@ -139,7 +139,7 @@ export function FloatViewAutoLockCount() {
   //   });
   // }, []);
 
-  if (!__DEV__) return null;
+  if (!NEED_DEVSETTINGBLOCKS) return null;
   if (!showAutoLockCountdown) return null;
 
   return (
