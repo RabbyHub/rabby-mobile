@@ -196,6 +196,7 @@ export const BridgeContent = () => {
     quoteLoading,
     quoteList,
 
+    notAvailableQuote,
     bestQuoteId,
     selectedBridgeQuote,
 
@@ -421,6 +422,7 @@ export const BridgeContent = () => {
                 payToken={payToken}
                 receiveToken={receiveToken}
                 bestQuoteId={bestQuoteId}
+                isEmptyQuote={notAvailableQuote}
               />
             )}
         </View>
