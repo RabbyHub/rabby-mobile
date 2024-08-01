@@ -665,8 +665,8 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     left: 0,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderTopRightRadius: 4,
-    borderBottomLeftRadius: 4,
+    borderTopLeftRadius: 4,
+    borderBottomRightRadius: 4,
     backgroundColor: colors['red-light'],
   },
   bestQuotePercentContainerIsBest: {
