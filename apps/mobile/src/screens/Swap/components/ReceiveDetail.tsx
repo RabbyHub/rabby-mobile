@@ -17,17 +17,21 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/utils/i18n';
 import { AssetAvatar, Tip } from '@/components';
 import { Skeleton, SkeletonProps } from '@rneui/themed';
-import { formatAmount } from '@/utils/number';
+import { formatAmount, formatUsdValue } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
-import { DEX } from '@/constant/swap';
+import { DEX, DEX_WITH_WRAP } from '@/constant/swap';
 import {
   RcIconSwapGas,
   RcIconSwapReceiveInfo,
   RcIconSwitchQuote,
 } from '@/assets/icons/swap';
+import { CHAINS_ENUM } from '@/constant/chains';
+import { isSwapWrapToken } from '../utils';
+import { RcIconEmptyCC } from '@/assets/icons/gnosis';
+import { DexQuoteItem } from './QuoteItem';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
   i18n.t('page.swap.QuoteLessWarning', { receive, diff });
@@ -65,15 +69,18 @@ const SkeletonChildren = (
 };
 
 interface ReceiveDetailsProps {
-  payAmount: string | number;
+  payAmount: string;
   receiveRawAmount: string | number;
   payToken: TokenItem;
   receiveToken: TokenItem;
   receiveTokenDecimals?: number;
   quoteWarning?: [string, string];
   loading?: boolean;
-  activeProvider: QuoteProvider;
+  activeProvider?: QuoteProvider;
   isWrapToken?: boolean;
+  bestQuoteDex: string;
+  chain: CHAINS_ENUM;
+  openQuotesList: () => void;
 }
 export const ReceiveDetails = (props: ReceiveDetailsProps) => {
   const { t } = useTranslation();
@@ -88,6 +95,9 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     loading = false,
     activeProvider,
     isWrapToken,
+    bestQuoteDex,
+    chain,
+    openQuotesList,
   } = props;
 
   const [reverse, setReverse] = useState(false);
@@ -102,152 +112,95 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
     }
   }, [receiveToken, payToken]);
 
-  const { receiveNum, payUsd, receiveUsd, rate, diff, sign, showLoss } =
-    useMemo(() => {
-      const pay = new BigNumber(payAmount).times(payToken.price || 0);
-      const receiveAll = new BigNumber(receiveAmount);
-      const receive = receiveAll.times(receiveToken.price || 0);
-      const cut = receive.minus(pay).div(pay).times(100);
-      const rateBn = new BigNumber(reverse ? payAmount : receiveAll).div(
-        reverse ? receiveAll : payAmount,
-      );
+  const {
+    receiveNum,
+    payUsd,
+    receiveUsd,
+    rate,
+    diff,
+    sign,
+    showLoss,
+    lossUsd,
+  } = useMemo(() => {
+    const pay = new BigNumber(payAmount).times(payToken.price || 0);
+    const receiveAll = new BigNumber(receiveAmount);
+    const receive = receiveAll.times(receiveToken.price || 0);
+    const cut = receive.minus(pay).div(pay).times(100);
+    const rateBn = new BigNumber(reverse ? payAmount : receiveAll).div(
+      reverse ? receiveAll : payAmount,
+    );
+    const lossUsd = formatUsdValue(receive.minus(pay).abs().toString());
 
-      return {
-        receiveNum: formatAmount(receiveAll.toString(10)),
-        payUsd: formatAmount(pay.toString(10)),
-        receiveUsd: formatAmount(receive.toString(10)),
-        rate: rateBn.lt(0.0001)
-          ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
-          : formatAmount(rateBn.toString(10)),
-        sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
-        diff: cut.abs().toFixed(2) + '%',
-        showLoss: cut.lte(-5),
-      };
-    }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
+    return {
+      receiveNum: formatAmount(receiveAll.toString(10)),
+      payUsd: formatUsdValue(pay.toString(10)),
+      receiveUsd: formatUsdValue(receive.toString(10)),
+      rate: rateBn.lt(0.0001)
+        ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
+        : formatAmount(rateBn.toString(10)),
+      sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
+      diff: cut.abs().toFixed(2) + '%',
+      showLoss: cut.lte(-5),
+      lossUsd,
+    };
+  }, [payAmount, payToken.price, receiveAmount, receiveToken.price, reverse]);
 
-  const openQuote = useSetQuoteVisible();
-  const payTokenSymbol = getTokenSymbol(payToken);
-  const receiveTokenSymbol = getTokenSymbol(receiveToken);
+  const isBestQuote = useMemo(
+    () => !!bestQuoteDex && activeProvider?.name === bestQuoteDex,
+    [bestQuoteDex, activeProvider?.name],
+  );
+  const payTokenSymbol = useMemo(() => getTokenSymbol(payToken), [payToken]);
+  const receiveTokenSymbol = useMemo(
+    () => getTokenSymbol(receiveToken),
+    [receiveToken],
+  );
+
+  const isWrapTokens = useMemo(
+    () => isSwapWrapToken(payToken.id, receiveToken.id, chain),
+    [payToken, receiveToken, chain],
+  );
+
+  if (!activeProvider) {
+    return (
+      <TouchableOpacity onPress={openQuotesList}>
+        <View>
+          <RcIconEmptyCC width={16} height={16} />
+          <Text>{t('page.swap.No-available-quote')}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <View style={styles.receiveWrapper}>
-      <View style={styles.column}>
-        <View style={styles.flexRow}>
-          <View style={styles.flexRow}>
-            <Image
-              style={styles.tokenImage}
-              source={
-                isWrapToken
-                  ? { uri: receiveToken.logo_url }
-                  : DEX[activeProvider?.name]?.logo
+      <DexQuoteItem
+        onlyShow
+        quote={activeProvider.quote}
+        name={activeProvider.name}
+        payToken={payToken}
+        receiveToken={receiveToken}
+        payAmount={payAmount}
+        chain={chain}
+        isBestQuote={false}
+        bestQuoteGasUsd={'0'}
+        bestQuoteAmount={'0'}
+        userAddress={''}
+        slippage={''}
+        fee={''}
+        quoteProviderInfo={
+          isWrapTokens
+            ? {
+                name: t('page.swap.wrap-contract'),
+                logo: receiveToken?.logo_url,
               }
-            />
-            <Text style={styles.titleText}>
-              {isWrapToken
-                ? t('page.swap.wrap-contract')
-                : DEX[activeProvider?.name]?.name}
-            </Text>
-            {!!activeProvider.shouldApproveToken && (
-              <Tip content={t('page.swap.need-to-approve-token-before-swap')}>
-                {/* <Image source={ImgLock} style={styles.lockImage} /> */}
-                <ImgLock style={styles.lockImage} />
-              </Tip>
-            )}
-          </View>
-
-          <View style={styles.flexRow}>
-            <AssetAvatar logo={receiveToken.logo_url} size={20} />
-            <Text style={styles.amountText}>
-              {loading ? '' : `${receiveNum}`}
-            </Text>
-            <WarningOrChecked quoteWarning={quoteWarning} />
-          </View>
-        </View>
-
-        <View style={styles.flexRow}>
-          <View style={styles.flexRow}>
-            {!!activeProvider?.gasUsd && (
-              <View style={styles.flexRow}>
-                <RcIconSwapGas style={styles.gasImage} />
-                <Text style={[styles.diffText, { marginLeft: 4 }]}>
-                  {activeProvider?.gasUsd}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View style={[styles.flexRow, styles.gap6]}>
-            <Text style={styles.diffText}>
-              {loading ? (
-                ''
-              ) : (
-                <>
-                  ≈ {receiveUsd}{' '}
-                  <Text style={sign === '-' ? styles.red : styles.green}>
-                    ({sign}
-                    {diff})
-                  </Text>
-                </>
-              )}
-            </Text>
-            <Tip
-              content={
-                <View style={styles.tooltipContent}>
-                  <Text
-                    style={
-                      styles.tooltipText
-                    }>{`Est Payment ${payAmount} ${payTokenSymbol} ≈ $${payUsd}`}</Text>
-                  <Text
-                    style={
-                      styles.tooltipText
-                    }>{`Est Receiving ${receiveNum} ${receiveTokenSymbol} ≈ $${receiveUsd}`}</Text>
-                  <Text
-                    style={
-                      styles.tooltipText
-                    }>{`Est Difference ${sign}${diff}`}</Text>
-                </View>
-              }>
-              <RcIconSwapReceiveInfo width={16} height={16} />
-            </Tip>
-          </View>
-        </View>
-      </View>
-      {!loading && quoteWarning && (
-        <View style={styles.warning}>
-          <Text style={styles.warningText}>
-            {getQuoteLessWarning(quoteWarning)}
-          </Text>
-        </View>
-      )}
-      {!loading && showLoss && (
-        <View style={styles.warning}>
-          <Text style={styles.warningText}>
-            {t(
-              'page.swap.selected-offer-differs-greatly-from-current-rate-may-cause-big-losses',
-            )}
-          </Text>
-        </View>
-      )}
-      <View style={[styles.flexRow, styles.footer]}>
-        <Text style={styles.rateText}>{t('page.swap.rate')}</Text>
-        <View>
-          <SkeletonChildren loading={loading}>
-            <TouchableOpacity onPress={reverseRate}>
-              <Text style={styles.rateValue}>{`1 ${
-                reverse ? receiveTokenSymbol : payTokenSymbol
-              } = ${rate} ${
-                reverse ? payTokenSymbol : receiveTokenSymbol
-              }`}</Text>
-            </TouchableOpacity>
-          </SkeletonChildren>
-        </View>
-      </View>
+            : DEX_WITH_WRAP[activeProvider.name]
+        }
+        inSufficient={false}
+        sortIncludeGasFee={true}
+        preExecResult={activeProvider.preExecResult}
+      />
       {activeProvider.name && receiveToken ? (
-        <TouchableOpacity
-          style={styles.quoteProvider}
-          onPress={() => {
-            openQuote(true);
-          }}>
+        <TouchableOpacity style={styles.quoteProvider} onPress={openQuotesList}>
           <RcIconSwitchQuote style={styles.switchImage} />
         </TouchableOpacity>
       ) : null}
@@ -262,7 +215,7 @@ const getStyles = createGetStyles(colors => ({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors['neutral-line'],
     borderRadius: 4,
-    padding: 12,
+    // padding: 12,
     color: colors['neutral-title-1'],
     fontSize: 13,
   },

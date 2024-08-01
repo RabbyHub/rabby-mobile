@@ -9,6 +9,7 @@ import { getRouter, getSpender, isSwapWrapToken } from './quote';
 import BigNumber from 'bignumber.js';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { findChain } from '@/utils/chain';
 
 const { isSameAddress } = addressUtils;
 
@@ -18,7 +19,7 @@ type ValidateTokenParam = {
   decimals: number;
 };
 
-export const useVerifyRouterAndSpender = (
+export const verifyRouterAndSpender = (
   chain: CHAINS_ENUM,
   dexId: DEX_ENUM,
   router?: string,
@@ -26,65 +27,59 @@ export const useVerifyRouterAndSpender = (
   payTokenId?: string,
   receiveTokenId?: string,
 ) => {
-  const data = useMemo(() => {
-    if (dexId === DEX_ENUM.WRAPTOKEN) {
-      return [true, true];
-    }
-    if (!dexId || !router || !spender || !payTokenId || !receiveTokenId) {
-      return [true, true];
-    }
-    const routerWhitelist = getRouter(dexId, chain);
-    const spenderWhitelist = getSpender(dexId, chain);
-    const isNativeToken = isSameAddress(
-      payTokenId,
-      CHAINS[chain].nativeTokenAddress,
-    );
-    const isWrapTokens = isSwapWrapToken(payTokenId, receiveTokenId, chain);
+  if (dexId === DEX_ENUM.WRAPTOKEN) {
+    return [true, true];
+  }
+  if (!dexId || !router || !spender || !payTokenId || !receiveTokenId) {
+    return [true, true];
+  }
+  const routerWhitelist = getRouter(dexId, chain);
+  const spenderWhitelist = getSpender(dexId, chain);
+  const isNativeToken = isSameAddress(
+    payTokenId,
+    CHAINS[chain].nativeTokenAddress,
+  );
+  const isWrapTokens = isSwapWrapToken(payTokenId, receiveTokenId, chain);
 
-    return [
-      isSameAddress(routerWhitelist, router),
-      isNativeToken || isWrapTokens
-        ? true
-        : isSameAddress(spenderWhitelist, spender),
-    ];
-  }, [chain, dexId, payTokenId, receiveTokenId, router, spender]);
-  return data;
+  return [
+    isSameAddress(routerWhitelist, router),
+    isNativeToken || isWrapTokens
+      ? true
+      : isSameAddress(spenderWhitelist, spender),
+  ];
 };
 
 const isNativeToken = (chain: CHAINS_ENUM, tokenId: string) =>
   isSameAddress(tokenId, CHAINS[chain].nativeTokenAddress);
 
-export const useVerifyCalldata = <
-  T extends Parameters<typeof decodeCalldata>[1],
->(
+export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
   data: QuoteResult | null,
   dexId: DEX_ENUM | null,
   slippage: string | number,
   tx?: T,
 ) => {
-  const callDataResult = useMemo(() => {
-    if (dexId && dexId !== DEX_ENUM.WRAPTOKEN && tx) {
-      try {
-        return decodeCalldata(dexId, tx) as DecodeCalldataResult;
-      } catch (error) {
-        return null;
-      }
+  let callDataResult: DecodeCalldataResult | null = null;
+  if (dexId && dexId !== DEX_ENUM.WRAPTOKEN && tx) {
+    try {
+      callDataResult = decodeCalldata(dexId, tx) as DecodeCalldataResult;
+    } catch (error) {
+      callDataResult = null;
     }
-    return null;
-  }, [dexId, tx]);
+  }
 
-  const result = useMemo(() => {
-    if (slippage && callDataResult && data && tx) {
-      const estimateMinReceive = new BigNumber(data.toTokenAmount).times(
-        new BigNumber(1).minus(slippage),
-      );
-      const chain = Object.values(CHAINS).find(item => item.id === tx.chainId);
+  let result = true;
+  if (slippage && callDataResult && data && tx) {
+    const estimateMinReceive = new BigNumber(data.toTokenAmount).times(
+      new BigNumber(1).minus(slippage),
+    );
+    const chain = findChain({
+      id: tx.chainId,
+    });
 
-      if (!chain) {
-        return true;
-      }
-
-      return (
+    if (!chain) {
+      result = true;
+    } else {
+      result =
         ((dexId === DEX_ENUM['UNISWAP'] &&
           isNativeToken(chain.enum, data.fromToken)) ||
           isSameAddress(callDataResult.fromToken, data.fromToken)) &&
@@ -94,12 +89,9 @@ export const useVerifyCalldata = <
           .minus(estimateMinReceive)
           .div(estimateMinReceive)
           .abs()
-          .lte(0.05)
-      );
+          .lte(0.05);
     }
-    return true;
-  }, [callDataResult, data, dexId, slippage, tx]);
-
+  }
   return result;
 };
 
@@ -112,7 +104,7 @@ type VerifySdkParams<T extends ValidateTokenParam> = {
   receiveToken: T;
 };
 
-export const useVerifySdk = <T extends ValidateTokenParam>(
+export const verifySdk = <T extends ValidateTokenParam>(
   p: VerifySdkParams<T>,
 ) => {
   const { chain, dexId, slippage, data, payToken, receiveToken } = p;
@@ -120,7 +112,7 @@ export const useVerifySdk = <T extends ValidateTokenParam>(
   const isWrapTokens = isSwapWrapToken(payToken.id, receiveToken.id, chain);
   const actualDexId = isWrapTokens ? DEX_ENUM.WRAPTOKEN : dexId;
 
-  const [routerPass, spenderPass] = useVerifyRouterAndSpender(
+  const [routerPass, spenderPass] = verifyRouterAndSpender(
     chain,
     actualDexId,
     data?.tx?.to,
@@ -129,7 +121,7 @@ export const useVerifySdk = <T extends ValidateTokenParam>(
     receiveToken?.id,
   );
 
-  const callDataPass = useVerifyCalldata(
+  const callDataPass = verifyCalldata(
     data,
     actualDexId,
     new BigNumber(slippage).div(100).toFixed(),

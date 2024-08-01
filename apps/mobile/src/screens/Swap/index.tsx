@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
 import BigNumber from 'bignumber.js';
-import { useQuoteVisible } from './hooks/atom';
+import { refreshIdAtom, useQuoteVisible } from './hooks/atom';
 import { ReceiveDetails } from './components/ReceiveDetail';
 import { QuoteList } from './components/Quotes';
 import { Slippage } from './components/Slippage';
@@ -34,6 +34,7 @@ import { RootNames } from '@/constant/layout';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import useMount from 'react-use/lib/useMount';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { useSetAtom } from 'jotai';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ const Swap = () => {
   const userAddress = currentAccount?.address;
 
   const {
+    bestQuoteDex,
     chain,
     switchChain,
 
@@ -81,6 +83,7 @@ const Swap = () => {
 
     feeRate,
 
+    openQuotesList,
     quoteLoading,
     quoteList,
 
@@ -89,6 +92,8 @@ const Swap = () => {
     slippageValidInfo,
     expired,
   } = useTokenPair(currentAccount!.address);
+
+  const refresh = useSetAtom(refreshIdAtom);
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Swap)?.params,
@@ -106,30 +111,6 @@ const Swap = () => {
       payTokenId: navState?.tokenId,
     });
   });
-
-  const miniReceivedAmount = useMemo(() => {
-    if (activeProvider?.quote?.toTokenAmount) {
-      const receivedTokeAmountBn = new BigNumber(
-        activeProvider?.quote?.toTokenAmount,
-      ).div(
-        10 **
-          (activeProvider?.quote?.toTokenDecimals ||
-            receiveToken?.decimals ||
-            1),
-      );
-      return formatAmount(
-        receivedTokeAmountBn
-          .minus(receivedTokeAmountBn.times(slippage).div(100))
-          .toString(10),
-      );
-    }
-    return '';
-  }, [
-    activeProvider?.quote?.toTokenAmount,
-    activeProvider?.quote?.toTokenDecimals,
-    receiveToken?.decimals,
-    slippage,
-  ]);
 
   const DexDisplayName = useMemo(
     () => DEX?.[activeProvider?.name as keyof typeof DEX]?.name || '',
@@ -151,15 +132,19 @@ const Swap = () => {
         name: isWrapToken ? 'Wrap Contract' : DexDisplayName,
       });
     }
+    if (quoteLoading) {
+      return t('page.swap.title');
+    }
 
-    return t('page.swap.get-quotes');
+    return t('page.swap.title');
   }, [
     slippageChanged,
     activeProvider,
     expired,
+    quoteLoading,
     t,
-    isWrapToken,
     DexDisplayName,
+    isWrapToken,
   ]);
 
   const { bottom } = useSafeAreaInsets();
@@ -195,7 +180,7 @@ const Swap = () => {
                   .toNumber(),
                 slippage: new BigNumber(slippage).div(100).toNumber(),
               },
-              dex_id: activeProvider?.name.replace('API', ''),
+              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
             },
           },
           {
@@ -293,7 +278,6 @@ const Swap = () => {
               />
             </View>
           </View>
-
           <View style={styles.amountInContainer}>
             <Text style={styles.label}>
               {t('page.swap.amount-in', {
@@ -312,7 +296,6 @@ const Swap = () => {
               </Text>
             </TouchableItem>
           </View>
-
           <View style={styles.inputContainer}>
             <TextInput
               value={payAmount}
@@ -334,74 +317,65 @@ const Swap = () => {
                 : ''}
             </Text>
           </View>
+          {/* {quoteLoading && !inSufficient && !activeProvider?.manualClick && (
+            <BestQuoteLoading />
+          )} */}
+          {Number(payAmount) > 0 &&
+          !inSufficient &&
+          activeProvider &&
+          (!quoteLoading || (activeProvider && !!activeProvider.manualClick)) &&
+          payToken &&
+          receiveToken ? (
+            <>
+              <ReceiveDetails
+                bestQuoteDex={bestQuoteDex}
+                activeProvider={activeProvider}
+                isWrapToken={isWrapToken}
+                payAmount={payAmount}
+                receiveRawAmount={activeProvider?.actualReceiveAmount}
+                payToken={payToken}
+                receiveToken={receiveToken}
+                quoteWarning={activeProvider?.quoteWarning}
+                chain={chain}
+                openQuotesList={openQuotesList}
+              />
 
-          {payAmount &&
-            activeProvider &&
-            activeProvider?.quote?.toTokenAmount &&
-            payToken &&
-            receiveToken && (
-              <>
-                <ReceiveDetails
-                  activeProvider={activeProvider}
-                  isWrapToken={isWrapToken}
-                  payAmount={payAmount}
-                  receiveRawAmount={activeProvider?.actualReceiveAmount}
-                  payToken={payToken}
-                  receiveToken={receiveToken}
-                  quoteWarning={activeProvider?.quoteWarning}
-                />
-
-                {isWrapToken ? (
-                  <View style={styles.afterWrapper}>
-                    <View style={styles.flexRow}>
-                      <Text style={styles.afterLabel}>
-                        {t('page.swap.slippage-tolerance')}
-                      </Text>
-                      <Text style={styles.afterValue}>
-                        {t('page.swap.no-slippage-for-wrap')}
-                      </Text>
-                    </View>
-                    <View style={styles.flexRow}>
-                      <Text style={styles.afterLabel}>
-                        {t('page.swap.rabby-fee')}
-                      </Text>
-                      <Text style={styles.afterValue}>0%</Text>
-                    </View>
+              {isWrapToken ? (
+                <View style={styles.afterWrapper}>
+                  <View style={styles.flexRow}>
+                    <Text style={styles.afterLabel}>
+                      {t('page.swap.slippage-tolerance')}
+                    </Text>
+                    <Text style={styles.afterValue}>
+                      {t('page.swap.no-slippage-for-wrap')}
+                    </Text>
                   </View>
-                ) : (
-                  <View style={styles.afterWrapper}>
-                    <Slippage
-                      displaySlippage={slippage}
-                      value={slippageState}
-                      onChange={e => {
-                        setSlippageChanged(true);
-                        setSlippage(e);
-                      }}
-                      recommendValue={
-                        slippageValidInfo?.is_valid
-                          ? undefined
-                          : slippageValidInfo?.suggest_slippage
-                      }
-                    />
-                    <View style={styles.flexRow}>
-                      <Text style={styles.afterLabel}>
-                        {t('page.swap.minimum-received')}
-                      </Text>
-                      <Text style={styles.afterValue}>
-                        {miniReceivedAmount}{' '}
-                        {receiveToken ? getTokenSymbol(receiveToken) : ''}
-                      </Text>
-                    </View>
-                    <View style={styles.flexRow}>
-                      <Text style={styles.afterLabel}>
-                        {t('page.swap.rabby-fee')}
-                      </Text>
-                      <Text style={styles.afterValue}>0.25%</Text>
-                    </View>
+                  <View style={styles.flexRow}>
+                    <Text style={styles.afterLabel}>
+                      {t('page.swap.rabby-fee')}
+                    </Text>
+                    <Text style={styles.afterValue}>0%</Text>
                   </View>
-                )}
-              </>
-            )}
+                </View>
+              ) : (
+                <View style={styles.afterWrapper}>
+                  <Slippage
+                    displaySlippage={slippage}
+                    value={slippageState}
+                    onChange={e => {
+                      setSlippageChanged(true);
+                      setSlippage(e);
+                    }}
+                    recommendValue={
+                      slippageValidInfo?.is_valid
+                        ? undefined
+                        : slippageValidInfo?.suggest_slippage
+                    }
+                  />
+                </View>
+              )}
+            </>
+          ) : null}
         </View>
 
         {inSufficient ? (
@@ -436,7 +410,11 @@ const Swap = () => {
           title={btnText}
           titleStyle={styles.btnTitle}
           disabled={
-            !payToken || !receiveToken || !payAmount || Number(payAmount) === 0
+            !payToken ||
+            !receiveToken ||
+            !payAmount ||
+            Number(payAmount) === 0 ||
+            !activeProvider
           }
         />
       </View>
@@ -464,6 +442,7 @@ const Swap = () => {
           fee={feeRate}
           inSufficient={inSufficient}
           setActiveProvider={setActiveProvider}
+          sortIncludeGasFee
         />
       ) : null}
     </NormalScreenContainer>

@@ -29,6 +29,7 @@ import { formatUsdValue } from '@/utils/number';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { stats } from '@/utils/stats';
 import { useSwapSupportedDexList } from './settings';
+import { verifySdk } from './verify';
 
 const { isSameAddress } = addressUtils;
 
@@ -392,6 +393,22 @@ export const useQuoteMethods = () => {
                 retries: 1,
               },
             );
+            const { isSdkDataPass } = verifySdk({
+              chain,
+              dexId,
+              slippage,
+              data: {
+                ...data,
+                fromToken: payToken.id,
+                fromTokenAmount: new BigNumber(payAmount)
+                  .times(10 ** payToken.decimals)
+                  .toFixed(0, 1),
+                toToken: receiveToken?.id,
+              },
+              payToken,
+              receiveToken,
+            });
+            preExecResult.isSdkPass = isSdkDataPass;
           } catch (error) {
             const quote: TDexQuoteData = {
               data,
@@ -433,54 +450,6 @@ export const useQuoteMethods = () => {
     [walletOpenapi, getPreExecResult],
   );
 
-  const getCexQuote = React.useCallback(
-    async (
-      params: getAllCexQuotesParams & {
-        cexId: string;
-        setQuote?: (quote: TCexQuoteData) => void;
-      },
-    ): Promise<TCexQuoteData> => {
-      const {
-        payToken,
-        payAmount,
-        receiveTokenId: receive_token_id,
-        chain,
-        cexId: cex_id,
-        setQuote,
-      } = params;
-
-      const p = {
-        cex_id,
-        pay_token_amount: payAmount,
-        chain_id: CHAINS[chain].serverId,
-        pay_token_id: payToken.id,
-        receive_token_id,
-      };
-
-      let quote: TCexQuoteData;
-
-      try {
-        const data = await walletOpenapi.getCEXSwapQuote(p);
-        quote = {
-          data,
-          name: cex_id,
-          isDex: false,
-        };
-      } catch (error) {
-        quote = {
-          data: null,
-          name: cex_id,
-          isDex: false,
-        };
-      }
-
-      setQuote?.(quote);
-
-      return quote;
-    },
-    [walletOpenapi],
-  );
-
   const swapViewList = swapService.getSwapViewList();
 
   const [supportedDEXList] = useSwapSupportedDexList();
@@ -488,7 +457,7 @@ export const useQuoteMethods = () => {
   const getAllQuotes = React.useCallback(
     async (
       params: Omit<getDexQuoteParams, 'dexId'> & {
-        setQuote: (quote: TCexQuoteData | TDexQuoteData) => void;
+        setQuote: (quote: TDexQuoteData) => void;
       },
     ) => {
       if (
@@ -510,21 +479,9 @@ export const useQuoteMethods = () => {
             e => swapViewList?.[e] !== false && supportedDEXList.includes(e),
           ) as DEX_ENUM[]
         ).map(dexId => getDexQuote({ ...params, dexId })),
-        ...Object.keys(CEX)
-          .filter(e => swapViewList?.[e] !== false)
-          .map(cexId =>
-            getCexQuote({
-              cexId,
-              payToken: params.payToken,
-              payAmount: params.payAmount,
-              receiveTokenId: params.receiveToken.id,
-              chain: params.chain,
-              setQuote: params.setQuote,
-            }),
-          ),
       ]);
     },
-    [getDexQuote, swapViewList, supportedDEXList, getCexQuote],
+    [getDexQuote, swapViewList, supportedDEXList],
   );
 
   return {
@@ -614,6 +571,7 @@ export type QuotePreExecResultInfo = {
   gasPrice: number;
   gasUsd: string;
   gasUsdValue: string;
+  isSdkPass?: boolean;
 } | null;
 
 interface getDexQuoteParams {
@@ -633,20 +591,7 @@ export type TDexQuoteData = {
   isDex: true;
   preExecResult: QuotePreExecResultInfo;
   loading?: boolean;
-};
-
-interface getAllCexQuotesParams {
-  payToken: TokenItem;
-  payAmount: string;
-  receiveTokenId: string;
-  chain: CHAINS_ENUM;
-}
-
-export type TCexQuoteData = {
-  data: null | CEXQuote;
-  name: string;
-  isDex: false;
-  loading?: boolean;
+  isBest?: boolean;
 };
 
 export function isSwapWrapToken(
@@ -668,6 +613,8 @@ export type QuoteProvider = {
   name: string;
   error?: boolean;
   quote: QuoteResult | null;
+  manualClick?: boolean;
+  preExecResult: QuotePreExecResultInfo;
   shouldApproveToken: boolean;
   shouldTwoStepApprove: boolean;
   halfBetterRate?: string;

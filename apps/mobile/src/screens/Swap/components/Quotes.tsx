@@ -160,7 +160,6 @@ export const Quotes = ({
                 .receive_token_list[0]?.amount || '0'
             }`}
             bestQuoteGasUsd={bestQuoteGasUsd}
-            active={activeName === dex?.name}
             isLoading={dex.loading}
             quoteProviderInfo={{
               name: t('page.swap.wrap-contract'),
@@ -334,24 +333,28 @@ export const QuoteList = (props: QuotesProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const ViewDexIdList = useSwapViewDexIdList();
+  // const ViewDexIdList = useSwapViewDexIdList();
 
   const { height: screenHeight } = useWindowDimensions();
 
+  // const height = useMemo(() => {
+  //   const min = 333;
+  //   const max = Math.min(605, screenHeight * 0.9);
+
+  //   const h = 64 + 24 + 30 + ViewDexIdList.length * 102;
+
+  //   if (h < min) {
+  //     return min;
+  //   }
+  //   if (h > max) {
+  //     return max;
+  //   }
+  //   return h;
+  // }, [ViewDexIdList.length, screenHeight]);
+
   const height = useMemo(() => {
-    const min = 333;
-    const max = Math.min(605, screenHeight * 0.9);
-
-    const h = 64 + 24 + 30 + ViewDexIdList.length * 92;
-
-    if (h < min) {
-      return min;
-    }
-    if (h > max) {
-      return max;
-    }
-    return h;
-  }, [ViewDexIdList.length, screenHeight]);
+    return Math.min(605, screenHeight * 0.9);
+  }, [screenHeight]);
 
   const snapPoints = useMemo(() => [height], [height]);
 
