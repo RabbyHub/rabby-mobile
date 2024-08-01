@@ -15,11 +15,10 @@ import {
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTranslation } from 'react-i18next';
-import { Chain, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { toast } from '@/components/Toast';
 import AddressMemo from './AddressMemo';
 import UserListDrawer from './UserListDrawer';
-import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { formatUsdValue, formatAmount } from '@/utils/number';
 import LogoWithText from './LogoWithText';
@@ -51,6 +50,8 @@ import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import { useThemeColors } from '@/hooks/theme';
 import { useTokenDetailSheetModalOnApprovals } from '@/components/TokenDetailPopup/hooks';
 import IconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
+import { useFindChain } from '@/hooks/useFindChain';
+import { Chain } from '@/constant/chains';
 
 const { isSameAddress } = addressUtils;
 
@@ -422,9 +423,9 @@ const DisplayChain = ({
   chainServerId: string;
   textStyle?: TextStyle;
 }) => {
-  const chain = useMemo(() => {
-    return Object.values(CHAINS).find(item => item.serverId === chainServerId);
-  }, [chainServerId]);
+  const chain = useFindChain({
+    serverId: chainServerId,
+  });
   const commonStyle = useCommonStyle();
   if (!chain) return null;
   return (

@@ -2,9 +2,8 @@ import BigNumber from 'bignumber.js';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { CHAINS_ENUM } from '@debank/common';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import i18n from '@/utils/i18n';
-import { CHAINS } from '@/constant/chains';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { preferenceService, swapService } from '@/core/services';
@@ -30,9 +29,10 @@ export const approveToken = async (
 ) => {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(i18n.t('background.error.noCurrentAccount'));
-  const chainId = Object.values(CHAINS).find(
-    chain => chain.serverId === chainServerId,
-  )?.id;
+
+  const chainId = findChain({
+    serverId: chainServerId,
+  })?.id;
   if (!chainId) throw new Error(i18n.t('background.error.invalidChainId'));
   let tx: any = {
     from: account.address,

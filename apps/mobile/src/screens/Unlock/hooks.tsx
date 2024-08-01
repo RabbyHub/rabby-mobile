@@ -30,7 +30,7 @@ export function useUnlockApp() {
       setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
 
       try {
-        return await apisLock.unlockWallet(password);
+        return apisLock.unlockWalletWithUpdateUnlockTime(password);
       } finally {
         setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.IDLE }));
       }

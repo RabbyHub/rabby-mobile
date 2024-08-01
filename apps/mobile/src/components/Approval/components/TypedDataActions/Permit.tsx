@@ -68,6 +68,7 @@ const Permit = ({
               <TokenAmountItem
                 amount={actionData.token.amount}
                 logoUrl={actionData.token.logo_url}
+                balance={tokenBalance}
               />
             </View>
           </Row>

@@ -13,11 +13,17 @@ export const TokenScreen = ({ onRefresh }: { onRefresh(): void }) => {
     hasTokens,
     refreshPositions,
     isPortfoliosLoading,
+    blockedTokens,
+    customizeTokens,
+    testnetTokens,
   } = useQueryProjects(currentAccount?.address, false, true);
   const sortTokens = useSortToken(tokens);
   return (
     <TokenWallet
       tokens={sortTokens}
+      testnetTokens={testnetTokens}
+      blockedTokens={blockedTokens}
+      customizeTokens={customizeTokens}
       isTokensLoading={isTokensLoading}
       hasTokens={hasTokens && sortTokens.length > 0}
       refreshPositions={refreshPositions}

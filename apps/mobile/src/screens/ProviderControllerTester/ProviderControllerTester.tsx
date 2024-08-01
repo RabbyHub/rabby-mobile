@@ -15,13 +15,18 @@ import {
   Header,
 } from 'react-native/Libraries/NewAppScreen';
 
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import {
+  useGetBinaryMode,
+  useThemeColors,
+  useThemeStyles,
+} from '@/hooks/theme';
 import { Button } from '@/components';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { useDapps } from '@/hooks/useDapps';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { useCurrentAccount } from '@/hooks/account';
 import { apisWalletConnect } from '@/core/apis';
+import { createGetStyles } from '@/utils/styles';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -31,10 +36,10 @@ function Section({ children, title }: SectionProps): JSX.Element {
   const isDarkMode = useGetBinaryMode() === 'dark';
 
   return (
-    <View style={styles.sectionContainer}>
+    <View style={sectionStyles.sectionContainer}>
       <Text
         style={[
-          styles.sectionTitle,
+          sectionStyles.sectionTitle,
           {
             color: isDarkMode ? Colors.white : Colors.black,
           },
@@ -45,6 +50,25 @@ function Section({ children, title }: SectionProps): JSX.Element {
     </View>
   );
 }
+
+const sectionStyles = StyleSheet.create({
+  sectionContainer: {
+    marginTop: 32,
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  sectionDescription: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '400',
+  },
+  highlight: {
+    fontWeight: '700',
+  },
+});
 
 function StyledButton({
   title,
@@ -102,6 +126,7 @@ function ProviderControllerTester(): JSX.Element {
   const [account, setAccount] = React.useState<string>();
   const { currentAccount } = useCurrentAccount();
   const [connectStatus, setConnectStatus] = React.useState<string>();
+  const { styles } = useThemeStyles(getStyles);
 
   const handleConnect = React.useCallback(() => {
     sendRequest(
@@ -429,7 +454,7 @@ function ProviderControllerTester(): JSX.Element {
           <Section title="Basic Actions">
             <StyledButton onPress={handleConnect} title="CONNECT" />
             <Text>{account}</Text>
-            <Text>Connect status: {connectStatus}</Text>
+            <Text style={styles.text}>Connect status: {connectStatus}</Text>
           </Section>
           <Section title="Personal Sign">
             <StyledButton
@@ -504,23 +529,12 @@ function ProviderControllerTester(): JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+const getStyles = createGetStyles(colors => {
+  return {
+    text: {
+      color: colors['neutral-body'],
+    },
+  };
 });
 
 export default ProviderControllerTester;

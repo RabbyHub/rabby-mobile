@@ -23,6 +23,7 @@ import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
 import { IS_ANDROID } from '@/core/native/utils';
+import AutoLockView from '@/components/AutoLockView';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
@@ -88,7 +89,8 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
           onCancel?.();
         }
       }}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         // scrollEnabled={false}
         style={[
           styles.container,
@@ -119,12 +121,12 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
             );
           })}
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 });
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles((colors, options) => ({
   sheet: {
     // backgroundColor: colors['neutral-bg-1'],
     backgroundColor: colors['neutral-bg-2'],
@@ -154,7 +156,7 @@ const getStyles = createGetStyles(colors => ({
     textAlign: 'center',
 
     marginTop: SIZES.titleMt,
-    height: SIZES.titleHeight,
+    minHeight: SIZES.titleHeight,
     marginBottom: SIZES.titleMb,
     // ...makeDebugBorder('red'),
   },
@@ -170,7 +172,9 @@ const getStyles = createGetStyles(colors => ({
     paddingTop: 18,
     paddingBottom: 18,
     paddingHorizontal: 20,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: !options?.isLight
+      ? colors['neutral-card1']
+      : colors['neutral-bg1'],
     borderRadius: 8,
 
     flexDirection: 'row',

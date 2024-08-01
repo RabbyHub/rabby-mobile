@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Text, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
+import { DEFAULT_NAVBAR_FONT_SIZE } from '@/constant/layout';
 
 export default function HeaderTitleText({
   style,
@@ -16,6 +17,7 @@ export default function HeaderTitleText({
       style={[
         {
           color: colors['neutral-title-1'],
+          fontSize: DEFAULT_NAVBAR_FONT_SIZE,
         },
         styles.text,
         style,

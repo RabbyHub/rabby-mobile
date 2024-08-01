@@ -4,17 +4,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
 import * as Sentry from '@sentry/react-native';
 
-import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
-import {
-  createGlobalBottomSheetModal,
-  globalBottomSheetModalAddListener,
-  presentGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
+
 import { stats } from '@/utils/stats';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { apisAppWin } from './appWin';
+import type { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { findChain } from '@/utils/chain';
 
 export interface Approval {
   id: string;
@@ -95,12 +92,15 @@ export class NotificationService extends Events {
 
     this.preferenceService = preferenceService;
     this.transactionHistoryService = transactionHistoryService;
-    globalBottomSheetModalAddListener('DISMISS', windId => {
-      if (windId === this.notifyWindowId) {
-        this.notifyWindowId = null;
-        this.rejectAllApprovals();
-      }
-    });
+    apisAppWin.globalBottomSheetModalAddListener(
+      'DISMISS' as EVENT_NAMES.DISMISS,
+      windId => {
+        if (windId === this.notifyWindowId) {
+          this.notifyWindowId = null;
+          this.rejectAllApprovals();
+        }
+      },
+    );
 
     // TODO: 可能不需要
     // winMgr.event.on('windowFocusChange', (winId: number) => {
@@ -117,7 +117,7 @@ export class NotificationService extends Events {
     // });
   }
 
-  activeFirstApproval = async () => {
+  activeFirstApproval = () => {
     try {
       // TODO 不需要
       // const windows = await browser.windows.getAll();
@@ -232,20 +232,25 @@ export class NotificationService extends Events {
         ? this.transactionHistoryService.getSigningTx(signingTxId)
         : null;
       const explain = signingTx?.explain;
+      const chain = findChain({
+        id: signingTx?.rawTx.chainId,
+      });
 
-      if (explain && currentAccount) {
+      if ((explain || chain?.isTestnet) && currentAccount) {
         stats.report('preExecTransaction', {
           type: currentAccount.brandName,
           category: KEYRING_CATEGORY_MAP[currentAccount.type],
-          chainId: explain.native_token.chain,
-          success: explain.calcSuccess && explain.pre_exec.success,
+          chainId: chain?.serverId || '',
+          success: explain
+            ? explain.calcSuccess && explain.pre_exec.success
+            : true,
           createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
           source: data?.params.$ctx?.ga?.source || '',
           trigger: data?.params.$ctx?.ga?.trigger || '',
         });
       }
     };
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const uuid = uuidv4();
       let signingTxId;
       if (data.approvalComponent === 'SignTx') {
@@ -306,26 +311,11 @@ export class NotificationService extends Events {
           this.currentApproval = approval;
         }
       }
-      if (
-        ['wallet_switchEthereumChain', 'wallet_addEthereumChain'].includes(
-          data?.params?.method,
-        )
-      ) {
-        const chainId = data.params?.data?.[0]?.chainId;
-        const chain = Object.values(CHAINS).find(chain =>
-          new BigNumber(chain.hex).isEqualTo(chainId),
-        );
-
-        if (chain) {
-          this.resolveApproval(null);
-          return;
-        }
-      }
 
       if (this.notifyWindowId !== null) {
-        presentGlobalBottomSheetModal(this.notifyWindowId);
+        apisAppWin.presentGlobalBottomSheetModal(this.notifyWindowId);
       } else {
-        this.openNotification(approval.winProps);
+        await this.openNotification(approval.winProps);
       }
     });
   };
@@ -335,7 +325,10 @@ export class NotificationService extends Events {
     this.currentApproval = null;
     if (this.notifyWindowId !== null && !stay) {
       try {
-        removeGlobalBottomSheetModal(this.notifyWindowId);
+        // some times the window is already closed, we need set a maxtime to wait
+        await apisAppWin.removeGlobalBottomSheetModal(this.notifyWindowId, {
+          waitMaxtime: 300,
+        });
       } catch (e) {
         // ignore error
       }
@@ -365,17 +358,18 @@ export class NotificationService extends Events {
     this.isLocked = true;
   };
 
-  openNotification = (winProps: any, ignoreLock = false) => {
+  openNotification = async (winProps: any, ignoreLock = false) => {
     // Only use ignoreLock flag when approval exist but no notification window exist
     if (!ignoreLock) {
       if (this.isLocked) return;
       this.lock();
     }
     if (this.notifyWindowId !== null) {
-      removeGlobalBottomSheetModal(this.notifyWindowId);
+      await apisAppWin.removeGlobalBottomSheetModal(this.notifyWindowId);
       this.notifyWindowId = null;
     }
-    this.notifyWindowId = createGlobalBottomSheetModal(winProps);
+    this.notifyWindowId =
+      apisAppWin.createGlobalBottomSheetModal(winProps) ?? null;
   };
 
   setCurrentRequestDeferFn = (fn: () => void) => {

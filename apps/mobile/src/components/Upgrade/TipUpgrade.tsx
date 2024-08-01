@@ -8,6 +8,7 @@ import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import FooterComponentForUpgrade from './FooterComponentForUpgrade';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { MarkdownInWebView } from '../Markdown/InWebView';
+import AutoLockView from '../AutoLockView';
 
 // const DEMO_CHANGELOG = `
 // ### New features
@@ -28,7 +29,8 @@ export function TipUpgradeModalInner() {
   const { safeOffBottom } = useSafeSizes();
 
   return (
-    <BottomSheetView
+    <AutoLockView
+      as="BottomSheetView"
       style={[styles.container, { paddingBottom: safeOffBottom }]}>
       <View style={styles.topContainer}>
         <View style={styles.titleArea}>
@@ -42,7 +44,7 @@ export function TipUpgradeModalInner() {
         </View>
       </View>
       <FooterComponentForUpgrade style={[styles.footerComponent]} />
-    </BottomSheetView>
+    </AutoLockView>
   );
 }
 

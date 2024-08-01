@@ -1,11 +1,12 @@
-import { CHAIN_ID_LIST } from '@/constant/projectLists';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeStyles } from '@/hooks/theme';
+import { useFindChain } from '@/hooks/useFindChain';
 import { useSwitch } from '@/hooks/useSwitch';
 import { Chain } from '@debank/common';
 import { memo, ReactNode, useMemo } from 'react';
-import { StyleSheet, View, Image, ImageStyle, ViewStyle } from 'react-native';
+import { Image, ImageStyle, StyleSheet, View, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { TestnetChainLogo } from './Chain/TestnetChainLogo';
 
 type AssetAvatarProps = {
   logo?: string;
@@ -45,15 +46,9 @@ export const AssetAvatar = memo(
     const { styles, colors } = useThemeStyles(getStyles);
     const { on, turnOn } = useSwitch();
 
-    const chainLogo = useMemo(
-      () =>
-        chain
-          ? {
-              uri: CHAIN_ID_LIST.get(chain)?.logo,
-            }
-          : undefined,
-      [chain],
-    );
+    const chainInfo = useFindChain({
+      serverId: chain || null,
+    });
 
     const chainStyle = useMemo(
       () =>
@@ -110,7 +105,15 @@ export const AssetAvatar = memo(
             />
           )}
         </View>
-        {chainLogo ? <FastImage source={chainLogo} style={chainStyle} /> : null}
+        {chainInfo?.isTestnet ? (
+          <TestnetChainLogo
+            name={chainInfo.name}
+            style={chainStyle}
+            size={chainSize}
+          />
+        ) : chainInfo?.logo ? (
+          <FastImage source={{ uri: chainInfo.logo }} style={chainStyle} />
+        ) : null}
       </View>
     );
   },

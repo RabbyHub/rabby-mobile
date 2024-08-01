@@ -10,6 +10,7 @@ import React from 'react';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { useImportKeystone } from './useImportKeystone';
+import AutoLockView from '../AutoLockView';
 
 export const ConnectKeystone: React.FC<{
   onDone?: () => void;
@@ -45,13 +46,13 @@ export const ConnectKeystone: React.FC<{
   }, [goImport, onDone]);
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       {currentScreen === 'camera' && (
         <CameraPermissionScreen onNext={handleCameraNext} />
       )}
       {currentScreen === 'scan' && (
         <ScanDeviceScreen onScanFinish={handleImportAddress} />
       )}
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

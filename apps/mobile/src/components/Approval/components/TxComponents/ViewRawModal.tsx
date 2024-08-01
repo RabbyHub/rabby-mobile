@@ -7,6 +7,7 @@ import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Tab, TabView } from '@rneui/themed';
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
+import AutoLockView from '@/components/AutoLockView';
 
 interface ContentProps {
   abi?: ExplainTxResponse['abi_str'];
@@ -88,7 +89,7 @@ export const ViewRawDetail = ({
   const num = Number(hasRaw) + Number(hasAbi) + Number(hasHex);
 
   return (
-    <BottomSheetView style={styles.popupView}>
+    <AutoLockView as="BottomSheetView" style={styles.popupView}>
       <Tab
         value={index}
         onChange={setIndex}
@@ -134,6 +135,6 @@ export const ViewRawDetail = ({
           </TabView.Item>
         )}
       </TabView>
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

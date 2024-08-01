@@ -1,6 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CHAINS, CHAINS_LIST } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { WaitingSignMessageComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
@@ -40,6 +39,7 @@ import { toast } from '@/components/Toast';
 import { adjustV } from '@/utils/gnosis';
 import { apisKeyring } from '@/core/apis/keyring';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import { TestnetTag } from './TestnetTag';
 
 interface SignTypedDataProps {
   method: string;
@@ -195,7 +195,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
-        return CHAINS[site.chainId].id;
+        return findChain({
+          enum: site?.chainId,
+        })?.id;
       }
     } else {
       return chain?.id;
@@ -219,8 +221,10 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         : await preferenceService.getCurrentAccount();
 
       const chainId = signTypedData?.domain?.chainId;
-      const apiProvider = isTestnetChainId(chainId) ? testOpenapi : openapi;
-      return await apiProvider.parseTypedData({
+      if (isTestnetChainId(chainId)) {
+        return null;
+      }
+      return await openapi.parseTypedData({
         typedData: signTypedData,
         address: currentAccount!.address,
         origin: session.origin,
@@ -385,7 +389,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
-        data.chainId = CHAINS[site.chainId].id.toString();
+        data.chainId = findChain({
+          enum: site.chainId,
+        })?.id?.toString();
       }
     }
     if (currentAccount) {
@@ -504,6 +510,14 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             originLogo={params.session.icon}
           />
         )}
+        {chain?.isTestnet ? (
+          <TestnetTag
+            style={{
+              right: 0,
+              top: 320,
+            }}
+          />
+        ) : null}
       </ScrollView>
 
       <FooterBar

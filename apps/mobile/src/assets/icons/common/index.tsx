@@ -1,9 +1,11 @@
 /** @deprecated use RcArrowRightCC directly */
 export { default as RcIconRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRightCC } from './arrow-right-cc.svg';
+export { default as RcArrowRight2CC } from './right-2-cc.svg';
 
 export { default as RcArrowDownCC } from './arrow-down-cc.svg';
 export { default as RcIconInfoCC } from './info-cc.svg';
+export { default as RcIconInfoFillCC } from './icon-info-fill.svg';
 export { default as RcIconInfo2CC } from './info2-cc.svg';
 export { default as RcIconCopyCC } from './copy-cc.svg';
 export { default as IconCommonInfo } from './info.svg';

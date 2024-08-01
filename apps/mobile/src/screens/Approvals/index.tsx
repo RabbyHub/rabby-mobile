@@ -27,6 +27,10 @@ import {
 } from './useApprovalsPage';
 import BottomSheetApprovalContract from './components/BottomSheetApprovalContract';
 import BottomSheetApprovalAsset from './components/BottomSheetApprovalAsset';
+import NetSwitchTabs, {
+  useSwitchNetTab,
+} from '@/components/PillsSwitch/NetSwitchTabs';
+import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -104,7 +108,7 @@ const ApprovalScreenContainer = () => {
   );
 };
 
-export default function ApprovalsScreen() {
+function MainnetApprovalsScreen() {
   const colors = useThemeColors();
 
   const approvalsPageCtx = useApprovalsPageOnTop({ isTestnet: false });
@@ -117,7 +121,7 @@ export default function ApprovalsScreen() {
 
   return (
     <ApprovalsPageContext.Provider value={approvalsPageCtx}>
-      <NormalScreenContainer
+      <View
         style={{
           flex: 1,
           alignItems: 'center',
@@ -130,8 +134,33 @@ export default function ApprovalsScreen() {
         <BottomSheetApprovalAsset />
 
         <ApprovalsBottomArea />
-      </NormalScreenContainer>
+      </View>
     </ApprovalsPageContext.Provider>
+  );
+}
+
+export default function ApprovalsScreen() {
+  const { selectedTab, onTabChange } = useSwitchNetTab();
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  return (
+    <NormalScreenContainer>
+      <NetSwitchTabs
+        value={selectedTab}
+        onTabChange={onTabChange}
+        style={styles.netTabs}
+      />
+      {selectedTab === 'mainnet' ? (
+        <MainnetApprovalsScreen />
+      ) : (
+        <View style={styles.notFound}>
+          <RcIconNotFindCC color={colors['neutral-body']} />
+          <Text style={styles.notFoundText}>
+            Not supported for custom network
+          </Text>
+        </View>
+      )}
+    </NormalScreenContainer>
   );
 }
 
@@ -160,6 +189,21 @@ const getStyles = createGetStyles(colors => {
     indicator: {
       backgroundColor: colors['blue-default'],
       height: 2,
+    },
+    netTabs: {
+      marginBottom: 18,
+    },
+    notFound: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '80%',
+    },
+    notFoundText: {
+      fontSize: 14,
+      lineHeight: 17,
+      color: colors['neutral-body'],
+      marginTop: 16,
     },
   });
 });

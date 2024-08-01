@@ -1,6 +1,7 @@
 import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
+import { makeEEClass } from './event';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -8,6 +9,12 @@ export const enum PasswordStatus {
   Custom = 11,
 }
 
+export type UIAuthType = 'none' | 'password' | 'biometrics';
+export type ValidationBehaviorOnFinishedContext = {
+  hasSetupCustomPassword?: boolean;
+  authType?: UIAuthType;
+  getValidatedPassword: () => string;
+};
 export type ValidationBehaviorProps = {
   /**
    * @description external-defined validatie password user input.
@@ -16,10 +23,7 @@ export type ValidationBehaviorProps = {
    * @param password
    */
   validationHandler?(password: string): void | Promise<void>;
-  onFinished?(ctx: {
-    hasSetupCustomPassword?: boolean;
-    validatedPassword: string;
-  }): void;
+  onFinished?(ctx: ValidationBehaviorOnFinishedContext): void;
 };
 
 const DefaultValidationPassword: ValidationBehaviorProps['validationHandler'] &
@@ -45,7 +49,7 @@ function getInitError(password: string) {
 }
 
 /* ===================== Password:start ===================== */
-export async function safeVerifyPassword(password: string) {
+async function safeVerifyPassword(password: string) {
   const result = { success: false, error: null as null | Error };
   try {
     await keyringService.verifyPassword(password);
@@ -162,7 +166,7 @@ export async function getRabbyLockInfo() {
   return info;
 }
 
-export async function tryAutoUnlockRabbyMobile() {
+async function tryAutoUnlockRabbyMobile() {
   // // leave here for debugging
   if (__DEV__) {
     console.debug(
@@ -194,7 +198,7 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
-export async function unlockWallet(password: string) {
+async function unlockWallet(password: string) {
   const unlockResult = {
     error: '',
   };
@@ -216,4 +220,50 @@ export async function lockWallet() {
   await keyringService.setLocked();
   sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
   sessionService.broadcastEvent(BroadcastEvent.lock);
+}
+
+const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
+  updated: (time: number) => void;
+}>();
+export const unlockTimeEvent = new UnlockTimeEvent();
+
+const unlockTimeRef = {
+  current: 0,
+};
+
+export function getUnlockTime() {
+  return unlockTimeRef.current;
+}
+
+export async function updateUnlockTime() {
+  const time = Date.now();
+  unlockTimeRef.current = time;
+  unlockTimeEvent.emit('updated', time);
+}
+
+function makeLockApiWithUpdateUnlockTime<T extends (...args: any[]) => any>(
+  fn: T,
+): T {
+  return function (...args) {
+    const res = fn(...args);
+    updateUnlockTime();
+    return res;
+  } as T;
+}
+
+export const tryAutoUnlockRabbyMobileWithUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(tryAutoUnlockRabbyMobile);
+export const unlockWalletWithUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(unlockWallet);
+export const safeVerifyPasswordAndUpdateUnlockTime =
+  makeLockApiWithUpdateUnlockTime(safeVerifyPassword);
+
+export function subscribeAppLock(fn: () => any) {
+  keyringService.on('locked', fn);
+
+  const dispose = () => {
+    keyringService.off('locked', fn);
+  };
+
+  return dispose;
 }

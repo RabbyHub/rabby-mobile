@@ -4,7 +4,11 @@ import React from 'react';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { RootNames, makeHeadersPresets } from '@/constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  RootNames,
+  makeHeadersPresets,
+} from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 
 import HistoryScreen from '@/screens/Transaction/History';
@@ -95,14 +99,17 @@ export default function TransactionNavigator() {
         component={GasTopUp}
         options={mergeScreenOptions({
           title: 'Instant Gas Top Up',
-          ...headerPresets.withBgCard2,
+          headerTitle: 'Instant Gas Top Up',
+          headerTransparent: true,
+          headerBackVisible: false,
           headerTintColor: colors?.['neutral-title-2'],
-          headerTitleStyle: {
-            ...headerPresets.withBgCard2.headerTitleStyle,
-            color: colors?.['neutral-title-2'],
-          },
           headerStyle: {
             backgroundColor: 'transparent',
+          },
+          headerTitleStyle: {
+            color: colors?.['neutral-title-2'],
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+            fontWeight: '500',
           },
         })}
       />
@@ -122,10 +129,10 @@ export default function TransactionNavigator() {
       <TransactionStack.Screen
         name={RootNames.Bridge}
         component={Bridge}
-        options={{
+        options={mergeScreenOptions({
           title: 'Bridge',
           ...headerPresets.withBgCard2,
-        }}
+        })}
       />
     </TransactionStack.Navigator>
   );

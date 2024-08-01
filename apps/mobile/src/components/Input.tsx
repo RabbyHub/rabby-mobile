@@ -15,6 +15,7 @@ interface InputProps extends TextInputProps {
   addonAfter?: ReactNode;
   customStyle?: ViewStyle & TextStyle;
   addonBefore?: ReactNode;
+  addonWrapperStyle?: ViewStyle;
 }
 
 const getStyle = (colors: AppColorsVariants) =>
@@ -71,6 +72,7 @@ export const BottomSheetInput = ({
   customStyle,
   addonAfter,
   addonBefore,
+  addonWrapperStyle,
   ...props
 }: InputProps) => {
   const colors = useThemeColors();
@@ -78,7 +80,11 @@ export const BottomSheetInput = ({
 
   if (addonAfter || addonBefore) {
     return (
-      <View style={styles.inputWithAddOnWrapper}>
+      <View
+        style={StyleSheet.flatten([
+          styles.inputWithAddOnWrapper,
+          addonWrapperStyle,
+        ])}>
         <View style={styles.addOnAfter}>{addonBefore}</View>
         <BottomSheetTextInput
           style={{

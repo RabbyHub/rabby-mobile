@@ -1,60 +1,38 @@
-import { CreateParams, EVENT_NAMES, MODAL_NAMES, RemoveParams } from './types';
-import { uniqueId } from 'lodash';
-import { events } from './event';
-import { sleep } from '@/utils/async';
+import { EVENT_NAMES } from './types';
+import { globalSheetModalEvents } from './event';
+import { apisAppWin } from '@/core/services/appWin';
+import { keyringService } from '@/core/services';
+import { uiRefreshTimeout } from '@/core/apis/autoLock';
 
-export const createGlobalBottomSheetModal = <
-  T extends MODAL_NAMES = MODAL_NAMES,
->(
-  params: CreateParams<T>,
-) => {
-  params.name = params.name ?? MODAL_NAMES.APPROVAL;
-  const id = `${params.name}_${uniqueId()}`;
-  events.emit(EVENT_NAMES.CREATE, id, params);
-  return id;
-};
-
-export async function removeGlobalBottomSheetModal(
-  key?: string | null,
-  params?: RemoveParams & {
-    waitMaxtime?: number;
-  },
-) {
-  if (typeof key !== 'string') {
-    return;
+class IdSet<T = any> extends Set<T> {
+  add(id: T) {
+    uiRefreshTimeout();
+    return super.add(id);
   }
-  const { waitMaxtime, ...removeParams } = params ?? {};
-  const promise = new Promise<string | null>(resolve => {
-    events.once(EVENT_NAMES.CLOSED, () => {
-      resolve(key);
-    });
-  });
-  events.emit(EVENT_NAMES.REMOVE, key, removeParams);
-
-  return Promise.all([promise, waitMaxtime ? sleep(waitMaxtime) : null]).then(
-    ([r]) => r,
-  );
+  delete(id: T) {
+    uiRefreshTimeout();
+    return super.delete(id);
+  }
 }
+const allIds = new IdSet<string>();
+keyringService.on('lock', () => {
+  allIds.forEach(id => {
+    apisAppWin.removeGlobalBottomSheetModal(id, { waitMaxtime: 0 });
+  });
+});
 
-export const globalBottomSheetModalAddListener = (
-  eventName: EVENT_NAMES.DISMISS /*  | EVENT_NAMES.CLOSED */,
-  callback: (key: string) => void,
-  once?: boolean,
-) => {
-  if (once) {
-    events.once(eventName, callback);
-    return;
-  }
-  events.on(eventName, callback);
-};
-
-export const presentGlobalBottomSheetModal = (key: string) => {
-  events.emit(EVENT_NAMES.PRESENT, key);
-};
+export const createGlobalBottomSheetModal =
+  apisAppWin.createGlobalBottomSheetModal;
+export const removeGlobalBottomSheetModal =
+  apisAppWin.removeGlobalBottomSheetModal;
+export const globalBottomSheetModalAddListener =
+  apisAppWin.globalBottomSheetModalAddListener;
+export const presentGlobalBottomSheetModal =
+  apisAppWin.presentGlobalBottomSheetModal;
 
 export const snapToIndexGlobalBottomSheetModal = (
   key: string,
   index: number,
 ) => {
-  events.emit(EVENT_NAMES.SNAP_TO_INDEX, key, index);
+  globalSheetModalEvents.emit(EVENT_NAMES.SNAP_TO_INDEX, key, index);
 };

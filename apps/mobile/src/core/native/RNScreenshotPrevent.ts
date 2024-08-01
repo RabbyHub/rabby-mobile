@@ -7,6 +7,10 @@ const { RNScreenshotPrevent: nativeModule } = resolveNativeModule(
 type Listeners = {
   userDidTakeScreenshot: () => any;
   screenCapturedChanged: (ret: { isBeingCaptured: boolean }) => any;
+  /**
+   * @description subscribe to android app state change, pause means app is in background, resume means app is in foreground
+   */
+  androidOnLifeCycleChanged: (ret: { state: 'resume' | 'pause' }) => any;
   /** @description pointless now */
   preventScreenshotChanged: (ret: {
     isPrevent: boolean;
@@ -51,6 +55,13 @@ function iosOnScreenCaptureChanged(fn: Listeners['screenCapturedChanged']) {
   return eventEmitter.addListener('screenCapturedChanged', fn);
 }
 
+function androidOnLifeCycleChanged(fn: Listeners['androidOnLifeCycleChanged']) {
+  const handler = makeDefaultHandler<'androidOnLifeCycleChanged'>(fn);
+  if (handler) return handler;
+
+  return eventEmitter.addListener('androidOnLifeCycleChanged', fn);
+}
+
 function onPreventScreenshotChanged(fn: Listeners['preventScreenshotChanged']) {
   const handler = makeDefaultHandler<'preventScreenshotChanged'>(fn);
   if (handler) return handler;
@@ -84,6 +95,7 @@ const RNScreenshotPrevent = Object.freeze({
   // },
   iosOnScreenCaptureChanged,
   iosOnUserDidTakeScreenshot,
+  androidOnLifeCycleChanged,
 });
 
 export default RNScreenshotPrevent;

@@ -1,6 +1,7 @@
+import { findChain, isTestnet } from '@/utils/chain';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { atom, useAtom } from 'jotai';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { AbstractPortfolioToken } from '@/screens/Home/types';
@@ -42,11 +43,23 @@ export function useGeneralTokenDetailSheetModal() {
     [onFocusToken, toggleShowSheetModal],
   );
 
+  const isTestnetToken = useMemo(() => {
+    if (!focusingToken) {
+      return false;
+    }
+    return (
+      findChain({
+        serverId: focusingToken.chain,
+      })?.isTestnet || false
+    );
+  }, [focusingToken]);
+
   return {
     focusingToken,
     sheetModalRef,
     openTokenDetailPopup,
     cleanFocusingToken,
+    isTestnetToken,
   };
 }
 

@@ -5,7 +5,7 @@ import { MMKV } from 'react-native-mmkv';
 
 import { appEncryptor } from '../services';
 import { strings } from '@/utils/i18n';
-import { clearCustomPassword, safeVerifyPassword, unlockWallet } from './lock';
+import * as apisLock from './lock';
 
 const storage = new MMKV({
   id: 'mmkv.keychain',
@@ -180,7 +180,7 @@ export async function requestGenericPassword<
 >(options: {
   purpose?: T;
   /**
-   * @description will be called and AWAIT on purpose `DECRYPT_PWD`
+   * @description will be called and AWAITED on purpose `DECRYPT_PWD`
    */
   onPlainPassword?: (password: string) => void | Promise<void>;
 }): Promise<null | DefaultRet> {
@@ -204,13 +204,17 @@ export async function requestGenericPassword<
 
       switch (purpose) {
         case RequestGenericPurpose.VERIFY: {
-          const verifyResult = await safeVerifyPassword(decrypted.password);
+          const verifyResult =
+            await apisLock.safeVerifyPasswordAndUpdateUnlockTime(
+              decrypted.password,
+            );
 
           onRequestReturn(instance);
           return { ...keychainObject, actionSuccess: verifyResult.success };
         }
         case RequestGenericPurpose.DECRYPT_PWD: {
           await onPlainPassword?.(decrypted.password);
+          apisLock.updateUnlockTime();
           onRequestReturn(instance);
           return { ...keychainObject, actionSuccess: true };
         }
@@ -272,7 +276,7 @@ export async function setGenericPassword(
 
 export async function clearApplicationPassword(password: string) {
   return Promise.allSettled([
-    clearCustomPassword(password),
+    apisLock.clearCustomPassword(password),
     resetGenericPassword(),
   ]).then(([appPwdResult, genericPwdResult]) => {
     return {

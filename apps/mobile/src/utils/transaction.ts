@@ -1,6 +1,5 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import abi from 'human-standard-token-abi';
-import { CHAINS } from '@/constant/chains';
 import type {
   ExplainTxResponse,
   GasLevel,
@@ -12,6 +11,7 @@ import { minBy } from 'lodash';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { ethers } from 'ethers';
 import { isHex, hexToString, stringToHex } from 'web3-utils';
+import { findChain } from './chain';
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -46,7 +46,9 @@ export const GASPRICE_RANGE = {
   [CHAINS_ENUM.METIS]: [0, 50000],
 };
 export const validateGasPriceRange = (tx: Tx) => {
-  const chain = Object.values(CHAINS).find(c => c.id === tx.chainId);
+  const chain = findChain({
+    id: tx.chainId,
+  });
   if (!chain) {
     return true;
   }

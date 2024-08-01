@@ -4,7 +4,6 @@ import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { autoLockEvent } from '@/core/apis/autoLock';
 import { apisAutoLock } from '@/core/apis';
 import { DEFAULT_AUTO_LOCK_MINUTES, TIME_SETTINGS } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
@@ -12,7 +11,7 @@ import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 
 const isIOS = DeviceUtils.isIOS();
 
-type ESettings = {
+type ScreenshotSettings = {
   androidAllowScreenCapture: boolean;
   iosAllowScreenRecord: boolean;
 };
@@ -27,7 +26,7 @@ const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
 });
 
 const KEY = isIOS ? 'iosAllowScreenRecord' : 'androidAllowScreenCapture';
-function isAllowScreenshot(ret: ESettings) {
+function isAllowScreenshot(ret: ScreenshotSettings) {
   return ret[KEY];
 }
 
@@ -92,33 +91,16 @@ export function useGlobalAppPreventScreenrecordOnDev() {
   }, [allowScreenshot]);
 }
 
-const autoLockTimeoutAtom = atom(-1);
-autoLockTimeoutAtom.onMount = setter => {
-  autoLockEvent.addListener('change', value => {
-    setter(value);
-  });
-};
-
-export function useAutoLockTimeout() {
-  const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
-
-  const fetchTimeout = useCallback(() => {
-    const value = apisAutoLock.getAutoLockTime();
-    setTimeout(value);
-    return value;
-  }, [setTimeout]);
-
-  return {
-    autoLockTimeout: timeout,
-    fetchTimeout,
-  };
-}
-
 const autoLockMinutesAtom = atom<number>(DEFAULT_AUTO_LOCK_MINUTES);
 autoLockMinutesAtom.onMount = setAutoLockMinutes => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 };
+export function useAutoLockTimeMinites() {
+  const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
+
+  return { autoLockMinutes };
+}
 export function useAutoLockTimeMs() {
   const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
 
@@ -129,7 +111,7 @@ export function useAutoLockTimeMs() {
 
   const onAutoLockTimeMsChange = useCallback(
     (ms: number) => {
-      const minutes = Math.floor(ms / 60000);
+      const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
       setAutoLockMinutes(minutes);
       preferenceService.setPreference({
         autoLockTime: minutes,
@@ -146,24 +128,30 @@ export function useAutoLockTimeMs() {
   };
 }
 
-export function useCurrentAutoLockLabel() {
-  const autoLockMinutes = useAtomValue(autoLockMinutesAtom);
+const showFloatingViewAtom = atom({
+  showAutoLockCountdown: __DEV__,
+});
 
-  return useMemo(() => {
-    const minutes = autoLockMinutes;
+export function useToggleShowAutoLockCountdown() {
+  const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
 
-    const preset = TIME_SETTINGS.find(
-      setting => setting.milliseconds === minutes * 60 * 1000,
-    );
-    if (preset?.label) return preset?.label;
+  const toggleShowAutoLockCountdown = useCallback(
+    (nextEnabled?: boolean) => {
+      setShowFloatingView(prev => {
+        if (typeof nextEnabled !== 'boolean') {
+          nextEnabled = !prev.showAutoLockCountdown;
+        }
+        return {
+          ...prev,
+          showAutoLockCountdown: nextEnabled,
+        };
+      });
+    },
+    [setShowFloatingView],
+  );
 
-    const timeSpans = getTimeSpan(minutes);
-
-    return [
-      timeSpans.d ? `${timeSpans.d} Day(s)` : '',
-      timeSpans.h ? `${timeSpans.h} Hour(s)` : '',
-      timeSpans.m ? `${timeSpans.m} Minute(s)` : '',
-      // timeSpans.s ? `${timeSpans.s} Sec(s)` : '',
-    ].join(' ');
-  }, [autoLockMinutes]);
+  return {
+    showAutoLockCountdown: floatingView.showAutoLockCountdown,
+    toggleShowAutoLockCountdown,
+  };
 }

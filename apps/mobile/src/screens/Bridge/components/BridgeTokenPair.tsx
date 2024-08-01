@@ -14,9 +14,14 @@ import { ModalLayouts } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { TokenPairLoading } from './loading';
-import { ListRenderItemInfo, StyleSheet, Text, View } from 'react-native';
+import {
+  ListRenderItemInfo,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import { getTokenSymbol } from '@/utils/token';
 import { formatUsdValue } from '@/utils/number';
 import RcArrowDown from '@/assets/icons/bridge/down.svg';
@@ -208,7 +213,7 @@ const TokenPairItem = (props: {
           {t('page.gasTopUp.InsufficientBalanceTips')}
         </Text>
       }>
-      <TouchableItem
+      <TouchableOpacity
         key={tokenPair.from_token_raw_amount_hex_str}
         onPress={handleSelectTokenPair}
         style={StyleSheet.flatten([
@@ -237,7 +242,7 @@ const TokenPairItem = (props: {
               .toString(),
           )}
         </Text>
-      </TouchableItem>
+      </TouchableOpacity>
     </Tip>
   );
 };
@@ -401,7 +406,7 @@ export const BridgeTokenPair = (props: {
   );
   return (
     <>
-      <TouchableItem style={styles.wrapper} onPress={() => setVisible(true)}>
+      <TouchableOpacity style={styles.wrapper} onPress={() => setVisible(true)}>
         {!value ? (
           <Text style={styles.placeholder}>
             {t('page.bridge.tokenPairPlaceholder')}
@@ -440,7 +445,7 @@ export const BridgeTokenPair = (props: {
           </View>
         )}
         <RcArrowDown style={styles.down} />
-      </TouchableItem>
+      </TouchableOpacity>
 
       <TokenPairDrawer
         onSelectTokenPair={onSelectTokenPair}

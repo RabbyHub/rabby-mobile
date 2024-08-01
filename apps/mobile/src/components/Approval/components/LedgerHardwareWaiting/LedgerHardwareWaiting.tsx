@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components/Toast';
-import { CHAINS } from '@/constant/chains';
 import {
   notificationService,
   preferenceService,
@@ -29,6 +28,7 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { adjustV } from '@/utils/gnosis';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
+import { findChain } from '@/utils/chain';
 
 interface ApprovalParams {
   address: string;
@@ -86,9 +86,9 @@ export const LedgerHardwareWaiting = ({
     APPROVAL_STATUS_MAP.WAITING,
   );
   const [getApproval, resolveApproval, rejectApproval] = useApproval();
-  const chain = Object.values(CHAINS).find(
-    item => item.id === (params.chainId || 1),
-  )!;
+  const chain = findChain({
+    id: params.chainId || 1,
+  })!;
   const { t } = useTranslation();
   const [isSignText, setIsSignText] = React.useState(false);
   const [result, setResult] = React.useState('');
@@ -112,7 +112,7 @@ export const LedgerHardwareWaiting = ({
       return;
     }
     setConnectStatus(APPROVAL_STATUS_MAP.WAITING);
-    await notificationService.callCurrentRequestDeferFn();
+    notificationService.callCurrentRequestDeferFn();
     if (showToast) {
       toast.success(t('page.signFooterBar.ledger.resent'));
     }

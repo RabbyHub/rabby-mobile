@@ -40,6 +40,7 @@ import { RcIconFaceId, RcIconFingerprint, RcIconInfoForToast } from './icons';
 import { useBiometrics } from '@/hooks/biometrics';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { sleep } from '@/utils/async';
+import { updateUnlockTime } from '@/core/apis/lock';
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -113,6 +114,8 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
         if (result.error) {
           helpers?.setFieldError('password', t('page.unlock.password.error'));
           toast.show(result.error);
+        } else {
+          updateUnlockTime();
         }
       } catch (error) {
         console.error(error);
@@ -150,12 +153,12 @@ export default function UnlockScreen() {
   const { t } = useTranslation();
 
   const navigation = useRabbyAppNavigation();
-  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
-    useUnlockForm(navigation);
   const {
     computed: { isBiometricsEnabled, supportedBiometryType, isFaceID },
     fetchBiometrics,
   } = useBiometrics({ autoFetch: true });
+  const { isUnlocking, formik, shouldDisabled, checkUnlocked } =
+    useUnlockForm(navigation);
 
   useFocusEffect(
     useCallback(() => {
@@ -189,6 +192,7 @@ export default function UnlockScreen() {
           }
         },
       });
+      updateUnlockTime();
     } catch (error: any) {
       if (__DEV__) console.error(error);
 

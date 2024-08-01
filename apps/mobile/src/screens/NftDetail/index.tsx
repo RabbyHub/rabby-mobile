@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
 import { StyleSheet, View } from 'react-native';
 import BigNumber from 'bignumber.js';
-import { CHAIN_ID_LIST } from '@/constant/projectLists';
+import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useThemeColors } from '@/hooks/theme';
 import { Text } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
@@ -99,7 +99,7 @@ export const NFTDetailScreen = () => {
         <ListItem title="Collection" value={collectionName} />
         <ListItem
           title="Chain"
-          value={CHAIN_ID_LIST.get(token?.chain || CHAINS_ENUM.ETH)?.name}
+          value={getCHAIN_ID_LIST().get(token?.chain || CHAINS_ENUM.ETH)?.name}
         />
         <ListItem title="Purchase Date" value={date} />
       </View>

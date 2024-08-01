@@ -2,7 +2,6 @@ import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
@@ -15,11 +14,18 @@ import {
   useOpenUrlView,
 } from '../../hooks/useDappView';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
+import AutoLockView from '@/components/AutoLockView';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+  <RefreshAutoLockBottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={-1}
+    appearsOnIndex={0}
+  />
 );
 
+/** @deprecated */
 export default function SheetGeneralWebView({ url }: { url: string | null }) {
   const {
     sheetModalRefs: { urlWebviewContainerRef },
@@ -61,7 +67,9 @@ export default function SheetGeneralWebView({ url }: { url: string | null }) {
       ref={urlWebviewContainerRef}
       snapPoints={[safeOffScreenTop]}
       onChange={handleBottomSheetChanges}>
-      <BottomSheetView className="px-[20] items-center justify-center">
+      <AutoLockView
+        as="BottomSheetView"
+        className="px-[20] items-center justify-center">
         <DappWebViewControl
           dappOrigin={url}
           bottomSheetContent={({ bottomNavBar }) => {
@@ -78,7 +86,7 @@ export default function SheetGeneralWebView({ url }: { url: string | null }) {
             );
           }}
         />
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 }

@@ -1,7 +1,3 @@
-import {
-  presentGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
 import { notificationService } from '@/core/services';
 import { Approval } from '@/core/services/notification';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
@@ -29,6 +25,7 @@ export const useApproval = () => {
     if (stay) {
       return;
     }
+
     let currentNotificationId = notificationService.notifyWindowId;
 
     setTimeout(() => {

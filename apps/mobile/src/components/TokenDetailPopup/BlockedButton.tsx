@@ -1,8 +1,10 @@
-import { Switch } from 'antd';
 import clsx from 'clsx';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { Text, View } from 'react-native';
+import { AppSwitch } from '../customized/Switch';
+import { createGetStyles } from '@/utils/styles';
+import { useThemeStyles } from '@/hooks/theme';
 
 export interface Props {
   selected?: boolean;
@@ -10,70 +12,84 @@ export interface Props {
   onClose(): void;
 }
 
-const SwitchStyled = styled(Switch)`
-  &.ant-switch-checked {
-    background-color: #ec5151;
-  }
-
-  &.ant-switch-small {
-    min-width: 24px;
-    height: 12px;
-    line-height: 12px;
-  }
-
-  &.ant-switch-small .ant-switch-handle {
-    width: 10px;
-    height: 10px;
-    top: 1px;
-    left: 1px;
-  }
-
-  &.ant-switch-small.ant-switch-checked .ant-switch-handle {
-    left: 13px;
-  }
-`;
-
 export const BlockedButton: React.FC<Props> = ({
   selected,
   onOpen,
   onClose,
 }) => {
   const { t } = useTranslation();
+  const { styles, colors } = useThemeStyles(getStyles);
   return (
-    <div
-      className={clsx('flex rounded', {
-        'py-[9px] px-8 bg-orange bg-opacity-20 justify-between -mt-10 mb-20 -mr-4': selected,
-        'float-right justify-end': !selected,
-      })}
-    >
-      <div
-        className={clsx(
-          'text-orange ml-4 text-13',
-          selected ? 'block' : 'hidden'
-        )}
-      >
-        {t('page.dashboard.tokenDetail.blockedTip')}
-      </div>
-      <label
-        className={clsx('flex items-center gap-x-6 cursor-pointer', {
-          'mr-4 mt-2': !selected,
-        })}
-      >
-        <SwitchStyled
-          size="small"
-          checked={selected}
-          onChange={(val) => {
-            if (val) {
+    <View
+      style={[
+        styles.container,
+        selected ? styles.selected : styles.notSelected,
+      ]}>
+      {selected ? (
+        <Text style={styles.tip} numberOfLines={2}>
+          {t('page.dashboard.tokenDetail.blockedTip')}
+        </Text>
+      ) : null}
+
+      <View style={styles.switchLabel}>
+        <AppSwitch
+          value={!!selected}
+          onValueChange={v => {
+            if (v) {
               onOpen();
             } else {
               onClose();
             }
           }}
+          backgroundActive={colors['red-default']}
+          circleBorderActiveColor={colors['red-default']}
         />
-        <span className="text-r-neutral-foot text-12">
+        <Text style={styles.switchText}>
           {t('page.dashboard.tokenDetail.blocked')}
-        </span>
-      </label>
-    </div>
+        </Text>
+      </View>
+    </View>
   );
 };
+
+const getStyles = createGetStyles(colors => {
+  return {
+    container: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 4,
+      gap: 30,
+    },
+    selected: {
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: colors['orange-light'],
+      marginBottom: 16,
+    },
+    notSelected: {
+      position: 'absolute',
+      right: 0,
+      top: 4,
+      zIndex: 1,
+    },
+    tip: {
+      minWidth: 0,
+      flex: 1,
+      color: colors['orange-default'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+    switchLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginLeft: 'auto',
+    },
+    switchText: {
+      color: colors['neutral-foot'],
+      fontSize: 13,
+      lineHeight: 16,
+    },
+  };
+});

@@ -4,6 +4,7 @@ import { WALLET_NAME } from '@rabby-wallet/keyring-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'react-native';
+import AutoLockView from '../AutoLockView';
 
 export const SwitchChain: React.FC = () => {
   const { setTitle, account, setHeight } = useCommonPopupView();
@@ -12,6 +13,7 @@ export const SwitchChain: React.FC = () => {
   React.useEffect(() => {
     setTitle(t('page.dashboard.hd.howToSwitch'));
     setHeight(420);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const url = React.useMemo(() => {
@@ -29,7 +31,7 @@ export const SwitchChain: React.FC = () => {
     }
   }, [account?.brandName]);
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       <Image
         source={url}
         resizeMode="contain"
@@ -38,6 +40,6 @@ export const SwitchChain: React.FC = () => {
           height: '100%',
         }}
       />
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

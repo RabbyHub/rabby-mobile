@@ -1,5 +1,4 @@
 import { CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { useRequest } from 'ahooks';
 import React, { useEffect, useRef } from 'react';
@@ -18,6 +17,7 @@ import { getStyles } from './styles';
 import { TouchableOpacity } from 'react-native';
 import { Card } from '../Actions/components/Card';
 import { Radio } from '@/components/Radio';
+import { findChain } from '@/utils/chain';
 
 interface BroadcastModeProps {
   value: {
@@ -46,7 +46,12 @@ export const BroadcastMode = ({
   const { t } = useTranslation();
   const { currentAccount: account } = useCurrentAccount();
   const { data: supportedPushType } = useRequest(
-    () => openapi.gasSupportedPushType(CHAINS[chain]?.serverId),
+    () =>
+      openapi.gasSupportedPushType(
+        findChain({
+          enum: chain,
+        })?.serverId || '',
+      ),
     {
       refreshDeps: [chain],
     },

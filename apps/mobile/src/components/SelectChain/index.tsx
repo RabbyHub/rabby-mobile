@@ -1,14 +1,14 @@
 import RcIconFind from '@/assets/icons/select-chain/icon-find.svg';
 import RcIconSearch from '@/assets/icons/select-chain/icon-search.svg';
-import { MAINNET_CHAINS_LIST } from '@/constant/chains';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { CHAINS_ENUM } from '@/constant/chains';
+import { CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { Input } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SelectChainList } from './SelectChainList';
+import AutoLockView from '../AutoLockView';
 
 export const SelectChain = ({
   value,
@@ -25,19 +25,17 @@ export const SelectChain = ({
   const list = React.useMemo(() => {
     const searchKeyword = search.trim().toLowerCase();
     if (searchKeyword) {
-      return MAINNET_CHAINS_LIST.filter(item =>
+      return getChainList('mainnet').filter(item =>
         [item.name, item.enum, item.nativeTokenSymbol].some(item =>
           item.toLowerCase().includes(searchKeyword),
         ),
       );
     }
-    return MAINNET_CHAINS_LIST;
+    return getChainList('mainnet');
   }, [search]);
 
-  console.log({ list: list.length });
-
   return (
-    <View className="h-full px-[20] pt-[10] pb-[32]">
+    <AutoLockView className="h-full px-[20] pt-[10] pb-[32]">
       <Input
         leftIcon={<RcIconSearch />}
         containerStyle={styles.containerStyle}
@@ -58,7 +56,7 @@ export const SelectChain = ({
           </Text>
         </View>
       )}
-    </View>
+    </AutoLockView>
   );
 };
 

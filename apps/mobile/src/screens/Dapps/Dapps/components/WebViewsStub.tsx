@@ -13,7 +13,6 @@ import {
   OPEN_DAPP_VIEW_INDEXES,
 } from '../../hooks/useDappView';
 import { BottomSheetContent } from './DappWebViewControlWidgets';
-import SheetGeneralWebView from './SheetGeneralWebView';
 import { devLog } from '@/utils/logger';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import {
@@ -47,9 +46,15 @@ import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
+import AutoLockView from '@/components/AutoLockView';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
+  <RefreshAutoLockBottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={0}
+    appearsOnIndex={1}
+  />
 );
 
 /**
@@ -213,8 +218,10 @@ export function OpenedDappWebViewStub() {
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
+      enableDynamicSizing={false}
       onChange={handleBottomSheetChanges}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         style={[
           styles.bsView,
           !!openedDappItems.length && styles.bsViewOpened,
@@ -366,7 +373,7 @@ export function OpenedDappWebViewStub() {
             />
           );
         })}
-      </BottomSheetView>
+      </AutoLockView>
     </OpenedDappBottomSheetModal>
   );
 }
@@ -388,20 +395,3 @@ const getWebViewStubStyles = createGetStyles(colors => {
     },
   };
 });
-
-/**
- * @deprecated
- */
-export function OpenedWebViewsStub() {
-  const { openedNonDappOrigin } = useOpenUrlView();
-
-  if (!openedNonDappOrigin) return null;
-
-  return (
-    <>
-      {[openedNonDappOrigin].map((url, idx) => {
-        return <SheetGeneralWebView key={`${url}-${idx}`} url={url} />;
-      })}
-    </>
-  );
-}
