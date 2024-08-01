@@ -1,6 +1,7 @@
 import { AppBottomSheetModal, AssetAvatar, Tip } from '@/components';
-import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
+import { SwapItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, {
   forwardRef,
   useCallback,
@@ -9,38 +10,36 @@ import React, {
   useRef,
 } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableWithoutFeedback,
   Animated,
   Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
-import { SwapItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { CHAINS_LIST } from '@debank/common';
 
 import RcPending from '@/assets/icons/swap/pending.svg';
 
-import BigNumber from 'bignumber.js';
-import { useTranslation } from 'react-i18next';
-import { createGetStyles } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
-import { useThemeColors } from '@/hooks/theme';
-import { Skeleton } from '@rneui/themed';
-import { ellipsis } from '@/utils/address';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
-import { formatAmount, formatUsdValue } from '@/utils/number';
-import { openExternalUrl } from '@/core/utils/linking';
-import { sinceTime } from '@/utils/time';
 import {
   RcIconSwapHistoryEmpty,
   RcIconSwapRightArrow,
 } from '@/assets/icons/swap';
 import { ModalLayouts } from '@/constant/layout';
+import { openExternalUrl } from '@/core/utils/linking';
+import { useThemeColors } from '@/hooks/theme';
+import { ellipsis } from '@/utils/address';
 import { findChain } from '@/utils/chain';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { sinceTime } from '@/utils/time';
+import { getTokenSymbol } from '@/utils/token';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import { Skeleton } from '@rneui/themed';
+import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 
 const getStyles = createGetStyles(colors => ({
   contentContainerStyle: {
@@ -60,6 +59,7 @@ const getStyles = createGetStyles(colors => ({
     height: 210,
     padding: 0,
     borderRadius: 6,
+    marginBottom: 12,
   },
   emptyView: {
     flex: 1,
@@ -451,8 +451,21 @@ const HistoryList = () => {
             {t('page.swap.no-transaction-records')}
           </Text>
         </View>
+      ) : loading ? (
+        <>
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Skeleton style={styles.skeletonBlock} key={idx} />
+          ))}
+        </>
       ) : null,
-    [loading, txList, styles.emptyView, styles.emptyText, t],
+    [
+      loading,
+      txList,
+      styles.emptyView,
+      styles.emptyText,
+      styles.skeletonBlock,
+      t,
+    ],
   );
 
   return (

@@ -17,6 +17,7 @@ import {
   QuotePreExecResultInfo,
   QuoteProvider,
   isSwapWrapToken,
+  useRabbyFeeVisible,
 } from '../hooks';
 
 import { useTranslation } from 'react-i18next';
@@ -317,6 +318,8 @@ export const DexQuoteItem = (
     [isSdkDataPass, quote, preExecResult, inSufficient],
   );
 
+  const [, setIsShowRabbyFeePopup] = useRabbyFeeVisible();
+
   const tooltipVisible = useMemo(() => {
     if (onlyShow) {
       return false;
@@ -511,7 +514,7 @@ export const DexQuoteItem = (
 
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
             {disabled ? (
-              <Text>Todo</Text>
+              <Text>{bestQuotePercent}</Text>
             ) : (
               <>
                 <Text style={styles.receivedTokenUsd}>
@@ -521,13 +524,27 @@ export const DexQuoteItem = (
                         usd: receivedTokenUsd,
                       })}
                 </Text>
-                <TouchableOpacity hitSlop={10}>
-                  <RcIconInfoCC
-                    width={14}
-                    height={14}
-                    color={colors['neutral-foot']}
-                  />
-                </TouchableOpacity>
+                {isWrapToken ? (
+                  <Tip content={t('page.swap.no-fees-for-wrap')}>
+                    <RcIconInfoCC
+                      width={14}
+                      height={14}
+                      color={colors['neutral-foot']}
+                    />
+                  </Tip>
+                ) : (
+                  <TouchableOpacity
+                    hitSlop={10}
+                    onPress={() => {
+                      setIsShowRabbyFeePopup(true);
+                    }}>
+                    <RcIconInfoCC
+                      width={14}
+                      height={14}
+                      color={colors['neutral-foot']}
+                    />
+                  </TouchableOpacity>
+                )}
               </>
             )}
           </View>

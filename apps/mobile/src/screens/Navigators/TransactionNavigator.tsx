@@ -123,7 +123,6 @@ export default function TransactionNavigator() {
         name={RootNames.Bridge}
         component={Bridge}
         options={{
-          ...screenOptions,
           title: 'Bridge',
           ...headerPresets.withBgCard2,
         }}

@@ -18,7 +18,7 @@ import { QuoteProvider, useQuoteMethods } from './quote';
 import { stats } from '@/utils/stats';
 import { formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
-import { useRequest } from 'ahooks';
+import { useDebounceFn, useRequest } from 'ahooks';
 
 const { isSameAddress } = addressUtils;
 
@@ -218,6 +218,7 @@ export const useTokenPair = (userAddress: string) => {
       return;
     }
     setPayAmount(v);
+    setQuoteLoading(true);
   }, []);
 
   const handleBalance = useCallback(() => {
@@ -309,7 +310,10 @@ export const useTokenPair = (userAddress: string) => {
 
   const fetchIdRef = useRef(0);
   const { getAllQuotes, validSlippage } = useQuoteMethods();
-  const { loading: quoteLoading, error: quotesError } = useRequest(
+
+  const [quoteLoading, setQuoteLoading] = useState(false);
+
+  const { error: quotesError, runAsync: _runGetAllQuotes } = useRequest(
     async () => {
       fetchIdRef.current += 1;
       const currentFetchId = fetchIdRef.current;
@@ -341,22 +345,45 @@ export const useTokenPair = (userAddress: string) => {
       }
     },
     {
-      refreshDeps: [
-        setActiveProvider,
-        inSufficient,
-        setQuotesList,
-        setQuote,
-        refreshId,
-        userAddress,
-        payToken?.id,
-        receiveToken?.id,
-        chain,
-        payAmount,
-        feeRate,
-      ],
-      debounceWait: 500,
+      manual: true,
+      onFinally() {
+        setQuoteLoading(false);
+      },
     },
   );
+
+  const { run: runGetAllQuotes } = useDebounceFn(_runGetAllQuotes, {
+    wait: 300,
+  });
+  useEffect(() => {
+    if (
+      userAddress &&
+      payToken?.id &&
+      receiveToken?.id &&
+      receiveToken &&
+      chain &&
+      Number(payAmount) > 0 &&
+      feeRate &&
+      !inSufficient
+    ) {
+      setQuoteLoading(true);
+    }
+    runGetAllQuotes();
+  }, [
+    setActiveProvider,
+    inSufficient,
+    setQuotesList,
+    setQuote,
+    refreshId,
+    userAddress,
+    payToken?.id,
+    receiveToken?.id,
+    chain,
+    payAmount,
+    feeRate,
+    runGetAllQuotes,
+    receiveToken,
+  ]);
 
   useEffect(() => {
     if (

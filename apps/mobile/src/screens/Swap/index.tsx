@@ -1,40 +1,47 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createGetStyles } from '@/utils/styles';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import { useNavigationState } from '@react-navigation/native';
-import { SwapHeader } from './components/Header';
-import { useThemeStyles } from '@/hooks/theme';
-import { useTranslation } from 'react-i18next';
-import { ChainInfo } from '../Send/components/ChainInfo';
 import { RcIconSwapArrow } from '@/assets/icons/swap';
-import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
-import { useCurrentAccount } from '@/hooks/account';
-import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS, CHAINS_ENUM } from '@debank/common';
-import TokenSelect from './components/TokenSelect';
-import { getTokenSymbol } from '@/utils/token';
-import { formatAmount, formatUsdValue } from '@/utils/number';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
-import { Button } from '@/components';
-import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { TwpStepApproveModal } from './components/TwoStepApproveModal';
-import BigNumber from 'bignumber.js';
-import { refreshIdAtom, useQuoteVisible } from './hooks/atom';
-import { ReceiveDetails } from './components/ReceiveDetail';
-import { QuoteList } from './components/Quotes';
-import { Slippage } from './components/Slippage';
-import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
-import { dexSwap } from './hooks/swap';
-import { colord } from 'colord';
-import { RootNames } from '@/constant/layout';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import useMount from 'react-use/lib/useMount';
+import { AppSwitch, Button, Tip } from '@/components';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RabbyFeePopup } from '@/components/RabbyFeePopup';
+import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
+import TouchableItem from '@/components/Touchable/TouchableItem';
+import { RootNames } from '@/constant/layout';
+import { DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
+import { swapService } from '@/core/services';
+import { useCurrentAccount } from '@/hooks/account';
+import { useThemeStyles } from '@/hooks/theme';
+import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
+import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
+import { useNavigationState } from '@react-navigation/native';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import useMount from 'react-use/lib/useMount';
+import { BestQuoteLoading } from '../Bridge/components/loading';
+import { ChainInfo } from '../Send/components/ChainInfo';
+import { SwapHeader } from './components/Header';
+import { QuoteList } from './components/Quotes';
+import { ReceiveDetails } from './components/ReceiveDetail';
+import { Slippage } from './components/Slippage';
+import TokenSelect from './components/TokenSelect';
+import { TwpStepApproveModal } from './components/TwoStepApproveModal';
+import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
+import {
+  refreshIdAtom,
+  useQuoteVisible,
+  useRabbyFeeVisible,
+} from './hooks/atom';
+import { dexSwap } from './hooks/swap';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -94,6 +101,27 @@ const Swap = () => {
   } = useTokenPair(currentAccount!.address);
 
   const refresh = useSetAtom(refreshIdAtom);
+  const [isShowRabbyFeePopup, setIsShowRabbyFeePopup] = useRabbyFeeVisible();
+
+  const showMEVGuardedSwitch = useMemo(
+    () => chain === CHAINS_ENUM.ETH,
+    [chain],
+  );
+
+  const switchPreferMEV = useMemoizedFn((bool: boolean) => {
+    swapService.setSwapPreferMEVGuarded(bool);
+    mutatePreferMEVGuarded(bool);
+  });
+
+  const { data: originPreferMEVGuarded, mutate: mutatePreferMEVGuarded } =
+    useRequest(async () => {
+      return swapService.getSwapPreferMEVGuarded();
+    });
+
+  const preferMEVGuarded = useMemo(
+    () => (chain === CHAINS_ENUM.ETH ? originPreferMEVGuarded : false),
+    [chain, originPreferMEVGuarded],
+  );
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Swap)?.params,
@@ -148,12 +176,12 @@ const Swap = () => {
   ]);
 
   const { bottom } = useSafeAreaInsets();
-  const gotoSwap = useCallback(async () => {
+  const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
         dexSwap(
           {
-            swapPreferMEVGuarded: false,
+            swapPreferMEVGuarded: !!preferMEVGuarded,
             chain,
             quote: activeProvider?.quote,
             needApprove: activeProvider.shouldApproveToken,
@@ -195,19 +223,25 @@ const Swap = () => {
         console.error(error);
       }
     }
-  }, [
-    inSufficient,
-    payToken,
-    receiveToken,
-    activeProvider?.quote,
-    activeProvider?.shouldApproveToken,
-    activeProvider?.name,
-    activeProvider?.shouldTwoStepApprove,
-    chain,
-    unlimitedAllowance,
-    payAmount,
-    slippage,
-  ]);
+  });
+
+  const FeeAndMEVGuarded = (
+    <>
+      {showMEVGuardedSwitch && (
+        <View style={styles.flexRow}>
+          <Tip content={t('page.swap.preferMEVTip')}>
+            <Text style={styles.afterLabel}>{t('page.swap.preferMEV')}</Text>
+          </Tip>
+          <Tip content={t('page.swap.preferMEVTip')}>
+            <AppSwitch
+              value={originPreferMEVGuarded}
+              onValueChange={switchPreferMEV}
+            />
+          </Tip>
+        </View>
+      )}
+    </>
+  );
 
   return (
     <NormalScreenContainer>
@@ -317,12 +351,14 @@ const Swap = () => {
                 : ''}
             </Text>
           </View>
-          {/* {quoteLoading && !inSufficient && !activeProvider?.manualClick && (
+          {quoteLoading &&
+          Number(payAmount) > 0 &&
+          !inSufficient &&
+          !activeProvider?.manualClick ? (
             <BestQuoteLoading />
-          )} */}
+          ) : null}
           {Number(payAmount) > 0 &&
           !inSufficient &&
-          activeProvider &&
           (!quoteLoading || (activeProvider && !!activeProvider.manualClick)) &&
           payToken &&
           receiveToken ? (
@@ -332,31 +368,37 @@ const Swap = () => {
                 activeProvider={activeProvider}
                 isWrapToken={isWrapToken}
                 payAmount={payAmount}
-                receiveRawAmount={activeProvider?.actualReceiveAmount}
+                receiveRawAmount={activeProvider?.actualReceiveAmount || 0}
                 payToken={payToken}
                 receiveToken={receiveToken}
                 quoteWarning={activeProvider?.quoteWarning}
                 chain={chain}
                 openQuotesList={openQuotesList}
               />
+            </>
+          ) : null}
 
+          {Number(payAmount) > 0 &&
+          (!quoteLoading || !!activeProvider?.manualClick) &&
+          !!activeProvider &&
+          !!activeProvider?.quote?.toTokenAmount &&
+          payToken &&
+          receiveToken ? (
+            <>
               {isWrapToken ? (
-                <View style={styles.afterWrapper}>
-                  <View style={styles.flexRow}>
-                    <Text style={styles.afterLabel}>
-                      {t('page.swap.slippage-tolerance')}
-                    </Text>
-                    <Text style={styles.afterValue}>
-                      {t('page.swap.no-slippage-for-wrap')}
-                    </Text>
+                <>
+                  <View style={styles.afterWrapper}>
+                    <View style={styles.flexRow}>
+                      <Text style={styles.afterLabel}>
+                        {t('page.swap.slippage-tolerance')}
+                      </Text>
+                      <Text style={styles.afterValue}>
+                        {t('page.swap.no-slippage-for-wrap')}
+                      </Text>
+                    </View>
+                    {FeeAndMEVGuarded}
                   </View>
-                  <View style={styles.flexRow}>
-                    <Text style={styles.afterLabel}>
-                      {t('page.swap.rabby-fee')}
-                    </Text>
-                    <Text style={styles.afterValue}>0%</Text>
-                  </View>
-                </View>
+                </>
               ) : (
                 <View style={styles.afterWrapper}>
                   <Slippage
@@ -372,6 +414,7 @@ const Swap = () => {
                         : slippageValidInfo?.suggest_slippage
                     }
                   />
+                  {FeeAndMEVGuarded}
                 </View>
               )}
             </>
@@ -398,7 +441,7 @@ const Swap = () => {
         <Button
           onPress={() => {
             if (!activeProvider || expired || slippageChanged) {
-              setVisible(true);
+              refresh(e => e + 1);
               return;
             }
             if (activeProvider?.shouldTwoStepApprove) {
@@ -445,6 +488,11 @@ const Swap = () => {
           sortIncludeGasFee
         />
       ) : null}
+      <RabbyFeePopup
+        type="swap"
+        visible={isShowRabbyFeePopup}
+        onClose={() => setIsShowRabbyFeePopup(false)}
+      />
     </NormalScreenContainer>
   );
 };

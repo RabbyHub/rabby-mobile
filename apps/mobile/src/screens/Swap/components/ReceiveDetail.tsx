@@ -1,3 +1,5 @@
+import ImgVerified from '@/assets/icons/swap/verified.svg';
+import ImgWarning from '@/assets/icons/swap/warn.svg';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import {
@@ -7,30 +9,26 @@ import {
   useMemo,
   useState,
 } from 'react';
-import ImgVerified from '@/assets/icons/swap/verified.svg';
-import ImgWarning from '@/assets/icons/swap/warn.svg';
-import ImgLock from '@/assets/icons/swap/lock.svg';
 
-import React from 'react';
-import { QuoteProvider, useSetQuoteVisible } from '../hooks';
-import { useTranslation } from 'react-i18next';
-import i18n from '@/utils/i18n';
-import { AssetAvatar, Tip } from '@/components';
-import { Skeleton, SkeletonProps } from '@rneui/themed';
-import { formatAmount, formatUsdValue } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
-import { DEX, DEX_WITH_WRAP } from '@/constant/swap';
+import { RcIconInfoCC } from '@/assets/icons/common';
 import {
-  RcIconSwapGas,
-  RcIconSwapReceiveInfo,
-  RcIconSwitchQuote,
+  RcIconSwapHistoryEmpty,
+  RcIconSwitchQuoteCC,
 } from '@/assets/icons/swap';
+import { Tip } from '@/components';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { DEX_WITH_WRAP } from '@/constant/swap';
+import { useThemeColors } from '@/hooks/theme';
+import i18n from '@/utils/i18n';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { Skeleton, SkeletonProps } from '@rneui/themed';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { QuoteProvider } from '../hooks';
 import { isSwapWrapToken } from '../utils';
-import { RcIconEmptyCC } from '@/assets/icons/gnosis';
 import { DexQuoteItem } from './QuoteItem';
 
 const getQuoteLessWarning = ([receive, diff]: [string, string]) =>
@@ -56,16 +54,6 @@ export const WarningOrChecked = ({
       )}
     </Tip>
   );
-};
-
-const SkeletonChildren = (
-  props: PropsWithChildren<SkeletonProps & { loading?: boolean }>,
-) => {
-  const { loading = true, children, ...other } = props;
-  if (loading) {
-    return <Skeleton {...other} />;
-  }
-  return <>{children}</>;
 };
 
 interface ReceiveDetailsProps {
@@ -139,7 +127,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
         ? new BigNumber(rateBn.toPrecision(1, 0)).toString(10)
         : formatAmount(rateBn.toString(10)),
       sign: cut.eq(0) ? '' : cut.lt(0) ? '-' : '+',
-      diff: cut.abs().toFixed(2) + '%',
+      diff: cut.abs().toFixed(2),
       showLoss: cut.lte(-5),
       lossUsd,
     };
@@ -162,49 +150,133 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
 
   if (!activeProvider) {
     return (
-      <TouchableOpacity onPress={openQuotesList}>
-        <View>
-          <RcIconEmptyCC width={16} height={16} />
-          <Text>{t('page.swap.No-available-quote')}</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={[styles.receiveWrapper, styles.receiveWrapperEmpty]}>
+        <TouchableOpacity onPress={openQuotesList}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <RcIconSwapHistoryEmpty width={18} height={18} />
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: 'normal',
+                color: colors['neutral-foot'],
+              }}>
+              {t('page.swap.No-available-quote')}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quoteProvider} onPress={openQuotesList}>
+          <RcIconSwitchQuoteCC
+            color={colors['blue-default']}
+            style={styles.switchImage}
+          />
+        </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <View style={styles.receiveWrapper}>
-      <DexQuoteItem
-        onlyShow
-        quote={activeProvider.quote}
-        name={activeProvider.name}
-        payToken={payToken}
-        receiveToken={receiveToken}
-        payAmount={payAmount}
-        chain={chain}
-        isBestQuote={false}
-        bestQuoteGasUsd={'0'}
-        bestQuoteAmount={'0'}
-        userAddress={''}
-        slippage={''}
-        fee={''}
-        quoteProviderInfo={
-          isWrapTokens
-            ? {
-                name: t('page.swap.wrap-contract'),
-                logo: receiveToken?.logo_url,
-              }
-            : DEX_WITH_WRAP[activeProvider.name]
-        }
-        inSufficient={false}
-        sortIncludeGasFee={true}
-        preExecResult={activeProvider.preExecResult}
-      />
-      {activeProvider.name && receiveToken ? (
-        <TouchableOpacity style={styles.quoteProvider} onPress={openQuotesList}>
-          <RcIconSwitchQuote style={styles.switchImage} />
-        </TouchableOpacity>
-      ) : null}
-    </View>
+    <>
+      <View
+        style={[
+          styles.receiveWrapper,
+          isBestQuote && styles.receiveWrapperBest,
+        ]}>
+        <DexQuoteItem
+          onlyShow
+          quote={activeProvider.quote}
+          name={activeProvider.name}
+          payToken={payToken}
+          receiveToken={receiveToken}
+          payAmount={payAmount}
+          chain={chain}
+          isBestQuote={false}
+          bestQuoteGasUsd={'0'}
+          bestQuoteAmount={'0'}
+          userAddress={''}
+          slippage={''}
+          fee={''}
+          quoteProviderInfo={
+            isWrapTokens
+              ? {
+                  name: t('page.swap.wrap-contract'),
+                  logo: receiveToken?.logo_url,
+                }
+              : DEX_WITH_WRAP[activeProvider.name]
+          }
+          inSufficient={false}
+          sortIncludeGasFee={true}
+          preExecResult={activeProvider.preExecResult}
+        />
+        {activeProvider.name && receiveToken ? (
+          isBestQuote ? (
+            <TouchableOpacity
+              style={[styles.quoteProvider, styles.quoteProviderBest]}
+              onPress={openQuotesList}>
+              <Text style={styles.quoteProviderBestText}>Best</Text>
+              <RcIconSwitchQuoteCC
+                color={colors['green-default']}
+                style={styles.switchImage}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.quoteProvider}
+              onPress={openQuotesList}>
+              <RcIconSwitchQuoteCC
+                color={colors['blue-default']}
+                style={styles.switchImage}
+              />
+            </TouchableOpacity>
+          )
+        ) : null}
+      </View>
+      {showLoss && (
+        <View>
+          <View style={styles.afterWrapper}>
+            <View style={styles.flexRow}>
+              <Text style={styles.afterLabel}>
+                {t('page.swap.price-impact')}
+              </Text>
+              <View style={styles.afterValueContainer}>
+                <Text style={[styles.afterValue, styles.red]}>
+                  {sign}
+                  {diff}%
+                </Text>
+                <Tip
+                  content={
+                    <View style={styles.impactTooltip}>
+                      <Text style={styles.impactTooltipText}>
+                        {t('page.swap.est-payment')} {payAmount}
+                        {payTokenSymbol} ≈ {payUsd}
+                      </Text>
+                      <Text style={styles.impactTooltipText}>
+                        {t('page.swap.est-receiving')} {receiveNum}
+                        {receiveTokenSymbol} ≈ {receiveUsd}
+                      </Text>
+                      <Text style={styles.impactTooltipText}>
+                        {t('page.swap.est-difference')} -{lossUsd}
+                      </Text>
+                    </View>
+                  }>
+                  <RcIconInfoCC
+                    color={colors['neutral-foot']}
+                    width={14}
+                    height={14}
+                  />
+                </Tip>
+              </View>
+            </View>
+          </View>
+          <View style={styles.warningTipContainer}>
+            <Text style={styles.warningTip}>
+              {t('page.swap.loss-tips', {
+                usd: lossUsd,
+              })}
+            </Text>
+          </View>
+        </View>
+      )}
+    </>
   );
 };
 
@@ -212,12 +284,24 @@ const getStyles = createGetStyles(colors => ({
   receiveWrapper: {
     position: 'relative',
     marginTop: 24,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors['neutral-line'],
+    borderWidth: 1,
+    borderColor: colors['blue-default'],
     borderRadius: 4,
     // padding: 12,
     color: colors['neutral-title-1'],
     fontSize: 13,
+  },
+  receiveWrapperBest: {
+    borderColor: colors['green-default'],
+  },
+  receiveWrapperEmpty: {
+    borderColor: colors['neutral-line'],
+    padding: 0,
+    paddingVertical: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
   },
   column: {
     paddingBottom: 12,
@@ -297,19 +381,30 @@ const getStyles = createGetStyles(colors => ({
   },
   quoteProvider: {
     position: 'absolute',
-    top: -12,
+    top: -11,
     left: 12,
-    height: 20,
-    padding: 4,
     display: 'flex',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 13,
-    color: colors['neutral-body'],
-    backgroundColor: colors['blue-light-2'],
+    gap: 2,
+
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+
+    backgroundColor: colors['blue-light-1'],
     borderRadius: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors['blue-default'],
+  },
+  quoteProviderBest: {
+    backgroundColor: colors['green-light'],
+    borderColor: colors['green-default'],
+  },
+  quoteProviderBestText: {
+    fontSize: 13,
+    lineHeight: 16,
+    color: colors['green-default'],
   },
   switchImage: {
     width: 12,
@@ -336,5 +431,48 @@ const getStyles = createGetStyles(colors => ({
   },
   green: {
     color: colors['green-default'],
+  },
+  afterWrapper: {
+    marginTop: 12,
+    gap: 12,
+    paddingHorizontal: 12,
+  },
+  afterLabel: {
+    fontSize: 13,
+    color: colors['neutral-body'],
+  },
+  afterValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  afterValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
+  impactTooltip: {
+    flexDirection: 'column',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  impactTooltipText: {
+    fontSize: 12,
+    lineHeight: 14,
+    color: colors['neutral-title-2'],
+  },
+  warningTipContainer: {
+    marginTop: 8,
+    marginHorizontal: 12,
+    borderRadius: 4,
+    backgroundColor: colors['red-light'],
+    padding: 10,
+  },
+  warningTip: {
+    color: colors['red-default'],
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 17,
   },
 }));

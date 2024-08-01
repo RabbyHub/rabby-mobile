@@ -155,7 +155,11 @@ export const Slippage = (props: SlippageProps) => {
               />
             </SlippageItem>
           </View>
-          {!!tips && <Text style={styles.warningTip}>{tips}</Text>}
+          {!!tips && (
+            <View style={styles.warningTipContainer}>
+              <Text style={styles.warningTip}>{tips}</Text>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -183,7 +187,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title-1'],
   },
   warning: {
-    color: colors['orange-default'],
+    color: colors['red-default'],
   },
   selectContainer: {
     marginTop: 8,
@@ -203,14 +207,17 @@ const getStyles = createGetStyles(colors => ({
     maxHeight: 0,
     overflow: 'hidden',
   },
-  warningTip: {
-    padding: 10,
-    color: colors['orange-default'],
-    fontWeight: '400',
-    fontSize: 12,
-    borderRadius: 4,
-    backgroundColor: colors['orange-light'], // 'rgba(255, 176, 32, 0.1)',
+  warningTipContainer: {
     marginTop: 8,
+    borderRadius: 4,
+    backgroundColor: colors['red-light'],
+    padding: 10,
+  },
+  warningTip: {
+    color: colors['red-default'],
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 17,
   },
   item: {
     flexDirection: 'row',

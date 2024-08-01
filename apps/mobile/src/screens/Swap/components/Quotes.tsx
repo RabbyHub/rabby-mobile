@@ -207,7 +207,6 @@ export const Quotes = ({
               isBestQuote={idx === 0}
               bestQuoteAmount={`${bestQuoteAmount}`}
               bestQuoteGasUsd={bestQuoteGasUsd}
-              active={activeName === name}
               isLoading={params.loading}
               quoteProviderInfo={
                 DEX_WITH_WRAP[name as keyof typeof DEX_WITH_WRAP]
