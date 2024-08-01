@@ -11,9 +11,8 @@ import { nanoid } from 'nanoid';
 import { Object as ObjectType } from 'ts-toolbelt';
 import { findMaxGasTx } from '../utils/tx';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
-import { sortBy, minBy, maxBy, uniqBy } from 'lodash';
+import { sortBy, minBy, maxBy, uniqBy, result } from 'lodash';
 import { openapi, testOpenapi } from '../request';
-import { CHAINS } from '@/constant/chains';
 import { EVENTS, eventBus } from '@/utils/events';
 import {
   ActionRequireData,
@@ -21,6 +20,9 @@ import {
 } from '@/components/Approval/components/Actions/utils';
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
+import { findChain } from '@/utils/chain';
+import { customTestnetService } from './customTestnetService';
+import { id } from 'ethers/lib/utils';
 
 export interface TransactionHistoryItem {
   address: string;
@@ -149,6 +151,13 @@ export class TransactionHistoryService {
         return;
       }
       if (nonce != null && tx.nonce !== nonce) {
+        return;
+      }
+      if (
+        !findChain({
+          id: tx.chainId,
+        })
+      ) {
         return;
       }
       const group = groups.find(
@@ -356,9 +365,9 @@ export class TransactionHistoryService {
     //     [key]: target,
     //   },
     // });
-    const chain = Object.values(CHAINS).find(
-      item => item.id === Number(target.chainId),
-    );
+    const chain = findChain({
+      id: Number(target.chainId),
+    });
     if (chain) {
       // TODO $ctx
       stats.report('completeTransaction', {
@@ -393,11 +402,13 @@ export class TransactionHistoryService {
       chainId,
       nonce,
     })?.[0];
-    if (!target) {
+    if (!target || target.isCompleted) {
       return;
     }
 
-    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    const chain = findChain({
+      id: chainId,
+    })!;
     const { txs } = target;
 
     const broadcastedTxs = txs.filter(
@@ -406,13 +417,20 @@ export class TransactionHistoryService {
 
     try {
       const results = await Promise.all(
-        broadcastedTxs.map(tx =>
-          openapi.getTx(
-            chain.serverId,
-            tx.hash!,
-            Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0),
-          ),
-        ),
+        broadcastedTxs.map(tx => {
+          if (chain.isTestnet) {
+            return customTestnetService.getTx({
+              chainId: chain.id,
+              hash: tx.hash!,
+            });
+          } else {
+            return openapi.getTx(
+              chain.serverId,
+              tx.hash!,
+              Number(tx.rawTx.gasPrice || tx.rawTx.maxFeePerGas || 0),
+            );
+          }
+        }),
       );
       const completed = results.find(
         result => result.code === 0 && result.status !== 0,
@@ -425,7 +443,7 @@ export class TransactionHistoryService {
         ) {
           // maximum retry 15 times;
           setTimeout(() => {
-            this.reloadTx({ address, chainId, nonce });
+            this.reloadTx({ address, chainId, nonce }, false);
           }, Number(duration) + 1000);
         }
         return;
@@ -452,7 +470,7 @@ export class TransactionHistoryService {
       ) {
         // maximum retry 15 times;
         setTimeout(() => {
-          this.reloadTx({ address, chainId, nonce });
+          this.reloadTx({ address, chainId, nonce }, false);
         }, Number(duration) + 1000);
       }
     }
@@ -504,7 +522,9 @@ export class TransactionHistoryService {
     const key = `${chainId}-${nonce}`;
     const from = address.toLowerCase();
     const target = this.store.transactions[from][key];
-    const chain = Object.values(CHAINS).find(c => c.id === chainId)!;
+    const chain = findChain({
+      id: chainId,
+    })!;
     console.log('reloadTxRequest', target);
     if (!target) {
       return;

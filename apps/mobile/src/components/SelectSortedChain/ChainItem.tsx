@@ -13,6 +13,7 @@ import {
 import { RcWalletCC } from '@/assets/icons/common';
 import { formatUsdValue } from '@/utils/number';
 import { toast } from '../Toast';
+import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
 
 export default function ChainItem({
   data,
@@ -58,12 +59,16 @@ export default function ChainItem({
         }
         onPress?.(data?.enum);
       }}>
-      <Image
-        source={{
-          uri: data.logo,
-        }}
-        style={styles.logo}
-      />
+      {data.isTestnet ? (
+        <TestnetChainLogo name={data.name} style={styles.logo} size={32} />
+      ) : (
+        <Image
+          source={{
+            uri: data.logo,
+          }}
+          style={styles.logo}
+        />
+      )}
       <View style={styles.contentContainer}>
         <View style={styles.leftBasic}>
           <Text style={styles.nameText}>{data?.name}</Text>

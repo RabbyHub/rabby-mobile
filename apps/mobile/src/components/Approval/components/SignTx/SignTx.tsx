@@ -10,7 +10,6 @@ import {
   convertLegacyTo1559,
 } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import {
   KEYRING_CATEGORY_MAP,
   KEYRING_CLASS,
@@ -82,6 +81,8 @@ import {
 } from '../TxComponents/GasSelector/GasSelectorHeader';
 import { SignAdvancedSettings } from '../SignAdvancedSettings';
 import { BroadcastMode } from '../BroadcastMode';
+import { useFindChain } from '@/hooks/useFindChain';
+import { SignTestnetTx } from '../SignTestnetTx';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -122,7 +123,7 @@ interface BlockInfo {
   uncles: string[];
 }
 
-export const SignTx = ({ params, origin }: SignTxProps) => {
+const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   const { isGnosis, account } = params;
   const [isReady, setIsReady] = useState(false);
   const [nonceChanged, setNonceChanged] = useState(false);
@@ -199,9 +200,9 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
   const [chainId, setChainId] = useState<number>(
     params.data[0].chainId && Number(params.data[0].chainId),
   );
-  const [chain, setChain] = useState(
-    Object.values(CHAINS).find(item => item.id === chainId),
-  );
+  const chain = useFindChain({
+    id: chainId,
+  });
   const [inited, setInited] = useState(false);
   const [isHardware, setIsHardware] = useState(false);
   const [manuallyChangeGasLimit, setManuallyChangeGasLimit] = useState(false);
@@ -610,6 +611,7 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
       await explainTx(currentAccount.address);
       setIsReady(true);
     } catch (e: any) {
+      console.error(e);
       toast.show(e.message || JSON.stringify(e));
     }
   };
@@ -1469,5 +1471,19 @@ export const SignTx = ({ params, origin }: SignTxProps) => {
         />
       )}
     </BottomSheetView>
+  );
+};
+
+export const SignTx = (props: SignTxProps) => {
+  const { params } = props;
+  const chainId = params?.data?.[0]?.chainId;
+  const chain = useFindChain({
+    id: chainId,
+  });
+
+  return chain?.isTestnet ? (
+    <SignTestnetTx {...props} />
+  ) : (
+    <SignMainnetTx {...props} />
   );
 };

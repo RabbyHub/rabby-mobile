@@ -12,7 +12,7 @@ import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
 import { preferenceService } from '@/core/services';
-import { findChainByEnum, findChainByServerID } from '@/utils/chain';
+import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
@@ -25,7 +25,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { useContactAccounts } from '@/hooks/contact';
 import { UIContactBookItem } from '@/core/apis/contact';
 import { ChainGas } from '@/core/services/preference';
-import { apiContact, apiProvider } from '@/core/apis';
+import { apiContact, apiCustomTestnet, apiProvider } from '@/core/apis';
 import {
   formatSpeicalAmount,
   formatTokenAmount,
@@ -46,6 +46,8 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder } from '@/core/apis/sendRequest';
 import { toast } from '@/components/Toast';
 import { zeroAddress } from '@ethereumjs/util';
+import { customTestnetTokenToTokenItem } from '@/utils/token';
+import { useFindChain } from '@/hooks/useFindChain';
 
 function makeDefaultToken(): TokenItem {
   return {
@@ -81,6 +83,10 @@ export function useSendTokenScreenChainToken() {
   const [chainToken, _setChainToken] = useAtom(sendTokenScreenChainTokenAtom);
   const { chainEnum, currentToken } = chainToken;
 
+  const chainItem =
+    useFindChain({
+      enum: chainEnum,
+    }) || null;
   /** @deprecated weried behavior */
   const currentTokenRef = useRef(currentToken);
   const putChainToken = useCallback(
@@ -102,27 +108,40 @@ export function useSendTokenScreenChainToken() {
   );
   // devLog('currentToken.chain', currentToken.chain);
 
-  const { chainItem, isNativeToken } = useMemo(() => {
-    const item = findChainByEnum(chainEnum);
+  const { isNativeToken } = useMemo(() => {
     const isNativeToken =
-      !!item && currentToken?.id === item.nativeTokenAddress;
+      !!chainItem && currentToken?.id === chainItem.nativeTokenAddress;
 
     return {
-      chainItem: item,
       isNativeToken,
     };
-  }, [chainEnum, currentToken?.id]);
+  }, [chainItem, currentToken?.id]);
   const { putScreenState } = useSendTokenScreenState();
 
   const loadCurrentToken = useCallback(
     async (id: string, chainId: string, address: string) => {
-      const t = await openapi.getToken(address, chainId, id);
-      if (t) {
-        putChainToken({ currentToken: t });
+      const chain = findChain({
+        serverId: chainId,
+      });
+      let result: TokenItem | null = null;
+      if (chain?.isTestnet) {
+        const res = await apiCustomTestnet.getCustomTestnetToken({
+          address,
+          chainId: chain.id,
+          tokenId: id,
+        });
+        if (res) {
+          result = customTestnetTokenToTokenItem(res);
+        }
+      } else {
+        result = await openapi.getToken(address, chainId, id);
+      }
+      if (result) {
+        putChainToken({ currentToken: result });
       }
       putScreenState({ isLoading: false });
 
-      return t;
+      return result;
     },
     [putChainToken, putScreenState],
   );

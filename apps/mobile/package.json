@@ -163,6 +163,7 @@
     "semver": "^7.5.4",
     "styled-components": "^6.1.1",
     "use-count-up": "^3.0.1",
+    "viem": "^2.17.4",
     "web3": "^4.3.0",
     "web3-eth-abi": "1.7.0",
     "web3-utils": "1.7.0",

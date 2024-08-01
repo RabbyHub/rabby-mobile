@@ -16,7 +16,6 @@ import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import i18n from '@/utils/i18n';
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import {
   ContextActionData,
@@ -39,6 +38,7 @@ import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { ChainSelector } from '@/components/ChainSelector';
 import { Spin } from '@/components/Spin';
 import useCommonStyle from '../../hooks/useCommonStyle';
+import { findChain } from '@/utils/chain';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -465,9 +465,10 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
         );
         let targetChain: Chain | undefined;
         for (let i = 0; i < recommendChains.length; i++) {
-          targetChain = Object.values(CHAINS).find(
-            c => c.serverId === recommendChains[i].id,
-          );
+          targetChain =
+            findChain({
+              serverId: recommendChains[i].id,
+            }) || undefined;
           if (targetChain) break;
         }
         defaultChain = targetChain ? targetChain.enum : CHAINS_ENUM.ETH;
@@ -499,10 +500,13 @@ export const Connect = ({ params: { icon, origin } }: ConnectProps) => {
     setEngineResults(results);
     if (site) {
       setIsLoading(false);
-      if (!isShowTestnet && CHAINS[site.chainId]?.isTestnet) {
+      const chain = findChain({
+        enum: site.chainId,
+      });
+      if (!isShowTestnet && chain?.isTestnet) {
         return;
       }
-      if (Object.values(CHAINS).find(c => c.enum === site.chainId)) {
+      if (chain) {
         setDefaultChain(site.chainId);
       }
 

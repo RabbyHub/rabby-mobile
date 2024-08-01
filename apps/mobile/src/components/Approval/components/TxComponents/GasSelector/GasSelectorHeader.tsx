@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { CHAINS } from '@/constant/chains';
 import { useApprovalSecurityEngine } from '../../../hooks/useApprovalSecurityEngine';
 import {
   CAN_ESTIMATE_L1_FEE_CHAINS,
@@ -44,6 +43,9 @@ import { openapi } from '@/core/request';
 import { RcIconUnknown } from '@/screens/Approvals/icons';
 import { Divide } from '../../Actions/components/Divide';
 import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
+import { useFindChain } from '@/hooks/useFindChain';
+import { isTestnet } from '@/utils/chain';
+import { useMemoizedFn } from 'ahooks';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -175,7 +177,9 @@ export const GasSelectorHeader = ({
       message: null,
     },
   });
-  const chain = Object.values(CHAINS).find(item => item.id === chainId)!;
+  const chain = useFindChain({
+    id: chainId,
+  })!;
   const hasCustomPriorityFee = useRef(false);
   const [customGasEstimated, setCustomGasEstimated] = useState<number>(0);
 
@@ -185,16 +189,17 @@ export const GasSelectorHeader = ({
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
 
-  const loadCustomGasData = React.useCallback(
-    async (custom?: number): Promise<GasLevel> => {
+  const loadCustomGasData = useMemoizedFn(
+    async (custom?: number): Promise<GasLevel | null> => {
+      if (chain?.isTestnet) {
+        return null;
+      }
       const list = await openapi.gasMarket(
         chain.serverId,
         custom && custom > 0 ? custom : undefined,
       );
       return list.find(item => item.level === 'custom')!;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
   );
 
   const engineResultMap = useMemo(() => {
@@ -440,6 +445,9 @@ export const GasSelectorHeader = ({
       if (isReady || !isFirstTimeLoad) {
         if (customGas === undefined) return;
         loadCustomGasData(Number(customGas) * 1e9).then(data => {
+          if (!data) {
+            return;
+          }
           if (data) setCustomGasEstimated(data.estimated_seconds);
           setSelectedGas(gas => ({
             ...gas,

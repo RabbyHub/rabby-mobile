@@ -46,7 +46,8 @@ const getStyle = (colors: AppColorsVariants) =>
     },
     emptyListText: {
       fontSize: 15,
-      color: colors['neutral-title-1'],
+      lineHeight: 18,
+      color: colors['neutral-body'],
       fontWeight: '600',
     },
   });

@@ -1,49 +1,47 @@
-import React, {
-  useMemo,
-  memo,
-  useCallback,
-  useState,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  Image,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
   ViewStyle,
-  Text,
-  Image,
-  TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab-view';
-import { useTranslation } from 'react-i18next';
-import { toast } from '@/components/Toast';
 
-import { AbstractPortfolioToken } from '../types';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { RcArrowRight2CC } from '@/assets/icons/common';
 import { AssetAvatar } from '@/components/AssetAvatar';
-import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
-import {
-  BottomSheetFlatList,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { PositionLoader } from './Skeleton';
 import { EmptyHolder } from '@/components/EmptyHolder';
+import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
+import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
-import { RefreshControl } from 'react-native-gesture-handler';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 import { useSheetModals } from '@/hooks/useSheetModal';
 import { SMALL_TOKEN_ID } from '@/utils/token';
-import { BottomSheetModalTokenDetail } from '@/components/TokenDetailPopup/BottomSheetModalTokenDetail';
 import { makeDebugBorder } from '@/utils/styles';
-import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
 import AutoLockView from '@/components/AutoLockView';
+import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useSetState } from 'ahooks';
+import { RefreshControl } from 'react-native-gesture-handler';
+import { useMergeSmallTokens } from '../hooks/useMergeSmallTokens';
+import { AbstractPortfolioToken } from '../types';
+import { AddMainnetCustomTokenPopup } from './AddMainnetCustomTokenPopup';
+import { AddTestnetCustomTokenPopup } from './AddTestnetCustomTokenPopup';
+import { BlockedTokenListPopup } from './BlockedTokenListPopup';
+import { CustomTokenListPopup } from './CustomTokenListPopup';
+import { PositionLoader } from './Skeleton';
+import { TokenWalletFooter } from './TokenWalletFooter';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const ITEM_HEIGHT = 68;
 
 type TokenWalletProps = {
   tokens?: AbstractPortfolioToken[];
+  testnetTokens?: AbstractPortfolioToken[];
+  customizeTokens?: AbstractPortfolioToken[];
+  blockedTokens?: AbstractPortfolioToken[];
   showHistory?: boolean;
   isTokensLoading?: boolean;
   hasTokens?: boolean;
@@ -105,15 +103,27 @@ const TokenRow = memo(
             />
           )}
           <View style={styles.tokenRowTokenInner}>
-            <Text
-              style={StyleSheet.flatten([
-                styles.tokenSymbol,
-                data.id === SMALL_TOKEN_ID && styles.smallTokenSymbol,
-              ])}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {data.symbol}
-            </Text>
+            {data.id === SMALL_TOKEN_ID ? (
+              <View style={styles.tokenRowTokenInnerSmallToken}>
+                <Text
+                  style={StyleSheet.flatten([
+                    styles.tokenSymbol,
+                    styles.smallTokenSymbol,
+                  ])}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {data.symbol}
+                </Text>
+                <RcArrowRight2CC color={colors['neutral-foot']} />
+              </View>
+            ) : (
+              <Text
+                style={StyleSheet.flatten([styles.tokenSymbol])}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {data.symbol}
+              </Text>
+            )}
             {data._priceStr ? (
               <Text style={styles.tokenRowPrice} numberOfLines={1}>
                 {data._priceStr}
@@ -135,6 +145,9 @@ const TokenRow = memo(
 
 export const TokenWallet = ({
   tokens,
+  testnetTokens,
+  customizeTokens,
+  blockedTokens,
   showHistory,
   isTokensLoading,
   hasTokens,
@@ -153,6 +166,15 @@ export const TokenWallet = ({
     }
   }, [isPortfoliosLoading, tokens]);
 
+  const [customState, setCustomState] = useSetState({
+    isTestnet: false,
+    isShowMainnetAddPopup: false,
+    isShowTestnetAddPopup: false,
+    isShowBlockedPopup: false,
+    isShowCustomPopup: false,
+    isShowCustomTestnetPopup: false,
+  });
+
   const {
     sheetModalRefs: { smallTokenModalRef },
     toggleShowSheetModal,
@@ -165,6 +187,7 @@ export const TokenWallet = ({
     openTokenDetailPopup,
     cleanFocusingToken,
     focusingToken,
+    isTestnetToken,
   } = useGeneralTokenDetailSheetModal();
 
   const handleOpenSmallToken = React.useCallback(() => {
@@ -211,11 +234,39 @@ export const TokenWallet = ({
     [],
   );
 
+  const tokenWalletFooterList = useMemo(() => {
+    return [
+      {
+        type: 'custom' as const,
+        label: t('page.dashboard.assets.table.customizeTokens', {
+          count: customizeTokens?.length || 0,
+        }),
+      },
+      {
+        type: 'blocked' as const,
+        label: t('page.dashboard.assets.table.blockedTokens', {
+          count: blockedTokens?.length || 0,
+        }),
+      },
+      {
+        type: 'customTestnet' as const,
+        label: t('page.dashboard.assets.table.testnetTokens', {
+          count: testnetTokens?.length || 0,
+        }),
+      },
+    ];
+  }, [
+    t,
+    customizeTokens?.length,
+    blockedTokens?.length,
+    testnetTokens?.length,
+  ]);
+
   const ListEmptyComponent = useMemo(() => {
     return isTokensLoading ? (
       <PositionLoader space={8} />
     ) : hasTokens ? null : (
-      <EmptyHolder text="No tokens" type="protocol" />
+      <EmptyHolder text="No Tokens" type="protocol" />
     );
   }, [isTokensLoading, hasTokens]);
 
@@ -223,7 +274,20 @@ export const TokenWallet = ({
     <>
       <Tabs.FlatList
         ListHeaderComponent={<View style={{ height: 12 }} />}
-        ListFooterComponent={<View style={{ height: 24 }} />}
+        ListFooterComponent={
+          isTokensLoading || refreshing ? null : (
+            <TokenWalletFooter
+              onPress={type => {
+                setCustomState({
+                  isShowBlockedPopup: type === 'blocked',
+                  isShowCustomPopup: type === 'custom',
+                  isShowCustomTestnetPopup: type === 'customTestnet',
+                });
+              }}
+              list={tokenWalletFooterList}
+            />
+          )
+        }
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         data={mainTokens}
@@ -243,18 +307,18 @@ export const TokenWallet = ({
       <AppBottomSheetModal
         enableContentPanningGesture={false}
         ref={smallTokenModalRef}
-        snapPoints={['70%']}>
+        snapPoints={['80%']}>
         <AutoLockView as="BottomSheetView" style={{ flex: 1, height: '100%' }}>
           <BottomSheetFlatList
             renderItem={renderItem}
             ListHeaderComponent={
-              <View className="flex-row justify-center mt-1 mb-2">
-                <Text className="text-r-neutral-title-1 text-[20px] font-semibold">
+              <BottomSheetHandlableView style={styles.handlableHead}>
+                <Text style={styles.titleText}>
                   {t('page.dashboard.assets.table.lowValueAssets', {
                     count: smallTokens?.length || 0,
                   })}
                 </Text>
-              </View>
+              </BottomSheetHandlableView>
             }
             keyExtractor={keyExtractor}
             data={smallTokens}
@@ -262,20 +326,83 @@ export const TokenWallet = ({
           />
         </AutoLockView>
       </AppBottomSheetModal>
-
       <BottomSheetModalTokenDetail
         ref={tokenDetailModalRef}
         token={focusingToken}
+        isTestnet={isTestnetToken}
         onDismiss={() => {
           cleanFocusingToken({ noNeedCloseModal: true });
         }}
         onTriggerDismissFromInternal={ctx => {
           if (ctx?.reason === 'redirect-to') {
             toggleShowSheetModal('smallTokenModalRef', false);
+            setCustomState({
+              isShowCustomPopup: false,
+              isShowBlockedPopup: false,
+              isShowCustomTestnetPopup: false,
+            });
           }
           // toggleShowSheetModal('tokenDetailModalRef', false);
           cleanFocusingToken();
         }}
+      />
+      <CustomTokenListPopup
+        tokens={customizeTokens}
+        visible={customState.isShowCustomPopup}
+        isTestnet={false}
+        onTokenPress={handleOpenTokenDetail}
+        onClose={() => {
+          setCustomState({
+            isShowCustomPopup: false,
+          });
+        }}
+        onAddTokenPress={() => {
+          setCustomState({
+            isShowMainnetAddPopup: true,
+          });
+        }}
+      />
+      <CustomTokenListPopup
+        tokens={testnetTokens}
+        visible={customState.isShowCustomTestnetPopup}
+        isTestnet={true}
+        onTokenPress={handleOpenTokenDetail}
+        onClose={() => {
+          setCustomState({
+            isShowCustomTestnetPopup: false,
+          });
+        }}
+        onAddTokenPress={() => {
+          setCustomState({
+            isShowTestnetAddPopup: true,
+          });
+        }}
+      />
+      <AddMainnetCustomTokenPopup
+        visible={customState.isShowMainnetAddPopup}
+        onClose={() => {
+          setCustomState({
+            isShowMainnetAddPopup: false,
+          });
+        }}
+      />
+      <AddTestnetCustomTokenPopup
+        visible={customState.isShowTestnetAddPopup}
+        onClose={() => {
+          setCustomState({
+            isShowTestnetAddPopup: false,
+          });
+        }}
+      />
+      <BlockedTokenListPopup
+        tokens={blockedTokens}
+        visible={customState.isShowBlockedPopup}
+        onClose={() => {
+          setCustomState({
+            isShowBlockedPopup: false,
+          });
+        }}
+        onTokenPress={handleOpenTokenDetail}
       />
     </>
   );
@@ -283,6 +410,17 @@ export const TokenWallet = ({
 
 const getStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    handlableHead: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 1,
+      marginBottom: 2,
+    },
+    titleText: {
+      color: colors['neutral-title-1'],
+      fontSize: 20,
+      fontWeight: '600',
+    },
     tokenRowWrap: {
       height: 68,
       width: '100%',
@@ -310,6 +448,11 @@ const getStyle = (colors: AppColorsVariants) =>
     tokenRowTokenInner: {
       flexShrink: 1,
       justifyContent: 'center',
+    },
+    tokenRowTokenInnerSmallToken: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
     },
     tokenRowPrice: {
       marginTop: 2,
@@ -343,6 +486,7 @@ const getStyle = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       fontSize: 13,
       fontWeight: '400',
+      width: undefined,
     },
 
     // modal

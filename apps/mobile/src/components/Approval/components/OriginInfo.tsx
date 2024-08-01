@@ -12,6 +12,7 @@ import { AppColorsVariants } from '@/constant/theme';
 import { useThemeStyles } from '@/hooks/theme';
 import { DappInfo } from '@/core/services/dappService';
 import { Tip } from '@/components';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 
 interface Props {
   chain?: Chain;
@@ -141,12 +142,22 @@ export const OriginInfo: React.FC<Props> = ({
           style={styles.dappIcon}
         />
         <Tip content={<Text>{currentChain.name}</Text>}>
-          {ChainLogo &&
-            (typeof ChainLogo === 'string' ? (
-              <Image style={styles.chainLogo} source={{ uri: ChainLogo }} />
-            ) : (
-              <ChainLogo style={styles.chainLogo} />
-            ))}
+          {currentChain?.isTestnet ? (
+            <TestnetChainLogo
+              name={currentChain.name}
+              style={styles.chainLogo}
+              size={14}
+            />
+          ) : (
+            <>
+              {ChainLogo &&
+                (typeof ChainLogo === 'string' ? (
+                  <Image style={styles.chainLogo} source={{ uri: ChainLogo }} />
+                ) : (
+                  <ChainLogo style={styles.chainLogo} />
+                ))}
+            </>
+          )}
         </Tip>
       </View>
       <Text style={styles.originText}>{displayOrigin}</Text>

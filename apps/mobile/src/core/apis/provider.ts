@@ -9,12 +9,12 @@ import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import providerController from '../controllers/provider';
 import { preferenceService, transactionHistoryService } from '@/core/services';
 import { OP_STACK_ENUMS } from '@/constant/gas';
-import { CHAINS } from '@/constant/chains';
 import { openapi } from '@/core/request';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
 import abiCoder, { AbiCoder } from 'web3-eth-abi';
 import { IExtractFromPromise } from '@/utils/type';
+import { findChain } from '@/utils/chain';
 
 function buildTxParams(txMeta) {
   return {
@@ -83,16 +83,19 @@ export const scrollL1FeeEstimate = async (txParams: any) => {
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await openapi.ethRpc(CHAINS[CHAINS_ENUM.SCRL].serverId, {
-    method: 'eth_call',
-    params: [
-      {
-        from: account?.address,
-        to: '0x5300000000000000000000000000000000000002',
-        data: calldata,
-      },
-    ],
-  });
+  const res = await openapi.ethRpc(
+    findChain({ enum: CHAINS_ENUM.SCRL })!.serverId,
+    {
+      method: 'eth_call',
+      params: [
+        {
+          from: account?.address,
+          to: '0x5300000000000000000000000000000000000002',
+          data: calldata,
+        },
+      ],
+    },
+  );
   return res;
 };
 
@@ -111,7 +114,7 @@ export const opStackL1FeeEstimate = async (
   const calldata = iface.encodeFunctionData('getL1Fee', [
     bytesToHex(serializedTransaction),
   ]);
-  const res = await openapi.ethRpc(CHAINS[chain].serverId, {
+  const res = await openapi.ethRpc(findChain({ enum: chain })!.serverId, {
     method: 'eth_call',
     params: [
       {
@@ -143,7 +146,9 @@ export const getRecommendNonce = async ({
   from: string;
   chainId: number;
 }) => {
-  const chain = Object.values(CHAINS).find(item => item.id === chainId);
+  const chain = findChain({
+    id: chainId,
+  });
   if (!chain) {
     throw new Error(t('background.error.invalidChainId'));
   }
@@ -166,9 +171,10 @@ export const getERC20Allowance = async (
 ): Promise<string> => {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
-  const chainId = Object.values(CHAINS)
-    .find(chain => chain.serverId === chainServerId)
-    ?.id.toString();
+
+  const chainId = findChain({
+    serverId: chainServerId,
+  })?.id.toString();
 
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
 

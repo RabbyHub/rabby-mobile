@@ -16,7 +16,8 @@ RCT_EXPORT_MODULE();
     return @[
       @"userDidTakeScreenshot",
       @"screenCapturedChanged",
-      @"preventScreenshotChanged"
+      @"preventScreenshotChanged",
+      @"androidOnLifeCycleChanged" // robust, not really used
     ];
 }
 

@@ -14,7 +14,11 @@ import {
 import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 
 import { Text } from '@/components';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  RootNames,
+  ScreenLayouts,
+} from '@/constant/layout';
 
 import HomeScreen from '@/screens/Home/Home';
 
@@ -180,7 +184,6 @@ export default function BottomTabNavigator() {
             title: isIOS ? 'Explore' : 'Dapps',
             headerTitleStyle: {
               fontWeight: '500',
-              fontSize: 17,
             },
             headerTitle: 'Dapps',
             headerTransparent: true,

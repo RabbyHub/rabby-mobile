@@ -1,19 +1,10 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Linking, Platform } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
 import {
   RcClearPending,
-  RcCustomRpc,
-  RcFollowUs,
-  RcInfo,
-  RcPrivacyPolicy,
-  RcManageAddress,
-  RcSignatureRecord,
-  RcConnectedDapp,
-  RcThemeMode,
-  RcWhitelist,
   RcEarth,
   RcFeedback,
   RcLockWallet,
@@ -21,53 +12,58 @@ import {
   RcCountdown,
   RcManagePassword,
   RcScreenshot,
+  RcFollowUs,
+  RcInfo,
+  RcPrivacyPolicy,
   RcScreenRecord,
+  RcThemeMode,
+  RcWhitelist,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
-import { type SettingConfBlock, Block } from './Block';
-import {
-  SHOULD_SUPPORT_DARK_MODE,
-  useAppTheme,
-  useThemeColors,
-  useThemeStyles,
-} from '@/hooks/theme';
-import { useSheetWebViewTester } from './sheetModals/hooks';
-import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 import {
   BUILD_CHANNEL,
   isSelfhostRegPkg,
   NEED_DEVSETTINGBLOCKS,
 } from '@/constant/env';
 import { RootNames } from '@/constant/layout';
+import {
+  SHOULD_SUPPORT_DARK_MODE,
+  useAppTheme,
+  useThemeColors,
+  useThemeStyles,
+} from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { type SettingConfBlock, Block } from './Block';
+import { useSheetWebViewTester } from './sheetModals/hooks';
+import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
 import { SwitchToggleType } from '@/components';
-import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
-import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
+import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
+import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
 
-import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from '@/components/Toast';
 import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
-import { openExternalUrl } from '@/core/utils/linking';
 import { clearPendingTxs } from '@/core/apis/transactions';
+import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
-import { useUpgradeInfo } from '@/hooks/version';
-import ThemeSelectorModal, {
-  useThemeSelectorModalVisible,
-} from './sheetModals/ThemeSelector';
-import { createGetStyles } from '@/utils/styles';
 import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
+import { useUpgradeInfo } from '@/hooks/version';
+import { SettingNavigatorParamList } from '@/navigation-type';
+import { createGetStyles } from '@/utils/styles';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigationState,
+} from '@react-navigation/native';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
-import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
 import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
-import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import {
   useIsAllowScreenshot,
   useToggleShowAutoLockCountdown,
@@ -78,12 +74,16 @@ import {
   AutoLockSettingLabel,
   LastUnlockTimeLabel,
 } from './components/LockAbout';
-import { SettingNavigatorParamList } from '@/navigation-type';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
 import useMount from 'react-use/lib/useMount';
 import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
+import { ConfirmBottomSheetModal } from './components/ConfirmBottomSheetModal';
+import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewTester';
+import ThemeSelectorModal, {
+  useThemeSelectorModalVisible,
+} from './sheetModals/ThemeSelector';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -158,6 +158,8 @@ function SettingsBlocks() {
   //   }
   // });
 
+  const navigation = useRabbyAppNavigation();
+
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       // features: {
@@ -229,6 +231,20 @@ function SettingsBlocks() {
               startSelectAutolockTime();
             },
             rightTextNode: <AutoLockSettingLabel />,
+          },
+          {
+            label: 'Add Custom Network',
+            icon: RcWhitelist,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.CustomTestnet,
+                  params: {
+                    source: 'settings',
+                  },
+                }),
+              );
+            },
           },
           {
             label: 'Clear Pending',

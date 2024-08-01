@@ -9,11 +9,11 @@ import {
   TextStyle,
   TouchableNativeFeedback,
   TouchableNativeFeedbackProps,
-  TouchableOpacity,
-  TouchableOpacityProps,
   View,
   ViewStyle,
   TextProps,
+  TouchableOpacityProps,
+  TouchableOpacity,
 } from 'react-native';
 import { colord } from 'colord';
 

@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react-native';
 import { toast } from '@/components/Toast';
-import { CHAINS } from '@/constant/chains';
 import {
   notificationService,
   preferenceService,
@@ -29,6 +28,7 @@ import { adjustV } from '@/utils/gnosis';
 import { getWalletIcon } from '@/utils/walletInfo';
 import { apisSafe } from '@/core/apis/safe';
 import { emitSignComponentAmounted } from '@/core/utils/signEvent';
+import { useFindChain } from '@/hooks/useFindChain';
 
 interface ApprovalParams {
   address: string;
@@ -78,9 +78,9 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
   const { t } = useTranslation();
   const { type } = params;
   const [errorMessage, setErrorMessage] = React.useState('');
-  const chain = Object.values(CHAINS).find(
-    item => item.id === (params.chainId || 1),
-  )!;
+  const chain = useFindChain({
+    id: params.chainId || 1,
+  });
   const [connectStatus, setConnectStatus] = React.useState(
     APPROVAL_STATUS_MAP.SUBMITTING,
   );

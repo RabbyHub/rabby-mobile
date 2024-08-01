@@ -1,4 +1,3 @@
-import { CHAINS } from '@/constant/chains';
 import { transactionHistoryService } from '@/core/services/shared';
 import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
@@ -18,7 +17,7 @@ import {
 } from '@rabby-wallet/keyring-utils';
 import { useCurrentAccount } from '@/hooks/account';
 import { apiKeystone } from '@/core/apis';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import Player from './Player';
 import Reader from './Reader';
 import { adjustV } from '@/utils/gnosis';
@@ -111,9 +110,9 @@ export const KeystoneHardwareWaiting = ({
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const chain = Object.values(CHAINS).find(
-    item => item.id === (params.chainId || 1),
-  )!.enum;
+  const chain = findChain({
+    id: params.chainId || 1,
+  })!.enum;
   const init = useCallback(async () => {
     const approval = await getApproval();
     if (!account) {

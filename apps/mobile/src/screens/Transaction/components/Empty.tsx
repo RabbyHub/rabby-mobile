@@ -28,7 +28,7 @@ export const Empty = () => {
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
-      height: '100%',
+      height: '80%',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',

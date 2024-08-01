@@ -34,6 +34,7 @@ export const useQueryProjects = (
     walletProject,
     customizeTokens,
     blockedTokens,
+    testnetTokens,
   } = useTokens(userAddr, historyTime, visible, 0, undefined, isTestnet);
 
   const {
@@ -77,5 +78,6 @@ export const useQueryProjects = (
     blockedTokens,
     portfolios,
     walletProject,
+    testnetTokens,
   };
 };

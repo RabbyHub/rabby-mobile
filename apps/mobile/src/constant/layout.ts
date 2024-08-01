@@ -41,6 +41,7 @@ export const RootNames = {
   StackSettings: 'StackSettings',
   Settings: 'Settings',
   SetPassword: 'SetPassword',
+  CustomTestnet: 'CustomTestnet',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
@@ -217,10 +218,17 @@ export function getScreenStatusBarConf(options: {
   };
 }
 
+export const DEFAULT_NAVBAR_FONT_SIZE = 18;
+
 export function makeHeadersPresets({
   colors,
 }: { colors?: AppColorsVariants } = {}) {
+  const navigationBarHeaderTitle = {
+    fontWeight: '500' as const,
+    fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+  };
   return {
+    navigationBarHeaderTitle,
     onlyTitle: {
       headerTitleAlign: 'center',
       headerStyle: {
@@ -228,10 +236,7 @@ export function makeHeadersPresets({
       },
       headerTransparent: true,
       headerBackVisible: false,
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 20,
-      },
+      headerTitleStyle: { ...navigationBarHeaderTitle },
     } as NativeStackNavigationOptions,
     withBgCard2: {
       headerStyle: {
@@ -239,8 +244,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '500' as const,
-        fontSize: 20,
+        ...navigationBarHeaderTitle,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
@@ -250,8 +254,7 @@ export function makeHeadersPresets({
       },
       headerTitleStyle: {
         color: colors?.['neutral-title-1'],
-        fontWeight: '500' as const,
-        fontSize: 20,
+        ...navigationBarHeaderTitle,
       },
       headerTintColor: colors?.['neutral-title-1'],
     },
