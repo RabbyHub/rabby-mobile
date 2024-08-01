@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useThemeColors } from '@/hooks/theme';
@@ -38,6 +44,7 @@ import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
 import { bridgeToken } from '../hooks/bridge';
 import { toast } from '@/components/Toast';
+import { RcIconMaxButton } from '@/assets/icons/swap';
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -83,6 +90,11 @@ const getStyles = createGetStyles(colors => ({
   },
   hidden: {
     display: 'none',
+  },
+  maxBtn: {
+    marginLeft: 6,
+    marginTop: 16,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -176,7 +188,8 @@ export const BridgeContent = () => {
 
     handleAmountChange,
     handleBalance,
-    payAmount,
+    inputAmount,
+    debouncePayAmount,
     inSufficient,
 
     openQuotesList,
@@ -229,7 +242,7 @@ export const BridgeContent = () => {
               from_token_id: payToken.id,
               user_addr: currentAccount?.address,
               from_chain_id: payToken.chain,
-              from_token_raw_amount: new BigNumber(payAmount)
+              from_token_raw_amount: new BigNumber(debouncePayAmount)
                 .times(10 ** payToken.decimals)
                 .toFixed(0, 1)
                 .toString(),
@@ -246,14 +259,14 @@ export const BridgeContent = () => {
           toTokenId: receiveToken.id,
           toChainId: receiveToken.chain,
           status: tx ? 'success' : 'fail',
-          payAmount: payAmount,
+          payAmount: debouncePayAmount,
         });
         bridgeToken(
           {
             to: tx.to,
             value: tx.value,
             data: tx.data,
-            payTokenRawAmount: new BigNumber(payAmount)
+            payTokenRawAmount: new BigNumber(debouncePayAmount)
               .times(10 ** payToken.decimals)
               .toFixed(0, 1)
               .toString(),
@@ -267,7 +280,7 @@ export const BridgeContent = () => {
               bridge_id: selectedBridgeQuote.bridge_id,
               from_chain_id: payToken.chain,
               from_token_id: payToken.id,
-              from_token_amount: payAmount,
+              from_token_amount: debouncePayAmount,
               to_chain_id: receiveToken.chain,
               to_token_id: receiveToken.id,
               to_token_amount: selectedBridgeQuote.to_token_amount,
@@ -293,7 +306,7 @@ export const BridgeContent = () => {
           toTokenId: receiveToken.id,
           toChainId: receiveToken.chain,
           status: 'fail',
-          payAmount,
+          payAmount: debouncePayAmount,
         });
         console.error(error);
       } finally {
@@ -360,15 +373,17 @@ export const BridgeContent = () => {
               <Text style={styles.subTitle}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
-              {/* <MaxButton onPress={handleBalance}>
-                {t('page.swap.max')}
-              </MaxButton> */}
+              <TouchableOpacity
+                style={[styles.subTitle, styles.maxBtn]}
+                onPress={handleBalance}>
+                <RcIconMaxButton width={34} height={16} />
+              </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
             <TextInput
-              value={payAmount}
+              value={inputAmount}
               onChangeText={handleAmountChange}
               keyboardType="numeric"
               inputMode="decimal"
@@ -378,9 +393,9 @@ export const BridgeContent = () => {
               placeholderTextColor={colors['neutral-foot']}
             />
             <Text style={styles.inputUsdValue}>
-              {payAmount
+              {inputAmount
                 ? `≈ ${formatUsdValue(
-                    new BigNumber(payAmount)
+                    new BigNumber(inputAmount)
                       .times(payToken?.price || 0)
                       .toString(10),
                   )}`
@@ -389,20 +404,20 @@ export const BridgeContent = () => {
           </View>
 
           {quoteLoading &&
-            Number(payAmount) > 0 &&
+            Number(debouncePayAmount) > 0 &&
             !inSufficient &&
             !selectedBridgeQuote?.manualClick && <BestQuoteLoading />}
 
           {payToken &&
             !inSufficient &&
             receiveToken &&
-            Number(payAmount) > 0 &&
+            Number(debouncePayAmount) > 0 &&
             (!quoteLoading ||
               (selectedBridgeQuote && selectedBridgeQuote?.manualClick)) && (
               <BridgeReceiveDetails
                 openQuotesList={openQuotesList}
                 activeProvider={selectedBridgeQuote}
-                payAmount={payAmount}
+                payAmount={debouncePayAmount}
                 payToken={payToken}
                 receiveToken={receiveToken}
                 bestQuoteId={bestQuoteId}
@@ -450,7 +465,7 @@ export const BridgeContent = () => {
           disabled={
             !payToken ||
             !receiveToken ||
-            !payAmount ||
+            !debouncePayAmount ||
             inSufficient ||
             !selectedBridgeQuote
           }
@@ -465,7 +480,7 @@ export const BridgeContent = () => {
         onConfirm={gotoBridge}
       />
 
-      {payToken && receiveToken && Number(payAmount) > 0 && chain ? (
+      {payToken && receiveToken && Number(debouncePayAmount) > 0 && chain ? (
         <QuoteList
           list={quoteList}
           loading={quoteLoading}
@@ -476,7 +491,7 @@ export const BridgeContent = () => {
           userAddress={currentAccount?.address || ''}
           chain={chain}
           payToken={payToken}
-          payAmount={payAmount}
+          payAmount={debouncePayAmount}
           receiveToken={receiveToken}
           inSufficient={inSufficient}
           setSelectedBridgeQuote={setSelectedBridgeQuote}
