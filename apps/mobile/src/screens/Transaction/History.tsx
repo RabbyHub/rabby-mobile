@@ -1,13 +1,19 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
+import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
+import NetSwitchTabs, {
+  useSwitchNetTab,
+} from '@/components/PillsSwitch/NetSwitchTabs';
 import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { preferenceService, transactionHistoryService } from '@/core/services';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { findChain, findChainByServerID } from '@/utils/chain';
+import { EVENTS, eventBus } from '@/utils/events';
 import {
   useInfiniteScroll,
   useInterval,
@@ -16,17 +22,14 @@ import {
   useRequest,
 } from 'ahooks';
 import { last } from 'lodash';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { HistoryList } from './components/HistoryList';
-import { Empty } from './components/Empty';
-import { findChainByServerID } from '@/utils/chain';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EVENTS, eventBus } from '@/utils/events';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { Empty } from './components/Empty';
+import { HistoryList } from './components/HistoryList';
 const PAGE_COUNT = 10;
 
-function HistoryScreen(): JSX.Element {
+function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   const account = preferenceService.getCurrentAccount();
@@ -34,6 +37,12 @@ function HistoryScreen(): JSX.Element {
   const { bottom } = useSafeAreaInsets();
 
   const fetchData = async (startTime = 0) => {
+    if (isTestnet) {
+      return {
+        last: 0,
+        list: [],
+      };
+    }
     const address = account?.address;
     if (!address) {
       throw new Error('no account');
@@ -76,34 +85,45 @@ function HistoryScreen(): JSX.Element {
     if (!account?.address) {
       return [];
     }
-    const { pendings, completeds } = transactionHistoryService.getList(
-      account.address,
-    );
+    const { pendings: _pendings, completeds: _completeds } =
+      transactionHistoryService.getList(account.address);
+
+    const pendings = _pendings.filter(item => {
+      const chain = findChain({ id: item.chainId });
+      return isTestnet ? chain?.isTestnet : !chain?.isTestnet;
+    });
+
+    const completeds = _completeds.filter(item => {
+      const chain = findChain({ id: item.chainId });
+      return isTestnet ? chain?.isTestnet : !chain?.isTestnet;
+    });
 
     return [
       ...pendings,
-      ...completeds.filter(item => {
-        const isSynced =
-          !!data?.list?.find(tx => {
+      ...(isTestnet
+        ? completeds
+        : completeds.filter(item => {
+            const isSynced =
+              !!data?.list?.find(tx => {
+                return (
+                  tx.id === item.maxGasTx.hash &&
+                  findChainByServerID(tx.chain)?.id === item.chainId
+                );
+              }) || item.isSynced;
+
+            if (isSynced && !item.isSynced) {
+              transactionHistoryService.updateTx({
+                ...item.maxGasTx,
+                isSynced: true,
+              });
+            }
+
             return (
-              tx.id === item.maxGasTx.hash &&
-              findChainByServerID(tx.chain)?.id === item.chainId
+              item.createdAt >= Date.now() - 3600000 &&
+              !item.isSubmitFailed &&
+              !isSynced
             );
-          }) || item.isSynced;
-
-        if (isSynced && !item.isSynced) {
-          transactionHistoryService.updateTx({
-            ...item.maxGasTx,
-            isSynced: true,
-          });
-        }
-
-        return (
-          item.createdAt >= Date.now() - 3600000 &&
-          !item.isSubmitFailed &&
-          !isSynced
-        );
-      }),
+          })),
     ];
   });
 
@@ -132,21 +152,20 @@ function HistoryScreen(): JSX.Element {
   }
 
   return (
-    <NormalScreenContainer
-      style={{
-        paddingBottom: bottom,
-      }}>
-      <TouchableOpacity
-        onPress={() => {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.HistoryFilterScam,
-            params: {},
-          });
-        }}
-        style={styles.link}>
-        <Text style={styles.linkText}>Hide scam transactions</Text>
-        <RcIconRight />
-      </TouchableOpacity>
+    <View style={{ flex: 1, paddingBottom: bottom }}>
+      {isTestnet ? null : (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.push(RootNames.StackTransaction, {
+              screen: RootNames.HistoryFilterScam,
+              params: {},
+            });
+          }}
+          style={styles.link}>
+          <Text style={styles.linkText}>Hide scam transactions</Text>
+          <RcIconRight />
+        </TouchableOpacity>
+      )}
       <HistoryList
         list={[...(groups || []), ...(data?.list || [])]}
         localTxList={groups}
@@ -155,12 +174,42 @@ function HistoryScreen(): JSX.Element {
         loadMore={loadMore}
         onRefresh={refresh}
       />
-    </NormalScreenContainer>
+    </View>
   );
 }
 
+const HistoryScreen = () => {
+  const { selectedTab, onTabChange } = useSwitchNetTab();
+
+  const colors = useThemeColors();
+  const styles = getStyles(colors);
+  return (
+    <NormalScreenContainer style={styles.page}>
+      <NetSwitchTabs
+        value={selectedTab}
+        onTabChange={onTabChange}
+        style={styles.netTabs}
+      />
+      {selectedTab === 'mainnet' ? (
+        <History isTestnet={false} key={'mainnet'} />
+      ) : (
+        <History isTestnet={true} key={'testnet'} />
+        // <View style={styles.notFound}>
+        //   <RcIconNotFindCC color={colors['neutral-body']} />
+        //   <Text style={styles.notFoundText}>
+        //     Not supported for custom network
+        //   </Text>
+        // </View>
+      )}
+    </NormalScreenContainer>
+  );
+};
+
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
+    page: {
+      backgroundColor: colors['neutral-bg-2'],
+    },
     link: {
       marginHorizontal: 20,
       marginBottom: 12,
@@ -177,6 +226,21 @@ const getStyles = (colors: AppColorsVariants) =>
       lineHeight: 18,
       fontWeight: '500',
       color: colors['neutral-body'],
+    },
+    netTabs: {
+      marginBottom: 12,
+    },
+    notFound: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '80%',
+    },
+    notFoundText: {
+      fontSize: 14,
+      lineHeight: 17,
+      color: colors['neutral-body'],
+      marginTop: 16,
     },
   });
 

@@ -1108,8 +1108,10 @@
         "send": "Send",
         "receive": "Receive",
         "noTransactions": "No Transactions",
-        "customizedButton": "customized",
-        "blockedButton": "blocked"
+        "customizedButton": "custom token",
+        "customizedButtons": "custom tokens",
+        "blockedButton": "blocked token",
+        "blockedButtons": "blocked tokens"
       },
       "assets": {
         "usdValue": "USD VALUE",
@@ -1148,7 +1150,16 @@
           "summaryDescription": "All assets in protocols (e.g. LP tokens) are resolved to the underlying assets for statistical calculations",
           "noMatch": "No Match",
           "lowValueDescription": "Low value assets will be shown here",
-          "lowValueAssets": "{{count}} low value assets"
+          "lowValueAssets": "{{count}} low value assets",
+          "customizeTokens_zero": "{{count}} custom token",
+          "customizeTokens_one": "{{count}} custom token",
+          "customizeTokens_other": "{{count}} custom tokens",
+          "blockedTokens_zero": "{{count}} blocked token",
+          "blockedTokens_one": "{{count}} blocked token",
+          "blockedTokens_other": "{{count}} blocked Tokens",
+          "testnetTokens_zero": "{{count}} custom network token",
+          "testnetTokens_one": "{{count}} custom network token",
+          "testnetTokens_other": "{{count}} custom network tokens"
         },
         "noAssets": "No assets",
         "blockLinkText": "Search address to block token",
@@ -1653,7 +1664,8 @@
       "title": "Add custom token to Rabby",
       "balance": "Balance",
       "tokenOnMultiChains": "Token address on multiple chains. Please choose one",
-      "noTokenFoundOnThisChain": "No token found on this chain"
+      "noTokenFoundOnThisChain": "No token found on this chain",
+      "hasAdded": "You have been added this token."
     },
     "switchChain": {
       "title": "Switching to {{chain}}",
@@ -2156,8 +2168,8 @@
     },
     "PillsSwitch": {
       "NetSwitchTabs": {
-        "mainnet": "Mainnets",
-        "testnet": "Testnets"
+        "mainnet": "Integrated Network",
+        "testnet": "Custom Network"
       }
     },
     "ChainSelectorModal": {

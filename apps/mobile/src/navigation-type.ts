@@ -116,6 +116,7 @@ export type SettingNavigatorParamList = {
         actionType: 'setBiometrics' | 'setAutoLockTime';
       };
   [RootNames.SetBiometricsAuthentication]: {};
+  [RootNames.CustomTestnet]?: {};
 };
 
 export type FavoritePopularDappsNavigatorParamList = {

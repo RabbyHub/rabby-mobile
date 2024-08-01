@@ -1,19 +1,27 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
 import RcIconSearchCC from '@/assets/icons/select-chain/icon-search-cc.svg';
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
+import { AppColorsVariants } from '@/constant/theme';
+import { useThemeColors } from '@/hooks/theme';
 import { Input } from '@rneui/themed';
 
 import { NetSwitchTabsKey } from '@/constant/netType';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
-import { varyAndSortChainItems } from '@/utils/chain';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { varyAndSortChainItems } from '@/utils/chain';
+import NetSwitchTabs, { useSwitchNetTab } from '../PillsSwitch/NetSwitchTabs';
 import MixedFlatChainList from './MixedFlatChainList';
+import { useChainList } from '@/hooks/useChainList';
+import { FooterButton } from '../FooterButton/FooterButton';
+import { RcIconAddCircle } from '@/assets/icons/address';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { StackActions } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
 
 const RcIconNotFind = makeThemeIconFromCC(RcIconNotFindCC, 'neutral-foot');
 const RcIconSearch = makeThemeIconFromCC(RcIconSearchCC, 'neutral-foot');
@@ -52,6 +60,8 @@ const useChainSeletorList = ({
   // TODO: not supported now
   const handleSort = (chains: Chain[]) => {};
 
+  const { mainnetList, testnetList } = useChainList();
+
   const { allSearched, matteredList, unmatteredList } = useMemo(() => {
     const searchKw = search?.trim().toLowerCase();
     const result = varyAndSortChainItems({
@@ -60,6 +70,8 @@ const useChainSeletorList = ({
       matteredChainBalances: chainBalances,
       pinned,
       netTabKey,
+      mainnetList,
+      testnetList,
     });
 
     return {
@@ -67,7 +79,15 @@ const useChainSeletorList = ({
       matteredList: searchKw ? [] : result.matteredList,
       unmatteredList: searchKw ? [] : result.unmatteredList,
     };
-  }, [search, pinned, supportChains, chainBalances, netTabKey]);
+  }, [
+    search,
+    supportChains,
+    chainBalances,
+    pinned,
+    netTabKey,
+    mainnetList,
+    testnetList,
+  ]);
 
   return {
     matteredList,
@@ -86,25 +106,41 @@ export type SelectSortedChainProps = {
   onChange?: (value: CHAINS_ENUM) => void;
   supportChains?: CHAINS_ENUM[];
   disabledTips?: string | ((ctx: { chain: Chain }) => string);
+  hideTestnetTab?: boolean;
+  hideMainnetTab?: boolean;
+  onClose?: () => void;
 };
 export default function SelectSortedChain({
   value,
   onChange,
   supportChains,
   disabledTips,
+  hideTestnetTab = false,
+  hideMainnetTab = false,
+  onClose,
 }: RNViewProps & SelectSortedChainProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { isShowTestnet, selectedTab, onTabChange } = useSwitchNetTab({
+    hideTestnetTab,
+  });
   const { search, setSearch, matteredList, unmatteredList, allSearched } =
     useChainSeletorList({
       // set undefined to allow all main chains
       supportChains: supportChains,
-      netTabKey: 'mainnet',
+      netTabKey: !hideMainnetTab ? selectedTab : 'testnet',
     });
 
   return (
     <View style={styles.container}>
+      {isShowTestnet && !hideMainnetTab ? (
+        <NetSwitchTabs
+          value={selectedTab}
+          onTabChange={onTabChange}
+          style={styles.netSwitchTabs}
+        />
+      ) : null}
       <Input
         leftIcon={<RcIconSearch />}
         containerStyle={[styles.inputContainer, styles.innerBlock]}
@@ -118,8 +154,17 @@ export default function SelectSortedChain({
 
       {matteredList.length === 0 && unmatteredList.length === 0 ? (
         <View style={[styles.chainListWrapper, styles.emptyDataWrapper]}>
-          <RcIconNotFind />
-          <Text style={styles.emptyText}>No Chains</Text>
+          {selectedTab === 'testnet' ? (
+            <>
+              <RcIconNotFind />
+              <Text style={styles.emptyText}>No Custom Network</Text>
+            </>
+          ) : (
+            <>
+              <RcIconNotFind />
+              <Text style={styles.emptyText}>No Chains</Text>
+            </>
+          )}
         </View>
       ) : (
         <View style={[styles.chainListWrapper]}>
@@ -134,6 +179,21 @@ export default function SelectSortedChain({
           />
         </View>
       )}
+      {matteredList.length === 0 &&
+      unmatteredList.length === 0 &&
+      selectedTab === 'testnet' ? (
+        <FooterButton
+          title="Add Custom Network"
+          footerStyle={{ position: 'absolute', bottom: 0 }}
+          icon={<RcIconAddCircle color={colors['neutral-title-2']} />}
+          onPress={() => {
+            onClose?.();
+            navigate(RootNames.StackSettings, {
+              screen: RootNames.CustomTestnet,
+            });
+          }}
+        />
+      ) : null}
     </View>
   );
 }
@@ -145,6 +205,9 @@ const getStyles = (colors: AppColorsVariants) => {
 
       paddingTop: 10,
       paddingBottom: 32,
+    },
+    netSwitchTabs: {
+      marginBottom: 20,
     },
     innerBlock: {
       paddingHorizontal: 20,

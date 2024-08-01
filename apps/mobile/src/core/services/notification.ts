@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { EthereumProviderError } from 'eth-rpc-errors/dist/classes';
 import * as Sentry from '@sentry/react-native';
 
-import { CHAINS } from '@/constant/chains';
 // import stats from '@/stats';
 import BigNumber from 'bignumber.js';
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { stats } from '@/utils/stats';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { findChain } from '@/utils/chain';
 
 export interface Approval {
   id: string;
@@ -232,13 +232,18 @@ export class NotificationService extends Events {
         ? this.transactionHistoryService.getSigningTx(signingTxId)
         : null;
       const explain = signingTx?.explain;
+      const chain = findChain({
+        id: signingTx?.rawTx.chainId,
+      });
 
-      if (explain && currentAccount) {
+      if ((explain || chain?.isTestnet) && currentAccount) {
         stats.report('preExecTransaction', {
           type: currentAccount.brandName,
           category: KEYRING_CATEGORY_MAP[currentAccount.type],
-          chainId: explain.native_token.chain,
-          success: explain.calcSuccess && explain.pre_exec.success,
+          chainId: chain?.serverId || '',
+          success: explain
+            ? explain.calcSuccess && explain.pre_exec.success
+            : true,
           createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
           source: data?.params.$ctx?.ga?.source || '',
           trigger: data?.params.$ctx?.ga?.trigger || '',
@@ -304,21 +309,6 @@ export class NotificationService extends Events {
         this.approvals = [...this.approvals, approval];
         if (!this.currentApproval) {
           this.currentApproval = approval;
-        }
-      }
-      if (
-        ['wallet_switchEthereumChain', 'wallet_addEthereumChain'].includes(
-          data?.params?.method,
-        )
-      ) {
-        const chainId = data.params?.data?.[0]?.chainId;
-        const chain = Object.values(CHAINS).find(chain =>
-          new BigNumber(chain.hex).isEqualTo(chainId),
-        );
-
-        if (chain) {
-          this.resolveApproval(null);
-          return;
         }
       }
 

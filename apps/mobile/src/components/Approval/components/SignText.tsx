@@ -7,8 +7,7 @@ import { FooterBar } from './FooterBar/FooterBar';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { isTestnetChainId } from '@/utils/chain';
-import { CHAINS } from '@/constant/chains';
+import { findChain, isTestnetChainId } from '@/utils/chain';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { ParseTextResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -114,7 +113,10 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     if (params.session.origin !== INTERNAL_REQUEST_ORIGIN) {
       const site = await dappService.getDapp(params.session.origin);
       if (site) {
-        chainId = CHAINS[site.chainId].id;
+        chainId =
+          findChain({
+            enum: site.chainId,
+          })?.id || 1;
       }
     }
     setChainId(chainId);

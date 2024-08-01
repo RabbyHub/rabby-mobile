@@ -2,7 +2,7 @@ import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Text } from '@/components';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { MEDIA_TYPE, Media } from '@/components/Media';
-import { CHAIN_ID_LIST } from '@/constant/projectLists';
+import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
@@ -211,7 +211,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   > = useCallback(
     ({ section }) => {
       const { collection } = section;
-      const chain = CHAIN_ID_LIST.get(collection!.chain);
+      const chain = getCHAIN_ID_LIST().get(collection!.chain);
       const iconUri = chain?.nativeTokenLogo;
 
       return (

@@ -1,4 +1,4 @@
-import { CHAINS } from '@/constant/chains';
+import { getChainList } from '@/constant/chains';
 
 type CacheState = Map<
   string,
@@ -17,7 +17,7 @@ class RpcCache {
   }
 
   async loadBlockNumber() {
-    const chainList = Object.values(CHAINS);
+    const chainList = getChainList('mainnet');
     // currently use random number as blockNumber to reduce the heavy burdens of server
     this.latestBlockNumber = chainList.reduce((res, current) => {
       return {

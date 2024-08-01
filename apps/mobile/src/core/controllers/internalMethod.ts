@@ -1,9 +1,8 @@
 import { CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { keyringService } from '../services';
 import { dappService } from '@/core/services/shared';
 import providerController from './provider';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import { ProviderRequest } from './type';
 
 const networkIdMap: {
@@ -42,7 +41,9 @@ const getProviderState = async (req: ProviderRequest) => {
     console.warn(
       `[internalMethod::getProviderState] chain ${chainEnum} not found`,
     );
-    chainItem = CHAINS.ETH;
+    chainItem = findChain({
+      enum: CHAINS_ENUM.ETH,
+    })!;
   }
 
   return {

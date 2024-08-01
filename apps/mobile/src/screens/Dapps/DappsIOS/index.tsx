@@ -273,7 +273,7 @@ const getStyles = (colors: AppColorsVariants) =>
     searchInput: {
       color: colors['neutral-title-1'],
       fontSize: 14,
-      lineHeight: 17,
+      lineHeight: undefined,
     },
     searchIcon: {
       width: 16,

@@ -1,10 +1,11 @@
-import { RootNames } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import SettingsScreen from '../Settings/Settings';
 import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
 import SetPasswordScreen from '../ManagePassword/SetPassword';
+import { CustomTestnetScreen } from '../CustomTestnet';
 import { useSetPasswordFirstState } from '@/hooks/useLock';
 
 const SettingsStack = createCustomNativeStackNavigator();
@@ -13,6 +14,7 @@ export function SettingNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
+  const headerPresets = makeHeadersPresets({ colors });
 
   return (
     <SettingsStack.Navigator
@@ -51,6 +53,15 @@ export function SettingNavigator() {
           animationTypeForReplace: 'pop',
           // ...(isOnSettingsWaiting && {
           // }),
+        }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.CustomTestnet}
+        component={CustomTestnetScreen}
+        options={{
+          title: 'Custom Network',
+          headerTitle: 'Custom Network',
+          ...headerPresets.withBgCard2,
         }}
       />
       {__DEV__ && (

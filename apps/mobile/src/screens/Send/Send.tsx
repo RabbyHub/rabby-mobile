@@ -23,6 +23,7 @@ import {
 } from './hooks/useSendToken';
 import BottomArea from './components/BottomArea';
 import {
+  findChain,
   findChainByEnum,
   findChainByID,
   findChainByServerID,
@@ -202,9 +203,13 @@ function SendScreen(): JSX.Element {
     } else {
       let tokenFromOrder: TokenItem | null = null;
 
-      const lastTimeToken = await preferenceService.getLastTimeSendToken(
+      const _lastTimeToken = await preferenceService.getLastTimeSendToken(
         account.address,
       );
+      const lastTimeToken =
+        chainItem && chainItem.serverId === _lastTimeToken?.chain
+          ? _lastTimeToken
+          : null;
       if (lastTimeToken) {
         setCurrentToken(lastTimeToken);
       } else {
@@ -241,6 +246,9 @@ function SendScreen(): JSX.Element {
       if (chainItem && needLoadToken.chain !== chainItem.serverId) {
         const target = findChainByServerID(needLoadToken.chain);
         if (target?.enum) setChainEnum(target.enum);
+      }
+      if (!chainItem) {
+        setChainEnum(CHAINS_ENUM.ETH);
       }
       loadCurrentToken(needLoadToken.id, needLoadToken.chain, account.address);
     }

@@ -8,7 +8,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useThemeColors } from '@/hooks/theme';
 import React, { forwardRef, useCallback, useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
@@ -40,11 +40,12 @@ export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
 
 export const AppBottomSheetModalTitle: React.FC<{
   title: string;
-}> = ({ title }) => {
+  style?: StyleProp<ViewStyle>;
+}> = ({ title, style }) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getBottomSheetHandleStyles(colors), [colors]);
 
-  return <Text style={styles.title}>{title}</Text>;
+  return <Text style={[styles.title, style]}>{title}</Text>;
 };
 
 export const AppBottomSheetModal = forwardRef<

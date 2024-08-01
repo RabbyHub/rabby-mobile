@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
 import { default as SvgIconArrowDownTriangle } from '@/assets/icons/gas-top-up/arrow-down-cc.svg';
 import { findChainByEnum, findChainByServerID } from '@/utils/chain';
-import { CHAINS_BY_NET, CHAINS_ENUM } from '@/constant/chains';
+import { CHAINS_ENUM, getChainList } from '@/constant/chains';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeColors } from '@/hooks/theme';
 import {
@@ -10,8 +10,6 @@ import {
   SelectSortedChainProps,
 } from '@/components/SelectSortedChain';
 import { Text } from '@/components';
-
-const allMainnetChainEnums = CHAINS_BY_NET.mainnet.map(item => item.enum);
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -121,7 +119,7 @@ export const GasTopUpChainSelect = ({
           visible={showSelectorModal}
           value={value}
           onCancel={handleCancel}
-          supportChains={allMainnetChainEnums}
+          supportChains={getChainList('mainnet').map(item => item.enum)}
           disabledTips={getDisabledTips}
           onChange={handleChange}
         />

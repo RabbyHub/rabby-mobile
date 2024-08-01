@@ -3,7 +3,7 @@ import { Dayjs } from 'dayjs';
 // import { atom, useSetAtom } from 'jotai';
 
 import { ComplexProtocol } from '@rabby-wallet/rabby-api/dist/types';
-import { CHAIN_ID_LIST } from '@/constant/projectLists';
+import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { getExpandListSwitch } from '@/hooks/useExpandList';
 import { useSafeState } from '@/hooks/useSafeState';
 import { chunk } from 'lodash';
@@ -210,7 +210,8 @@ export const usePortfolios = (
     const historyIds = realtimeIds.current.filter(
       x =>
         projectDict.current![x].chain &&
-        CHAIN_ID_LIST.get(projectDict.current![x].chain!)?.isSupportHistory,
+        getCHAIN_ID_LIST().get(projectDict.current![x].chain!)
+          ?.isSupportHistory,
     );
 
     const historyIdsArr = chunk(historyIds, chunkSize);

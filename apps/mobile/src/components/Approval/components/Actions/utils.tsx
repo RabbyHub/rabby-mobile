@@ -34,7 +34,7 @@ import BigNumber from 'bignumber.js';
 import { useState, useCallback, useEffect } from 'react';
 import PQueue from 'p-queue/dist/index';
 // import { TransactionGroup } from '@/background/service/transactionHistory';
-import { isTestnet } from '@/utils/chain';
+import { findChain, isTestnet } from '@/utils/chain';
 import { findChainByServerID } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -46,7 +46,6 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { ALIAS_ADDRESS } from '@/constant/gas';
-import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import i18n from '@/utils/i18n';
@@ -1139,9 +1138,9 @@ export const fetchActionRequiredData = async ({
     });
   }
   if (actionData.cancelTx) {
-    const chain = Object.values(CHAINS).find(
-      chain => chain.serverId === chainId,
-    );
+    const chain = findChain({
+      serverId: chainId,
+    });
     if (chain) {
       const pendingTxs = await transactionHistoryService.getPendingTxsByNonce(
         address,

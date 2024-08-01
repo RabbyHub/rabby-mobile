@@ -1,6 +1,5 @@
 import { Tip } from '@/components/Tip';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
-import { CHAINS } from '@/constant/chains';
 import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
@@ -199,16 +198,16 @@ export const FooterBar: React.FC<Props> = ({
     ...apiApprovalSecurityEngine
   } = useApprovalSecurityEngine();
 
-  const currentChain = useMemo(() => {
-    if (origin === INTERNAL_REQUEST_ORIGIN) {
-      return props.chain || CHAINS.ETH;
-    } else {
-      if (!connectedSite) {
-        return CHAINS.ETH;
-      }
-      return CHAINS[connectedSite.chainId];
-    }
-  }, [props.chain, origin, connectedSite]);
+  // const currentChain = useMemo(() => {
+  //   if (origin === INTERNAL_REQUEST_ORIGIN) {
+  //     return props.chain || CHAINS.ETH;
+  //   } else {
+  //     if (!connectedSite) {
+  //       return CHAINS.ETH;
+  //     }
+  //     return CHAINS[connectedSite.chainId];
+  //   }
+  // }, [props.chain, origin, connectedSite]);
 
   const engineResultMap = useMemo(() => {
     const map: Record<string, Result> = {};

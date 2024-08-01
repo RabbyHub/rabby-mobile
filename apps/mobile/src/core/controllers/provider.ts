@@ -22,6 +22,7 @@ import {
   transactionBroadcastWatcherService,
   notificationService,
   swapService,
+  customTestnetService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -42,13 +43,12 @@ import { Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import RpcCache from '../services/rpcCache';
 // import Wallet from '../wallet';
 import { CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { SAFE_RPC_METHODS } from '@/constant/rpc';
 import BaseController from './base';
 import { Account } from '../services/preference';
 import BigNumber from 'bignumber.js';
 // import { formatTxMetaForRpcResult } from 'background/utils/tx';
-import { findChainByEnum } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 import { is1559Tx, validateGasPriceRange } from '@/utils/transaction';
 import { eventBus, EVENTS } from '@/utils/events';
 import { sessionService } from '../services/shared';
@@ -60,6 +60,8 @@ import { stats } from '@/utils/stats';
 import { StatsData } from '../services/notification';
 import { ethers } from 'ethers';
 import { getGlobalProvider } from '../apis/globalProvider';
+import { bytesToHex } from '@ethereumjs/util';
+import { CustomTestnetTokenBase } from '../services/customTestnetService';
 // import eventBus from '@/eventBus';
 
 const SIGN_TIMEOUT = 100;
@@ -228,9 +230,10 @@ class ProviderController extends BaseController {
     }
 
     const site = dappService.getDapp(origin);
-    let chainServerId = CHAINS[CHAINS_ENUM.ETH].serverId;
+    let chainServerId = findChain({ enum: CHAINS_ENUM.ETH })!.serverId;
     if (site) {
-      chainServerId = CHAINS[site.chainId]?.serverId || chainServerId;
+      chainServerId =
+        findChain({ enum: site.chainId })?.serverId || chainServerId;
     }
     if (forceChainServerId) {
       chainServerId = forceChainServerId;
@@ -246,54 +249,60 @@ class ProviderController extends BaseController {
     if (cache) {
       return cache;
     }
-    const chain = Object.values(CHAINS).find(
-      item => item.serverId === chainServerId,
-    )!;
-    // if (RPCService.hasCustomRPC(chain.enum)) {
-    if (false) {
-      // const promise = RPCService.requestCustomRPC(
-      //   chain.enum,
-      //   method,
-      //   params,
-      // ).then(result => {
-      //   RpcCache.set(currentAddress, {
-      //     method,
-      //     params,
-      //     result,
-      //     chainId: chainServerId,
-      //   });
-      //   return result;
-      // });
-      // RpcCache.set(currentAddress, {
-      //   method,
-      //   params,
-      //   result: promise,
-      //   chainId: chainServerId,
-      // });
-      // return promise;
-    } else {
-      const promise = openapi
-        .ethRpc(chainServerId, {
-          origin: encodeURIComponent(origin),
-          method,
-          params,
-        })
-        .then(result => {
-          RpcCache.set(currentAddress, {
+
+    const chain = findChain({
+      serverId: chainServerId,
+    });
+    if (!chain?.isTestnet) {
+      // if (RPCService.hasCustomRPC(chain.enum)) {
+      if (false) {
+        // const promise = RPCService.requestCustomRPC(
+        //   chain.enum,
+        //   method,
+        //   params,
+        // ).then(result => {
+        //   RpcCache.set(currentAddress, {
+        //     method,
+        //     params,
+        //     result,
+        //     chainId: chainServerId,
+        //   });
+        //   return result;
+        // });
+        // RpcCache.set(currentAddress, {
+        //   method,
+        //   params,
+        //   result: promise,
+        //   chainId: chainServerId,
+        // });
+        // return promise;
+      } else {
+        const promise = openapi
+          .ethRpc(chainServerId, {
+            origin: encodeURIComponent(origin),
             method,
             params,
-            result,
-            chainId: chainServerId,
+          })
+          .then(result => {
+            RpcCache.set(currentAddress, {
+              method,
+              params,
+              result,
+              chainId: chainServerId,
+            });
+            return result;
           });
-          return result;
+        RpcCache.set(currentAddress, {
+          method,
+          params,
+          result: promise,
+          chainId: chainServerId,
         });
-      RpcCache.set(currentAddress, {
-        method,
-        params,
-        result: promise,
-        chainId: chainServerId,
-      });
-      return promise;
+        return promise;
+      }
+    } else {
+      const client = customTestnetService.getClient(chain.id);
+      return client.request({ method: method as any, params: params as any });
     }
   };
 
@@ -313,17 +322,21 @@ class ProviderController extends BaseController {
     const connectSite = dappService.getConnectedDapp(origin);
 
     if (connectSite) {
-      const chain = CHAINS[connectSite.chainId];
-      // // rabby:chainChanged event must be sent before chainChanged event
-      // sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
-      sessionService.broadcastEvent(
-        BroadcastEvent.chainChanged,
-        {
-          chainId: chain.hex,
-          networkVersion: chain.network,
-        },
-        origin,
-      );
+      const chain = findChain({
+        enum: connectSite.chainId,
+      });
+      if (chain) {
+        // // rabby:chainChanged event must be sent before chainChanged event
+        // sessionService.broadcastEvent('rabby:chainChanged', chain, origin);
+        sessionService.broadcastEvent(
+          BroadcastEvent.chainChanged,
+          {
+            chainId: chain.hex,
+            networkVersion: chain.network,
+          },
+          origin,
+        );
+      }
     }
 
     return account;
@@ -376,7 +389,7 @@ class ProviderController extends BaseController {
         .getCurrentAccount()
         ?.address.toLowerCase();
       const currentChain = dappService.isInternalDapp(session.origin)
-        ? Object.values(CHAINS).find(chain => chain.id === tx.chainId)!.enum
+        ? findChain({ id: tx.chainId })!.enum
         : dappService.getConnectedDapp(session.origin)?.chainId;
       if (tx.from.toLowerCase() !== currentAddress) {
         throw ethErrors.rpc.invalidParams(
@@ -385,7 +398,8 @@ class ProviderController extends BaseController {
       }
       if (
         'chainId' in tx &&
-        (!currentChain || Number(tx.chainId) !== CHAINS[currentChain].id)
+        (!currentChain ||
+          Number(tx.chainId) !== findChain({ enum: currentChain })?.id)
       ) {
         throw ethErrors.rpc.invalidParams(
           'chainId should be same as current chainId',
@@ -490,8 +504,7 @@ class ProviderController extends BaseController {
       }
     }
     const chain = dappService.isInternalDapp(origin)
-      ? Object.values(CHAINS).find(chain => chain.id === approvalRes.chainId)!
-          .enum
+      ? findChain({ id: approvalRes.chainId })!.enum
       : dappService.getConnectedDapp(origin)!.chainId;
 
     const approvingTx = transactionHistoryService.getSigningTx(signingTxId!);
@@ -504,6 +517,8 @@ class ProviderController extends BaseController {
 
     const { explain: cacheExplain, rawTx, action } = approvingTx;
 
+    console.log('c', cacheExplain);
+
     const chainItem = findChainByEnum(chain);
 
     const statsData: StatsData = {
@@ -515,7 +530,7 @@ class ProviderController extends BaseController {
       chainId: chainItem?.serverId || '',
       category: KEYRING_CATEGORY_MAP[currentAccount.type],
       preExecSuccess: cacheExplain
-        ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
+        ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
         : true,
       createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
       source: options?.data?.$ctx?.ga?.source || '',
@@ -607,7 +622,7 @@ class ProviderController extends BaseController {
           transactionBroadcastWatcherService.addTx(reqId, {
             reqId,
             address: txParams.from,
-            chainId: CHAINS[chain].id,
+            chainId: findChain({ enum: chain })!.id,
             nonce: approvalRes.nonce,
           });
         }
@@ -634,7 +649,7 @@ class ProviderController extends BaseController {
           category: KEYRING_CATEGORY_MAP[currentAccount.type],
           success: false,
           preExecSuccess: cacheExplain
-            ? cacheExplain.pre_exec.success && cacheExplain.calcSuccess
+            ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
             : true,
           createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
           source: options?.data?.$ctx?.ga?.source || '',
@@ -654,7 +669,7 @@ class ProviderController extends BaseController {
           //   origin,
           // );
         }
-        const errMsg = e.message || JSON.stringify(e);
+        const errMsg = e.details || e.message || JSON.stringify(e);
         if (notificationService.statsData?.signMethod) {
           statsData.signMethod = notificationService.statsData?.signMethod;
         }
@@ -712,54 +727,81 @@ class ProviderController extends BaseController {
         validateGasPriceRange(approvalRes);
         let hash: string | undefined = undefined;
         let reqId: string | undefined = undefined;
-        // TODO: customRPC
-        // if (RPCService.hasCustomRPC(chain)) {
-        if (false) {
-          // const txData: any = {
-          //   ...approvalRes,
-          //   gasLimit: approvalRes.gas,
-          //   r: addHexPrefix(signedTx.r),
-          //   s: addHexPrefix(signedTx.s),
-          //   v: addHexPrefix(signedTx.v),
-          // };
-          // if (is1559) {
-          //   txData.type = '0x2';
-          // }
-          // const tx = TransactionFactory.fromTxData(txData);
-          // const rawTx = covertToHex(tx.serialize());
-          // hash = await RPCService.requestCustomRPC(
-          //   chain,
-          //   'eth_sendRawTransaction',
-          //   [rawTx],
-          // );
-          // onTransactionCreated({ hash, reqId, pushType });
-        } else {
-          const res = await openapi.submitTx({
-            tx: {
-              ...approvalRes,
-              r: covertToHex(signedTx.r),
-              s: covertToHex(signedTx.s),
-              v: covertToHex(signedTx.v),
-              value: approvalRes.value || '0x0',
-            },
-            push_type: pushType,
-            low_gas_deadline: lowGasDeadline,
-            req_id: preReqId || '',
-            origin,
-            is_gasless: isGasLess,
-          });
-
-          hash = res.req.tx_id || undefined;
-          reqId = res.req.id || undefined;
-          if (res.req.push_status === 'failed') {
-            onTransactionSubmitFailed(new Error('Submit tx failed'));
+        if (!findChain({ enum: chain })?.isTestnet) {
+          // TODO: customRPC
+          // if (RPCService.hasCustomRPC(chain)) {
+          if (false) {
+            // const txData: any = {
+            //   ...approvalRes,
+            //   gasLimit: approvalRes.gas,
+            //   r: addHexPrefix(signedTx.r),
+            //   s: addHexPrefix(signedTx.s),
+            //   v: addHexPrefix(signedTx.v),
+            // };
+            // if (is1559) {
+            //   txData.type = '0x2';
+            // }
+            // const tx = TransactionFactory.fromTxData(txData);
+            // const rawTx = covertToHex(tx.serialize());
+            // hash = await RPCService.requestCustomRPC(
+            //   chain,
+            //   'eth_sendRawTransaction',
+            //   [rawTx],
+            // );
+            // onTransactionCreated({ hash, reqId, pushType });
           } else {
-            onTransactionCreated({ hash, reqId, pushType });
-            if (notificationService.statsData?.signMethod) {
-              statsData.signMethod = notificationService.statsData?.signMethod;
+            const res = await openapi.submitTx({
+              tx: {
+                ...approvalRes,
+                r: covertToHex(signedTx.r),
+                s: covertToHex(signedTx.s),
+                v: covertToHex(signedTx.v),
+                value: approvalRes.value || '0x0',
+              },
+              push_type: pushType,
+              low_gas_deadline: lowGasDeadline,
+              req_id: preReqId || '',
+              origin,
+              is_gasless: isGasLess,
+            });
+
+            hash = res.req.tx_id || undefined;
+            reqId = res.req.id || undefined;
+            if (res.req.push_status === 'failed') {
+              onTransactionSubmitFailed(new Error('Submit tx failed'));
+            } else {
+              onTransactionCreated({ hash, reqId, pushType });
+              if (notificationService.statsData?.signMethod) {
+                statsData.signMethod =
+                  notificationService.statsData?.signMethod;
+              }
+              notificationService.setStatsData(statsData);
             }
-            notificationService.setStatsData(statsData);
           }
+        } else {
+          const chainData = findChain({
+            enum: chain,
+          })!;
+          const txData: any = {
+            ...approvalRes,
+            gasLimit: approvalRes.gas,
+            r: addHexPrefix(signedTx.r),
+            s: addHexPrefix(signedTx.s),
+            v: addHexPrefix(signedTx.v),
+          };
+          if (is1559) {
+            txData.type = '0x2';
+          }
+          const tx = TransactionFactory.fromTxData(txData);
+          const rawTx = bytesToHex(tx.serialize());
+          const client = customTestnetService.getClient(chainData.id);
+
+          hash = await client.request({
+            method: 'eth_sendRawTransaction',
+            params: [rawTx as any],
+          });
+          onTransactionCreated({ hash, reqId, pushType });
+          notificationService.setStatsData(statsData);
         }
 
         return hash;
@@ -776,7 +818,11 @@ class ProviderController extends BaseController {
         statsData.signMethod = notificationService.statsData?.signMethod;
       }
       notificationService.setStatsData(statsData);
-      throw typeof e === 'object' ? e : new Error(JSON.stringify(e));
+      if ('details' in (e as any)) {
+        throw new Error((e as any).details);
+      } else {
+        throw typeof e === 'object' ? e : new Error(JSON.stringify(e));
+      }
     }
   };
   @Reflect.metadata('SAFE', true)
@@ -1064,11 +1110,6 @@ class ProviderController extends BaseController {
         params: [chainParams],
       },
       session,
-    }: {
-      data: {
-        params: [AddEthereumChainParams];
-      };
-      session: Session;
     }) => {
       if (!chainParams) {
         throw ethErrors.rpc.invalidParams('params is required but got []');
@@ -1077,13 +1118,15 @@ class ProviderController extends BaseController {
         throw ethErrors.rpc.invalidParams('chainId is required');
       }
       const connected = dappService.getConnectedDapp(session.origin);
+
       if (connected) {
-        if (Number(chainParams.chainId) === CHAINS[connected.chainId].id) {
+        // if rabby supported this chain, do not show popup
+        if (findChain({ id: chainParams.chainId })) {
           return true;
         }
       }
     },
-    { height: 650 },
+    // { height: 650 },
   ])
   walletAddEthereumChain = ({
     data: {
@@ -1107,11 +1150,12 @@ class ProviderController extends BaseController {
     if (typeof chainId === 'number') {
       chainId = intToHex(chainId).toLowerCase();
     } else {
-      chainId = chainId.toLowerCase();
+      chainId = `0x${new BigNumber(chainId).toString(16).toLowerCase()}`;
     }
-    const chain = Object.values(CHAINS).find(value =>
-      new BigNumber(value.hex).isEqualTo(chainId),
-    );
+
+    const chain = findChain({
+      hex: chainId,
+    });
 
     if (!chain) {
       throw new Error('This chain is not supported by Rabby yet.');
@@ -1122,7 +1166,9 @@ class ProviderController extends BaseController {
     }
 
     const connectSite = dappService.getConnectedDapp(origin);
-    const prev = connectSite ? CHAINS[connectSite.chainId] : undefined;
+    const prev = connectSite
+      ? findChain({ enum: connectSite.chainId })
+      : undefined;
     if (!connectSite) {
       return;
     }
@@ -1132,24 +1178,6 @@ class ProviderController extends BaseController {
       chainId: chain.enum,
     });
 
-    // rabby:chainChanged event must be sent before chainChanged event
-    // TODO: sessionService
-    // sessionService.broadcastEvent(
-    //   'rabby:chainChanged',
-    //   {
-    //     ...chain,
-    //     prev,
-    //   },
-    //   origin,
-    // );
-    // sessionService.broadcastEvent(
-    //   'chainChanged',
-    //   {
-    //     chain: chain.hex,
-    //     networkVersion: chain.network,
-    //   },
-    //   origin,
-    // )
     sessionService.broadcastEvent(
       BroadcastEvent.chainChanged,
       {
@@ -1162,7 +1190,7 @@ class ProviderController extends BaseController {
   };
 
   @Reflect.metadata('APPROVAL', [
-    'AddChain',
+    'SwitchChain',
     ({
       data,
       session,
@@ -1181,9 +1209,13 @@ class ProviderController extends BaseController {
       const connected = dappService.getConnectedDapp(session.origin);
       if (connected) {
         const { chainId } = data.params[0];
-        if (Number(chainId) === CHAINS[connected.chainId].id) {
+        if (Number(chainId) === findChain({ enum: connected.chainId })?.id) {
           return true;
         }
+        throw ethErrors.provider.custom({
+          code: 4902,
+          message: `Unrecognized chain ID "${chainId}". Try adding the chain using wallet_switchEthereumChain first.`,
+        });
       }
     },
     { height: 650 },
@@ -1205,16 +1237,23 @@ class ProviderController extends BaseController {
     } else {
       chainId = chainId.toLowerCase();
     }
-    const chain = Object.values(CHAINS).find(value =>
-      new BigNumber(value.hex).isEqualTo(chainId),
-    );
+    const chain = findChain({ hex: chainId });
 
     if (!chain) {
       throw new Error('This chain is not supported by Rabby yet.');
     }
 
+    if (!chain) {
+      throw ethErrors.provider.custom({
+        code: 4902,
+        message: `Unrecognized chain ID "${chainId}". Try adding the chain using wallet_switchEthereumChain first.`,
+      });
+    }
+
     const connectSite = dappService.getConnectedDapp(origin);
-    const prev = connectSite ? CHAINS[connectSite.chainId] : undefined;
+    const prev = connectSite
+      ? findChain({ enum: connectSite.chainId })
+      : undefined;
 
     if (!connectSite) {
       return;
@@ -1258,13 +1297,25 @@ class ProviderController extends BaseController {
   walletWatchAsset = ({
     approvalRes,
   }: {
-    approvalRes: { id: string; chain: string };
+    approvalRes: { id: string; chain: string } & CustomTestnetTokenBase;
   }) => {
-    const { id, chain } = approvalRes;
-    preferenceService.addCustomizedToken({
-      address: id,
-      chain,
+    const { id, chain, chainId, symbol, decimals } = approvalRes;
+    const chainInfo = findChain({
+      serverId: chain,
     });
+    if (chainInfo?.isTestnet) {
+      customTestnetService.addToken({
+        chainId,
+        symbol,
+        decimals,
+        id,
+      });
+    } else {
+      preferenceService.addCustomizedToken({
+        address: id,
+        chain,
+      });
+    }
   };
 
   walletRequestPermissions = ({

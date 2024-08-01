@@ -1,6 +1,6 @@
 // this script is injected into webpage's context
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
-import { CHAINS, CHAINS_ENUM } from '@/constant/chains';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { EventEmitter } from 'events';
 import { underline2Camelcase } from '../controllers/rpcFlow';
 import { notificationService, preferenceService } from '../services';
