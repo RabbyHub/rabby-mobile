@@ -1,10 +1,13 @@
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { RootNames } from '@/constant/layout';
 import { sendRequest } from '@/core/apis/provider';
 import { bridgeService, preferenceService } from '@/core/services';
 import { BridgeRecord } from '@/core/services/bridge';
 import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
+import { navigationRef } from '@/utils/navigation';
+import { StackActions } from '@react-navigation/native';
 import BigNumber from 'bignumber.js';
 
 export const bridgeToken = async (
@@ -109,6 +112,12 @@ export const bridgeToken = async (
         ],
       },
       INTERNAL_REQUEST_SESSION,
-    );
+    ).then(() => {
+      navigationRef.dispatch(
+        StackActions.replace(RootNames.StackRoot, {
+          screen: RootNames.Home,
+        }),
+      );
+    });
   } catch (e) {}
 };
