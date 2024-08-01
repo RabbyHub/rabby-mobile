@@ -448,8 +448,6 @@ export const useTokenPair = (userAddress: string) => {
     console.error('quotesError', quotesError);
   }
 
-  console.log('quoteLoading', quoteLoading);
-
   useEffect(() => {
     setExpired(false);
     setSelectedBridgeQuote(undefined);
