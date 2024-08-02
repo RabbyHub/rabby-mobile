@@ -2,5 +2,4 @@ export * from './atom';
 export * from './history';
 export * from './token';
 export * from './settings';
-export * from './verify';
 export * from './quote';
