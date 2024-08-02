@@ -13,7 +13,7 @@ import MobilePortStream from './MobilePortStream';
 import Port from './Port';
 import { setupMultiplex } from '../utils/streams';
 import type { Substream } from '@rabby-wallet/object-multiplex/dist/Substream';
-import { urlUtils } from '@rabby-wallet/base-utils';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 import { createOriginMiddleware } from './middlewares';
 import { createSanitizationMiddleware } from './middlewares/SanitizationMiddleware';
@@ -25,6 +25,7 @@ import WebView from 'react-native-webview';
 
 type BackgroundBridgeOptions = {
   webview: RefLikeObject<WebView | null>;
+  webviewIdRef: RefLikeObject<string>;
   urlRef: RefLikeObject<string>;
   titleRef: RefLikeObject<string>;
   iconRef: RefLikeObject<string | undefined>;
@@ -34,10 +35,13 @@ type BackgroundBridgeOptions = {
 export class BackgroundBridge extends EventEmitter {
   port: Port;
 
+  dappCardId = stringUtils.randString();
+
   #webview: WebView | null;
   #webviewOrigin: string;
 
   #disconnected: boolean = true;
+  #webviewIdRef: RefLikeObject<string> = { current: '' };
   #urlRef: RefLikeObject<string> = { current: '' };
   #titleRef: RefLikeObject<string> = { current: '' };
   #iconRef: RefLikeObject<string | undefined> = { current: '' };
@@ -52,12 +56,18 @@ export class BackgroundBridge extends EventEmitter {
     return this.#urlRef.current;
   }
 
+  get webviewId() {
+    return this.#webviewIdRef.current;
+  }
+
   constructor(options: BackgroundBridgeOptions) {
     super();
 
-    const { webview, urlRef, titleRef, iconRef, isMainFrame } = options;
+    const { webview, webviewIdRef, urlRef, titleRef, iconRef, isMainFrame } =
+      options;
 
     this.#webview = webview.current;
+    this.#webviewIdRef = webviewIdRef;
     this.#webviewOrigin = urlUtils.canoicalizeDappUrl(
       urlRef.current,
     ).httpOrigin;

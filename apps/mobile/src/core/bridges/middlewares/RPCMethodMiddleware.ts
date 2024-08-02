@@ -4,7 +4,7 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { getActiveDappOrigin, shouldAllowApprovePopup } from '../state';
+import { getActiveDappTabId } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 
 let appVersion = '';
@@ -76,7 +76,14 @@ RPCMethodsMiddleParameters) =>
 
       return accounts;
     };
-    const checkTabActive = () => {};
+    const checkTabActive = () => {
+      const activeDappTabId = getActiveDappTabId();
+      if (!activeDappTabId) return false;
+
+      const webviewId = bridge.webviewId;
+
+      return activeDappTabId === webviewId;
+    };
 
     const providerSessionBase: ProviderRequest['session'] & object = {
       name: titleRef.current,
@@ -84,11 +91,15 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
     };
 
-    const srcOrigin = req.origin;
-    const notAllowedNow = !shouldAllowApprovePopup({
-      dappOrigin: srcOrigin,
-      currentOrigin: getActiveDappOrigin(),
-    });
+    // const targetOrigin = req.origin;
+    // const notAllowedNow = !shouldAllowApprovePopup(
+    //   {
+    //     targetOrigin,
+    //     currentActiveOrigin: getActiveDappOrigin(),
+    //   },
+    //   { noNeedStrict: true },
+    // );
+    const notAllowedNow = !checkTabActive();
 
     const rpcMethods = {
       ['@reject']: async () => {

@@ -180,6 +180,7 @@ function useDefaultNodes({
 
 export type DappWebViewControlType = {
   closeWebViewNavModal: () => void;
+  getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
 };
@@ -209,6 +210,7 @@ const DappWebViewControl = React.forwardRef<
 
     const {
       webviewRef,
+      webviewIdRef,
       urlRef,
       titleRef,
       iconRef,
@@ -237,10 +239,11 @@ const DappWebViewControl = React.forwardRef<
         closeWebViewNavModal: () => {
           webviewNavRef?.current?.close();
         },
+        getWebViewId: () => webviewIdRef.current || '',
         getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewNavRef, webviewState, webviewActions],
+      [webviewNavRef, webviewIdRef, webviewState, webviewActions],
     );
 
     const handlePressMoreDefault = useCallback(() => {
@@ -322,12 +325,13 @@ const DappWebViewControl = React.forwardRef<
     } = useSetupWebview({
       dappOrigin,
       webviewRef,
+      webviewIdRef,
       siteInfoRefs: {
         urlRef,
         titleRef,
         iconRef,
       },
-      onSelfClose,
+      // onSelfClose,
     });
 
     const initialUrl = useMemo(() => {

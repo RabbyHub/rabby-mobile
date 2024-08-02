@@ -5,8 +5,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import * as ApprovalComponent from './components';
-import { shouldAllowApprovePopup } from '@/core/bridges/state';
-import { useCurrentActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
+import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
+import { getActiveDappTabId } from '@/core/bridges/state';
 
 export const Approval = () => {
   const [getApproval, ,] = useApproval();
@@ -42,23 +42,21 @@ export const Approval = () => {
     };
   }, [init]);
 
-  const { activeDappOrigin } = useCurrentActiveOpenedDapp();
-
-  if (!approval) {
+  if (!getActiveDappTabId() || !approval) {
     return <View />;
   }
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
 
-  const sourceOrigin = origin || params.origin;
-  if (
-    !shouldAllowApprovePopup({
-      dappOrigin: sourceOrigin,
-      currentOrigin: activeDappOrigin,
-    })
-  ) {
-    return <View />;
-  }
+  // const sourceOrigin = origin || params.origin;
+  // if (
+  //   !shouldAllowApprovePopup({
+  //     targetOrigin: sourceOrigin,
+  //     currentActiveOrigin: activeDappOrigin,
+  //   })
+  // ) {
+  //   return <View />;
+  // }
 
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;

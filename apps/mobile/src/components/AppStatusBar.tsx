@@ -3,7 +3,7 @@ import { Appearance, Platform, StatusBar } from 'react-native';
 
 import { useCurrentRouteName, useRabbyAppNavigation } from '@/hooks/navigation';
 import { useGetBinaryMode } from '@/hooks/theme';
-import { useCurrentActiveOpenedDapp } from '@/screens/Dapps/hooks/useDappView';
+import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
 import {
   AppRootName,
   ScreenStatusBarConf,
@@ -17,7 +17,7 @@ export const USE_ANDROID_STATUS_BAR_TRANSPARENT = true;
 
 export function useSafeSetNavigationOptions() {
   const navigation = useRabbyAppNavigation();
-  const { hasActiveDapp: isShowingDappCard } = useCurrentActiveOpenedDapp();
+  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
 
   const setNavigationOptions = React.useCallback(
     (options: NativeStackNavigationOptions) => {
@@ -58,7 +58,7 @@ export function useSafeSetNavigationOptions() {
 
 function useTuneStatusBar() {
   const _isDarkTheme = useGetBinaryMode() !== 'light';
-  const { hasActiveDapp: isShowingDappCard } = useCurrentActiveOpenedDapp();
+  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
 
   const tuneStatusBar = React.useCallback(
     (options: {
@@ -133,7 +133,7 @@ export function useScreenAppStatusBarConf(expectedRoute?: string) {
   const isLight = useGetBinaryMode() === 'light';
 
   // maybe we need more smooth transition on toggle active dapp
-  const { hasActiveDapp: isShowingDappCard } = useCurrentActiveOpenedDapp();
+  const { hasActiveDapp: isShowingDappCard } = useOpenedActiveDappState();
 
   const { rootSpecs, screenSpec: routeStatusbarConf } = useMemo(() => {
     return getScreenStatusBarConf({
