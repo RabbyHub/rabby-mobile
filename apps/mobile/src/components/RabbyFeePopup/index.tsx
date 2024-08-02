@@ -83,6 +83,7 @@ export const RabbyFeePopup = ({
       ref={sheetModalRef}
       snapPoints={snapPoints}
       enableDismissOnClose
+      onDismiss={onClose}
       handleStyle={styles.sheetBg}
       backgroundStyle={styles.sheetBg}>
       <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
