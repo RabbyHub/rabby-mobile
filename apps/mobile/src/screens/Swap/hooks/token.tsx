@@ -367,6 +367,7 @@ export const useTokenPair = (userAddress: string) => {
       !inSufficient
     ) {
       setQuoteLoading(true);
+      setActiveProvider(undefined);
     }
     runGetAllQuotes();
   }, [
@@ -482,13 +483,16 @@ export const useTokenPair = (userAddress: string) => {
     }
   }, [slippage, chain, payToken?.id, receiveToken?.id, refreshId]);
 
+  const { setSwapSortIncludeGasFee } = useSwapSettings();
+
   const openQuote = useSetQuoteVisible();
 
   const openQuotesList = useCallback(() => {
     setQuotesList([]);
     setRefreshId(e => e + 1);
     openQuote(true);
-  }, [openQuote, setRefreshId]);
+    setSwapSortIncludeGasFee(true);
+  }, [openQuote, setRefreshId, setSwapSortIncludeGasFee]);
 
   useEffect(() => {
     if (expiredTimer.current) {

@@ -318,17 +318,23 @@ const Swap = () => {
                 symbol: payToken ? getTokenSymbol(payToken) : '',
               })}
             </Text>
-            <TouchableItem onPress={handleBalance}>
-              <Text
-                style={[
-                  styles.label,
-                  !payTokenIsNativeToken && {
-                    textDecorationLine: 'underline',
-                  },
-                ]}>
+            {payTokenIsNativeToken ? (
+              <Text style={[styles.label]}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
-            </TouchableItem>
+            ) : (
+              <TouchableItem onPress={handleBalance}>
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      textDecorationLine: 'underline',
+                    },
+                  ]}>
+                  {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
+                </Text>
+              </TouchableItem>
+            )}
           </View>
           <View style={styles.inputContainer}>
             <TextInput
@@ -553,7 +559,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     height: 52,
     borderRadius: 4,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: colors['neutral-line'],
     paddingHorizontal: 12,
     alignItems: 'center',

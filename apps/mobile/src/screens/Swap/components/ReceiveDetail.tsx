@@ -206,10 +206,12 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
           inSufficient={false}
           sortIncludeGasFee={true}
           preExecResult={activeProvider.preExecResult}
+          onPress={openQuotesList}
         />
         {activeProvider.name && receiveToken ? (
           isBestQuote ? (
             <TouchableOpacity
+              activeOpacity={1}
               style={[styles.quoteProvider, styles.quoteProviderBest]}
               onPress={openQuotesList}>
               <Text style={styles.quoteProviderBestText}>Best</Text>
@@ -220,6 +222,7 @@ export const ReceiveDetails = (props: ReceiveDetailsProps) => {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
+              activeOpacity={1}
               style={styles.quoteProvider}
               onPress={openQuotesList}>
               <RcIconSwitchQuoteCC

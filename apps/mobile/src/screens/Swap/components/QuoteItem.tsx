@@ -49,6 +49,7 @@ export interface QuoteItemProps {
     React.SetStateAction<QuoteProvider | undefined>
   >;
   sortIncludeGasFee: boolean;
+  onPress?: () => void;
 }
 
 export const DexQuoteItem = (
@@ -81,6 +82,7 @@ export const DexQuoteItem = (
     onlyShowErrorQuote,
     onErrQuote,
     onlyShow,
+    onPress,
   } = props;
 
   const colors = useThemeColors();
@@ -170,8 +172,8 @@ export const DexQuoteItem = (
       }
 
       if (!quote?.toTokenAmount) {
-        receiveOrErrorContent = null;
-        bestQuotePercent = (
+        bestQuotePercent = null;
+        receiveOrErrorContent = (
           <Text style={styles.failedTipText}>
             {t('page.swap.unable-to-fetch-the-price')}
           </Text>
@@ -361,14 +363,7 @@ export const DexQuoteItem = (
             paddingTop: 14,
             paddingBottom: 14,
           },
-          onlyShow && {
-            backgroundColor: 'transparent',
-            height: 'auto',
-            shadowColor: 'transparent',
-            shadowOffset: undefined,
-            shadowOpacity: 0,
-            shadowRadius: 0,
-          },
+          onlyShow && styles.onlyShow,
         ]}
         onPress={() => {
           if (gasFeeTooHight) {
@@ -379,6 +374,7 @@ export const DexQuoteItem = (
             setInSufficientTapTip(true);
           }
           if (onlyShow) {
+            onPress?.();
             return;
           }
           handleClick();
@@ -558,6 +554,16 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     shadowOpacity: 1,
     shadowRadius: 12,
     // minHeight: 93,
+  },
+  onlyShow: {
+    backgroundColor: 'transparent',
+    height: 'auto',
+    shadowColor: 'transparent',
+    shadowOffset: undefined,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    borderWidth: 0,
+    borderRadius: 0,
   },
   percentText: {
     fontSize: 12,

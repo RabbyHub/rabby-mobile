@@ -335,21 +335,6 @@ export const QuoteList = (props: QuotesProps) => {
 
   const { height: screenHeight } = useWindowDimensions();
 
-  // const height = useMemo(() => {
-  //   const min = 333;
-  //   const max = Math.min(605, screenHeight * 0.9);
-
-  //   const h = 64 + 24 + 30 + ViewDexIdList.length * 102;
-
-  //   if (h < min) {
-  //     return min;
-  //   }
-  //   if (h > max) {
-  //     return max;
-  //   }
-  //   return h;
-  // }, [ViewDexIdList.length, screenHeight]);
-
   const height = useMemo(() => {
     return Math.min(605, screenHeight * 0.9);
   }, [screenHeight]);
@@ -410,6 +395,7 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     fontWeight: '500',
     color: colors['neutral-body'],
+    marginLeft: 4,
   },
   edit: {
     color: colors['blue-default'],
