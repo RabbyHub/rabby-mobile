@@ -135,7 +135,7 @@ export const RabbyFeePopup = ({
   );
 };
 
-const getStyles = createGetStyles((colors: any) => ({
+const getStyles = createGetStyles(colors => ({
   sheetBg: {
     backgroundColor: colors['neutral-bg-2'],
   },

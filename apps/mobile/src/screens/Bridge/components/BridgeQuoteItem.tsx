@@ -137,7 +137,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
           />
           <Text style={styles.feeText}>
             {t('page.bridge.duration', {
-              duration: Math.round(props.duration / 60),
+              duration: Math.ceil(props.duration / 60),
             })}
           </Text>
         </View>
@@ -153,7 +153,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
                 .toString(),
             )}
           </Text>
-          <Text style={styles.estimatedValueText}>after fee</Text>
+          <Text style={styles.estimatedValueText}>after fees</Text>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
@@ -215,6 +215,7 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 6,
   },
   leftSection: {
     flexDirection: 'row',
@@ -246,8 +247,7 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 16,
     fontWeight: '500',
     color: colors['neutral-title1'],
-    maxWidth: 138,
-    // flexShrink: 0,
+    flexShrink: 1,
   },
   bottomRow: {
     flexDirection: 'row',
