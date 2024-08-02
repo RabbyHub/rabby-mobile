@@ -47,6 +47,8 @@ export default function BottomArea() {
     addressToAddAsContacts,
   } = screenState;
 
+  const shouldShowWhitelistAlert = formValues.to && showWhitelistAlert;
+
   const whitelistAlertContent = useMemo(() => {
     if (!whitelistEnabled) {
       return {
@@ -114,7 +116,7 @@ export default function BottomArea() {
         styles.bottomDockArea,
         isAndroid && { paddingBottom: 20 + safeOffBottom },
       ]}>
-      {showWhitelistAlert && (
+      {shouldShowWhitelistAlert && (
         <TouchableView
           disabled={canSendNow}
           onPress={handleClickAllowTransferTo}>
