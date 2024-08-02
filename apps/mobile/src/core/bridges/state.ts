@@ -15,8 +15,8 @@ type Listeners = {
 };
 export const activeDappStateEvents =
   new (makeEEClass<Listeners>().EventEmitter)();
-export function getActiveDappTabId() {
-  return activeDappRef.tabId;
+export function getActiveDappState() {
+  return { ...activeDappRef };
 }
 export function globalSetActiveDappState(input: {
   tabId?: string | null;

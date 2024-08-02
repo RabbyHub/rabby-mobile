@@ -4,7 +4,7 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { getActiveDappTabId } from '../state';
+import { getActiveDappState } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 
 let appVersion = '';
@@ -77,12 +77,12 @@ RPCMethodsMiddleParameters) =>
       return accounts;
     };
     const checkTabActive = () => {
-      const activeDappTabId = getActiveDappTabId();
-      if (!activeDappTabId) return false;
+      const activeDappState = getActiveDappState();
+      if (activeDappState.dappOrigin && !!activeDappState.tabId) return false;
 
       const webviewId = bridge.webviewId;
 
-      return activeDappTabId === webviewId;
+      return activeDappState.tabId === webviewId;
     };
 
     const providerSessionBase: ProviderRequest['session'] & object = {
