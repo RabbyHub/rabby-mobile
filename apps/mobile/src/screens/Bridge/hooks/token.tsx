@@ -203,14 +203,6 @@ export const useTokenPair = (userAddress: string) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
 
-  const visible = useQuoteVisible();
-
-  useEffect(() => {
-    if (!visible) {
-      setQuotesList([]);
-    }
-  }, [visible]);
-
   const setRefreshId = useSetRefreshId();
 
   const aggregatorsList = useAggregatorsList();
