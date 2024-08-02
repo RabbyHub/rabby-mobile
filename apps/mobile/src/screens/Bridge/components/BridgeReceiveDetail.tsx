@@ -93,8 +93,6 @@ export const BridgeReceiveDetails = (props: ReceiveDetailsProps) => {
     [activeProvider, bestQuoteId],
   );
 
-  console.log('activeProvider', !!activeProvider, !!noBestQuote);
-
   if (!activeProvider) {
     if (!noBestQuote) {
       return null;
