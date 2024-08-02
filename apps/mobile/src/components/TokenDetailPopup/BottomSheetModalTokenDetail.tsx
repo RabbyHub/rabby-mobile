@@ -80,6 +80,8 @@ const TokenDetailHeader = React.memo(
     token,
     style,
     logoStyle,
+    isAdded,
+    setIsAdded,
   }: // onSmallTokenPress,
   // onTokenPress,
   {
@@ -87,6 +89,8 @@ const TokenDetailHeader = React.memo(
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     showHistory?: boolean;
+    isAdded: boolean;
+    setIsAdded: (isAdded: boolean) => void;
     // onSmallTokenPress?(token: AbstractPortfolioToken): void;
     // onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
@@ -117,38 +121,6 @@ const TokenDetailHeader = React.memo(
     const isNativeToken = !/^0x.{40}$/.test(token?._tokenId || '');
 
     const copyAddressIconRef = React.useRef<CopyAddressIconType>(null);
-
-    const [isAdded, setIsAdded] = React.useState(false);
-
-    const checkIsAdded = useMemoizedFn(async () => {
-      if (!token) return;
-
-      if (chainItem?.isTestnet) {
-        const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
-          chainId: chainItem.id,
-          id: token._tokenId,
-        });
-        setIsAdded(isAdded);
-      } else {
-        let list: Token[] = [];
-        if (token.is_core) {
-          list = await preferenceService.getBlockedToken();
-        } else {
-          list = await preferenceService.getCustomizedToken();
-        }
-
-        const isAdded = list.some(
-          item =>
-            isSameAddress(item.address, token._tokenId) &&
-            item.chain === token.chain,
-        );
-        setIsAdded(isAdded);
-      }
-    });
-
-    React.useEffect(() => {
-      checkIsAdded();
-    }, [checkIsAdded]);
 
     const {
       addCustomToken,
@@ -451,7 +423,6 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   BottomSheetModalMethods,
   {
     token?: AbstractPortfolioToken | null;
-    isAdded?: boolean;
     canClickToken?: boolean;
     isTestnet?: boolean;
     onDismiss?: () => void;
@@ -465,7 +436,6 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   (
     {
       token,
-      isAdded,
       canClickToken,
       onDismiss,
       onTriggerDismissFromInternal,
@@ -535,6 +505,40 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         listRef.scrollToOffset({ offset: 0, animated: false });
       }
     }, []);
+
+    const [isAdded, setIsAdded] = React.useState(false);
+
+    const chainItem = findChain({ serverId: token?.chain });
+
+    const checkIsAdded = useMemoizedFn(async () => {
+      if (!token) return;
+
+      if (chainItem?.isTestnet) {
+        const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
+          chainId: chainItem.id,
+          id: token._tokenId,
+        });
+        setIsAdded(isAdded);
+      } else {
+        let list: Token[] = [];
+        if (token.is_core) {
+          list = await preferenceService.getBlockedToken();
+        } else {
+          list = await preferenceService.getCustomizedToken();
+        }
+
+        const isAdded = list.some(
+          item =>
+            isSameAddress(item.address, token._tokenId) &&
+            item.chain === token.chain,
+        );
+        setIsAdded(isAdded);
+      }
+    });
+
+    React.useEffect(() => {
+      checkIsAdded();
+    }, [checkIsAdded, token]);
 
     // Customized and not added
     const isHiddenButton = isTestnet ? false : !token?.is_core && !isAdded;
@@ -871,7 +875,13 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             {tokenLoad?.isLoading ? (
               <SkeletonTokenDetailHeader />
             ) : (
-              !!tokenWithAmount && <TokenDetailHeader token={tokenWithAmount} />
+              !!tokenWithAmount && (
+                <TokenDetailHeader
+                  token={tokenWithAmount}
+                  isAdded={isAdded}
+                  setIsAdded={setIsAdded}
+                />
+              )
             )}
           </BottomSheetHandlableView>
           <BottomSheetFlatList

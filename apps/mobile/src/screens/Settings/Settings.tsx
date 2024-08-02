@@ -63,7 +63,11 @@ import {
 } from '@react-navigation/native';
 import { ManagePasswordSheetModal } from '../ManagePassword/components/ManagePasswordSheetModal';
 import { useManagePasswordOnSettings } from '../ManagePassword/hooks';
-import { useBiometrics, useVerifyByBiometrics } from '@/hooks/biometrics';
+import {
+  useBiometrics,
+  useBiometricsComputed,
+  useVerifyByBiometrics,
+} from '@/hooks/biometrics';
 import {
   useIsAllowScreenshot,
   useToggleShowAutoLockCountdown,
@@ -160,6 +164,8 @@ function SettingsBlocks() {
 
   const navigation = useRabbyAppNavigation();
 
+  const biometricsComputed = useBiometricsComputed();
+
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       // features: {
@@ -206,7 +212,7 @@ function SettingsBlocks() {
             rightNode: <SwitchWhitelistEnable ref={switchWhitelistRef} />,
           },
           {
-            label: `${isIOS ? 'Face ID' : 'Biometrics'}`,
+            label: biometricsComputed.defaultTypeLabel,
             icon: getBiometricsIcon(isFaceID),
             rightNode: (
               <SwitchBiometricsAuthentication ref={switchBiometricsRef} />

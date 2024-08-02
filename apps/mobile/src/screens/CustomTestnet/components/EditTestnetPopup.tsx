@@ -31,6 +31,7 @@ import { AddFromChainList } from './AddFromChainList';
 import { CustomTestnetForm } from './CustomTestnetForm';
 import { ModalLayouts } from '@/constant/layout';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import AutoLockView from '@/components/AutoLockView';
 
 export const EditCustomTestnetPopup = ({
   data,
@@ -141,76 +142,84 @@ export const EditCustomTestnetPopup = ({
       snapPoints={['80%']}
       ref={modalRef}
       onDismiss={onCancel}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={styles.container}>
-          <AppBottomSheetModalTitle
-            style={{ paddingTop: ModalLayouts.titleTopOffset }}
-            title={t('page.customRpc.EditCustomTestnetModal.title')}
-          />
-          <KeyboardAwareScrollView
-            style={styles.container}
-            enableOnAndroid
-            scrollEnabled
-            keyboardOpeningTime={0}
-            keyboardShouldPersistTaps="handled">
-            <View style={styles.main}>
-              <TouchableOpacity
-                onPress={() => {
-                  setIsShowAddFromChainList(true);
-                }}
-                style={styles.quickAdd}>
-                <RcIconFlash color={colors['neutral-body']} />
-                <Text style={styles.quickAddText}>
-                  {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
-                </Text>
-                <RcIconRight color={colors['neutral-body']} />
-              </TouchableOpacity>
-              <CustomTestnetForm formik={formik} isEdit={isEdit} />
-            </View>
-          </KeyboardAwareScrollView>
-          <View style={styles.footer}>
-            <Button
-              onPress={onCancel}
-              title={'Cancel'}
-              buttonStyle={[styles.buttonStyle]}
-              titleStyle={styles.btnCancelTitle}
-              type="white"
-              containerStyle={[styles.btnContainer, styles.btnCancelContainer]}
+      <AutoLockView style={{ height: '100%' }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.container}>
+            <AppBottomSheetModalTitle
+              style={{ paddingTop: ModalLayouts.titleTopOffset }}
+              title={t('page.customRpc.EditCustomTestnetModal.title')}
             />
-            <Button
-              title={'Confirm'}
-              buttonStyle={[
-                styles.buttonStyle,
-                { backgroundColor: colors['blue-default'] },
-              ]}
-              style={{
-                width: '100%',
+            <KeyboardAwareScrollView
+              style={styles.container}
+              enableOnAndroid
+              scrollEnabled
+              keyboardOpeningTime={0}
+              keyboardShouldPersistTaps="handled">
+              <View style={styles.main}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsShowAddFromChainList(true);
+                  }}
+                  style={styles.quickAdd}>
+                  <RcIconFlash color={colors['neutral-body']} />
+                  <Text style={styles.quickAddText}>
+                    {t('page.customRpc.EditCustomTestnetModal.quickAdd')}
+                  </Text>
+                  <RcIconRight color={colors['neutral-body']} />
+                </TouchableOpacity>
+                <CustomTestnetForm formik={formik} isEdit={isEdit} />
+              </View>
+            </KeyboardAwareScrollView>
+            <View style={styles.footer}>
+              <Button
+                onPress={onCancel}
+                title={'Cancel'}
+                buttonStyle={[styles.buttonStyle]}
+                titleStyle={styles.btnCancelTitle}
+                type="white"
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnCancelContainer,
+                ]}
+              />
+              <Button
+                title={'Confirm'}
+                buttonStyle={[
+                  styles.buttonStyle,
+                  { backgroundColor: colors['blue-default'] },
+                ]}
+                style={{
+                  width: '100%',
+                }}
+                titleStyle={styles.btnConfirmTitle}
+                onPress={handleSubmit}
+                loading={loading}
+                containerStyle={[
+                  styles.btnContainer,
+                  styles.btnConfirmContainer,
+                ]}
+              />
+            </View>
+            <AddFromChainList
+              visible={isShowAddFromChainList}
+              onClose={() => {
+                setIsShowAddFromChainList(false);
               }}
-              titleStyle={styles.btnConfirmTitle}
-              onPress={handleSubmit}
-              loading={loading}
-              containerStyle={[styles.btnContainer, styles.btnConfirmContainer]}
+              onSelect={item => {
+                formik.resetForm();
+                formik.setValues(item);
+                setIsShowAddFromChainList(false);
+                const source = ctx?.ga?.source || 'setting';
+                matomoRequestEvent({
+                  category: 'Custom Network',
+                  action: 'Choose ChainList Network',
+                  label: `${source}_${String(item.id)}`,
+                });
+              }}
             />
           </View>
-          <AddFromChainList
-            visible={isShowAddFromChainList}
-            onClose={() => {
-              setIsShowAddFromChainList(false);
-            }}
-            onSelect={item => {
-              formik.resetForm();
-              formik.setValues(item);
-              setIsShowAddFromChainList(false);
-              const source = ctx?.ga?.source || 'setting';
-              matomoRequestEvent({
-                category: 'Custom Network',
-                action: 'Choose ChainList Network',
-                label: `${source}_${String(item.id)}`,
-              });
-            }}
-          />
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 };

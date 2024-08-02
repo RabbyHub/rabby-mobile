@@ -16,11 +16,19 @@ function useToggleBiometricsEnabled() {
         confirmText: strings('global.confirm'),
         cancelText: strings('global.cancel'),
         title: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enable')
-          : strings('component.AuthenticationModals.biometrics.disable'),
-        description: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enableTip')
-          : strings('component.AuthenticationModals.biometrics.disableTip'),
+          ? strings('component.AuthenticationModals.biometrics.enable', {
+              bioType: computed.defaultTypeLabel,
+            })
+          : strings('component.AuthenticationModals.biometrics.disable', {
+              bioType: computed.defaultTypeLabel,
+            }),
+        // description: nextEnabled
+        //   ? strings('component.AuthenticationModals.biometrics.enableTip', {
+        //       bioType: computed.defaultTypeLabel,
+        //     })
+        //   : strings('component.AuthenticationModals.biometrics.disableTip', {
+        //       bioType: computed.defaultTypeLabel,
+        //     }),
         authType: nextEnabled ? ['password'] : ['none'],
         async onFinished({ getValidatedPassword }) {
           await toggleBiometrics(nextEnabled, {
@@ -30,7 +38,7 @@ function useToggleBiometricsEnabled() {
         },
       });
     },
-    [toggleBiometrics],
+    [toggleBiometrics, computed.defaultTypeLabel],
   );
 
   return {
