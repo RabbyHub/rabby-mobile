@@ -5,6 +5,8 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { useCurrentAccount } from '@/hooks/account';
 import { openapi } from '@/core/request';
 import { ApprovalStatus } from '@rabby-wallet/rabby-api/dist/types';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { appIsDev } from '@/constant/event';
 
 const approvalStatusAtom = atom<ApprovalStatus[]>([]);
 
@@ -14,7 +16,10 @@ export function useApprovalAlert() {
 
   const [{ loading: loadingMaybeWrong, error }, loadApprovalStatus] =
     useAsyncFn(async () => {
-      if (currentAccount?.address) {
+      if (
+        currentAccount?.address &&
+        (currentAccount.type !== KEYRING_TYPE.WatchAddressKeyring || appIsDev)
+      ) {
         // const apiLevel = await openapi.getAPIConfig([], 'ApiLevel', false);
         // if (apiLevel < 1) {
         // } else {
@@ -22,7 +27,7 @@ export function useApprovalAlert() {
         // }
 
         try {
-          const data = await openapi.approvalStatus(currentAccount.address);
+          const data = await openapi.approvalStatus(currentAccount!.address);
           setApprovalState(data);
         } catch (error) {}
       }
