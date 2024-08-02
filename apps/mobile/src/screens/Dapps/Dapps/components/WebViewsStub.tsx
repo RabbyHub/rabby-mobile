@@ -39,7 +39,10 @@ import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
-import { OpenedDappBottomSheetModal } from '@/components';
+import {
+  OpenedDappBottomSheetModal,
+  useAutoLockBottomSheetModalOnChange,
+} from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { createGetStyles } from '@/utils/styles';
@@ -48,6 +51,8 @@ import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import AutoLockView from '@/components/AutoLockView';
+import { globalSetActiveDappState } from '@/core/bridges/state';
+// import { globalSetActiveDappState } from '@/core/bridges/state';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -186,6 +191,8 @@ export function OpenedDappWebViewStub() {
       // openedDappWebviewSheetModalRef?.current?.present();
       expandDappWebViewModal();
       // toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+    } else {
+      globalSetActiveDappState({ dappOrigin: null, tabId: null });
     }
   }, [expandDappWebViewModal, activeDapp]);
 
@@ -205,6 +212,10 @@ export function OpenedDappWebViewStub() {
   const { currentAccount } = useCurrentAccount();
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
+  const { handleChange } = useAutoLockBottomSheetModalOnChange(
+    handleBottomSheetChanges,
+  );
+
   return (
     <OpenedDappBottomSheetModal
       index={OPEN_DAPP_VIEW_INDEXES.collapsed}
@@ -219,7 +230,7 @@ export function OpenedDappWebViewStub() {
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
       enableDynamicSizing={false}
-      onChange={handleBottomSheetChanges}>
+      onChange={handleChange}>
       <AutoLockView
         as="BottomSheetView"
         style={[
@@ -234,7 +245,16 @@ export function OpenedDappWebViewStub() {
           return (
             <DappWebViewControl
               key={key}
-              ref={activeDappWebViewControlRef}
+              ref={inst => {
+                // @ts-expect-error
+                activeDappWebViewControlRef.current = inst;
+                if (isActiveDapp) {
+                  globalSetActiveDappState({
+                    dappOrigin: dappInfo.origin,
+                    tabId: inst?.getWebViewId(),
+                  });
+                }
+              }}
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
               initialUrl={dappInfo.$openParams?.initialUrl}

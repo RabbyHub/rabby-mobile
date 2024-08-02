@@ -7,10 +7,36 @@ import { DappInfo } from '@/core/services/dappService';
 import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
-import { setGlobalActiveDappOrigin } from '@/core/bridges/state';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
+import {
+  ActiveDappState,
+  activeDappStateEvents,
+  globalSetActiveDappState,
+} from '@/core/bridges/state';
 
-const activeDappOriginAtom = atom<DappInfo['origin'] | null>(null);
+const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
+activeDappTabIdAtom.onMount = set => {
+  const listener = (tabId: ActiveDappState['tabId']) => {
+    set(tabId);
+  };
+  activeDappStateEvents.addListener('updated', listener);
+
+  return () => {
+    activeDappStateEvents.removeListener('updated', listener);
+  };
+};
+
+const activeDappOriginAtom = atom<ActiveDappState['dappOrigin']>(null);
+export function useOpenedActiveDappState() {
+  const activeDappOrigin = useAtomValue(activeDappOriginAtom);
+  const activeTabId = useAtomValue(activeDappTabIdAtom);
+
+  return {
+    activeDappOrigin,
+    activeTabId: activeTabId,
+    hasActiveDapp: !!activeDappOrigin,
+  };
+}
 
 export type OpenedDappItem = {
   origin: DappInfo['origin'];
@@ -30,27 +56,19 @@ export function useActiveViewSheetModalRefs() {
   return useSheetModals(useAtomValue(activeWebViewSheetModalRefs));
 }
 
-export function useCurrentActiveOpenedDapp() {
-  const [activeDappOrigin] = useAtom(activeDappOriginAtom);
-
-  return {
-    activeDappOrigin,
-    hasActiveDapp: !!activeDappOrigin,
-  };
-}
-
 export const OPEN_DAPP_VIEW_INDEXES = {
   expanded: 1,
   collapsed: 0,
 };
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
+  // const { activeDappOrigin, setActiveDappState } = useOpenedActiveDappState();
   const [activeDappOrigin, _setActiveDappOrigin] =
     useAtom(activeDappOriginAtom);
 
   const setActiveDappOrigin = useCallback(
     (origin: DappInfo['origin'] | null) => {
-      setGlobalActiveDappOrigin(origin);
+      globalSetActiveDappState({ dappOrigin: origin });
       _setActiveDappOrigin(origin);
     },
     [_setActiveDappOrigin],
@@ -231,6 +249,7 @@ export function useOpenDappView() {
   return {
     activeDapp,
     openedDappItems,
+    setActiveDappOrigin,
 
     expandDappWebViewModal,
     collapseDappWebViewModal,

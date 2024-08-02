@@ -51,6 +51,38 @@ export const AppBottomSheetModalTitle: React.FC<{
   return <Text style={[styles.title, style]}>{title}</Text>;
 };
 
+type onChangeArgsType = Parameters<BottomSheetModalProps['onChange'] & object>;
+export function useAutoLockBottomSheetModalOnChange(
+  onChange: BottomSheetModalProps['onChange'],
+) {
+  const preOnChangeArgsRef = React.useRef<onChangeArgsType | null>(null);
+  const handleChange = useCallback<BottomSheetModalProps['onChange'] & object>(
+    (idx, pos, type) => {
+      onChange?.(idx, pos, type);
+
+      try {
+        const prevVal = preOnChangeArgsRef.current;
+        const curVal = [idx, pos, type] as onChangeArgsType;
+        preOnChangeArgsRef.current = curVal;
+
+        if (
+          !prevVal ||
+          prevVal[0] !== curVal[0] ||
+          prevVal[1] !== curVal[1] ||
+          prevVal[2] !== curVal[2]
+        ) {
+          apisAutoLock.uiRefreshTimeout();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [onChange],
+  );
+
+  return { handleChange };
+}
+
 export const AppBottomSheetModal = forwardRef<
   BottomSheetModal,
   React.ComponentProps<typeof BottomSheetModal> & {
@@ -83,33 +115,7 @@ export const AppBottomSheetModal = forwardRef<
     [props.backdropProps],
   );
 
-  type onChangeArgsType = Parameters<
-    BottomSheetModalProps['onChange'] & object
-  >;
-  const preOnChangeArgsRef = React.useRef<onChangeArgsType | null>(null);
-  const handleChange = useCallback<BottomSheetModalProps['onChange'] & object>(
-    (idx, pos, type) => {
-      onChange?.(idx, pos, type);
-
-      try {
-        const prevVal = preOnChangeArgsRef.current;
-        const curVal = [idx, pos, type] as onChangeArgsType;
-        preOnChangeArgsRef.current = curVal;
-
-        if (
-          !prevVal ||
-          prevVal[0] !== curVal[0] ||
-          prevVal[1] !== curVal[1] ||
-          prevVal[2] !== curVal[2]
-        ) {
-          apisAutoLock.uiRefreshTimeout();
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    [onChange],
-  );
+  const { handleChange } = useAutoLockBottomSheetModalOnChange(onChange);
 
   return (
     <BottomSheetModal

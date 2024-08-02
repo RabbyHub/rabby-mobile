@@ -1,5 +1,5 @@
 import { devLog } from '@/utils/logger';
-import { urlUtils } from '@rabby-wallet/base-utils';
+import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 import { useCallback, useRef, useState } from 'react';
 import { GestureResponderEvent } from 'react-native';
 import WebView, { WebViewNavigation } from 'react-native-webview';
@@ -17,6 +17,8 @@ export const BLANK_PAGE = 'about:blank';
 
 export function useWebViewControl() {
   const webviewRef = useRef<WebView>(null);
+  const webviewIdRef = useRef<string>(stringUtils.randString());
+
   const urlRef = useRef<string>(BLANK_PAGE);
   const titleRef = useRef<string>('');
   const iconRef = useRef<string | undefined>();
@@ -76,6 +78,7 @@ export function useWebViewControl() {
   return {
     webviewState,
     webviewRef,
+    webviewIdRef,
     urlRef,
     titleRef,
     iconRef,
