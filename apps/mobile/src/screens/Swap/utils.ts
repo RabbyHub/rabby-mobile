@@ -337,9 +337,19 @@ export const halfBetterRate = (
   return null;
 };
 
-export type QuotePreExecResultInfo = Awaited<
-  ReturnType<typeof getPreExecResult>
-> | null;
+// export type QuotePreExecResultInfo = Awaited<
+//   ReturnType<typeof getPreExecResult>
+// > | null;
+
+export type QuotePreExecResultInfo = {
+  shouldApproveToken: boolean;
+  shouldTwoStepApprove: boolean;
+  swapPreExecTx: ExplainTxResponse;
+  gasPrice: number;
+  gasUsd: string;
+  gasUsdValue: string;
+  isSdkPass?: boolean;
+} | null;
 
 interface getDexQuoteParams {
   payToken: TokenItem;

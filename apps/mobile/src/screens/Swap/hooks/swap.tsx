@@ -14,14 +14,18 @@ import { RootNames } from '@/constant/layout';
 
 const MAX_UNSIGNED_256_INT = new BigNumber(2).pow(256).minus(1).toString(10);
 
-const approveToken = async (
+export const approveToken = async (
   chainServerId: string,
   id: string,
   spender: string,
   amount: number | string,
   $ctx?: any,
   gasPrice?: number,
-  extra?: { isSwap: boolean; swapPreferMEVGuarded?: boolean },
+  extra?: {
+    isSwap?: boolean;
+    swapPreferMEVGuarded?: boolean;
+    isBridge?: boolean;
+  },
 ) => {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(i18n.t('background.error.noCurrentAccount'));

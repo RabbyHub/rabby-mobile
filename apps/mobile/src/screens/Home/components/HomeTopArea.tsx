@@ -7,6 +7,7 @@ import {
   RcIconApproval,
   RcIconGasTopUp,
   RcIconQueue,
+  RcIconBridge,
 } from '@/assets/icons/home';
 import { BSheetModal } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -35,7 +36,7 @@ import AutoLockView from '@/components/AutoLockView';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
-const MORE_SHEET_MODAL_SNAPPOINTS = [220];
+const MORE_SHEET_MODAL_SNAPPOINTS = [290];
 
 const isAndroid = Platform.OS === 'android';
 function BadgeText({
@@ -189,6 +190,15 @@ export const HomeTopArea = () => {
     badge?: number;
     badgeAlert?: boolean;
   }[] = [
+    {
+      title: 'Bridge',
+      Icon: RcIconBridge,
+      onPress: () => {
+        navigation.push(RootNames.StackTransaction, {
+          screen: RootNames.Bridge,
+        });
+      },
+    },
     {
       title: 'Approvals',
       Icon: RcIconApproval,
