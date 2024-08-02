@@ -155,11 +155,11 @@ export const Slippage = (props: SlippageProps) => {
               />
             </SlippageItem>
           </View>
-          {!!tips && (
-            <View style={styles.warningTipContainer}>
-              <Text style={styles.warningTip}>{tips}</Text>
-            </View>
-          )}
+        </View>
+      )}
+      {!!tips && (
+        <View style={styles.warningTipContainer}>
+          <Text style={styles.warningTip}>{tips}</Text>
         </View>
       )}
     </View>
