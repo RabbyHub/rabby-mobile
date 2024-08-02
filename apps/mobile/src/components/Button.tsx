@@ -28,7 +28,10 @@ import { createGetStyles } from '@/utils/styles';
 
 export type ButtonProps = TouchableOpacityProps &
   TouchableNativeFeedbackProps & {
-    title?: string | React.ReactElement<{}>;
+    title?:
+      | string
+      | ((ctx: { titleStyle?: TextStyle }) => ReactNode)
+      | React.ReactElement<{}>;
     titleStyle?: StyleProp<TextStyle>;
     titleProps?: TextProps;
     buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
@@ -221,6 +224,13 @@ export const Button = ({
     return icon;
   }, [icon, titleStyle]);
 
+  const textNode = useMemo(() => {
+    if (typeof title === 'function') {
+      return title({ titleStyle });
+    }
+    return title;
+  }, [title, titleStyle]);
+
   return (
     <View
       style={[styles.container, containerStyle]}
@@ -255,8 +265,8 @@ export const Button = ({
                 </View>
               )}
               {/* Title for Button */}
-              {!!title &&
-                renderText(title, {
+              {!!textNode &&
+                renderText(textNode, {
                   style: titleStyle,
                   ...titleProps,
                 })}

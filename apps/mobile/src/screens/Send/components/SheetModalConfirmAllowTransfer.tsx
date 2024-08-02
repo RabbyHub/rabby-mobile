@@ -22,7 +22,6 @@ import { toast } from '@/components/Toast';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { BiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
-import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
 
 interface ConfirmAllowTransferModalProps {
@@ -193,17 +192,22 @@ export function ModalConfirmAllowTransfer({
       confirmButtonProps={{
         type: 'primary',
         disabled: shouldDisabled,
-        icon: ctx =>
-          currentAuthType !== 'biometrics' ? null : (
-            <BiometricsIcon
-              size={18}
-              color={isBiometricsActive ? '#FF2D55' : ctx.titleStyle?.color}
-            />
-          ),
-        titleStyle: {
-          // ...makeDebugBorder('yellow'),
-          flex: undefined,
-        },
+        title: ctx => (
+          <View style={styles.confirmModalButtonTitleViewStyle}>
+            {currentAuthType !== 'biometrics' ? null : (
+              <BiometricsIcon
+                size={18}
+                style={{ marginRight: 6 }}
+                color={isBiometricsActive ? '#FF2D55' : ctx.titleStyle?.color}
+              />
+            )}
+            <Text style={[ctx.titleStyle, styles.confirmModalButtonTextStyle]}>
+              {t('global.confirm')}
+            </Text>
+          </View>
+        ),
+        containerStyle: styles.confirmModalContainerStyle,
+        buttonStyle: styles.confirmModalButtonStyle,
       }}
       bottomSheetModalProps={{
         keyboardBehavior: 'interactive',
@@ -325,6 +329,30 @@ const getStyles = createGetStyles(colors => {
       top: 6,
       width: 16,
       height: 16,
+    },
+    confirmModalContainerStyle: {
+      // ...(IS_IOS && {
+      //   ...makeDebugBorder('red'),
+      //   // width: '100%',
+      //   // paddingHorizontal: 0,
+      // }),
+    },
+    confirmModalButtonStyle: {
+      // ...(IS_IOS && {
+      //   ...makeDebugBorder('yellow'),
+      //   // width: '100%',
+      //   // flex: 1,
+      // }),
+    },
+    confirmModalButtonTitleViewStyle: {
+      flex: undefined,
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    confirmModalButtonTextStyle: {
+      flex: undefined,
     },
   };
 });
