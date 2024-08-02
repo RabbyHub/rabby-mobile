@@ -66,7 +66,7 @@ export const RabbyFeePopup = ({
   const { bottom } = useSafeAreaInsets();
 
   const snapPoints = useMemo(
-    () => [Math.min(type === 'swap' ? 605 : 520, height)],
+    () => [Math.min(type === 'swap' ? 548 : 520, height)],
     [type, height],
   );
 
@@ -83,6 +83,12 @@ export const RabbyFeePopup = ({
       ref={sheetModalRef}
       snapPoints={snapPoints}
       onDismiss={onClose}
+      handleStyle={{
+        backgroundColor: colors['neutral-bg-2'],
+      }}
+      backgroundStyle={{
+        backgroundColor: colors['neutral-bg-2'],
+      }}
       enableDismissOnClose>
       <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
         <View style={styles.iconContainer}>
@@ -133,13 +139,14 @@ export const RabbyFeePopup = ({
   );
 };
 
-const getStyles = createGetStyles((colors: any) => ({
+const getStyles = createGetStyles(colors => ({
   contentContainer: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 20,
     paddingHorizontal: 20,
     paddingTop: 24,
+    backgroundColor: colors['neutral-bg-2'],
   },
   iconContainer: {
     width: 52,

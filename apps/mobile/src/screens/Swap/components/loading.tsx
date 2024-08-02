@@ -94,7 +94,7 @@ const getStyles = createGetStyles(colors => ({
   dexLoading: {
     flexDirection: 'column',
     width: '100%',
-    height: 100,
+    height: 90,
     paddingHorizontal: 16,
     justifyContent: 'center',
     gap: 10,

@@ -349,9 +349,13 @@ export const DexQuoteItem = (
             borderColor: !(disabled || inSufficient || gasFeeTooHight)
               ? 'transparent'
               : colors['neutral-line'],
+            borderWidth: !(disabled || inSufficient || gasFeeTooHight)
+              ? 0
+              : StyleSheet.hairlineWidth,
           },
           isErrorQuote && {
             // height: 52,
+            borderWidth: StyleSheet.hairlineWidth,
             paddingHorizontal: 16,
             paddingTop: 14,
             paddingBottom: 14,
@@ -371,9 +375,8 @@ export const DexQuoteItem = (
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            marginBottom: 10,
           }}>
-          {/* top left */}
-          {inSufficient && !disabled && <View />}
           <View
             style={{
               flexDirection: 'row',
@@ -525,11 +528,11 @@ export function CheckedIcon() {
 export const getQuoteItemStyle = createGetStyles(colors => ({
   dexContainer: {
     position: 'relative',
-    borderWidth: StyleSheet.hairlineWidth,
+    // borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 16,
     paddingTop: 24,
-    paddingBottom: 16,
-    gap: 10,
+    paddingBottom: 15,
+    // gap: 10,
     justifyContent: 'center',
     borderRadius: 6,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
@@ -612,6 +615,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     color: colors['neutral-title-2'],
     fontSize: 14,
     fontWeight: '500',
+    lineHeight: 17,
   },
   disabledContentBtnText: {
     color: colors['blue-default'],
@@ -619,6 +623,7 @@ export const getQuoteItemStyle = createGetStyles(colors => ({
     fontWeight: '500',
     textAlign: 'left',
     paddingLeft: 12 + 12 + 4,
+    lineHeight: 17,
   },
   bestQuotePercentContainer: {
     position: 'absolute',

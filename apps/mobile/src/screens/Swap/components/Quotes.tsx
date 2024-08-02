@@ -1,13 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DexQuoteItem, QuoteItemProps } from './QuoteItem';
 import {
-  TCexQuoteData,
-  TDexQuoteData,
-  useSwapSettings,
-  useSwapSupportedDexList,
-  useSwapViewDexIdList,
-} from '../hooks';
+  RcIconSwapChecked,
+  RcIconSwapHiddenArrow,
+  RcIconSwapUnchecked,
+} from '@/assets/icons/swap';
+import { AppBottomSheetModal } from '@/components';
+import { Radio } from '@/components/Radio';
+import { DEX_WITH_WRAP } from '@/constant/swap';
+import { useThemeColors } from '@/hooks/theme';
+import { createGetStyles } from '@/utils/styles';
+import { getTokenSymbol } from '@/utils/token';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
 import BigNumber from 'bignumber.js';
+import { useSetAtom } from 'jotai';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -16,25 +22,13 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { DEX_WITH_WRAP } from '@/constant/swap';
-import { useSetAtom } from 'jotai';
+import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
-import { AppBottomSheetModal } from '@/components';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { Radio } from '@/components/Radio';
-import {
-  RcIconSwapChecked,
-  RcIconSwapHiddenArrow,
-  RcIconSwapUnchecked,
-} from '@/assets/icons/swap';
-import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
-import TouchableItem from '@/components/Touchable/TouchableItem';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
-import { getTokenSymbol } from '@/utils/token';
+import { DexQuoteItem, QuoteItemProps } from './QuoteItem';
 import { SwapRefreshBtn } from './SwapRefreshBtn';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
 
 interface QuotesProps
   extends Omit<
@@ -47,7 +41,7 @@ interface QuotesProps
     | 'isBestQuote'
     | 'quoteProviderInfo'
   > {
-  list?: (TCexQuoteData | TDexQuoteData)[];
+  list?: TDexQuoteData[];
   activeName?: string;
   visible: boolean;
   onClose: () => void;
@@ -68,50 +62,34 @@ export const Quotes = ({
     () => [
       ...(list?.sort((a, b) => {
         const getNumber = (quote: typeof a) => {
-          const price = other.receiveToken.price ? other.receiveToken.price : 1;
-          if (quote.isDex) {
-            if (inSufficient) {
-              return new BigNumber(quote.data?.toTokenAmount || 0)
-                .div(
-                  10 **
-                    (quote.data?.toTokenDecimals ||
-                      other.receiveToken.decimals),
-                )
-                .times(price);
-            }
-            if (!quote.preExecResult) {
-              return new BigNumber(Number.MIN_SAFE_INTEGER);
-            }
-
-            if (sortIncludeGasFee) {
-              return new BigNumber(
-                quote?.preExecResult.swapPreExecTx.balance_change
-                  .receive_token_list?.[0]?.amount || 0,
+          const price = other.receiveToken.price ? other.receiveToken.price : 0;
+          if (inSufficient) {
+            return new BigNumber(quote.data?.toTokenAmount || 0)
+              .div(
+                10 **
+                  (quote.data?.toTokenDecimals || other.receiveToken.decimals),
               )
-                .times(price)
-                .minus(quote?.preExecResult?.gasUsdValue || 0);
-            }
-
-            return new BigNumber(
-              quote?.preExecResult.swapPreExecTx.balance_change
-                .receive_token_list?.[0]?.amount || 0,
-            ).times(price);
+              .times(price);
+          }
+          if (!quote.preExecResult) {
+            return new BigNumber(Number.MIN_SAFE_INTEGER);
+          }
+          const receiveTokenAmount =
+            quote?.preExecResult.swapPreExecTx.balance_change.receive_token_list.find(
+              item => isSameAddress(item.id, other.receiveToken.id),
+            )?.amount || 0;
+          if (sortIncludeGasFee) {
+            return new BigNumber(receiveTokenAmount)
+              .times(price)
+              .minus(quote?.preExecResult?.gasUsdValue || 0);
           }
 
-          return quote?.data?.receive_token
-            ? new BigNumber(quote?.data?.receive_token?.amount).times(price)
-            : new BigNumber(Number.MIN_SAFE_INTEGER);
+          return new BigNumber(receiveTokenAmount).times(price);
         };
         return getNumber(b).minus(getNumber(a)).toNumber();
       }) || []),
     ],
-    [
-      inSufficient,
-      list,
-      other.receiveToken.decimals,
-      other?.receiveToken?.price,
-      sortIncludeGasFee,
-    ],
+    [inSufficient, list, other.receiveToken, sortIncludeGasFee],
   );
 
   const [hiddenError, setHiddenError] = useState(true);
@@ -120,26 +98,26 @@ export const Quotes = ({
 
   const [bestQuoteAmount, bestQuoteGasUsd] = useMemo(() => {
     const bestQuote = sortedList?.[0];
+    const receiveTokenAmount = bestQuote?.preExecResult
+      ? bestQuote.preExecResult.swapPreExecTx.balance_change.receive_token_list.find(
+          item => isSameAddress(item.id, other.receiveToken.id),
+        )?.amount || 0
+      : 0;
 
     return [
-      (bestQuote?.isDex
-        ? inSufficient
-          ? new BigNumber(bestQuote.data?.toTokenAmount || 0)
-              .div(
-                10 **
-                  (bestQuote?.data?.toTokenDecimals ||
-                    other.receiveToken.decimals ||
-                    1),
-              )
-              .toString(10)
-          : bestQuote?.preExecResult?.swapPreExecTx.balance_change
-              .receive_token_list[0]?.amount
-        : new BigNumber(bestQuote?.data?.receive_token.amount || '0').toString(
-            10,
-          )) || '0',
+      inSufficient
+        ? new BigNumber(bestQuote.data?.toTokenAmount || 0)
+            .div(
+              10 **
+                (bestQuote?.data?.toTokenDecimals ||
+                  other.receiveToken.decimals ||
+                  1),
+            )
+            .toString(10)
+        : receiveTokenAmount,
       bestQuote?.isDex ? bestQuote.preExecResult?.gasUsdValue || '0' : '0',
     ];
-  }, [inSufficient, other?.receiveToken?.decimals, sortedList]);
+  }, [inSufficient, other?.receiveToken, sortedList]);
 
   const fetchedList = useMemo(() => list?.map(e => e.name) || [], [list]);
 
@@ -336,7 +314,7 @@ export const QuoteList = (props: QuotesProps) => {
   const { height: screenHeight } = useWindowDimensions();
 
   const height = useMemo(() => {
-    return Math.min(605, screenHeight * 0.9);
+    return Math.min(520, screenHeight * 0.9);
   }, [screenHeight]);
 
   const snapPoints = useMemo(() => [height], [height]);
