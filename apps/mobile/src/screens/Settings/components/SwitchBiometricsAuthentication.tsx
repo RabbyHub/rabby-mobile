@@ -22,13 +22,13 @@ function useToggleBiometricsEnabled() {
           : strings('component.AuthenticationModals.biometrics.disable', {
               bioType: computed.defaultTypeLabel,
             }),
-        description: nextEnabled
-          ? strings('component.AuthenticationModals.biometrics.enableTip', {
-              bioType: computed.defaultTypeLabel,
-            })
-          : strings('component.AuthenticationModals.biometrics.disableTip', {
-              bioType: computed.defaultTypeLabel,
-            }),
+        // description: nextEnabled
+        //   ? strings('component.AuthenticationModals.biometrics.enableTip', {
+        //       bioType: computed.defaultTypeLabel,
+        //     })
+        //   : strings('component.AuthenticationModals.biometrics.disableTip', {
+        //       bioType: computed.defaultTypeLabel,
+        //     }),
         authType: nextEnabled ? ['password'] : ['none'],
         async onFinished({ getValidatedPassword }) {
           await toggleBiometrics(nextEnabled, {
