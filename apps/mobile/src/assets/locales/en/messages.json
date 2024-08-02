@@ -2217,10 +2217,10 @@
     },
     "AuthenticationModals": {
       "biometrics": {
-        "enable": "Enable Biometrics",
-        "disable": "Disable Biometrics",
-        "enableTip": "Enable biometrics to unlock Rabby",
-        "disableTip": "Disable biometrics to unlock Rabby"
+        "enable": "Enable {{ bioType }}",
+        "disable": "Disable {{ bioType }}",
+        "enableTip": "Enable {{ bioType }} to unlock Rabby",
+        "disableTip": "Disable {{ bioType }} to unlock Rabby"
       },
       "processBiometrics": {
         "title": "Biometrics Authentication",
