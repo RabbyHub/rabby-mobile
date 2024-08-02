@@ -37,6 +37,7 @@ unix_replace_variables $script_dir/tpl/ios/version.json $deployment_local_dir/ve
 
 # ============ prepare changelogs :start ============== #
 possible_changelogs=(
+  "$project_dir/src/changeLogs/$proj_version.ios.md"
   "$project_dir/src/changeLogs/$proj_version.md"
 )
 
