@@ -464,7 +464,7 @@ export const BridgeContent = () => {
           disabled={
             !payToken ||
             !receiveToken ||
-            Number(payAmount) > 0 ||
+            !Number(payAmount) ||
             inSufficient ||
             !selectedBridgeQuote
           }

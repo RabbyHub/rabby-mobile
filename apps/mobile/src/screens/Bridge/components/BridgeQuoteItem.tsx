@@ -101,20 +101,12 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
             isLoading={props.onlyShow ? false : props.loading}
           />
           <Text style={styles.aggregatorName}>{props.aggregator.name}</Text>
-          <Tip
-            content={
-              <Text>
-                {t('page.bridge.via-bridge', { bridge: props.bridge.name })}
-              </Text>
-            }
-            isVisible={props.onlyShow ? undefined : false}>
-            <Text
-              style={styles.bridgeName}
-              numberOfLines={1}
-              ellipsizeMode="tail">
-              {t('page.bridge.via-bridge', { bridge: props.bridge.name })}
-            </Text>
-          </Tip>
+          <Text
+            style={styles.bridgeName}
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {t('page.bridge.via-bridge', { bridge: props.bridge.name })}
+          </Text>
           {props.shouldApproveToken && (
             <Tip content={t('page.bridge.need-to-approve-token-before-bridge')}>
               <Image source={ImgLock} style={styles.icon} />
@@ -152,15 +144,16 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
         <View
           style={styles.estimatedValueSection}
           onStartShouldSetResponder={() => true}>
-          <Text style={styles.estimatedValueText} numberOfLines={1}>
-            {t('page.bridge.estimated-value', {
-              value: formatUsdValue(
-                new BigNumber(props.to_token_amount)
-                  .times(props.receiveToken.price)
-                  .toString(),
-              ),
-            })}
+          <Text
+            style={[styles.estimatedValueText, { flex: 1 }]}
+            numberOfLines={1}>
+            {formatUsdValue(
+              new BigNumber(props.to_token_amount)
+                .times(props.receiveToken.price)
+                .toString(),
+            )}
           </Text>
+          <Text style={styles.estimatedValueText}>after fee</Text>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
@@ -243,6 +236,7 @@ const getStyles = createGetStyles(colors => ({
   bridgeName: {
     fontSize: 13,
     color: colors['neutral-foot'],
+    flexShrink: 0,
   },
   icon: {
     width: 16,
@@ -253,16 +247,19 @@ const getStyles = createGetStyles(colors => ({
     fontWeight: '500',
     color: colors['neutral-title1'],
     maxWidth: 138,
+    // flexShrink: 0,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 4,
     marginTop: 12,
   },
   feeSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
   },
   feeText: {
     fontSize: 13,
@@ -276,13 +273,15 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flex: 1,
+    flexShrink: 1,
     justifyContent: 'flex-end',
   },
   estimatedValueText: {
+    textAlign: 'right',
     fontSize: 13,
     color: colors['neutral-foot'],
   },
+
   infoIcon: {
     width: 14,
     height: 14,

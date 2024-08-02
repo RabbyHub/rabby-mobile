@@ -53,6 +53,9 @@ export default function ChainItem({
 
   return (
     <Tip
+      tooltipStyle={{
+        transform: [{ translateY: 20 }],
+      }}
       content={finalDisabledTips}
       isVisible={tipsVisible}
       onClose={() => setTipsVisible(false)}>
