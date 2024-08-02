@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { SVGProps, useMemo } from 'react';
 import { QuoteLogo } from './QuoteLogo';
 import { useSwapSettings, useSwapSupportedDexList } from '../hooks';
 import { StyleSheet, Text, View } from 'react-native';
@@ -6,6 +6,8 @@ import { Skeleton } from '@rneui/themed';
 import { DEX } from '@/constant/swap';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
+import { SvgXml, XmlProps } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 
 type QuoteListLoadingProps = {
   fetchedList?: string[];
@@ -34,22 +36,13 @@ export const QuoteLoading = ({
     ],
     [isCex, styles.container],
   );
-  if (isCex) {
-    return (
-      <View style={viewStyle}>
-        <QuoteLogo isLoading={true} logo={logo} />
-        <Text style={styles.text}>{name}</Text>
-        <Skeleton style={styles.skeleton4} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.dexLoading}>
       <View style={styles.column}>
         <View style={styles.dexNameColumn}>
-          <QuoteLogo isLoading={true} logo={logo} />
-          <Text style={styles.text}>{name}</Text>
+          <Skeleton circle width={24} height={24} />
+          <Skeleton style={styles.skeleton2} />
         </View>
         <Skeleton style={styles.skeleton3} />
       </View>
@@ -101,7 +94,7 @@ const getStyles = createGetStyles(colors => ({
   dexLoading: {
     flexDirection: 'column',
     width: '100%',
-    height: 80,
+    height: 90,
     paddingHorizontal: 16,
     justifyContent: 'center',
     gap: 10,
@@ -134,13 +127,13 @@ const getStyles = createGetStyles(colors => ({
   skeleton2: {
     marginLeft: 'auto',
     borderRadius: 2,
-    width: 57,
-    height: 20,
+    width: 70,
+    height: 18,
   },
   skeleton3: {
     borderRadius: 2,
     width: 132,
-    height: 20,
+    height: 18,
   },
   skeleton4: {
     borderRadius: 2,

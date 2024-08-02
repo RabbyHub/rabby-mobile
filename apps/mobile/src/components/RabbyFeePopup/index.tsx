@@ -66,7 +66,7 @@ export const RabbyFeePopup = ({
   const { bottom } = useSafeAreaInsets();
 
   const snapPoints = useMemo(
-    () => [Math.min(type === 'swap' ? 570 : 520, height)],
+    () => [Math.min(type === 'swap' ? 548 : 520, height)],
     [type, height],
   );
 
@@ -144,6 +144,7 @@ const getStyles = createGetStyles((colors: any) => ({
     paddingVertical: 20,
     paddingHorizontal: 20,
     paddingTop: 24,
+    backgroundColor: colors['neutral-bg-2'],
   },
   iconContainer: {
     width: 52,
