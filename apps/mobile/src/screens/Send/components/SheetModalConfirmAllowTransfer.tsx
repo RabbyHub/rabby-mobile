@@ -198,7 +198,7 @@ export function ModalConfirmAllowTransfer({
               <BiometricsIcon
                 size={18}
                 style={{ marginRight: 6 }}
-                color={isBiometricsActive ? '#FF2D55' : ctx.titleStyle?.color}
+                color={ctx.titleStyle?.color}
               />
             )}
             <Text style={[ctx.titleStyle, styles.confirmModalButtonTextStyle]}>
