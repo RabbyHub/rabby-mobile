@@ -24,7 +24,7 @@ const getStyles = createGetStyles(colors => ({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingTop: 20,
     paddingLeft: 20,
     alignSelf: 'stretch',
     gap: 3,
@@ -39,6 +39,7 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 12,
     fontWeight: '500',
     color: colors['neutral-body'],
+    marginLeft: 4,
   },
 
   radioContainer: {
@@ -63,6 +64,7 @@ const getStyles = createGetStyles(colors => ({
     gap: 12,
     marginBottom: 20,
     height: '100%',
+    marginTop: 120,
   },
   emptyText: {
     fontSize: 14,
@@ -222,7 +224,11 @@ export const QuoteList = (props: Omit<QuotesProps, 'sortIncludeGasFee'>) => {
             containerStyle={styles.radioContainer}
           />
         </View>
-        <Quotes {...props} sortIncludeGasFee={sortIncludeGasFee} />
+        <Quotes
+          {...props}
+          loading={props.loading}
+          sortIncludeGasFee={sortIncludeGasFee}
+        />
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );

@@ -139,7 +139,6 @@ const getStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     tokenText: {
-      marginLeft: 12,
       fontSize: 16,
       fontWeight: '500',
       color: colors['neutral-title1'],
@@ -203,16 +202,7 @@ const TokenPairItem = (props: {
     <Tip
       isVisible={tipVisible}
       onClose={() => setTipVisible(false)}
-      content={
-        <Text
-          style={{
-            padding: 20,
-            fontSize: 13,
-            color: colors['neutral-title-2'],
-          }}>
-          {t('page.gasTopUp.InsufficientBalanceTips')}
-        </Text>
-      }>
+      content={t('page.gasTopUp.InsufficientBalanceTips')}>
       <TouchableOpacity
         key={tokenPair.from_token_raw_amount_hex_str}
         onPress={handleSelectTokenPair}
@@ -227,7 +217,7 @@ const TokenPairItem = (props: {
             chainSize={14}
             logo={tokenPair.from_token.logo_url}
           />
-          <Text style={styles.tokenText}>
+          <Text style={[styles.tokenText, { marginLeft: 12 }]}>
             {getTokenSymbol(tokenPair.from_token)}
           </Text>
           <Text style={styles.toArrow}>→</Text>

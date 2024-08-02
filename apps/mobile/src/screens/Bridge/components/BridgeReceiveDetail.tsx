@@ -75,17 +75,12 @@ interface ReceiveDetailsProps {
     aggregatorId: string;
   };
   openQuotesList: () => void;
-  isEmptyQuote?: boolean;
+  noBestQuote?: boolean;
 }
 export const BridgeReceiveDetails = (props: ReceiveDetailsProps) => {
   const { t } = useTranslation();
-  const {
-    activeProvider,
-    bestQuoteId,
-    openQuotesList,
-    isEmptyQuote,
-    ...other
-  } = props;
+  const { activeProvider, bestQuoteId, openQuotesList, noBestQuote, ...other } =
+    props;
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -99,7 +94,7 @@ export const BridgeReceiveDetails = (props: ReceiveDetailsProps) => {
   );
 
   if (!activeProvider) {
-    if (!isEmptyQuote) {
+    if (!noBestQuote) {
       return null;
     }
     return (
