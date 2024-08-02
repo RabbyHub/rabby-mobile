@@ -10,7 +10,7 @@ export const RcIconFaceId = makeThemeIconFromCC(
 
 export const RcIconFingerprint = makeThemeIconFromCC(
   RcIconKeychainFingerprintCC,
-  '#FF2D55',
+  'neutral-body',
 );
 
 export const RcIconInfoForToast = makeThemeIconFromCC(

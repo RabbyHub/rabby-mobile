@@ -15,6 +15,9 @@ import { default as RcIconArrowUpCC } from './arrow-up-cc.svg';
 import { default as RcIconSwapInfoCC } from './warning-cc.svg';
 import { default as RcIconSwapHiddenArrowCC } from './hidden-arrow-cc.svg';
 import { default as RcIconSwapReceiveInfoCC } from './info-outline-cc.svg';
+import { default as RcIconMaxButton } from './max-button.svg';
+
+export { RcIconSwitchQuoteCC, RcIconMaxButton };
 
 export const RcIconSwapHistory = makeThemeIconFromCC(
   RcIconHeaderSwapHistoryCC,

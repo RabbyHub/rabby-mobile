@@ -63,117 +63,135 @@ export function useSetupWebview({
   dappOrigin,
   siteInfoRefs: { urlRef, titleRef, iconRef },
   webviewRef,
-  onSelfClose,
-}: {
+  webviewIdRef,
+}: // onSelfClose,
+{
   dappOrigin: string;
   siteInfoRefs: {
     urlRef: React.MutableRefObject<string>;
     titleRef: React.MutableRefObject<string>;
     iconRef: React.MutableRefObject<string | undefined>;
   };
+  webviewIdRef: React.MutableRefObject<string>;
   webviewRef: React.MutableRefObject<WebView | null>;
-  onSelfClose?: OnSelfClose;
+  // onSelfClose?: OnSelfClose;
 }) {
   const { backgroundBridgeRefs, putBackgroundBridge, removeBackgroundBridge } =
     useBackgroundBridges();
 
-  const initializeBackgroundBridge = (
-    urlBridge: string,
-    isMainFrame: boolean = true,
-  ) => {
-    urlRef.current = urlBridge;
-    const newBridge = new BackgroundBridge({
-      webview: webviewRef,
-      urlRef,
-      titleRef,
-      iconRef,
-      isMainFrame,
-    });
-
-    const session = sessionService.getOrCreateSession(newBridge);
-    session?.setProp({
-      origin: urlBridge,
-      icon: '//todo',
-      name: '//todo',
-    });
-
-    if (!dappService.getDapp(urlBridge) && session) {
-      dappService.addDapp(createDappBySession(session));
-    }
-
-    putBackgroundBridge(newBridge);
-  };
-
-  const onMessage: OnMessage = ({ nativeEvent }) => {
-    let data = nativeEvent.data as any;
-    try {
-      data = typeof data === 'string' ? JSON.parse(data) : data;
-      if (!data || (!data.type && !data.name)) {
-        return;
-      }
-      if (data.name) {
-        const senderOrigin = urlUtils.canoicalizeDappUrl(
-          nativeEvent.url,
-        ).httpOrigin;
-
-        backgroundBridgeRefs.current.forEach(bridge => {
-          const bridgeOrigin = urlUtils.canoicalizeDappUrl(
-            bridge.url,
-          ).httpOrigin;
-
-          if (bridgeOrigin === senderOrigin) {
-            bridge.onMessage(data);
-          }
-        });
-        return;
-      }
-    } catch (e) {
-      console.error(e, `Browser::onMessage on ${urlRef.current}`);
-    }
-  };
-
-  const changeUrl = async (navInfo: WebViewNavigation) => {
-    urlRef.current = navInfo.url;
-    titleRef.current = navInfo.title;
-    // if (navInfo.icon) iconRef.current = navInfo.icon;
-  };
-
-  // would be called every time the url changes
-  const onLoadStart: OnLoadStart = async ({ nativeEvent }) => {
-    if (
-      nativeEvent.url !== urlRef.current &&
-      nativeEvent.loading &&
-      nativeEvent.navigationType === 'backforward'
-    ) {
-      // changeAddressBar({ ...nativeEvent });
-    }
-
-    // setError(false);
-
-    changeUrl(nativeEvent);
-    // sendActiveAccount();
-
-    // icon.current = null;
-
-    // Reset the previous bridges
-    backgroundBridgeRefs.current.length &&
-      backgroundBridgeRefs.current.forEach(bridge => {
-        bridge.onDisconnect();
-        sessionService.deleteSession(bridge);
+  const initializeBackgroundBridge = useCallback(
+    (urlBridge: string, isMainFrame: boolean = true) => {
+      urlRef.current = urlBridge;
+      const newBridge = new BackgroundBridge({
+        webview: webviewRef,
+        webviewIdRef: webviewIdRef,
+        urlRef,
+        titleRef,
+        iconRef,
+        isMainFrame,
       });
 
-    // // Cancel loading the page if we detect its a phishing page
-    // const { hostname } = new URL(nativeEvent.url);
-    // if (!isAllowedUrl(hostname)) {
-    //   handleNotAllowedUrl(url);
-    //   return false;
-    // }
+      const session = sessionService.getOrCreateSession(newBridge);
+      session?.setProp({
+        origin: urlBridge,
+        icon: '//todo',
+        name: '//todo',
+      });
 
-    backgroundBridgeRefs.current = [];
-    const formattedDappOrigin =
-      urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
-    initializeBackgroundBridge(formattedDappOrigin, true);
-  };
+      if (!dappService.getDapp(urlBridge) && session) {
+        dappService.addDapp(createDappBySession(session));
+      }
+
+      putBackgroundBridge(newBridge);
+    },
+    [iconRef, putBackgroundBridge, titleRef, urlRef, webviewRef, webviewIdRef],
+  );
+
+  const onMessage = useCallback(
+    ({ nativeEvent }: Parameters<OnMessage>[0]) => {
+      let data = nativeEvent.data as any;
+      try {
+        data = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!data || (!data.type && !data.name)) {
+          return;
+        }
+        if (data.name) {
+          const senderOrigin = urlUtils.canoicalizeDappUrl(
+            nativeEvent.url,
+          ).httpOrigin;
+
+          backgroundBridgeRefs.current.forEach(bridge => {
+            const bridgeOrigin = urlUtils.canoicalizeDappUrl(
+              bridge.url,
+            ).httpOrigin;
+
+            if (bridgeOrigin === senderOrigin) {
+              bridge.onMessage(data);
+            }
+          });
+          return;
+        }
+      } catch (e) {
+        console.error(e, `Browser::onMessage on ${urlRef.current}`);
+      }
+    },
+    [backgroundBridgeRefs, urlRef],
+  );
+
+  const changeUrl = useCallback(
+    async (navInfo: WebViewNavigation) => {
+      urlRef.current = navInfo.url;
+      titleRef.current = navInfo.title;
+      // if (navInfo.icon) iconRef.current = navInfo.icon;
+    },
+    [urlRef, titleRef],
+  );
+
+  // would be called every time the url changes
+  const onLoadStart: OnLoadStart = useCallback(
+    async ({ nativeEvent }) => {
+      if (
+        nativeEvent.url !== urlRef.current &&
+        nativeEvent.loading &&
+        nativeEvent.navigationType === 'backforward'
+      ) {
+        // changeAddressBar({ ...nativeEvent });
+      }
+
+      // setError(false);
+
+      changeUrl(nativeEvent);
+      // sendActiveAccount();
+
+      // icon.current = null;
+
+      // Reset the previous bridges
+      backgroundBridgeRefs.current.length &&
+        backgroundBridgeRefs.current.forEach(bridge => {
+          bridge.onDisconnect();
+          sessionService.deleteSession(bridge);
+        });
+
+      // // Cancel loading the page if we detect its a phishing page
+      // const { hostname } = new URL(nativeEvent.url);
+      // if (!isAllowedUrl(hostname)) {
+      //   handleNotAllowedUrl(url);
+      //   return false;
+      // }
+
+      backgroundBridgeRefs.current = [];
+      const formattedDappOrigin =
+        urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+      initializeBackgroundBridge(formattedDappOrigin, true);
+    },
+    [
+      backgroundBridgeRefs,
+      changeUrl,
+      dappOrigin,
+      initializeBackgroundBridge,
+      urlRef,
+    ],
+  );
 
   /**
    *  Function that allows custom handling of any web view requests.

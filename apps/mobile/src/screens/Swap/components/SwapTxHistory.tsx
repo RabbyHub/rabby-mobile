@@ -1,6 +1,7 @@
 import { AppBottomSheetModal, AssetAvatar, Tip } from '@/components';
-import { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
+import { SwapItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import React, {
   forwardRef,
   useCallback,
@@ -9,48 +10,48 @@ import React, {
   useRef,
 } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableWithoutFeedback,
   Animated,
   Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
-import { SwapItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { CHAINS_LIST } from '@debank/common';
 
 import RcPending from '@/assets/icons/swap/pending.svg';
 
-import BigNumber from 'bignumber.js';
-import { useTranslation } from 'react-i18next';
-import { createGetStyles } from '@/utils/styles';
-import { getTokenSymbol } from '@/utils/token';
-import { useThemeColors } from '@/hooks/theme';
-import { Skeleton } from '@rneui/themed';
-import { ellipsis } from '@/utils/address';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
-import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
-import { formatAmount, formatUsdValue } from '@/utils/number';
-import { openExternalUrl } from '@/core/utils/linking';
-import { sinceTime } from '@/utils/time';
 import {
   RcIconSwapHistoryEmpty,
   RcIconSwapRightArrow,
 } from '@/assets/icons/swap';
 import { ModalLayouts } from '@/constant/layout';
+import { openExternalUrl } from '@/core/utils/linking';
+import { useThemeColors } from '@/hooks/theme';
+import { ellipsis } from '@/utils/address';
+import { findChain } from '@/utils/chain';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { sinceTime } from '@/utils/time';
+import { getTokenSymbol } from '@/utils/token';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/src/types';
+import { Skeleton } from '@rneui/themed';
+import BigNumber from 'bignumber.js';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSwapHistory, useSwapTxHistoryVisible } from '../hooks/history';
 
 const getStyles = createGetStyles(colors => ({
   contentContainerStyle: {
-    gap: 12,
+    // gap: 12,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '500',
     textAlign: 'center',
-    paddingVertical: 20,
-    backgroundColor: colors['neutral-bg-1'],
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: colors['neutral-bg-2'],
     color: colors['neutral-title-1'],
   },
   skeletonBlock: {
@@ -58,12 +59,14 @@ const getStyles = createGetStyles(colors => ({
     height: 210,
     padding: 0,
     borderRadius: 6,
+    marginBottom: 12,
   },
   emptyView: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
+    paddingTop: 150,
   },
   emptyList: {
     position: 'absolute',
@@ -77,37 +80,60 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 14,
   },
   container: {
-    backgroundColor: colors['neutral-card-2'],
+    backgroundColor: colors['neutral-card-1'],
     borderRadius: 6,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 14,
     fontSize: 12,
+    marginBottom: 12,
   },
   textTokenLabel: {
     width: 68,
   },
   text: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 17,
     color: colors['neutral-body'],
+    fontWeight: '400',
+  },
+  valueText: {
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
+  timeText: {
+    fontSize: 14,
+    lineHeight: 17,
+    color: colors['neutral-title-1'],
+    fontWeight: '500',
+  },
+  dexText: {
+    fontSize: 14,
+    lineHeight: 17,
+    color: colors['neutral-title-1'],
+    fontWeight: '500',
   },
   pendingText: {
     color: colors['orange-default'],
+    fontWeight: '500',
   },
   completedText: {
     color: colors['neutral-body'],
   },
   topBorder: {
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 11,
+    marginBottom: 19,
     width: '100%',
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors['neutral-line'],
   },
   list: {
-    gap: 15,
+    gap: 20,
   },
   bottomBorder: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 20,
+    marginBottom: 12,
     marginHorizontal: 12,
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors['neutral-line'],
@@ -116,6 +142,7 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minWidth: 0,
   },
   itemBottomBorder: {
     borderBottomWidth: 1,
@@ -141,6 +168,7 @@ const getStyles = createGetStyles(colors => ({
   },
   footText: {
     fontSize: 12,
+    lineHeight: 14,
     color: colors['neutral-foot'],
   },
 
@@ -165,6 +193,9 @@ const getStyles = createGetStyles(colors => ({
     flexWrap: 'wrap',
     marginLeft: 6,
     flex: 1,
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '500',
   },
   skeleton: {
     flex: 1,
@@ -234,7 +265,9 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
   const time = data?.finished_at || data?.create_at;
   const targetDex = data?.dex_id;
   const txId = data?.tx_id;
-  const chainItem = CHAINS_LIST.find(e => e.serverId === data?.chain);
+  const chainItem = findChain({
+    serverId: data?.chain,
+  });
   const chainName = chainItem?.name || '';
   const scanLink = chainItem?.scanLink.replace('_s_', '');
   const loading = data?.status !== 'Finished';
@@ -302,18 +335,20 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
           <Tip content={t('page.swap.completedTip')}>
             <TouchableWithoutFeedback style={styles.detailContainer}>
               {/* <Image source={ImgCompleted} style={styles.arrowIcon} /> */}
-              <Image
-                source={{ uri: require('@/assets/icons/swap/completed.svg') }}
-                style={styles.arrowIcon}
-              />
-              <Text style={[styles.text, styles.completedText]}>
-                {t('page.swap.Completed')}
-              </Text>
+              <>
+                <Image
+                  source={{ uri: require('@/assets/icons/swap/completed.svg') }}
+                  style={styles.arrowIcon}
+                />
+                <Text style={[styles.text, styles.completedText]}>
+                  {t('page.swap.Completed')}
+                </Text>
+              </>
             </TouchableWithoutFeedback>
           </Tip>
         )}
-        <Text style={styles.text}>{!isPending && sinceTime(time)}</Text>
-        {!!targetDex && <Text style={styles.text}>{targetDex}</Text>}
+        <Text style={styles.timeText}>{!isPending && sinceTime(time)}</Text>
+        {!!targetDex && <Text style={styles.dexText}>{targetDex}</Text>}
       </View>
       <View style={styles.topBorder} />
       <View style={styles.list}>
@@ -342,19 +377,24 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
             actual
           />
         </View>
-
         <View style={styles.itemContainer}>
-          <Text style={styles.text}>{t('page.swap.slippage_tolerance')}</Text>
-          <Text style={styles.text}>{slippagePercent}</Text>
-        </View>
+          <View
+            style={[styles.itemContainer, { gap: 6, paddingHorizontal: 0 }]}>
+            <Text style={styles.text}>{t('page.swap.slippage_tolerance')}</Text>
+            <Text style={[styles.valueText, { opacity: 0.5 }]}>
+              {slippagePercent}
+            </Text>
+          </View>
 
-        <View style={styles.itemContainer}>
-          <Text style={styles.text}>{t('page.swap.actual-slippage')}</Text>
-          {loading ? (
-            <Skeleton style={{ width: 52, height: 18 }} />
-          ) : (
-            <Text style={styles.text}>{actualSlippagePercent}</Text>
-          )}
+          <View
+            style={[styles.itemContainer, { gap: 6, paddingHorizontal: 0 }]}>
+            <Text style={styles.text}>{t('page.swap.actual-slippage')}</Text>
+            {loading ? (
+              <Skeleton style={{ width: 52, height: 18 }} />
+            ) : (
+              <Text style={styles.valueText}>{actualSlippagePercent}</Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -379,6 +419,7 @@ const Transaction = forwardRef<View, { data: SwapItem }>(({ data }, ref) => {
 
 const HistoryList = () => {
   const { txList, loading, loadingMore, loadMore, noMore } = useSwapHistory();
+
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
@@ -410,8 +451,21 @@ const HistoryList = () => {
             {t('page.swap.no-transaction-records')}
           </Text>
         </View>
+      ) : loading ? (
+        <>
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Skeleton style={styles.skeletonBlock} key={idx} />
+          ))}
+        </>
       ) : null,
-    [loading, txList, styles.emptyView, styles.emptyText, t],
+    [
+      loading,
+      txList,
+      styles.emptyView,
+      styles.emptyText,
+      styles.skeletonBlock,
+      t,
+    ],
   );
 
   return (
@@ -442,6 +496,7 @@ export const SwapTxHistory = () => {
   const bottomRef = useRef<BottomSheetModalMethods>(null);
   const snapPoints = useMemo(() => [ModalLayouts.defaultHeightPercentText], []);
   const { visible, setVisible } = useSwapTxHistoryVisible();
+  const colors = useThemeColors();
 
   const onDismiss = useCallback(() => {
     setVisible(false);
@@ -457,6 +512,12 @@ export const SwapTxHistory = () => {
       ref={bottomRef}
       snapPoints={snapPoints}
       onDismiss={onDismiss}
+      backgroundStyle={{
+        backgroundColor: colors['neutral-bg-2'],
+      }}
+      handleStyle={{
+        backgroundColor: colors['neutral-bg-2'],
+      }}
       enableDismissOnClose>
       <HistoryList />
     </AppBottomSheetModal>

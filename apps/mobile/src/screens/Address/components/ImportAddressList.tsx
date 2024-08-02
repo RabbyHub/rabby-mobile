@@ -9,11 +9,8 @@ import {
 } from '@/assets/icons/address';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { useLoadLockInfo, useSetPasswordFirst } from '@/hooks/useLock';
-import { PasswordStatus } from '@/core/apis/lock';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useFocusEffect } from '@react-navigation/native';
-import { SettingNavigatorParamList } from '@/navigation-type';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -25,12 +22,13 @@ const styles = StyleSheet.create({
 });
 
 export const ImportAddressList = () => {
-  const navigation = useRabbyAppNavigation();
-
   const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
 
   const handlePrivateKey = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore(RootNames.ImportPrivateKey)) return;
+    if (
+      shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportPrivateKey })
+    )
+      return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
@@ -38,7 +36,8 @@ export const ImportAddressList = () => {
   }, [shouldRedirectToSetPasswordBefore]);
 
   const handleSeedPhrase = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore(RootNames.ImportMnemonic)) return;
+    if (shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportMnemonic }))
+      return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,

@@ -26,6 +26,7 @@ import { ModalLayouts } from '@/constant/layout';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 import { apisLock } from '@/core/apis';
 import { useLoadLockInfo } from '@/hooks/useLock';
+import AutoLockView from '../AutoLockView';
 
 export interface SelectAddressProps {
   heightPercent?: `${number}%`;
@@ -85,8 +86,6 @@ export function SelectAddressSheetModal({
     });
   }, [whitelistEnabled, accountsList, whitelist]);
 
-  const { isUseCustomPwd } = useLoadLockInfo();
-
   const onPressSaveButton = useCallback(async () => {
     if (isEditing) {
       AuthenticationModal.show({
@@ -99,12 +98,11 @@ export function SelectAddressSheetModal({
           setWhitelist(localWhiteList);
           setEditing(!isEditing);
         },
-        needPassword: isUseCustomPwd,
       });
     } else {
       setEditing(!isEditing);
     }
-  }, [t, isEditing, setEditing, setWhitelist, localWhiteList, isUseCustomPwd]);
+  }, [t, isEditing, setEditing, setWhitelist, localWhiteList]);
 
   const onModalDismiss = useCallback(() => {
     if (isEditing) {
@@ -173,7 +171,7 @@ export function SelectAddressSheetModal({
           )
         }
         enableContentPanningGesture={false}>
-        <BottomSheetView style={[styles.container]}>
+        <AutoLockView as="BottomSheetView" style={[styles.container]}>
           <BottomSheetHandlableView
             style={[styles.titleArea, styles.innerBlock]}>
             <Text style={[styles.modalTitle, styles.modalMainTitle]}>
@@ -235,7 +233,7 @@ export function SelectAddressSheetModal({
               })}
             </View>
           </BottomSheetScrollView>
-        </BottomSheetView>
+        </AutoLockView>
       </AppBottomSheetModal>
       <ModalConfirmDiscard
         visible={isConfirmingDiscard}

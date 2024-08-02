@@ -6,7 +6,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
 import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
-import { RootNames } from '@/constant/layout';
+import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
@@ -36,14 +36,13 @@ const hitSlop = {
 };
 
 export function AddressNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
 
   return (
     <AddressStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -52,9 +51,11 @@ export function AddressNavigator() {
         headerTintColor: colors['neutral-title-1'],
         headerTitleStyle: {
           color: colors['neutral-title-1'],
+          fontWeight: '500',
+          fontSize: DEFAULT_NAVBAR_FONT_SIZE,
         },
         headerTitle: '',
-      }}>
+      })}>
       <AddressStack.Screen
         name={RootNames.CurrentAddress}
         component={CurrentAddressScreen}
@@ -81,10 +82,15 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
         component={ImportNewAddressScreen}
-        options={{
+        options={mergeScreenOptions({
           headerTitle: 'Add an Address',
           title: 'Add an Address',
-        }}
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            // fontWeight: '500',
+            color: colors['neutral-title-1'],
+          },
+        })}
       />
       <AddressStack.Screen
         name={RootNames.ImportSuccess}
@@ -122,7 +128,7 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Import more address',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           title: 'Import more address',
           headerRight: ImportMoreAddressScreenButton,
@@ -135,7 +141,7 @@ export function AddressNavigator() {
           headerTitle: 'Import Private Key',
           title: 'Import Private Key',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           headerRight: ScannerButton,
         }}
@@ -147,7 +153,7 @@ export function AddressNavigator() {
           headerTitle: 'Import Seed Phrase',
           title: 'Import Seed Phrase',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           headerRight: ScannerButton,
         }}
@@ -159,7 +165,7 @@ export function AddressNavigator() {
           headerTitle: strings('page.newAddress.createNewSeedPhrase'),
           title: strings('page.newAddress.createNewSeedPhrase'),
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />
@@ -169,9 +175,6 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Add from Current Seed Phrase',
           title: 'Add from Current Seed Phrase',
-          headerTitleStyle: {
-            fontSize: 20,
-          },
         }}
       />
       <AddressStack.Screen
@@ -181,7 +184,7 @@ export function AddressNavigator() {
           headerTitle: 'Backup seed phrase',
           title: 'Backup seed phrase',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />
@@ -192,7 +195,7 @@ export function AddressNavigator() {
           headerTitle: 'Verify seed phrase  ',
           title: 'Verify seed phrase',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />
@@ -203,7 +206,7 @@ export function AddressNavigator() {
           headerTitle: 'Backup Private Key',
           title: 'Backup Private Key',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />
@@ -214,7 +217,7 @@ export function AddressNavigator() {
           headerTitle: 'Backup Seed Phrase',
           title: 'Backup Seed Phrase',
           headerTitleStyle: {
-            fontSize: 20,
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
       />

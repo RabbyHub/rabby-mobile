@@ -37,7 +37,7 @@ export const useMergeSmallTokens = (tokens?: AbstractPortfolioToken[]) => {
     if (result) {
       const smallToken = {
         ...SMALL_TOKEN,
-        symbol: `${smallTokens?.length} assets are hidden`,
+        symbol: `${smallTokens?.length} low value tokens`,
         _usdValue: smallTokensTotalValue,
         _usdValueStr: formatNetworth(smallTokensTotalValue),
       };

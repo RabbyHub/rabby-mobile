@@ -10,6 +10,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { RootNames } from '@/constant/layout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 
 const isAndroid = Platform.OS === 'android';
 const isIOS = Platform.OS === 'ios';
@@ -55,7 +57,7 @@ export function usePasswordStatus() {
 }
 
 const tryAutoUnlockPromiseRef = {
-  current: apisLock.tryAutoUnlockRabbyMobile(),
+  current: apisLock.tryAutoUnlockRabbyMobileWithUpdateUnlockTime(),
 };
 
 /**
@@ -138,9 +140,11 @@ function tryGetAppStatus() {
 
 const appStateAtom = atom<{
   current: AppStateStatus;
+  androidPaused: boolean;
   // iosStatus: AppStateStatus;
 }>({
   current: tryGetAppStatus(),
+  androidPaused: false,
   // iosStatus: FALLBACK_STATE,
 });
 
@@ -160,7 +164,7 @@ export function useIsOnBackground() {
       return isInactive(appState.current);
     }
 
-    return isInactive(appState.current);
+    return isInactive(appState.current) /*  && appState.androidPaused */;
   }, [appState]);
 
   return {
@@ -175,29 +179,37 @@ export function useSecureOnBackground() {
   const setAppStatus = useSetAtom(appStateAtom);
 
   React.useEffect(() => {
-    if (!AppState.isAvailable) return;
-
     if (isAndroid) {
       const subBlur = AppState.addEventListener('blur', () => {
-        // nativeBlockScreen();
-        setAppStatus({ current: 'inactive' });
+        // setAppStatus(prev => ({ ...prev, current: 'inactive' }));
       });
       const subFocus = AppState.addEventListener('focus', () => {
-        // nativeUnblockScreen();
-        setAppStatus({ current: 'active' });
+        // setAppStatus(prev => ({ ...prev, current: 'active' }));
+      });
+      /**
+       * @why not AppState.addEventListener('blur'|'focus', ...)
+       *
+       * because the blur and focus event will be triggered on <Modal /> component shown.
+       */
+      const subChanged = RNScreenshotPrevent.androidOnLifeCycleChanged(ret => {
+        setAppStatus(prev => ({
+          ...prev,
+          androidPaused: ['pause', 'prepaused'].includes(ret.state),
+        }));
       });
 
       return () => {
         subBlur.remove();
         subFocus.remove();
+        subChanged.remove();
       };
-    } else if (isIOS) {
+    } else if (isIOS && AppState.isAvailable) {
       /** @see https://reactnative.dev/docs/appstate#change */
       const subChange = AppState.addEventListener('change', nextStatus => {
         // if (isInactive(nextStatus)) nativeBlockScreen();
         // else nativeUnblockScreen();
 
-        setAppStatus({ current: nextStatus });
+        setAppStatus(prev => ({ ...prev, current: nextStatus }));
       });
 
       return () => {
@@ -207,27 +219,76 @@ export function useSecureOnBackground() {
   }, [setAppStatus]);
 }
 
+type SwitchToggleType =
+  import('@/components/customized/Switch').SwitchToggleType;
+export const sheetModalRefsNeedLock = {
+  switchBiometricsRef: React.createRef<SwitchToggleType>(),
+  selectAutolockTimeRef: React.createRef<BottomSheetModal>(),
+};
+const setPasswordFirstAtom = atom({
+  isOnSettingsWaiting: false,
+});
+export function useSetPasswordFirstState() {
+  const [{ isOnSettingsWaiting }, updateSetPasswordFirst] =
+    useAtom(setPasswordFirstAtom);
+
+  // const updateSetPasswordFirst = useCallback(
+  //   (state: { isOnSettingsWaiting: boolean }) => {
+  //     _updateSetPasswordFirst(prev => ({
+  //       ...prev,
+  //       ...state,
+  //     }));
+  //   },
+  //   [navigation, _updateSetPasswordFirst],
+  // );
+
+  return {
+    isOnSettingsWaiting,
+    updateSetPasswordFirst,
+  };
+}
 export function useSetPasswordFirst() {
   const navigation = useRabbyAppNavigation();
   const { lockInfo, fetchLockInfo } = useLoadLockInfo();
+  // const { updateSetPasswordFirst } = useSetPasswordFirstState();
+
   useFocusEffect(
     useCallback(() => {
       fetchLockInfo();
     }, [fetchLockInfo]),
   );
   const shouldRedirectToSetPasswordBefore = React.useCallback(
-    (
-      screen: (SettingNavigatorParamList['SetPassword'] &
-        object)['replaceScreen'],
-    ) => {
+    ({
+      screen,
+      onSettingsAction,
+    }: {
+      screen?: (SettingNavigatorParamList['SetPassword'] & {
+        actionAfterSetup: 'backScreen';
+      })['replaceScreen'];
+      onSettingsAction?: (SettingNavigatorParamList['SetPassword'] & {
+        actionAfterSetup: 'onSettings';
+      })['actionType'];
+    }) => {
       if (!APP_FEATURE_SWITCH.customizePassword) return false;
+      if (lockInfo.pwdStatus === PasswordStatus.Custom) return false;
 
-      if (lockInfo.pwdStatus !== PasswordStatus.Custom) {
+      if (screen) {
         navigation.push(RootNames.StackSettings, {
           screen: RootNames.SetPassword,
           params: {
+            actionAfterSetup: 'backScreen',
             replaceStack: RootNames.StackAddress,
             replaceScreen: screen,
+          },
+        });
+        return true;
+      } else if (onSettingsAction) {
+        // updateSetPasswordFirst({ isOnSettingsWaiting: true });
+        navigation.push(RootNames.StackSettings, {
+          screen: RootNames.SetPassword,
+          params: {
+            actionAfterSetup: 'onSettings',
+            actionType: onSettingsAction,
           },
         });
         return true;

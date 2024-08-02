@@ -9,11 +9,11 @@ import {
   TextStyle,
   TouchableNativeFeedback,
   TouchableNativeFeedbackProps,
-  TouchableOpacity,
-  TouchableOpacityProps,
   View,
   ViewStyle,
   TextProps,
+  TouchableOpacityProps,
+  TouchableOpacity,
 } from 'react-native';
 import { colord } from 'colord';
 
@@ -28,7 +28,10 @@ import { createGetStyles } from '@/utils/styles';
 
 export type ButtonProps = TouchableOpacityProps &
   TouchableNativeFeedbackProps & {
-    title?: string | React.ReactElement<{}>;
+    title?:
+      | string
+      | ((ctx: { titleStyle?: TextStyle }) => ReactNode)
+      | React.ReactElement<{}>;
     titleStyle?: StyleProp<TextStyle>;
     titleProps?: TextProps;
     buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
@@ -46,7 +49,7 @@ export type ButtonProps = TouchableOpacityProps &
     disabledTitleStyle?: StyleProp<TextStyle>;
     ghost?: boolean;
     iconRight?: boolean;
-    icon?: ReactNode;
+    icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
     iconContainerStyle?: StyleProp<ViewStyle>;
   };
 
@@ -214,6 +217,20 @@ export const Button = ({
     busy: !!loading,
   };
 
+  const iconNode = useMemo(() => {
+    if (typeof icon === 'function') {
+      return icon({ titleStyle });
+    }
+    return icon;
+  }, [icon, titleStyle]);
+
+  const textNode = useMemo(() => {
+    if (typeof title === 'function') {
+      return title({ titleStyle });
+    }
+    return title;
+  }, [title, titleStyle]);
+
   return (
     <View
       style={[styles.container, containerStyle]}
@@ -238,28 +255,28 @@ export const Button = ({
           )}
           {(!loading || showTitleOnLoading) && (
             <>
-              {icon && !iconRight && (
+              {iconNode && !iconRight && (
                 <View
                   style={StyleSheet.flatten([
                     styles.iconContainer,
                     iconContainerStyle,
                   ])}>
-                  {icon}
+                  {iconNode}
                 </View>
               )}
               {/* Title for Button */}
-              {!!title &&
-                renderText(title, {
+              {!!textNode &&
+                renderText(textNode, {
                   style: titleStyle,
                   ...titleProps,
                 })}
-              {icon && iconRight && (
+              {iconNode && iconRight && (
                 <View
                   style={StyleSheet.flatten([
                     styles.iconContainer,
                     iconContainerStyle,
                   ])}>
-                  {icon}
+                  {iconNode}
                 </View>
               )}
             </>

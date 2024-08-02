@@ -2,25 +2,16 @@ import React from 'react';
 import { ActionsContainer, Props } from './ActionsContainer';
 import { useTranslation } from 'react-i18next';
 import { Tip } from '@/components/Tip';
-import {
-  ActivityIndicator,
-  LayoutChangeEvent,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
-import { HoldingAnimated } from './HoldingAnimated';
-import { Spin } from '@/screens/TransactionRecord/components/Spin';
-import { RcIconSelectCC } from '@/assets/icons/common';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     button: {
-      width: 233,
+      width: 240,
       height: 48,
       borderColor: colors['blue-default'],
       borderWidth: 1,
@@ -28,7 +19,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     buttonText: {
       color: colors['blue-default'],
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '500',
     },
     disabled: {
@@ -52,20 +43,12 @@ export const ProcessActions: React.FC<Props> = ({
   tooltipContent,
   submitText,
   gasLess,
-  needHolding,
   isPrimary,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [buttonWidth, setButtonWidth] = React.useState(0);
-  const [buttonHeight, setButtonHeight] = React.useState(0);
-  const [holdPercent, setHoldPercent] = React.useState(0);
 
-  const getButtonWidthLayout = React.useCallback((e: LayoutChangeEvent) => {
-    setButtonWidth(e.nativeEvent.layout.width);
-    setButtonHeight(e.nativeEvent.layout.height);
-  }, []);
   const buttonIsPrimary = isPrimary || gasLess;
   const buttonText = submitText ?? t('page.signFooterBar.beginSigning');
   const buttonTextStyle = StyleSheet.flatten([
@@ -82,7 +65,7 @@ export const ProcessActions: React.FC<Props> = ({
       <Tip
         // @ts-expect-error
         content={tooltipContent}>
-        <View onLayout={getButtonWidthLayout}>
+        <View>
           <GasLessAnimatedWrapper
             title={buttonText}
             titleStyle={buttonTextStyle}
@@ -90,63 +73,16 @@ export const ProcessActions: React.FC<Props> = ({
             gasLess={gasLess}
             showOrigin={!gasLess && !disabledProcess}
             type="process">
-            <HoldingAnimated
-              width={buttonWidth}
-              height={buttonHeight}
-              enable={needHolding}
-              onChange={setHoldPercent}
-              onFinish={onSubmit}>
-              <Button
-                TouchableComponent={needHolding ? View : undefined}
-                disabled={disabledProcess}
-                type={buttonIsPrimary ? 'primary' : 'clear'}
-                buttonStyle={styles.button}
-                titleStyle={buttonTextStyle}
-                disabledStyle={styles.disabled}
-                onPress={needHolding ? undefined : onSubmit}
-                title={
-                  needHolding ? (
-                    <View style={styles.holdButton}>
-                      {holdPercent > 0 && holdPercent < 1 ? (
-                        <Spin
-                          style={styles.spin}
-                          color={
-                            buttonIsPrimary
-                              ? colors['neutral-title-2']
-                              : styles.buttonText.color
-                          }
-                        />
-                      ) : null}
-                      {holdPercent >= 1 ? (
-                        <RcIconSelectCC
-                          width={16}
-                          height={16}
-                          color={
-                            buttonIsPrimary
-                              ? colors['neutral-title-2']
-                              : styles.buttonText.color
-                          }
-                        />
-                      ) : null}
-                      <Text
-                        style={
-                          buttonIsPrimary
-                            ? StyleSheet.flatten([
-                                styles.buttonText,
-                                { color: colors['neutral-title-2'] },
-                              ])
-                            : styles.buttonText
-                        }>
-                        {buttonText}
-                      </Text>
-                    </View>
-                  ) : (
-                    buttonText
-                  )
-                }
-                showTitleOnLoading
-              />
-            </HoldingAnimated>
+            <Button
+              disabled={disabledProcess}
+              type={buttonIsPrimary ? 'primary' : 'clear'}
+              buttonStyle={styles.button}
+              titleStyle={buttonTextStyle}
+              disabledStyle={styles.disabled}
+              onPress={onSubmit}
+              title={buttonText}
+              showTitleOnLoading
+            />
           </GasLessAnimatedWrapper>
         </View>
       </Tip>

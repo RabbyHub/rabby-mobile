@@ -290,9 +290,10 @@ const TokenApprove = ({
           <Row>
             <View ref={tokenApproveBalanceRef}>
               <TokenAmountItem
-                amount={actionData.token.amount}
+                amount={approveAmount}
                 logoUrl={actionData.token.logo_url}
                 onEdit={() => setEditApproveModalVisible(true)}
+                balance={tokenBalance}
               />
             </View>
           </Row>

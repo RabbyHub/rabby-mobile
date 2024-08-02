@@ -1,7 +1,6 @@
 package com.debank.rabbymobile;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -32,7 +31,6 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   public static final String NAME = "RNScreenshotPrevent";
   private final ReactApplicationContext reactContext;
   private RelativeLayout overlayLayout;
-  private boolean secureFlagWasSet;
 
   public RNScreenshotPreventModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -47,11 +45,21 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
     return NAME;
   }
 
-  private static void setSecure(Activity activity) {
+  private static ViewGroup activityGetRootView(Activity activity) {
+    ViewGroup rootView = (ViewGroup) activity.getWindow().getDecorView().getRootView();
+    return rootView;
+  }
+
+  private static boolean activityIsSecure(Activity activity) {
+    int flags = activity.getWindow().getAttributes().flags;
+    return (flags & WindowManager.LayoutParams.FLAG_SECURE) != 0;
+  }
+
+  private static void activitySetSecure(Activity activity) {
     activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
   }
 
-  private static void cancelSecure(Activity activity) {
+  private static void activityCancelSecure(Activity activity) {
     activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
   }
 
@@ -68,14 +76,14 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
           activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              RNScreenshotPreventModule.setSecure(activity);
+              activitySetSecure(activity);
             }
           });
         } else {
           activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              RNScreenshotPreventModule.cancelSecure(activity);
+              activityCancelSecure(activity);
             }
           });
         }
@@ -83,7 +91,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
       }
     }
 
-    this.rnSendEvent(reactContext, "preventScreenshotChanged", params);
+    RabbyUtils.rnCtxSendEvent(reactContext, "preventScreenshotChanged", params);
   }
 
   @ReactMethod
@@ -115,7 +123,7 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
 
   private void createOverlay(Activity activity, String imagePath) {
     overlayLayout = new RelativeLayout(activity);
-    overlayLayout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+    overlayLayout.setBackgroundColor(Color.parseColor("#7084FF"));
 
     // Create an ImageView
     ImageView imageView = new ImageView(activity);
@@ -141,44 +149,43 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
   @Override
   public void onHostResume() {
     Activity currentActivity = this.reactContext.getCurrentActivity();
-    if (currentActivity != null && overlayLayout != null) {
-      currentActivity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          ViewGroup rootView = (ViewGroup) currentActivity.getWindow().getDecorView().getRootView();
-          rootView.removeView(overlayLayout);
-          if (secureFlagWasSet) {
-            currentActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-            secureFlagWasSet = false;
-          }
-        }
-      });
-    }
+    WritableMap params = Arguments.createMap();
+    params.putString("state", "resume");
+    RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
+    // if (currentActivity != null && overlayLayout != null) {
+    //   currentActivity.runOnUiThread(new Runnable() {
+    //     @Override
+    //     public void run() {
+    //       if (overlayLayout != null) {
+    //         activityGetRootView(currentActivity).removeView(overlayLayout);
+    //         overlayLayout = null;
+    //       }
+    //     }
+    //   });
+    // }
   }
 
   @Override
   public void onHostPause() {
     Activity currentActivity = this.reactContext.getCurrentActivity();
-    if (currentActivity != null && overlayLayout != null) {
-      currentActivity.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          ViewGroup rootView = (ViewGroup) currentActivity.getWindow().getDecorView().getRootView();
-          RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT);
-          rootView.addView(overlayLayout, layoutParams);
+    WritableMap params = Arguments.createMap();
+    params.putString("state", "pause");
+    RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
 
-          int flags = currentActivity.getWindow().getAttributes().flags;
-          if ((flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
-            currentActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-            secureFlagWasSet = true;
-          } else {
-            secureFlagWasSet = false;
-          }
-        }
-      });
-    }
+    // if (currentActivity != null && overlayLayout == null) {
+    //  currentActivity.runOnUiThread(new Runnable() {
+    //     @Override
+    //     public void run() {
+    //       ViewGroup rootView = activityGetRootView(currentActivity);
+    //       createOverlay(currentActivity, "");
+
+    //       RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+    //       ViewGroup.LayoutParams.MATCH_PARENT,
+    //       ViewGroup.LayoutParams.MATCH_PARENT);
+    //       rootView.addView(overlayLayout, layoutParams);
+    //     }
+    //  });
+    // }
   }
 
   @Override

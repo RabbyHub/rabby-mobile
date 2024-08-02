@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { merge } from 'lodash';
 
 import {
   NativeStackNavigationOptions,
@@ -68,7 +69,10 @@ const hitSlop = {
   right: 10,
 };
 
-export const useStackScreenConfig = (): NativeStackNavigationOptions => {
+type ScreenOptions = Omit<NativeStackNavigationOptions, 'headerTitleStyle'> & {
+  headerTitleStyle: NativeStackNavigationOptions['headerTitleStyle'] & object;
+};
+export const useStackScreenConfig = () => {
   const colors = useThemeColors();
 
   const navBack = useCallback(() => {
@@ -85,38 +89,45 @@ export const useStackScreenConfig = (): NativeStackNavigationOptions => {
 
   const headerPresets = makeHeadersPresets({ colors });
 
-  return {
-    animation: 'slide_from_right',
-    contentStyle: {
-      // backgroundColor: colors.bgChat,
+  const mergeScreenOptions = useCallback(
+    (...optsList: Partial<ScreenOptions>[]) => {
+      const screenOptions: ScreenOptions = {
+        animation: 'slide_from_right',
+        ...headerPresets.onlyTitle,
+        headerTitleStyle: {
+          ...(headerPresets.onlyTitle.headerTitleStyle as object),
+          color: colors['neutral-title-1'],
+          fontWeight: '500',
+        },
+        // headerTintColor: colors['neutral-bg-1'],
+        headerTintColor: colors['neutral-title-1'],
+        headerLeft: ({ tintColor }) => (
+          <CustomTouchableOpacity
+            style={styles.backButtonStyle}
+            hitSlop={hitSlop}
+            onPress={navBack}>
+            <RcIconHeaderBack
+              width={24}
+              height={24}
+              color={tintColor || colors['neutral-body']}
+            />
+          </CustomTouchableOpacity>
+        ),
+      };
+
+      return merge(
+        {},
+        screenOptions,
+        ...optsList.map(x => ({ ...x })),
+      ) as ScreenOptions;
     },
-    ...headerPresets.onlyTitle,
-    headerTitleStyle: {
-      ...(headerPresets.onlyTitle.headerTitleStyle as object),
-      color: colors['neutral-title-1'],
-      fontWeight: 'normal',
-    },
-    headerTintColor: colors['neutral-bg-1'],
-    headerLeft: ({ tintColor }) => (
-      <CustomTouchableOpacity
-        style={styles.backButtonStyle}
-        hitSlop={hitSlop}
-        onPress={navBack}>
-        <RcIconHeaderBack
-          width={24}
-          height={24}
-          color={tintColor || colors['neutral-body']}
-        />
-      </CustomTouchableOpacity>
-    ),
-  };
+    [headerPresets, colors, navBack],
+  );
+
+  return { mergeScreenOptions };
 };
 
 const styles = StyleSheet.create({
-  headerTitleStyle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   backButtonStyle: {
     // width: 56,
     // height: 56,

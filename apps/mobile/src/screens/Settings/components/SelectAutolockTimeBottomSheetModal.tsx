@@ -22,14 +22,28 @@ import { RcIconCheckmarkCC } from '@/assets/icons/common';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useAutoLockTimeMs } from '@/hooks/appSettings';
+import { IS_ANDROID } from '@/core/native/utils';
+import AutoLockView from '@/components/AutoLockView';
 
 const RcIconCheckmark = makeThemeIconFromCC(RcIconCheckmarkCC, 'green-default');
 
-const FULL_HEIGHT = 538;
 const SIZES = {
-  FULL_HEIGHT: FULL_HEIGHT,
+  ITEM_HEIGHT: 60,
+  ITEM_GAP: 12,
+  titleMt: 6,
+  titleHeight: 24,
+  titleMb: 16,
   HANDLE_HEIGHT: 8,
-  CONTENT_HEIGHT: FULL_HEIGHT /* full */ - 8 /* handleHeight */,
+  containerPb: 42,
+  get FULL_HEIGHT() {
+    return (
+      SIZES.HANDLE_HEIGHT +
+      (SIZES.titleMt + SIZES.titleHeight + SIZES.titleMb) +
+      (SIZES.ITEM_HEIGHT + SIZES.ITEM_GAP) * (TIME_SETTINGS.length - 1) +
+      SIZES.ITEM_HEIGHT +
+      SIZES.containerPb
+    );
+  },
 };
 export const SelectAutolockTimeBottomSheetModal = forwardRef<
   BottomSheetModal,
@@ -42,7 +56,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   const sheetModalRef = useRef<BottomSheetModal>(null);
   const { safeSizes } = useSafeAndroidBottomSizes({
     sheetHeight: SIZES.FULL_HEIGHT,
-    containerPaddingBottom: 20,
+    containerPaddingBottom: SIZES.containerPb,
   });
 
   const colors = useThemeColors();
@@ -75,11 +89,14 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
           onCancel?.();
         }
       }}>
-      <BottomSheetView
+      <AutoLockView
+        as="BottomSheetView"
         // scrollEnabled={false}
         style={[
           styles.container,
-          { paddingBottom: safeSizes.containerPaddingBottom },
+          {
+            paddingBottom: safeSizes.containerPaddingBottom,
+          },
         ]}>
         <Text style={styles.title}>Auto lock time</Text>
         <View style={styles.mainContainer}>
@@ -104,12 +121,12 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
             );
           })}
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 });
 
-const getStyles = createGetStyles(colors => ({
+const getStyles = createGetStyles((colors, options) => ({
   sheet: {
     // backgroundColor: colors['neutral-bg-1'],
     backgroundColor: colors['neutral-bg-2'],
@@ -126,19 +143,21 @@ const getStyles = createGetStyles(colors => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     height: '100%',
-    // ...makeDebugBorder('yellow'),
+    paddingBottom: SIZES.containerPb,
     // height: SIZES.CONTENT_HEIGHT,
-    // backgroundColor: colors['neutral-bg-2'],
+    // ...makeDebugBorder('yellow'),
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     textAlign: 'center',
 
-    marginBottom: 16,
+    marginTop: SIZES.titleMt,
+    minHeight: SIZES.titleHeight,
+    marginBottom: SIZES.titleMb,
     // ...makeDebugBorder('red'),
   },
 
@@ -149,11 +168,13 @@ const getStyles = createGetStyles(colors => ({
 
   settingItem: {
     width: '100%',
-    height: 60,
+    height: SIZES.ITEM_HEIGHT,
     paddingTop: 18,
     paddingBottom: 18,
     paddingHorizontal: 20,
-    backgroundColor: colors['neutral-bg-1'],
+    backgroundColor: !options?.isLight
+      ? colors['neutral-card1']
+      : colors['neutral-bg1'],
     borderRadius: 8,
 
     flexDirection: 'row',
@@ -161,14 +182,14 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
   },
   notFirstOne: {
-    marginTop: 12,
+    marginTop: SIZES.ITEM_GAP,
   },
   settingItemLabel: {
     // color: var(--r-neutral-title1, #192945);
     color: colors['neutral-title-1'],
     fontSize: 16,
     fontStyle: 'normal',
-    fontWeight: '600',
+    fontWeight: '500',
   },
 
   border: {

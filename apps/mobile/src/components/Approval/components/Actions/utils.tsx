@@ -34,7 +34,7 @@ import BigNumber from 'bignumber.js';
 import { useState, useCallback, useEffect } from 'react';
 import PQueue from 'p-queue/dist/index';
 // import { TransactionGroup } from '@/background/service/transactionHistory';
-import { isTestnet } from '@/utils/chain';
+import { findChain, isTestnet } from '@/utils/chain';
 import { findChainByServerID } from '@/utils/chain';
 import { openapi, testOpenapi } from '@/core/request';
 import {
@@ -46,7 +46,6 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { ALIAS_ADDRESS } from '@/constant/gas';
-import { CHAINS } from '@/constant/chains';
 import { getTimeSpan } from '@/utils/time';
 import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import i18n from '@/utils/i18n';
@@ -189,6 +188,10 @@ export interface ParsedActionData {
     is_involving_privacy: boolean;
     receiver?: string;
     from: string;
+  };
+  permit2BatchRevokeToken?: {
+    permit2_id: string;
+    revoke_list: RevokeTokenApproveAction[];
   };
 }
 
@@ -481,6 +484,11 @@ export const parseAction = (
       },
     };
   }
+  if (data?.type === 'permit2_batch_revoke_token') {
+    return {
+      permit2BatchRevokeToken: data.data as any,
+    };
+  }
   return {
     contractCall: {},
   };
@@ -747,6 +755,11 @@ export const fetchContractRequireData = async (
   return result;
 };
 
+export type BatchRevokePermit2RequireData = Record<
+  string,
+  Omit<ApproveTokenRequireData, 'token'>
+>;
+
 export interface AssetOrderRequireData extends ContractRequireData {
   sender: string;
 }
@@ -758,12 +771,13 @@ export type ActionRequireData =
   | ApproveNFTRequireData
   | RevokeNFTRequireData
   | ContractCallRequireData
-  | Record<string, never>
+  | Record<string, any>
   | ContractCallRequireData
   | CancelTxRequireData
   | WrapTokenRequireData
   | PushMultiSigRequireData
   | AssetOrderRequireData
+  | BatchRevokePermit2RequireData
   | null;
 
 export const waitQueueFinished = (q: PQueue) => {
@@ -823,7 +837,7 @@ export const fetchNFTApproveRequiredData = async ({
     result.hasInteraction = hasInteraction.has_interaction;
   });
   queue.add(async () => {
-    const { usd_value } = await openapi.getTokenNFTExposure(chainId, spender);
+    const { usd_value } = await openapi.getTokenNFTTrustValue(chainId, spender);
     result.riskExposure = usd_value;
   });
   await waitQueueFinished(queue);
@@ -837,7 +851,7 @@ const fetchTokenApproveRequireData = async ({
   chainId,
 }: {
   spender: string;
-  token: TokenItem;
+  token?: TokenItem;
   address: string;
   chainId: string;
   apiProvider: OpenApiService;
@@ -853,7 +867,7 @@ const fetchTokenApproveRequireData = async ({
     protocol: null,
     isDanger: false,
     token: {
-      ...token,
+      ...token!,
       amount: 0,
       raw_amount_hex_str: '0x0',
     },
@@ -863,13 +877,18 @@ const fetchTokenApproveRequireData = async ({
     result.rank = credit.rank_at;
   });
   queue.add(async () => {
-    const { usd_value } = await openapi.tokenApproveExposure(spender, chainId);
+    const { usd_value } = await openapi.tokenApproveTrustValue(
+      spender,
+      chainId,
+    );
     result.riskExposure = usd_value;
   });
-  queue.add(async () => {
-    const t = await openapi.getToken(address, chainId, token.id);
-    result.token = t;
-  });
+  if (token) {
+    queue.add(async () => {
+      const t = await openapi.getToken(address, chainId, token.id);
+      result.token = t;
+    });
+  }
   queue.add(async () => {
     const { desc } = await openapi.addrDesc(spender);
     if (desc.contract && desc.contract[chainId]) {
@@ -1119,9 +1138,9 @@ export const fetchActionRequiredData = async ({
     });
   }
   if (actionData.cancelTx) {
-    const chain = Object.values(CHAINS).find(
-      chain => chain.serverId === chainId,
-    );
+    const chain = findChain({
+      serverId: chainId,
+    });
     if (chain) {
       const pendingTxs = await transactionHistoryService.getPendingTxsByNonce(
         address,
@@ -1390,6 +1409,26 @@ export const fetchActionRequiredData = async ({
       }
     });
     await waitQueueFinished(queue);
+    return result;
+  }
+  if (actionData.permit2BatchRevokeToken) {
+    const spenders = actionData.permit2BatchRevokeToken.revoke_list.map(
+      item => item.spender,
+    );
+    // filter out the same spender
+    const uniqueSpenders = Array.from(new Set(spenders));
+
+    const result: BatchRevokePermit2RequireData = {};
+    await Promise.all(
+      uniqueSpenders.map(async spender => {
+        result[spender] = await fetchTokenApproveRequireData({
+          apiProvider,
+          chainId,
+          address,
+          spender,
+        });
+      }),
+    );
     return result;
   }
   return null;
@@ -1752,6 +1791,9 @@ export const getActionTypeText = (data: ParsedActionData) => {
   if (data?.common) {
     return data.common.title;
   }
+  if (data.permit2BatchRevokeToken) {
+    return t('page.signTx.batchRevokePermit2.title');
+  }
   return t('page.signTx.unknownAction');
 };
 
@@ -1778,6 +1820,7 @@ export const getActionTypeTextByType = (type: string) => {
     push_multisig: t('page.signTx.submitMultisig.title'),
     contract_call: t('page.signTx.contractCall.title'),
     swap_order: t('page.signTx.assetOrder.title'),
+    permit2_batch_revoke_token: t('page.signTx.batchRevokePermit2.title'),
   };
 
   return dict[type] || t('page.signTx.unknownAction');

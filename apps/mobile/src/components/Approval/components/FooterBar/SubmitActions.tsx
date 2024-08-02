@@ -1,32 +1,51 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionsContainer, Props } from './ActionsContainer';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { Button } from '@/components/Button';
 import { Tip } from '@/components/Tip';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { GasLessAnimatedWrapper } from './GasLessComponents';
+import { colord, extend } from 'colord';
+import mixPlugin from 'colord/plugins/mix';
+import { useSubmitAction } from './useSubmitAction';
+import { globalBottomSheetModalAddListener } from '@/components/GlobalBottomSheetModal';
+import { EVENT_NAMES } from '@/components/GlobalBottomSheetModal/types';
+
+extend([mixPlugin]);
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     button: {
-      width: '100%',
+      width: 240,
       height: 48,
       borderColor: colors['blue-default'],
       borderWidth: 1,
       borderRadius: 8,
     },
+    buttonConfirm: {
+      borderColor: colord(colors['blue-default'])
+        .mix(colord(colors['neutral-black']), 0.2)
+        .toHex(),
+      backgroundColor: colord(colors['blue-default'])
+        .mix(colord(colors['neutral-black']), 0.2)
+        .toHex(),
+    },
     buttonText: {
       color: colors['neutral-title-2'],
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '500',
     },
     buttonDisabled: {
       borderColor: colors['blue-light-1'],
     },
-    buttonWrapper: {
-      marginRight: 10,
+    buttonWrapper: {},
+    submitButtonWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
     },
   });
 
@@ -46,10 +65,50 @@ export const SubmitActions: React.FC<Props> = ({
   }, []);
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const [pressedConfirm, setPressedConfirm] = React.useState(false);
+  const { submitText, SubmitIcon, onPress } = useSubmitAction();
+  const handlePress = React.useCallback(() => {
+    setPressedConfirm(true);
+    globalBottomSheetModalAddListener(
+      EVENT_NAMES.DISMISS,
+      () => {
+        setPressedConfirm(false);
+      },
+      true,
+    );
+    onPress(onSubmit, () => setPressedConfirm(false));
+  }, [onSubmit, setPressedConfirm, onPress]);
 
   return (
     <ActionsContainer onCancel={onCancel}>
-      {isSign ? null : (
+      {isSign ? (
+        <Button
+          disabled={disabledProcess || pressedConfirm}
+          type="primary"
+          buttonStyle={StyleSheet.flatten([
+            styles.button,
+            styles.buttonConfirm,
+          ])}
+          titleStyle={styles.buttonText}
+          disabledStyle={styles.buttonDisabled}
+          onPress={handlePress}
+          title={
+            <View style={styles.submitButtonWrapper}>
+              {SubmitIcon && (
+                <SubmitIcon
+                  width={18}
+                  height={18}
+                  style={{
+                    // @ts-expect-error
+                    color: colors['neutral-title-2'],
+                  }}
+                />
+              )}
+              <Text style={styles.buttonText}>{submitText}</Text>
+            </View>
+          }
+        />
+      ) : (
         // @ts-expect-error
         <Tip content={enableTooltip ? tooltipContent : undefined}>
           <View style={styles.buttonWrapper}>

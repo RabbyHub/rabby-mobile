@@ -1,30 +1,34 @@
-import {
-  Chain,
-  CHAINS_BY_NET,
-  CHAINS_ENUM,
-  CHAINS_LIST,
-} from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
+import { Chain, CHAINS_ENUM, getChainList } from '@/constant/chains';
+import { TestnetChain } from '@/core/services/customTestnetService';
 import {
   ChainWithBalance,
   TokenItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { keyBy } from 'lodash';
 
-export const findChain = (params: {
-  enum?: CHAINS_ENUM | string | null;
-  id?: number | null;
-  serverId?: string | null;
-  hex?: string | null;
-  networkId?: string | null;
-}): Chain | null | undefined => {
+export const findChain = (
+  params: {
+    enum?: CHAINS_ENUM | string | null;
+    id?: number | null;
+    serverId?: string | null;
+    hex?: string | null;
+    networkId?: string | null;
+  },
+  _chainList?: (Chain | TestnetChain)[],
+): Chain | null | undefined => {
+  const chainList = _chainList || [
+    ...getChainList('mainnet'),
+    ...getChainList('testnet'),
+  ];
   const { enum: chainEnum, id, serverId, hex, networkId } = params;
   if (chainEnum && chainEnum.startsWith('CUSTOM_')) {
-    return findChain({
-      id: +chainEnum.replace('CUSTOM_', ''),
-    });
+    return findChain(
+      {
+        id: +chainEnum.replace('CUSTOM_', ''),
+      },
+      chainList,
+    );
   }
-  const chain = [...CHAINS_LIST].find(
+  const chain = chainList.find(
     item =>
       item.enum === chainEnum ||
       (id && +item.id === +id) ||
@@ -52,13 +56,19 @@ export function findChainByEnum(
   const toFallbackEnum: CHAINS_ENUM | null = fallbackIdx
     ? CHAINS_ENUM[fallbackIdx] || CHAINS_ENUM.ETH
     : null;
-  const toFallbackChain = toFallbackEnum ? CHAINS[toFallbackEnum] : null;
+  const toFallbackChain = toFallbackEnum
+    ? findChain({ enum: toFallbackEnum }) || null
+    : null;
 
   if (!chainEnum) {
     return toFallbackChain;
   }
 
-  return CHAINS[chainEnum as CHAINS_ENUM] || toFallbackChain;
+  return (
+    findChain({
+      enum: chainEnum,
+    }) || toFallbackChain
+  );
 }
 
 export function filterChainEnum(chainEnum: CHAINS_ENUM) {
@@ -88,18 +98,22 @@ export function ensureChainListValid<T extends CHAINS_ENUM[]>(list: T) {
  * @description safe find chain
  */
 export function findChainByID(chainId: Chain['id']): Chain | null {
-  return !chainId
-    ? null
-    : CHAINS_LIST.find(chain => chain.id === chainId) || null;
+  return (
+    findChain({
+      id: chainId,
+    }) || null
+  );
 }
 
 /**
  * @description safe find chain by serverId
  */
 export function findChainByServerID(chainId: Chain['serverId']): Chain | null {
-  return !chainId
-    ? null
-    : CHAINS_LIST.find(chain => chain.serverId === chainId) || null;
+  return (
+    findChain({
+      serverId: chainId,
+    }) || null
+  );
 }
 
 export function isTestnet(chainServerId?: string) {
@@ -132,9 +146,9 @@ export interface DisplayChainWithWhiteLogo extends ChainWithBalance {
 export function formatChainToDisplay(
   item: ChainWithBalance,
 ): DisplayChainWithWhiteLogo {
-  const chainsArray = Object.values(CHAINS);
-  const chain = chainsArray.find(chain => chain.id === item.community_id);
-
+  const chain = findChain({
+    id: item.community_id,
+  });
   return {
     ...item,
     logo: chain?.logo || item.logo_url,
@@ -209,6 +223,8 @@ export function varyAndSortChainItems(deps: {
     [x: string]: DisplayChainWithWhiteLogo | undefined;
   };
   netTabKey?: 'mainnet' | 'testnet';
+  mainnetList?: Chain[];
+  testnetList?: Chain[];
 }) {
   const {
     supportChains,
@@ -216,6 +232,8 @@ export function varyAndSortChainItems(deps: {
     pinned,
     matteredChainBalances,
     netTabKey,
+    mainnetList = getChainList('mainnet'),
+    testnetList = getChainList('testnet'),
   } = deps;
 
   const unpinnedListGroup = {
@@ -230,8 +248,7 @@ export function varyAndSortChainItems(deps: {
   };
 
   const _all = (
-    (netTabKey ? CHAINS_BY_NET[netTabKey] : CHAINS_BY_NET.mainnet) ||
-    CHAINS_BY_NET.mainnet
+    (netTabKey === 'testnet' ? testnetList : mainnetList) || mainnetList
   ).sort((a: { name: string }, b: { name: any }) =>
     a.name.localeCompare(b.name),
   );
@@ -302,8 +319,9 @@ export function varyAndSortChainItems(deps: {
 export const formatChain = (
   item: ChainWithBalance,
 ): DisplayChainWithWhiteLogo => {
-  const chainsArray = Object.values(CHAINS);
-  const chain = chainsArray.find(chain => chain.id === item.community_id);
+  const chain = findChain({
+    id: item.community_id,
+  });
 
   return {
     ...item,
@@ -331,10 +349,11 @@ export function makeTokenFromChain(chain: Chain): TokenItem {
   };
 }
 
-const chainsDict = keyBy(CHAINS, 'serverId');
 export const getChain = (chainId?: string) => {
   if (!chainId) {
     return null;
   }
-  return chainsDict[chainId];
+  return findChain({
+    serverId: chainId,
+  });
 };

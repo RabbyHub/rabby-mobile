@@ -14,6 +14,7 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import AutoLockView from '@/components/AutoLockView';
 
 const markdownContent = `
 # Rabby Terms of Service and Privacy Policy
@@ -101,7 +102,8 @@ export function MarkdownInWebViewInner() {
   const { safeOffBottom } = useSafeSizes();
 
   return (
-    <BottomSheetView
+    <AutoLockView
+      as="BottomSheetView"
       style={[styles.container, { paddingBottom: safeOffBottom }]}>
       <View style={styles.topContainer}>
         {/* <View style={styles.titleArea}>
@@ -116,7 +118,7 @@ export function MarkdownInWebViewInner() {
         </View>
       </View>
       {/* <FooterComponentForUpgrade style={[styles.footerComponent]} /> */}
-    </BottomSheetView>
+    </AutoLockView>
   );
 }
 

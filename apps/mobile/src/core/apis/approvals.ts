@@ -1,10 +1,10 @@
 import { type ApprovalSpenderItemToBeRevoked } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 import { t } from 'i18next';
-import { CHAINS } from '@/constant/chains';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder, sendRequest } from './sendRequest';
 import { preferenceService } from '../services';
 import type PQueue from 'p-queue/dist/index';
+import { findChain } from '@/utils/chain';
 
 async function approveToken(
   chainServerId: string,
@@ -17,9 +17,9 @@ async function approveToken(
 ) {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
-  const chainId = Object.values(CHAINS).find(
-    chain => chain.serverId === chainServerId,
-  )?.id;
+  const chainId = findChain({
+    serverId: chainServerId,
+  })?.id;
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   let tx: any = {
     from: account.address,
@@ -91,9 +91,9 @@ async function revokeNFTApprove(
 ) {
   const account = await preferenceService.getCurrentAccount();
   if (!account) throw new Error(t('background.error.noCurrentAccount'));
-  const chainId = Object.values(CHAINS).find(
-    chain => chain.serverId === chainServerId,
-  )?.id;
+  const chainId = findChain({
+    serverId: chainServerId,
+  })?.id;
   if (!chainId) throw new Error(t('background.error.invalidChainId'));
   if (abi === 'ERC721') {
     if (isApprovedForAll) {

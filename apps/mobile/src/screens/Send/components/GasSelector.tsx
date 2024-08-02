@@ -21,6 +21,7 @@ import { getGasLevelI18nKey } from '@/utils/trans';
 import { AppBottomSheetModal, Button } from '@/components';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { coerceNumber } from '@/utils/coerce';
+import AutoLockView from '@/components/AutoLockView';
 
 interface GasSelectorProps {
   chainId: Chain['id'];
@@ -151,7 +152,7 @@ export default function GasSelectorBottomSheetModal({
       snapPoints={['50%']}
       keyboardBlurBehavior="restore"
       onDismiss={onClose}>
-      <BottomSheetView style={styles.container}>
+      <AutoLockView as="BottomSheetView" style={styles.container}>
         <View style={styles.topArea}>
           <Text style={styles.title}>Set Gas Price (Gwei)</Text>
           <View style={styles.description}>
@@ -239,7 +240,7 @@ export default function GasSelectorBottomSheetModal({
             title={t('page.sendToken.GasSelector.confirm')}
           />
         </View>
-      </BottomSheetView>
+      </AutoLockView>
     </AppBottomSheetModal>
   );
 }

@@ -6,7 +6,6 @@ import { ethErrors } from 'eth-rpc-errors';
 // } from 'background/service';
 import { dappService, keyringService, notificationService } from '../services';
 import PromiseFlow from '@/utils/promiseFlow';
-import { CHAINS } from '@/constant/chains';
 import providerController from './provider';
 // import eventBus from '@/eventBus';
 import { ProviderRequest } from './type';
@@ -18,6 +17,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import * as apisDapp from '../apis/dapp';
 import { stats } from '@/utils/stats';
 import { waitSignComponentAmounted } from '../utils/signEvent';
+import { findChain } from '@/utils/chain';
 
 export const underline2Camelcase = (str: string) => {
   return str.replace(/_(.)/g, (m, p1) => p1.toUpperCase());
@@ -210,9 +210,9 @@ const flowContext = flow
       if (approvalType === 'SignTx' && !('chainId' in params[0])) {
         const site = dappService.getConnectedDapp(origin);
         if (site) {
-          const chain = Object.values(CHAINS).find(
-            item => item.enum === site.chainId,
-          );
+          const chain = findChain({
+            enum: site.chainId,
+          });
           if (chain) {
             params[0].chainId = chain.id;
           }

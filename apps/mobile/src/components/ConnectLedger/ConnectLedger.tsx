@@ -17,6 +17,7 @@ import { NotFoundDeviceScreen } from './NotFoundDeviceScreen';
 import { OpenEthAppScreen } from './OpenEthAppScreen';
 import { ScanDeviceScreen } from './ScanDeviceScreen';
 import { SelectDeviceScreen } from './SelectDeviceScreen';
+import AutoLockView from '../AutoLockView';
 
 export const ConnectLedger: React.FC<{
   onDone?: () => void;
@@ -166,7 +167,7 @@ export const ConnectLedger: React.FC<{
   }, []);
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       {currentScreen === 'ble' && (
         <BluetoothPermissionScreen onNext={handleBleNext} />
       )}
@@ -181,6 +182,6 @@ export const ConnectLedger: React.FC<{
       )}
       {currentScreen === 'notfound' && <NotFoundDeviceScreen />}
       {currentScreen === 'openEthApp' && <OpenEthAppScreen />}
-    </BottomSheetView>
+    </AutoLockView>
   );
 };

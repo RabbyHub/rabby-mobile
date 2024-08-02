@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
 import ImgWarning from '@/assets/icons/swap/warn.svg';
+import AutoLockView from '@/components/AutoLockView';
 
 export const Unknown = () => {
   const [, , rejectApproval] = useApproval();
@@ -15,14 +16,14 @@ export const Unknown = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <AutoLockView style={styles.root}>
       <View style={styles.main}>
         <ImgWarning width={52} height={52} />
         <Text style={styles.text}>Not supported in current version.</Text>
       </View>
 
       <FooterButton title="Cancel" onPress={onCancel} />
-    </View>
+    </AutoLockView>
   );
 };
 

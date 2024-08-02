@@ -1,23 +1,14 @@
 package com.debank.rabbymobile;
 
-import androidx.annotation.Nullable;
-
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.WritableMap;
 
 abstract class EventEmitterPackageSpec extends ReactContextBaseJavaModule {
   EventEmitterPackageSpec(ReactApplicationContext context) {
     super(context);
-  }
-
-  protected void rnSendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
-    reactContext
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-        .emit(eventName, params);
   }
   // private static final List<EventDispatcherListener> mListeners = new CopyOnWriteArrayList<>();
 

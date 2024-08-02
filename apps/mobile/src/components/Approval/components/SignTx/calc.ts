@@ -1,6 +1,5 @@
 import { TransactionGroup } from '@/core/services/transactionHistory';
 import i18n from '@/utils/i18n';
-import { CHAINS } from '@/constant/chains';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import BigNumber from 'bignumber.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -12,6 +11,7 @@ import {
   MINIMUM_GAS_LIMIT,
 } from '@/constant/gas';
 import { transactionHistoryService } from '@/core/services';
+import { findChain } from '@/utils/chain';
 
 export const getRecommendGas = async ({
   gas,
@@ -74,7 +74,9 @@ export const getRecommendNonce = async ({
   tx: Tx;
   chainId: number;
 }) => {
-  const chain = Object.values(CHAINS).find(item => item.id === chainId);
+  const chain = findChain({
+    id: chainId,
+  });
   if (!chain) {
     throw new Error('chain not found');
   }
@@ -97,7 +99,9 @@ export const getNativeTokenBalance = async ({
   address: string;
   chainId: number;
 }): Promise<string> => {
-  const chain = Object.values(CHAINS).find(item => item.id === chainId);
+  const chain = findChain({
+    id: chainId,
+  });
   if (!chain) {
     throw new Error('chain not found');
   }
@@ -128,7 +132,7 @@ export const explainGas = async ({
 }) => {
   let gasCostTokenAmount = new BigNumber(gasUsed).times(gasPrice).div(1e18);
   let maxGasCostAmount = new BigNumber(gasLimit || 0).times(gasPrice).div(1e18);
-  const chain = Object.values(CHAINS).find(item => item.id === chainId);
+  const chain = findChain({ id: chainId });
   if (!chain) throw new Error(`${chainId} is not found in supported chains`);
   if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum)) {
     const res = await apiProvider.fetchEstimatedL1Fee(

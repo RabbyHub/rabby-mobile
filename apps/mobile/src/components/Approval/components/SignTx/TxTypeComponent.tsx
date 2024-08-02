@@ -1,16 +1,16 @@
 import { Chain, CHAINS_ENUM } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { ExplainTxResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import React from 'react';
 import { ActionRequireData, ParsedActionData } from '../Actions/utils';
 import Actions from '../Actions';
 import Loading from '../TxComponents/Loading';
+import { findChain } from '@/utils/chain';
 
 export const TxTypeComponent = ({
   actionRequireData,
   actionData,
-  chain = CHAINS[CHAINS_ENUM.ETH],
+  chain,
   isReady,
   raw,
   onChange,
@@ -41,7 +41,12 @@ export const TxTypeComponent = ({
       <Actions
         data={actionData}
         requireData={actionRequireData}
-        chain={chain}
+        chain={
+          chain ||
+          findChain({
+            enum: CHAINS_ENUM.ETH,
+          })
+        }
         engineResults={engineResults}
         txDetail={txDetail}
         raw={raw}

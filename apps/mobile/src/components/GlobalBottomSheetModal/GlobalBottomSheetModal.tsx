@@ -18,9 +18,10 @@ import {
   MODAL_VIEWS,
   SNAP_POINTS,
 } from './utils';
-import { events } from './event';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useRefreshAutoLockPanResponder } from '../AutoLockView';
+import { globalSheetModalEvents } from './event';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -48,10 +49,16 @@ export const GlobalBottomSheetModal = () => {
     const currentModal = modalRefs.current[key];
 
     if (!currentModal) {
+      if (__DEV__) {
+        console.warn(
+          `[GlobalBottomSheetModal] Modal with key ${key} not found`,
+        );
+      }
       return;
     }
 
     currentModal.current?.present();
+    globalSheetModalEvents.emit(EVENT_NAMES.PRESENTED, key);
   }, []);
 
   const [getApproval] = useApproval();
@@ -91,7 +98,10 @@ export const GlobalBottomSheetModal = () => {
     GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
   >((key: string, params) => {
     if (modalRefs.current[key]) {
-      modalRefs.current[key].current?.close({ ...params });
+      // Empty object as props causes flash, undefined is preferred
+      modalRefs.current[key].current?.close(
+        Object.keys(params || {}).length ? { ...params } : undefined,
+      );
     }
     delete modalRefs.current[key];
     // const modalInst = modals.find(modal => modal.id === key);
@@ -101,15 +111,15 @@ export const GlobalBottomSheetModal = () => {
       return prev.filter(modal => modal.id !== key);
     });
 
-    events.emit(EVENT_NAMES.CLOSED, key);
-    events.emit(EVENT_NAMES.DISMISS, key);
+    globalSheetModalEvents.emit(EVENT_NAMES.CLOSED, key);
+    globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
   }, []);
 
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
     (key: string) => {
-      events.emit(EVENT_NAMES.DISMISS, key);
+      globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
       handleRemove(key);
     },
     [handleRemove],
@@ -128,16 +138,16 @@ export const GlobalBottomSheetModal = () => {
   }, []);
 
   React.useEffect(() => {
-    events.on(EVENT_NAMES.CREATE, handleCreate);
-    events.on(EVENT_NAMES.REMOVE, handleRemove);
-    events.on(EVENT_NAMES.PRESENT, handlePresent);
-    events.on(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
+    globalSheetModalEvents.on(EVENT_NAMES.CREATE, handleCreate);
+    globalSheetModalEvents.on(EVENT_NAMES.REMOVE, handleRemove);
+    globalSheetModalEvents.on(EVENT_NAMES.PRESENT, handlePresent);
+    globalSheetModalEvents.on(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
 
     return () => {
-      events.off(EVENT_NAMES.CREATE, handleCreate);
-      events.off(EVENT_NAMES.REMOVE, handleRemove);
-      events.off(EVENT_NAMES.PRESENT, handlePresent);
-      events.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
+      globalSheetModalEvents.off(EVENT_NAMES.CREATE, handleCreate);
+      globalSheetModalEvents.off(EVENT_NAMES.REMOVE, handleRemove);
+      globalSheetModalEvents.off(EVENT_NAMES.PRESENT, handlePresent);
+      globalSheetModalEvents.off(EVENT_NAMES.SNAP_TO_INDEX, handleSnapToIndex);
     };
   }, [handleCreate, handlePresent, handleRemove, handleSnapToIndex]);
 
@@ -155,12 +165,19 @@ export const GlobalBottomSheetModal = () => {
 
   React.useEffect(onHardwareBackHandler);
 
+  const { panResponder } = useRefreshAutoLockPanResponder();
+
   return (
     <View>
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
         const enableDynamicSizing = bottomSheetModalProps?.enableDynamicSizing;
+
+        const modalViewProps = {
+          ...modal.params,
+          $createParams: modal.params,
+        };
 
         return (
           <AppBottomSheetModal
@@ -178,11 +195,11 @@ export const GlobalBottomSheetModal = () => {
             name={modal.id}
             children={
               enableDynamicSizing ? (
-                <BottomSheetView>
-                  <ModalView {...modal.params} />
+                <BottomSheetView {...panResponder.panHandlers}>
+                  <ModalView {...modalViewProps} />
                 </BottomSheetView>
               ) : (
-                <ModalView {...modal.params} />
+                <ModalView {...modalViewProps} />
               )
             }
             stackBehavior="push"

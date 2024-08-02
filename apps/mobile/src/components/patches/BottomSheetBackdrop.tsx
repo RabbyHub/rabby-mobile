@@ -24,6 +24,7 @@ import {
 } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/constants';
 import { styles } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/styles';
 import type { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/types';
+import { apisAutoLock } from '@/core/apis';
 
 /**
  * @description this component is patched from the original BottomSheetBackdrop.tsx on package @gorhom/bottom-sheet,
@@ -61,6 +62,7 @@ const BottomSheetBackdropComponent = ({
 
   //#region callbacks
   const handleOnPress = useCallback(() => {
+    apisAutoLock.uiRefreshTimeout();
     onPress?.();
 
     if (pressBehavior === 'close') {

@@ -34,7 +34,8 @@ export const CreateAddressList = () => {
   }, []);
 
   const handleSeedPhrase = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore(RootNames.CreateMnemonic)) return;
+    if (shouldRedirectToSetPasswordBefore({ screen: RootNames.CreateMnemonic }))
+      return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonic,

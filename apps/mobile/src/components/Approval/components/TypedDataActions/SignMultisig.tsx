@@ -7,10 +7,10 @@ import { MultiSigRequireData } from './utils';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Chain } from '@/constant/chains';
-import { CHAINS } from '@/constant/chains';
 import { Text, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
+import { findChain } from '@/utils/chain';
 
 const PushMultiSig = ({
   data,
@@ -29,7 +29,9 @@ const PushMultiSig = ({
     if (!chain) {
       for (const key in requireData?.contract) {
         const contract = requireData.contract[key];
-        const c = Object.values(CHAINS).find(item => item.serverId === key);
+        const c = findChain({
+          serverId: key,
+        });
         if (contract.multisig && c) {
           return {
             ...contract.multisig,

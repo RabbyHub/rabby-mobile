@@ -6,9 +6,9 @@ import { Text } from '@/components/Text';
  *
  * https://github.com/react-native-elements/react-native-elements/blob/9e26230cdfb90f22b26dc8b7362ef5ac5d5a9f81/packages/base/src/helpers/renderNode.tsx#L3
  */
-export const renderNode = (
-  Component: any,
-  content: any,
+export const renderNode = <T extends object = any>(
+  Component: React.FC<T>,
+  content: React.ReactNode | (() => React.ReactNode) | T,
   defaultProps: any = {},
 ) => {
   if (content == null || content === false) {
@@ -37,8 +37,11 @@ export const renderNode = (
 };
 
 export const renderText = (
-  content: any,
-  defaultProps: any,
+  content:
+    | React.ReactNode
+    | (() => React.ReactNode)
+    | React.ComponentProps<typeof Text>,
+  defaultProps: Partial<React.ComponentProps<typeof Text>>,
   style?: StyleProp<any>,
 ) =>
   renderNode(Text, content, {

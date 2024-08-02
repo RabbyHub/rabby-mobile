@@ -13,7 +13,6 @@ import {
   OPEN_DAPP_VIEW_INDEXES,
 } from '../../hooks/useDappView';
 import { BottomSheetContent } from './DappWebViewControlWidgets';
-import SheetGeneralWebView from './SheetGeneralWebView';
 import { devLog } from '@/utils/logger';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import {
@@ -40,16 +39,27 @@ import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
-import { OpenedDappBottomSheetModal } from '@/components';
+import {
+  OpenedDappBottomSheetModal,
+  useAutoLockBottomSheetModalOnChange,
+} from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
 import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
+import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
+import AutoLockView from '@/components/AutoLockView';
+import { globalSetActiveDappState } from '@/core/bridges/state';
+// import { globalSetActiveDappState } from '@/core/bridges/state';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} disappearsOnIndex={0} appearsOnIndex={1} />
+  <RefreshAutoLockBottomSheetBackdrop
+    {...props}
+    disappearsOnIndex={0}
+    appearsOnIndex={1}
+  />
 );
 
 /**
@@ -181,6 +191,8 @@ export function OpenedDappWebViewStub() {
       // openedDappWebviewSheetModalRef?.current?.present();
       expandDappWebViewModal();
       // toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
+    } else {
+      globalSetActiveDappState({ dappOrigin: null, tabId: null });
     }
   }, [expandDappWebViewModal, activeDapp]);
 
@@ -200,6 +212,10 @@ export function OpenedDappWebViewStub() {
   const { currentAccount } = useCurrentAccount();
   const { RcWalletIcon } = useWalletBrandLogo(currentAccount?.brandName);
 
+  const { handleChange } = useAutoLockBottomSheetModalOnChange(
+    handleBottomSheetChanges,
+  );
+
   return (
     <OpenedDappBottomSheetModal
       index={OPEN_DAPP_VIEW_INDEXES.collapsed}
@@ -213,8 +229,10 @@ export function OpenedDappWebViewStub() {
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
-      onChange={handleBottomSheetChanges}>
-      <BottomSheetView
+      enableDynamicSizing={false}
+      onChange={handleChange}>
+      <AutoLockView
+        as="BottomSheetView"
         style={[
           styles.bsView,
           !!openedDappItems.length && styles.bsViewOpened,
@@ -227,7 +245,16 @@ export function OpenedDappWebViewStub() {
           return (
             <DappWebViewControl
               key={key}
-              ref={activeDappWebViewControlRef}
+              ref={inst => {
+                // @ts-expect-error
+                activeDappWebViewControlRef.current = inst;
+                if (isActiveDapp) {
+                  globalSetActiveDappState({
+                    dappOrigin: dappInfo.origin,
+                    tabId: inst?.getWebViewId(),
+                  });
+                }
+              }}
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
               initialUrl={dappInfo.$openParams?.initialUrl}
@@ -366,7 +393,7 @@ export function OpenedDappWebViewStub() {
             />
           );
         })}
-      </BottomSheetView>
+      </AutoLockView>
     </OpenedDappBottomSheetModal>
   );
 }
@@ -388,20 +415,3 @@ const getWebViewStubStyles = createGetStyles(colors => {
     },
   };
 });
-
-/**
- * @deprecated
- */
-export function OpenedWebViewsStub() {
-  const { openedNonDappOrigin } = useOpenUrlView();
-
-  if (!openedNonDappOrigin) return null;
-
-  return (
-    <>
-      {[openedNonDappOrigin].map((url, idx) => {
-        return <SheetGeneralWebView key={`${url}-${idx}`} url={url} />;
-      })}
-    </>
-  );
-}

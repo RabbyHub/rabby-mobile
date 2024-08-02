@@ -1,21 +1,21 @@
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 import { usePreventScreenshot } from './native/security';
 import DeviceUtils from '@/core/utils/device';
 import { atomByMMKV } from '@/core/storage/mmkv';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
-import { autoLockEvent } from '@/core/apis/autoLock';
 import { apisAutoLock } from '@/core/apis';
-import { DEFAULT_AUTO_LOCK_MINUTES } from '@/constant/autoLock';
+import { DEFAULT_AUTO_LOCK_MINUTES, TIME_SETTINGS } from '@/constant/autoLock';
 import { preferenceService } from '@/core/services';
+import { getTimeSpan, getTimeSpanByMs } from '@/utils/time';
 
 const isIOS = DeviceUtils.isIOS();
 
-type ESettings = {
+type ScreenshotSettings = {
   androidAllowScreenCapture: boolean;
   iosAllowScreenRecord: boolean;
 };
-const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
+const ExperimentalSettingsAtom = atomByMMKV('@ExperimentalSettings', {
   /**
    * @description means screen-capture/screen-recording on Android, or screen-recording on iOS
    *
@@ -26,7 +26,7 @@ const ExperimentalSettingsAtom = atomByMMKV('ExperimentalSettings', {
 });
 
 const KEY = isIOS ? 'iosAllowScreenRecord' : 'androidAllowScreenCapture';
-function isAllowScreenshot(ret: ESettings) {
+function isAllowScreenshot(ret: ScreenshotSettings) {
   return ret[KEY];
 }
 
@@ -91,33 +91,16 @@ export function useGlobalAppPreventScreenrecordOnDev() {
   }, [allowScreenshot]);
 }
 
-const autoLockTimeoutAtom = atom(-1);
-autoLockTimeoutAtom.onMount = setter => {
-  autoLockEvent.addListener('change', value => {
-    setter(value);
-  });
-};
-
-export function useAutoLockTimeout() {
-  const [timeout, setTimeout] = useAtom(autoLockTimeoutAtom);
-
-  const fetchTimeout = useCallback(() => {
-    const value = apisAutoLock.getAutoLockTime();
-    setTimeout(value);
-    return value;
-  }, [setTimeout]);
-
-  return {
-    autoLockTimeout: timeout,
-    fetchTimeout,
-  };
-}
-
 const autoLockMinutesAtom = atom<number>(DEFAULT_AUTO_LOCK_MINUTES);
 autoLockMinutesAtom.onMount = setAutoLockMinutes => {
   const times = apisAutoLock.getPersistedAutoLockTimes();
   setAutoLockMinutes(times.minutes);
 };
+export function useAutoLockTimeMinites() {
+  const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
+
+  return { autoLockMinutes };
+}
 export function useAutoLockTimeMs() {
   const [autoLockMinutes, setAutoLockMinutes] = useAtom(autoLockMinutesAtom);
 
@@ -128,7 +111,7 @@ export function useAutoLockTimeMs() {
 
   const onAutoLockTimeMsChange = useCallback(
     (ms: number) => {
-      const minutes = Math.floor(ms / 60000);
+      const minutes = apisAutoLock.coerceAutoLockTimeout(ms).minutes;
       setAutoLockMinutes(minutes);
       preferenceService.setPreference({
         autoLockTime: minutes,
@@ -142,5 +125,33 @@ export function useAutoLockTimeMs() {
     autoLockMs,
     // autoLockMinutes,
     onAutoLockTimeMsChange,
+  };
+}
+
+const showFloatingViewAtom = atom({
+  showAutoLockCountdown: __DEV__,
+});
+
+export function useToggleShowAutoLockCountdown() {
+  const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
+
+  const toggleShowAutoLockCountdown = useCallback(
+    (nextEnabled?: boolean) => {
+      setShowFloatingView(prev => {
+        if (typeof nextEnabled !== 'boolean') {
+          nextEnabled = !prev.showAutoLockCountdown;
+        }
+        return {
+          ...prev,
+          showAutoLockCountdown: nextEnabled,
+        };
+      });
+    },
+    [setShowFloatingView],
+  );
+
+  return {
+    showAutoLockCountdown: floatingView.showAutoLockCountdown,
+    toggleShowAutoLockCountdown,
   };
 }

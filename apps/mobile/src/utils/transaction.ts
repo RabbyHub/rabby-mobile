@@ -1,6 +1,5 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import abi from 'human-standard-token-abi';
-import { CHAINS } from '@/constant/chains';
 import type {
   ExplainTxResponse,
   GasLevel,
@@ -12,6 +11,7 @@ import { minBy } from 'lodash';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import { ethers } from 'ethers';
 import { isHex, hexToString, stringToHex } from 'web3-utils';
+import { findChain } from './chain';
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -46,7 +46,9 @@ export const GASPRICE_RANGE = {
   [CHAINS_ENUM.METIS]: [0, 50000],
 };
 export const validateGasPriceRange = (tx: Tx) => {
-  const chain = Object.values(CHAINS).find(c => c.id === tx.chainId);
+  const chain = findChain({
+    id: tx.chainId,
+  });
   if (!chain) {
     return true;
   }
@@ -95,39 +97,17 @@ export function getKRCategoryByType(type?: string) {
   return KEYRING_CATEGORY_MAP[type as any] || null;
 }
 
+// return maxPriorityPrice or maxGasPrice
 export const calcMaxPriorityFee = (
   gasList: GasLevel[],
   target: GasLevel,
   chainId: number,
   useMaxFee: boolean,
 ) => {
-  if (chainId !== 1 || useMaxFee) {
-    return target.price;
-  }
   if (target.priority_price && target.priority_price !== null) {
     return target.priority_price;
   }
-  // only enable auto-priorityFee for ETH currently
-  const min = minBy(
-    gasList.filter(item => item.level !== 'custom'),
-    'price',
-  );
-  if (min) {
-    if (target.price < min.price) return target.price / 10;
-    const basePriorityFee = target.price / 10;
-    if (min.level === target.level) {
-      return basePriorityFee;
-    } else {
-      const gap = target.price - min.price;
-      const value = new BigNumber(gap)
-        .times(0.8)
-        .plus(basePriorityFee)
-        .toFixed(1);
-      return Number(value);
-    }
-  } else {
-    return target.price;
-  }
+  return target.price;
 };
 
 export function makeTransactionId(

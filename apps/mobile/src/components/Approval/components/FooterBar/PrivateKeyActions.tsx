@@ -1,22 +1,18 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Props } from './ActionsContainer';
-import { ProcessActions } from './ProcessActions';
+import { SubmitActions } from './SubmitActions';
 
 export const PrivateKeyActions: React.FC<Props> = props => {
   const { disabledProcess } = props;
-  const { t } = useTranslation();
 
   const handleSubmit = React.useCallback(() => {
     props.onSubmit();
   }, [props]);
 
   return (
-    <ProcessActions
+    <SubmitActions
       {...props}
-      isPrimary
       onSubmit={handleSubmit}
-      submitText={t('page.signFooterBar.privateKeySign')}
       disabledProcess={disabledProcess}
     />
   );

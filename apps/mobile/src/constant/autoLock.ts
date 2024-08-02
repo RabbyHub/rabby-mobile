@@ -1,4 +1,8 @@
-export const TIME_SETTINGS = [
+export const TIME_SETTINGS: {
+  key: string;
+  label: string;
+  milliseconds: number;
+}[] = [
   {
     key: '24h',
     label: '24 hours',
@@ -16,8 +20,8 @@ export const TIME_SETTINGS = [
   },
   {
     key: '1h',
-    label: '30 minutes',
-    milliseconds: 30 * 60 * 1000,
+    label: '1 hour',
+    milliseconds: 60 * 60 * 1000,
   },
   {
     key: '10m',
@@ -29,8 +33,21 @@ export const TIME_SETTINGS = [
     label: '5 minutes',
     milliseconds: 5 * 60 * 1000,
   },
-] as const;
+];
+
+if (__DEV__) {
+  TIME_SETTINGS.push({
+    key: '30s',
+    label: '30 seconds (DEV ONLY)',
+    milliseconds: 30 * 1000,
+  });
+  TIME_SETTINGS.push({
+    key: '10s',
+    label: '10 seconds (DEV ONLY)',
+    milliseconds: 10 * 1000,
+  });
+}
 
 export const DEFAULT_AUTO_LOCK_MINUTES = Math.floor(
-  TIME_SETTINGS.find(item => item.key === '5m')!.milliseconds / (1000 * 60),
+  TIME_SETTINGS.find(item => item.key === '24h')!.milliseconds / (1000 * 60),
 );

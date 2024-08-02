@@ -69,6 +69,8 @@ export const APPROVAL_SNAP_POINTS: Record<
   [APPROVAL_MODAL_NAMES.PrivatekeyWaiting]: [200, 255],
   [APPROVAL_MODAL_NAMES.ETHSign]: [300],
   [APPROVAL_MODAL_NAMES.Unknown]: [300],
+  [APPROVAL_MODAL_NAMES.AddChain]: ['90%'],
+  [APPROVAL_MODAL_NAMES.AddAsset]: ['90%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -135,6 +137,8 @@ export function makeBottomSheetProps(ctx: {
         APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
         APPROVAL_MODAL_NAMES.WatchAddressWaiting,
         APPROVAL_MODAL_NAMES.ETHSign,
+        APPROVAL_MODAL_NAMES.AddAsset,
+        APPROVAL_MODAL_NAMES.AddChain,
         APPROVAL_MODAL_NAMES.Unknown,
       ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)
     ) {

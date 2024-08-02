@@ -39,6 +39,8 @@ import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
 import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
+import AutoLockView from '../AutoLockView';
+import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -79,7 +81,7 @@ function BottomSheetMoreLayout({ children }: React.PropsWithChildren) {
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => {
   return (
-    <BottomSheetBackdrop
+    <RefreshAutoLockBottomSheetBackdrop
       {...props}
       // leave here for debug
       style={[
@@ -178,6 +180,7 @@ function useDefaultNodes({
 
 export type DappWebViewControlType = {
   closeWebViewNavModal: () => void;
+  getWebViewId: () => string;
   getWebViewState: () => WebViewState;
   getWebViewActions: () => WebViewActions;
 };
@@ -207,6 +210,7 @@ const DappWebViewControl = React.forwardRef<
 
     const {
       webviewRef,
+      webviewIdRef,
       urlRef,
       titleRef,
       iconRef,
@@ -235,10 +239,11 @@ const DappWebViewControl = React.forwardRef<
         closeWebViewNavModal: () => {
           webviewNavRef?.current?.close();
         },
+        getWebViewId: () => webviewIdRef.current || '',
         getWebViewState: () => webviewState,
         getWebViewActions: () => webviewActions,
       }),
-      [webviewNavRef, webviewState, webviewActions],
+      [webviewNavRef, webviewIdRef, webviewState, webviewActions],
     );
 
     const handlePressMoreDefault = useCallback(() => {
@@ -320,12 +325,13 @@ const DappWebViewControl = React.forwardRef<
     } = useSetupWebview({
       dappOrigin,
       webviewRef,
+      webviewIdRef,
       siteInfoRefs: {
         urlRef,
         titleRef,
         iconRef,
       },
-      onSelfClose,
+      // onSelfClose,
     });
 
     const initialUrl = useMemo(() => {
@@ -423,7 +429,7 @@ const DappWebViewControl = React.forwardRef<
     ]);
 
     return (
-      <View style={[style, styles.dappWebViewControl]}>
+      <AutoLockView style={[style, styles.dappWebViewControl]}>
         {renderedHeaderNode}
 
         {/* webvbiew */}
@@ -448,7 +454,7 @@ const DappWebViewControl = React.forwardRef<
             </DappNavCardBottomSheetModal>
           </BottomSheetModalProvider>
         </BottomSheetMoreLayout>
-      </View>
+      </AutoLockView>
     );
   },
 );

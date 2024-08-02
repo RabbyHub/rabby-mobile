@@ -18,6 +18,7 @@ import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '../GlobalBottomSheetModal';
+import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
 
 interface ChainSelectorProps {
   value: CHAINS_ENUM;
@@ -102,14 +103,18 @@ export const ChainSelector = ({
       style={StyleSheet.flatten([styles.wrapper, style])}
       onPress={handleClickSelector}>
       <View>
-        {chainInfo && (
-          <Image
-            source={{
-              uri: chainInfo.logo,
-            }}
-            style={styles.chainIcon}
-          />
-        )}
+        {chainInfo ? (
+          chainInfo.isTestnet ? (
+            <TestnetChainLogo name={chainInfo.name} style={styles.chainIcon} />
+          ) : (
+            <Image
+              source={{
+                uri: chainInfo.logo,
+              }}
+              style={styles.chainIcon}
+            />
+          )
+        ) : null}
       </View>
       <Text style={styles.chainText}>{findChainByEnum(value)?.name}</Text>
       <RcIconArrowRight style={styles.buttonIcon} />

@@ -1,22 +1,24 @@
-import { RootNames } from '@/constant/layout';
+import { RootNames, makeHeadersPresets } from '@/constant/layout';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import SettingsScreen from '../Settings/Settings';
 import ProviderControllerTester from '../ProviderControllerTester/ProviderControllerTester';
 import SetPasswordScreen from '../ManagePassword/SetPassword';
+import { CustomTestnetScreen } from '../CustomTestnet';
+import { useSetPasswordFirstState } from '@/hooks/useLock';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
 export function SettingNavigator() {
-  const screenOptions = useStackScreenConfig();
+  const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
+  const headerPresets = makeHeadersPresets({ colors });
 
   return (
     <SettingsStack.Navigator
-      screenOptions={{
-        ...screenOptions,
+      screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
         headerStyle: {
@@ -24,11 +26,10 @@ export function SettingNavigator() {
         },
         headerTitleStyle: {
           color: colors['neutral-title-1'],
-          fontWeight: 'normal',
         },
         headerTitle: 'Settings',
         headerTintColor: colors['neutral-title-1'],
-      }}>
+      })}>
       <SettingsStack.Screen
         name={RootNames.Settings}
         component={SettingsScreen}
@@ -47,6 +48,19 @@ export function SettingNavigator() {
           headerTitleStyle: {
             color: colors['neutral-title2'],
           },
+          animation: 'fade_from_bottom',
+          animationTypeForReplace: 'pop',
+          // ...(isOnSettingsWaiting && {
+          // }),
+        }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.CustomTestnet}
+        component={CustomTestnetScreen}
+        options={{
+          title: 'Custom Network',
+          headerTitle: 'Custom Network',
+          ...headerPresets.withBgCard2,
         }}
       />
       {__DEV__ && (

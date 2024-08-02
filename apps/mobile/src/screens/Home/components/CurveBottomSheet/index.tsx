@@ -27,6 +27,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import AutoLockView from '@/components/AutoLockView';
 
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
@@ -110,7 +111,7 @@ function Inner() {
   const timeMachineXOffset = useSharedValue(0);
 
   return (
-    <BottomSheetView>
+    <AutoLockView as="BottomSheetView">
       <View style={styles.timeTabWrapper}>
         <TimeTab activeKey={activeKey} onPress={setActiveKey} />
       </View>
@@ -137,7 +138,7 @@ function Inner() {
           />
         </View>
       ))}
-    </BottomSheetView>
+    </AutoLockView>
   );
 }
 

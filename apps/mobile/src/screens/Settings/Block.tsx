@@ -13,10 +13,10 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
-const RcIconRight = makeThemeIconFromCC(RcIconRightCC, {
-  onLight: ThemeColors.light['neutral-foot'],
-  onDark: ThemeColors.dark['neutral-foot'],
-});
+const RcIconRight = makeThemeIconFromCC(
+  RcIconRightCC,
+  colors => colors['neutral-foot'],
+);
 
 export function Block({
   label,
@@ -105,7 +105,12 @@ function BlockItem({
     (icon as React.ReactNode)
   );
 
-  const rightIconNode = <RcIconRight style={{ width: 20, height: 20 }} />;
+  const rightIconNode = (
+    <RcIconRight
+      color={colors['neutral-foot']}
+      style={{ width: 20, height: 20 }}
+    />
+  );
 
   if (typeof rightNode === 'function') {
     rightNode = rightNode({ colors, rightIconNode });
@@ -113,10 +118,16 @@ function BlockItem({
     let rightLabelNode: React.ReactNode = null;
 
     if (rightTextNode) {
-      rightLabelNode =
-        typeof rightTextNode === 'function'
-          ? rightTextNode({ colors, rightIconNode })
-          : rightTextNode;
+      if (typeof rightTextNode === 'string') {
+        rightLabelNode = (
+          <Text style={styles.defaultRightText}>{rightTextNode}</Text>
+        );
+      } else {
+        rightLabelNode =
+          typeof rightTextNode === 'function'
+            ? rightTextNode({ colors, rightIconNode })
+            : rightTextNode;
+      }
     }
 
     rightNode = (
@@ -179,6 +190,11 @@ const getBlockItemStyles = createGetStyles(colors => {
       alignItems: 'center',
       height: '100%',
       // ...makeDebugBorder(),
+    },
+    defaultRightText: {
+      color: colors['neutral-title1'],
+      fontWeight: 'normal',
+      fontSize: 14,
     },
   };
 });

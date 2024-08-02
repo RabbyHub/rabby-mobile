@@ -37,7 +37,7 @@ import {
   CopyAddressIcon,
   CopyAddressIconType,
 } from '@/components/AddressViewer/CopyAddress';
-import { findChainByServerID, getChain } from '@/utils/chain';
+import { findChain, findChainByServerID, getChain } from '@/utils/chain';
 import { getTokenSymbol } from '@/utils/token';
 import { useTranslation } from 'react-i18next';
 import { ellipsisOverflowedText } from '@/utils/text';
@@ -58,6 +58,16 @@ import { RootNames } from '@/constant/layout';
 import { CHAINS_ENUM } from '@debank/common';
 import { ensureAbstractPortfolioToken } from '@/screens/Home/utils/token';
 import { TOKEN_DETAIL_HISTORY_SIZES } from './layout';
+import AutoLockView from '../AutoLockView';
+import { BlockedButton } from './BlockedButton';
+import { Token } from '@/core/services/preference';
+import { preferenceService } from '@/core/services';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useManageTokenList } from '@/screens/Home/hooks/useManageToken';
+import { useManageTestnetTokenList } from '@/screens/Home/hooks/useManageTestnetToken';
+import { DisplayedToken } from '@/screens/Home/utils/project';
+import { CustomizedSwitch } from './CustomizedSwitch';
+import { apiCustomTestnet } from '@/core/apis';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -70,6 +80,8 @@ const TokenDetailHeader = React.memo(
     token,
     style,
     logoStyle,
+    isAdded,
+    setIsAdded,
   }: // onSmallTokenPress,
   // onTokenPress,
   {
@@ -77,15 +89,17 @@ const TokenDetailHeader = React.memo(
     style?: ViewStyle;
     logoStyle?: ViewStyle;
     showHistory?: boolean;
+    isAdded: boolean;
+    setIsAdded: (isAdded: boolean) => void;
     // onSmallTokenPress?(token: AbstractPortfolioToken): void;
     // onTokenPress?(token: AbstractPortfolioToken): void;
   }) => {
     const { t } = useTranslation();
     const { colors, styles } = useThemeStyles(getTokenDetailHeaderStyle);
 
-    const { isContractToken, nativeTokenChainName, tokenAddress } =
+    const { isContractToken, nativeTokenChainName, tokenAddress, chainItem } =
       React.useMemo(() => {
-        const item = findChainByServerID(token.chain);
+        const item = findChain({ serverId: token.chain });
         /* for AbstractPortfolioToken,
           id of native token is `{chain.symbol}{chain.symbol}`,
           id of non-native token is `{token_address}{chain.symbol}  */
@@ -104,7 +118,58 @@ const TokenDetailHeader = React.memo(
         };
       }, [token]);
 
+    const isNativeToken = !/^0x.{40}$/.test(token?._tokenId || '');
+
     const copyAddressIconRef = React.useRef<CopyAddressIconType>(null);
+
+    const {
+      addCustomToken,
+      addBlockedToken,
+      removeBlockedToken,
+      removeCustomToken,
+    } = useManageTokenList();
+
+    const {
+      addCustomToken: addTestnetCustomToken,
+      removeCustomToken: removeTestnetCustomToken,
+    } = useManageTestnetTokenList();
+
+    const handleAddToken = useMemoizedFn(
+      (tokenWithAmount: AbstractPortfolioToken) => {
+        if (!tokenWithAmount) {
+          return;
+        }
+        setIsAdded(true);
+        if (chainItem?.isTestnet) {
+          addTestnetCustomToken(tokenWithAmount);
+        } else {
+          if (tokenWithAmount.is_core) {
+            addBlockedToken(tokenWithAmount);
+          } else {
+            addCustomToken(tokenWithAmount);
+          }
+        }
+      },
+    );
+
+    const handleRemoveToken = useMemoizedFn(
+      (tokenWithAmount: AbstractPortfolioToken) => {
+        if (!tokenWithAmount) {
+          return;
+        }
+        setIsAdded(false);
+
+        if (chainItem?.isTestnet) {
+          removeTestnetCustomToken(tokenWithAmount);
+        } else {
+          if (tokenWithAmount?.is_core) {
+            removeBlockedToken(tokenWithAmount);
+          } else {
+            removeCustomToken(tokenWithAmount);
+          }
+        }
+      },
+    );
 
     return (
       <View style={[styles.tokenDetailHeaderWrap, style]}>
@@ -163,10 +228,49 @@ const TokenDetailHeader = React.memo(
         </View>
 
         <View style={styles.tokenDetailHeaderF2}>
+          {chainItem?.isTestnet ? (
+            <>
+              {isNativeToken ? null : (
+                <CustomizedSwitch
+                  selected={isAdded}
+                  onClose={() => {
+                    handleRemoveToken(token);
+                  }}
+                  onOpen={() => {
+                    handleAddToken(token);
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              {token?.is_core ? (
+                <BlockedButton
+                  selected={isAdded}
+                  onClose={() => {
+                    handleRemoveToken(token);
+                  }}
+                  onOpen={() => {
+                    handleAddToken(token);
+                  }}
+                />
+              ) : (
+                <CustomizedSwitch
+                  selected={isAdded}
+                  onClose={() => {
+                    handleRemoveToken(token);
+                  }}
+                  onOpen={() => {
+                    handleAddToken(token);
+                  }}
+                />
+              )}
+            </>
+          )}
+
           <Text style={styles.balanceTitle}>
             {getTokenSymbol(token)} {t('page.newAddress.hd.balance')}
           </Text>
-
           <View style={styles.tokenDetailHeaderF2Inner}>
             <View style={styles.tokenDetailHeaderUsdValueWrap}>
               {token._amountStr ? (
@@ -197,7 +301,7 @@ const TokenDetailHeader = React.memo(
 const getTokenDetailHeaderStyle = createGetStyles(colors => {
   return {
     tokenDetailHeaderWrap: {
-      height: SIZES.headerHeight,
+      // height: SIZES.headerHeight,
       width: '100%',
       paddingVertical: 4,
       alignItems: 'flex-start',
@@ -263,6 +367,8 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
       // ...makeDebugBorder(),
     },
     tokenDetailHeaderF2: {
+      width: '100%',
+      position: 'relative',
       flexDirection: 'column',
       // alignItems: 'center',
       marginTop: 16,
@@ -317,7 +423,6 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   BottomSheetModalMethods,
   {
     token?: AbstractPortfolioToken | null;
-    isAdded?: boolean;
     canClickToken?: boolean;
     isTestnet?: boolean;
     onDismiss?: () => void;
@@ -331,11 +436,11 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
   (
     {
       token,
-      isAdded,
       canClickToken,
       onDismiss,
       onTriggerDismissFromInternal,
       hideOperationButtons = false,
+      isTestnet,
     },
     ref,
   ) => {
@@ -401,8 +506,42 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       }
     }, []);
 
+    const [isAdded, setIsAdded] = React.useState(false);
+
+    const chainItem = findChain({ serverId: token?.chain });
+
+    const checkIsAdded = useMemoizedFn(async () => {
+      if (!token) return;
+
+      if (chainItem?.isTestnet) {
+        const isAdded = await apiCustomTestnet.isAddedCustomTestnetToken({
+          chainId: chainItem.id,
+          id: token._tokenId,
+        });
+        setIsAdded(isAdded);
+      } else {
+        let list: Token[] = [];
+        if (token.is_core) {
+          list = await preferenceService.getBlockedToken();
+        } else {
+          list = await preferenceService.getCustomizedToken();
+        }
+
+        const isAdded = list.some(
+          item =>
+            isSameAddress(item.address, token._tokenId) &&
+            item.chain === token.chain,
+        );
+        setIsAdded(isAdded);
+      }
+    });
+
+    React.useEffect(() => {
+      checkIsAdded();
+    }, [checkIsAdded, token]);
+
     // Customized and not added
-    const isHiddenButton = !token?.is_core && !isAdded;
+    const isHiddenButton = isTestnet ? false : !token?.is_core && !isAdded;
 
     // const [latestData, setLatestData] = React.useState<LoadData>({
     //   list: [],
@@ -429,7 +568,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
           list: [],
         };
 
-        if (!token) {
+        if (!token || isTestnet) {
           return tickResult;
         }
 
@@ -474,18 +613,21 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       },
       {
         // manual: true,
-        reloadDeps: [token, token?._tokenId],
+        reloadDeps: [token, token?._tokenId, isTestnet],
         isNoMore: d => {
+          if (isTestnet) {
+            return true;
+          }
           return !d?.earliest || (d?.list.length || 0) < PAGE_COUNT;
         },
       },
     );
 
     useEffect(() => {
-      if (token) {
+      if (token && !isTestnet) {
         resetHistoryListPosition();
       }
-    }, [token, resetHistoryListPosition]);
+    }, [token, resetHistoryListPosition, isTestnet]);
 
     const { dataList, shouldRenderLoadingOnEmpty } = useMemo(() => {
       const res = {
@@ -507,15 +649,21 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       res.shouldRenderLoadingOnEmpty =
         isLoadingFirst ||
         (!res.dataList?.length && isLoadingMore) ||
-        lastTokenIdMatched;
+        (tokenLoad?.isLoading && lastTokenIdMatched);
+
+      if (isTestnet) {
+        res.shouldRenderLoadingOnEmpty = false;
+      }
 
       return res;
     }, [
       latestData?.tokenId,
       latestData?.list,
       token?._tokenId,
+      tokenLoad?.isLoading,
       isLoadingFirst,
       isLoadingMore,
+      isTestnet,
     ]);
 
     const onEndReached = React.useCallback(() => {
@@ -722,12 +870,18 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
         onChange={useCallback(() => {}, [])}
         onDismiss={onDismiss}>
-        <BottomSheetView style={styles.container}>
+        <AutoLockView as="BottomSheetView" style={styles.container}>
           <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
             {tokenLoad?.isLoading ? (
               <SkeletonTokenDetailHeader />
             ) : (
-              !!tokenWithAmount && <TokenDetailHeader token={tokenWithAmount} />
+              !!tokenWithAmount && (
+                <TokenDetailHeader
+                  token={tokenWithAmount}
+                  isAdded={isAdded}
+                  setIsAdded={setIsAdded}
+                />
+              )
             )}
           </BottomSheetHandlableView>
           <BottomSheetFlatList
@@ -753,7 +907,7 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
             //   />
             // }
           />
-        </BottomSheetView>
+        </AutoLockView>
       </AppBottomSheetModal>
     );
   },

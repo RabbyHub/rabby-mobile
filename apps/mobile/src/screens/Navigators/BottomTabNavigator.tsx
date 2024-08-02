@@ -14,15 +14,16 @@ import {
 import { useThemeColors, useGetBinaryMode } from '@/hooks/theme';
 
 import { Text } from '@/components';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
+import {
+  DEFAULT_NAVBAR_FONT_SIZE,
+  RootNames,
+  ScreenLayouts,
+} from '@/constant/layout';
 
 import HomeScreen from '@/screens/Home/Home';
 
 import { DappsScreen } from '@/screens/Dapps/Dapps';
-import {
-  OpenedDappWebViewStub,
-  // OpenedWebViewsStub,
-} from '../Dapps/Dapps/components/WebViewsStub';
+import { OpenedDappWebViewStub } from '../Dapps/Dapps/components/WebViewsStub';
 import { BottomTabParamsList } from '@/navigation-type';
 import React, { useMemo } from 'react';
 import { PointScreen } from '../Points';
@@ -183,7 +184,6 @@ export default function BottomTabNavigator() {
             title: isIOS ? 'Explore' : 'Dapps',
             headerTitleStyle: {
               fontWeight: '500',
-              fontSize: 17,
             },
             headerTitle: 'Dapps',
             headerTransparent: true,
@@ -250,7 +250,6 @@ export default function BottomTabNavigator() {
       <BiometricsStubModal />
 
       <OpenedDappWebViewStub />
-      {/* <OpenedWebViewsStub /> */}
 
       <ApprovalTokenDetailSheetModalStub />
 

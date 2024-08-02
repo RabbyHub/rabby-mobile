@@ -81,6 +81,8 @@ const getStyles = createGetStyles(_ => ({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    width: 24,
+    height: 24,
   },
   loadingWrapper: {
     position: 'absolute',

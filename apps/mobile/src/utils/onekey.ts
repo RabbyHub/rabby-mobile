@@ -1,12 +1,11 @@
 import {
-  createGlobalBottomSheetModal,
-  globalBottomSheetModalAddListener,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from '@/components/GlobalBottomSheetModal/types';
 import type { OneKeyKeyring } from '@/core/keyring-bridge/onekey/onekey-keyring';
 import { KeyringInstance } from '@rabby-wallet/service-keyring';
 import { eventBus, EVENTS } from './events';
+import { apisAppWin } from '@/core/services/appWin';
 
 // 当前版本的 OneKeyKeyring 仅支持在设备上输入 PIN 和 Passphrase
 const ONLY_IN_DEVICE = true;
@@ -19,7 +18,7 @@ function createPinModal(
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  pinModalId = createGlobalBottomSheetModal({
+  pinModalId = apisAppWin.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(pin: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePin({
@@ -30,12 +29,12 @@ function createPinModal(
   });
 
   eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-    removeGlobalBottomSheetModal(pinModalId);
+    apisAppWin.removeGlobalBottomSheetModal(pinModalId, { waitMaxtime: 300 });
     pinModalId = null;
   });
 
-  globalBottomSheetModalAddListener(
-    'DISMISS',
+  apisAppWin.globalBottomSheetModalAddListener(
+    EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== pinModalId) {
         return;
@@ -52,7 +51,7 @@ function createPassphraseModal(
   connectId: string,
   modalName: MODAL_NAMES,
 ) {
-  passphraseModalId = createGlobalBottomSheetModal({
+  passphraseModalId = apisAppWin.createGlobalBottomSheetModal({
     name: modalName,
     onConfirm(passphrase: string, switchOnDevice: boolean) {
       oneKeyKeyring.bridge.receivePassphrase({
@@ -62,13 +61,15 @@ function createPassphraseModal(
     },
   });
 
-  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, () => {
-    removeGlobalBottomSheetModal(passphraseModalId);
+  eventBus.once(EVENTS.ONEKEY.CLOSE_UI_WINDOW, async () => {
+    apisAppWin.removeGlobalBottomSheetModal(passphraseModalId, {
+      waitMaxtime: 300,
+    });
     passphraseModalId = null;
   });
 
-  globalBottomSheetModalAddListener(
-    'DISMISS',
+  apisAppWin.globalBottomSheetModalAddListener(
+    EVENT_NAMES.DISMISS,
     _id => {
       if (_id !== passphraseModalId) {
         return;

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { StyleProp, Text, TextStyle, View } from 'react-native';
 
 import { CHAINS_ENUM } from '@/constant/chains';
 
@@ -12,6 +12,7 @@ import { createGetStyles } from '@/utils/styles';
 import { findChainByEnum } from '@/utils/chain';
 import SelectSortedChainModal from '@/components/SelectSortedChain/SheetModal';
 import { SelectSortedChainProps } from '@/components/SelectSortedChain';
+import { useFindChain } from '@/hooks/useFindChain';
 
 const RcArrowDown = makeThemeIconFromCC(RcArrowDownCC, 'neutral-foot');
 
@@ -50,21 +51,33 @@ export function ChainInfo({
   onChange,
   supportChains,
   disabledTips,
+  hideMainnetTab,
+  hideTestnetTab,
+  rightArrowIcon,
+  titleStyle,
 }: React.PropsWithChildren<
   RNViewProps & {
     chainEnum?: CHAINS_ENUM;
     onChange?: (chain: CHAINS_ENUM) => void;
     supportChains?: SelectSortedChainProps['supportChains'];
     disabledTips?: SelectSortedChainProps['disabledTips'];
+    hideMainnetTab?: SelectSortedChainProps['hideMainnetTab'];
+    hideTestnetTab?: SelectSortedChainProps['hideTestnetTab'];
+    rightArrowIcon?: React.ReactNode;
+    titleStyle?: StyleProp<TextStyle>;
   }
 >) {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
   const [showSelectorModal, setShowSelectorModal] = useState(false);
-  const chainItem = useMemo(() => {
-    return findChainByEnum(chainEnum, { fallback: true })!;
-  }, [chainEnum]);
+  // const chainItem = useMemo(() => {
+  //   return findChainByEnum(chainEnum, { fallback: true })!;
+  // }, [chainEnum]);
+
+  const chainItem = useFindChain({
+    enum: chainEnum,
+  });
 
   return (
     <>
@@ -75,12 +88,10 @@ export function ChainInfo({
         }}>
         <View style={styles.left}>
           <ChainIconImage size={24} chainEnum={chainEnum} />
-          <Text style={styles.chainName}>{chainItem?.name}</Text>
+          <Text style={[styles.chainName, titleStyle]}>{chainItem?.name}</Text>
         </View>
 
-        <View>
-          <RcArrowDown />
-        </View>
+        <View>{rightArrowIcon ? rightArrowIcon : <RcArrowDown />}</View>
       </TouchableView>
 
       <SelectSortedChainModal
@@ -91,6 +102,8 @@ export function ChainInfo({
         }}
         supportChains={supportChains}
         disabledTips={disabledTips}
+        hideMainnetTab={hideMainnetTab}
+        hideTestnetTab={hideTestnetTab}
         onChange={chain => {
           setShowSelectorModal(false);
           onChange?.(chain);

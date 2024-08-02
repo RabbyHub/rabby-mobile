@@ -7,11 +7,14 @@ import { useThemeColors } from '@/hooks/theme';
 import { TouchableOpacity } from 'react-native';
 import useCommonStyle from '@/components/Approval/hooks/useCommonStyle';
 import DeviceUtils from '@/core/utils/device';
+import { isNil } from 'lodash';
+import BigNumber from 'bignumber.js';
 
 interface Props {
-  amount: number;
+  amount: number | string;
   logoUrl: string;
   onEdit?: () => void;
+  balance?: string;
 }
 
 const WIDTH = DeviceUtils.getDeviceWidth();
@@ -20,9 +23,13 @@ export const TokenAmountItem: React.FC<Props> = ({
   amount,
   logoUrl,
   onEdit,
+  balance,
 }) => {
   const commonStyle = useCommonStyle();
+  const hideTooltip = isNil(balance);
+  const isExceed = hideTooltip ? false : new BigNumber(amount).gt(balance);
   const colors = useThemeColors();
+
   return (
     <TouchableOpacity
       disabled={!onEdit}
@@ -46,10 +53,13 @@ export const TokenAmountItem: React.FC<Props> = ({
             })}>
             <View>
               <Values.TokenAmount
-                style={{
+                style={StyleSheet.flatten({
                   ...commonStyle.subRowText,
                   maxWidth: (WIDTH - 60) / 2,
-                }}
+                  color: isExceed
+                    ? colors['red-default']
+                    : commonStyle.subRowText.color,
+                })}
                 value={amount}
               />
             </View>

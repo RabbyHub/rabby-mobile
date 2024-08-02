@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text } from 'react-native';
 
 import * as Yup from 'yup';
@@ -20,6 +20,9 @@ import { getFormikErrorsCount } from '@/utils/patch';
 import { apisLock } from '@/core/apis';
 import { toast } from '@/components/Toast';
 import { useLoadLockInfo } from '@/hooks/useLock';
+import { BiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
+import { useAuthenticationModal } from '@/components/AuthenticationModal/hooks';
+import usePrevious from 'react-use/lib/usePrevious';
 
 interface ConfirmAllowTransferModalProps {
   toAddr: string;
@@ -83,14 +86,26 @@ export function ModalConfirmAllowTransfer({
 
   const { isUseCustomPwd } = useLoadLockInfo({ autoFetch: true });
   const { formik, shouldDisabledDueToForm } = useConfirmAllowForm();
-  const shouldDisabled = isUseCustomPwd && shouldDisabledDueToForm;
 
   const handleCancel = useCallback(() => {
     onCancel?.();
     formik.resetForm();
   }, [onCancel, formik]);
 
-  const handleSubmit = useCallback<
+  const onValidatedPassword = useCallback(
+    async (validatedPassword: string) => {
+      await apisLock.throwErrorIfInvalidPwd(validatedPassword);
+
+      if (toAddr && confirmToAddToWhitelist) {
+        await addWhitelist(toAddr, { hasValidated: isUseCustomPwd });
+      }
+
+      onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
+    },
+    [isUseCustomPwd, toAddr, confirmToAddToWhitelist, addWhitelist, onFinished],
+  );
+
+  const handleSubmitForm = useCallback<
     React.ComponentProps<typeof BottomSheetModalConfirmContainer>['onConfirm'] &
       object
   >(async () => {
@@ -101,27 +116,65 @@ export function ModalConfirmAllowTransfer({
       if (getFormikErrorsCount(errors)) return false;
 
       try {
-        await apisLock.throwErrorIfInvalidPwd(formik.values.password);
+        await onValidatedPassword(formik.values.password);
       } catch (error: any) {
         formik.setFieldError('password', error?.message);
         toast.show(error?.message);
         return false;
       }
     }
+  }, [isUseCustomPwd, formik, onValidatedPassword]);
 
-    if (toAddr && confirmToAddToWhitelist) {
-      await addWhitelist(toAddr, { hasValidated: isUseCustomPwd });
+  const {
+    currentAuthType,
+    updateAuthType,
+    isBiometricsActive,
+    handleAuthWithBiometrics,
+    prepareBioAuth,
+  } = useAuthenticationModal({
+    authTypes: ['biometrics', 'password'],
+  });
+  const shouldShowInput = currentAuthType === 'password' && isUseCustomPwd;
+  const shouldDisabled =
+    currentAuthType === 'password'
+      ? isUseCustomPwd && shouldDisabledDueToForm
+      : false;
+
+  const handleConfirm = useCallback(async () => {
+    if (currentAuthType === 'biometrics') {
+      prepareBioAuth();
+      setTimeout(() => {
+        handleAuthWithBiometrics().then(result => {
+          if (!result.success) {
+            updateAuthType('password');
+            return;
+          }
+
+          onValidatedPassword(result.getValidatedPassword());
+        });
+      }, 100);
+
+      return false;
+    } else {
+      return handleSubmitForm();
     }
-
-    onFinished?.({ isAddToWhitelist: confirmToAddToWhitelist });
   }, [
-    isUseCustomPwd,
-    formik,
-    toAddr,
-    confirmToAddToWhitelist,
-    addWhitelist,
-    onFinished,
+    currentAuthType,
+    prepareBioAuth,
+    updateAuthType,
+    handleAuthWithBiometrics,
+    onValidatedPassword,
+    handleSubmitForm,
   ]);
+
+  const previousVisible = usePrevious(visible);
+  React.useEffect(() => {
+    // sometimes, useEffect woule be re-triggered on every re-render
+    // only update auth type when visible changed from
+    if (!previousVisible && visible) {
+      updateAuthType('biometrics');
+    }
+  }, [previousVisible, visible, updateAuthType]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
@@ -133,12 +186,28 @@ export function ModalConfirmAllowTransfer({
   return (
     <BottomSheetModalConfirmContainer
       ref={sheetModalRef}
-      onConfirm={handleSubmit}
+      onConfirm={handleConfirm}
       onCancel={handleCancel}
-      height={isUseCustomPwd ? 332 : 279}
+      height={shouldShowInput ? 332 : 279}
       confirmButtonProps={{
         type: 'primary',
         disabled: shouldDisabled,
+        title: ctx => (
+          <View style={styles.confirmModalButtonTitleViewStyle}>
+            {currentAuthType !== 'biometrics' ? null : (
+              <BiometricsIcon
+                size={18}
+                style={{ marginRight: 6 }}
+                color={ctx.titleStyle?.color}
+              />
+            )}
+            <Text style={[ctx.titleStyle, styles.confirmModalButtonTextStyle]}>
+              {t('global.confirm')}
+            </Text>
+          </View>
+        ),
+        containerStyle: styles.confirmModalContainerStyle,
+        buttonStyle: styles.confirmModalButtonStyle,
       }}
       bottomSheetModalProps={{
         keyboardBehavior: 'interactive',
@@ -151,7 +220,7 @@ export function ModalConfirmAllowTransfer({
 
         <View style={styles.contentContainer}>
           <View style={styles.formInputContainer}>
-            {isUseCustomPwd && (
+            {shouldShowInput && (
               <FormInput
                 clearable
                 errorText={formik.errors.password}
@@ -260,6 +329,30 @@ const getStyles = createGetStyles(colors => {
       top: 6,
       width: 16,
       height: 16,
+    },
+    confirmModalContainerStyle: {
+      // ...(IS_IOS && {
+      //   ...makeDebugBorder('red'),
+      //   // width: '100%',
+      //   // paddingHorizontal: 0,
+      // }),
+    },
+    confirmModalButtonStyle: {
+      // ...(IS_IOS && {
+      //   ...makeDebugBorder('yellow'),
+      //   // width: '100%',
+      //   // flex: 1,
+      // }),
+    },
+    confirmModalButtonTitleViewStyle: {
+      flex: undefined,
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    confirmModalButtonTextStyle: {
+      flex: undefined,
     },
   };
 });

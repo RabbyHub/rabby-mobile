@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { MODAL_CREATE_PARAMS } from '../GlobalBottomSheetModal/types';
+import AutoLockView from '../AutoLockView';
 
 export default function SimpleConfirmInner({
   title,
@@ -10,9 +11,9 @@ export default function SimpleConfirmInner({
   const { styles } = useThemeStyles(getStyles);
 
   return (
-    <View style={styles.container}>
+    <AutoLockView style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-    </View>
+    </AutoLockView>
   );
 }
 

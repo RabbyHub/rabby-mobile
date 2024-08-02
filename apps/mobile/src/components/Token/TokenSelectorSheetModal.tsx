@@ -27,6 +27,9 @@ import { BottomSheetHandlableView } from '../customized/BottomSheetHandle';
 import { toast } from '../Toast';
 import { ModalLayouts } from '@/constant/layout';
 import { Skeleton } from '@rneui/themed';
+import { NotMatchedHolder } from '@/screens/Approvals/components/Layout';
+import AutoLockView from '../AutoLockView';
+import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 
 export const isSwapTokenType = (s?: string) =>
   s && ['swapFrom', 'swapTo'].includes(s);
@@ -190,7 +193,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => {
         return (
-          <BottomSheetBackdrop
+          <RefreshAutoLockBottomSheetBackdrop
             {...props}
             onPress={onCancel}
             disappearsOnIndex={-1}
@@ -215,7 +218,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
         }}
         bottomInset={1}
         backdropComponent={renderBackdrop}>
-        <BottomSheetView style={styles.container}>
+        <AutoLockView as="BottomSheetView" style={styles.container}>
           <View style={[styles.titleArea, styles.internalBlock]}>
             <BottomSheetHandlableView>
               <Text style={[styles.modalTitle, styles.modalMainTitle]}>
@@ -277,6 +280,14 @@ export const TokenSelectorSheetModal = React.forwardRef<
                   : null,
               [isLoading],
             )}
+            ListEmptyComponent={
+              <NotMatchedHolder
+                style={{
+                  height: 400,
+                }}
+                text="No tokens"
+              />
+            }
             extraData={isLoading}
             getItemLayout={(_, index) => ({
               length: ITEM_HEIGHT,
@@ -359,7 +370,7 @@ export const TokenSelectorSheetModal = React.forwardRef<
               ],
             )}
           />
-        </BottomSheetView>
+        </AutoLockView>
       </AppBottomSheetModal>
     );
   },

@@ -26,7 +26,7 @@ export const DappsScreen = () => {
   return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
 };
 
-export function DappsScreenRaw(): JSX.Element {
+function DappsScreenRaw(): JSX.Element {
   const { styles } = useThemeStyles(getStyles);
 
   const getHeaderTitle = React.useCallback(() => {

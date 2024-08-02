@@ -395,7 +395,9 @@ export class PreferenceService {
         ...(this.store.customizedToken || []),
         token,
       ];
+      return token;
     }
+    return null;
   };
   removeCustomizedToken = (token: Token) => {
     this.store.customizedToken = this.store.customizedToken?.filter(
