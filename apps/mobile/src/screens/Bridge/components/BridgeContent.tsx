@@ -333,6 +333,7 @@ export const BridgeContent = () => {
             }}
             titleStyle={{
               fontSize: 18,
+              fontWeight: '500',
             }}
             rightArrowIcon={<RcArrowDown width={24} height={24} />}
           />
