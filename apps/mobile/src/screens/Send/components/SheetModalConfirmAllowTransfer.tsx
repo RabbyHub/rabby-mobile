@@ -197,7 +197,7 @@ export function ModalConfirmAllowTransfer({
           currentAuthType !== 'biometrics' ? null : (
             <BiometricsIcon
               size={18}
-              color={isBiometricsActive ? '#FF2D55' : ctx.titleStyle?.color}
+              // color={isBiometricsActive ? '#FF2D55' : ctx.titleStyle?.color}
             />
           ),
         titleStyle: {
