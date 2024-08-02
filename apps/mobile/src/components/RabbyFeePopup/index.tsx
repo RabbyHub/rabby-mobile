@@ -82,7 +82,9 @@ export const RabbyFeePopup = ({
     <AppBottomSheetModal
       ref={sheetModalRef}
       snapPoints={snapPoints}
-      enableDismissOnClose>
+      enableDismissOnClose
+      handleStyle={styles.sheetBg}
+      backgroundStyle={styles.sheetBg}>
       <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
         <View style={styles.iconContainer}>
           <RCIconRabbyWhite width={36} height={30} />
@@ -133,6 +135,9 @@ export const RabbyFeePopup = ({
 };
 
 const getStyles = createGetStyles((colors: any) => ({
+  sheetBg: {
+    backgroundColor: colors['neutral-bg-2'],
+  },
   contentContainer: {
     flex: 1,
     alignItems: 'center',
