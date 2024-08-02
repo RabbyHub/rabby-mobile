@@ -150,7 +150,7 @@ const getStyles = createGetStyles((colors, options) => ({
     // ...makeDebugBorder('yellow'),
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '500',
     color: colors['neutral-title-1'],
     textAlign: 'center',
