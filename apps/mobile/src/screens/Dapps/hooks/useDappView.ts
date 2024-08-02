@@ -153,7 +153,6 @@ export function useOpenDappView() {
       });
 
       if (isActiveDapp) {
-        // setActiveDappState(prev => ({ ...prev, dappOrigin: item.origin }));
         setActiveDappOrigin(item.origin);
       }
 
@@ -175,11 +174,6 @@ export function useOpenDappView() {
       );
 
       if (activeDappOrigin === dappOrigin) {
-        // setActiveDappState(prev => ({
-        //   ...prev,
-        //   dappOrigin: null,
-        //   tabId: null,
-        // }));
         setActiveDappOrigin(null);
       }
     },
@@ -187,7 +181,6 @@ export function useOpenDappView() {
   );
 
   const onHideActiveDapp = useCallback(() => {
-    // setActiveDappState(prev => ({ ...prev, dappOrigin: null, tabId: null }));
     setActiveDappOrigin(null);
   }, [setActiveDappOrigin]);
 

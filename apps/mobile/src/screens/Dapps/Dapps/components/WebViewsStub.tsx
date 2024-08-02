@@ -142,7 +142,6 @@ const DEFAULT_RANGES = ['1%', '100%'];
 export function OpenedDappWebViewStub() {
   const { colors, styles } = useThemeStyles(getWebViewStubStyles);
   const {
-    // setActiveDappState,
     openedDappItems,
     expandDappWebViewModal,
     collapseDappWebViewModal,
