@@ -66,7 +66,7 @@ export const RabbyFeePopup = ({
   const { bottom } = useSafeAreaInsets();
 
   const snapPoints = useMemo(
-    () => [Math.min(type === 'swap' ? 570 : 520, height)],
+    () => [Math.min(type === 'swap' ? 605 : 520, height)],
     [type, height],
   );
 
@@ -82,6 +82,7 @@ export const RabbyFeePopup = ({
     <AppBottomSheetModal
       ref={sheetModalRef}
       snapPoints={snapPoints}
+      onDismiss={onClose}
       enableDismissOnClose>
       <View style={[styles.contentContainer, { paddingBottom: 20 + bottom }]}>
         <View style={styles.iconContainer}>

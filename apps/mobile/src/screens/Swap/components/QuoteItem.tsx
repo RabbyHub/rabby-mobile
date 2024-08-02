@@ -1,41 +1,30 @@
+import ImgLock from '@/assets/icons/swap/lock.svg';
+import ImgVerified from '@/assets/icons/swap/verified.svg';
 import { CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import { DEX_ENUM } from '@rabby-wallet/rabby-swap';
 import { QuoteResult } from '@rabby-wallet/rabby-swap/dist/quote';
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { QuoteLogo } from './QuoteLogo';
 import BigNumber from 'bignumber.js';
-import ImgLock from '@/assets/icons/swap/lock.svg';
-import ImgWarning from '@/assets/icons/swap/warn.svg';
-import ImgVerified from '@/assets/icons/swap/verified.svg';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { QuoteLogo } from './QuoteLogo';
 
 import {
-  useSetQuoteVisible,
-  useSwapSettings,
-  useSwapSettingsVisible,
-  useVerifySdk,
   QuotePreExecResultInfo,
   QuoteProvider,
   isSwapWrapToken,
   useRabbyFeeVisible,
+  useSetQuoteVisible,
+  useSwapSettings,
+  useSwapSettingsVisible,
 } from '../hooks';
 
-import { useTranslation } from 'react-i18next';
-import { formatAmount, formatUsdValue } from '@/utils/number';
-import { getTokenSymbol } from '@/utils/token';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import i18n from '@/utils/i18n';
-import { AssetAvatar, Tip } from '@/components';
-import useDebounce from 'react-use/lib/useDebounce';
-import { useThemeColors } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import {
-  RcIconSwapGas,
-  RcIconSwapGasRed,
-  RcIconSwapInfo,
-} from '@/assets/icons/swap';
-import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
 import { RcIconInfoCC } from '@/assets/icons/common';
+import { RcIconSwapGas, RcIconSwapGasRed } from '@/assets/icons/swap';
+import { AssetAvatar, Tip } from '@/components';
+import { useThemeColors } from '@/hooks/theme';
+import { formatAmount, formatUsdValue } from '@/utils/number';
+import { createGetStyles } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const GAS_USE_AMOUNT_LIMIT = 2_000_000;
 
@@ -103,14 +92,6 @@ export const DexQuoteItem = (
   const openSwapQuote = useSetQuoteVisible();
 
   const { sortIncludeGasFee } = useSwapSettings();
-
-  const { swapTradeList: tradeList } = useSwapSettings();
-  const disabledTrade = useMemo(
-    () =>
-      !tradeList?.[dexId] &&
-      !isSwapWrapToken(payToken.id, receiveToken.id, chain),
-    [tradeList, dexId, payToken.id, receiveToken.id, chain],
-  );
 
   const isSdkDataPass = !!preExecResult?.isSdkPass;
 
@@ -362,27 +343,15 @@ export const DexQuoteItem = (
         transform: [{ translateY: 20 }],
       }}>
       <TouchableOpacity
-        activeOpacity={
-          disabledTrade || inSufficient || gasFeeTooHight ? 1 : 0.2
-        }
+        activeOpacity={inSufficient || gasFeeTooHight ? 1 : 0.2}
         style={[
           styles.dexContainer,
           {
             position: 'relative',
-            backgroundColor: !(
-              disabledTrade ||
-              disabled ||
-              inSufficient ||
-              gasFeeTooHight
-            )
+            backgroundColor: !(disabled || inSufficient || gasFeeTooHight)
               ? colors['neutral-card-1']
               : 'transparent',
-            borderColor: !(
-              disabledTrade ||
-              disabled ||
-              inSufficient ||
-              gasFeeTooHight
-            )
+            borderColor: !(disabled || inSufficient || gasFeeTooHight)
               ? 'transparent'
               : colors['neutral-line'],
           },
