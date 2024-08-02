@@ -36,29 +36,32 @@ export function globalSetActiveDappState(input: {
 
 export function shouldAllowApprovePopup(
   {
-    targetOrigin = '',
+    fromOrigin: fromDappOrigin = '',
     currentActiveOrigin,
   }: {
-    targetOrigin?: string;
+    fromOrigin?: string;
     currentActiveOrigin: string | null;
   },
   options?: { allowSecondaryDomainMatch?: boolean },
 ) {
-  if (targetOrigin === INTERNAL_REQUEST_ORIGIN) return true;
-  if (!currentActiveOrigin || !targetOrigin) return false;
+  if (fromDappOrigin === INTERNAL_REQUEST_ORIGIN) return true;
+
+  if (!currentActiveOrigin || !fromDappOrigin) return false;
 
   const { allowSecondaryDomainMatch = false } = options || {};
 
-  const currentInfo = urlUtils.canoicalizeDappUrl(currentActiveOrigin);
-  const targetInfo = urlUtils.canoicalizeDappUrl(targetOrigin);
+  if (currentActiveOrigin) {
+    const currentInfo = urlUtils.canoicalizeDappUrl(currentActiveOrigin);
+    const targetInfo = urlUtils.canoicalizeDappUrl(fromDappOrigin);
 
-  if (currentInfo.httpOrigin === targetInfo.httpOrigin) return true;
+    if (currentInfo.httpOrigin === targetInfo.httpOrigin) return true;
 
-  if (
-    allowSecondaryDomainMatch &&
-    targetInfo.secondaryDomain === currentInfo.secondaryDomain
-  ) {
-    return true;
+    if (
+      allowSecondaryDomainMatch &&
+      targetInfo.secondaryDomain === currentInfo.secondaryDomain
+    ) {
+      return true;
+    }
   }
 
   return false;

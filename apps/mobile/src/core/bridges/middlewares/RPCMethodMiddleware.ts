@@ -91,14 +91,6 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
     };
 
-    // const targetOrigin = req.origin;
-    // const notAllowedNow = !shouldAllowApprovePopup(
-    //   {
-    //     targetOrigin,
-    //     currentActiveOrigin: getActiveDappOrigin(),
-    //   },
-    //   { allowSecondaryDomainMatch: true },
-    // );
     const notAllowedNow = !checkTabActive();
 
     const rpcMethods = {

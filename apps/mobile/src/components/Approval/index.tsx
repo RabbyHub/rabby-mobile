@@ -76,10 +76,9 @@ export const Approval = () => {
 
   const sourceOrigin = origin || params.origin;
   if (
-    activeDappOrigin &&
     !shouldAllowApprovePopup(
       {
-        targetOrigin: sourceOrigin,
+        fromOrigin: sourceOrigin,
         currentActiveOrigin: activeDappOrigin,
       },
       { allowSecondaryDomainMatch: !!activeTabId },
