@@ -1,4 +1,4 @@
-import { RcIconSwapArrow } from '@/assets/icons/swap';
+import { RcIconMaxButton, RcIconSwapArrow } from '@/assets/icons/swap';
 import RcDangerIcon from '@/assets/icons/swap/info-error.svg';
 import { AppSwitch, Button, Tip } from '@/components';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
@@ -42,6 +42,7 @@ import {
   useRabbyFeeVisible,
 } from './hooks/atom';
 import { dexSwap } from './hooks/swap';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -323,17 +324,16 @@ const Swap = () => {
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
             ) : (
-              <TouchableItem onPress={handleBalance}>
-                <Text
-                  style={[
-                    styles.label,
-                    {
-                      textDecorationLine: 'underline',
-                    },
-                  ]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.label]}>
                   {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
                 </Text>
-              </TouchableItem>
+                <TouchableOpacity
+                  style={[styles.maxBtn]}
+                  onPress={handleBalance}>
+                  <RcIconMaxButton width={34} height={16} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
           <View style={styles.inputContainer}>
@@ -638,6 +638,9 @@ const getStyles = createGetStyles(colors => ({
   },
   btnTitle: {
     color: colors['neutral-title-2'],
+  },
+  maxBtn: {
+    marginLeft: 6,
   },
 }));
 
