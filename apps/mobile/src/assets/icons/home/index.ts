@@ -101,6 +101,6 @@ export const RcIconHeaderEyeClose = makeThemeIconFromCC(
 );
 
 export const RcIconBridge = makeThemeIconFromCC(RcIconBridgeCC, {
-  onLight: ThemeColors.light['neutral-title-1'],
-  onDark: ThemeColors.dark['neutral-title-1'],
+  onLight: ThemeColors.light['neutral-body'],
+  onDark: ThemeColors.dark['neutral-body'],
 });

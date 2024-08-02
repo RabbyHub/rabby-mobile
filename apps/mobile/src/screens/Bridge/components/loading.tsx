@@ -246,7 +246,7 @@ const getStyles = createGetStyles(colors => ({
   footerText: {
     fontSize: 13,
     color: colors['neutral-foot'],
-    marginLeft: 16,
+    marginLeft: 6,
   },
   dotsContainer: {
     flexDirection: 'row',
