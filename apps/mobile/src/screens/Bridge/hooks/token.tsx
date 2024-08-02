@@ -400,6 +400,7 @@ export const useTokenPair = (userAddress: string) => {
     payToken?.id,
     receiveToken,
     userAddress,
+    refreshId,
   ]);
 
   useDebounce(
