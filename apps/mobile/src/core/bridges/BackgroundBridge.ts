@@ -35,8 +35,6 @@ type BackgroundBridgeOptions = {
 export class BackgroundBridge extends EventEmitter {
   port: Port;
 
-  dappCardId = stringUtils.randString();
-
   #webview: WebView | null;
   #webviewOrigin: string;
 

@@ -8,7 +8,11 @@ import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { ActiveDappState, activeDappStateEvents } from '@/core/bridges/state';
+import {
+  ActiveDappState,
+  activeDappStateEvents,
+  globalSetActiveDappState,
+} from '@/core/bridges/state';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -59,14 +63,16 @@ export const OPEN_DAPP_VIEW_INDEXES = {
 export function useOpenDappView() {
   const { dapps, addDapp } = useDapps();
   // const { activeDappOrigin, setActiveDappState } = useOpenedActiveDappState();
-  const [activeDappOrigin, setActiveDappOrigin] = useAtom(activeDappOriginAtom);
+  const [activeDappOrigin, _setActiveDappOrigin] =
+    useAtom(activeDappOriginAtom);
 
-  // const setActiveDappOrigin = useCallback(
-  //   (origin: DappInfo['origin'] | null) => {
-  //     setActiveDappState(prev => ({ ...prev, dappOrigin: origin }));
-  //   },
-  //   [setActiveDappState],
-  // );
+  const setActiveDappOrigin = useCallback(
+    (origin: DappInfo['origin'] | null) => {
+      globalSetActiveDappState({ dappOrigin: origin });
+      _setActiveDappOrigin(origin);
+    },
+    [_setActiveDappOrigin],
+  );
 
   const { toggleShowSheetModal } = useActiveViewSheetModalRefs();
 

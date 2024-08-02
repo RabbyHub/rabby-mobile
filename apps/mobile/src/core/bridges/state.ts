@@ -22,9 +22,13 @@ export function globalSetActiveDappState(input: {
   tabId?: string | null;
   dappOrigin?: string | null;
 }) {
-  activeDappRef.dappOrigin = input.dappOrigin || null;
-  activeDappRef.tabId = input.tabId || null;
-  activeDappStateEvents.emit('updated', activeDappRef.tabId);
+  if (input.dappOrigin !== undefined) {
+    activeDappRef.dappOrigin = input.dappOrigin || null;
+  }
+  if (input.tabId !== undefined) {
+    activeDappRef.tabId = input.tabId || null;
+    activeDappStateEvents.emit('updated', activeDappRef.tabId);
+  }
 }
 
 export function shouldAllowApprovePopup(
