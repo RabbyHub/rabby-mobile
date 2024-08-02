@@ -11,7 +11,7 @@ const activeDappRef: ActiveDappState = {
   tabId: null,
 };
 type Listeners = {
-  updated: (info: ActiveDappState) => void;
+  updated: (info: ActiveDappState['tabId']) => void;
 };
 export const activeDappStateEvents =
   new (makeEEClass<Listeners>().EventEmitter)();
@@ -24,7 +24,7 @@ export function globalSetActiveDappState(input: {
 }) {
   activeDappRef.dappOrigin = input.dappOrigin || null;
   activeDappRef.tabId = input.tabId || null;
-  activeDappStateEvents.emit('updated', { ...activeDappRef });
+  activeDappStateEvents.emit('updated', activeDappRef.tabId);
 }
 
 export function shouldAllowApprovePopup(
@@ -35,12 +35,12 @@ export function shouldAllowApprovePopup(
     targetOrigin?: string;
     currentActiveOrigin: string | null;
   },
-  options?: { noNeedStrict?: boolean },
+  options?: { allowSecondaryDomainMatch?: boolean },
 ) {
   if (targetOrigin === INTERNAL_REQUEST_ORIGIN) return true;
   if (!currentActiveOrigin || !targetOrigin) return false;
 
-  const { noNeedStrict = false } = options || {};
+  const { allowSecondaryDomainMatch = false } = options || {};
 
   const currentInfo = urlUtils.canoicalizeDappUrl(currentActiveOrigin);
   const targetInfo = urlUtils.canoicalizeDappUrl(targetOrigin);
@@ -48,7 +48,7 @@ export function shouldAllowApprovePopup(
   if (currentInfo.httpOrigin === targetInfo.httpOrigin) return true;
 
   if (
-    noNeedStrict &&
+    allowSecondaryDomainMatch &&
     targetInfo.secondaryDomain === currentInfo.secondaryDomain
   ) {
     return true;

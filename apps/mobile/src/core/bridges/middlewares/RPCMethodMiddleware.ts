@@ -97,7 +97,7 @@ RPCMethodsMiddleParameters) =>
     //     targetOrigin,
     //     currentActiveOrigin: getActiveDappOrigin(),
     //   },
-    //   { noNeedStrict: true },
+    //   { allowSecondaryDomainMatch: true },
     // );
     const notAllowedNow = !checkTabActive();
 

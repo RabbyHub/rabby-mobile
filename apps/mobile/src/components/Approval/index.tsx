@@ -2,11 +2,34 @@ import { useApproval } from '@/hooks/useApproval';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import { IExtractFromPromise } from '@/utils/type';
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import * as ApprovalComponent from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
-import { getActiveDappTabId } from '@/core/bridges/state';
+import { shouldAllowApprovePopup } from '@/core/bridges/state';
+// import TouchableText from '../Touchable/TouchableText';
+
+function ShouldntRenderApproveDueToDappDisappeared() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        height: '100%',
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text>No approve found</Text>
+        {/* <TouchableText style={{ marginLeft: 6, textDecorationLine: 'underline' }} onPress={() => {
+        specificGlobalSheetModalEvents.emit('cancelDappApproval');
+      }}>
+        Close
+      </TouchableText> */}
+      </View>
+    </View>
+  );
+}
 
 export const Approval = () => {
   const [getApproval, ,] = useApproval();
@@ -42,21 +65,27 @@ export const Approval = () => {
     };
   }, [init]);
 
-  if (!getActiveDappTabId() || !approval) {
+  const { activeTabId, activeDappOrigin } = useOpenedActiveDappState();
+
+  if (!approval) {
     return <View />;
   }
+
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
 
-  // const sourceOrigin = origin || params.origin;
-  // if (
-  //   !shouldAllowApprovePopup({
-  //     targetOrigin: sourceOrigin,
-  //     currentActiveOrigin: activeDappOrigin,
-  //   })
-  // ) {
-  //   return <View />;
-  // }
+  const sourceOrigin = origin || params.origin;
+  if (
+    !shouldAllowApprovePopup(
+      {
+        targetOrigin: sourceOrigin,
+        currentActiveOrigin: activeDappOrigin,
+      },
+      { allowSecondaryDomainMatch: !!activeTabId },
+    )
+  ) {
+    return <ShouldntRenderApproveDueToDappDisappeared />;
+  }
 
   const CurrentApprovalComponent =
     ApprovalComponent[approvalComponent] ?? ApprovalComponent.Unknown;

@@ -8,36 +8,28 @@ import { useDapps } from '@/hooks/useDapps';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { createDappBySession, syncBasicDappInfo } from '@/core/apis/dapp';
 import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import {
-  ActiveDappState,
-  activeDappStateEvents,
-  getActiveDappTabId,
-} from '@/core/bridges/state';
+import { ActiveDappState, activeDappStateEvents } from '@/core/bridges/state';
 
-// const activeDappStateAtom = atom<ActiveDappState>({
-//   dappOrigin: null,
-//   tabId: null,
-// });
-// activeDappStateAtom.onMount = set => {
-//   const listener = (info: ActiveDappState) => {
-//     // set(info);
-//   };
-//   activeDappStateEvents.addListener('updated', listener);
+const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
+activeDappTabIdAtom.onMount = set => {
+  const listener = (tabId: ActiveDappState['tabId']) => {
+    set(tabId);
+  };
+  activeDappStateEvents.addListener('updated', listener);
 
-//   return () => {
-//     activeDappStateEvents.removeListener('updated', listener);
-//   };
-// };
+  return () => {
+    activeDappStateEvents.removeListener('updated', listener);
+  };
+};
+
 const activeDappOriginAtom = atom<ActiveDappState['dappOrigin']>(null);
-
 export function useOpenedActiveDappState() {
-  // const [{ dappOrigin: activeDappOrigin, tabId }, setActiveDappState] =
-  //   useAtom(activeDappStateAtom);
   const activeDappOrigin = useAtomValue(activeDappOriginAtom);
+  const activeTabId = useAtomValue(activeDappTabIdAtom);
 
   return {
     activeDappOrigin,
-    activeTabId: getActiveDappTabId(),
+    activeTabId: activeTabId,
     hasActiveDapp: !!activeDappOrigin,
   };
 }

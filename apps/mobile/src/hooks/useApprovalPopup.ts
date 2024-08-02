@@ -5,10 +5,17 @@ import {
   snapToIndexGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { atom, useAtom } from 'jotai';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { getActiveDappTabId } from '@/core/bridges/state';
 
+const ids = new Set<string>();
 const idAtom = atom<string | null>(null);
+
+const clearPopup = (idToClear: string | null) => {
+  if (!idToClear) return;
+  removeGlobalBottomSheetModal(idToClear);
+  ids.delete(idToClear);
+};
 
 /**
  * New popup window for approval
@@ -22,19 +29,20 @@ export const useApprovalPopup = () => {
       name: MODAL_NAMES.APPROVAL,
     });
     setId(_id);
+    ids.add(_id);
   };
 
-  const enablePopup = (type: string) => {
+  const enablePopup = useCallback((type: string) => {
     if (type) {
       return true;
     }
 
     return false;
-  };
+  }, []);
 
-  const closePopup = () => {
-    removeGlobalBottomSheetModal(id);
-  };
+  const closePopup = useCallback(() => {
+    clearPopup(id);
+  }, [id]);
 
   const snapToIndexPopup = React.useCallback(
     (index: number) => {

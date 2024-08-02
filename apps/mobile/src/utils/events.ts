@@ -1,7 +1,11 @@
-import EventEmitter from 'events';
 import { SIGN_HELPER_EVENTS } from '@rabby-wallet/service-keyring';
+import { makeEEClass } from '@/core/apis/event';
 
-export const eventBus = new EventEmitter();
+type Listeners = {
+  [P: string]: (data: any) => void;
+};
+const { EventEmitter: EE } = makeEEClass<Listeners>();
+export const eventBus = new EE();
 
 export const EVENTS = SIGN_HELPER_EVENTS;
 
