@@ -152,7 +152,7 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
         <View
           style={styles.estimatedValueSection}
           onStartShouldSetResponder={() => true}>
-          <Text style={styles.estimatedValueText}>
+          <Text style={styles.estimatedValueText} numberOfLines={1}>
             {t('page.bridge.estimated-value', {
               value: formatUsdValue(
                 new BigNumber(props.to_token_amount)
@@ -180,7 +180,10 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
             styles.badge,
             props.isBestQuote ? styles.bestBadge : styles.diffBadge,
           ]}>
-          <Text style={styles.badgeText}>
+          <Text
+            style={
+              props.isBestQuote ? styles.bestQuoteText : styles.otherQuoteText
+            }>
             {props.isBestQuote ? t('page.bridge.best') : diffPercent}
           </Text>
         </View>
@@ -229,8 +232,8 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    flex: 1,
     justifyContent: 'flex-end',
+    flexShrink: 1,
   },
   aggregatorName: {
     fontSize: 16,
@@ -273,6 +276,8 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   estimatedValueText: {
     fontSize: 13,
@@ -298,9 +303,15 @@ const getStyles = createGetStyles(colors => ({
   diffBadge: {
     backgroundColor: colors['red-light'],
   },
-  badgeText: {
+
+  bestQuoteText: {
     fontSize: 12,
     fontWeight: '500',
     color: colors['green-default'],
+  },
+  otherQuoteText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors['red-default'],
   },
 }));

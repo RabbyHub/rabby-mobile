@@ -10,9 +10,8 @@ import {
 } from './context';
 
 import { findChain } from '@/utils/chain';
-import { CHAINS_ENUM } from '@debank/common';
+import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { openapi } from '@/core/request';
-import { CHAINS } from '@/constant/chains';
 import { bridgeService } from '@/core/services';
 import { useAsyncInitializeChainList } from '@/hooks/useChain';
 import { useAggregatorsList, useBridgeSupportedChains } from './atom';
@@ -23,7 +22,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { ETH_USDT_CONTRACT } from '@/constant/swap';
 import useAsync from 'react-use/lib/useAsync';
 import useDebounce from 'react-use/lib/useDebounce';
-import useDebounceValue from '@/hooks/common/useDebounceValue';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 const { isSameAddress } = addressUtils;
 
@@ -165,9 +164,7 @@ export const useTokenPair = (userAddress: string) => {
     bridgeService.setSelectedToToken(receiveToken);
   }, [receiveToken]);
 
-  const [inputAmount, setPayAmount] = useState('');
-
-  const debouncePayAmount = useDebounceValue(inputAmount, 300);
+  const [payAmount, setPayAmount] = useState('');
 
   const [selectedBridgeQuote, setOriSelectedBridgeQuote] = useState<
     SelectedBridgeQuote | undefined
@@ -193,9 +190,9 @@ export const useTokenPair = (userAddress: string) => {
   const inSufficient = useMemo(
     () =>
       payToken
-        ? tokenAmountBn(payToken).lt(debouncePayAmount)
-        : new BigNumber(0).lt(debouncePayAmount),
-    [payToken, debouncePayAmount],
+        ? tokenAmountBn(payToken).lt(payAmount)
+        : new BigNumber(0).lt(payAmount),
+    [payToken, payAmount],
   );
 
   const [quoteList, setQuotesList] = useState<SelectedBridgeQuote[]>([]);
@@ -204,7 +201,7 @@ export const useTokenPair = (userAddress: string) => {
     setQuotesList([]);
     setSelectedBridgeQuote(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, debouncePayAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
 
   const visible = useQuoteVisible();
 
@@ -218,165 +215,201 @@ export const useTokenPair = (userAddress: string) => {
 
   const aggregatorsList = useAggregatorsList();
 
+  const [noBestQuote, setNoBestQuote] = useState(false);
+
   const fetchIdRef = useRef(0);
 
-  const [isEmptyQuote, setIsEmptyQuote] = useState(false);
+  const inFetching = useRef(false);
 
-  const { loading: quoteLoading, error: quotesError } = useAsync(async () => {
+  const [{ loading: quoteLoading, error: quotesError }, callGetQuotes] =
+    useAsyncFn(async () => {
+      if (
+        !inSufficient &&
+        userAddress &&
+        payToken?.id &&
+        receiveToken?.id &&
+        receiveToken &&
+        chain &&
+        Number(payAmount) > 0 &&
+        aggregatorsList.length > 0
+      ) {
+        inFetching.current = true;
+
+        fetchIdRef.current += 1;
+        const currentFetchId = fetchIdRef.current;
+
+        let preQuotesIsEmpty = false;
+        const result: SelectedBridgeQuote[] = [];
+
+        setQuotesList(e => {
+          if (!e.length) {
+            preQuotesIsEmpty = true;
+          }
+          return e?.map(e => ({ ...e, loading: true }));
+        });
+
+        setSelectedBridgeQuote(undefined);
+
+        const originData = await openapi
+          .getBridgeQuoteList({
+            aggregator_ids: aggregatorsList.map(e => e.id).join(','),
+            from_token_id: payToken.id,
+            user_addr: userAddress,
+            from_chain_id: payToken.chain,
+            from_token_raw_amount: new BigNumber(payAmount)
+              .times(10 ** payToken.decimals)
+              .toFixed(0, 1)
+              .toString(),
+            to_chain_id: receiveToken.chain,
+            to_token_id: receiveToken.id,
+          })
+          .catch(err => {
+            console.log('err', err);
+            if (currentFetchId === fetchIdRef.current) {
+              stats.report('bridgeQuoteResult', {
+                aggregatorIds: aggregatorsList.map(e => e.id).join(','),
+                fromChainId: payToken.chain,
+                fromTokenId: payToken.id,
+                toTokenId: receiveToken.id,
+                toChainId: receiveToken.chain,
+                status: 'fail',
+                amount: payAmount,
+              });
+            }
+          })
+          .finally(() => {});
+
+        const data = originData?.filter(
+          quote =>
+            !!quote?.bridge &&
+            !!quote?.bridge?.id &&
+            !!quote?.bridge?.logo_url &&
+            !!quote.bridge.name,
+        );
+
+        if (currentFetchId === fetchIdRef.current) {
+          stats.report('bridgeQuoteResult', {
+            aggregatorIds: aggregatorsList.map(e => e.id).join(','),
+            fromChainId: payToken.chain,
+            fromTokenId: payToken.id,
+            toTokenId: receiveToken.id,
+            toChainId: receiveToken.chain,
+            status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
+          });
+        }
+
+        if (data && currentFetchId === fetchIdRef.current) {
+          if (!preQuotesIsEmpty) {
+            setQuotesList(data.map(e => ({ ...e, loading: true })));
+          }
+
+          await Promise.allSettled(
+            data.map(async quote => {
+              if (currentFetchId !== fetchIdRef.current) {
+                return;
+              }
+              let tokenApproved = false;
+              let allowance = '0';
+              const fromChain = findChain({ serverId: payToken?.chain });
+              if (payToken?.id === fromChain?.nativeTokenAddress) {
+                tokenApproved = true;
+              } else {
+                allowance = await getERC20Allowance(
+                  payToken.chain,
+                  payToken.id,
+                  quote.approve_contract_id,
+                );
+                tokenApproved = new BigNumber(allowance).gte(
+                  new BigNumber(payAmount).times(10 ** payToken.decimals),
+                );
+              }
+              let shouldTwoStepApprove = false;
+              if (
+                fromChain?.enum === CHAINS_ENUM.ETH &&
+                isSameAddress(payToken.id, ETH_USDT_CONTRACT) &&
+                Number(allowance) !== 0 &&
+                !tokenApproved
+              ) {
+                shouldTwoStepApprove = true;
+              }
+
+              if (preQuotesIsEmpty) {
+                result.push({
+                  ...quote,
+                  shouldTwoStepApprove,
+                  shouldApproveToken: !tokenApproved,
+                });
+              } else {
+                if (currentFetchId === fetchIdRef.current) {
+                  setQuotesList(e => {
+                    const filteredArr = e.filter(
+                      item =>
+                        item.aggregator.id !== quote.aggregator.id ||
+                        item.bridge.id !== quote.bridge.id,
+                    );
+                    return [
+                      ...filteredArr,
+                      {
+                        ...quote,
+                        loading: false,
+                        shouldTwoStepApprove,
+                        shouldApproveToken: !tokenApproved,
+                      },
+                    ];
+                  });
+                }
+              }
+            }),
+          );
+
+          if (preQuotesIsEmpty && currentFetchId === fetchIdRef.current) {
+            setQuotesList(result);
+          }
+        }
+      }
+    }, [
+      inSufficient,
+      aggregatorsList,
+      refreshId,
+      userAddress,
+      payToken?.id,
+      receiveToken?.id,
+      chain,
+      payAmount,
+    ]);
+
+  const [stateChangeLoading, setStateChangeLoading] = useState(false);
+
+  useEffect(() => {
     if (
       !inSufficient &&
       userAddress &&
       payToken?.id &&
       receiveToken?.id &&
-      receiveToken &&
       chain &&
-      Number(debouncePayAmount) > 0 &&
+      Number(payAmount) > 0 &&
       aggregatorsList.length > 0
     ) {
-      fetchIdRef.current += 1;
-      const currentFetchId = fetchIdRef.current;
-
-      let preQuotesIsEmpty = false;
-      const result: SelectedBridgeQuote[] = [];
-      setIsEmptyQuote(false);
-
-      setQuotesList(e => {
-        if (!e.length) {
-          preQuotesIsEmpty = true;
-        }
-        return e?.map(e => ({ ...e, loading: true }));
-      });
-
-      setSelectedBridgeQuote(undefined);
-
-      const originData = await openapi
-        .getBridgeQuoteList({
-          aggregator_ids: aggregatorsList.map(e => e.id).join(','),
-          from_token_id: payToken.id,
-          user_addr: userAddress,
-          from_chain_id: payToken.chain,
-          from_token_raw_amount: new BigNumber(debouncePayAmount)
-            .times(10 ** payToken.decimals)
-            .toFixed(0, 1)
-            .toString(),
-          to_chain_id: receiveToken.chain,
-          to_token_id: receiveToken.id,
-        })
-        .catch(err => {
-          console.log('err', err);
-          setIsEmptyQuote(true);
-          if (currentFetchId === fetchIdRef.current) {
-            stats.report('bridgeQuoteResult', {
-              aggregatorIds: aggregatorsList.map(e => e.id).join(','),
-              fromChainId: payToken.chain,
-              fromTokenId: payToken.id,
-              toTokenId: receiveToken.id,
-              toChainId: receiveToken.chain,
-              status: 'fail',
-              amount: debouncePayAmount,
-            });
-          }
-        })
-        .finally(() => {});
-
-      const data = originData?.filter(
-        quote =>
-          !!quote?.bridge &&
-          !!quote?.bridge?.id &&
-          !!quote?.bridge?.logo_url &&
-          !!quote.bridge.name,
-      );
-
-      if (currentFetchId === fetchIdRef.current) {
-        stats.report('bridgeQuoteResult', {
-          aggregatorIds: aggregatorsList.map(e => e.id).join(','),
-          fromChainId: payToken.chain,
-          fromTokenId: payToken.id,
-          toTokenId: receiveToken.id,
-          toChainId: receiveToken.chain,
-          status: data ? (data?.length === 0 ? 'none' : 'success') : 'fail',
-        });
-      }
-
-      if (data && currentFetchId === fetchIdRef.current) {
-        if (!preQuotesIsEmpty) {
-          setQuotesList(data.map(e => ({ ...e, loading: true })));
-        }
-
-        await Promise.allSettled(
-          data.map(async quote => {
-            if (currentFetchId !== fetchIdRef.current) {
-              return;
-            }
-            let tokenApproved = false;
-            let allowance = '0';
-            const fromChain = findChain({ serverId: payToken?.chain });
-            if (payToken?.id === fromChain?.nativeTokenAddress) {
-              tokenApproved = true;
-            } else {
-              allowance = await getERC20Allowance(
-                payToken.chain,
-                payToken.id,
-                quote.approve_contract_id,
-              );
-              tokenApproved = new BigNumber(allowance).gte(
-                new BigNumber(debouncePayAmount).times(10 ** payToken.decimals),
-              );
-            }
-            let shouldTwoStepApprove = false;
-            if (
-              fromChain?.enum === CHAINS_ENUM.ETH &&
-              isSameAddress(payToken.id, ETH_USDT_CONTRACT) &&
-              Number(allowance) !== 0 &&
-              !tokenApproved
-            ) {
-              shouldTwoStepApprove = true;
-            }
-
-            if (preQuotesIsEmpty) {
-              result.push({
-                ...quote,
-                shouldTwoStepApprove,
-                shouldApproveToken: !tokenApproved,
-              });
-            } else {
-              if (currentFetchId === fetchIdRef.current) {
-                setQuotesList(e => {
-                  const filteredArr = e.filter(
-                    item =>
-                      item.aggregator.id !== quote.aggregator.id ||
-                      item.bridge.id !== quote.bridge.id,
-                  );
-                  return [
-                    ...filteredArr,
-                    {
-                      ...quote,
-                      loading: false,
-                      shouldTwoStepApprove,
-                      shouldApproveToken: !tokenApproved,
-                    },
-                  ];
-                });
-              }
-            }
-          }),
-        );
-
-        if (preQuotesIsEmpty && currentFetchId === fetchIdRef.current) {
-          setQuotesList(result);
-        }
-      }
+      setStateChangeLoading(true);
     }
   }, [
-    inSufficient,
-    aggregatorsList,
-    refreshId,
-    userAddress,
-    payToken?.id,
-    receiveToken?.id,
+    aggregatorsList.length,
     chain,
-    debouncePayAmount,
+    inSufficient,
+    payAmount,
+    payToken?.id,
+    receiveToken,
+    userAddress,
+    refreshId,
   ]);
+
+  useDebounce(
+    () => {
+      callGetQuotes();
+    },
+    300,
+    [callGetQuotes],
+  );
 
   const [bestQuoteId, setBestQuoteId] = useState<
     | {
@@ -394,21 +427,13 @@ export const useTokenPair = (userAddress: string) => {
     openQuote(true);
   }, [openQuote, setRefreshId]);
 
-  const notAvailableQuote = useMemo(
-    () =>
-      !quoteLoading &&
-      !!receiveToken &&
-      Number(debouncePayAmount) > 0 &&
-      (!quoteList || !quoteList.length),
-    [debouncePayAmount, quoteList, quoteLoading, receiveToken],
-  );
-
   useEffect(() => {
     if (
       !quoteLoading &&
       receiveToken &&
-      Number(debouncePayAmount) > 0 &&
-      quoteList.every(e => !e.loading)
+      Number(payAmount) > 0 &&
+      quoteList.every(e => !e.loading) &&
+      inFetching.current
     ) {
       const sortedList = quoteList?.sort((b, a) => {
         return new BigNumber(a.to_token_amount)
@@ -426,6 +451,8 @@ export const useTokenPair = (userAddress: string) => {
         sortedList[0]?.bridge_id &&
         sortedList[0]?.aggregator?.id
       ) {
+        setNoBestQuote(false);
+
         setBestQuoteId({
           bridgeId: sortedList[0]?.bridge_id,
           aggregatorId: sortedList[0]?.aggregator?.id,
@@ -434,14 +461,23 @@ export const useTokenPair = (userAddress: string) => {
         setSelectedBridgeQuote(preItem =>
           preItem?.manualClick ? preItem : sortedList[0],
         );
+      } else {
+        setNoBestQuote(true);
       }
+
+      inFetching.current = false;
+      setStateChangeLoading(false);
+
+      return () => {
+        setNoBestQuote(false);
+      };
     }
   }, [
     quoteList,
     quoteLoading,
     receiveToken,
     setSelectedBridgeQuote,
-    debouncePayAmount,
+    payAmount,
   ]);
 
   if (quotesError) {
@@ -452,7 +488,7 @@ export const useTokenPair = (userAddress: string) => {
     setExpired(false);
     setSelectedBridgeQuote(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payToken?.id, receiveToken?.id, chain, debouncePayAmount, inSufficient]);
+  }, [payToken?.id, receiveToken?.id, chain, payAmount, inSufficient]);
 
   return {
     chain,
@@ -465,20 +501,18 @@ export const useTokenPair = (userAddress: string) => {
 
     handleAmountChange,
     handleBalance,
-    inputAmount,
-    debouncePayAmount,
+    payAmount,
 
     inSufficient,
+    noBestQuote: noBestQuote,
 
-    quoteLoading,
+    quoteLoading: stateChangeLoading,
     quoteList,
     selectedBridgeQuote,
     setSelectedBridgeQuote,
     openQuotesList,
 
     bestQuoteId,
-
-    notAvailableQuote,
     expired,
   };
 };

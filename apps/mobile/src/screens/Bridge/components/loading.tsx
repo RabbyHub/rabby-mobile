@@ -87,7 +87,6 @@ const SvgComponent = ({ ...props }) => (
 );
 
 export const BestQuoteLoading = () => {
-  const { t } = useTranslation();
   const [animation] = React.useState(new Animated.Value(0));
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -96,7 +95,7 @@ export const BestQuoteLoading = () => {
     Animated.loop(
       Animated.timing(animation, {
         toValue: 1,
-        duration: 2000,
+        duration: 3000,
         useNativeDriver: true,
         isInteraction: false,
         delay: 0,
@@ -114,7 +113,7 @@ export const BestQuoteLoading = () => {
           ? [2, 2, 1, 1, 1, 1, 2, 2]
           : index === 1
           ? [1, 1, 1, 1, 2, 2, 1, 1]
-          : [1, 1, 2, 2, 1, 1, 1, 1],
+          : [1, 1, 2, 2, 1, 1, 0, 0],
     }),
 
     transform: [
@@ -253,8 +252,8 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     marginLeft: 16,
     position: 'relative',
-    top: -4,
-    left: -2,
+    top: -6,
+    left: -10,
   },
   dot: {
     fontSize: 24,

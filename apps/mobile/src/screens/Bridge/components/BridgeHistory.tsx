@@ -197,14 +197,14 @@ const Transaction = forwardRef<View, { data: BridgeHistory }>(
 
         <View style={styles.transactionFooter}>
           <TouchableOpacity onPress={gotoScan}>
-            <Text style={styles.transactionDetail}>
+            <Text style={styles.transactionDetail} numberOfLines={1}>
               {t('page.bridge.detail-tx')}:{' '}
               <Text style={styles.transactionId}>
                 {txId ? ellipsis(txId) : ''}
               </Text>
             </Text>
           </TouchableOpacity>
-          <Text style={styles.gasFee}>
+          <Text style={styles.gasFee} numberOfLines={1}>
             {!loading
               ? t('page.bridge.gas-fee', { gasUsed })
               : t('page.bridge.gas-x-price', {
@@ -440,6 +440,7 @@ const getStyles = createGetStyles(colors => ({
     paddingTop: 10,
     borderTopWidth: 0.5,
     borderColor: colors['neutral-line'],
+    gap: 4,
   },
   transactionDetail: {
     fontSize: 13,
@@ -449,9 +450,12 @@ const getStyles = createGetStyles(colors => ({
     textDecorationLine: 'underline',
   },
   gasFee: {
+    textAlign: 'right',
     marginLeft: 'auto',
     fontSize: 13,
     color: colors['neutral-foot'],
+    flex: 1,
+    flexWrap: 'wrap',
   },
   emptyContainer: {
     width: '100%',
@@ -466,7 +470,7 @@ const getStyles = createGetStyles(colors => ({
   emptyText: {
     textAlign: 'center',
     fontSize: 14,
-    color: 'rgba(62, 73, 94, 1)', // Update as needed
+    color: colors['neutral-foot'],
   },
   historyList: {
     maxHeight: 434,
@@ -493,7 +497,7 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
   },
   emptyView: {
-    marginTop: 100,
+    marginTop: '50%',
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -503,8 +507,8 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 20,
     fontWeight: '500',
     textAlign: 'center',
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
     backgroundColor: colors['neutral-bg-2'],
     color: colors['neutral-title-1'],
   },

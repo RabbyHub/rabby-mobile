@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Text, View } from 'react-native';
 
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
@@ -14,6 +14,7 @@ import { RcWalletCC } from '@/assets/icons/common';
 import { formatUsdValue } from '@/utils/number';
 import { toast } from '../Toast';
 import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
+import { Tip } from '../Tip';
 
 export default function ChainItem({
   data,
@@ -48,44 +49,51 @@ export default function ChainItem({
     return disabledTips;
   }, [data, disabledTips]);
 
+  const [tipsVisible, setTipsVisible] = useState(false);
+
   return (
-    <TouchableView
-      activeOpacity={disabled ? 1 : undefined}
-      style={[styles.container, disabled && styles.disable, style]}
-      onPress={() => {
-        if (disabled) {
-          finalDisabledTips && toast.info(finalDisabledTips);
-          return;
-        }
-        onPress?.(data?.enum);
-      }}>
-      {data.isTestnet ? (
-        <TestnetChainLogo name={data.name} style={styles.logo} size={32} />
-      ) : (
-        <Image
-          source={{
-            uri: data.logo,
-          }}
-          style={styles.logo}
-        />
-      )}
-      <View style={styles.contentContainer}>
-        <View style={styles.leftBasic}>
-          <Text style={styles.nameText}>{data?.name}</Text>
-          {!!chainBalanceItem?.usd_value && (
-            <View style={styles.selectChainItemBalance}>
-              <RcWalletCC style={styles.walletIcon} />
-              <Text style={styles.usdValueText}>
-                {formatUsdValue(chainBalanceItem?.usd_value || 0)}
-              </Text>
-            </View>
-          )}
+    <Tip
+      content={finalDisabledTips}
+      isVisible={tipsVisible}
+      onClose={() => setTipsVisible(false)}>
+      <TouchableView
+        activeOpacity={disabled ? 1 : undefined}
+        style={[styles.container, disabled && styles.disable, style]}
+        onPress={() => {
+          if (disabled) {
+            finalDisabledTips && setTipsVisible(true); // toast.info(finalDisabledTips);
+            return;
+          }
+          onPress?.(data?.enum);
+        }}>
+        {data.isTestnet ? (
+          <TestnetChainLogo name={data.name} style={styles.logo} size={32} />
+        ) : (
+          <Image
+            source={{
+              uri: data.logo,
+            }}
+            style={styles.logo}
+          />
+        )}
+        <View style={styles.contentContainer}>
+          <View style={styles.leftBasic}>
+            <Text style={styles.nameText}>{data?.name}</Text>
+            {!!chainBalanceItem?.usd_value && (
+              <View style={styles.selectChainItemBalance}>
+                <RcWalletCC style={styles.walletIcon} />
+                <Text style={styles.usdValueText}>
+                  {formatUsdValue(chainBalanceItem?.usd_value || 0)}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.rightArea}>
+            {value && value === data?.enum ? <RcIconChecked /> : null}
+          </View>
         </View>
-        <View style={styles.rightArea}>
-          {value && value === data?.enum ? <RcIconChecked /> : null}
-        </View>
-      </View>
-    </TouchableView>
+      </TouchableView>
+    </Tip>
   );
 }
 
