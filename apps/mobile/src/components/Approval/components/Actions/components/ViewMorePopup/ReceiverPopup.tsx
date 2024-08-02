@@ -131,7 +131,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         </Col>
         {data.hasReceiverMnemonicInWallet && (
           <Col>
-            <Row>
+            <Row isTitle>
               <Text>{t('page.signTx.addressSource')}</Text>
             </Row>
             <Row>
@@ -141,7 +141,7 @@ export const ReceiverPopup: React.FC<Props> = ({ data }) => {
         )}
         {data.hasReceiverPrivateKeyInWallet && (
           <Col>
-            <Row>
+            <Row isTitle>
               <Text>{t('page.signTx.addressSource')}</Text>
             </Row>
             <Row>
