@@ -277,6 +277,7 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     gap: 6,
     flex: 1,
+    justifyContent: 'flex-end',
   },
   estimatedValueText: {
     fontSize: 13,
