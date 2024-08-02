@@ -91,6 +91,7 @@ export const DexQuoteItem = (
   const { t } = useTranslation();
 
   const { setVisible: openSwapSettings } = useSwapSettingsVisible();
+
   const openSwapQuote = useSetQuoteVisible();
 
   const { sortIncludeGasFee } = useSwapSettings();
@@ -249,10 +250,12 @@ export const DexQuoteItem = (
 
   const handleClick = useCallback(() => {
     if (gasFeeTooHight) {
+      setInSufficientTapTip(true);
       return;
     }
 
     if (inSufficient) {
+      setInSufficientTapTip(true);
       return;
     }
     if (disabled) {
@@ -303,16 +306,6 @@ export const DexQuoteItem = (
 
   const [, setIsShowRabbyFeePopup] = useRabbyFeeVisible();
 
-  const tooltipVisible = useMemo(() => {
-    if (onlyShow) {
-      return false;
-    }
-    if (gasFeeTooHight || (inSufficient && !disabled)) {
-      return undefined;
-    }
-    return false;
-  }, [onlyShow, gasFeeTooHight, inSufficient, disabled]);
-
   useEffect(() => {
     if (isErrorQuote && onlyShowErrorQuote) {
       onErrQuote?.(e => {
@@ -336,10 +329,10 @@ export const DexQuoteItem = (
     <Tip
       content={
         gasFeeTooHight
-          ? t('page.swap.gas-fee-too-high')
+          ? t('page.swap.Gas-fee-too-high')
           : t('page.swap.insufficient-balance')
       }
-      isVisible={inSufficientTapTip}
+      isVisible={!onlyShow && inSufficientTapTip}
       onClose={() => setInSufficientTapTip(false)}
       tooltipStyle={{
         transform: [{ translateY: 20 }],
@@ -366,13 +359,6 @@ export const DexQuoteItem = (
           onlyShow && styles.onlyShow,
         ]}
         onPress={() => {
-          if (gasFeeTooHight) {
-            setInSufficientTapTip(true);
-            return;
-          }
-          if (inSufficient && !disabled) {
-            setInSufficientTapTip(true);
-          }
           if (onlyShow) {
             onPress?.();
             return;
