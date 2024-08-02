@@ -18,6 +18,9 @@ export const activeDappStateEvents =
 export function getActiveDappState() {
   return { ...activeDappRef };
 }
+export function isRpcAllowed(s: ActiveDappState) {
+  return !!s.dappOrigin && s.tabId;
+}
 export function globalSetActiveDappState(input: {
   tabId?: string | null;
   dappOrigin?: string | null;

@@ -23,16 +23,13 @@ const clearPopup = (idToClear: string | null) => {
 export const useApprovalPopup = () => {
   const [id, setId] = useAtom(idAtom);
 
-  const showPopup = () => {
-    const activeDappState = getActiveDappState();
-    if (activeDappState.dappOrigin && !!activeDappState.tabId) return false;
-
+  const showPopup = useCallback(() => {
     const _id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.APPROVAL,
     });
     setId(_id);
     ids.add(_id);
-  };
+  }, [setId]);
 
   const enablePopup = useCallback((type: string) => {
     if (type) {

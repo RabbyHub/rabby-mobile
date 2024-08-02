@@ -4,7 +4,7 @@ import { isWhitelistedRPC, RPCStageTypes } from '../rpc/events';
 import { keyringService } from '@/core/services';
 import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
-import { getActiveDappState } from '../state';
+import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
 
 let appVersion = '';
@@ -78,7 +78,7 @@ RPCMethodsMiddleParameters) =>
     };
     const checkTabActive = () => {
       const activeDappState = getActiveDappState();
-      if (activeDappState.dappOrigin && !!activeDappState.tabId) return false;
+      if (!isRpcAllowed(activeDappState)) return false;
 
       const webviewId = bridge.webviewId;
 
