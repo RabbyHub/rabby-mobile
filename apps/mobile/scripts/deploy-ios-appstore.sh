@@ -44,7 +44,7 @@ possible_changelogs=(
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-ios-appstore] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/
+    cp $changelog $deployment_local_dir/$proj_version.md
     break
   fi
 done

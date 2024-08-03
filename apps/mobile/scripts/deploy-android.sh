@@ -73,7 +73,7 @@ possible_changelogs=(
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-android] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/
+    cp $changelog $deployment_local_dir/$android_version_name.md
     break
   fi
 done
