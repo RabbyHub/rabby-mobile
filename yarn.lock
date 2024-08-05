@@ -6145,9 +6145,6 @@ __metadata:
     "@rabby-wallet/rabby-sign": ">= 0.3"
   checksum: 2424b804ba9c7f32bc7ff51a3f6a10b1094373a52fee78aab1237b643fe714bb261f5b6d5ded51dca6237b0206eac66e6cf52a6ad0fa955940b450b7302e2c98
   languageName: node
-  linkType: hard
-
-"@rabby-wallet/rabby-security-engine@npm:2.0.4":
   version: 2.0.4
   resolution: "@rabby-wallet/rabby-security-engine@npm:2.0.4"
   peerDependencies:
