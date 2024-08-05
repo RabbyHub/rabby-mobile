@@ -37,13 +37,14 @@ unix_replace_variables $script_dir/tpl/ios/version.json $deployment_local_dir/ve
 
 # ============ prepare changelogs :start ============== #
 possible_changelogs=(
+  "$project_dir/src/changeLogs/$proj_version.ios.md"
   "$project_dir/src/changeLogs/$proj_version.md"
 )
 
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-ios-adhoc] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/
+    cp $changelog $deployment_local_dir/$proj_version.md
     break
   fi
 done
@@ -87,11 +88,11 @@ echo ""
 
 if [ "$REALLY_UPLOAD" == "true" ]; then
   echo "[deploy-ios-adhoc] start sync to $deployment_s3_dir..."
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps
-  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
-  # aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
+  # aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.ipa" --acl public-read --content-type application/octet-stream --exact-timestamps
+  # aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.plist" --acl public-read --content-type application/x-plist --exact-timestamps
+  # aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.png" --acl public-read --content-type image/png --exact-timestamps
+  # aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.json" --acl public-read --content-type application/json --exact-timestamps
+  aws s3 sync $deployment_local_dir $deployment_s3_dir/ --exclude '*' --include "*.md" --acl public-read --content-type text/plain --exact-timestamps
 
   node $script_dir/notify-lark.js "$manifest_plist_url" ios
 fi

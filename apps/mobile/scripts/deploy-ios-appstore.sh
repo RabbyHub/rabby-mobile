@@ -37,13 +37,14 @@ unix_replace_variables $script_dir/tpl/ios/version.json $deployment_local_dir/ve
 
 # ============ prepare changelogs :start ============== #
 possible_changelogs=(
+  "$project_dir/src/changeLogs/$proj_version.ios.md"
   "$project_dir/src/changeLogs/$proj_version.md"
 )
 
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-ios-appstore] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/
+    cp $changelog $deployment_local_dir/$proj_version.md
     break
   fi
 done

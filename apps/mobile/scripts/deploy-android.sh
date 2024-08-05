@@ -66,14 +66,14 @@ unix_replace_variables $script_dir/tpl/android/version.json $deployment_local_di
 
 # ============ prepare changelogs :start ============== #
 possible_changelogs=(
+  "$project_dir/src/changeLogs/$android_version_name.android.md"
   "$project_dir/src/changeLogs/$android_version_name.md"
-  "$project_dir/src/changeLogs/$android_version_name.$android_version_code.md"
 )
 
 for changelog in "${possible_changelogs[@]}"; do
   if [ -f $changelog ]; then
     echo "[deploy-android] found changelog: $changelog"
-    cp $changelog $deployment_local_dir/
+    cp $changelog $deployment_local_dir/$android_version_name.md
     break
   fi
 done
