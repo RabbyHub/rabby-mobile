@@ -256,38 +256,43 @@ const flowContext = flow
       session: { origin },
     } = request;
     const requestDeferFn = async () =>
-      new Promise(async (resolve, reject) => {
+      new Promise(async resolve => {
+        let waitSignComponentPromise = Promise.resolve();
         if (isSignApproval(approvalType) && uiRequestComponent) {
-          await waitSignComponentAmounted();
+          waitSignComponentPromise = waitSignComponentAmounted();
         }
 
-        return Promise.resolve(
-          providerController[mapMethod]({
-            ...request,
-            approvalRes,
-          }),
-        )
-          .then(result => {
-            if (isSignApproval(approvalType)) {
-              eventBus.emit(EVENTS.SIGN_FINISHED, {
-                success: true,
-                data: result,
-              });
-            }
-            return result;
-          })
-          .then(resolve)
-          .catch((e: any) => {
-            Sentry.captureException(e);
-            if (isSignApproval(approvalType)) {
-              eventBus.emit(EVENTS.SIGN_FINISHED, {
-                success: false,
-                errorMsg: e?.message || JSON.stringify(e),
-              });
-            } else if (__DEV__) {
-              console.error(e);
-            }
-          });
+        if (approvalRes?.isGnosis) return resolve(undefined);
+
+        return waitSignComponentPromise.then(() =>
+          Promise.resolve(
+            providerController[mapMethod]({
+              ...request,
+              approvalRes,
+            }),
+          )
+            .then(result => {
+              if (isSignApproval(approvalType)) {
+                eventBus.emit(EVENTS.SIGN_FINISHED, {
+                  success: true,
+                  data: result,
+                });
+              }
+              return result;
+            })
+            .then(resolve)
+            .catch((e: any) => {
+              Sentry.captureException(e);
+              if (isSignApproval(approvalType)) {
+                eventBus.emit(EVENTS.SIGN_FINISHED, {
+                  success: false,
+                  errorMsg: e?.message || JSON.stringify(e),
+                });
+              } else if (__DEV__) {
+                console.error(e);
+              }
+            }),
+        );
       });
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
