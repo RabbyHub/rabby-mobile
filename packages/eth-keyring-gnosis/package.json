@@ -33,7 +33,7 @@
   "dependencies": {
     "@gnosis.pm/safe-core-sdk": "1.1.1",
     "@gnosis.pm/safe-core-sdk-types": "0.1.1",
-    "@rabby-wallet/gnosis-sdk": "^1.3.6",
+    "@rabby-wallet/gnosis-sdk": "1.3.8",
     "@rabby-wallet/keyring-utils": "^0.1.0",
     "ethereumjs-util": "^7.1.5",
     "semver": "^7.6.2",

@@ -5810,7 +5810,7 @@ __metadata:
     "@gnosis.pm/safe-core-sdk": 1.1.1
     "@gnosis.pm/safe-core-sdk-types": 0.1.1
     "@metamask/auto-changelog": ^3.4.3
-    "@rabby-wallet/gnosis-sdk": ^1.3.6
+    "@rabby-wallet/gnosis-sdk": 1.3.8
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10
@@ -5960,9 +5960,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/gnosis-sdk@npm:^1.3.6":
-  version: 1.3.6
-  resolution: "@rabby-wallet/gnosis-sdk@npm:1.3.6"
+"@rabby-wallet/gnosis-sdk@npm:1.3.8":
+  version: 1.3.8
+  resolution: "@rabby-wallet/gnosis-sdk@npm:1.3.8"
   dependencies:
     "@ethersproject/bignumber": ^5.5.0
     "@ethersproject/bytes": ^5.5.0
@@ -5971,7 +5971,7 @@ __metadata:
     "@ethersproject/solidity": ^5.5.0
     "@gnosis.pm/safe-core-sdk": ^1.0.0
     "@gnosis.pm/safe-core-sdk-types": ^0.1.1
-    "@safe-global/safe-deployments": ^1.25.0
+    "@safe-global/safe-deployments": ^1.37.2
     axios: ^0.24.0
     bignumber.js: ^9.0.2
     ethereumjs-util: ^7.1.3
@@ -5979,7 +5979,7 @@ __metadata:
     semver: ^7.5.4
     typescript: ^4.5.0
     web3-core: ^1.6.0
-  checksum: e3eb11e9d8cd31ac35b4ccaa77bdd9da5525d18e6550968c421cbe5638201eaaaef11dde6af53ae398ac1b8f849c08e748dffdfe66fcd113f8682374903ca940
+  checksum: 2e6a902d920be5c2dac65f6265cf6c67f357621d19ec691c0334f1ab34b5838894bf2e75348c7ad304f79f06b78fe5fbfabb3de88ecd707226f2d4d3fb3bcee0
   languageName: node
   linkType: hard
 
@@ -7145,12 +7145,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/safe-deployments@npm:^1.25.0":
-  version: 1.36.0
-  resolution: "@safe-global/safe-deployments@npm:1.36.0"
+"@safe-global/safe-deployments@npm:^1.37.2":
+  version: 1.37.3
+  resolution: "@safe-global/safe-deployments@npm:1.37.3"
   dependencies:
-    semver: ^7.6.0
-  checksum: 01ba36bcee87ee18c61e478524af15fce201f7a7c1ebd339f3cc94fcd8166b9b4bac1f151d74d4d6080b3e95f86e74994d59f0e80d6a923cc1a4529efbbc92bf
+    semver: ^7.6.2
+  checksum: 8c83944822aea1468fc51944edb964a050065f0f7404ee138a34d74228d7f5113102ec4e10f1866798969624193a072f6d65f2b6c8b79dc76f03081cefc5f06a
   languageName: node
   linkType: hard
 
@@ -27619,7 +27619,7 @@ __metadata:
     "@rabby-wallet/eth-keyring-watch": "*"
     "@rabby-wallet/eth-simple-keyring": ^5.0.1
     "@rabby-wallet/eth-walletconnect-keyring": 2.1.4
-    "@rabby-wallet/gnosis-sdk": ^1.3.6
+    "@rabby-wallet/gnosis-sdk": 1.3.8
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.24
@@ -30117,7 +30117,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.6.0, semver@npm:^7.6.2":
+"semver@npm:^7.6.2":
   version: 7.6.2
   resolution: "semver@npm:7.6.2"
   bin:
