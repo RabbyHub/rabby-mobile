@@ -11,6 +11,7 @@ import {
   splitNumberByStep,
 } from './biz-number';
 import BigNumber from 'bignumber.js';
+import { encodePermit2GroupKey, RevokeSummary } from './permit2';
 
 const approvalEnvs = {
   appIsProd: true,
@@ -29,15 +30,19 @@ export function setApprovalEnvsOnce(envs: typeof approvalEnvs) {
 export type ApprovalSpenderItemToBeRevoked = {
   chainServerId: ApprovalItem['chain'];
   spender: Spender['id'];
+  permit2Id?: string;
 } & (
   | {
       contractId: NFTInfoHost['contract_id'];
       abi: 'ERC721' | 'ERC1155' | '';
-      tokenId: string | null | undefined;
       isApprovedForAll: boolean;
+      tokenId?: '';
+      nftTokenId: string | null | undefined;
     }
   | {
+      contractId?: undefined;
       id: TokenApproval['id'] | Spender['id'];
+      tokenId?: string | null | undefined;
     }
 );
 
@@ -55,13 +60,18 @@ export type AssetApprovalSpender =
   | TokenApprovalItem['list'][number]
   | NftApprovalItem['list'][number];
 
+export type TokenApprovalIndexedBySpender = TokenApproval & {
+  readonly $indexderSpender?: SpenderInTokenApproval;
+  readonly $self?: TokenApproval;
+};
+
 type ContractFor = 'nft' | 'nft-contract' | 'token';
 type GetContractTypeByContractFor<T extends ContractFor> = T extends 'nft'
   ? NFTApproval
   : T extends 'nft-contract'
   ? NFTApprovalContract
   : T extends 'token'
-  ? TokenApproval
+  ? TokenApprovalIndexedBySpender
   : unknown;
 
 export type ContractApprovalItem<T extends ContractFor = ContractFor> = {
@@ -318,6 +328,36 @@ export function compareContractApprovalItemByRiskLevel(
   return 0;
 }
 
+export function markContractTokenSpender(
+  orig: TokenApproval,
+  spender: Spender
+): TokenApprovalIndexedBySpender {
+  const tokenApproval = { ...orig };
+  // eslint-disable-next-line no-prototype-builtins
+  if (!tokenApproval.hasOwnProperty('$indexderSpender')) {
+    Object.defineProperty(tokenApproval, '$indexderSpender', {
+      enumerable: false,
+      configurable: approvalEnvs.appIsProd,
+      get() {
+        return spender;
+      },
+    });
+  }
+
+  // eslint-disable-next-line no-prototype-builtins
+  if (!tokenApproval.hasOwnProperty('$self')) {
+    Object.defineProperty(tokenApproval, '$self', {
+      enumerable: false,
+      configurable: approvalEnvs.appIsProd,
+      get() {
+        return orig;
+      },
+    });
+  }
+
+  return tokenApproval as TokenApprovalIndexedBySpender;
+}
+
 export function markParentForAssetItemSpender(
   spender: Spender,
   parent: AssetApprovalItem,
@@ -535,4 +575,57 @@ export function compareAssetSpenderByType(
   }
 
   return 0;
+}
+
+export function summarizeRevoke(revokeList: ApprovalSpenderItemToBeRevoked[]) {
+  const { statics, permit2Revokes, generalRevokes } = revokeList.reduce(
+    (accu, cur) => {
+      accu.statics.spenderCount += 1;
+      if ('permit2Id' in cur && cur.permit2Id) {
+        const permit2Id = cur.permit2Id;
+        const permit2Key = encodePermit2GroupKey(cur.chainServerId, permit2Id);
+        if (!accu.permit2Revokes[permit2Key]) {
+          accu.permit2Revokes[permit2Key] = accu.permit2Revokes[permit2Key] || {
+            chainServerId: cur.chainServerId,
+            // contractId: cur.contractId,
+            permit2Id,
+            tokenSpenders: [],
+          };
+        }
+
+        if ('tokenId' in cur && cur.tokenId) {
+          accu.permit2Revokes[permit2Key].tokenSpenders.push({
+            spender: cur.spender,
+            token: cur.tokenId,
+          });
+        }
+        // accu.permit2Revokes[permit2Key].push(cur);
+      } else {
+        accu.generalRevokes.push(cur);
+      }
+
+      return accu;
+    },
+    <RevokeSummary>{
+      generalRevokes: [],
+      permit2Revokes: {},
+      statics: {
+        txCount: 0,
+        spenderCount: 0,
+      },
+    }
+  );
+
+  statics.txCount =
+    generalRevokes.length +
+    Object.values(permit2Revokes).filter(
+      (revokes) => revokes.tokenSpenders.length > 0
+    ).length;
+
+  return {
+    // $originalList: revokeList,
+    statics,
+    generalRevokes,
+    permit2Revokes,
+  };
 }

@@ -5,6 +5,8 @@ import { abiCoder, sendRequest } from './sendRequest';
 import { preferenceService } from '../services';
 import type PQueue from 'p-queue/dist/index';
 import { findChain } from '@/utils/chain';
+import { TokenSpenderPair } from '@rabby-wallet/biz-utils/dist/isomorphic/permit2';
+import { approvalUtils, permit2Utils } from '@rabby-wallet/biz-utils';
 
 async function approveToken(
   chainServerId: string,
@@ -77,7 +79,7 @@ async function revokeNFTApprove(
     contractId,
     spender,
     abi,
-    tokenId,
+    nftTokenId,
     isApprovedForAll,
   }: {
     chainServerId: string;
@@ -85,7 +87,7 @@ async function revokeNFTApprove(
     spender: string;
     abi: 'ERC721' | 'ERC1155' | '';
     isApprovedForAll: boolean;
-    tokenId: string | null | undefined;
+    nftTokenId?: string | null | undefined;
   },
   $ctx?: any,
 ) {
@@ -159,7 +161,10 @@ async function revokeNFTApprove(
                   stateMutability: 'nonpayable',
                   type: 'function',
                 },
-                ['0x0000000000000000000000000000000000000000', tokenId] as any,
+                [
+                  '0x0000000000000000000000000000000000000000',
+                  nftTokenId,
+                ] as any,
               ),
             },
           ],
@@ -218,28 +223,76 @@ export async function revoke({
   const queue = getQueue();
   const controller = new AbortController();
 
-  const revokeList = list.map(e => async () => {
-    try {
-      if ('tokenId' in e) {
-        await revokeNFTApprove(e);
-      } else {
-        await approveToken(e.chainServerId, e.id, e.spender, 0, {
-          ga: {
-            category: 'Security',
-            source: 'tokenApproval',
-          },
-        });
+  const abortRevoke = new AbortController();
+
+  const revokeSummary = approvalUtils.summarizeRevoke(list);
+
+  const revokeList: (() => Promise<void>)[] = [
+    ...Object.entries(revokeSummary.permit2Revokes).map(
+      ([permit2Key, item]) =>
+        async () => {
+          try {
+            const { chainServerId, permit2ContractId } =
+              permit2Utils.decodePermit2GroupKey(permit2Key);
+            if (!permit2ContractId) return;
+            if (chainServerId !== item.chainServerId) {
+              console.warn(`chainServerId ${chainServerId} not match`, item);
+              return;
+            }
+
+            await lockdownPermit2({
+              id: permit2ContractId,
+              chainServerId: item.chainServerId,
+              tokenSpenders: item.tokenSpenders,
+            });
+          } catch (error) {
+            abortRevoke.abort();
+            if (__DEV__) console.error(error);
+            console.error('batch revoke permit2 error', item);
+          }
+        },
+    ),
+    ...revokeSummary.generalRevokes.map(e => async () => {
+      try {
+        if ('nftTokenId' in e) {
+          await revokeNFTApprove(e);
+        } else {
+          await approveToken(e.chainServerId, e.id, e.spender, 0, {
+            ga: {
+              category: 'Security',
+              source: 'tokenApproval',
+            },
+          });
+        }
+      } catch (error) {
+        abortRevoke.abort();
+        if (__DEV__) console.error(error);
+        console.error('revoke error', e);
       }
-    } catch (error) {
-      await queue.clear();
-      console.error('revoke error', e);
-      controller.abort();
-    }
+    }),
+  ];
+
+  const waitAbort = new Promise<void>(resolve => {
+    const onAbort = () => {
+      queue.clear();
+      resolve();
+
+      abortRevoke.signal.removeEventListener('abort', onAbort);
+    };
+    abortRevoke.signal.addEventListener('abort', onAbort);
   });
 
   try {
-    await queue.addAll(revokeList, { signal: controller.signal });
+    await Promise.race([queue.addAll(revokeList), waitAbort]);
   } catch (error) {
-    console.warn('[revoke] revoke error', error);
+    console.log('revoke error', error);
   }
 }
+
+export async function lockdownPermit2(input: {
+  id: string;
+  chainServerId: string;
+  tokenSpenders: TokenSpenderPair[];
+  $ctx?: any;
+  gasPrice?: number;
+}) {}
