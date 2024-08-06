@@ -18,6 +18,7 @@ import {
   RcScreenRecord,
   RcThemeMode,
   RcWhitelist,
+  RcAddCustomNetwork,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -139,6 +140,9 @@ function SettingsBlocks() {
     switchBiometricsRef.current?.toggle();
   }, [shouldRedirectToSetPasswordBefore]);
 
+  const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
+  const { appThemeText } = useAppTheme();
+
   const navParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Settings)?.params,
   ) as SettingNavigatorParamList['Settings'];
@@ -240,7 +244,7 @@ function SettingsBlocks() {
           },
           {
             label: 'Add Custom Network',
-            icon: RcWhitelist,
+            icon: RcAddCustomNetwork,
             onPress: () => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
@@ -249,6 +253,27 @@ function SettingsBlocks() {
                     source: 'settings',
                   },
                 }),
+              );
+            },
+          },
+          {
+            visible: SHOULD_SUPPORT_DARK_MODE,
+            label: 'Theme Mode',
+            icon: RcThemeMode,
+            onPress: () => {
+              setThemeSelectorModalVisible(true);
+            },
+            rightTextNode: ctx => {
+              return (
+                <Text
+                  style={{
+                    fontWeight: '400',
+                    fontSize: 14,
+                    color: colors['neutral-title-1'],
+                    marginRight: 6,
+                  }}>
+                  {appThemeText}
+                </Text>
               );
             },
           },
@@ -396,9 +421,6 @@ function DevSettingsBlocks() {
   const { hasSetupCustomPassword, openManagePasswordSheetModal } =
     useManagePasswordOnSettings();
 
-  const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
-  const { appThemeText } = useAppTheme();
-
   const {
     computed: { couldSetupBiometrics, isBiometricsEnabled, isFaceID },
     fetchBiometrics,
@@ -442,27 +464,6 @@ function DevSettingsBlocks() {
               ),
               // TODO: only show in non-production mode
               visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
-            },
-            {
-              visible: SHOULD_SUPPORT_DARK_MODE,
-              label: 'Switch Theme',
-              icon: RcThemeMode,
-              onPress: () => {
-                setThemeSelectorModalVisible(true);
-              },
-              rightTextNode: ctx => {
-                return (
-                  <Text
-                    style={{
-                      fontWeight: '400',
-                      fontSize: 14,
-                      color: colors['neutral-title-1'],
-                      marginRight: 6,
-                    }}>
-                    {appThemeText} Mode
-                  </Text>
-                );
-              },
             },
             {
               label: allowScreenshot

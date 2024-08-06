@@ -109,14 +109,14 @@ export const DappCardInWebViewNav = ({
   );
 };
 
-const getStyles = createGetStyles((colors, opts) => {
-  const descWrapperBgColor = opts?.isLight
+const getStyles = createGetStyles((colors, ctx) => {
+  const descWrapperBgColor = ctx?.isLight
     ? colors['neutral-card-3']
     : '#484d5d';
 
   return {
     dappCard: {
-      backgroundColor: opts?.isLight ? colors['neutral-card-1'] : 'transparent',
+      backgroundColor: ctx?.isLight ? colors['neutral-card-1'] : 'transparent',
       // backgroundColor: 'blue',
       borderWidth: 1,
       borderColor: 'transparent',

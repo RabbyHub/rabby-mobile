@@ -66,7 +66,7 @@ export const DappIcon = ({
   return Placeholder;
 };
 
-const getStyles = createGetStyles((colors, opts) => ({
+const getStyles = createGetStyles((colors, ctx) => ({
   dappIcon: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -75,6 +75,6 @@ const getStyles = createGetStyles((colors, opts) => ({
   dappIconText: {
     fontSize: 15,
     fontWeight: '500',
-    color: opts?.isLight ? colors['neutral-card-1'] : colors['neutral-title2'],
+    color: ctx?.isLight ? colors['neutral-card-1'] : colors['neutral-title2'],
   },
 }));

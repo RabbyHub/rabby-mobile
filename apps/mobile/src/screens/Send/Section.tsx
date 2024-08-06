@@ -224,7 +224,9 @@ export function BalanceSection({ style }: RNViewProps) {
   );
 }
 
-const getBalanceStyles = createGetStyles(colors => {
+const getBalanceStyles = createGetStyles((colors, ctx) => {
+  const tipWrapperBg = ctx?.isLight ? colors['neutral-card-3'] : '#484d5d';
+
   return {
     balanceText: {
       color: colors['neutral-body'],
@@ -276,7 +278,7 @@ const getBalanceStyles = createGetStyles(colors => {
 
     tokenDetailBlock: {
       width: '100%',
-      backgroundColor: colors['neutral-card2'],
+      backgroundColor: tipWrapperBg,
       padding: 12,
       borderRadius: 4,
       position: 'relative',
@@ -289,7 +291,7 @@ const getBalanceStyles = createGetStyles(colors => {
       ...makeTriangleStyle({
         dir: 'up',
         size: 12,
-        color: colors['neutral-card2'],
+        color: tipWrapperBg,
       }),
       borderTopWidth: 8,
       borderLeftWidth: 10,

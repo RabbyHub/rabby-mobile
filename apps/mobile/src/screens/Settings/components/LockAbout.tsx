@@ -39,12 +39,12 @@ export function useAutoLockCountDown() {
   const { autoLockTime } = useAutoLockTime();
   const colors = useThemeColors();
   const [spinner, setSpinner] = React.useState(false);
-  // useInterval(() => {
-  //   if (NEED_DEVSETTINGBLOCKS) {
-  //     // trigger countDown re-calculated
-  //     setSpinner(prev => !prev);
-  //   }
-  // }, 500);
+  useInterval(() => {
+    if (NEED_DEVSETTINGBLOCKS) {
+      // trigger countDown re-calculated
+      setSpinner(prev => !prev);
+    }
+  }, 500);
 
   const { text: countDownText, secs: countDownSecs } = React.useMemo(() => {
     spinner;
