@@ -1,5 +1,6 @@
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
+import { createGetStyles } from '@/utils/styles';
 import { Image } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import {
@@ -36,8 +37,7 @@ export const DappIcon = ({
   origin: string;
   source?: ImageURISource;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { colors, styles, isLight } = useThemeStyles(getStyles);
   const [bgColor, originName] = useMemo(() => {
     const bgIndex = Math.abs(hashCode(origin) % 12);
 
@@ -66,16 +66,15 @@ export const DappIcon = ({
   return Placeholder;
 };
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
-    dappIcon: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    dappIconText: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: colors['neutral-card-1'],
-    },
-  });
+const getStyles = createGetStyles((colors, opts) => ({
+  dappIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dappIconText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: opts?.isLight ? colors['neutral-card-1'] : colors['neutral-title2'],
+  },
+}));
