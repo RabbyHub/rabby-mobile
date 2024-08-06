@@ -56,6 +56,8 @@ export const SubmitActions: React.FC<Props> = ({
   tooltipContent,
   enableTooltip,
   gasLess,
+  gasLessThemeColor,
+  isGasNotEnough,
 }) => {
   const { t } = useTranslation();
   const [isSign, setIsSign] = React.useState(false);
@@ -113,6 +115,8 @@ export const SubmitActions: React.FC<Props> = ({
         <Tip content={enableTooltip ? tooltipContent : undefined}>
           <View style={styles.buttonWrapper}>
             <GasLessAnimatedWrapper
+              isGasNotEnough={isGasNotEnough}
+              gasLessThemeColor={gasLessThemeColor}
               title={t('page.signFooterBar.signAndSubmitButton')}
               titleStyle={styles.buttonText}
               buttonStyle={styles.button}
@@ -121,7 +125,15 @@ export const SubmitActions: React.FC<Props> = ({
               <Button
                 disabled={disabledProcess}
                 type="primary"
-                buttonStyle={styles.button}
+                buttonStyle={[
+                  styles.button,
+                  gasLess && gasLessThemeColor
+                    ? {
+                        backgroundColor: gasLessThemeColor,
+                        borderColor: gasLessThemeColor,
+                      }
+                    : {},
+                ]}
                 titleStyle={styles.buttonText}
                 disabledStyle={styles.buttonDisabled}
                 onPress={handleClickSign}

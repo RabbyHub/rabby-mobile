@@ -4,7 +4,7 @@ import { SecurityEngineLevel } from '@/constant/security';
 import { AppColorsVariants } from '@/constant/theme';
 import { dappService, preferenceService } from '@/core/services';
 import { Account } from '@/core/services/preference';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { DappIcon } from '@/screens/Dapps/components/DappIcon';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -18,7 +18,11 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
 import { AccountInfo } from './AccountInfo';
 import { ActionGroup, Props as ActionGroupProps } from './ActionGroup';
-import { GasLessNotEnough, GasLessToSign } from './GasLessComponents';
+import {
+  GasLessConfig,
+  GasLessNotEnough,
+  GasLessActivityToSign,
+} from './GasLessComponents';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -38,6 +42,8 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   gasLessFailedReason?: string;
   isWatchAddr?: boolean;
   Header?: React.ReactNode;
+  gasLessConfig?: GasLessConfig;
+  isGasNotEnough?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -174,6 +180,7 @@ export const FooterBar: React.FC<Props> = ({
   Header,
   gasLessFailedReason,
   isWatchAddr,
+  gasLessConfig,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -239,6 +246,8 @@ export const FooterBar: React.FC<Props> = ({
     }
     apiApprovalSecurityEngine.init();
   };
+  const binaryTheme = useGetBinaryMode();
+  const isDarkTheme = binaryTheme === 'dark';
 
   useEffect(() => {
     if (origin) {
@@ -281,6 +290,9 @@ export const FooterBar: React.FC<Props> = ({
           {...props}
           disabledProcess={useGasLess ? false : props.disabledProcess}
           enableTooltip={useGasLess ? false : props.enableTooltip}
+          gasLessThemeColor={
+            isDarkTheme ? gasLessConfig?.dark_color : gasLessConfig?.theme_color
+          }
         />
         {securityLevel && hasUnProcessSecurityResult && (
           <View
@@ -320,11 +332,12 @@ export const FooterBar: React.FC<Props> = ({
         {showGasLess &&
           (!securityLevel || !hasUnProcessSecurityResult) &&
           (canUseGasLess ? (
-            <GasLessToSign
+            <GasLessActivityToSign
               gasLessEnable={useGasLess}
               handleFreeGas={() => {
                 enableGasLess?.();
               }}
+              gasLessConfig={gasLessConfig}
             />
           ) : isWatchAddr ? null : (
             <GasLessNotEnough gasLessFailedReason={gasLessFailedReason} />

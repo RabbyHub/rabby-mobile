@@ -44,6 +44,8 @@ export const ProcessActions: React.FC<Props> = ({
   submitText,
   gasLess,
   isPrimary,
+  gasLessThemeColor,
+  isGasNotEnough,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -57,7 +59,13 @@ export const ProcessActions: React.FC<Props> = ({
   ]);
   const buttonStyle = StyleSheet.flatten([
     styles.button,
-    buttonIsPrimary ? { backgroundColor: colors['blue-default'] } : {},
+    buttonIsPrimary
+      ? !!gasLess && !!gasLessThemeColor
+        ? { backgroundColor: gasLessThemeColor, borderColor: gasLessThemeColor }
+        : {
+            backgroundColor: colors['blue-default'],
+          }
+      : {},
   ]);
 
   return (
@@ -67,6 +75,8 @@ export const ProcessActions: React.FC<Props> = ({
         content={tooltipContent}>
         <View>
           <GasLessAnimatedWrapper
+            isGasNotEnough={isGasNotEnough}
+            gasLessThemeColor={gasLessThemeColor}
             title={buttonText}
             titleStyle={buttonTextStyle}
             buttonStyle={buttonStyle}
@@ -76,7 +86,7 @@ export const ProcessActions: React.FC<Props> = ({
             <Button
               disabled={disabledProcess}
               type={buttonIsPrimary ? 'primary' : 'clear'}
-              buttonStyle={styles.button}
+              buttonStyle={[styles.button, buttonStyle]}
               titleStyle={buttonTextStyle}
               disabledStyle={styles.disabled}
               onPress={onSubmit}
