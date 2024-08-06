@@ -29,14 +29,6 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 14,
       flex: 1,
     },
-    privateKeyContainer: {
-      backgroundColor: colors['neutral-card-1'],
-      borderRadius: 8,
-      padding: 12,
-      height: 100,
-      position: 'relative',
-      overflow: 'hidden',
-    },
     qrCodeContainer: {
       backgroundColor: colors['neutral-bg1'],
       borderRadius: 12,
@@ -53,6 +45,15 @@ const getStyles = (colors: AppColorsVariants) =>
       gap: 40,
       flex: 1,
       alignItems: 'center',
+    },
+    privateKeyContainer: {
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
+      padding: 12,
+      height: 100,
+      width: '100%',
+      position: 'relative',
+      overflow: 'hidden',
     },
     privateKeyContainerText: {
       color: colors['neutral-title1'],
@@ -81,6 +82,9 @@ export const BackupPrivateKeyScreen = () => {
     nav.goBack();
   }, [nav]);
 
+  const [maskQrcodeVisible, setMaskQrcodeVisible] = React.useState(true);
+  const [maskTextVisible, setMaskTextVisible] = React.useState(true);
+
   return (
     <FooterButtonScreenContainer
       buttonText={t('global.Done')}
@@ -95,20 +99,28 @@ export const BackupPrivateKeyScreen = () => {
 
         <View style={styles.qrCodeContainer}>
           <MaskContainer
+            masked={maskQrcodeVisible}
+            onPress={v => setMaskQrcodeVisible(v)}
             textSize={17}
             logoSize={52}
             textGap={16}
             flexDirection="column"
             text={t('page.backupPrivateKey.clickToShowQr')}
           />
-          {data && <QRCode size={QR_CODE_WIDTH} value={data} />}
+          {!maskQrcodeVisible && data && (
+            <QRCode size={QR_CODE_WIDTH} value={data} />
+          )}
         </View>
         <View style={styles.privateKeyContainer}>
           <MaskContainer
-            isLight
+            masked={maskTextVisible}
+            // isLight
             text={t('page.backupPrivateKey.clickToShow')}
+            onPress={v => setMaskTextVisible(v)}
           />
-          <Text style={styles.privateKeyContainerText}>{data}</Text>
+          <Text style={styles.privateKeyContainerText}>
+            {!maskTextVisible ? data : null}
+          </Text>
           <CopyAddressIcon style={styles.copyButton} address={data} />
         </View>
       </View>

@@ -1,5 +1,5 @@
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React from 'react';
 import {
   StyleProp,
@@ -19,11 +19,13 @@ interface Props {
   textSize?: number;
   flexDirection?: 'row' | 'column';
   textGap?: number;
-  onPress?: () => void;
+  masked?: boolean;
+  onPress?: (masked: boolean) => void;
 }
 
-export const MaskContainer: React.FC<Props> = ({
+export const MaskContainer = ({
   style,
+  masked,
   isLight,
   text,
   textSize = 15,
@@ -31,17 +33,20 @@ export const MaskContainer: React.FC<Props> = ({
   flexDirection = 'row',
   textGap = 4,
   onPress,
-}) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [visible, setVisible] = React.useState(true);
+}: Props) => {
+  const { colors, styles } = useThemeStyles(getStyles);
+  const [innerMasked, setInnertMasked] = React.useState(true);
 
   const handlePress = React.useCallback(() => {
-    setVisible(false);
-    onPress?.();
+    setInnertMasked(false);
+    onPress?.(false);
   }, [onPress]);
 
-  if (!visible) {
+  React.useEffect(() => {
+    setInnertMasked(masked ?? true);
+  }, [masked]);
+
+  if (!innerMasked) {
     return null;
   }
 
