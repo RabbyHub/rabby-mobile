@@ -424,7 +424,6 @@ function DevSettingsBlocks() {
 
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
-  const { showAutoLockCountdown } = useToggleShowAutoLockCountdown();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
