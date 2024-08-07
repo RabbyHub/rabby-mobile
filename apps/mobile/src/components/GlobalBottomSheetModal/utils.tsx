@@ -25,6 +25,7 @@ import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipT
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
+import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -52,6 +53,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: ['68%'],
   [MODAL_NAMES.AUTHENTICATION]: undefined,
+  [MODAL_NAMES.NFT_DETAIL]: ['80%'],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -99,6 +101,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
+  [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
 };
 
 export function makeBottomSheetProps(ctx: {

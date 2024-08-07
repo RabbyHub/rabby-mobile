@@ -13,6 +13,8 @@ import { useThemeColors } from '@/hooks/theme';
 
 import HistoryScreen from '@/screens/Transaction/History';
 import SendScreen from '../Send/Send';
+import SendNFTScreen from '../SendNFT/SendNFT';
+
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
@@ -55,6 +57,14 @@ export default function TransactionNavigator() {
         component={SendScreen}
         options={mergeScreenOptions({
           title: 'Send',
+          ...headerPresets.withBg2,
+        })}
+      />
+      <TransactionStack.Screen
+        name={RootNames.SendNFT}
+        component={SendNFTScreen}
+        options={mergeScreenOptions({
+          title: 'Send NFT',
           ...headerPresets.withBg2,
         })}
       />
