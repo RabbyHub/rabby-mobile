@@ -110,7 +110,7 @@ export function ModalEditContact({
       bottomSheetModalProps={{
         keyboardBehavior: 'interactive',
         keyboardBlurBehavior: 'restore',
-        handleHeight: 0,
+        // handleHeight: 0,
         handleComponent: null,
       }}
       onCancel={onCancel}

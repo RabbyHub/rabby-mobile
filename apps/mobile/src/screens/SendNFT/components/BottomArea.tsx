@@ -3,9 +3,9 @@ import { Platform, View, Text } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import { Button } from '@/components';
 import {
-  useSendTokenFormik,
-  useSendTokenInternalContext,
-} from '../hooks/useSendToken';
+  useSendNFTFormik,
+  useSendNFTInternalContext,
+} from '../hooks/useSendNFT';
 import { useTranslation } from 'react-i18next';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
@@ -25,7 +25,7 @@ export default function BottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const { handleSubmit } = useSendTokenFormik();
+  const { handleSubmit } = useSendNFTFormik();
 
   const {
     formValues,
@@ -37,7 +37,7 @@ export default function BottomArea() {
       toAddressInContactBook,
     },
     fns: { putScreenState, fetchContactAccounts },
-  } = useSendTokenInternalContext();
+  } = useSendNFTInternalContext();
 
   const {
     temporaryGrant,

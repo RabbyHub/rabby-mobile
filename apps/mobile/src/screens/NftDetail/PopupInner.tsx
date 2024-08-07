@@ -13,8 +13,7 @@ import { CHAINS_ENUM } from '@/constant/chains';
 import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '@/components/AutoLockView';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { RootNames } from '@/constant/layout';
+import { useTranslation } from 'react-i18next';
 
 const ListItem = (props: {
   title: string;
@@ -115,8 +114,8 @@ export const NFTDetailPopupInner = ({
   token,
   collectionName,
 }: NFTDetailPopupProps) => {
-  const colors = useThemeColors();
-  const styles = getStyle(colors);
+  const { t } = useTranslation();
+  const { colors, styles } = useThemeStyles(getStyle);
 
   const price = useMemo(() => {
     if (token.usd_price) {
@@ -150,9 +149,7 @@ export const NFTDetailPopupInner = ({
         />
         <View style={styles.details}>
           <View style={styles.titleView}>
-            <Text style={styles.title}>
-              {token.name || 'Unable to get NFT name'}
-            </Text>
+            <Text style={styles.title}>{token.name || '-'}</Text>
             {token.amount > 1 ? (
               <View style={styles.subtitle}>
                 <IconNumberNFT color={colors['neutral-title-1']} width={15} />
@@ -170,13 +167,23 @@ export const NFTDetailPopupInner = ({
               </View>
             ) : null}
           </View>
-          <ListItem title="Collection" value={collectionName} showBorderTop />
           <ListItem
-            title="Chain"
+            title={t('component.NFTDetailModal.FieldLabel.Collection')}
+            value={collectionName}
+            showBorderTop
+          />
+          <ListItem
+            title={t('component.NFTDetailModal.FieldLabel.Chain')}
             value={getCHAIN_ID_LIST().get(token.chain || CHAINS_ENUM.ETH)?.name}
           />
-          <ListItem title="Last Price" value={price} />
-          <ListItem title="Purchase Date" value={date} />
+          <ListItem
+            title={t('component.NFTDetailModal.FieldLabel.LastPrice')}
+            value={price}
+          />
+          <ListItem
+            title={t('component.NFTDetailModal.FieldLabel.PurschaseDate')}
+            value={date}
+          />
         </View>
       </BottomSheetScrollView>
     </AutoLockView>

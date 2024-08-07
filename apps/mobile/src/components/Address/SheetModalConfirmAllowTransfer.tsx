@@ -10,7 +10,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '../icons';
+import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '@/assets/icons/send';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { useTranslation } from 'react-i18next';

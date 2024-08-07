@@ -3,7 +3,7 @@ import {} from '@react-navigation/bottom-tabs';
 
 import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Chain } from './constant/chains';
+import { Chain, CHAINS_ENUM } from './constant/chains';
 import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 /**
@@ -91,6 +91,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {
+    chainEnum?: CHAINS_ENUM | undefined;
     nftToken: NFTItem;
   };
   [RootNames.Swap]?: {};

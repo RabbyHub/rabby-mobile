@@ -34,7 +34,7 @@ import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { apiPageStateCache } from '@/core/apis';
 import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { redirectBackErrorHandler } from '@/utils/navigation';
-import { BalanceSection, Section } from './Section';
+import { BalanceSection, SendTokenSection } from './Section';
 import { ChainInfo } from './components/ChainInfo';
 import FromAddressInfo from './components/FromAddressInfo';
 import ToAddressControl from './components/ToAddressControl';
@@ -52,7 +52,7 @@ function SendScreen(): JSX.Element {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
-  const navState = useNavigationState(
+  const navParams = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.Send)?.params,
   ) as
     | { chainEnum?: CHAINS_ENUM | undefined; tokenId?: TokenItem['id'] }
@@ -113,11 +113,11 @@ function SendScreen(): JSX.Element {
       // setChain(target.enum);
       // loadCurrentToken(id, tokenChain, account.address);
     } else if (
-      navState &&
-      'safeInfo' in navState &&
-      typeof navState.safeInfo === 'object'
+      navParams &&
+      'safeInfo' in navParams &&
+      typeof navParams.safeInfo === 'object'
     ) {
-      const safeInfo = navState.safeInfo;
+      const safeInfo = navParams.safeInfo;
       // const safeInfo: {
       //   nonce: number;
       //   chainId: number;
@@ -168,12 +168,12 @@ function SendScreen(): JSX.Element {
         hideLoading();
       }
     } else if (
-      navState &&
-      'chainEnum' in navState &&
-      navState?.chainEnum &&
-      navState?.tokenId
+      navParams &&
+      'chainEnum' in navParams &&
+      navParams?.chainEnum &&
+      navParams?.tokenId
     ) {
-      const target = findChainByEnum(navState?.chainEnum);
+      const target = findChainByEnum(navParams?.chainEnum);
 
       const hideLoading = toastLoading('Loading Token...');
       try {
@@ -190,7 +190,7 @@ function SendScreen(): JSX.Element {
           setChainEnum(target.enum);
           await Promise.race([
             await loadCurrentToken(
-              navState?.tokenId,
+              navParams?.tokenId,
               target.serverId,
               account.address,
             ),
@@ -283,7 +283,7 @@ function SendScreen(): JSX.Element {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navState, screenState.inited]);
+  }, [navParams, screenState.inited]);
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -377,26 +377,26 @@ function SendScreen(): JSX.Element {
           <View style={styles.sendScreen}>
             <KeyboardAwareScrollView contentContainerStyle={styles.mainContent}>
               {/* FromToSection */}
-              <Section>
+              <SendTokenSection>
                 {/* ChainInfo */}
-                <View className="mt-[0]">
+                <View style={{ marginTop: 0 }}>
                   <Text style={styles.sectionTitle}>Chain</Text>
                   <ChainInfo
-                    className="mt-[8]"
+                    style={{ marginTop: 8 }}
                     chainEnum={chainEnum}
                     onChange={handleChainChanged}
                   />
                 </View>
 
                 {/* From */}
-                <View className="mt-[20]">
+                <View style={{ marginTop: 20 }}>
                   <Text style={styles.sectionTitle}>From</Text>
-                  <FromAddressInfo className="mt-[8]" />
+                  <FromAddressInfo style={{ marginTop: 8 }} />
                 </View>
 
                 {/* To */}
-                <ToAddressControl className="mt-[20]" />
-              </Section>
+                <ToAddressControl style={{ marginTop: 20 }} />
+              </SendTokenSection>
               {/* balance info */}
               <BalanceSection style={{ marginTop: 20 }} />
             </KeyboardAwareScrollView>

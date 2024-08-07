@@ -4,12 +4,11 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { MEDIA_TYPE, Media } from '@/components/Media';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import { chunk } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  useColorScheme,
   StyleSheet,
   View,
   SectionListProps,
@@ -24,7 +23,6 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { toast } from '@/components/Toast';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
 import {
   createGlobalBottomSheetModal,
