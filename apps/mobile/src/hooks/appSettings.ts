@@ -129,8 +129,35 @@ export function useAutoLockTimeMs() {
 }
 
 const showFloatingViewAtom = atom({
-  showAutoLockCountdown: __DEV__,
+  collapsed: true,
+  ui_showAutoLockCountdown: __DEV__,
 });
+
+export function useFloatingView() {
+  const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
+  const toggleCollapsed = useCallback(
+    (nextEnabled?: boolean) => {
+      setShowFloatingView(prev => {
+        if (typeof nextEnabled !== 'boolean') {
+          nextEnabled = !prev.collapsed;
+        }
+        return {
+          ...prev,
+          collapsed: nextEnabled,
+        };
+      });
+    },
+    [setShowFloatingView],
+  );
+
+  return {
+    collapsed: floatingView.collapsed,
+    toggleCollapsed,
+    shouldShow: Object.entries(floatingView).some(
+      ([k, v]) => k.startsWith('ui_') && v,
+    ),
+  };
+}
 
 export function useToggleShowAutoLockCountdown() {
   const [floatingView, setShowFloatingView] = useAtom(showFloatingViewAtom);
@@ -139,11 +166,11 @@ export function useToggleShowAutoLockCountdown() {
     (nextEnabled?: boolean) => {
       setShowFloatingView(prev => {
         if (typeof nextEnabled !== 'boolean') {
-          nextEnabled = !prev.showAutoLockCountdown;
+          nextEnabled = !prev.ui_showAutoLockCountdown;
         }
         return {
           ...prev,
-          showAutoLockCountdown: nextEnabled,
+          ui_showAutoLockCountdown: nextEnabled,
         };
       });
     },
@@ -151,7 +178,7 @@ export function useToggleShowAutoLockCountdown() {
   );
 
   return {
-    showAutoLockCountdown: floatingView.showAutoLockCountdown,
+    showAutoLockCountdown: floatingView.ui_showAutoLockCountdown,
     toggleShowAutoLockCountdown,
   };
 }

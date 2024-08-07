@@ -143,9 +143,11 @@ export default function SelectSortedChain({
         />
       ) : null}
       <Input
-        leftIcon={<RcIconSearch />}
-        containerStyle={[styles.inputContainer, styles.innerBlock]}
+        leftIcon={<RcIconSearch color={colors['neutral-foot']} />}
+        containerStyle={[styles.containerOfInput, styles.innerBlock]}
         inputContainerStyle={styles.inputContainerStyle}
+        style={styles.inputText}
+        placeholderTextColor={colors['neutral-foot']}
         placeholder="Search chain"
         value={search}
         onChangeText={text => {
@@ -213,7 +215,7 @@ const getStyles = (colors: AppColorsVariants) => {
     innerBlock: {
       paddingHorizontal: 20,
     },
-    inputContainer: {
+    containerOfInput: {
       paddingHorizontal: 0,
       paddingVertical: 0,
       marginBottom: -8,
@@ -224,6 +226,9 @@ const getStyles = (colors: AppColorsVariants) => {
       borderRadius: 8,
       borderColor: colors['neutral-line'],
       paddingHorizontal: 16,
+    },
+    inputText: {
+      color: colors['neutral-title1'],
     },
 
     chainListWrapper: {

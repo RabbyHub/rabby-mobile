@@ -10,8 +10,6 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { createGetStyles, makeTriangleStyle } from '@/utils/styles';
 import { formatDappOriginToShow } from '@/utils/url';
 import { DappCardListBy } from './DappCard';
-import { useDapps } from '@/hooks/useDapps';
-import { apisDapp } from '@/core/apis';
 
 const NUM_OF_LINES = 3;
 
@@ -111,10 +109,12 @@ export const DappCardInWebViewNav = ({
   );
 };
 
-const getStyles = createGetStyles(colors =>
-  StyleSheet.create({
+const getStyles = createGetStyles((colors, ctx) => {
+  const descWrapperBgColor = colors['neutral-card-3'];
+
+  return {
     dappCard: {
-      backgroundColor: colors['neutral-card-1'],
+      backgroundColor: ctx?.isLight ? colors['neutral-card-1'] : 'transparent',
       // backgroundColor: 'blue',
       borderWidth: 1,
       borderColor: 'transparent',
@@ -185,7 +185,7 @@ const getStyles = createGetStyles(colors =>
       width: '100%',
       position: 'relative',
       color: colors['neutral-body'],
-      backgroundColor: colors['neutral-card-3'],
+      backgroundColor: descWrapperBgColor,
       padding: 8,
       borderRadius: 4,
       overflow: 'visible',
@@ -193,6 +193,7 @@ const getStyles = createGetStyles(colors =>
     dappDescText: {
       fontSize: 14,
       lineHeight: 20,
+      color: colors['neutral-body'],
     },
     triangle: {
       position: 'absolute',
@@ -200,17 +201,17 @@ const getStyles = createGetStyles(colors =>
       top: -8 * 2,
       ...makeTriangleStyle({
         dir: 'up',
-        size: 12,
-        color: colors['neutral-card-3'],
+        size: 8,
+        color: descWrapperBgColor,
       }),
       borderTopWidth: 8,
-      borderLeftWidth: 10,
-      borderRightWidth: 10,
+      borderLeftWidth: 8,
+      borderRightWidth: 8,
     },
     dappIcon: {
       width: 32,
       height: 32,
       borderRadius: 16,
     },
-  }),
-);
+  };
+});

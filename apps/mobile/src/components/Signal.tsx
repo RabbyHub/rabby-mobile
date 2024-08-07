@@ -1,3 +1,4 @@
+import { ThemeColors } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React, { useMemo } from 'react';
@@ -42,7 +43,7 @@ const getStyle = createGetStyles(colors => ({
     backgroundColor: colors['orange-default'],
   },
   gray: {
-    backgroundColor: colors['neutral-line'],
+    backgroundColor: ThemeColors.light['neutral-line'],
   },
   green: {
     backgroundColor: colors['green-default'],
