@@ -29,14 +29,6 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 14,
       flex: 1,
     },
-    privateKeyContainer: {
-      backgroundColor: colors['neutral-card-1'],
-      borderRadius: 8,
-      padding: 12,
-      height: 100,
-      position: 'relative',
-      overflow: 'hidden',
-    },
     qrCodeContainer: {
       backgroundColor: colors['neutral-bg1'],
       borderRadius: 12,
@@ -54,6 +46,15 @@ const getStyles = (colors: AppColorsVariants) =>
       flex: 1,
       alignItems: 'center',
     },
+    privateKeyContainer: {
+      backgroundColor: colors['neutral-card-1'],
+      borderRadius: 8,
+      padding: 12,
+      height: 100,
+      width: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+    },
     privateKeyContainerText: {
       color: colors['neutral-title1'],
       fontSize: 15,
@@ -66,6 +67,12 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const FAKE_QRCODE_INPUT =
+  '0x' +
+  Array(64)
+    .fill(undefined)
+    .map(() => Math.floor(Math.random() * 10))
+    .join('');
 export const BackupPrivateKeyScreen = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -81,6 +88,14 @@ export const BackupPrivateKeyScreen = () => {
     nav.goBack();
   }, [nav]);
 
+  const [maskQrcodeVisible, setMaskQrcodeVisible] = React.useState(true);
+  const [maskTextVisible, setMaskTextVisible] = React.useState(true);
+
+  const qrcodeData =
+    React.useMemo(() => {
+      return !maskQrcodeVisible ? data : FAKE_QRCODE_INPUT;
+    }, [maskQrcodeVisible, data]) || '';
+
   return (
     <FooterButtonScreenContainer
       buttonText={t('global.Done')}
@@ -95,21 +110,29 @@ export const BackupPrivateKeyScreen = () => {
 
         <View style={styles.qrCodeContainer}>
           <MaskContainer
+            masked={maskQrcodeVisible}
+            onPress={v => setMaskQrcodeVisible(v)}
             textSize={17}
             logoSize={52}
             textGap={16}
             flexDirection="column"
             text={t('page.backupPrivateKey.clickToShowQr')}
           />
-          {data && <QRCode size={QR_CODE_WIDTH} value={data} />}
+          {!!qrcodeData && <QRCode size={QR_CODE_WIDTH} value={qrcodeData} />}
         </View>
         <View style={styles.privateKeyContainer}>
           <MaskContainer
+            masked={maskTextVisible}
             isLight
             text={t('page.backupPrivateKey.clickToShow')}
+            onPress={v => setMaskTextVisible(v)}
           />
-          <Text style={styles.privateKeyContainerText}>{data}</Text>
-          <CopyAddressIcon style={styles.copyButton} address={data} />
+          {!maskTextVisible && (
+            <>
+              <Text style={styles.privateKeyContainerText}>{data}</Text>
+              <CopyAddressIcon style={styles.copyButton} address={data} />
+            </>
+          )}
         </View>
       </View>
     </FooterButtonScreenContainer>

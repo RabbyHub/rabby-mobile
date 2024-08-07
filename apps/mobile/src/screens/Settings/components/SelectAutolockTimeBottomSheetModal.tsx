@@ -126,7 +126,7 @@ export const SelectAutolockTimeBottomSheetModal = forwardRef<
   );
 });
 
-const getStyles = createGetStyles((colors, options) => ({
+const getStyles = createGetStyles((colors, ctx) => ({
   sheet: {
     // backgroundColor: colors['neutral-bg-1'],
     backgroundColor: colors['neutral-bg-2'],
@@ -172,7 +172,7 @@ const getStyles = createGetStyles((colors, options) => ({
     paddingTop: 18,
     paddingBottom: 18,
     paddingHorizontal: 20,
-    backgroundColor: !options?.isLight
+    backgroundColor: !ctx?.isLight
       ? colors['neutral-card1']
       : colors['neutral-bg1'],
     borderRadius: 8,

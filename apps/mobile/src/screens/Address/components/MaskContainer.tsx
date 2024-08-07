@@ -1,5 +1,5 @@
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React from 'react';
 import {
   StyleProp,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { StyleSheet } from 'react-native';
 import ShieldSVG from '@/assets/icons/address/shield-cc.svg';
+import { createGetStyles } from '@/utils/styles';
 
 interface Props {
   style?: StyleProp<ViewStyle>;
@@ -19,11 +20,13 @@ interface Props {
   textSize?: number;
   flexDirection?: 'row' | 'column';
   textGap?: number;
-  onPress?: () => void;
+  masked?: boolean;
+  onPress?: (masked: boolean) => void;
 }
 
-export const MaskContainer: React.FC<Props> = ({
+export const MaskContainer = ({
   style,
+  masked,
   isLight,
   text,
   textSize = 15,
@@ -31,17 +34,20 @@ export const MaskContainer: React.FC<Props> = ({
   flexDirection = 'row',
   textGap = 4,
   onPress,
-}) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [visible, setVisible] = React.useState(true);
+}: Props) => {
+  const { colors, styles } = useThemeStyles(getStyles, { isLight });
+  const [innerMasked, setInnertMasked] = React.useState(true);
 
   const handlePress = React.useCallback(() => {
-    setVisible(false);
-    onPress?.();
+    setInnertMasked(false);
+    onPress?.(false);
   }, [onPress]);
 
-  if (!visible) {
+  React.useEffect(() => {
+    setInnertMasked(masked ?? true);
+  }, [masked]);
+
+  if (!innerMasked) {
     return null;
   }
 
@@ -51,7 +57,7 @@ export const MaskContainer: React.FC<Props> = ({
       style={StyleSheet.flatten([
         styles.main,
         style,
-        isLight ? styles.mainIsLight : {},
+        isLight && styles.mainIsLight,
         { flexDirection, gap: textGap },
       ])}>
       <ShieldSVG
@@ -63,7 +69,7 @@ export const MaskContainer: React.FC<Props> = ({
       <Text
         style={StyleSheet.flatten([
           styles.text,
-          isLight ? styles.textIsLight : {},
+          isLight && styles.textIsLight,
           {
             fontSize: textSize,
           },
@@ -74,7 +80,7 @@ export const MaskContainer: React.FC<Props> = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyles = createGetStyles(colors =>
   StyleSheet.create({
     main: {
       position: 'absolute',
@@ -95,12 +101,12 @@ const getStyles = (colors: AppColorsVariants) =>
       opacity: 1,
     },
     text: {
-      color: colors['neutral-title-2'],
+      color: colors['neutral-title2'],
       fontSize: 15,
       textAlign: 'center',
     },
     textIsLight: {
       color: colors['neutral-body'],
-      fontSize: 15,
     },
-  });
+  }),
+);
