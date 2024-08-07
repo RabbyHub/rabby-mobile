@@ -67,6 +67,12 @@ const getStyles = (colors: AppColorsVariants) =>
     },
   });
 
+const FAKE_QRCODE_INPUT =
+  '0x' +
+  Array(64)
+    .fill(undefined)
+    .map(() => Math.floor(Math.random() * 10))
+    .join('');
 export const BackupPrivateKeyScreen = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -84,6 +90,11 @@ export const BackupPrivateKeyScreen = () => {
 
   const [maskQrcodeVisible, setMaskQrcodeVisible] = React.useState(true);
   const [maskTextVisible, setMaskTextVisible] = React.useState(true);
+
+  const qrcodeData =
+    React.useMemo(() => {
+      return !maskQrcodeVisible ? data : FAKE_QRCODE_INPUT;
+    }, [maskQrcodeVisible, data]) || '';
 
   return (
     <FooterButtonScreenContainer
@@ -107,14 +118,12 @@ export const BackupPrivateKeyScreen = () => {
             flexDirection="column"
             text={t('page.backupPrivateKey.clickToShowQr')}
           />
-          {!maskQrcodeVisible && data && (
-            <QRCode size={QR_CODE_WIDTH} value={data} />
-          )}
+          {!!qrcodeData && <QRCode size={QR_CODE_WIDTH} value={qrcodeData} />}
         </View>
         <View style={styles.privateKeyContainer}>
           <MaskContainer
             masked={maskTextVisible}
-            // isLight
+            isLight
             text={t('page.backupPrivateKey.clickToShow')}
             onPress={v => setMaskTextVisible(v)}
           />

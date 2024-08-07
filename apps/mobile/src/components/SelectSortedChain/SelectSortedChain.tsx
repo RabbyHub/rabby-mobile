@@ -147,6 +147,7 @@ export default function SelectSortedChain({
         containerStyle={[styles.containerOfInput, styles.innerBlock]}
         inputContainerStyle={styles.inputContainerStyle}
         style={styles.inputText}
+        placeholderTextColor={colors['neutral-foot']}
         placeholder="Search chain"
         value={search}
         onChangeText={text => {

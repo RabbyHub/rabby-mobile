@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { StyleSheet } from 'react-native';
 import ShieldSVG from '@/assets/icons/address/shield-cc.svg';
+import { createGetStyles } from '@/utils/styles';
 
 interface Props {
   style?: StyleProp<ViewStyle>;
@@ -34,7 +35,7 @@ export const MaskContainer = ({
   textGap = 4,
   onPress,
 }: Props) => {
-  const { colors, styles } = useThemeStyles(getStyles);
+  const { colors, styles } = useThemeStyles(getStyles, { isLight });
   const [innerMasked, setInnertMasked] = React.useState(true);
 
   const handlePress = React.useCallback(() => {
@@ -56,7 +57,7 @@ export const MaskContainer = ({
       style={StyleSheet.flatten([
         styles.main,
         style,
-        isLight ? styles.mainIsLight : {},
+        isLight && styles.mainIsLight,
         { flexDirection, gap: textGap },
       ])}>
       <ShieldSVG
@@ -68,7 +69,7 @@ export const MaskContainer = ({
       <Text
         style={StyleSheet.flatten([
           styles.text,
-          isLight ? styles.textIsLight : {},
+          isLight && styles.textIsLight,
           {
             fontSize: textSize,
           },
@@ -79,7 +80,7 @@ export const MaskContainer = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) =>
+const getStyles = createGetStyles(colors =>
   StyleSheet.create({
     main: {
       position: 'absolute',
@@ -100,12 +101,12 @@ const getStyles = (colors: AppColorsVariants) =>
       opacity: 1,
     },
     text: {
-      color: colors['neutral-title-2'],
+      color: colors['neutral-title2'],
       fontSize: 15,
       textAlign: 'center',
     },
     textIsLight: {
       color: colors['neutral-body'],
-      fontSize: 15,
     },
-  });
+  }),
+);
