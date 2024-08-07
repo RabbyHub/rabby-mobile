@@ -110,9 +110,7 @@ export const DappCardInWebViewNav = ({
 };
 
 const getStyles = createGetStyles((colors, ctx) => {
-  const descWrapperBgColor = ctx?.isLight
-    ? colors['neutral-card-3']
-    : '#484d5d';
+  const descWrapperBgColor = colors['neutral-card-3'];
 
   return {
     dappCard: {
@@ -203,12 +201,12 @@ const getStyles = createGetStyles((colors, ctx) => {
       top: -8 * 2,
       ...makeTriangleStyle({
         dir: 'up',
-        size: 12,
+        size: 8,
         color: descWrapperBgColor,
       }),
       borderTopWidth: 8,
-      borderLeftWidth: 10,
-      borderRightWidth: 10,
+      borderLeftWidth: 8,
+      borderRightWidth: 8,
     },
     dappIcon: {
       width: 32,
