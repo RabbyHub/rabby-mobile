@@ -127,10 +127,12 @@ export const BackupPrivateKeyScreen = () => {
             text={t('page.backupPrivateKey.clickToShow')}
             onPress={v => setMaskTextVisible(v)}
           />
-          <Text style={styles.privateKeyContainerText}>
-            {!maskTextVisible ? data : null}
-          </Text>
-          <CopyAddressIcon style={styles.copyButton} address={data} />
+          {!maskTextVisible && (
+            <>
+              <Text style={styles.privateKeyContainerText}>{data}</Text>
+              <CopyAddressIcon style={styles.copyButton} address={data} />
+            </>
+          )}
         </View>
       </View>
     </FooterButtonScreenContainer>
