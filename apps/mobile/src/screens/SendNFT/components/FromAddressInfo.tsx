@@ -13,7 +13,7 @@ const getStyles = createGetStyles(colors => {
     container: {
       borderRadius: 4,
       padding: 12,
-      backgroundColor: colors['neutral-card2'],
+      backgroundColor: colors['blue-light1'],
 
       width: '100%',
       height: 52,
@@ -41,7 +41,7 @@ const getStyles = createGetStyles(colors => {
     priceText: {
       color: colors['blue-default'],
       fontSize: 12,
-      fontWeight: 'normal',
+      fontWeight: '600',
     },
   };
 });

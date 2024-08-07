@@ -11,20 +11,18 @@ import { StackActions, useNavigationState } from '@react-navigation/native';
 import { NFTAmountSection, SendNFTSection } from './Section';
 import { ChainInfo } from './components/ChainInfo';
 import FromAddressInfo from './components/FromAddressInfo';
-import { CHAINS_ENUM } from '@debank/common';
 import ToAddressControl from './components/ToAddressControl';
 import {
   SendNFTEvents,
   SendNFTInternalContextProvider,
   subscribeEvent,
   useSendNFTForm,
-  useSendNFTScreenChainToken,
   useSendNFTScreenState,
 } from './hooks/useSendNFT';
-import { useLoadMatteredChainBalances } from '@/hooks/account';
 import { useContactAccounts } from '@/hooks/contact';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import BottomArea from './components/BottomArea';
+import { findChain } from '@/utils/chain';
 
 export default function SendNFT() {
   const { styles } = useThemeStyles(getStyles);
@@ -34,21 +32,11 @@ export default function SendNFT() {
     s => s.routes.find(r => r.name === RootNames.SendNFT)?.params,
   ) as TransactionNavigatorParamList['SendNFT'] | undefined;
 
-  // console.debug('navParams', JSON.stringify(navParams));
-
-  // const chainEnum = React.useMemo(
-  //   () => navParams?.chainEnum || CHAINS_ENUM.ETH,
-  //   [navParams?.chainEnum],
-  // );
+  const nftItem = navParams?.nftItem;
+  const chainItem = findChain({ serverId: nftItem?.chain });
 
   const {
-    chainItem,
-    currentToken,
-    // currentTokenPrice,
-  } = useSendNFTScreenChainToken();
-
-  const {
-    sendTokenScreenState: screenState,
+    sendNFTScreenState: screenState,
     putScreenState,
     resetScreenState,
   } = useSendNFTScreenState();
@@ -58,12 +46,6 @@ export default function SendNFT() {
     formik,
     formValues,
     handleFieldChange,
-    handleClickTokenBalance,
-    handleGasChange,
-
-    chainEnum,
-    handleChainChanged,
-    handleCurrentTokenChange,
 
     whitelistEnabled,
     computed: {
@@ -72,9 +54,7 @@ export default function SendNFT() {
       toAddressInWhitelist,
       canSubmit,
     },
-  } = useSendNFTForm();
-
-  const { fetchOrderedChainList } = useLoadMatteredChainBalances();
+  } = useSendNFTForm(nftItem);
 
   const { fetchContactAccounts } = useContactAccounts();
 
@@ -108,7 +88,7 @@ export default function SendNFT() {
     };
   }, [resetScreenState]);
 
-  if (!navParams?.nftToken) return null;
+  if (!nftItem || !chainItem) return null;
 
   return (
     <SendNFTInternalContextProvider
@@ -121,11 +101,8 @@ export default function SendNFT() {
           whitelistEnabled,
           toAddressIsValid,
           toAddressInContactBook,
-
           chainItem,
-          currentToken,
-          // currentTokenPrice,
-          // currentTokenBalance: balanceNumText,
+          currentNFT: nftItem,
         },
         events: sendNFTEvents,
         formik,
@@ -135,10 +112,7 @@ export default function SendNFT() {
         },
 
         callbacks: {
-          handleCurrentTokenChange,
           handleFieldChange,
-          handleClickTokenBalance,
-          handleGasChange,
         },
       }}>
       <NormalScreenContainer style={styles.container}>
@@ -151,7 +125,7 @@ export default function SendNFT() {
                 <Text style={styles.sectionTitle}>Chain</Text>
                 <ChainInfo
                   style={{ marginTop: 8 }}
-                  chainEnum={chainEnum}
+                  chainEnum={chainItem.enum}
                   // onChange={handleChainChanged}
                 />
               </View>
@@ -168,8 +142,9 @@ export default function SendNFT() {
 
             {/* nft amount info */}
             <NFTAmountSection
-              nftToken={navParams?.nftToken}
-              style={{ marginTop: 20 }}
+              collectionName={navParams?.collectionName}
+              nftItem={navParams?.nftItem}
+              style={{ marginTop: 16 }}
             />
           </KeyboardAwareScrollView>
           <BottomArea />

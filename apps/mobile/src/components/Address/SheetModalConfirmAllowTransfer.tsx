@@ -262,7 +262,9 @@ export function ModalConfirmAllowTransfer({
                     : colors['neutral-title1']
                 }
               />
-              <Text>{t('page.sendToken.allowTransferModal.addWhitelist')}</Text>
+              <Text style={styles.checkTitle}>
+                {t('page.sendToken.allowTransferModal.addWhitelist')}
+              </Text>
             </TouchableView>
           )}
         </View>
@@ -329,6 +331,9 @@ const getStyles = createGetStyles(colors => {
       top: 6,
       width: 16,
       height: 16,
+    },
+    checkTitle: {
+      color: colors['neutral-title1'],
     },
     confirmModalContainerStyle: {
       // ...(IS_IOS && {

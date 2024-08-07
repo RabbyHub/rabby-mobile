@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { Platform, View, Text } from 'react-native';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
 import {
   useSendNFTFormik,
@@ -22,8 +22,7 @@ const isAndroid = Platform.OS === 'android';
 export default function BottomArea() {
   const { t } = useTranslation();
 
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { colors, styles } = useThemeStyles(getStyles);
 
   const { handleSubmit } = useSendNFTFormik();
 

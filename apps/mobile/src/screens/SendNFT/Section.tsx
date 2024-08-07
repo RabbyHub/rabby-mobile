@@ -37,11 +37,11 @@ export function SendNFTSection({
 
 export function NFTAmountSection({
   style,
-  nftToken,
+  nftItem,
   collectionName,
 }: RNViewProps & {
-  nftToken: NFTItem;
-  collectionName: string;
+  nftItem: NFTItem;
+  collectionName?: string;
 }) {
   const { styles } = useThemeStyles(getBalanceStyles);
   const { t } = useTranslation();
@@ -59,19 +59,21 @@ export function NFTAmountSection({
       <View style={styles.infoSection}>
         <View style={styles.nftMedia}>
           <Media
-            failedPlaceholder={<IconDefaultNFT width={'100%'} height={390} />}
-            type={nftToken.content_type}
-            src={nftToken.content}
+            failedPlaceholder={
+              <IconDefaultNFT width={'100%'} height={BASIC_INFO_H} />
+            }
+            type={nftItem.content_type}
+            src={nftItem.content}
             style={styles.images}
             mediaStyle={styles.images}
             playable={true}
-            poster={nftToken.content}
+            poster={nftItem.content}
           />
         </View>
 
         {/* right area */}
         <View style={styles.nftDetailBlock}>
-          <Text style={styles.nftDetailTitle}>{nftToken.name || '-'}</Text>
+          <Text style={styles.nftDetailTitle}>{nftItem.name || '-'}</Text>
 
           <View style={styles.nftDetailKvs}>
             <View style={[styles.nftDetailLine, { marginTop: 8 }]}>
@@ -84,10 +86,11 @@ export function NFTAmountSection({
               <Text style={styles.nftDetaiLabel}>Contract</Text>
               <View style={[styles.nftDetailValue, styles.nftDetailCopy]}>
                 <AddressViewer
-                  address={nftToken.contract_id}
+                  address={nftItem.contract_id}
                   showArrow={false}
+                  addressStyle={[styles.nftDetailText]}
                 />
-                <CopyAddressIcon address={nftToken.contract_id} />
+                <CopyAddressIcon address={nftItem.contract_id} />
               </View>
             </View>
           </View>
@@ -97,6 +100,7 @@ export function NFTAmountSection({
       <View style={styles.amountArea}>
         <Text style={styles.amountLabel}>Send amount</Text>
         <NFTAmountInput
+          nftItem={nftItem}
           style={styles.nftAmountInput}
           value={formValues.amount}
           onChange={val => {
@@ -169,15 +173,16 @@ const getBalanceStyles = createGetStyles(colors => {
       color: colors['neutral-foot'],
       fontSize: 12,
       fontWeight: '400',
-    },
-    nftDetailText: {
-      color: colors['neutral-foot'],
-      fontSize: 12,
-      fontWeight: '400',
+      width: 70,
+      // ...makeDebugBorder('red')
     },
     nftDetailValue: {
-      marginLeft: 12,
-      textAlign: 'left',
+      // ...makeDebugBorder('yellow')
+    },
+    nftDetailText: {
+      color: colors['neutral-body'],
+      fontSize: 12,
+      fontWeight: '400',
     },
     nftDetailCopy: {
       display: 'flex',
@@ -185,8 +190,8 @@ const getBalanceStyles = createGetStyles(colors => {
       alignItems: 'center',
     },
     amountArea: {
-      marginTop: 16,
-      paddingTop: 16,
+      marginTop: 12,
+      paddingTop: 12,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors['neutral-line'],
       flexDirection: 'row',
@@ -195,7 +200,7 @@ const getBalanceStyles = createGetStyles(colors => {
     },
     amountLabel: {
       color: colors['neutral-body'],
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: '400',
     },
     nftAmountInput: {

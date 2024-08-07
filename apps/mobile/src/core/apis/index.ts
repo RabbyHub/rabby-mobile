@@ -17,4 +17,5 @@ export * as apiApprovals from './approvals';
 export * as apiOneKey from './onekey';
 export * as apiPrivateKey from './privateKey';
 export * as apiMnemonic from './mnemonic';
-export * from './customTestnet';
+export * as apiToken from './token';
+export { apiCustomTestnet } from './customTestnet';

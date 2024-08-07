@@ -91,8 +91,8 @@ export type TransactionNavigatorParamList = {
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {
-    chainEnum?: CHAINS_ENUM | undefined;
-    nftToken: NFTItem;
+    nftItem: NFTItem;
+    collectionName?: string;
   };
   [RootNames.Swap]?: {};
   [RootNames.GnosisTransactionQueue]?: {};

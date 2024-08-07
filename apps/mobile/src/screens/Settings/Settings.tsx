@@ -582,7 +582,7 @@ function DevSettingsBlocks() {
                 navigation.push(RootNames.StackTransaction, {
                   screen: RootNames.SendNFT,
                   params: {
-                    nftToken: RABBY_GENESIS_NFT_DATA.nftToken,
+                    nftItem: RABBY_GENESIS_NFT_DATA.nftToken,
                   },
                 });
               },

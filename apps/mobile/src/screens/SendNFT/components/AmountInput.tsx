@@ -9,6 +9,10 @@ import RcPlusCC from '../icons/plus-cc.svg';
 import RcMinusCC from '../icons/minus-cc.svg';
 import { NumericInput } from '@/components/Form/NumbericInput';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
+import { strings } from '@/utils/i18n';
+import { Tip } from '@/components';
+import { useTranslation } from 'react-i18next';
 
 function CalcButton({
   disabled,
@@ -34,19 +38,18 @@ function CalcButton({
   );
 }
 
-const CALC = {
-  min: 0,
-  max: Infinity,
-};
 export function NFTAmountInput({
+  nftItem,
   value = 0,
   onChange,
   style,
 }: RNViewProps & {
+  nftItem: NFTItem;
   value?: number | string;
   onChange?: (value: number) => void;
 }) {
   const { styles } = useThemeStyles(getStyles);
+  const { t } = useTranslation();
   const valueNum = bizNumberUtils.coerceInteger(value);
   const handleInc = React.useCallback(() => {
     const nextVal = valueNum + 1;
@@ -54,16 +57,19 @@ export function NFTAmountInput({
   }, [valueNum, onChange]);
 
   const handleDec = React.useCallback(() => {
-    const nextVal = Math.max(valueNum - 1, CALC.min);
+    const nextVal = Math.max(valueNum - 1, 0);
     onChange?.(nextVal);
   }, [valueNum, onChange]);
 
-  const { couldInc, couldDec } = React.useMemo(() => {
+  const { nftAmount, couldInc, couldDec } = React.useMemo(() => {
+    const nftAmount = Math.max(1, nftItem?.amount || 1);
     return {
-      couldInc: valueNum < CALC.max,
-      couldDec: valueNum > CALC.min,
+      nftAmount,
+      disabledDueToSolo: nftItem?.is_erc721,
+      couldInc: valueNum < nftAmount,
+      couldDec: valueNum > 0,
     };
-  }, [valueNum]);
+  }, [nftItem?.amount, nftItem?.is_erc721, valueNum]);
 
   return (
     <View style={[styles.inputAmountWrapper, style]}>
@@ -74,8 +80,8 @@ export function NFTAmountInput({
         isMinus
       />
       <NumericInput
-        min={CALC.min}
-        max={CALC.max}
+        min={0}
+        max={nftAmount}
         value={value + ''}
         onChangeText={val => {
           onChange?.(bizNumberUtils.coerceInteger(val));
@@ -84,11 +90,26 @@ export function NFTAmountInput({
         style={styles.input}
         placeholderTextColor={styles.input.color}
       />
-      <CalcButton
-        disabled={!couldInc}
-        onPress={handleInc}
-        style={styles.calcBtn}
-      />
+      <Tip
+        placement="top"
+        contentStyle={styles.tooltipContentStyle}
+        content={
+          <View style={styles.tooltipInnerStyle}>
+            <Text style={styles.tipText}>
+              {nftItem.is_erc1155
+                ? t('component.NFTNumberInput.erc1155Tips', {
+                    amount: nftItem.amount,
+                  })
+                : t('component.NFTNumberInput.erc721Tips')}
+            </Text>
+          </View>
+        }>
+        <CalcButton
+          disabled={!couldInc}
+          onPress={handleInc}
+          style={styles.calcBtn}
+        />
+      </Tip>
     </View>
   );
 }
@@ -115,6 +136,21 @@ const getStyles = createGetStyles(colors => {
       textAlign: 'center',
       color: colors['neutral-title1'],
       // ...makeDebugBorder('red'),
+    },
+    tooltipContentStyle: {
+      borderRadius: 2,
+      height: 33,
+    },
+    tooltipInnerStyle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    tipText: {
+      color: colors['neutral-title2'],
+      fontSize: 12,
+      fontWeight: '400',
     },
   };
 });

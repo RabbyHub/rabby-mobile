@@ -65,7 +65,8 @@ const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
               navigation.push(RootNames.StackTransaction, {
                 screen: RootNames.SendNFT,
                 params: {
-                  nftToken: item,
+                  collectionName,
+                  nftItem: item,
                 },
               });
             }}

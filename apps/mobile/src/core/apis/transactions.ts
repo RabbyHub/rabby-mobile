@@ -1,4 +1,3 @@
-import { findChainByID } from '@/utils/chain';
 import {
   transactionBroadcastWatcherService,
   transactionHistoryService,
