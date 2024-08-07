@@ -86,3 +86,9 @@ export const RcScreenRecord = makeThemeIconFromCC(
   RcScreenRecordCC,
   'neutral-body',
 );
+
+import { default as RcCustomTestnetCC } from './testnet-cc.svg';
+export const RcCustomTestnet = makeThemeIconFromCC(
+  RcCustomTestnetCC,
+  'neutral-body',
+);

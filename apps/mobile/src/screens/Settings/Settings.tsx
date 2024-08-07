@@ -18,6 +18,7 @@ import {
   RcScreenRecord,
   RcThemeMode,
   RcWhitelist,
+  RcCustomTestnet,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -240,7 +241,7 @@ function SettingsBlocks() {
           },
           {
             label: 'Add Custom Network',
-            icon: RcWhitelist,
+            icon: RcCustomTestnet,
             onPress: () => {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
