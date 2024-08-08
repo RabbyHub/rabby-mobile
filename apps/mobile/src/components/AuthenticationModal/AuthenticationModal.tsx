@@ -190,7 +190,7 @@ const getFooterStyle = createGetStyles(colors => {
     confirmIconStyle: {
       marginLeft: 0,
       marginRight: 6,
-      ...makeDebugBorder(),
+      // ...makeDebugBorder(),
     },
     confirmStyle: {
       backgroundColor: colors['blue-default'],

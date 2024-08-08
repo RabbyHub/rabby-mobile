@@ -17,10 +17,8 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
-import { BUILD_CHANNEL } from '@/constant/env';
 
-export const SHOULD_SUPPORT_DARK_MODE =
-  __DEV__ || BUILD_CHANNEL === 'selfhost-reg';
+export const SHOULD_SUPPORT_DARK_MODE = true;
 
 const FORCE_THEME = 'light' as const;
 function coerceBinaryTheme(
@@ -130,11 +128,15 @@ export const useThemeColors = (): AppColorsVariants => {
 
 export function useThemeStyles<T extends ReturnType<typeof createGetStyles>>(
   getStyle: T,
+  opts?: { isLight?: boolean },
 ) {
   const appThemeMode = useGetBinaryMode();
   const colors = ThemeColors[appThemeMode] as AppColorsVariants;
 
-  const isLight = appThemeMode === 'light';
+  const isLight =
+    typeof opts?.isLight === 'boolean'
+      ? opts?.isLight
+      : appThemeMode === 'light';
 
   const cs = React.useMemo(() => {
     return {

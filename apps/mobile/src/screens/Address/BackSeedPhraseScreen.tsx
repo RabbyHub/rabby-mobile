@@ -100,8 +100,12 @@ export const BackSeedPhraseScreen = () => {
     nav.goBack();
   }, [nav]);
 
-  const onPressMask = React.useCallback(() => {
+  const [maskQrcodeVisible, setMaskQrcodeVisible] = React.useState(true);
+  const onPressMask = React.useCallback<
+    React.ComponentProps<typeof MaskContainer>['onPress'] & object
+  >(v => {
     setVisibleCopyButton(true);
+    setMaskQrcodeVisible(v);
   }, []);
 
   const qrCodeModalRef = React.useRef<AppBottomSheetModal>(null);
@@ -120,6 +124,7 @@ export const BackSeedPhraseScreen = () => {
 
         <View style={styles.seedPhraseContainer}>
           <MaskContainer
+            masked={maskQrcodeVisible}
             logoSize={40}
             textGap={13}
             textSize={17}
@@ -127,7 +132,9 @@ export const BackSeedPhraseScreen = () => {
             text={t('page.backupSeedPhrase.clickToShow')}
             onPress={onPressMask}
           />
-          <Text style={styles.seedPhraseContainerText}>{data}</Text>
+          {!maskQrcodeVisible && (
+            <Text style={styles.seedPhraseContainerText}>{data}</Text>
+          )}
         </View>
 
         {visibleCopyButton && (

@@ -86,3 +86,9 @@ export const RcScreenRecord = makeThemeIconFromCC(
   RcScreenRecordCC,
   'neutral-body',
 );
+
+import { default as RcAddCustomNetworkCC } from './add-custom-network-cc.svg';
+export const RcAddCustomNetwork = makeThemeIconFromCC(
+  RcAddCustomNetworkCC,
+  'neutral-body',
+);

@@ -53,7 +53,7 @@ import {
 import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
-import { FloatViewAutoLockCount } from './screens/Settings/components/LockAbout';
+import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 

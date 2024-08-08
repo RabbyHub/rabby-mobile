@@ -30,7 +30,7 @@ export default function AccountCard({
   // disabled?: boolean;
   onPress?: (account: IDisplayedAccountWithBalance) => void;
 }) {
-  const { styles, colors } = useThemeStyles(getStyles);
+  const { styles, colors, isLight } = useThemeStyles(getStyles);
 
   const handleCopyAddress = useCallback<
     React.ComponentProps<typeof TouchableOpacity>['onPress'] & object
@@ -60,7 +60,10 @@ export default function AccountCard({
         onPress?.(account);
       }}>
       {isEditing && (
-        <Checkbox color={colors['blue-default']} style={styles.checkbox} />
+        <Checkbox
+          color={isLight ? colors['blue-default'] : colors['neutral-foot']}
+          style={styles.checkbox}
+        />
       )}
       <View style={[styles.inner]}>
         <View style={[styles.leftCol]}>
