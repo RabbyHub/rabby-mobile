@@ -43,6 +43,9 @@ interface GasReservedProps {
   trigger?: 'number' | 'whole';
 }
 
+/**
+ * @deprecated
+ */
 export default function GasReserved({
   amount,
   token,

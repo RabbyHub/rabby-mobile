@@ -14,17 +14,15 @@ import {
   useSendTokenInternalContext,
 } from './hooks/useSendToken';
 import { useCurrentAccount } from '@/hooks/account';
-import { devLog } from '@/utils/logger';
-import GasReserved from './components/GasReserved';
-import GasSelectorBottomSheetModal from './components/GasSelector';
 import { AddressViewer } from '@/components/AddressViewer';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { default as RcMaxButton } from './icons/max-button.svg';
 import { useTranslation } from 'react-i18next';
 import { useFindChain } from '@/hooks/useFindChain';
-import { CHAINS_ENUM } from '@debank/common';
-import { findChain } from '@/utils/chain';
+import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
+import { GasLevelType } from '@/components/ReserveGasPopup';
+import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -59,8 +57,8 @@ export function BalanceSection({ style }: RNViewProps) {
       balanceWarn,
       showGasReserved,
       selectedGasLevel,
-      tokenAmountForGas,
-      gasSelectorVisible,
+      reserveGasOpen,
+      estimateGas,
       gasList,
     },
 
@@ -72,12 +70,11 @@ export function BalanceSection({ style }: RNViewProps) {
       currentTokenPrice,
     },
 
-    fns: { putScreenState },
     callbacks: {
       handleCurrentTokenChange,
-      handleClickTokenBalance,
+      handleGasLevelChanged,
       handleFieldChange,
-      handleGasChange,
+      handleClickMaxButton,
     },
   } = useSendTokenInternalContext();
 
@@ -100,7 +97,7 @@ export function BalanceSection({ style }: RNViewProps) {
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
   // devLog('BalanceSection:: selectedGasLevel', selectedGasLevel);
 
-  if (!currentToken) return null;
+  if (!chainItem || !currentToken) return null;
 
   return (
     <Section style={style}>
@@ -120,7 +117,7 @@ export function BalanceSection({ style }: RNViewProps) {
                   disabled={disableMax}
                   className="h-[100%] ml-[4]"
                   style={styles.maxButtonWrapper}
-                  onPress={handleClickTokenBalance}>
+                  onPress={handleClickMaxButton}>
                   <RcMaxButton />
                 </TouchableView>
               )}
@@ -130,20 +127,6 @@ export function BalanceSection({ style }: RNViewProps) {
 
         {/* right area */}
         <View style={styles.issueBlock}>
-          {/* {showGasReserved &&
-            (selectedGasLevel ? (
-              <GasReserved
-                style={styles.gasReserved}
-                token={currentToken}
-                amount={tokenAmountForGas}
-                onClickAmount={() => {
-                  putScreenState({ gasSelectorVisible: true });
-                }}
-                trigger="whole"
-              />
-            ) : (
-              <Skeleton style={styles.issueBlockSkeleton} />
-            ))} */}
           {showGasReserved && !selectedGasLevel && (
             <Skeleton style={styles.issueBlockSkeleton} />
           )}
@@ -201,24 +184,17 @@ export function BalanceSection({ style }: RNViewProps) {
         </View>
       </View>
 
-      <GasSelectorBottomSheetModal
-        visible={gasSelectorVisible}
-        onClose={() => {
-          putScreenState({ gasSelectorVisible: false });
-        }}
-        chainId={
-          chainItem?.id ||
-          findChain({
-            enum: CHAINS_ENUM.ETH,
-          })!.id
-        }
-        onChange={val => {
-          putScreenState({ gasSelectorVisible: false });
-          handleGasChange(val);
+      <SendReserveGasPopup
+        selectedItem={selectedGasLevel?.level as GasLevelType}
+        chain={chainItem?.enum}
+        limit={Math.max(estimateGas, MINIMUM_GAS_LIMIT)}
+        onGasChange={gasLevel => {
+          handleGasLevelChanged(gasLevel);
         }}
         gasList={gasList}
-        gas={selectedGasLevel}
-        token={currentToken}
+        visible={reserveGasOpen}
+        rawHexBalance={currentToken.raw_amount_hex_str}
+        onClose={gasLevel => handleGasLevelChanged(gasLevel)}
       />
     </Section>
   );
