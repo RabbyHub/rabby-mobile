@@ -102,7 +102,10 @@ const Swap = () => {
   } = useTokenPair(currentAccount!.address);
 
   const refresh = useSetAtom(refreshIdAtom);
-  const [isShowRabbyFeePopup, setIsShowRabbyFeePopup] = useRabbyFeeVisible();
+  const [
+    { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
+    setIsShowRabbyFeePopup,
+  ] = useRabbyFeeVisible();
 
   const showMEVGuardedSwitch = useMemo(
     () => chain === CHAINS_ENUM.ETH,
@@ -497,7 +500,9 @@ const Swap = () => {
       <RabbyFeePopup
         type="swap"
         visible={isShowRabbyFeePopup}
-        onClose={() => setIsShowRabbyFeePopup(false)}
+        dexName={dexName}
+        dexFeeDesc={dexFeeDesc}
+        onClose={() => setIsShowRabbyFeePopup({ visible: false })}
       />
     </NormalScreenContainer>
   );

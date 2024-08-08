@@ -11,6 +11,7 @@ import { Button } from '../Button';
 import { AppBottomSheetModal } from '../customized/BottomSheet';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DEX } from '@/constant/swap';
 
 const swapFee = [
   {
@@ -52,22 +53,32 @@ export const RabbyFeePopup = ({
   visible,
   onClose,
   type = 'swap',
+  dexFeeDesc,
+  dexName,
 }: {
   visible: boolean;
   onClose: () => void;
   type?: keyof typeof fee;
+  dexFeeDesc?: string;
+  dexName?: string;
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { sheetModalRef } = useSheetModal();
 
+  const hasSwapDexFee = useMemo(() => {
+    return type === 'swap' && dexName && dexFeeDesc && DEX?.[dexName]?.logo;
+  }, [type, dexName, dexFeeDesc]);
+
   const { height } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
 
   const snapPoints = useMemo(
-    () => [Math.min(type === 'swap' ? 548 : 520, height)],
-    [type, height],
+    () => [
+      Math.min(type === 'swap' ? (hasSwapDexFee ? 574 : 548) : 520, height),
+    ],
+    [type, hasSwapDexFee, height],
   );
 
   useEffect(() => {
@@ -123,6 +134,8 @@ export const RabbyFeePopup = ({
           ))}
         </View>
 
+        <SwapAggregatorFee dexName={dexName} feeDexDesc={dexFeeDesc} />
+
         <View style={styles.buttonContainer}>
           <Button
             type="primary"
@@ -134,6 +147,26 @@ export const RabbyFeePopup = ({
     </AppBottomSheetModal>
   );
 };
+
+function SwapAggregatorFee({
+  dexName,
+  feeDexDesc,
+}: {
+  dexName?: string;
+  feeDexDesc?: string;
+}) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  if (dexName && feeDexDesc && DEX?.[dexName]?.logo) {
+    return (
+      <View style={styles.dexFeeContainer}>
+        <Image source={{ uri: DEX[dexName].logo }} style={styles.dexFeeLogo} />
+        <Text style={styles.dexFeeText}>{feeDexDesc}</Text>
+      </View>
+    );
+  }
+  return null;
+}
 
 const getStyles = createGetStyles(colors => ({
   sheetBg: {
@@ -212,6 +245,22 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 13,
     fontWeight: '500',
     color: colors['neutral-title1'],
+  },
+  dexFeeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 3,
+  },
+  dexFeeLogo: {
+    width: 14,
+    height: 14,
+    borderRadius: 999999,
+  },
+  dexFeeText: {
+    fontSize: 13,
+    color: colors['neutral-foot'],
   },
   buttonContainer: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -108,6 +108,12 @@ export const Slippage = (props: SlippageProps) => {
     },
     [onChange],
   );
+
+  useEffect(() => {
+    if (tips) {
+      setSlippageOpen(true);
+    }
+  }, [tips]);
 
   return (
     <View>
