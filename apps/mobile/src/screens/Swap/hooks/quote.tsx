@@ -33,7 +33,7 @@ import BigNumber from 'bignumber.js';
 import pRetry from 'p-retry';
 import React from 'react';
 import { useSwapSupportedDexList } from './settings';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 // import { verifySdk } from './verify';
 
 const { isSameAddress } = addressUtils;
@@ -57,7 +57,7 @@ export const useQuoteMethods = () => {
     }: validSlippageParams) => {
       const p = {
         slippage: new BigNumber(slippage).div(100).toString(),
-        chain_id: CHAINS[chain].serverId,
+        chain_id: findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
         from_token_id: payTokenId,
         to_token_id: receiveTokenId,
       };
@@ -116,7 +116,7 @@ export const useQuoteMethods = () => {
     async ({ addr, chain, tokenId }: getTokenParams) => {
       return walletOpenapi.getToken(
         addr,
-        CHAINS[chain].serverId,
+        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
         tokenId, // CHAINS[chain].nativeTokenAddress
       );
     },
@@ -134,15 +134,16 @@ export const useQuoteMethods = () => {
       getDexQuoteParams,
       'payToken' | 'receiveToken' | 'payAmount' | 'chain' | 'dexId'
     >) => {
+      const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       if (
-        payToken?.id === CHAINS[chain].nativeTokenAddress ||
+        payToken?.id === chainInfo.nativeTokenAddress ||
         isSwapWrapToken(payToken.id, receiveToken.id, chain)
       ) {
         return [true, false];
       }
 
       const allowance = await getERC20Allowance(
-        CHAINS[chain].serverId,
+        chainInfo.serverId,
         payToken.id,
         getSpender(dexId, chain),
       );
@@ -174,13 +175,14 @@ export const useQuoteMethods = () => {
       dexId,
       quote,
     }: getPreExecResultParams) => {
+      const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       const nonce = await getRecommendNonce({
         from: userAddress,
-        chainId: CHAINS[chain].id,
+        chainId: chainInfo.id,
       });
       const lastTimeGas: ChainGas | null =
-        await preferenceService.getLastTimeGasSelection(CHAINS[chain].id);
-      const gasMarket = await walletOpenapi.gasMarket(CHAINS[chain].serverId);
+        await preferenceService.getLastTimeGasSelection(chainInfo.id);
+      const gasMarket = await walletOpenapi.gasMarket(chainInfo.serverId);
 
       let gasPrice = 0;
       if (lastTimeGas?.lastTimeSelect === 'gasPrice' && lastTimeGas.gasPrice) {
@@ -212,7 +214,7 @@ export const useQuoteMethods = () => {
         const tokenApproveParams = await generateApproveTokenTx({
           from: userAddress,
           to: payToken.id,
-          chainId: CHAINS[chain].id,
+          chainId: chainInfo.id,
           spender: getSpender(dexId, chain),
           amount,
         });
@@ -276,7 +278,7 @@ export const useQuoteMethods = () => {
         tx: {
           ...quote.tx,
           nonce: nextNonce,
-          chainId: CHAINS[chain].id,
+          chainId: chainInfo.id,
           value: `0x${new BigNumber(quote.tx.value).toString(16)}`,
           gasPrice: `0x${new BigNumber(gasPrice).toString(16)}`,
           gas: '0x0',
@@ -326,12 +328,11 @@ export const useQuoteMethods = () => {
       setQuote?: (quote: TDexQuoteData) => void;
     }): Promise<TDexQuoteData> => {
       const isOpenOcean = dexId === DEX_ENUM.OPENOCEAN;
+      const chainInfo = findChainByEnum(chain) || CHAINS[chain];
       try {
         let gasPrice: number;
         if (isOpenOcean) {
-          const gasMarket = await walletOpenapi.gasMarket(
-            CHAINS[chain].serverId,
-          );
+          const gasMarket = await walletOpenapi.gasMarket(chainInfo.serverId);
           gasPrice = gasMarket?.[1]?.price;
         }
         stats.report('swapRequestQuote', {
@@ -606,7 +607,8 @@ export function isSwapWrapToken(
 ) {
   const wrapTokens = [
     WrapTokenAddressMap[chain as keyof typeof WrapTokenAddressMap],
-    CHAINS[chain].nativeTokenAddress,
+    findChainByEnum(chain)?.nativeTokenAddress ||
+      CHAINS[chain].nativeTokenAddress,
   ];
   return (
     !!wrapTokens.find(token => isSameAddress(payTokenId, token)) &&
@@ -669,7 +671,8 @@ export const verifyRouterAndSpender = (
   const spenderWhitelist = getSpender(dexId, chain);
   const isNativeToken = isSameAddress(
     payTokenId,
-    CHAINS[chain].nativeTokenAddress,
+    findChainByEnum(chain)?.nativeTokenAddress ||
+      CHAINS[chain].nativeTokenAddress,
   );
   const isWrapTokens = isSwapWrapToken(payTokenId, receiveTokenId, chain);
 
@@ -682,7 +685,11 @@ export const verifyRouterAndSpender = (
 };
 
 const isNativeToken = (chain: CHAINS_ENUM, tokenId: string) =>
-  isSameAddress(tokenId, CHAINS[chain].nativeTokenAddress);
+  isSameAddress(
+    tokenId,
+    findChainByEnum(chain)?.nativeTokenAddress ||
+      CHAINS[chain].nativeTokenAddress,
+  );
 
 export const verifyCalldata = <T extends Parameters<typeof decodeCalldata>[1]>(
   data: QuoteResult | null,
@@ -757,7 +764,9 @@ export const verifySdk = <T extends ValidateTokenParam>(
     data,
     actualDexId,
     new BigNumber(slippage).div(100).toFixed(),
-    data?.tx ? { ...data?.tx, chainId: CHAINS[chain].id } : undefined,
+    data?.tx
+      ? { ...data?.tx, chainId: findChainByEnum(chain)?.id || CHAINS[chain].id }
+      : undefined,
   );
 
   return {

@@ -2,6 +2,7 @@ import { DEX_ENUM, DEX_SUPPORT_CHAINS } from '@rabby-wallet/rabby-swap';
 
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { findChainByEnum } from '@/utils/chain';
 
 const LogoParaswap = require('@/assets/icons/swap/paraswap.png');
 const Logo0X = require('@/assets/icons/swap/0xswap.png');
@@ -64,7 +65,7 @@ export const DEX_WITH_WRAP = {
 };
 
 export const getChainDefaultToken = (chain: CHAINS_ENUM) => {
-  const chainInfo = CHAINS[chain];
+  const chainInfo = findChainByEnum(chain) || CHAINS[chain];
   return {
     id: chainInfo.nativeTokenAddress,
     decimals: chainInfo.nativeTokenDecimals,

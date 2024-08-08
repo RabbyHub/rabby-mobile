@@ -234,6 +234,10 @@ const Swap = () => {
     }
   });
 
+  const chainServerId = useMemo(() => {
+    return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
+  }, [chain]);
+
   const FeeAndMEVGuarded = (
     <>
       {showMEVGuardedSwitch && (
@@ -291,7 +295,7 @@ const Swap = () => {
                   }
                   setPayToken(token);
                 }}
-                chainId={CHAINS[chain].serverId}
+                chainId={chainServerId}
                 type={'swapFrom'}
                 placeholder={t('page.swap.search-by-name-address')}
                 excludeTokens={
@@ -313,7 +317,7 @@ const Swap = () => {
                   }
                   setReceiveToken(token);
                 }}
-                chainId={CHAINS[chain].serverId}
+                chainId={chainServerId}
                 type={'swapTo'}
                 placeholder={t('page.swap.search-by-name-address')}
                 excludeTokens={payToken?.id ? [payToken?.id] : undefined}

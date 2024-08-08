@@ -20,7 +20,7 @@ import { formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { GasLevelType } from '@/components/ReserveGasPopup';
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByEnum } from '@/utils/chain';
 
 const { isSameAddress } = addressUtils;
 
@@ -40,7 +40,7 @@ const useTokenInfo = ({
     if (userAddress && token?.id && chain) {
       const data = await openapi.getToken(
         userAddress,
-        CHAINS[chain].serverId,
+        findChainByEnum(chain)?.serverId || CHAINS[chain].serverId,
         token.id,
       );
       return data;
@@ -109,6 +109,11 @@ export const useTokenPair = (userAddress: string) => {
     swapService.setSelectedChain(c);
     // resetSwapTokens(c);
   };
+
+  const chainInfo = useMemo(
+    () => findChainByEnum(chain) || CHAINS[chain],
+    [chain],
+  );
 
   const [payAmount, setPayAmount] = useState('');
 
@@ -209,10 +214,10 @@ export const useTokenPair = (userAddress: string) => {
 
   const payTokenIsNativeToken = useMemo(() => {
     if (payToken) {
-      return isSameAddress(payToken.id, CHAINS[chain].nativeTokenAddress);
+      return isSameAddress(payToken.id, chainInfo.nativeTokenAddress);
     }
     return false;
-  }, [chain, payToken]);
+  }, [chainInfo?.nativeTokenAddress, payToken]);
 
   const handleAmountChange = useCallback((e: string) => {
     const v = formatSpeicalAmount(e);
@@ -229,8 +234,8 @@ export const useTokenPair = (userAddress: string) => {
   const { value: gasList } = useAsync(() => {
     gasPriceRef.current = undefined;
     setGasLevel('normal');
-    return openapi.gasMarket(CHAINS[chain].serverId);
-  }, [chain]);
+    return openapi.gasMarket(chainInfo.serverId);
+  }, [chainInfo?.serverId]);
 
   const [reserveGasOpen, setReserveGasOpen] = useState(false);
 
@@ -325,7 +330,7 @@ export const useTokenPair = (userAddress: string) => {
     if (payToken?.id && receiveToken?.id) {
       const wrapTokens = [
         WrapTokenAddressMap[chain],
-        CHAINS[chain].nativeTokenAddress,
+        chainInfo.nativeTokenAddress,
       ];
       const res =
         !!wrapTokens.find(token => isSameAddress(payToken?.id, token)) &&
@@ -338,7 +343,7 @@ export const useTokenPair = (userAddress: string) => {
       ];
     }
     return [false, ''];
-  }, [payToken, receiveToken, chain]);
+  }, [payToken, receiveToken, chain, chainInfo.nativeTokenAddress]);
 
   const inSufficient = useMemo(
     () =>
