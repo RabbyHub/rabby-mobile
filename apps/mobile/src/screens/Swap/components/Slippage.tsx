@@ -10,12 +10,12 @@ import {
 import BigNumber from 'bignumber.js';
 import { Trans, useTranslation } from 'react-i18next';
 import { useThemeColors } from '@/hooks/theme';
-import useToggle from 'react-use/lib/useToggle';
 import { createGetStyles } from '@/utils/styles';
 import { Input } from '@rneui/base';
 import { RcIconArrowUp } from '@/assets/icons/swap';
+import { useSlippageStore } from '../hooks';
 
-const SLIPPAGE = ['0.1', '0.3', '0.5'];
+const SLIPPAGE = ['0.1', '0.5'];
 
 interface SlippageProps {
   value: string;
@@ -43,7 +43,12 @@ export const Slippage = (props: SlippageProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const [isCustom, setIsCustom] = useToggle(false);
+  const {
+    autoSlippage,
+    isCustomSlippage,
+    setAutoSlippage,
+    setIsCustomSlippage,
+  } = useSlippageStore();
 
   const { value, displaySlippage, onChange, recommendValue } = props;
   const [slippageOpen, setSlippageOpen] = useState(false);
@@ -125,29 +130,43 @@ export const Slippage = (props: SlippageProps) => {
       {slippageOpen && (
         <View style={styles.selectContainer}>
           <View style={styles.listContainer}>
+            <SlippageItem
+              active={autoSlippage}
+              onPress={() => {
+                setAutoSlippage(true);
+                setIsCustomSlippage(false);
+              }}>
+              <Text style={styles.input}>{t('page.swap.Auto')}</Text>
+            </SlippageItem>
+
             {SLIPPAGE.map(e => (
               <SlippageItem
                 key={e}
-                active={!isCustom && e === value}
+                active={!autoSlippage && !isCustomSlippage && e === value}
                 onPress={() => {
-                  setIsCustom(false);
+                  setIsCustomSlippage(false);
+                  setAutoSlippage(false);
                   onChange(e);
                 }}>
                 <Text style={styles.input}>{e}%</Text>
               </SlippageItem>
             ))}
+
             <SlippageItem
               style={[
                 styles.inputItem,
-                isCustom && { borderColor: colors['blue-default'] },
+                isCustomSlippage && { borderColor: colors['blue-default'] },
               ]}
-              active={isCustom}>
+              active={isCustomSlippage}>
               <Input
                 errorStyle={styles.errorStyle}
                 inputContainerStyle={styles.inputContainerStyle}
                 inputStyle={styles.input}
                 value={value}
-                onPressIn={() => setIsCustom(true)}
+                onPressIn={() => {
+                  setIsCustomSlippage(true);
+                  setAutoSlippage(false);
+                }}
                 onChangeText={onInputChange}
                 placeholder="0.1"
                 keyboardType="numeric"
