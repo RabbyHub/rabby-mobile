@@ -1,22 +1,24 @@
-import {
+import type {
   NFTApproval,
   NFTApprovalContract,
   Spender,
   TokenApproval,
 } from '@rabby-wallet/rabby-api/dist/types';
+import BigNumber from 'bignumber.js';
+
 import {
   coerceFloat,
   coerceInteger,
   formatNumber,
   splitNumberByStep,
 } from './biz-number';
-import BigNumber from 'bignumber.js';
-import { encodePermit2GroupKey, RevokeSummary } from './permit2';
+import type { RevokeSummary } from './permit2';
+import { encodePermit2GroupKey } from './permit2';
 
 const approvalEnvs = {
   appIsProd: true,
   appIsDev: false,
-}
+};
 let setupApprovalEnvs = false;
 export function setApprovalEnvsOnce(envs: typeof approvalEnvs) {
   if (!setupApprovalEnvs) {
@@ -34,10 +36,11 @@ export type ApprovalSpenderItemToBeRevoked = {
 } & (
   | {
       contractId: NFTInfoHost['contract_id'];
-      abi: 'ERC721' | 'ERC1155' | '';
       isApprovedForAll: boolean;
       tokenId?: '';
+      abi: 'ERC721' | 'ERC1155' | '';
       nftTokenId: string | null | undefined;
+      nftContractName?: string | null;
     }
   | {
       contractId?: undefined;
@@ -111,9 +114,9 @@ export type TokenApprovalItem = {
 
 export type SpenderBalancePartials = {
   from: ContractFor;
-  nftAmount: 0,
-  tokenBalance: 0,
-}
+  nftAmount: 0;
+  tokenBalance: 0;
+};
 export type SpenderInNFTApproval = Spender & {
   readonly $assetParent?: NftApprovalItem;
   readonly $assetToken?: NFTApproval | NFTApprovalContract;
@@ -154,7 +157,7 @@ export const RiskNumMap = {
   warning: 10,
   danger: 100,
 } as const;
-type RiskLevelScore = typeof RiskNumMap[ApprovalRiskLevel];
+type RiskLevelScore = (typeof RiskNumMap)[ApprovalRiskLevel];
 
 export type ComputedRiskEvaluation = {
   serverRiskScore: RiskLevelScore;
@@ -182,7 +185,7 @@ export function isContractType(
 ): contract is ContractApprovalItem<'nft-contract'>;
 export function isContractType(
   contract: ContractApprovalItem,
-  type: 'token'
+  type: 'token',
 ): contract is ContractApprovalItem<'token'>;
 export function isContractType<T extends ContractFor>(
   contract: ContractApprovalItem,
@@ -193,7 +196,7 @@ export function isContractType<T extends ContractFor>(
 
 export function makeComputedRiskAboutValues(
   contractFor: ContractFor,
-  spender?: Spender
+  spender?: Spender,
 ): ComputedRiskAboutValues {
   if (contractFor === 'nft' || contractFor === 'nft-contract') {
     return {
@@ -568,7 +571,7 @@ function getAssetSpenderTypeOrderScore(spender: AssetApprovalSpender) {
  */
 export function compareAssetSpenderByType(
   a: AssetApprovalSpender,
-  b: AssetApprovalSpender
+  b: AssetApprovalSpender,
 ) {
   const aScore = getAssetSpenderTypeOrderScore(a);
   const bScore = getAssetSpenderTypeOrderScore(b);
@@ -585,7 +588,7 @@ export function summarizeRevoke(revokeList: ApprovalSpenderItemToBeRevoked[]) {
     (accu, cur) => {
       accu.statics.spenderCount += 1;
       if ('permit2Id' in cur && cur.permit2Id) {
-        const permit2Id = cur.permit2Id;
+        const { permit2Id } = cur;
         const permit2Key = encodePermit2GroupKey(cur.chainServerId, permit2Id);
         if (!accu.permit2Revokes[permit2Key]) {
           accu.permit2Revokes[permit2Key] = accu.permit2Revokes[permit2Key] || {
@@ -609,20 +612,20 @@ export function summarizeRevoke(revokeList: ApprovalSpenderItemToBeRevoked[]) {
 
       return accu;
     },
-    <RevokeSummary>{
+    {
       generalRevokes: [],
       permit2Revokes: {},
       statics: {
         txCount: 0,
         spenderCount: 0,
       },
-    }
+    } as RevokeSummary,
   );
 
   statics.txCount =
     generalRevokes.length +
     Object.values(permit2Revokes).filter(
-      (revokes) => revokes.tokenSpenders.length > 0
+      revokes => revokes.tokenSpenders.length > 0,
     ).length;
 
   return {

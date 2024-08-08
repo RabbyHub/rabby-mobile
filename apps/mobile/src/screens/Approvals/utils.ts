@@ -24,6 +24,8 @@ import { urlUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { ObjectMirror } from '@/utils/type';
 
+type SpendersHost = ApprovalItem['list'][number];
+
 export function formatTimeFromNow(time?: Date | number) {
   if (!time) return '';
 
@@ -258,6 +260,118 @@ export function querySelectedAssetSpender(
     : null;
 }
 
+function getAbiType<T extends SpendersHost = ApprovalItem['list'][number]>(
+  spenderHost: T,
+) {
+  if ('is_erc721' in spenderHost && spenderHost.is_erc721) return 'ERC721';
+  if ('is_erc1155' in spenderHost && spenderHost.is_erc1155) return 'ERC1155';
+
+  return '';
+}
+
+export const findIndexRevokeList = <
+  T extends SpendersHost = ApprovalItem['list'][number],
+>(
+  list: ApprovalSpenderItemToBeRevoked[],
+  input: {
+    spenderHost: T;
+  } & (
+    | {
+        item: ContractApprovalItem;
+        itemIsContractApproval?: true;
+      }
+    | {
+        item: Exclude<ApprovalItem, ContractApprovalItem>;
+        assetApprovalSpender?: AssetApprovalSpender;
+      }
+  ),
+) => {
+  const { item, spenderHost } = input;
+
+  if (item.type === 'contract') {
+    let assetApprovalSpender =
+      'assetApprovalSpender' in input
+        ? input.assetApprovalSpender ?? null
+        : null;
+    const itemIsContractApproval =
+      'itemIsContractApproval' in input ? input.itemIsContractApproval : false;
+    if (itemIsContractApproval && '$indexderSpender' in spenderHost) {
+      assetApprovalSpender = spenderHost.$indexderSpender ?? null;
+    }
+    const permit2IdToMatch = assetApprovalSpender?.permit2_id;
+
+    if ('inner_id' in spenderHost) {
+      return list.findIndex(revoke => {
+        if (
+          revoke.contractId === spenderHost.contract_id &&
+          revoke.spender === spenderHost.spender.id &&
+          revoke.abi === getAbiType(spenderHost) &&
+          (permit2IdToMatch
+            ? revoke.permit2Id === permit2IdToMatch
+            : !revoke.permit2Id) &&
+          revoke.nftTokenId === spenderHost.inner_id &&
+          revoke.chainServerId === spenderHost.chain
+        ) {
+          return true;
+        }
+      });
+    } else if ('contract_name' in spenderHost) {
+      return list.findIndex(revoke => {
+        if (
+          revoke.contractId === spenderHost.contract_id &&
+          revoke.spender === spenderHost.spender.id &&
+          revoke.abi === getAbiType(spenderHost) &&
+          revoke.nftContractName === spenderHost.contract_name &&
+          (permit2IdToMatch
+            ? revoke.permit2Id === permit2IdToMatch
+            : !revoke.permit2Id) &&
+          revoke.chainServerId === spenderHost.chain
+        ) {
+          return true;
+        }
+      });
+    } else {
+      return list.findIndex(revoke => {
+        if (
+          revoke.spender === item.id &&
+          (permit2IdToMatch
+            ? revoke.permit2Id === permit2IdToMatch
+            : !revoke.permit2Id) &&
+          revoke.tokenId === spenderHost.id &&
+          revoke.chainServerId === item.chain
+        ) {
+          return true;
+        }
+      });
+    }
+  } else if (item.type === 'token') {
+    return list.findIndex(revoke => {
+      if (
+        revoke.spender === (spenderHost as Spender).id &&
+        // revoke.id === item.id &&
+        revoke.tokenId === item.id &&
+        revoke.chainServerId === item.chain
+      ) {
+        return true;
+      }
+    });
+  } else if (item.type === 'nft') {
+    return list.findIndex(revokse => {
+      const isNftContracts = !!item.nftContract;
+      const nftInfo = isNftContracts ? item.nftContract : item.nftToken;
+
+      if (
+        revoke.spender === (spenderHost as Spender).id &&
+        revoke.tokenId === (nftInfo as NFTApproval).inner_id &&
+        revoke.chainServerId === item.chain
+      ) {
+        return true;
+      }
+    });
+  }
+  return -1;
+};
+
 export const toRevokeItem = <T extends ApprovalItem>(
   item: T,
   spenderHost: T['list'][number],
@@ -274,33 +388,24 @@ export const toRevokeItem = <T extends ApprovalItem>(
     const permit2Id = assetApprovalSpender?.permit2_id;
 
     if ('inner_id' in spenderHost) {
-      const abi = spenderHost?.is_erc721
-        ? 'ERC721'
-        : spenderHost?.is_erc1155
-        ? 'ERC1155'
-        : '';
       return {
         chainServerId: spenderHost?.chain,
         contractId: spenderHost?.contract_id,
         permit2Id,
         spender: spenderHost?.spender?.id,
-        abi,
+        abi: getAbiType(spenderHost),
         nftTokenId: spenderHost?.inner_id,
         isApprovedForAll: false,
       } as const;
     } else if ('contract_name' in spenderHost) {
-      const abi = spenderHost?.is_erc721
-        ? 'ERC721'
-        : spenderHost?.is_erc1155
-        ? 'ERC1155'
-        : '';
       return {
         chainServerId: spenderHost?.chain,
         contractId: spenderHost?.contract_id,
         permit2Id,
         spender: spenderHost?.spender?.id,
         nftTokenId: null,
-        abi,
+        nftContractName: spenderHost?.contract_name,
+        abi: getAbiType(spenderHost),
         isApprovedForAll: true,
       } as const;
     } else {
