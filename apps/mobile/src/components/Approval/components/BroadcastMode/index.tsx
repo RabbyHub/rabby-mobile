@@ -130,13 +130,6 @@ export const BroadcastMode = ({
       value: 'default',
     },
     {
-      title: t('page.signTx.BroadcastMode.lowGas.title'),
-      desc: t('page.signTx.BroadcastMode.lowGas.desc'),
-      value: 'low_gas',
-      disabled: disabledMap.low_gas.disabled,
-      tips: disabledMap.low_gas.tips,
-    },
-    {
       title: t('page.signTx.BroadcastMode.mev.title'),
       desc: t('page.signTx.BroadcastMode.mev.desc'),
       value: 'mev',
