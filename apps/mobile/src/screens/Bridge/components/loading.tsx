@@ -79,6 +79,7 @@ const SvgComponent = ({ ...props }) => {
         rx={6}
         fill={isDarkTheme ? '#404455' : '#fff'}
         strokeWidth={0.5}
+        stroke={colors['neutral-line']}
       />
       <Circle cx={43} cy={34} r={12.5} fill={colors['neutral-card-2']} />
       <Rect
