@@ -160,7 +160,7 @@ function SwapAggregatorFee({
   if (dexName && feeDexDesc && DEX?.[dexName]?.logo) {
     return (
       <View style={styles.dexFeeContainer}>
-        <Image source={{ uri: DEX[dexName].logo }} style={styles.dexFeeLogo} />
+        <Image source={DEX[dexName].logo} style={styles.dexFeeLogo} />
         <Text style={styles.dexFeeText}>{feeDexDesc}</Text>
       </View>
     );
@@ -187,7 +187,6 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     borderRadius: 26,
     backgroundColor: colors['blue-default'],
-    marginBottom: 12,
   },
   title: {
     fontSize: 20,
