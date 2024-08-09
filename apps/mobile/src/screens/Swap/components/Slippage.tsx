@@ -139,6 +139,9 @@ export const Slippage = (props: SlippageProps) => {
             <SlippageItem
               active={autoSlippage}
               onPress={() => {
+                if (autoSlippage) {
+                  return;
+                }
                 onChange(value);
                 setAutoSlippage(true);
                 setIsCustomSlippage(false);
