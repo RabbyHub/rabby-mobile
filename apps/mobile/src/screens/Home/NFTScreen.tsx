@@ -380,6 +380,8 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       maxWidth: 260,
       fontWeight: '600',
+      // lineHeight: 16,
+      lineHeight: 22,
     },
     length: {
       fontSize: 13,
@@ -401,6 +403,8 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
     floorPriceContainer: {
       marginTop: 6,
       flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
     },
     floorPriceText: {
       fontSize: 13,
@@ -414,10 +418,11 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       marginRight: -5,
     },
     footContainer: {
-      marginTop: IMAGE_OFFSET_Y,
+      marginTop: IMAGE_OFFSET_Y + 5,
       marginBottom: IMAGE_OFFSET_Y,
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors['neutral-line'],
+      // ...makeDebugBorder('blue'),
     },
     imagesView: {
       borderRadius: 4,
@@ -463,6 +468,7 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       marginTop: 2,
       width: 16,
       height: 16,
+      borderRadius: 16,
     },
     corner: {
       backgroundColor: colors['neutral-black'],
