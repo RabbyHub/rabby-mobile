@@ -7,7 +7,7 @@ import {
 import { useThemeStyles } from '@/hooks/theme';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { useSheetModal } from '@/hooks/useSheetModal';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
 
@@ -29,7 +29,6 @@ export const SendReserveGasPopup = (
     rawHexBalance,
     visible,
     onClose,
-    onCancel,
   } = props;
   const { styles } = useThemeStyles(getStyles);
 
@@ -62,9 +61,13 @@ export const SendReserveGasPopup = (
       ref={sheetModalRef}
       snapPoints={snapPoints}
       enableDismissOnClose
-      // onDismiss={handleClose}
       handleStyle={styles.sheetBg}
-      backgroundStyle={styles.sheetBg}>
+      backgroundStyle={styles.sheetBg}
+      onChange={idx => {
+        if (idx <= -1) {
+          handleClose();
+        }
+      }}>
       <AutoLockView style={styles.flex1}>
         {gasList && (
           <ReserveGasContent
