@@ -276,7 +276,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title-1'],
     fontSize: 20,
     fontWeight: '500',
-    marginTop: 20,
+    marginTop: 8,
     marginBottom: 16,
   },
   item: {
