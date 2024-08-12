@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Table, Col, Row } from '../Table';
 import * as Values from '../Values';
 import { Chain } from '@/constant/chains';
@@ -33,7 +33,15 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
   return (
     <View>
       <View style={styles.title}>
-        <Text style={styles.titleText}>NFT</Text>
+        <Text
+          style={StyleSheet.flatten([
+            styles.titleText,
+            {
+              marginRight: 12,
+            },
+          ])}>
+          NFT
+        </Text>
         <NFTWithName nft={data.nft} textStyle={commonStyle.detailPrimaryText} />
       </View>
       <Table style={styles.viewMoreTable}>
@@ -70,7 +78,10 @@ export const NFTPopup: React.FC<Props> = ({ data }) => {
             </Text>
           </Row>
           <Row>
-            <Values.Address address={data.nft.contract_id} chain={data.chain} />
+            <Values.AddressWithCopy
+              address={data.nft.contract_id}
+              chain={data.chain}
+            />
           </Row>
         </Col>
       </Table>
