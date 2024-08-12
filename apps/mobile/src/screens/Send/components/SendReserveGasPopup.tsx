@@ -10,6 +10,7 @@ import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { GasLevel } from '@rabby-wallet/rabby-api/dist/types';
 import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ReserveGasContentProps = React.ComponentProps<typeof ReserveGasContent>;
 
@@ -43,13 +44,9 @@ export const SendReserveGasPopup = (
 
   const reverseGasContentRef = React.useRef<ReserveGasType>(null);
 
-  const { safeSizes } = useSafeAndroidBottomSizes({
-    snapPointH: 500,
-  });
-  const snapPoints = React.useMemo(
-    () => [safeSizes.snapPointH],
-    [safeSizes.snapPointH],
-  );
+  const { bottom } = useSafeAreaInsets();
+
+  const snapPoints = React.useMemo(() => [500 + bottom], [bottom]);
 
   const handleClose = React.useCallback(() => {
     const gasLevel = reverseGasContentRef.current?.getSelectedGasLevel();

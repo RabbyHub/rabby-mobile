@@ -24,6 +24,7 @@ import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
+import { noop } from 'lodash';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -122,7 +123,9 @@ export function BalanceSection({ style }: RNViewProps) {
   return (
     <SendTokenSection style={style}>
       <View className="mt-[0]" style={styles.titleSection}>
-        <View style={styles.balanceArea}>
+        <TouchableView
+          style={styles.balanceArea}
+          onPress={isLoading ? noop : handleClickMaxButton}>
           {isLoading ? (
             <Skeleton style={{ width: 100, height: 16 }} />
           ) : (
@@ -143,7 +146,7 @@ export function BalanceSection({ style }: RNViewProps) {
               )}
             </>
           )}
-        </View>
+        </TouchableView>
 
         {/* right area */}
         <View style={styles.issueBlock}>

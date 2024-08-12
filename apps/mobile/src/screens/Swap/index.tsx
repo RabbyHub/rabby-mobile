@@ -337,14 +337,16 @@ const Swap = () => {
                 symbol: payToken ? getTokenSymbol(payToken) : '',
               })}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              onPress={handleBalance}>
               <Text style={[styles.label]}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
               <TouchableOpacity style={[styles.maxBtn]} onPress={handleBalance}>
                 <RcIconMaxButton width={34} height={16} />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
             <TextInput
