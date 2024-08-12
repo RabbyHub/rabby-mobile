@@ -20,7 +20,7 @@ import { underline2Camelcase } from '@/core/controllers/rpcFlow';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { apiKeyring, apiSecurityEngine } from '@/core/apis';
@@ -305,7 +305,12 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     }
 
     if (isGnosis && params.account) {
-      if (WaitingSignMessageComponent[params.account.type]) {
+      if (
+        WaitingSignMessageComponent[params.account.type] &&
+        ![KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC].includes(
+          params.account.type as any,
+        )
+      ) {
         apisKeyring.signTypedData(
           params.account.type,
           params.account.address,
@@ -349,7 +354,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
             await apisSafe.postGnosisTransaction();
           }
 
-          resolveApproval(result, false, true);
+          resolveApproval(result, false, false);
         } catch (e: any) {
           toast.info(e?.message);
           report('completeSignText', {
