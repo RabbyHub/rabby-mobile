@@ -149,15 +149,6 @@ const Loading = () => {
             <Skeleton style={rowStyles.item2} />
           </View>
         </Card>
-        <Card>
-          <View
-            style={StyleSheet.flatten({
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-            })}>
-            <Skeleton style={rowStyles.item2} />
-          </View>
-        </Card>
       </View>
     </>
   );
