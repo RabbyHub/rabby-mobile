@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { View, Text, TextInput } from 'react-native';
 
 import { Skeleton } from '@rneui/themed';
@@ -23,6 +23,7 @@ import { useFindChain } from '@/hooks/useFindChain';
 import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
+import { checkIfTokenBalanceEnough } from '@/utils/token';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -70,6 +71,8 @@ export function BalanceSection({ style }: RNViewProps) {
       currentTokenPrice,
     },
 
+    fns: { putScreenState },
+
     callbacks: {
       handleCurrentTokenChange,
       handleGasLevelChanged,
@@ -91,6 +94,23 @@ export function BalanceSection({ style }: RNViewProps) {
   useInputBlurOnEvents(amountInputRef);
 
   const disableMax = showGasReserved && !!formValues.amount;
+
+  useEffect(() => {
+    if (reserveGasOpen && currentToken && gasList) {
+      const result = checkIfTokenBalanceEnough(currentToken, {
+        gasList: gasList,
+        gasLimit: MINIMUM_GAS_LIMIT,
+      });
+
+      if (result.isNormalEnough && result.normalLevel) {
+        putScreenState({ selectedGasLevel: result.normalLevel });
+      } else if (result.isSlowEnough && result.slowLevel) {
+        putScreenState({ selectedGasLevel: result.slowLevel });
+      } else if (result.customLevel) {
+        putScreenState({ selectedGasLevel: result.customLevel });
+      }
+    }
+  }, [reserveGasOpen, putScreenState, currentToken, gasList]);
 
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);

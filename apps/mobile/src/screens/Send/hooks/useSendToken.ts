@@ -1018,6 +1018,7 @@ export function useSendTokenForm() {
 
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
+      putScreenState(prev => ({ ...prev, clickedMax: false }));
       const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;

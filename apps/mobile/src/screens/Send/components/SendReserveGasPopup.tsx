@@ -48,7 +48,7 @@ export const SendReserveGasPopup = (
     snapPointH: 500,
   });
   const snapPoints = React.useMemo(
-    () => [500 + safeSizes.snapPointH],
+    () => [safeSizes.snapPointH],
     [safeSizes.snapPointH],
   );
 
