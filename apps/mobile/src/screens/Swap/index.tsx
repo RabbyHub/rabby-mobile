@@ -262,6 +262,11 @@ const Swap = () => {
     </>
   );
 
+  const payTokenAmountAvailable = useMemo(
+    () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
+    [payToken],
+  );
+
   return (
     <NormalScreenContainer>
       <KeyboardAwareScrollView
@@ -339,13 +344,21 @@ const Swap = () => {
             </Text>
             <TouchableOpacity
               style={{ flexDirection: 'row', alignItems: 'center' }}
-              onPress={handleBalance}>
+              onPress={() => {
+                if (payTokenAmountAvailable) {
+                  handleBalance();
+                }
+              }}>
               <Text style={[styles.label]}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
-              <TouchableOpacity style={[styles.maxBtn]} onPress={handleBalance}>
-                <RcIconMaxButton width={34} height={16} />
-              </TouchableOpacity>
+              {payTokenAmountAvailable && (
+                <TouchableOpacity
+                  style={[styles.maxBtn]}
+                  onPress={handleBalance}>
+                  <RcIconMaxButton width={34} height={16} />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
