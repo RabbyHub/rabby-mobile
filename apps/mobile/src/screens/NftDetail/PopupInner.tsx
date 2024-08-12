@@ -231,9 +231,7 @@ const getStyle = createGetStyles(colors => ({
     width: '100%',
     height: '100%',
     borderRadius: 6,
-    // resizeMode: 'cover',
-    // resizeMode: 'contain',
-    resizeMode: 'contain',
+    resizeMode: 'cover',
   },
   nftCountContainer: {
     position: 'absolute',
