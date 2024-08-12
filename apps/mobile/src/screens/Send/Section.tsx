@@ -55,6 +55,7 @@ export function BalanceSection({ style }: RNViewProps) {
   const {
     screenState: {
       isLoading,
+      isEstimatingGas,
       balanceError,
       balanceWarn,
       showGasReserved,
@@ -93,8 +94,6 @@ export function BalanceSection({ style }: RNViewProps) {
 
   const amountInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(amountInputRef);
-
-  const disableMax = showGasReserved && !!formValues.amount;
 
   useEffect(() => {
     if (reserveGasOpen && currentToken && gasList) {
@@ -135,15 +134,20 @@ export function BalanceSection({ style }: RNViewProps) {
                 {currentTokenBalance}
               </Text>
               {/* max button */}
-              {currentToken.amount > 0 && (
-                <TouchableView
-                  disabled={disableMax}
-                  className="h-[100%] ml-[4]"
-                  style={styles.maxButtonWrapper}
-                  onPress={handleClickMaxButton}>
-                  <RcMaxButton />
-                </TouchableView>
-              )}
+              {currentToken.amount > 0 &&
+                (isEstimatingGas ? (
+                  <Skeleton
+                    style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
+                  />
+                ) : (
+                  <TouchableView
+                    disabled={isEstimatingGas}
+                    className="h-[100%] ml-[4]"
+                    style={styles.maxButtonWrapper}
+                    onPress={handleClickMaxButton}>
+                    <RcMaxButton />
+                  </TouchableView>
+                ))}
             </>
           )}
         </TouchableView>
@@ -244,6 +248,7 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
       alignItems: 'center',
       justifyContent: 'flex-start',
     },
+    maxButtonLoading: { width: 30, height: '100%', marginLeft: 2 },
 
     balanceArea: {
       flexDirection: 'row',
