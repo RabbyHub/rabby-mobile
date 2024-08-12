@@ -45,21 +45,23 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     nftAvatar: {
       width: '100%',
-      height: 306,
-      borderColor: colors['neutral-line'],
+      height: 300,
       borderRadius: 6,
       backgroundColor: colors['neutral-bg-1'],
     },
     nftTitle: {
       fontWeight: '500',
-      fontSize: 15,
-      lineHeight: 18,
-      color: colors['neutral-title-1'],
+      fontSize: 18,
+      lineHeight: 20,
+      color: colors['neutral-title1'],
+      overflow: 'hidden',
+    },
+    nftTitleWrapper: {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: colors['neutral-line'],
+      borderStyle: 'solid',
       paddingTop: 16,
-      paddingBottom: 12,
-      overflow: 'hidden',
+      paddingBottom: 16,
     },
     nftProperties: {
       paddingTop: 12,
@@ -69,20 +71,21 @@ const getStyles = (colors: AppColorsVariants) =>
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 12,
+      marginBottom: 16,
       flexDirection: 'row',
     },
     nftPropertyLabel: {
-      fontWeight: '500',
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-title-1'],
+      fontWeight: '400',
+      fontSize: 15,
+      lineHeight: 18,
+      color: colors['neutral-title1'],
     },
     nftPropertyValue: {
       overflow: 'hidden',
-      fontSize: 12,
-      lineHeight: 14,
-      color: colors['neutral-foot'],
+      fontSize: 15,
+      lineHeight: 18,
+      fontWeight: '500',
+      color: colors['neutral-title1'],
     },
   });
 
@@ -121,12 +124,13 @@ export default function ModalPreviewNFTItem({
   const { chainName } = React.useMemo(() => {
     const chainName = getChain(nft?.chain)?.name || '-';
     return { chainName };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectProperty]);
 
   const { t } = useTranslation();
 
   return (
-    <AppBottomSheetModal ref={modalRef} {...props}>
+    <AppBottomSheetModal enableDynamicSizing ref={modalRef} {...props}>
       <BottomSheetView style={styles.wrapper}>
         <View style={styles.nft}>
           <Media
@@ -143,9 +147,11 @@ export default function ModalPreviewNFTItem({
             </View>
           ) : null}
         </View>
-        <Text numberOfLines={1} style={styles.nftTitle}>
-          {nft?.name || '-'}
-        </Text>
+        <View style={styles.nftTitleWrapper}>
+          <Text numberOfLines={1} style={styles.nftTitle}>
+            {nft?.name || '-'}
+          </Text>
+        </View>
         <View style={styles.nftProperties}>
           <View style={styles.nftProperty}>
             <Text style={styles.nftPropertyLabel}>

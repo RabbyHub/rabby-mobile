@@ -138,7 +138,7 @@ export type FormSendNFT = {
 };
 const DF_SEND_TOKEN_FORM: FormSendNFT = {
   to: '',
-  amount: 0,
+  amount: 1,
 };
 export function useSendNFTForm(nftToken?: NFTItem) {
   const { t } = useTranslation();
