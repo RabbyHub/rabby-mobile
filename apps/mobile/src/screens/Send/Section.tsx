@@ -37,7 +37,7 @@ const getSectionStyles = createGetStyles(colors => {
   };
 });
 
-export function Section({
+export function SendTokenSection({
   children,
   style,
 }: React.PropsWithChildren<RNViewProps>) {
@@ -103,7 +103,7 @@ export function BalanceSection({ style }: RNViewProps) {
   if (!currentToken) return null;
 
   return (
-    <Section style={style}>
+    <SendTokenSection style={style}>
       <View className="mt-[0]" style={styles.titleSection}>
         <View style={styles.balanceArea}>
           {isLoading ? (
@@ -220,7 +220,7 @@ export function BalanceSection({ style }: RNViewProps) {
         gas={selectedGasLevel}
         token={currentToken}
       />
-    </Section>
+    </SendTokenSection>
   );
 }
 

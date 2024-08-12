@@ -4,12 +4,11 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { MEDIA_TYPE, Media } from '@/components/Media';
 import { getCHAIN_ID_LIST } from '@/constant/projectLists';
 import { useCurrentAccount } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { abbreviateNumber } from '@/utils/math';
 import { chunk } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  useColorScheme,
   StyleSheet,
   View,
   SectionListProps,
@@ -24,13 +23,22 @@ import { Tabs } from 'react-native-collapsible-tab-view';
 import { NFTListLoader } from './components/NFTSkeleton';
 import { CollectionList, NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 import { EmptyHolder } from '@/components/EmptyHolder';
-import { toast } from '@/components/Toast';
 import { usePsudoPagination } from '@/hooks/common/usePagination';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import { NFTDetailPopupInner } from '../NftDetail/PopupInner';
+import { createGetStyles } from '@/utils/styles';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
 
 type ItemProps = {
   item: NFTItem;
   indexInline: number;
   lastCountMark: null | number;
+  collectionName: string;
 };
 const width = Dimensions.get('window').width;
 /**
@@ -41,19 +49,36 @@ const width = Dimensions.get('window').width;
  */
 const detailWidth = (width - 90) / 5;
 
-const Item = ({ item, lastCountMark }: ItemProps) => {
-  const colors = useThemeColors();
-  const isLight = useColorScheme() === 'light';
-  const styles = getStyle(colors, isLight);
+const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
+  const { styles } = useThemeStyles(getStyle);
+  const navigation = useRabbyAppNavigation();
 
   const handleNFTPress = useCallback(() => {
-    // TODO: next milestone
-    // return navigate(RootNames.NftDetail, {
-    //   token: item,
-    //   collectionName,
-    // });
-    toast.show('Coming Soon :)');
-  }, []);
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.NFT_DETAIL,
+      bottomSheetModalProps: {
+        footerComponent: () => (
+          <NFTDetailPopupInner.FooterComponent
+            onPressSend={() => {
+              removeGlobalBottomSheetModal(id);
+
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.SendNFT,
+                params: {
+                  collectionName,
+                  nftItem: item,
+                },
+              });
+            }}
+            token={item}
+            collectionName={collectionName}
+          />
+        ),
+      },
+      token: item,
+      collectionName,
+    });
+  }, [item, collectionName, navigation]);
 
   const numberDisplay = useMemo(() => {
     let v = abbreviateNumber(item.amount || 0);
@@ -129,6 +154,7 @@ class PureItem extends React.PureComponent<{
               indexInline={indexInline}
               key={`${token.id}-${collection!.name}-${indexInline}`}
               lastCountMark={lastCountMark}
+              collectionName={collection.name}
             />
           );
         })}
@@ -141,9 +167,7 @@ const NFT_COUNT_PER_LINE = 5;
 const NFT_LIMITED_DISPLAY_COUNT = 50;
 const NFT_LINES_LIMIT = NFT_LIMITED_DISPLAY_COUNT / NFT_COUNT_PER_LINE;
 export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
-  const colors = useThemeColors();
-  const isLight = useColorScheme() === 'light';
-  const styles = getStyle(colors, isLight);
+  const { styles } = useThemeStyles(getStyle);
   const { currentAccount } = useCurrentAccount();
 
   const {
@@ -315,7 +339,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   );
 };
 
-const getStyle = (colors: AppColorsVariants, isLight = true) =>
+const getStyle = createGetStyles((colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
       backgroundColor: colors['neutral-bg-1'],
@@ -450,4 +474,5 @@ const getStyle = (colors: AppColorsVariants, isLight = true) =>
       width: '100%',
       height: '100%',
     },
-  });
+  }),
+);

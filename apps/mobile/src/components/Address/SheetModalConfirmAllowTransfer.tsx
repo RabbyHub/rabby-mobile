@@ -10,7 +10,7 @@ import { useWhitelist } from '@/hooks/whitelist';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '../icons';
+import { RcIconCheckedFilledCC, RcIconUnCheckCC } from '@/assets/icons/send';
 import TouchableView from '@/components/Touchable/TouchableView';
 import ThemeIcon from '@/components/ThemeMode/ThemeIcon';
 import { useTranslation } from 'react-i18next';
@@ -262,7 +262,9 @@ export function ModalConfirmAllowTransfer({
                     : colors['neutral-title1']
                 }
               />
-              <Text>{t('page.sendToken.allowTransferModal.addWhitelist')}</Text>
+              <Text style={styles.checkTitle}>
+                {t('page.sendToken.allowTransferModal.addWhitelist')}
+              </Text>
             </TouchableView>
           )}
         </View>
@@ -329,6 +331,9 @@ const getStyles = createGetStyles(colors => {
       top: 6,
       width: 16,
       height: 16,
+    },
+    checkTitle: {
+      color: colors['neutral-title1'],
     },
     confirmModalContainerStyle: {
       // ...(IS_IOS && {

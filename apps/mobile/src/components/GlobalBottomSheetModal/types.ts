@@ -1,7 +1,9 @@
 import { AddChain } from './../Approval/components/AddChain/AddChain';
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
-import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
+
+import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
+import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 
 export enum MODAL_NAMES {
   'APPROVAL' = 'APPROVAL',
@@ -31,6 +33,7 @@ export enum MODAL_NAMES {
   'ONEKEY_INPUT_PASSPHRASE' = 'ONEKEY_INPUT_PASSPHRASE',
   'ONEKEY_TEMP_PIN_OR_PASSPHRASE' = 'ONEKEY_TEMP_PIN_OR_PASSPHRASE',
   'AUTHENTICATION' = 'AUTHENTICATION',
+  'NFT_DETAIL' = 'NFT_DETAIL',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -65,6 +68,7 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.TIP_UPGRADE]: {};
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
+  [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupProps;
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {

@@ -50,6 +50,7 @@ export const RootNames = {
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',
+  SendNFT: 'SendNFT',
   Receive: 'Receive',
   Swap: 'Swap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',

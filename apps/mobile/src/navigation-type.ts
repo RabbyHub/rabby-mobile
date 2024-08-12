@@ -3,7 +3,8 @@ import {} from '@react-navigation/bottom-tabs';
 
 import { AppRootName, RootNames } from './constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { Chain } from './constant/chains';
+import { Chain, CHAINS_ENUM } from './constant/chains';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 /**
  * Learn more about using TypeScript with React Navigation:
@@ -89,6 +90,10 @@ export type TransactionNavigatorParamList = {
   [RootNames.History]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
+  [RootNames.SendNFT]?: {
+    nftItem: NFTItem;
+    collectionName?: string;
+  };
   [RootNames.Swap]?: {};
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
