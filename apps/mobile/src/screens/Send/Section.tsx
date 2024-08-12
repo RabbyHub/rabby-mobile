@@ -25,6 +25,7 @@ import { GasLevelType } from '@/components/ReserveGasPopup';
 import { SendReserveGasPopup } from './components/SendReserveGasPopup';
 import { checkIfTokenBalanceEnough } from '@/utils/token';
 import { noop } from 'lodash';
+import { devLog } from '@/utils/logger';
 
 const getSectionStyles = createGetStyles(colors => {
   return {
@@ -53,17 +54,7 @@ export function BalanceSection({ style }: RNViewProps) {
 
   const { currentAccount } = useCurrentAccount();
   const {
-    screenState: {
-      isLoading,
-      isEstimatingGas,
-      balanceError,
-      balanceWarn,
-      showGasReserved,
-      selectedGasLevel,
-      reserveGasOpen,
-      estimateGas,
-      gasList,
-    },
+    screenState,
 
     formValues,
     computed: {
@@ -96,9 +87,9 @@ export function BalanceSection({ style }: RNViewProps) {
   useInputBlurOnEvents(amountInputRef);
 
   useEffect(() => {
-    if (reserveGasOpen && currentToken && gasList) {
+    if (currentToken && screenState.gasList) {
       const result = checkIfTokenBalanceEnough(currentToken, {
-        gasList: gasList,
+        gasList: screenState.gasList,
         gasLimit: MINIMUM_GAS_LIMIT,
       });
 
@@ -110,12 +101,15 @@ export function BalanceSection({ style }: RNViewProps) {
         putScreenState({ selectedGasLevel: result.customLevel });
       }
     }
-  }, [reserveGasOpen, putScreenState, currentToken, gasList]);
+  }, [putScreenState, currentToken, screenState.gasList]);
 
   // devLog('BalanceSection:: balanceError', balanceError);
   // devLog('BalanceSection:: formValues.amount', formValues.amount);
   // devLog('BalanceSection:: showGasReserved', showGasReserved);
-  // devLog('BalanceSection:: selectedGasLevel', selectedGasLevel);
+  devLog(
+    'BalanceSection:: screenState.selectedGasLevel',
+    screenState.selectedGasLevel,
+  );
 
   if (!chainItem || !currentToken) return null;
 
@@ -124,8 +118,8 @@ export function BalanceSection({ style }: RNViewProps) {
       <View className="mt-[0]" style={styles.titleSection}>
         <TouchableView
           style={styles.balanceArea}
-          onPress={isLoading ? noop : handleClickMaxButton}>
-          {isLoading ? (
+          onPress={screenState.isLoading ? noop : handleClickMaxButton}>
+          {screenState.isLoading ? (
             <Skeleton style={{ width: 100, height: 16 }} />
           ) : (
             <>
@@ -135,13 +129,13 @@ export function BalanceSection({ style }: RNViewProps) {
               </Text>
               {/* max button */}
               {currentToken.amount > 0 &&
-                (isEstimatingGas ? (
+                (screenState.isEstimatingGas ? (
                   <Skeleton
                     style={[styles.maxButtonWrapper, styles.maxButtonLoading]}
                   />
                 ) : (
                   <TouchableView
-                    disabled={isEstimatingGas}
+                    disabled={screenState.isEstimatingGas}
                     className="h-[100%] ml-[4]"
                     style={styles.maxButtonWrapper}
                     onPress={handleClickMaxButton}>
@@ -154,12 +148,13 @@ export function BalanceSection({ style }: RNViewProps) {
 
         {/* right area */}
         <View style={styles.issueBlock}>
-          {showGasReserved && !selectedGasLevel && (
+          {screenState.showGasReserved && !screenState.selectedGasLevel && (
             <Skeleton style={styles.issueBlockSkeleton} />
           )}
-          {!showGasReserved && (balanceError || balanceWarn) ? (
+          {!screenState.showGasReserved &&
+          (screenState.balanceError || screenState.balanceWarn) ? (
             <Text style={[styles.issueText]}>
-              {balanceError || balanceWarn}
+              {screenState.balanceError || screenState.balanceWarn}
             </Text>
           ) : null}
         </View>
@@ -212,14 +207,14 @@ export function BalanceSection({ style }: RNViewProps) {
       </View>
 
       <SendReserveGasPopup
-        selectedItem={selectedGasLevel?.level as GasLevelType}
+        selectedItem={screenState.selectedGasLevel?.level as GasLevelType}
         chain={chainItem?.enum}
-        limit={Math.max(estimateGas, MINIMUM_GAS_LIMIT)}
+        limit={Math.max(screenState.estimateGas, MINIMUM_GAS_LIMIT)}
         onGasChange={gasLevel => {
           handleGasLevelChanged(gasLevel);
         }}
-        gasList={gasList}
-        visible={reserveGasOpen}
+        gasList={screenState.gasList}
+        visible={screenState.reserveGasOpen}
         rawHexBalance={currentToken.raw_amount_hex_str}
         onClose={gasLevel => handleGasLevelChanged(gasLevel)}
       />
