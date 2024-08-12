@@ -9,15 +9,15 @@ import {
   RcWhiteListEnabled,
   RcWhiteListDisabled,
 } from '@/assets/icons/address';
-
 import { RcEditPenCC } from '@/assets/icons/send';
+
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
 import { Trans, useTranslation } from 'react-i18next';
 import {
   useInputBlurOnEvents,
-  useSendTokenFormik,
-  useSendTokenInternalContext,
-} from '../hooks/useSendToken';
+  useSendNFTFormik,
+  useSendNFTInternalContext,
+} from '../hooks/useSendNFT';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
 
@@ -44,13 +44,13 @@ export default function ToAddressControl({
     computed: { toAddressIsValid, toAddressInContactBook, whitelistEnabled },
     fns: { putScreenState },
     callbacks: { handleFieldChange },
-  } = useSendTokenInternalContext();
+  } = useSendNFTInternalContext();
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
   const { t } = useTranslation();
 
-  const { errors } = useSendTokenFormik();
+  const { errors } = useSendNFTFormik();
 
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);

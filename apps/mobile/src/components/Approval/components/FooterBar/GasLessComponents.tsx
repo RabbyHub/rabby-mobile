@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { default as RcIconLogo } from '@/assets/icons/sign/tx/rabby.svg';
 
 import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import Svg, { Path } from 'react-native-svg';
 
 import {
   View,
@@ -19,6 +20,8 @@ import {
   DimensionValue,
   StyleSheet,
   Pressable,
+  Image,
+  useWindowDimensions,
 } from 'react-native';
 import { makeThemeIcon } from '@/hooks/makeThemeIcon';
 import LinearGradient from 'react-native-linear-gradient';
@@ -38,6 +41,15 @@ import { colord } from 'colord';
 import { Tip } from '@/components/Tip';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
+
+export type GasLessConfig = {
+  button_text: string;
+  before_click_text: string;
+  after_click_text: string;
+  logo: string;
+  theme_color: string;
+  dark_color: string;
+};
 
 export function GasLessNotEnough({
   gasLessFailedReason,
@@ -81,7 +93,44 @@ export function GasLessNotEnough({
   );
 }
 
-function FreeGasReady() {
+function FreeGasReady({
+  freeGasText,
+  color,
+  logo,
+}: {
+  freeGasText?: string;
+  color?: string;
+  logo?: string;
+}) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  if (freeGasText) {
+    return (
+      <View
+        style={[
+          styles.securityLevelTip,
+          {
+            position: 'relative',
+            backgroundColor: 'transparent',
+            paddingTop: 13,
+          },
+        ]}>
+        <ActivityFreeGasBg
+          borderColor={color!}
+          style={styles.activityFreeGasBg}
+        />
+        <Image source={{ uri: logo }} style={styles.activityLogo} />
+        <Text
+          style={{
+            color: color,
+            fontSize: 13,
+            fontWeight: '500',
+          }}>
+          {freeGasText}
+        </Text>
+      </View>
+    );
+  }
   return (
     <View
       style={{
@@ -97,16 +146,101 @@ function FreeGasReady() {
   );
 }
 
-export function GasLessToSign({
+interface ActivityFreeGasBgProps {
+  width?: number;
+  height?: number;
+  trianglePosition?: number;
+  borderColor: string;
+  borderWidth?: number;
+  style?: ViewStyle;
+}
+
+const ActivityFreeGasBg: React.FC<ActivityFreeGasBgProps> = ({
+  width: propsWidth,
+  height = 45,
+  trianglePosition = 120,
+  borderWidth = 1,
+  borderColor,
+  style,
+}) => {
+  const { width: defaultWidth } = useWindowDimensions();
+
+  const width = useMemo(
+    () => propsWidth || defaultWidth - 20 * 2,
+    [propsWidth, defaultWidth],
+  );
+
+  const triangleHeight = 5;
+
+  const outerWidth = useMemo(
+    () => width + borderWidth * 2,
+    [width, borderWidth],
+  );
+  const outerHeight = useMemo(
+    () => height + borderWidth * 2,
+    [height, borderWidth],
+  );
+
+  const pathData = useMemo(
+    () => `
+    M${trianglePosition + 5} ${triangleHeight + borderWidth}
+    H${outerWidth - 6 - borderWidth}
+    C${outerWidth - 3 - borderWidth} ${triangleHeight + borderWidth} ${
+      outerWidth - borderWidth
+    } ${triangleHeight + 3 + borderWidth} ${outerWidth - borderWidth} ${
+      triangleHeight + 6 + borderWidth
+    }
+    V${outerHeight - 6 - borderWidth}
+    C${outerWidth - borderWidth} ${outerHeight - 3 - borderWidth} ${
+      outerWidth - 3 - borderWidth
+    } ${outerHeight - borderWidth} ${outerWidth - 6 - borderWidth} ${
+      outerHeight - borderWidth
+    }
+    H${6 + borderWidth}
+    C${3 + borderWidth} ${outerHeight - borderWidth} ${borderWidth} ${
+      outerHeight - 3 - borderWidth
+    } ${borderWidth} ${outerHeight - 6 - borderWidth}
+    V${triangleHeight + 6 + borderWidth}
+    C${borderWidth} ${triangleHeight + 3 + borderWidth} ${3 + borderWidth} ${
+      triangleHeight + borderWidth
+    } ${6 + borderWidth} ${triangleHeight + borderWidth}
+    H${trianglePosition - 5}
+    L${trianglePosition} ${borderWidth}
+    L${trianglePosition + 5} ${triangleHeight + borderWidth}
+    Z
+  `,
+    [trianglePosition, borderWidth, outerWidth, outerHeight],
+  );
+
+  return (
+    <Svg
+      style={style}
+      width={outerWidth}
+      height={outerHeight}
+      viewBox={`0 0 ${outerWidth} ${outerHeight}`}
+      fill="none">
+      <Path d={pathData} stroke={borderColor} />
+    </Svg>
+  );
+};
+
+export function GasLessActivityToSign({
   handleFreeGas,
   gasLessEnable,
+  gasLessConfig,
 }: {
   handleFreeGas: () => void;
   gasLessEnable: boolean;
+  gasLessConfig?: GasLessConfig;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const isLight = useGetBinaryMode() === 'light';
+
+  const themeColor = !isLight
+    ? gasLessConfig?.dark_color
+    : gasLessConfig?.theme_color;
 
   const hiddenAnimated = useSharedValue(0);
 
@@ -131,40 +265,99 @@ export function GasLessToSign({
     );
   }, [hiddenAnimated, handleFreeGas]);
 
+  const isActivityFreeGas = React.useMemo(() => {
+    return !!gasLessConfig && !!gasLessConfig?.button_text;
+  }, [gasLessConfig]);
+
   if (gasLessEnable && !animated) {
-    return <FreeGasReady />;
+    return (
+      <FreeGasReady
+        freeGasText={gasLessConfig?.after_click_text}
+        color={themeColor}
+        logo={gasLessConfig?.logo}
+      />
+    );
   }
 
   return (
     <>
       <Animated.View style={toSignStyle}>
-        <View style={[styles.securityLevelTip, { paddingHorizontal: 6 }]}>
-          <View style={styles.tipTriangle} />
-          <RcIconGas
-            width={16}
-            height={16}
-            color={colors['neutral-title-1']}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={[styles.text, styles.gasText]}>
-            {t('page.signFooterBar.gasless.notEnough')}
+        <View
+          style={[
+            styles.securityLevelTip,
+
+            isActivityFreeGas
+              ? {
+                  backgroundColor: 'transparent',
+                }
+              : {},
+          ]}>
+          {isActivityFreeGas ? (
+            <ActivityFreeGasBg
+              borderColor={themeColor!}
+              style={styles.activityFreeGasBg}
+            />
+          ) : (
+            <View style={styles.tipTriangle} />
+          )}
+          {isActivityFreeGas ? (
+            <Image
+              source={{ uri: gasLessConfig?.logo }}
+              style={styles.activityLogo}
+            />
+          ) : (
+            <RcIconGas
+              width={16}
+              height={16}
+              color={colors['neutral-title-1']}
+              style={{ marginRight: 4 }}
+            />
+          )}
+          <Text
+            style={[
+              styles.text,
+              styles.gasText,
+              isActivityFreeGas && {
+                color: themeColor,
+              },
+            ]}>
+            {gasLessConfig?.before_click_text ||
+              t('page.signFooterBar.gasless.notEnough')}
           </Text>
           <TouchableOpacity onPress={startAnimation}>
-            <LinearGradient
-              colors={['#60bcff', '#8154ff']}
-              locations={[0.1447, 0.9383]}
-              useAngle
-              angle={94}
-              style={styles.linearGradient}>
-              <Text style={styles.linearGradientText}>
-                {t('page.signFooterBar.gasless.GetFreeGasToSign')}
-              </Text>
-            </LinearGradient>
+            {isActivityFreeGas ? (
+              <View
+                style={[
+                  styles.linearGradient,
+                  {
+                    backgroundColor: themeColor,
+                  },
+                ]}>
+                <Text style={styles.linearGradientText}>
+                  {gasLessConfig?.button_text}
+                </Text>
+              </View>
+            ) : (
+              <LinearGradient
+                colors={['#60bcff', '#8154ff']}
+                locations={[0.1447, 0.9383]}
+                useAngle
+                angle={94}
+                style={styles.linearGradient}>
+                <Text style={styles.linearGradientText}>
+                  {t('page.signFooterBar.gasless.GetFreeGasToSign')}
+                </Text>
+              </LinearGradient>
+            )}
           </TouchableOpacity>
         </View>
       </Animated.View>
       <Animated.View style={confirmedStyled}>
-        <FreeGasReady />
+        <FreeGasReady
+          freeGasText={gasLessConfig?.after_click_text}
+          color={themeColor}
+          logo={gasLessConfig?.logo}
+        />
       </Animated.View>
     </>
   );
@@ -178,6 +371,8 @@ export const GasLessAnimatedWrapper = (
     buttonStyle: StyleProp<ViewStyle>;
     showOrigin: boolean;
     type?: 'submit' | 'process';
+    gasLessThemeColor?: string;
+    isGasNotEnough?: boolean;
   }>,
 ) => {
   const colors = useThemeColors();
@@ -191,7 +386,7 @@ export const GasLessAnimatedWrapper = (
   const overlayStyle = useAnimatedStyle(
     () => ({
       position: 'absolute',
-      opacity: 0.5,
+      opacity: props?.isGasNotEnough ? 0.5 : 0,
       width: '110%',
       height: '100%',
       top: 0,
@@ -199,7 +394,7 @@ export const GasLessAnimatedWrapper = (
       left: (interpolate(logoXValue.value, [-10, 100], [-10, 100]) +
         '%') as DimensionValue,
     }),
-    [colors],
+    [colors, props?.isGasNotEnough],
   );
 
   const logoStyle = useAnimatedStyle(() => ({
@@ -214,17 +409,22 @@ export const GasLessAnimatedWrapper = (
     transform: [{ translateY: logoYValue.value }],
   }));
 
-  const blueBgStyle = useAnimatedStyle(() => ({
-    width: '200%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors['blue-default'],
-    left: (interpolate(logoXValue.value, [-10, 100], [-210, -100]) +
-      '%') as DimensionValue,
-  }));
+  const blueBgStyle = useAnimatedStyle(
+    () => ({
+      width: '200%',
+      height: '100%',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: props?.gasLessThemeColor
+        ? props?.gasLessThemeColor
+        : colors['blue-default'],
+      left: (interpolate(logoXValue.value, [-10, 100], [-210, -100]) +
+        '%') as DimensionValue,
+    }),
+    [props?.gasLessThemeColor],
+  );
 
   const processBgColor = useMemo(
     () => colord(colors['blue-default']).alpha(0.5).toRgbString(),
@@ -233,12 +433,16 @@ export const GasLessAnimatedWrapper = (
 
   const bgStyle = useAnimatedStyle(
     () =>
-      logoXValue.value > -10
+      logoXValue.value > 100 && props?.gasLessThemeColor
+        ? {
+            backgroundColor: props?.gasLessThemeColor,
+          }
+        : logoXValue.value > -10 && props?.isGasNotEnough
         ? {
             backgroundColor: processBgColor,
           }
         : {},
-    [processBgColor],
+    [props?.gasLessThemeColor, props?.isGasNotEnough],
   );
 
   const start = React.useCallback(() => {
@@ -331,7 +535,9 @@ export const GasLessAnimatedWrapper = (
         </Animated.View>
         <Animated.View style={overlayStyle} />
         <Animated.View style={logoStyle}>
-          <RcIconLogo width={24} height={24} />
+          {props.gasLessThemeColor ? null : (
+            <RcIconLogo width={24} height={24} />
+          )}
         </Animated.View>
       </Animated.View>
     </>
@@ -368,6 +574,18 @@ const getStyles = createGetStyles(colors => ({
     borderBottomColor: colors['neutral-card-2'],
     alignItems: 'center',
   },
+
+  activityFreeGasBg: {
+    position: 'absolute',
+    left: 0,
+    top: -5,
+  },
+  activityLogo: {
+    width: 16,
+    height: 16,
+    marginRight: 4,
+  },
+
   text: {
     color: colors['neutral-title-1'],
     fontSize: 12,

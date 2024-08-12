@@ -12,20 +12,47 @@ import { CEX, DEX, SWAP_SUPPORT_CHAINS } from '@/constant/swap';
 export type ViewKey = keyof typeof CEX | keyof typeof DEX;
 
 export type SwapServiceStore = {
-  gasPriceCache: GasCache;
-  selectedDex: DEX_ENUM | null;
+  autoSlippage: boolean;
+  isCustomSlippage?: boolean;
+  slippage: string;
   selectedChain: CHAINS_ENUM | null;
   selectedFromToken?: TokenItem;
   selectedToToken?: TokenItem;
-  unlimitedAllowance: boolean;
-  viewList: Record<ViewKey, boolean>;
-  tradeList: Record<ViewKey, boolean>;
-  sortIncludeGasFee?: boolean;
   preferMEVGuarded: boolean;
+
+  /**
+   * @deprecated
+   */
+  gasPriceCache: GasCache;
+  /**
+   * @deprecated
+   */
+  selectedDex: DEX_ENUM | null;
+  /**
+   * @deprecated
+   */
+  unlimitedAllowance: boolean;
+  /**
+   * @deprecated
+   */
+  viewList: Record<ViewKey, boolean>;
+  /**
+   * @deprecated
+   */
+  tradeList: Record<ViewKey, boolean>;
+  /**
+   * @deprecated
+   */
+  sortIncludeGasFee?: boolean;
+  /**
+   * @deprecated
+   */
 };
 
 export class SwapService {
   store: SwapServiceStore = {
+    autoSlippage: true,
+    slippage: '0.1',
     gasPriceCache: {},
     selectedChain: null,
     selectedFromToken: undefined,
@@ -42,6 +69,8 @@ export class SwapService {
       {
         name: 'swap',
         template: {
+          autoSlippage: true,
+          slippage: '0.1',
           gasPriceCache: {},
           selectedChain: null,
           selectedDex: null,
@@ -87,7 +116,7 @@ export class SwapService {
     }
   };
 
-  getSwap = (key?: keyof SwapServiceStore) => {
+  getSwap = <K extends keyof SwapServiceStore>(key?: K) => {
     return key ? this.store[key] : this.store;
   };
 
@@ -242,5 +271,29 @@ export class SwapService {
 
   setSwapPreferMEVGuarded = (bool: boolean) => {
     this.store.preferMEVGuarded = bool;
+  };
+
+  getAutoSlippage = () => {
+    return this.store.autoSlippage;
+  };
+
+  getIsCustomSlippage = () => {
+    return this.store.isCustomSlippage;
+  };
+
+  getSlippage = () => {
+    return this.store.slippage;
+  };
+
+  setAutoSlippage = (auto: boolean) => {
+    this.store.autoSlippage = auto;
+  };
+
+  setIsCustomSlippage = (isCustomSlippage: boolean) => {
+    this.store.isCustomSlippage = isCustomSlippage;
+  };
+
+  setSlippage = (slippage: string) => {
+    this.store.slippage = slippage;
   };
 }

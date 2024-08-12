@@ -52,6 +52,8 @@ export interface Props {
   submitText?: string;
   gasLess?: boolean;
   isPrimary?: boolean;
+  gasLessThemeColor?: string;
+  isGasNotEnough?: boolean;
 }
 
 export const ActionsContainer: React.FC<

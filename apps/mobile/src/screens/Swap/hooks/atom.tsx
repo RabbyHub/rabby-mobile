@@ -1,7 +1,11 @@
 import { atom, useAtom, useSetAtom } from 'jotai';
 
 const quoteVisibleAtom = atom(false);
-const rabbyFeeVisibleAtom = atom(false);
+const rabbyFeeVisibleAtom = atom({ visible: false } as {
+  visible: boolean;
+  dexFeeDesc?: string;
+  dexName?: string;
+});
 
 export const useQuoteVisible = () => useAtom(quoteVisibleAtom);
 

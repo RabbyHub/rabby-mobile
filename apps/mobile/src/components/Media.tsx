@@ -12,6 +12,7 @@ import {
 import FastImage, { FastImageProps, ImageStyle } from 'react-native-fast-image';
 import Video from 'react-native-video';
 import { CustomTouchableOpacity } from './CustomTouchableOpacity';
+import { NFTItem } from '@rabby-wallet/rabby-api/dist/types';
 
 export enum MEDIA_TYPE {
   IMAGE = 'image',
@@ -24,7 +25,7 @@ interface MediaProps {
   src?: string;
   thumbnail?: string;
   poster?: string;
-  type?: MEDIA_TYPE;
+  type?: MEDIA_TYPE | NFTItem['content_type'];
   failedPlaceholder?: ReactNode;
   style?: ViewStyle;
   mediaStyle?: ImageStyle;

@@ -80,7 +80,6 @@ import {
   LastUnlockTimeLabel,
 } from './components/LockAbout';
 import { sheetModalRefsNeedLock, useSetPasswordFirst } from '@/hooks/useLock';
-import useMount from 'react-use/lib/useMount';
 import { getBiometricsIcon } from '@/components/AuthenticationModal/BiometricsIcon';
 import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 import { SwitchShowFloatingAutoLockCountdown } from './components/SwitchFloatingView';
@@ -89,6 +88,7 @@ import { useShowMarkdownInWebVIewTester } from './sheetModals/MarkdownInWebViewT
 import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
+import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -571,6 +571,18 @@ function DevSettingsBlocks() {
                     toast.show(
                       'Canceled, But this handler has beed deprecated',
                     );
+                  },
+                });
+              },
+            },
+            {
+              label: 'View Rabby Genesis NFT Detail',
+              icon: RcInfo,
+              onPress: () => {
+                navigation.push(RootNames.StackTransaction, {
+                  screen: RootNames.SendNFT,
+                  params: {
+                    nftItem: RABBY_GENESIS_NFT_DATA.nftToken,
                   },
                 });
               },
