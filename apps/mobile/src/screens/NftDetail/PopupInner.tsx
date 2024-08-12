@@ -111,6 +111,9 @@ export type NFTDetailPopupProps = {
   token: NFTItem;
   collectionName?: string;
 };
+
+const LAYOUT_INNER_PX = 20;
+const CONTENT_W = Dimensions.get('window').width - LAYOUT_INNER_PX * 2;
 export const NFTDetailPopupInner = ({
   token,
   collectionName,
@@ -141,7 +144,9 @@ export const NFTDetailPopupInner = ({
         contentContainerStyle={styles.scrollViewContentContainer}>
         <View style={styles.imageView}>
           <Media
-            failedPlaceholder={<IconDefaultNFT width={'100%'} height={295} />}
+            failedPlaceholder={
+              <IconDefaultNFT width={CONTENT_W} height={CONTENT_W} />
+            }
             type={token.content_type}
             src={token.content}
             style={styles.images}
@@ -158,7 +163,7 @@ export const NFTDetailPopupInner = ({
         <View style={styles.details}>
           <View style={styles.titleView}>
             <Text style={styles.title}>{token.name || '-'}</Text>
-            {token.amount > 1 ? (
+            {/* {token.amount > 1 ? (
               <View style={styles.subtitle}>
                 <IconNumberNFT color={colors['neutral-title-1']} width={15} />
                 <View>
@@ -173,7 +178,7 @@ export const NFTDetailPopupInner = ({
                   </Text>
                 </View>
               </View>
-            ) : null}
+            ) : null} */}
           </View>
           <ListItem
             title={t('component.NFTDetailModal.FieldLabel.Collection')}
@@ -201,7 +206,6 @@ export const NFTDetailPopupInner = ({
 
 NFTDetailPopupInner.FooterComponent = FooterComponent;
 
-const LAYOUT_INNER_PX = 20;
 const getStyle = createGetStyles(colors => ({
   container: {
     flex: 1,
@@ -212,8 +216,6 @@ const getStyle = createGetStyles(colors => ({
   },
   scrollView: { width: '100%' },
   scrollViewContentContainer: {
-    // flex: 1,
-    // ...makeDebugBorder(),
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     paddingVertical: 12,
@@ -221,9 +223,8 @@ const getStyle = createGetStyles(colors => ({
     paddingBottom: LAYOUT.footerHeight + 20,
   },
   imageView: {
-    // width: 295,
-    width: '100%',
-    height: 295,
+    width: CONTENT_W,
+    height: CONTENT_W,
     position: 'relative',
     marginBottom: 10,
   },
@@ -288,7 +289,7 @@ const getStyle = createGetStyles(colors => ({
     color: colors['neutral-title-1'],
     fontSize: 14,
     fontWeight: '400',
-    width: 90,
+    width: 120,
     // ...makeDebugBorder(),
   },
   itemValue: {
