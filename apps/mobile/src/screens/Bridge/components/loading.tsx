@@ -4,7 +4,7 @@ import { View, Text, Image, Animated, Easing, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Svg, Rect, Circle } from 'react-native-svg';
 import { createGetStyles } from '@/utils/styles';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 
 const Dots = () => {
   const colors = useThemeColors();
@@ -66,26 +66,53 @@ const Dots = () => {
   );
 };
 
-const SvgComponent = ({ ...props }) => (
-  <Svg width={325} height={99} viewBox="0 0 325 99" fill="none" {...props}>
-    <Rect
-      x={17}
-      y={9}
-      width={292}
-      height={66}
-      rx={6}
-      fill="white"
-      stroke="#E0E5EC"
-      strokeWidth={0.5}
-    />
-    <Circle cx={43} cy={34} r={12.5} fill="#F2F4F7" />
-    <Rect x={65} y={23} width={103} height={16} fill="#F2F4F7" />
-    <Rect x={190} y={23} width={103} height={16} fill="#F2F4F7" />
-    <Rect x={65} y={47} width={71} height={16} fill="#F2F4F7" />
-    <Rect x={222} y={47} width={71} height={16} fill="#F2F4F7" />
-  </Svg>
-);
-
+const SvgComponent = ({ ...props }) => {
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+  const colors = useThemeColors();
+  return (
+    <Svg width={325} height={99} viewBox="0 0 325 99" fill="none" {...props}>
+      <Rect
+        x={17}
+        y={9}
+        width={292}
+        height={66}
+        rx={6}
+        fill={isDarkTheme ? '#404455' : '#fff'}
+        strokeWidth={0.5}
+        stroke={colors['neutral-line']}
+      />
+      <Circle cx={43} cy={34} r={12.5} fill={colors['neutral-card-2']} />
+      <Rect
+        x={65}
+        y={23}
+        width={103}
+        height={16}
+        fill={colors['neutral-card-2']}
+      />
+      <Rect
+        x={190}
+        y={23}
+        width={103}
+        height={16}
+        fill={colors['neutral-card-2']}
+      />
+      <Rect
+        x={65}
+        y={47}
+        width={71}
+        height={16}
+        fill={colors['neutral-card-2']}
+      />
+      <Rect
+        x={222}
+        y={47}
+        width={71}
+        height={16}
+        fill={colors['neutral-card-2']}
+      />
+    </Svg>
+  );
+};
 export const BestQuoteLoading = () => {
   const [animation] = React.useState(new Animated.Value(0));
   const colors = useThemeColors();

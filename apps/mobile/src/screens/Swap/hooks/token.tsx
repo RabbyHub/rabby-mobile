@@ -19,6 +19,7 @@ import { stats } from '@/utils/stats';
 import { formatSpeicalAmount } from '@/utils/number';
 import { getTokenSymbol } from '@/utils/token';
 import { useDebounceFn, useRequest } from 'ahooks';
+import { useSlippageStore } from './slippage';
 
 const { isSameAddress } = addressUtils;
 
@@ -62,7 +63,7 @@ const useTokenInfo = ({
 };
 
 export const useSlippage = () => {
-  const [slippageState, setSlippage] = useState('0.1');
+  const { slippage: slippageState, setSlippage } = useSlippageStore();
   const slippage = useMemo(() => slippageState || '0.1', [slippageState]);
   const [slippageChanged, setSlippageChanged] = useState(false);
 
@@ -111,6 +112,8 @@ export const useTokenPair = (userAddress: string) => {
   const [payAmount, setPayAmount] = useState('');
 
   const [feeRate] = useState<FeeProps['fee']>('0');
+
+  const { autoSlippage } = useSlippageStore();
 
   const {
     slippageChanged,
@@ -266,8 +269,10 @@ export const useTokenPair = (userAddress: string) => {
   );
 
   useEffect(() => {
-    setSlippage(isStableCoin ? '0.05 ' : '0.1');
-  }, [isWrapToken, isStableCoin, setSlippage]);
+    if (autoSlippage) {
+      setSlippage(isStableCoin ? '0.1' : '0.5');
+    }
+  }, [autoSlippage, isStableCoin, setSlippage]);
 
   const [quoteList, setQuotesList] = useState<TDexQuoteData[]>([]);
   const [visible, settingVisible] = useQuoteVisible();

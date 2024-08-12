@@ -490,7 +490,11 @@ export const DexQuoteItem = (
                   <TouchableOpacity
                     hitSlop={10}
                     onPress={() => {
-                      setIsShowRabbyFeePopup(true);
+                      setIsShowRabbyFeePopup({
+                        visible: true,
+                        dexName: dexId,
+                        dexFeeDesc: quote?.dexFeeDesc || undefined,
+                      });
                     }}>
                     <RcIconInfoCC
                       width={14}
