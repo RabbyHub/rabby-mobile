@@ -57,7 +57,9 @@ export const GnosisDrawer = ({
     const ownersInWallet = accounts.filter(account =>
       owners.find(owner => isSameAddress(account.address, owner)),
     );
-    const groupOwners = groupBy(ownersInWallet, 'address');
+    const groupOwners = groupBy(ownersInWallet, item =>
+      item.address.toLowerCase(),
+    );
     const result = Object.keys(groupOwners).map(address => {
       let target = groupOwners[address][0];
       if (groupOwners[address].length === 1) {
