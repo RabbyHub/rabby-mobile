@@ -1,5 +1,4 @@
 import { Button } from '@/components';
-import { toast, toastWithIcon } from '@/components/Toast';
 import { SessionSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRINGS_LOGOS } from '@/constant/icon';
 import { AppColorsVariants } from '@/constant/theme';
@@ -18,6 +17,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CommonAccount } from './CommonAccount';
+import { WALLET_NAME } from '@rabby-wallet/keyring-utils';
 
 export interface Props {
   account: Account;
@@ -183,10 +183,15 @@ export const WalletConnectAccount: React.FC<Props> = ({ account, chain }) => {
   }, [status]);
 
   React.useEffect(() => {
-    if (chain && sessionChainId && chain.id !== sessionChainId) {
+    if (
+      brandName === WALLET_NAME.MetaMask &&
+      chain &&
+      sessionChainId &&
+      chain.id !== sessionChainId
+    ) {
       apisWalletConnect.walletConnectSwitchChain(account, chain.id);
     }
-  }, [sessionChainId, chain, account]);
+  }, [sessionChainId, chain, account, brandName]);
 
   const connectWallet = useConnectWallet();
   // const toastHiddenRef = React.useRef<ReturnType<(typeof toast)['info']>>();
