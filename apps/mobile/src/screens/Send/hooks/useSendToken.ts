@@ -826,19 +826,25 @@ export function useSendTokenForm() {
 
     const to = formik.values.to;
 
-    const _gasUsed = await apiProvider.requestETHRpc<string>(
-      {
-        method: 'eth_estimateGas',
-        params: [
-          {
-            from: currentAccount.address,
-            to: to && isValidAddress(to) ? to : zeroAddress(),
-            value: currentToken.raw_amount_hex_str,
-          },
-        ],
-      },
-      chainItem.serverId,
-    );
+    let _gasUsed: string = intToHex(21000);
+    try {
+      _gasUsed = await apiProvider.requestETHRpc<string>(
+        {
+          method: 'eth_estimateGas',
+          params: [
+            {
+              from: currentAccount.address,
+              to: to && isValidAddress(to) ? to : zeroAddress(),
+              gasPrice: intToHex(0),
+              value: currentToken.raw_amount_hex_str,
+            },
+          ],
+        },
+        chainItem.serverId,
+      );
+    } catch (error) {
+      console.error(error);
+    }
     const gasUsed = chainItem.isTestnet
       ? new BigNumber(_gasUsed).multipliedBy(1.5).integerValue().toNumber()
       : _gasUsed;
