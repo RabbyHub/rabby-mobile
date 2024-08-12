@@ -131,7 +131,7 @@ export const NFTDetailPopupInner = ({
   const date = useMemo(
     () =>
       token.pay_token?.time_at
-        ? dayjs(token.pay_token?.time_at * 1000).format('YYYY / MM / DD')
+        ? dayjs(token.pay_token?.time_at * 1000).format('YYYY-MM-DD')
         : '-',
 
     [token.pay_token?.time_at],
