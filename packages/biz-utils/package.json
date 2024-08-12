@@ -39,7 +39,7 @@
     "cov:report": "open ./coverage/index.html"
   },
   "dependencies": {
-    "@rabby-wallet/rabby-api": "0.7.7",
+    "@rabby-wallet/rabby-api": "0.7.25",
     "bignumber.js": "^9.1.2",
     "ethereumjs-util": "^7.1.5"
   },
