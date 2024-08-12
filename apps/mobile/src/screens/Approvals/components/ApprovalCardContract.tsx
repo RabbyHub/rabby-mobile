@@ -67,11 +67,11 @@ function CardProto({
     React.useMemo(() => {
       const trustValue = (() => {
         const isDanger =
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
           approvalUtils.RiskNumMap.danger;
         const isWarning =
           !isDanger &&
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
             approvalUtils.RiskNumMap.warning;
 
         const isRisky = isDanger || isWarning;
