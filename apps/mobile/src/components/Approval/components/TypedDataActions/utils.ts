@@ -342,7 +342,7 @@ const fetchTokenApproveRequireData = async ({
     result.rank = credit.rank_at;
   });
   queue.add(async () => {
-    const { usd_value } = await apiProvider.tokenApproveExposure(
+    const { usd_value } = await apiProvider.tokenApproveTrustValue(
       spender,
       chainId,
     );
@@ -426,7 +426,7 @@ const fetchBatchTokenApproveRequireData = async ({
     result.rank = credit.rank_at;
   });
   queue.add(async () => {
-    const { usd_value } = await apiProvider.tokenApproveExposure(
+    const { usd_value } = await apiProvider.tokenApproveTrustValue(
       spender,
       chainId,
     );
