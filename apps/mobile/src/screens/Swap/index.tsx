@@ -201,6 +201,9 @@ const Swap = () => {
             pay_token_id: payToken.id,
             unlimited: unlimitedAllowance,
             shouldTwoStepApprove: activeProvider.shouldTwoStepApprove,
+            gasPrice: payTokenIsNativeToken
+              ? gasList?.find(e => e.level === gasLevel)?.price
+              : undefined,
             postSwapParams: {
               quote: {
                 pay_token_id: payToken.id,
