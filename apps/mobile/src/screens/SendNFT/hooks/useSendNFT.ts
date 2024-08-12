@@ -33,6 +33,9 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { toast } from '@/components/Toast';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { RootNames } from '@/constant/layout';
+import { StackActions } from '@react-navigation/native';
 
 export const enum SendNFTEvents {
   'ON_PRESS_DISMISS' = 'ON_PRESS_DISMISS',
@@ -161,6 +164,7 @@ export function useSendNFTForm(nftToken?: NFTItem) {
   }, [t]);
 
   const chainItem = findChain({ serverId: nftToken?.chain });
+  const navigation = useRabbyAppNavigation();
 
   const handleSubmit = useCallback(
     async ({ to, amount }: FormSendNFT) => {
@@ -181,7 +185,7 @@ export function useSendNFTForm(nftToken?: NFTItem) {
           ].join('|'),
         });
 
-        apiToken.transferNFT(
+        await apiToken.transferNFT(
           {
             to,
             amount: bizNumberUtils.coerceInteger(amount),
@@ -197,13 +201,19 @@ export function useSendNFTForm(nftToken?: NFTItem) {
             },
           },
         );
+
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
       } catch (e: any) {
         toast.info(e.message);
       } finally {
         putScreenState({ isSubmitLoading: false });
       }
     },
-    [currentAccount, putScreenState, chainItem?.name, nftToken],
+    [currentAccount, putScreenState, chainItem?.name, nftToken, navigation],
   );
 
   /** @notice the formik will be new object every-time re-render, but most of its fields keep same */
