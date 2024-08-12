@@ -123,7 +123,7 @@ export const NFTDetailPopupInner = ({
 
   const price = useMemo(() => {
     if (token.usd_price) {
-      return new BigNumber(token.usd_price).toFormat(2, 4);
+      return `$${new BigNumber(token.usd_price).toFormat(2, 4)}`;
     }
     return '-';
   }, [token.usd_price]);
