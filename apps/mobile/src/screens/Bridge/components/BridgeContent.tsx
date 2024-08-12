@@ -369,7 +369,9 @@ export const BridgeContent = () => {
                 symbol: payToken ? getTokenSymbol(payToken) : '',
               })}
             </Text>
-            <View style={payToken ? styles.balanceContainer : styles.hidden}>
+            <TouchableOpacity
+              style={payToken ? styles.balanceContainer : styles.hidden}
+              onPress={handleBalance}>
               <Text style={styles.subTitle}>
                 {t('global.Balance')}: {formatAmount(payToken?.amount || 0)}
               </Text>
@@ -378,7 +380,7 @@ export const BridgeContent = () => {
                 onPress={handleBalance}>
                 <RcIconMaxButton />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>

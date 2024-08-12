@@ -79,7 +79,6 @@ function SendScreen(): JSX.Element {
     formik,
     formValues,
     handleFieldChange,
-    handleReserveGasClose,
     handleClickMaxButton,
     handleGasLevelChanged,
 
@@ -366,7 +365,6 @@ function SendScreen(): JSX.Element {
           handleCurrentTokenChange,
           handleFieldChange,
           handleClickMaxButton,
-          handleReserveGasClose,
           handleGasLevelChanged,
         },
       }}>

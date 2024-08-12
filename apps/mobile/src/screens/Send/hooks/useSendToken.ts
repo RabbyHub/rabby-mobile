@@ -987,12 +987,8 @@ export function useSendTokenForm() {
       screenState.isLoading,
     ],
   );
-  const handleReserveGasClose = useCallback(() => {
-    putScreenState({ reserveGasOpen: false });
-  }, [putScreenState]);
   const handleGasLevelChanged = useCallback(
     async (gl?: GasLevel | null) => {
-      handleReserveGasClose();
       const gasLevel = gl
         ? gl
         : await loadGasList().then(
@@ -1001,10 +997,10 @@ export function useSendTokenForm() {
               findInstanceLevel(res),
           );
 
-      putScreenState({ selectedGasLevel: gasLevel });
+      putScreenState({ reserveGasOpen: false, selectedGasLevel: gasLevel });
       handleMaxInfoChanged({ gasLevel });
     },
-    [handleReserveGasClose, putScreenState, handleMaxInfoChanged, loadGasList],
+    [putScreenState, handleMaxInfoChanged, loadGasList],
   );
   const handleClickMaxButton = useCallback(async () => {
     putScreenState(prev => ({ ...prev, clickedMax: true }));
@@ -1120,7 +1116,6 @@ export function useSendTokenForm() {
     handleCurrentTokenChange,
 
     handleGasLevelChanged,
-    handleReserveGasClose,
     handleClickMaxButton,
 
     sendTokenEvents: sendTokenEventsRef.current,
@@ -1175,7 +1170,6 @@ type InternalContext = {
     ) => void;
     handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
     handleClickMaxButton: () => Promise<void> | void;
-    handleReserveGasClose: () => void;
     // onGasChange: (input: {
     //   gasLevel: GasLevel;
     //   updateTokenAmount?: boolean;
@@ -1206,7 +1200,6 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     fetchContactAccounts: () => {},
   },
   callbacks: {
-    handleReserveGasClose: () => {},
     handleCurrentTokenChange: () => {},
     handleFieldChange: () => {},
     handleGasLevelChanged: () => {},
