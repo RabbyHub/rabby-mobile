@@ -1,4 +1,4 @@
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Contract, providers } from 'ethers';
 import { hexToString } from 'web3-utils';
 
@@ -6,6 +6,7 @@ import type { AbstractPortfolioToken } from '@/screens/Home/types';
 import { findChain } from './chain';
 import { CustomTestnetToken } from '@/core/services/customTestnetService';
 import BigNumber from 'bignumber.js';
+import { MINIMUM_GAS_LIMIT } from '@/constant/gas';
 
 export const SMALL_TOKEN_ID = '_SMALL_TOKEN_';
 
@@ -230,3 +231,48 @@ export const isSameTestnetToken = <
     +token1.chainId === +token2.chainId
   );
 };
+
+function checkGasIsEnough({
+  token_balance_hex,
+  price,
+  gasLimit,
+}: {
+  token_balance_hex: TokenItem['raw_amount_hex_str'];
+  price: number;
+  gasLimit: number;
+}) {
+  return new BigNumber(token_balance_hex || 0, 16).gte(
+    new BigNumber(gasLimit).times(price),
+  );
+}
+export function checkIfTokenBalanceEnough(
+  token: TokenItem,
+  options?: {
+    gasLimit?: number;
+    gasList?: GasLevel[];
+  },
+) {
+  const { gasLimit = MINIMUM_GAS_LIMIT, gasList = [] } = options || {};
+  const normalLevel = gasList?.find(e => e.level === 'normal');
+  const slowLevel = gasList?.find(e => e.level === 'slow');
+  const customLevel = gasList?.find(e => e.level === 'custom');
+
+  const isNormalEnough = checkGasIsEnough({
+    token_balance_hex: token?.raw_amount_hex_str,
+    price: normalLevel?.price || 0,
+    gasLimit,
+  });
+  const isSlowEnough = checkGasIsEnough({
+    token_balance_hex: token?.raw_amount_hex_str,
+    price: slowLevel?.price || 0,
+    gasLimit,
+  });
+
+  return {
+    normalLevel,
+    isNormalEnough,
+    isSlowEnough,
+    slowLevel,
+    customLevel,
+  };
+}

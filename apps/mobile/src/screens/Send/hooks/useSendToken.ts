@@ -11,12 +11,12 @@ import * as Yup from 'yup';
 import { intToHex } from '@ethereumjs/util';
 import { EventEmitter } from 'events';
 
-import { preferenceService } from '@/core/services';
+import { customTestnetService, preferenceService } from '@/core/services';
 import { findChain, findChainByEnum, findChainByServerID } from '@/utils/chain';
 import { CHAINS_ENUM, Chain } from '@/constant/chains';
 import { GasLevel, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { atom, useAtom } from 'jotai';
-import { openapi } from '@/core/request';
+import { openapi, testOpenapi } from '@/core/request';
 import { TFunction } from 'i18next';
 import { isValidAddress } from '@ethereumjs/util';
 import BigNumber from 'bignumber.js';
@@ -48,6 +48,7 @@ import { toast } from '@/components/Toast';
 import { zeroAddress } from '@ethereumjs/util';
 import { customTestnetTokenToTokenItem } from '@/utils/token';
 import { useFindChain } from '@/hooks/useFindChain';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 function makeDefaultToken(): TokenItem {
   return {
@@ -194,15 +195,20 @@ export type SendScreenState = {
   cacheAmount: string;
   tokenAmountForGas: string;
   showWhitelistAlert: boolean;
+
+  gasList: GasLevel[];
   showGasReserved: boolean;
+  isEstimatingGas: boolean;
+
   clickedMax: boolean;
   balanceError: string | null;
   balanceWarn: string | null;
   isLoading: boolean;
   isSubmitLoading: boolean;
   estimateGas: number;
+  reserveGasOpen: boolean;
   temporaryGrant: boolean;
-  gasList: GasLevel[];
+  /** @deprecated */
   gasPriceMap: Record<string, { list: GasLevel[]; expireAt: number }>;
   gasSelectorVisible: boolean;
   selectedGasLevel: GasLevel | null;
@@ -229,15 +235,21 @@ const DFLT_SEND_STATE: SendScreenState = {
   cacheAmount: '0',
   tokenAmountForGas: '0',
   showWhitelistAlert: false,
+
+  gasList: [],
   showGasReserved: false,
   clickedMax: false,
+
   balanceError: null,
   balanceWarn: null,
   isLoading: false,
   isSubmitLoading: false,
+
   estimateGas: 0,
+  isEstimatingGas: false,
+
+  reserveGasOpen: false,
   temporaryGrant: false,
-  gasList: [],
   gasPriceMap: {},
   gasSelectorVisible: false,
   selectedGasLevel: null,
@@ -255,11 +267,22 @@ export function useSendTokenScreenState() {
   );
 
   const putScreenState = useCallback(
-    (patch: Partial<SendScreenState>) => {
-      setSendScreenState(prev => ({
-        ...prev,
-        ...patch,
-      }));
+    (
+      patchOrUpdateFunc:
+        | Partial<SendScreenState>
+        | ((prev: SendScreenState) => SendScreenState),
+    ) => {
+      setSendScreenState(prev => {
+        const patch =
+          typeof patchOrUpdateFunc === 'function'
+            ? patchOrUpdateFunc(prev)
+            : patchOrUpdateFunc;
+
+        return {
+          ...prev,
+          ...patch,
+        };
+      });
     },
     [setSendScreenState],
   );
@@ -299,8 +322,16 @@ export function makeSendTokenValidationSchema(options: {
   return SendTokenSchema;
 }
 
+function findInstanceLevel(gasList: GasLevel[]) {
+  return gasList.reduce((prev, current) =>
+    prev.price >= current.price ? prev : current,
+  );
+}
 const fetchGasList = async (chainItem: Chain | null) => {
-  const list: GasLevel[] = await openapi.gasMarket(chainItem?.serverId || '');
+  const list: GasLevel[] = chainItem?.isTestnet
+    ? await customTestnetService.getGasMarket({ chainId: chainItem.id })
+    : await openapi.gasMarket(chainItem?.serverId || '');
+
   return list;
 };
 function calcGasCost({
@@ -356,6 +387,10 @@ const DF_SEND_TOKEN_FORM: FormSendToken = {
   messageDataForContractCall: '',
 };
 // const sendTokenScreenFormAtom = atom<FormSendToken>({ ...DF_SEND_TOKEN_FORM });
+
+/**
+ * @description only called once at top level
+ */
 export function useSendTokenForm() {
   const { t } = useTranslation();
 
@@ -373,9 +408,7 @@ export function useSendTokenForm() {
 
   const { sendTokenScreenState: screenState, putScreenState } =
     useSendTokenScreenState();
-  const { gasPriceMap } = screenState;
 
-  // const [formValues, setFormValues] = useAtom(sendTokenScreenFormAtom);
   const [formValues, setFormValues] = React.useState<FormSendToken>({
     ...DF_SEND_TOKEN_FORM,
   });
@@ -385,6 +418,21 @@ export function useSendTokenForm() {
       validationSchema: makeSendTokenValidationSchema({ t }),
     };
   }, [t]);
+
+  const [{ error: loadGasListError }, loadGasList] = useAsyncFn(
+    async () => fetchGasList(chainItem),
+    [chainItem, putScreenState],
+  );
+
+  if (__DEV__ && loadGasListError) {
+    console.error(loadGasListError);
+  }
+
+  useEffect(() => {
+    loadGasList().then(list => {
+      putScreenState({ gasList: list });
+    });
+  }, [loadGasList, putScreenState]);
 
   const { addressType } = useCheckAddressType(formValues.to, chainItem);
 
@@ -767,11 +815,64 @@ export function useSendTokenForm() {
     ],
   );
 
-  const handleGasChange = useCallback(
-    (gas: GasLevel, updateTokenAmount = true, gasLimit = MINIMUM_GAS_LIMIT) => {
+  const ethEstimateGas = useCallback(async () => {
+    const result = {
+      gasNumber: 0,
+      gasNumHex: intToHex(0),
+    };
+
+    if (!currentAccount?.address) return result;
+    if (!chainItem) return result;
+
+    const to = formik.values.to;
+
+    let _gasUsed: string = intToHex(21000);
+    try {
+      _gasUsed = await apiProvider.requestETHRpc<string>(
+        {
+          method: 'eth_estimateGas',
+          params: [
+            {
+              from: currentAccount.address,
+              to: to && isValidAddress(to) ? to : zeroAddress(),
+              gasPrice: intToHex(0),
+              value: currentToken.raw_amount_hex_str,
+            },
+          ],
+        },
+        chainItem.serverId,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+    const gasUsed = chainItem.isTestnet
+      ? new BigNumber(_gasUsed).multipliedBy(1.5).integerValue().toNumber()
+      : _gasUsed;
+
+    result.gasNumber = Number(gasUsed);
+    result.gasNumHex =
+      typeof gasUsed === 'string' ? gasUsed : intToHex(gasUsed);
+
+    return result;
+  }, [currentAccount, chainItem, formik, currentToken.raw_amount_hex_str]);
+
+  const couldReserveGas = isNativeToken && !screenState.isGnosisSafe;
+
+  const onGasChange = useCallback(
+    ({
+      gasLevel,
+      updateTokenAmount = true,
+      gasLimit = MINIMUM_GAS_LIMIT,
+    }: {
+      gasLevel: GasLevel;
+      updateTokenAmount?: boolean;
+      gasLimit?: number;
+    }) => {
       const nextPartials = {} as Partial<SendScreenState>;
-      nextPartials.selectedGasLevel = gas;
-      const gasTokenAmount = new BigNumber(gas.price).times(gasLimit).div(1e18);
+      nextPartials.selectedGasLevel = gasLevel;
+      const gasTokenAmount = new BigNumber(gasLevel.price)
+        .times(gasLimit)
+        .div(1e18);
       nextPartials.tokenAmountForGas = gasTokenAmount.toFixed();
       putScreenState(nextPartials);
 
@@ -794,133 +895,130 @@ export function useSendTokenForm() {
     [currentToken, handleFieldChange, putScreenState],
   );
 
-  const ethEstimateGas = useCallback(async () => {
-    const result = {
-      gasNumber: 0,
-      gasNumHex: intToHex(0),
-    };
+  const handleMaxInfoChanged = useCallback(
+    async (input?: { gasLevel: GasLevel }) => {
+      if (!currentAccount) return;
 
-    if (!currentAccount?.address) return result;
-    if (!chainItem) return result;
+      if (screenState.isLoading) return;
+      if (screenState.isEstimatingGas) return;
 
-    const to = formik.values.to;
+      const tokenBalance = new BigNumber(
+        currentToken.raw_amount_hex_str || 0,
+      ).div(10 ** currentToken.decimals);
+      let amount = tokenBalance.toFixed();
+      const to = formik.values.to;
 
-    const _gasUsed = await apiProvider.requestETHRpc<string>(
-      {
-        method: 'eth_estimateGas',
-        params: [
-          {
-            from: currentAccount.address,
-            to: to && isValidAddress(to) ? to : zeroAddress(),
-            value: currentToken.raw_amount_hex_str,
-          },
-        ],
-      },
-      chainItem.serverId,
-    );
-    const gasUsed = chainItem.isTestnet
-      ? new BigNumber(_gasUsed).multipliedBy(1.5).integerValue().toNumber()
-      : _gasUsed;
+      const {
+        gasLevel = screenState.selectedGasLevel ||
+          (await loadGasList().then(findInstanceLevel)),
+      } = input || {};
+      const needReserveGasOnSendToken = gasLevel.price > 0;
 
-    result.gasNumber = Number(gasUsed);
-    result.gasNumHex =
-      typeof gasUsed === 'string' ? gasUsed : intToHex(gasUsed);
+      if (couldReserveGas && needReserveGasOnSendToken) {
+        putScreenState({ showGasReserved: true, isEstimatingGas: true });
+        try {
+          const { gasNumber } = await ethEstimateGas();
+          putScreenState({ estimateGas: gasNumber });
 
-    return result;
-  }, [currentAccount, chainItem, formik, currentToken.raw_amount_hex_str]);
+          let gasTokenAmount = onGasChange({
+            gasLevel: gasLevel,
+            updateTokenAmount: false,
+            gasLimit: gasNumber,
+          });
+          if (
+            chainItem &&
+            CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainItem.enum)
+          ) {
+            const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
+              {
+                txParams: {
+                  chainId: chainItem.id,
+                  from: currentAccount.address,
+                  to: to && isValidAddress(to) ? to : zeroAddress(),
+                  value: currentToken.raw_amount_hex_str,
+                  gas: intToHex(21000),
+                  gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
+                  data: '0x',
+                },
+              },
+              chainItem.enum,
+            );
+            gasTokenAmount = gasTokenAmount
+              .plus(new BigNumber(l1GasFee).div(1e18))
+              .times(1.1);
+          }
+          const tokenForSend = tokenBalance.minus(gasTokenAmount);
+          amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
+          if (tokenForSend.lt(0)) {
+            putScreenState({ showGasReserved: false });
+          }
+        } catch (e) {
+          if (!screenState.isGnosisSafe) {
+            // // Gas fee reservation required
+            // setBalanceWarn(t('page.sendToken.balanceWarn.gasFeeReservation'));
+            putScreenState({ showGasReserved: false });
+          }
+        } finally {
+          putScreenState({ isEstimatingGas: false });
+        }
+      }
 
-  const handleClickTokenBalance = useCallback(async () => {
-    if (!currentAccount) return;
-    putScreenState({ clickedMax: true });
+      const newValues = {
+        ...formik.values,
+        amount,
+      };
+      patchFormValues(newValues);
+    },
+    [
+      currentAccount,
+      currentToken.decimals,
+      currentToken.raw_amount_hex_str,
+      ethEstimateGas,
+      screenState.selectedGasLevel,
+      loadGasList,
+      formik,
+      patchFormValues,
+      onGasChange,
+      putScreenState,
+      couldReserveGas,
+      chainItem,
+      screenState.isEstimatingGas,
+      screenState.isGnosisSafe,
+      screenState.isLoading,
+    ],
+  );
+  const handleReserveGasClose = useCallback(() => {
+    putScreenState({ reserveGasOpen: false });
+  }, [putScreenState]);
+  const handleGasLevelChanged = useCallback(
+    async (gl?: GasLevel | null) => {
+      handleReserveGasClose();
+      const gasLevel = gl
+        ? gl
+        : await loadGasList().then(
+            res =>
+              res.find(item => item.level === 'normal') ||
+              findInstanceLevel(res),
+          );
 
-    if (
-      screenState.isLoading ||
-      (screenState.showGasReserved && formik.values.amount)
-    )
-      return;
+      putScreenState({ selectedGasLevel: gasLevel });
+      handleMaxInfoChanged({ gasLevel });
+    },
+    [handleReserveGasClose, putScreenState, handleMaxInfoChanged, loadGasList],
+  );
+  const handleClickMaxButton = useCallback(async () => {
+    putScreenState(prev => ({ ...prev, clickedMax: true }));
 
-    const tokenBalance = new BigNumber(
-      currentToken.raw_amount_hex_str || 0,
-    ).div(10 ** currentToken.decimals);
-    let amount = tokenBalance.toFixed();
-    // const to = form.getFieldValue('to');
-    const to = formik.values.to;
-
-    // if (isNativeToken && !screenState.isGnosisSafe) {
-    //   putScreenState({ showGasReserved: true });
-    //   try {
-    //     const list = await fetchGasList(chainItem);
-    //     putScreenState({ gasList: list });
-    //     let instant = list[0];
-    //     for (let i = 1; i < list.length; i++) {
-    //       if (list[i].price > instant.price) {
-    //         instant = list[i];
-    //       }
-    //     }
-    //     const { gasNumber } = await ethEstimateGas();
-    //     putScreenState({ estimateGas: gasNumber });
-
-    //     let gasTokenAmount = handleGasChange(instant, false, gasNumber);
-    //     if (CAN_ESTIMATE_L1_FEE_CHAINS.includes(chainEnum)) {
-    //       const l1GasFee = await apiProvider.fetchEstimatedL1Fee(
-    //         {
-    //           txParams: {
-    //             chainId: findChainByEnum(chainEnum, { fallback: true })!.id,
-    //             from: currentAccount.address,
-    //             to: to && isValidAddress(to) ? to : zeroAddress(),
-    //             value: currentToken.raw_amount_hex_str,
-    //             gas: intToHex(21000),
-    //             gasPrice: `0x${new BigNumber(instant.price).toString(16)}`,
-    //             data: '0x',
-    //           },
-    //         },
-    //         chainEnum,
-    //       );
-    //       gasTokenAmount = gasTokenAmount
-    //         .plus(new BigNumber(l1GasFee).div(1e18))
-    //         .times(1.1);
-    //     }
-    //     const tokenForSend = tokenBalance.minus(gasTokenAmount);
-    //     amount = tokenForSend.gt(0) ? tokenForSend.toFixed() : '0';
-    //     if (tokenForSend.lt(0)) {
-    //       putScreenState({ showGasReserved: false });
-    //     }
-    //   } catch (e) {
-    //     if (!screenState.isGnosisSafe) {
-    //       // Gas fee reservation required
-    //       putScreenState({
-    //         showGasReserved: false,
-    //         // balanceWarn: t('page.sendToken.balanceWarn.gasFeeReservation'),
-    //       });
-    //     }
-    //   }
-    // }
-
-    const values = formik.values;
-    const newValues = {
-      ...values,
-      amount,
-    };
-    formik.setFormikState(prev => ({ ...prev, values: newValues }));
-    handleFormValuesChange(null, { currentPartials: newValues });
-  }, [
-    // chainEnum,
-    // chainItem,
-    currentAccount,
-    currentToken.decimals,
-    currentToken.raw_amount_hex_str,
-    formik,
-    handleFormValuesChange,
-    // handleGasChange,
-    // isNativeToken,
-    putScreenState,
-    screenState,
-    // ethEstimateGas,
-    // t,
-  ]);
+    if (couldReserveGas) {
+      putScreenState({ reserveGasOpen: true });
+    } else {
+      handleMaxInfoChanged();
+    }
+  }, [couldReserveGas, putScreenState, handleMaxInfoChanged]);
 
   const handleChainChanged = useCallback(
     async (val: CHAINS_ENUM) => {
+      putScreenState(prev => ({ ...prev, clickedMax: false }));
       const account = preferenceService.getCurrentAccount()!;
       // fallback to eth, but we don't expect this to happen
       const chain = findChainByEnum(val, { fallback: true })!;
@@ -970,10 +1068,10 @@ export function useSendTokenForm() {
       );
     },
     [
+      putScreenState,
       putChainToken,
       loadCurrentToken,
       patchFormValues,
-      putScreenState,
       handleFormValuesChange,
     ],
   );
@@ -1021,8 +1119,9 @@ export function useSendTokenForm() {
     currentToken,
     handleCurrentTokenChange,
 
-    handleGasChange,
-    handleClickTokenBalance,
+    handleGasLevelChanged,
+    handleReserveGasClose,
+    handleClickMaxButton,
 
     sendTokenEvents: sendTokenEventsRef.current,
     formik,
@@ -1074,12 +1173,14 @@ type InternalContext = {
       f: T,
       value: FormSendToken[T],
     ) => void;
-    handleClickTokenBalance: () => Promise<void> | void;
-    handleGasChange: (
-      gas: GasLevel,
-      updateTokenAmount?: boolean,
-      gasLimit?: number,
-    ) => void;
+    handleGasLevelChanged: (gl?: GasLevel | null) => Promise<void> | void;
+    handleClickMaxButton: () => Promise<void> | void;
+    handleReserveGasClose: () => void;
+    // onGasChange: (input: {
+    //   gasLevel: GasLevel;
+    //   updateTokenAmount?: boolean;
+    //   gasLimit?: number;
+    // }) => void;
     // onFormValuesChange: (changedValues: Partial<FormSendToken>) => void;
   };
 };
@@ -1105,11 +1206,11 @@ const SendTokenInternalContext = React.createContext<InternalContext>({
     fetchContactAccounts: () => {},
   },
   callbacks: {
+    handleReserveGasClose: () => {},
     handleCurrentTokenChange: () => {},
     handleFieldChange: () => {},
-    handleClickTokenBalance: () => {},
-    handleGasChange: () => {},
-    // onFormValuesChange: () => {},
+    handleGasLevelChanged: () => {},
+    handleClickMaxButton: () => {},
   },
 });
 

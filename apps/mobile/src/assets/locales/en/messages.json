@@ -2310,6 +2310,13 @@
         "notEnabled": "Biometrics is not enabled",
         "authFailed": "Biometrics authentication failed"
       }
+    },
+    "ReserveGasPopup": {
+      "title": "Reserve Gas",
+      "instant": "Instant",
+      "fast": "Fast",
+      "normal": "Normal",
+      "doNotReserve": "Don't reserve Gas"
     }
   },
   "native": {

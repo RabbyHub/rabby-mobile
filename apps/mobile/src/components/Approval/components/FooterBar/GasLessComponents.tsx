@@ -627,6 +627,5 @@ const getStyles = createGetStyles(colors => ({
   linearGradientText: {
     fontSize: 11,
     color: colors['neutral-title-2'],
-    cursor: 'pointer',
   },
 }));
