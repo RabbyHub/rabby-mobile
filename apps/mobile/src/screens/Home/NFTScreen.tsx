@@ -30,7 +30,7 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { NFTDetailPopupInner } from '../NftDetail/PopupInner';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -238,6 +238,8 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
       const chain = getCHAIN_ID_LIST().get(collection!.chain);
       const iconUri = chain?.nativeTokenLogo;
 
+      const showSubTitle = iconUri || chain?.name || !!collection?.floor_price;
+
       return (
         <View style={styles.headerContainer}>
           <View style={styles.titleContainer}>
@@ -247,7 +249,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
             <Text
               style={styles.length}>{`(${collection?.nft_list.length})`}</Text>
           </View>
-          {collection?.floor_price && collection.floor_price !== 0 ? (
+          {!showSubTitle ? null : (
             <View style={styles.floorPriceContainer}>
               {iconUri ? (
                 <FastImage
@@ -257,17 +259,19 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
                   style={styles.chainIcon}
                 />
               ) : null}
-              <Text style={styles.floorPriceText}>
-                {chain?.name} / Floor Price:{' '}
-              </Text>
-              <Text style={styles.floorPriceText}>
-                {collection.floor_price}
-              </Text>
-              <Text style={styles.floorPriceText}>
-                {collection?.native_token?.symbol}
-              </Text>
+              <Text style={styles.floorPriceText}>{chain?.name} </Text>
+              {!!collection?.floor_price && (
+                <>
+                  <Text style={styles.floorPriceText}>
+                    / Floor Price: {collection.floor_price}
+                  </Text>
+                  <Text style={styles.floorPriceText}>
+                    {collection?.native_token?.symbol}
+                  </Text>
+                </>
+              )}
             </View>
-          ) : null}
+          )}
         </View>
       );
     },
@@ -339,6 +343,7 @@ export const NFTScreen = ({ onRefresh }: { onRefresh(): void }) => {
   );
 };
 
+const IMAGE_OFFSET_Y = 10;
 const getStyle = createGetStyles((colors: AppColorsVariants) =>
   StyleSheet.create({
     container: {
@@ -383,13 +388,15 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       marginLeft: 4,
     },
     headerContainer: {
-      paddingVertical: 10,
+      paddingTop: 0,
+      paddingBottom: 0,
+      // ...makeDebugBorder('purple'),
     },
     titleContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'flex-start',
-      // alignItems: 'flex-end',
+      alignItems: 'center',
     },
     floorPriceContainer: {
       marginTop: 6,
@@ -407,7 +414,8 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       marginRight: -5,
     },
     footContainer: {
-      marginVertical: 10,
+      marginTop: IMAGE_OFFSET_Y,
+      marginBottom: IMAGE_OFFSET_Y,
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors['neutral-line'],
     },
@@ -416,7 +424,10 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       justifyContent: 'center',
       alignItems: 'center',
       position: 'relative',
-      margin: 5,
+      marginTop: IMAGE_OFFSET_Y,
+      marginBottom: 0,
+      marginLeft: 5,
+      marginRight: 5,
       // ...makeDebugBorder('blue'),
     },
     imageCountMarkView: {
