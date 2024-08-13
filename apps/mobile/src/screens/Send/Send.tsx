@@ -80,6 +80,7 @@ function SendScreen(): JSX.Element {
     formValues,
     handleFieldChange,
     handleClickMaxButton,
+    handleReserveGasClose,
     handleGasLevelChanged,
 
     chainEnum,
@@ -365,6 +366,7 @@ function SendScreen(): JSX.Element {
           handleCurrentTokenChange,
           handleFieldChange,
           handleClickMaxButton,
+          handleReserveGasClose,
           handleGasLevelChanged,
         },
       }}>

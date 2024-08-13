@@ -68,6 +68,7 @@ export function BalanceSection({ style }: RNViewProps) {
 
     callbacks: {
       handleCurrentTokenChange,
+      handleReserveGasClose,
       handleGasLevelChanged,
       handleFieldChange,
       handleClickMaxButton,
@@ -216,7 +217,7 @@ export function BalanceSection({ style }: RNViewProps) {
         gasList={screenState.gasList}
         visible={screenState.reserveGasOpen}
         rawHexBalance={currentToken.raw_amount_hex_str}
-        onClose={gasLevel => handleGasLevelChanged(gasLevel)}
+        onClose={() => handleReserveGasClose()}
       />
     </SendTokenSection>
   );
