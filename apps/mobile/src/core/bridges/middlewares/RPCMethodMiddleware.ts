@@ -79,7 +79,11 @@ RPCMethodsMiddleParameters) =>
     };
     const checkTabActive = () => {
       const activeDappState = getActiveDappState();
-      if (!isRpcAllowed(activeDappState)) return false;
+      if (!isRpcAllowed(activeDappState)) {
+        // // leave here for debug
+        // console.debug('[checkTabActive] activeDappState', activeDappState);
+        return false;
+      }
 
       const webviewId = bridge.webviewId;
 

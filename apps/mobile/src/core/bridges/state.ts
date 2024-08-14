@@ -5,10 +5,12 @@ import { makeEEClass } from '../apis/event';
 export type ActiveDappState = {
   dappOrigin: string | null;
   tabId: string | null | undefined;
+  isPanning: boolean;
 };
 const activeDappRef: ActiveDappState = {
   dappOrigin: null,
   tabId: null,
+  isPanning: false,
 };
 type Listeners = {
   updated: (info: ActiveDappState['tabId']) => void;
@@ -19,18 +21,36 @@ export function getActiveDappState() {
   return { ...activeDappRef };
 }
 export function isRpcAllowed(s: ActiveDappState) {
-  return !!s.dappOrigin && s.tabId;
+  return !!s.dappOrigin && !!s.tabId && !s.isPanning;
 }
-export function globalSetActiveDappState(input: {
-  tabId?: string | null;
-  dappOrigin?: string | null;
-}) {
+export function globalSetActiveDappState(
+  input: {
+    tabId?: string | null;
+    dappOrigin?: string | null;
+    isPanning?: boolean;
+  },
+  options?: { delay?: number },
+) {
+  const { delay = 0 } = options || {};
+
   if (input.dappOrigin !== undefined) {
     activeDappRef.dappOrigin = input.dappOrigin || null;
   }
   if (input.tabId !== undefined) {
     activeDappRef.tabId = input.tabId || null;
     activeDappStateEvents.emit('updated', activeDappRef.tabId);
+  }
+
+  const setter = () => {
+    if (typeof input.isPanning === 'boolean') {
+      activeDappRef.isPanning = input.isPanning;
+    }
+  };
+
+  if (delay) {
+    setTimeout(setter, delay);
+  } else {
+    setter();
   }
 }
 

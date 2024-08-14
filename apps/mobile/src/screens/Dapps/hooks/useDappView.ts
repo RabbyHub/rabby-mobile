@@ -13,6 +13,8 @@ import {
   activeDappStateEvents,
   globalSetActiveDappState,
 } from '@/core/bridges/state';
+import useDebounceValue from '@/hooks/common/useDebounceValue';
+import { stringUtils } from '@rabby-wallet/base-utils';
 
 const activeDappTabIdAtom = atom<ActiveDappState['tabId']>(null);
 activeDappTabIdAtom.onMount = set => {
@@ -40,6 +42,7 @@ export function useOpenedActiveDappState() {
 
 export type OpenedDappItem = {
   origin: DappInfo['origin'];
+  dappTabId: string;
   $openParams?: {
     initialUrl?: string;
   };
@@ -54,6 +57,10 @@ const activeWebViewSheetModalRefs = atom({
 
 export function useActiveViewSheetModalRefs() {
   return useSheetModals(useAtomValue(activeWebViewSheetModalRefs));
+}
+
+export function makeDappTabId() {
+  return stringUtils.randString(8);
 }
 
 export const OPEN_DAPP_VIEW_INDEXES = {
@@ -112,7 +119,10 @@ export function useOpenDappView() {
       const { isActiveDapp = true, showSheetModalFirst = false } =
         options || {};
 
-      const item = typeof dappUrl === 'string' ? { origin: dappUrl } : dappUrl;
+      const item =
+        typeof dappUrl === 'string'
+          ? { origin: dappUrl, dappTabId: makeDappTabId() }
+          : dappUrl;
 
       const itemUrl = item.origin;
       const { origin: targetOrigin, urlInfo } = canoicalizeDappUrl(itemUrl);
@@ -216,7 +226,7 @@ export function useOpenDappView() {
     [activeDappOrigin, removeOpenedDapp, closeActiveOpenedDapp],
   );
 
-  const { openedDappItems, activeDapp } = useMemo(() => {
+  const originalInfo = useMemo(() => {
     const retOpenedDapps = [] as OpenedDappItem[];
     openedDappRecords.forEach(item => {
       retOpenedDapps.push({
@@ -245,6 +255,9 @@ export function useOpenDappView() {
       activeDapp: retActiveDapp,
     };
   }, [dapps, activeDappOrigin, openedDappRecords]);
+
+  const openedDappItems = useDebounceValue(originalInfo.openedDappItems, 100);
+  const activeDapp = useDebounceValue(originalInfo.activeDapp, 250);
 
   return {
     activeDapp,

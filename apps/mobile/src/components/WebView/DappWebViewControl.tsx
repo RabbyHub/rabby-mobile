@@ -96,6 +96,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => {
 
 type DappWebViewControlProps = {
   dappOrigin: string;
+  dappTabId?: string;
   /**
    * @description if embedHtml provided, dappOrigin would be ignored
    */
@@ -188,6 +189,7 @@ const DappWebViewControl = React.forwardRef<
   (
     {
       dappOrigin,
+      dappTabId,
       embedHtml,
       initialUrl: _initialUrl,
       onPressMore,
@@ -216,7 +218,7 @@ const DappWebViewControl = React.forwardRef<
 
       latestUrl,
       webviewActions,
-    } = useWebViewControl();
+    } = useWebViewControl({ initialTabId: dappTabId });
 
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
