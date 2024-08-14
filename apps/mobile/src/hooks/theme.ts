@@ -96,9 +96,11 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
   const { setMode } = useThemeMode();
 
   React.useEffect(() => {
+    if (!options?.isAppTop) return;
+
     setMode(colorScheme === 'dark' ? 'dark' : 'light');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorScheme]);
+  }, [options?.isAppTop, colorScheme]);
 
   React.useEffect(() => {
     if (!options?.isAppTop) return;
