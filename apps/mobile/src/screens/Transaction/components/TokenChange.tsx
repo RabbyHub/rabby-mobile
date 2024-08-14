@@ -1,12 +1,9 @@
-import { default as RcIconSend } from '@/assets/icons/history/send.svg';
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
-import { getTokenSymbol } from '@/utils/token';
 import {
   TxDisplayItem,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { useTranslation } from 'react-i18next';
 import {
   Image,
   StyleProp,
