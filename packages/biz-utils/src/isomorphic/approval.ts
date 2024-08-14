@@ -239,7 +239,7 @@ export function getContractRiskEvaluation(
     spendValue < 1e4 ? 'danger' : spendValue < 1e5 ? 'warning' : 'safe';
   const clientSpendScore = coerceInteger(
     RiskNumMap[clientSpendLevel],
-    0
+    0,
   ) as RiskLevelScore;
 
   const approve_user_count = coerceInteger(

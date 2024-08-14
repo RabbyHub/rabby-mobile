@@ -356,7 +356,7 @@ export const findIndexRevokeList = <
       }
     });
   } else if (item.type === 'nft') {
-    return list.findIndex(revokse => {
+    return list.findIndex(revoke => {
       const isNftContracts = !!item.nftContract;
       const nftInfo = isNftContracts ? item.nftContract : item.nftToken;
 
@@ -487,8 +487,8 @@ export function sortContractListAsTable(
     reEvaluateContractRisk(b).totalRiskScore -
       reEvaluateContractRisk(a).totalRiskScore ||
     // ascending order by risk exposure
-    a.$riskAboutValues.risk_exposure_usd_value -
-      b.$riskAboutValues.risk_exposure_usd_value ||
+    a.$riskAboutValues.risk_spend_usd_value -
+      b.$riskAboutValues.risk_spend_usd_value ||
     // or descending order by approved count
     b.list.length - a.list.length
   );
@@ -505,10 +505,10 @@ export function reEvaluateContractRisk(contract: ContractApprovalItem) {
   const $riskEval = contract.$contractRiskEvaluation;
   const trustValue = (() => {
     const isDanger =
-      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.danger;
+      $riskEval.extra.clientSpendScore >= approvalUtils.RiskNumMap.danger;
     const isWarning =
       !isDanger &&
-      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.warning;
+      $riskEval.extra.clientSpendScore >= approvalUtils.RiskNumMap.warning;
 
     const isRisky = isDanger || isWarning;
 

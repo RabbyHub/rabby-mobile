@@ -76,11 +76,11 @@ function CardProto({
     React.useMemo(() => {
       const trustValue = (() => {
         const isDanger =
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
           approvalUtils.RiskNumMap.danger;
         const isWarning =
           !isDanger &&
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
             approvalUtils.RiskNumMap.warning;
 
         const isRisky = isDanger || isWarning;
@@ -93,7 +93,7 @@ function CardProto({
         const finalUnderlineStyle = StyleSheet.flatten([
           styles.floorValueUnderlineDefault,
           isRisky && {
-            borderColor: finalTextStyle['color'],
+            borderColor: finalTextStyle.color,
           },
         ]);
 
@@ -125,7 +125,7 @@ function CardProto({
         const finalUnderlineStyle = StyleSheet.flatten([
           styles.floorValueUnderlineDefault,
           isRisky && {
-            borderColor: finalTextStyle['color'],
+            borderColor: finalTextStyle.color,
           },
         ]);
 
@@ -160,9 +160,9 @@ function CardProto({
   const contractUsdText = useMemo(
     () =>
       bizNumberUtils.formatUsdValue(
-        contract.$riskAboutValues.risk_exposure_usd_value || 0,
+        contract.$riskAboutValues.risk_spend_usd_value || 0,
       ),
-    [contract.$riskAboutValues.risk_exposure_usd_value],
+    [contract.$riskAboutValues.risk_spend_usd_value],
   );
 
   const isTreatedAsSelected = isSelectedAll || isSelectedPartial;

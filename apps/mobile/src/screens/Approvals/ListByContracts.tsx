@@ -31,8 +31,7 @@ import { ApprovalsLayouts } from './layout';
 const isIOS = Platform.OS === 'ios';
 
 export default function ListByContracts() {
-  const { colors, styles } = useThemeStyles(getStyles);
-  const { t } = useTranslation();
+  const { styles } = useThemeStyles(getStyles);
 
   const {
     isLoading,
@@ -51,7 +50,7 @@ export default function ListByContracts() {
   const renderItem = React.useCallback<
     SectionListProps<ContractApprovalItem>['renderItem'] & object
   >(
-    ({ item, section, index }) => {
+    ({ item, index }) => {
       const isFirstItem = index === 0;
       return (
         <View
@@ -66,13 +65,8 @@ export default function ListByContracts() {
     [styles],
   );
 
-  const {
-    fallList,
-    simulateLoadNext,
-    resetPage,
-    isFetchingNextPage,
-    isReachTheEnd,
-  } = usePsudoPagination(displaySortedContractList, { pageSize: 10 });
+  const { fallList, simulateLoadNext, resetPage, isFetchingNextPage } =
+    usePsudoPagination(displaySortedContractList, { pageSize: 10 });
 
   const sectionList = React.useMemo(() => {
     return !fallList?.length

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { Platform, View, Text, Dimensions, StatusBar } from 'react-native';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
@@ -6,7 +6,6 @@ import { Button } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
-import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import {
   RcIconCheckedCC,
   RcIconIndeterminateCC,

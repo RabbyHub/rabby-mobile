@@ -87,7 +87,7 @@ async function revokeNFTApprove(
     spender: string;
     abi: 'ERC721' | 'ERC1155' | '';
     isApprovedForAll: boolean;
-    nftTokenId?: string | null | undefined;
+    nftTokenId?: string | null;
   },
   $ctx?: any,
 ) {
@@ -221,7 +221,6 @@ export async function revoke({
   list: ApprovalSpenderItemToBeRevoked[];
 }) {
   const queue = getQueue();
-  const controller = new AbortController();
 
   const abortRevoke = new AbortController();
 
@@ -295,4 +294,69 @@ export async function lockdownPermit2(input: {
   tokenSpenders: TokenSpenderPair[];
   $ctx?: any;
   gasPrice?: number;
-}) {}
+}) {
+  const {
+    chainServerId,
+    id,
+    tokenSpenders: _tokenSpenders,
+    $ctx,
+    gasPrice,
+  } = input;
+
+  const tokenSpenders = JSON.parse(JSON.stringify(_tokenSpenders));
+
+  const account = await preferenceService.getCurrentAccount();
+  if (!account) {
+    throw new Error(t('background.error.noCurrentAccount'));
+  }
+  const chainId = findChain({
+    serverId: chainServerId,
+  })?.id;
+  if (!chainId) {
+    throw new Error(t('background.error.invalidChainId'));
+  }
+  const tx: any = {
+    from: account.address,
+    to: id,
+    chainId: chainId,
+    data: abiCoder.encodeFunctionCall(
+      {
+        constant: false,
+        inputs: [
+          {
+            name: 'approvals',
+            type: 'tuple[]',
+            internalType: 'tuple[]',
+            components: [
+              { type: 'address', name: 'token' },
+              { type: 'address', name: 'spender' },
+            ],
+          },
+        ],
+        name: 'lockdown',
+        outputs: [
+          {
+            name: '',
+            type: 'bool',
+          },
+        ],
+        payable: false,
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      [tokenSpenders] as any,
+    ),
+  };
+  if (gasPrice) {
+    tx.gasPrice = gasPrice;
+  }
+
+  return await sendRequest(
+    {
+      $ctx,
+      method: 'eth_sendTransaction',
+      params: [tx],
+    },
+    INTERNAL_REQUEST_SESSION,
+  );
+}
