@@ -103,9 +103,7 @@ export const ViewRawDetail = ({
         indicatorStyle={styles.indicator}
         containerStyle={active => ({
           ...styles.tabContainer,
-          backgroundColor: active
-            ? colors['neutral-bg1']
-            : colors['neutral-line'],
+          backgroundColor: active ? colors['neutral-bg1'] : 'transparent',
         })}
         titleStyle={active => ({
           ...styles.indicatorText,
