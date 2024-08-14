@@ -54,7 +54,6 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
-import { useThemeMode } from '@rneui/themed';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -153,13 +152,6 @@ export default function AppNavigation({
     [undefined, RootNames.GetStarted].includes(previousRoute as any) &&
     routeNameRef.current === RootNames.Unlock;
   // console.debug('previousRoute: %s, routeNameRef.current: %s, isSlideFromGetStarted: %s', previousRoute, routeNameRef.current, isSlideFromGetStarted);
-
-  const { setMode } = useThemeMode();
-
-  useEffect(() => {
-    setMode(colorScheme === 'dark' ? 'dark' : 'light');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorScheme]);
 
   return (
     <AutoLockView.ForAppNav

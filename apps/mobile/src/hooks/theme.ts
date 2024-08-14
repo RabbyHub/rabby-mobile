@@ -17,6 +17,7 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { createGetStyles } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { devLog } from '@/utils/logger';
+import { useThemeMode } from '@rneui/themed';
 
 export const SHOULD_SUPPORT_DARK_MODE = true;
 
@@ -91,6 +92,13 @@ export const useAppTheme = (options?: { isAppTop?: boolean }) => {
 
     Appearance.setColorScheme(appThemeToColorScheme(appTheme));
   }, [options?.isAppTop, appTheme]);
+
+  const { setMode } = useThemeMode();
+
+  React.useEffect(() => {
+    setMode(colorScheme === 'dark' ? 'dark' : 'light');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorScheme]);
 
   React.useEffect(() => {
     if (!options?.isAppTop) return;
