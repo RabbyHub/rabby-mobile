@@ -6,6 +6,7 @@ import { createGetStyles } from '@/utils/styles';
 import { useIsOnBackground } from '@/hooks/useLock';
 import { useCurrentRouteName } from '@/hooks/navigation';
 import { RootNames } from '@/constant/layout';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const getBlurModalStyles = createGetStyles(colors => {
   return {
@@ -29,7 +30,7 @@ export function BackgroundSecureBlurView() {
   const { currentRouteName } = useCurrentRouteName();
   const { isOnBackground } = useIsOnBackground();
 
-  if (!isOnBackground) return null;
+  if (!isOnBackground || IS_ANDROID) return null;
   if (
     currentRouteName &&
     BLUR_FREE_ROOT_NAMES.includes(currentRouteName as any)
