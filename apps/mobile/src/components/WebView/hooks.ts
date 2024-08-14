@@ -13,7 +13,11 @@ export type WebViewActions = ReturnType<
   typeof useWebViewControl
 >['webviewActions'];
 
-export const BLANK_PAGE = 'about:blank';
+import { BLANK_PAGE } from '@/core/bridges/useBackgroundBridge';
+export {
+  BLANK_PAGE,
+  BLANK_RABBY_PAGE,
+} from '@/core/bridges/useBackgroundBridge';
 
 export function useWebViewControl() {
   const webviewRef = useRef<WebView>(null);

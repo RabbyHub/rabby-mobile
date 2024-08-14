@@ -25,15 +25,13 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import {
-  BLANK_PAGE,
-  WebViewActions,
-  WebViewState,
-  useWebViewControl,
-} from './hooks';
+import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
 import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
+import {
+  BUILTIN_SPECIAL_URLS,
+  useSetupWebview,
+} from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
@@ -46,7 +44,6 @@ function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
 }
 
-const BUILTIN_SPECIAL_URLS = [BLANK_PAGE];
 function convertToWebviewUrl(dappOrigin: string) {
   if (__DEV__) {
     if (dappOrigin.startsWith('http://')) {
@@ -361,11 +358,13 @@ const DappWebViewControl = React.forwardRef<
           style={[styles.dappWebView, webviewProps?.style]}
           ref={webviewRef}
           source={{
-            uri: initialUrl,
-            ...(embedHtml && {
-              uri: undefined,
-              html: embedHtml,
-            }),
+            ...(embedHtml
+              ? {
+                  html: embedHtml,
+                }
+              : {
+                  uri: initialUrl,
+                }),
             // TODO: cusotmize userAgent here
             // 'User-Agent': ''
           }}

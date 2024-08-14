@@ -66,9 +66,10 @@ export class BackgroundBridge extends EventEmitter {
 
     this.#webview = webview.current;
     this.#webviewIdRef = webviewIdRef;
-    this.#webviewOrigin = urlUtils.canoicalizeDappUrl(
-      urlRef.current,
-    ).httpOrigin;
+    this.#webviewOrigin =
+      urlRef.current === 'about:rabby'
+        ? urlRef.current
+        : urlUtils.canoicalizeDappUrl(urlRef.current).httpOrigin;
 
     this.#urlRef = urlRef;
     this.#titleRef = titleRef;

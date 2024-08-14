@@ -122,19 +122,21 @@ function useForceExpandOnceOnBootstrap(
     useRefState(false);
 
   useEffect(() => {
-    if (!firstTouchedRef.current && OPEN_DAPP_VIEW_INDEXES.expanded > 0) {
-      sheetModalRef?.current?.present();
-      sheetModalRef?.current?.snapToIndex(OPEN_DAPP_VIEW_INDEXES.expanded);
+    (async () => {
+      if (!firstTouchedRef.current && OPEN_DAPP_VIEW_INDEXES.expanded > 0) {
+        sheetModalRef?.current?.present();
+        sheetModalRef?.current?.snapToIndex(OPEN_DAPP_VIEW_INDEXES.expanded);
 
-      firstTouchedRef.current = true;
+        firstTouchedRef.current = true;
 
-      setTimeout(() => {
-        sheetModalRef?.current?.forceClose();
-        sheetModalRef?.current?.dismiss();
+        setTimeout(() => {
+          sheetModalRef?.current?.forceClose();
+          sheetModalRef?.current?.dismiss();
 
-        setFirstTouched(true, true);
-      }, 200);
-    }
+          setFirstTouched(true, true);
+        }, 200);
+      }
+    })();
   }, [firstTouchedRef, setFirstTouched, sheetModalRef]);
 }
 
