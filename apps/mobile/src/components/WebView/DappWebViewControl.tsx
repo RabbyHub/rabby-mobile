@@ -371,6 +371,7 @@ const DappWebViewControl = React.forwardRef<
           testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
           applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
           javaScriptEnabled
+          // androidLayerType='software'
           injectedJavaScriptBeforeContentLoaded={fullScript}
           injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
@@ -433,6 +434,7 @@ const DappWebViewControl = React.forwardRef<
 
         {/* webvbiew */}
         <View
+          renderToHardwareTextureAndroid
           style={[
             styles.dappWebViewContainer,
             {
@@ -512,12 +514,14 @@ const getStyles = createGetStyles(colors =>
 
     dappWebViewContainer: {
       flexShrink: 1,
+      flex: 1,
       height: '100%',
     },
     dappWebView: {
+      flex: 1,
       height: '100%',
       width: '100%',
-      opacity: 1,
+      opacity: 0.99,
       overflow: 'hidden',
     },
   }),
