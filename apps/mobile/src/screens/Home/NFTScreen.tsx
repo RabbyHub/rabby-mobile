@@ -119,7 +119,7 @@ const Item = ({ item, lastCountMark, collectionName }: ItemProps) => {
       )}
       {item?.amount > 1 ? (
         <View style={styles.corner}>
-          <Text style={styles.cornerNumber}>{numberDisplay}</Text>
+          <Text style={styles.cornerNumber}>x{numberDisplay}</Text>
         </View>
       ) : null}
     </CustomTouchableOpacity>
@@ -471,7 +471,7 @@ const getStyle = createGetStyles((colors: AppColorsVariants) =>
       borderRadius: 16,
     },
     corner: {
-      backgroundColor: colors['neutral-black'],
+      backgroundColor: 'rgba(0, 0, 0, 0.30)',
       position: 'absolute',
       right: 4,
       top: 4,

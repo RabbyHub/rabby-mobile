@@ -13,7 +13,7 @@ export default function TokenLabel({
   token,
   isNft,
   // onClose,
-  canClickToken,
+  canClickToken: propCanClickToken,
   style,
 }: RNViewProps & {
   token: TokenItem;
@@ -32,6 +32,8 @@ export default function TokenLabel({
   }, [t, isNft, token, symbol]);
 
   const { openTokenDetailPopup } = useGeneralTokenDetailSheetModal();
+
+  const canClickToken = propCanClickToken && !isNft;
 
   if (!canClickToken)
     return (
