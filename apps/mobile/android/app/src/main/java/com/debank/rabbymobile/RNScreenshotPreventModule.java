@@ -148,10 +148,10 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
 
   @Override
   public void onHostResume() {
-    Activity currentActivity = this.reactContext.getCurrentActivity();
-    WritableMap params = Arguments.createMap();
-    params.putString("state", "resume");
-    RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
+    // Activity currentActivity = this.reactContext.getCurrentActivity();
+    // WritableMap params = Arguments.createMap();
+    // params.putString("state", "resume");
+    // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
     // if (currentActivity != null && overlayLayout != null) {
     //   currentActivity.runOnUiThread(new Runnable() {
     //     @Override
@@ -167,10 +167,10 @@ public class RNScreenshotPreventModule extends EventEmitterPackageSpec implement
 
   @Override
   public void onHostPause() {
-    Activity currentActivity = this.reactContext.getCurrentActivity();
-    WritableMap params = Arguments.createMap();
-    params.putString("state", "pause");
-    RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
+    // Activity currentActivity = this.reactContext.getCurrentActivity();
+    // WritableMap params = Arguments.createMap();
+    // params.putString("state", "pause");
+    // RabbyUtils.rnCtxSendEvent(reactContext, "androidOnLifeCycleChanged", params);
 
     // if (currentActivity != null && overlayLayout == null) {
     //  currentActivity.runOnUiThread(new Runnable() {
