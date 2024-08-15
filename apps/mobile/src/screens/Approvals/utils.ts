@@ -385,6 +385,16 @@ export const toRevokeItem = <T extends ApprovalItem>(
   return undefined;
 };
 
+export function checkoutContractSpender(
+  contractApproval: ContractApprovalItem['list'][number],
+) {
+  return 'spender' in contractApproval
+    ? contractApproval.spender
+    : 'spenders' in contractApproval
+    ? contractApproval.spenders?.[0]
+    : null;
+}
+
 export function getFinalRiskInfo(contract: ContractApprovalItem) {
   const eva = contract.$contractRiskEvaluation;
   const finalMaxScore = Math.max(eva.clientMaxRiskScore, eva.serverRiskScore);

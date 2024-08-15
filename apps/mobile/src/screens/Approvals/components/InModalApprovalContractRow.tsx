@@ -13,6 +13,7 @@ import {
   getContractNFTType,
   querySelectedContractSpender,
   maybeNFTLikeItem,
+  checkoutContractSpender,
 } from '../utils';
 
 import {
@@ -151,14 +152,13 @@ export function InModalApprovalContractRow({
   const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
 
   const { contractFocusingRevokeMap } = useRevokeApprovals();
-  const { spender, isSelected } = React.useMemo(() => {
-    const spender =
-      '$indexderSpender' in contractApproval
-        ? contractApproval.$indexderSpender
-        : null;
-
+  const { spender, isSelected, associatedSpender } = React.useMemo(() => {
     return {
-      spender,
+      spender: checkoutContractSpender(contractApproval),
+      associatedSpender:
+        '$indexderSpender' in contractApproval
+          ? contractApproval.$indexderSpender
+          : null,
       isSelected: !!querySelectedContractSpender(
         contractFocusingRevokeMap,
         approval,
@@ -197,8 +197,8 @@ export function InModalApprovalContractRow({
           ((contractApproval as any)?.collection?.logo_url as string),
       };
 
-      const spenderValues = spender
-        ? approvalUtils.getSpenderApprovalAmount(spender)
+      const spenderValues = associatedSpender
+        ? approvalUtils.getSpenderApprovalAmount(associatedSpender)
         : null;
 
       return {
@@ -208,7 +208,7 @@ export function InModalApprovalContractRow({
         spender,
         spenderValues,
       };
-    }, [contractApproval, spender]);
+    }, [contractApproval, spender, associatedSpender]);
 
   if (!spender) return null;
 
@@ -241,7 +241,10 @@ export function InModalApprovalContractRow({
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
             <Text
-              style={styles.itemName}
+              style={{
+                ...styles.itemName,
+                maxWidth: associatedSpender?.permit2_id ? 85 : 150,
+              }}
               ellipsizeMode="tail"
               numberOfLines={1}>
               {itemName}
@@ -253,7 +256,9 @@ export function InModalApprovalContractRow({
             </View>
           )}
         </View>
-        {spender?.permit2_id && <Permit2Badge style={styles.permit2} />}
+        {associatedSpender?.permit2_id && (
+          <Permit2Badge style={styles.permit2} />
+        )}
       </View>
 
       <View style={styles.rightArea}>
