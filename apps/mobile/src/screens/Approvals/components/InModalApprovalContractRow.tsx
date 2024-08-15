@@ -7,14 +7,12 @@ import { NFTApproval } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import {
-  checkoutContractSpender,
   getContractNFTType,
   querySelectedContractSpender,
   maybeNFTLikeItem,
-  encodeApprovalSpenderKey,
 } from '../utils';
 
 import {
@@ -27,6 +25,8 @@ import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
+import Permit2Badge from './Permit2Badge';
+import { getTokenSymbol } from '@/utils/token';
 
 function ApprovalAmountInfo({
   style,
@@ -152,7 +152,10 @@ export function InModalApprovalContractRow({
 
   const { contractFocusingRevokeMap } = useRevokeApprovals();
   const { spender, isSelected } = React.useMemo(() => {
-    const spender = checkoutContractSpender(contractApproval);
+    const spender =
+      '$indexderSpender' in contractApproval
+        ? contractApproval.$indexderSpender
+        : null;
 
     return {
       spender,
@@ -169,7 +172,7 @@ export function InModalApprovalContractRow({
       const maybeContractForNFT = maybeNFTLikeItem(contractApproval);
 
       const itemName = !maybeContractForNFT
-        ? contractApproval.symbol
+        ? getTokenSymbol(contractApproval)
         : 'inner_id' in contractApproval
         ? stringUtils.ensureSuffix(
             contractApproval.contract_name || 'Unknown',
@@ -250,6 +253,7 @@ export function InModalApprovalContractRow({
             </View>
           )}
         </View>
+        {spender?.permit2_id && <Permit2Badge style={styles.permit2} />}
       </View>
 
       <View style={styles.rightArea}>
@@ -338,5 +342,8 @@ const getApprovalContractRowStyles = createGetStyles(colors => {
       height: 24,
     },
     chainIcon: { marginRight: 12 },
+    permit2: {
+      marginLeft: 12,
+    },
   };
 });

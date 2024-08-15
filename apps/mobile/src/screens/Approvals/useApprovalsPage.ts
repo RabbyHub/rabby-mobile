@@ -1001,6 +1001,7 @@ export function useRevokeAssetSpenders() {
           const revokeSpenderKey = encodeApprovalSpenderKey(
             spender.$assetContract!,
             spender.$assetToken!,
+            spender,
           );
 
           if (isToggledSingle) nextSelect = !assetRevokeMap[revokeSpenderKey];

@@ -1,9 +1,17 @@
-import React, { useMemo } from 'react';
-import { Platform, View, Text, Dimensions, StatusBar } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import {
+  Platform,
+  View,
+  Text,
+  Dimensions,
+  StatusBar,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { Button } from '@/components';
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { createGetStyles } from '@/utils/styles';
 
 import {
@@ -16,6 +24,7 @@ import { useApprovalsPage, useRevokeApprovals } from '../useApprovalsPage';
 import { apiApprovals } from '@/core/apis';
 import { useRefState } from '@/hooks/common/useRefState';
 import { ApprovalsLayouts } from '../layout';
+import { summarizeRevoke } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 /** @deprecated import from '../layout' directly */
 export { ApprovalsLayouts };
 
@@ -76,6 +85,8 @@ export function ApprovalsBottomArea() {
   const colors = useThemeColors();
   const styles = getStyles(colors);
 
+  const [showModal, setShowModal] = useState(false);
+
   const {
     filterType,
     loadApprovals,
@@ -84,16 +95,21 @@ export function ApprovalsBottomArea() {
   const { contractRevokeMap, assetRevokeMap, resetRevokeMaps } =
     useRevokeApprovals();
 
-  const currentRevokeList = React.useMemo(() => {
-    return filterType === 'contract'
-      ? Object.values(contractRevokeMap)
-      : filterType === 'assets'
-      ? Object.values(assetRevokeMap)
-      : [];
+  const { currentRevokeList, revokeSummary } = React.useMemo(() => {
+    const list =
+      filterType === 'contract'
+        ? Object.values(contractRevokeMap)
+        : filterType === 'assets'
+        ? Object.values(assetRevokeMap)
+        : [];
+    return {
+      currentRevokeList: list,
+      revokeSummary: summarizeRevoke(list),
+    };
   }, [filterType, contractRevokeMap, assetRevokeMap]);
 
   const { couldSubmit, buttonTitle } = useMemo(() => {
-    const revokeCount = currentRevokeList.length;
+    const revokeCount = revokeSummary.statics.txCount;
     const buttonTitle = [
       `${t('page.approvals.component.RevokeButton.btnText', {
         // count: revokeList.length,
@@ -108,7 +124,7 @@ export function ApprovalsBottomArea() {
       couldSubmit: !!revokeCount,
       buttonTitle,
     };
-  }, [t, currentRevokeList]);
+  }, [t, revokeSummary]);
 
   const {
     state: isSubmitLoading,
@@ -117,6 +133,7 @@ export function ApprovalsBottomArea() {
   } = useRefState(false);
 
   const handleRevoke = React.useCallback(() => {
+    setShowModal(false);
     if (isSubmitLoadingRef.current) return;
     setIsSubmitLoading(true, true);
 
@@ -140,6 +157,17 @@ export function ApprovalsBottomArea() {
     loadApprovals,
   ]);
 
+  const onRevoke = () => {
+    const hasPackedPermit2Sign = Object.values(
+      revokeSummary.permit2Revokes,
+    ).some(x => x.tokenSpenders.length > 1);
+
+    if (!hasPackedPermit2Sign) {
+      return handleRevoke();
+    }
+    setShowModal(true);
+  };
+
   return (
     <View
       style={[styles.bottomDockArea, { height: safeSizes.bottomAreaHeight }]}>
@@ -151,8 +179,41 @@ export function ApprovalsBottomArea() {
         type="primary"
         title={buttonTitle}
         loading={isSubmitLoading}
-        onPress={handleRevoke}
+        onPress={onRevoke}
       />
+      <Modal
+        visible={showModal}
+        transparent={true}
+        onRequestClose={() => setShowModal(false)}>
+        <TouchableOpacity
+          style={styles.modalContainer}
+          onPress={() => setShowModal(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalContent}
+            onPress={e => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>
+              <Trans
+                i18nKey="page.approvals.component.RevokeButton.permit2Batch.modalTitle"
+                values={{ count: revokeSummary.statics.txCount }}>
+                A total of{' '}
+                <Text style={styles.highlightText}>
+                  {revokeSummary.statics.txCount}
+                </Text>{' '}
+                signature is required
+              </Trans>
+            </Text>
+            <Text style={styles.modalBody}>
+              {t(
+                'page.approvals.component.RevokeButton.permit2Batch.modalContent',
+              )}
+            </Text>
+            <TouchableOpacity style={styles.okButton} onPress={handleRevoke}>
+              <Text style={styles.okButtonText}>{t('global.confirm')}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -183,6 +244,52 @@ const getStyles = createGetStyles(colors => {
 
     buttonText: {
       color: colors['neutral-title-2'],
+    },
+
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      width: '80%',
+      backgroundColor: colors['neutral-bg1'],
+      borderRadius: 16,
+      padding: 20,
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '500',
+      lineHeight: 24,
+      color: colors['neutral-title1'],
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    highlightText: {
+      color: colors['blue-default'],
+    },
+    modalBody: {
+      fontSize: 14,
+      color: colors['neutral-body'],
+      lineHeight: 20,
+      textAlign: 'center',
+      marginBottom: 60,
+    },
+    okButton: {
+      width: '100%',
+      height: 48,
+      backgroundColor: colors['blue-default'],
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 8,
+    },
+    okButtonText: {
+      color: colors['neutral-title2'],
+      fontSize: 15,
+      lineHeight: 18,
+      fontWeight: '600',
     },
   };
 });
