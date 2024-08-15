@@ -909,6 +909,7 @@ export function useRevokeContractSpenders() {
           const contractRevokeKey = encodeApprovalSpenderKey(
             ctx.approval,
             contract,
+            true,
           );
           if (!contractRevokeKey) {
             __DEV__ &&

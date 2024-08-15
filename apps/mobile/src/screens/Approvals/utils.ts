@@ -241,7 +241,7 @@ export function parseApprovalSpenderSelection<T extends TParseMaps>(
             (member as AssetApprovalSpender).$assetToken!,
             member as AssetApprovalSpender,
           )
-        : encodeApprovalSpenderKey(approval, member);
+        : encodeApprovalSpenderKey(approval, member, true);
 
       const nextS = maps.nextKeepMap?.[indexKey]
         ? { key: indexKey, item: maps.nextKeepMap?.[indexKey] }
@@ -278,7 +278,7 @@ export function querySelectedContractSpender(
   contract?: ContractApprovalItem['list'][number] | null,
 ) {
   if (!contract) return null;
-  const key = encodeApprovalSpenderKey(approval, contract);
+  const key = encodeApprovalSpenderKey(approval, contract, true);
   return key && assetRevokeMap[key]
     ? { spenderKey: key, spender: assetRevokeMap[key] }
     : null;
