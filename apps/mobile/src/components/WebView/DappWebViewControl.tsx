@@ -436,7 +436,7 @@ const DappWebViewControl = React.forwardRef<
 
         {/* webvbiew */}
         <View
-          renderToHardwareTextureAndroid
+          // renderToHardwareTextureAndroid
           style={[
             styles.dappWebViewContainer,
             {
