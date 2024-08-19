@@ -169,9 +169,7 @@ function CardProto({
             <ChainIconImage
               style={styles.chainIcon}
               size={20}
-              {...(contract.logo_url && {
-                source: { uri: chainLogoUrl },
-              })}
+              source={{ uri: chainLogoUrl }}
             />
           ) : (
             <RcIconUnknown style={styles.chainIcon} />
@@ -198,11 +196,7 @@ function CardProto({
       </View>
 
       {risky && (
-        <View
-          style={[
-            styles.contractItemFloor,
-            { height: ApprovalsLayouts.contractCardRiskAlertSpace },
-          ]}>
+        <View style={[styles.contractItemFloor]}>
           <View style={[styles.riskyTip]}>
             <RcIconInfoCC
               width={14}
@@ -393,7 +387,7 @@ export const getCardStyles = createGetStyles(colors => {
     },
     riskyTip: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'flex-start',
       borderRadius: 6,
       padding: 8,
