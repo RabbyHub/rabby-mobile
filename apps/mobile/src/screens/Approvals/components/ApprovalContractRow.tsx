@@ -185,9 +185,7 @@ function CardProto({
             <ChainIconImage
               style={styles.chainIcon}
               size={20}
-              {...(contract.logo_url && {
-                source: { uri: chainLogoUrl },
-              })}
+              source={{ uri: chainLogoUrl }}
             />
           ) : (
             <RcIconUnknown style={styles.chainIcon} />
