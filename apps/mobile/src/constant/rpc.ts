@@ -42,5 +42,6 @@ export const SAFE_RPC_METHODS = [
   'eth_uninstallFilter',
   'wallet_requestPermissions',
   'wallet_getPermissions',
+  'wallet_revokePermissions',
   'net_version',
 ];
