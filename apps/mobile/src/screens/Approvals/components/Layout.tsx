@@ -115,7 +115,7 @@ export function ApprovalsBottomArea() {
         // count: revokeList.length,
         // count: revokeCount,
       })}`,
-      revokeCount && ` (${revokeCount})`,
+      revokeCount && ` (${currentRevokeList.length})`,
     ]
       .filter(Boolean)
       .join('');
@@ -124,7 +124,7 @@ export function ApprovalsBottomArea() {
       couldSubmit: !!revokeCount,
       buttonTitle,
     };
-  }, [t, revokeSummary]);
+  }, [revokeSummary.statics.txCount, t, currentRevokeList.length]);
 
   const {
     state: isSubmitLoading,
