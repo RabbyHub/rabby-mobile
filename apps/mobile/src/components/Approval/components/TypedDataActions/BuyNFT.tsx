@@ -147,7 +147,7 @@ const BuyNFT = ({
             {actionData.expire_at ? (
               <Values.TimeSpanFuture to={Number(actionData.expire_at)} />
             ) : (
-              '-'
+              <Text>-</Text>
             )}
           </Row>
         </Col>
