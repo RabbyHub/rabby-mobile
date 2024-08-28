@@ -6865,6 +6865,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-google-signin/google-signin@npm:^12.2.1":
+  version: 12.2.1
+  resolution: "@react-native-google-signin/google-signin@npm:12.2.1"
+  peerDependencies:
+    expo: ">=50.0.0"
+    react: "*"
+    react-dom: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 214a51d4b98a74b3f8f26aaf2882d95d37592aebfc59f2c65619234f64aa545a72a7ba3b2cb19eebf02312758ec0f6c12c5fe801bb3da613bf79d9914f247dac
+  languageName: node
+  linkType: hard
+
 "@react-native-masked-view/masked-view@npm:^0.3.1":
   version: 0.3.1
   resolution: "@react-native-masked-view/masked-view@npm:0.3.1"
@@ -27824,6 +27841,7 @@ __metadata:
     "@react-native-community/netinfo": ^11.2.0
     "@react-native-firebase/analytics": ^18.8.0
     "@react-native-firebase/app": ^18.8.0
+    "@react-native-google-signin/google-signin": ^12.2.1
     "@react-native-masked-view/masked-view": ^0.3.1
     "@react-native-menu/menu": ^1.1.2
     "@react-native/eslint-config": ^0.72.2
@@ -27899,6 +27917,7 @@ __metadata:
     react-native-asset: ^2.1.1
     react-native-ble-manager: 8
     react-native-ble-plx: 3.1.2
+    react-native-cloud-storage: ^1.4.1
     react-native-collapsible-tab-view: ^6.2.1
     react-native-crypto-js: ^1.0.0
     react-native-device-info: ^10.12.0
@@ -28370,6 +28389,20 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 6a35269d4e65c3b8a52469db9a628b4519f28fe4009f90c96ba017b84408d63751c708391901219ec0a4cac3c560defba4fa504ded0b8a4a4b5b2c8c307a1841
+  languageName: node
+  linkType: hard
+
+"react-native-cloud-storage@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "react-native-cloud-storage@npm:1.4.1"
+  peerDependencies:
+    expo: ">=48.0.0"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 7289529b4f85ca9ec7ae016d2cd14cd2c971127c322761e7aff187064b92b5e36bc9016ed81c3e65ba88ad06d283baaf63943a8100725c8f28485d562242e7b9
   languageName: node
   linkType: hard
 
