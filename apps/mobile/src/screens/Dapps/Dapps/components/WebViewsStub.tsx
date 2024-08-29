@@ -274,6 +274,7 @@ export function OpenedDappWebViewStub() {
                  * @platform android
                  */
                 nestedScrollEnabled: false,
+                allowsInlineMediaPlayback: true,
               }}
               bottomNavH={
                 isConnected
