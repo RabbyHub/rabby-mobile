@@ -50,6 +50,7 @@
 		01BBE0192C387B8C0033D12B /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIImage+ImageEffects.h"; path = "RabbyMobile/UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		01BBE01E2C3889BB0033D12B /* ScreenShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ScreenShield.swift; path = RabbyMobile/ScreenShield.swift; sourceTree = "<group>"; };
 		01C69DD82C2C93CA007C7A6E /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = AppConfig.xcconfig; path = RabbyMobile/AppConfig.xcconfig; sourceTree = "<group>"; };
+		01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RabbyMobileDebug.entitlements; path = RabbyMobile/RabbyMobileDebug.entitlements; sourceTree = "<group>"; };
 		01E584B52C370990007F3280 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LaunchScreen.xib; path = RabbyMobile/LaunchScreen.xib; sourceTree = "<group>"; };
 		01EF41A82C36CAFF009D8053 /* ReactNativeSecurity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReactNativeSecurity.h; path = RabbyMobile/ReactNativeSecurity.h; sourceTree = "<group>"; };
 		01EF41A92C36CB00009D8053 /* ReactNativeSecurity.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ReactNativeSecurity.mm; path = RabbyMobile/ReactNativeSecurity.mm; sourceTree = "<group>"; };
@@ -115,6 +116,7 @@
 		13B07FAE1A68108700A75B9A /* RabbyMobile */ = {
 			isa = PBXGroup;
 			children = (
+				01D18D942C804A750067DA5F /* RabbyMobileDebug.entitlements */,
 				A8D4D12C2C7EFDA1002B827D /* RabbyMobile.entitlements */,
 				01E584B52C370990007F3280 /* LaunchScreen.xib */,
 				01BBE01E2C3889BB0033D12B /* ScreenShield.swift */,
@@ -582,7 +584,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobile.entitlements;
+				CODE_SIGN_ENTITLEMENTS = RabbyMobile/RabbyMobileDebug.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
