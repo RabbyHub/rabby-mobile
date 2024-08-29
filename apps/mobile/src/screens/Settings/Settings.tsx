@@ -90,7 +90,11 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
-import { loginIfNeeded } from '@/core/utils/cloudBackup';
+import {
+  getBackupsFromCloud,
+  loginIfNeeded,
+  saveMnemonicToCloud,
+} from '@/core/utils/cloudBackup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -502,6 +506,15 @@ function DevSettingsBlocks() {
                 loginIfNeeded()
                   .then(e => {
                     console.log('loginIfNeeded done', e);
+                    saveMnemonicToCloud({
+                      mnemonic: 'test',
+                      password: 'test',
+                    });
+                    getBackupsFromCloud({
+                      password: 'test',
+                    }).then(e => {
+                      console.log('getBackupsFromCloud done', e);
+                    });
                   })
                   .catch(e => {
                     console.error('loginIfNeeded error', e);

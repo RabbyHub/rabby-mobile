@@ -1,5 +1,4 @@
-import { nodeEncryptor } from '@rabby-wallet/service-keyring/dist/utils/encryptor';
-import { CloudStorage } from 'react-native-cloud-storage';
+import { CloudStorage, CloudStorageScope } from 'react-native-cloud-storage';
 import { IS_ANDROID } from '../native/utils';
 import {
   GoogleSignin,
@@ -8,8 +7,9 @@ import {
   User,
 } from '@react-native-google-signin/google-signin';
 import md5 from 'md5';
+import { appEncryptor } from '../services/shared';
 
-const REMOTE_BACKUP_WALLET_DIR = 'com.debank.rabby-mobile/wallet-backups';
+const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 
 GoogleSignin.configure();
 
@@ -30,16 +30,18 @@ export const saveMnemonicToCloud = async ({
   password: string;
 }) => {
   await loginIfNeeded();
+  await makeDirIfNeeded();
 
-  const encryptedData = await nodeEncryptor.encrypt(
+  const encryptedData = await appEncryptor.encrypt(
     password,
     JSON.stringify(mnemonic),
   );
   const filename = generateBackupFileName(mnemonic);
 
   await CloudStorage.writeFile(
-    `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+    `/${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     encryptedData,
+    CloudStorageScope.Documents,
   );
 };
 
@@ -49,8 +51,12 @@ export const getBackupsFromCloud = async ({
   password: string;
 }) => {
   await loginIfNeeded();
+  await makeDirIfNeeded();
 
-  const filenames = await CloudStorage.readdir(`${REMOTE_BACKUP_WALLET_DIR}`);
+  const filenames = await CloudStorage.readdir(
+    REMOTE_BACKUP_WALLET_DIR,
+    CloudStorageScope.Documents,
+  );
   if (!filenames.length) {
     return;
   }
@@ -60,10 +66,11 @@ export const getBackupsFromCloud = async ({
   for (const filename of filenames) {
     const encryptedData = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+      CloudStorageScope.Documents,
     );
     try {
       const result = JSON.parse(
-        await nodeEncryptor.decrypt(password, encryptedData),
+        await appEncryptor.decrypt(password, encryptedData),
       );
       backups.push(result);
     } catch (e) {
@@ -103,6 +110,20 @@ export const loginIfNeeded = async () => {
 
   if (userInfo) {
     CloudStorage.setGoogleDriveAccessToken(userInfo.idToken);
+  }
+};
+
+export const makeDirIfNeeded = async () => {
+  if (
+    !(await CloudStorage.exists(
+      REMOTE_BACKUP_WALLET_DIR,
+      CloudStorageScope.Documents,
+    ))
+  ) {
+    await CloudStorage.mkdir(
+      REMOTE_BACKUP_WALLET_DIR,
+      CloudStorageScope.Documents,
+    );
   }
 };
 
