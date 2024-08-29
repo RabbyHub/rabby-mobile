@@ -8,6 +8,7 @@ export const NFTListLoader = memo(
       // eslint-disable-next-line react-native/no-inline-styles
       style={{
         paddingHorizontal: 20,
+        height: (40 + detailWidth) * 5 + 50,
       }}>
       {Array(5)
         .fill(0)
