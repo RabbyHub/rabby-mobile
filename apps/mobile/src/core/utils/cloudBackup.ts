@@ -5,11 +5,17 @@ import {
   GoogleSignin,
   isErrorWithCode,
   statusCodes,
+  User,
 } from '@react-native-google-signin/google-signin';
+import md5 from 'md5';
 
 const REMOTE_BACKUP_WALLET_DIR = 'com.debank.rabby-mobile/wallet-backups';
 
 GoogleSignin.configure();
+
+const generateBackupFileName = (mnemonic: string) => {
+  return md5(mnemonic);
+};
 
 // for dev
 export const deleteAllBackups = async () => {
@@ -23,49 +29,92 @@ export const saveMnemonicToCloud = async ({
   mnemonic: string;
   password: string;
 }) => {
+  await loginIfNeeded();
+
   const encryptedData = await nodeEncryptor.encrypt(
     password,
     JSON.stringify(mnemonic),
   );
+  const filename = generateBackupFileName(mnemonic);
 
   await CloudStorage.writeFile(
-    `${REMOTE_BACKUP_WALLET_DIR}/mnemonic.txt`,
+    `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     encryptedData,
   );
 };
 
+export const getBackupsFromCloud = async ({
+  password,
+}: {
+  password: string;
+}) => {
+  await loginIfNeeded();
+
+  const filenames = await CloudStorage.readdir(`${REMOTE_BACKUP_WALLET_DIR}`);
+  if (!filenames.length) {
+    return;
+  }
+
+  const backups: string[] = [];
+
+  for (const filename of filenames) {
+    const encryptedData = await CloudStorage.readFile(
+      `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+    );
+    try {
+      const result = JSON.parse(
+        await nodeEncryptor.decrypt(password, encryptedData),
+      );
+      backups.push(result);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  return backups;
+};
+
 // login to google if needed
 export const loginIfNeeded = async () => {
-  if (!IS_ANDROID) {
-    return false;
-  }
   const available = await CloudStorage.isCloudAvailable();
 
   if (available) {
-    return false;
+    throw new Error('Cloud is not available');
   }
 
-  try {
-    await GoogleSignin.hasPlayServices();
-    const userInfo = await GoogleSignin.signIn();
-    CloudStorage.setGoogleDriveAccessToken(userInfo.idToken);
-  } catch (error) {
-    if (isErrorWithCode(error)) {
-      switch (error.code) {
-        case statusCodes.SIGN_IN_CANCELLED:
-          // user cancelled the login flow
-          break;
-        case statusCodes.IN_PROGRESS:
-          // operation (eg. sign in) already in progress
-          break;
-        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-          // play services not available or outdated
-          break;
-        default:
-        // some other error happened
-      }
-    } else {
-      // an error that's not related to google sign in occurred
+  if (!IS_ANDROID) {
+    return true;
+  }
+
+  let userInfo: User | null = null;
+  await GoogleSignin.hasPlayServices();
+
+  if (GoogleSignin.hasPreviousSignIn()) {
+    userInfo = await GoogleSignin.getCurrentUser();
+    if (!userInfo) {
+      await GoogleSignin.signInSilently();
+      userInfo = await GoogleSignin.getCurrentUser();
     }
   }
+
+  if (!userInfo) {
+    userInfo = await GoogleSignin.signIn();
+  }
+
+  if (userInfo) {
+    CloudStorage.setGoogleDriveAccessToken(userInfo.idToken);
+  }
+};
+
+// if token expired, refresh it
+export const refreshAccessToken = async () => {
+  const token = await CloudStorage.getGoogleDriveAccessToken();
+  if (token) {
+    await GoogleSignin.clearCachedAccessToken(token);
+  }
+  CloudStorage.setGoogleDriveAccessToken(
+    await (
+      await GoogleSignin.getTokens()
+    ).idToken,
+  );
 };

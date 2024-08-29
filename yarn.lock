@@ -6865,9 +6865,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-google-signin/google-signin@npm:^12.2.1":
-  version: 12.2.1
-  resolution: "@react-native-google-signin/google-signin@npm:12.2.1"
+"@react-native-google-signin/google-signin@npm:12.1.0":
+  version: 12.1.0
+  resolution: "@react-native-google-signin/google-signin@npm:12.1.0"
   peerDependencies:
     expo: ">=50.0.0"
     react: "*"
@@ -6878,7 +6878,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 214a51d4b98a74b3f8f26aaf2882d95d37592aebfc59f2c65619234f64aa545a72a7ba3b2cb19eebf02312758ec0f6c12c5fe801bb3da613bf79d9914f247dac
+  checksum: 30f60c6c0796760eb84736d6e64922aa4172ced884e426842d598535633abb09be2aa37bf8339fb04a7cd4323183cda5c1d8237145d219ea547ae9caec75ba75
   languageName: node
   linkType: hard
 
@@ -8886,6 +8886,13 @@ __metadata:
   version: 4.0.2
   resolution: "@types/long@npm:4.0.2"
   checksum: d16cde7240d834cf44ba1eaec49e78ae3180e724cd667052b194a372f350d024cba8dd3f37b0864931683dab09ca935d52f0c4c1687178af5ada9fc85b0635f4
+  languageName: node
+  linkType: hard
+
+"@types/md5@npm:^2.3.5":
+  version: 2.3.5
+  resolution: "@types/md5@npm:2.3.5"
+  checksum: a86baf0521006e3072488bd79089b84831780866102e5e4b4f7afabfab17e0270a3791f3331776b73efb2cc9317efd56a334fd3d2698c7929e9b18593ca3fd39
   languageName: node
   linkType: hard
 
@@ -13069,6 +13076,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"charenc@npm:0.0.2":
+  version: 0.0.2
+  resolution: "charenc@npm:0.0.2"
+  checksum: 81dcadbe57e861d527faf6dd3855dc857395a1c4d6781f4847288ab23cffb7b3ee80d57c15bba7252ffe3e5e8019db767757ee7975663ad2ca0939bb8fcaf2e5
+  languageName: node
+  linkType: hard
+
 "check-error@npm:^1.0.3":
   version: 1.0.3
   resolution: "check-error@npm:1.0.3"
@@ -14067,6 +14081,13 @@ __metadata:
     shebang-command: ^2.0.0
     which: ^2.0.1
   checksum: 671cc7c7288c3a8406f3c69a3ae2fc85555c04169e9d611def9a675635472614f1c0ed0ef80955d5b6d4e724f6ced67f0ad1bb006c2ea643488fcfef994d7f52
+  languageName: node
+  linkType: hard
+
+"crypt@npm:0.0.2":
+  version: 0.0.2
+  resolution: "crypt@npm:0.0.2"
+  checksum: baf4c7bbe05df656ec230018af8cf7dbe8c14b36b98726939cef008d473f6fe7a4fad906cfea4062c93af516f1550a3f43ceb4d6615329612c6511378ed9fe34
   languageName: node
   linkType: hard
 
@@ -19931,6 +19952,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-buffer@npm:~1.1.6":
+  version: 1.1.6
+  resolution: "is-buffer@npm:1.1.6"
+  checksum: 4a186d995d8bbf9153b4bd9ff9fd04ae75068fe695d29025d25e592d9488911eeece84eefbd8fa41b8ddcc0711058a71d4c466dcf6f1f6e1d83830052d8ca707
+  languageName: node
+  linkType: hard
+
 "is-callable@npm:^1.1.3, is-callable@npm:^1.1.4, is-callable@npm:^1.2.7":
   version: 1.2.7
   resolution: "is-callable@npm:1.2.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fis-callable%2F-%2Fis-callable-1.2.7.tgz"
@@ -23674,6 +23702,17 @@ __metadata:
     inherits: ^2.0.1
     safe-buffer: ^5.1.2
   checksum: 098494d885684bcc4f92294b18ba61b7bd353c23147fbc4688c75b45cb8590f5a95fd4584d742415dcc52487f7a1ef6ea611cfa1543b0dc4492fe026357f3f0c
+  languageName: node
+  linkType: hard
+
+"md5@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "md5@npm:2.3.0"
+  dependencies:
+    charenc: 0.0.2
+    crypt: 0.0.2
+    is-buffer: ~1.1.6
+  checksum: a63cacf4018dc9dee08c36e6f924a64ced735b37826116c905717c41cebeb41a522f7a526ba6ad578f9c80f02cb365033ccd67fe186ffbcc1a1faeb75daa9b6e
   languageName: node
   linkType: hard
 
@@ -27841,7 +27880,7 @@ __metadata:
     "@react-native-community/netinfo": ^11.2.0
     "@react-native-firebase/analytics": ^18.8.0
     "@react-native-firebase/app": ^18.8.0
-    "@react-native-google-signin/google-signin": ^12.2.1
+    "@react-native-google-signin/google-signin": 12.1.0
     "@react-native-masked-view/masked-view": ^0.3.1
     "@react-native-menu/menu": ^1.1.2
     "@react-native/eslint-config": ^0.72.2
@@ -27858,6 +27897,7 @@ __metadata:
     "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
     "@types/lodash.debounce": ^4.0.9
+    "@types/md5": ^2.3.5
     "@types/pump": ^1.1.3
     "@types/qrcode": ^1.5.5
     "@types/react": ^18.0.24
@@ -27895,6 +27935,7 @@ __metadata:
     lint-staged: ^15.2.0
     lodash: ^4.17.21
     markdown-it: ^14.0.0
+    md5: ^2.3.0
     metro-react-native-babel-preset: 0.76.8
     nativewind: ^2.0.11
     node-libs-react-native: ^1.2.1

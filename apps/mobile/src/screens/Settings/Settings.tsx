@@ -90,6 +90,7 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
+import { loginIfNeeded } from '@/core/utils/cloudBackup';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -494,6 +495,19 @@ function DevSettingsBlocks() {
               onPress: () => {
                 requestLockWalletAndBackToUnlockScreen();
               },
+            },
+            {
+              label: 'sign google drive',
+              onPress: () => {
+                loginIfNeeded()
+                  .then(e => {
+                    console.log('loginIfNeeded done', e);
+                  })
+                  .catch(e => {
+                    console.error('loginIfNeeded error', e);
+                  });
+              },
+              visible: __DEV__,
             },
             {
               label: (
