@@ -95,6 +95,7 @@ import {
   loginIfNeeded,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -520,7 +521,7 @@ function DevSettingsBlocks() {
                     console.error('loginIfNeeded error', e);
                   });
               },
-              visible: __DEV__,
+              visible: __DEV__ && IS_ANDROID,
             },
             {
               label: (

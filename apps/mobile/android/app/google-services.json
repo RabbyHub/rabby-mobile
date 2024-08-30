@@ -12,7 +12,20 @@
           "package_name": "com.debank.rabbymobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "809331497367-978hn685l8muepdb98lcg4r6v38v6dk9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.debank.rabbymobile",
+            "certificate_hash": "c54f6bda01b2e17c7eb91474e0f5afed5a4ad4ce"
+          }
+        },
+        {
+          "client_id": "809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMKhIvBPa7XIKopsjpakUj78CrlD8fMPw"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.debank.rabby-mobile"
+              }
+            }
+          ]
         }
       }
     }

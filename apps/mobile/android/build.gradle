@@ -15,6 +15,9 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { // Aliyun's Maven repository
+          url "https://maven.aliyun.com/repository/central"
+        }
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
@@ -22,6 +25,10 @@ buildscript {
         classpath 'com.google.gms:google-services:4.3.3'
     }
 }
+
+// plugins {
+//     id 'com.google.gms.google-services' version '4.4.2' apply false
+// }
 
 allprojects {
     repositories {

@@ -8,10 +8,14 @@ import {
 } from '@react-native-google-signin/google-signin';
 import md5 from 'md5';
 import { appEncryptor } from '../services/shared';
+import { FIREBASE_WEBCLIENT_ID } from '@/constant';
 
 const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 
-GoogleSignin.configure();
+GoogleSignin.configure({
+  // https://rnfirebase.io/auth/social-auth#google
+  webClientId: FIREBASE_WEBCLIENT_ID,
+});
 
 const generateBackupFileName = (mnemonic: string) => {
   return md5(mnemonic);
@@ -83,15 +87,18 @@ export const getBackupsFromCloud = async ({
 
 // login to google if needed
 export const loginIfNeeded = async () => {
-  const available = await CloudStorage.isCloudAvailable();
+  const result = {
+    needLogin: IS_ANDROID,
+    userInfo: null as User | null,
+  };
+  if (!IS_ANDROID) return result;
+  result.needLogin = true;
 
-  if (available) {
-    throw new Error('Cloud is not available');
-  }
-
-  if (!IS_ANDROID) {
-    return true;
-  }
+  // const available = await CloudStorage.isCloudAvailable();
+  // console.debug('available', available);
+  // if (!available) {
+  //   throw new Error('Cloud is not available');
+  // }
 
   let userInfo: User | null = null;
   await GoogleSignin.hasPlayServices();
@@ -105,12 +112,21 @@ export const loginIfNeeded = async () => {
   }
 
   if (!userInfo) {
-    userInfo = await GoogleSignin.signIn();
+    try {
+      userInfo = await GoogleSignin.signIn();
+    } catch (error) {
+      console.debug(JSON.stringify(error));
+      throw error;
+    }
   }
 
   if (userInfo) {
+    // __DEV__ && console.debug('userInfo', userInfo);
     CloudStorage.setGoogleDriveAccessToken(userInfo.idToken);
+    result.userInfo = userInfo;
   }
+
+  return result;
 };
 
 export const makeDirIfNeeded = async () => {

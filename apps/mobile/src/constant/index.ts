@@ -75,6 +75,13 @@ export const APPLICATION_ID =
     ? 'com.debank.rabby-mobile-debug'
     : 'com.debank.rabby-mobile';
 
+export const FIREBASE_WEBCLIENT_ID =
+  Platform.select({
+    android:
+      '809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com',
+    ios: '809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com',
+  }) || '';
+
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 
 export const APP_FEATURE_SWITCH = {
