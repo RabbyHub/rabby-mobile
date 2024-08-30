@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
@@ -9,20 +9,15 @@ import {
   makeTriangleStyle,
 } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
-import {
-  useFocusedApprovalOnApprovals,
-  type ContractApprovalItem,
-  useRevokeContractSpenders,
-} from '../useApprovalsPage';
+import { type ContractApprovalItem } from '../useApprovalsPage';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { findChainByServerID } from '@/utils/chain';
 import { ellipsisAddress } from '@/utils/address';
 import { SimulateUnderline } from '@/components/patches/Simulation';
 
-import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
+import { RcIconUnknown } from '../icons';
 import { getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
@@ -33,21 +28,6 @@ export const ContractFloorLayouts = {
   floor2: { height: 24, paddingTop: 4 },
   floor3: { height: 24, paddingTop: 4 },
 };
-
-function RightTouchableView({
-  children,
-  ...props
-}: React.ComponentProps<typeof TouchableView>) {
-  const { colors, styles } = useThemeStyles(getCardStyles);
-
-  return (
-    <TouchableView
-      {...props}
-      style={[styles.floorRight, { height: '100%' }, props.style]}>
-      <View style={styles.rowCenter}>{children}</View>
-    </TouchableView>
-  );
-}
 
 function CardProto({
   style,
