@@ -36,7 +36,9 @@ import AutoLockView from '@/components/AutoLockView';
 
 type HomeProps = NativeStackScreenProps<RootStackParamsList>;
 
-const MORE_SHEET_MODAL_SNAPPOINTS = [290];
+const MORE_SHEET_MODAL_SNAPPOINTS = (actionsNum: number) => [
+  80 + 70 * actionsNum,
+];
 
 const isAndroid = Platform.OS === 'android';
 function BadgeText({
@@ -97,6 +99,16 @@ export const HomeTopArea = () => {
       refreshAsync();
     }),
   );
+
+  const bridgeItemAction = {
+    title: 'Bridge',
+    Icon: RcIconBridge,
+    onPress: () => {
+      navigation.push(RootNames.StackTransaction, {
+        screen: RootNames.Bridge,
+      });
+    },
+  };
 
   const actions: {
     title: string;
@@ -165,7 +177,7 @@ export const HomeTopArea = () => {
             },
           },
         ]
-      : []),
+      : [bridgeItemAction]),
 
     {
       title: 'More',
@@ -190,15 +202,7 @@ export const HomeTopArea = () => {
     badge?: number;
     badgeAlert?: boolean;
   }[] = [
-    {
-      title: 'Bridge',
-      Icon: RcIconBridge,
-      onPress: () => {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.Bridge,
-        });
-      },
-    },
+    ...(isGnosisKeyring ? [bridgeItemAction] : []),
     {
       title: 'Approvals',
       Icon: RcIconApproval,
@@ -261,7 +265,7 @@ export const HomeTopArea = () => {
 
       <BSheetModal
         ref={moresheetModalRef}
-        snapPoints={MORE_SHEET_MODAL_SNAPPOINTS}>
+        snapPoints={MORE_SHEET_MODAL_SNAPPOINTS(moreItems.length)}>
         <AutoLockView as="BottomSheetView" style={styles.list}>
           {moreItems.map(item => (
             <TouchableView
