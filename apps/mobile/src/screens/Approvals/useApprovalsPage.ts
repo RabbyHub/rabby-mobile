@@ -933,10 +933,10 @@ export function useRevokeContractSpenders() {
       nextShouldPickAllFocusingContracts: !parseApprovalSpenderSelection(
         focusedApproval.contract,
         'contract',
-        { curAllSelectedMap: revokes.assetsFocusing },
+        { curAllSelectedMap: revokes.contractFocusing },
       ).isSelectedAll,
     };
-  }, [revokes.assetsFocusing, focusedApproval.contract]);
+  }, [revokes.contractFocusing, focusedApproval.contract]);
 
   const onSelectAllContractApprovals = React.useCallback(
     (
