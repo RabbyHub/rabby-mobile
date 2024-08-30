@@ -13,11 +13,18 @@ export type WebViewActions = ReturnType<
   typeof useWebViewControl
 >['webviewActions'];
 
-export const BLANK_PAGE = 'about:blank';
+import { BLANK_PAGE } from '@/core/bridges/useBackgroundBridge';
+export {
+  BLANK_PAGE,
+  BLANK_RABBY_PAGE,
+} from '@/core/bridges/useBackgroundBridge';
 
-export function useWebViewControl() {
+function makeInnerDappTabId() {
+  return `in${stringUtils.randString(8)}`;
+}
+export function useWebViewControl({ initialTabId }: { initialTabId?: string }) {
   const webviewRef = useRef<WebView>(null);
-  const webviewIdRef = useRef<string>(stringUtils.randString());
+  const webviewIdRef = useRef<string>(initialTabId || makeInnerDappTabId());
 
   const urlRef = useRef<string>(BLANK_PAGE);
   const titleRef = useRef<string>('');

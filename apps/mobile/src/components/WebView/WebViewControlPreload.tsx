@@ -1,12 +1,14 @@
 import { useCallback, useMemo } from 'react';
-import { Platform } from 'react-native';
+import { Dimensions, Platform, StyleSheet } from 'react-native';
 import { atom, useAtom } from 'jotai';
 import WebView, { WebViewProps } from 'react-native-webview';
 
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
 import { devLog } from '@/utils/logger';
-import { StyleSheet } from 'react-native';
 import DappWebViewControl from './DappWebViewControl';
+import { SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
+import { makeDebugBorder } from '@/utils/styles';
+import { BLANK_RABBY_PAGE } from './hooks';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -14,19 +16,33 @@ function getTouchHtml(inPageScript: string = '') {
   return `
   <html>
   <head>
-    <!-- touche view -->
+    <!-- touch view -->
     <title></title>
   </head>
   <body>
-    <div style="display: none;">touche view</div>
+    <div style="display: none;">touch view</div>
     <script>
       ;(function() {
         ${inPageScript}
       })();
 
       ;(function() {
-        // window.alert('window.ethereum existed? ' + typeof window.ethereum);
-        window.ethereum && window.ethereum.request({ method: 'eth_accounts' });
+        // ${
+          __DEV__
+            ? `!window.ethereum && window.alert('window.ethereum not exist, type: ' + Object.keys(window).sort());`
+            : ''
+        }
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          name: 'rabby-provider',
+          data: {
+            method: '${SELF_CHECK_RPC_METHOD}',
+            jsonrpc: '2.0',
+            id: '-999',
+            params: [],
+            toNative: true,
+          },
+          origin: '${BLANK_RABBY_PAGE}',
+        }));
       })();
     </script>
     <script>
@@ -60,9 +76,10 @@ export default function WebViewControlPreload() {
   const onWebViewLoadEnd = useCallback<
     WebViewProps['onLoadEnd'] & object
   >(() => {
+    devLog('[WebViewControlPreload] webview loadEnd, will force close it');
     setTimeout(() => {
-      devLog('[WebViewControlPreload] webview loadEnd, will close it');
       setFirstTouched(true);
+      devLog('[WebViewControlPreload] webview loadEnd, force closed it');
     }, 500);
   }, [setFirstTouched]);
 
@@ -80,34 +97,23 @@ export default function WebViewControlPreload() {
   return (
     <DappWebViewControl
       // would be ignored, just for type checking
-      dappOrigin="https://rabby.io/docs/privacy"
+      dappOrigin={BLANK_RABBY_PAGE}
+      initialUrl={BLANK_RABBY_PAGE}
       embedHtml={embedHtml}
-      style={styles.webviewStyle}
+      style={StyleSheet.flatten([
+        styles.webviewStyle,
+        // __DEV__ && styles.debugStyle,
+      ])}
       webviewProps={{
         cacheEnabled: false,
+        onError: e => {
+          if (__DEV__) {
+            devLog('[WebViewControlPreload] webview error', e);
+          }
+        },
         onLoadEnd: onWebViewLoadEnd,
       }}
     />
-    // <WebView
-    //   cacheEnabled={false}
-    //   startInLoadingState
-    //   style={styles.webviewStyle}
-    //   source={{
-    //     // html: TOUCH_HTML,
-    //     uri: 'https://rabby.io/docs/privacy',
-    //   }}
-    //   injectedJavaScriptBeforeContentLoaded={fullScript}
-    //   injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
-    //   onError={error => {
-    //     // TODO: report to sentry
-    //     devLog('WebViewControlPreload webview error', error);
-    //   }}
-    //   webviewDebuggingEnabled={__DEV__}
-    //   onMessage={event => {
-    //     devLog('WebView:: onMessage event', event);
-    //   }}
-    //   onLoadEnd={onWebViewLoadEnd}
-    // />
   );
 }
 
@@ -118,5 +124,19 @@ const styles = StyleSheet.create({
     width: 0,
     position: 'absolute',
     bottom: -999,
+  },
+  debugStyle: {
+    ...makeDebugBorder('red'),
+    display: 'flex',
+    padding: 0,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: Dimensions.get('window').height - 60,
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    top: 60,
+    bottom: 0,
   },
 });

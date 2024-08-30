@@ -6,6 +6,7 @@ import { sendRequest } from '@/core/apis/sendRequest';
 import { ProviderRequest } from '@/core/controllers/type';
 import { getActiveDappState, isRpcAllowed } from '../state';
 import { ethErrors } from 'eth-rpc-errors';
+import { SELF_CHECK_RPC_METHOD } from '@/constant/rpc';
 
 let appVersion = '';
 
@@ -78,7 +79,11 @@ RPCMethodsMiddleParameters) =>
     };
     const checkTabActive = () => {
       const activeDappState = getActiveDappState();
-      if (!isRpcAllowed(activeDappState)) return false;
+      if (!isRpcAllowed(activeDappState)) {
+        // // leave here for debug
+        // console.debug('[checkTabActive] activeDappState', activeDappState);
+        return false;
+      }
 
       const webviewId = bridge.webviewId;
 
@@ -91,67 +96,18 @@ RPCMethodsMiddleParameters) =>
       icon: iconRef.current || '',
     };
 
-    const notAllowedNow = !checkTabActive();
+    const methodAllowed =
+      req.method === SELF_CHECK_RPC_METHOD || checkTabActive();
 
     const rpcMethods = {
+      [SELF_CHECK_RPC_METHOD]: async () => {
+        res.result = true;
+      },
       ['@reject']: async () => {
         throw ethErrors.provider.userRejectedRequest({
           message: 'Not Allowed',
         });
       },
-      // wallet_getPermissions: async () => new Promise<any>(resolve => {}),
-      // wallet_requestPermissions: async () => {
-      //   res.result = [
-      //     {
-      //       parentCapability: 'eth_accounts',
-      //     },
-      //   ];
-      // },
-      // eth_getTransactionByHash: async () => {},
-      // eth_getTransactionByBlockHashAndIndex: async () => {},
-      // eth_getTransactionByBlockNumberAndIndex: async () => {},
-      // // eth_hashrate: () => {
-      // //   res.result = '0x00';
-      // // },
-      // eth_mining: () => {
-      //   res.result = false;
-      // },
-      // net_listening: () => {
-      //   res.result = true;
-      // },
-      // // TODO: if useless, delete it
-      // parity_defaultAccount: getEthAccounts,
-      // eth_sendTransaction: async () => {},
-      // eth_signTransaction: async () => {},
-      // // eth_sign: async () => {},
-      // // personal_sign: async () => {},
-      // personal_ecRecover: () => {
-      //   const data = req.params?.[0];
-      //   const signature = req.params?.[1];
-      //   const address = recoverPersonalSignature({ data, signature });
-      //   res.result = address;
-      // },
-      // parity_checkRequest: () => {},
-      // eth_signTypedData: async () => {},
-      // eth_signTypedData_v3: async () => {},
-      // eth_signTypedData_v4: async () => {},
-      // web3_clientVersion: async () => {
-      //   if (!appVersion) {
-      //     appVersion = await getVersion();
-      //   }
-      //   res.result = `Rabby/${appVersion}/Mobile`;
-      // },
-      // wallet_scanQRCode: () =>
-      //   new Promise<void>((resolve, reject) => {
-      //     checkTabActive();
-      //   }),
-      // wallet_watchAsset: async () => {},
-      // wallet_addEthereumChain: () => {
-      //   checkTabActive();
-      // },
-      // wallet_switchEthereumChain: () => {
-      //   checkTabActive();
-      // },
     };
 
     if (__DEV__) {
@@ -165,26 +121,27 @@ RPCMethodsMiddleParameters) =>
       if (isWhiteListedMethod) {
         // dispatch rpc execution stage change here: RPCStageTypes.REQUEST_SEND
       }
-      if (notAllowedNow) {
+      if (!methodAllowed) {
         if (__DEV__) {
           console.debug(
-            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) not allowed now`,
+            `[getRpcMethodMiddleware::not-allowed] req.method: '${req.method}'(req.id: ${req.id}) not allowed now`,
           );
         }
         await rpcMethods['@reject']();
       } else if (rpcMethods[req.method]) {
         if (__DEV__) {
           console.debug(
-            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
+            `[getRpcMethodMiddleware::pre-hook] req.method: '${req.method}'(req.id: ${req.id}) use customized route`,
           );
         }
         await rpcMethods[req.method]();
       } else {
         if (__DEV__) {
           console.debug(
-            `[getRpcMethodMiddleware] req.method: '${req.method}'(req.id: ${req.id}) use providerController`,
+            `[getRpcMethodMiddleware::rpc-method] req.method: '${req.method}'(req.id: ${req.id}) use providerController`,
           );
         }
+        // res.result = await rpcMethods['@reject']();
         res.result = await sendRequest(
           {
             method: req.method,
@@ -215,6 +172,12 @@ RPCMethodsMiddleParameters) =>
         );
       }
       throw e;
+    } finally {
+      if (__DEV__) {
+        console.debug(
+          `[getRpcMethodMiddleware] ================== finally for method '${req.method}'(req.id: ${req.id}) ==================`,
+        );
+      }
     }
   });
 export default getRpcMethodMiddleware;

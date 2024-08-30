@@ -1,11 +1,5 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-} from 'react';
-import { Dimensions, Platform } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, Platform, Text, View } from 'react-native';
 import {
   useOpenUrlView,
   useOpenDappView,
@@ -16,9 +10,8 @@ import { BottomSheetContent } from './DappWebViewControlWidgets';
 import { devLog } from '@/utils/logger';
 import { useSafeSizes } from '@/hooks/useAppLayout';
 import {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetView,
+  BottomSheetModalProps,
   useBottomSheet,
   useBottomSheetGestureHandlers,
 } from '@gorhom/bottom-sheet';
@@ -29,30 +22,33 @@ import DappWebViewControl, {
 import { useDapps } from '@/hooks/useDapps';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames, ScreenLayouts } from '@/constant/layout';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
+import Animated, { runOnJS } from 'react-native-reanimated';
 import { BottomNavControl } from '@/components/WebView/Widgets';
 import { RcIconDisconnect } from '@/assets/icons/dapp';
 import { toast } from '@/components/Toast';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
-import { AppBottomSheetHandle } from '@/components/customized/BottomSheetHandle';
+import {
+  AppBottomSheetHandle,
+  BottomSheetHandlableView,
+} from '@/components/customized/BottomSheetHandle';
 import {
   OpenedDappBottomSheetModal,
   useAutoLockBottomSheetModalOnChange,
 } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import AutoLockView from '@/components/AutoLockView';
 import { globalSetActiveDappState } from '@/core/bridges/state';
-// import { globalSetActiveDappState } from '@/core/bridges/state';
+import TouchableText from '@/components/Touchable/TouchableText';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -74,17 +70,24 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
       .enabled(true)
       .shouldCancelWhenOutside(false)
       .runOnJS(false)
-      .onStart(handlePanGestureHandler.handleOnStart)
+      .onStart((...args) => {
+        runOnJS(globalSetActiveDappState)({ isPanning: true });
+        return handlePanGestureHandler.handleOnStart(...args);
+      })
       .onChange(handlePanGestureHandler.handleOnChange)
       .onEnd(handlePanGestureHandler.handleOnEnd)
-      .onFinalize(handlePanGestureHandler.handleOnFinalize);
+      .onFinalize((evt, success) => {
+        runOnJS(globalSetActiveDappState)({ isPanning: false }, { delay: 250 });
+        return handlePanGestureHandler.handleOnFinalize(evt);
+      });
 
     return gesture;
   }, [
-    handlePanGestureHandler.handleOnChange,
-    handlePanGestureHandler.handleOnEnd,
-    handlePanGestureHandler.handleOnFinalize,
-    handlePanGestureHandler.handleOnStart,
+    handlePanGestureHandler,
+    // handlePanGestureHandler.handleOnStart,
+    // handlePanGestureHandler.handleOnChange,
+    // handlePanGestureHandler.handleOnEnd,
+    // handlePanGestureHandler.handleOnFinalize,
   ]);
 
   return (
@@ -122,30 +125,53 @@ function useForceExpandOnceOnBootstrap(
     useRefState(false);
 
   useEffect(() => {
-    if (!firstTouchedRef.current && OPEN_DAPP_VIEW_INDEXES.expanded > 0) {
-      sheetModalRef?.current?.present();
-      sheetModalRef?.current?.snapToIndex(OPEN_DAPP_VIEW_INDEXES.expanded);
+    (async () => {
+      if (!firstTouchedRef.current && OPEN_DAPP_VIEW_INDEXES.expanded > 0) {
+        sheetModalRef?.current?.present();
+        sheetModalRef?.current?.expand({ duration: 0 });
+        // sheetModalRef?.current?.snapToIndex(OPEN_DAPP_VIEW_INDEXES.expanded);
 
-      firstTouchedRef.current = true;
+        firstTouchedRef.current = true;
 
-      setTimeout(() => {
-        sheetModalRef?.current?.forceClose();
-        sheetModalRef?.current?.dismiss();
+        setTimeout(() => {
+          sheetModalRef?.current?.forceClose();
+          sheetModalRef?.current?.dismiss({ duration: 0 });
 
-        setFirstTouched(true, true);
-      }, 200);
-    }
+          setFirstTouched(true, true);
+        }, 200);
+      }
+    })();
   }, [firstTouchedRef, setFirstTouched, sheetModalRef]);
 }
 
-const DEFAULT_RANGES = ['1%', '100%'];
+function getDefaultSnapPoints() {
+  const scrLayout = Dimensions.get('screen');
+
+  return [
+    Math.max(1, Math.floor(scrLayout.height * 0.01)),
+    parseFloat(scrLayout.height.toFixed(2)),
+  ] as const;
+}
+const DEFAULT_RANGES = getDefaultSnapPoints();
+// const DEFAULT_RANGES = ['1%', '100%'];
+function useSafeSnapshots() {
+  const { top } = useSafeAreaInsets();
+
+  const snapPoints = useMemo(() => {
+    const presets = getDefaultSnapPoints();
+
+    return [presets[0], Math.max(presets[1], DEFAULT_RANGES[1]) - top];
+  }, [top]);
+
+  return { snapPoints };
+}
 export function OpenedDappWebViewStub() {
   const { colors, styles } = useThemeStyles(getWebViewStubStyles);
   const {
     openedDappItems,
+    activeDapp,
     expandDappWebViewModal,
     collapseDappWebViewModal,
-    activeDapp,
     closeOpenedDapp,
     onHideActiveDapp,
     closeActiveOpenedDapp,
@@ -157,11 +183,6 @@ export function OpenedDappWebViewStub() {
 
   const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
 
-  const { safeOffScreenTop } = useSafeSizes();
-  const snapPoints = useMemo(() => {
-    return [DEFAULT_RANGES[0], safeOffScreenTop];
-  }, [safeOffScreenTop]);
-
   useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
 
   const { isDappConnected, disconnectDapp } = useDapps();
@@ -171,9 +192,16 @@ export function OpenedDappWebViewStub() {
     onHideActiveDapp();
   }, [collapseDappWebViewModal, onHideActiveDapp]);
 
-  const handleBottomSheetChanges = useCallback(
-    (index: number) => {
-      devLog('OpenedDappWebViewStub::handleBottomSheetChanges', index);
+  const handleBottomSheetChanges = useCallback<
+    BottomSheetModalProps['onChange'] & object
+  >(
+    (index, pos, type) => {
+      devLog(
+        '[OpenedDappWebViewStub::handleBottomSheetChanges] index: %s; pos: %s; type: %s',
+        index,
+        pos,
+        type,
+      );
       if (index <= OPEN_DAPP_VIEW_INDEXES.collapsed) {
         /**
          * If `enablePanDownToClose` set as true, Dont call this method which would lead 'close' modal,
@@ -187,14 +215,15 @@ export function OpenedDappWebViewStub() {
 
   useEffect(() => {
     if (activeDapp) {
-      // openedDappWebviewSheetModalRef?.current?.snapToIndex(INDEX_AS_EXPANDED);
-      // openedDappWebviewSheetModalRef?.current?.present();
       expandDappWebViewModal();
-      // toggleShowSheetModal('openedDappWebviewSheetModalRef', true);
-    } else {
-      globalSetActiveDappState({ dappOrigin: null, tabId: null });
     }
   }, [expandDappWebViewModal, activeDapp]);
+
+  React.useEffect(() => {
+    if (!openedDappItems.length || !activeDapp) {
+      globalSetActiveDappState({ dappOrigin: null, tabId: null });
+    }
+  }, [openedDappItems.length, activeDapp]);
 
   const { onHardwareBackHandler } = useHandleBackPressClosable(
     useCallback(() => {
@@ -215,6 +244,8 @@ export function OpenedDappWebViewStub() {
   const { handleChange } = useAutoLockBottomSheetModalOnChange(
     handleBottomSheetChanges,
   );
+
+  const { snapPoints } = useSafeSnapshots();
 
   return (
     <OpenedDappBottomSheetModal
@@ -237,26 +268,47 @@ export function OpenedDappWebViewStub() {
           styles.bsView,
           !!openedDappItems.length && styles.bsViewOpened,
         ]}>
+        {!openedDappItems.length && (
+          <BottomSheetHandlableView
+            style={{
+              height: '100%',
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                color: __DEV__ ? colors['neutral-title1'] : 'transparent',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              No Dapp Opened, Pan down to close
+            </Text>
+          </BottomSheetHandlableView>
+        )}
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
-          const key = `${dappInfo.origin}-${idx}`;
+          const key = `${dappInfo.origin}-${dappInfo.dappTabId}-${idx}`;
 
           return (
             <DappWebViewControl
               key={key}
               ref={inst => {
-                // @ts-expect-error
-                activeDappWebViewControlRef.current = inst;
                 if (isActiveDapp) {
+                  globalSetActiveDappState({ dappOrigin: dappInfo.origin });
+                  // @ts-expect-error
+                  activeDappWebViewControlRef.current = inst;
+                  const activeTabId = inst?.getWebViewId() ?? undefined;
                   globalSetActiveDappState({
                     dappOrigin: dappInfo.origin,
-                    tabId: inst?.getWebViewId(),
+                    tabId: dappInfo.dappTabId,
                   });
                 }
               }}
               style={[!isActiveDapp && { display: 'none' }]}
               dappOrigin={dappInfo.origin}
+              dappTabId={dappInfo.dappTabId}
               initialUrl={dappInfo.$openParams?.initialUrl}
               onSelfClose={reason => {
                 if (reason === 'phishing') {

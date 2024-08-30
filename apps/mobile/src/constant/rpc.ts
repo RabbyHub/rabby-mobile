@@ -1,3 +1,9 @@
+import { stringUtils } from '@rabby-wallet/base-utils';
+
+export const SELF_CHECK_RPC_METHOD = `__app_self_check__${stringUtils.randString(
+  6,
+)}`;
+
 export const SAFE_RPC_METHODS = [
   'eth_blockNumber',
   'eth_call',
