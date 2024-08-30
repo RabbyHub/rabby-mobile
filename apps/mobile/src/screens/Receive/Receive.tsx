@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { StyleSheet, View, Modal, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { navigationRef } from '@/utils/navigation';
 import { default as RcIconHeaderBack } from '@/assets/icons/header/back-cc.svg';
@@ -54,6 +53,7 @@ const hitSlop = {
 };
 
 function ReceiveScreen(): JSX.Element {
+  const _isDarkTheme = useGetBinaryMode() !== 'light';
   const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const [chainTokenInfo, setChainTokenInfo] = useState({
@@ -63,7 +63,7 @@ function ReceiveScreen(): JSX.Element {
   const [clickedCopy, setClickedCopy] = useState(false);
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const styles = getStyles(colors, _isDarkTheme);
 
   const { on: isShowAccount, toggle: toggleShowAccount } = useSwitch(true);
   const { currentAccount: account } = useCurrentAccount();
@@ -137,7 +137,9 @@ function ReceiveScreen(): JSX.Element {
   React.useLayoutEffect(() => {
     setNavigationOptions({
       headerStyle: {
-        backgroundColor: colors['blue-default'],
+        backgroundColor: _isDarkTheme
+          ? colors['blue-disable']
+          : colors['blue-default'],
       },
       headerTitle: () =>
         isShowAccount && account ? (
@@ -270,10 +272,6 @@ function ReceiveScreen(): JSX.Element {
               style={styles.alertModalText}>
               {t('page.receive.watchModeAlert')}
             </Text>
-            <View
-              className="w-full bg-r-neutral-line"
-              style={styles.modalSplitLine}
-            />
             <View className="flex-row items-center justify-center w-full mt-[20] px-[20]">
               <View className="flex-1 pr-[5]">
                 <Button
@@ -303,12 +301,15 @@ function ReceiveScreen(): JSX.Element {
 
 const HEADER_OFFSET = 12;
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
+const getStyles = (
+  colors: ReturnType<typeof useThemeColors>,
+  isDark: boolean,
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       alignItems: 'center',
-      backgroundColor: colors['blue-default'],
+      backgroundColor: isDark ? colors['blue-disable'] : colors['blue-default'],
     },
     headerTitleContainer: {
       marginTop: HEADER_OFFSET,
@@ -372,12 +373,12 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       width: 180,
       height: 48,
       borderRadius: 4,
-      backgroundColor: colors['blue-light-1'],
+      backgroundColor: colors['neutral-card-2'],
     },
     copyButtonText: {
       fontSize: 15,
       fontWeight: '500',
-      color: colors['blue-default'],
+      color: colors['neutral-title-1'],
     },
     copyButtonSuccess: {
       backgroundColor: colors['green-light'],
@@ -386,7 +387,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       color: colors['green-default'],
     },
     successIcon: { color: colors['green-default'], marginLeft: -20 },
-    copyIcon: { color: colors['blue-default'], marginLeft: -20 },
+    copyIcon: { color: colors['neutral-title-1'], marginLeft: -20 },
     receiveContainer: {
       alignItems: 'center',
       padding: 20,
@@ -472,7 +473,7 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
       backgroundColor: colors['red-default'],
     },
     overlay: {
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: 'rgba(0,0,0,0.8)',
       height: '100%',
       justifyContent: 'center',
     },
@@ -491,9 +492,6 @@ const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
     alertModalText: {
       fontSize: 17,
       color: colors['neutral-title1'],
-    },
-    modalSplitLine: {
-      height: StyleSheet.hairlineWidth,
     },
   });
 
