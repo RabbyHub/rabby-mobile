@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "809331497367-8ckn12dhasir7bs4v50t55ni3jotkct1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.debank.rabbymobile.debug",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -31,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com",
+              "client_id": "809331497367-vip7ti5jnh1umlp99d5r42mqqt9f0vuv.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.debank.rabby-mobile"
+                "bundle_id": "com.debank.rabby-mobile-debug"
               }
             }
           ]

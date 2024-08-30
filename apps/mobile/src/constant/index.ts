@@ -61,26 +61,49 @@ export const APP_URLS = {
   })!,
 };
 
-const androidPackageName = !NativeModules.RNVersionCheck.packageName
-  ? 'com.debank.rabbymobile'
-  : stringUtils.unSuffix(
-      stringUtils.unSuffix(NativeModules.RNVersionCheck.packageName, '.debug'),
-      '.regression',
-    );
+type AndroidIdSuffx = '' | '.debug' | '.regression';
+const androidPackageName = (
+  !NativeModules.RNVersionCheck.packageName
+    ? 'com.debank.rabbymobile'
+    : stringUtils.unSuffix(
+        stringUtils.unSuffix(
+          NativeModules.RNVersionCheck.packageName,
+          '.debug',
+        ),
+        '.regression',
+      )
+) as `com.debank.rabbymobile${AndroidIdSuffx}`;
 
-export const APPLICATION_ID =
+type IosIdSuffix = '' | '-debug';
+
+export const APPLICATION_ID:
+  | typeof androidPackageName
+  | `com.debank.rabby-mobile${IosIdSuffix}` =
   Platform.OS == 'android'
     ? androidPackageName
     : __DEV__
-    ? 'com.debank.rabby-mobile-debug'
-    : 'com.debank.rabby-mobile';
+    ? ('com.debank.rabby-mobile-debug' as const)
+    : ('com.debank.rabby-mobile' as const);
+
+const AndroidFirebaseWebClientIds = {
+  'com.debank.rabbymobile.debug':
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
+  'com.debank.rabbymobile.regression':
+    '809331497367-hhietrsi4ani813o7evsqb7l30m6cs3n.apps.googleusercontent.com',
+  'com.debank.rabbymobile':
+    '809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com',
+
+  'com.debank.rabby-mobile':
+    '809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com',
+  'com.debank.rabby-mobile-debug':
+    '809331497367-vip7ti5jnh1umlp99d5r42mqqt9f0vuv.apps.googleusercontent.com',
+} as const;
 
 export const FIREBASE_WEBCLIENT_ID =
   Platform.select({
-    android:
-      '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
-    ios: '809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com',
-  }) || '';
+    android: AndroidFirebaseWebClientIds[APPLICATION_ID],
+    ios: AndroidFirebaseWebClientIds[APPLICATION_ID],
+  }) || AndroidFirebaseWebClientIds[APPLICATION_ID];
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 
