@@ -5773,6 +5773,7 @@ __metadata:
   resolution: "@rabby-wallet/biz-utils@workspace:packages/biz-utils"
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
+    "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.25
     "@types/jest": ^27.4.1
     "@types/sinon": ^9.0.10

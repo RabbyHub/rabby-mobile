@@ -4,9 +4,7 @@ import { View, Text, SectionListProps, ActivityIndicator } from 'react-native';
 import { AppBottomSheetModal } from '@/components';
 import {
   BottomSheetModalProps,
-  BottomSheetScrollView,
   BottomSheetSectionList,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {
   ContractApprovalItem,

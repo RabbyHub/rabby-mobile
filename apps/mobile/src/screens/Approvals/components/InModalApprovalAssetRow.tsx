@@ -20,6 +20,7 @@ import { ellipsisAddress } from '@/utils/address';
 import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { querySelectedAssetSpender } from '../utils';
+import Permit2Badge from './Permit2Badge';
 
 function ApprovalAmountInfo({
   style,
@@ -184,39 +185,24 @@ export function InModalApprovalAssetRow({
         onToggleSelection?.({ spender, approval });
       }}>
       <View style={styles.leftArea}>
-        <AssetAvatar
-          style={styles.chainIcon}
-          // pass empty if it's token as no logo_url to enforce the default logo
-          logo={spender.protocol?.logo_url}
-          logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-          chain={spender.protocol?.chain}
-          chainIconPosition="tr"
-          size={28}
-          chainSize={16}
-        />
-
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
+            <Text style={styles.address} ellipsizeMode="tail" numberOfLines={1}>
+              {ellipsisAddress(spender.id)}
+            </Text>
             <Text
               style={styles.protocolName}
               ellipsizeMode="tail"
               numberOfLines={1}>
-              {spenderInfo.protocolName}
+              ({spenderInfo.protocolName})
             </Text>
           </View>
-          <View style={styles.basicInfoF2}>
-            <Text
-              style={[styles.addressText]}
-              ellipsizeMode="tail"
-              numberOfLines={1}>
-              {ellipsisAddress(spender.id)}
-            </Text>
-            <CopyAddressIcon
-              address={spender.id}
-              style={{ marginLeft: 2 }}
-              color={colors['neutral-foot']}
-            />
-          </View>
+          {spender.$assetContract?.type === 'contract' &&
+            !!spender.permit2_id && (
+              <View style={styles.basicInfoF2}>
+                <Permit2Badge style={styles.permit2} />
+              </View>
+            )}
         </View>
       </View>
 
@@ -284,6 +270,8 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
+      fontSize: 14,
+      lineHeight: 17,
     },
     basicInfoF2: {
       flexDirection: 'row',
@@ -303,10 +291,13 @@ const getStyles = createGetStyles(colors => {
       fontWeight: '400',
       // marginLeft: 6,
     },
-    protocolName: {
-      fontSize: 16,
+    address: {
       fontWeight: '500',
       color: colors['neutral-title1'],
+    },
+    protocolName: {
+      color: colors['neutral-foot'],
+      marginLeft: 4,
     },
     itemCheckbox: {
       marginLeft: 16,
@@ -314,5 +305,8 @@ const getStyles = createGetStyles(colors => {
       height: 24,
     },
     chainIcon: { marginRight: 12 },
+    permit2: {
+      marginLeft: 0,
+    },
   };
 });

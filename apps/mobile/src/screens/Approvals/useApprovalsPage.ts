@@ -13,6 +13,7 @@ import {
   type TokenApprovalItem,
   type ApprovalSpenderItemToBeRevoked,
   getContractRiskEvaluation,
+  markContractTokenSpender,
   makeComputedRiskAboutValues,
   markParentForAssetItemSpender,
   ApprovalItem,
@@ -366,10 +367,12 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
             const data = await openapiClient.tokenAuthorizedList(
               userAddress,
               e.id,
+              { restfulPrefix: 'v2' },
             );
             if (data.length) {
               data.forEach(token => {
                 token.spenders.forEach(spender => {
+                  const shapedToken = markContractTokenSpender(token, spender);
                   const chainName = token.chain;
                   const contractId = spender.id;
 
@@ -397,25 +400,25 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                     };
                   }
                   nextApprovalsData.contractMap[contractTokenKey].list.push(
-                    token,
+                    shapedToken,
                   );
 
-                  const tokenId = token.id;
+                  const tokenId = shapedToken.id;
                   const tokenKey = `${chainName}:${tokenId}`;
                   if (!nextApprovalsData.tokenMap[tokenKey]) {
                     nextApprovalsData.tokenMap[tokenKey] = {
                       list: [],
                       chain: e.id,
                       risk_level: 'safe',
-                      id: token.id,
-                      name: token.symbol,
-                      logo_url: token.logo_url,
+                      id: shapedToken.id,
+                      name: shapedToken.symbol,
+                      logo_url: shapedToken.logo_url,
                       type: 'token',
                       $riskAboutValues: makeComputedRiskAboutValues(
                         'token',
                         spender,
                       ),
-                      balance: token.balance,
+                      balance: shapedToken.balance,
                     };
                   }
                   nextApprovalsData.tokenMap[tokenKey].list.push(
@@ -423,7 +426,7 @@ export function useApprovalsPageOnTop(options?: { isTestnet?: boolean }) {
                       spender,
                       nextApprovalsData.tokenMap[tokenKey],
                       nextApprovalsData.contractMap[contractTokenKey],
-                      token,
+                      shapedToken,
                     ),
                   );
                 });
@@ -906,6 +909,7 @@ export function useRevokeContractSpenders() {
           const contractRevokeKey = encodeApprovalSpenderKey(
             ctx.approval,
             contract,
+            true,
           );
           if (!contractRevokeKey) {
             __DEV__ &&
@@ -920,6 +924,7 @@ export function useRevokeContractSpenders() {
             contractRevokeMap[contractRevokeKey] = toRevokeItem(
               approval,
               contract,
+              true,
             )!;
           }
         });
@@ -997,6 +1002,7 @@ export function useRevokeAssetSpenders() {
           const revokeSpenderKey = encodeApprovalSpenderKey(
             spender.$assetContract!,
             spender.$assetToken!,
+            spender,
           );
 
           if (isToggledSingle) nextSelect = !assetRevokeMap[revokeSpenderKey];
@@ -1007,6 +1013,7 @@ export function useRevokeAssetSpenders() {
             assetRevokeMap[revokeSpenderKey] = toRevokeItem(
               spender.$assetContract!,
               spender.$assetToken!,
+              spender,
             )!;
           }
         });

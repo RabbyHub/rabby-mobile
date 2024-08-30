@@ -7,14 +7,13 @@ import { NFTApproval } from '@rabby-wallet/rabby-api/dist/types';
 
 import { AssetAvatar, Tip } from '@/components';
 import NFTAvatar from '@/components/NFTAvatar';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { useThemeStyles } from '@/hooks/theme';
 import {
-  checkoutContractSpender,
   getContractNFTType,
   querySelectedContractSpender,
   maybeNFTLikeItem,
-  encodeApprovalSpenderKey,
+  checkoutContractSpender,
 } from '../utils';
 
 import {
@@ -27,6 +26,8 @@ import ApprovalNFTBadge from './NFTBadge';
 import { useTranslation } from 'react-i18next';
 import { getSelectableContainerStyle, getTooltipContentStyles } from './Layout';
 import TouchableView from '@/components/Touchable/TouchableView';
+import Permit2Badge from './Permit2Badge';
+import { getTokenSymbol } from '@/utils/token';
 
 function ApprovalAmountInfo({
   style,
@@ -151,11 +152,13 @@ export function InModalApprovalContractRow({
   const { colors, styles } = useThemeStyles(getApprovalContractRowStyles);
 
   const { contractFocusingRevokeMap } = useRevokeApprovals();
-  const { spender, isSelected } = React.useMemo(() => {
-    const spender = checkoutContractSpender(contractApproval);
-
+  const { spender, isSelected, associatedSpender } = React.useMemo(() => {
     return {
-      spender,
+      spender: checkoutContractSpender(contractApproval),
+      associatedSpender:
+        '$indexderSpender' in contractApproval
+          ? contractApproval.$indexderSpender
+          : null,
       isSelected: !!querySelectedContractSpender(
         contractFocusingRevokeMap,
         approval,
@@ -169,7 +172,7 @@ export function InModalApprovalContractRow({
       const maybeContractForNFT = maybeNFTLikeItem(contractApproval);
 
       const itemName = !maybeContractForNFT
-        ? contractApproval.symbol
+        ? getTokenSymbol(contractApproval)
         : 'inner_id' in contractApproval
         ? stringUtils.ensureSuffix(
             contractApproval.contract_name || 'Unknown',
@@ -194,8 +197,8 @@ export function InModalApprovalContractRow({
           ((contractApproval as any)?.collection?.logo_url as string),
       };
 
-      const spenderValues = spender
-        ? approvalUtils.getSpenderApprovalAmount(spender)
+      const spenderValues = associatedSpender
+        ? approvalUtils.getSpenderApprovalAmount(associatedSpender)
         : null;
 
       return {
@@ -205,7 +208,7 @@ export function InModalApprovalContractRow({
         spender,
         spenderValues,
       };
-    }, [contractApproval, spender]);
+    }, [contractApproval, spender, associatedSpender]);
 
   if (!spender) return null;
 
@@ -238,7 +241,10 @@ export function InModalApprovalContractRow({
         <View style={styles.basicInfo}>
           <View style={styles.basicInfoF1}>
             <Text
-              style={styles.itemName}
+              style={{
+                ...styles.itemName,
+                maxWidth: associatedSpender?.permit2_id ? 85 : 150,
+              }}
               ellipsizeMode="tail"
               numberOfLines={1}>
               {itemName}
@@ -250,6 +256,9 @@ export function InModalApprovalContractRow({
             </View>
           )}
         </View>
+        {associatedSpender?.permit2_id && (
+          <Permit2Badge style={styles.permit2} />
+        )}
       </View>
 
       <View style={styles.rightArea}>
@@ -338,5 +347,8 @@ const getApprovalContractRowStyles = createGetStyles(colors => {
       height: 24,
     },
     chainIcon: { marginRight: 12 },
+    permit2: {
+      marginLeft: 12,
+    },
   };
 });

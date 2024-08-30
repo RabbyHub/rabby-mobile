@@ -10,11 +10,7 @@ import {
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import {
-  createGetStyles,
-  makeDebugBorder,
-  makeDevOnlyStyle,
-} from '@/utils/styles';
+import { createGetStyles } from '@/utils/styles';
 import { ApprovalsBottomArea } from './components/Layout';
 import { ApprovalsLayouts } from './layout';
 import ListByAssets from './ListByAssets';
