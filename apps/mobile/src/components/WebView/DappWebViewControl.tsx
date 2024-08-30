@@ -380,7 +380,7 @@ const DappWebViewControl = React.forwardRef<
             injectedJavaScript: PATCH_ANCHOR_TARGET,
           })}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
-          webviewDebuggingEnabled={true}
+          webviewDebuggingEnabled={__DEV__}
           onLoadStart={nativeEvent => {
             webviewProps?.onLoadStart?.(nativeEvent);
             onLoadStart(nativeEvent);
