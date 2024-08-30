@@ -78,7 +78,7 @@ export const APPLICATION_ID =
 export const FIREBASE_WEBCLIENT_ID =
   Platform.select({
     android:
-      '809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com',
+      '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
     ios: '809331497367-js92drkjmd7ihv23od98u4ri6tg25kjq.apps.googleusercontent.com',
   }) || '';
 
