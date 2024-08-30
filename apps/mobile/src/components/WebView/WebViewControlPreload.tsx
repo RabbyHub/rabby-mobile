@@ -16,11 +16,11 @@ function getTouchHtml(inPageScript: string = '') {
   return `
   <html>
   <head>
-    <!-- touche view -->
+    <!-- touch view -->
     <title></title>
   </head>
   <body>
-    <div>touche view</div>
+    <div style="display: none;">touch view</div>
     <script>
       ;(function() {
         ${inPageScript}
