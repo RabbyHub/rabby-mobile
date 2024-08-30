@@ -41,6 +41,8 @@ import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
+import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
+import { IS_ANDROID } from '@/core/native/utils';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -374,6 +376,9 @@ const DappWebViewControl = React.forwardRef<
           javaScriptEnabled
           injectedJavaScriptBeforeContentLoaded={fullScript}
           injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+          {...(IS_ANDROID && {
+            injectedJavaScript: PATCH_ANCHOR_TARGET,
+          })}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
           webviewDebuggingEnabled={__DEV__}
           onLoadStart={nativeEvent => {
