@@ -11,6 +11,7 @@ buildscript {
         ndkVersion = "23.1.7779620"
         // Only using Android Support libraries
         supportLibVersion = "34.0.0"
+        googlePlayServicesAuthVersion = "20.7.0"
     }
     repositories {
         google()
@@ -22,7 +23,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath 'com.google.gms:google-services:4.3.3'
+        classpath("com.google.gms:google-services:4.4.0")
     }
 }
 
