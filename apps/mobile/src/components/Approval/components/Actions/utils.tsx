@@ -660,19 +660,24 @@ export const fetchContractRequireData = async (
     unexpectedAddr: null,
     receiverInWallet: false,
   };
+  let isEOA = false;
   queue.add(async () => {
-    const credit = await apiProvider.getContractCredit(id, chainId);
-    result.rank = credit.rank_at;
-  });
-  queue.add(async () => {
-    const { desc } = await apiProvider.addrDesc(id);
-    if (desc.contract && desc.contract[chainId]) {
-      result.bornAt = desc.contract[chainId].create_at;
+    const contractInfo = await apiProvider.getContractInfo(id, chainId);
+    if (!contractInfo) {
+      result.rank = null;
+      isEOA = true;
     } else {
-      result.bornAt = desc.born_at;
+      result.rank = contractInfo.credit.rank_at;
+      result.bornAt = contractInfo.create_at;
+      result.protocol = contractInfo.protocol;
     }
-    result.protocol = getProtocol(desc.protocol, chainId);
   });
+  if (isEOA) {
+    queue.add(async () => {
+      const { desc } = await apiProvider.addrDesc(id);
+      result.bornAt = desc.born_at;
+    });
+  }
   queue.add(async () => {
     const hasInteraction = await apiProvider.hasInteraction(
       sender,
@@ -812,22 +817,25 @@ export const fetchNFTApproveRequiredData = async ({
   };
 
   queue.add(async () => {
-    const credit = await openapi.getContractCredit(spender, chainId);
-    result.rank = credit.rank_at;
-  });
-
-  queue.add(async () => {
-    const { desc } = await openapi.addrDesc(spender);
-    if (desc.contract && desc.contract[chainId]) {
-      result.bornAt = desc.contract[chainId].create_at;
-    }
-    if (!desc.contract?.[chainId]) {
+    const contractInfo = await openapi.getContractInfo(spender, chainId);
+    if (!contractInfo) {
       result.isEOA = true;
-      result.bornAt = desc.born_at;
+      result.rank = null;
+    } else {
+      result.rank = contractInfo.credit.rank_at;
+      result.riskExposure = contractInfo.top_nft_spend_usd_value;
+      result.bornAt = contractInfo.create_at;
+      result.isDanger =
+        contractInfo.is_danger.auto || contractInfo.is_danger.edit;
+      result.protocol = contractInfo.protocol;
     }
-    result.protocol = getProtocol(desc.protocol, chainId);
-    result.isDanger = desc.contract?.[chainId]?.is_danger || null;
   });
+  if (result.isEOA) {
+    queue.add(async () => {
+      const { desc } = await openapi.addrDesc(spender);
+      result.bornAt = desc.born_at;
+    });
+  }
   queue.add(async () => {
     const hasInteraction = await openapi.hasInteraction(
       address,
@@ -835,10 +843,6 @@ export const fetchNFTApproveRequiredData = async ({
       spender,
     );
     result.hasInteraction = hasInteraction.has_interaction;
-  });
-  queue.add(async () => {
-    const { usd_value } = await openapi.getTokenNFTTrustValue(chainId, spender);
-    result.riskExposure = usd_value;
   });
   await waitQueueFinished(queue);
   return result;
@@ -873,15 +877,18 @@ const fetchTokenApproveRequireData = async ({
     },
   };
   queue.add(async () => {
-    const credit = await openapi.getContractCredit(spender, chainId);
-    result.rank = credit.rank_at;
-  });
-  queue.add(async () => {
-    const { usd_value } = await openapi.tokenApproveTrustValue(
-      spender,
-      chainId,
-    );
-    result.riskExposure = usd_value;
+    const contractInfo = await openapi.getContractInfo(spender, chainId);
+    if (!contractInfo) {
+      result.isEOA = true;
+      result.rank = null;
+    } else {
+      result.rank = contractInfo.credit.rank_at;
+      result.riskExposure = contractInfo.spend_usd_value;
+      result.bornAt = contractInfo.create_at;
+      result.isDanger =
+        contractInfo.is_danger.auto || contractInfo.is_danger.edit;
+      result.protocol = contractInfo.protocol;
+    }
   });
   if (token) {
     queue.add(async () => {
@@ -889,18 +896,12 @@ const fetchTokenApproveRequireData = async ({
       result.token = t;
     });
   }
-  queue.add(async () => {
-    const { desc } = await openapi.addrDesc(spender);
-    if (desc.contract && desc.contract[chainId]) {
-      result.bornAt = desc.contract[chainId].create_at;
-    }
-    if (!desc.contract?.[chainId]) {
-      result.isEOA = true;
+  if (result.isEOA) {
+    queue.add(async () => {
+      const { desc } = await openapi.addrDesc(spender);
       result.bornAt = desc.born_at;
-    }
-    result.isDanger = desc.contract?.[chainId]?.is_danger || null;
-    result.protocol = getProtocol(desc.protocol, chainId);
-  });
+    });
+  }
   queue.add(async () => {
     const hasInteraction = await openapi.hasInteraction(
       address,
@@ -950,17 +951,14 @@ export const fetchActionRequiredData = async ({
       receiverInWallet,
     };
     queue.add(async () => {
-      const credit = await apiProvider.getContractCredit(id, chainId);
-      result.rank = credit.rank_at;
-    });
-    queue.add(async () => {
-      const { desc } = await apiProvider.addrDesc(id);
-      if (desc.contract && desc.contract[chainId]) {
-        result.bornAt = desc.contract[chainId].create_at;
+      const contractInfo = await apiProvider.getContractInfo(id, chainId);
+      if (!contractInfo) {
+        result.rank = null;
       } else {
-        result.bornAt = desc.born_at;
+        result.rank = contractInfo.credit.rank_at;
+        result.bornAt = contractInfo.create_at;
+        result.protocol = contractInfo.protocol;
       }
-      result.protocol = getProtocol(desc.protocol, chainId);
     });
     queue.add(async () => {
       const hasInteraction = await apiProvider.hasInteraction(
@@ -987,17 +985,14 @@ export const fetchActionRequiredData = async ({
       receiverInWallet,
     };
     queue.add(async () => {
-      const credit = await apiProvider.getContractCredit(id, chainId);
-      result.rank = credit.rank_at;
-    });
-    queue.add(async () => {
-      const { desc } = await apiProvider.addrDesc(id);
-      if (desc.contract && desc.contract[chainId]) {
-        result.bornAt = desc.contract[chainId].create_at;
+      const contractInfo = await apiProvider.getContractInfo(id, chainId);
+      if (!contractInfo) {
+        result.rank = null;
       } else {
-        result.bornAt = desc.born_at;
+        result.rank = contractInfo.credit.rank_at;
+        result.bornAt = contractInfo.create_at;
+        result.protocol = contractInfo.protocol;
       }
-      result.protocol = getProtocol(desc.protocol, chainId);
     });
     queue.add(async () => {
       const hasInteraction = await apiProvider.hasInteraction(
@@ -1323,11 +1318,17 @@ export const fetchActionRequiredData = async ({
       receiverInWallet: false,
     };
     queue.add(async () => {
-      const credit = await apiProvider.getContractCredit(
+      const contractInfo = await apiProvider.getContractInfo(
         contractCall.contract.id,
         chainId,
       );
-      result.rank = credit.rank_at;
+      if (!contractInfo) {
+        result.rank = null;
+      } else {
+        result.rank = contractInfo.credit.rank_at;
+        result.bornAt = contractInfo.create_at;
+        result.protocol = contractInfo.protocol;
+      }
     });
     queue.add(async () => {
       const { desc } = await apiProvider.addrDesc(contractCall.contract.id);
