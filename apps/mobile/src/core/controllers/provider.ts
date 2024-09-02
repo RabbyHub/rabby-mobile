@@ -24,6 +24,7 @@ import {
   swapService,
   customTestnetService,
   bridgeService,
+  customRPCService,
 } from '@/core/services/shared';
 import { keyringService } from '../services';
 // import {
@@ -253,30 +254,27 @@ class ProviderController extends BaseController {
 
     const chain = findChain({
       serverId: chainServerId,
-    });
+    })!;
     if (!chain?.isTestnet) {
-      // if (RPCService.hasCustomRPC(chain.enum)) {
-      if (false) {
-        // const promise = RPCService.requestCustomRPC(
-        //   chain.enum,
-        //   method,
-        //   params,
-        // ).then(result => {
-        //   RpcCache.set(currentAddress, {
-        //     method,
-        //     params,
-        //     result,
-        //     chainId: chainServerId,
-        //   });
-        //   return result;
-        // });
-        // RpcCache.set(currentAddress, {
-        //   method,
-        //   params,
-        //   result: promise,
-        //   chainId: chainServerId,
-        // });
-        // return promise;
+      if (customRPCService.hasCustomRPC(chain.enum)) {
+        const promise = customRPCService
+          .requestCustomRPC(chain.enum, method, params)
+          .then(result => {
+            RpcCache.set(currentAddress, {
+              method,
+              params,
+              result,
+              chainId: chainServerId,
+            });
+            return result;
+          });
+        RpcCache.set(currentAddress, {
+          method,
+          params,
+          result: promise,
+          chainId: chainServerId,
+        });
+        return promise;
       } else {
         const promise = openapi
           .ethRpc(chainServerId, {
@@ -730,27 +728,25 @@ class ProviderController extends BaseController {
         let hash: string | undefined = undefined;
         let reqId: string | undefined = undefined;
         if (!findChain({ enum: chain })?.isTestnet) {
-          // TODO: customRPC
-          // if (RPCService.hasCustomRPC(chain)) {
-          if (false) {
-            // const txData: any = {
-            //   ...approvalRes,
-            //   gasLimit: approvalRes.gas,
-            //   r: addHexPrefix(signedTx.r),
-            //   s: addHexPrefix(signedTx.s),
-            //   v: addHexPrefix(signedTx.v),
-            // };
-            // if (is1559) {
-            //   txData.type = '0x2';
-            // }
-            // const tx = TransactionFactory.fromTxData(txData);
-            // const rawTx = covertToHex(tx.serialize());
-            // hash = await RPCService.requestCustomRPC(
-            //   chain,
-            //   'eth_sendRawTransaction',
-            //   [rawTx],
-            // );
-            // onTransactionCreated({ hash, reqId, pushType });
+          if (customRPCService.hasCustomRPC(chain)) {
+            const txData: any = {
+              ...approvalRes,
+              gasLimit: approvalRes.gas,
+              r: addHexPrefix(signedTx.r),
+              s: addHexPrefix(signedTx.s),
+              v: addHexPrefix(signedTx.v),
+            };
+            if (is1559) {
+              txData.type = '0x2';
+            }
+            const tx = TransactionFactory.fromTxData(txData);
+            const rawTx = bytesToHex(tx.serialize());
+            hash = await customRPCService.requestCustomRPC(
+              chain,
+              'eth_sendRawTransaction',
+              [rawTx],
+            );
+            onTransactionCreated({ hash, reqId, pushType });
           } else {
             const res = await openapi.submitTx({
               tx: {

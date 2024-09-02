@@ -1,9 +1,9 @@
 import { findChain } from '@/utils/chain';
 import React, { useMemo } from 'react';
-import { Image, ImageProps } from 'react-native';
+import { Image, ImageProps, View, ViewProps, ViewStyle } from 'react-native';
 import FastImage, { FastImageProps } from 'react-native-fast-image';
-import { SvgXml } from 'react-native-svg';
 import { TestnetChainLogo } from './TestnetChainLogo';
+import { RPCStatusBadge } from './RPCStatusBadge';
 
 export default function ChainIconImage({
   chainEnum,
@@ -11,6 +11,10 @@ export default function ChainIconImage({
   chainId,
   source,
   size = 20,
+  isShowRPCStatus,
+  containerStyle,
+  badgeStyle,
+  badgeSize,
   ...props
 }: React.PropsWithoutRef<
   Omit<ImageProps, 'source'> & {
@@ -19,6 +23,10 @@ export default function ChainIconImage({
     chainEnum?: string;
     chainServerId?: string;
     chainId?: number;
+    isShowRPCStatus?: boolean;
+    containerStyle?: ViewStyle;
+    badgeStyle?: ViewStyle;
+    badgeSize?: number;
   }
 >) {
   const chain = useMemo(() => {
@@ -31,11 +39,13 @@ export default function ChainIconImage({
 
   if (chain?.isTestnet) {
     return (
-      <TestnetChainLogo size={size} style={props.style} name={chain.name} />
+      <View style={[containerStyle, { width: size, height: size }]}>
+        <TestnetChainLogo size={size} style={props.style} name={chain.name} />
+      </View>
     );
   }
 
-  return (
+  const Content = (
     <Image
       width={size}
       height={size}
@@ -43,6 +53,25 @@ export default function ChainIconImage({
       source={source || { uri: chain?.logo }}
       style={[{ height: size, width: size }, props.style]}
     />
+  );
+
+  if (isShowRPCStatus) {
+    return (
+      <RPCStatusBadge
+        chainEnum={chain?.enum}
+        size={size}
+        badgeStyle={badgeStyle}
+        badgeSize={badgeSize}
+        style={containerStyle}>
+        {Content}
+      </RPCStatusBadge>
+    );
+  }
+
+  return (
+    <View style={[containerStyle, { width: size, height: size }]}>
+      {Content}
+    </View>
   );
 }
 

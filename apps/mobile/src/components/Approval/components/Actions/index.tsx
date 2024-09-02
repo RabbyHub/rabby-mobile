@@ -58,6 +58,8 @@ import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import AssetOrder from './AssetOrder';
 import { BatchRevokePermit2 } from './BatchRevokePermit2';
+import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
+import ChainIconImage from '@/components/Chain/ChainIconImage';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -164,6 +166,18 @@ export const getActionsStyle = (colors: AppColorsVariants) =>
     signTitleLeft: {
       flexDirection: 'row',
       alignItems: 'center',
+    },
+    chainInfo: {
+      flexDirection: 'row',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+    },
+    rpcBadge: {
+      top: -2,
+      right: -2,
+      width: 8,
+      height: 8,
     },
   });
 
@@ -319,11 +333,15 @@ const Actions = ({
               </Text>
             </Row>
             <Row>
-              <LogoWithText
-                textStyle={commonStyle.primaryText}
-                logo={chain.logo}
-                text={chain.name}
-              />
+              <View style={styles.chainInfo}>
+                <ChainIconImage
+                  chainEnum={chain.enum}
+                  size={16}
+                  isShowRPCStatus
+                  badgeStyle={styles.rpcBadge}
+                />
+                <Text style={commonStyle.primaryText}>{chain.name}</Text>
+              </View>
             </Row>
           </Col>
 

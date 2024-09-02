@@ -123,6 +123,10 @@ export type SettingNavigatorParamList = {
       };
   [RootNames.SetBiometricsAuthentication]: {};
   [RootNames.CustomTestnet]?: {};
+  [RootNames.CustomRPC]?: {
+    chainId: number;
+    rpcUrl: string;
+  };
 };
 
 export type FavoritePopularDappsNavigatorParamList = {
