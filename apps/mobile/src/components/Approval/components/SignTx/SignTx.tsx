@@ -451,6 +451,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
           setIsShowCustomRPCErrorModal(true);
         }
+        throw e;
       }
     }
     if (updateNonce && !isGnosisAccount) {
@@ -1098,12 +1099,19 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         // ),
         false,
       );
-      const balance = await getNativeTokenBalance({
-        chainId,
-        address: currentAccount.address,
-      });
+      try {
+        const balance = await getNativeTokenBalance({
+          chainId,
+          address: currentAccount.address,
+        });
 
-      setNativeTokenBalance(balance);
+        setNativeTokenBalance(balance);
+      } catch (e) {
+        if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
+          setIsShowCustomRPCErrorModal(true);
+        }
+        throw e;
+      }
 
       stats.report('createTransaction', {
         type: currentAccount.brandName,
@@ -1188,6 +1196,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       }
       setInited(true);
     } catch (e: any) {
+      console.error(e);
       toast.show(e.message || JSON.stringify(e));
     }
   };
@@ -1497,11 +1506,11 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       <CustomRPCErrorModal
         visible={isShowCustomRPCErrorModal}
         onCancel={() => {
-          setIsShowCustomRPCErrorModal(true);
+          setIsShowCustomRPCErrorModal(false);
         }}
         onConfirm={() => {
           setRPCEnable({ chain: chain.enum, enable: false });
-          // todo check this
+          setIsShowCustomRPCErrorModal(false);
           init();
         }}
       />
