@@ -31,8 +31,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "6.29.9",
-    "@ledgerhq/hw-transport": "^6.30.3",
+    "@ledgerhq/hw-app-eth": "6.38.0",
+    "@ledgerhq/hw-transport": "6.31.2",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
     "eth-sig-util": "^3.0.1",
@@ -40,9 +40,9 @@
   },
   "devDependencies": {
     "@ethereumjs/tx": "5",
-    "@ledgerhq/devices": "^8.2.0",
-    "@ledgerhq/types-cryptoassets": "^7.9.0",
-    "@ledgerhq/types-devices": "^6.23.0",
+    "@ledgerhq/devices": "8.4.2",
+    "@ledgerhq/types-cryptoassets": "7.15.0",
+    "@ledgerhq/types-devices": "6.25.3",
     "@metamask/auto-changelog": "^3.4.3",
     "@types/jest": "^27.4.1",
     "@types/sinon": "^9.0.10",
