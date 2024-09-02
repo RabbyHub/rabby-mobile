@@ -1,16 +1,13 @@
 import React from 'react';
-import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
-import { CloudStorage } from 'react-native-cloud-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { atom, useAtom, useSetAtom } from 'jotai';
 import { loginIfNeeded } from '@/core/utils/cloudBackup';
 
 const cloudStorageAtom = atom<{
-  googleUser: User | null;
-}>({
-  googleUser: null,
-});
+  accessToken?: string;
+}>({});
 export function useGoogleSign() {
-  const [{ googleUser }, setCloudStorage] = useAtom(cloudStorageAtom);
+  const [cloudStorage, setCloudStorage] = useAtom(cloudStorageAtom);
 
   const previousSigned = React.useMemo(
     () => GoogleSignin.hasPreviousSignIn(),
@@ -18,14 +15,14 @@ export function useGoogleSign() {
   );
 
   const doGoogleSign = React.useCallback(async () => {
-    let userInfo: User | null = null;
+    let accessToken: string | null = null;
     const result = await loginIfNeeded();
 
-    userInfo = result.userInfo ? result.userInfo : null;
+    accessToken = result.accessToken ? result.accessToken : null;
 
     setCloudStorage(prev => ({
       ...prev,
-      googleUser: userInfo,
+      accessToken,
     }));
 
     return result;
@@ -33,18 +30,18 @@ export function useGoogleSign() {
 
   const doGoogleSignOut = React.useCallback(async () => {
     await GoogleSignin.signOut();
-    if (googleUser?.idToken) {
-      await GoogleSignin.clearCachedAccessToken(googleUser?.idToken);
+    if (cloudStorage.accessToken) {
+      await GoogleSignin.clearCachedAccessToken(cloudStorage.accessToken);
     }
 
     setCloudStorage(prev => ({
       ...prev,
-      googleUser: null,
+      accessToken: undefined,
     }));
-  }, [setCloudStorage, googleUser]);
+  }, [setCloudStorage, cloudStorage]);
 
   return {
-    isLoginedGoogle: googleUser !== null,
+    isLoginedGoogle: !!cloudStorage.accessToken,
     previousSigned,
     // googleUser,
     // googleUserAccessToken: googleUser?.idToken,
@@ -58,11 +55,13 @@ export function useAutoGoogleSignIfPreviousSignedOnTop() {
 
   React.useEffect(() => {
     if (GoogleSignin.hasPreviousSignIn()) {
-      GoogleSignin.signInSilently().then(userInfo => {
-        setCloudStorage(prev => ({
-          ...prev,
-          googleUser: userInfo,
-        }));
+      GoogleSignin.signInSilently().then(() => {
+        GoogleSignin.getTokens().then(({ accessToken }) => {
+          setCloudStorage(prev => ({
+            ...prev,
+            accessToken,
+          }));
+        });
       });
     }
   }, [setCloudStorage]);
