@@ -62,21 +62,19 @@ export const APP_URLS = {
 };
 
 type AndroidIdSuffx = '' | '.debug' | '.regression';
+const realAndroidPackageName = NativeModules.RNVersionCheck.packageName;
 const androidPackageName = (
-  !NativeModules.RNVersionCheck.packageName
+  !realAndroidPackageName
     ? 'com.debank.rabbymobile'
     : stringUtils.unSuffix(
-        stringUtils.unSuffix(
-          NativeModules.RNVersionCheck.packageName,
-          '.debug',
-        ),
+        stringUtils.unSuffix(realAndroidPackageName, '.debug'),
         '.regression',
       )
 ) as `com.debank.rabbymobile${AndroidIdSuffx}`;
 
 type IosIdSuffix = '' | '-debug';
 
-export const APPLICATION_ID:
+export const PROD_APPLICATION_ID:
   | typeof androidPackageName
   | `com.debank.rabby-mobile${IosIdSuffix}` =
   Platform.OS == 'android'
@@ -85,7 +83,7 @@ export const APPLICATION_ID:
     ? ('com.debank.rabby-mobile-debug' as const)
     : ('com.debank.rabby-mobile' as const);
 
-const AndroidFirebaseWebClientIds = {
+const FirebaseWebClientIds = {
   'com.debank.rabbymobile.debug':
     '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
   'com.debank.rabbymobile.regression':
@@ -101,9 +99,9 @@ const AndroidFirebaseWebClientIds = {
 
 export const FIREBASE_WEBCLIENT_ID =
   Platform.select({
-    android: AndroidFirebaseWebClientIds[APPLICATION_ID],
-    ios: AndroidFirebaseWebClientIds[APPLICATION_ID],
-  }) || AndroidFirebaseWebClientIds[APPLICATION_ID];
+    android: FirebaseWebClientIds[realAndroidPackageName],
+    ios: FirebaseWebClientIds[realAndroidPackageName],
+  }) || FirebaseWebClientIds[realAndroidPackageName];
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 

@@ -92,6 +92,11 @@ export const loginIfNeeded = async () => {
     userInfo: null as User | null,
   };
   if (!IS_ANDROID) return result;
+
+  // // uncomment this line to force login
+  // if (__DEV__ && GoogleSignin.hasPreviousSignIn()) {
+  //   GoogleSignin.signOut();
+  // }
   result.needLogin = true;
 
   // const available = await CloudStorage.isCloudAvailable();
