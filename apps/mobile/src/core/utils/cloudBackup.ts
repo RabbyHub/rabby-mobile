@@ -15,7 +15,7 @@ const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 GoogleSignin.configure({
   // https://rnfirebase.io/auth/social-auth#google
   webClientId: FIREBASE_WEBCLIENT_ID,
-  scopes: ['https://www.googleapis.com/auth/drive'],
+  scopes: ['https://www.googleapis.com/auth/drive.appdata'],
 });
 
 const generateBackupFileName = (mnemonic: string) => {
@@ -43,10 +43,11 @@ export const saveMnemonicToCloud = async ({
   );
   const filename = generateBackupFileName(mnemonic);
 
+  console.log(`${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
   await CloudStorage.writeFile(
-    `/${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+    `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     encryptedData,
-    CloudStorageScope.Documents,
+    CloudStorageScope.AppData,
   );
 };
 
@@ -58,20 +59,19 @@ export const getBackupsFromCloud = async ({
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const filenames = await CloudStorage.readdir(
-    REMOTE_BACKUP_WALLET_DIR,
-    CloudStorageScope.Documents,
-  );
+  const filenames = await CloudStorage.readdir('/', CloudStorageScope.AppData);
+  console.log('filenames', filenames);
   if (!filenames.length) {
     return;
   }
 
+  filenames.pop(); // remove the last one, which is the dir itself
   const backups: string[] = [];
 
   for (const filename of filenames) {
     const encryptedData = await CloudStorage.readFile(
-      `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
-      CloudStorageScope.Documents,
+      `/${filename}`,
+      CloudStorageScope.AppData,
     );
     try {
       const result = JSON.parse(
@@ -140,12 +140,12 @@ export const makeDirIfNeeded = async () => {
   if (
     !(await CloudStorage.exists(
       REMOTE_BACKUP_WALLET_DIR,
-      CloudStorageScope.Documents,
+      CloudStorageScope.AppData,
     ))
   ) {
     await CloudStorage.mkdir(
       REMOTE_BACKUP_WALLET_DIR,
-      CloudStorageScope.Documents,
+      CloudStorageScope.AppData,
     );
   }
 };
