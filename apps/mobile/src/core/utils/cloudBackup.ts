@@ -90,7 +90,7 @@ export const getBackupsFromCloud = async ({
 export const loginIfNeeded = async () => {
   const result = {
     needLogin: IS_ANDROID,
-    userInfo: null as User | null,
+    accessToken: '',
   };
   if (!IS_ANDROID) return result;
 
@@ -127,9 +127,10 @@ export const loginIfNeeded = async () => {
   }
 
   if (userInfo) {
+    const { accessToken } = await GoogleSignin.getTokens();
     // __DEV__ && console.debug('userInfo', userInfo);
-    CloudStorage.setGoogleDriveAccessToken(userInfo.idToken);
-    result.userInfo = userInfo;
+    CloudStorage.setGoogleDriveAccessToken(accessToken);
+    result.accessToken = accessToken;
   }
 
   return result;
@@ -158,6 +159,6 @@ export const refreshAccessToken = async () => {
   CloudStorage.setGoogleDriveAccessToken(
     await (
       await GoogleSignin.getTokens()
-    ).idToken,
+    ).accessToken,
   );
 };
