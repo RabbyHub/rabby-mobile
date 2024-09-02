@@ -15,6 +15,7 @@ const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 GoogleSignin.configure({
   // https://rnfirebase.io/auth/social-auth#google
   webClientId: FIREBASE_WEBCLIENT_ID,
+  scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
 const generateBackupFileName = (mnemonic: string) => {

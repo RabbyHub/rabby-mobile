@@ -520,13 +520,13 @@ function DevSettingsBlocks() {
                   icon: RcGoogleDrive,
                   onPress: () => {
                     doGoogleSign()
-                      .then(e => {
-                        console.log('loginIfNeeded done', e);
-                        saveMnemonicToCloud({
+                      .then(async e => {
+                        console.log('loginIfNeeded done', e.needLogin);
+                        await saveMnemonicToCloud({
                           mnemonic: 'test',
                           password: 'test',
                         });
-                        getBackupsFromCloud({
+                        await getBackupsFromCloud({
                           password: 'test',
                         }).then(e => {
                           console.log('getBackupsFromCloud done', e);
