@@ -20,6 +20,8 @@ import {
   RcWhitelist,
   RcAddCustomNetwork,
   RcRPC,
+  RcGoogleDrive,
+  RcGoogleSignout,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -96,6 +98,7 @@ import {
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useGoogleSign } from '@/hooks/cloudStorage';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -461,6 +464,8 @@ function DevSettingsBlocks() {
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
+  const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
+
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       ...(isSelfhostRegPkg && {
@@ -501,28 +506,38 @@ function DevSettingsBlocks() {
                 requestLockWalletAndBackToUnlockScreen();
               },
             },
-            {
-              label: 'sign google drive',
-              onPress: () => {
-                loginIfNeeded()
-                  .then(e => {
-                    console.log('loginIfNeeded done', e);
-                    saveMnemonicToCloud({
-                      mnemonic: 'test',
-                      password: 'test',
-                    });
-                    getBackupsFromCloud({
-                      password: 'test',
-                    }).then(e => {
-                      console.log('getBackupsFromCloud done', e);
-                    });
-                  })
-                  .catch(e => {
-                    console.error('loginIfNeeded error', e);
-                  });
-              },
-              visible: __DEV__ && IS_ANDROID,
-            },
+            isLoginedGoogle
+              ? {
+                  label: 'Signout google drive',
+                  icon: RcGoogleSignout,
+                  onPress: async () => {
+                    await doGoogleSignOut();
+                  },
+                  visible: IS_ANDROID,
+                }
+              : {
+                  label: 'Sign google drive',
+                  icon: RcGoogleDrive,
+                  onPress: () => {
+                    doGoogleSign()
+                      .then(e => {
+                        console.log('loginIfNeeded done', e);
+                        saveMnemonicToCloud({
+                          mnemonic: 'test',
+                          password: 'test',
+                        });
+                        getBackupsFromCloud({
+                          password: 'test',
+                        }).then(e => {
+                          console.log('getBackupsFromCloud done', e);
+                        });
+                      })
+                      .catch(e => {
+                        console.error('loginIfNeeded error', e);
+                      });
+                  },
+                  visible: IS_ANDROID,
+                },
             {
               label: (
                 <Text>
