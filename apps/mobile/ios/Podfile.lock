@@ -107,7 +107,7 @@ PODS:
   - MMKV (1.3.5):
     - MMKVCore (~> 1.3.5)
   - MMKVCore (1.3.5)
-  - MultiplatformBleAdapter (0.1.9)
+  - MultiplatformBleAdapter (0.2.0)
   - nanopb (2.30909.1):
     - nanopb/decode (= 2.30909.1)
     - nanopb/encode (= 2.30909.1)
@@ -420,8 +420,9 @@ PODS:
     - React-Core
   - react-native-ble-manager (8.8.0):
     - React-Core
-  - react-native-ble-plx (2.0.3):
-    - MultiplatformBleAdapter (= 0.1.9)
+  - react-native-ble-plx (3.1.2):
+    - MultiplatformBleAdapter (= 0.2.0)
+    - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - react-native-blur (4.3.2):
     - React-Core
@@ -915,7 +916,7 @@ SPEC CHECKSUMS:
   libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
   MMKV: 506311d0494023c2f7e0b62cc1f31b7370fa3cfb
   MMKVCore: 9e2e5fd529b64a9fe15f1a7afb3d73b2e27b4db9
-  MultiplatformBleAdapter: 5a6a897b006764392f9cef785e4360f54fb9477d
+  MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   PromisesObjC: c50d2056b5253dadbd6c2bea79b0674bd5a52fa4
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
@@ -936,7 +937,7 @@ SPEC CHECKSUMS:
   react-native-aes: b580a7919ae1ba5a1b457e7e4914a87eb01de6f4
   react-native-animateable-text: 5f5a6e96f6c075aa943ce52ea7fd3fbb3e56d725
   react-native-ble-manager: f8add48474ad08a0bd3e46b2d1ebff5e00a628b7
-  react-native-ble-plx: f10240444452dfb2d2a13a0e4f58d7783e92d76e
+  react-native-ble-plx: 1c04d21b1d9990227745f28b40b7422ea1e4e493
   react-native-blur: cfdad7b3c01d725ab62a8a729f42ea463998afa2
   react-native-compat: d658d1a1c8589c5a1b6c0f6c8c83c0a51880b7d2
   react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
