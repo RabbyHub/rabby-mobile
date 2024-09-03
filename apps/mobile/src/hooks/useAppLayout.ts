@@ -49,15 +49,21 @@ export function useSafeAndroidBottomSizes<T extends Record<string, number>>(
   const { bottom } = useSafeAreaInsets();
 
   const androidBottomOffset = isAndroid ? bottom : 0;
-  const safeSizes = useMemo(() => {
-    const outpus = { ...inputs };
+  const { safeSizes, cutOffSizes } = useMemo(() => {
+    const outpus = {
+      safeSizes: { ...inputs },
+      cutOffSizes: { ...inputs },
+    };
 
-    return Object.entries(outpus).reduce((acc, [key, value]) => {
+    return Object.entries(inputs).reduce((acc, [key, value]) => {
       // @ts-expect-error
-      acc[key] = isAndroid ? value + bottom : acc[key];
+      acc.safeSizes[key] = isAndroid ? value + bottom : acc[key];
+      // @ts-expect-error
+      acc.cutOffSizes[key] = isAndroid ? Math.max(0, value - bottom) : acc[key];
+
       return acc;
     }, outpus);
   }, [bottom, inputs]);
 
-  return { safeSizes, androidBottomOffset };
+  return { safeSizes, cutOffSizes, androidBottomOffset };
 }
