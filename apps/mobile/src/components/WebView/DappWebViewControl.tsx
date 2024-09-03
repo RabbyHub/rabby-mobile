@@ -41,6 +41,7 @@ import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -347,6 +348,12 @@ const DappWebViewControl = React.forwardRef<
       return convertToWebviewUrl(_initialUrl);
     }, [dappOrigin, _initialUrl]);
 
+    const { cutOffSizes } = useSafeAndroidBottomSizes({
+      webviewNodeContainerMaxH:
+        Dimensions.get('window').height -
+        ScreenLayouts.dappWebViewControlHeaderHeight,
+    });
+
     const renderedWebviewNode = useMemo(() => {
       if (!entryScriptWeb3Loaded) return null;
 
@@ -445,9 +452,7 @@ const DappWebViewControl = React.forwardRef<
           style={[
             styles.dappWebViewContainer,
             {
-              maxHeight:
-                Dimensions.get('window').height -
-                ScreenLayouts.dappWebViewControlHeaderHeight,
+              maxHeight: cutOffSizes.webviewNodeContainerMaxH,
             },
           ]}>
           {renderedWebviewNode}
