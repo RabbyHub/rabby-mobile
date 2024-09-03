@@ -516,14 +516,14 @@ function DevSettingsBlocks() {
                   visible: IS_ANDROID,
                 }
               : {
-                  label: 'Sign google drive',
+                  label: IS_ANDROID ? 'Sign google drive' : 'Store to iCloud',
                   icon: RcGoogleDrive,
                   onPress: () => {
                     doGoogleSign()
                       .then(async e => {
                         console.log('loginIfNeeded done', e.needLogin);
                         await saveMnemonicToCloud({
-                          mnemonic: 'test',
+                          mnemonic: 'testtest',
                           password: 'test',
                         });
                         await getBackupsFromCloud({
@@ -536,7 +536,6 @@ function DevSettingsBlocks() {
                         console.error('loginIfNeeded error', e);
                       });
                   },
-                  visible: IS_ANDROID,
                 },
             {
               label: (

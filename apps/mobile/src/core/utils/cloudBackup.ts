@@ -1,5 +1,5 @@
 import { CloudStorage, CloudStorageScope } from 'react-native-cloud-storage';
-import { IS_ANDROID } from '../native/utils';
+import { IS_ANDROID, IS_IOS } from '../native/utils';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -17,6 +17,10 @@ GoogleSignin.configure({
   webClientId: FIREBASE_WEBCLIENT_ID,
   scopes: ['https://www.googleapis.com/auth/drive.appdata'],
 });
+
+export function normalizeAndroidBackupFilename(filename: string) {
+  return filename.replace(`${REMOTE_BACKUP_WALLET_DIR}/`, '');
+}
 
 const generateBackupFileName = (mnemonic: string) => {
   return md5(mnemonic);
@@ -47,7 +51,6 @@ export const saveMnemonicToCloud = async ({
   await CloudStorage.writeFile(
     `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     encryptedData,
-    CloudStorageScope.AppData,
   );
 };
 
@@ -59,19 +62,16 @@ export const getBackupsFromCloud = async ({
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const filenames = await CloudStorage.readdir('/', CloudStorageScope.AppData);
-  console.log('filenames', filenames);
+  const filenames = await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR);
   if (!filenames.length) {
     return;
   }
 
-  filenames.pop(); // remove the last one, which is the dir itself
   const backups: string[] = [];
 
   for (const filename of filenames) {
     const encryptedData = await CloudStorage.readFile(
-      `/${filename}`,
-      CloudStorageScope.AppData,
+      `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     );
     try {
       const result = JSON.parse(
@@ -137,16 +137,24 @@ export const loginIfNeeded = async () => {
 };
 
 export const makeDirIfNeeded = async () => {
-  if (
-    !(await CloudStorage.exists(
-      REMOTE_BACKUP_WALLET_DIR,
-      CloudStorageScope.AppData,
-    ))
-  ) {
-    await CloudStorage.mkdir(
-      REMOTE_BACKUP_WALLET_DIR,
-      CloudStorageScope.AppData,
-    );
+  if (IS_IOS) {
+    CloudStorage.setDefaultScope(CloudStorageScope.Documents);
+  }
+
+  console.log('check dir', REMOTE_BACKUP_WALLET_DIR);
+  if (!(await CloudStorage.exists(REMOTE_BACKUP_WALLET_DIR))) {
+    const dirs = REMOTE_BACKUP_WALLET_DIR.split('/');
+    let currentDir = '';
+    for (const dir of dirs) {
+      if (!dir) {
+        continue;
+      }
+      currentDir += '/' + dir;
+      console.log('make dir', currentDir);
+      if (!(await CloudStorage.exists(currentDir))) {
+        await CloudStorage.mkdir(currentDir);
+      }
+    }
   }
 };
 
