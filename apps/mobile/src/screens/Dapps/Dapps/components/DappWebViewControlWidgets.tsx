@@ -4,12 +4,14 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { OpenedDappItem } from '../../hooks/useDappView';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { DappCardInWebViewNav } from '../../components/DappCardInWebViewNav';
 import { Button } from '@/components';
 import { useDapps } from '@/hooks/useDapps';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
+const BOTTOM_CONTAINER_PADDING = 16;
 export function BottomSheetContent({
   dappInfo,
   bottomNavBar,
@@ -19,20 +21,21 @@ export function BottomSheetContent({
   bottomNavBar: React.ReactNode;
   onPressCloseDapp?: () => void;
 }) {
-  const colors = useThemeColors();
-
   const { updateFavorite, addDapp } = useDapps();
 
-  const styles = React.useMemo(() => {
-    return getStyle(colors);
-  }, [colors]);
+  const { styles } = useThemeStyles(getStyle);
+  const { safeSizes, androidBottomOffset } = useSafeAndroidBottomSizes({});
 
   if (!dappInfo) return null;
 
   return (
-    <View>
+    <View style={[styles.container, {}]}>
       {dappInfo?.maybeDappInfo && (
-        <BottomSheetScrollView style={{ minHeight: 108 }}>
+        <BottomSheetScrollView
+          style={{
+            minHeight: 108 - androidBottomOffset,
+            // ...makeDebugBorder('red'),
+          }}>
           <DappCardInWebViewNav
             data={dappInfo.maybeDappInfo}
             onFavoritePress={dapp => {
@@ -42,8 +45,8 @@ export function BottomSheetContent({
         </BottomSheetScrollView>
       )}
 
-      <View style={styles.container}>
-        <View style={{ flexShrink: 0 }}>{bottomNavBar}</View>
+      <View style={[styles.navbarContainer]}>
+        <View style={styles.bottomNavbarContainer}>{bottomNavBar}</View>
         <View style={styles.buttonWrapper}>
           <Button
             onPress={onPressCloseDapp}
@@ -68,16 +71,37 @@ export function BottomSheetContent({
 
 const getStyle = createGetStyles(colors => ({
   container: {
-    paddingVertical: 16,
+    flexShrink: 1,
+    height: '100%',
+    width: '100%',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 8,
+    // ...makeDebugBorder('yellow')
+  },
+  navbarContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: BOTTOM_CONTAINER_PADDING,
+    paddingBottom: 0,
     borderTopColor: colors['neutral-line'],
     borderTopWidth: StyleSheet.hairlineWidth,
-    justifyContent: 'center',
+    // justifyContent: 'center',
+  },
+  bottomNavbarContainer: {
+    flexShrink: 0,
+    width: '100%',
+    // ...makeDebugBorder('green'),
+    paddingRight: 0,
   },
   buttonWrapper: {
     width: '100%',
     flexShrink: 1,
     marginTop: 18,
-    paddingHorizontal: 20,
+    justifyContent: 'center',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    // ...makeDebugBorder('pink'),
   },
   buttonContainer: {
     display: 'flex',

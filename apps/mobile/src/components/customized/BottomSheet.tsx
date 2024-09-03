@@ -6,15 +6,16 @@ import {
   BottomSheetModalProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TextStyle } from 'react-native';
 import { AppColorsVariants } from '@/constant/theme';
-import { useSafeSizes } from '@/hooks/useAppLayout';
+import { useSafeAndroidBottomSizes, useSafeSizes } from '@/hooks/useAppLayout';
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { apisAutoLock, apisLock } from '@/core/apis';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -188,9 +189,13 @@ export const DappNavCardBottomSheetModal = forwardRef<
   }
 >(({ children, bottomNavH, keepAliveOnAppLocked = false, ...props }, ref) => {
   const { safeTop } = useSafeSizes();
-  const colors = useThemeColors();
+  const { styles } = useThemeStyles(getDappNavCardBottomSheetStyles);
 
   const topSnapPoint = bottomNavH + safeTop;
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    topSnapPoint,
+    sheetViewPb: 0,
+  });
 
   React.useEffect(() => {
     if (keepAliveOnAppLocked) return;
@@ -213,18 +218,35 @@ export const DappNavCardBottomSheetModal = forwardRef<
       enableContentPanningGesture={true}
       name="webviewNavRef"
       handleHeight={28}
-      snapPoints={[topSnapPoint]}
-      backgroundStyle={{
-        backgroundColor: colors['neutral-bg-1'],
-      }}
+      snapPoints={[safeSizes.topSnapPoint]}
+      backgroundStyle={styles.sheetModal}
       ref={ref}>
       <AutoLockView
         as="BottomSheetView"
-        className="px-[20] items-center justify-center">
+        style={[
+          styles.sheetView,
+          {
+            paddingBottom: safeSizes.sheetViewPb,
+          },
+        ]}>
         {children || null}
       </AutoLockView>
     </AppBottomSheetModal>
   );
+});
+
+const getDappNavCardBottomSheetStyles = createGetStyles(colors => {
+  return {
+    sheetModal: { backgroundColor: colors['neutral-bg-1'] },
+    sheetView: {
+      height: '100%',
+      width: '100%',
+      // paddingHorizontal: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // ...makeDebugBorder(),
+    },
+  };
 });
 
 export type DappNavCardBottomSheetModal = BottomSheetModal;
