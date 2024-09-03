@@ -825,16 +825,15 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
       onRedirecTo,
     ]);
 
-    const { safeOffBottom } = useSafeSizes();
+    const { androidOnlyBottomOffset } = useSafeSizes();
 
     const ListFooterComponent = React.useMemo(() => {
       return (
-        <View
-          style={[styles.listFooterContainer, { minHeight: safeOffBottom }]}>
+        <View style={[styles.listFooterContainer]}>
           {isLoadingMore ? <ActivityIndicator /> : null}
         </View>
       );
-    }, [styles, isLoadingMore, safeOffBottom]);
+    }, [styles, isLoadingMore]);
 
     const ListEmptyComponent = React.useMemo(() => {
       return shouldRenderLoadingOnEmpty ? (
@@ -870,7 +869,12 @@ export const BottomSheetModalTokenDetail = React.forwardRef<
         snapPoints={[`${SIZES.sheetModalHorizontalPercentage * 100}%`]}
         onChange={useCallback(() => {}, [])}
         onDismiss={onDismiss}>
-        <AutoLockView as="BottomSheetView" style={styles.container}>
+        <AutoLockView
+          as="BottomSheetView"
+          style={[
+            styles.container,
+            { paddingBottom: androidOnlyBottomOffset },
+          ]}>
           <BottomSheetHandlableView style={[styles.tokenDetailHeaderBlock]}>
             {tokenLoad?.isLoading ? (
               <SkeletonTokenDetailHeader />

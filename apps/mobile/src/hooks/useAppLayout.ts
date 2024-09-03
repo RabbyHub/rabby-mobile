@@ -35,6 +35,7 @@ export function useSafeSizes() {
      * in most cases, it equals to `screenHeight - windowHeight - statusbarHeight`
      */
     systembarOffsetBottom: bottom,
+    androidOnlyBottomOffset: isAndroid ? bottom : 0,
   };
 }
 
