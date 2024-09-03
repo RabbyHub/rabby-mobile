@@ -16,6 +16,7 @@ import { apisAutoLock, apisLock } from '@/core/apis';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
+import { IS_IOS } from '@/core/native/utils';
 
 export const getBottomSheetHandleStyles = (colors: AppColorsVariants) => {
   return StyleSheet.create({
@@ -177,6 +178,7 @@ const renderOpenedDappNavCardBackdrop = (props: BottomSheetBackdropProps) => {
   );
 };
 
+const SYS_BOTTOM_OFFSET = IS_IOS ? 12 : 8;
 export const DappNavCardBottomSheetModal = forwardRef<
   AppBottomSheetModal,
   Omit<React.ComponentProps<typeof AppBottomSheetModal>, 'snapPoints'> & {
@@ -193,8 +195,8 @@ export const DappNavCardBottomSheetModal = forwardRef<
 
   const topSnapPoint = bottomNavH + safeTop;
   const { safeSizes } = useSafeAndroidBottomSizes({
-    topSnapPoint,
-    sheetViewPb: 0,
+    topSnapPoint: topSnapPoint + SYS_BOTTOM_OFFSET,
+    sheetViewPb: SYS_BOTTOM_OFFSET,
   });
 
   React.useEffect(() => {

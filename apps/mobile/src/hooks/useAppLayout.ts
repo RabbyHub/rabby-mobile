@@ -57,9 +57,11 @@ export function useSafeAndroidBottomSizes<T extends Record<string, number>>(
 
     return Object.entries(inputs).reduce((acc, [key, value]) => {
       // @ts-expect-error
-      acc.safeSizes[key] = isAndroid ? value + bottom : acc[key];
+      acc.safeSizes[key] = isAndroid ? value + bottom : acc.safeSizes[key];
       // @ts-expect-error
-      acc.cutOffSizes[key] = isAndroid ? Math.max(0, value - bottom) : acc[key];
+      acc.cutOffSizes[key] = isAndroid
+        ? Math.max(0, value - bottom)
+        : acc.cutOffSizes[key];
 
       return acc;
     }, outpus);
