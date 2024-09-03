@@ -209,7 +209,7 @@ export function BalanceSection({ style }: RNViewProps) {
       <SendReserveGasPopup
         selectedItem={screenState.selectedGasLevel?.level as GasLevelType}
         chain={chainItem?.enum}
-        limit={Math.max(screenState.estimateGas, MINIMUM_GAS_LIMIT)}
+        limit={Math.max(screenState.estimatedGas, MINIMUM_GAS_LIMIT)}
         onGasChange={gasLevel => {
           handleGasLevelChanged(gasLevel);
         }}
