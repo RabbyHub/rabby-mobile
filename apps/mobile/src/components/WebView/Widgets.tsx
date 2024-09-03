@@ -10,6 +10,7 @@ import {
   RcIconNavReload,
 } from '@/components/WebView/icons';
 import TouchableView from '@/components/Touchable/TouchableView';
+import { makeDebugBorder } from '@/utils/styles';
 
 export const BOTTOM_NAV_CONTROL_PRESS_OPACITY = 0.3;
 
@@ -17,16 +18,20 @@ export const bottomNavStyles = StyleSheet.create({
   navControls: {
     width: '100%',
     height: 52,
-    paddingHorizontal: 26,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    // ...makeDebugBorder('orange'),
   },
   navControlItem: {
     height: '100%',
+    width: '100%',
+    flexShrink: 1,
+    flexDirection: 'row',
     justifyContent: 'center',
-    flexShrink: 0,
+    alignItems: 'center',
+    // ...makeDebugBorder('orange'),
   },
   disabledStyle: {
     opacity: 0.3,
