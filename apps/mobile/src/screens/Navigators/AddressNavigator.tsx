@@ -24,6 +24,7 @@ import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyS
 import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 import { strings } from '@/utils/i18n';
+import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -154,6 +155,10 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.PreCreateMnemonic}
+        component={PreCreateSeedPhraseScreen}
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonic}

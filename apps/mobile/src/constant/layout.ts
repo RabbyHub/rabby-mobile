@@ -78,6 +78,7 @@ export const RootNames = {
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
   CreateMnemonic: 'CreateMnemonic',
+  PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
   CreateMnemonicBackup: 'CreateMnemonicBackup',
   CreateMnemonicVerify: 'CreateMnemonicVerify',

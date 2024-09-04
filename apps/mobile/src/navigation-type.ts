@@ -71,6 +71,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportPrivateKey]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.AddMnemonic]?: {};
+  [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
@@ -112,7 +113,7 @@ export type SettingNavigatorParamList = {
         actionAfterSetup: 'backScreen';
         replaceStack: typeof RootNames.StackAddress;
         replaceScreen:
-          | typeof RootNames.CreateMnemonic
+          | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
           | typeof RootNames.ImportMnemonic;
       }
