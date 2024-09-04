@@ -584,7 +584,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             sender: address,
             walletProvider: {
               hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-              hasAddress: keyringService.hasAddress,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
               getWhitelist: async () => whitelistService.getWhitelist(),
               isWhitelistEnabled: async () =>
                 whitelistService.isWhitelistEnabled(),
@@ -609,7 +609,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             isTestnet: isTestnet(chain.serverId),
             provider: {
               getTimeSpan,
-              hasAddress: keyringService.hasAddress,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
             },
           });
           const result = await executeEngine(ctx);
@@ -1246,7 +1246,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       isTestnet: isTestnet(chain.serverId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
       },
     });
     const result = await executeEngine(ctx);

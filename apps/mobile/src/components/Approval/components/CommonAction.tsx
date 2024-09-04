@@ -4,7 +4,6 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { ProtocolListItem } from './Actions/components/ProtocolListItem';
 import { SecurityListItem } from './Actions/components/SecurityListItem';
 import ViewMore from './Actions/components/ViewMore';
-import { ContractRequireData } from './TypedDataActions/utils';
 import { Col, Row, Table } from './Actions/components/Table';
 import * as Values from './Actions/components/Values';
 import { Chain } from '@/constant/chains';
@@ -13,10 +12,13 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { Text, View } from 'react-native';
 import { useThemeColors } from '@/hooks/theme';
 import useCommonStyle from '../hooks/useCommonStyle';
-import { ContractCallRequireData } from './Actions/utils';
 import { SubTable, SubCol, SubRow } from './Actions/components/SubTable';
 import BigNumber from 'bignumber.js';
 import { formatTokenAmount } from '@/utils/number';
+import {
+  ContractRequireData,
+  ContractCallRequireData,
+} from '@rabby-wallet/rabby-action';
 
 const { isSameAddress } = addressUtils;
 

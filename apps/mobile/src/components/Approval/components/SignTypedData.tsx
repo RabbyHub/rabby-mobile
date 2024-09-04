@@ -425,7 +425,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         chainId: chainServerId || CHAINS.ETH.serverId,
         walletProvider: {
           hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
-          hasAddress: keyringService.hasAddress,
+          hasAddress: keyringService.hasAddress.bind(keyringService),
           getWhitelist: async () => whitelistService.getWhitelist(),
           isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
           getPendingTxsByNonce: async (...args) =>
@@ -444,7 +444,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         isTestnet: isTestnetChainId(data.chainId),
         provider: {
           getTimeSpan,
-          hasAddress: keyringService.hasAddress,
+          hasAddress: keyringService.hasAddress.bind(keyringService),
         },
         origin: params.session.origin,
       });
@@ -472,7 +472,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       isTestnet: isTestnetChainId(parsedActionData.chainId),
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
       },
       origin: params.session.origin,
     });

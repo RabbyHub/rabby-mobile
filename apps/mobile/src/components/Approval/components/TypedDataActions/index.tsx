@@ -8,9 +8,7 @@ import {
   MultiSigRequireData,
   SwapTokenOrderRequireData,
   BatchApproveTokenRequireData,
-  ApproveNFTRequireData,
   RevokeTokenApproveRequireData,
-  SendRequireData,
   ParsedTypedDataActionData,
   ActionRequireData,
 } from '@rabby-wallet/rabby-action';
@@ -52,10 +50,9 @@ import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import RevokePermit2 from '../Actions/RevokePermit2';
-import ApproveNFT from '../Actions/ApproveNFT';
-import Send from '../Actions/Send';
-import AssetOrder from '../Actions/AssetOrder';
 import { getActionTypeText } from './utils';
+import { TransactionActionList } from '../Actions/components/TransactionActionList';
+import { noop } from 'lodash';
 
 const Actions = ({
   data,
@@ -203,14 +200,6 @@ const Actions = ({
                     engineResults={engineResults}
                   />
                 )}
-                {data.approveNFT && chain && (
-                  <ApproveNFT
-                    data={data.approveNFT}
-                    requireData={requireData as ApproveNFTRequireData}
-                    chain={chain}
-                    engineResults={engineResults}
-                  />
-                )}
                 {data.batchPermit2 && chain && (
                   <BatchPermit2
                     data={data.batchPermit2}
@@ -254,27 +243,10 @@ const Actions = ({
                     sender={data.sender}
                   />
                 )}
-                {data.assetOrder && chain && (
-                  <AssetOrder
-                    data={data.assetOrder}
-                    requireData={requireData as ContractRequireData}
-                    chain={chain}
-                    engineResults={engineResults}
-                    sender={data.sender}
-                  />
-                )}
                 {data.signMultiSig && (
                   <SignMultisig
                     data={data.signMultiSig}
                     requireData={requireData as MultiSigRequireData}
-                    chain={chain}
-                    engineResults={engineResults}
-                  />
-                )}
-                {data.send && chain && (
-                  <Send
-                    data={data.send}
-                    requireData={requireData as SendRequireData}
                     chain={chain}
                     engineResults={engineResults}
                   />
@@ -324,6 +296,17 @@ const Actions = ({
                     requireData={requireData as ContractRequireData}
                     chain={chain}
                     engineResults={engineResults}
+                  />
+                )}
+                {chain && (
+                  <TransactionActionList
+                    data={data}
+                    requireData={requireData}
+                    chain={chain}
+                    engineResults={engineResults}
+                    raw={raw}
+                    isTypedData
+                    onChange={noop}
                   />
                 )}
               </View>

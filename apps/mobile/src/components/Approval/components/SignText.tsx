@@ -235,7 +235,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       requireData: null,
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
       },
     });
     const result = await executeEngine(ctx);
@@ -306,7 +306,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       requireData: null,
       provider: {
         getTimeSpan,
-        hasAddress: keyringService.hasAddress,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
       },
     });
     const result = await executeEngine(ctx);
