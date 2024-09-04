@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
-import { ParsedActionData, WrapTokenRequireData } from './utils';
+import {
+  ParsedActionData,
+  WrapTokenRequireData,
+} from '@rabby-wallet/rabby-action';
 import { formatAmount } from '@/utils/number';
 import { Chain } from '@/constant/chains';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';

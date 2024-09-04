@@ -7,11 +7,13 @@ import {
   ContractRequireData,
   MultiSigRequireData,
   SwapTokenOrderRequireData,
-  TypedDataActionData,
-  TypedDataRequireData,
-  getActionTypeText,
   BatchApproveTokenRequireData,
-} from './utils';
+  ApproveNFTRequireData,
+  RevokeTokenApproveRequireData,
+  SendRequireData,
+  ParsedTypedDataActionData,
+  ActionRequireData,
+} from '@rabby-wallet/rabby-action';
 import BuyNFT from './BuyNFT';
 import SellNFT from './SellNFT';
 import Permit from './Permit';
@@ -28,7 +30,6 @@ import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
 import { Chain } from '@/constant/chains';
 import {
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -51,14 +52,10 @@ import LogoWithText from '../Actions/components/LogoWithText';
 import { Col, Row } from '../Actions/components/Table';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import RevokePermit2 from '../Actions/RevokePermit2';
-import {
-  ApproveNFTRequireData,
-  RevokeTokenApproveRequireData,
-  SendRequireData,
-} from '../Actions/utils';
 import ApproveNFT from '../Actions/ApproveNFT';
 import Send from '../Actions/Send';
 import AssetOrder from '../Actions/AssetOrder';
+import { getActionTypeText } from './utils';
 
 const Actions = ({
   data,
@@ -70,8 +67,8 @@ const Actions = ({
   origin,
   originLogo,
 }: {
-  data: TypedDataActionData | null;
-  requireData: TypedDataRequireData;
+  data: ParsedTypedDataActionData | null;
+  requireData: ActionRequireData;
   chain?: Chain;
   engineResults: Result[];
   raw: Record<string, any>;

@@ -3,7 +3,7 @@ import { Platform, Dimensions } from 'react-native';
 
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import PQueue from 'p-queue/dist/index';
+import PQueue from 'p-queue';
 
 import {
   type AssetApprovalSpender,

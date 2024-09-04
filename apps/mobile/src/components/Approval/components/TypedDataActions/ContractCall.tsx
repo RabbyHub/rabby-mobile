@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ContractRequireData, TypedDataActionData } from './utils';
+import {
+  ContractRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
@@ -23,7 +26,7 @@ const ContractCall = ({
   raw,
   engineResults,
 }: {
-  data: TypedDataActionData['contractCall'];
+  data: ParsedTypedDataActionData['contractCall'];
   requireData: ContractRequireData;
   chain: Chain;
   raw: Record<string, string | number>;

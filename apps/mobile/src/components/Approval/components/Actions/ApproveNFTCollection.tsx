@@ -3,7 +3,10 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveNFTRequireData, ParsedActionData } from './utils';
+import {
+  ApproveNFTRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import { ProtocolListItem } from './components/ProtocolListItem';

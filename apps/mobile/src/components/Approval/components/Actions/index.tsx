@@ -38,11 +38,10 @@ import {
   SendRequireData,
   SwapRequireData,
   WrapTokenRequireData,
-  getActionTypeText,
   ContractRequireData,
   AssetOrderRequireData,
   BatchRevokePermit2RequireData,
-} from './utils';
+} from '@rabby-wallet/rabby-action';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import IconSpeedUp from '@/assets/icons/sign/tx/speedup.svg';
 import IconQuestionMark from '@/assets/icons/sign/question-mark-24-cc.svg';
@@ -58,8 +57,8 @@ import LogoWithText from './components/LogoWithText';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import AssetOrder from './AssetOrder';
 import { BatchRevokePermit2 } from './BatchRevokePermit2';
-import { RPCStatusBadge } from '@/components/Chain/RPCStatusBadge';
 import ChainIconImage from '@/components/Chain/ChainIconImage';
+import { getActionTypeText } from './utils';
 
 export const getActionsStyle = (colors: AppColorsVariants) =>
   StyleSheet.create({

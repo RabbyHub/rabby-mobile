@@ -2,7 +2,10 @@ import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveTokenRequireData, TypedDataActionData } from './utils';
+import {
+  ApproveTokenRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
@@ -22,7 +25,7 @@ const Permit = ({
   chain,
   engineResults,
 }: {
-  data: TypedDataActionData['permit'];
+  data: ParsedTypedDataActionData['permit'];
   requireData: ApproveTokenRequireData;
   chain?: Chain;
   engineResults: Result[];

@@ -6,7 +6,7 @@ import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
 import ViewMore from './components/ViewMore';
-import { ParsedActionData, SwapRequireData } from './utils';
+import { ParsedActionData, SwapRequireData } from '@rabby-wallet/rabby-action';
 import { formatAmount, formatUsdValue } from '@/utils/number';
 import { Chain } from '@/constant/chains';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';

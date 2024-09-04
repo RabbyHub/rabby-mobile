@@ -4,7 +4,10 @@ import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ContractCallRequireData, ParsedActionData } from './utils';
+import {
+  ContractCallRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { formatTokenAmount } from '@/utils/number';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';

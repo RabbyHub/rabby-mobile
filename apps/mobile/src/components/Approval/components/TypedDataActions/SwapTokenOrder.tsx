@@ -2,7 +2,10 @@ import React, { useEffect, useMemo } from 'react';
 import BigNumber from 'bignumber.js';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { SwapTokenOrderRequireData, TypedDataActionData } from './utils';
+import {
+  SwapTokenOrderRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
@@ -26,7 +29,7 @@ const SwapTokenOrder = ({
   chain,
   engineResults,
 }: {
-  data: TypedDataActionData['swapTokenOrder'];
+  data: ParsedTypedDataActionData['swapTokenOrder'];
   requireData: SwapTokenOrderRequireData;
   chain: Chain;
   engineResults: Result[];

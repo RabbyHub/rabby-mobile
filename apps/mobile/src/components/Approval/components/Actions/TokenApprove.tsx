@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveTokenRequireData, ParsedActionData } from './utils';
+import {
+  ApproveTokenRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getCustomTxParamsData } from '@/utils/transaction';
