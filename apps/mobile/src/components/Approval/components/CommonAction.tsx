@@ -87,7 +87,7 @@ export const CommonAction = ({
 
   return (
     <Table>
-      {requireData && chain ? (
+      {requireData && Object.keys(requireData).length && chain ? (
         <>
           <Col>
             <Row isTitle itemsCenter>
