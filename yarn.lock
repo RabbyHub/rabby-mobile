@@ -4942,6 +4942,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/abi-utils@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@metamask/abi-utils@npm:2.0.2"
+  dependencies:
+    "@metamask/utils": ^8.0.0
+    superstruct: ^1.0.3
+  checksum: 5ec153e7691a4e1dc8738a0ba1a99a354ddb13851fa88a40a19f002f6308310e71c2cee28c3a25d9f7f67e839c7dffe4760e93e308dd17fa725b08d0dc73a3d4
+  languageName: node
+  linkType: hard
+
 "@metamask/action-utils@npm:^1.0.0":
   version: 1.0.0
   resolution: "@metamask/action-utils@npm:1.0.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Faction-utils%2F-%2Faction-utils-1.0.0.tgz"
@@ -5228,6 +5238,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/superstruct@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@metamask/superstruct@npm:3.1.0"
+  checksum: 00e4d0c0aae8b25ccc1885c1db0bb4ed1590010570140c255e4deee3bf8a10c859c8fce5e475b4ae09c8a56316207af87585b91f7f5a5c028d668ccd111f19e3
+  languageName: node
+  linkType: hard
+
 "@metamask/utils@npm:^3.0.3":
   version: 3.6.0
   resolution: "@metamask/utils@npm:3.6.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40metamask%2Futils%2F-%2Futils-3.6.0.tgz"
@@ -5250,6 +5267,23 @@ __metadata:
     semver: ^7.3.8
     superstruct: ^1.0.3
   checksum: eca82e42911b2840deb4f32f0f215c5ffd14d22d68afbbe92d3180e920e509e310777b15eab29def3448f3535b66596ceb4c23666ec846adacc8e1bb093ff882
+  languageName: node
+  linkType: hard
+
+"@metamask/utils@npm:^8.0.0":
+  version: 8.5.0
+  resolution: "@metamask/utils@npm:8.5.0"
+  dependencies:
+    "@ethereumjs/tx": ^4.2.0
+    "@metamask/superstruct": ^3.0.0
+    "@noble/hashes": ^1.3.1
+    "@scure/base": ^1.1.3
+    "@types/debug": ^4.1.7
+    debug: ^4.3.4
+    pony-cause: ^2.1.10
+    semver: ^7.5.4
+    uuid: ^9.0.1
+  checksum: e8eac1c796c3f6b623be3c2736e8682248620f666b180f5c12ce56ee09587d4e28b6811862139a05c7a1bec91415f10ccf0516f3cdf342f88b0189d2a057c24b
   languageName: node
   linkType: hard
 
@@ -6256,6 +6290,20 @@ __metadata:
     typescript: ~4.4.0
   languageName: unknown
   linkType: soft
+
+"@rabby-wallet/rabby-action@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@rabby-wallet/rabby-action@npm:0.1.1"
+  dependencies:
+    p-queue: ^8.0.1
+  peerDependencies:
+    "@debank/common": ^0.3.60
+    "@rabby-wallet/rabby-api": ^0.7.26
+    "@rabby-wallet/rabby-security-engine": ^2.0.5
+    bignumber.js: "*"
+  checksum: 737652059efbac2b144f056029d2bc0eacf85f60d116c5ff733971e16ed92ab73a24e65ba3590b5a64eac2437ff0aac2efcde450a318fbc227a0970c17e05655
+  languageName: node
+  linkType: hard
 
 "@rabby-wallet/rabby-api@npm:0.7.25":
   version: 0.7.25
@@ -25719,6 +25767,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-queue@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "p-queue@npm:8.0.1"
+  dependencies:
+    eventemitter3: ^5.0.1
+    p-timeout: ^6.1.2
+  checksum: 84a27a5b1faf2dcc96b8c0e423c34b5984b241acc07353d3cc6d8d3d1dadefb250b4ec84ce278cb1c946466999c6bf2a36ff718a75810bad8e11c7ca47ce80f5
+  languageName: node
+  linkType: hard
+
 "p-reflect@npm:^2.0.0":
   version: 2.1.0
   resolution: "p-reflect@npm:2.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-reflect%2F-%2Fp-reflect-2.1.0.tgz"
@@ -25761,6 +25819,13 @@ __metadata:
   version: 5.1.0
   resolution: "p-timeout@npm:5.1.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fp-timeout%2F-%2Fp-timeout-5.1.0.tgz"
   checksum: f5cd4e17301ff1ff1d8dbf2817df0ad88c6bba99349fc24d8d181827176ad4f8aca649190b8a5b1a428dfd6ddc091af4606835d3e0cb0656e04045da5c9e270c
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "p-timeout@npm:6.1.2"
+  checksum: 887b805eb72c217dbc3c55a60a7f3b89a46cab14f04af62224f253ec84716cbd0880758be13b35444a4fa12d64d37d4c8a300f0b12a57c004d289f0a574cfe91
   languageName: node
   linkType: hard
 
@@ -27795,6 +27860,7 @@ __metadata:
     "@ethereumjs/util": ^9.0.1
     "@gorhom/bottom-sheet": alpha
     "@ledgerhq/react-native-hw-transport-ble": 6.33.2
+    "@metamask/abi-utils": 2.0.2
     "@metamask/eth-sig-util": 5.1.0
     "@ngraveio/bc-ur": 1.1.6
     "@noble/hashes": ^1.4.0
@@ -27812,6 +27878,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.33
+    "@rabby-wallet/rabby-action": ^0.1.1
     "@rabby-wallet/rabby-security-engine": 2.0.4
     "@rabby-wallet/rabby-swap": 0.0.40
     "@rabby-wallet/service-address": "workspace:^"
