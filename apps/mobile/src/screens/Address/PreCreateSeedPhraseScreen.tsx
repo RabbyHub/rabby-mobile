@@ -9,6 +9,10 @@ import { ICloudIcon } from '@/assets/icons/address/icloud-icon';
 import { GDriveIcon } from '@/assets/icons/address/gdrive-icon';
 import { ManualIcon } from '@/assets/icons/address/manual-icon';
 import { WalletItem } from './components/WalletItem';
+import { useRequest } from 'ahooks';
+import { apiMnemonic } from '@/core/apis';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -52,11 +56,20 @@ export const PreCreateSeedPhraseScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
 
-  const handleBackupToCloud = React.useCallback(() => {
-    console.log('handleBackup');
-  }, []);
+  const { data: seedPhrase } = useRequest(async () => {
+    const res = await apiMnemonic.generatePreMnemonic();
+    return res as string;
+  });
 
-  const handleBackupToPaper = React.useCallback(() => {}, []);
+  const handleBackupToCloud = React.useCallback(() => {
+    console.log('handleBackup', seedPhrase);
+  }, [seedPhrase]);
+
+  const handleBackupToPaper = React.useCallback(() => {
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.CreateMnemonic,
+    });
+  }, []);
 
   return (
     <NormalScreenContainer>
