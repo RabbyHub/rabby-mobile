@@ -7,9 +7,9 @@ import { BackupIcon } from './BackupIcon';
 
 const getStyles = createGetStyles(colors => ({
   root: {
-    alignItems: 'center',
     height: 328,
     paddingTop: 52,
+    backgroundColor: colors['neutral-bg-1'],
   },
 }));
 
@@ -25,11 +25,6 @@ export const BackupErrorScreen: React.FC<Props> = ({ onConfirm }) => {
     <FooterButtonScreenContainer
       buttonText={'重试'}
       onPressButton={onConfirm}
-      btnProps={{
-        footerStyle: {
-          paddingBottom: 50,
-        },
-      }}
       style={styles.root}>
       <BackupIcon status="error" isGray description={'备份失败'} />
     </FooterButtonScreenContainer>

@@ -48,13 +48,14 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
       fontSize: 20,
       fontWeight: '500',
-      marginTop: 42,
+      marginTop: 36,
     },
     iconWrapper: {
       position: 'relative',
     },
     errorText: {
       color: colors['red-default'],
+      marginTop: 28,
     },
     successText: {
       color: colors['green-default'],

@@ -16,12 +16,9 @@ import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
-import {
-  EVENT_NAMES,
-  MODAL_NAMES,
-} from '@/components/GlobalBottomSheetModal/types';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { IS_IOS } from '@/core/native/utils';
-import { globalSheetModalEvents } from '@/components/GlobalBottomSheetModal/event';
+import { useNavigation } from '@react-navigation/native';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -64,6 +61,7 @@ export const PreCreateSeedPhraseScreen = () => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
+  const nav = useNavigation();
 
   const handleBackupToCloud = React.useCallback(() => {
     const id = createGlobalBottomSheetModal({
@@ -72,11 +70,14 @@ export const PreCreateSeedPhraseScreen = () => {
         enableDynamicSizing: true,
         maxDynamicContentSize: 460,
       },
-      onDone: () => {
+      onDone: isNoMnemonic => {
         removeGlobalBottomSheetModal(id);
+        if (isNoMnemonic) {
+          nav.goBack();
+        }
       },
     });
-  }, []);
+  }, [nav]);
 
   const handleBackupToPaper = React.useCallback(() => {
     navigate(RootNames.StackAddress, {

@@ -8,7 +8,11 @@ import { BackupSuccessScreen } from './BackupSuccessScreen';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { BackupUploadScreen } from './BackupUploadScreen';
 
-export const SeedPhraseBackupToCloud = ({ onDone }) => {
+interface Props {
+  onDone: (isNoMnemonic?: boolean) => void;
+}
+
+export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
   const { data: mnemonic } = useRequest(async () => {
     const res = await apiMnemonic.getPreMnemonics();
     return res as string;
@@ -28,8 +32,8 @@ export const SeedPhraseBackupToCloud = ({ onDone }) => {
       }
 
       if (!mnemonic) {
-        // TODO: back to previous page
         console.log('no mnemonic');
+        onDone(true);
         return;
       }
 
@@ -42,12 +46,16 @@ export const SeedPhraseBackupToCloud = ({ onDone }) => {
       })
         .then(() => {
           setStep('backup_success');
-          setTimeout(() => {
-            onDone?.();
-          }, 500);
+
+          return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
+            mnemonic,
+            '',
+          );
+        })
+        .then(() => {
+          onDone();
         })
         .catch(e => {
-          // TODO: handle error
           console.log('backup error', e);
           setStep('backup_error');
         });

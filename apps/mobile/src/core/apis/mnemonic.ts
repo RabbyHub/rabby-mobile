@@ -7,7 +7,6 @@ import {
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
-import { apiKeyring } from '.';
 import {
   contactService,
   hdKeyringService,
@@ -15,7 +14,12 @@ import {
   preferenceService,
 } from '../services';
 import { Account } from '../services/preference';
-import { _getKeyringByType, addKeyringToStash, stashKeyrings } from './keyring';
+import {
+  _getKeyringByType,
+  addKeyringToStash,
+  stashKeyrings,
+  requestKeyring,
+} from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
 
 export const getMnemonics = async (password: string, address: string) => {
@@ -343,42 +347,38 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
   mnemonics: string,
   passphrase = '',
 ) => {
-  try {
-    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+  const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+    mnemonics,
+    passphrase,
+  );
+
+  const firstAddress = await requestKeyring(
+    KEYRING_TYPE.HdKeyring,
+    'getAddresses',
+    keyringId ?? null,
+    0,
+    1,
+  );
+
+  await new Promise(resolve => setTimeout(resolve, 1));
+  await activeAndPersistAccountsByMnemonics(
+    mnemonics,
+    passphrase,
+    firstAddress as any,
+    true,
+  );
+  keyringService.removePreMnemonics();
+  return navigate(RootNames.StackAddress, {
+    screen: RootNames.ImportSuccess,
+    params: {
+      type: KEYRING_TYPE.HdKeyring,
+      brandName: KEYRING_CLASS.MNEMONIC,
+      isFirstImport: true,
+      address: [firstAddress?.[0].address],
       mnemonics,
       passphrase,
-    );
-
-    const firstAddress = await apiKeyring.requestKeyring(
-      KEYRING_TYPE.HdKeyring,
-      'getAddresses',
-      keyringId ?? null,
-      0,
-      1,
-    );
-
-    await new Promise(resolve => setTimeout(resolve, 1));
-    await activeAndPersistAccountsByMnemonics(
-      mnemonics,
-      passphrase,
-      firstAddress as any,
-      true,
-    );
-    keyringService.removePreMnemonics();
-    return navigate(RootNames.StackAddress, {
-      screen: RootNames.ImportSuccess,
-      params: {
-        type: KEYRING_TYPE.HdKeyring,
-        brandName: KEYRING_CLASS.MNEMONIC,
-        isFirstImport: true,
-        address: [firstAddress?.[0].address],
-        mnemonics,
-        passphrase,
-        keyringId: keyringId || undefined,
-        isExistedKR: isExistedKR,
-      },
-    });
-  } catch (error) {
-    console.log('error', error);
-  }
+      keyringId: keyringId || undefined,
+      isExistedKR: isExistedKR,
+    },
+  });
 };

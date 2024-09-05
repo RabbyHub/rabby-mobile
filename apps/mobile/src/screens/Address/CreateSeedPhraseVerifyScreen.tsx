@@ -62,10 +62,14 @@ export const CreateSeedPhraseVerifyScreen = () => {
 
       const mnemonics = data.seedPhrase;
       const passphrase = '';
-      await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
-        mnemonics,
-        passphrase,
-      );
+      try {
+        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
+          mnemonics,
+          passphrase,
+        );
+      } catch (e) {
+        console.log('addMnemonicKeyringAndGotoSuccessScreen error', e);
+      }
     },
     {
       manual: true,
