@@ -54,6 +54,8 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import { RestoreFromCloud } from './screens/RestoreFromCloud/RestoreFromCloud';
+import { IS_IOS } from './core/native/utils';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -272,6 +274,15 @@ export default function AppNavigation({
                 color: colors['neutral-title-2'],
                 fontWeight: 'normal',
               },
+            })}
+          />
+          <RootStack.Screen
+            name={RootNames.RestoreFromCloud}
+            component={RestoreFromCloud}
+            options={mergeScreenOptions({
+              title: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
+              headerShadowVisible: false,
+              headerShown: true,
             })}
           />
         </RootStack.Navigator>

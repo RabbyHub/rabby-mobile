@@ -85,6 +85,7 @@ export const RootNames = {
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
   BackupMnemonic: 'BackupMnemonic',
+  RestoreFromCloud: 'RestoreFromCloud',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

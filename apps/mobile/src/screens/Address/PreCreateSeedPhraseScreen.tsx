@@ -93,24 +93,31 @@ export const PreCreateSeedPhraseScreen = () => {
     <NormalScreenContainer>
       <View style={styles.hero}>
         <SeedCreateSuccessSVG />
-        <Text style={styles.heroTitle}>助记词创建成功</Text>
+        <Text style={styles.heroTitle}>
+          {t('page.newAddress.seedPhrase.createdSuccess')}
+        </Text>
       </View>
       <View style={styles.body}>
-        <Text style={styles.bodyTitle}>选择备份方式</Text>
+        <Text style={styles.bodyTitle}>
+          {t('page.newAddress.seedPhrase.chooseBackupMethodTitle')}
+        </Text>
         <Text style={styles.bodyDesc}>
-          If you delete the APP or change your device, you can recover your Seed
-          Phrase in the following ways
+          {t('page.newAddress.seedPhrase.chooseBackupMethodDesc')}
         </Text>
         <WalletItem
           style={styles.walletItem}
           Icon={IS_IOS ? ICloudIcon : GDriveIcon}
-          title={IS_IOS ? '通过 iCloud 备份' : '通过 Google Drive 备份'}
+          title={
+            IS_IOS
+              ? t('page.newAddress.seedPhrase.icloudBackup')
+              : t('page.newAddress.seedPhrase.googleDriveBackup')
+          }
           onPress={handleBackupToCloud}
         />
         <WalletItem
           style={styles.walletItem}
           Icon={ManualIcon}
-          title="通过手动抄写备份"
+          title={t('page.newAddress.seedPhrase.manuallyBackup')}
           onPress={handleBackupToPaper}
         />
       </View>

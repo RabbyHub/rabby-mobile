@@ -23,10 +23,14 @@ export const BackupErrorScreen: React.FC<Props> = ({ onConfirm }) => {
 
   return (
     <FooterButtonScreenContainer
-      buttonText={'重试'}
+      buttonText={t('page.newAddress.seedPhrase.backupFailedButton')}
       onPressButton={onConfirm}
       style={styles.root}>
-      <BackupIcon status="error" isGray description={'备份失败'} />
+      <BackupIcon
+        status="error"
+        isGray
+        description={t('page.newAddress.seedPhrase.backupFailedTitle')}
+      />
     </FooterButtonScreenContainer>
   );
 };

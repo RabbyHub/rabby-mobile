@@ -4,6 +4,7 @@ import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { FooterButtonScreenContainer } from '../ScreenContainer/FooterButtonScreenContainer';
 import { BackupIcon } from './BackupIcon';
@@ -62,6 +63,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
   const colors = useThemeColors();
   const { styles } = useThemeStyles(getStyles);
   const [error, setError] = React.useState<string>();
+  const { t } = useTranslation();
 
   const handleConfirm = React.useCallback(() => {
     if (!password) {
@@ -87,13 +89,15 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
           paddingBottom: 50,
         },
       }}
-      buttonText={'开始备份'}
+      buttonText={t('page.newAddress.seedPhrase.backupUnlockButton')}
       onPressButton={handleConfirm}>
       <View style={styles.root}>
         <BackupIcon status="unlock" isGray />
-        <Text style={styles.title}>Encrypt with Unlock Password</Text>
+        <Text style={styles.title}>
+          {t('page.newAddress.seedPhrase.backupUnlockTitle')}
+        </Text>
         <Text style={styles.description}>
-          请保管好你的密码，后续恢复助记词的时需要验证该密码，并且Rabby没有存储也无法帮你找回
+          {t('page.newAddress.seedPhrase.backupUnlockDesc')}
         </Text>
         <View style={styles.inputWrapper}>
           <BottomSheetTextInput
@@ -112,7 +116,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
                   : colors['neutral-line'],
               },
             ])}
-            placeholder="Enter the Password to Confirm"
+            placeholder={t(
+              'page.newAddress.seedPhrase.backupUnlockPlaceholder',
+            )}
           />
           <Text style={styles.errorText}>{error}</Text>
         </View>

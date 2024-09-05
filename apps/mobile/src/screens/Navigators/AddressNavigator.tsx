@@ -25,6 +25,7 @@ import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 import { strings } from '@/utils/i18n';
 import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen';
+import { CloudBackupButton } from '../Address/CloudBackupButton';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -154,6 +155,7 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
+          headerRight: CloudBackupButton,
         }}
       />
       <AddressStack.Screen

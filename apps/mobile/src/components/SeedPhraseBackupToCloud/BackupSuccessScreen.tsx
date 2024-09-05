@@ -19,7 +19,9 @@ interface Props {}
 export const BackupSuccessScreen: React.FC<Props> = () => {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
-  const description = IS_IOS ? '已备份到 iCloud' : '已备份到 Google Drive';
+  const description = IS_IOS
+    ? t('page.newAddress.seedPhrase.backupSuccessICloud')
+    : t('page.newAddress.seedPhrase.backupSuccessGDrive');
 
   return (
     <View style={styles.root}>

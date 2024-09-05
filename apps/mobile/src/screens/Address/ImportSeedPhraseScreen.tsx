@@ -172,6 +172,7 @@ export const ImportSeedPhraseScreen = () => {
         loading: importing,
       }}>
       <PasteTextArea
+        enableScan
         style={styles.textArea}
         value={mnemonics}
         onChange={importing ? undefined : setMnemonics}

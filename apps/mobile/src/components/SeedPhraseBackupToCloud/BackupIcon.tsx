@@ -76,8 +76,8 @@ export const BackupIcon: React.FC<Props> = ({
         : require('@/assets/icons/address/icloud.png');
     }
     return isGray
-      ? require('@/assets/icons/address/icloud-gray.png')
-      : require('@/assets/icons/address/icloud.png');
+      ? require('@/assets/icons/address/gdrive-gray.png')
+      : require('@/assets/icons/address/gdrive.png');
   }, [isGray]);
   const StatusIcon = React.useMemo(() => {
     switch (status) {

@@ -32,6 +32,7 @@ export type RootStackParamsList = {
     isExistedKR?: boolean;
   };
   [RootNames.Scanner]?: {};
+  [RootNames.RestoreFromCloud]?: {};
 };
 
 export type BottomTabParamsList = {
