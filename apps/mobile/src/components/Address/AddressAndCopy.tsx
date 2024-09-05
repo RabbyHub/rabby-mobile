@@ -51,6 +51,7 @@ export const AddressAndCopy: React.FC<Props> = ({ address, style }) => {
         })}
       </Text>
       <TouchableOpacity
+        hitSlop={10}
         onPress={e => {
           e.stopPropagation();
           onCopy(address);
