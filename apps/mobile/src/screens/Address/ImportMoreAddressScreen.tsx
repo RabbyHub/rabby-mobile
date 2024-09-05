@@ -27,10 +27,7 @@ import RootScreenContainer from '@/components/ScreenContainer/RootScreenContaine
 import { useAtom } from 'jotai';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
 import { Radio } from '@/components/Radio';
-import { RcIconCopyCC } from '@/assets/icons/common';
-import { formatAddressToShow } from '@/utils/address';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import Clipboard from '@react-native-clipboard/clipboard';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { formatUsdValue } from '@/utils/number';
 import { isNumber } from 'lodash';
@@ -40,9 +37,9 @@ import { Spin } from '@/components/Spin';
 import { Skeleton } from '@rneui/themed';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useNavigationState } from '@react-navigation/native';
-import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
+import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
 
 const { isSameAddress } = addressUtils;
 
@@ -108,11 +105,6 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-body'],
       fontSize: 15,
       lineHeight: 24,
-    },
-    itemAddressWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      columnGap: 4,
     },
     footerButtonTitle: {
       fontWeight: '600',
@@ -356,11 +348,6 @@ export const ImportMoreAddressScreen = () => {
     }
   }, [setSetting, state.type]);
 
-  const onCopy = React.useCallback((address: string) => {
-    Clipboard.setString(address);
-    toastCopyAddressSuccess(address);
-  }, []);
-
   const importToastHiddenRef = React.useRef<() => void>(() => {});
 
   const handleConfirm = React.useCallback(async () => {
@@ -470,24 +457,7 @@ export const ImportMoreAddressScreen = () => {
                   key={address}>
                   <View style={styles.itemLeft}>
                     <Text style={styles.itemIndex}>{index}</Text>
-                    <View style={styles.itemAddressWrap}>
-                      <Text style={styles.itemAddress}>
-                        {formatAddressToShow(address, {
-                          ellipsis: true,
-                        })}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={e => {
-                          e.stopPropagation();
-                          onCopy(address);
-                        }}>
-                        <RcIconCopyCC
-                          color={colors['neutral-foot']}
-                          width={14}
-                          height={14}
-                        />
-                      </TouchableOpacity>
-                    </View>
+                    <AddressAndCopy address={address} />
                   </View>
                   <View style={styles.itemRight}>
                     {isNumber(balance) && (

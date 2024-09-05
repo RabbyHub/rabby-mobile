@@ -1406,7 +1406,10 @@
         "backupSuccessICloud": "Backed Up to iCloud",
         "backupSuccessGDrive": "Backed Up to Google Drive",
         "backupFailedTitle": "Backup Failed",
-        "backupFailedButton": "Retry"
+        "backupFailedButton": "Retry",
+        "backupRestoreLoadingText": "Searching for backup seed phrase...",
+        "backupRestoreTitle": "{{count}} seed phrase found",
+        "backupRestoreButton": "Import Seed Phrase ({{count}})"
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",

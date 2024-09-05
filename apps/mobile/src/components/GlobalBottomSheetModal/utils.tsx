@@ -27,7 +27,6 @@ import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
-import { SeedPhraseRecoveryFromCloud } from '../SeedPhraseRecoveryFromCloud/SeedPhraseRecoveryFromCloud';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -57,7 +56,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.AUTHENTICATION]: undefined,
   [MODAL_NAMES.NFT_DETAIL]: ['85%'],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: [],
-  [MODAL_NAMES.SEED_PHRASE_RECOVERY_FROM_CLOUD]: [],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -101,7 +99,6 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: OneKeyInputPassphrase,
   [MODAL_NAMES.ONEKEY_TEMP_PIN_OR_PASSPHRASE]: OneKeyPinOrPassphrase,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
-  [MODAL_NAMES.SEED_PHRASE_RECOVERY_FROM_CLOUD]: SeedPhraseRecoveryFromCloud,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,

@@ -84,6 +84,42 @@ export const getBackupsFromCloud = async ({
   return backups;
 };
 
+export type BackupStats = {
+  address: string;
+  createdAt: string;
+  filename: string;
+};
+
+export const getBackupsStatsFromCloud = async () => {
+  await loginIfNeeded();
+  await makeDirIfNeeded();
+
+  const filenames = await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR);
+  if (!filenames.length) {
+    return;
+  }
+
+  const stats: BackupStats[] = [];
+
+  for (const filename of filenames) {
+    const encryptedData = await CloudStorage.readFile(
+      `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+    );
+    try {
+      const result = JSON.parse(encryptedData);
+      stats.push({
+        filename,
+        address: result.address,
+        createdAt: result.createdAt,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  return stats;
+};
+
 // login to google if needed
 export const loginIfNeeded = async () => {
   const result = {

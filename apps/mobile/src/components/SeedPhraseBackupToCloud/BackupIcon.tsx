@@ -11,7 +11,7 @@ import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
 
 interface Props {
-  status: 'success' | 'error' | 'unlock' | 'running' | 'info';
+  status: 'success' | 'error' | 'unlock' | 'running' | 'info' | 'restoring';
   isGray?: boolean;
   description?: string;
 }
@@ -90,8 +90,9 @@ export const BackupIcon: React.FC<Props> = ({
       case 'running':
         return BackupUploadSVG;
       case 'info':
-      default:
         return BackupInfoSVG;
+      default:
+        return undefined;
     }
   }, [status]);
 
@@ -101,17 +102,18 @@ export const BackupIcon: React.FC<Props> = ({
         <Image style={styles.cloudIcon} source={CloudImageSrc} />
 
         <View style={styles.statusIconWrapper}>
-          <StatusIcon style={styles.statusIcon} />
+          {StatusIcon && <StatusIcon style={styles.statusIcon} />}
         </View>
-        {status === 'running' && (
-          <View style={styles.progress}>
-            <MaterialIndicator
-              color={colors['blue-default']}
-              size={100}
-              trackWidth={2.5}
-            />
-          </View>
-        )}
+        {status === 'running' ||
+          (status === 'restoring' && (
+            <View style={styles.progress}>
+              <MaterialIndicator
+                color={colors['blue-default']}
+                size={100}
+                trackWidth={2.5}
+              />
+            </View>
+          ))}
       </View>
       {description && (
         <Text
