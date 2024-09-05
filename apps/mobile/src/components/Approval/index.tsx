@@ -6,7 +6,10 @@ import { Text, View } from 'react-native';
 import { removeGlobalBottomSheetModal } from '../GlobalBottomSheetModal';
 import * as ApprovalComponent from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
-import { shouldAllowApprovePopup } from '@/core/bridges/state';
+import {
+  isInternalSession,
+  shouldAllowApprovePopupByTabId,
+} from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
 
 function ShouldntRenderApproveDueToDappDisappeared() {
@@ -74,15 +77,15 @@ export const Approval = () => {
   const { data } = approval;
   const { approvalComponent, params, origin } = data;
 
+  const fromTabId =
+    params.$mobileCtx?.fromTabId ||
+    data.$mobileCtx?.fromTabId ||
+    params?.session?.$mobileCtx?.fromTabId;
+
   const sourceOrigin = origin || params.origin;
   if (
-    !shouldAllowApprovePopup(
-      {
-        fromOrigin: sourceOrigin,
-        currentActiveOrigin: activeDappOrigin,
-      },
-      { allowSecondaryDomainMatch: !!activeTabId },
-    )
+    !isInternalSession(sourceOrigin) &&
+    !shouldAllowApprovePopupByTabId({ fromTabId, currentActiveId: activeTabId })
   ) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
