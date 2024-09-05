@@ -1,3 +1,8 @@
+import { apiMnemonic } from '@/core/apis';
+import {
+  BackupDataWithMnemonic,
+  getBackupsFromCloud,
+} from '@/core/utils/cloudBackup';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -18,6 +23,7 @@ export const SeedPhraseRestoreFromCloud: React.FC<Props> = ({
     'backup_unlock' | 'backup_downloading' | 'backup_success' | 'backup_error'
   >('backup_unlock');
   const [inputPassword, setInputPassword] = React.useState('');
+
   const { t } = useTranslation();
 
   const handleRestore = React.useCallback(
@@ -30,13 +36,25 @@ export const SeedPhraseRestoreFromCloud: React.FC<Props> = ({
       }
 
       setStep('backup_downloading');
+      getBackupsFromCloud({ password, filenames })
+        .then(result => {
+          const arr = result.map(r => r.mnemonic);
 
-      // TODO: For testing
-      setTimeout(() => {
-        onDone();
-      }, 1000);
+          console.log('memnonics', arr);
+
+          if (arr) {
+            return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(arr);
+          }
+        })
+        .then(() => {
+          onDone();
+        })
+        .catch(e => {
+          console.log('backup error', e);
+          setStep('backup_error');
+        });
     },
-    [onDone],
+    [filenames, onDone],
   );
 
   return (

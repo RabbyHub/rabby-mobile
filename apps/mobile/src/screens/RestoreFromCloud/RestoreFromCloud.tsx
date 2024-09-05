@@ -88,14 +88,27 @@ export const RestoreFromCloud = () => {
     });
   }, []);
 
-  if (loading || !backupsStats) {
+  if (loading) {
     return (
       <NormalScreenContainer
         style={StyleSheet.flatten([loading && styles.rootLoading])}>
         <View style={styles.loading}>
-          <BackupIcon status="restoring" />
+          <BackupIcon status="loading" />
           <Text style={styles.loadingText}>
             {t('page.newAddress.seedPhrase.backupRestoreLoadingText')}
+          </Text>
+        </View>
+      </NormalScreenContainer>
+    );
+  }
+
+  if (!backupsStats?.length) {
+    return (
+      <NormalScreenContainer style={StyleSheet.flatten([styles.rootLoading])}>
+        <View style={styles.loading}>
+          <BackupIcon status="info" />
+          <Text style={styles.loadingText}>
+            {t('page.newAddress.seedPhrase.backupRestoreEmpty')}
           </Text>
         </View>
       </NormalScreenContainer>

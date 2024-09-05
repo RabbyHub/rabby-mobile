@@ -343,42 +343,74 @@ export const getKeyringAccountsByAddress = async (address: string) => {
   return await keyring.getAccounts();
 };
 
+// TODO: if address is existed, return keyringId
 export const addMnemonicKeyringAndGotoSuccessScreen = async (
-  mnemonics: string,
+  input: string | string[],
   passphrase = '',
 ) => {
-  const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
-    mnemonics,
-    passphrase,
-  );
+  const arr = Array.isArray(input) ? input : [input];
+  const addresses: string[] = [];
+  const currentAddressInfo = {
+    keyringId: null,
+    isExistedKR: false,
+  } as {
+    keyringId: number | null;
+    isExistedKR: boolean;
+  };
 
-  const firstAddress = await requestKeyring(
-    KEYRING_TYPE.HdKeyring,
-    'getAddresses',
-    keyringId ?? null,
-    0,
-    1,
-  );
+  for (let i = 0; i < arr.length; i++) {
+    const mnemonics = arr[i];
+    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+      mnemonics,
+      passphrase,
+    );
 
-  await new Promise(resolve => setTimeout(resolve, 1));
-  await activeAndPersistAccountsByMnemonics(
-    mnemonics,
-    passphrase,
-    firstAddress as any,
-    true,
-  );
+    const firstAddress = await requestKeyring(
+      KEYRING_TYPE.HdKeyring,
+      'getAddresses',
+      keyringId ?? null,
+      0,
+      1,
+    );
+
+    addresses.push(firstAddress[0].address);
+    currentAddressInfo.keyringId = keyringId;
+    currentAddressInfo.isExistedKR = isExistedKR;
+
+    await new Promise(resolve => setTimeout(resolve, 1));
+    await activeAndPersistAccountsByMnemonics(
+      mnemonics,
+      passphrase,
+      firstAddress as any,
+      true,
+    );
+  }
+
   keyringService.removePreMnemonics();
+
+  if (addresses.length === 1) {
+    return navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportSuccess,
+      params: {
+        type: KEYRING_TYPE.HdKeyring,
+        brandName: KEYRING_CLASS.MNEMONIC,
+        isFirstImport: true,
+        address: addresses,
+        mnemonics: arr[0],
+        passphrase,
+        keyringId: currentAddressInfo.keyringId || undefined,
+        isExistedKR: currentAddressInfo.isExistedKR,
+      },
+    });
+  }
+
   return navigate(RootNames.StackAddress, {
     screen: RootNames.ImportSuccess,
     params: {
       type: KEYRING_TYPE.HdKeyring,
       brandName: KEYRING_CLASS.MNEMONIC,
-      isFirstImport: true,
-      address: [firstAddress?.[0].address],
-      mnemonics,
-      passphrase,
-      keyringId: keyringId || undefined,
-      isExistedKR: isExistedKR,
+      isFirstImport: false,
+      address: addresses,
     },
   });
 };

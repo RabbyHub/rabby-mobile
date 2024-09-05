@@ -23,9 +23,35 @@ const generateBackupFileName = (name: string) => {
 
 // for dev
 export const deleteAllBackups = async () => {
-  CloudStorage.unlink(REMOTE_BACKUP_WALLET_DIR);
+  const files = await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR);
+  if (files.length) {
+    for (const file of files) {
+      await CloudStorage.unlink(`${REMOTE_BACKUP_WALLET_DIR}/${file}`);
+    }
+  }
 };
 
+export type BackupStats = {
+  address: string;
+  createdAt: string;
+  filename: string;
+};
+
+export type BackupData = {
+  mnemonicEncrypted: string;
+  address: string;
+  createdAt: string;
+};
+
+export type BackupDataWithMnemonic = BackupStats & {
+  mnemonic: string;
+};
+
+/**
+ * save mnemonic to cloud
+ * @param param mnemonic and password
+ * @returns filename
+ */
 export const saveMnemonicToCloud = async ({
   mnemonic,
   password,
@@ -36,10 +62,10 @@ export const saveMnemonicToCloud = async ({
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const data = {
+  const data: BackupData = {
     mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
     address: getAddressFromMnemonic(mnemonic, 0),
-    createdAt: new Date().getTime(),
+    createdAt: new Date().getTime() + '',
   };
 
   const filename = generateBackupFileName(data.address);
@@ -50,44 +76,49 @@ export const saveMnemonicToCloud = async ({
     `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     JSON.stringify(data),
   );
+
+  return filename;
 };
 
+/**
+ * get backups from cloud
+ * @param param password and filenames
+ * @returns backups
+ */
 export const getBackupsFromCloud = async ({
   password,
+  filenames,
 }: {
   password: string;
+  filenames: string[];
 }) => {
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const filenames = await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR);
-  if (!filenames.length) {
-    return;
-  }
-
-  const backups: string[] = [];
+  const backups: BackupDataWithMnemonic[] = [];
 
   for (const filename of filenames) {
-    const encryptedData = await CloudStorage.readFile(
+    const json = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     );
     try {
-      const result = JSON.parse(
-        await appEncryptor.decrypt(password, encryptedData),
+      const data = JSON.parse(json) as BackupData;
+      const mnemonic = await appEncryptor.decrypt(
+        password,
+        data.mnemonicEncrypted,
       );
-      backups.push(result);
+      backups.push({
+        createdAt: data.createdAt,
+        address: data.address,
+        mnemonic,
+        filename,
+      });
     } catch (e) {
       console.error(e);
     }
   }
 
   return backups;
-};
-
-export type BackupStats = {
-  address: string;
-  createdAt: string;
-  filename: string;
 };
 
 export const getBackupsStatsFromCloud = async () => {

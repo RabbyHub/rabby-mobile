@@ -79,7 +79,7 @@ export const BackupItem: React.FC<BackupItemProps> = ({
   const { styles } = useThemeStyles(getStyles);
   const [balance, setBalance] = React.useState<number>();
   const createdAtStr = React.useMemo(
-    () => dayjs(item.createdAt).format('YYYY-MM-DD HH:mm'),
+    () => dayjs(Number(item.createdAt)).format('YYYY-MM-DD HH:mm'),
     [item.createdAt],
   );
   React.useEffect(() => {

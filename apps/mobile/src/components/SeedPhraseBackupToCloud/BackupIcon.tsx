@@ -11,7 +11,14 @@ import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
 
 interface Props {
-  status: 'success' | 'error' | 'unlock' | 'uploading' | 'info' | 'downloading';
+  status:
+    | 'success'
+    | 'error'
+    | 'unlock'
+    | 'uploading'
+    | 'info'
+    | 'downloading'
+    | 'loading';
   isGray?: boolean;
   description?: string;
 }
@@ -115,7 +122,9 @@ export const BackupIcon: React.FC<Props> = ({
             />
           )}
         </View>
-        {(status === 'uploading' || status === 'downloading') && (
+        {(status === 'uploading' ||
+          status === 'downloading' ||
+          status === 'loading') && (
           <View style={styles.progress}>
             <MaterialIndicator
               color={colors['blue-default']}

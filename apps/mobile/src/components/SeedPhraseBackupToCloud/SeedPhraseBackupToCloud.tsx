@@ -47,10 +47,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
         .then(() => {
           setStep('backup_success');
 
-          return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
-            mnemonic,
-            '',
-          );
+          return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(mnemonic);
         })
         .then(() => {
           onDone();

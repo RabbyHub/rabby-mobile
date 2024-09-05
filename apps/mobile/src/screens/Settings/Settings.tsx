@@ -93,6 +93,7 @@ import ThemeSelectorModal, {
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import {
+  deleteAllBackups,
   getBackupsFromCloud,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
@@ -525,17 +526,19 @@ function DevSettingsBlocks() {
                           mnemonic: 'testtest',
                           password: 'test',
                         });
-                        await getBackupsFromCloud({
-                          password: 'test',
-                        }).then(e => {
-                          console.log('getBackupsFromCloud done', e);
-                        });
                       })
                       .catch(e => {
                         console.error('loginIfNeeded error', e);
                       });
                   },
                 },
+            {
+              label: 'Clear Cloud Backup',
+              icon: RcClearPending,
+              onPress: () => {
+                deleteAllBackups();
+              },
+            },
             {
               label: (
                 <Text>
