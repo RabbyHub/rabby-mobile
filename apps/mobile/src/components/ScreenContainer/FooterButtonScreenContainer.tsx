@@ -1,7 +1,13 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from 'react-native';
 import { FooterButton } from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +39,7 @@ interface Props {
   onPressButton: () => void;
   buttonText: string;
   btnProps?: ButtonProps;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -52,6 +59,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
   onPressButton,
   children,
   btnProps,
+  style,
 }) => {
   const { top } = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -63,6 +71,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       style={StyleSheet.flatten([
         styles.root,
         { paddingTop: top + ScreenLayouts.headerAreaHeight },
+        style,
       ])}
       behavior="padding">
       <ScrollView style={styles.main}>{children}</ScrollView>

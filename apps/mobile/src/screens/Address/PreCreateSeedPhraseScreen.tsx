@@ -9,10 +9,16 @@ import { ICloudIcon } from '@/assets/icons/address/icloud-icon';
 import { GDriveIcon } from '@/assets/icons/address/gdrive-icon';
 import { ManualIcon } from '@/assets/icons/address/manual-icon';
 import { WalletItem } from './components/WalletItem';
-import { useRequest } from 'ahooks';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
+import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
+import {
+  EVENT_NAMES,
+  MODAL_NAMES,
+} from '@/components/GlobalBottomSheetModal/types';
+import { IS_IOS } from '@/core/native/utils';
+import { globalSheetModalEvents } from '@/components/GlobalBottomSheetModal/event';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -56,19 +62,24 @@ export const PreCreateSeedPhraseScreen = () => {
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
 
-  const { data: seedPhrase } = useRequest(async () => {
-    const res = await apiMnemonic.generatePreMnemonic();
-    return res as string;
-  });
-
   const handleBackupToCloud = React.useCallback(() => {
-    console.log('handleBackup', seedPhrase);
-  }, [seedPhrase]);
+    createGlobalBottomSheetModal({
+      name: MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD,
+      bottomSheetModalProps: {
+        enableDynamicSizing: true,
+        maxDynamicContentSize: 460,
+      },
+    });
+  }, []);
 
   const handleBackupToPaper = React.useCallback(() => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.CreateMnemonic,
     });
+  }, []);
+
+  React.useEffect(() => {
+    apiMnemonic.generatePreMnemonic();
   }, []);
 
   return (
@@ -85,8 +96,8 @@ export const PreCreateSeedPhraseScreen = () => {
         </Text>
         <WalletItem
           style={styles.walletItem}
-          Icon={ICloudIcon}
-          title="通过 iCloud 备份"
+          Icon={IS_IOS ? ICloudIcon : GDriveIcon}
+          title={IS_IOS ? '通过 iCloud 备份' : '通过 Google Drive 备份'}
           onPress={handleBackupToCloud}
         />
         <WalletItem
