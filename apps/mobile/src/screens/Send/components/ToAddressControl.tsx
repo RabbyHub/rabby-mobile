@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -8,6 +8,7 @@ import { FormInput } from '@/components/Form/Input';
 import {
   RcWhiteListEnabled,
   RcWhiteListDisabled,
+  RcIconScannerCC,
 } from '@/assets/icons/address';
 
 import { RcEditPenCC } from '@/assets/icons/send';
@@ -20,6 +21,10 @@ import {
 } from '../hooks/useSendToken';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
+import { CameraPopup } from '@/screens/Address/components/CameraPopup';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { isValidHexAddress } from '@metamask/utils';
+import { Code } from 'react-native-vision-camera';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -54,6 +59,24 @@ export default function ToAddressControl({
 
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);
+
+  const codeRef = useRef<BottomSheetModal>(null);
+  const openCamera = React.useCallback(() => {
+    codeRef.current?.present();
+  }, []);
+
+  const onCodeScanned = React.useCallback(
+    (codes: Code[]) => {
+      if (
+        codes[0].value &&
+        isValidHexAddress(codes[0].value as `0x${string}`)
+      ) {
+        codeRef.current?.close();
+        handleFieldChange('to', codes[0].value);
+      }
+    },
+    [handleFieldChange],
+  );
 
   return (
     <View style={[styles.control, style]}>
@@ -102,6 +125,19 @@ export default function ToAddressControl({
         disableFocusingStyle
         inputStyle={styles.input}
         hasError={!!errors.to}
+        clearable={false}
+        customIcon={ctx => {
+          return (
+            <TouchableView
+              onPress={openCamera}
+              style={StyleSheet.flatten([
+                ctx.iconStyle,
+                styles.scanButtonContainer,
+              ])}>
+              <RcIconScannerCC style={styles.scanIcon} />
+            </TouchableView>
+          );
+        }}
         inputProps={{
           ...inputProps,
           numberOfLines: 2,
@@ -166,9 +202,17 @@ export default function ToAddressControl({
           });
         }}
       />
+      <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
     </View>
   );
 }
+
+const SIZES = {
+  INPUT_CONTAINER_H: 64,
+  SCAN_BTN_H: 64,
+  SCAN_BTN_W: 32,
+  SCAN_ICON_SIZE: 20,
+};
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -235,11 +279,22 @@ const getStyles = createGetStyles(colors => {
       height: 20,
     },
 
+    inputWrapper: {
+      position: 'relative',
+      paddingRight: SIZES.INPUT_CONTAINER_H - 12,
+      // ...makeDebugBorder('red'),
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
     inputContainer: {
       borderRadius: 4,
+      flexShrink: 0,
+      // ...makeDebugBorder('yellow'),
 
       width: '100%',
-      height: 64,
+      height: SIZES.INPUT_CONTAINER_H,
     },
 
     input: {
@@ -252,6 +307,23 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 12,
       // flexDirection: 'row',
       // alignItems: 'center',
+    },
+
+    scanButtonContainer: {
+      flexShrink: 0,
+      width: SIZES.SCAN_BTN_W,
+      height: SIZES.SCAN_BTN_H,
+      // ...makeDebugBorder('blue'),
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingRight: 8,
+    },
+
+    scanIcon: {
+      width: SIZES.SCAN_ICON_SIZE,
+      height: SIZES.SCAN_ICON_SIZE,
+      color: colors['neutral-title1'],
     },
 
     extraView: {
