@@ -1,10 +1,9 @@
-import { IS_IOS } from '@/core/native/utils';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { BackupIcon } from './BackupIcon';
+import { BackupIcon } from '../SeedPhraseBackupToCloud/BackupIcon';
 
 const getStyles = createGetStyles(colors => ({
   root: {
@@ -16,16 +15,16 @@ const getStyles = createGetStyles(colors => ({
 
 interface Props {}
 
-export const BackupUploadScreen: React.FC<Props> = () => {
+export const BackupRestoreScreen: React.FC<Props> = () => {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
-  const description = IS_IOS
-    ? t('page.newAddress.seedPhrase.backupUploadToICloud')
-    : t('page.newAddress.seedPhrase.backupUploadToGDrive');
+  const description = t(
+    'page.newAddress.seedPhrase.backupRestoreDownloadTitle',
+  );
 
   return (
     <View style={styles.root}>
-      <BackupIcon status="uploading" isGray description={description} />
+      <BackupIcon status="downloading" isGray description={description} />
     </View>
   );
 };

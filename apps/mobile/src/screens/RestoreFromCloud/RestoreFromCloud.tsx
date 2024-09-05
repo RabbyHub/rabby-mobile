@@ -1,3 +1,8 @@
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud/BackupIcon';
@@ -49,7 +54,9 @@ export const RestoreFromCloud = () => {
   const [loading, setLoading] = React.useState(true);
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
-  const [selectedBackups, setSelectedBackups] = React.useState<number[]>([]);
+  const [selectedFilenames, setSelectedFilenames] = React.useState<string[]>(
+    [],
+  );
 
   React.useEffect(() => {
     getBackupsStatsFromCloud().then(result => {
@@ -59,15 +66,25 @@ export const RestoreFromCloud = () => {
   }, []);
 
   const handleRestore = React.useCallback(() => {
-    throw new Error('Function not implemented.');
-  }, []);
+    const id = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD,
+      bottomSheetModalProps: {
+        enableDynamicSizing: true,
+        maxDynamicContentSize: 460,
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal(id);
+      },
+      filenames: selectedFilenames,
+    });
+  }, [selectedFilenames]);
 
-  const handleSelect = React.useCallback((index: number) => {
-    setSelectedBackups(prev => {
-      if (prev.includes(index)) {
-        return prev.filter(i => i !== index);
+  const handleSelect = React.useCallback((filename: string) => {
+    setSelectedFilenames(prev => {
+      if (prev.includes(filename)) {
+        return prev.filter(i => i !== filename);
       }
-      return [...prev, index];
+      return [...prev, filename];
     });
   }, []);
 
@@ -89,10 +106,10 @@ export const RestoreFromCloud = () => {
     <FooterButtonScreenContainer
       onPressButton={handleRestore}
       btnProps={{
-        disabled: !selectedBackups.length,
+        disabled: !selectedFilenames.length,
       }}
       buttonText={t('page.newAddress.seedPhrase.backupRestoreButton', {
-        count: selectedBackups.length,
+        count: selectedFilenames.length,
       })}>
       <View style={styles.body}>
         <View>
@@ -105,13 +122,13 @@ export const RestoreFromCloud = () => {
         </View>
         <View style={styles.backupList}>
           {backupsStats.map((item, index) => {
-            const selected = selectedBackups.includes(index);
+            const selected = selectedFilenames.includes(item.filename);
             return (
               <BackupItem
                 key={index}
                 item={item}
                 selected={selected}
-                onPress={() => handleSelect(index)}
+                onPress={() => handleSelect(item.filename)}
                 index={index}
                 style={styles.backupItem}
               />

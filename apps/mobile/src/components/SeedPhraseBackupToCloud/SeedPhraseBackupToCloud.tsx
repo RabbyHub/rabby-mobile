@@ -18,7 +18,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
     return res as string;
   });
   const [step, setStep] = React.useState<
-    'backup_unlock' | 'backup_running' | 'backup_success' | 'backup_error'
+    'backup_unlock' | 'backup_uploading' | 'backup_success' | 'backup_error'
   >('backup_unlock');
   const [inputPassword, setInputPassword] = React.useState('');
 
@@ -37,7 +37,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
         return;
       }
 
-      setStep('backup_running');
+      setStep('backup_uploading');
 
       // upload seedPhrase to cloud
       saveMnemonicToCloud({
@@ -68,7 +68,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
       {step === 'backup_unlock' && (
         <BackupUnlockScreen onConfirm={handleUpload} />
       )}
-      {step === 'backup_running' && <BackupUploadScreen />}
+      {step === 'backup_uploading' && <BackupUploadScreen />}
       {step === 'backup_success' && <BackupSuccessScreen />}
       {step === 'backup_error' && (
         <BackupErrorScreen onConfirm={() => handleUpload(inputPassword)} />

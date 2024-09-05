@@ -1409,7 +1409,10 @@
         "backupFailedButton": "Retry",
         "backupRestoreLoadingText": "Searching for backup seed phrase...",
         "backupRestoreTitle": "{{count}} seed phrase found",
-        "backupRestoreButton": "Import Seed Phrase ({{count}})"
+        "backupRestoreButton": "Import Seed Phrase ({{count}})",
+        "backupRestoreUnlockTitle": "Enter Backup Password",
+        "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
+        "backupRestoreDownloadTitle": "Importing Seed Phrase..."
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",

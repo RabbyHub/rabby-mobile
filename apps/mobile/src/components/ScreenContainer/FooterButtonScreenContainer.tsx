@@ -14,6 +14,7 @@ import {
 } from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FooterButtonGroup } from '../FooterButton/FooterButtonGroup';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -42,6 +43,7 @@ interface Props {
   buttonText: string;
   btnProps?: FootButtonProps;
   style?: StyleProp<ViewStyle>;
+  onCancel?: () => void;
 }
 
 /**
@@ -55,6 +57,20 @@ interface Props {
  * |-------------|
  * |Footer Button|
  * |-------------|
+ *
+ * or
+ *
+ * |-------------|
+ * | Header Area |
+ * |-------------|
+ * |             |
+ * |             |
+ * |             |
+ * |             |
+ * |             |
+ * |-------------|
+ * |Cancel Confirm|
+ * |-------------|
  */
 export const FooterButtonScreenContainer: React.FC<Props> = ({
   buttonText,
@@ -62,6 +78,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
   children,
   btnProps,
   style,
+  onCancel,
 }) => {
   const { top } = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -77,13 +94,26 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       ])}
       behavior="padding">
       <ScrollView style={styles.main}>{children}</ScrollView>
-      <FooterButton
-        titleStyle={styles.footerButtonTitle}
-        disabledStyle={styles.footerButtonDisabled}
-        title={buttonText}
-        onPress={onPressButton}
-        {...btnProps}
-      />
+
+      {onCancel ? (
+        <FooterButtonGroup
+          style={StyleSheet.flatten([
+            { paddingBottom: 35 },
+            btnProps?.footerStyle,
+          ])}
+          onCancel={onCancel}
+          onConfirm={onPressButton}
+          confirmText={buttonText}
+        />
+      ) : (
+        <FooterButton
+          titleStyle={styles.footerButtonTitle}
+          disabledStyle={styles.footerButtonDisabled}
+          title={buttonText}
+          onPress={onPressButton}
+          {...btnProps}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };

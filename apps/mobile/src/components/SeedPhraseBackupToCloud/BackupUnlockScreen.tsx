@@ -56,9 +56,17 @@ const getStyles = createGetStyles(colors => ({
 
 interface Props {
   onConfirm: (password: string) => void;
+  description?: string;
+  title?: string;
+  onCancel?: () => void;
 }
 
-export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
+export const BackupUnlockScreen: React.FC<Props> = ({
+  onConfirm,
+  description,
+  title,
+  onCancel,
+}) => {
   const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
   const colors = useThemeColors();
   const { styles } = useThemeStyles(getStyles);
@@ -82,6 +90,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
 
   return (
     <FooterButtonScreenContainer
+      onCancel={onCancel}
       style={styles.container}
       btnProps={{
         disabled: !password,
@@ -94,10 +103,10 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
       <View style={styles.root}>
         <BackupIcon status="unlock" isGray />
         <Text style={styles.title}>
-          {t('page.newAddress.seedPhrase.backupUnlockTitle')}
+          {title || t('page.newAddress.seedPhrase.backupUnlockTitle')}
         </Text>
         <Text style={styles.description}>
-          {t('page.newAddress.seedPhrase.backupUnlockDesc')}
+          {description || t('page.newAddress.seedPhrase.backupUnlockDesc')}
         </Text>
         <View style={styles.inputWrapper}>
           <BottomSheetTextInput

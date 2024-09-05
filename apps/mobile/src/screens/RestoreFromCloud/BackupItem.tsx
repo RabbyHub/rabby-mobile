@@ -18,7 +18,6 @@ import { formatUsdValue } from '@/utils/number';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { isAddress } from 'web3-utils';
 
-console.log(RcIconCheckedFilledCC);
 const getStyles = createGetStyles(colors => ({
   root: {
     borderWidth: 1,

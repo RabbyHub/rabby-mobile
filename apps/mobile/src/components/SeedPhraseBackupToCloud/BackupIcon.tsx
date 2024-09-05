@@ -11,7 +11,7 @@ import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
 
 interface Props {
-  status: 'success' | 'error' | 'unlock' | 'running' | 'info' | 'restoring';
+  status: 'success' | 'error' | 'unlock' | 'uploading' | 'info' | 'downloading';
   isGray?: boolean;
   description?: string;
 }
@@ -60,6 +60,9 @@ const getStyles = (colors: AppColorsVariants) =>
     successText: {
       color: colors['green-default'],
     },
+    statusIconDownloading: {
+      transform: [{ rotate: '180deg' }],
+    },
   });
 
 export const BackupIcon: React.FC<Props> = ({
@@ -87,7 +90,8 @@ export const BackupIcon: React.FC<Props> = ({
         return BackupErrorSVG;
       case 'unlock':
         return BackupLockSVG;
-      case 'running':
+      case 'uploading':
+      case 'downloading':
         return BackupUploadSVG;
       case 'info':
         return BackupInfoSVG;
@@ -102,18 +106,24 @@ export const BackupIcon: React.FC<Props> = ({
         <Image style={styles.cloudIcon} source={CloudImageSrc} />
 
         <View style={styles.statusIconWrapper}>
-          {StatusIcon && <StatusIcon style={styles.statusIcon} />}
+          {StatusIcon && (
+            <StatusIcon
+              style={StyleSheet.flatten([
+                styles.statusIcon,
+                status === 'downloading' && styles.statusIconDownloading,
+              ])}
+            />
+          )}
         </View>
-        {status === 'running' ||
-          (status === 'restoring' && (
-            <View style={styles.progress}>
-              <MaterialIndicator
-                color={colors['blue-default']}
-                size={100}
-                trackWidth={2.5}
-              />
-            </View>
-          ))}
+        {(status === 'uploading' || status === 'downloading') && (
+          <View style={styles.progress}>
+            <MaterialIndicator
+              color={colors['blue-default']}
+              size={100}
+              trackWidth={2.5}
+            />
+          </View>
+        )}
       </View>
       {description && (
         <Text
