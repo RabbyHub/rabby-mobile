@@ -12,7 +12,10 @@ import { WalletItem } from './components/WalletItem';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { createGlobalBottomSheetModal } from '@/components/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal,
+  removeGlobalBottomSheetModal,
+} from '@/components/GlobalBottomSheetModal';
 import {
   EVENT_NAMES,
   MODAL_NAMES,
@@ -63,11 +66,14 @@ export const PreCreateSeedPhraseScreen = () => {
   const { t } = useTranslation();
 
   const handleBackupToCloud = React.useCallback(() => {
-    createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal({
       name: MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD,
       bottomSheetModalProps: {
         enableDynamicSizing: true,
         maxDynamicContentSize: 460,
+      },
+      onDone: () => {
+        removeGlobalBottomSheetModal(id);
       },
     });
   }, []);

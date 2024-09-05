@@ -1,3 +1,4 @@
+import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
@@ -53,11 +54,11 @@ const getStyles = createGetStyles(colors => ({
 }));
 
 interface Props {
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
 }
 
 export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
-  const [password, setPassword] = React.useState<string>();
+  const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
   const colors = useThemeColors();
   const { styles } = useThemeStyles(getStyles);
   const [error, setError] = React.useState<string>();
@@ -70,7 +71,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
     keyringService
       .verifyPassword(password)
       .then(() => {
-        onConfirm();
+        onConfirm(password);
       })
       .catch(e => {
         setError(e.message);
@@ -82,6 +83,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
       style={styles.container}
       btnProps={{
         disabled: !password,
+        footerStyle: {
+          paddingBottom: 50,
+        },
       }}
       buttonText={'开始备份'}
       onPressButton={handleConfirm}>

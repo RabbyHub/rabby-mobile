@@ -94,7 +94,6 @@ import ThemeSelectorModal, {
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
 import {
   getBackupsFromCloud,
-  loginIfNeeded,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
 import { IS_ANDROID } from '@/core/native/utils';

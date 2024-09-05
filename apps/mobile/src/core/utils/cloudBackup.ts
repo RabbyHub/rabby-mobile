@@ -1,14 +1,9 @@
 import { CloudStorage, CloudStorageScope } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
-import {
-  GoogleSignin,
-  isErrorWithCode,
-  statusCodes,
-  User,
-} from '@react-native-google-signin/google-signin';
-import md5 from 'md5';
+import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
 import { FIREBASE_WEBCLIENT_ID } from '@/constant';
+import { getAddressFromMnemonic } from './mnemonic';
 
 const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 
@@ -22,8 +17,8 @@ export function normalizeAndroidBackupFilename(filename: string) {
   return filename.replace(`${REMOTE_BACKUP_WALLET_DIR}/`, '');
 }
 
-const generateBackupFileName = (mnemonic: string) => {
-  return md5(mnemonic);
+const generateBackupFileName = (name: string) => {
+  return name;
 };
 
 // for dev
@@ -41,16 +36,19 @@ export const saveMnemonicToCloud = async ({
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const encryptedData = await appEncryptor.encrypt(
-    password,
-    JSON.stringify(mnemonic),
-  );
-  const filename = generateBackupFileName(mnemonic);
+  const data = {
+    mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
+    address: getAddressFromMnemonic(mnemonic, 0),
+    createdAt: new Date().getTime(),
+  };
 
-  console.log(`${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
+  const filename = generateBackupFileName(data.address);
+
+  console.log(`save ${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
+
   await CloudStorage.writeFile(
     `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
-    encryptedData,
+    JSON.stringify(data),
   );
 };
 

@@ -15,10 +15,10 @@ export function useGoogleSign() {
   );
 
   const doGoogleSign = React.useCallback(async () => {
-    let accessToken: string | null = null;
+    let accessToken: string | undefined;
     const result = await loginIfNeeded();
 
-    accessToken = result.accessToken ? result.accessToken : null;
+    accessToken = result.accessToken ? result.accessToken : undefined;
 
     setCloudStorage(prev => ({
       ...prev,

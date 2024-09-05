@@ -3,12 +3,12 @@ import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { ButtonProps, Button } from '../Button';
 
-export const FooterButton: React.FC<
-  ButtonProps & {
-    width?: number;
-    footerStyle?: StyleProp<ViewStyle>;
-  }
-> = props => {
+export type FootButtonProps = ButtonProps & {
+  width?: number;
+  footerStyle?: StyleProp<ViewStyle>;
+};
+
+export const FooterButton: React.FC<FootButtonProps> = props => {
   const colors = useThemeColors();
   const { width, footerStyle } = props;
   const styles = React.useMemo(

@@ -1,12 +1,8 @@
 import { Button } from '@/components/Button';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { RootNames } from '@/constant/layout';
 import { AppColorsVariants } from '@/constant/theme';
-import { apiKeyring, apiMnemonic } from '@/core/apis';
-import { keyringService } from '@/core/services';
+import { apiMnemonic } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
-import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { Dialog } from '@rneui/themed';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import _ from 'lodash';
@@ -66,42 +62,10 @@ export const CreateSeedPhraseVerifyScreen = () => {
 
       const mnemonics = data.seedPhrase;
       const passphrase = '';
-      try {
-        const { keyringId, isExistedKR } =
-          await apiMnemonic.generateKeyringWithMnemonic(mnemonics, passphrase);
-
-        const firstAddress = await apiKeyring.requestKeyring(
-          KEYRING_TYPE.HdKeyring,
-          'getAddresses',
-          keyringId ?? null,
-          0,
-          1,
-        );
-
-        await new Promise(resolve => setTimeout(resolve, 1));
-        await apiMnemonic.activeAndPersistAccountsByMnemonics(
-          mnemonics,
-          passphrase,
-          firstAddress as any,
-          true,
-        );
-        keyringService.removePreMnemonics();
-        return navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
-          params: {
-            type: KEYRING_TYPE.HdKeyring,
-            brandName: KEYRING_CLASS.MNEMONIC,
-            isFirstImport: true,
-            address: [firstAddress?.[0].address],
-            mnemonics,
-            passphrase,
-            keyringId: keyringId || undefined,
-            isExistedKR: isExistedKR,
-          },
-        });
-      } catch (error) {
-        console.log('error', error);
-      }
+      await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
+        mnemonics,
+        passphrase,
+      );
     },
     {
       manual: true,

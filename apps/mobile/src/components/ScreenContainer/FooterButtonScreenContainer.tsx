@@ -8,10 +8,12 @@ import {
   StyleSheet,
   ViewStyle,
 } from 'react-native';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
+import {
+  FootButtonProps,
+  FooterButton,
+} from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ButtonProps } from '../Button';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -38,7 +40,7 @@ interface Props {
   children: React.ReactNode;
   onPressButton: () => void;
   buttonText: string;
-  btnProps?: ButtonProps;
+  btnProps?: FootButtonProps;
   style?: StyleProp<ViewStyle>;
 }
 

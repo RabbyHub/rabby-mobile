@@ -1,7 +1,6 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import React from 'react';
-import { CircleSnail } from 'react-native-progress';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import BackupErrorSVG from '@/assets/icons/address/backup-error.svg';
@@ -9,6 +8,7 @@ import BackupInfoSVG from '@/assets/icons/address/backup-info.svg';
 import BackupLockSVG from '@/assets/icons/address/backup-lock.svg';
 import BackupSuccessSVG from '@/assets/icons/address/backup-success.svg';
 import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
+import { MaterialIndicator } from 'react-native-indicators';
 
 interface Props {
   status: 'success' | 'error' | 'unlock' | 'running' | 'info';
@@ -20,15 +20,21 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     progress: {
       position: 'absolute',
-      top: -15,
-      left: -15,
+      top: -10,
+      left: -10,
     },
     statusIcon: {
       width: 28,
       height: 28,
+    },
+    statusIconWrapper: {
       position: 'absolute',
-      bottom: -4,
-      right: -4,
+      bottom: -5,
+      right: -5,
+      borderWidth: 2,
+      borderColor: 'white',
+      borderRadius: 100,
+      zIndex: 1,
     },
     cloudIcon: {
       width: 80,
@@ -46,6 +52,12 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     iconWrapper: {
       position: 'relative',
+    },
+    errorText: {
+      color: colors['red-default'],
+    },
+    successText: {
+      color: colors['green-default'],
     },
   });
 
@@ -86,16 +98,30 @@ export const BackupIcon: React.FC<Props> = ({
     <View style={styles.root}>
       <View style={styles.iconWrapper}>
         <Image style={styles.cloudIcon} source={CloudImageSrc} />
-        <StatusIcon style={styles.statusIcon} />
+
+        <View style={styles.statusIconWrapper}>
+          <StatusIcon style={styles.statusIcon} />
+        </View>
         {status === 'running' && (
-          <CircleSnail
-            color={[colors['blue-default']]}
-            size={110}
-            style={styles.progress}
-          />
+          <View style={styles.progress}>
+            <MaterialIndicator
+              color={colors['blue-default']}
+              size={100}
+              trackWidth={2.5}
+            />
+          </View>
         )}
       </View>
-      {description && <Text style={styles.description}>{description}</Text>}
+      {description && (
+        <Text
+          style={StyleSheet.flatten([
+            styles.description,
+            status === 'error' && styles.errorText,
+            status === 'success' && styles.successText,
+          ])}>
+          {description}
+        </Text>
+      )}
     </View>
   );
 };
