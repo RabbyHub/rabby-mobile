@@ -154,19 +154,6 @@ export const NFTSpenderPopup: React.FC<Props> = ({ data }) => {
         <Col>
           <Row style={styles.firstRow}>
             <Text style={commonStyle.detailRowTitleText}>
-              {t('page.signTx.interacted')}
-            </Text>
-          </Row>
-          <Row>
-            <Values.Boolean
-              value={data.hasInteraction}
-              style={commonStyle.detailPrimaryText}
-            />
-          </Row>
-        </Col>
-        <Col>
-          <Row style={styles.firstRow}>
-            <Text style={commonStyle.detailRowTitleText}>
               {t('page.signTx.addressNote')}
             </Text>
           </Row>

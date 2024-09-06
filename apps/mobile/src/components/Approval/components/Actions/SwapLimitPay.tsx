@@ -179,17 +179,6 @@ const SwapLimitPay = ({
             </SubRow>
           </SubCol>
 
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.hasInteraction')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.Interacted value={requireData.hasInteraction} />
-            </SubRow>
-          </SubCol>
-
           {isInWhitelist && (
             <SubCol>
               <SubRow isTitle>

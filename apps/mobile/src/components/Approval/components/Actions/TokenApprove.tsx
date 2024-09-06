@@ -372,16 +372,6 @@ const TokenApprove = ({
           />
 
           <SecurityListItem
-            id="1025"
-            title={t('page.signTx.interacted')}
-            engineResult={engineResultMap['1025']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-          />
-
-          <SecurityListItem
             tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
             id="1023"
             engineResult={engineResultMap['1023']}

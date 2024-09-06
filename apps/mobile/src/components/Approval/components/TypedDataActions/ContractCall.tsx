@@ -81,7 +81,6 @@ const ContractCall = ({
             <ViewMore
               type="contract"
               data={{
-                hasInteraction: requireData.hasInteraction,
                 bornAt: requireData.bornAt,
                 protocol: requireData.protocol,
                 rank: requireData.rank,
@@ -106,16 +105,6 @@ const ContractCall = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
-            </SubRow>
-          </SubCol>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.hasInteraction')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.Interacted value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
           {isInWhitelist && (

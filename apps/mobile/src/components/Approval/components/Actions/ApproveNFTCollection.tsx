@@ -112,16 +112,6 @@ const ApproveNFTCollection = ({
           />
 
           <SecurityListItem
-            id="1056"
-            engineResult={engineResultMap['1056']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-            title={t('page.signTx.interacted')}
-          />
-
-          <SecurityListItem
             tip={t('page.signTx.nftApprove.nftContractTrustValueTip')}
             id="1054"
             engineResult={engineResultMap['1054']}

@@ -176,16 +176,6 @@ const Permit2 = ({
           />
 
           <SecurityListItem
-            id="1074"
-            engineResult={engineResultMap['1074']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-            title={t('page.signTx.interacted')}
-          />
-
-          <SecurityListItem
             tip={t('page.signTx.tokenApprove.contractTrustValueTip')}
             id="1072"
             engineResult={engineResultMap['1072']}
