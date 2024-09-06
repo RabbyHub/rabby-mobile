@@ -78,18 +78,21 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   const { styles } = useThemeStyles(getStyles);
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
+  const [loading, setLoading] = React.useState(false);
 
   const handleConfirm = React.useCallback(async () => {
     if (!password) {
       return;
     }
 
+    setLoading(true);
     try {
       if (!ignoreValidation) {
         await keyringService.verifyPassword(password);
       }
       onConfirm(password);
     } catch (e) {
+      setLoading(false);
       setError(t('page.unlock.password.error'));
     }
   }, [ignoreValidation, onConfirm, password, t]);
@@ -109,6 +112,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
         footerStyle: {
           paddingBottom: 50,
         },
+        loading,
       }}
       buttonText={t('page.newAddress.seedPhrase.backupUnlockButton')}
       onPressButton={handleConfirm}>

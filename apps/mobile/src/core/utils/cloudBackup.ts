@@ -133,6 +133,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
         address: result.address,
         createdAt: result.createdAt,
         mnemonicEncrypted: result.mnemonicEncrypted,
+        version: result.version,
       });
     } catch (e) {
       console.error(e);
