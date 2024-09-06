@@ -17,3 +17,7 @@ export function withHttp(url: string, defaultProtocol = 'https') {
   }
   return url;
 }
+
+export const isValidateUrl = (url: string) => {
+  return /^(https?|http?):\/\/(localhost|\S)+/.test(url);
+};

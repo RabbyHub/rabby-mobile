@@ -15,6 +15,8 @@ import { formatUsdValue } from '@/utils/number';
 import { toast } from '../Toast';
 import { TestnetChainLogo } from '../Chain/TestnetChainLogo';
 import { Tip } from '../Tip';
+import { Badge } from '@rneui/themed';
+import { RPCStatusBadge } from '../Chain/RPCStatusBadge';
 
 export default function ChainItem({
   data,
@@ -72,12 +74,16 @@ export default function ChainItem({
         {data.isTestnet ? (
           <TestnetChainLogo name={data.name} style={styles.logo} size={32} />
         ) : (
-          <Image
-            source={{
-              uri: data.logo,
-            }}
-            style={styles.logo}
-          />
+          <>
+            <RPCStatusBadge size={styles.logo.width} chainEnum={data?.enum}>
+              <Image
+                source={{
+                  uri: data.logo,
+                }}
+                style={styles.logo}
+              />
+            </RPCStatusBadge>
+          </>
         )}
         <View style={styles.contentContainer}>
           <View style={styles.leftBasic}>

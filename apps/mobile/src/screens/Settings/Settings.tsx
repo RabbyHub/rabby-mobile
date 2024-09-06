@@ -19,6 +19,7 @@ import {
   RcThemeMode,
   RcWhitelist,
   RcAddCustomNetwork,
+  RcRPC,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -227,13 +228,6 @@ function SettingsBlocks() {
             disabled: disabledBiometrics,
             visible: APP_FEATURE_SWITCH.biometricsAuth,
           },
-          // {
-          //   label: 'Custom RPC',
-          //   icon: RcCustomRpc,
-          //   onPress: () => {},
-          //   disabled: true,
-          //   visible: !!__DEV__,
-          // },
           {
             label: 'Auto lock time',
             icon: RcAutoLockTime,
@@ -249,6 +243,20 @@ function SettingsBlocks() {
               navigation.dispatch(
                 StackActions.push(RootNames.StackSettings, {
                   screen: RootNames.CustomTestnet,
+                  params: {
+                    source: 'settings',
+                  },
+                }),
+              );
+            },
+          },
+          {
+            label: 'Modify RPC URL',
+            icon: RcRPC,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.push(RootNames.StackSettings, {
+                  screen: RootNames.CustomRPC,
                   params: {
                     source: 'settings',
                   },

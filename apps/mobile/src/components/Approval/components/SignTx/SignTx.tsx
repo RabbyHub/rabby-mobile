@@ -37,7 +37,7 @@ import {
   parseAction,
 } from '../Actions/utils';
 import { openapi } from '@/core/request';
-import { apiProvider, apiSecurityEngine } from '@/core/apis';
+import { apiCustomRPC, apiProvider, apiSecurityEngine } from '@/core/apis';
 import {
   DEFAULT_GAS_LIMIT_RATIO,
   GAS_TOP_UP_ADDRESS,
@@ -84,6 +84,8 @@ import { BroadcastMode } from '../BroadcastMode';
 import { useFindChain } from '@/hooks/useFindChain';
 import { SignTestnetTx } from '../SignTestnetTx';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
+import { CustomRPCErrorModal } from './CustomRPCErrorModal';
+import { useCustomRPC } from '@/hooks/useCustomRPC';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -433,14 +435,24 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
     undefined,
   );
 
+  const [isShowCustomRPCErrorModal, setIsShowCustomRPCErrorModal] =
+    useState(false);
+
   const explainTx = async (address: string) => {
     let recommendNonce = '0x0';
     if (!isGnosisAccount) {
-      recommendNonce = await getRecommendNonce({
-        tx,
-        chainId,
-      });
-      setRecommendNonce(recommendNonce);
+      try {
+        recommendNonce = await getRecommendNonce({
+          tx,
+          chainId,
+        });
+        setRecommendNonce(recommendNonce);
+      } catch (e) {
+        if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
+          setIsShowCustomRPCErrorModal(true);
+        }
+        throw e;
+      }
     }
     if (updateNonce && !isGnosisAccount) {
       setRealNonce(recommendNonce);
@@ -1087,12 +1099,19 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         // ),
         false,
       );
-      const balance = await getNativeTokenBalance({
-        chainId,
-        address: currentAccount.address,
-      });
+      try {
+        const balance = await getNativeTokenBalance({
+          chainId,
+          address: currentAccount.address,
+        });
 
-      setNativeTokenBalance(balance);
+        setNativeTokenBalance(balance);
+      } catch (e) {
+        if (await apiCustomRPC.hasCustomRPC(chain.enum)) {
+          setIsShowCustomRPCErrorModal(true);
+        }
+        throw e;
+      }
 
       stats.report('createTransaction', {
         type: currentAccount.brandName,
@@ -1177,6 +1196,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       }
       setInited(true);
     } catch (e: any) {
+      console.error(e);
       toast.show(e.message || JSON.stringify(e));
     }
   };
@@ -1292,190 +1312,210 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { setRPCEnable } = useCustomRPC();
   return (
-    <BottomSheetView style={styles.wrapper}>
-      <ScrollView style={styles.approvalTx}>
+    <>
+      <BottomSheetView style={styles.wrapper}>
+        <ScrollView style={styles.approvalTx}>
+          {txDetail && (
+            <View
+              style={StyleSheet.flatten({
+                rowGap: 12,
+              })}>
+              {txDetail && (
+                <TxTypeComponent
+                  isReady={isReady}
+                  actionData={actionData}
+                  actionRequireData={actionRequireData}
+                  chain={chain}
+                  txDetail={txDetail}
+                  raw={{
+                    ...tx,
+                    nonce: realNonce || tx.nonce,
+                    gas: gasLimit!,
+                  }}
+                  onChange={handleTxChange}
+                  isSpeedUp={isSpeedUp}
+                  engineResults={engineResults}
+                  origin={origin}
+                  originLogo={params.session.icon}
+                />
+              )}
+
+              {isGnosisAccount && (
+                <SafeNonceSelector
+                  disabled={isViewGnosisSafe}
+                  isReady={isReady}
+                  chainId={chainId}
+                  value={realNonce}
+                  safeInfo={safeInfo}
+                  onChange={v => {
+                    setRealNonce(v);
+                    setNonceChanged(true);
+                  }}
+                />
+              )}
+
+              {!isGnosisAccount &&
+              !isCoboArugsAccount &&
+              swapPreferMEVGuarded &&
+              isReady ? (
+                <BroadcastMode
+                  chain={chain.enum}
+                  value={pushInfo}
+                  isCancel={isCancel}
+                  isSpeedUp={isSpeedUp}
+                  isGasTopUp={isGasTopUp}
+                  onChange={value => {
+                    setPushInfo(value);
+                  }}
+                />
+              ) : null}
+
+              {!isGnosisAccount &&
+              !isCoboArugsAccount &&
+              txDetail &&
+              isReady ? (
+                <SignAdvancedSettings
+                  disabled={isGnosisAccount || isCoboArugsAccount}
+                  isReady={isReady}
+                  gasLimit={gasLimit}
+                  recommendGasLimit={recommendGasLimit}
+                  recommendNonce={recommendNonce}
+                  onChange={handleAdvancedSettingsChange}
+                  nonce={realNonce || tx.nonce}
+                  disableNonce={isSpeedUp || isCancel}
+                  manuallyChangeGasLimit={manuallyChangeGasLimit}
+                />
+              ) : null}
+            </View>
+          )}
+
+          {isGnosisAccount && safeInfo ? (
+            <GnosisDrawer
+              visible={drawerVisible}
+              safeInfo={safeInfo}
+              onCancel={handleDrawerCancel}
+              onConfirm={handleGnosisConfirm}
+            />
+          ) : null}
+          <RuleDrawer
+            selectRule={currentTx.ruleDrawer.selectRule}
+            visible={currentTx.ruleDrawer.visible}
+            onIgnore={handleIgnoreRule}
+            onUndo={handleUndoIgnore}
+            onRuleEnableStatusChange={handleRuleEnableStatusChange}
+            onClose={handleRuleDrawerClose}
+          />
+          <View style={styles.placeholder} />
+        </ScrollView>
         {txDetail && (
-          <View
-            style={StyleSheet.flatten({
-              rowGap: 12,
-            })}>
-            {txDetail && (
-              <TxTypeComponent
-                isReady={isReady}
-                actionData={actionData}
-                actionRequireData={actionRequireData}
-                chain={chain}
-                txDetail={txDetail}
-                raw={{
-                  ...tx,
-                  nonce: realNonce || tx.nonce,
-                  gas: gasLimit!,
-                }}
-                onChange={handleTxChange}
-                isSpeedUp={isSpeedUp}
-                engineResults={engineResults}
-                origin={origin}
-                originLogo={params.session.icon}
-              />
-            )}
-
-            {isGnosisAccount && (
-              <SafeNonceSelector
-                disabled={isViewGnosisSafe}
-                isReady={isReady}
-                chainId={chainId}
-                value={realNonce}
-                safeInfo={safeInfo}
-                onChange={v => {
-                  setRealNonce(v);
-                  setNonceChanged(true);
-                }}
-              />
-            )}
-
-            {!isGnosisAccount &&
-            !isCoboArugsAccount &&
-            swapPreferMEVGuarded &&
-            isReady ? (
-              <BroadcastMode
-                chain={chain.enum}
-                value={pushInfo}
-                isCancel={isCancel}
-                isSpeedUp={isSpeedUp}
-                isGasTopUp={isGasTopUp}
-                onChange={value => {
-                  setPushInfo(value);
-                }}
-              />
-            ) : null}
-
-            {!isGnosisAccount && !isCoboArugsAccount && txDetail && isReady ? (
-              <SignAdvancedSettings
+          <FooterBar
+            Header={
+              <GasSelectorHeader
+                pushType={pushInfo.type}
                 disabled={isGnosisAccount || isCoboArugsAccount}
                 isReady={isReady}
                 gasLimit={gasLimit}
+                noUpdate={isCancel || isSpeedUp}
+                gasList={gasList}
+                selectedGas={selectedGas}
+                version={txDetail.pre_exec_version}
+                gas={{
+                  error: txDetail.gas.error,
+                  success: txDetail.gas.success,
+                  gasCostUsd: gasExplainResponse.gasCostUsd,
+                  gasCostAmount: gasExplainResponse.gasCostAmount,
+                }}
+                gasCalcMethod={price => {
+                  return explainGas({
+                    gasUsed,
+                    gasPrice: price,
+                    chainId,
+                    nativeTokenPrice: txDetail?.native_token.price || 0,
+                    tx,
+                    gasLimit,
+                  });
+                }}
                 recommendGasLimit={recommendGasLimit}
                 recommendNonce={recommendNonce}
-                onChange={handleAdvancedSettingsChange}
+                chainId={chainId}
+                onChange={handleGasChange}
                 nonce={realNonce || tx.nonce}
                 disableNonce={isSpeedUp || isCancel}
+                isSpeedUp={isSpeedUp}
+                isCancel={isCancel}
+                is1559={support1559}
+                isHardware={isHardware}
                 manuallyChangeGasLimit={manuallyChangeGasLimit}
+                errors={checkErrors}
+                engineResults={engineResults}
+                nativeTokenBalance={nativeTokenBalance}
+                gasPriceMedian={gasPriceMedian}
               />
-            ) : null}
-          </View>
-        )}
-
-        {isGnosisAccount && safeInfo ? (
-          <GnosisDrawer
-            visible={drawerVisible}
-            safeInfo={safeInfo}
-            onCancel={handleDrawerCancel}
-            onConfirm={handleGnosisConfirm}
+            }
+            isWatchAddr={
+              currentAccountType === KEYRING_TYPE.WatchAddressKeyring
+            }
+            gasLessConfig={gasLessConfig}
+            gasLessFailedReason={gasLessFailedReason}
+            canUseGasLess={canUseGasLess}
+            showGasLess={
+              !gasLessLoading && isReady && (isGasNotEnough || !!gasLessConfig)
+            }
+            useGasLess={
+              (isGasNotEnough || !!gasLessConfig) && canUseGasLess && useGasLess
+            }
+            isGasNotEnough={isGasNotEnough}
+            enableGasLess={() => setUseGasLess(true)}
+            hasShadow={footerShowShadow}
+            origin={origin}
+            originLogo={params.session.icon}
+            hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+            securityLevel={securityLevel}
+            gnosisAccount={isGnosis ? account : undefined}
+            chain={chain}
+            isTestnet={chain.isTestnet}
+            onCancel={handleCancel}
+            onSubmit={() => handleAllow()}
+            onIgnoreAllRules={handleIgnoreAllRules}
+            enableTooltip={
+              // 3001 use gasless tip
+              checkErrors && checkErrors?.[0]?.code === 3001
+                ? false
+                : !canProcess ||
+                  !!checkErrors.find(item => item.level === 'forbidden')
+            }
+            tooltipContent={
+              checkErrors && checkErrors?.[0]?.code === 3001
+                ? undefined
+                : checkErrors.find(item => item.level === 'forbidden')
+                ? checkErrors.find(item => item.level === 'forbidden')!.msg
+                : cantProcessReason
+            }
+            disabledProcess={
+              !isReady ||
+              (selectedGas ? selectedGas.price < 0 : true) ||
+              !canProcess ||
+              !!checkErrors.find(item => item.level === 'forbidden') ||
+              hasUnProcessSecurityResult
+            }
           />
-        ) : null}
-        <RuleDrawer
-          selectRule={currentTx.ruleDrawer.selectRule}
-          visible={currentTx.ruleDrawer.visible}
-          onIgnore={handleIgnoreRule}
-          onUndo={handleUndoIgnore}
-          onRuleEnableStatusChange={handleRuleEnableStatusChange}
-          onClose={handleRuleDrawerClose}
-        />
-        <View style={styles.placeholder} />
-      </ScrollView>
-      {txDetail && (
-        <FooterBar
-          Header={
-            <GasSelectorHeader
-              pushType={pushInfo.type}
-              disabled={isGnosisAccount || isCoboArugsAccount}
-              isReady={isReady}
-              gasLimit={gasLimit}
-              noUpdate={isCancel || isSpeedUp}
-              gasList={gasList}
-              selectedGas={selectedGas}
-              version={txDetail.pre_exec_version}
-              gas={{
-                error: txDetail.gas.error,
-                success: txDetail.gas.success,
-                gasCostUsd: gasExplainResponse.gasCostUsd,
-                gasCostAmount: gasExplainResponse.gasCostAmount,
-              }}
-              gasCalcMethod={price => {
-                return explainGas({
-                  gasUsed,
-                  gasPrice: price,
-                  chainId,
-                  nativeTokenPrice: txDetail?.native_token.price || 0,
-                  tx,
-                  gasLimit,
-                });
-              }}
-              recommendGasLimit={recommendGasLimit}
-              recommendNonce={recommendNonce}
-              chainId={chainId}
-              onChange={handleGasChange}
-              nonce={realNonce || tx.nonce}
-              disableNonce={isSpeedUp || isCancel}
-              isSpeedUp={isSpeedUp}
-              isCancel={isCancel}
-              is1559={support1559}
-              isHardware={isHardware}
-              manuallyChangeGasLimit={manuallyChangeGasLimit}
-              errors={checkErrors}
-              engineResults={engineResults}
-              nativeTokenBalance={nativeTokenBalance}
-              gasPriceMedian={gasPriceMedian}
-            />
-          }
-          isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
-          gasLessConfig={gasLessConfig}
-          gasLessFailedReason={gasLessFailedReason}
-          canUseGasLess={canUseGasLess}
-          showGasLess={
-            !gasLessLoading && isReady && (isGasNotEnough || !!gasLessConfig)
-          }
-          useGasLess={
-            (isGasNotEnough || !!gasLessConfig) && canUseGasLess && useGasLess
-          }
-          isGasNotEnough={isGasNotEnough}
-          enableGasLess={() => setUseGasLess(true)}
-          hasShadow={footerShowShadow}
-          origin={origin}
-          originLogo={params.session.icon}
-          hasUnProcessSecurityResult={hasUnProcessSecurityResult}
-          securityLevel={securityLevel}
-          gnosisAccount={isGnosis ? account : undefined}
-          chain={chain}
-          isTestnet={chain.isTestnet}
-          onCancel={handleCancel}
-          onSubmit={() => handleAllow()}
-          onIgnoreAllRules={handleIgnoreAllRules}
-          enableTooltip={
-            // 3001 use gasless tip
-            checkErrors && checkErrors?.[0]?.code === 3001
-              ? false
-              : !canProcess ||
-                !!checkErrors.find(item => item.level === 'forbidden')
-          }
-          tooltipContent={
-            checkErrors && checkErrors?.[0]?.code === 3001
-              ? undefined
-              : checkErrors.find(item => item.level === 'forbidden')
-              ? checkErrors.find(item => item.level === 'forbidden')!.msg
-              : cantProcessReason
-          }
-          disabledProcess={
-            !isReady ||
-            (selectedGas ? selectedGas.price < 0 : true) ||
-            !canProcess ||
-            !!checkErrors.find(item => item.level === 'forbidden') ||
-            hasUnProcessSecurityResult
-          }
-        />
-      )}
-    </BottomSheetView>
+        )}
+      </BottomSheetView>
+      <CustomRPCErrorModal
+        visible={isShowCustomRPCErrorModal}
+        onCancel={() => {
+          setIsShowCustomRPCErrorModal(false);
+          rejectApproval();
+        }}
+        onConfirm={() => {
+          setRPCEnable({ chain: chain.enum, enable: false });
+          setIsShowCustomRPCErrorModal(false);
+          init();
+        }}
+      />
+    </>
   );
 };
 
