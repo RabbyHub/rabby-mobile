@@ -1,10 +1,14 @@
 import { CHAINS_ENUM } from '@/constant/chains';
 import { apiCustomRPC } from '@/core/apis';
 import { RPCItem } from '@/core/services/customRPCService';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { atom, useAtom } from 'jotai';
+import { useMemo } from 'react';
 
 const customRPCAtom = atom<Partial<Record<CHAINS_ENUM, RPCItem>>>({});
+const customRPCStatusAtom = atom<
+  Partial<Record<CHAINS_ENUM, 'success' | 'error' | undefined>>
+>({});
 
 export const useCustomRPC = () => {
   const [customRPCStore, setCustomRPCStore] = useAtom(customRPCAtom);
@@ -41,4 +45,36 @@ export const useCustomRPC = () => {
     setRPCEnable,
     deleteCustomRPC,
   };
+};
+
+export const useCustomRPCStatus = (chainEnum?: CHAINS_ENUM) => {
+  const { customRPCStore } = useCustomRPC();
+  const [customRPCStatus, setCustomRPCStatus] = useAtom(customRPCStatusAtom);
+  const hasCustomRPC = useMemo(() => {
+    return chainEnum && customRPCStore[chainEnum]?.enable;
+  }, [chainEnum, customRPCStore]);
+
+  useRequest(
+    async () => {
+      if (!chainEnum || !hasCustomRPC) {
+        return;
+      }
+      const isAvailable = await apiCustomRPC.pingCustomRPC(chainEnum);
+      return isAvailable ? 'success' : 'error';
+    },
+    {
+      refreshDeps: [chainEnum, hasCustomRPC],
+      onSuccess: status => {
+        if (!chainEnum) {
+          return;
+        }
+        setCustomRPCStatus(prev => ({
+          ...prev,
+          [chainEnum]: status,
+        }));
+      },
+    },
+  );
+
+  return chainEnum ? customRPCStatus[chainEnum] : undefined;
 };

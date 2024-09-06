@@ -112,7 +112,7 @@ class CustomRPCService {
   removeCustomRPC = (chain: CHAINS_ENUM) => {
     const map = this.store.customRPC;
     delete map[chain];
-    this.store.customRPC = map;
+    this.store.customRPC = { ...map };
     if (this.rpcStatus[chain]) {
       delete this.rpcStatus[chain];
     }

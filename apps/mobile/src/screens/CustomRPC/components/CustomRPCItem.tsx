@@ -121,11 +121,13 @@ export const CustomRPCItem = ({
             onPress?.(item);
           }}>
           <View style={styles.mainContent}>
-            <ChainIconImage chainEnum={item.id} size={32} />
+            <ChainIconImage chainEnum={item.id} size={32} isShowRPCStatus />
             <View style={styles.content}>
               <Text style={styles.name}>{chainItem?.name}</Text>
               <View style={styles.footer}>
-                <Text style={styles.url}>{item.rpc?.url}</Text>
+                <Text style={styles.url} numberOfLines={1}>
+                  {item.rpc?.url}
+                </Text>
               </View>
             </View>
           </View>

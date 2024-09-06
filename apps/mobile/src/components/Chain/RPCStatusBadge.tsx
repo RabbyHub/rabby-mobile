@@ -1,6 +1,6 @@
 import { apiCustomRPC } from '@/core/apis';
 import { useThemeColors } from '@/hooks/theme';
-import { useCustomRPC } from '@/hooks/useCustomRPC';
+import { useCustomRPC, useCustomRPCStatus } from '@/hooks/useCustomRPC';
 import { createGetStyles } from '@/utils/styles';
 import { CHAINS_ENUM } from '@debank/common';
 import { useRequest } from 'ahooks';
@@ -25,23 +25,7 @@ export const RPCStatusBadge = ({
 }: RPCStatusBadgeProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const { customRPCStore } = useCustomRPC();
-  const hasCustomRPC = useMemo(() => {
-    return chainEnum && customRPCStore[chainEnum]?.enable;
-  }, [chainEnum, customRPCStore]);
-
-  const { data: RPCStatus } = useRequest(
-    async () => {
-      if (!chainEnum || !hasCustomRPC) {
-        return;
-      }
-      const isAvailable = await apiCustomRPC.pingCustomRPC(chainEnum);
-      return isAvailable ? 'success' : 'error';
-    },
-    {
-      refreshDeps: [chainEnum, hasCustomRPC],
-    },
-  );
+  const rpcStatus = useCustomRPCStatus(chainEnum);
 
   return (
     <View
@@ -56,11 +40,11 @@ export const RPCStatusBadge = ({
         style,
       ]}>
       {children}
-      {RPCStatus ? (
+      {rpcStatus ? (
         <View
           style={[
             styles.badge,
-            RPCStatus === 'error' ? styles.badgeError : null,
+            rpcStatus === 'error' ? styles.badgeError : null,
             badgeStyle,
             badgeSize ? { width: badgeSize, height: badgeSize } : null,
           ]}

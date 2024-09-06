@@ -1507,6 +1507,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         visible={isShowCustomRPCErrorModal}
         onCancel={() => {
           setIsShowCustomRPCErrorModal(false);
+          rejectApproval();
         }}
         onConfirm={() => {
           setRPCEnable({ chain: chain.enum, enable: false });

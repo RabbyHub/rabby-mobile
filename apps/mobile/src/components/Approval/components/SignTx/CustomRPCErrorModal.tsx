@@ -35,7 +35,7 @@ export const CustomRPCErrorModal = ({
             {t('page.signTx.customRPCErrorModal.title')}
           </Text>
           <View style={styles.closeIcon}>
-            <TouchableOpacity onPress={onCancel}>
+            <TouchableOpacity onPress={onCancel} hitSlop={4}>
               <RcIconCloseCC
                 color={colors['neutral-foot']}
                 width={20}
@@ -85,6 +85,7 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'absolute',
       right: 20,
       top: 24,
+      zIndex: 1,
     },
     dialogTitle: {
       color: colors['neutral-title-1'],

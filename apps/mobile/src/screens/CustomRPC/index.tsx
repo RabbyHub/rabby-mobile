@@ -147,14 +147,12 @@ export function CustomRPCScreen(): JSX.Element {
       });
       if (chainInfo) {
         const chain = chainInfo.enum;
-        if (customRPC[chain]) {
-          setSelectedChain(chain);
-          setEditRPC({
-            id: chain,
-            rpc: { ...customRPC[chain], url: rpcUrl },
-          });
-          setRPCModalVisible(true);
-        }
+        setSelectedChain(chain);
+        setEditRPC({
+          id: chain,
+          rpc: { ...(customRPC[chain] || { enable: false }), url: rpcUrl },
+        });
+        setRPCModalVisible(true);
       }
     }
   });

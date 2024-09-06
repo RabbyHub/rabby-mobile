@@ -135,49 +135,43 @@ export const EditCustomRPCPopup = ({
               }}
               title={t('page.customRpc.EditRPCModal.title')}
             />
-            <KeyboardAwareScrollView
-              style={styles.container}
-              enableOnAndroid
-              scrollEnabled
-              keyboardOpeningTime={0}
-              keyboardShouldPersistTaps="handled">
-              <View style={styles.main}>
-                <View style={styles.header}>
-                  <ChainIconImage chainEnum={chainEnum} size={56} />
-                  <Text style={styles.chainName}>{chainItem?.name}</Text>
-                </View>
-                <View style={[styles.formItem]}>
-                  <Text style={styles.formLabel}>
-                    {t('page.customRpc.EditRPCModal.rpcUrl')}
-                  </Text>
-                  <FormInput
-                    inputStyle={[styles.input]}
-                    // className="mt-[8]"
-                    // containerStyle={styles.inputContainer}
-                    // ref={formInputRef}
-                    // disableFocusingStyle
-                    // inputStyle={styles.input}
-                    hasError={!!rpcErrorMsg}
-                    inputProps={{
-                      // ...inputProps,
-                      autoFocus: true,
-                      numberOfLines: 1,
-                      multiline: false,
-                      value: rpcUrl,
-                      editable: true,
-                      onChangeText: value => {
-                        handleRPCChanged(value);
-                      },
-                    }}
-                  />
-                  {rpcErrorMsg ? (
-                    <View style={styles.formItemExtra}>
-                      <Text style={styles.formItemError}>{rpcErrorMsg}</Text>
-                    </View>
-                  ) : null}
-                </View>
+            <View style={styles.main}>
+              <View style={styles.header}>
+                <ChainIconImage chainEnum={chainEnum} size={56} />
+                <Text style={styles.chainName}>{chainItem?.name}</Text>
               </View>
-            </KeyboardAwareScrollView>
+              <View style={[styles.formItem]}>
+                <Text style={styles.formLabel}>
+                  {t('page.customRpc.EditRPCModal.rpcUrl')}
+                </Text>
+                <FormInput
+                  inputStyle={[styles.input]}
+                  // className="mt-[8]"
+                  // containerStyle={styles.inputContainer}
+                  // ref={formInputRef}
+                  // disableFocusingStyle
+                  // inputStyle={styles.input}
+                  hasError={!!rpcErrorMsg}
+                  inputProps={{
+                    // ...inputProps,
+                    autoFocus: true,
+                    numberOfLines: 1,
+                    multiline: false,
+                    value: rpcUrl,
+                    editable: true,
+                    placeholder: 'Enter the RPC URL',
+                    onChangeText: value => {
+                      handleRPCChanged(value);
+                    },
+                  }}
+                />
+                {rpcErrorMsg ? (
+                  <View style={styles.formItemExtra}>
+                    <Text style={styles.formItemError}>{rpcErrorMsg}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
             <View style={styles.footer}>
               <Button
                 onPress={onCancel}
@@ -191,7 +185,7 @@ export const EditCustomRPCPopup = ({
                 ]}
               />
               <Button
-                title={'Confirm'}
+                title={'Save'}
                 buttonStyle={[
                   styles.buttonStyle,
                   { backgroundColor: colors['blue-default'] },
