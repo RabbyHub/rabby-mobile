@@ -256,7 +256,7 @@ const flowContext = flow
     // console.debug('[debug] flowContext:: before process request');
     const { uiRequestComponent, ...rest } = approvalRes || {};
     const {
-      session: { origin },
+      session: { origin, $mobileCtx },
     } = request;
     const requestDeferFn = async () =>
       new Promise(async resolve => {
@@ -297,14 +297,19 @@ const flowContext = flow
             }),
         );
       });
+
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
       ctx.request.requestedApproval = true;
+
       try {
         const res = await notificationService.requestApproval({
           approvalComponent: uiRequestComponent,
-          params: rest,
+          params: {
+            ...rest,
+            $mobileCtx: rest.$mobileCtx || $mobileCtx,
+          },
           origin,
           approvalType,
           isUnshift: true,
