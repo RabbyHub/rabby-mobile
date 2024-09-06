@@ -160,6 +160,7 @@ export const EditCustomRPCPopup = ({
                     value: rpcUrl,
                     editable: true,
                     placeholder: 'Enter the RPC URL',
+                    placeholderTextColor: colors['neutral-foot'],
                     onChangeText: value => {
                       handleRPCChanged(value);
                     },
@@ -278,7 +279,7 @@ const getStyles = (colors: AppColorsVariants) =>
       height: 52,
       borderRadius: 6,
       color: colors['neutral-title-1'],
-      fontWeight: '500',
+      fontWeight: '400',
       fontSize: 16,
       textAlign: undefined,
       lineHeight: undefined,
