@@ -84,19 +84,20 @@ export const Approval = () => {
     params?.session?.$mobileCtx?.fromTabId;
 
   const fromOrigin = origin || params.origin;
-  if (
+  const shouldDisallow =
     !isInternalSession(fromOrigin) &&
     !shouldAllowApprovePopupByTabId({
       fromTabId,
       currentActiveId: activeTabId,
-    }) &&
-    // TODO: for legacy on unknown case, we should allow it
+    });
+  const shouldAllowForLegacy =
     !__DEV__ &&
-    !shouldAllowApprovePopupByOrigin(
+    shouldAllowApprovePopupByOrigin(
       { fromOrigin, currentActiveOrigin: activeDappOrigin },
       { allowSecondaryDomainMatch: false },
-    )
-  ) {
+    );
+
+  if (shouldDisallow && !shouldAllowForLegacy) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }
 
