@@ -60,11 +60,6 @@ export interface TestnetChain extends TestnetChainBase {
   needEstimateGas?: boolean;
 }
 
-export interface RPCItem {
-  url: string;
-  enable: boolean;
-}
-
 export interface CustomTestnetTokenBase {
   id: string;
   chainId: number;

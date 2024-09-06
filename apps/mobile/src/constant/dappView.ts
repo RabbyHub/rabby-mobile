@@ -36,14 +36,38 @@ export const trustedProtocolToDeeplink = [
  * @returns - String corresponding to the warning message
  */
 export const getAlertMessage = (protocol: string) => {
+  const result = {
+    needAlert: true,
+    allowOpenLink: false,
+    message: '',
+  };
   switch (protocol) {
-    case 'tel:':
-      return 'This website has been blocked from automatically making a phone call';
-    case 'mailto:':
-      return 'This website has been blocked from automatically composing an email.';
-    default:
-      return 'This website has been blocked from automatically opening an external application';
+    case 'tel:': {
+      result.needAlert = true;
+      result.message =
+        'This website has been blocked from automatically making a phone call';
+      break;
+    }
+    case 'mailto:': {
+      result.needAlert = true;
+      result.message =
+        'This website has been blocked from automatically composing an email.';
+      break;
+    }
+    case 'blob:': {
+      result.needAlert = false;
+      result.message = '';
+      break;
+    }
+    default: {
+      result.needAlert = true;
+      result.message =
+        'This website has been blocked from automatically opening an external application';
+      break;
+    }
   }
+
+  return result;
 };
 
 /**

@@ -7,7 +7,7 @@ export const useCustomTestnetForm = (params: {
   onSubmit: (values: any) => void;
 }) => {
   const { t } = useTranslation();
-  return useFormik<TestnetChainBase | { id?: number }>({
+  return useFormik<Partial<TestnetChainBase>>({
     initialValues: {
       id: undefined,
       name: '',

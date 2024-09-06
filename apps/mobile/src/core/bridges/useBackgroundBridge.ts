@@ -215,24 +215,25 @@ export function useSetupWebview({
       return false;
     }
 
-    const alertMsg = getAlertMessage(protocol);
+    const alertResult = getAlertMessage(protocol);
+    if (alertResult.needAlert) {
+      // Pop up an alert dialog box to prompt the user for permission
+      // to execute the request
+      Alert.alert('Warning', alertResult.message, [
+        {
+          text: 'Ignore',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        {
+          text: 'Allow',
+          onPress: () => allowLinkOpen(url),
+          style: 'default',
+        },
+      ]);
+    }
 
-    // Pop up an alert dialog box to prompt the user for permission
-    // to execute the request
-    Alert.alert('Warning', alertMsg, [
-      {
-        text: 'Ignore',
-        onPress: () => null,
-        style: 'cancel',
-      },
-      {
-        text: 'Allow',
-        onPress: () => allowLinkOpen(url),
-        style: 'default',
-      },
-    ]);
-
-    return false;
+    return alertResult.allowOpenLink;
   }, []);
 
   return {
