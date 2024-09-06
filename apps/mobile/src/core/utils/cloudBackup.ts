@@ -7,6 +7,7 @@ import { getAddressFromMnemonic } from './mnemonic';
 import { sortBy } from 'lodash';
 
 const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
+const CURRENT_VERSION = 1;
 
 export function normalizeAndroidBackupFilename(filename: string) {
   return filename.replace(`${REMOTE_BACKUP_WALLET_DIR}/`, '');
@@ -31,6 +32,7 @@ export type BackupData = {
   address: string;
   createdAt: string;
   filename: string;
+  version: number;
 };
 
 export type BackupDataWithMnemonic = BackupData & {
@@ -56,6 +58,7 @@ export const saveMnemonicToCloud = async ({
     mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
     address: getAddressFromMnemonic(mnemonic, 0),
     createdAt: new Date().getTime() + '',
+    version: CURRENT_VERSION,
   };
 
   const filename = generateBackupFileName(data.address);
@@ -122,6 +125,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
     const encryptedData = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     );
+    console.log(`${REMOTE_BACKUP_WALLET_DIR}/${filename}`, encryptedData);
     try {
       const result = JSON.parse(encryptedData);
       backups.push({
