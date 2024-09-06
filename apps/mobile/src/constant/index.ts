@@ -87,9 +87,9 @@ const FirebaseWebClientIds = {
   'com.debank.rabbymobile.debug':
     '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
   'com.debank.rabbymobile.regression':
-    '809331497367-hhietrsi4ani813o7evsqb7l30m6cs3n.apps.googleusercontent.com',
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
   'com.debank.rabbymobile':
-    '809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com',
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
 
   'com.debank.rabby-mobile':
     '809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com',
