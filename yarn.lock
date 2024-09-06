@@ -8889,13 +8889,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/md5@npm:^2.3.5":
-  version: 2.3.5
-  resolution: "@types/md5@npm:2.3.5"
-  checksum: a86baf0521006e3072488bd79089b84831780866102e5e4b4f7afabfab17e0270a3791f3331776b73efb2cc9317efd56a334fd3d2698c7929e9b18593ca3fd39
-  languageName: node
-  linkType: hard
-
 "@types/mdast@npm:^3.0.0":
   version: 3.0.15
   resolution: "@types/mdast@npm:3.0.15::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fmdast%2F-%2Fmdast-3.0.15.tgz"
@@ -27865,7 +27858,6 @@ __metadata:
     "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
     "@types/lodash.debounce": ^4.0.9
-    "@types/md5": ^2.3.5
     "@types/pump": ^1.1.3
     "@types/qrcode": ^1.5.5
     "@types/react": ^18.0.24
