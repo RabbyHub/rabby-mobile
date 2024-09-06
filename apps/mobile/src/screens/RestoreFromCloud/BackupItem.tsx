@@ -1,4 +1,3 @@
-import { BackupStats } from '@/core/utils/cloudBackup';
 import { createGetStyles } from '@/utils/styles';
 import {
   StyleProp,
@@ -13,10 +12,12 @@ import { RcIconCheckedFilledCC } from '@/assets/icons/common';
 import dayjs from 'dayjs';
 import React from 'react';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
-import { isNumber } from 'lodash';
+import { isNumber, noop } from 'lodash';
 import { formatUsdValue } from '@/utils/number';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { isAddress } from 'web3-utils';
+import { useTranslation } from 'react-i18next';
+import { BackupData } from '@/core/utils/cloudBackup';
 
 const getStyles = createGetStyles(colors => ({
   root: {
@@ -27,6 +28,9 @@ const getStyles = createGetStyles(colors => ({
   },
   rootSelected: {
     borderColor: colors['blue-default'],
+  },
+  rootImported: {
+    opacity: 0.5,
   },
   body: {
     padding: 16,
@@ -60,22 +64,33 @@ const getStyles = createGetStyles(colors => ({
   itemAddress: {
     fontSize: 15,
   },
+  importedText: {
+    color: colors['neutral-foot'],
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  imported: {
+    flexDirection: 'row',
+  },
 }));
 
 interface BackupItemProps {
-  item: BackupStats;
+  item: BackupData;
   index: number;
   onPress: () => void;
   selected: boolean;
+  imported: boolean;
   style?: StyleProp<ViewStyle>;
 }
 export const BackupItem: React.FC<BackupItemProps> = ({
   item,
   selected,
+  imported,
   onPress,
   index,
   style,
 }) => {
+  const { t } = useTranslation();
   const { styles } = useThemeStyles(getStyles);
   const [balance, setBalance] = React.useState<number>();
   const createdAtStr = React.useMemo(
@@ -95,10 +110,11 @@ export const BackupItem: React.FC<BackupItemProps> = ({
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={imported ? noop : onPress}
       style={StyleSheet.flatten([
         styles.root,
         selected && styles.rootSelected,
+        imported && styles.rootImported,
         style,
       ])}>
       <View style={styles.body}>
@@ -107,6 +123,14 @@ export const BackupItem: React.FC<BackupItemProps> = ({
           <Text style={styles.bodyDesc}>Backup created on {createdAtStr}</Text>
         </View>
         {selected && <RcIconCheckedFilledCC width={24} height={24} />}
+        {imported && (
+          <View style={styles.imported}>
+            <RcIconCheckedFilledCC width={16} height={16} />
+            <Text style={styles.importedText}>
+              {t('page.newAddress.seedPhrase.backupRestoreImported')}
+            </Text>
+          </View>
+        )}
       </View>
       <View style={styles.footer}>
         <AddressAndCopy address={item.address} style={styles.itemAddress} />

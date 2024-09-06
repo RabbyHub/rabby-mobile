@@ -4,6 +4,7 @@ import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
 import { FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
+import { sortBy } from 'lodash';
 
 const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 
@@ -140,7 +141,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
     }
   }
 
-  return backups;
+  return sortBy(backups, 'createdAt').reverse();
 };
 
 // login to google if needed
@@ -190,6 +191,7 @@ export const loginIfNeeded = async () => {
     result.accessToken = accessToken;
   }
 
+  console.log('loginIfNeeded', result);
   return result;
 };
 

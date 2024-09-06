@@ -8,11 +8,15 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud/BackupIcon';
 import { BackupData, getBackupsFromCloud } from '@/core/utils/cloudBackup';
 import { useThemeStyles } from '@/hooks/theme';
+import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { createGetStyles } from '@/utils/styles';
+import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
 import { BackupItem } from './BackupItem';
+
+const { isSameAddress } = addressUtils;
 
 const getStyles = createGetStyles(colors => ({
   loading: {
@@ -54,6 +58,8 @@ export const RestoreFromCloud = () => {
   const [selectedFilenames, setSelectedFilenames] = React.useState<string[]>(
     [],
   );
+  const [importedFiles, setImportedFiles] = React.useState<string[]>([]);
+  const { seedPhraseList } = useSeedPhrase();
 
   React.useEffect(() => {
     getBackupsFromCloud().then(result => {
@@ -84,6 +90,21 @@ export const RestoreFromCloud = () => {
       return [...prev, filename];
     });
   }, []);
+
+  React.useEffect(() => {
+    if (backups?.length && seedPhraseList.length) {
+      seedPhraseList.forEach(seedPhrase => {
+        seedPhrase.list.forEach(account => {
+          const found = backups.find(backup =>
+            isSameAddress(backup.address, account.address),
+          );
+          if (found) {
+            setImportedFiles(prev => [...prev, found.filename]);
+          }
+        });
+      });
+    }
+  }, [backups, seedPhraseList]);
 
   if (loading) {
     return (
@@ -132,12 +153,14 @@ export const RestoreFromCloud = () => {
         </View>
         <View style={styles.backupList}>
           {backups.map((item, index) => {
+            const imported = importedFiles.includes(item.filename);
             const selected = selectedFilenames.includes(item.filename);
             return (
               <BackupItem
                 key={index}
                 item={item}
                 selected={selected}
+                imported={imported}
                 onPress={() => handleSelect(item.filename)}
                 index={index}
                 style={styles.backupItem}

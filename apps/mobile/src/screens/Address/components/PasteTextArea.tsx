@@ -132,7 +132,10 @@ export const PasteTextArea: React.FC<Props> = ({
         />
         <View style={styles.buttonGroup}>
           {enableScan && (
-            <TouchableOpacity onPress={onPressScan} style={styles.button}>
+            <TouchableOpacity
+              hitSlop={6}
+              onPress={onPressScan}
+              style={styles.button}>
               <RcIconScannerCC
                 width={16}
                 height={16}
@@ -141,7 +144,10 @@ export const PasteTextArea: React.FC<Props> = ({
               <Text style={styles.pasteButtonText}>Scan</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={onPressPaste} style={styles.button}>
+          <TouchableOpacity
+            hitSlop={6}
+            onPress={onPressPaste}
+            style={styles.button}>
             <IconPaste width={16} height={16} color={colors['neutral-foot']} />
             <Text style={styles.pasteButtonText}>Paste</Text>
           </TouchableOpacity>
