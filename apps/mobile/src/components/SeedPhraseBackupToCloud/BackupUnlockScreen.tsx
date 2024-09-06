@@ -59,6 +59,9 @@ interface Props {
   description?: string;
   title?: string;
   onCancel?: () => void;
+  ignoreValidation?: boolean;
+  isError?: boolean;
+  onClearError?: () => void;
 }
 
 export const BackupUnlockScreen: React.FC<Props> = ({
@@ -66,6 +69,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   description,
   title,
   onCancel,
+  ignoreValidation,
+  isError,
+  onClearError,
 }) => {
   const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
   const colors = useThemeColors();
@@ -73,20 +79,26 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
 
-  const handleConfirm = React.useCallback(() => {
+  const handleConfirm = React.useCallback(async () => {
     if (!password) {
       return;
     }
 
-    keyringService
-      .verifyPassword(password)
-      .then(() => {
-        onConfirm(password);
-      })
-      .catch(e => {
-        setError(e.message);
-      });
-  }, [onConfirm, password]);
+    try {
+      if (!ignoreValidation) {
+        await keyringService.verifyPassword(password);
+      }
+      onConfirm(password);
+    } catch (e) {
+      setError(t('page.unlock.password.error'));
+    }
+  }, [ignoreValidation, onConfirm, password, t]);
+
+  React.useEffect(() => {
+    if (isError) {
+      setError(t('page.unlock.password.error'));
+    }
+  }, [isError, t]);
 
   return (
     <FooterButtonScreenContainer
@@ -115,6 +127,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             onChangeText={v => {
               setPassword(v);
               setError('');
+              onClearError?.();
             }}
             placeholderTextColor={colors['neutral-foot']}
             style={StyleSheet.flatten([

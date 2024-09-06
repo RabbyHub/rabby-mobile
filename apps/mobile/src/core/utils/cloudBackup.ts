@@ -31,19 +31,14 @@ export const deleteAllBackups = async () => {
   }
 };
 
-export type BackupStats = {
+export type BackupData = {
+  mnemonicEncrypted: string;
   address: string;
   createdAt: string;
   filename: string;
 };
 
-export type BackupData = {
-  mnemonicEncrypted: string;
-  address: string;
-  createdAt: string;
-};
-
-export type BackupDataWithMnemonic = BackupStats & {
+export type BackupDataWithMnemonic = BackupData & {
   mnemonic: string;
 };
 
@@ -62,7 +57,7 @@ export const saveMnemonicToCloud = async ({
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const data: BackupData = {
+  const data: Omit<BackupData, 'filename'> = {
     mnemonicEncrypted: await appEncryptor.encrypt(password, mnemonic),
     address: getAddressFromMnemonic(mnemonic, 0),
     createdAt: new Date().getTime() + '',
@@ -81,37 +76,28 @@ export const saveMnemonicToCloud = async ({
 };
 
 /**
- * get backups from cloud
+ * decrypt files from files
  * @param param password and filenames
  * @returns backups
  */
-export const getBackupsFromCloud = async ({
+export const decryptFiles = async ({
   password,
-  filenames,
+  files,
 }: {
   password: string;
-  filenames: string[];
+  files: BackupData[];
 }) => {
-  await loginIfNeeded();
-  await makeDirIfNeeded();
-
   const backups: BackupDataWithMnemonic[] = [];
 
-  for (const filename of filenames) {
-    const json = await CloudStorage.readFile(
-      `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
-    );
+  for (const file of files) {
     try {
-      const data = JSON.parse(json) as BackupData;
       const mnemonic = await appEncryptor.decrypt(
         password,
-        data.mnemonicEncrypted,
+        file.mnemonicEncrypted,
       );
       backups.push({
-        createdAt: data.createdAt,
-        address: data.address,
+        ...file,
         mnemonic,
-        filename,
       });
     } catch (e) {
       console.error(e);
@@ -121,16 +107,21 @@ export const getBackupsFromCloud = async ({
   return backups;
 };
 
-export const getBackupsStatsFromCloud = async () => {
+/**
+ * get backups from cloud
+ * @returns backups
+ */
+export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
   await loginIfNeeded();
   await makeDirIfNeeded();
 
-  const filenames = await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR);
+  const filenames =
+    targetFilenames || (await CloudStorage.readdir(REMOTE_BACKUP_WALLET_DIR));
   if (!filenames.length) {
-    return;
+    return [];
   }
 
-  const stats: BackupStats[] = [];
+  const backups: BackupData[] = [];
 
   for (const filename of filenames) {
     const encryptedData = await CloudStorage.readFile(
@@ -138,17 +129,18 @@ export const getBackupsStatsFromCloud = async () => {
     );
     try {
       const result = JSON.parse(encryptedData);
-      stats.push({
+      backups.push({
         filename,
         address: result.address,
         createdAt: result.createdAt,
+        mnemonicEncrypted: result.mnemonicEncrypted,
       });
     } catch (e) {
       console.error(e);
     }
   }
 
-  return stats;
+  return backups;
 };
 
 // login to google if needed

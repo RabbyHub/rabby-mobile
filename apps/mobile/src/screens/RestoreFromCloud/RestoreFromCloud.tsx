@@ -6,10 +6,7 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud/BackupIcon';
-import {
-  BackupStats,
-  getBackupsStatsFromCloud,
-} from '@/core/utils/cloudBackup';
+import { BackupData, getBackupsFromCloud } from '@/core/utils/cloudBackup';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React from 'react';
@@ -50,7 +47,7 @@ const getStyles = createGetStyles(colors => ({
 }));
 
 export const RestoreFromCloud = () => {
-  const [backupsStats, setBackupsStats] = React.useState<BackupStats[]>();
+  const [backups, setBackups] = React.useState<BackupData[]>();
   const [loading, setLoading] = React.useState(true);
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
@@ -59,8 +56,8 @@ export const RestoreFromCloud = () => {
   );
 
   React.useEffect(() => {
-    getBackupsStatsFromCloud().then(result => {
-      setBackupsStats(result);
+    getBackupsFromCloud().then(result => {
+      setBackups(result);
       setLoading(false);
     });
   }, []);
@@ -75,9 +72,9 @@ export const RestoreFromCloud = () => {
       onDone: () => {
         removeGlobalBottomSheetModal(id);
       },
-      filenames: selectedFilenames,
+      files: backups?.filter(item => selectedFilenames.includes(item.filename)),
     });
-  }, [selectedFilenames]);
+  }, [backups, selectedFilenames]);
 
   const handleSelect = React.useCallback((filename: string) => {
     setSelectedFilenames(prev => {
@@ -102,7 +99,7 @@ export const RestoreFromCloud = () => {
     );
   }
 
-  if (!backupsStats?.length) {
+  if (!backups?.length) {
     return (
       <NormalScreenContainer style={StyleSheet.flatten([styles.rootLoading])}>
         <View style={styles.loading}>
@@ -129,12 +126,12 @@ export const RestoreFromCloud = () => {
           <BackupIcon status="success" />
           <Text style={styles.title}>
             {t('page.newAddress.seedPhrase.backupRestoreTitle', {
-              count: backupsStats.length,
+              count: backups.length,
             })}
           </Text>
         </View>
         <View style={styles.backupList}>
-          {backupsStats.map((item, index) => {
+          {backups.map((item, index) => {
             const selected = selectedFilenames.includes(item.filename);
             return (
               <BackupItem

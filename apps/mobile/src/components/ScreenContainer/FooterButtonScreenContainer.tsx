@@ -98,7 +98,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       {onCancel ? (
         <FooterButtonGroup
           style={StyleSheet.flatten([
-            { paddingBottom: 35 },
+            { paddingBottom: 35, marginTop: 0 },
             btnProps?.footerStyle,
           ])}
           onCancel={onCancel}

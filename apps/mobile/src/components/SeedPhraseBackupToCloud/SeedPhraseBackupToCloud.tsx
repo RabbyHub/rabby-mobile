@@ -1,5 +1,9 @@
 import { apiMnemonic } from '@/core/apis';
-import { saveMnemonicToCloud } from '@/core/utils/cloudBackup';
+import {
+  decryptFiles,
+  getBackupsFromCloud,
+  saveMnemonicToCloud,
+} from '@/core/utils/cloudBackup';
 import { useRequest } from 'ahooks';
 import React from 'react';
 import { View } from 'react-native';
@@ -40,22 +44,22 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
       setStep('backup_uploading');
 
       // upload seedPhrase to cloud
-      saveMnemonicToCloud({
-        mnemonic,
-        password,
-      })
-        .then(() => {
-          setStep('backup_success');
-
-          return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(mnemonic);
-        })
-        .then(() => {
-          onDone();
-        })
-        .catch(e => {
-          console.log('backup error', e);
-          setStep('backup_error');
+      try {
+        const filename = await saveMnemonicToCloud({
+          mnemonic,
+          password,
         });
+        // check if the mnemonic is uploaded successfully
+        const files = await getBackupsFromCloud([filename]);
+        await decryptFiles({ password, files });
+
+        setStep('backup_success');
+        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(mnemonic);
+        onDone();
+      } catch (e) {
+        console.log('backup error', e);
+        setStep('backup_error');
+      }
     },
     [mnemonic, onDone],
   );

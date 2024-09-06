@@ -1,8 +1,5 @@
 import { apiMnemonic } from '@/core/apis';
-import {
-  BackupDataWithMnemonic,
-  getBackupsFromCloud,
-} from '@/core/utils/cloudBackup';
+import { BackupData, decryptFiles } from '@/core/utils/cloudBackup';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -12,17 +9,18 @@ import { BackupRestoreScreen } from './BackupRestoreScreen';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
-  filenames: string[];
+  files: BackupData[];
 }
 
 export const SeedPhraseRestoreFromCloud: React.FC<Props> = ({
   onDone,
-  filenames,
+  files,
 }) => {
   const [step, setStep] = React.useState<
-    'backup_unlock' | 'backup_downloading' | 'backup_success' | 'backup_error'
+    'backup_unlock' | 'backup_downloading' | 'backup_error'
   >('backup_unlock');
   const [inputPassword, setInputPassword] = React.useState('');
+  const [isPasswordError, setIsPasswordError] = React.useState(false);
 
   const { t } = useTranslation();
 
@@ -35,26 +33,25 @@ export const SeedPhraseRestoreFromCloud: React.FC<Props> = ({
         return;
       }
 
-      setStep('backup_downloading');
-      getBackupsFromCloud({ password, filenames })
-        .then(result => {
-          const arr = result.map(r => r.mnemonic);
+      try {
+        const result = await decryptFiles({ password, files });
+        const arr = result.map(r => r.mnemonic);
 
-          console.log('memnonics', arr);
+        if (arr.length === 0) {
+          setIsPasswordError(true);
+          return;
+        }
 
-          if (arr) {
-            return apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(arr);
-          }
-        })
-        .then(() => {
-          onDone();
-        })
-        .catch(e => {
-          console.log('backup error', e);
-          setStep('backup_error');
-        });
+        setStep('backup_downloading');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(arr);
+        onDone();
+      } catch (e) {
+        console.log('backup error', e);
+        setStep('backup_error');
+      }
     },
-    [filenames, onDone],
+    [files, onDone],
   );
 
   return (
@@ -65,10 +62,12 @@ export const SeedPhraseRestoreFromCloud: React.FC<Props> = ({
           description={t('page.newAddress.seedPhrase.backupRestoreUnlockDesc')}
           title={t('page.newAddress.seedPhrase.backupRestoreUnlockTitle')}
           onCancel={onDone}
+          ignoreValidation
+          isError={isPasswordError}
+          onClearError={() => setIsPasswordError(false)}
         />
       )}
       {step === 'backup_downloading' && <BackupRestoreScreen />}
-      {/* {step === 'backup_success' && <BackupSuccessScreen />} */}
       {step === 'backup_error' && (
         <BackupErrorScreen onConfirm={() => handleRestore(inputPassword)} />
       )}

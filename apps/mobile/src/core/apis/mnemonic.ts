@@ -289,7 +289,7 @@ export const activeAndPersistAccountsByMnemonics = async (
     throw new Error('[activeAndPersistAccountsByMnemonics] no keyring found.');
   }
 
-  const accounts: string[] = await (keyring as any).getAccounts();
+  const accounts: string[] = [...(await (keyring as any).getAccounts())];
 
   const currentLength = accounts.length;
 
@@ -318,7 +318,10 @@ export const activeAndPersistAccountsByMnemonics = async (
   };
   if (addDefaultAlias) {
     accountsToImport.forEach(({ address }, index) => {
-      if (!contactService.getContactByAddress(address)) {
+      if (
+        !accounts.includes(address) &&
+        !contactService.getContactByAddress(address)
+      ) {
         const alias = generateAliasName({
           keyringType: keyring.type,
           brandName: keyring.type,
