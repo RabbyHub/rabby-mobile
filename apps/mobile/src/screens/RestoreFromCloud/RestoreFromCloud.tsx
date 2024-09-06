@@ -62,10 +62,14 @@ export const RestoreFromCloud = () => {
   const { seedPhraseList } = useSeedPhrase();
 
   React.useEffect(() => {
-    getBackupsFromCloud().then(result => {
-      setBackups(result);
-      setLoading(false);
-    });
+    getBackupsFromCloud()
+      .then(result => {
+        setBackups(result);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   const handleRestore = React.useCallback(() => {

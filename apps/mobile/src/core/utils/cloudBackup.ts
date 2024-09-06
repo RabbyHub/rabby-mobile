@@ -8,12 +8,6 @@ import { sortBy } from 'lodash';
 
 const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
 
-GoogleSignin.configure({
-  // https://rnfirebase.io/auth/social-auth#google
-  webClientId: FIREBASE_WEBCLIENT_ID,
-  scopes: ['https://www.googleapis.com/auth/drive.appdata'],
-});
-
 export function normalizeAndroidBackupFilename(filename: string) {
   return filename.replace(`${REMOTE_BACKUP_WALLET_DIR}/`, '');
 }
@@ -144,8 +138,30 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
   return sortBy(backups, 'createdAt').reverse();
 };
 
+export const checkTokenIsExpired = async () => {
+  console.log('checkTokenIsExpired');
+  try {
+    await Promise.race([
+      CloudStorage.exists(REMOTE_BACKUP_WALLET_DIR),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 5000),
+      ),
+    ]);
+    return false;
+  } catch (e) {
+    console.error(e);
+    return true;
+  }
+};
+
 // login to google if needed
 export const loginIfNeeded = async () => {
+  GoogleSignin.configure({
+    // https://rnfirebase.io/auth/social-auth#google
+    webClientId: FIREBASE_WEBCLIENT_ID,
+    scopes: ['https://www.googleapis.com/auth/drive.appdata'],
+  });
+
   const result = {
     needLogin: IS_ANDROID,
     accessToken: '',
@@ -165,33 +181,53 @@ export const loginIfNeeded = async () => {
   // }
 
   let userInfo: User | null = null;
-  await GoogleSignin.hasPlayServices();
+  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-  if (GoogleSignin.hasPreviousSignIn()) {
-    userInfo = await GoogleSignin.getCurrentUser();
-    if (!userInfo) {
-      await GoogleSignin.signInSilently();
+  try {
+    if (GoogleSignin.hasPreviousSignIn()) {
       userInfo = await GoogleSignin.getCurrentUser();
+      if (!userInfo) {
+        await GoogleSignin.signInSilently();
+        userInfo = await GoogleSignin.getCurrentUser();
+      }
     }
+
+    if (!userInfo) {
+      try {
+        userInfo = await GoogleSignin.signIn();
+      } catch (error) {
+        console.debug(JSON.stringify(error));
+        throw error;
+      }
+    }
+
+    if (userInfo) {
+      const { accessToken } = await GoogleSignin.getTokens();
+      // __DEV__ && console.debug('userInfo', userInfo);
+      CloudStorage.setGoogleDriveAccessToken(accessToken);
+      result.accessToken = accessToken;
+    }
+  } catch (e) {
+    console.error('login error', e);
   }
 
-  if (!userInfo) {
+  let loopCount = 0;
+  while ((await checkTokenIsExpired()) && loopCount < 3) {
+    console.log('refreshAccessToken');
+    result.accessToken = '';
     try {
-      userInfo = await GoogleSignin.signIn();
-    } catch (error) {
-      console.debug(JSON.stringify(error));
-      throw error;
+      result.accessToken = await refreshAccessToken();
+    } catch (e) {
+      console.error('refreshAccessToken error', e);
     }
-  }
-
-  if (userInfo) {
-    const { accessToken } = await GoogleSignin.getTokens();
-    // __DEV__ && console.debug('userInfo', userInfo);
-    CloudStorage.setGoogleDriveAccessToken(accessToken);
-    result.accessToken = accessToken;
+    loopCount++;
   }
 
   console.log('loginIfNeeded', result);
+  if (!result.accessToken) {
+    throw new Error('login failed');
+  }
+
   return result;
 };
 
@@ -223,9 +259,8 @@ export const refreshAccessToken = async () => {
   if (token) {
     await GoogleSignin.clearCachedAccessToken(token);
   }
-  CloudStorage.setGoogleDriveAccessToken(
-    await (
-      await GoogleSignin.getTokens()
-    ).accessToken,
-  );
+
+  const accountToken = await (await GoogleSignin.getTokens()).accessToken;
+  CloudStorage.setGoogleDriveAccessToken(accountToken);
+  return accountToken;
 };
