@@ -62,7 +62,6 @@ function SendScreen(): JSX.Element {
   const {
     chainItem,
     currentToken,
-    loadCurrentToken,
     setCurrentToken,
     setChainEnum,
     currentTokenPrice,
@@ -84,6 +83,7 @@ function SendScreen(): JSX.Element {
 
     chainEnum,
     handleChainChanged,
+    loadCurrentToken,
     handleCurrentTokenChange,
 
     whitelistEnabled,
