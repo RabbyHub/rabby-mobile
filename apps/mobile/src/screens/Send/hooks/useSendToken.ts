@@ -341,9 +341,13 @@ function calcGasCost({
     // no cache, use the fast level in gasMarket
     gasLevel = gasList.find(item => item.level === 'fast')!;
   }
-  const costTokenAmount = new BigNumber(gasLevel.price).times(21000).div(1e18);
+  const costTokenAmount = new BigNumber(gasLevel.price)
+    .times(DEFAULT_GAS_USED)
+    .div(1e18);
   return costTokenAmount;
 }
+
+const DEFAULT_GAS_USED = 21000;
 
 export type FormSendToken = {
   to: string;
@@ -493,11 +497,11 @@ export function useSendTokenForm() {
           if (gasLimit > 0) {
             params.gas = intToHex(gasLimit);
           } else if (notContract && couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(21000);
+            params.gas = intToHex(DEFAULT_GAS_USED);
           }
         } catch (e) {
           if (couldSpecifyIntrinsicGas) {
-            params.gas = intToHex(21000);
+            params.gas = intToHex(DEFAULT_GAS_USED);
           }
         }
         if (
@@ -740,12 +744,14 @@ export function useSendTokenForm() {
       tokenItem?: TokenItem;
       currentAddress?: string;
     }) => {
-      const result = {
-        gasNumber: 0,
-        gasNumHex: intToHex(0),
-      };
+      const result = { gasNumber: 0 };
 
-      if (!input?.chainItem?.needEstimateGas) return result;
+      const doReturn = (nextGas = DEFAULT_GAS_USED) => {
+        result.gasNumber = nextGas;
+
+        putScreenState({ estimatedGas: result.gasNumber });
+        return result;
+      };
 
       const {
         chainItem: lastestChainItem = chainItem,
@@ -753,8 +759,8 @@ export function useSendTokenForm() {
         currentAddress = currentAccount?.address,
       } = input || {};
 
-      if (!currentAddress) return result;
-      if (!lastestChainItem) return result;
+      if (!lastestChainItem?.needEstimateGas) return doReturn(DEFAULT_GAS_USED);
+      if (!currentAddress) return doReturn();
 
       if (lastestChainItem.serverId !== tokenItem.chain) {
         console.warn(
@@ -767,7 +773,7 @@ export function useSendTokenForm() {
 
       const to = formik.values.to;
 
-      let _gasUsed: string = intToHex(21000);
+      let _gasUsed: string = intToHex(DEFAULT_GAS_USED);
       try {
         _gasUsed = await apiProvider.requestETHRpc<string>(
           {
@@ -786,17 +792,12 @@ export function useSendTokenForm() {
       } catch (err) {
         console.error(err);
       }
-      const gasUsed = lastestChainItem.isTestnet
-        ? new BigNumber(_gasUsed).multipliedBy(1.5).integerValue().toNumber()
-        : _gasUsed;
+      const gasUsed = new BigNumber(_gasUsed)
+        .multipliedBy(1.5)
+        .integerValue()
+        .toNumber();
 
-      result.gasNumber = Number(gasUsed);
-      result.gasNumHex =
-        typeof gasUsed === 'string' ? gasUsed : intToHex(gasUsed);
-
-      putScreenState({ estimatedGas: result.gasNumber });
-
-      return result;
+      return doReturn(Number(gasUsed));
     },
     [currentAccount, chainItem, formik, currentToken, putScreenState],
   );
@@ -941,7 +942,10 @@ export function useSendTokenForm() {
       if (couldReserveGas && needReserveGasOnSendToken) {
         putScreenState({ showGasReserved: true, isEstimatingGas: true });
         try {
-          const { gasNumber } = await estimateGasOnChain();
+          const { gasNumber } = await estimateGasOnChain({
+            chainItem,
+            tokenItem: currentToken,
+          });
 
           let gasTokenAmount = onGasChange({
             gasLevel: gasLevel,
@@ -959,7 +963,7 @@ export function useSendTokenForm() {
                   from: currentAccount.address,
                   to: to && isValidAddress(to) ? to : zeroAddress(),
                   value: currentToken.raw_amount_hex_str,
-                  gas: intToHex(21000),
+                  gas: intToHex(DEFAULT_GAS_USED),
                   gasPrice: `0x${new BigNumber(gasLevel.price).toString(16)}`,
                   data: '0x',
                 },
@@ -994,8 +998,7 @@ export function useSendTokenForm() {
     },
     [
       currentAccount,
-      currentToken.decimals,
-      currentToken.raw_amount_hex_str,
+      currentToken,
       estimateGasOnChain,
       screenState.selectedGasLevel,
       loadGasList,
