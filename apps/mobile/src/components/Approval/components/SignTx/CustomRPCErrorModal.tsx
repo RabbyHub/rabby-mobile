@@ -5,8 +5,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { Dialog } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const CustomRPCErrorModal = ({
   visible,
