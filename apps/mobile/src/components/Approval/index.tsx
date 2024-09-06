@@ -8,6 +8,7 @@ import * as ApprovalComponent from './components';
 import { useOpenedActiveDappState } from '@/screens/Dapps/hooks/useDappView';
 import {
   isInternalSession,
+  shouldAllowApprovePopupByOrigin,
   shouldAllowApprovePopupByTabId,
 } from '@/core/bridges/state';
 // import TouchableText from '../Touchable/TouchableText';
@@ -82,10 +83,19 @@ export const Approval = () => {
     data.$mobileCtx?.fromTabId ||
     params?.session?.$mobileCtx?.fromTabId;
 
-  const sourceOrigin = origin || params.origin;
+  const fromOrigin = origin || params.origin;
   if (
-    !isInternalSession(sourceOrigin) &&
-    !shouldAllowApprovePopupByTabId({ fromTabId, currentActiveId: activeTabId })
+    !isInternalSession(fromOrigin) &&
+    !shouldAllowApprovePopupByTabId({
+      fromTabId,
+      currentActiveId: activeTabId,
+    }) &&
+    // TODO: for legacy on unknown case, we should allow it
+    !__DEV__ &&
+    !shouldAllowApprovePopupByOrigin(
+      { fromOrigin, currentActiveOrigin: activeDappOrigin },
+      { allowSecondaryDomainMatch: false },
+    )
   ) {
     return <ShouldntRenderApproveDueToDappDisappeared />;
   }

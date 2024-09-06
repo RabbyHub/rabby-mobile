@@ -54,6 +54,7 @@ export function globalSetActiveDappState(
   }
 }
 
+/** @deprecated */
 export function shouldAllowApprovePopupByOrigin(
   {
     fromOrigin: fromDappOrigin = '',
@@ -91,7 +92,6 @@ export function isInternalSession(sessionOrigin: string) {
   return sessionOrigin === INTERNAL_REQUEST_ORIGIN;
 }
 
-/** @deprecated */
 export function shouldAllowApprovePopupByTabId({
   fromTabId,
   currentActiveId,
