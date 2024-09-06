@@ -516,7 +516,7 @@ function DevSettingsBlocks() {
                   visible: IS_ANDROID,
                 }
               : {
-                  label: IS_ANDROID ? 'Sign google drive' : 'Store to iCloud',
+                  label: 'Sign google drive',
                   icon: RcGoogleDrive,
                   onPress: () => {
                     doGoogleSign()
@@ -531,6 +531,7 @@ function DevSettingsBlocks() {
                         console.error('loginIfNeeded error', e);
                       });
                   },
+                  visible: IS_ANDROID,
                 },
             {
               label: 'Clear Cloud Backup',
