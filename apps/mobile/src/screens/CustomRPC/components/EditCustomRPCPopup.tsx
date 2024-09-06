@@ -280,7 +280,7 @@ const getStyles = (colors: AppColorsVariants) =>
       borderRadius: 6,
       color: colors['neutral-title-1'],
       fontWeight: '400',
-      fontSize: 16,
+      fontSize: 14,
       textAlign: undefined,
       lineHeight: undefined,
     },
