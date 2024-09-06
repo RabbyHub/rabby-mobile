@@ -117,7 +117,7 @@ const flowContext = flow
     // check connect
     const {
       request: {
-        session: { origin, name, icon },
+        session: { origin, name, icon, $mobileCtx },
       },
       mapMethod,
     } = ctx;
@@ -136,7 +136,7 @@ const flowContext = flow
           const { defaultChain, signPermission } =
             await notificationService.requestApproval(
               {
-                params: { origin, name, icon },
+                params: { origin, name, icon, $mobileCtx },
                 approvalComponent: 'Connect',
               },
               { height: 800 },
@@ -149,6 +149,7 @@ const flowContext = flow
               name,
               icon,
               origin,
+              $mobileCtx,
             },
           });
         } catch (e) {
@@ -166,10 +167,11 @@ const flowContext = flow
     const {
       request: {
         data: { params, method },
-        session: { origin, name, icon },
+        session: { origin, name, icon, $mobileCtx: _$mobileCtx },
       },
       mapMethod,
     } = ctx;
+    const $mobileCtx = _$mobileCtx || params.$mobileCtx;
     // // leave here for debug
     // console.debug('[debug] flowContext:: before check need approval');
     const [approvalType, condition, options = {}] =
@@ -223,9 +225,10 @@ const flowContext = flow
           approvalComponent: approvalType,
           params: {
             $ctx: ctx?.request?.data?.$ctx,
+            $mobileCtx,
             method,
             data: ctx.request.data.params,
-            session: { origin, name, icon },
+            session: { origin, name, icon, $mobileCtx },
           },
           origin,
         },
@@ -253,7 +256,7 @@ const flowContext = flow
     // console.debug('[debug] flowContext:: before process request');
     const { uiRequestComponent, ...rest } = approvalRes || {};
     const {
-      session: { origin },
+      session: { origin, $mobileCtx },
     } = request;
     const requestDeferFn = async () =>
       new Promise(async resolve => {
@@ -294,14 +297,19 @@ const flowContext = flow
             }),
         );
       });
+
     notificationService.setCurrentRequestDeferFn(requestDeferFn);
     const requestDefer = requestDeferFn();
     async function requestApprovalLoop({ uiRequestComponent, ...rest }) {
       ctx.request.requestedApproval = true;
+
       try {
         const res = await notificationService.requestApproval({
           approvalComponent: uiRequestComponent,
-          params: rest,
+          params: {
+            ...rest,
+            $mobileCtx: rest.$mobileCtx || $mobileCtx,
+          },
           origin,
           approvalType,
           isUnshift: true,

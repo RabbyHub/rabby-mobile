@@ -19,6 +19,7 @@ export interface Approval {
   signingTxId?: string;
   data: {
     params?: any;
+    $mobileCtx?: any;
     origin?: string;
     approvalComponent: string;
     requestDefer?: Promise<any>;
@@ -57,6 +58,21 @@ export type StatsData = {
   reported: boolean;
   signMethod?: string;
 };
+
+type RequestApprovalParamBase = {
+  approvalComponent: string;
+  params: any;
+  origin: string;
+  approvalType: string;
+  isUnshift?: boolean;
+};
+type RequestApprovaParam =
+  | ({
+      lock?: undefined | false;
+    } & RequestApprovalParamBase)
+  | ({
+      lock?: true;
+    } & Partial<RequestApprovalParamBase>);
 
 // something need user approval in window
 // should only open one window, unfocus will close the current notification
@@ -212,8 +228,11 @@ export class NotificationService extends Events {
     this.emit('reject', err);
   };
 
-  requestApproval = async (data: any, winProps?: any): Promise<any> => {
-    const origin = this.getOrigin(data);
+  requestApproval = async (
+    inputData: RequestApprovaParam,
+    winProps?: any,
+  ): Promise<any> => {
+    const origin = this.getOrigin(inputData);
     if (origin) {
       const dapp = this.dappManager.get(origin);
       // is blocked and less 1 min
@@ -226,6 +245,7 @@ export class NotificationService extends Events {
         );
       }
     }
+    const data = inputData as RequestApprovalParamBase;
     const currentAccount = this.preferenceService.getCurrentAccount();
     const reportExplain = (signingTxId?: string) => {
       const signingTx = signingTxId
@@ -450,7 +470,9 @@ export class NotificationService extends Events {
     dapp.blockedTimestamp = Date.now();
   };
 
-  private getOrigin(data = this.currentApproval?.data): string {
+  private getOrigin(
+    data: RequestApprovaParam | undefined = this.currentApproval?.data,
+  ): string {
     return data?.params?.origin || data?.origin;
   }
 }
