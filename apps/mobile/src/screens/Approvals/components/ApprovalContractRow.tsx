@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { approvalUtils, bizNumberUtils } from '@rabby-wallet/biz-utils';
 
@@ -23,15 +23,14 @@ import { RcIconRightEntryMiniCC, RcIconUnknown } from '../icons';
 import { SelectionCheckbox, getSelectableContainerStyle } from './Layout';
 import { ApprovalsLayouts } from '../layout';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { CopyAddressIcon } from '@/components/AddressViewer/CopyAddress';
 import { parseApprovalSpenderSelection } from '../utils';
 import { RcIconInfoCC } from '@/assets/icons/common';
 import { Tip } from '@/components';
 
 export const ContractFloorLayouts = {
-  floorHeader: { height: 33, paddingTop: 0 },
-  floor2: { height: 24, paddingTop: 4 },
-  floor3: { height: 24, paddingTop: 4 },
+  floorHeader: { paddingTop: 0 },
+  floor2: { marginTop: 17 },
+  floor3: { marginTop: 16 },
 };
 
 function RightTouchableView({
@@ -76,11 +75,11 @@ function CardProto({
     React.useMemo(() => {
       const trustValue = (() => {
         const isDanger =
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
           approvalUtils.RiskNumMap.danger;
         const isWarning =
           !isDanger &&
-          contract.$contractRiskEvaluation.extra.clientExposureScore >=
+          contract.$contractRiskEvaluation.extra.clientSpendScore >=
             approvalUtils.RiskNumMap.warning;
 
         const isRisky = isDanger || isWarning;
@@ -93,7 +92,7 @@ function CardProto({
         const finalUnderlineStyle = StyleSheet.flatten([
           styles.floorValueUnderlineDefault,
           isRisky && {
-            borderColor: finalTextStyle['color'],
+            borderColor: finalTextStyle.color,
           },
         ]);
 
@@ -125,7 +124,7 @@ function CardProto({
         const finalUnderlineStyle = StyleSheet.flatten([
           styles.floorValueUnderlineDefault,
           isRisky && {
-            borderColor: finalTextStyle['color'],
+            borderColor: finalTextStyle.color,
           },
         ]);
 
@@ -160,9 +159,9 @@ function CardProto({
   const contractUsdText = useMemo(
     () =>
       bizNumberUtils.formatUsdValue(
-        contract.$riskAboutValues.risk_exposure_usd_value || 0,
+        contract.$riskAboutValues.risk_spend_usd_value || 0,
       ),
-    [contract.$riskAboutValues.risk_exposure_usd_value],
+    [contract.$riskAboutValues.risk_spend_usd_value],
   );
 
   const isTreatedAsSelected = isSelectedAll || isSelectedPartial;
@@ -186,9 +185,7 @@ function CardProto({
             <ChainIconImage
               style={styles.chainIcon}
               size={20}
-              {...(contract.logo_url && {
-                source: { uri: chainLogoUrl },
-              })}
+              source={{ uri: chainLogoUrl }}
             />
           ) : (
             <RcIconUnknown style={styles.chainIcon} />
@@ -230,11 +227,7 @@ function CardProto({
       </View>
 
       {risky && (
-        <View
-          style={[
-            styles.contractItemFloor,
-            { height: ApprovalsLayouts.contractCardRiskAlertSpace },
-          ]}>
+        <View style={[styles.contractItemFloor, { marginTop: 7 }]}>
           <View style={[styles.riskyTip]}>
             <RcIconInfoCC
               width={14}
@@ -412,7 +405,7 @@ export const getCardStyles = createGetStyles(colors => {
     },
     riskyTip: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'flex-start',
       borderRadius: 6,
       padding: 8,
@@ -443,7 +436,7 @@ export const getCardStyles = createGetStyles(colors => {
     },
     contractAddrText: {
       color: colors['neutral-title1'],
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: '500',
     },
     contractName: {
@@ -463,9 +456,10 @@ export const getCardStyles = createGetStyles(colors => {
       flexShrink: 0,
     },
     entryText: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: '600',
       color: colors['neutral-title1'],
+      marginRight: 2,
     },
     approvalsCount: {
       fontSize: 14,
@@ -477,7 +471,7 @@ export const getCardStyles = createGetStyles(colors => {
     },
     floorLabel: {
       color: colors['neutral-body'],
-      fontSize: 13,
+      fontSize: 15,
     },
     riskyAlertTooltipContent: {
       borderRadius: 2,
@@ -502,7 +496,7 @@ export const getCardStyles = createGetStyles(colors => {
     },
     floorValue: {
       color: colors['neutral-title1'],
-      fontSize: 13,
+      fontSize: 15,
       fontWeight: '600',
       position: 'relative',
     },

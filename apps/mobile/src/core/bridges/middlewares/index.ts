@@ -30,7 +30,10 @@ export function createOriginMiddleware(opts: {
   urlRef: RefLikeObject<string>;
 }) {
   return function originMiddleware(req: any, _: any, next: Function) {
-    req.origin = urlUtils.safeGetOrigin(opts.urlRef.current);
+    req.origin =
+      opts.urlRef.current === 'about:rabby'
+        ? 'about:rabby'
+        : urlUtils.safeGetOrigin(opts.urlRef.current);
 
     // web3-provider-engine compatibility
     // TODO:provider delete this after web3-provider-engine deprecation

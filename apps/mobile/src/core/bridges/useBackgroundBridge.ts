@@ -13,6 +13,10 @@ import {
 } from '@/constant/dappView';
 import { createDappBySession } from '../apis/dapp';
 
+export const BLANK_PAGE = 'about:blank';
+export const BLANK_RABBY_PAGE = 'about:rabby';
+export const BUILTIN_SPECIAL_URLS = [BLANK_PAGE, BLANK_RABBY_PAGE];
+
 export function useBackgroundBridges() {
   const [, setSpinner] = useState(false);
   const backgroundBridgeRefs = useRef<BackgroundBridge[]>([]);
@@ -180,8 +184,9 @@ export function useSetupWebview({
       // }
 
       backgroundBridgeRefs.current = [];
-      const formattedDappOrigin =
-        urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
+      const formattedDappOrigin = BUILTIN_SPECIAL_URLS.includes(dappOrigin)
+        ? dappOrigin
+        : urlUtils.canoicalizeDappUrl(dappOrigin).httpOrigin;
       initializeBackgroundBridge(formattedDappOrigin, true);
     },
     [

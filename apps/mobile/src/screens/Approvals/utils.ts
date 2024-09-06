@@ -3,12 +3,12 @@ import dayjs from 'dayjs';
 import {
   type ApprovalItem,
   type ApprovalSpenderItemToBeRevoked,
-  type AssetApprovalItem,
   type ContractApprovalItem,
   type SpenderInNFTApproval,
   type AssetApprovalSpender,
   RiskNumMap,
   compareContractApprovalItemByRiskLevel,
+  TokenApprovalIndexedBySpender,
 } from '@rabby-wallet/biz-utils/dist/isomorphic/approval';
 
 import {
@@ -23,6 +23,8 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { urlUtils } from '@rabby-wallet/base-utils';
 import { approvalUtils } from '@rabby-wallet/biz-utils';
 import { ObjectMirror } from '@/utils/type';
+
+type SpendersHost = ApprovalItem['list'][number];
 
 export function formatTimeFromNow(time?: Date | number) {
   if (!time) return '';
@@ -110,35 +112,63 @@ export type RevokeItemDict = Record<string, ApprovalSpenderItemToBeRevoked>;
  * @description the key function to serialize the ContractApprovalItem or AssetApprovalItem,
  * used as selection key of spender in the approval list
  */
-export function encodeApprovalSpenderKey<
-  T extends ApprovalItem['list'][number] = ApprovalItem['list'][number],
->(approval: ApprovalItem, token: T) {
+export function encodeApprovalSpenderKey<T extends ApprovalItem>(
+  approval: T,
+  spenderHost: T['list'][number],
+  assetApprovalSpenderOrIsContractItem?: AssetApprovalSpender | true,
+) {
   const approvalIndexBase = makeApprovalIndexURLBase(approval);
 
   if (approval.type === 'contract') {
-    if ('inner_id' in token) {
+    const assetApprovalSpender =
+      assetApprovalSpenderOrIsContractItem === true
+        ? '$indexderSpender' in spenderHost
+          ? spenderHost.$indexderSpender
+          : null
+        : assetApprovalSpenderOrIsContractItem ?? null;
+
+    const permit2Id = assetApprovalSpender?.permit2_id;
+    if ('inner_id' in spenderHost) {
+      const abi = spenderHost?.is_erc721
+        ? 'ERC721'
+        : spenderHost?.is_erc1155
+        ? 'ERC1155'
+        : '';
       return `${approvalIndexBase}/contract-token/?${urlUtils.obj2query({
-        spender: token.spender.id,
-        chainServerId: token.chain,
-        contractId: token.contract_id,
-        tokenId: token.inner_id,
+        chainServerId: spenderHost.chain,
+        contractId: spenderHost.contract_id,
+        permit2Id: permit2Id ?? '',
+        spender: spenderHost.spender.id,
+        abi,
+        nftTokenId: spenderHost.inner_id,
+        isApprovedForAll: 'false',
       })}`;
-    } else if ('contract_name' in token) {
+    } else if ('contract_name' in spenderHost) {
+      const abi = spenderHost?.is_erc721
+        ? 'ERC721'
+        : spenderHost?.is_erc1155
+        ? 'ERC1155'
+        : '';
       return `${approvalIndexBase}/contract/?${urlUtils.obj2query({
-        spender: token.spender.id,
-        chainServerId: token.chain,
-        tokenContractId: token.contract_id,
+        chainServerId: spenderHost?.chain,
+        contractId: spenderHost?.contract_id,
+        permit2Id: permit2Id ?? '',
+        spender: spenderHost?.spender?.id,
+        abi,
+        isApprovedForAll: 'true',
       })}`;
     } else {
       return `${approvalIndexBase}/contract/?${urlUtils.obj2query({
-        spender: approval.id,
         chainServerId: approval.chain,
-        id: token.id,
+        permit2Id: permit2Id ?? '',
+        tokenId: spenderHost?.id,
+        id: spenderHost?.id,
+        spender: approval.id,
       })}`;
     }
   } else if (approval.type === 'token') {
     return `${approvalIndexBase}/token/?${urlUtils.obj2query({
-      spender: (token as Spender).id,
+      spender: (spenderHost as Spender).id,
       chainServerId: approval.chain,
       id: approval.id,
     })}`;
@@ -146,10 +176,19 @@ export function encodeApprovalSpenderKey<
     const isNftContracts = !!approval.nftContract;
     const nftInfo = isNftContracts ? approval.nftContract : approval.nftToken;
 
+    const abi = nftInfo?.is_erc721
+      ? 'ERC721'
+      : nftInfo?.is_erc1155
+      ? 'ERC1155'
+      : '';
+
     return `${approvalIndexBase}/nft/?${urlUtils.obj2query({
-      spender: (token as Spender).id,
-      chainServerId: approval.chain,
-      tokenId: (nftInfo as NFTApproval).inner_id,
+      chainServerId: approval?.chain,
+      contractId: nftInfo?.contract_id || '',
+      spender: (spenderHost as Spender).id,
+      nftTokenId: (nftInfo as NFTApproval)?.inner_id || '',
+      abi,
+      isApprovedForAll: nftInfo && 'inner_id' in nftInfo ? 'false' : 'true',
     })}`;
   }
 
@@ -200,8 +239,9 @@ export function parseApprovalSpenderSelection<T extends TParseMaps>(
         ? encodeApprovalSpenderKey(
             (member as AssetApprovalSpender).$assetContract!,
             (member as AssetApprovalSpender).$assetToken!,
+            member as AssetApprovalSpender,
           )
-        : encodeApprovalSpenderKey(approval, member);
+        : encodeApprovalSpenderKey(approval, member, true);
 
       const nextS = maps.nextKeepMap?.[indexKey]
         ? { key: indexKey, item: maps.nextKeepMap?.[indexKey] }
@@ -238,7 +278,7 @@ export function querySelectedContractSpender(
   contract?: ContractApprovalItem['list'][number] | null,
 ) {
   if (!contract) return null;
-  const key = encodeApprovalSpenderKey(approval, contract);
+  const key = encodeApprovalSpenderKey(approval, contract, true);
   return key && assetRevokeMap[key]
     ? { spenderKey: key, spender: assetRevokeMap[key] }
     : null;
@@ -252,49 +292,64 @@ export function querySelectedAssetSpender(
   const key = encodeApprovalSpenderKey(
     spender.$assetContract,
     spender.$assetToken,
+    spender,
   );
   return key && assetRevokeMap[key]
     ? { spenderKey: key, spender: assetRevokeMap[key] }
     : null;
 }
 
+function getAbiType<T extends SpendersHost = ApprovalItem['list'][number]>(
+  spenderHost: T,
+) {
+  if ('is_erc721' in spenderHost && spenderHost.is_erc721) return 'ERC721';
+  if ('is_erc1155' in spenderHost && spenderHost.is_erc1155) return 'ERC1155';
+
+  return '';
+}
+
 export const toRevokeItem = <T extends ApprovalItem>(
   item: T,
-  token: T['list'][number],
+  spenderHost: T['list'][number],
+  assetApprovalSpenderOrIsContractItem?: AssetApprovalSpender | true,
 ): ApprovalSpenderItemToBeRevoked | undefined => {
   if (item.type === 'contract') {
-    if ('inner_id' in token) {
-      const abi = token?.is_erc721
-        ? 'ERC721'
-        : token?.is_erc1155
-        ? 'ERC1155'
-        : '';
+    const assetApprovalSpender =
+      assetApprovalSpenderOrIsContractItem === true
+        ? '$indexderSpender' in spenderHost
+          ? (spenderHost as TokenApprovalIndexedBySpender).$indexderSpender
+          : null
+        : assetApprovalSpenderOrIsContractItem ?? null;
+
+    const permit2Id = assetApprovalSpender?.permit2_id;
+
+    if ('inner_id' in spenderHost) {
       return {
-        chainServerId: token?.chain,
-        contractId: token?.contract_id,
-        spender: token?.spender?.id,
-        abi,
-        tokenId: token?.inner_id,
+        chainServerId: spenderHost?.chain,
+        contractId: spenderHost?.contract_id,
+        permit2Id,
+        spender: spenderHost?.spender?.id,
+        abi: getAbiType(spenderHost),
+        nftTokenId: spenderHost?.inner_id,
         isApprovedForAll: false,
       } as const;
-    } else if ('contract_name' in token) {
-      const abi = token?.is_erc721
-        ? 'ERC721'
-        : token?.is_erc1155
-        ? 'ERC1155'
-        : '';
+    } else if ('contract_name' in spenderHost) {
       return {
-        chainServerId: token?.chain,
-        contractId: token?.contract_id,
-        spender: token?.spender?.id,
-        tokenId: null,
-        abi,
+        chainServerId: spenderHost?.chain,
+        contractId: spenderHost?.contract_id,
+        permit2Id,
+        spender: spenderHost?.spender?.id,
+        nftTokenId: null,
+        nftContractName: spenderHost?.contract_name,
+        abi: getAbiType(spenderHost),
         isApprovedForAll: true,
       } as const;
     } else {
       return {
         chainServerId: item.chain,
-        id: token?.id,
+        permit2Id,
+        tokenId: spenderHost?.id,
+        id: spenderHost?.id,
         spender: item.id,
       };
     }
@@ -303,8 +358,9 @@ export const toRevokeItem = <T extends ApprovalItem>(
   if (item.type === 'token') {
     return {
       chainServerId: item.chain,
+      tokenId: (spenderHost as Spender).id,
       id: item.id,
-      spender: (token as Spender).id,
+      spender: (spenderHost as Spender).id,
     };
   }
 
@@ -319,8 +375,8 @@ export const toRevokeItem = <T extends ApprovalItem>(
     return {
       chainServerId: item?.chain,
       contractId: nftInfo?.contract_id || '',
-      spender: (token as Spender).id,
-      tokenId: (nftInfo as NFTApproval)?.inner_id || null,
+      spender: (spenderHost as Spender).id,
+      nftTokenId: (nftInfo as NFTApproval)?.inner_id || null,
       abi,
       isApprovedForAll: nftInfo && 'inner_id' in nftInfo ? false : true,
     };
@@ -367,8 +423,8 @@ export function sortContractListAsTable(
     reEvaluateContractRisk(b).totalRiskScore -
       reEvaluateContractRisk(a).totalRiskScore ||
     // ascending order by risk exposure
-    a.$riskAboutValues.risk_exposure_usd_value -
-      b.$riskAboutValues.risk_exposure_usd_value ||
+    a.$riskAboutValues.risk_spend_usd_value -
+      b.$riskAboutValues.risk_spend_usd_value ||
     // or descending order by approved count
     b.list.length - a.list.length
   );
@@ -385,10 +441,10 @@ export function reEvaluateContractRisk(contract: ContractApprovalItem) {
   const $riskEval = contract.$contractRiskEvaluation;
   const trustValue = (() => {
     const isDanger =
-      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.danger;
+      $riskEval.extra.clientSpendScore >= approvalUtils.RiskNumMap.danger;
     const isWarning =
       !isDanger &&
-      $riskEval.extra.clientExposureScore >= approvalUtils.RiskNumMap.warning;
+      $riskEval.extra.clientSpendScore >= approvalUtils.RiskNumMap.warning;
 
     const isRisky = isDanger || isWarning;
 

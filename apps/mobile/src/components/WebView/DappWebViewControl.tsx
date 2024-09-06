@@ -25,15 +25,13 @@ import { RcIconMore } from './icons';
 import { devLog } from '@/utils/logger';
 import { useSheetModal } from '@/hooks/useSheetModal';
 import TouchableView from '../Touchable/TouchableView';
-import {
-  BLANK_PAGE,
-  WebViewActions,
-  WebViewState,
-  useWebViewControl,
-} from './hooks';
+import { WebViewActions, WebViewState, useWebViewControl } from './hooks';
 import { DappNavCardBottomSheetModal } from '../customized/BottomSheet';
 import { useJavaScriptBeforeContentLoaded } from '@/hooks/useBootstrap';
-import { useSetupWebview } from '@/core/bridges/useBackgroundBridge';
+import {
+  BUILTIN_SPECIAL_URLS,
+  useSetupWebview,
+} from '@/core/bridges/useBackgroundBridge';
 import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { BottomNavControl, BottomNavControlCbCtx } from './Widgets';
 import { formatDappOriginToShow } from '@/utils/url';
@@ -41,12 +39,14 @@ import { APP_UA_PARIALS } from '@/constant';
 import { createGetStyles } from '@/utils/styles';
 import AutoLockView from '../AutoLockView';
 import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI';
+import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
 }
 
-const BUILTIN_SPECIAL_URLS = [BLANK_PAGE];
 function convertToWebviewUrl(dappOrigin: string) {
   if (__DEV__) {
     if (dappOrigin.startsWith('http://')) {
@@ -99,6 +99,7 @@ const renderBackdrop = (props: BottomSheetBackdropProps) => {
 
 type DappWebViewControlProps = {
   dappOrigin: string;
+  dappTabId?: string;
   /**
    * @description if embedHtml provided, dappOrigin would be ignored
    */
@@ -191,6 +192,7 @@ const DappWebViewControl = React.forwardRef<
   (
     {
       dappOrigin,
+      dappTabId,
       embedHtml,
       initialUrl: _initialUrl,
       onPressMore,
@@ -219,7 +221,7 @@ const DappWebViewControl = React.forwardRef<
 
       latestUrl,
       webviewActions,
-    } = useWebViewControl();
+    } = useWebViewControl({ initialTabId: dappTabId });
 
     const { entryScriptWeb3Loaded, fullScript } =
       useJavaScriptBeforeContentLoaded({ isTop: false });
@@ -346,6 +348,12 @@ const DappWebViewControl = React.forwardRef<
       return convertToWebviewUrl(_initialUrl);
     }, [dappOrigin, _initialUrl]);
 
+    const { cutOffSizes } = useSafeAndroidBottomSizes({
+      webviewNodeContainerMaxH:
+        Dimensions.get('window').height -
+        ScreenLayouts.dappWebViewControlHeaderHeight,
+    });
+
     const renderedWebviewNode = useMemo(() => {
       if (!entryScriptWeb3Loaded) return null;
 
@@ -361,19 +369,25 @@ const DappWebViewControl = React.forwardRef<
           style={[styles.dappWebView, webviewProps?.style]}
           ref={webviewRef}
           source={{
-            uri: initialUrl,
-            ...(embedHtml && {
-              uri: undefined,
-              html: embedHtml,
-            }),
+            ...(embedHtml
+              ? {
+                  html: embedHtml,
+                }
+              : {
+                  uri: initialUrl,
+                }),
             // TODO: cusotmize userAgent here
             // 'User-Agent': ''
           }}
           testID={'RABBY_DAPP_WEBVIEW_ANDROID_CONTAINER'}
           applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
           javaScriptEnabled
+          // androidLayerType='software'
           injectedJavaScriptBeforeContentLoaded={fullScript}
           injectedJavaScriptBeforeContentLoadedForMainFrameOnly={true}
+          {...(IS_ANDROID && {
+            injectedJavaScript: PATCH_ANCHOR_TARGET,
+          })}
           onNavigationStateChange={webviewActions.onNavigationStateChange}
           webviewDebuggingEnabled={__DEV__}
           onLoadStart={nativeEvent => {
@@ -434,12 +448,11 @@ const DappWebViewControl = React.forwardRef<
 
         {/* webvbiew */}
         <View
+          // renderToHardwareTextureAndroid
           style={[
             styles.dappWebViewContainer,
             {
-              maxHeight:
-                Dimensions.get('window').height -
-                ScreenLayouts.dappWebViewControlHeaderHeight,
+              maxHeight: cutOffSizes.webviewNodeContainerMaxH,
             },
           ]}>
           {renderedWebviewNode}
@@ -513,12 +526,14 @@ const getStyles = createGetStyles(colors =>
 
     dappWebViewContainer: {
       flexShrink: 1,
+      flex: 1,
       height: '100%',
     },
     dappWebView: {
+      flex: 1,
       height: '100%',
       width: '100%',
-      opacity: 1,
+      opacity: 0.99,
       overflow: 'hidden',
     },
   }),

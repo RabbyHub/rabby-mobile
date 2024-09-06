@@ -18,7 +18,7 @@ import { preferenceService } from '@/core/services';
 import { toast } from '@/components/Toast';
 import { stats } from '@/utils/stats';
 import { gasTopUp } from './hooks';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { Button, Text } from '@/components';
 import { GasBox } from './components/GasBox';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
@@ -47,6 +47,8 @@ const GasTopUp = () => {
   const chainItem = useMemo(() => findChainByEnum(chain)!, [chain]);
 
   const [index, setIndex] = useState(0);
+
+  const _isDarkTheme = useGetBinaryMode() !== 'light';
 
   const { currentAccount } = useCurrentAccount();
 
@@ -346,7 +348,9 @@ const GasTopUp = () => {
           {
             height: 287 + top,
             paddingTop: top,
-            backgroundColor: colors['blue-default'],
+            backgroundColor: _isDarkTheme
+              ? colors['blue-disable']
+              : colors['blue-default'],
           },
         ]}>
         <Image

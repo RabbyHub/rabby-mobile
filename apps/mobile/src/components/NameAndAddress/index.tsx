@@ -2,7 +2,6 @@ import {
   CopyAddressIcon,
   CopyAddressIconType,
 } from '@/components/AddressViewer/CopyAddress';
-import TouchableView from '@/components/Touchable/TouchableView';
 import { ALIAS_ADDRESS } from '@/constant/gas';
 import { getAliasName } from '@/core/apis/contact';
 import { useThemeStyles } from '@/hooks/theme';
