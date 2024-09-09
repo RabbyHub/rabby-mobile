@@ -94,6 +94,9 @@ RPCMethodsMiddleParameters) =>
       name: titleRef.current,
       origin: req.origin,
       icon: iconRef.current || '',
+      $mobileCtx: {
+        fromTabId: bridge.webviewId,
+      },
     };
 
     const methodAllowed =
@@ -146,7 +149,6 @@ RPCMethodsMiddleParameters) =>
           {
             method: req.method,
             params: req.params,
-            $ctx: {},
           },
           providerSessionBase,
         );

@@ -87,7 +87,11 @@ export function ChainInfo({
           setShowSelectorModal(true);
         }}>
         <View style={styles.left}>
-          <ChainIconImage size={24} chainEnum={chainEnum} />
+          <ChainIconImage
+            size={24}
+            chainEnum={chainEnum}
+            isShowRPCStatus={true}
+          />
           <Text style={[styles.chainName, titleStyle]}>{chainItem?.name}</Text>
         </View>
 

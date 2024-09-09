@@ -7,6 +7,7 @@ import ProviderControllerTester from '../ProviderControllerTester/ProviderContro
 import SetPasswordScreen from '../ManagePassword/SetPassword';
 import { CustomTestnetScreen } from '../CustomTestnet';
 import { useSetPasswordFirstState } from '@/hooks/useLock';
+import { CustomRPCScreen } from '../CustomRPC';
 
 const SettingsStack = createCustomNativeStackNavigator();
 
@@ -60,6 +61,15 @@ export function SettingNavigator() {
         options={{
           title: 'Custom Network',
           headerTitle: 'Custom Network',
+          ...headerPresets.withBgCard2,
+        }}
+      />
+      <SettingsStack.Screen
+        name={RootNames.CustomRPC}
+        component={CustomRPCScreen}
+        options={{
+          title: 'Modify RPC URL',
+          headerTitle: 'Modify RPC URL',
           ...headerPresets.withBgCard2,
         }}
       />

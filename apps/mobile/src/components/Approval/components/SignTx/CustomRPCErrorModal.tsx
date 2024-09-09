@@ -1,36 +1,22 @@
+import RcIconCloseCC from '@/assets/icons/common/icon-close-cc.svg';
 import { Button } from '@/components';
-import ChainIconImage from '@/components/Chain/ChainIconImage';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import { findChain } from '@/utils/chain';
 import { Dialog } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export const ConfirmModifyRpcModal = ({
+export const CustomRPCErrorModal = ({
   visible,
   onCancel,
   onConfirm,
-  chainId,
-  rpcUrl,
 }: {
   visible: boolean;
-  onCancel(): void;
-  onConfirm(): void;
-  chainId?: number;
-  rpcUrl?: string;
+  onCancel?(): void;
+  onConfirm?(): void;
 }) => {
   const { t } = useTranslation();
-  const chain = useMemo(() => {
-    if (!chainId) {
-      return null;
-    }
-    return findChain({
-      id: chainId,
-    });
-  }, [chainId]);
-
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
@@ -43,33 +29,31 @@ export const ConfirmModifyRpcModal = ({
       }}
       isVisible={visible}>
       <View>
+        <View style={styles.dialogHeader}>
+          <Text style={styles.dialogTitle}>
+            {t('page.signTx.customRPCErrorModal.title')}
+          </Text>
+          <View style={styles.closeIcon}>
+            <TouchableOpacity onPress={onCancel} hitSlop={4}>
+              <RcIconCloseCC
+                color={colors['neutral-foot']}
+                width={20}
+                height={20}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
         <View style={styles.dialogBody}>
           <Text style={styles.dialogContent}>
-            {t('page.customTestnet.ConfirmModifyRpcModal.desc')}
+            {t('page.signTx.customRPCErrorModal.content')}
           </Text>
-          <View style={styles.chainInfo}>
-            <ChainIconImage
-              chainId={chainId}
-              size={32}
-              style={styles.chainIcon}
-            />
-            <Text style={styles.chainName}>{chain?.name}</Text>
-            <Text style={styles.rpcUrl}>{rpcUrl}</Text>
-          </View>
         </View>
         <View style={styles.dialogFooter}>
           <Button
             type="primary"
-            ghost
-            onPress={onCancel}
-            title={t('global.Cancel')}
-            containerStyle={styles.button}
-          />
-          <Button
-            type="primary"
             className="w-[172px]"
             onPress={onConfirm}
-            title={t('global.Confirm')}
+            title={t('page.signTx.customRPCErrorModal.button')}
             containerStyle={styles.button}
           />
         </View>
@@ -93,7 +77,14 @@ const getStyles = (colors: AppColorsVariants) =>
     dialogHeader: {
       paddingHorizontal: 20,
       paddingTop: 20,
-      marginBottom: 16,
+      marginBottom: 12,
+      position: 'relative',
+    },
+    closeIcon: {
+      position: 'absolute',
+      right: 20,
+      top: 24,
+      zIndex: 1,
     },
     dialogTitle: {
       color: colors['neutral-title-1'],
@@ -104,47 +95,23 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     dialogBody: {
       paddingHorizontal: 20,
-      paddingTop: 20,
-      paddingBottom: 27,
     },
     dialogContent: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      lineHeight: 19,
-      fontWeight: '500',
+      color: colors['neutral-body'],
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '400',
       textAlign: 'center',
-      marginBottom: 22,
+      marginBottom: 26,
     },
     dialogFooter: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors['neutral-line'],
-      padding: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 20,
       flexDirection: 'row',
       gap: 12,
       alignItems: 'center',
     },
     button: {
       flex: 1,
-    },
-    chainInfo: {
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    chainIcon: {
-      marginBottom: 12,
-    },
-    chainName: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      lineHeight: 19,
-      fontWeight: '500',
-      textAlign: 'center',
-      marginBottom: 6,
-    },
-    rpcUrl: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 17,
     },
   });

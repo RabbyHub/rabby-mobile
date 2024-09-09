@@ -1,15 +1,12 @@
 import { BroadcastEvent } from '@/constant/event';
 import { BackgroundBridge } from '../bridges/BackgroundBridge';
 import { globalSerivceEvents } from '../apis/serviceEvent';
+import { MobileSession } from '../controllers/type';
 
 // import { permissionService } from 'background/service';
 // import PortMessage from '@/utils/message/portMessage';
 
-export interface SessionProp {
-  origin: string;
-  icon: string;
-  name: string;
-}
+export type SessionProp = MobileSession;
 
 type SessionKey = BackgroundBridge;
 export class Session {
