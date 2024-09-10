@@ -131,6 +131,16 @@ export const RestoreFromCloud = () => {
     }
   }, [backups, seedPhraseList]);
 
+  React.useEffect(() => {
+    if (backups) {
+      setSelectedFilenames(
+        backups
+          .filter(b => !importedFiles.includes(b.filename))
+          .map(item => item.filename),
+      );
+    }
+  }, [backups, importedFiles]);
+
   if (loading) {
     return (
       <NormalScreenContainer
@@ -164,9 +174,9 @@ export const RestoreFromCloud = () => {
       btnProps={{
         disabled: !selectedFilenames.length,
       }}
-      buttonText={t('page.newAddress.seedPhrase.backupRestoreButton', {
-        count: selectedFilenames.length,
-      })}>
+      buttonText={`${t('page.newAddress.seedPhrase.backupRestoreButton')}${
+        selectedFilenames.length ? `(${selectedFilenames.length})` : ''
+      }`}>
       <View style={styles.body}>
         <View>
           <BackupIcon status="success" />

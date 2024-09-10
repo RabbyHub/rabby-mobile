@@ -31,6 +31,7 @@ const getStyles = createGetStyles(colors => ({
   },
   rootImported: {
     opacity: 0.5,
+    borderColor: 'transparent',
   },
   body: {
     padding: 16,
@@ -120,7 +121,10 @@ export const BackupItem: React.FC<BackupItemProps> = ({
       <View style={styles.body}>
         <View>
           <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
-          <Text style={styles.bodyDesc}>Backup created on {createdAtStr}</Text>
+          <Text style={styles.bodyDesc}>
+            {t('page.newAddress.seedPhrase.backupRestoreCreatedAt')}
+            {createdAtStr}
+          </Text>
         </View>
         {selected && <RcIconCheckedFilledCC width={24} height={24} />}
         {imported && (

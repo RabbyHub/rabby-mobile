@@ -25,6 +25,8 @@ const getStyles = (colors: AppColorsVariants) =>
     walletItem: {
       marginBottom: 16,
       borderRadius: 8,
+      height: 64,
+      gap: 4,
     },
     hero: {
       alignItems: 'center',
@@ -46,7 +48,7 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 20,
       fontWeight: '500',
       lineHeight: 24,
-      marginBottom: 20,
+      marginBottom: 12,
     },
     bodyDesc: {
       color: colors['neutral-foot'],

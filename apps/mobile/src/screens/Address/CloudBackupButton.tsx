@@ -29,8 +29,8 @@ export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
       <Image
         // eslint-disable-next-line react-native/no-inline-styles
         style={{
-          width: 24,
-          height: 24,
+          width: 32,
+          height: 32,
         }}
         source={CloudImageSrc}
       />

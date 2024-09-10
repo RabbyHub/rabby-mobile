@@ -1409,13 +1409,14 @@
         "backupFailedButton": "Retry",
         "backupRestoreLoadingText": "Searching for backup seed phrase...",
         "backupRestoreTitle": "{{count}} seed phrase found",
-        "backupRestoreButton": "Import Seed Phrase ({{count}})",
+        "backupRestoreButton": "Import Seed Phrase",
         "backupRestoreUnlockTitle": "Enter Backup Password",
         "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
         "backupRestoreDownloadTitle": "Importing Seed Phrase...",
         "backupRestoreEmpty": "No backup seed phrase found",
         "backupRestoreImported": "Imported",
-        "backupErrorCloudNotAvailable": "iCloud unavailable"
+        "backupErrorCloudNotAvailable": "iCloud unavailable",
+        "backupRestoreCreatedAt": "Backup Time: "
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
