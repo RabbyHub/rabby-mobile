@@ -2,11 +2,11 @@ import { CloudStorage, CloudStorageScope } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
 import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
-import { FIREBASE_WEBCLIENT_ID } from '@/constant';
+import { APPLICATION_ID, FIREBASE_WEBCLIENT_ID } from '@/constant';
 import { getAddressFromMnemonic } from './mnemonic';
 import { sortBy } from 'lodash';
 
-const REMOTE_BACKUP_WALLET_DIR = '/com.debank.rabby-mobile/wallet-backups';
+const REMOTE_BACKUP_WALLET_DIR = `/${APPLICATION_ID}/wallet-backups`;
 const CURRENT_VERSION = 1;
 
 export function normalizeAndroidBackupFilename(filename: string) {

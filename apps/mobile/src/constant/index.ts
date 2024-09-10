@@ -62,6 +62,7 @@ export const APP_URLS = {
 };
 
 type AndroidIdSuffx = '' | '.debug' | '.regression';
+export const APPLICATION_ID = NativeModules.RNVersionCheck.packageName;
 const realAndroidPackageName = NativeModules.RNVersionCheck.packageName;
 const androidPackageName = (
   !realAndroidPackageName
