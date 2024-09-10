@@ -1414,7 +1414,8 @@
         "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
         "backupRestoreDownloadTitle": "Importing Seed Phrase...",
         "backupRestoreEmpty": "No backup seed phrase found",
-        "backupRestoreImported": "Imported"
+        "backupRestoreImported": "Imported",
+        "backupErrorCloudNotAvailable": "iCloud unavailable"
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",

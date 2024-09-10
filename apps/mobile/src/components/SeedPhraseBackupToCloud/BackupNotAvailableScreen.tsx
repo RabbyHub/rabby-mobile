@@ -15,27 +15,23 @@ const getStyles = createGetStyles(colors => ({
 
 interface Props {
   onConfirm: () => void;
-  errorMessage?: string;
 }
 
-export const BackupErrorScreen: React.FC<Props> = ({
-  onConfirm,
-  errorMessage,
-}) => {
+export const BackupNotAvailableScreen: React.FC<Props> = ({ onConfirm }) => {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
   return (
     <FooterButtonScreenContainer
-      buttonText={t('page.newAddress.seedPhrase.backupFailedButton')}
+      buttonText={t('global.ok')}
       onPressButton={onConfirm}
       style={styles.root}>
       <BackupIcon
         status="error"
         isGray
-        description={
-          errorMessage || t('page.newAddress.seedPhrase.backupFailedTitle')
-        }
+        description={t(
+          'page.newAddress.seedPhrase.backupErrorCloudNotAvailable',
+        )}
       />
     </FooterButtonScreenContainer>
   );

@@ -6,7 +6,11 @@ import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud/BackupIcon';
-import { BackupData, getBackupsFromCloud } from '@/core/utils/cloudBackup';
+import {
+  BackupData,
+  detectCloudIsAvailable,
+  getBackupsFromCloud,
+} from '@/core/utils/cloudBackup';
 import { useThemeStyles } from '@/hooks/theme';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { createGetStyles } from '@/utils/styles';
@@ -92,6 +96,23 @@ export const RestoreFromCloud = () => {
         return prev.filter(i => i !== filename);
       }
       return [...prev, filename];
+    });
+  }, []);
+
+  React.useEffect(() => {
+    detectCloudIsAvailable().then(result => {
+      if (!result) {
+        const id = createGlobalBottomSheetModal({
+          name: MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE,
+          bottomSheetModalProps: {
+            enableDynamicSizing: true,
+            maxDynamicContentSize: 348,
+          },
+          onConfirm: () => {
+            removeGlobalBottomSheetModal(id);
+          },
+        });
+      }
     });
   }, []);
 

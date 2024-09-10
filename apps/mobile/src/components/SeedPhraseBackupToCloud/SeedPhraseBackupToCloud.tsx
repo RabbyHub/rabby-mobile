@@ -1,6 +1,7 @@
 import { apiMnemonic } from '@/core/apis';
 import {
   decryptFiles,
+  detectCloudIsAvailable,
   getBackupsFromCloud,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
@@ -8,6 +9,7 @@ import { useRequest } from 'ahooks';
 import React from 'react';
 import { View } from 'react-native';
 import { BackupErrorScreen } from './BackupErrorScreen';
+import { BackupNotAvailableScreen } from './BackupNotAvailableScreen';
 import { BackupSuccessScreen } from './BackupSuccessScreen';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { BackupUploadScreen } from './BackupUploadScreen';
@@ -22,7 +24,11 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
     return res as string;
   });
   const [step, setStep] = React.useState<
-    'backup_unlock' | 'backup_uploading' | 'backup_success' | 'backup_error'
+    | 'backup_unlock'
+    | 'backup_uploading'
+    | 'backup_success'
+    | 'backup_error'
+    | 'backup_not_available'
   >('backup_unlock');
   const [inputPassword, setInputPassword] = React.useState('');
 
@@ -64,6 +70,14 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
     [mnemonic, onDone],
   );
 
+  React.useEffect(() => {
+    detectCloudIsAvailable().then(isAvailable => {
+      if (!isAvailable) {
+        setStep('backup_not_available');
+      }
+    });
+  }, []);
+
   return (
     <View>
       {step === 'backup_unlock' && (
@@ -73,6 +87,9 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
       {step === 'backup_success' && <BackupSuccessScreen />}
       {step === 'backup_error' && (
         <BackupErrorScreen onConfirm={() => handleUpload(inputPassword)} />
+      )}
+      {step === 'backup_not_available' && (
+        <BackupNotAvailableScreen onConfirm={onDone} />
       )}
     </View>
   );

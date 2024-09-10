@@ -166,6 +166,12 @@ export const checkTokenIsExpired = async () => {
   }
 };
 
+export const detectCloudIsAvailable = async () => {
+  const available = await CloudStorage.isCloudAvailable();
+  console.log('detectCloudIsAvailable', available);
+  return available;
+};
+
 // login to google if needed
 export const loginIfNeeded = async () => {
   GoogleSignin.configure({
