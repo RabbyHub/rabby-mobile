@@ -122,6 +122,13 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
   const backups: BackupData[] = [];
 
   for (const filename of filenames) {
+    console.log(
+      'download file',
+      await CloudStorage.downloadFile(
+        `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
+      ),
+    );
+
     const encryptedData = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
     );
@@ -237,10 +244,6 @@ export const loginIfNeeded = async () => {
 };
 
 export const makeDirIfNeeded = async () => {
-  if (IS_IOS) {
-    CloudStorage.setDefaultScope(CloudStorageScope.Documents);
-  }
-
   console.log('check dir', REMOTE_BACKUP_WALLET_DIR);
   if (!(await CloudStorage.exists(REMOTE_BACKUP_WALLET_DIR))) {
     const dirs = REMOTE_BACKUP_WALLET_DIR.split('/');
