@@ -332,7 +332,7 @@
       "keystoneConnected": "Keystone is connected",
       "ledgerConnected": "Ledger is connected",
       "importedByLedger": "Imported by Ledger",
-      "signAndSubmitButton": "Sign and Create",
+      "signAndSubmitButton": "Sign",
       "confirm": "Confirm",
       "confirmWithPassword": "Confirm with Password",
       "gasless": {
@@ -2166,6 +2166,15 @@
     },
     "sign": {
       "transactionSpeed": "Transaction Speed"
+    },
+    "miniSignFooterBar": {
+      "signWithLedger": "Sign with Ledger",
+      "status": {
+        "txCreated": "Transaction created",
+        "txSigned": "Signed. Creating transaction",
+        "txSending": "Sending signing request",
+        "txSendings": "Sending signing request({{current}}/{{total}})"
+      }
     }
   },
   "component": {

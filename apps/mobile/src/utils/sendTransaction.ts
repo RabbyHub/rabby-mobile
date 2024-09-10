@@ -1,12 +1,3 @@
-// import {
-//   ALIAS_ADDRESS,
-//   CHAINS_ENUM,
-//   EVENTS,
-//   INTERNAL_REQUEST_ORIGIN,
-//   INTERNAL_REQUEST_SESSION,
-// } from '@/constant';
-// import { intToHex, WalletControllerType } from '@/ui/utils';
-// import { findChain, isTestnet } from '@/utils/chain';
 import {
   calcGasLimit,
   calcMaxPriorityFee,
@@ -15,14 +6,6 @@ import {
   getNativeTokenBalance,
   getPendingTxs,
 } from '@/utils/transaction';
-// import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
-// import BigNumber from 'bignumber.js';
-// import Browser from 'webextension-polyfill';
-// import eventBus from '@/eventBus';
-// import {
-//   parseAction,
-//   fetchActionRequiredData,
-// } from '@rabby-wallet/rabby-action';
 
 import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain } from './chain';
@@ -47,6 +30,7 @@ export enum FailedCode {
   GasTooHigh = 'GasTooHigh',
   SubmitTxFailed = 'SubmitTxFailed',
   DefaultFailed = 'DefaultFailed',
+  UserRejected = 'UserRejected',
 }
 
 type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
@@ -73,6 +57,7 @@ export const sendTransaction = async ({
   waitCompleted = true,
   pushType = 'default',
   ignoreGasNotEnoughCheck,
+  onError,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -84,6 +69,7 @@ export const sendTransaction = async ({
   isGasLess?: boolean;
   waitCompleted?: boolean;
   pushType?: TxPushType;
+  onError?: (err: any) => void;
 }) => {
   onProgress?.('building');
   const chain = findChain({
@@ -322,13 +308,18 @@ export const sendTransaction = async ({
       }),
       new Promise((_, reject) => {
         eventBus.once(EVENTS.LEDGER.REJECTED, async data => {
-          reject(new Error(data));
+          const e = new Error(data);
+          e.name = FailedCode.UserRejected;
+          reject(e);
         });
       }),
     ]);
   } catch (e) {
     const err = new Error((e as any).message);
-    err.name = FailedCode.SubmitTxFailed;
+    err.name =
+      err.name === FailedCode.UserRejected
+        ? FailedCode.UserRejected
+        : FailedCode.SubmitTxFailed;
     throw err;
   }
 

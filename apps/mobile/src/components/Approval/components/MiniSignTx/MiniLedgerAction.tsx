@@ -29,10 +29,10 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useMemoizedFn } from 'ahooks';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useLedgerStatus } from '@/hooks/ledger/useLedgerStatus';
 import React from 'react';
-import { useGetBinaryMode } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { isLedgerLockError } from '@/utils/ledger';
 import { eventBus, EVENTS } from '@/utils/events';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +41,8 @@ import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { RcIconCheckedCC } from '@/assets/icons/common';
 import clsx from 'clsx';
 import { Dots } from '../Popup/Dots';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppColorsVariants } from '@/constant/theme';
 
 interface Props extends ActionGroupProps {
   chain?: Chain;
@@ -92,61 +93,24 @@ export const MiniLedgerAction: React.FC<Props> = ({
 }) => {
   const binaryTheme = useGetBinaryMode();
   const isDarkTheme = binaryTheme === 'dark';
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const { txStatus, total, currentActiveIndex: current } = task;
-
-  const { status } = useLedgerStatus(account.address);
-
-  const [visibleLedgerConnectModal, setVisibleLedgerConnectModal] =
-    React.useState(false);
-
-  React.useEffect(() => {
-    const listener = msg => {
-      if (isLedgerLockError(msg) || msg === 'DISCONNECTED') {
-        setVisibleLedgerConnectModal(true);
-        task.stop();
-
-        // if (msg !== 'DISCONNECTED') {
-        //   task.addRevokeTask(task.currentApprovalRef.current!, 1);
-        // }
-      }
-    };
-
-    eventBus.addListener(EVENTS.LEDGER.REJECTED, listener);
-
-    return () => {
-      eventBus.removeListener(EVENTS.LEDGER.REJECTED, listener);
-    };
-  }, [task]);
+  const { status, onClickConnect } = useLedgerStatus(account.address);
+  const { t } = useTranslation();
 
   const handleSubmit = useMemoizedFn(() => {
-    if (status === 'DISCONNECTED') {
-      setVisibleLedgerConnectModal(true);
+    if (status !== 'CONNECTED') {
+      onClickConnect(() => {
+        onSubmit?.();
+      });
       return;
     }
-    onSubmit();
+    onSubmit?.();
   });
-
-  React.useEffect(() => {
-    if (task.status === 'active' && status === 'DISCONNECTED') {
-      eventBus.emit(EVENTS.LEDGER.REJECTED, 'DISCONNECTED');
-    }
-  }, [task.status, status]);
-  const { t } = useTranslation();
 
   return (
     <>
-      {/* <Popup
-        height={320}
-        visible={visibleLedgerConnectModal}
-        closable
-        onCancel={() => setVisibleLedgerConnectModal(false)}
-        title={t('page.dashboard.hd.ledgerIsDisconnected')}
-        maskStyle={{
-          backgroundColor: 'transparent',
-        }}>
-        <Ledger isModalContent />
-      </Popup> */}
-
       {task.status === 'idle' ? (
         <>
           <ProcessActions
@@ -160,40 +124,40 @@ export const MiniLedgerAction: React.FC<Props> = ({
               isDarkTheme
                 ? gasLessConfig?.dark_color
                 : gasLessConfig?.theme_color
-            }>
-            <View className="flex items-center gap-[8px] justify-center">
+            }
+            buttonIcon={
               <LedgerSVG width={22} height={22} viewBox="0 0 28 28" />
-              <Text>{t('page.miniSignFooterBar.signWithLedger')}</Text>
-            </View>
-          </ProcessActions>
-
+            }
+            submitText={t('page.miniSignFooterBar.signWithLedger')}
+          />
           {footer}
         </>
       ) : task.status === 'completed' ? (
         <>
-          <View
-            className={clsx(
-              'rounded-[6px] bg-r-green-light p-[14px] text-r-green-default text-[16px] leading-[20px] font-medium',
-              'flex items-center justify-center gap-[8px]',
-            )}>
+          <View style={[styles.statusContainer, styles.statusContainerSuccess]}>
             <RcIconCheckedCC
-              viewBox="0 0 20 20"
-              className="text-r-green-default w-[16px] h-[16px]"
+              width={16}
+              height={16}
+              color={colors['green-default']}
             />
 
-            <Text>{t('page.miniSignFooterBar.status.txCreated')}</Text>
+            <Text style={[styles.statusText, styles.statusTextSuccess]}>
+              {t('page.miniSignFooterBar.status.txCreated')}
+            </Text>
           </View>
         </>
       ) : current + 1 === total && txStatus === 'signed' ? (
-        <View className="rounded-[6px] bg-r-neutral-card2 p-[14px] text-r-neutral-body text-[16px] leading-[20px] font-medium text-center">
-          <Text>{t('page.miniSignFooterBar.status.txSigned')}</Text>
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusText}>
+            {t('page.miniSignFooterBar.status.txSigned')}
+          </Text>
           <Dots />
         </View>
       ) : (
-        <View className="rounded-[6px] bg-r-neutral-card2 p-[14px] text-r-neutral-body text-[16px] leading-[20px] font-medium text-center">
+        <View style={styles.statusContainer}>
           {total > 1 ? (
             <>
-              <Text>
+              <Text style={styles.statusText}>
                 {t('page.miniSignFooterBar.status.txSendings', {
                   current: current + 1,
                   total: total,
@@ -203,7 +167,9 @@ export const MiniLedgerAction: React.FC<Props> = ({
             </>
           ) : (
             <>
-              <Text>{t('page.miniSignFooterBar.status.txSending')}</Text>{' '}
+              <Text style={styles.statusText}>
+                {t('page.miniSignFooterBar.status.txSending')}
+              </Text>
               <Dots />
             </>
           )}
@@ -212,3 +178,30 @@ export const MiniLedgerAction: React.FC<Props> = ({
     </>
   );
 };
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 16,
+      gap: 8,
+      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 6,
+
+      marginTop: 10,
+    },
+    statusContainerSuccess: {
+      backgroundColor: colors['green-light'],
+    },
+    statusText: {
+      fontSize: 16,
+      lineHeight: 19,
+      fontWeight: '500',
+      color: colors['neutral-body'],
+    },
+    statusTextSuccess: {
+      color: colors['green-default'],
+    },
+  });

@@ -2,16 +2,14 @@ import { AppBottomSheetModal } from '@/components';
 import { toast } from '@/components/Toast';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { Chain } from '@/constant/chains';
-import { GAS_TOP_UP_ADDRESS } from '@/constant/gas';
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
-import { apiSecurityEngine } from '@/core/apis';
 import { apisSafe } from '@/core/apis/safe';
 import { openapi } from '@/core/request';
 import { preferenceService } from '@/core/services';
 import { Account, ChainGas } from '@/core/services/preference';
+import { useCurrentAccount } from '@/hooks/account';
 import { useSecurityEngine } from '@/hooks/securityEngine';
 import { useThemeColors } from '@/hooks/theme';
-import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { useFindChain } from '@/hooks/useFindChain';
@@ -40,34 +38,30 @@ import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useMemoizedFn } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { isHexString } from 'ethereumjs-util';
+import _ from 'lodash';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import {
   ActionRequireData,
   ParsedActionData,
   formatSecurityEngineCtx,
 } from '../Actions/utils';
-import { FooterBar } from '../FooterBar/FooterBar';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import {
   explainGas,
   getNativeTokenBalance,
   getRecommendGas,
   getRecommendNonce,
-  useCheckGasAndNonce,
-  useExplainGas,
 } from '../SignTx/calc';
 import { normalizeTxParams } from '../SignTx/util';
 import {
   GasSelectorHeader,
   GasSelectorResponse,
 } from '../TxComponents/GasSelector/GasSelectorHeader';
-import { getStyles } from './style';
-import _ from 'lodash';
-import { useCurrentAccount } from '@/hooks/account';
 import { MiniFooterBar } from './MiniFooterBar';
+import { MiniWaiting } from './MiniWaiting';
+import { getStyles } from './style';
 import { useBatchSignTxTask } from './useBatchSignTxTask';
 
 interface SignTxProps<TData extends any[] = any[]> {
@@ -255,7 +249,6 @@ const MiniSignTx = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   // const scrollRefSize = useSize(scrollRef);
   // const scrollInfo = useScroll(scrollRef);
-  const [getApproval, resolveApproval, rejectApproval] = useApproval();
   if (!chain) throw new Error('No support chain found');
   const [support1559, setSupport1559] = useState(chain.eip['1559']);
   const [footerShowShadow, setFooterShowShadow] = useState(false);
@@ -272,24 +265,6 @@ const MiniSignTx = ({
       gasCost: Awaited<ReturnType<typeof explainGas>>;
     }[]
   >([]);
-
-  // useSignPermissionCheck({
-  //   origin,
-  //   chainId,
-  //   onDisconnect: () => {
-  //     handleCancel();
-  //   },
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  // });
-
-  // useTestnetCheck({
-  //   chainId,
-  //   onOk: () => {
-  //     handleCancel();
-  //   },
-  // });
 
   const {
     data = '0x',
@@ -548,8 +523,7 @@ const MiniSignTx = ({
   };
 
   const handleCancel = () => {
-    // gaEvent('cancel');
-    rejectApproval('User rejected the request.');
+    onReject?.();
   };
 
   const loadGasMarket = async (
@@ -880,14 +854,6 @@ const MiniSignTx = ({
     setTxsResult(res);
   });
 
-  // useEffect(() => {
-  //   if (isReady) {
-  //     if (scrollRef.current && scrollRef.current.scrollTop > 0) {
-  //       scrollRef.current && (scrollRef.current.scrollTop = 0);
-  //     }
-  //   }
-  // }, [isReady]);
-
   useEffect(() => {
     if (
       isReady &&
@@ -926,34 +892,22 @@ const MiniSignTx = ({
     }
   }, [handleIsGnosisAccountChange, isGnosisAccount]);
 
-  useEffect(() => {
-    if (!inited) return;
-    // explain();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inited, updateId]);
-
-  useEffect(() => {
-    executeSecurityEngine();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData, rules]);
-
-  // TODO
-  // useEffect(() => {
-  //   if (scrollRef.current && scrollInfo && scrollRefSize) {
-  //     const avaliableHeight =
-  //       scrollRef.current.scrollHeight - scrollRefSize.height;
-  //     if (avaliableHeight <= 0) {
-  //       setFooterShowShadow(false);
-  //     } else {
-  //       setFooterShowShadow(avaliableHeight - 20 > scrollInfo.y);
-  //     }
-  //   }
-  // }, [scrollInfo, scrollRefSize]);
-
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+
+  console.log('task.error', task.error);
+
   return (
-    <BottomSheetView style={styles.wrapper}>
+    <>
+      <MiniWaiting
+        visible={!!task.error}
+        error={task.error}
+        onCancel={onReject}
+        onRetry={async () => {
+          await task.retry();
+          onResolve?.();
+        }}
+      />
       <MiniFooterBar
         task={task}
         Header={
@@ -1028,7 +982,7 @@ const MiniSignTx = ({
         hasShadow={footerShowShadow}
         origin={INTERNAL_REQUEST_SESSION.origin}
         originLogo={INTERNAL_REQUEST_SESSION.icon}
-        hasUnProcessSecurityResult={hasUnProcessSecurityResult}
+        // hasUnProcessSecurityResult={hasUnProcessSecurityResult}
         securityLevel={securityLevel}
         gnosisAccount={undefined}
         chain={chain}
@@ -1054,24 +1008,21 @@ const MiniSignTx = ({
           !isReady ||
           (selectedGas ? selectedGas.price < 0 : true) ||
           !canProcess ||
-          !!checkErrors.find(item => item.level === 'forbidden') ||
-          hasUnProcessSecurityResult
+          !!checkErrors.find(item => item.level === 'forbidden')
         }
       />
-    </BottomSheetView>
+    </>
   );
 };
 
 export const MiniApproval = ({
   txs,
   visible,
-  onClose,
   onResolve,
   onReject,
 }: {
   txs?: Tx[];
   visible?: boolean;
-  onClose?: () => void;
   onReject?: () => void;
   onResolve?: () => void;
 }) => {
@@ -1095,38 +1046,36 @@ export const MiniApproval = ({
     }
   }, [sheetModalRef, visible]);
 
-  const snapPoints = [500];
-
   return (
     <AppBottomSheetModal
       ref={sheetModalRef}
-      snapPoints={snapPoints}
+      // snapPoints={snapPoints}
       enableDismissOnClose
-      onDismiss={onClose}
+      onDismiss={onReject}
       handleStyle={styles.sheetBg}
+      enableDynamicSizing
       backgroundStyle={styles.sheetBg}>
-      <View>
-        <Text>hello world</Text>
-      </View>
-      {txs?.length ? (
-        <MiniSignTx
-          txs={txs}
-          onSubmit={() => {
-            setIsSubmitting(true);
-          }}
-          onReject={onReject}
-          onResolve={() => {
-            setIsSubmitting(false);
-            onResolve?.();
-          }}
-        />
-      ) : null}
+      <BottomSheetView>
+        {txs?.length ? (
+          <MiniSignTx
+            txs={txs}
+            onSubmit={() => {
+              setIsSubmitting(true);
+            }}
+            onReject={onReject}
+            onResolve={() => {
+              setIsSubmitting(false);
+              onResolve?.();
+            }}
+          />
+        ) : null}
+      </BottomSheetView>
     </AppBottomSheetModal>
   );
 };
 
 const getSheetStyles = createGetStyles(colors => ({
   sheetBg: {
-    backgroundColor: colors['neutral-bg-2'],
+    backgroundColor: colors['neutral-bg-1'],
   },
 }));

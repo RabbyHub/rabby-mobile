@@ -367,6 +367,7 @@ export const GasLessAnimatedWrapper = (
   props: PropsWithChildren<{
     gasLess?: boolean;
     title: string;
+    icon?: React.ReactNode;
     titleStyle: StyleProp<TextStyle>;
     buttonStyle: StyleProp<ViewStyle>;
     showOrigin: boolean;
@@ -525,6 +526,12 @@ export const GasLessAnimatedWrapper = (
             bgStyle,
           ]}>
           <Animated.View style={blueBgStyle} />
+
+          {props?.icon ? (
+            <Animated.View style={{ marginRight: 8 }}>
+              {props?.icon}
+            </Animated.View>
+          ) : null}
 
           {renderText(props.title, {
             style: StyleSheet.flatten([

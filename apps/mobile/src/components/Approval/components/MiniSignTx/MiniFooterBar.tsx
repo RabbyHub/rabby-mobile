@@ -57,22 +57,22 @@ const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 20,
-      paddingTop: 12,
+      paddingTop: 10,
       paddingBottom: 40,
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
       backgroundColor: colors['neutral-bg-1'],
       position: 'relative',
       // shadow
-      shadowColor: colors['neutral-line'],
-      shadowOffset: {
-        width: 0,
-        height: 6,
-      },
-      shadowOpacity: 0.5,
-      shadowRadius: 16,
+      // shadowColor: colors['neutral-line'],
+      // shadowOffset: {
+      //   width: 0,
+      //   height: 6,
+      // },
+      // shadowOpacity: 0.5,
+      // shadowRadius: 16,
 
-      elevation: 12,
+      // elevation: 12,
     },
     dappIconWrapper: {
       position: 'relative',
@@ -150,6 +150,9 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     container: {
       position: 'relative',
+    },
+    actions: {
+      // backgroundColor: 'red',
     },
   });
 
@@ -333,14 +336,13 @@ export const MiniFooterBar: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      {/* {!isDarkTheme && hasShadow && <Shadow />} */}
       <View
         style={styles.wrapper}
         className={clsx({
           // 'has-shadow': !isDarkTheme && hasShadow,
         })}>
         {Header}
-        <View className="pt-[10px]">
+        <View style={styles.actions}>
           {account.type === KEYRING_CLASS.HARDWARE.LEDGER ? (
             <MiniLedgerAction
               task={task}

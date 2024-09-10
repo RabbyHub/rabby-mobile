@@ -17,7 +17,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
@@ -35,7 +39,11 @@ import { ReceiveDetails } from './components/ReceiveDetail';
 import { Slippage } from './components/Slippage';
 import TokenSelect from './components/TokenSelect';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
-import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
+import {
+  useDetectLoss,
+  useSwapUnlimitedAllowance,
+  useTokenPair,
+} from './hooks';
 import {
   refreshIdAtom,
   useQuoteVisible,
@@ -91,6 +99,8 @@ const Swap = () => {
     slippage,
     setSlippage,
     payTokenIsNativeToken,
+    isSlippageHigh,
+    isSlippageLow,
 
     feeRate,
 
@@ -304,13 +314,23 @@ const Swap = () => {
     manual: true,
   });
 
+  const showLoss = useDetectLoss({
+    payToken: payToken,
+    payAmount: payAmount,
+    receiveRawAmount: activeProvider?.actualReceiveAmount || 0,
+    receiveToken: receiveToken,
+  });
+
   const handleSwap = useMemoizedFn(() => {
     if (
       [
         KEYRING_TYPE.SimpleKeyring,
         KEYRING_TYPE.HdKeyring,
         KEYRING_CLASS.HARDWARE.LEDGER,
-      ].includes((currentAccount?.type || '') as any)
+      ].includes((currentAccount?.type || '') as any) &&
+      !isSlippageHigh &&
+      !isSlippageLow &&
+      !showLoss
     ) {
       runBuildSwapTxs();
       setIsShowSign(true);
@@ -345,6 +365,8 @@ const Swap = () => {
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
     [payToken],
   );
+
+  const navigation = useNavigation();
 
   return (
     <NormalScreenContainer>
@@ -621,10 +643,6 @@ const Swap = () => {
       <MiniApproval
         visible={isShowSign}
         txs={txs}
-        onClose={() => {
-          setIsShowSign(false);
-          mutateTxs([]);
-        }}
         onReject={() => {
           setIsShowSign(false);
           mutateTxs([]);
@@ -633,10 +651,12 @@ const Swap = () => {
           setTimeout(() => {
             setIsShowSign(false);
             mutateTxs([]);
-            // setPayAmount('');
-            // setTimeout(() => {
-            // history.replace('/');
-            // }, 500);
+
+            navigation.dispatch(
+              StackActions.replace(RootNames.StackRoot, {
+                screen: RootNames.Home,
+              }),
+            );
           }, 500);
         }}
       />

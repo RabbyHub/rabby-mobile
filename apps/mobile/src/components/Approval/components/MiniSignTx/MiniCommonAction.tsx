@@ -6,7 +6,7 @@ import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import clsx from 'clsx';
 // import { KEYRING_CLASS } from 'consts';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 // import { ReactComponent as LedgerSVG } from 'ui/assets/walletlogo/ledger.svg';
 import {
   ActionGroup,
@@ -18,11 +18,12 @@ import { Dots } from '../Popup/Dots';
 import { BatchSignTxTaskType } from './useBatchSignTxTask';
 import { useTranslation } from 'react-i18next';
 import { Account } from '@/core/services/preference';
-import { useGetBinaryMode } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import { RcIconCheckedCC } from '@/assets/icons/common';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { AppColorsVariants } from '@/constant/theme';
 
 interface Props extends ActionGroupProps {
   chain?: Chain;
@@ -72,6 +73,8 @@ export const MiniCommonAction: React.FC<Props> = ({
 }) => {
   const binaryTheme = useGetBinaryMode();
   const isDarkTheme = binaryTheme === 'dark';
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
 
   const { t } = useTranslation();
   return (
@@ -94,24 +97,52 @@ export const MiniCommonAction: React.FC<Props> = ({
         </>
       ) : task.status === 'completed' ? (
         <>
-          <View
-            className={clsx(
-              'rounded-[6px] bg-r-green-light p-[14px] text-r-green-default text-[16px] leading-[20px] font-medium',
-              'flex items-center justify-center gap-[8px]',
-            )}>
+          <View style={[styles.statusContainer, styles.statusContainerSuccess]}>
             <RcIconCheckedCC
-              viewBox="0 0 20 20"
-              className="text-r-green-default w-[16px] h-[16px]"
+              color={colors['green-default']}
+              width={16}
+              height={16}
             />
-            <Text>{t('page.miniSignFooterBar.status.txCreated')}</Text>
+            <Text style={[styles.statusText, styles.statusTextSuccess]}>
+              {t('page.miniSignFooterBar.status.txCreated')}
+            </Text>
           </View>
         </>
       ) : (
-        <View className="rounded-[6px] bg-r-neutral-card2 p-[14px] text-r-neutral-body text-[16px] leading-[20px] font-medium text-center">
-          <Text>{t('page.miniSignFooterBar.status.txSigned')}</Text>
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusText}>
+            {t('page.miniSignFooterBar.status.txSigned')}
+          </Text>
           <Dots />
         </View>
       )}
     </>
   );
 };
+
+const getStyles = (colors: AppColorsVariants) =>
+  StyleSheet.create({
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 16,
+      gap: 8,
+      backgroundColor: colors['neutral-card-2'],
+      borderRadius: 6,
+
+      marginTop: 10,
+    },
+    statusContainerSuccess: {
+      backgroundColor: colors['green-light'],
+    },
+    statusText: {
+      fontSize: 16,
+      lineHeight: 19,
+      fontWeight: '500',
+      color: colors['neutral-body'],
+    },
+    statusTextSuccess: {
+      color: colors['green-default'],
+    },
+  });

@@ -516,8 +516,6 @@ class ProviderController extends BaseController {
 
     const { explain: cacheExplain, rawTx, action } = approvingTx;
 
-    console.log('c', cacheExplain);
-
     const chainItem = findChainByEnum(chain);
 
     const statsData: StatsData = {

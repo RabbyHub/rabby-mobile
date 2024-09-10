@@ -1,9 +1,10 @@
 import { isLedgerLockError } from '@/utils/ledger';
-import { sendTransaction } from '@/utils/sendTransaction';
+import { FailedCode, sendTransaction } from '@/utils/sendTransaction';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useMemoizedFn } from 'ahooks';
 import _ from 'lodash';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type TxStatus = 'sended' | 'signed' | 'idle' | 'failed';
 
@@ -24,7 +25,13 @@ export const useBatchSignTxTask = () => {
   const [status, setStatus] = React.useState<
     'idle' | 'active' | 'paused' | 'completed'
   >('idle');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{
+    status: 'REJECTED' | 'FAILED';
+    content: string;
+    description: string;
+  } | null>(null);
+
+  const { t } = useTranslation();
 
   const _updateList = useMemoizedFn(
     ({ index, payload }: { index: number; payload: Partial<ListItemType> }) => {
@@ -90,9 +97,19 @@ export const useBatchSignTxTask = () => {
             },
           });
 
-          if (!(isLedgerLockError(msg) || msg === 'DISCONNECTED')) {
-            setError(msg);
-          }
+          const _status =
+            e.name === FailedCode.UserRejected ? 'REJECTED' : 'FAILED';
+          setError({
+            status: _status,
+            content:
+              _status === 'REJECTED'
+                ? t('page.signFooterBar.ledger.txRejected')
+                : t('page.signFooterBar.qrcode.txFailed'),
+            description: msg,
+          });
+          // if (!(isLedgerLockError(msg) || msg === 'DISCONNECTED')) {
+          //   setError(msg);
+          // }
           throw e;
         }
       }
@@ -104,9 +121,7 @@ export const useBatchSignTxTask = () => {
   });
 
   const handleRetry = useMemoizedFn(async () => {
-    setError('');
-    // setStatus('idle');
-    // setStatus('')
+    setError(null);
     await start();
   });
 
