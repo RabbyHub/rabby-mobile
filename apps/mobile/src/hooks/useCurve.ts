@@ -1,9 +1,14 @@
 import { openapi } from '@/core/request';
 import { formatUsdValue } from '@/utils/number';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type CurveList = Array<{ timestamp: number; usd_value: number }>;
+
+export enum CurveDayType {
+  DAY = 1,
+  WEEK = 7,
+}
 
 const formChartData = (
   data: CurveList,
@@ -73,6 +78,7 @@ export const useCurve = (
   address: string | undefined,
   nonce: number,
   realtimeNetWorth: number | null,
+  days: CurveDayType = CurveDayType.DAY,
 ) => {
   const [data, setData] = useState<
     {
@@ -85,11 +91,14 @@ export const useCurve = (
     return formChartData(data, realtimeNetWorth ?? 0, new Date().getTime());
   }, [data, realtimeNetWorth]);
 
-  const fetch = async (addr: string, force = false) => {
-    const curve = await openapi.getNetCurve(addr);
-    setData(curve);
-    setIsLoading(false);
-  };
+  const fetch = useCallback(
+    async (addr: string, force = false) => {
+      const curve = await openapi.getNetCurve(addr, days);
+      setData(curve);
+      setIsLoading(false);
+    },
+    [days],
+  );
 
   const refresh = async () => {
     if (!address) {
@@ -108,8 +117,9 @@ export const useCurve = (
     if (!address) {
       return;
     }
+    setIsLoading(true);
     fetch(address);
-  }, [address, nonce]);
+  }, [address, fetch, nonce]);
 
   return {
     result: isLoading ? undefined : select,

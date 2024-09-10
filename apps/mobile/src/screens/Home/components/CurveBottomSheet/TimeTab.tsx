@@ -47,6 +47,8 @@ export const TIME_TAB_LIST = [
   };
 });
 
+export const REAL_TIME_TAB_LIST = ['24h', '1W'];
+
 export const TimeTab = ({
   activeKey,
   onPress,
