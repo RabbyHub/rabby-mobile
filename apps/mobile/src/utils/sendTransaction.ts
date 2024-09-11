@@ -8,21 +8,27 @@ import {
 } from '@/utils/transaction';
 
 import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
-import { findChain } from './chain';
-import { preferenceService, transactionHistoryService } from '@/core/services';
-import { apiProvider } from '@/core/apis';
-import { openapi } from '@/core/request';
+import { findChain, isTestnet } from './chain';
+import {
+  keyringService,
+  preferenceService,
+  transactionHistoryService,
+  whitelistService,
+} from '@/core/services';
+import { apiKeyring, apiProvider } from '@/core/apis';
+import { openapi, testOpenapi } from '@/core/request';
 import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { intToHex } from './number';
 
 import BigNumber from 'bignumber.js';
 import { getRecommendGas } from '@/components/Approval/components/SignTx/calc';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { eventBus, EVENTS } from './events';
 import {
   fetchActionRequiredData,
   parseAction,
-} from '@/components/Approval/components/Actions/utils';
-import { eventBus, EVENTS } from './events';
+} from '@rabby-wallet/rabby-action';
+import { ALIAS_ADDRESS } from '@/constant/gas';
 
 // fail code
 export enum FailedCode {
@@ -57,7 +63,6 @@ export const sendTransaction = async ({
   waitCompleted = true,
   pushType = 'default',
   ignoreGasNotEnoughCheck,
-  onError,
 }: {
   tx: Tx;
   chainServerId: string;
@@ -69,7 +74,6 @@ export const sendTransaction = async ({
   isGasLess?: boolean;
   waitCompleted?: boolean;
   pushType?: TxPushType;
-  onError?: (err: any) => void;
 }) => {
   onProgress?.('building');
   const chain = findChain({
@@ -236,30 +240,45 @@ export const sendTransaction = async ({
     origin: INTERNAL_REQUEST_SESSION.origin || '',
     addr: address,
   });
-  const parsed = parseAction(
-    actionData.action,
-    preExecResult.balance_change,
-    {
-      ...tx,
-      gas: '0x0',
-      nonce: recommendNonce || '0x1',
-      value: tx.value || '0x0',
-    },
-    preExecResult.pre_exec_version,
-    preExecResult.gas.gas_used,
-  );
-  const requiredData = await fetchActionRequiredData({
-    origin: INTERNAL_REQUEST_SESSION.origin || '',
-    actionData: parsed,
-    contractCall: actionData.contract_call,
-    chainId: chain.serverId,
-    address,
+
+  const parsed = parseAction({
+    type: 'transaction',
+    data: actionData.action,
+    balanceChange: preExecResult.balance_change,
     tx: {
       ...tx,
       gas: '0x0',
       nonce: recommendNonce || '0x1',
       value: tx.value || '0x0',
     },
+    preExecVersion: preExecResult.pre_exec_version,
+    gasUsed: preExecResult.gas.gas_used,
+    sender: tx.from,
+  });
+
+  const requiredData = await fetchActionRequiredData({
+    type: 'transaction',
+    actionData: parsed,
+    contractCall: actionData.contract_call,
+    chainId: chain.serverId,
+    sender: address,
+    walletProvider: {
+      hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+      hasAddress: keyringService.hasAddress.bind(keyringService),
+      getWhitelist: async () => whitelistService.getWhitelist(),
+      isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+      getPendingTxsByNonce: async (...args) =>
+        transactionHistoryService.getPendingTxsByNonce(...args),
+      findChain,
+      ALIAS_ADDRESS,
+    },
+    tx: {
+      ...tx,
+      gas: '0x0',
+      nonce: recommendNonce || '0x1',
+      value: tx.value || '0x0',
+    },
+    apiProvider: openapi,
   });
 
   await transactionHistoryService.updateSigningTx(signingTxId, {
