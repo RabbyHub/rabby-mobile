@@ -102,7 +102,7 @@ export const BackupItem: React.FC<BackupItemProps> = ({
     if (!isAddress(item.address)) {
       return;
     }
-    getAccountBalance(item.address).then(setBalance);
+    getAccountBalance(item.address, true).then(setBalance);
   }, [item.address]);
 
   if (!isAddress(item.address)) {

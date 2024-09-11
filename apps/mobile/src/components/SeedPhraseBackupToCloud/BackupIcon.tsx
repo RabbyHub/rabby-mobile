@@ -1,4 +1,11 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  TextStyle,
+} from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import React from 'react';
 import { useThemeColors } from '@/hooks/theme';
@@ -21,6 +28,7 @@ interface Props {
     | 'loading';
   isGray?: boolean;
   description?: string;
+  descriptionStyle?: StyleProp<TextStyle>;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -76,6 +84,7 @@ export const BackupIcon: React.FC<Props> = ({
   status,
   isGray,
   description,
+  descriptionStyle,
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -112,16 +121,17 @@ export const BackupIcon: React.FC<Props> = ({
       <View style={styles.iconWrapper}>
         <Image style={styles.cloudIcon} source={CloudImageSrc} />
 
-        <View style={styles.statusIconWrapper}>
-          {StatusIcon && (
+        {StatusIcon && (
+          <View style={styles.statusIconWrapper}>
             <StatusIcon
               style={StyleSheet.flatten([
                 styles.statusIcon,
                 status === 'downloading' && styles.statusIconDownloading,
               ])}
             />
-          )}
-        </View>
+          </View>
+        )}
+
         {(status === 'uploading' ||
           status === 'downloading' ||
           status === 'loading') && (
@@ -140,6 +150,7 @@ export const BackupIcon: React.FC<Props> = ({
             styles.description,
             status === 'error' && styles.errorText,
             status === 'success' && styles.successText,
+            descriptionStyle,
           ])}>
           {description}
         </Text>

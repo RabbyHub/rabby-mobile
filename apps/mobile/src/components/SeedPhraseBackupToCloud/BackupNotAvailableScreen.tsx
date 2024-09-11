@@ -11,6 +11,9 @@ const getStyles = createGetStyles(colors => ({
     paddingTop: 52,
     backgroundColor: colors['neutral-bg-1'],
   },
+  description: {
+    color: colors['neutral-title-1'],
+  },
 }));
 
 interface Props {
@@ -32,6 +35,7 @@ export const BackupNotAvailableScreen: React.FC<Props> = ({ onConfirm }) => {
         description={t(
           'page.newAddress.seedPhrase.backupErrorCloudNotAvailable',
         )}
+        descriptionStyle={styles.description}
       />
     </FooterButtonScreenContainer>
   );

@@ -13,6 +13,7 @@ import { BackupNotAvailableScreen } from './BackupNotAvailableScreen';
 import { BackupSuccessScreen } from './BackupSuccessScreen';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { BackupUploadScreen } from './BackupUploadScreen';
+import NetInfo from '@react-native-community/netinfo';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -76,6 +77,18 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
         setStep('backup_not_available');
       }
     });
+  }, []);
+
+  React.useEffect(() => {
+    const removeNetInfoSubscription = NetInfo.addEventListener(state => {
+      const conn = state.isConnected; //boolean value whether internet connected or not
+      console.log('Connection type', state.type); //gives the connection type
+      if (!conn) {
+        setStep('backup_not_available');
+      }
+    });
+
+    return () => removeNetInfoSubscription();
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import { CloudStorage, CloudStorageScope } from 'react-native-cloud-storage';
+import { CloudStorage } from 'react-native-cloud-storage';
 import { IS_ANDROID, IS_IOS } from '../native/utils';
 import { GoogleSignin, User } from '@react-native-google-signin/google-signin';
 import { appEncryptor } from '../services/shared';
@@ -122,12 +122,15 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
   const backups: BackupData[] = [];
 
   for (const filename of filenames) {
-    console.log(
-      'download file',
-      await CloudStorage.downloadFile(
+    if (IS_IOS) {
+      const cantDownload = await CloudStorage.downloadFile(
         `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
-      ),
-    );
+      );
+      console.log('download file', cantDownload);
+      if (!cantDownload) {
+        throw new Error('cant download file');
+      }
+    }
 
     const encryptedData = await CloudStorage.readFile(
       `${REMOTE_BACKUP_WALLET_DIR}/${filename}`,
@@ -147,7 +150,7 @@ export const getBackupsFromCloud = async (targetFilenames?: string[]) => {
     }
   }
 
-  return sortBy(backups, 'createdAt').reverse();
+  return sortBy(backups, 'createdAt');
 };
 
 export const checkTokenIsExpired = async () => {

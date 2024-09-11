@@ -92,8 +92,9 @@ export const BackupUnlockScreen: React.FC<Props> = ({
       }
       onConfirm(password);
     } catch (e) {
-      setLoading(false);
       setError(t('page.unlock.password.error'));
+    } finally {
+      setLoading(false);
     }
   }, [ignoreValidation, onConfirm, password, t]);
 

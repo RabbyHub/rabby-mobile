@@ -15,6 +15,7 @@ import { useThemeStyles } from '@/hooks/theme';
 import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 import { createGetStyles } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
@@ -64,6 +65,7 @@ export const RestoreFromCloud = () => {
   );
   const [importedFiles, setImportedFiles] = React.useState<string[]>([]);
   const { seedPhraseList } = useSeedPhrase();
+  const navigation = useNavigation();
 
   React.useEffect(() => {
     getBackupsFromCloud()
@@ -112,11 +114,12 @@ export const RestoreFromCloud = () => {
           },
           onConfirm: () => {
             removeGlobalBottomSheetModal(id);
+            navigation.goBack();
           },
         });
       }
     });
-  }, []);
+  }, [navigation]);
 
   React.useEffect(() => {
     if (backups?.length && seedPhraseList.length) {

@@ -231,7 +231,7 @@ export function AddressNavigator() {
         name={RootNames.RestoreFromCloud}
         component={RestoreFromCloud}
         options={mergeScreenOptions({
-          title: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
+          headerTitle: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
           headerShadowVisible: false,
           headerShown: true,
         })}
