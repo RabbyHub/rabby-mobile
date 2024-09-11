@@ -167,6 +167,9 @@ export const checkTokenIsExpired = async () => {
 };
 
 export const detectCloudIsAvailable = async () => {
+  if (!IS_IOS) {
+    return true;
+  }
   const available = await CloudStorage.isCloudAvailable();
   console.log('detectCloudIsAvailable', available);
   return available;
