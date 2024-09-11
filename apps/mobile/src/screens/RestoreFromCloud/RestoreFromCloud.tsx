@@ -108,10 +108,6 @@ export const RestoreFromCloud = () => {
       if (!result) {
         const id = createGlobalBottomSheetModal({
           name: MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE,
-          bottomSheetModalProps: {
-            enableDynamicSizing: true,
-            maxDynamicContentSize: 348,
-          },
           onConfirm: () => {
             removeGlobalBottomSheetModal(id);
             navigation.goBack();
@@ -173,14 +169,16 @@ export const RestoreFromCloud = () => {
     );
   }
 
+  const len = selectedFilenames.length;
+
   return (
     <FooterButtonScreenContainer
       onPressButton={handleRestore}
       btnProps={{
-        disabled: !selectedFilenames.length,
+        disabled: !len,
       }}
-      buttonText={`${t('page.newAddress.seedPhrase.backupRestoreButton')}${
-        selectedFilenames.length ? `(${selectedFilenames.length})` : ''
+      buttonText={`${t('page.newAddress.seedPhrase.backupRestoreButton')} ${
+        len ? `(${len})` : ''
       }`}>
       <View style={styles.body}>
         <View>

@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useThemeStyles } from '@/hooks/theme';
-import { RcIconCheckedFilledCC } from '@/assets/icons/common';
+import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
 import dayjs from 'dayjs';
 import React from 'react';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
@@ -126,14 +126,17 @@ export const BackupItem: React.FC<BackupItemProps> = ({
             {createdAtStr}
           </Text>
         </View>
-        {selected && <RcIconCheckedFilledCC width={24} height={24} />}
-        {imported && (
+        {imported ? (
           <View style={styles.imported}>
             <RcIconCheckedFilledCC width={16} height={16} />
             <Text style={styles.importedText}>
               {t('page.newAddress.seedPhrase.backupRestoreImported')}
             </Text>
           </View>
+        ) : selected ? (
+          <RcIconCheckedFilledCC width={24} height={24} />
+        ) : (
+          <RcIconUncheckCC width={24} height={24} />
         )}
       </View>
       <View style={styles.footer}>

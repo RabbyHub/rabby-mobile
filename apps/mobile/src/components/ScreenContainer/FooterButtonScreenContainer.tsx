@@ -105,6 +105,7 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
           onConfirm={onPressButton}
           confirmText={buttonText}
           loading={btnProps?.loading}
+          disabled={btnProps?.disabled}
         />
       ) : (
         <FooterButton

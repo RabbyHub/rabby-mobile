@@ -12,7 +12,16 @@ export const FooterButtonGroup: React.FC<{
   confirmText?: string;
   style?: StyleProp<ViewStyle>;
   loading?: boolean;
-}> = ({ onCancel, onConfirm, cancelText, confirmText, style, loading }) => {
+  disabled?: boolean;
+}> = ({
+  onCancel,
+  onConfirm,
+  cancelText,
+  confirmText,
+  style,
+  loading,
+  disabled,
+}) => {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
 
@@ -37,6 +46,7 @@ export const FooterButtonGroup: React.FC<{
         titleStyle={styles.confirmTitleStyle}
         onPress={onConfirm}
         loading={loading}
+        disabled={disabled}
       />
     </View>
   );

@@ -61,6 +61,10 @@ export const saveMnemonicToCloud = async ({
     version: CURRENT_VERSION,
   };
 
+  if (!(await checkNetworkIsAvailable())) {
+    throw new Error("Can't connect to the network");
+  }
+
   const filename = generateBackupFileName(data.address);
 
   console.log(`save ${REMOTE_BACKUP_WALLET_DIR}/${filename}`);
@@ -166,6 +170,26 @@ export const checkTokenIsExpired = async () => {
   } catch (e) {
     console.error(e);
     return true;
+  }
+};
+
+// only for ios
+export const checkNetworkIsAvailable = async () => {
+  if (!IS_IOS) {
+    return true;
+  }
+
+  try {
+    await Promise.race([
+      fetch('https://api.rabby.io/ping'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 1000),
+      ),
+    ]);
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
   }
 };
 
