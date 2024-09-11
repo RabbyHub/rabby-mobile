@@ -60,6 +60,7 @@ export const RootNames = {
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   Bridge: 'Bridge',
+  GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',

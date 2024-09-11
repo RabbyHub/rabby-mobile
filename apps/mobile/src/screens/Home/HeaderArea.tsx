@@ -34,6 +34,7 @@ import { CurveBottomSheetModal } from './components/CurveBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import usePrevious from 'ahooks/lib/usePrevious';
 import useCachedValue from '@/hooks/common/useCachedValue';
+import { GasAccountDashBoardHeader } from '../GasAccount/components/DashBoardHeader';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -178,7 +179,16 @@ export default function HomeHeaderArea() {
           <RcIconHeaderRightArrow style={styles.accountRightArrow} />
         </TouchableView>
         <View style={styles.rightActionsBox}>
-          <TouchableView onPress={() => handlePressIcon('history')}>
+          <TouchableView
+            onPress={() => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              });
+            }}>
+            <GasAccountDashBoardHeader />
+          </TouchableView>
+          {/* <TouchableView onPress={() => handlePressIcon('history')}>
             <PendingTxCount />
           </TouchableView>
           <TouchableView
@@ -191,7 +201,7 @@ export default function HomeHeaderArea() {
                 !remoteVersion.couldUpgrade && styles.hideReddot,
               ]}
             />
-          </TouchableView>
+          </TouchableView> */}
         </View>
       </View>
 

@@ -33,6 +33,7 @@ import { HDKeyringService } from './hdKeyringService';
 export { customTestnetService } from './customTestnetService';
 export { customRPCService } from './customRPCService';
 import { BridgeService } from './bridge';
+import { GasAccountService } from './gasAccount';
 
 const keyringState = normalizeKeyringState().keyringData;
 
@@ -158,5 +159,9 @@ export const hdKeyringService = new HDKeyringService({
 });
 
 export const bridgeService = new BridgeService({
+  storageAdapter: appStorage,
+});
+
+export const gasAccountService = new GasAccountService({
   storageAdapter: appStorage,
 });

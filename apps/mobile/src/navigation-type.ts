@@ -103,6 +103,7 @@ export type TransactionNavigatorParamList = {
   [RootNames.Approvals]?: {};
   [RootNames.GasTopUp]?: {};
   [RootNames.Bridge]?: {};
+  [RootNames.GasAccount]?: {};
 };
 
 export type SettingNavigatorParamList = {
