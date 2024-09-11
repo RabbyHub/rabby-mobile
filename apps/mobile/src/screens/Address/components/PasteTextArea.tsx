@@ -14,6 +14,9 @@ import IconPaste from '@/assets/icons/common/paste-cc.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
 import { useTranslation } from 'react-i18next';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { RcIconInnerScanner } from '@/assets/icons/address';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -35,14 +38,18 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'relative',
       overflow: 'hidden',
     },
-    pasteButton: {
+    actions: {
       flexDirection: 'row',
-      gap: 4,
+      gap: 12,
       position: 'absolute',
       right: 12,
       bottom: 12,
     },
-    pasteButtonText: {
+    actionItem: {
+      flexDirection: 'row',
+      gap: 4,
+    },
+    actionText: {
       color: colors['neutral-foot'],
       fontSize: 15,
       lineHeight: 18,
@@ -90,6 +97,10 @@ export const PasteTextArea: React.FC<Props> = ({
     });
   }, [onChange, t]);
 
+  const onPressScan = () => {
+    navigate(RootNames.Scanner);
+  };
+
   return (
     <View style={style}>
       <View
@@ -112,10 +123,20 @@ export const PasteTextArea: React.FC<Props> = ({
           value={value}
           onChangeText={onChange}
         />
-        <TouchableOpacity onPress={onPressPaste} style={styles.pasteButton}>
-          <IconPaste width={16} height={16} color={colors['neutral-foot']} />
-          <Text style={styles.pasteButtonText}>Paste</Text>
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={onPressScan} style={styles.actionItem}>
+            <RcIconInnerScanner
+              width={16}
+              height={16}
+              color={colors['neutral-foot']}
+            />
+            <Text style={styles.actionText}>Scan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onPressPaste} style={styles.actionItem}>
+            <IconPaste width={16} height={16} color={colors['neutral-foot']} />
+            <Text style={styles.actionText}>Paste</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
