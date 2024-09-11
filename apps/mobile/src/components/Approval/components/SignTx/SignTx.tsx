@@ -960,7 +960,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           gas: gasLimit,
         },
         usdValue: Math.max(sendUsdValue.toNumber(), receiveUsdValue.toNumber()),
-        preExecSuccess: txDetail?.pre_exec.success || false,
+        preExecSuccess: txDetail?.pre_exec?.success || false,
         gasUsed: txDetail?.gas?.gas_used || 0,
       });
 
