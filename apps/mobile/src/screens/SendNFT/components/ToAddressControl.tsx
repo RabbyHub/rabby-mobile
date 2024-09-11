@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
@@ -8,6 +8,7 @@ import { FormInput } from '@/components/Form/Input';
 import {
   RcWhiteListEnabled,
   RcWhiteListDisabled,
+  RcIconInnerScanner,
 } from '@/assets/icons/address';
 import { RcEditPenCC } from '@/assets/icons/send';
 
@@ -20,6 +21,9 @@ import {
 } from '../hooks/useSendNFT';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useScanner } from '@/screens/Scanner/ScannerScreen';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -46,11 +50,24 @@ export default function ToAddressControl({
     callbacks: { handleFieldChange },
   } = useSendNFTInternalContext();
   const colors = useThemeColors();
+  const scanner = useScanner();
+
   const styles = getStyles(colors);
 
   const { t } = useTranslation();
 
   const { errors } = useSendNFTFormik();
+
+  const openCamera = useCallback(() => {
+    navigate(RootNames.Scanner);
+  }, []);
+
+  useEffect(() => {
+    if (scanner.text) {
+      handleFieldChange('to', scanner.text);
+      scanner.clear();
+    }
+  }, [handleFieldChange, scanner]);
 
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);
@@ -102,9 +119,21 @@ export default function ToAddressControl({
         disableFocusingStyle
         inputStyle={styles.input}
         hasError={!!errors.to}
+        clearable={false}
+        customIcon={ctx => {
+          return (
+            <TouchableView
+              onPress={openCamera}
+              style={StyleSheet.flatten([
+                ctx.iconStyle,
+                styles.scanButtonContainer,
+              ])}>
+              <RcIconInnerScanner style={styles.scanIcon} />
+            </TouchableView>
+          );
+        }}
         inputProps={{
           ...inputProps,
-          numberOfLines: 2,
           multiline: true,
           value: formValues.to,
           onChangeText: value => {
@@ -112,8 +141,11 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter address',
+          placeholder: 'Enter address or search',
           placeholderTextColor: colors['neutral-foot'],
+          style: {
+            paddingTop: 0,
+          },
         }}
       />
       {/* extra info area */}
@@ -169,6 +201,13 @@ export default function ToAddressControl({
     </View>
   );
 }
+
+const SIZES = {
+  INPUT_CONTAINER_H: 64,
+  SCAN_BTN_H: 64,
+  SCAN_BTN_W: 32,
+  SCAN_ICON_SIZE: 20,
+};
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -237,9 +276,9 @@ const getStyles = createGetStyles(colors => {
 
     inputContainer: {
       borderRadius: 4,
-
+      flexShrink: 0,
+      paddingVertical: 17,
       width: '100%',
-      height: 64,
     },
 
     input: {
@@ -252,6 +291,20 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 12,
       // flexDirection: 'row',
       // alignItems: 'center',
+    },
+
+    scanButtonContainer: {
+      flexShrink: 0,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingRight: 12,
+    },
+
+    scanIcon: {
+      width: SIZES.SCAN_ICON_SIZE,
+      height: SIZES.SCAN_ICON_SIZE,
+      color: colors['neutral-title1'],
     },
 
     extraView: {

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -21,10 +21,6 @@ import {
 } from '../hooks/useSendToken';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
-import { CameraPopup } from '@/screens/Address/components/CameraPopup';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { isValidHexAddress } from '@metamask/utils';
-import { Code } from 'react-native-vision-camera';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
@@ -65,30 +61,16 @@ export default function ToAddressControl({
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);
 
-  const codeRef = useRef<BottomSheetModal>(null);
-  const openCamera = React.useCallback(() => {
+  const openCamera = useCallback(() => {
     navigate(RootNames.Scanner);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (scanner.text) {
       handleFieldChange('to', scanner.text);
       scanner.clear();
     }
   }, [handleFieldChange, scanner]);
-
-  const onCodeScanned = React.useCallback(
-    (codes: Code[]) => {
-      if (
-        codes[0].value &&
-        isValidHexAddress(codes[0].value as `0x${string}`)
-      ) {
-        codeRef.current?.close();
-        handleFieldChange('to', codes[0].value);
-      }
-    },
-    [handleFieldChange],
-  );
 
   return (
     <View style={[styles.control, style]}>
@@ -216,7 +198,6 @@ export default function ToAddressControl({
           });
         }}
       />
-      <CameraPopup ref={codeRef} onCodeScanned={onCodeScanned} />
     </View>
   );
 }
