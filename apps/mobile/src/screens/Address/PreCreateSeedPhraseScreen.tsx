@@ -73,7 +73,9 @@ export const PreCreateSeedPhraseScreen = () => {
         maxDynamicContentSize: 460,
       },
       onDone: isNoMnemonic => {
-        removeGlobalBottomSheetModal(id);
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
         if (isNoMnemonic) {
           nav.goBack();
         }

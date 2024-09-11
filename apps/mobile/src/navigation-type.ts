@@ -82,6 +82,7 @@ export type AddressNavigatorParamList = {
   [RootNames.BackupMnemonic]?: {
     data: string;
   };
+  [RootNames.RestoreFromCloud]?: {};
 };
 
 export type AccountNavigatorParamList = {

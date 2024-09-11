@@ -84,7 +84,9 @@ export const RestoreFromCloud = () => {
         maxDynamicContentSize: 460,
       },
       onDone: () => {
-        removeGlobalBottomSheetModal(id);
+        setTimeout(() => {
+          removeGlobalBottomSheetModal(id);
+        }, 0);
       },
       files: backups?.filter(item => selectedFilenames.includes(item.filename)),
     });

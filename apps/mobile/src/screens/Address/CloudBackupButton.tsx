@@ -15,7 +15,9 @@ const hitSlop = {
 
 export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
   const onPress = React.useCallback(() => {
-    navigate(RootNames.RestoreFromCloud);
+    navigate(RootNames.StackAddress, {
+      screen: RootNames.RestoreFromCloud,
+    });
   }, []);
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {

@@ -1,12 +1,11 @@
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, PanResponder, View } from 'react-native';
+import { ColorSchemeName } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 
@@ -54,8 +53,6 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
-import { RestoreFromCloud } from './screens/RestoreFromCloud/RestoreFromCloud';
-import { IS_IOS } from './core/native/utils';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -274,15 +271,6 @@ export default function AppNavigation({
                 color: colors['neutral-title-2'],
                 fontWeight: 'normal',
               },
-            })}
-          />
-          <RootStack.Screen
-            name={RootNames.RestoreFromCloud}
-            component={RestoreFromCloud}
-            options={mergeScreenOptions({
-              title: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
-              headerShadowVisible: false,
-              headerShown: true,
             })}
           />
         </RootStack.Navigator>
