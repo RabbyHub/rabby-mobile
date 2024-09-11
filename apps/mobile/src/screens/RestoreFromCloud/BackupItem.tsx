@@ -22,7 +22,7 @@ import { BackupData } from '@/core/utils/cloudBackup';
 const getStyles = createGetStyles(colors => ({
   root: {
     borderWidth: 1,
-    borderColor: colors['neutral-line'],
+    borderColor: 'transparent',
     borderRadius: 8,
     backgroundColor: colors['neutral-card-1'],
   },
