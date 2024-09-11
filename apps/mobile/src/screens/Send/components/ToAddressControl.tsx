@@ -8,7 +8,7 @@ import { FormInput } from '@/components/Form/Input';
 import {
   RcWhiteListEnabled,
   RcWhiteListDisabled,
-  RcIconScannerCC,
+  RcIconInnerScanner,
 } from '@/assets/icons/address';
 
 import { RcEditPenCC } from '@/assets/icons/send';
@@ -25,6 +25,9 @@ import { CameraPopup } from '@/screens/Address/components/CameraPopup';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { isValidHexAddress } from '@metamask/utils';
 import { Code } from 'react-native-vision-camera';
+import { RootNames } from '@/constant/layout';
+import { navigate } from '@/utils/navigation';
+import { useScanner } from '@/screens/Scanner/ScannerScreen';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -51,6 +54,8 @@ export default function ToAddressControl({
     callbacks: { handleFieldChange },
   } = useSendTokenInternalContext();
   const colors = useThemeColors();
+  const scanner = useScanner();
+
   const styles = getStyles(colors);
 
   const { t } = useTranslation();
@@ -62,8 +67,15 @@ export default function ToAddressControl({
 
   const codeRef = useRef<BottomSheetModal>(null);
   const openCamera = React.useCallback(() => {
-    codeRef.current?.present();
+    navigate(RootNames.Scanner);
   }, []);
+
+  React.useEffect(() => {
+    if (scanner.text) {
+      handleFieldChange('to', scanner.text);
+      scanner.clear();
+    }
+  }, [handleFieldChange, scanner]);
 
   const onCodeScanned = React.useCallback(
     (codes: Code[]) => {
@@ -134,7 +146,7 @@ export default function ToAddressControl({
                 ctx.iconStyle,
                 styles.scanButtonContainer,
               ])}>
-              <RcIconScannerCC style={styles.scanIcon} />
+              <RcIconInnerScanner style={styles.scanIcon} />
             </TouchableView>
           );
         }}
@@ -148,7 +160,7 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter address',
+          placeholder: 'Enter address or search',
           placeholderTextColor: colors['neutral-foot'],
         }}
       />
