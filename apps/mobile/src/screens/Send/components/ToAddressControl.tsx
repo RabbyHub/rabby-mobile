@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
@@ -152,7 +152,6 @@ export default function ToAddressControl({
         }}
         inputProps={{
           ...inputProps,
-          numberOfLines: 2,
           multiline: true,
           value: formValues.to,
           onChangeText: value => {
@@ -162,6 +161,9 @@ export default function ToAddressControl({
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
           placeholder: 'Enter address or search',
           placeholderTextColor: colors['neutral-foot'],
+          style: {
+            paddingTop: 0,
+          },
         }}
       />
       {/* extra info area */}
@@ -304,9 +306,8 @@ const getStyles = createGetStyles(colors => {
       borderRadius: 4,
       flexShrink: 0,
       // ...makeDebugBorder('yellow'),
-
+      paddingVertical: 17,
       width: '100%',
-      height: SIZES.INPUT_CONTAINER_H,
     },
 
     input: {
@@ -323,13 +324,11 @@ const getStyles = createGetStyles(colors => {
 
     scanButtonContainer: {
       flexShrink: 0,
-      width: SIZES.SCAN_BTN_W,
-      height: SIZES.SCAN_BTN_H,
       // ...makeDebugBorder('blue'),
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingRight: 8,
+      paddingRight: 12,
     },
 
     scanIcon: {
