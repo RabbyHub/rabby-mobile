@@ -10,13 +10,15 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
+import { AssetAvatar } from '@/components';
 import { useTranslation } from 'react-i18next';
 import { noop } from 'lodash';
 import { Tip } from '@/components/Tip';
+import { Button } from '@/components/Button';
 import clsx from 'clsx';
 import { formatUsdValue } from '@/utils/number';
 import { openapi, testOpenapi } from '@/core/request';
@@ -79,11 +81,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
           content={t('page.gasTopUp.InsufficientBalanceTips')}
           isVisible={disabled ? undefined : false}>
           <CustomTouchableOpacity
-            style={[
-              styles.row,
-              { opacity: disabled ? 0.5 : 1 },
-              !disabled && styles.rowActive,
-            ]}
+            style={[styles.tokenListItem, { opacity: disabled ? 0.5 : 1 }]}
             onPress={() => {
               if (!disabled) {
                 onChange(item);
@@ -91,9 +89,22 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
               }
             }}
             disabled={disabled}>
-            <View style={styles.tokenContainer}>
-              {/* <TokenWithChain token={item} hideCorner /> */}
-              <Text style={styles.tokenSymbol}>{getTokenSymbol(item)}</Text>
+            <View style={styles.box}>
+              <AssetAvatar
+                size={32}
+                chain={item.chain}
+                logo={item.logo_url}
+                chainSize={16}
+              />
+              <Text
+                style={StyleSheet.flatten([
+                  {
+                    marginLeft: 16,
+                  },
+                  styles.text,
+                ])}>
+                {getTokenSymbol(item)}
+              </Text>
             </View>
             <Text>{formatUsdValue(item.amount * item.price || 0)}</Text>
           </CustomTouchableOpacity>
@@ -107,7 +118,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={onClose}
-      snapPoints={[320]}
+      snapPoints={[550]}
       // isVisible={visible}
     >
       <BottomSheetView style={styles.popup}>
@@ -131,6 +142,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
           ) : (
             <FlatList
               data={sortedList}
+              style={styles.flatList}
               renderItem={({ item }) => <Row item={item} />}
               keyExtractor={item => item.id}
             />
@@ -172,12 +184,15 @@ const GasAccountDepositContent = ({ onClose }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
-        {t('page.gasAccount.depositPopup.title')}
+        {t('component.gasAccount.depositPopup.title')}
       </Text>
       <Text style={styles.description}>
-        {t('page.gasAccount.depositPopup.desc')}
+        {t('component.gasAccount.depositPopup.desc')}
       </Text>
 
+      <Text style={styles.tokenLabel}>
+        {t('component.gasAccount.depositPopup.amount')}
+      </Text>
       <View style={styles.amountSelector}>
         {amountList.map(amount => (
           <CustomTouchableOpacity
@@ -200,29 +215,37 @@ const GasAccountDepositContent = ({ onClose }) => {
       </View>
 
       <Text style={styles.tokenLabel}>
-        {t('page.gasAccount.depositPopup.token')}
+        {t('component.gasAccount.depositPopup.token')}
       </Text>
       <CustomTouchableOpacity
         style={styles.tokenContainer}
         onPress={openTokenList}>
         {token ? (
           <View style={styles.tokenContent}>
-            {/* <TokenWithChain token={token} hideCorner width={24} height={24} /> */}
+            <AssetAvatar
+              size={24}
+              chain={token.chain}
+              logo={token.logo_url}
+              chainSize={16}
+            />
             <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
           </View>
         ) : (
           <Text style={styles.tokenPlaceholder}>
-            {t('page.gasAccount.depositPopup.selectToken')}
+            {t('component.gasAccount.depositPopup.selectToken')}
           </Text>
         )}
       </CustomTouchableOpacity>
 
-      <CustomTouchableOpacity
-        style={[styles.confirmButton, !token && styles.confirmButtonDisabled]}
-        onPress={topUpGasAccount}
-        disabled={!token}>
-        <Text style={styles.confirmButtonText}>{t('global.Confirm')}</Text>
-      </CustomTouchableOpacity>
+      <View style={styles.btnContainer}>
+        <Button
+          type="primary"
+          containerStyle={styles.confirmButton}
+          onPress={topUpGasAccount}
+          disabled={!token}
+          title={t('component.gasAccount.deposit')}
+        />
+      </View>
 
       <TokenSelector
         visible={tokenListVisible}
@@ -249,7 +272,7 @@ export const GasAccountDepositPopup = props => {
 
   return (
     <AppBottomSheetModal
-      snapPoints={[320]}
+      snapPoints={[440]}
       onDismiss={props.onCancel || props.onClose}
       ref={modalRef}>
       <BottomSheetView style={styles.popup}>
@@ -260,59 +283,106 @@ export const GasAccountDepositPopup = props => {
 };
 
 const getStyles = createGetStyles(colors => ({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 20, fontWeight: '500', marginBottom: 12 },
-  description: { textAlign: 'center', fontSize: 13, marginHorizontal: 20 },
+  container: {
+    width: '100%',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '500',
+    marginBottom: 12,
+    color: colors['neutral-title1'],
+  },
+  description: {
+    textAlign: 'center',
+    fontSize: 13,
+    marginHorizontal: 20,
+    color: colors['neutral-body'],
+  },
   amountSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 20,
+    height: 52,
   },
   amountButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 114,
+    flex: 1,
+    marginRight: 8,
     height: 52,
     borderRadius: 6,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: colors['neutral-card2'],
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  selectedAmountButton: { backgroundColor: '#E0E7FF', borderColor: '#007BFF' },
+  selectedAmountButton: {
+    backgroundColor: colors['blue-light1'],
+    borderColor: '#007BFF',
+  },
   amountText: { fontSize: 18, fontWeight: '500' },
   selectedAmountText: { fontSize: 18, fontWeight: '500', color: '#007BFF' },
-  tokenLabel: { fontSize: 13, marginTop: 12, marginBottom: 8 },
+  tokenLabel: {
+    fontSize: 13,
+    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'left',
+    width: '100%',
+    color: colors['neutral-body'],
+  },
   tokenContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: colors['neutral-card2'],
     borderRadius: 6,
     width: '100%',
     height: 52,
     paddingHorizontal: 16,
+    marginBottom: 42,
+  },
+  flatList: {
+    width: '100%',
+  },
+  tokenListItem: {
+    height: 64,
+    flex: 1,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 6,
   },
   tokenContent: { flexDirection: 'row', alignItems: 'center' },
   tokenSymbol: { fontSize: 15, fontWeight: '500', marginLeft: 12 },
   tokenPlaceholder: { fontSize: 15, fontWeight: '500' },
   confirmButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 16,
+    width: '100%',
+    height: 52,
+  },
+  popup: {
+    justifyContent: 'flex-end',
+    margin: 0,
+    height: '100%',
     paddingHorizontal: 20,
-    borderRadius: 6,
+    paddingVertical: 10,
   },
-  confirmButtonDisabled: { backgroundColor: '#B0B0B0' },
-  confirmButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
+  btnContainer: {
+    paddingVertical: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopColor: colors['neutral-line'],
+    // borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 0.5,
+    backgroundColor: colors['neutral-bg1'],
   },
-  popup: { justifyContent: 'flex-end', margin: 0 },
   modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: colors['neutral-bg1'],
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     height: 500,
   },
   loadingContainer: {
@@ -325,23 +395,18 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'center',
     height: '100%',
   },
+  box: { flexDirection: 'row', alignItems: 'center' },
+  text: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
   header: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
     borderBottomWidth: 0.5,
-    borderColor: '#E0E0E0',
+    borderColor: colors['neutral-line'],
     paddingVertical: 8,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 52,
-    borderColor: 'transparent',
-    borderWidth: 1,
-    borderRadius: 6,
-  },
-  rowActive: { borderColor: '#007BFF' },
 }));

@@ -8,7 +8,8 @@ import { useThemeColors } from '@/hooks/theme';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './components/DepositPopup';
-import { Button } from '../../components/Button';
+import { WithDrawPopup } from './components/WithDrawPopup';
+import { Button } from '@/components/Button';
 import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
 import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
 
@@ -17,6 +18,7 @@ export const GasAccountScreen = () => {
   const { t } = useTranslation();
   const [canDesposit, setCanDesposit] = useState<boolean>(true);
   const [showDesposit, setShowDesposit] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { value } = useGasAccountInfo();
 
@@ -36,12 +38,12 @@ export const GasAccountScreen = () => {
       <View style={styles.accountContainer}>
         <View style={styles.content}>
           <RcIconGasAccountBalance style={styles.acountIcon} />
-          <Text style={styles.balanceText}>${usd}</Text>
+          <Text style={styles.balanceText}>{usd}</Text>
         </View>
         <View style={styles.accountfooter}>
           <Button
             type="white"
-            onPress={() => {}}
+            onPress={() => setShowWithdraw(true)}
             buttonStyle={[styles.whiteBtn, styles.buttonContainer]}
             title={t('component.gasAccount.withdraw')}
           />
@@ -57,13 +59,19 @@ export const GasAccountScreen = () => {
       <View style={styles.historyContainer}>
         <RcIconHistoryIcon style={styles.historyIcon} />
         <Text style={styles.historyText}>
-          {t('component.gasAccount.history.NoHistory')}
+          {t('component.gasAccount.history.noHistory')}
         </Text>
       </View>
 
       <GasAccountDepositPopup
         visible={showDesposit}
         onCancel={() => setShowDesposit(false)}
+      />
+
+      <WithDrawPopup
+        visible={showWithdraw}
+        balance={value?.account.balance}
+        onCancel={() => setShowWithdraw(false)}
       />
     </NormalScreenContainer>
   );
