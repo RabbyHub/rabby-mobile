@@ -895,8 +895,6 @@ const MiniSignTx = ({
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
-  console.log('task.error', task.error);
-
   return (
     <>
       <MiniWaiting
