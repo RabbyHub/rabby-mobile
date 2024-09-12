@@ -145,6 +145,7 @@ export default function ToAddressControl({
           placeholderTextColor: colors['neutral-foot'],
           style: {
             paddingTop: 0,
+            paddingBottom: 0,
           },
         }}
       />
