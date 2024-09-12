@@ -94,6 +94,7 @@ interface GasSelectorProps {
   nativeTokenBalance: string;
   gasPriceMedian: number | null;
   pushType?: TxPushType;
+  isDisabledGasPopup?: boolean;
 }
 
 const useExplainGas = ({
@@ -140,6 +141,7 @@ export const GasSelectorHeader = ({
   gasPriceMedian,
   isCancel,
   isSpeedUp,
+  isDisabledGasPopup,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -709,6 +711,7 @@ export const GasSelectorHeader = ({
           )}
         </TouchableOpacity>
         <GasMenuButton
+          disabled={isDisabledGasPopup}
           gasList={gasList}
           selectedGas={selectedGas}
           onSelect={externalPanelSelection}

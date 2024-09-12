@@ -911,6 +911,7 @@ const MiniSignTx = ({
         Header={
           <GasSelectorHeader
             pushType={pushInfo.type}
+            isDisabledGasPopup={task.status !== 'idle'}
             disabled={false}
             isReady={isReady}
             gasLimit={gasLimit}
