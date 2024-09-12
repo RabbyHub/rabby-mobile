@@ -18,11 +18,9 @@ import { matomoRequestEvent } from '@/utils/analytics';
 import { intToHex } from '@/utils/number';
 import { createGetStyles } from '@/utils/styles';
 import {
-  calcGasLimit,
   calcMaxPriorityFee,
   checkGasAndNonce,
   convertLegacyTo1559,
-  getPendingTxs,
 } from '@/utils/transaction';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
@@ -42,11 +40,6 @@ import _ from 'lodash';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import {
-  ActionRequireData,
-  ParsedActionData,
-  formatSecurityEngineCtx,
-} from '../Actions/utils';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import {
   explainGas,
@@ -63,6 +56,11 @@ import { MiniFooterBar } from './MiniFooterBar';
 import { MiniWaiting } from './MiniWaiting';
 import { getStyles } from './style';
 import { useBatchSignTxTask } from './useBatchSignTxTask';
+import { calcGasLimit, getPendingTxs } from '@/core/apis/transactions';
+import {
+  ActionRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -690,38 +688,6 @@ const MiniSignTx = ({
     }
   });
 
-  const executeSecurityEngine = async () => {
-    const ctx = formatSecurityEngineCtx({
-      actionData: actionData,
-      requireData: actionRequireData,
-      chainId: chain.serverId,
-    });
-    const result = await executeEngine(ctx);
-    setEngineResults(result);
-  };
-
-  const hasUnProcessSecurityResult = useMemo(() => {
-    const { processedRules } = currentTx;
-    const enableResults = engineResults.filter(item => item.enable);
-    // const hasForbidden = enableResults.find(
-    //   (result) => result.level === Level.FORBIDDEN
-    // );
-    const hasSafe = !!enableResults.find(result => result.level === Level.SAFE);
-    const needProcess = enableResults.filter(
-      result =>
-        (result.level === Level.DANGER ||
-          result.level === Level.WARNING ||
-          result.level === Level.FORBIDDEN) &&
-        !processedRules.includes(result.id),
-    );
-    // if (hasForbidden) return true;
-    if (needProcess.length > 0) {
-      return !hasSafe;
-    } else {
-      return false;
-    }
-  }, [engineResults, currentTx]);
-
   useEffect(() => {
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -792,7 +758,7 @@ const MiniSignTx = ({
         });
         const gas = new BigNumber(gasRaw);
 
-        let gasLimit = tx.gas || tx.gasLimit;
+        let gasLimit = tx.gas || tx.gasLimit || '';
         let recommendGasLimitRatio = 1;
 
         if (!gasLimit) {

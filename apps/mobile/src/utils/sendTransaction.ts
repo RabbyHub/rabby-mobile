@@ -4,7 +4,6 @@ import {
   checkGasAndNonce,
   explainGas,
   getNativeTokenBalance,
-  getPendingTxs,
 } from '@/utils/transaction';
 
 import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
@@ -29,6 +28,7 @@ import {
   parseAction,
 } from '@rabby-wallet/rabby-action';
 import { ALIAS_ADDRESS } from '@/constant/gas';
+import { getPendingTxs } from '@/core/apis/transactions';
 
 // fail code
 export enum FailedCode {
