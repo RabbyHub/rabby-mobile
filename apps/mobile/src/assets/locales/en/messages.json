@@ -2213,6 +2213,52 @@
     }
   },
   "component": {
+    "gasAccount": {
+      "title": "GasAccount",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "gasExceed": "GasAccount balance cannot exceed $1000",
+      "logout": "Log out current GasAccount",
+      "history": {
+        "noHistory": "No history"
+      },
+      "loginInTip": {
+        "title": "Deposit USDC / USDT",
+        "desc": "Pay Gas Fees on All Chains",
+        "login": "Log in GasAccount",
+        "gotIt": "Got it"
+      },
+      "loginConfirmModal": {
+        "title": "Log in with Current Address",
+        "desc": "Once confirmed you can only log in with this address"
+      },
+      "logoutConfirmModal": {
+        "title": "Log out current GasAccount",
+        "desc": "Once logged out, you will no longer be able to use GasAccount to pay for gas fees.",
+        "logout": "Log out"
+      },
+      "depositPopup": {
+        "title": "Deposit",
+        "desc": "Make a deposit to Rabby's DeBank L2 Account with no extra fees—withdraw anytime.",
+        "amount": "Amount",
+        "token": "Token",
+        "selectToken": "Select Token to Deposit"
+      },
+      "withdrawPopup": {
+        "title": "Withdraw",
+        "desc": "You can withdraw your GasAccount balance to your DeBank L2 Wallet. Log in to your DeBank L2 Wallet to transfer the funds to a supported blockchain as needed.",
+        "amount": "Amount",
+        "to": "To"
+      },
+      "withdrawConfirmModal": {
+        "title": "Transferred to your DeBank L2 Wallet",
+        "button": "View on DeBank"
+      },
+      "GasAccountDepositTipPopup": {
+        "title": "Open GasAccount and Deposit",
+        "gotIt": "Got it"
+      }
+    },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",
       "AddressItem": {
