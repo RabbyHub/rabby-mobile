@@ -27,7 +27,7 @@ import {
   AppBottomSheetModalTitle,
   Tip,
 } from '@/components';
-import { formatTokenAmount } from '@/utils/number';
+import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
@@ -46,6 +46,13 @@ import IconInfoSVG from '@/assets/icons/common/info-cc.svg';
 import { useFindChain } from '@/hooks/useFindChain';
 import { isTestnet } from '@/utils/chain';
 import { useMemoizedFn } from 'ahooks';
+
+import { default as RcIconGasActive } from '@/assets/icons/sign/tx/gas-active.svg';
+import { default as RcIconGasBlurCC } from '@/assets/icons/sign/tx/gas-blur-cc.svg';
+
+import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-account-blur-cc.svg';
+import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
+import { SvgProps } from 'react-native-svg';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -95,6 +102,18 @@ interface GasSelectorProps {
   gasPriceMedian: number | null;
   pushType?: TxPushType;
   isDisabledGasPopup?: boolean;
+  gasMethod?: 'native' | 'gasAccount';
+  onChangeGasMethod?(value: 'native' | 'gasAccount'): void;
+  gasAccountCost?: {
+    gas_account_cost: {
+      total_cost: number;
+      tx_cost: number;
+      gas_cost: number;
+    };
+    is_gas_account: boolean;
+    balance_is_enough: boolean;
+    chain_not_support: boolean;
+  };
 }
 
 const useExplainGas = ({
@@ -142,6 +161,9 @@ export const GasSelectorHeader = ({
   isCancel,
   isSpeedUp,
   isDisabledGasPopup,
+  gasMethod,
+  gasAccountCost,
+  onChangeGasMethod,
 }: GasSelectorProps) => {
   const { t } = useTranslation();
   const customerInputRef = useRef<TextInput>(null);
@@ -590,6 +612,7 @@ export const GasSelectorHeader = ({
     return `${formatTokenAmount(
       new BigNumber(modalExplainGas.gasCostAmount).toString(10),
       6,
+      true,
     )} ${chain.nativeTokenSymbol}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalExplainGas?.gasCostAmount]);
@@ -638,12 +661,47 @@ export const GasSelectorHeader = ({
         <TouchableOpacity
           onPress={() => setIsGasHovering(!isGasHovering)}
           style={styles.gasView}>
-          <GasLogoSVG
-            color={colors['neutral-foot']}
-            style={StyleSheet.flatten({
-              flexShrink: 0,
-            })}
-          />
+          {gasMethod ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                padding: 2,
+                borderRadius: 6,
+                borderWidth: 0.5,
+                borderStyle: 'solid',
+                borderColor: colors['neutral-line'],
+              }}>
+              <GasMethod
+                active={gasMethod === 'native'}
+                onChange={() => {
+                  onChangeGasMethod?.('native');
+                }}
+                ActiveComponent={RcIconGasActive}
+                BlurComponent={RcIconGasBlurCC}
+                tips={t('page.signTx.nativeTokenForGas', {
+                  tokenName: chain.nativeTokenSymbol,
+                  chainName: chain.name,
+                })}
+              />
+
+              <GasMethod
+                active={gasMethod === 'gasAccount'}
+                onChange={() => {
+                  onChangeGasMethod?.('gasAccount');
+                }}
+                ActiveComponent={RcIconGasAccountActive}
+                BlurComponent={RcIconGasAccountBlurCC}
+                tips={t('page.signTx.gasAccountForGas')}
+              />
+            </View>
+          ) : (
+            <GasLogoSVG
+              color={colors['neutral-foot']}
+              style={StyleSheet.flatten({
+                flexShrink: 0,
+              })}
+            />
+          )}
 
           <View style={styles.gasSelectorCardContent}>
             {disabled ? (
@@ -656,23 +714,112 @@ export const GasSelectorHeader = ({
                   {t('page.signTx.failToFetchGasCost')}
                 </Text>
               </>
+            ) : gasMethod === 'gasAccount' ? (
+              <View className="gas-selector-card-content-item relative">
+                <Tip
+                  content={
+                    <View
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                      }}>
+                      <View>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '400',
+                            color: colors['neutral-title-2'],
+                          }}>
+                          {t('page.signTx.gasAccount.totalCost')}
+                          {formatUsdValue(
+                            gasAccountCost?.gas_account_cost.total_cost || '0',
+                          )}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '400',
+                            color: colors['neutral-title-2'],
+                          }}>
+                          {t('page.signTx.gasAccount.currentTxCost')}
+
+                          {formatUsdValue(
+                            gasAccountCost?.gas_account_cost.tx_cost || '0',
+                          )}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '400',
+                            color: colors['neutral-title-2'],
+                          }}>
+                          {t('page.signTx.gasAccount.gasCost')}
+                          {formatUsdValue(
+                            gasAccountCost?.gas_account_cost.gas_cost || '0',
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                  }>
+                  <Text
+                    style={{
+                      color: colors['blue-default'],
+                      fontSize: 16,
+                      fontWeight: '500',
+                    }}>
+                    {gasAccountCost?.gas_account_cost.total_cost} USD
+                  </Text>
+                </Tip>
+              </View>
             ) : (
               <View style={styles.gasSelectorCardContentItem}>
                 <View style={styles.gasSelectorCardAmount}>
-                  <Text
-                    style={StyleSheet.flatten([
-                      styles.gasSelectorCardAmountLabel,
-                      !processedRules.includes('1118') &&
-                      engineResultMap['1118']?.level === 'danger'
-                        ? { color: colors['red-default'] }
-                        : {},
-                      !processedRules.includes('1118') &&
-                      engineResultMap['1118']?.level === 'warning'
-                        ? { color: colors['orange-default'] }
-                        : {},
-                    ])}>
-                    {gasCostUsdStr}
-                  </Text>
+                  {gasMethod ? (
+                    <Tip content={`≈${gasCostUsdStr}`}>
+                      <Text
+                        style={StyleSheet.flatten([
+                          styles.gasSelectorCardAmountLabel,
+                          !processedRules.includes('1118') &&
+                          engineResultMap['1118']?.level === 'danger'
+                            ? { color: colors['red-default'] }
+                            : {},
+                          !processedRules.includes('1118') &&
+                          engineResultMap['1118']?.level === 'warning'
+                            ? { color: colors['orange-default'] }
+                            : {},
+                        ])}>
+                        <Text style={{ color: colors['blue-default'] }}>
+                          {gasCostAmountStr}
+                        </Text>
+                      </Text>
+                    </Tip>
+                  ) : (
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.gasSelectorCardAmountLabel,
+                        !processedRules.includes('1118') &&
+                        engineResultMap['1118']?.level === 'danger'
+                          ? { color: colors['red-default'] }
+                          : {},
+                        !processedRules.includes('1118') &&
+                        engineResultMap['1118']?.level === 'warning'
+                          ? { color: colors['orange-default'] }
+                          : {},
+                      ])}>
+                      {gasMethod ? (
+                        <Text style={{ color: colors['blue-default'] }}>
+                          {gasCostAmountStr}
+                        </Text>
+                      ) : (
+                        gasCostUsdStr
+                      )}
+                    </Text>
+                  )}
+
                   {L2_ENUMS.includes(chain.enum) &&
                     !CAN_ESTIMATE_L1_FEE_CHAINS.includes(chain.enum) && (
                       <View
@@ -690,13 +837,13 @@ export const GasSelectorHeader = ({
             )}
           </View>
 
-          {gas.success && (
+          {!gasMethod && gas.success ? (
             <Text style={styles.gasCostAmount}>
               {isGasHovering
                 ? calcGasEstimated(selectedGas?.estimated_seconds)
                 : `~${gasCostAmountStr}`}
             </Text>
-          )}
+          ) : null}
           {engineResultMap['1118'] && (
             <SecurityLevelTagNoText
               enable={engineResultMap['1118'].enable}
@@ -901,5 +1048,40 @@ export const GasSelectorHeader = ({
         </BottomSheetView>
       </AppBottomSheetModal>
     </>
+  );
+};
+
+const GasMethod = (props: {
+  active: boolean;
+  onChange: () => void;
+  ActiveComponent: React.FC<SvgProps>;
+  BlurComponent: React.FC<SvgProps>;
+  tips?: React.ReactNode;
+}) => {
+  const { active, onChange, ActiveComponent, BlurComponent } = props;
+  const colors = useThemeColors();
+  return (
+    <TouchableOpacity
+      style={{
+        width: 32,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 4,
+        backgroundColor: active ? colors['blue-light-1'] : 'transparent',
+      }}
+      onPress={onChange}>
+      <ActiveComponent
+        style={{
+          display: active ? 'flex' : 'none',
+        }}
+      />
+      <BlurComponent
+        color={colors['neutral-foot']}
+        style={{
+          display: active ? 'none' : 'flex',
+        }}
+      />
+    </TouchableOpacity>
   );
 };

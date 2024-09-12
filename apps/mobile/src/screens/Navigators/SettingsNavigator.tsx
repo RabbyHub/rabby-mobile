@@ -32,14 +32,6 @@ export function SettingNavigator() {
         headerTintColor: colors['neutral-title-1'],
       })}>
       <SettingsStack.Screen
-        name={RootNames.Settings}
-        component={SettingsScreen}
-        options={{
-          title: '',
-          headerTitle: 'Settings',
-        }}
-      />
-      <SettingsStack.Screen
         name={RootNames.SetPassword}
         component={SetPasswordScreen}
         options={{

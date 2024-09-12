@@ -101,37 +101,6 @@ export default function HomeHeaderArea() {
     });
   }, [navigation]);
 
-  const handlePressIcon = React.useCallback(
-    (type: 'history' | 'settings' | 'add-account') => {
-      switch (type) {
-        default:
-          break;
-        case 'settings': {
-          navigation.push(RootNames.StackSettings, {
-            screen: RootNames.Settings,
-            params: {},
-          });
-          break;
-        }
-        case 'add-account': {
-          navigation.push(RootNames.StackAddress, {
-            screen: RootNames.ImportNewAddress,
-            params: {},
-          });
-          break;
-        }
-        case 'history': {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.History,
-            params: {},
-          });
-          break;
-        }
-      }
-    },
-    [navigation],
-  );
-
   const { remoteVersion } = useUpgradeInfo();
 
   const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -299,8 +268,8 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     touchBox: {
       maxWidth: width - 20 - 107,
       paddingHorizontal: 8,
-      height: 48,
-      paddingVertical: 10,
+      height: 40,
+      paddingVertical: 8,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',

@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { noop } from 'lodash';
 import { Tip } from '@/components/Tip';
 import clsx from 'clsx';
-import { useAsync } from 'react-use';
 import { formatUsdValue } from '@/utils/number';
 import { openapi, testOpenapi } from '@/core/request';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -36,6 +35,7 @@ import { findChainByServerID } from '@/utils/chain';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { TokenAmountItem } from '@/components/Approval/components/Actions/components/TokenAmountItem';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
+import useAsync from 'react-use/lib/useAsync';
 // import { GasAccountCloseIcon } from './PopupCloseIcon';
 
 const amountList = [20, 100, 500];

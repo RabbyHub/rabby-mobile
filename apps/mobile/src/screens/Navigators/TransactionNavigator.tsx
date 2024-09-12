@@ -11,7 +11,6 @@ import {
 } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 
-import HistoryScreen from '@/screens/Transaction/History';
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
@@ -45,14 +44,6 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
-      <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
-        options={{
-          title: 'History',
-          ...headerPresets.withBgCard2,
-        }}
-      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}

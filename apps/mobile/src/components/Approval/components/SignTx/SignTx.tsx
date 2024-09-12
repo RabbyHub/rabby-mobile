@@ -96,6 +96,7 @@ import { CustomRPCErrorModal } from './CustomRPCErrorModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
 import { findChain, isTestnet } from '@/utils/chain';
 import { getTimeSpan } from '@/utils/time';
+import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -427,20 +428,45 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
 
-  // useEffect(() => {
-  //   const hasCustomRPC = async () => {
-  //     if (chain?.enum) {
-  //       const b = await wallet.hasCustomRPC(chain?.enum);
-  // if (b) {
-  //   setGasLessFailedReason(
-  //     t('page.signFooterBar.gasless.customRpcUnavailableTip')
-  //   );
-  // }
-  //       setNoCustomRPC(!b);
-  //     }
-  //   };
-  //   hasCustomRPC();
-  // }, [chain?.enum]);
+  const txs = useMemo(() => {
+    return [
+      {
+        ...tx,
+        nonce: realNonce,
+        gasPrice: tx.gasPrice || tx.maxFeePerGas,
+        gas: gasLimit,
+      },
+    ] as Tx[];
+  }, [tx, realNonce, gasLimit]);
+
+  const {
+    gasAccountCost,
+    gasMethod,
+    setGasMethod,
+    isGasAccountLogin,
+    gasAccountCanPay,
+    canGotoUseGasAccount,
+  } = useGasAccountTxsCheck({
+    isReady,
+    txs,
+    noCustomRPC,
+    isSupportedAddr,
+  });
+
+  useEffect(() => {
+    const hasCustomRPC = async () => {
+      if (chain?.enum) {
+        const b = await apiCustomRPC.hasCustomRPC(chain?.enum);
+        if (b) {
+          setGasLessFailedReason(
+            t('page.signFooterBar.gasless.customRpcUnavailableTip'),
+          );
+        }
+        setNoCustomRPC(!b);
+      }
+    };
+    hasCustomRPC();
+  }, [chain?.enum, t]);
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );
@@ -800,7 +826,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         pushType: pushInfo.type,
         lowGasDeadline: pushInfo.lowGasDeadline,
         reqId,
-        isGasLess: useGasLess,
+        isGasLess: gasMethod === 'native' ? useGasLess : false,
+        isGasAccount: gasAccountCanPay,
       });
 
       return;
@@ -1449,6 +1476,9 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           <FooterBar
             Header={
               <GasSelectorHeader
+                gasAccountCost={gasAccountCost}
+                gasMethod={gasMethod}
+                onChangeGasMethod={setGasMethod}
                 pushType={pushInfo.type}
                 disabled={isGnosisAccount || isCoboArugsAccount}
                 isReady={isReady}
@@ -1490,6 +1520,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
                 gasPriceMedian={gasPriceMedian}
               />
             }
+            noCustomRPC={noCustomRPC}
+            gasMethod={gasMethod}
+            gasAccountCost={gasAccountCost}
+            gasAccountCanPay={gasAccountCanPay}
+            canGotoUseGasAccount={canGotoUseGasAccount}
+            isGasAccountLogin={isGasAccountLogin}
+            onChangeGasAccount={() => setGasMethod('gasAccount')}
             isWatchAddr={
               currentAccountType === KEYRING_TYPE.WatchAddressKeyring
             }

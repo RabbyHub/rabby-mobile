@@ -1,5 +1,7 @@
-import { gasAccountService } from '@/core/services';
+import { gasAccountService, keyringService } from '@/core/services';
 import { GasAccountServiceStore } from '@/core/services/gasAccount';
+import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useCallback } from 'react';
 
@@ -13,16 +15,49 @@ export const useGasBalanceRefresh = () => {
   return { refreshId, refresh };
 };
 
-export const gasAccountSigAtom = atom<{
-  sig?: string;
-  accountId?: string;
-}>({});
+export const gasAccountSigAtom = atom<Partial<GasAccountServiceStore>>({});
 
 gasAccountSigAtom.onMount = set => {
+  const syncDeleteGasAccount = async (
+    address: string,
+    type: string,
+    brand?: string,
+  ) => {
+    if (type !== KEYRING_TYPE.WatchAddressKeyring) {
+      console.log('syncDeleteGasAccount', address, type, brand);
+      const restAddresses = await keyringService.getAllAddresses();
+      console.log('restAddresses', restAddresses);
+      const gasAccount =
+        gasAccountService.getGasAccountData() as GasAccountServiceStore;
+      if (!gasAccount?.account?.address) return;
+      // check if there is another type address in wallet
+      const stillHasAddr = restAddresses.some(item => {
+        return (
+          isSameAddress(item.address, gasAccount.account!.address) &&
+          item.type !== KEYRING_TYPE.WatchAddressKeyring
+        );
+      });
+      if (!stillHasAddr && isSameAddress(address, gasAccount.account.address)) {
+        // if there is no another type address then reset signature
+        gasAccountService.setGasAccountSig();
+        const data =
+          gasAccountService.getGasAccountData() as GasAccountServiceStore;
+
+        set({
+          ...data,
+        });
+      }
+    }
+  };
+  keyringService.on('removedAccount', syncDeleteGasAccount);
   set({
     sig: gasAccountService.store.sig,
     accountId: gasAccountService.store.accountId,
   });
+
+  return () => {
+    keyringService.off('removedAccount', syncDeleteGasAccount);
+  };
 };
 
 export const useGasAccountSign = () => {
@@ -34,7 +69,7 @@ export const useSetGasAccount = () => {
   const setGasAccount = useCallback(
     (sig?: string, account?: GasAccountServiceStore['account']) => {
       gasAccountService.setGasAccountSig(sig, account);
-      set({ sig, accountId: account?.address });
+      set({ sig, accountId: account?.address, account: account });
     },
     [set],
   );

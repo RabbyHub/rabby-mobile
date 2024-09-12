@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useAsyncFn, useDebounce } from 'react-use';
 import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { useGasAccountSign } from './atom';
 import { openapi } from '@/core/request';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
+import useDebounce from 'react-use/lib/useDebounce';
 
 export const useGasAccountTxsCheck = ({
   isReady,

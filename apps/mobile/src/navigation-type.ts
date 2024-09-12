@@ -39,6 +39,10 @@ export type BottomTabParamsList = {
   [RootNames.Home]?: {};
   [RootNames.Dapps]?: {};
   [RootNames.Points]?: {};
+  [RootNames.History]?: {};
+  [RootNames.Settings]?: {
+    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  };
 };
 
 type GetStartedNavigatorParamsList = {
@@ -90,7 +94,6 @@ export type AccountNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.History]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {
@@ -107,9 +110,6 @@ export type TransactionNavigatorParamList = {
 };
 
 export type SettingNavigatorParamList = {
-  [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
-  };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
     | {

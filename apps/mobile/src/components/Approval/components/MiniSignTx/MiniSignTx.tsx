@@ -61,6 +61,8 @@ import {
   ActionRequireData,
   ParsedActionData,
 } from '@rabby-wallet/rabby-action';
+import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
+import { apiCustomRPC } from '@/core/apis';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -406,20 +408,49 @@ const MiniSignTx = ({
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
 
-  // useEffect(() => {
-  //   const hasCustomRPC = async () => {
-  //     if (chain?.enum) {
-  //       const b = await wallet.hasCustomRPC(chain?.enum);
-  // if (b) {
-  //   setGasLessFailedReason(
-  //     t('page.signFooterBar.gasless.customRpcUnavailableTip')
-  //   );
-  // }
-  //       setNoCustomRPC(!b);
-  //     }
-  //   };
-  //   hasCustomRPC();
-  // }, [chain?.enum]);
+  const gasAccountTxs = useMemo(() => {
+    if (!selectedGas?.price) {
+      return [] as Tx[];
+    }
+    return (
+      txsResult.map((item, index) => {
+        return {
+          ...item.tx,
+          gas: item.gasLimit,
+          gasPrice: intToHex(selectedGas.price),
+        };
+      }) || ([] as Tx[])
+    );
+  }, [txsResult, selectedGas?.price]);
+
+  const {
+    gasAccountCost,
+    gasMethod,
+    setGasMethod,
+    isGasAccountLogin,
+    gasAccountCanPay,
+    canGotoUseGasAccount,
+  } = useGasAccountTxsCheck({
+    isReady,
+    txs: gasAccountTxs,
+    noCustomRPC,
+    isSupportedAddr,
+  });
+
+  useEffect(() => {
+    const hasCustomRPC = async () => {
+      if (chain?.enum) {
+        const b = await apiCustomRPC.hasCustomRPC(chain?.enum);
+        if (b) {
+          setGasLessFailedReason(
+            t('page.signFooterBar.gasless.customRpcUnavailableTip'),
+          );
+        }
+        setNoCustomRPC(!b);
+      }
+    };
+    hasCustomRPC();
+  }, [chain?.enum, t]);
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );
@@ -435,7 +466,8 @@ const MiniSignTx = ({
           options: {
             chainServerId: chain.serverId,
             gasLevel: selectedGas || undefined,
-            isGasLess: useGasLess,
+            isGasLess: gasMethod === 'native' ? useGasLess : false,
+            isGasAccount: gasAccountCanPay,
             waitCompleted: false,
             pushType: pushInfo.type,
             ignoreGasCheck: true,
@@ -456,6 +488,7 @@ const MiniSignTx = ({
     useGasLess,
     pushInfo.type,
     handleInitTask,
+    gasAccountCanPay,
   ]);
 
   const handleAllow = useMemoizedFn(async () => {
@@ -876,6 +909,9 @@ const MiniSignTx = ({
         task={task}
         Header={
           <GasSelectorHeader
+            gasAccountCost={gasAccountCost}
+            gasMethod={gasMethod}
+            onChangeGasMethod={setGasMethod}
             pushType={pushInfo.type}
             isDisabledGasPopup={task.status !== 'idle'}
             disabled={false}
@@ -932,6 +968,16 @@ const MiniSignTx = ({
             }}
           />
         }
+        noCustomRPC={noCustomRPC}
+        gasMethod={gasMethod}
+        gasAccountCost={gasAccountCost}
+        gasAccountCanPay={gasAccountCanPay}
+        canGotoUseGasAccount={canGotoUseGasAccount}
+        isGasAccountLogin={isGasAccountLogin}
+        isWalletConnect={
+          currentAccountType === KEYRING_TYPE.WalletConnectKeyring
+        }
+        onChangeGasAccount={() => setGasMethod('gasAccount')}
         isWatchAddr={currentAccountType === KEYRING_TYPE.WatchAddressKeyring}
         gasLessConfig={gasLessConfig}
         gasLessFailedReason={gasLessFailedReason}
