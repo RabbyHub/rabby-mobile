@@ -156,7 +156,7 @@ export const PrivatekeyWaiting = ({ params }: { params: ApprovalParams }) => {
           chainId: chain?.serverId || '',
           category: KEYRING_CATEGORY_MAP[account.type],
           preExecSuccess: explain
-            ? explain?.calcSuccess && explain?.pre_exec.success
+            ? explain?.calcSuccess && explain?.pre_exec?.success
             : true,
           createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
           source: params?.$ctx?.ga?.source || '',
