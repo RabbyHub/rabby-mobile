@@ -29,9 +29,16 @@ interface AddressItemProps {
   isCurrentAddress?: boolean;
   isInModal?: boolean;
   isInList?: boolean;
+  showUsd?: boolean;
 }
 export const AddressItemInner = (props: AddressItemProps) => {
-  const { wallet, isCurrentAddress, isInModal, isInList } = props;
+  const {
+    wallet,
+    isCurrentAddress,
+    isInModal,
+    isInList,
+    showUsd = true,
+  } = props;
   const { isAddrOnWhitelist } = useWhitelist();
 
   const themeColors = useThemeColors();
@@ -163,7 +170,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
               }
             />
           </TouchableOpacity>
-          {!isCurrentAddress && (
+          {!isCurrentAddress && showUsd && (
             <Text
               style={StyleSheet.flatten([
                 styles.text,
