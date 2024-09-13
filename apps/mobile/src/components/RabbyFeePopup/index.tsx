@@ -160,8 +160,12 @@ function SwapAggregatorFee({
   if (dexName && feeDexDesc && DEX?.[dexName]?.logo) {
     return (
       <View style={styles.dexFeeContainer}>
-        <Image source={DEX[dexName].logo} style={styles.dexFeeLogo} />
-        <Text style={styles.dexFeeText}>{feeDexDesc}</Text>
+        <Text style={styles.dexFeeText}>
+          <View style={{ position: 'relative' }}>
+            <Image source={DEX[dexName].logo} style={styles.dexFeeLogo} />
+          </View>
+          {feeDexDesc}
+        </Text>
       </View>
     );
   }
@@ -248,11 +252,13 @@ const getStyles = createGetStyles(colors => ({
   dexFeeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 0,
     marginTop: 20,
     gap: 3,
   },
   dexFeeLogo: {
+    top: 2,
+    marginRight: 2,
     width: 14,
     height: 14,
     borderRadius: 999999,
