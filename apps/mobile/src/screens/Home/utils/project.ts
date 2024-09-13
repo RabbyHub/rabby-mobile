@@ -1,4 +1,4 @@
-import PQueue from 'p-queue/dist/index';
+import PQueue from 'p-queue';
 
 import {
   PortfolioItem,

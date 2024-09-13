@@ -2,7 +2,10 @@ import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import BigNumber from 'bignumber.js';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveTokenRequireData, TypedDataActionData } from './utils';
+import {
+  ApproveTokenRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
@@ -25,7 +28,7 @@ const Permit2 = ({
   chain,
   engineResults,
 }: {
-  data: TypedDataActionData['permit2'];
+  data: ParsedTypedDataActionData['permit2'];
   requireData: ApproveTokenRequireData;
   chain: Chain;
   engineResults: Result[];
@@ -170,16 +173,6 @@ const Permit2 = ({
             engineResult={engineResultMap['1071']}
             dangerText={t('page.signTx.tokenApprove.eoaAddress')}
             title={t('page.signTx.addressTypeTitle')}
-          />
-
-          <SecurityListItem
-            id="1074"
-            engineResult={engineResultMap['1074']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-            title={t('page.signTx.interacted')}
           />
 
           <SecurityListItem

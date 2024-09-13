@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Col, Row, Table } from '../Actions/components/Table';
-import { TypedDataActionData } from './utils';
+import { ParsedTypedDataActionData } from '@rabby-wallet/rabby-action';
 import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Text, View } from 'react-native';
@@ -11,7 +11,7 @@ import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 const CoboSafeModificationRule = ({
   data,
 }: {
-  data: TypedDataActionData['coboSafeModificationRole'];
+  data: ParsedTypedDataActionData['coboSafeModificationRole'];
 }) => {
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();

@@ -3,7 +3,10 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveNFTRequireData, ParsedActionData } from './utils';
+import {
+  ApproveNFTRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from './components/Table';
 import NFTWithName from './components/NFTWithName';
 import * as Values from './components/Values';
@@ -105,16 +108,6 @@ const ApproveNFT = ({
             engineResult={engineResultMap['1043']}
             dangerText={t('page.signTx.tokenApprove.eoaAddress')}
             title={t('page.signTx.addressTypeTitle')}
-          />
-
-          <SecurityListItem
-            id="1048"
-            engineResult={engineResultMap['1048']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-            title={t('page.signTx.interacted')}
           />
 
           <SecurityListItem

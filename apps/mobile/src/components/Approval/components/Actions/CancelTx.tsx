@@ -4,7 +4,10 @@ import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { maxBy } from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { ParsedActionData, CancelTxRequireData } from './utils';
+import {
+  ParsedActionData,
+  CancelTxRequireData,
+} from '@rabby-wallet/rabby-action';
 import IconAlert from '@/assets/icons/sign/tx/alert.svg';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
 import { useThemeColors } from '@/hooks/theme';
