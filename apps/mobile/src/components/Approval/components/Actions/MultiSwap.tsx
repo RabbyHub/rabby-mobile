@@ -17,7 +17,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import { Chain } from '@/constant/chains';
 import { StyleSheet, Text, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
-import { formatTokenAmount } from '@/utils/number';
+import { formatAmount } from '@/utils/number';
 
 const { isSameAddress } = addressUtils;
 
@@ -93,7 +93,7 @@ const MultiSwap = ({
                 text={
                   <View style={commonStyle.rowFlexCenterItem}>
                     <Text style={commonStyle.primaryText}>
-                      {formatTokenAmount(token.amount)}{' '}
+                      {formatAmount(token.amount)}{' '}
                     </Text>
                     <Values.TokenSymbol
                       token={token}
@@ -125,7 +125,7 @@ const MultiSwap = ({
                   text={
                     <View style={commonStyle.rowFlexCenterItem}>
                       <Text style={commonStyle.primaryText}>
-                        {formatTokenAmount(token.amount)}{' '}
+                        {formatAmount(token.min_amount)}{' '}
                       </Text>
                       <Values.TokenSymbol
                         token={token}
