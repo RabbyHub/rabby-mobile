@@ -121,6 +121,9 @@ export default function ToAddressControl({
         hasError={!!errors.to}
         clearable={false}
         customIcon={ctx => {
+          if (formValues.to) {
+            return null;
+          }
           return (
             <TouchableView
               onPress={openCamera}
