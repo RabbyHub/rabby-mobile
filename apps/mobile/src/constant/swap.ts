@@ -13,6 +13,7 @@ const LogoBinance = require('@/assets/icons/swap/binance.png');
 const LogoCoinbase = require('@/assets/icons/swap/coinbase.png');
 const LogoOkx = require('@/assets/icons/swap/okx.png');
 const LogoKyberSwap = require('@/assets/icons/swap/kyberswap.png');
+const LogoOdos = require('@/assets/icons/swap/odos.png');
 
 const LogoTokenDefault = require('@/assets/icons/swap/token-default.svg');
 
@@ -50,6 +51,18 @@ export const DEX = {
     logo: LogoKyberSwap,
     name: 'KyberSwap',
     chains: DEX_SUPPORT_CHAINS[DEX_ENUM.KYBERSWAP],
+  },
+  [DEX_ENUM.PARASWAPV6]: {
+    id: DEX_ENUM.PARASWAPV6,
+    logo: LogoParaswap,
+    name: 'ParaSwap',
+    chains: DEX_SUPPORT_CHAINS[DEX_ENUM.PARASWAPV6],
+  },
+  [DEX_ENUM.ODOS]: {
+    id: DEX_ENUM.ODOS,
+    logo: LogoOdos,
+    name: 'Odos',
+    chains: DEX_SUPPORT_CHAINS[DEX_ENUM.ODOS],
   },
 };
 
