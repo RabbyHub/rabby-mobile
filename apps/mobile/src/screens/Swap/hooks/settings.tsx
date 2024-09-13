@@ -30,7 +30,7 @@ const swapSupportedDexList = atom<string[]>(Object.keys(DEX));
 
 swapSupportedDexList.onMount = setAtom => {
   openapi.getSupportedDEXList().then(s => {
-    setAtom(s.dex_list);
+    setAtom(s.dex_list?.filter(e => DEX[e]));
   });
 };
 
