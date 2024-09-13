@@ -2,7 +2,7 @@ import { toast } from '@/components/Toast';
 import { openapi } from '@/core/request';
 import { useCurrentAccount } from '@/hooks/account';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
-import { useCurve } from '@/hooks/useCurve';
+import { CurveDayType, useCurve } from '@/hooks/useCurve';
 import { numFormat } from '@/utils/math';
 import { formatUsdValue } from '@/utils/number';
 import { CHAINS_LIST } from '@debank/common';
@@ -11,7 +11,7 @@ import { findLastIndex } from 'lodash';
 import { useEffect, useState } from 'react';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
 
-export const use24hCurveData = () => {
+export const use24hOrWeekCurveData = (isWeek?: boolean) => {
   const { currentAccount } = useCurrentAccount();
   const { balance, success, hasValueChainBalances, balanceLoading } =
     useCurrentBalance(currentAccount?.address);
@@ -20,7 +20,12 @@ export const use24hCurveData = () => {
     result: curveData,
     refresh: refreshCurve,
     isLoading: curveLoading,
-  } = useCurve(currentAccount?.address, 0, balance);
+  } = useCurve(
+    currentAccount?.address,
+    0,
+    balance,
+    isWeek ? CurveDayType.WEEK : CurveDayType.DAY,
+  );
 
   return {
     curveData,

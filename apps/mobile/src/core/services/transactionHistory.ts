@@ -373,13 +373,18 @@ export class TransactionHistoryService {
       stats.report('completeTransaction', {
         chainId: chain.serverId,
         success,
-        preExecSuccess: Boolean(
-          target.maxGasTx?.explain?.pre_exec.success &&
-            target.maxGasTx?.explain?.calcSuccess,
-        ),
+        preExecSuccess: chain.isTestnet
+          ? true
+          : target.maxGasTx.explain
+          ? Boolean(
+              target.maxGasTx?.explain?.pre_exec?.success &&
+                target.maxGasTx?.explain?.calcSuccess,
+            )
+          : true,
         // createBy: target?.$ctx?.ga ? 'rabby' : 'dapp',
         // source: target?.$ctx?.ga?.source || '',
         // trigger: target?.$ctx?.ga?.trigger || '',
+        networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
       });
     }
     // this.clearBefore({ address, chainId, nonce });

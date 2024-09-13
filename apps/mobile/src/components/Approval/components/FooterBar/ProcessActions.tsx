@@ -71,34 +71,36 @@ export const ProcessActions: React.FC<Props> = ({
 
   return (
     <ActionsContainer onCancel={onCancel}>
-      <Tip
-        // @ts-expect-error
-        content={tooltipContent}>
-        <View>
-          <GasLessAnimatedWrapper
-            isGasNotEnough={isGasNotEnough}
-            gasLessThemeColor={gasLessThemeColor}
-            title={buttonText}
-            icon={buttonIcon}
-            titleStyle={buttonTextStyle}
-            buttonStyle={buttonStyle}
-            gasLess={gasLess}
-            showOrigin={!gasLess && !disabledProcess}
-            type="process">
-            <Button
-              disabled={disabledProcess}
-              type={buttonIsPrimary ? 'primary' : 'clear'}
-              buttonStyle={[styles.button, buttonStyle]}
-              titleStyle={buttonTextStyle}
-              disabledStyle={styles.disabled}
-              onPress={onSubmit}
-              icon={buttonIcon}
+      <View>
+        <Tip
+          // @ts-expect-error
+          content={tooltipContent}>
+          <View>
+            <GasLessAnimatedWrapper
+              isGasNotEnough={isGasNotEnough}
+              gasLessThemeColor={gasLessThemeColor}
               title={buttonText}
-              showTitleOnLoading
-            />
-          </GasLessAnimatedWrapper>
-        </View>
-      </Tip>
+              titleStyle={buttonTextStyle}
+              buttonStyle={buttonStyle}
+              gasLess={gasLess}
+              showOrigin={!gasLess && !disabledProcess}
+              icon={buttonIcon}
+              type="process">
+              <Button
+                disabled={disabledProcess}
+                type={buttonIsPrimary ? 'primary' : 'clear'}
+                buttonStyle={[styles.button, buttonStyle]}
+                titleStyle={buttonTextStyle}
+                disabledStyle={styles.disabled}
+                onPress={onSubmit}
+                icon={buttonIcon}
+                title={buttonText}
+                showTitleOnLoading
+              />
+            </GasLessAnimatedWrapper>
+          </View>
+        </Tip>
+      </View>
     </ActionsContainer>
   );
 };

@@ -12,29 +12,32 @@ import React, { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-export const CameraPopup = forwardRef<BottomSheetModal, QRCodeScannerProps>(
-  (props, ref) => {
-    const { colors, styles } = useThemeStyles(getStyle);
-    const { t } = useTranslation();
+export const CameraPopup = forwardRef<
+  BottomSheetModal,
+  QRCodeScannerProps & {
+    tip?: string;
+  }
+>(({ tip, ...props }, ref) => {
+  const { colors, styles } = useThemeStyles(getStyle);
+  const { t } = useTranslation();
 
-    return (
-      <AppBottomSheetModal ref={ref} snapPoints={[436]}>
-        <BottomSheetView style={styles.container}>
-          <View>
-            <Text style={styles.title}>
-              {t('page.newAddress.addContacts.cameraTitle')}
-            </Text>
-          </View>
-          <RcIconScannerDownArrowCC
-            color={colors['neutral-line']}
-            style={styles.icon}
-          />
-          <QRCodeScanner {...props} />
-        </BottomSheetView>
-      </AppBottomSheetModal>
-    );
-  },
-);
+  return (
+    <AppBottomSheetModal ref={ref} snapPoints={[436]}>
+      <BottomSheetView style={styles.container}>
+        <View>
+          <Text style={styles.title}>
+            {tip || t('page.newAddress.addContacts.cameraTitle')}
+          </Text>
+        </View>
+        <RcIconScannerDownArrowCC
+          color={colors['neutral-line']}
+          style={styles.icon}
+        />
+        <QRCodeScanner {...props} />
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+});
 
 const getStyle = createGetStyles(colors => ({
   container: {

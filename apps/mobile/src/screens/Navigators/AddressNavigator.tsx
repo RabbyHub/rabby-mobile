@@ -16,7 +16,6 @@ import { ImportMoreAddressScreen } from '../Address/ImportMoreAddressScreen';
 import { ImportMoreAddressScreenButton } from '../Address/ImportMoreAddressScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
 import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
-import { ScannerButton } from '../Address/ScannerButton';
 import { ImportSeedPhraseScreen } from '../Address/ImportSeedPhraseScreen';
 import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
 import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRiskCheckScreen';
@@ -143,7 +142,6 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
-          headerRight: ScannerButton,
         }}
       />
       <AddressStack.Screen
@@ -155,7 +153,6 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
-          headerRight: ScannerButton,
         }}
       />
       <AddressStack.Screen
