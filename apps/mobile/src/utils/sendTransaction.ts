@@ -1,10 +1,4 @@
-import {
-  calcGasLimit,
-  calcMaxPriorityFee,
-  checkGasAndNonce,
-  explainGas,
-  getNativeTokenBalance,
-} from '@/utils/transaction';
+import { calcMaxPriorityFee, checkGasAndNonce } from '@/utils/transaction';
 
 import { GasLevel, Tx, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import { findChain, isTestnet } from './chain';
@@ -20,7 +14,11 @@ import { INTERNAL_REQUEST_ORIGIN, INTERNAL_REQUEST_SESSION } from '@/constant';
 import { intToHex } from './number';
 
 import BigNumber from 'bignumber.js';
-import { getRecommendGas } from '@/components/Approval/components/SignTx/calc';
+import {
+  explainGas,
+  getNativeTokenBalance,
+  getRecommendGas,
+} from '@/components/Approval/components/SignTx/calc';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { eventBus, EVENTS } from './events';
 import {
@@ -28,7 +26,7 @@ import {
   parseAction,
 } from '@rabby-wallet/rabby-action';
 import { ALIAS_ADDRESS } from '@/constant/gas';
-import { getPendingTxs } from '@/core/apis/transactions';
+import { calcGasLimit, getPendingTxs } from '@/core/apis/transactions';
 
 // fail code
 export enum FailedCode {

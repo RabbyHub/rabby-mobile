@@ -17,6 +17,7 @@ import {
   transactionWatcherService,
 } from '../services';
 import { findChain } from '@/utils/chain';
+import { intToHex } from '@/utils/number';
 
 export const clearPendingTxs = (address: string) => {
   transactionHistoryService.clearPendingTransactions(address);
