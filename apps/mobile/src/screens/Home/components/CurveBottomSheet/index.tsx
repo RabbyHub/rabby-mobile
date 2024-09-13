@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CurvePoint,
   formatTimeMachineCurve,
-  use24hCurveData,
+  use24hOrWeekCurveData,
   useTimeMachineData,
 } from '../../hooks/useCurve';
 import dayjs from 'dayjs';
@@ -19,7 +19,7 @@ import { useCurrentAccount } from '@/hooks/account';
 import { formatUsdValue } from '@/utils/number';
 import * as d3Shape from 'd3-shape';
 import { CurveLoader } from './CurveLoader';
-import { TIME_TAB_LIST, TabKey, TimeTab } from './TimeTab';
+import { TIME_TAB_LIST, REAL_TIME_TAB_LIST, TabKey, TimeTab } from './TimeTab';
 import { DataHeaderInfo } from './DataHeaderInfo';
 import Animated, {
   SharedValue,
@@ -31,31 +31,33 @@ import AutoLockView from '@/components/AutoLockView';
 
 const DATE_FORMATTER = 'MMM DD, YYYY';
 
+const isRealTimeKey = (key: string) => REAL_TIME_TAB_LIST.includes(key);
+
 function Inner() {
   const { colors, styles } = useThemeStyles(getStyles);
 
   const [activeKey, setActiveKey] = useState<TabKey>(TIME_TAB_LIST[0].key);
   const {
-    curveData: curve24hData,
+    curveData: realTimeData,
     curveLoading,
     isOffline,
     hadAssets,
     balanceLoading,
-  } = use24hCurveData();
+  } = use24hOrWeekCurveData(activeKey === '1W');
   const {
     data: historyData,
     loading: timeMachineLoading,
     supportChainList,
     isNoAssets,
-  } = useTimeMachineData(activeKey !== '24h');
+  } = useTimeMachineData(!isRealTimeKey(activeKey));
 
   const timeMachMapping = useMemo(() => {
     let result = {} as Record<
-      Exclude<TabKey, '24h'>,
+      Exclude<TabKey, '24h' | '1W'>,
       ReturnType<typeof formatTimeMachineCurve>
     >;
     TIME_TAB_LIST.forEach(e => {
-      if (e.key !== '24h' && historyData?.result?.data) {
+      if (!isRealTimeKey(e.key) && historyData?.result?.data) {
         result[e.key] = formatTimeMachineCurve(
           e.value,
           historyData?.result?.data as unknown as any,
@@ -66,11 +68,11 @@ function Inner() {
   }, [historyData?.result?.data]);
 
   const data = useMemo(() => {
-    if (activeKey === '24h') {
-      return curve24hData;
+    if (isRealTimeKey(activeKey)) {
+      return realTimeData;
     }
     return timeMachMapping[activeKey];
-  }, [activeKey, curve24hData, timeMachMapping]);
+  }, [activeKey, realTimeData, timeMachMapping]);
 
   const { isUp, percent } = useMemo(() => {
     if (data?.list?.length) {
@@ -120,8 +122,8 @@ function Inner() {
           <Chart
             isOffline={isOffline}
             data={
-              (e.key === '24h'
-                ? curve24hData?.list
+              (isRealTimeKey(e.key)
+                ? realTimeData?.list
                 : timeMachMapping?.[e.key]?.list) || []
             }
             activeKey={e.key}
@@ -129,11 +131,11 @@ function Inner() {
             supportChainList={supportChainList}
             loading={
               balanceLoading ||
-              (e.key === '24h' ? curveLoading : timeMachineLoading)
+              (isRealTimeKey(e.key) ? curveLoading : timeMachineLoading)
             }
             isNoAssets={e.key !== '24h' ? isNoAssets : false}
             pathColor={pathColor}
-            showSupportChainList={e.key !== '24h'}
+            showSupportChainList={!isRealTimeKey(e.key)}
             xOffset={e.key === '24h' ? curve24hXOffset : timeMachineXOffset}
           />
         </View>
