@@ -267,6 +267,7 @@ export default function AppNavigation({
               headerStyle: {
                 backgroundColor: colors['neutral-black'],
               },
+              headerTintColor: colors['neutral-title-2'],
               headerTitleStyle: {
                 color: colors['neutral-title-2'],
                 fontWeight: 'normal',
