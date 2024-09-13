@@ -262,3 +262,19 @@ export const generateApproveTokenTx = ({
     ),
   };
 };
+
+export const ethSendTransaction = async (
+  ...args: Parameters<typeof providerController.ethSendTransaction>
+) => {
+  try {
+    const res = await providerController.ethSendTransaction(...args);
+    return res;
+  } catch (e) {
+    const signingTxId = args?.[0]?.approvalRes?.signingTxId;
+    if (signingTxId != null) {
+      transactionHistoryService.removeSigningTx(signingTxId);
+    }
+
+    throw e;
+  }
+};

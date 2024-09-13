@@ -46,6 +46,7 @@ export const ProcessActions: React.FC<Props> = ({
   isPrimary,
   gasLessThemeColor,
   isGasNotEnough,
+  buttonIcon,
 }) => {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -83,6 +84,7 @@ export const ProcessActions: React.FC<Props> = ({
               buttonStyle={buttonStyle}
               gasLess={gasLess}
               showOrigin={!gasLess && !disabledProcess}
+              icon={buttonIcon}
               type="process">
               <Button
                 disabled={disabledProcess}
@@ -91,6 +93,7 @@ export const ProcessActions: React.FC<Props> = ({
                 titleStyle={buttonTextStyle}
                 disabledStyle={styles.disabled}
                 onPress={onSubmit}
+                icon={buttonIcon}
                 title={buttonText}
                 showTitleOnLoading
               />

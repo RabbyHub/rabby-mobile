@@ -17,7 +17,11 @@ import { getTokenSymbol } from '@/utils/token';
 import { CHAINS, CHAINS_ENUM } from '@debank/common';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { DEX_ENUM, DEX_SPENDER_WHITELIST } from '@rabby-wallet/rabby-swap';
-import { useNavigationState } from '@react-navigation/native';
+import {
+  StackActions,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import BigNumber from 'bignumber.js';
 import { useSetAtom } from 'jotai';
@@ -35,15 +39,21 @@ import { ReceiveDetails } from './components/ReceiveDetail';
 import { Slippage } from './components/Slippage';
 import TokenSelect from './components/TokenSelect';
 import { TwpStepApproveModal } from './components/TwoStepApproveModal';
-import { useSwapUnlimitedAllowance, useTokenPair } from './hooks';
+import {
+  useDetectLoss,
+  useSwapUnlimitedAllowance,
+  useTokenPair,
+} from './hooks';
 import {
   refreshIdAtom,
   useQuoteVisible,
   useRabbyFeeVisible,
 } from './hooks/atom';
-import { dexSwap } from './hooks/swap';
+import { buildDexSwap, dexSwap } from './hooks/swap';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { ReserveGasPopup } from '@/components/ReserveGasPopup';
+import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -89,6 +99,8 @@ const Swap = () => {
     slippage,
     setSlippage,
     payTokenIsNativeToken,
+    isSlippageHigh,
+    isSlippageLow,
 
     feeRate,
 
@@ -188,6 +200,8 @@ const Swap = () => {
   ]);
 
   const { bottom } = useSafeAreaInsets();
+
+  const [isShowSign, setIsShowSign] = useState(false);
   const gotoSwap = useMemoizedFn(async () => {
     if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
       try {
@@ -240,6 +254,91 @@ const Swap = () => {
     }
   });
 
+  const buildSwapTxs = useMemoizedFn(async () => {
+    if (!inSufficient && payToken && receiveToken && activeProvider?.quote) {
+      try {
+        return buildDexSwap(
+          {
+            swapPreferMEVGuarded: !!preferMEVGuarded,
+            chain,
+            quote: activeProvider?.quote,
+            needApprove: activeProvider.shouldApproveToken,
+            spender:
+              activeProvider?.name === DEX_ENUM.WRAPTOKEN
+                ? ''
+                : DEX_SPENDER_WHITELIST[activeProvider.name][chain],
+            pay_token_id: payToken.id,
+            unlimited: unlimitedAllowance,
+            shouldTwoStepApprove: activeProvider.shouldTwoStepApprove,
+            gasPrice: payTokenIsNativeToken
+              ? gasList?.find(e => e.level === gasLevel)?.price
+              : undefined,
+            postSwapParams: {
+              quote: {
+                pay_token_id: payToken.id,
+                pay_token_amount: Number(payAmount),
+                receive_token_id: receiveToken!.id,
+                receive_token_amount: new BigNumber(
+                  activeProvider?.quote.toTokenAmount,
+                )
+                  .div(
+                    10 **
+                      (activeProvider?.quote.toTokenDecimals ||
+                        receiveToken.decimals),
+                  )
+                  .toNumber(),
+                slippage: new BigNumber(slippage).div(100).toNumber(),
+              },
+              dex_id: activeProvider?.name.replace('API', '') || 'WrapToken',
+            },
+          },
+          {
+            ga: {
+              category: 'Swap',
+              source: 'swap',
+              trigger: 'home',
+            },
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  });
+
+  const {
+    data: txs,
+    runAsync: runBuildSwapTxs,
+    mutate: mutateTxs,
+  } = useRequest(buildSwapTxs, {
+    manual: true,
+  });
+
+  const showLoss = useDetectLoss({
+    payToken: payToken,
+    payAmount: payAmount,
+    receiveRawAmount: activeProvider?.actualReceiveAmount || 0,
+    receiveToken: receiveToken,
+  });
+
+  const handleSwap = useMemoizedFn(() => {
+    if (
+      [
+        KEYRING_TYPE.SimpleKeyring,
+        KEYRING_TYPE.HdKeyring,
+        KEYRING_CLASS.HARDWARE.LEDGER,
+      ].includes((currentAccount?.type || '') as any) &&
+      !isSlippageHigh &&
+      !isSlippageLow &&
+      !showLoss
+    ) {
+      runBuildSwapTxs();
+      setIsShowSign(true);
+    } else {
+      gotoSwap();
+    }
+  });
+
   const chainServerId = useMemo(() => {
     return findChainByEnum(chain)?.serverId || CHAINS[chain].serverId;
   }, [chain]);
@@ -266,6 +365,8 @@ const Swap = () => {
     () => new BigNumber(payToken?.raw_amount_hex_str || 0, 16).gt(0),
     [payToken],
   );
+
+  const navigation = useNavigation();
 
   return (
     <NormalScreenContainer>
@@ -481,7 +582,8 @@ const Swap = () => {
               setTwoStepApproveModalVisible(true);
               return;
             }
-            gotoSwap();
+            // gotoSwap();
+            handleSwap();
           }}
           title={btnText}
           titleStyle={styles.btnTitle}
@@ -499,7 +601,7 @@ const Swap = () => {
         onCancel={() => {
           setTwoStepApproveModalVisible(false);
         }}
-        onConfirm={gotoSwap}
+        onConfirm={handleSwap}
       />
       <ReserveGasPopup
         selectedItem={gasLevel}
@@ -537,6 +639,26 @@ const Swap = () => {
         dexName={dexName}
         dexFeeDesc={dexFeeDesc}
         onClose={() => setIsShowRabbyFeePopup({ visible: false })}
+      />
+      <MiniApproval
+        visible={isShowSign}
+        txs={txs}
+        onReject={() => {
+          setIsShowSign(false);
+          mutateTxs([]);
+        }}
+        onResolve={() => {
+          setTimeout(() => {
+            setIsShowSign(false);
+            mutateTxs([]);
+
+            navigation.dispatch(
+              StackActions.replace(RootNames.StackRoot, {
+                screen: RootNames.Home,
+              }),
+            );
+          }, 500);
+        }}
       />
     </NormalScreenContainer>
   );

@@ -69,13 +69,13 @@ export function GasLessNotEnough({
       <RcIconGas
         width={16}
         height={16}
-        color={colors['neutral-title-1']}
+        color={colors['neutral-foot']}
         style={{ marginRight: 4 }}
       />
       <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
         {t('page.signFooterBar.gasless.unavailable')}
       </Text>
-      {gasLessFailedReason ? (
+      {/* {gasLessFailedReason ? (
         <Tip
           content={gasLessFailedReason}
           isVisible={visible}
@@ -88,7 +88,7 @@ export function GasLessNotEnough({
             height={14}
           />
         </Tip>
-      ) : null}
+      ) : null} */}
     </Pressable>
   );
 }
@@ -367,6 +367,7 @@ export const GasLessAnimatedWrapper = (
   props: PropsWithChildren<{
     gasLess?: boolean;
     title: string;
+    icon?: React.ReactNode;
     titleStyle: StyleProp<TextStyle>;
     buttonStyle: StyleProp<ViewStyle>;
     showOrigin: boolean;
@@ -525,6 +526,12 @@ export const GasLessAnimatedWrapper = (
             bgStyle,
           ]}>
           <Animated.View style={blueBgStyle} />
+
+          {props?.icon ? (
+            <Animated.View style={{ marginRight: 8 }}>
+              {props?.icon}
+            </Animated.View>
+          ) : null}
 
           {renderText(props.title, {
             style: StyleSheet.flatten([

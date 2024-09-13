@@ -54,6 +54,7 @@ export interface Props {
   isPrimary?: boolean;
   gasLessThemeColor?: string;
   isGasNotEnough?: boolean;
+  buttonIcon?: React.ReactNode;
 }
 
 export const ActionsContainer: React.FC<
