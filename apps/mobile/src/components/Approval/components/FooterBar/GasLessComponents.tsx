@@ -69,13 +69,13 @@ export function GasLessNotEnough({
       <RcIconGas
         width={16}
         height={16}
-        color={colors['neutral-title-1']}
+        color={colors['neutral-foot']}
         style={{ marginRight: 4 }}
       />
       <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
         {t('page.signFooterBar.gasless.unavailable')}
       </Text>
-      {gasLessFailedReason ? (
+      {/* {gasLessFailedReason ? (
         <Tip
           content={gasLessFailedReason}
           isVisible={visible}
@@ -88,7 +88,7 @@ export function GasLessNotEnough({
             height={14}
           />
         </Tip>
-      ) : null}
+      ) : null} */}
     </Pressable>
   );
 }
