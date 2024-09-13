@@ -1,17 +1,18 @@
 import { CHAINS_ENUM } from '@/constant/chains';
-import abi from 'human-standard-token-abi';
+import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
+import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
 import type {
   ExplainTxResponse,
   GasLevel,
   Tx,
 } from '@rabby-wallet/rabby-api/dist/types';
-import { isHexString } from 'ethereumjs-util';
 import BigNumber from 'bignumber.js';
-import { minBy } from 'lodash';
-import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { isHexString } from 'ethereumjs-util';
 import { ethers } from 'ethers';
-import { isHex, hexToString, stringToHex } from 'web3-utils';
+import abi from 'human-standard-token-abi';
+import { hexToString, isHex, stringToHex } from 'web3-utils';
 import { findChain } from './chain';
+import i18n from './i18n';
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -344,3 +345,104 @@ export function formatTxExplainAbiData(abi?: ExplainTxResponse['abi'] | null) {
     ')',
   ].join('');
 }
+
+export const checkGasAndNonce = ({
+  recommendGasLimitRatio,
+  recommendGasLimit,
+  recommendNonce,
+  tx,
+  gasLimit,
+  nonce,
+  isCancel,
+  gasExplainResponse,
+  isSpeedUp,
+  isGnosisAccount,
+  nativeTokenBalance,
+}: {
+  recommendGasLimitRatio: number;
+  nativeTokenBalance: string;
+  recommendGasLimit: number | string | BigNumber;
+  recommendNonce: number | string | BigNumber;
+  tx: Tx;
+  gasLimit: number | string | BigNumber;
+  nonce: number | string | BigNumber;
+  gasExplainResponse: {
+    isExplainingGas?: boolean;
+    gasCostUsd: BigNumber;
+    gasCostAmount: BigNumber;
+    maxGasCostAmount: BigNumber;
+  };
+  isCancel: boolean;
+  isSpeedUp: boolean;
+  isGnosisAccount: boolean;
+}) => {
+  const errors: {
+    code: number;
+    msg: string;
+    level?: 'warn' | 'danger' | 'forbidden';
+  }[] = [];
+  if (!isGnosisAccount && new BigNumber(gasLimit).lt(MINIMUM_GAS_LIMIT)) {
+    errors.push({
+      code: 3006,
+      msg: i18n.t('page.signTx.gasLimitNotEnough'),
+      level: 'forbidden',
+    });
+  }
+  if (
+    !isGnosisAccount &&
+    new BigNumber(gasLimit).lt(
+      new BigNumber(recommendGasLimit).times(recommendGasLimitRatio),
+    ) &&
+    new BigNumber(gasLimit).gte(21000)
+  ) {
+    if (recommendGasLimitRatio === DEFAULT_GAS_LIMIT_RATIO) {
+      const realRatio = new BigNumber(gasLimit).div(recommendGasLimit);
+      if (realRatio.lt(DEFAULT_GAS_LIMIT_RATIO) && realRatio.gt(1)) {
+        errors.push({
+          code: 3004,
+          msg: i18n.t('page.signTx.gasLimitLessThanExpect'),
+          level: 'warn',
+        });
+      } else if (realRatio.lt(1)) {
+        errors.push({
+          code: 3005,
+          msg: i18n.t('page.signTx.gasLimitLessThanGasUsed'),
+          level: 'danger',
+        });
+      }
+    } else {
+      if (new BigNumber(gasLimit).lt(recommendGasLimit)) {
+        errors.push({
+          code: 3004,
+          msg: i18n.t('page.signTx.gasLimitLessThanExpect'),
+          level: 'warn',
+        });
+      }
+    }
+  }
+  let sendNativeTokenAmount = new BigNumber(tx.value); // current transaction native token transfer count
+  sendNativeTokenAmount = isNaN(sendNativeTokenAmount.toNumber())
+    ? new BigNumber(0)
+    : sendNativeTokenAmount;
+  if (
+    !isGnosisAccount &&
+    gasExplainResponse.maxGasCostAmount
+      .plus(sendNativeTokenAmount.div(1e18))
+      .isGreaterThan(new BigNumber(nativeTokenBalance).div(1e18))
+  ) {
+    errors.push({
+      code: 3001,
+      msg: i18n.t('page.signTx.nativeTokenNotEngouthForGas'),
+      level: 'forbidden',
+    });
+  }
+  if (new BigNumber(nonce).lt(recommendNonce) && !(isCancel || isSpeedUp)) {
+    errors.push({
+      code: 3003,
+      msg: i18n.t('page.signTx.nonceLowerThanExpect', [
+        new BigNumber(recommendNonce).toString(),
+      ] as any) as string,
+    });
+  }
+  return errors;
+};

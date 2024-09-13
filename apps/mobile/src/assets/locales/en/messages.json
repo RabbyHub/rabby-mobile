@@ -35,7 +35,7 @@
       "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted",
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.",
       "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.",
-      "nativeTokenNotEngouthForGas": "Gas balance is not enough for transaction",
+      "nativeTokenNotEngouthForGas": "Gas balance is not enough",
       "nonceLowerThanExpect": "Nonce is too low, the minimum should be {{0}}",
       "canOnlyUseImportedAddress": "You can only use imported addresses to sign",
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
@@ -341,11 +341,11 @@
       "keystoneConnected": "Keystone is connected",
       "ledgerConnected": "Ledger is connected",
       "importedByLedger": "Imported by Ledger",
-      "signAndSubmitButton": "Sign and Create",
+      "signAndSubmitButton": "Sign",
       "confirm": "Confirm",
       "confirmWithPassword": "Confirm with Password",
       "gasless": {
-        "unavailable": "Gas is not enough and not qualify for Free Gas",
+        "unavailable": "Gas Balance is not enough",
         "notEnough": "Gas balance is not enough",
         "GetFreeGasToSign": "Get Free Gas to sign",
         "rabbyPayGas": "Rabby'll pay for the gas needed – just sign on",
@@ -2201,6 +2201,15 @@
     },
     "sign": {
       "transactionSpeed": "Transaction Speed"
+    },
+    "miniSignFooterBar": {
+      "signWithLedger": "Sign with Ledger",
+      "status": {
+        "txCreated": "Transaction created",
+        "txSigned": "Signed. Creating transaction",
+        "txSending": "Sending signing request",
+        "txSendings": "Sending signing request({{current}}/{{total}})"
+      }
     }
   },
   "component": {
