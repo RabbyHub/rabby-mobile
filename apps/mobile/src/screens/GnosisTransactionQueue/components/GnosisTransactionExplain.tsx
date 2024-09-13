@@ -1,5 +1,5 @@
 import { RcIconUser } from '@/assets/icons/gnosis';
-import { getProtocol } from '@/components/Approval/components/Actions/utils';
+import { getProtocol } from '@rabby-wallet/rabby-action';
 import { Button } from '@/components/Button';
 import { openapi } from '@/core/request';
 import { useThemeColors } from '@/hooks/theme';

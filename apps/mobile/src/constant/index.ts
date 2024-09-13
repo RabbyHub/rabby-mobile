@@ -61,19 +61,48 @@ export const APP_URLS = {
   })!,
 };
 
-const androidPackageName = !NativeModules.RNVersionCheck.packageName
-  ? 'com.debank.rabbymobile'
-  : stringUtils.unSuffix(
-      stringUtils.unSuffix(NativeModules.RNVersionCheck.packageName, '.debug'),
-      '.regression',
-    );
+type AndroidIdSuffx = '' | '.debug' | '.regression';
+export const APPLICATION_ID = NativeModules.RNVersionCheck.packageName;
+const realAndroidPackageName = NativeModules.RNVersionCheck.packageName;
+const androidPackageName = (
+  !realAndroidPackageName
+    ? 'com.debank.rabbymobile'
+    : stringUtils.unSuffix(
+        stringUtils.unSuffix(realAndroidPackageName, '.debug'),
+        '.regression',
+      )
+) as `com.debank.rabbymobile${AndroidIdSuffx}`;
 
-export const APPLICATION_ID =
+type IosIdSuffix = '' | '-debug';
+
+export const PROD_APPLICATION_ID:
+  | typeof androidPackageName
+  | `com.debank.rabby-mobile${IosIdSuffix}` =
   Platform.OS == 'android'
     ? androidPackageName
     : __DEV__
-    ? 'com.debank.rabby-mobile-debug'
-    : 'com.debank.rabby-mobile';
+    ? ('com.debank.rabby-mobile-debug' as const)
+    : ('com.debank.rabby-mobile' as const);
+
+const FirebaseWebClientIds = {
+  'com.debank.rabbymobile.debug':
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
+  'com.debank.rabbymobile.regression':
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
+  'com.debank.rabbymobile':
+    '809331497367-vv5g8gs5v7187a349pon5ggnsrgr7uuj.apps.googleusercontent.com',
+
+  'com.debank.rabby-mobile':
+    '809331497367-85vtc15egvte1r5nc30dnno4l1ofbeqg.apps.googleusercontent.com',
+  'com.debank.rabby-mobile-debug':
+    '809331497367-vip7ti5jnh1umlp99d5r42mqqt9f0vuv.apps.googleusercontent.com',
+} as const;
+
+export const FIREBASE_WEBCLIENT_ID =
+  Platform.select({
+    android: FirebaseWebClientIds[realAndroidPackageName],
+    ios: FirebaseWebClientIds[realAndroidPackageName],
+  }) || FirebaseWebClientIds[realAndroidPackageName];
 
 export const APP_TEST_PWD = __DEV__ ? '11111111' : '';
 

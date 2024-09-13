@@ -17,7 +17,7 @@ import { EVENTS, eventBus } from '@/utils/events';
 import {
   ActionRequireData,
   ParsedActionData,
-} from '@/components/Approval/components/Actions/utils';
+} from '@rabby-wallet/rabby-action';
 import { DappInfo } from './dappService';
 import { stats } from '@/utils/stats';
 import { findChain } from '@/utils/chain';

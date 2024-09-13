@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ContractRequireData } from '../TypedDataActions/utils';
-import { ParsedActionData } from './utils';
+import { ContractRequireData } from '@rabby-wallet/rabby-action';
+import { ParsedActionData } from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import NFTWithName from '../Actions/components/NFTWithName';
 import * as Values from '../Actions/components/Values';

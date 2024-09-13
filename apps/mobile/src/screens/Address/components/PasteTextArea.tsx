@@ -14,9 +14,9 @@ import IconPaste from '@/assets/icons/common/paste-cc.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { toast } from '@/components/Toast';
 import { useTranslation } from 'react-i18next';
-import { navigate } from '@/utils/navigation';
+import { RcIconScannerCC } from '@/assets/icons/address';
 import { RootNames } from '@/constant/layout';
-import { RcIconInnerScanner } from '@/assets/icons/address';
+import { navigate } from '@/utils/navigation';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -38,18 +38,23 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'relative',
       overflow: 'hidden',
     },
-    actions: {
+    buttonGroup: {
       flexDirection: 'row',
-      gap: 12,
       position: 'absolute',
       right: 12,
       bottom: 12,
+      gap: 12,
+    },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
     },
     actionItem: {
       flexDirection: 'row',
       gap: 4,
     },
-    actionText: {
+    pasteButtonText: {
       color: colors['neutral-foot'],
       fontSize: 15,
       lineHeight: 18,
@@ -71,6 +76,7 @@ interface Props {
   value?: string;
   onChange?: (text: string) => void;
   error?: string;
+  enableScan?: boolean;
 }
 
 export const PasteTextArea: React.FC<Props> = ({
@@ -79,6 +85,7 @@ export const PasteTextArea: React.FC<Props> = ({
   value,
   onChange,
   error,
+  enableScan,
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -97,9 +104,9 @@ export const PasteTextArea: React.FC<Props> = ({
     });
   }, [onChange, t]);
 
-  const onPressScan = () => {
+  const onPressScan = React.useCallback(() => {
     navigate(RootNames.Scanner);
-  };
+  }, []);
 
   return (
     <View style={style}>
@@ -123,18 +130,26 @@ export const PasteTextArea: React.FC<Props> = ({
           value={value}
           onChangeText={onChange}
         />
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={onPressScan} style={styles.actionItem}>
-            <RcIconInnerScanner
-              width={16}
-              height={16}
-              color={colors['neutral-foot']}
-            />
-            <Text style={styles.actionText}>Scan</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onPressPaste} style={styles.actionItem}>
+        <View style={styles.buttonGroup}>
+          {enableScan && (
+            <TouchableOpacity
+              hitSlop={6}
+              onPress={onPressScan}
+              style={styles.button}>
+              <RcIconScannerCC
+                width={16}
+                height={16}
+                color={colors['neutral-foot']}
+              />
+              <Text style={styles.pasteButtonText}>Scan</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            hitSlop={6}
+            onPress={onPressPaste}
+            style={styles.button}>
             <IconPaste width={16} height={16} color={colors['neutral-foot']} />
-            <Text style={styles.actionText}>Paste</Text>
+            <Text style={styles.pasteButtonText}>Paste</Text>
           </TouchableOpacity>
         </View>
       </View>

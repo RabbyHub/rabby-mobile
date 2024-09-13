@@ -24,6 +24,10 @@ import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyS
 import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 import { strings } from '@/utils/i18n';
+import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen';
+import { CloudBackupButton } from '../Address/CloudBackupButton';
+import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
+import { IS_IOS } from '@/core/native/utils';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -153,7 +157,12 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
+          headerRight: CloudBackupButton,
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.PreCreateMnemonic}
+        component={PreCreateSeedPhraseScreen}
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonic}
@@ -217,6 +226,15 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.RestoreFromCloud}
+        component={RestoreFromCloud}
+        options={mergeScreenOptions({
+          headerTitle: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
+          headerShadowVisible: false,
+          headerShown: true,
+        })}
       />
     </AddressStack.Navigator>
   );

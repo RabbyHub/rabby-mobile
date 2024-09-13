@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
-import { ParsedActionData, WrapTokenRequireData } from './utils';
+import {
+  ParsedActionData,
+  WrapTokenRequireData,
+} from '@rabby-wallet/rabby-action';
 import { formatAmount } from '@/utils/number';
 import { Chain } from '@/constant/chains';
 import SecurityLevelTagNoText from '../SecurityEngine/SecurityLevelTagNoText';
@@ -184,7 +187,6 @@ const UnWrapToken = ({
             <ViewMore
               type="contract"
               data={{
-                hasInteraction: requireData.hasInteraction,
                 bornAt: requireData.bornAt,
                 protocol: requireData.protocol,
                 rank: requireData.rank,
@@ -209,16 +211,6 @@ const UnWrapToken = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
-            </SubRow>
-          </SubCol>
-          <SubCol>
-            <SubRow isTitle>
-              <Text style={commonStyle.subRowTitleText}>
-                {t('page.signTx.hasInteraction')}
-              </Text>
-            </SubRow>
-            <SubRow>
-              <Values.Interacted value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
           {isInWhitelist && (

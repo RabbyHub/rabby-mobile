@@ -5,7 +5,6 @@ import { Text } from '../Text';
 import ErrorCircleSVG from '@/assets/icons/address/error-circle.svg';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import { Circle } from 'react-native-progress';
 import { FooterButton } from '../FooterButton/FooterButton';
 import { SvgProps } from 'react-native-svg';
 
@@ -39,6 +38,13 @@ const getStyles = (colors: AppColorsVariants) =>
       bottom: 0,
       right: 0,
     },
+    circle: {
+      width: 240,
+      height: 240,
+      borderRadius: 1000,
+      borderColor: colors['red-default'],
+      borderWidth: 4,
+    },
   });
 
 type Props = {
@@ -66,12 +72,9 @@ export const CommonNotFoundDeviceScreen: React.FC<Props> = ({
         <Text style={styles.text}>{descriptionText}</Text>
         <View style={styles.imageWrapper}>
           <DeviceLogo />
-          <Circle
-            borderWidth={4}
-            color={colors['red-default']}
-            size={240}
-            style={styles.progress}
-          />
+          <View style={styles.progress}>
+            <View style={styles.circle} />
+          </View>
           <ErrorCircleSVG width={40} height={40} style={styles.errorIcon} />
         </View>
       </View>

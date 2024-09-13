@@ -3,7 +3,10 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveTokenRequireData, ParsedActionData } from './utils';
+import {
+  ApproveTokenRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from './components/Table';
 import LogoWithText from './components/LogoWithText';
 import * as Values from './components/Values';
