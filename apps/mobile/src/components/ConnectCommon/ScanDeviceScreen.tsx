@@ -4,9 +4,9 @@ import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import { CircleSnail } from 'react-native-progress';
 import { SvgProps } from 'react-native-svg';
 import AutoLockView from '../AutoLockView';
+import { MaterialIndicator } from 'react-native-indicators';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -56,11 +56,13 @@ export const CommonScanDeviceScreen: React.FC<Props> = ({
         <Text style={styles.text}>{descriptionText}</Text>
         <View style={styles.imageWrapper}>
           <DeviceLogo />
-          <CircleSnail
-            color={[colors['blue-default']]}
-            size={240}
-            style={styles.progress}
-          />
+          <View style={styles.progress}>
+            <MaterialIndicator
+              color={colors['blue-default']}
+              size={240}
+              trackWidth={2.5}
+            />
+          </View>
         </View>
       </View>
     </AutoLockView>

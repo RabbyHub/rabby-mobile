@@ -28,6 +28,7 @@ import { useUpgradeInfo } from './hooks/version';
 import { AppProvider } from './hooks/global';
 import { useGlobalAppPreventScreenrecordOnDev } from './hooks/appSettings';
 import { useAppPreventScreenshotOnScreen } from './hooks/navigation';
+import { useAutoGoogleSignIfPreviousSignedOnTop } from './hooks/cloudStorage';
 
 const rneuiTheme = createTheme({
   lightColors: {
@@ -52,6 +53,7 @@ function MainScreen({ rabbitCode }: AppProps) {
   useSecureOnBackground();
   useGlobalAppPreventScreenrecordOnDev();
   useAppPreventScreenshotOnScreen();
+  useAutoGoogleSignIfPreviousSignedOnTop();
 
   const initAccounts = useMemoizedFn(async () => {
     const accounts = await keyringService.getAllVisibleAccountsArray();

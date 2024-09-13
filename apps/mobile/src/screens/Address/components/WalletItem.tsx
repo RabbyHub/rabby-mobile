@@ -26,6 +26,8 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   entryTitle: {
     fontSize: 16,

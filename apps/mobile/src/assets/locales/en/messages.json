@@ -1039,7 +1039,7 @@
         "metamaskTooltip": "You prefer to use MetaMask with this dapp. Update this settings anytime in Settings > MetaMask Preferred Dapps",
         "connected": "Connected",
         "notConnected": "Not connected",
-        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp’s webpage.",
+        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp's webpage.",
         "noDappFound": "No Dapp found",
         "disconnectAll": "Disconnect All",
         "disconnectRecentlyUsed": {
@@ -1097,7 +1097,7 @@
         "goToSwap": "Go to Swap",
         "claim": "Claim",
         "viewYourClaimCode": "View your claim code on DeBank",
-        "noCode": "You haven’t activated claim code for this address",
+        "noCode": "You haven't activated claim code for this address",
         "freeGasNoCode": "Please click the button below to visit DeBank and get the claim code using your current address first.",
         "learnMoreOnDebank": "Learn more on DeBank",
         "rabbyValuedUserNo": "Rabby Valued User No.{{num}}",
@@ -1390,7 +1390,33 @@
         "inputInvalidCount_one": "1 input do not conform to Seed Phrase norms, please check.",
         "inputInvalidCount_other": "{{count}} inputs do not conform to Seed Phrase norms, please check.",
         "passphrase": "Passphrase",
-        "maxAccountCount": "Maximum 50 addresses each time"
+        "maxAccountCount": "Maximum 50 addresses each time",
+        "createdSuccess": "Your seed phrase has been created",
+        "chooseBackupMethodTitle": "Choose a backup method",
+        "chooseBackupMethodDesc": "Backups let you restore your wallet if you delete the app or lose your device.",
+        "icloudBackup": "iCloud Backup",
+        "googleDriveBackup": "Google Drive Backup",
+        "manuallyBackup": "Manually Backup",
+        "backupUnlockTitle": "Encrypt with App Password",
+        "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
+        "backupUnlockPlaceholder": "Enter the Password to Confirm",
+        "backupUnlockButton": "Continue",
+        "backupUploadToICloud": "Backing Up to iCloud...",
+        "backupUploadToGDrive": "Backing Up to Google Drive...",
+        "backupSuccessICloud": "Backed Up to iCloud",
+        "backupSuccessGDrive": "Backed Up to Google Drive",
+        "backupFailedTitle": "Backup Failed",
+        "backupFailedButton": "Retry",
+        "backupRestoreLoadingText": "Searching for backup seed phrase...",
+        "backupRestoreTitle": "{{count}} seed phrase found",
+        "backupRestoreButton": "Import Seed Phrase",
+        "backupRestoreUnlockTitle": "Enter Backup Password",
+        "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
+        "backupRestoreDownloadTitle": "Importing Seed Phrase...",
+        "backupRestoreEmpty": "No backup seed phrase found",
+        "backupRestoreImported": "Imported",
+        "backupErrorCloudNotAvailable": "iCloud unavailable",
+        "backupRestoreCreatedAt": "Backup Time: "
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
@@ -2057,7 +2083,7 @@
       "Predict": {
         "completed": "Transaction Completed",
         "predictFailed": "Packing time prediction failed",
-        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can’t complete"
+        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can't complete"
       }
     },
     "dappSearch": {

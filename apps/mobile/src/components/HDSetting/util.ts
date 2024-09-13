@@ -4,8 +4,11 @@ import { Account } from './type';
 // cached chains, balance, firstTxTime
 const cachedAccountInfo = new Map<string, Account>();
 
-export const getAccountBalance = async (address: string) => {
-  if (cachedAccountInfo.has(address)) {
+export const getAccountBalance = async (
+  address: string,
+  ignoreCached = false,
+) => {
+  if (cachedAccountInfo.has(address) && !ignoreCached) {
     const cached = cachedAccountInfo.get(address);
     if (cached) {
       return cached.balance;

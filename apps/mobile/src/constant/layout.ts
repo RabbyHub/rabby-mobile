@@ -78,12 +78,14 @@ export const RootNames = {
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
   CreateMnemonic: 'CreateMnemonic',
+  PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
   CreateMnemonicBackup: 'CreateMnemonicBackup',
   CreateMnemonicVerify: 'CreateMnemonicVerify',
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
   BackupMnemonic: 'BackupMnemonic',
+  RestoreFromCloud: 'RestoreFromCloud',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

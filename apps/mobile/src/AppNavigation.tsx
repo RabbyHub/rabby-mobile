@@ -1,12 +1,11 @@
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import { ColorSchemeName, PanResponder, View } from 'react-native';
+import { ColorSchemeName } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
 

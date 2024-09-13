@@ -95,3 +95,15 @@ export const RcAddCustomNetwork = makeThemeIconFromCC(
   RcAddCustomNetworkCC,
   'neutral-body',
 );
+
+import { default as RcGoogleDriveCC } from './google-drive-cc.svg';
+export const RcGoogleDrive = makeThemeIconFromCC(
+  RcGoogleDriveCC,
+  'neutral-body',
+);
+
+import { default as RcGoogleSignoutCC } from './google-signout-cc.svg';
+export const RcGoogleSignout = makeThemeIconFromCC(
+  RcGoogleSignoutCC,
+  'neutral-body',
+);
