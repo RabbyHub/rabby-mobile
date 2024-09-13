@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, Image, useWindowDimensions } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  useWindowDimensions,
+  Dimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import RCIconRabbyWhite from '@/assets/icons/swap/rabby.svg'; // Ensure this is a compatible React Native SVG component
 import ImgMetaMask from '@/assets/icons/swap/metamask.png';
@@ -157,15 +163,16 @@ function SwapAggregatorFee({
 }) {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const { width } = useWindowDimensions();
   if (dexName && feeDexDesc && DEX?.[dexName]?.logo) {
     return (
       <View style={styles.dexFeeContainer}>
-        <Text style={styles.dexFeeText}>
-          <View style={{ position: 'relative' }}>
-            <Image source={DEX[dexName].logo} style={styles.dexFeeLogo} />
-          </View>
-          {feeDexDesc}
-        </Text>
+        <Image source={DEX[dexName].logo} style={styles.dexFeeLogo} />
+        <View>
+          <Text style={[styles.dexFeeText, { maxWidth: width - 40 - 14 - 2 }]}>
+            {feeDexDesc}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -250,20 +257,21 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title1'],
   },
   dexFeeContainer: {
+    width: '100%',
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 0,
     marginTop: 20,
     gap: 3,
   },
   dexFeeLogo: {
-    top: 2,
-    marginRight: 2,
+    flexBasis: 14,
     width: 14,
     height: 14,
     borderRadius: 999999,
   },
   dexFeeText: {
+    flexShrink: 0,
     fontSize: 13,
     color: colors['neutral-foot'],
   },
