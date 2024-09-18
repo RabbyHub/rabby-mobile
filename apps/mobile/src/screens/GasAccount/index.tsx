@@ -1,17 +1,19 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { createGetStyles } from '@/utils/styles';
 import { Text, View, StyleSheet, Modal } from 'react-native';
-import { useGasAccountInfo } from './hooks';
+import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { RcIconGasAccount } from '@/assets/icons/gas-account';
 import { useThemeColors } from '@/hooks/theme';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './components/DepositPopup';
 import { WithDrawPopup } from './components/WithDrawPopup';
 import { Button } from '@/components/Button';
 import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
 import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
+import { GasAccountHistory } from './components/History';
+import { GasAccountLoginPopup } from './components/LoginPopup';
 
 export const GasAccountScreen = () => {
   const colors = useThemeColors();
@@ -19,8 +21,9 @@ export const GasAccountScreen = () => {
   const [canDesposit, setCanDesposit] = useState<boolean>(true);
   const [showDesposit, setShowDesposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [loginVisible, setLoginVisible] = useState(false);
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const { value } = useGasAccountInfo();
+  const { value, loading } = useGasAccountInfo();
 
   const usd = useMemo(() => {
     if (value && 'account' in value) {
@@ -29,9 +32,33 @@ export const GasAccountScreen = () => {
     return formatUsdValue(0);
   }, [value]);
 
+  const gotoDashboard = () => {
+    // history.push('/dashboard');
+  };
+
   const gotoDesposit = () => {
     setShowDesposit(true);
   };
+
+  const { isLogin } = useGasAccountLogin({ value, loading });
+
+  const balance = value?.account?.balance || 0;
+
+  // useEffect(() => {
+  //   wallet.clearPageStateCache();
+  // }, [wallet?.clearPageStateCache]);
+
+  useEffect(() => {
+    if (!isLogin) {
+      setLoginVisible(true);
+    }
+  }, [isLogin]);
+
+  useEffect(() => {
+    if (!loading && !isLogin) {
+      setLoginVisible(true);
+    }
+  }, [loading, isLogin]);
 
   return (
     <NormalScreenContainer>
@@ -56,12 +83,8 @@ export const GasAccountScreen = () => {
           />
         </View>
       </View>
-      <View style={styles.historyContainer}>
-        <RcIconHistoryIcon style={styles.historyIcon} />
-        <Text style={styles.historyText}>
-          {t('component.gasAccount.history.noHistory')}
-        </Text>
-      </View>
+
+      <GasAccountHistory />
 
       <GasAccountDepositPopup
         visible={showDesposit}
@@ -72,6 +95,14 @@ export const GasAccountScreen = () => {
         visible={showWithdraw}
         balance={value?.account.balance}
         onCancel={() => setShowWithdraw(false)}
+      />
+
+      <GasAccountLoginPopup
+        visible={loginVisible}
+        onCancel={() => {
+          gotoDashboard();
+          setLoginVisible(false);
+        }}
       />
     </NormalScreenContainer>
   );
@@ -137,13 +168,6 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-foot'],
     fontWeight: '500',
     fontSize: 13,
-    // color: var(--r-neutral-foot, #6A7587);
-    // text-align: center;
-    // font-family: "SF Pro";
-    // font-size: 13px;
-    // font-style: normal;
-    // font-weight: 510;
-    // line-height: normal;
   },
   buttonContainer: {
     height: 48,
