@@ -7,6 +7,7 @@ import { approveToken } from '@/screens/Swap/hooks/swap';
 import { findChain } from '@/utils/chain';
 import i18n from '@/utils/i18n';
 import { navigationRef } from '@/utils/navigation';
+import { Tx } from '@rabby-wallet/rabby-api/dist/types';
 import { StackActions } from '@react-navigation/native';
 import BigNumber from 'bignumber.js';
 
@@ -120,4 +121,122 @@ export const bridgeToken = async (
       );
     });
   } catch (e) {}
+};
+
+export const buildBridgeToken = async (
+  {
+    to,
+    data,
+    payTokenRawAmount,
+    payTokenId,
+    payTokenChainServerId,
+    shouldApprove,
+    shouldTwoStepApprove,
+    gasPrice,
+    info,
+    value,
+  }: {
+    data: string;
+    to: string;
+    value: string;
+    chainId: number;
+    shouldApprove: boolean;
+    shouldTwoStepApprove: boolean;
+    payTokenId: string;
+    payTokenChainServerId: string;
+    payTokenRawAmount: string;
+    gasPrice?: number;
+    info: BridgeRecord;
+  },
+  $ctx?: any,
+) => {
+  const account = await preferenceService.getCurrentAccount();
+  if (!account) {
+    throw new Error(i18n.t('background.error.noCurrentAccount'));
+  }
+  const chainObj = findChain({ serverId: payTokenChainServerId });
+  if (!chainObj) {
+    throw new Error(
+      i18n.t('background.error.notFindChain', { payTokenChainServerId }),
+    );
+  }
+  const txs: Tx[] = [];
+  try {
+    if (shouldTwoStepApprove) {
+      const res = await approveToken(
+        payTokenChainServerId,
+        payTokenId,
+        to,
+        0,
+        {
+          ga: {
+            ...$ctx?.ga,
+            source: 'approvalAndBridge|tokenApproval',
+          },
+        },
+        gasPrice,
+        { isBridge: true },
+        true,
+      );
+
+      txs.push(res.params[0]);
+    }
+
+    if (shouldApprove) {
+      const res = await approveToken(
+        payTokenChainServerId,
+        payTokenId,
+        to,
+        payTokenRawAmount,
+        {
+          ga: {
+            ...$ctx?.ga,
+            source: 'approvalAndBridge|tokenApproval',
+          },
+        },
+        gasPrice,
+        { isBridge: true },
+        true,
+      );
+      txs.push(res.params[0]);
+    }
+
+    if (info) {
+      bridgeService.addTx(chainObj.enum, data, info);
+    }
+    const res = await sendRequest(
+      {
+        $ctx:
+          shouldApprove && payTokenId !== chainObj.nativeTokenAddress
+            ? {
+                ga: {
+                  ...$ctx?.ga,
+                  source: 'approvalAndBridge|bridge',
+                },
+              }
+            : $ctx,
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: account.address,
+            to: to,
+            data: data || '0x',
+            value: `0x${new BigNumber(value || '0').toString(16)}`,
+            chainId: chainObj.id,
+            gasPrice: gasPrice
+              ? `0x${new BigNumber(gasPrice).toString(16)}`
+              : undefined,
+            isBridge: true,
+          },
+        ],
+      },
+      INTERNAL_REQUEST_SESSION,
+      true,
+    );
+    txs.push(res.params[0]);
+
+    return txs;
+  } catch (e) {
+    return [];
+  }
 };

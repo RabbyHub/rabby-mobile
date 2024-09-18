@@ -32,7 +32,7 @@ export const SeedPhraseGroup: React.FC<Props> = ({
       <View style={styles.body}>
         {data.list.map(item => (
           <View key={item.address} style={styles.item}>
-            <AddressItemInner isInList wallet={item} />
+            <AddressItemInner isInList wallet={item} showUsd={false} />
           </View>
         ))}
       </View>

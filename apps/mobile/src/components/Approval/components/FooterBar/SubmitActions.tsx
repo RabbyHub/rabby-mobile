@@ -111,37 +111,39 @@ export const SubmitActions: React.FC<Props> = ({
           }
         />
       ) : (
-        // @ts-expect-error
-        <Tip content={enableTooltip ? tooltipContent : undefined}>
-          <View style={styles.buttonWrapper}>
-            <GasLessAnimatedWrapper
-              isGasNotEnough={isGasNotEnough}
-              gasLessThemeColor={gasLessThemeColor}
-              title={t('page.signFooterBar.signAndSubmitButton')}
-              titleStyle={styles.buttonText}
-              buttonStyle={styles.button}
-              gasLess={gasLess}
-              showOrigin={!gasLess && !disabledProcess}>
-              <Button
-                disabled={disabledProcess}
-                type="primary"
-                buttonStyle={[
-                  styles.button,
-                  gasLess && gasLessThemeColor
-                    ? {
-                        backgroundColor: gasLessThemeColor,
-                        borderColor: gasLessThemeColor,
-                      }
-                    : {},
-                ]}
-                titleStyle={styles.buttonText}
-                disabledStyle={styles.buttonDisabled}
-                onPress={handleClickSign}
+        <View>
+          {/* @ts-ignore */}
+          <Tip content={enableTooltip ? tooltipContent : undefined}>
+            <View style={styles.buttonWrapper}>
+              <GasLessAnimatedWrapper
+                isGasNotEnough={isGasNotEnough}
+                gasLessThemeColor={gasLessThemeColor}
                 title={t('page.signFooterBar.signAndSubmitButton')}
-              />
-            </GasLessAnimatedWrapper>
-          </View>
-        </Tip>
+                titleStyle={styles.buttonText}
+                buttonStyle={styles.button}
+                gasLess={gasLess}
+                showOrigin={!gasLess}>
+                <Button
+                  disabled={disabledProcess}
+                  type="primary"
+                  buttonStyle={[
+                    styles.button,
+                    gasLess && gasLessThemeColor
+                      ? {
+                          backgroundColor: gasLessThemeColor,
+                          borderColor: gasLessThemeColor,
+                        }
+                      : {},
+                  ]}
+                  titleStyle={styles.buttonText}
+                  disabledStyle={styles.buttonDisabled}
+                  onPress={handleClickSign}
+                  title={t('page.signFooterBar.signAndSubmitButton')}
+                />
+              </GasLessAnimatedWrapper>
+            </View>
+          </Tip>
+        </View>
       )}
     </ActionsContainer>
   );

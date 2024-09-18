@@ -85,6 +85,7 @@ export const ImportPrivateKeyScreen = () => {
         onChange={setPrivateKey}
         placeholder="Enter your Private Key"
         error={error}
+        enableScan
       />
       <QandASection
         style={styles.qAndASection}

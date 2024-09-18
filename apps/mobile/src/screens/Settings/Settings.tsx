@@ -20,6 +20,8 @@ import {
   RcWhitelist,
   RcAddCustomNetwork,
   RcRPC,
+  RcGoogleDrive,
+  RcGoogleSignout,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -90,6 +92,13 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
+import {
+  deleteAllBackups,
+  getBackupsFromCloud,
+  saveMnemonicToCloud,
+} from '@/core/utils/cloudBackup';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useGoogleSign } from '@/hooks/cloudStorage';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -455,6 +464,8 @@ function DevSettingsBlocks() {
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
+  const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
+
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       ...(isSelfhostRegPkg && {
@@ -493,6 +504,40 @@ function DevSettingsBlocks() {
               disabled: !hasSetupCustomPassword,
               onPress: () => {
                 requestLockWalletAndBackToUnlockScreen();
+              },
+            },
+            isLoginedGoogle
+              ? {
+                  label: 'Signout google drive',
+                  icon: RcGoogleSignout,
+                  onPress: async () => {
+                    await doGoogleSignOut();
+                  },
+                  visible: IS_ANDROID,
+                }
+              : {
+                  label: 'Sign google drive',
+                  icon: RcGoogleDrive,
+                  onPress: () => {
+                    doGoogleSign()
+                      .then(async e => {
+                        console.log('loginIfNeeded done', e.needLogin);
+                        await saveMnemonicToCloud({
+                          mnemonic: 'testtest',
+                          password: 'test',
+                        });
+                      })
+                      .catch(e => {
+                        console.error('loginIfNeeded error', e);
+                      });
+                  },
+                  visible: IS_ANDROID,
+                },
+            {
+              label: 'Clear Cloud Backup',
+              icon: RcClearPending,
+              onPress: () => {
+                deleteAllBackups();
               },
             },
             {

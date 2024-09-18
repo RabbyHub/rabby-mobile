@@ -371,24 +371,17 @@ export const DexQuoteItem = (
         }}>
         <View
           style={{
-            // flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 10,
+            marginBottom: disabled ? 0 : 10,
           }}>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 8,
-              ...(inSufficient && !disabled
-                ? {
-                    position: 'absolute',
-                    top: 40 - 12 - 14,
-                    left: 0,
-                  }
-                : {}),
             }}>
             <QuoteLogo
               loaded

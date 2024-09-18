@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
 import { abiCoder, sendRequest } from './sendRequest';
 import { preferenceService } from '../services';
-import type PQueue from 'p-queue/dist/index';
+import type PQueue from 'p-queue';
 import { findChain } from '@/utils/chain';
 import { TokenSpenderPair } from '@rabby-wallet/biz-utils/dist/isomorphic/permit2';
 import { approvalUtils, permit2Utils } from '@rabby-wallet/biz-utils';

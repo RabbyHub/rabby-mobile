@@ -31,6 +31,7 @@ import useMount from 'react-use/lib/useMount';
 import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
+import { APP_TEST_PWD } from '@/constant';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -244,11 +245,11 @@ export const AuthenticationModal = ({
   const bioComputed = useBiometricsComputed();
 
   const [checklistState, setChecklistState] = React.useState<boolean[]>(
-    checklist?.map(() => false) ?? [],
+    checklist?.map(() => (__DEV__ ? true : false)) ?? [],
   );
   const hasCheckFailed = checklistState.includes(false);
 
-  const [password, setPassword] = React.useState('');
+  const [password, setPassword] = React.useState(APP_TEST_PWD);
   const [error, setError] = React.useState<string>();
 
   const onFinishedReturnBase = useMemo(

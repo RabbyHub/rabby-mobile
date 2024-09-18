@@ -164,7 +164,6 @@ export const ImportWatchAddressScreen = () => {
         </View>
         <View style={styles.inputContainer}>
           <TextInput
-            numberOfLines={2}
             multiline
             value={input}
             onChange={handleSubmit}
@@ -250,7 +249,7 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
       fontSize: 24,
       fontWeight: '700',
       color: colors['neutral-title-2'],
-      marginTop: 4,
+      marginTop: 24,
     },
     description: {
       fontSize: 15,
@@ -281,14 +280,14 @@ const getStyles = function (colors: AppColorsVariants, topInset: number) {
     input: {
       backgroundColor: colors['neutral-card-1'],
       borderRadius: 8,
-      paddingHorizontal: 12,
+      paddingHorizontal: 16,
       paddingVertical: 0,
       fontSize: 15,
-      height: 64,
       color: colors['neutral-title-1'],
       borderWidth: 1,
       textAlignVertical: 'center',
-      paddingTop: Platform.OS === 'ios' ? 12 : 0,
+      paddingTop: 16,
+      paddingBottom: 16,
     },
 
     ensResultBox: {

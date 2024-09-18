@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ContractRequireData, TypedDataActionData } from './utils';
+import {
+  ContractRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
 import NFTWithName from '../Actions/components/NFTWithName';
 import * as Values from '../Actions/components/Values';
@@ -25,7 +28,7 @@ const BatchSellNFT = ({
   engineResults,
   sender,
 }: {
-  data: TypedDataActionData['batchSellNFT'];
+  data: ParsedTypedDataActionData['batchSellNFT'];
   requireData: ContractRequireData;
   chain: Chain;
   engineResults: Result[];

@@ -11,17 +11,24 @@ buildscript {
         ndkVersion = "23.1.7779620"
         // Only using Android Support libraries
         supportLibVersion = "34.0.0"
+        googlePlayServicesAuthVersion = "20.7.0"
     }
     repositories {
         google()
         mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/public" }
+        maven { url "https://maven.aliyun.com/repository/central" }
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath 'com.google.gms:google-services:4.3.3'
+        classpath("com.google.gms:google-services:4.4.0")
     }
 }
+
+// plugins {
+//     id 'com.google.gms.google-services' version '4.4.2' apply false
+// }
 
 allprojects {
     repositories {

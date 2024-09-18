@@ -35,7 +35,7 @@
       "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted",
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.",
       "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.",
-      "nativeTokenNotEngouthForGas": "Gas balance is not enough for transaction",
+      "nativeTokenNotEngouthForGas": "Gas balance is not enough",
       "nonceLowerThanExpect": "Nonce is too low, the minimum should be {{0}}",
       "canOnlyUseImportedAddress": "You can only use imported addresses to sign",
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
@@ -100,6 +100,15 @@
       },
       "wrapToken": "Wrap Token",
       "unwrap": "Unwrap Token",
+      "transferOwner": {
+        "title": "Transfer Assets Ownership",
+        "description": "Description",
+        "transferTo": "Transfer to"
+      },
+      "swapLimitPay": {
+        "title": "Swap Token Limit Pay",
+        "maxPay": "Maximum pay"
+      },
       "send": {
         "title": "Send Token",
         "sendToken": "Send token",
@@ -332,11 +341,11 @@
       "keystoneConnected": "Keystone is connected",
       "ledgerConnected": "Ledger is connected",
       "importedByLedger": "Imported by Ledger",
-      "signAndSubmitButton": "Sign and Create",
+      "signAndSubmitButton": "Sign",
       "confirm": "Confirm",
       "confirmWithPassword": "Confirm with Password",
       "gasless": {
-        "unavailable": "Gas is not enough and not qualify for Free Gas",
+        "unavailable": "Gas Balance is not enough",
         "notEnough": "Gas balance is not enough",
         "GetFreeGasToSign": "Get Free Gas to sign",
         "rabbyPayGas": "Rabby'll pay for the gas needed – just sign on",
@@ -1039,7 +1048,7 @@
         "metamaskTooltip": "You prefer to use MetaMask with this dapp. Update this settings anytime in Settings > MetaMask Preferred Dapps",
         "connected": "Connected",
         "notConnected": "Not connected",
-        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp’s webpage.",
+        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp's webpage.",
         "noDappFound": "No Dapp found",
         "disconnectAll": "Disconnect All",
         "disconnectRecentlyUsed": {
@@ -1097,7 +1106,7 @@
         "goToSwap": "Go to Swap",
         "claim": "Claim",
         "viewYourClaimCode": "View your claim code on DeBank",
-        "noCode": "You haven’t activated claim code for this address",
+        "noCode": "You haven't activated claim code for this address",
         "freeGasNoCode": "Please click the button below to visit DeBank and get the claim code using your current address first.",
         "learnMoreOnDebank": "Learn more on DeBank",
         "rabbyValuedUserNo": "Rabby Valued User No.{{num}}",
@@ -1390,7 +1399,33 @@
         "inputInvalidCount_one": "1 input do not conform to Seed Phrase norms, please check.",
         "inputInvalidCount_other": "{{count}} inputs do not conform to Seed Phrase norms, please check.",
         "passphrase": "Passphrase",
-        "maxAccountCount": "Maximum 50 addresses each time"
+        "maxAccountCount": "Maximum 50 addresses each time",
+        "createdSuccess": "Your seed phrase has been created",
+        "chooseBackupMethodTitle": "Choose a backup method",
+        "chooseBackupMethodDesc": "Backups let you restore your wallet if you delete the app or lose your device.",
+        "icloudBackup": "iCloud Backup",
+        "googleDriveBackup": "Google Drive Backup",
+        "manuallyBackup": "Manually Backup",
+        "backupUnlockTitle": "Encrypt with App Password",
+        "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
+        "backupUnlockPlaceholder": "Enter the Password to Confirm",
+        "backupUnlockButton": "Continue",
+        "backupUploadToICloud": "Backing Up to iCloud...",
+        "backupUploadToGDrive": "Backing Up to Google Drive...",
+        "backupSuccessICloud": "Backed Up to iCloud",
+        "backupSuccessGDrive": "Backed Up to Google Drive",
+        "backupFailedTitle": "Backup Failed",
+        "backupFailedButton": "Retry",
+        "backupRestoreLoadingText": "Searching for backup seed phrase...",
+        "backupRestoreTitle": "{{count}} seed phrase found",
+        "backupRestoreButton": "Import Seed Phrase",
+        "backupRestoreUnlockTitle": "Enter Backup Password",
+        "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
+        "backupRestoreDownloadTitle": "Importing Seed Phrase...",
+        "backupRestoreEmpty": "No backup seed phrase found",
+        "backupRestoreImported": "Imported",
+        "backupErrorCloudNotAvailable": "iCloud unavailable",
+        "backupRestoreCreatedAt": "Backup Time: "
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
@@ -2057,7 +2092,7 @@
       "Predict": {
         "completed": "Transaction Completed",
         "predictFailed": "Packing time prediction failed",
-        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can’t complete"
+        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can't complete"
       }
     },
     "dappSearch": {
@@ -2166,6 +2201,15 @@
     },
     "sign": {
       "transactionSpeed": "Transaction Speed"
+    },
+    "miniSignFooterBar": {
+      "signWithLedger": "Sign with Ledger",
+      "status": {
+        "txCreated": "Transaction created",
+        "txSigned": "Signed. Creating transaction",
+        "txSending": "Sending signing request",
+        "txSendings": "Sending signing request({{current}}/{{total}})"
+      }
     }
   },
   "component": {

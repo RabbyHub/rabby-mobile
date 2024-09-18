@@ -36,7 +36,7 @@ const getFormInputStyles = createGetStyles(colors => {
     inputContainerFocusing: {
       borderColor: colors['blue-default'],
     },
-    inputContainerClearable: {
+    inputContainerWithIcon: {
       position: 'relative',
 
       flexDirection: 'row',
@@ -96,6 +96,7 @@ export const FormInput = React.forwardRef<
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
     clearable?: boolean;
     clearIcon?: React.ReactNode | ((ctx: RenderCtx) => React.ReactNode);
+    customIcon?: React.ReactNode | ((ctx: RenderCtx) => React.ReactNode);
     hasError?: boolean;
     errorText?: string;
     disableFocusingStyle?: boolean;
@@ -111,6 +112,7 @@ export const FormInput = React.forwardRef<
       inputStyle,
       clearable,
       clearIcon,
+      customIcon,
       errorText,
       disableFocusingStyle = false,
       fieldErrorContainerStyle,
@@ -186,13 +188,32 @@ export const FormInput = React.forwardRef<
       );
     }, [styles, clearable, clearIcon, onPressClear]);
 
+    const formmatedCustomIcon = useMemo(() => {
+      if (!customIcon) return null;
+
+      const iconWrapperStyle = StyleSheet.flatten([styles.closeIconWrapper]);
+      const iconStyle = StyleSheet.flatten([styles.closeIcon]);
+
+      if (typeof customIcon === 'function') {
+        return customIcon({
+          clearable,
+          iconStyle,
+          wrapperStyle: iconWrapperStyle,
+          onPressClear,
+        });
+      }
+      return customIcon;
+    }, [styles, customIcon, clearable, onPressClear]);
+
+    const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
+
     return (
       <>
         <View
           {...viewProps}
           style={StyleSheet.flatten([
             styles.inputContainer,
-            clearable && styles.inputContainerClearable,
+            hasCustomIcon && styles.inputContainerWithIcon,
             hasError && styles.errorInputContainer,
             !disableFocusingStyle &&
               isFocusing &&
@@ -212,7 +233,9 @@ export const FormInput = React.forwardRef<
               inputProps?.style,
             ])}
           />
-          {inputProps?.value && clearable && (formattedClearIcon || null)}
+          {formmatedCustomIcon
+            ? formmatedCustomIcon
+            : clearable && inputProps?.value && (formattedClearIcon || null)}
         </View>
         {errorText && (
           <View
