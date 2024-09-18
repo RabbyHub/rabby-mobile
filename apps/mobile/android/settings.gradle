@@ -8,3 +8,6 @@ project(':react-native-splash-screen').projectDir = new File(rootProject.project
 
 // include ':isudaji_react-native-install-apk'
 // project(':isudaji_react-native-install-apk').projectDir = new File(rootProject.projectDir, 	'../node_modules/@isudaji/react-native-install-apk/android')
+
+// include ':@onekeyfe_react-native-ble-plx'
+// project(':@onekeyfe_react-native-ble-plx').projectDir = new File(rootProject.projectDir, '../node_modules/@onekeyfe/react-native-ble-plx/android')
