@@ -1,0 +1,100 @@
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/dist/BleTransport.d.ts b/node_modules/@onekeyfe/hd-transport-react-native/dist/BleTransport.d.ts
+index 4bec2f7..c122b7d 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/dist/BleTransport.d.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/dist/BleTransport.d.ts
+@@ -1,4 +1,4 @@
+-import { Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { Device, Characteristic } from 'react-native-ble-plx';
+ export default class BleTransport {
+     id: string;
+     device: Device;
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/dist/index.d.ts b/node_modules/@onekeyfe/hd-transport-react-native/dist/index.d.ts
+index b144d68..12a535d 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/dist/index.d.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/dist/index.d.ts
+@@ -1,6 +1,6 @@
+ import * as transport from '@onekeyfe/hd-transport';
+ import transport__default from '@onekeyfe/hd-transport';
+-import { BleManager, Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { BleManager, Device, Characteristic } from 'react-native-ble-plx';
+ import { Deferred } from '@onekeyfe/hd-shared';
+ import EventEmitter from 'events';
+ 
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/dist/index.js b/node_modules/@onekeyfe/hd-transport-react-native/dist/index.js
+index 84a93ec..db32699 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/dist/index.js
++++ b/node_modules/@onekeyfe/hd-transport-react-native/dist/index.js
+@@ -2,7 +2,7 @@
+ 
+ var reactNative = require('react-native');
+ var buffer = require('buffer');
+-var reactNativeBlePlx = require('@onekeyfe/react-native-ble-plx');
++var reactNativeBlePlx = require('react-native-ble-plx');
+ var ByteBuffer = require('bytebuffer');
+ var transport = require('@onekeyfe/hd-transport');
+ var hdShared = require('@onekeyfe/hd-shared');
+@@ -172,8 +172,9 @@ class BleTransport {
+ const { check, buildBuffers, receiveOne, parseConfigure } = transport__default["default"];
+ const transportCache = {};
+ let connectOptions = {
++    autoConnect: false,
+     requestMTU: 256,
+-    timeout: 3000,
++    // timeout: 3000,
+     refreshGatt: 'OnConnected',
+ };
+ const tryToGetConfiguration = (device) => {
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/dist/types.d.ts b/node_modules/@onekeyfe/hd-transport-react-native/dist/types.d.ts
+index 3dfc80d..cadf426 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/dist/types.d.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/dist/types.d.ts
+@@ -1,4 +1,4 @@
+-export type { BleManager as BlePlxManager } from '@onekeyfe/react-native-ble-plx';
++export type { BleManager as BlePlxManager } from 'react-native-ble-plx';
+ export type TransportOptions = {
+     scanTimeout?: number;
+ };
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/src/BleTransport.ts b/node_modules/@onekeyfe/hd-transport-react-native/src/BleTransport.ts
+index 110fcc0..954d5ec 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/src/BleTransport.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/src/BleTransport.ts
+@@ -1,4 +1,4 @@
+-import { Device, Characteristic } from '@onekeyfe/react-native-ble-plx';
++import { Device, Characteristic } from 'react-native-ble-plx';
+ 
+ export default class BleTransport {
+   id: string;
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/src/index.ts b/node_modules/@onekeyfe/hd-transport-react-native/src/index.ts
+index 39a288c..f96b606 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/src/index.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/src/index.ts
+@@ -6,7 +6,7 @@ import {
+   BleErrorCode,
+   Characteristic,
+   ScanMode,
+-} from '@onekeyfe/react-native-ble-plx';
++} from 'react-native-ble-plx';
+ import ByteBuffer from 'bytebuffer';
+ import transport, { COMMON_HEADER_SIZE, LogBlockCommand } from '@onekeyfe/hd-transport';
+ import { createDeferred, Deferred, ERRORS, HardwareErrorCode } from '@onekeyfe/hd-shared';
+@@ -30,8 +30,9 @@ const { check, buildBuffers, receiveOne, parseConfigure } = transport;
+ const transportCache: Record<string, any> = {};
+ 
+ let connectOptions: Record<string, unknown> = {
++  autoConnect: false,
+   requestMTU: 256,
+-  timeout: 3000,
++  // timeout: 3000,
+   refreshGatt: 'OnConnected',
+ };
+ 
+diff --git a/node_modules/@onekeyfe/hd-transport-react-native/src/types.ts b/node_modules/@onekeyfe/hd-transport-react-native/src/types.ts
+index a9c4d8b..b5a933b 100644
+--- a/node_modules/@onekeyfe/hd-transport-react-native/src/types.ts
++++ b/node_modules/@onekeyfe/hd-transport-react-native/src/types.ts
+@@ -1,4 +1,4 @@
+-export type { BleManager as BlePlxManager } from '@onekeyfe/react-native-ble-plx';
++export type { BleManager as BlePlxManager } from 'react-native-ble-plx';
+ 
+ export type TransportOptions = {
+   scanTimeout?: number;
