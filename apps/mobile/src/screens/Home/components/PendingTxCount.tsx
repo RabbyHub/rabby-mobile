@@ -58,7 +58,7 @@ export const PendingTxCount = ({ focused }: { focused?: boolean }) => {
     <RcIconHistoryFocusLight />
   ) : (
     <RcIconHistoryLight />
-  ); //<RcIconHistory style={styles.actionIcon} />
+  );
 };
 
 const getStyles = (colors: AppColorsVariants) =>
