@@ -7828,7 +7828,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/react-native@npm:^5.19.3":
+"@sentry/react-native@npm:5.22.2":
   version: 5.22.2
   resolution: "@sentry/react-native@npm:5.22.2"
   dependencies:
@@ -28114,7 +28114,7 @@ __metadata:
     "@rneui/base": ^4.0.0-rc.8
     "@rneui/themed": ^4.0.0-rc.8
     "@scure/bip39": ^1.3.0
-    "@sentry/react-native": ^5.19.3
+    "@sentry/react-native": 5.22.2
     "@tsconfig/react-native": ^3.0.0
     "@types/koa-compose": ^3.2.8
     "@types/lodash": ^4.14.202
