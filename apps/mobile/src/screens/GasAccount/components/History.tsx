@@ -65,7 +65,7 @@ const HistoryItem = ({
   return (
     <View style={[styles.historyItem, borderT && styles.borderTop]}>
       {isPending ? (
-        <TouchableOpacity style={styles.pendingContainer}>
+        <View style={styles.pendingContainer}>
           <Animated.View
             style={{
               ...styles.pendingIcon,
@@ -79,7 +79,7 @@ const HistoryItem = ({
           </Animated.View>
 
           <Text style={styles.pendingText}>{t('page.gasAccount.deposit')}</Text>
-        </TouchableOpacity>
+        </View>
       ) : (
         <Text style={styles.timeText}>{sinceTime(time)}</Text>
       )}
@@ -220,14 +220,14 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 8,
     marginHorizontal: 20,
     marginBottom: 20,
-    padding: 16,
+    // padding: 16,
     paddingTop: 0,
   },
   historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    padding: 16,
   },
   pendingContainer: {
     flexDirection: 'row',
@@ -271,7 +271,7 @@ const getStyles = createGetStyles(colors => ({
   },
   borderTop: {
     borderTopWidth: 0.5,
-    borderTopColor: colors['neutral-line'],
+    borderTopColor: colors['neutral-card2'],
   },
   historyContainer: {
     display: 'flex',

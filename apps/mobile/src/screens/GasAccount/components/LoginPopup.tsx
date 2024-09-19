@@ -16,6 +16,8 @@ import { createGetStyles } from '@/utils/styles';
 import { useGasAccountMethods } from '../hooks';
 import { GasAccountBlueLogo } from './GasAccountBlueLogo';
 import { GasAccountCurrentAddress } from './LogoutPopup';
+import { GasAccountWrapperBg } from '../components/WrapperBg';
+import { RcIconQuoteEnd, RcIconQuoteStart } from '@/assets/icons/gas-account';
 
 const GasAccountLoginContent = ({ onClose }) => {
   const colors = useThemeColors();
@@ -74,14 +76,20 @@ const GasAccountLoginContent = ({ onClose }) => {
   }
 
   return (
-    <View style={styles.loginContainer}>
+    <GasAccountWrapperBg style={styles.loginContainer}>
       <GasAccountBlueLogo style={styles.logo} />
-      <Text style={styles.loginTip}>
-        {t('component.gasAccount.loginInTip.title')}
-      </Text>
-      <Text style={styles.loginDesc}>
-        {t('component.gasAccount.loginInTip.desc')}
-      </Text>
+      <View style={styles.quoteContainer}>
+        <RcIconQuoteStart style={styles.quoteStart} />
+        <Text style={styles.loginTip}>
+          {t('component.gasAccount.loginInTip.title')}
+        </Text>
+      </View>
+      <View style={styles.quoteContainer}>
+        <Text style={styles.loginDesc}>
+          {t('component.gasAccount.loginInTip.desc')}
+        </Text>
+        <RcIconQuoteEnd style={styles.quoteEnd} />
+      </View>
       <View style={styles.buttonContainer}>
         <Button
           containerStyle={styles.confirmButton}
@@ -90,7 +98,7 @@ const GasAccountLoginContent = ({ onClose }) => {
           title={t('component.gasAccount.loginInTip.login')}
         />
       </View>
-    </View>
+    </GasAccountWrapperBg>
   );
 };
 
@@ -236,6 +244,20 @@ const getStyles = createGetStyles(colors => ({
   },
   popupBody: {
     padding: 0,
+  },
+  quoteContainer: {
+    position: 'relative',
+    // marginBottom: 16,
+  },
+  quoteEnd: {
+    position: 'absolute',
+    top: 2,
+    right: -20,
+  },
+  quoteStart: {
+    position: 'absolute',
+    top: 2,
+    left: -20,
   },
 }));
 

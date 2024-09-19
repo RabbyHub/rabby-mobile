@@ -2314,7 +2314,7 @@
       },
       "withdrawConfirmModal": {
         "title": "Transferred to your DeBank L2 Wallet",
-        "button": "View on DeBank"
+        "button": "View on DeBank APP"
       },
       "GasAccountDepositTipPopup": {
         "title": "Open GasAccount and Deposit",
