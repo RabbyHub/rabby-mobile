@@ -1,8 +1,7 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import RcIconRight from '@/assets/icons/history/icon-right.svg';
-import RcIconNotFindCC from '@/assets/icons/select-chain/icon-notfind-cc.svg';
 import NetSwitchTabs, {
   useSwitchNetTab,
 } from '@/components/PillsSwitch/NetSwitchTabs';
@@ -171,6 +170,7 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
         localTxList={groups}
         loading={isFirstLoading}
         loadingMore={loadingMore}
+        refreshLoading={loading}
         loadMore={loadMore}
         onRefresh={refresh}
       />
