@@ -62,7 +62,7 @@ export const GasAccountDepositTipPopup = ({
   }, [visible]);
   return (
     <AppBottomSheetModal
-      enableDynamicSizing
+      snapPoints={[380]}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose
@@ -127,7 +127,7 @@ export const GasAccountLogInTipPopup = ({ visible, onClose }: PopupProps) => {
 
   return (
     <AppBottomSheetModal
-      enableDynamicSizing
+      snapPoints={[540]}
       ref={bottomRef}
       onDismiss={onClose}
       enableDismissOnClose

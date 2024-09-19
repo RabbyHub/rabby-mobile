@@ -34,9 +34,7 @@ gasAccountSigAtom.onMount = set => {
     brand?: string,
   ) => {
     if (type !== KEYRING_TYPE.WatchAddressKeyring) {
-      console.log('syncDeleteGasAccount', address, type, brand);
       const restAddresses = await keyringService.getAllAddresses();
-      console.log('restAddresses', restAddresses);
       const gasAccount =
         gasAccountService.getGasAccountData() as GasAccountServiceStore;
       if (!gasAccount?.account?.address) return;
@@ -61,8 +59,7 @@ gasAccountSigAtom.onMount = set => {
   };
   keyringService.on('removedAccount', syncDeleteGasAccount);
   set({
-    sig: gasAccountService.store.sig,
-    accountId: gasAccountService.store.accountId,
+    ...(gasAccountService.getGasAccountData() as GasAccountServiceStore),
   });
 
   return () => {

@@ -1526,6 +1526,9 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
             gasAccountCanPay={gasAccountCanPay}
             canGotoUseGasAccount={canGotoUseGasAccount}
             isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={
+              currentAccountType === KEYRING_TYPE.WalletConnectKeyring
+            }
             onChangeGasAccount={() => setGasMethod('gasAccount')}
             isWatchAddr={
               currentAccountType === KEYRING_TYPE.WatchAddressKeyring

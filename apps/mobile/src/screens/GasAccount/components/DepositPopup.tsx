@@ -43,7 +43,7 @@ import { topUpGasAccount } from '@/core/apis/gasAccount';
 import { useGasAccountHistoryRefresh } from '../hooks/atom';
 // import { GasAccountCloseIcon } from './PopupCloseIcon';
 
-const amountList = [1, 100, 500];
+const amountList = [20, 100, 500];
 
 const TokenSelector = ({ visible, onClose, cost, onChange }) => {
   const { t } = useTranslation();

@@ -117,7 +117,7 @@ const WithDrawConfirm = () => {
           style={[
             styles.labelContent,
             {
-              width: 270,
+              width: 'auto',
               height: 48,
               paddingVertical: 0,
               paddingHorizontal: 0,

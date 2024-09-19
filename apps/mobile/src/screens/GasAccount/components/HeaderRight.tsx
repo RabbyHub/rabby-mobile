@@ -1,5 +1,5 @@
 import { RcIconGasAccountHeaderRight } from '@/assets/icons/gas-account';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ export const GasAccountHeader = () => {
   const styles = useMemo(() => getStyles(color), [color]);
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
+  const isDark = useGetBinaryMode() === 'dark';
 
   const [, setLogoutVisible] = useGasAccountLogoutVisible();
 
@@ -26,7 +27,10 @@ export const GasAccountHeader = () => {
     <Tip
       hideArrow
       placement="bottom"
-      contentStyle={styles.content}
+      contentStyle={[
+        styles.content,
+        isDark && { backgroundColor: color['neutral-bg-1'] },
+      ]}
       isVisible={visible}
       onClose={() => setVisible(false)}
       content={
@@ -56,7 +60,7 @@ const getStyles = createGetStyles(color => ({
   },
   content: {
     width: 'auto',
-    backgroundColor: color['neutral-bg-2'],
+    backgroundColor: color['neutral-card-1'],
     height: 'auto',
     padding: 14,
     paddingLeft: 12,

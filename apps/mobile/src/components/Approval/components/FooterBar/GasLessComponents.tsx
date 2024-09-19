@@ -86,10 +86,13 @@ export function GasLessNotEnough({
       </Text>
 
       {canGotoUseGasAccount ? (
-        <Button
-          onPress={onChangeGasAccount}
-          title={t('page.signFooterBar.gasAccount.useGasAccount')}
-        />
+        <TouchableOpacity
+          style={[styles.gasAccountBtn, { paddingHorizontal: 8 }]}
+          onPress={onChangeGasAccount}>
+          <Text style={styles.gasAccountTipBtnText}>
+            {t('page.signFooterBar.gasAccount.useGasAccount')}
+          </Text>
+        </TouchableOpacity>
       ) : null}
     </Pressable>
   );
@@ -571,6 +574,8 @@ export function GasAccountTips({
 
   const [tipPopupVisible, setTipPopupVisible] = useState(false);
 
+  console.log('isWalletConnect', 'isWalletConnect');
+
   const [tip, btnText] = useMemo(() => {
     if (!noCustomRPC) {
       return [t('page.signFooterBar.gasAccount.customRPC'), null];
@@ -738,7 +743,7 @@ const getStyles = createGetStyles(colors => ({
   gasAccountBtn: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 72,
+    minWidth: 72,
     height: 28,
     backgroundColor: colors['blue-default'],
     borderRadius: 6,
