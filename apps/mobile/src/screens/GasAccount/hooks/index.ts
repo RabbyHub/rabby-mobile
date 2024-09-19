@@ -236,13 +236,6 @@ export const useGasAccountHistory = () => {
     }
   }, [mutate, refreshGasAccountBalance, value]);
 
-  // useEffect(() => {
-  //   if (!noMore && !loadingMore && loadMore) {
-  //     loadMore();
-  //     console.log('loadingMore');
-  //   }
-  // }, [loadMore, loading, loadingMore, noMore]);
-
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (!loading && !loadingMore && !!txList?.rechargeList?.length) {

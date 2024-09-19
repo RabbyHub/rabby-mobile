@@ -8,10 +8,13 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-// import { GasAccountCloseIcon } from './PopupCloseIcon';
 import IconJumpBtn from '@/assets/icons/gas-account/IconJumpBtn.svg';
 import RcIconHasConfirmed from '@/assets/icons/gas-account/IconHasConfirmed.svg';
-import { useGasAccountSign, useGasBalanceRefresh } from '../hooks/atom';
+import {
+  useGasAccountHistoryRefresh,
+  useGasAccountSign,
+  useGasBalanceRefresh,
+} from '../hooks/atom';
 import { GasAccountCurrentAddress } from './LogoutPopup';
 import { toast } from '@/components/Toast';
 import { gotoDeBankAppL2 } from '../hooks';
@@ -33,6 +36,8 @@ const WithDrawInitContent = ({
 
   const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
 
+  const { refresh: refreshGasAccountHistory } = useGasAccountHistoryRefresh();
+
   const withdraw = async () => {
     if (!sig || !accountId || loading) {
       return;
@@ -50,6 +55,7 @@ const WithDrawInitContent = ({
         account_id: accountId!,
         amount: balance,
       });
+      refreshGasAccountHistory();
       refreshGasAccountBalance();
       onClose();
       onAfterConfirm?.();
