@@ -39,9 +39,11 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { TokenAmountItem } from '@/components/Approval/components/Actions/components/TokenAmountItem';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
 import useAsync from 'react-use/lib/useAsync';
+import { topUpGasAccount } from '@/core/apis/gasAccount';
+import { useGasAccountHistoryRefresh } from '../hooks/atom';
 // import { GasAccountCloseIcon } from './PopupCloseIcon';
 
-const amountList = [20, 100, 500];
+const amountList = [1, 100, 500];
 
 const TokenSelector = ({ visible, onClose, cost, onChange }) => {
   const { t } = useTranslation();
@@ -113,7 +115,9 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
                 {getTokenSymbol(item)}
               </Text>
             </View>
-            <Text>{formatUsdValue(item.amount * item.price || 0)}</Text>
+            <Text style={styles.text}>
+              {formatUsdValue(item.amount * item.price || 0)}
+            </Text>
           </CustomTouchableOpacity>
         </Tip>
       );
@@ -125,7 +129,7 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
     <AppBottomSheetModal
       ref={modalRef}
       onDismiss={onClose}
-      snapPoints={[550]}
+      snapPoints={[580]}
       // isVisible={visible}
     >
       <BottomSheetView style={styles.popup}>
@@ -134,8 +138,8 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
             {t('page.gasTopUp.Select-from-supported-tokens')}
           </Text>
           <View style={styles.header}>
-            <Text>{t('page.gasTopUp.Token')}</Text>
-            <Text>{t('page.gasTopUp.Value')}</Text>
+            <Text style={styles.label}>{t('page.gasTopUp.Token')}</Text>
+            <Text style={styles.label}>{t('page.gasTopUp.Value')}</Text>
           </View>
           {loading ? (
             <View style={styles.loadingContainer}>
@@ -167,24 +171,30 @@ const GasAccountDepositContent = ({ onClose }) => {
   const [token, setToken] = useState<TokenItem | undefined>(undefined);
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
-  // const wallet = useWallet();
-  const wallet = {} as any;
 
   const openTokenList = () => setTokenListVisible(true);
+  const [loading, setLoading] = useState(false);
 
-  const topUpGasAccount = () => {
-    if (token) {
+  const { refresh: refreshHistoryList } = useGasAccountHistoryRefresh();
+
+  const topUp = async () => {
+    if (token && !loading) {
+      setLoading(true);
       const chainEnum = findChainByServerID(token.chain)!;
-      wallet.topUpGasAccount({
-        to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
-        chainServerId: chainEnum.serverId,
-        tokenId: token.id,
-        amount: selectedAmount,
-        rawAmount: new BigNumber(selectedAmount)
-          .times(10 ** token.decimals)
-          .toFixed(0),
-      });
-      onClose();
+      try {
+        await topUpGasAccount({
+          to: L2_DEPOSIT_ADDRESS_MAP[chainEnum.enum],
+          chainServerId: chainEnum.serverId,
+          tokenId: token.id,
+          amount: selectedAmount,
+          rawAmount: new BigNumber(selectedAmount)
+            .times(10 ** token.decimals)
+            .toFixed(0),
+        });
+        refreshHistoryList();
+        onClose();
+      } catch (error) {}
+      setLoading(false);
     }
   };
 
@@ -253,9 +263,10 @@ const GasAccountDepositContent = ({ onClose }) => {
 
       <View style={styles.btnContainer}>
         <Button
+          loading={loading}
           type="primary"
           containerStyle={styles.confirmButton}
-          onPress={topUpGasAccount}
+          onPress={topUp}
           disabled={!token}
           title={t('global.confirm')}
         />
@@ -341,10 +352,18 @@ const getStyles = createGetStyles(colors => ({
   },
   selectedAmountButton: {
     backgroundColor: colors['blue-light1'],
-    borderColor: '#007BFF',
+    borderColor: colors['blue-default'],
   },
-  amountText: { fontSize: 18, fontWeight: '500' },
-  selectedAmountText: { fontSize: 18, fontWeight: '500', color: '#007BFF' },
+  amountText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
+  selectedAmountText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: colors['blue-default'],
+  },
   tokenLabel: {
     fontSize: 13,
     marginTop: 12,
@@ -377,8 +396,17 @@ const getStyles = createGetStyles(colors => ({
     borderRadius: 6,
   },
   tokenContent: { flexDirection: 'row', alignItems: 'center' },
-  tokenSymbol: { fontSize: 15, fontWeight: '500', marginLeft: 12 },
-  tokenPlaceholder: { fontSize: 15, fontWeight: '500' },
+  tokenSymbol: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 12,
+    color: colors['neutral-title-1'],
+  },
+  tokenPlaceholder: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors['neutral-title-1'],
+  },
   confirmButton: {
     width: '100%',
     height: 52,
@@ -433,5 +461,9 @@ const getStyles = createGetStyles(colors => ({
     borderBottomWidth: 0.5,
     borderColor: colors['neutral-line'],
     paddingVertical: 8,
+  },
+  label: {
+    fontSize: 13,
+    color: colors['neutral-body'],
   },
 }));

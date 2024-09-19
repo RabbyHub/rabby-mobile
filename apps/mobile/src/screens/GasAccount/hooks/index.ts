@@ -10,10 +10,17 @@ import React, { useEffect } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import {
+  useGasAccountHistoryRefresh,
+  useGasAccountLoginVisible,
+  useGasAccountLogoutVisible,
   useGasAccountSign,
   useGasBalanceRefresh,
   useSetGasAccount,
 } from './atom';
+import { openExternalUrl } from '@/core/utils/linking';
+import { Linking, Platform } from 'react-native';
+import { RootNames } from '@/constant/layout';
+import { navigationRef } from '@/utils/navigation';
 
 export const useGasAccountInfo = () => {
   const { sig, accountId } = useGasAccountSign();
@@ -46,8 +53,32 @@ export const useGasAccountInfo = () => {
   return { loading, value };
 };
 
+export const useGasAccountGoBack = () => {
+  const navigation = navigationRef;
+  return useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootNames.StackRoot,
+            params: {
+              screen: RootNames.Home,
+            },
+          },
+        ],
+      });
+    }
+  }, [navigation]);
+};
+
 export const useGasAccountMethods = () => {
   const { sig, accountId } = useGasAccountSign();
+  const [, setLogoutVisible] = useGasAccountLogoutVisible();
+  const [, setLoginVisible] = useGasAccountLoginVisible();
+  const gotoDashboard = useGasAccountGoBack();
 
   const setGasAccount = useSetGasAccount();
 
@@ -77,9 +108,10 @@ export const useGasAccountMethods = () => {
 
       if (result?.success) {
         setGasAccount(signature, account);
+        setLoginVisible(false);
       }
     }
-  }, [setGasAccount]);
+  }, [setGasAccount, setLoginVisible]);
 
   const logout = useCallback(async () => {
     if (sig && accountId) {
@@ -89,11 +121,13 @@ export const useGasAccountMethods = () => {
       });
       if (result.success) {
         setGasAccount();
+        setLogoutVisible(false);
+        gotoDashboard();
       } else {
         toast.show('please retry');
       }
     }
-  }, [accountId, setGasAccount, sig]);
+  }, [accountId, gotoDashboard, setGasAccount, setLogoutVisible, sig]);
 
   return { login, logout };
 };
@@ -117,10 +151,8 @@ export const useGasAccountLogin = ({
 export const useGasAccountHistory = () => {
   const { sig, accountId } = useGasAccountSign();
 
-  const [refreshTxListCount, setRefreshListTx] = useState(0);
-  const refreshListTx = React.useCallback(() => {
-    setRefreshListTx(e => e + 1);
-  }, []);
+  const { refreshId: refreshTxListCount, refresh: refreshListTx } =
+    useGasAccountHistoryRefresh();
 
   const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
 
@@ -143,7 +175,7 @@ export const useGasAccountHistory = () => {
         sig: sig!,
         account_id: accountId!,
         start: d?.list?.length && d?.list?.length > 1 ? d?.list?.length : 0,
-        limit: 5,
+        limit: 10,
       });
 
       const rechargeList = data.recharge_list;
@@ -204,11 +236,12 @@ export const useGasAccountHistory = () => {
     }
   }, [mutate, refreshGasAccountBalance, value]);
 
-  useEffect(() => {
-    if (!noMore && !loadingMore && loadMore) {
-      loadMore();
-    }
-  }, [loadMore, loading, loadingMore, noMore]);
+  // useEffect(() => {
+  //   if (!noMore && !loadingMore && loadMore) {
+  //     loadMore();
+  //     console.log('loadingMore');
+  //   }
+  // }, [loadMore, loading, loadingMore, noMore]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -226,5 +259,30 @@ export const useGasAccountHistory = () => {
     loading,
     txList,
     loadingMore,
+    loadMore,
+    noMore,
   };
+};
+
+export const gotoDeBankAppL2 = () => {
+  const gotoAppStore = () =>
+    openExternalUrl(
+      Platform.OS === 'android'
+        ? 'https://play.google.com/store/apps/details?id=com.debank.meme'
+        : 'https://apps.apple.com/us/app/debank-crypto-defi-portfolio/id1621278377',
+    );
+
+  const urlScheme = 'debank://account';
+
+  Linking.canOpenURL(urlScheme)
+    .then(supported => {
+      if (supported) {
+        Linking.openURL(urlScheme);
+      } else {
+        gotoAppStore();
+      }
+    })
+    .catch(() => {
+      gotoAppStore();
+    });
 };

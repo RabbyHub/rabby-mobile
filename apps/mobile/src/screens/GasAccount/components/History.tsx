@@ -1,17 +1,17 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+  Animated,
+  Easing,
+  ListRenderItem,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import clsx from 'clsx';
 import { formatUsdValue } from '@/utils/number';
 import { Skeleton } from '@rneui/themed';
-import { openapi, testOpenapi } from '@/core/request';
-import { useCurrentAccount } from '@/hooks/account';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { findChainByServerID } from '@/utils/chain';
@@ -20,6 +20,7 @@ import { openExternalUrl } from '@/core/utils/linking';
 import { sinceTime } from '@/utils/time';
 import { useGasAccountHistory } from '../hooks';
 import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HistoryItem = ({
   time,
@@ -43,33 +44,48 @@ const HistoryItem = ({
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { t } = useTranslation();
 
-  const gotoTxDetail = () => {
-    if (chainServerId && txId) {
-      const chain = findChainByServerID(chainServerId);
-      if (chain && chain.scanLink) {
-        const scanLink = chain.scanLink.replace('_s_', '');
-        // 使用 Linking 来打开链接
-        openExternalUrl(`${scanLink}${txId}`);
-      }
-    }
-  };
+  const transAnim = React.useRef(new Animated.Value(0));
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.timing(transAnim.current, {
+        toValue: 360,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, []);
+
+  const rotate = transAnim.current.interpolate({
+    inputRange: [0, 360],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View style={[styles.historyItem, borderT && styles.borderTop]}>
       {isPending ? (
-        <TouchableOpacity
-          style={styles.pendingContainer}
-          onPress={gotoTxDetail}>
-          <RcIconHistoryLoading style={styles.pendingIcon} />
+        <TouchableOpacity style={styles.pendingContainer}>
+          <Animated.View
+            style={{
+              ...styles.pendingIcon,
+              transform: [
+                {
+                  rotate,
+                },
+              ],
+            }}>
+            <RcIconHistoryLoading />
+          </Animated.View>
+
           <Text style={styles.pendingText}>{t('page.gasAccount.deposit')}</Text>
-          {/* <RcIconOpenExternalCC style={styles.externalIcon} /> */}
         </TouchableOpacity>
       ) : (
         <Text style={styles.timeText}>{sinceTime(time)}</Text>
       )}
       <Text style={styles.valueText}>
         {sign}
-        {formatUsdValue(value)}{' '}
+        {formatUsdValue(value)}
       </Text>
     </View>
   );
@@ -90,9 +106,85 @@ const LoadingItem = ({ borderT }) => {
 export const GasAccountHistory = () => {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  // const { loading, txList, loadingMore, ref } = useGasAccountHistory();
-  const { loading, txList, loadingMore } = useGasAccountHistory();
+  const { loading, txList, loadingMore, loadMore, noMore } =
+    useGasAccountHistory();
   const styles = useMemo(() => getStyles(colors), [colors]);
+
+  const { bottom } = useSafeAreaInsets();
+
+  const ListEmptyComponent = useMemo(
+    () =>
+      !loading && (!txList || !txList?.list?.length) ? (
+        <View style={styles.historyContainer}>
+          <RcIconHistoryIcon style={styles.historyIcon} />
+          <Text style={styles.historyText}>
+            {t('component.gasAccount.history.noHistory')}
+          </Text>
+        </View>
+      ) : loading ? (
+        <>
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <LoadingItem key={idx} borderT={idx !== 0} />
+          ))}
+        </>
+      ) : null,
+    [
+      loading,
+      txList,
+      styles.historyContainer,
+      styles.historyIcon,
+      styles.historyText,
+      t,
+    ],
+  );
+
+  const ListEndLoader = useCallback(() => {
+    if (noMore) {
+      return null;
+    }
+    return <LoadingItem borderT />;
+  }, [noMore]);
+
+  const ListHeaderComponent = useCallback(() => {
+    return (
+      !loading &&
+      txList?.rechargeList?.map((item, index) => (
+        <HistoryItem
+          key={item.tx_id + item.chain_id}
+          time={item.create_at}
+          value={item.amount}
+          sign={'+'}
+          borderT={index !== 0}
+          isPending={true}
+          chainServerId={item?.chain_id}
+          txId={item?.tx_id}
+        />
+      ))
+    );
+  }, [loading, txList?.rechargeList]);
+
+  const renderItem: ListRenderItem<{
+    id: string;
+    chain_id: string;
+    create_at: number;
+    gas_cost_usd_value: number;
+    gas_account_id: string;
+    tx_id: string;
+    usd_value: number;
+    user_addr: string;
+    history_type: 'tx' | 'recharge' | 'withdraw';
+  }> = useCallback(
+    ({ item, index }) => (
+      <HistoryItem
+        key={item.tx_id + item.chain_id}
+        time={item.create_at}
+        value={item.usd_value}
+        sign={item.history_type === 'recharge' ? '+' : '-'}
+        borderT={!txList?.rechargeList.length ? index !== 0 : true}
+      />
+    ),
+    [txList?.rechargeList],
+  );
 
   if (!loading && !txList?.rechargeList.length && !txList?.list.length) {
     return (
@@ -106,48 +198,19 @@ export const GasAccountHistory = () => {
   }
 
   return (
-    <View style={styles.container}>
-      {!loading &&
-        txList?.rechargeList?.map((item, index) => (
-          <HistoryItem
-            key={item.create_at}
-            time={item.create_at}
-            value={item.amount}
-            sign={'+'}
-            borderT={index !== 0}
-            isPending={true}
-            chainServerId={item?.chain_id}
-            txId={item?.tx_id}
-          />
-        ))}
-      {!loading &&
-        txList?.list.map((item, index) => (
-          <HistoryItem
-            key={item.create_at}
-            time={item.create_at}
-            value={item.usd_value}
-            sign={item.history_type === 'recharge' ? '+' : '-'}
-            borderT={!txList?.rechargeList.length ? index !== 0 : true}
-          />
-        ))}
-
-      {(loading && !txList) || loadingMore ? (
-        <>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <LoadingItem
-              key={index}
-              borderT={
-                !txList?.rechargeList.length && !txList?.list.length
-                  ? index !== 0
-                  : true
-              }
-            />
-          ))}
-        </>
-      ) : null}
-
-      {/* <View ref={ref} /> */}
-    </View>
+    <FlatList
+      style={[styles.container, { marginBottom: bottom }]}
+      data={txList?.list}
+      contentInset={{ bottom: 12 }}
+      ListHeaderComponent={ListHeaderComponent}
+      renderItem={renderItem}
+      extraData={txList?.rechargeList.length}
+      keyExtractor={item => `${item.tx_id}${item.chain_id}`}
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.6}
+      ListFooterComponent={ListEndLoader}
+      ListEmptyComponent={ListEmptyComponent}
+    />
   );
 };
 
@@ -158,10 +221,12 @@ const getStyles = createGetStyles(colors => ({
     marginHorizontal: 20,
     marginBottom: 20,
     padding: 16,
+    paddingTop: 0,
   },
   historyItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 12,
   },
   pendingContainer: {
@@ -230,5 +295,30 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-foot'],
     fontWeight: '500',
     fontSize: 13,
+  },
+  emptyView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    paddingTop: 150,
+  },
+  emptyList: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: colors['neutral-foot'],
+    fontSize: 14,
+  },
+  skeletonBlock: {
+    width: '100%',
+    height: 210,
+    padding: 0,
+    borderRadius: 6,
+    marginBottom: 12,
   },
 }));

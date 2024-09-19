@@ -1,20 +1,30 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { createGetStyles } from '@/utils/styles';
-import { Text, View, StyleSheet, Modal } from 'react-native';
-import { useGasAccountInfo, useGasAccountLogin } from './hooks';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
-import { RcIconGasAccount } from '@/assets/icons/gas-account';
+import { Text, View } from 'react-native';
+import {
+  useGasAccountGoBack,
+  useGasAccountInfo,
+  useGasAccountLogin,
+} from './hooks';
+import { formatUsdValue } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './components/DepositPopup';
 import { WithDrawPopup } from './components/WithDrawPopup';
 import { Button } from '@/components/Button';
 import RcIconGasAccountBalance from '@/assets/icons/gas-account/balance-acount.svg';
-import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
 import { GasAccountHistory } from './components/History';
 import { GasAccountLoginPopup } from './components/LoginPopup';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { GasAccountHeader } from './components/HeaderRight';
+import GasAccountLogoutPopup from './components/LogoutPopup';
+import {
+  useGasAccountLoginVisible,
+  useGasAccountLogoutVisible,
+} from './hooks/atom';
+import { GasAccountWrapperBg } from './components/WrapperBg';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -23,7 +33,8 @@ export const GasAccountScreen = () => {
   const { t } = useTranslation();
   const [showDesposit, setShowDesposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [loginVisible, setLoginVisible] = useState(false);
+  const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
+
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { value, loading } = useGasAccountInfo();
 
@@ -34,9 +45,7 @@ export const GasAccountScreen = () => {
     return formatUsdValue(0);
   }, [value]);
 
-  const gotoDashboard = () => {
-    // history.push('/dashboard');
-  };
+  const gotoDashboard = useGasAccountGoBack();
 
   const gotoDesposit = () => {
     setShowDesposit(true);
@@ -48,49 +57,61 @@ export const GasAccountScreen = () => {
 
   const canDesposit = useMemo(() => balance < DEPOSIT_LIMIT, [balance]);
 
-  // useEffect(() => {
-  //   wallet.clearPageStateCache();
-  // }, [wallet?.clearPageStateCache]);
+  const [logoutPopupVisible, setLogoutPopupVisible] =
+    useGasAccountLogoutVisible();
+
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const headerRight = useCallback(() => <GasAccountHeader />, []);
+
+  useEffect(() => {
+    setNavigationOptions({ headerRight: headerRight });
+  }, [setNavigationOptions, headerRight]);
 
   useEffect(() => {
     if (!isLogin) {
       setLoginVisible(true);
     }
-  }, [isLogin]);
+  }, [isLogin, setLoginVisible]);
 
   useEffect(() => {
     if (!loading && !isLogin) {
       setLoginVisible(true);
     }
-  }, [loading, isLogin]);
+  }, [loading, isLogin, setLoginVisible]);
 
   return (
     <NormalScreenContainer>
-      <View style={styles.accountContainer}>
+      <GasAccountWrapperBg style={styles.accountContainer}>
         <View style={styles.content}>
           <RcIconGasAccountBalance style={styles.acountIcon} />
           <Text style={styles.balanceText}>{usd}</Text>
         </View>
-        <View style={styles.accountfooter}>
-          <Button
-            type="white"
-            onPress={() => setShowWithdraw(true)}
-            buttonStyle={[styles.whiteBtn, styles.buttonContainer]}
-            containerStyle={styles.buttonContainer}
-            title={t('component.gasAccount.withdraw')}
-          />
-          <View style={styles.buttonContainer}>
+        <View style={styles.accountFooter}>
+          <View
+            style={{
+              flex: 1,
+            }}>
+            <Button
+              type="white"
+              ghost
+              onPress={() => setShowWithdraw(true)}
+              buttonStyle={[styles.whiteBtn, styles.buttonContainer]}
+              title={t('component.gasAccount.withdraw')}
+            />
+          </View>
+          <View
+            style={{
+              flex: 1,
+            }}>
             <Tip
               placement="top"
               content={
                 !canDesposit ? t('component.gasAccount.gasExceed') : undefined
-              }
-              // isVisible={!disabled}
-            >
+              }>
               <Button
                 type="primary"
                 buttonStyle={styles.buttonContainer}
-                containerStyle={styles.btnContainerStyle}
                 onPress={() => canDesposit && gotoDesposit()}
                 disabled={!canDesposit}
                 title={t('component.gasAccount.deposit')}
@@ -98,7 +119,7 @@ export const GasAccountScreen = () => {
             </Tip>
           </View>
         </View>
-      </View>
+      </GasAccountWrapperBg>
 
       <GasAccountHistory />
 
@@ -109,15 +130,24 @@ export const GasAccountScreen = () => {
 
       <WithDrawPopup
         visible={showWithdraw}
-        balance={value?.account.balance}
+        balance={balance}
         onCancel={() => setShowWithdraw(false)}
       />
 
       <GasAccountLoginPopup
         visible={loginVisible}
         onCancel={() => {
-          gotoDashboard();
           setLoginVisible(false);
+          if (!isLogin) {
+            gotoDashboard();
+          }
+        }}
+      />
+
+      <GasAccountLogoutPopup
+        visible={logoutPopupVisible}
+        onClose={() => {
+          setLogoutPopupVisible(false);
         }}
       />
     </NormalScreenContainer>
@@ -127,7 +157,8 @@ export const GasAccountScreen = () => {
 const getStyles = createGetStyles(colors => ({
   accountContainer: {
     height: 320,
-    padding: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
     marginHorizontal: 20,
     borderRadius: 8,
     backgroundColor: colors['neutral-card-1'],
@@ -136,11 +167,10 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     marginBottom: 20,
   },
-  accountfooter: {
-    height: 115,
+  accountFooter: {
+    marginTop: 'auto',
     flexDirection: 'row',
     gap: 16,
-    alignItems: 'center',
     width: '100%',
   },
   content: {
@@ -187,11 +217,8 @@ const getStyles = createGetStyles(colors => ({
   },
   buttonContainer: {
     height: 48,
-    flex: 1,
   },
-  btnContainerStyle: {
-    height: 48,
-  },
+
   whiteBtn: {
     borderWidth: 1,
     borderColor: colors['blue-default'],

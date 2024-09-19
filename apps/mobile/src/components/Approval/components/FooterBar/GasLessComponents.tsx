@@ -624,7 +624,7 @@ export function GasAccountTips({
       <View style={styles.tipTriangle} />
       <RcIconGasAccount width={16} height={16} />
       <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
-        {t('page.signFooterBar.gasless.notEnough')}
+        {tip}
       </Text>
 
       {btnText ? (

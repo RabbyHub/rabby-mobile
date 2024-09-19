@@ -1,43 +1,20 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
-import { AssetAvatar } from '@/components';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { noop } from 'lodash';
-import { Tip } from '@/components/Tip';
 import { Button } from '@/components/Button';
-import clsx from 'clsx';
-import useAsync from 'react-use/lib/useAsync';
 import { formatUsdValue } from '@/utils/number';
-import { openapi, testOpenapi } from '@/core/request';
+import { openapi } from '@/core/request';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import {
-  AppBottomSheetModal,
-  AppBottomSheetModalTitle,
-} from '@/components/customized/BottomSheet';
-import { useCurrentAccount } from '@/hooks/account';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
-import BigNumber from 'bignumber.js';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
-import { openAppWithUri } from 'react-native-send-intent';
 // import { GasAccountCloseIcon } from './PopupCloseIcon';
 import IconJumpBtn from '@/assets/icons/gas-account/IconJumpBtn.svg';
 import RcIconHasConfirmed from '@/assets/icons/gas-account/IconHasConfirmed.svg';
-import { openExternalUrl } from '@/core/utils/linking';
+import { useGasAccountSign, useGasBalanceRefresh } from '../hooks/atom';
+import { GasAccountCurrentAddress } from './LogoutPopup';
+import { toast } from '@/components/Toast';
+import { gotoDeBankAppL2 } from '../hooks';
 
 const WithDrawInitContent = ({
   balance,
@@ -49,19 +26,22 @@ const WithDrawInitContent = ({
   onAfterConfirm: () => void;
 }) => {
   const { t } = useTranslation();
-  // const { sig, accountId } = useGasAccountSign();
-  const { sig, accountId } = {};
+  const { sig, accountId } = useGasAccountSign();
   const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
-  // const gasAccount = useRabbySelector((s) => s.gasAccount.account);
-  const gasAccount = {} as any;
   const styles = useMemo(() => getStyles(colors), [colors]);
-  const [visible, setVisible] = useState(true);
-  // const wallet = useWallet();
 
-  const wallet = {} as any;
+  const { refresh: refreshGasAccountBalance } = useGasBalanceRefresh();
 
   const withdraw = async () => {
+    if (!sig || !accountId || loading) {
+      return;
+    }
+    if (balance <= 0) {
+      onClose();
+      onAfterConfirm?.();
+      return;
+    }
     try {
       setLoading(true);
       onAfterConfirm?.();
@@ -70,10 +50,11 @@ const WithDrawInitContent = ({
         account_id: accountId!,
         amount: balance,
       });
+      refreshGasAccountBalance();
       onClose();
       onAfterConfirm?.();
     } catch (error) {
-      // message.error(error?.message || String(error));
+      toast.info((error as any)?.message || String(error));
     } finally {
       setLoading(false);
     }
@@ -101,8 +82,8 @@ const WithDrawInitContent = ({
           {t('component.gasAccount.withdrawPopup.to')}
         </Text>
 
-        <View style={styles.labelContent}>
-          <Text>{'rabby wallet '}</Text>
+        <View style={[styles.labelContent, { paddingLeft: 0 }]}>
+          <GasAccountCurrentAddress transparent />
         </View>
       </View>
       <View style={styles.btnContainer}>
@@ -118,35 +99,10 @@ const WithDrawInitContent = ({
   );
 };
 
-const WithDrawConfrim = ({
-  balance,
-  onClose,
-}: {
-  balance: number;
-  onClose: () => void;
-}) => {
+const WithDrawConfirm = () => {
   const { t } = useTranslation();
-  // const { sig, accountId } = useGasAccountSign();
-  const { sig, accountId } = {};
   const colors = useThemeColors();
-  const [loading, setLoading] = useState(false);
-  // const gasAccount = useRabbySelector((s) => s.gasAccount.account);
-  const gasAccount = {} as any;
   const styles = useMemo(() => getStyles(colors), [colors]);
-  // const wallet = useWallet();
-
-  const wallet = {} as any;
-
-  const gotoDebank = async () => {
-    try {
-      openExternalUrl('https://debank.com/account');
-    } catch (error) {
-      // message.error(error?.message || String(error));
-      __DEV__ && console.debug(error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -163,11 +119,12 @@ const WithDrawConfrim = ({
             {
               width: 270,
               height: 48,
-              marginTop: 17,
-              marginBottom: 32,
+              paddingVertical: 0,
+              paddingHorizontal: 0,
+              marginTop: 16,
             },
           ]}>
-          <Text>{'rabby wallet '}</Text>
+          <GasAccountCurrentAddress transparent />
         </View>
       </View>
 
@@ -175,9 +132,8 @@ const WithDrawConfrim = ({
         <Button
           type="primary"
           containerStyle={styles.confirmButton}
-          onPress={gotoDebank}
+          onPress={gotoDeBankAppL2}
           buttonStyle={styles.debankBtn}
-          loading={loading}
           icon={<IconJumpBtn style={styles.jumpBtnIcon} />}
           iconRight={true}
           title={t('component.gasAccount.withdrawConfirmModal.button')}
@@ -235,10 +191,7 @@ export const WithDrawPopup = props => {
         onDismiss={() => setShowConfirm(false)}
         ref={confirmModalRef}>
         <BottomSheetView style={styles.popup}>
-          <WithDrawConfrim
-            balance={props.balance}
-            onClose={() => setShowConfirm(false)}
-          />
+          <WithDrawConfirm />
         </BottomSheetView>
       </AppBottomSheetModal>
     </>
@@ -290,7 +243,7 @@ const getStyles = createGetStyles(colors => ({
   labelContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors['neutral-card2'],
+    backgroundColor: colors['neutral-card-2'],
     borderRadius: 6,
     width: '100%',
     height: 52,
@@ -298,7 +251,11 @@ const getStyles = createGetStyles(colors => ({
     marginBottom: 8,
     fontSize: 15,
   },
-  textContent: { flexDirection: 'row', alignItems: 'center' },
+  textContent: {
+    fontSize: 15,
+    color: colors['neutral-title1'],
+    fontWeight: '500',
+  },
   btnContainer: {
     marginTop: 15,
     paddingVertical: 20,
@@ -318,7 +275,7 @@ const getStyles = createGetStyles(colors => ({
   },
   debankBtn: {
     color: colors['neutral-title2'],
-    backgroundColor: colors['orange-default'],
+    backgroundColor: '#FF7C60', //colors['orange-dbk'],
     fontSize: 16,
     fontWeight: '500',
   },

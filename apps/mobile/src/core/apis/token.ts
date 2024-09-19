@@ -1,8 +1,11 @@
-import { findChain } from '@/utils/chain';
+import { findChain, findChainByServerID } from '@/utils/chain';
 import { preferenceService } from '../services';
 import { strings } from '@/utils/i18n';
 import { abiCoder, sendRequest } from './sendRequest';
 import { INTERNAL_REQUEST_SESSION } from '@/constant';
+import { t } from 'i18next';
+import { AbiCoder } from 'web3-eth-abi';
+import { addHexPrefix, unpadHexString } from 'ethereumjs-util';
 
 export async function transferNFT(
   {
@@ -118,3 +121,71 @@ export async function transferNFT(
     throw new Error(strings('background.error.unknownAbi'));
   }
 }
+
+export const sendToken = async ({
+  to,
+  chainServerId,
+  tokenId,
+  rawAmount,
+  $ctx,
+}: {
+  to: string;
+  chainServerId: string;
+  tokenId: string;
+  rawAmount: string;
+  $ctx?: any;
+}) => {
+  const account = await preferenceService.getCurrentAccount();
+  if (!account) {
+    throw new Error(t('background.error.noCurrentAccount'));
+  }
+  const chain = findChainByServerID(chainServerId);
+  const chainId = chain?.id;
+  if (!chainId) {
+    throw new Error(t('background.error.invalidChainId'));
+  }
+  const params: Record<string, any> = {
+    chainId: chain.id,
+    from: account!.address,
+    to: tokenId,
+    value: '0x0',
+    data: (abiCoder as unknown as AbiCoder).encodeFunctionCall(
+      {
+        name: 'transfer',
+        type: 'function',
+        inputs: [
+          {
+            type: 'address',
+            name: 'to',
+          },
+          {
+            type: 'uint256',
+            name: 'value',
+          },
+        ],
+      },
+      [to, rawAmount],
+    ),
+    isSend: true,
+  };
+  const isNativeToken = tokenId === chain.nativeTokenAddress;
+
+  if (isNativeToken) {
+    params.to = to;
+    delete params.data;
+    params.value = addHexPrefix(
+      unpadHexString(
+        (abiCoder as unknown as AbiCoder).encodeParameter('uint256', rawAmount),
+      ),
+    );
+  }
+
+  return await sendRequest(
+    {
+      method: 'eth_sendTransaction',
+      params: [params],
+      $ctx,
+    },
+    INTERNAL_REQUEST_SESSION,
+  );
+};

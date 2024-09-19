@@ -7,8 +7,18 @@ import { useCallback } from 'react';
 
 const refreshGasBalanceAtom = atom(0);
 
+const refreshgasAccountHistoryAtom = atom(0);
+
 export const useGasBalanceRefresh = () => {
   const [refreshId, setRefreshId] = useAtom(refreshGasBalanceAtom);
+  const refresh = useCallback(() => {
+    setRefreshId(e => e + 1);
+  }, [setRefreshId]);
+  return { refreshId, refresh };
+};
+
+export const useGasAccountHistoryRefresh = () => {
+  const [refreshId, setRefreshId] = useAtom(refreshgasAccountHistoryAtom);
   const refresh = useCallback(() => {
     setRefreshId(e => e + 1);
   }, [setRefreshId]);
@@ -74,4 +84,15 @@ export const useSetGasAccount = () => {
     [set],
   );
   return setGasAccount;
+};
+
+const logoutVisibleAtom = atom(false);
+const loginVisibleAtom = atom(false);
+
+export const useGasAccountLogoutVisible = () => {
+  return useAtom(logoutVisibleAtom);
+};
+
+export const useGasAccountLoginVisible = () => {
+  return useAtom(loginVisibleAtom);
 };

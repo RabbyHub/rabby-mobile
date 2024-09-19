@@ -50,6 +50,7 @@
 		<string>zerion</string>
 		<string>cbwallet</string>
 		<string>blob</string>
+		<string>debank</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true />
