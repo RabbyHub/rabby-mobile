@@ -58,7 +58,7 @@ build_appstore() {
   cd $project_dir/ios;
   bundle install;
   [ ! -z $CI ] && bundle exec pod cache clean --all;
-  bundle exec pod install;
+  bundle exec pod install --repo-update;
   cd $project_dir;
   bundle exec fastlane ios appstore;
 }

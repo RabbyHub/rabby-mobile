@@ -94,7 +94,7 @@ jobs:
             buildchannel=selfhost-reg ./scripts/deploy-android.sh
           elif [ "$OS_TYPE" == "Darwin" ]; then
             security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} login.keychain
-            # cd ios && bundle install && bundle exec pod install;
+            # cd ios && bundle install && bundle exec pod install --repo-update;
             # cd ../;
             ./scripts/deploy-ios-adhoc.sh
           fi
