@@ -5,6 +5,7 @@ import { useGasAccountInfo, useGasAccountLogin } from './hooks';
 import { formatTokenAmount, formatUsdValue } from '@/utils/number';
 import { RcIconGasAccount } from '@/assets/icons/gas-account';
 import { useThemeColors } from '@/hooks/theme';
+import { Tip } from '@/components/Tip';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GasAccountDepositPopup } from './components/DepositPopup';
@@ -15,10 +16,11 @@ import RcIconHistoryIcon from '@/assets/icons/gas-account/history-icon.svg';
 import { GasAccountHistory } from './components/History';
 import { GasAccountLoginPopup } from './components/LoginPopup';
 
+const DEPOSIT_LIMIT = 1000;
+
 export const GasAccountScreen = () => {
   const colors = useThemeColors();
   const { t } = useTranslation();
-  const [canDesposit, setCanDesposit] = useState<boolean>(true);
   const [showDesposit, setShowDesposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [loginVisible, setLoginVisible] = useState(false);
@@ -43,6 +45,8 @@ export const GasAccountScreen = () => {
   const { isLogin } = useGasAccountLogin({ value, loading });
 
   const balance = value?.account?.balance || 0;
+
+  const canDesposit = useMemo(() => balance < DEPOSIT_LIMIT, [balance]);
 
   // useEffect(() => {
   //   wallet.clearPageStateCache();
@@ -72,15 +76,27 @@ export const GasAccountScreen = () => {
             type="white"
             onPress={() => setShowWithdraw(true)}
             buttonStyle={[styles.whiteBtn, styles.buttonContainer]}
+            containerStyle={styles.buttonContainer}
             title={t('component.gasAccount.withdraw')}
           />
-          <Button
-            type="primary"
-            buttonStyle={styles.buttonContainer}
-            onPress={() => canDesposit && gotoDesposit()}
-            disabled={!canDesposit}
-            title={t('component.gasAccount.deposit')}
-          />
+          <View style={styles.buttonContainer}>
+            <Tip
+              placement="top"
+              content={
+                !canDesposit ? t('component.gasAccount.gasExceed') : undefined
+              }
+              // isVisible={!disabled}
+            >
+              <Button
+                type="primary"
+                buttonStyle={styles.buttonContainer}
+                containerStyle={styles.btnContainerStyle}
+                onPress={() => canDesposit && gotoDesposit()}
+                disabled={!canDesposit}
+                title={t('component.gasAccount.deposit')}
+              />
+            </Tip>
+          </View>
         </View>
       </View>
 
@@ -171,23 +187,13 @@ const getStyles = createGetStyles(colors => ({
   },
   buttonContainer: {
     height: 48,
-    width: 154,
+    flex: 1,
+  },
+  btnContainerStyle: {
+    height: 48,
   },
   whiteBtn: {
     borderWidth: 1,
     borderColor: colors['blue-default'],
-  },
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    height: '100%',
-    justifyContent: 'center',
-  },
-  modalContent: {
-    borderRadius: 16,
-    backgroundColor: colors['neutral-bg1'],
-    boxShadow: '0 20 20 0 rgba(45, 48, 51, 0.16)',
-    marginHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 20,
   },
 }));

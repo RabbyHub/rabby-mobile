@@ -256,7 +256,8 @@ const getStyles = createGetStyles(colors => ({
     borderTopColor: colors['neutral-body'],
   },
   twoBtnContainer: {
-    width: 170,
+    // width: 170,
+    flex: 1,
     // marginRight: 12,
   },
   buttonContainer: {

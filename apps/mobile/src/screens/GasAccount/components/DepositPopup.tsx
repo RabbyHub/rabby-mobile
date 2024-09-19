@@ -34,6 +34,7 @@ import { getTokenSymbol } from '@/utils/token';
 import { useThemeColors } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { findChainByServerID } from '@/utils/chain';
+import RcIconRightArrowCC from '@/assets/icons/gas-top-up/arrow-right-cc.svg';
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { TokenAmountItem } from '@/components/Approval/components/Actions/components/TokenAmountItem';
 import { L2_DEPOSIT_ADDRESS_MAP } from '@/constant/gas-account';
@@ -78,8 +79,14 @@ const TokenSelector = ({ visible, onClose, cost, onChange }) => {
       return (
         <Tip
           placement="top"
-          content={t('page.gasTopUp.InsufficientBalanceTips')}
-          isVisible={disabled ? undefined : false}>
+          tooltipStyle={{
+            transform: [{ translateY: 30 }],
+          }}
+          content={
+            disabled ? t('page.gasTopUp.InsufficientBalanceTips') : undefined
+          }
+          // isVisible={!disabled}
+        >
           <CustomTouchableOpacity
             style={[styles.tokenListItem, { opacity: disabled ? 0.5 : 1 }]}
             onPress={() => {
@@ -183,59 +190,66 @@ const GasAccountDepositContent = ({ onClose }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {t('component.gasAccount.depositPopup.title')}
-      </Text>
-      <Text style={styles.description}>
-        {t('component.gasAccount.depositPopup.desc')}
-      </Text>
+      <View style={styles.containerHorizontal}>
+        <Text style={styles.title}>
+          {t('component.gasAccount.depositPopup.title')}
+        </Text>
+        <Text style={styles.description}>
+          {t('component.gasAccount.depositPopup.desc')}
+        </Text>
 
-      <Text style={styles.tokenLabel}>
-        {t('component.gasAccount.depositPopup.amount')}
-      </Text>
-      <View style={styles.amountSelector}>
-        {amountList.map(amount => (
-          <CustomTouchableOpacity
-            key={amount}
-            onPress={() => setAmount(amount)}
-            style={[
-              styles.amountButton,
-              selectedAmount === amount && styles.selectedAmountButton,
-            ]}>
-            <Text
-              style={
-                selectedAmount === amount
-                  ? styles.selectedAmountText
-                  : styles.amountText
-              }>
-              ${amount}
+        <Text style={styles.tokenLabel}>
+          {t('component.gasAccount.depositPopup.amount')}
+        </Text>
+        <View style={styles.amountSelector}>
+          {amountList.map(amount => (
+            <CustomTouchableOpacity
+              key={amount}
+              onPress={() => setAmount(amount)}
+              style={[
+                styles.amountButton,
+                selectedAmount === amount && styles.selectedAmountButton,
+              ]}>
+              <Text
+                style={
+                  selectedAmount === amount
+                    ? styles.selectedAmountText
+                    : styles.amountText
+                }>
+                ${amount}
+              </Text>
+            </CustomTouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.tokenLabel}>
+          {t('component.gasAccount.depositPopup.token')}
+        </Text>
+        <CustomTouchableOpacity
+          style={styles.tokenContainer}
+          onPress={openTokenList}>
+          {token ? (
+            <View style={styles.tokenContent}>
+              <AssetAvatar
+                size={24}
+                chain={token.chain}
+                logo={token.logo_url}
+                chainSize={16}
+              />
+              <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
+            </View>
+          ) : (
+            <Text style={styles.tokenPlaceholder}>
+              {t('component.gasAccount.depositPopup.selectToken')}
             </Text>
-          </CustomTouchableOpacity>
-        ))}
+          )}
+          <RcIconRightArrowCC
+            width={16}
+            height={16}
+            color={colors['neutral-foot']}
+          />
+        </CustomTouchableOpacity>
       </View>
-
-      <Text style={styles.tokenLabel}>
-        {t('component.gasAccount.depositPopup.token')}
-      </Text>
-      <CustomTouchableOpacity
-        style={styles.tokenContainer}
-        onPress={openTokenList}>
-        {token ? (
-          <View style={styles.tokenContent}>
-            <AssetAvatar
-              size={24}
-              chain={token.chain}
-              logo={token.logo_url}
-              chainSize={16}
-            />
-            <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
-          </View>
-        ) : (
-          <Text style={styles.tokenPlaceholder}>
-            {t('component.gasAccount.depositPopup.selectToken')}
-          </Text>
-        )}
-      </CustomTouchableOpacity>
 
       <View style={styles.btnContainer}>
         <Button
@@ -243,7 +257,7 @@ const GasAccountDepositContent = ({ onClose }) => {
           containerStyle={styles.confirmButton}
           onPress={topUpGasAccount}
           disabled={!token}
-          title={t('component.gasAccount.deposit')}
+          title={t('global.confirm')}
         />
       </View>
 
@@ -288,6 +302,13 @@ const getStyles = createGetStyles(colors => ({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  containerHorizontal: {
+    width: '100%',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 20,
@@ -335,12 +356,13 @@ const getStyles = createGetStyles(colors => ({
   tokenContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors['neutral-card2'],
     borderRadius: 6,
     width: '100%',
     height: 52,
     paddingHorizontal: 16,
-    marginBottom: 42,
+    marginBottom: 32,
   },
   flatList: {
     width: '100%',
@@ -365,10 +387,12 @@ const getStyles = createGetStyles(colors => ({
     justifyContent: 'flex-end',
     margin: 0,
     height: '100%',
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     paddingVertical: 10,
   },
   btnContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
     paddingVertical: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -379,6 +403,7 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['neutral-bg1'],
   },
   modalContent: {
+    paddingHorizontal: 20,
     backgroundColor: colors['neutral-bg1'],
     flex: 1,
     justifyContent: 'center',

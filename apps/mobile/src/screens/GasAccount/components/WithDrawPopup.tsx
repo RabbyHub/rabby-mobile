@@ -262,6 +262,7 @@ const getStyles = createGetStyles(colors => ({
     paddingHorizontal: 20,
   },
   title: {
+    marginTop: 12,
     fontSize: 20,
     fontWeight: '500',
     marginBottom: 12,
@@ -271,17 +272,16 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 16,
     fontWeight: '500',
     marginTop: 12,
-    marginBottom: 12,
     color: colors['green-default'],
   },
   description: {
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: 14,
     color: colors['neutral-body'],
   },
   label: {
     fontSize: 13,
-    marginTop: 12,
+    marginTop: 4,
     marginBottom: 8,
     textAlign: 'left',
     width: '100%',
@@ -295,10 +295,12 @@ const getStyles = createGetStyles(colors => ({
     width: '100%',
     height: 52,
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
+    fontSize: 15,
   },
   textContent: { flexDirection: 'row', alignItems: 'center' },
   btnContainer: {
+    marginTop: 15,
     paddingVertical: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -308,7 +310,7 @@ const getStyles = createGetStyles(colors => ({
     borderTopWidth: 0.5,
     backgroundColor: colors['neutral-bg1'],
     paddingHorizontal: 20,
-    paddingBottom: 35,
+    marginBottom: 15,
   },
   confirmButton: {
     width: '100%',
@@ -331,6 +333,7 @@ const getStyles = createGetStyles(colors => ({
     // paddingVertical: 10,
   },
   confirmIcon: {
+    marginTop: 16,
     width: 32,
     height: 32,
   },

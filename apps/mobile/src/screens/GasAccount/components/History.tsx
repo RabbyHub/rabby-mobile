@@ -155,6 +155,7 @@ const getStyles = createGetStyles(colors => ({
   container: {
     backgroundColor: colors['neutral-card-1'],
     borderRadius: 8,
+    marginHorizontal: 20,
     marginBottom: 20,
     padding: 16,
   },
