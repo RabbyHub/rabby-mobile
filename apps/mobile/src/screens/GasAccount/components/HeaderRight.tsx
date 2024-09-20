@@ -57,13 +57,13 @@ const getStyles = createGetStyles(color => ({
     flexDirection: 'row',
     backgroundColor: 'transparent',
     gap: 6,
+    padding: 14,
+    paddingLeft: 12,
   },
   content: {
     width: 'auto',
     backgroundColor: color['neutral-card-1'],
     height: 'auto',
-    padding: 14,
-    paddingLeft: 12,
     marginLeft: 6,
   },
   text: {

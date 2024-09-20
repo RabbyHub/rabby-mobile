@@ -191,8 +191,8 @@ const GasAccountDepositContent = ({ onClose }) => {
             .times(10 ** token.decimals)
             .toFixed(0),
         });
-        refreshHistoryList();
         onClose();
+        refreshHistoryList();
       } catch (error) {}
       setLoading(false);
     }

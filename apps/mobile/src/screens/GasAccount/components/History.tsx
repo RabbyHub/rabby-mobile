@@ -123,7 +123,7 @@ export const GasAccountHistory = () => {
         </View>
       ) : loading ? (
         <>
-          {Array.from({ length: 4 }).map((_, idx) => (
+          {Array.from({ length: 10 }).map((_, idx) => (
             <LoadingItem key={idx} borderT={idx !== 0} />
           ))}
         </>
@@ -260,6 +260,7 @@ const getStyles = createGetStyles(colors => ({
     color: colors['neutral-title1'],
   },
   loadingItem: {
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,

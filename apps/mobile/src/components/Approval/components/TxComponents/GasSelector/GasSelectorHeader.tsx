@@ -670,6 +670,7 @@ export const GasSelectorHeader = ({
                 borderWidth: 0.5,
                 borderStyle: 'solid',
                 borderColor: colors['neutral-line'],
+                marginRight: 12,
               }}>
               <GasMethod
                 active={gasMethod === 'native'}

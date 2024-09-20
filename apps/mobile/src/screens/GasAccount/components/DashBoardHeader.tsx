@@ -45,8 +45,8 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
     backgroundColor: colors['neutral-card-2'],
     borderRadius: 4,
+    height: 40,
     paddingHorizontal: 8,
-    paddingVertical: 10,
   },
   usd: {
     color: colors['neutral-foot'],
