@@ -5,55 +5,69 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import { getTokenSymbol } from '@/utils/token';
-import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
+import { NFTItem, TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Text } from 'react-native';
 import { useGeneralTokenDetailSheetModal } from '@/components/TokenDetailPopup/hooks';
+import { useNFTDetailSheetModalOnHistory } from '@/screens/NftDetail/hooks';
 
 export default function TokenLabel({
   token,
   isNft,
-  // onClose,
-  canClickToken: propCanClickToken,
+  isMyOwn,
+  disableClickToken: propDisableClick,
   style,
 }: RNViewProps & {
-  token: TokenItem;
-  isNft?: boolean;
-  canClickToken?: boolean;
-  // onClose?: () => void;
-}) {
+  isMyOwn?: boolean;
+  disableClickToken?: boolean;
+} & (
+    | {
+        token: TokenItem;
+        isNft?: false;
+      }
+    | {
+        token: NFTItem;
+        isNft: true;
+      }
+  )) {
   const { styles } = useThemeStyles(getStyles);
   const { t } = useTranslation();
-  const symbol = useMemo(() => getTokenSymbol(token), [token]);
-  const name = useMemo(() => {
+  const symbolName = useMemo(() => {
+    const symbol = isNft ? '' : getTokenSymbol(token);
+
     return isNft
       ? token?.name ||
           (symbol ? `${symbol} ${token?.inner_id}` : t('global.unknownNFT'))
       : symbol;
-  }, [t, isNft, token, symbol]);
+  }, [t, isNft, token]);
 
   const { openTokenDetailPopup } = useGeneralTokenDetailSheetModal();
+  const { handlePressNftToken } = useNFTDetailSheetModalOnHistory();
 
-  const canClickToken = propCanClickToken && !isNft;
+  const disableClickToken = propDisableClick || (isNft && !isMyOwn);
 
-  if (!canClickToken)
+  if (disableClickToken)
     return (
       <Text style={style} numberOfLines={1} ellipsizeMode="tail">
-        {name}
+        {symbolName}
       </Text>
     );
 
   return (
     <TouchableText
       onPress={() => {
-        if (!canClickToken) return;
+        if (disableClickToken) return;
 
-        openTokenDetailPopup(token);
+        if (isNft) {
+          handlePressNftToken(token, { needSendButton: isMyOwn });
+        } else {
+          openTokenDetailPopup(token as TokenItem);
+        }
       }}
-      disabled={!canClickToken}
-      style={[canClickToken && styles.clickable, style]}
+      disabled={disableClickToken}
+      style={[!disableClickToken && styles.clickable, style]}
       numberOfLines={1}
       ellipsizeMode="tail">
-      {name}
+      {symbolName}
     </TouchableText>
   );
 }
