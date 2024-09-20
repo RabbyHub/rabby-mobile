@@ -4,7 +4,6 @@ import { useThemeColors } from '@/hooks/theme';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Spin } from './Spin';
-import RcIconDropdownCC from '@/assets/icons/transaction-record/icon-dropdown-cc.svg';
 import RcIconInfoCC from '@/assets/icons/transaction-record/icon-info-cc.svg';
 import { TxRequest } from '@rabby-wallet/rabby-api/dist/types';
 
@@ -45,7 +44,6 @@ export const TransactionPendingTag = ({
         <Text style={styles.tagText}>
           {t('page.activities.signedTx.status.pendingBroadcasted')}
         </Text>
-        <RcIconDropdownCC color={colors['orange-default']} />
       </View>
     );
   }

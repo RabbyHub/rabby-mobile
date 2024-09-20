@@ -2,7 +2,6 @@ import {
   RcIconHistoryFocusLight,
   RcIconHistoryLight,
 } from '@/assets/icons/bottom-bar';
-import { RcIconHistory } from '@/assets/icons/home';
 import { AppColorsVariants } from '@/constant/theme';
 import { transactionHistoryService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
@@ -41,14 +40,14 @@ export const PendingTxCount = ({ focused }: { focused?: boolean }) => {
   return count ? (
     <View style={styles.container}>
       <Spin
-        color={focused ? colors['blue-default'] : colors['neutral-foot']}
+        color={focused ? colors['blue-default'] : colors['orange-default']}
         style={styles.spin}
       />
       <Text
         style={[
           styles.count,
           {
-            color: focused ? colors['blue-default'] : colors['neutral-foot'],
+            color: focused ? colors['blue-default'] : colors['orange-default'],
           },
         ]}>
         {count > 9 ? 9 : count}

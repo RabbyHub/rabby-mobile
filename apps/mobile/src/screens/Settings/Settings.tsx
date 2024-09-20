@@ -1,5 +1,12 @@
 import React, { useCallback, useRef } from 'react';
-import { Linking, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
@@ -99,6 +106,9 @@ import {
 } from '@/core/utils/cloudBackup';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useGoogleSign } from '@/hooks/cloudStorage';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -705,8 +715,10 @@ export default function SettingsScreen(): JSX.Element {
     containerPaddingBottom: 0,
   });
 
+  const { bottom } = useSafeAreaInsets();
+
   return (
-    <NormalScreenContainer
+    <RootScreenContainer
       fitStatuBar
       style={[
         styles.container,
@@ -714,9 +726,13 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
+      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
-        contentContainerStyle={[styles.scrollableContentStyle]}>
+        contentContainerStyle={[
+          styles.scrollableContentStyle,
+          { paddingBottom: 12 + bottom },
+        ]}>
         <SettingsBlocks />
         {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
         <View style={[styles.bottomFooter]}>
@@ -729,7 +745,7 @@ export default function SettingsScreen(): JSX.Element {
       <ManagePasswordSheetModal height={422} />
 
       <SheetWebViewTester />
-    </NormalScreenContainer>
+    </RootScreenContainer>
   );
 }
 

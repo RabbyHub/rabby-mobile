@@ -25,7 +25,6 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { PendingTxCount } from './components/PendingTxCount';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useTranslation } from 'react-i18next';
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
