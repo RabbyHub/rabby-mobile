@@ -12,7 +12,13 @@ import { useInterval, useRequest } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export const PendingTxCount = ({ focused }: { focused?: boolean }) => {
+export const PendingTxCount = ({
+  focused,
+  size = 24,
+}: {
+  focused?: boolean;
+  size?: number;
+}) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { currentAccount } = useCurrentAccount();
@@ -54,9 +60,9 @@ export const PendingTxCount = ({ focused }: { focused?: boolean }) => {
       </Text>
     </View>
   ) : focused ? (
-    <RcIconHistoryFocusLight />
+    <RcIconHistoryFocusLight width={size} height={size} />
   ) : (
-    <RcIconHistoryLight />
+    <RcIconHistoryLight width={size} height={size} />
   );
 };
 

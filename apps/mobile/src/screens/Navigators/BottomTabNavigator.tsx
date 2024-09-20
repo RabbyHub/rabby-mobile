@@ -97,7 +97,13 @@ React.PropsWithChildren<{
 
 const isIOS = Platform.OS === 'ios';
 
-const SettingsBarIcon = ({ focused }: { focused?: boolean }) => {
+const SettingsBarIcon = ({
+  focused,
+  size = 24,
+}: {
+  focused?: boolean;
+  size?: number;
+}) => {
   const { remoteVersion } = useUpgradeInfo();
 
   const colors = useThemeColors();
@@ -105,7 +111,11 @@ const SettingsBarIcon = ({ focused }: { focused?: boolean }) => {
 
   return (
     <View style={styles.settingsWrapper}>
-      {focused ? <RcIconSettingFocusLight /> : <RcIconSettingLight />}
+      {focused ? (
+        <RcIconSettingFocusLight width={size} height={size} />
+      ) : (
+        <RcIconSettingLight width={size} height={size} />
+      )}
       <View
         style={[
           styles.actionIconReddot,
@@ -189,6 +199,7 @@ export default function BottomTabNavigator() {
             backgroundColor: colors['neutral-bg-1'],
             // ...makeDebugBorder('red'),
           },
+          tabBarShowLabel: false,
         }}>
         <BottomTab.Screen
           name={RootNames.Home}
@@ -203,11 +214,9 @@ export default function BottomTabNavigator() {
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
                 icon={
-                  focused ? (
-                    <RcIconNavigationHomeFocusLight />
-                  ) : (
-                    <RcIconNavigationHomeLight />
-                  )
+                  focused
+                    ? RcIconNavigationHomeFocusLight
+                    : RcIconNavigationHomeLight
                 }
               />
             ),
@@ -233,11 +242,9 @@ export default function BottomTabNavigator() {
             tabBarIcon: ({ color, focused }) => (
               <BottomTabIcon
                 icon={
-                  focused ? (
-                    <RcIconNavigationDappsFocusLight />
-                  ) : (
-                    <RcIconNavigationDappsLight />
-                  )
+                  focused
+                    ? RcIconNavigationDappsFocusLight
+                    : RcIconNavigationDappsLight
                 }
               />
             ),
@@ -258,7 +265,9 @@ export default function BottomTabNavigator() {
                 <BottomTabLabel focused={focused} label={'History'} />
               ),
               tabBarIcon: ({ focused }) => (
-                <BottomTabIcon icon={<PendingTxCount focused={focused} />} />
+                <BottomTabIcon
+                  icon={<PendingTxCount focused={focused} size={24} />}
+                />
               ),
             }),
             [colors],
@@ -279,7 +288,9 @@ export default function BottomTabNavigator() {
                 <BottomTabLabel focused={focused} label={'Settings'} />
               ),
               tabBarIcon: ({ focused }) => (
-                <BottomTabIcon icon={<SettingsBarIcon focused={focused} />} />
+                <BottomTabIcon
+                  icon={<SettingsBarIcon focused={focused} size={24} />}
+                />
               ),
             }),
             [colors],
