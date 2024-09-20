@@ -131,8 +131,8 @@ const getStyles = createGetStyles(colors => ({
     position: 'relative',
   },
   actionIconReddot: {
-    width: 8,
-    height: 8,
+    width: 10,
+    height: 10,
     position: 'absolute',
 
     top: -1,
