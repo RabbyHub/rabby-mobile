@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 const { isSameAddress } = addressUtils;
 
 const whitelistAtom = atom<string[]>([]);
-const enableAtom = atom<boolean>(false);
+const enableAtom = atom<boolean>(whitelistService.isWhitelistEnabled());
 
 export const useWhitelist = (options?: { disableAutoFetch?: boolean }) => {
   const [whitelist, setWL] = useAtom(whitelistAtom);
