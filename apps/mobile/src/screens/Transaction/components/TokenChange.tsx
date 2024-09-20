@@ -1,6 +1,8 @@
 import { IconDefaultNFT } from '@/assets/icons/nft';
 import { Media } from '@/components/Media';
 import {
+  NFTItem,
+  TokenItem,
   TxDisplayItem,
   TxHistoryItem,
 } from '@rabby-wallet/rabby-api/dist/types';
@@ -17,7 +19,6 @@ import { numberWithCommasIsLtOne } from '@/utils/number';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
 import TokenLabel from './TokenLabel';
-import { makeDebugBorder } from '@/utils/styles';
 
 const TxChangeItem = ({
   item,
@@ -28,7 +29,10 @@ const TxChangeItem = ({
 }: {
   data: TxHistoryItem;
   item: TxHistoryItem['sends'][0] | TxDisplayItem['receives'][0];
-  tokenDict: TxDisplayItem['tokenDict'];
+  tokenDict: /* TxDisplayItem['tokenDict'] */ Record<
+    string,
+    TokenItem | NFTItem
+  >;
   isSend?: boolean;
   canClickToken?: boolean;
 }) => {
@@ -56,10 +60,10 @@ const TxChangeItem = ({
           mediaStyle={styles.media}
           style={styles.media}
         />
-      ) : token?.logo_url ? (
+      ) : (token as TokenItem)?.logo_url ? (
         <Image
           source={{
-            uri: token.logo_url,
+            uri: (token as TokenItem).logo_url,
           }}
           style={styles.media}
         />
@@ -74,10 +78,12 @@ const TxChangeItem = ({
         {isNft ? item.amount : numberWithCommasIsLtOne(item.amount, 2)}
       </Text>
       <TokenLabel
-        canClickToken={canClickToken}
+        disableClickToken={!canClickToken}
         style={[tokenChangeStyle, styles.tokenLabel]}
-        token={token}
-        isNft={isNft}
+        {...(isNft
+          ? { token: token as NFTItem, isNft }
+          : { token: token as TokenItem })}
+        isMyOwn={!isSend}
       />
     </View>
   );
