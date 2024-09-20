@@ -160,7 +160,7 @@ const ApproveAmountModal = ({
             value={customAmount}
             onChange={e => handleChange(e.nativeEvent.text)}
             // autoFocus
-            style={styles.inputText}
+            customStyle={styles.inputText}
             addonAfter={
               <Text style={styles.addonText}>
                 ≈{' '}
