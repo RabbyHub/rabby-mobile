@@ -1,16 +1,20 @@
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { minBy, range } from 'lodash';
 import React from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
 import { HistoryItem } from './HistoryItem';
 import { SkeletonCard } from './SkeletonCard';
 import { TransactionItem } from '@/screens/TransactionRecord/components/TransactionItem';
 import { TransactionGroup } from '@/core/services/transactionHistory';
 
+const isIOS = Platform.OS === 'ios';
+
 export const HistoryList = ({
   loading,
   loadingMore,
   loadMore,
+  refreshLoading,
   list,
   localTxList,
   onRefresh,
@@ -19,6 +23,7 @@ export const HistoryList = ({
   list?: (TxDisplayItem | TransactionGroup)[];
   loading?: boolean;
   loadingMore?: boolean;
+  refreshLoading?: boolean;
   loadMore?: () => void;
   onRefresh?: () => void;
 }) => {
@@ -68,6 +73,17 @@ export const HistoryList = ({
       onEndReached={loadMore}
       onEndReachedThreshold={0.8}
       ListFooterComponent={loadingMore ? <SkeletonCard /> : null}
+      refreshControl={
+        onRefresh && (
+          <RefreshControl
+            {...(isIOS && {
+              progressViewOffset: -12,
+            })}
+            refreshing={refreshLoading || false}
+            onRefresh={onRefresh}
+          />
+        )
+      }
     />
   );
 };
