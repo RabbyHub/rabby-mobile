@@ -49,6 +49,8 @@ type ProgressStatus = 'building' | 'builded' | 'signed' | 'submitted';
  * @param gasLevel gas level, default is normal
  * @param lowGasDeadline low gas deadline
  * @param isGasLess is gas less
+ * @param isGasAccount is gas account
+ *
  */
 export const sendTransaction = async ({
   tx,
@@ -58,6 +60,7 @@ export const sendTransaction = async ({
   gasLevel,
   lowGasDeadline,
   isGasLess,
+  isGasAccount,
   waitCompleted = true,
   pushType = 'default',
   ignoreGasNotEnoughCheck,
@@ -70,6 +73,7 @@ export const sendTransaction = async ({
   gasLevel?: GasLevel;
   lowGasDeadline?: number;
   isGasLess?: boolean;
+  isGasAccount?: boolean;
   waitCompleted?: boolean;
   pushType?: TxPushType;
 }) => {
@@ -318,6 +322,7 @@ export const sendTransaction = async ({
           // logId: logId,
           lowGasDeadline,
           isGasLess,
+          isGasAccount,
           pushType,
         },
         pushed: false,

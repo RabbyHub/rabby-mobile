@@ -26,6 +26,9 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty } from './components/Empty';
 import { HistoryList } from './components/HistoryList';
+import { useCurrentAccount } from '@/hooks/account';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 const PAGE_COUNT = 10;
 
 function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
@@ -181,19 +184,22 @@ function History({ isTestnet = false }: { isTestnet?: boolean }): JSX.Element {
 const HistoryScreen = () => {
   const { selectedTab, onTabChange } = useSwitchNetTab();
 
+  const { currentAccount } = useCurrentAccount();
+
   const colors = useThemeColors();
   const styles = getStyles(colors);
   return (
-    <NormalScreenContainer style={styles.page}>
+    <RootScreenContainer fitStatuBar style={styles.page}>
+      <ScreenSpecificStatusBar screenName={RootNames.History} />
       <NetSwitchTabs
         value={selectedTab}
         onTabChange={onTabChange}
         style={styles.netTabs}
       />
       {selectedTab === 'mainnet' ? (
-        <History isTestnet={false} key={'mainnet'} />
+        <History isTestnet={false} key={'mainnet' + currentAccount?.address} />
       ) : (
-        <History isTestnet={true} key={'testnet'} />
+        <History isTestnet={true} key={'testnet' + currentAccount?.address} />
         // <View style={styles.notFound}>
         //   <RcIconNotFindCC color={colors['neutral-body']} />
         //   <Text style={styles.notFoundText}>
@@ -201,7 +207,7 @@ const HistoryScreen = () => {
         //   </Text>
         // </View>
       )}
-    </NormalScreenContainer>
+    </RootScreenContainer>
   );
 };
 

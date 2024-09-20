@@ -32,8 +32,8 @@ export const RcIconHistory = makeThemeIconFromCC(RcIconHistoryCC, {
 export const RcIconHeaderAddAccount = makeThemeIconFromCC(
   RcIconHeaderAddAccountCC,
   {
-    onLight: ThemeColors.light['neutral-title-1'],
-    onDark: ThemeColors.dark['neutral-title-1'],
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['blue-default'],
   },
 );
 

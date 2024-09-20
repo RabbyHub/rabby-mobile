@@ -154,7 +154,11 @@ export const OriginInfo: React.FC<Props> = ({
                 (typeof ChainLogo === 'string' ? (
                   <Image style={styles.chainLogo} source={{ uri: ChainLogo }} />
                 ) : (
-                  <ChainLogo style={styles.chainLogo} />
+                  <ChainLogo
+                    style={styles.chainLogo}
+                    width={styles.chainLogo.width}
+                    height={styles.chainLogo.height}
+                  />
                 ))}
             </>
           )}

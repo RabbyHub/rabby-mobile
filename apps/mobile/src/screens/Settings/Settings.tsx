@@ -1,5 +1,12 @@
 import React, { useCallback, useRef } from 'react';
-import { Linking, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
@@ -42,7 +49,7 @@ import { type SettingConfBlock, Block } from './Block';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
-import { SwitchToggleType } from '@/components';
+import type { SwitchToggleType } from '@/components';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
@@ -56,7 +63,10 @@ import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { useUpgradeInfo } from '@/hooks/version';
+import {
+  useForceLocalVersionForNonProduction,
+  useUpgradeInfo,
+} from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -99,6 +109,12 @@ import {
 } from '@/core/utils/cloudBackup';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useGoogleSign } from '@/hooks/cloudStorage';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DevForceLocalVersionSelector, {
+  useLocalVersionSelectorModalVisible,
+} from './sheetModals/DevForceLocalVersionSelector';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -153,9 +169,9 @@ function SettingsBlocks() {
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appThemeText } = useAppTheme();
 
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Settings)?.params,
-  ) as SettingNavigatorParamList['Settings'];
+  // const navParams = useNavigationState(
+  //   s => s.routes.find(r => r.name === RootNames.Settings)?.params,
+  // ) as SettingNavigatorParamList['Settings'];
 
   // useMount(() => {
   //   console.debug(
@@ -465,6 +481,8 @@ function DevSettingsBlocks() {
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
+  const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
+    useLocalVersionSelectorModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -482,7 +500,21 @@ function DevSettingsBlocks() {
                 </Text>
               ),
               // TODO: only show in non-production mode
-              visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Force Local version',
+              icon: RcInfo,
+              onPress: () => {
+                setLocalVersionSelectorModalVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  Runtime: {currentLocalVersion}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: allowScreenshot
@@ -683,6 +715,8 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
+
+      <DevForceLocalVersionSelector />
     </>
   );
 }
@@ -705,8 +739,10 @@ export default function SettingsScreen(): JSX.Element {
     containerPaddingBottom: 0,
   });
 
+  const { bottom } = useSafeAreaInsets();
+
   return (
-    <NormalScreenContainer
+    <RootScreenContainer
       fitStatuBar
       style={[
         styles.container,
@@ -714,9 +750,13 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
+      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
-        contentContainerStyle={[styles.scrollableContentStyle]}>
+        contentContainerStyle={[
+          styles.scrollableContentStyle,
+          { paddingBottom: 12 + bottom },
+        ]}>
         <SettingsBlocks />
         {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
         <View style={[styles.bottomFooter]}>
@@ -729,7 +769,7 @@ export default function SettingsScreen(): JSX.Element {
       <ManagePasswordSheetModal height={422} />
 
       <SheetWebViewTester />
-    </NormalScreenContainer>
+    </RootScreenContainer>
   );
 }
 

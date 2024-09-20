@@ -11,7 +11,6 @@ import {
 } from '@/constant/layout';
 import { useThemeColors } from '@/hooks/theme';
 
-import HistoryScreen from '@/screens/Transaction/History';
 import SendScreen from '../Send/Send';
 import SendNFTScreen from '../SendNFT/SendNFT';
 
@@ -23,6 +22,7 @@ import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
 import { Bridge } from '../Bridge';
+import { GasAccountScreen } from '../GasAccount';
 
 const TransactionStack =
   createNativeStackNavigator<TransactionNavigatorParamList>();
@@ -44,14 +44,6 @@ export default function TransactionNavigator() {
         headerShadowVisible: false,
         headerShown: true,
       })}>
-      <TransactionStack.Screen
-        name={RootNames.History}
-        component={HistoryScreen}
-        options={{
-          title: 'History',
-          ...headerPresets.withBgCard2,
-        }}
-      />
       <TransactionStack.Screen
         name={RootNames.Send}
         component={SendScreen}
@@ -141,6 +133,15 @@ export default function TransactionNavigator() {
         component={Bridge}
         options={mergeScreenOptions({
           title: 'Bridge',
+          ...headerPresets.withBgCard2,
+        })}
+      />
+
+      <TransactionStack.Screen
+        name={RootNames.GasAccount}
+        component={GasAccountScreen}
+        options={mergeScreenOptions({
+          title: 'GasAccount',
           ...headerPresets.withBgCard2,
         })}
       />

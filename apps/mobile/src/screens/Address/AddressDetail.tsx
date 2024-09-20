@@ -788,6 +788,7 @@ const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
     },
     valueText: {
+      maxWidth: 200,
       fontSize: 16,
       color: colors['neutral-body'],
     },

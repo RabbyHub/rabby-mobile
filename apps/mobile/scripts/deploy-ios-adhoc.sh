@@ -56,7 +56,7 @@ build_adhoc() {
   yarn;
   yarn syncrnversion;
   cd $project_dir/ios;
-  bundle install && bundle exec pod install;
+  bundle install && bundle exec pod install --deployment;
   cd $project_dir;
   bundle exec fastlane ios adhoc;
 }

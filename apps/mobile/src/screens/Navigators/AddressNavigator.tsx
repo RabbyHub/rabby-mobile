@@ -67,17 +67,19 @@ export function AddressNavigator() {
           title: 'Current Address',
           headerRight: ({ tintColor }) => (
             <CustomTouchableOpacity
+              style={{
+                borderRadius: 4,
+                backgroundColor: colors['neutral-card-1'],
+                paddingHorizontal: 6,
+                paddingVertical: 4,
+              }}
               hitSlop={hitSlop}
               onPress={() => {
                 navigation.push(RootNames.StackAddress, {
                   screen: RootNames.ImportNewAddress,
                 });
               }}>
-              <RcIconHeaderAddAccount
-                width={24}
-                height={24}
-                color={tintColor}
-              />
+              <RcIconHeaderAddAccount width={20} height={20} />
             </CustomTouchableOpacity>
           ),
         })}

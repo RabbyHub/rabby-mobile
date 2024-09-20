@@ -15,6 +15,7 @@ export function getSentryEnv() {
 export const SENTRY_DEBUG = APP_RUNTIME_ENV === 'development';
 
 export const isSelfhostRegPkg = BUILD_CHANNEL === 'selfhost-reg';
+export const isNonPublicProductionEnv = isSelfhostRegPkg || __DEV__;
 export const NEED_DEVSETTINGBLOCKS = isSelfhostRegPkg || __DEV__;
 
 export const appIsProd = process.env.NODE_ENV === 'production';

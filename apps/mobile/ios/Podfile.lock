@@ -451,7 +451,7 @@ PODS:
   - react-native-menu (1.1.2):
     - React
   - react-native-mmkv (2.12.2):
-    - MMKV (>= 1.3.3)
+    - MMKV (= 1.3.5)
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - react-native-netinfo (11.2.1):
@@ -977,7 +977,7 @@ SPEC CHECKSUMS:
   react-native-compat: d658d1a1c8589c5a1b6c0f6c8c83c0a51880b7d2
   react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
   react-native-menu: d32728a357dfb360cf01cd5979cf7713c5acbb95
-  react-native-mmkv: b738e135cc27fc8ed25b39ec451b2e3e0ae9ce1b
+  react-native-mmkv: 436ee510dcc43b58a49d7be0451f285e06a9fd1d
   react-native-netinfo: 8a7fd3f7130ef4ad2fb4276d5c9f8d3f28d2df3d
   react-native-pager-view: cf96a223846458cc7e932017636b5c6d8cc2c549
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
