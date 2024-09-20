@@ -99,9 +99,10 @@ export async function downloadLatestApk(options?: {
   });
 }
 
-export async function getUpgradeInfo() {
+export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
   // use version from package.json on devlopment
-  const localVersion = APP_VERSIONS.forCheckUpgrade;
+  const localVersion =
+    options?.forceLocalVersion || APP_VERSIONS.forCheckUpgrade;
 
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
@@ -129,9 +130,9 @@ export async function getUpgradeInfo() {
     selfHostUpgrade = {};
   }
 
-  const storeUrl = await VersionCheck.getStoreUrl().catch(
-    () => APP_URLS.STORE_URL,
-  );
+  const storeUrl = await VersionCheck.getStoreUrl({
+    packageName: PROD_APPLICATION_ID,
+  }).catch(() => APP_URLS.STORE_URL);
 
   const finalRemoteInfo: MergedRemoteVersion = {
     version: storeVersion || selfHostUpgrade.version || localVersion,

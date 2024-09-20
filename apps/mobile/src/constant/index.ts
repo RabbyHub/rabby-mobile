@@ -3,6 +3,7 @@ import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { stringUtils } from '@rabby-wallet/base-utils';
 
 import { CHAINS_ENUM } from './chains';
+// import pkgjson from '../../package.json';
 
 // export const INITIAL_OPENAPI_URL = 'https://api.rabby.io';
 export const INITIAL_OPENAPI_URL = 'https://app-api.rabby.io';
@@ -28,7 +29,7 @@ export enum CANCEL_TX_TYPE {
 const fromJs = process.env.APP_VERSION!;
 const fromNative = getVersion();
 const buildNumber = getBuildNumber();
-const fullVersionNumber = `${fromNative}.${buildNumber}`;
+// const fullVersionNumber = `${fromNative}.${buildNumber}`;
 export const APP_VERSIONS = {
   fromJs,
   fromNative,

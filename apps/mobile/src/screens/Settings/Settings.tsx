@@ -49,7 +49,7 @@ import { type SettingConfBlock, Block } from './Block';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
-import { SwitchToggleType } from '@/components';
+import type { SwitchToggleType } from '@/components';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
@@ -63,7 +63,10 @@ import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import { useUpgradeInfo } from '@/hooks/version';
+import {
+  useForceLocalVersionForNonProduction,
+  useUpgradeInfo,
+} from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -109,6 +112,9 @@ import { useGoogleSign } from '@/hooks/cloudStorage';
 import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
 import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DevForceLocalVersionSelector, {
+  useLocalVersionSelectorModalVisible,
+} from './sheetModals/DevForceLocalVersionSelector';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -163,9 +169,9 @@ function SettingsBlocks() {
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appThemeText } = useAppTheme();
 
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Settings)?.params,
-  ) as SettingNavigatorParamList['Settings'];
+  // const navParams = useNavigationState(
+  //   s => s.routes.find(r => r.name === RootNames.Settings)?.params,
+  // ) as SettingNavigatorParamList['Settings'];
 
   // useMount(() => {
   //   console.debug(
@@ -475,6 +481,8 @@ function DevSettingsBlocks() {
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
   const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
+  const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
+    useLocalVersionSelectorModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -492,7 +500,21 @@ function DevSettingsBlocks() {
                 </Text>
               ),
               // TODO: only show in non-production mode
-              visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Force Local version',
+              icon: RcInfo,
+              onPress: () => {
+                setLocalVersionSelectorModalVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  Runtime: {currentLocalVersion}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: allowScreenshot
@@ -693,6 +715,8 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
+
+      <DevForceLocalVersionSelector />
     </>
   );
 }
