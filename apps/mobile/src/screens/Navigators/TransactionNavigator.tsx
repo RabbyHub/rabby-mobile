@@ -17,7 +17,6 @@ import SendNFTScreen from '../SendNFT/SendNFT';
 import HistoryFilterScamScreen from '../Transaction/HistoryFilterScamScreen';
 import { TransactionNavigatorParamList } from '@/navigation-type';
 import Swap from '../Swap';
-import GasTopUp from '../GasTopUp';
 import ApprovalsScreen from '../Approvals';
 import ReceiveScreen from '../Receive/Receive';
 import { GnosisTransactionQueue } from '../GnosisTransactionQueue';
@@ -93,26 +92,6 @@ export default function TransactionNavigator() {
         options={mergeScreenOptions({
           title: 'Swap',
           ...headerPresets.withBg2,
-        })}
-      />
-
-      <TransactionStack.Screen
-        name={RootNames.GasTopUp}
-        component={GasTopUp}
-        options={mergeScreenOptions({
-          title: 'Instant Gas Top Up',
-          headerTitle: 'Instant Gas Top Up',
-          headerTransparent: true,
-          headerBackVisible: false,
-          headerTintColor: colors?.['neutral-title-2'],
-          headerStyle: {
-            backgroundColor: 'transparent',
-          },
-          headerTitleStyle: {
-            color: colors?.['neutral-title-2'],
-            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-            fontWeight: '500',
-          },
         })}
       />
 

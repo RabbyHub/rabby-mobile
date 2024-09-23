@@ -5,7 +5,6 @@ import {
   RcIconSwap,
   RcIconMore,
   RcIconApproval,
-  RcIconGasTopUp,
   RcIconQueue,
   RcIconBridge,
 } from '@/assets/icons/home';
@@ -214,15 +213,6 @@ export const HomeTopArea = () => {
       },
       badge: approvalRiskAlert,
       badgeAlert: approvalRiskAlert > 0,
-    },
-    {
-      title: 'Gas Top Up',
-      Icon: RcIconGasTopUp,
-      onPress: () => {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.GasTopUp,
-        });
-      },
     },
   ];
 
