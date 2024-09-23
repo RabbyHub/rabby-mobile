@@ -89,8 +89,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100032
-        versionName "0.2.9"
+        versionCode 100033
+        versionName "0.3.0"
     }
     splits {
         abi {
