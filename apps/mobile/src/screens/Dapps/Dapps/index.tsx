@@ -21,6 +21,7 @@ import {
 import { EmptyDapps } from './components/EmptyDapps';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { createGetStyles } from '@/utils/styles';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 export const DappsScreen = () => {
   return Platform.OS === 'ios' ? <DappsIOSScreen /> : <DappsScreenRaw />;
@@ -58,8 +59,13 @@ function DappsScreenRaw(): JSX.Element {
   const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
   // todo refresh dapps when webview close
 
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    containerPb: 0,
+  });
+
   return (
-    <NormalScreenContainer style={styles.page}>
+    <NormalScreenContainer
+      style={[styles.page, { paddingBottom: safeSizes.containerPb }]}>
       <View style={styles.container}>
         <DappCardList
           sections={dappSections}

@@ -716,7 +716,7 @@ export const GasSelectorHeader = ({
                 </Text>
               </>
             ) : gasMethod === 'gasAccount' ? (
-              <View className="gas-selector-card-content-item relative">
+              <View style={{ position: 'relative' }}>
                 <Tip
                   content={
                     <View
