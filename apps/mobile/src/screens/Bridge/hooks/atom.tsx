@@ -24,7 +24,7 @@ const bridgeSupportedChainsAtom = atom(
 
 bridgeSupportedChainsAtom.onMount = setAtom => {
   openapi.getBridgeSupportChain().then(s => {
-    setAtom(s.map(e => findChainByServerID(e)!.enum || e));
+    setAtom(s.map(e => findChainByServerID(e)?.enum! || e));
   });
 };
 
