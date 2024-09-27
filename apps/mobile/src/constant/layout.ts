@@ -56,7 +56,6 @@ export const RootNames = {
   Swap: 'Swap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
-  GasTopUp: 'GasTopUp',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   Bridge: 'Bridge',
@@ -185,7 +184,6 @@ function makeScreenSpecConfig() {
       GnosisTransactionQueue: card2DefaultConf,
 
       Approvals: bg2DefaultConf,
-      GasTopUp: blueLightConf,
 
       SetPassword: blueLightConf,
       SetBiometricsAuthentication: bg1DefaultConf,
