@@ -787,7 +787,7 @@ export function useSendTokenForm() {
                 from: currentAddress,
                 to: to && isValidAddress(to) ? to : zeroAddress(),
                 gasPrice: intToHex(0),
-                value: tokenItem.raw_amount_hex_str,
+                value: intToHex(0),
               },
             ],
           },
