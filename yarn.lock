@@ -6205,6 +6205,7 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-keystone@workspace:packages/eth-keyring-keystone"
   dependencies:
     "@keystonehq/base-eth-keyring": ^0.14.1
+    "@keystonehq/bc-ur-registry": ^0.6.0
     "@keystonehq/hw-app-eth": ^0.3.2
     "@keystonehq/metamask-airgapped-keyring": ^0.13.1
     "@metamask/auto-changelog": ^3.4.3
@@ -6410,6 +6411,7 @@ __metadata:
     jest-silent-reporter: ^0.5.0
     lint-staged: ^15.2.0
     nock: ^13.3.1
+    patch-package: ^8.0.0
     prettier: ^2.7.1
     prettier-plugin-packagejson: ^2.4.5
     rimraf: ^3.0.2
