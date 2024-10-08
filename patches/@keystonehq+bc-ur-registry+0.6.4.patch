@@ -1,0 +1,13 @@
+diff --git a/node_modules/@keystonehq/bc-ur-registry/dist/CryptoAccount.js b/node_modules/@keystonehq/bc-ur-registry/dist/CryptoAccount.js
+index 8e7bd5d..c14f90f 100644
+--- a/node_modules/@keystonehq/bc-ur-registry/dist/CryptoAccount.js
++++ b/node_modules/@keystonehq/bc-ur-registry/dist/CryptoAccount.js
+@@ -1,7 +1,7 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.CryptoAccount = void 0;
+-const _1 = require(".");
++const _1 = require("./index");
+ const lib_1 = require("./lib");
+ const RegistryItem_1 = require("./RegistryItem");
+ const RegistryType_1 = require("./RegistryType");
