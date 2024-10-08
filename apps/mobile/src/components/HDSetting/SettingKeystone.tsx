@@ -4,7 +4,12 @@ import { useAtom } from 'jotai';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, View } from 'react-native';
-import { isLoadedAtom, MainContainer, settingAtom } from './MainContainer';
+import {
+  isLoadedAtom,
+  MainContainer,
+  settingAtom,
+  Props as MainContainerProps,
+} from './MainContainer';
 import { HardwareSVG } from '@/assets/icons/address';
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
@@ -97,19 +102,53 @@ export const SettingKeystone: React.FC<{
 }> = ({ onDone, brand }) => {
   const { t } = useTranslation();
   const [, setLoading] = React.useState(false);
-  const hdPathOptions = React.useMemo(
-    () => [
-      {
-        title: 'Default',
-        description: t('page.newAddress.hd.keystone.hdPathType.bip44'),
-        noChainDescription: t(
-          'page.newAddress.hd.keystone.hdPathTypeNoChain.bip44',
-        ),
-        value: LedgerHDPathType.BIP44,
-      },
-    ],
-    [t],
-  );
+  const [hdPathOptions, setHdPathOptions] = React.useState<
+    MainContainerProps['hdPathOptions']
+  >([]);
+
+  React.useEffect(() => {
+    const getHdPathOptions = async () => {
+      const hdPathType = await apiKeystone.getCurrentUsedHDPathType();
+
+      if (hdPathType === LedgerHDPathType.BIP44) {
+        return [
+          {
+            title: 'BIP44',
+            description: t('page.newAddress.hd.keystone.hdPathType.bip44'),
+            noChainDescription: t(
+              'page.newAddress.hd.keystone.hdPathTypeNoChain.bip44',
+            ),
+            value: LedgerHDPathType.BIP44,
+          },
+        ];
+      } else if (hdPathType === LedgerHDPathType.LedgerLive) {
+        return [
+          {
+            title: 'Ledger Live',
+            description: t('page.newAddress.hd.keystone.hdPathType.legerLive'),
+            noChainDescription: t(
+              'page.newAddress.hd.keystone.hdPathTypeNoChain.legerLive',
+            ),
+            value: LedgerHDPathType.LedgerLive,
+          },
+        ];
+      } else {
+        return [
+          {
+            title: 'Legacy',
+            description: t('page.newAddress.hd.keystone.hdPathType.legacy'),
+            noChainDescription: t(
+              'page.newAddress.hd.keystone.hdPathTypeNoChain.legacy',
+            ),
+            value: LedgerHDPathType.Legacy,
+          },
+        ];
+      }
+    };
+
+    getHdPathOptions().then(setHdPathOptions);
+  }, [t]);
+
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
   const [setting, setSetting] = useAtom(settingAtom);
@@ -151,6 +190,7 @@ export const SettingKeystone: React.FC<{
   return (
     <MainContainer
       hdPathOptions={hdPathOptions}
+      disableHdPathOptions
       onConfirm={handleConfirm}
       setting={setting}>
       <TouchableOpacity onPress={handleOpenSwitch} style={styles.switchButton}>
