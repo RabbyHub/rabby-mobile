@@ -33,7 +33,7 @@ export interface Setting {
   startNumber: number;
 }
 
-interface Props {
+export interface Props {
   hdPathOptions: {
     title: string;
     description: string;
@@ -46,6 +46,7 @@ interface Props {
   setting: Setting;
   loading?: boolean;
   children?: React.ReactNode;
+  disableHdPathOptions?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -143,6 +144,7 @@ export const MainContainer: React.FC<Props> = ({
   onConfirm,
   loading,
   children,
+  disableHdPathOptions,
 }) => {
   const [fetching, setFetching] = React.useState(false);
   const { t } = useTranslation();
@@ -201,6 +203,7 @@ export const MainContainer: React.FC<Props> = ({
           <View style={styles.list}>
             {currentHdPathOptions.map(option => (
               <TouchableOpacity
+                disabled={disableHdPathOptions}
                 style={styles.item}
                 onPress={() => {
                   setHdPath(option.value);
