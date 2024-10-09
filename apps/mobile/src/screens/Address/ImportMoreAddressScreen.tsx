@@ -192,6 +192,7 @@ export const ImportMoreAddressScreen = () => {
   >([]);
   const [importing, setImporting] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const maxCountRef = React.useRef(MAX_ACCOUNT_COUNT);
 
   const mnemonicKeyringRef = React.useRef<
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
@@ -247,7 +248,9 @@ export const ImportMoreAddressScreen = () => {
     const start = startNumberRef.current;
     let i = start;
     try {
-      for (; i < start + MAX_ACCOUNT_COUNT; ) {
+      maxCountRef.current =
+        (await apiHD.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+      for (; i < start + maxCountRef.current; ) {
         if (stoppedRef.current) {
           break;
         }
@@ -272,15 +275,15 @@ export const ImportMoreAddressScreen = () => {
       return;
     }
 
-    if (i !== start + MAX_ACCOUNT_COUNT) {
+    if (i !== start + maxCountRef.current) {
       handleLoadAddress();
     }
-  }, [loadAddress, t]);
+  }, [apiHD, loadAddress, t]);
 
   const handleSelectIndex = React.useCallback(
     async (address, index) => {
       setSelectedAccounts(prev => {
-        if (prev.length >= MAX_ACCOUNT_COUNT) {
+        if (prev.length >= maxCountRef.current) {
           toast.info(t('page.newAddress.seedPhrase.maxAccountCount'));
           return prev;
         }

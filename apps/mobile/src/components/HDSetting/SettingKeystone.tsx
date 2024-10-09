@@ -9,6 +9,7 @@ import {
   MainContainer,
   settingAtom,
   Props as MainContainerProps,
+  MAX_ACCOUNT_COUNT,
 } from './MainContainer';
 import { HardwareSVG } from '@/assets/icons/address';
 import { AppColorsVariants } from '@/constant/theme';
@@ -105,6 +106,7 @@ export const SettingKeystone: React.FC<{
   const [hdPathOptions, setHdPathOptions] = React.useState<
     MainContainerProps['hdPathOptions']
   >([]);
+  const [disableStartFrom, setDisableStartFrom] = React.useState(false);
 
   React.useEffect(() => {
     const getHdPathOptions = async () => {
@@ -125,9 +127,9 @@ export const SettingKeystone: React.FC<{
         return [
           {
             title: 'Ledger Live',
-            description: t('page.newAddress.hd.keystone.hdPathType.legerLive'),
+            description: t('page.newAddress.hd.keystone.hdPathType.ledgerLive'),
             noChainDescription: t(
-              'page.newAddress.hd.keystone.hdPathTypeNoChain.legerLive',
+              'page.newAddress.hd.keystone.hdPathTypeNoChain.ledgerLive',
             ),
             value: LedgerHDPathType.LedgerLive,
           },
@@ -147,6 +149,10 @@ export const SettingKeystone: React.FC<{
     };
 
     getHdPathOptions().then(setHdPathOptions);
+
+    apiKeystone.getMaxAccountLimit().then(limit => {
+      setDisableStartFrom((limit ?? MAX_ACCOUNT_COUNT) < MAX_ACCOUNT_COUNT);
+    });
   }, [t]);
 
   const colors = useThemeColors();
@@ -191,6 +197,7 @@ export const SettingKeystone: React.FC<{
     <MainContainer
       hdPathOptions={hdPathOptions}
       disableHdPathOptions
+      disableStartFrom={disableStartFrom}
       onConfirm={handleConfirm}
       setting={setting}>
       <TouchableOpacity onPress={handleOpenSwitch} style={styles.switchButton}>
