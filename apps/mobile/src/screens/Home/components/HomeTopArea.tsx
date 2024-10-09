@@ -175,18 +175,30 @@ export const HomeTopArea = () => {
               backgroundColor: colors['blue-default'],
             },
           },
+          {
+            title: 'More',
+            Icon: RcIconMore,
+            onPress: () => {
+              loadApprovalStatus();
+              moresheetModalRef.current?.present();
+            },
+            badge: totalAlertCount,
+          },
         ]
-      : [bridgeItemAction]),
-
-    {
-      title: 'More',
-      Icon: RcIconMore,
-      onPress: () => {
-        loadApprovalStatus();
-        moresheetModalRef.current?.present();
-      },
-      badge: totalAlertCount,
-    },
+      : [
+          bridgeItemAction,
+          {
+            title: 'Approvals',
+            Icon: RcIconApproval,
+            onPress: () => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.Approvals,
+              });
+              moresheetModalRef.current?.dismiss();
+            },
+            badge: approvalRiskAlert,
+          },
+        ]),
   ];
 
   const toastDisabledAction = useCallback(() => {
@@ -201,7 +213,6 @@ export const HomeTopArea = () => {
     badge?: number;
     badgeAlert?: boolean;
   }[] = [
-    ...(isGnosisKeyring ? [bridgeItemAction] : []),
     {
       title: 'Approvals',
       Icon: RcIconApproval,
@@ -214,6 +225,7 @@ export const HomeTopArea = () => {
       badge: approvalRiskAlert,
       badgeAlert: approvalRiskAlert > 0,
     },
+    ...(isGnosisKeyring ? [bridgeItemAction] : []),
   ];
 
   return (
@@ -233,7 +245,13 @@ export const HomeTopArea = () => {
                 <item.Icon style={styles.actionIcon} />
               </View>
 
-              <View style={styles.actionBadgeWrapper}>
+              <View
+                style={[
+                  styles.actionBadgeWrapper,
+                  item.title === 'Approvals' && {
+                    right: 0,
+                  },
+                ]}>
                 {!!item.badge && item.badge > 0 && (
                   <BadgeText count={item.badge} style={item.badgeStyle} />
                 )}
