@@ -256,15 +256,43 @@ export const HomeTopArea = () => {
                   <BadgeText count={item.badge} style={item.badgeStyle} />
                 )}
               </View>
-              <Text
-                style={[
-                  styles.actionText,
-                  {
-                    fontSize: actions.length > 4 ? 13 : 14,
-                  },
-                ]}>
-                {item.title}
-              </Text>
+              <View
+                style={{
+                  width: '100%',
+                }}>
+                <Text
+                  style={[
+                    styles.actionText,
+                    {
+                      fontSize: actions.length > 4 ? 13 : 14,
+                    },
+                  ]}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: 72,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    transform: [
+                      {
+                        translateX: -(72 - styles.actionIconWrapper.width) / 2,
+                      },
+                    ],
+                  }}>
+                  <Text
+                    style={[
+                      styles.actionText,
+                      {
+                        fontSize: actions.length > 4 ? 13 : 14,
+                      },
+                    ]}>
+                    {item.title}
+                  </Text>
+                </View>
+              </View>
             </TouchableView>
           ))}
         </View>
