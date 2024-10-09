@@ -1,10 +1,6 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
-import {
-  BottomSheetTextInput,
-  BottomSheetView,
-  TouchableOpacity,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, TouchableOpacity } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { atom } from 'jotai';
 import React from 'react';
@@ -47,6 +43,7 @@ export interface Props {
   loading?: boolean;
   children?: React.ReactNode;
   disableHdPathOptions?: boolean;
+  disableStartFrom?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -145,6 +142,7 @@ export const MainContainer: React.FC<Props> = ({
   loading,
   children,
   disableHdPathOptions,
+  disableStartFrom,
 }) => {
   const [fetching, setFetching] = React.useState(false);
   const { t } = useTranslation();
@@ -228,29 +226,31 @@ export const MainContainer: React.FC<Props> = ({
               </TouchableOpacity>
             ))}
           </View>
-          <View style={styles.selectIndex}>
-            <Text style={styles.selectIndexText}>
-              {t('page.newAddress.hd.selectIndexTip')}
-            </Text>
-            <BottomSheetTextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              defaultValue={startNumber.toString()}
-              onChangeText={text => {
-                const number = parseInt(text, 10);
-                if (number > 0 && number < HARDENED_OFFSET) {
-                  setStartNumber(number);
-                }
-              }}
-            />
-            <Text style={styles.selectIndexFoot}>
-              {/* @ts-ignore */}
-              {t('page.newAddress.hd.manageAddressFrom', [
-                startNumber,
-                startNumber + MAX_ACCOUNT_COUNT - 1,
-              ])}
-            </Text>
-          </View>
+          {!disableStartFrom && (
+            <View style={styles.selectIndex}>
+              <Text style={styles.selectIndexText}>
+                {t('page.newAddress.hd.selectIndexTip')}
+              </Text>
+              <BottomSheetTextInput
+                style={styles.input}
+                keyboardType="number-pad"
+                defaultValue={startNumber.toString()}
+                onChangeText={text => {
+                  const number = parseInt(text, 10);
+                  if (number > 0 && number < HARDENED_OFFSET) {
+                    setStartNumber(number);
+                  }
+                }}
+              />
+              <Text style={styles.selectIndexFoot}>
+                {/* @ts-ignore */}
+                {t('page.newAddress.hd.manageAddressFrom', [
+                  startNumber,
+                  startNumber + MAX_ACCOUNT_COUNT - 1,
+                ])}
+              </Text>
+            </View>
+          )}
           {children}
         </ScrollView>
         <FooterButton

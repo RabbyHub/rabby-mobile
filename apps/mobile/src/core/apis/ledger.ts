@@ -206,3 +206,7 @@ export async function checkEthApp(cb: (result: boolean) => void) {
 
   return true;
 }
+
+export function getMaxAccountLimit() {
+  return undefined;
+}
