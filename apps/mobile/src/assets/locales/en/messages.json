@@ -1486,15 +1486,15 @@
         "imported": "Already imported",
         "ble": {
           "title": "Connect Ledger",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "scan": {
           "title": "Searching for Device",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "notFound": {
           "title": "Device Not Found",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X",
+          "description": "Turn on Bluetooth and unlock Ledger",
           "buttonText": "View Ledger support tutorial"
         },
         "select": {
