@@ -213,7 +213,6 @@ export const HomeTopArea = () => {
     badge?: number;
     badgeAlert?: boolean;
   }[] = [
-    ...(isGnosisKeyring ? [bridgeItemAction] : []),
     {
       title: 'Approvals',
       Icon: RcIconApproval,
@@ -226,6 +225,7 @@ export const HomeTopArea = () => {
       badge: approvalRiskAlert,
       badgeAlert: approvalRiskAlert > 0,
     },
+    ...(isGnosisKeyring ? [bridgeItemAction] : []),
   ];
 
   return (
