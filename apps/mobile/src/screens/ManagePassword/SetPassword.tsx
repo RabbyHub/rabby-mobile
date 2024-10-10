@@ -27,7 +27,7 @@ import TouchableView, {
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import { resetNavigationTo, useRabbyAppNavigation } from '@/hooks/navigation';
 import TouchableText from '@/components/Touchable/TouchableText';
-import { useShowTipTermOfUseModal } from './components/TipTermOfUseModalInner';
+import { useShowUserAgreementLikeModal } from './components/UserAgreementLikeModalInner';
 import { ConfirmSetPasswordModal } from './components/ConfirmModal';
 import { useNavigationState } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
@@ -173,7 +173,7 @@ export default function SetPasswordScreen() {
     formik.handleSubmit();
   }, [formik]);
 
-  const { viewTermOfUse } = useShowTipTermOfUseModal();
+  const { viewTermsOfUse } = useShowUserAgreementLikeModal();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: LAYOUTS.fixedFooterHeight,
@@ -272,7 +272,7 @@ export default function SetPasswordScreen() {
                   touchableProps={{ style: styles.termOfUseTouchable }}
                   onPress={evt => {
                     evt.stopPropagation();
-                    viewTermOfUse();
+                    viewTermsOfUse();
                   }}>
                   Term of Use
                 </TouchableText>
