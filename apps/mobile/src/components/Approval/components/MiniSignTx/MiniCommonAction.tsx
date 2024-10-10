@@ -81,18 +81,7 @@ export const MiniCommonAction: React.FC<Props> = ({
     <>
       {task.status === 'idle' ? (
         <>
-          <ActionGroup
-            account={account}
-            gasLess={useGasLess}
-            {...props}
-            disabledProcess={useGasLess ? false : props.disabledProcess}
-            enableTooltip={useGasLess ? false : props.enableTooltip}
-            gasLessThemeColor={
-              isDarkTheme
-                ? gasLessConfig?.dark_color
-                : gasLessConfig?.theme_color
-            }
-          />
+          <ActionGroup account={account} gasLess={useGasLess} {...props} />
           {footer}
         </>
       ) : task.status === 'completed' ? (

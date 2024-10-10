@@ -1026,7 +1026,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       setGasLessLoading(false);
       setGasLessConfig(
         res.is_gasless && res?.promotion?.config
-          ? res?.promotion?.config
+          ? res.promotion.id === '0ca5aaa5f0c9217e6f45fe1d109c24fb'
+            ? {
+                ...res.promotion.config,
+                dark_color: '',
+                theme_color: '',
+              }
+            : res?.promotion?.config
           : undefined,
       );
     } catch (error) {
