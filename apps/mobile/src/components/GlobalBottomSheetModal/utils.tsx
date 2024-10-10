@@ -21,7 +21,10 @@ import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
 import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
-import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
+import {
+  TipTermOfUseModalInner,
+  TipPrivacyPolicyInner,
+} from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
@@ -51,6 +54,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
+  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: ['80%'],
   [MODAL_NAMES.TIP_TERM_OF_USE]: ['80%'],
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
@@ -108,6 +112,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
+  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: TipPrivacyPolicyInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
