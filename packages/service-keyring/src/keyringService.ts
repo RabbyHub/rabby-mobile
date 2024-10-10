@@ -81,7 +81,7 @@ export class KeyringService extends RNEventEmitter {
 
   memStore: ObservableStore<MemStoreState>;
 
-  password: string | null = null;
+  #password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
   private readonly contactService?: ContactBookService;
@@ -127,7 +127,7 @@ export class KeyringService extends RNEventEmitter {
   }
 
   private async _setupBoot(password: string) {
-    this.password = password;
+    this.#password = password;
     const encryptBooted = await this.encryptor.encrypt(password, 'true');
     this.store.updateState({ booted: encryptBooted });
   }
@@ -266,7 +266,7 @@ export class KeyringService extends RNEventEmitter {
    */
   async setLocked(): Promise<MemStoreState> {
     // set locked
-    this.password = null;
+    this.#password = null;
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
@@ -302,7 +302,7 @@ export class KeyringService extends RNEventEmitter {
    */
   async submitPassword(password: string): Promise<MemStoreState> {
     await this.verifyPassword(password);
-    this.password = password;
+    this.#password = password;
     try {
       this.keyrings = await this.unlockKeyrings(password);
     } catch {
@@ -642,7 +642,7 @@ export class KeyringService extends RNEventEmitter {
    * and persists that encrypted string to storage.
    */
   async persistAllKeyrings(): Promise<boolean> {
-    if (!this.password || typeof this.password !== 'string') {
+    if (!this.#password || typeof this.#password !== 'string') {
       return Promise.reject(
         new Error('KeyringService - password is not a string'),
       );
@@ -663,7 +663,7 @@ export class KeyringService extends RNEventEmitter {
     )
       .then(serializedKeyrings => {
         return this.encryptor.encrypt(
-          this.password as string,
+          this.#password as string,
           serializedKeyrings as unknown as Buffer,
         );
       })
@@ -966,11 +966,11 @@ export class KeyringService extends RNEventEmitter {
   }
 
   async generatePreMnemonic(): Promise<string> {
-    if (!this.password) {
+    if (!this.#password) {
       throw new Error('background.error.unlock');
     }
     const mnemonic = this.generateMnemonic();
-    const preMnemonics = await this.encryptor.encrypt(this.password, mnemonic);
+    const preMnemonics = await this.encryptor.encrypt(this.#password, mnemonic);
     this.memStore.updateState({ preMnemonics });
 
     return mnemonic;
@@ -985,12 +985,12 @@ export class KeyringService extends RNEventEmitter {
       return '';
     }
 
-    if (!this.password) {
+    if (!this.#password) {
       throw new Error('background.error.unlock');
     }
 
     return await this.encryptor.decrypt(
-      this.password,
+      this.#password,
       this.memStore.getState().preMnemonics,
     );
   }
