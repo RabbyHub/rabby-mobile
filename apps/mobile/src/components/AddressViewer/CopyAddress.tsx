@@ -1,4 +1,4 @@
-import React, { useCallback, useImperativeHandle } from 'react';
+import React, { useCallback, useImperativeHandle, useMemo } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -28,6 +28,13 @@ type Props = {
   onToastSucess?: (ctx: { address: string }) => void;
   title?: string;
   titleStyle?: StyleProp<TextStyle>;
+  icon?:
+    | React.ReactNode
+    | ((ctx: {
+        defaultNode: React.ReactNode;
+        iconStyle: SvgProps['style'];
+        iconColor: string;
+      }) => React.ReactNode);
 };
 export type CopyAddressIconType = {
   doCopy: CopyHandler;
@@ -42,6 +49,7 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
       color,
       title,
       titleStyle,
+      icon,
     },
     ref,
   ) {
@@ -72,6 +80,21 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
       doCopy: handleCopyAddress,
     }));
 
+    const iconNode = useMemo(() => {
+      const iconColor = color || colors['neutral-foot'];
+      const defaultNode = <RcIconCopyCC color={iconColor} style={style} />;
+
+      if (!icon) return defaultNode;
+
+      if (typeof icon === 'function') {
+        return icon({
+          defaultNode,
+          iconStyle: style,
+          iconColor: iconColor,
+        });
+      }
+    }, [icon, color, colors, style]);
+
     return (
       <TouchableOpacity
         style={StyleSheet.flatten([
@@ -85,7 +108,7 @@ export const CopyAddressIcon = React.forwardRef<CopyAddressIconType, Props>(
             : {},
         ])}
         onPress={handleCopyAddress}>
-        <RcIconCopyCC color={color || colors['neutral-foot']} style={style} />
+        {iconNode}
         {title && <Text style={titleStyle}>{title}</Text>}
       </TouchableOpacity>
     );
