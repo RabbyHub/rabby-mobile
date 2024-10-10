@@ -2,7 +2,7 @@ import { Account } from '@/core/services/preference';
 import { useApproval } from '@/hooks/useApproval';
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { WaitingSignMessageComponent } from './map';
+import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import { INTERNAL_REQUEST_ORIGIN } from '@/constant';
 import { useSecurityEngine } from '@/hooks/securityEngine';
@@ -199,12 +199,9 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
       await invokeEnterPassphrase(currentAccount.address);
     }
 
-    if (
-      currentAccount?.type &&
-      WaitingSignMessageComponent[currentAccount?.type]
-    ) {
+    if (currentAccount?.type && WaitingSignComponent[currentAccount?.type]) {
       resolveApproval({
-        uiRequestComponent: WaitingSignMessageComponent[currentAccount?.type],
+        uiRequestComponent: WaitingSignComponent[currentAccount?.type],
         type: currentAccount.type,
         address: currentAccount.address,
         extra: {
