@@ -132,7 +132,7 @@ android {
     // }
     buildTypes {
         debug {
-            defaultConfig.minSdkVersion 24
+            // defaultConfig.minSdkVersion 24
             signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             // debuggable true
