@@ -12,6 +12,7 @@ import { last } from 'lodash';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDevOnlyStyle } from '@/utils/styles';
+import { RcIconCopyRegularCC, RcIconJumpCC } from '@/assets/icons/common';
 import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
@@ -68,6 +69,7 @@ import { useManageTestnetTokenList } from '@/screens/Home/hooks/useManageTestnet
 import { DisplayedToken } from '@/screens/Home/utils/project';
 import { CustomizedSwitch } from './CustomizedSwitch';
 import { apiCustomTestnet } from '@/core/apis';
+import { openTxExternalUrl } from '@/utils/transaction';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -209,20 +211,46 @@ const TokenDetailHeader = React.memo(
               </>
             )}
             {isContractToken && tokenAddress && (
-              <TouchableView
-                style={[styles.tokenAddressWrapper]}
-                onPress={evt => {
-                  copyAddressIconRef.current?.doCopy(evt);
-                }}>
+              <View style={[styles.tokenAddressWrapper]}>
                 <Text style={[styles.tokenAddressText]}>
                   {ellipsisAddress(tokenAddress)}
                 </Text>
-                <CopyAddressIcon
-                  ref={copyAddressIconRef}
-                  address={tokenAddress}
-                  style={styles.copyIcon}
-                />
-              </TouchableView>
+                <TouchableView
+                  style={[styles.tokenTouchIcon, { marginRight: 6 }]}
+                  onPress={() => {
+                    openTxExternalUrl({
+                      chain: chainItem,
+                      address: tokenAddress,
+                    });
+                  }}>
+                  <RcIconJumpCC
+                    width={14}
+                    height={14}
+                    style={styles.jumpIcon}
+                  />
+                </TouchableView>
+                <TouchableView
+                  style={[styles.tokenTouchIcon]}
+                  onPress={evt => {
+                    copyAddressIconRef.current?.doCopy(evt);
+                  }}>
+                  <CopyAddressIcon
+                    ref={copyAddressIconRef}
+                    address={tokenAddress}
+                    style={styles.copyIcon}
+                    icon={ctx => {
+                      return (
+                        <RcIconCopyRegularCC
+                          color={ctx.iconColor}
+                          width={14}
+                          height={14}
+                          style={ctx.iconStyle}
+                        />
+                      );
+                    }}
+                  />
+                </TouchableView>
+              </View>
             )}
           </View>
         </View>
@@ -354,6 +382,7 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
     tokenAddressWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
+      maxHeight: SIZES.headerTokenLogo - 2 * 4,
     },
     tokenAddressText: {
       color: colors['neutral-foot'],
@@ -362,8 +391,16 @@ const getTokenDetailHeaderStyle = createGetStyles(colors => {
 
       marginHorizontal: 6,
     },
-    copyIcon: {
+    tokenTouchIcon: {
       height: '100%',
+      // ...makeDebugBorder(),
+    },
+    jumpIcon: {
+      maxHeight: 14,
+      color: colors['neutral-foot'],
+    },
+    copyIcon: {
+      maxHeight: 14,
       // ...makeDebugBorder(),
     },
     tokenDetailHeaderF2: {
