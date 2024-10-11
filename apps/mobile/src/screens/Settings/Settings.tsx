@@ -21,6 +21,7 @@ import {
   RcScreenshot,
   RcFollowUs,
   RcInfo,
+  RcTermsOfUse,
   RcPrivacyPolicy,
   RcScreenRecord,
   RcThemeMode,
@@ -194,7 +195,7 @@ function SettingsBlocks() {
 
   const biometricsComputed = useBiometricsComputed();
 
-  const { viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -375,6 +376,13 @@ function SettingsBlocks() {
             },
           },
           {
+            label: 'Term Of Use',
+            icon: RcTermsOfUse,
+            onPress: async () => {
+              viewTermsOfUse();
+            },
+          },
+          {
             label: 'Privacy Policy',
             icon: RcPrivacyPolicy,
             onPress: async () => {
@@ -471,7 +479,6 @@ function DevSettingsBlocks() {
   const { allowScreenshot } = useIsAllowScreenshot();
   const { openMetaMaskTestDapp } = useSheetWebViewTester();
   const { viewMarkdownInWebView } = useShowMarkdownInWebVIewTester();
-  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const disabledBiometrics =
     !couldSetupBiometrics ||
@@ -625,20 +632,6 @@ function DevSettingsBlocks() {
               icon: RcEarth,
               onPress: () => {
                 openMetaMaskTestDapp();
-              },
-            },
-            {
-              label: 'View Term of Use',
-              icon: RcPrivacyPolicy,
-              onPress: () => {
-                viewTermsOfUse();
-              },
-            },
-            {
-              label: 'View Privacy Policy',
-              icon: RcPrivacyPolicy,
-              onPress: () => {
-                viewPrivacyPolicy();
               },
             },
             {

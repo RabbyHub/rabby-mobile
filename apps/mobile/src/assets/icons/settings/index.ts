@@ -24,6 +24,10 @@ export const RcPrivacyPolicy = makeThemeIconFromCC(
   'neutral-body',
 );
 
+// terms-of-use-cc.svg
+import { default as RcTermsOfUseCC } from './terms-of-use-cc.svg';
+export const RcTermsOfUse = makeThemeIconFromCC(RcTermsOfUseCC, 'neutral-body');
+
 import { default as RcLockCC } from './lock-cc.svg';
 export const RcLock = makeThemeIconFromCC(RcLockCC, 'neutral-body');
 

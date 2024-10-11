@@ -137,7 +137,7 @@ function useSetupPasswordForm() {
               } else if (navParams.actionType === 'setAutoLockTime') {
                 sheetModalRefsNeedLock.selectAutolockTimeRef.current?.present();
               }
-              navigation.replace(RootNames.StackSettings, {
+              navigation.replace(RootNames.StackRoot, {
                 screen: RootNames.Settings,
                 params: {},
               });
@@ -173,7 +173,7 @@ export default function SetPasswordScreen() {
     formik.handleSubmit();
   }, [formik]);
 
-  const { viewTermsOfUse } = useShowUserAgreementLikeModal();
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: LAYOUTS.fixedFooterHeight,
@@ -257,7 +257,7 @@ export default function SetPasswordScreen() {
               onPress={() => {
                 formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
-              <View>
+              <View style={styles.agreementCheckbox}>
                 <CheckBoxCircled checked={formik.values.checked} />
               </View>
 
@@ -268,13 +268,23 @@ export default function SetPasswordScreen() {
                   I have read and agree to the{' '}
                 </Text>
                 <TouchableText
-                  style={styles.termOfUse}
-                  touchableProps={{ style: styles.termOfUseTouchable }}
+                  style={styles.userAgreementTouchText}
+                  touchableProps={{ style: styles.userAgreementTouchable }}
                   onPress={evt => {
                     evt.stopPropagation();
                     viewTermsOfUse();
                   }}>
                   Term of Use
+                </TouchableText>
+                <Text> and </Text>
+                <TouchableText
+                  style={styles.userAgreementTouchText}
+                  touchableProps={{ style: styles.userAgreementTouchable }}
+                  onPress={evt => {
+                    evt.stopPropagation();
+                    viewPrivacyPolicy();
+                  }}>
+                  Privacy Policy
                 </TouchableText>
               </View>
             </TouchableView>
@@ -380,24 +390,32 @@ const getStyles = createGetStyles(colors => {
     agreementWrapper: {
       flexDirection: 'row',
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'flex-start',
+      flexWrap: 'nowrap',
+      paddingHorizontal: 32,
+    },
+    agreementCheckbox: {
+      marginRight: 6,
+      position: 'relative',
+      top: 1,
     },
     agreementTextWrapper: {
-      marginLeft: 6,
       position: 'relative',
       flexDirection: 'row',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       alignItems: 'center',
+      flexWrap: 'wrap',
     },
     agreementText: {
       fontSize: 14,
+      lineHeight: 20,
       color: colors['neutral-body'],
     },
-    termOfUse: {
+    userAgreementTouchText: {
       fontSize: 14,
       color: colors['blue-default'],
     },
-    termOfUseTouchable: {
+    userAgreementTouchable: {
       padding: 0,
       // position: 'relative',
       // top: 0,
