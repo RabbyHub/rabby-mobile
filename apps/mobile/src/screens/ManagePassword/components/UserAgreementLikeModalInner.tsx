@@ -14,10 +14,10 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import { TermOfUseMarkdown } from './TermOfUseMarkdown';
 import AutoLockView from '@/components/AutoLockView';
 import WebView from 'react-native-webview';
 import { APP_UA_PARIALS } from '@/constant';
+import { checkShouldStartLoadingWithRequestForTrustedContent } from '@/components/WebView/utils';
 
 export function useShowUserAgreementLikeModal() {
   const openedModalIdRef = React.useRef<string>('');
@@ -99,10 +99,17 @@ export function UserAgreementLikeModalInner({ uri }: { uri: string }) {
             startInLoadingState
             allowsFullscreenVideo={false}
             allowsInlineMediaPlayback={false}
-            originWhitelist={['debank.com', 'rabby.io']}
+            originWhitelist={['https://debank.com', 'https://rabby.io']}
             applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
             javaScriptEnabled
             source={{ uri }}
+            onShouldStartLoadWithRequest={nativeEvent => {
+              // always allow first time loading
+              if (!nativeEvent.canGoBack) return true;
+              return checkShouldStartLoadingWithRequestForTrustedContent(
+                nativeEvent,
+              );
+            }}
           />
         </View>
       </View>

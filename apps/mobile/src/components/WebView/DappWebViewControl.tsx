@@ -42,6 +42,7 @@ import { RefreshAutoLockBottomSheetBackdrop } from '../patches/refreshAutoLockUI
 import { PATCH_ANCHOR_TARGET } from '@/core/bridges/builtInScripts/patchAnchor';
 import { IS_ANDROID } from '@/core/native/utils';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { checkShouldStartLoadingWithRequestForDappWebView } from './utils';
 
 function errorLog(...info: any) {
   // devLog('[DappWebViewControl::error]', ...info);
@@ -320,11 +321,7 @@ const DappWebViewControl = React.forwardRef<
       styles,
     ]);
 
-    const {
-      onLoadStart,
-      onMessage: onBridgeMessage,
-      onShouldStartLoadWithRequest,
-    } = useSetupWebview({
+    const { onLoadStart, onMessage: onBridgeMessage } = useSetupWebview({
       dappOrigin,
       webviewRef,
       webviewIdRef,
@@ -395,9 +392,9 @@ const DappWebViewControl = React.forwardRef<
             onLoadStart(nativeEvent);
           }}
           onShouldStartLoadWithRequest={nativeEvent => {
-            const result = onShouldStartLoadWithRequest(nativeEvent);
-
-            return result;
+            return checkShouldStartLoadingWithRequestForDappWebView(
+              nativeEvent,
+            );
           }}
           onError={errorLog}
           onMessage={event => {
@@ -435,7 +432,6 @@ const DappWebViewControl = React.forwardRef<
       initialUrl,
       onBridgeMessage,
       onLoadStart,
-      onShouldStartLoadWithRequest,
       webviewActions.onNavigationStateChange,
       webviewNode,
       webviewRef,
