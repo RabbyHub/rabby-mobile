@@ -114,7 +114,10 @@ export default function ToAddressControl({
       </View>
       <FormInput
         className="mt-[8]"
-        containerStyle={styles.inputContainer}
+        containerStyle={[
+          styles.inputContainer,
+          !formValues.to && styles.withoutValue,
+        ]}
         ref={formInputRef}
         disableFocusingStyle
         inputStyle={styles.input}
@@ -251,6 +254,7 @@ const getStyles = createGetStyles(colors => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      // ...makeDebugBorder(),
     },
 
     disabledAliasEditButton: {},
@@ -270,7 +274,6 @@ const getStyles = createGetStyles(colors => {
 
     entryWhitelist: {
       marginLeft: 8,
-      paddingLeft: 8,
     },
 
     entryWhitelistIcon: {
@@ -278,21 +281,18 @@ const getStyles = createGetStyles(colors => {
       height: 20,
     },
 
-    inputWrapper: {
-      position: 'relative',
-      paddingRight: SIZES.INPUT_CONTAINER_H - 12,
-      // ...makeDebugBorder('red'),
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-
     inputContainer: {
+      height: SIZES.INPUT_CONTAINER_H,
       borderRadius: 4,
       flexShrink: 0,
       // ...makeDebugBorder('yellow'),
-      paddingVertical: 17,
+      paddingVertical: 12,
       width: '100%',
+    },
+
+    withoutValue: {
+      height: 'auto',
+      // paddingVertical: 24,
     },
 
     input: {
