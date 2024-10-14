@@ -146,7 +146,7 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter address or search',
+          placeholder: 'Enter an address or scan',
           placeholderTextColor: colors['neutral-foot'],
           style: {
             paddingTop: 0,
