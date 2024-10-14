@@ -113,7 +113,6 @@ export default function ToAddressControl({
         </View>
       </View>
       <FormInput
-        className="mt-[8]"
         containerStyle={[
           styles.inputContainer,
           !formValues.to && styles.withoutValue,
@@ -287,6 +286,7 @@ const getStyles = createGetStyles(colors => {
       // ...makeDebugBorder('yellow'),
       paddingVertical: 12,
       width: '100%',
+      marginTop: 8,
     },
 
     withoutValue: {
@@ -302,8 +302,8 @@ const getStyles = createGetStyles(colors => {
       // paddingTop: Platform.OS === 'ios' ? 12 : 0,
       paddingTop: 12,
       paddingHorizontal: 12,
-      // flexDirection: 'row',
-      // alignItems: 'center',
+      fontSize: 15,
+      fontWeight: '600',
     },
 
     scanButtonContainer: {

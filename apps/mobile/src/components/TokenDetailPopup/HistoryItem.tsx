@@ -141,7 +141,7 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     txIdClickable: {
       textDecorationLine: 'underline',
-      color: colors['green-default'],
+      // color: colors['green-default'],
     },
     scamContainer: {
       borderRadius: 2,
