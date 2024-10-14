@@ -13,7 +13,7 @@ const getStyles = createGetStyles(colors => {
     container: {
       borderRadius: 4,
       padding: 12,
-      backgroundColor: colors['blue-light1'],
+      backgroundColor: colors['blue-light-1'],
 
       width: '100%',
       height: 52,

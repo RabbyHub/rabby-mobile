@@ -61,6 +61,5 @@ const getStyles = (colors: AppColorsVariants) =>
     },
     txIdClickable: {
       textDecorationLine: 'underline',
-      color: colors['green-default'],
     },
   });
