@@ -189,7 +189,7 @@ export function BalanceSection({ style }: RNViewProps) {
               </View>
             </View>
           )}
-          <View style={[styles.tokenDetailLine, { marginTop: 8 }]}>
+          <View style={[styles.tokenDetailLine]}>
             <Text style={styles.tokenDetailText}>Chain</Text>
             {tokenChain && (
               <Text style={[styles.tokenDetailText, styles.tokenDetailValue]}>
@@ -223,7 +223,7 @@ export function BalanceSection({ style }: RNViewProps) {
 }
 
 const getBalanceStyles = createGetStyles((colors, ctx) => {
-  const tipWrapperBg = colors['neutral-card-3'];
+  const tipWrapperBg = colors['neutral-card2'];
 
   return {
     balanceText: {
@@ -257,12 +257,10 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
       flexShrink: 1,
       width: '100%',
       justifyContent: 'flex-end',
-      // ...makeDebugBorder(),
     },
 
     gasReserved: {
       paddingLeft: 8,
-      // ...makeDebugBorder()
     },
 
     issueBlockSkeleton: {
@@ -281,6 +279,7 @@ const getBalanceStyles = createGetStyles((colors, ctx) => {
       padding: 12,
       borderRadius: 4,
       position: 'relative',
+      justifyContent: 'center',
     },
 
     tokenDetailTriangle: {
