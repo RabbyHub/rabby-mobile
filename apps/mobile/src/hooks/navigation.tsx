@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { merge } from 'lodash';
+import { debounce, merge } from 'lodash';
 
 import {
   NativeStackNavigationOptions,
@@ -26,7 +26,8 @@ import {
 } from './native/security';
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
-import { IS_IOS } from '@/core/native/utils';
+import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
+import RNTimeChanged from '@/core/native/RNTimeChanged';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -174,18 +175,24 @@ export function resetNavigationTo(
   }
 }
 
-export async function requestLockWalletAndBackToUnlockScreen() {
+export async function requestLockWalletAndBackToUnlockScreen(): Promise<{
+  canLockWallet: boolean;
+}> {
   const lockInfo = await apisLock.getRabbyLockInfo();
-  if (!lockInfo.isUseCustomPwd) return;
+  const result = { canLockWallet: false };
+  if (!lockInfo.isUseCustomPwd) return result;
 
   const isUnlocked = apisLock.isUnlocked();
   if (isUnlocked) {
+    result.canLockWallet = true;
     await apisLock.lockWallet();
   }
 
   console.debug('will back to unlock screen');
   const navigation = getReadyNavigationInstance();
   if (navigation) resetNavigationTo(navigation, 'Unlock');
+
+  return result;
 }
 
 export function usePreventGoBack({
@@ -322,3 +329,31 @@ export function useAppPreventScreenshotOnScreen() {
     }
   }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
 }
+
+type OnTimeChangedCtx = Parameters<
+  Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
+>[0];
+const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
+  const result = await requestLockWalletAndBackToUnlockScreen();
+  if (result.canLockWallet) {
+    Alert.alert(
+      'Auto Lock',
+      `Time settings changed, auto lock wallet for security.`,
+    );
+  } else {
+    Alert.alert(
+      'Warning',
+      `Time settings changed, will quit app for security.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            RNTimeChanged.exitAppForSecurity();
+          },
+        },
+      ],
+    );
+  }
+}, 1000);
+
+RNTimeChanged.subscribeTimeChanged(handleTimeChanged);

@@ -28,6 +28,7 @@ public class MainApplication extends Application implements ReactApplication {
       List<ReactPackage> packages = new PackageList(this).getPackages();
       packages.add(new ReactNativeSecurityPackage());
       packages.add(new RNScreenshotPreventPackage());
+      packages.add(new RNTimeChangedPackage());
 
       return packages;
     }
