@@ -1,0 +1,26 @@
+diff --git a/node_modules/@ledgerhq/hw-transport/lib-es/Transport.d.ts b/node_modules/@ledgerhq/hw-transport/lib-es/Transport.d.ts
+index 9099450..e890e2c 100644
+--- a/node_modules/@ledgerhq/hw-transport/lib-es/Transport.d.ts
++++ b/node_modules/@ledgerhq/hw-transport/lib-es/Transport.d.ts
+@@ -132,7 +132,7 @@ export default class Transport {
+      * @returns {Promise<void>} A promise that resolves when the transport is closed.
+      */
+     close(): Promise<void>;
+-    _events: EventEmitter<[never]>;
++    _events: EventEmitter;
+     /**
+      * Listen for an event on the transport instance.
+      * Transport implementations may have specific events. Common events include:
+diff --git a/node_modules/@ledgerhq/hw-transport/lib/Transport.d.ts b/node_modules/@ledgerhq/hw-transport/lib/Transport.d.ts
+index 9099450..dc951ad 100644
+--- a/node_modules/@ledgerhq/hw-transport/lib/Transport.d.ts
++++ b/node_modules/@ledgerhq/hw-transport/lib/Transport.d.ts
+@@ -132,7 +132,7 @@ export default class Transport {
+      * @returns {Promise<void>} A promise that resolves when the transport is closed.
+      */
+     close(): Promise<void>;
+-    _events: EventEmitter<[never]>;
++    _events: EventEmitter;
+     /**
+      * Listen for an event on the transport instance.
+      * Transport implementations may have specific events. Common events include:
