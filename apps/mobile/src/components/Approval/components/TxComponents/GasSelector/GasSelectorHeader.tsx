@@ -762,7 +762,7 @@ export const GasSelectorHeader = ({
                             0) +
                             (gasAccountCost?.gas_account_cost.gas_cost || 0),
                         )?.replace('$', '')}{' '}
-                        123USD
+                        USD
                       </Text>
                     </Text>
                   </Pressable>
