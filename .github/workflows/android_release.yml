@@ -56,13 +56,13 @@ jobs:
           flatten_refname=${flatten_refname//\./'_'}
           echo "flatten_refname=$flatten_refname" >> "$GITHUB_OUTPUT"
 
-      - name: "[Android] Setup Nodejs and Yarn"
+      - name: '[Android] Setup Nodejs and Yarn'
         if: runner.os == 'Linux'
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: "[Android] Setup Ruby & Fastlane"
+      - name: '[Android] Setup Ruby & Fastlane'
         if: runner.os == 'Linux'
         uses: ruby/setup-ruby@v1
         with:
@@ -83,6 +83,7 @@ jobs:
           yarn --version;
           # yarn setup && yarn postinstall;
           yarn install;
+          yarn postinstall;
           cd apps/mobile;
           bundle install;
           yarn prepare-archive;
