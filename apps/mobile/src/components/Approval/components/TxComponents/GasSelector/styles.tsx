@@ -14,7 +14,6 @@ export const getStyles = (colors: AppColorsVariants) =>
     gasView: {
       flexDirection: 'row',
       alignItems: 'center',
-      maxWidth: 220,
       flex: 1,
       position: 'relative',
     },
@@ -56,6 +55,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       color: colors['neutral-title-1'],
     },
     gasSelectorCardContent: {
+      flex: 1,
       marginHorizontal: 4,
       alignItems: 'center',
     },
@@ -74,6 +74,7 @@ export const getStyles = (colors: AppColorsVariants) =>
       color: colors['orange-default'],
     },
     gasSelectorCardAmount: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
     },
@@ -92,6 +93,11 @@ export const getStyles = (colors: AppColorsVariants) =>
       marginTop: 2,
       flexShrink: 0,
       fontSize: 14,
+    },
+    gasAccountTip: {
+      fontSize: 13,
+      fontWeight: '400',
+      color: colors['neutral-title-2'],
     },
     gasMore: {
       flexDirection: 'row',

@@ -1,5 +1,11 @@
 import BigNumber from 'bignumber.js';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { calcMaxPriorityFee } from '@/utils/transaction';
 import { Result } from '@rabby-wallet/rabby-security-engine';
@@ -7,6 +13,7 @@ import { GasLevel, TxPushType } from '@rabby-wallet/rabby-api/dist/types';
 import {
   Image,
   NativeSyntheticEvent,
+  Pressable,
   StyleSheet,
   Text,
   TextInputChangeEventData,
@@ -53,6 +60,7 @@ import { default as RcIconGasBlurCC } from '@/assets/icons/sign/tx/gas-blur-cc.s
 import { default as RcIconGasAccountBlurCC } from '@/assets/icons/sign/tx/gas-account-blur-cc.svg';
 import { default as RcIconGasAccountActive } from '@/assets/icons/sign/tx/gas-account-active.svg';
 import { SvgProps } from 'react-native-svg';
+import { RcIconInfoCC } from '@/assets/icons/common';
 
 export interface GasSelectorResponse extends GasLevel {
   gasLimit: number;
@@ -109,6 +117,7 @@ interface GasSelectorProps {
       total_cost: number;
       tx_cost: number;
       gas_cost: number;
+      estimate_tx_cost: number;
     };
     is_gas_account: boolean;
     balance_is_enough: boolean;
@@ -595,17 +604,8 @@ export const GasSelectorHeader = ({
 
   const gasCostUsdStr = useMemo(() => {
     const bn = new BigNumber(modalExplainGas?.gasCostUsd);
-    let value;
 
-    if (bn.gt(1)) {
-      value = bn.toFixed(2);
-    } else if (bn.gt(0.0001)) {
-      value = bn.toFixed(4);
-    } else {
-      value = '0.0001';
-    }
-
-    return `$${formatTokenAmount(value)}`;
+    return formatUsdValue(bn.toString(10));
   }, [modalExplainGas?.gasCostUsd]);
 
   const gasCostAmountStr = useMemo(() => {
@@ -617,7 +617,17 @@ export const GasSelectorHeader = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalExplainGas?.gasCostAmount]);
 
+  const calcGasAccountUsd = useCallback((n: number | string) => {
+    const v = Number(n);
+    if (!Number.isNaN(v) && v < 0.01) {
+      return `$${n}`;
+    }
+    return formatUsdValue(n || '0');
+  }, []);
+
   const [isGasHovering, setIsGasHovering] = useState(false);
+
+  const [isGasAccountHovering, setIsGasAccountHovering] = useState(false);
 
   const handleClosePopup = () => {
     if (pressedConfirmRef.current) {
@@ -660,7 +670,11 @@ export const GasSelectorHeader = ({
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => setIsGasHovering(!isGasHovering)}
-          style={styles.gasView}>
+          activeOpacity={1}
+          style={StyleSheet.flatten([
+            styles.gasView,
+            !gasMethod && { maxWidth: 220 },
+          ])}>
           {gasMethod ? (
             <View
               style={{
@@ -716,88 +730,140 @@ export const GasSelectorHeader = ({
                 </Text>
               </>
             ) : gasMethod === 'gasAccount' ? (
-              <View className="gas-selector-card-content-item relative">
-                <Tip
-                  content={
-                    <View
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                      }}>
-                      <View>
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            fontWeight: '400',
-                            color: colors['neutral-title-2'],
-                          }}>
-                          {t('page.signTx.gasAccount.totalCost')}
-                          {formatUsdValue(
-                            gasAccountCost?.gas_account_cost.total_cost || '0',
-                          )}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            fontWeight: '400',
-                            color: colors['neutral-title-2'],
-                          }}>
-                          {t('page.signTx.gasAccount.currentTxCost')}
-
-                          {formatUsdValue(
-                            gasAccountCost?.gas_account_cost.tx_cost || '0',
-                          )}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            fontWeight: '400',
-                            color: colors['neutral-title-2'],
-                          }}>
-                          {t('page.signTx.gasAccount.gasCost')}
-                          {formatUsdValue(
-                            gasAccountCost?.gas_account_cost.gas_cost || '0',
-                          )}
-                        </Text>
-                      </View>
-                    </View>
-                  }>
-                  <Text
-                    style={{
-                      color: colors['blue-default'],
-                      fontSize: 16,
-                      fontWeight: '500',
+              <View style={styles.gasSelectorCardContentItem}>
+                <View style={[styles.gasSelectorCardAmount]}>
+                  <Pressable
+                    onPress={() => {
+                      setIsGasAccountHovering(true);
                     }}>
-                    {gasAccountCost?.gas_account_cost.total_cost} USD
-                  </Text>
-                </Tip>
+                    <Text numberOfLines={1}>
+                      <Text
+                        style={{
+                          color: colors['blue-default'],
+                          fontSize: 16,
+                          fontWeight: '500',
+                        }}>
+                        {formatUsdValue(
+                          (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
+                            0) +
+                            (gasAccountCost?.gas_account_cost.gas_cost || 0),
+                        )}
+                      </Text>
+                      <Text
+                        style={{
+                          paddingLeft: 4,
+                          fontSize: 14,
+                          color: colors['neutral-body'],
+                        }}>
+                        {' '}
+                        ~
+                        {calcGasAccountUsd(
+                          (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
+                            0) +
+                            (gasAccountCost?.gas_account_cost.gas_cost || 0),
+                        )?.replace('$', '')}{' '}
+                        123USD
+                      </Text>
+                    </Text>
+                  </Pressable>
+                  <Tip
+                    isVisible={isGasAccountHovering}
+                    onClose={() => {
+                      setIsGasAccountHovering(false);
+                    }}
+                    content={
+                      <View
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                        }}>
+                        <View>
+                          <Text style={styles.gasAccountTip}>
+                            {t('page.signTx.gasAccount.estimatedGas')}
+                            {calcGasAccountUsd(
+                              gasAccountCost?.gas_account_cost
+                                .estimate_tx_cost || 0,
+                            )}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={styles.gasAccountTip}>
+                            {t('page.signTx.gasAccount.maxGas')}
+
+                            {calcGasAccountUsd(
+                              gasAccountCost?.gas_account_cost.total_cost ||
+                                '0',
+                            )}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={styles.gasAccountTip}>
+                            {t('page.signTx.gasAccount.sendGas')}
+                            {calcGasAccountUsd(
+                              gasAccountCost?.gas_account_cost.total_cost ||
+                                '0',
+                            )}
+                          </Text>
+                        </View>
+
+                        <View>
+                          <Text style={styles.gasAccountTip}>
+                            {t('page.signTx.gasAccount.gasCost')}
+                            {calcGasAccountUsd(
+                              gasAccountCost?.gas_account_cost.gas_cost || '0',
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    }>
+                    <View>
+                      <RcIconInfoCC
+                        onPress={() => {
+                          setIsGasAccountHovering(true);
+                        }}
+                        style={{ marginLeft: 4 }}
+                        width={16}
+                        height={16}
+                        color={colors['neutral-body']}
+                      />
+                    </View>
+                  </Tip>
+                </View>
               </View>
             ) : (
               <View style={styles.gasSelectorCardContentItem}>
                 <View style={styles.gasSelectorCardAmount}>
                   {gasMethod ? (
-                    <Tip content={`≈${gasCostUsdStr}`}>
+                    <Text
+                      numberOfLines={1}
+                      style={StyleSheet.flatten([
+                        styles.gasSelectorCardAmountLabel,
+                        !processedRules.includes('1118') &&
+                        engineResultMap['1118']?.level === 'danger'
+                          ? { color: colors['red-default'] }
+                          : {},
+                        !processedRules.includes('1118') &&
+                        engineResultMap['1118']?.level === 'warning'
+                          ? { color: colors['orange-default'] }
+                          : {},
+                      ])}>
                       <Text
-                        style={StyleSheet.flatten([
-                          styles.gasSelectorCardAmountLabel,
-                          !processedRules.includes('1118') &&
-                          engineResultMap['1118']?.level === 'danger'
-                            ? { color: colors['red-default'] }
-                            : {},
-                          !processedRules.includes('1118') &&
-                          engineResultMap['1118']?.level === 'warning'
-                            ? { color: colors['orange-default'] }
-                            : {},
-                        ])}>
-                        <Text style={{ color: colors['blue-default'] }}>
-                          {gasCostAmountStr}
-                        </Text>
+                        style={{
+                          color: colors['blue-default'],
+                          fontSize: 16,
+                          fontWeight: '500',
+                        }}>
+                        {gasCostUsdStr}
                       </Text>
-                    </Tip>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          color: colors['neutral-body'],
+                          fontWeight: '400',
+                        }}>
+                        {` ~${gasCostAmountStr}`}
+                      </Text>
+                    </Text>
                   ) : (
                     <Text
                       style={StyleSheet.flatten([
