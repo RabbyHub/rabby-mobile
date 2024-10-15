@@ -21,7 +21,7 @@
     "build:watch": "yarn run build --watch",
     "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
     "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
-    "postinstall": "yarn build && yarn apps/mobile postinstall && patch-package",
+    "postinstall": "patch-package && yarn build && yarn apps/mobile postinstall",
     "install-husky": "husky install",
     "lint": "yarn lint:eslint && yarn lint:misc --check && yarn constraints",
     "lint:eslint": "eslint . --cache --ext js,ts",
