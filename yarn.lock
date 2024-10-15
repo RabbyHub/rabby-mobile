@@ -5062,7 +5062,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/hw-app-eth@npm:6.40.0":
+"@ledgerhq/hw-app-eth@npm:^6.40.0":
   version: 6.40.0
   resolution: "@ledgerhq/hw-app-eth@npm:6.40.0"
   dependencies:
@@ -5094,7 +5094,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/hw-transport@npm:6.31.4, @ledgerhq/hw-transport@npm:^6.31.4":
+"@ledgerhq/hw-transport@npm:^6.31.4":
   version: 6.31.4
   resolution: "@ledgerhq/hw-transport@npm:6.31.4"
   dependencies:
@@ -6269,8 +6269,8 @@ __metadata:
   dependencies:
     "@ethereumjs/tx": 5
     "@ledgerhq/devices": ^8.2.0
-    "@ledgerhq/hw-app-eth": 6.40.0
-    "@ledgerhq/hw-transport": 6.31.4
+    "@ledgerhq/hw-app-eth": ^6.40.0
+    "@ledgerhq/hw-transport": ^6.31.4
     "@ledgerhq/types-cryptoassets": ^7.9.0
     "@ledgerhq/types-devices": ^6.23.0
     "@metamask/auto-changelog": ^3.4.3
@@ -6451,6 +6451,7 @@ __metadata:
     jest-silent-reporter: ^0.5.0
     lint-staged: ^15.2.0
     nock: ^13.3.1
+    patch-package: ^8.0.0
     prettier: ^2.7.1
     prettier-plugin-packagejson: ^2.4.5
     rimraf: ^3.0.2
