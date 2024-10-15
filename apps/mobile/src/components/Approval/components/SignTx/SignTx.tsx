@@ -844,7 +844,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       category: KEYRING_CATEGORY_MAP[currentAccount.type],
       preExecSuccess:
         checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-      createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
       source: params?.$ctx?.ga?.source || '',
       trigger: params?.$ctx?.ga?.trigger || '',
     });
@@ -1026,7 +1026,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       setGasLessLoading(false);
       setGasLessConfig(
         res.is_gasless && res?.promotion?.config
-          ? res?.promotion?.config
+          ? res.promotion.id === '0ca5aaa5f0c9217e6f45fe1d109c24fb'
+            ? {
+                ...res.promotion.config,
+                dark_color: '',
+                theme_color: '',
+              }
+            : res?.promotion?.config
           : undefined,
       );
     } catch (error) {
@@ -1174,7 +1180,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         type: currentAccount.brandName,
         category: KEYRING_CATEGORY_MAP[currentAccount.type],
         chainId: chain.serverId,
-        createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
         source: params?.$ctx?.ga?.source || '',
         trigger: params?.$ctx?.ga?.trigger || '',
       });

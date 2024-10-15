@@ -5,7 +5,6 @@ import {
   RcIconSwap,
   RcIconMore,
   RcIconApproval,
-  RcIconGasTopUp,
   RcIconQueue,
   RcIconBridge,
 } from '@/assets/icons/home';
@@ -176,18 +175,30 @@ export const HomeTopArea = () => {
               backgroundColor: colors['blue-default'],
             },
           },
+          {
+            title: 'More',
+            Icon: RcIconMore,
+            onPress: () => {
+              loadApprovalStatus();
+              moresheetModalRef.current?.present();
+            },
+            badge: totalAlertCount,
+          },
         ]
-      : [bridgeItemAction]),
-
-    {
-      title: 'More',
-      Icon: RcIconMore,
-      onPress: () => {
-        loadApprovalStatus();
-        moresheetModalRef.current?.present();
-      },
-      badge: totalAlertCount,
-    },
+      : [
+          bridgeItemAction,
+          {
+            title: 'Approvals',
+            Icon: RcIconApproval,
+            onPress: () => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.Approvals,
+              });
+              moresheetModalRef.current?.dismiss();
+            },
+            badge: approvalRiskAlert,
+          },
+        ]),
   ];
 
   const toastDisabledAction = useCallback(() => {
@@ -202,7 +213,6 @@ export const HomeTopArea = () => {
     badge?: number;
     badgeAlert?: boolean;
   }[] = [
-    ...(isGnosisKeyring ? [bridgeItemAction] : []),
     {
       title: 'Approvals',
       Icon: RcIconApproval,
@@ -215,15 +225,7 @@ export const HomeTopArea = () => {
       badge: approvalRiskAlert,
       badgeAlert: approvalRiskAlert > 0,
     },
-    {
-      title: 'Gas Top Up',
-      Icon: RcIconGasTopUp,
-      onPress: () => {
-        navigation.push(RootNames.StackTransaction, {
-          screen: RootNames.GasTopUp,
-        });
-      },
-    },
+    ...(isGnosisKeyring ? [bridgeItemAction] : []),
   ];
 
   return (
@@ -243,20 +245,54 @@ export const HomeTopArea = () => {
                 <item.Icon style={styles.actionIcon} />
               </View>
 
-              <View style={styles.actionBadgeWrapper}>
+              <View
+                style={[
+                  styles.actionBadgeWrapper,
+                  item.title === 'Approvals' && {
+                    right: 0,
+                  },
+                ]}>
                 {!!item.badge && item.badge > 0 && (
                   <BadgeText count={item.badge} style={item.badgeStyle} />
                 )}
               </View>
-              <Text
-                style={[
-                  styles.actionText,
-                  {
-                    fontSize: actions.length > 4 ? 13 : 14,
-                  },
-                ]}>
-                {item.title}
-              </Text>
+              <View
+                style={{
+                  width: '100%',
+                }}>
+                <Text
+                  style={[
+                    styles.actionText,
+                    {
+                      fontSize: actions.length > 4 ? 13 : 14,
+                    },
+                  ]}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: 72,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    transform: [
+                      {
+                        translateX: -(72 - styles.actionIconWrapper.width) / 2,
+                      },
+                    ],
+                  }}>
+                  <Text
+                    style={[
+                      styles.actionText,
+                      {
+                        fontSize: actions.length > 4 ? 13 : 14,
+                      },
+                    ]}>
+                    {item.title}
+                  </Text>
+                </View>
+              </View>
             </TouchableView>
           ))}
         </View>

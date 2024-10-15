@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { View } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
@@ -15,12 +14,14 @@ import {
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 
-import { TermOfUseMarkdown } from './TermOfUseMarkdown';
 import AutoLockView from '@/components/AutoLockView';
+import WebView from 'react-native-webview';
+import { APP_UA_PARIALS } from '@/constant';
+import { checkShouldStartLoadingWithRequestForTrustedContent } from '@/components/WebView/utils';
 
-export function useShowTipTermOfUseModal() {
+export function useShowUserAgreementLikeModal() {
   const openedModalIdRef = React.useRef<string>('');
-  const viewTermOfUse = React.useCallback(() => {
+  const viewTermsOfUse = React.useCallback(() => {
     openedModalIdRef.current = createGlobalBottomSheetModal({
       name: MODAL_NAMES.TIP_TERM_OF_USE,
       title: '',
@@ -33,8 +34,23 @@ export function useShowTipTermOfUseModal() {
     });
   }, []);
 
+  const openedModal2IdRef = React.useRef<string>('');
+  const viewPrivacyPolicy = React.useCallback(() => {
+    openedModal2IdRef.current = createGlobalBottomSheetModal({
+      name: MODAL_NAMES.TIP_PRIVACY_POLYCY,
+      title: '',
+      bottomSheetModalProps: {
+        onDismiss: () => {
+          removeGlobalBottomSheetModal(openedModal2IdRef.current);
+          openedModal2IdRef.current = '';
+        },
+      },
+    });
+  }, []);
+
   return {
-    viewTermOfUse,
+    viewPrivacyPolicy,
+    viewTermsOfUse,
   };
 }
 
@@ -62,7 +78,7 @@ p {
 }
 `;
 
-export function TipTermOfUseModalInner() {
+export function UserAgreementLikeModalInner({ uri }: { uri: string }) {
   const { styles } = useThemeStyles(getStyles);
 
   const { safeOffBottom } = useSafeSizes();
@@ -76,15 +92,39 @@ export function TipTermOfUseModalInner() {
           <Text style={styles.title}>New Version</Text>
           <Text style={styles.subTitle}>{remoteVersion.version}</Text>
         </View> */}
-        <View style={[styles.bodyTextScrollerContainer]}>
-          <MarkdownInWebView
-            markdown={TermOfUseMarkdown}
-            htmlInnerStyle={HTML_INNER_STYLE}
+        <View style={[styles.bodyScrollerContainer]}>
+          <WebView
+            style={styles.webviewInst}
+            cacheEnabled
+            startInLoadingState
+            allowsFullscreenVideo={false}
+            allowsInlineMediaPlayback={false}
+            originWhitelist={['https://debank.com', 'https://rabby.io']}
+            applicationNameForUserAgent={APP_UA_PARIALS.UA_FULL_NAME}
+            javaScriptEnabled
+            source={{ uri }}
+            onShouldStartLoadWithRequest={nativeEvent => {
+              // always allow first time loading
+              if (!nativeEvent.canGoBack) return true;
+              return checkShouldStartLoadingWithRequestForTrustedContent(
+                nativeEvent,
+              );
+            }}
           />
         </View>
       </View>
       {/* <FooterComponentForUpgrade style={[styles.footerComponent]} /> */}
     </AutoLockView>
+  );
+}
+
+export function TipPrivacyPolicyInner() {
+  return <UserAgreementLikeModalInner uri={'https://rabby.io/docs/privacy'} />;
+}
+
+export function TipTermOfUseModalInner() {
+  return (
+    <UserAgreementLikeModalInner uri={'https://rabby.io/docs/terms-of-use'} />
   );
 }
 
@@ -125,8 +165,13 @@ const getStyles = createGetStyles(colors => {
       marginTop: 12,
     },
 
-    bodyTextScrollerContainer: {
+    bodyScrollerContainer: {
       flexShrink: 2,
+      height: '100%',
+    },
+
+    webviewInst: {
+      width: '100%',
       height: '100%',
     },
 

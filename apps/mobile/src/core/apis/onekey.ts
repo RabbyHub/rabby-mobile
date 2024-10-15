@@ -143,3 +143,7 @@ export async function isConnected(
 
   return [true, detail.connectId];
 }
+
+export function getMaxAccountLimit() {
+  return undefined;
+}

@@ -104,7 +104,6 @@ export type TransactionNavigatorParamList = {
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
-  [RootNames.GasTopUp]?: {};
   [RootNames.Bridge]?: {};
   [RootNames.GasAccount]?: {};
 };

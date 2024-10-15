@@ -1,13 +1,15 @@
 import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { getChain } from '@/utils/chain';
 import { sinceTime } from '@/utils/time';
 import { TxDisplayItem } from '@rabby-wallet/rabby-api/dist/types';
 import { StyleSheet, Text, View } from 'react-native';
 import { TxChange } from '@/screens/Transaction/components/TokenChange';
 import { TxInterAddressExplain } from '@/screens/Transaction/components/TxInterAddressExplain';
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ellipsisAddress } from '@/utils/address';
+import { openTxExternalUrl } from '@/utils/transaction';
+import TouchableText from '../Touchable/TouchableText';
 
 type HistoryItemProps = {
   data: TxDisplayItem;
@@ -17,16 +19,33 @@ type HistoryItemProps = {
 
 const TxId = ({
   style,
+  chain,
   id,
 }: {
   style?: React.ComponentProps<typeof View>['style'];
   id: string;
+  chain?: ReturnType<typeof getChain> | string;
 }) => {
-  const colors = useThemeColors();
-  const styles = getStyles(colors);
+  const { styles } = useThemeStyles(getStyles);
+  const { chainItem, touchable } = useMemo(() => {
+    const info = typeof chain === 'string' ? getChain(chain) : chain;
+
+    return { chainItem: info, touchable: !!info?.scanLink };
+  }, [chain]);
+
+  const onOpenTxId = useCallback(() => {
+    openTxExternalUrl({ chain: chainItem, txHash: id });
+  }, [chainItem, id]);
+
   return (
     <View style={[styles.txIdContainer, style]}>
-      <Text style={styles.txIdHash}>{ellipsisAddress(id)}</Text>
+      {/* <Text style={styles.chain}>{chainItem?.name || 'Unknown'}</Text> */}
+      <TouchableText
+        disabled={!touchable}
+        onPress={onOpenTxId}
+        style={[styles.txIdHash, touchable && styles.txIdClickable]}>
+        {ellipsisAddress(id)}
+      </TouchableText>
     </View>
   );
 };
@@ -42,7 +61,7 @@ export const HistoryItem = React.memo(
   }: HistoryItemProps) => {
     const isFailed = data.tx?.status === 0;
     const isScam = data.is_scam;
-    const chainItem = getChain(data.chain);
+    // const chainItem = getChain(data.chain);
     const colors = useThemeColors();
     const styles = getStyles(colors);
 
@@ -63,7 +82,7 @@ export const HistoryItem = React.memo(
             <Text style={styles.time} numberOfLines={1}>
               {sinceTime(data.time_at)}
             </Text>
-            <TxId id={data.id} />
+            <TxId id={data.id} chain={data.chain} />
           </View>
         </View>
         <View style={styles.cardBody}>
@@ -119,6 +138,10 @@ const getStyles = (colors: AppColorsVariants) =>
       fontSize: 12,
       lineHeight: 14,
       color: colors['neutral-foot'],
+    },
+    txIdClickable: {
+      textDecorationLine: 'underline',
+      // color: colors['green-default'],
     },
     scamContainer: {
       borderRadius: 2,

@@ -650,7 +650,7 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search",
+        "searchInputPlaceholder": "Enter an address or scan",
         "title": "To"
       },
       "sendButton": "Send",
@@ -702,7 +702,7 @@
         "title": "To",
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search"
+        "searchInputPlaceholder": "Enter an address or scan"
       },
       "nftInfoFieldLabel": {
         "Collection": "Collection",
@@ -1486,15 +1486,15 @@
         "imported": "Already imported",
         "ble": {
           "title": "Connect Ledger",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "scan": {
           "title": "Searching for Device",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "notFound": {
           "title": "Device Not Found",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X",
+          "description": "Turn on Bluetooth and unlock Ledger",
           "buttonText": "View Ledger support tutorial"
         },
         "select": {
