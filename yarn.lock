@@ -2237,6 +2237,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@debank/rabby-sign-bvm@npm:0.1.14":
+  version: 0.1.14
+  resolution: "@debank/rabby-sign-bvm@npm:0.1.14"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+    lodash.clonedeep: ^4.5.0
+    sha256-uint8array: 0.10.3
+    url-parse: ^1.5.1
+  checksum: 3b471e5a203505eba6c7788bdfbb498acca343fab9eb7d2eea50dc6d68d876b99e796712f6966c804a492206a8fe544bf4c3f5e8f4d24b7cf33bd6d2bf73c3d1
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40discoveryjs%2Fjson-ext%2F-%2Fjson-ext-0.5.7.tgz"
@@ -28073,6 +28085,7 @@ __metadata:
     "@debank/common": 0.3.58
     "@debank/festats": 1.0.4
     "@debank/rabby-rn-security": ^0.1.1
+    "@debank/rabby-sign-bvm": 0.1.14
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.2.0
     "@ethereumjs/tx": 5.1.0
