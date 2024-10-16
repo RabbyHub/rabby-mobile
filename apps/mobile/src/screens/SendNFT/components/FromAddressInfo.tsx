@@ -7,6 +7,7 @@ import { formatAddressToShow } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import { splitNumberByStep } from '@/utils/number';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -42,7 +43,7 @@ const getStyles = createGetStyles(colors => {
     priceText: {
       color: colors['blue-default'],
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: IS_ANDROID ? 'normal' : '600',
     },
   };
 });
