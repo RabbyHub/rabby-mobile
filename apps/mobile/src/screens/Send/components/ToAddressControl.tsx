@@ -24,6 +24,7 @@ import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -119,7 +120,7 @@ export default function ToAddressControl({
         ]}
         ref={formInputRef}
         disableFocusingStyle
-        inputStyle={styles.input}
+        inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
         clearable={false}
         customIcon={ctx => {
@@ -209,7 +210,7 @@ export default function ToAddressControl({
 }
 
 const SIZES = {
-  INPUT_CONTAINER_H: 60,
+  INPUT_CONTAINER_H: IS_ANDROID ? 64 : 60,
   SCAN_BTN_H: 64,
   SCAN_BTN_W: 32,
   SCAN_ICON_SIZE: 20,
@@ -284,15 +285,15 @@ const getStyles = createGetStyles(colors => {
       height: SIZES.INPUT_CONTAINER_H,
       borderRadius: 4,
       flexShrink: 0,
-      // ...makeDebugBorder('yellow'),
       paddingVertical: 12,
       width: '100%',
       marginTop: 8,
     },
 
     withoutValue: {
-      height: 'auto',
-      // paddingVertical: 24,
+      ...(!IS_ANDROID && {
+        height: 'auto',
+      }),
     },
 
     input: {
@@ -303,7 +304,11 @@ const getStyles = createGetStyles(colors => {
       paddingTop: 12,
       paddingHorizontal: 12,
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: IS_ANDROID ? 'normal' : '600',
+    },
+
+    inputWithoutValue: {
+      fontWeight: '400',
     },
 
     scanButtonContainer: {
