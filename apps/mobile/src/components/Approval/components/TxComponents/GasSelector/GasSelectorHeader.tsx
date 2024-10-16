@@ -34,7 +34,7 @@ import {
   AppBottomSheetModalTitle,
   Tip,
 } from '@/components';
-import { formatTokenAmount, formatUsdValue } from '@/utils/number';
+import { formatTokenAmount, formatGasHeaderUsdValue } from '@/utils/number';
 import IconQuestionMark from '@/assets/icons/sign/question-mark.svg';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { GasSelectContainer } from './GasSelectContainer';
@@ -605,7 +605,7 @@ export const GasSelectorHeader = ({
   const gasCostUsdStr = useMemo(() => {
     const bn = new BigNumber(modalExplainGas?.gasCostUsd);
 
-    return formatUsdValue(bn.toString(10));
+    return formatGasHeaderUsdValue(bn.toString(10));
   }, [modalExplainGas?.gasCostUsd]);
 
   const gasCostAmountStr = useMemo(() => {
@@ -619,10 +619,10 @@ export const GasSelectorHeader = ({
 
   const calcGasAccountUsd = useCallback((n: number | string) => {
     const v = Number(n);
-    if (!Number.isNaN(v) && v < 0.01) {
+    if (!Number.isNaN(v) && v < 0.0001) {
       return `$${n}`;
     }
-    return formatUsdValue(n || '0');
+    return formatGasHeaderUsdValue(n || '0');
   }, []);
 
   const [isGasHovering, setIsGasHovering] = useState(false);
@@ -743,7 +743,7 @@ export const GasSelectorHeader = ({
                           fontSize: 16,
                           fontWeight: '500',
                         }}>
-                        {formatUsdValue(
+                        {formatGasHeaderUsdValue(
                           (gasAccountCost?.gas_account_cost.estimate_tx_cost ||
                             0) +
                             (gasAccountCost?.gas_account_cost.gas_cost || 0),
