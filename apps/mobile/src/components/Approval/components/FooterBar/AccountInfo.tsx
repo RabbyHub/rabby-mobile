@@ -11,6 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AddressViewer } from '@/components/AddressViewer';
 import { AppColorsVariants } from '@/constant/theme';
 import { getWalletIcon } from '@/utils/walletInfo';
+import { TruncatedText } from '@/components/TruncatedText';
 
 export interface Props {
   account: Account;
@@ -85,18 +86,26 @@ export const AccountInfo: React.FC<Props> = ({
   }, [account]);
 
   const BrandIcon = getWalletIcon(account?.brandName);
+  const [enableNicknameTip, setEnableNicknameTip] = React.useState(false);
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.addressInfoContainer}>
         <View style={styles.addressContainer}>
           <BrandIcon width={20} height={20} />
-          <Tip content={nickname}>
-            <Text numberOfLines={1} style={styles.nickname}>
-              {nickname}
-            </Text>
+          <Tip content={enableNicknameTip ? nickname : undefined}>
+            <TruncatedText
+              onTruncate={setEnableNicknameTip}
+              text={nickname}
+              numberOfLines={1}
+              style={styles.nickname}
+            />
           </Tip>
-          <AddressViewer showArrow={false} address={account.address} />
+          <AddressViewer
+            disabledPress
+            showArrow={false}
+            address={account.address}
+          />
         </View>
         {isTestnet ? null : (
           <Text style={styles.balance}>${displayBalance}</Text>
