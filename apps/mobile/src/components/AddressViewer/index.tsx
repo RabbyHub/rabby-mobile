@@ -24,6 +24,7 @@ interface AddressViewProps {
   showIndex?: boolean;
   style?: StyleProp<ViewStyle>;
   addressStyle?: StyleProp<TextStyle>;
+  disabledPress?: boolean;
 }
 
 export const AddressViewer = ({
@@ -36,12 +37,13 @@ export const AddressViewer = ({
   showIndex = false,
   style,
   addressStyle,
+  disabledPress,
 }: AddressViewProps) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
 
   return (
-    <TouchableOpacity onPress={onClick}>
+    <TouchableOpacity disabled={disabledPress} onPress={onClick}>
       <View style={StyleSheet.flatten([styles[className], style])}>
         {showIndex && index >= 0 && (
           <Text style={styles.numberIndex}>{index}</Text>
