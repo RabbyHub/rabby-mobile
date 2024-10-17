@@ -19,7 +19,7 @@ export const TruncatedText: React.FC<
     props.onTextLayout?.(event);
     const { lines } = event.nativeEvent;
     console.log('lines', lines);
-    const lastLineWidth = lines[lines.length - 1].width;
+    const lastLineWidth = lines[props.numberOfLines - 1].width;
     if (lastLineWidthRef.current === lastLineWidth) {
       onTruncate?.(true);
     } else {
@@ -44,7 +44,7 @@ export const TruncatedText: React.FC<
         setTestFlag('');
       }
     }, 0);
-  }, [hasTested, text]);
+  }, [hasTested, text, props.numberOfLines]);
 
   return (
     <Text {...props} onTextLayout={handleTextLayout}>
