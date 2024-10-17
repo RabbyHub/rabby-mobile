@@ -43,7 +43,7 @@ export const TruncatedText: React.FC<
       } else {
         setTestFlag('');
       }
-    }, 0);
+    }, 500);
   }, [hasTested, text, props.numberOfLines]);
 
   return (
