@@ -72,7 +72,7 @@ export default function AccountCard({
           <View style={styles.leftTextInfos}>
             <View style={styles.leftInnerLine}>
               <Text style={styles.name} numberOfLines={1}>
-                {account.aliasName.repeat(10)}
+                {account.aliasName}
               </Text>
               {inWhitelist && (
                 <RcIconAddressWhitelistCC
