@@ -650,7 +650,7 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search",
+        "searchInputPlaceholder": "Enter an address or scan",
         "title": "To"
       },
       "sendButton": "Send",
@@ -702,7 +702,7 @@
         "title": "To",
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search"
+        "searchInputPlaceholder": "Enter an address or scan"
       },
       "nftInfoFieldLabel": {
         "Collection": "Collection",
@@ -1231,7 +1231,7 @@
           "fractionTips": "Calculate based on the price of the linked ERC20 token."
         },
         "tokenButton": {
-          "subTitle": "The token in this list will not be added to total balance"
+          "subTitle": "Tokens on this list will not be added to the total balance."
         },
         "table": {
           "assetAmount": "Asset / Amount",

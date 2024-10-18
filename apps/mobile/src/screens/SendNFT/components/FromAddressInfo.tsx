@@ -7,13 +7,14 @@ import { formatAddressToShow } from '@/utils/address';
 import { createGetStyles } from '@/utils/styles';
 import { splitNumberByStep } from '@/utils/number';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const getStyles = createGetStyles(colors => {
   return {
     container: {
       borderRadius: 4,
       padding: 12,
-      backgroundColor: colors['blue-light1'],
+      backgroundColor: colors['blue-light-1'],
 
       width: '100%',
       height: 52,
@@ -36,12 +37,13 @@ const getStyles = createGetStyles(colors => {
       color: colors['blue-default'],
       fontSize: 12,
       fontWeight: '400',
+      marginTop: 2,
     },
 
     priceText: {
       color: colors['blue-default'],
-      fontSize: 12,
-      fontWeight: '600',
+      fontSize: 13,
+      fontWeight: IS_ANDROID ? 'normal' : '600',
     },
   };
 });
@@ -69,12 +71,12 @@ export default function FromAddressInfo({
     <View style={[styles.container, style]}>
       <View style={styles.left}>
         <RcWalletIcon width={24} height={24} className="rounded-[24px]" />
-        <View className="ml-[8]">
+        <View style={{ marginLeft: 8 }}>
           <Text style={styles.aliasName}>
             {currentAccount?.aliasName || 'Unknown'}
           </Text>
           {/* TODO: format to lowercase */}
-          <Text className="mt-[2]" style={styles.addressText}>
+          <Text style={styles.addressText}>
             {formatAddressToShow(currentAccount?.address)}
           </Text>
         </View>

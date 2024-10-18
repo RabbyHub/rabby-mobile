@@ -80,7 +80,7 @@ export const CustomTokenListPopup = ({
               <View style={styles.header}>
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.desc}>
-                  The token in this list will not be added to total balance
+                  Tokens on this list will not be added to the total balance.
                 </Text>
               </View>
             }

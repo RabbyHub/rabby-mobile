@@ -21,6 +21,7 @@ import {
   RcScreenshot,
   RcFollowUs,
   RcInfo,
+  RcTermsOfUse,
   RcPrivacyPolicy,
   RcScreenRecord,
   RcThemeMode,
@@ -63,10 +64,7 @@ import {
   requestLockWalletAndBackToUnlockScreen,
   useRabbyAppNavigation,
 } from '@/hooks/navigation';
-import {
-  useForceLocalVersionForNonProduction,
-  useUpgradeInfo,
-} from '@/hooks/version';
+import { useUpgradeInfo } from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -115,6 +113,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
+import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -195,6 +194,8 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -375,10 +376,17 @@ function SettingsBlocks() {
             },
           },
           {
+            label: 'Term Of Use',
+            icon: RcTermsOfUse,
+            onPress: async () => {
+              viewTermsOfUse();
+            },
+          },
+          {
             label: 'Privacy Policy',
             icon: RcPrivacyPolicy,
             onPress: async () => {
-              openExternalUrl(APP_URLS.PRIVACY_POLICY);
+              viewPrivacyPolicy();
             },
           },
         ].filter(Boolean),

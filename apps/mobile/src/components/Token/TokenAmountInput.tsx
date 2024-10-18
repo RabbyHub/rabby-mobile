@@ -277,18 +277,20 @@ export const TokenAmountInput = React.forwardRef<
               setTokenSelectorVisible(true);
             }}>
             <View style={styles.leftInner}>
-              <AssetAvatar
-                logo={token.logo_url}
-                logoStyle={{ backgroundColor: colors['neutral-foot'] }}
-                size={24}
-              />
-              <Text
-                style={[styles.leftTokenSymbol]}
-                ellipsizeMode="tail"
-                numberOfLines={1}>
-                {getTokenSymbol(token)}
-              </Text>
-              <View>
+              <View style={styles.leftTokenInfo}>
+                <AssetAvatar
+                  logo={token.logo_url}
+                  logoStyle={{ backgroundColor: colors['neutral-foot'] }}
+                  size={24}
+                />
+                <Text
+                  style={[styles.leftTokenSymbol]}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}>
+                  {getTokenSymbol(token)}
+                </Text>
+              </View>
+              <View style={styles.rightArrow}>
                 <RcArrowDown />
               </View>
             </View>
@@ -373,11 +375,18 @@ const getStyles = createGetStyles(colors => {
     leftInner: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       paddingRight: 8,
-      minWidth: 132,
       borderRightColor: colors['neutral-line'],
       borderRightWidth: StyleSheet.hairlineWidth,
       borderRightStyle: 'solid',
+    },
+    leftTokenInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    rightArrow: {
+      marginLeft: 24,
     },
     leftTokenSymbol: {
       color: colors['neutral-title1'],
