@@ -28,6 +28,7 @@ import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
 import { apisLock } from '@/core/apis';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RNTimeChanged from '@/core/native/RNTimeChanged';
+import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -336,6 +337,7 @@ type OnTimeChangedCtx = Parameters<
 const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
   const result = await requestLockWalletAndBackToUnlockScreen();
   if (result.canLockWallet) {
+    checkMultipleFailed({ forceRecountdownIfInFreezing: true });
     Alert.alert(
       'Auto Lock',
       `Time settings changed, auto lock wallet for security.`,

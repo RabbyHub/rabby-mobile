@@ -5,7 +5,7 @@ import { makeEEClass } from './event';
 import { formatTimeReadable } from '@/utils/time';
 import {
   resetMultipleFailed,
-  setMultipleFailed,
+  checkMultipleFailed,
   shouldRejectUnlockDueToMultipleFailed,
 } from '../utils/unlockRateLimit';
 
@@ -231,7 +231,7 @@ async function unlockWallet(password: string) {
     resetMultipleFailed();
   } catch (err) {
     unlockResult.error = ERRORS.INCORRECT_PASSWORD;
-    setMultipleFailed();
+    checkMultipleFailed();
     return unlockResult;
   }
 

@@ -11,48 +11,112 @@ const MULTIPLE_FAILED_CONF = {
  * @description
  *
  * - `count` means the failed attempts.
- * - `time` means the time when the unlocking will be allwed.
+ * - `time` means the time when the unlocking will be allowed.
  */
-type FAILED_LOCK_INFO = { count: number; time: number };
+type FAILED_FREEZING_INFO = {
+  count: number;
+  /**
+   * @description used to check if warn up
+   */
+  expireTimeUTC0: number;
+  /**
+   * @description on bootstrap, used to validate if keeping freezing state on last-time
+   *
+   *
+   */
+  lastTimeCountdown: number;
+};
+const GET_DFLT_FAILED_STATE = () => ({
+  count: 0,
+  expireTimeUTC0: 0,
+  lastTimeCountdown: 0,
+});
 function getMultipleFailed() {
   const val = appStorage.getItem(MULTIPLE_FAILED_CONF.key);
 
   return {
-    count: 0,
-    time: 0,
+    ...GET_DFLT_FAILED_STATE(),
     ...val,
-  } as FAILED_LOCK_INFO;
+  } as FAILED_FREEZING_INFO;
 }
-export function setMultipleFailed() {
+function setMultipleFailed(partials?: Partial<FAILED_FREEZING_INFO>) {
+  appStorage.setItem(MULTIPLE_FAILED_CONF.key, {
+    ...GET_DFLT_FAILED_STATE(),
+    ...partials,
+  });
+}
+function reCountdown(options: { restCountdown: number; nowMS?: number }) {
+  const { restCountdown, nowMS = Date.now() } = options;
+
+  const ltCd = Math.min(
+    MULTIPLE_FAILED_CONF.duration,
+    Math.max(0, restCountdown),
+  );
+
+  setMultipleFailed({
+    lastTimeCountdown: ltCd,
+    expireTimeUTC0: nowMS + ltCd,
+  });
+
+  return getMultipleFailed();
+}
+export function checkMultipleFailed(options?: {
+  forceRecountdownIfInFreezing?: boolean;
+}) {
   const record = getMultipleFailed();
 
-  const now = Date.now();
-  if (record.time >= now) {
+  const { forceRecountdownIfInFreezing = false } = options || {};
+
+  const nowMS = Date.now();
+
+  if (forceRecountdownIfInFreezing && record.expireTimeUTC0 >= nowMS) {
+    return reCountdown({ restCountdown: record.lastTimeCountdown, nowMS });
+  } else if (record.expireTimeUTC0 >= nowMS) {
     record.count = 0;
+    record.lastTimeCountdown = Math.max(0, record.expireTimeUTC0 - nowMS);
   } else if (record.count >= MULTIPLE_FAILED_CONF.limit) {
-    record.time = now + MULTIPLE_FAILED_CONF.duration;
+    return reCountdown({ restCountdown: MULTIPLE_FAILED_CONF.duration, nowMS });
   } else {
     record.count += 1;
+    record.lastTimeCountdown = Math.max(0, record.expireTimeUTC0 - nowMS);
   }
 
-  appStorage.setItem(MULTIPLE_FAILED_CONF.key, record);
+  setMultipleFailed(record);
 }
 export function resetMultipleFailed() {
-  appStorage.setItem(MULTIPLE_FAILED_CONF.key, { count: 0, time: 0 });
+  appStorage.setItem(MULTIPLE_FAILED_CONF.key, GET_DFLT_FAILED_STATE());
 }
 export function shouldRejectUnlockDueToMultipleFailed() {
   const record = getMultipleFailed();
   const result = {
-    reject: false,
     timeDiff: 0,
+    reject: false,
   };
-  if (!record?.time) return result;
+  if (!record?.expireTimeUTC0) return result;
 
-  const now = Date.now();
-  if (record.time > now) {
-    result.timeDiff = record.time - now;
-    result.reject = true;
-  }
+  const nowMS = Date.now();
+  const newRecord = reCountdown({
+    nowMS,
+    restCountdown: Math.max(0, record.expireTimeUTC0 - nowMS),
+  });
+
+  result.timeDiff = newRecord.lastTimeCountdown;
+  result.reject = newRecord.lastTimeCountdown > 0;
 
   return result;
 }
+
+(function onBootstrap() {
+  const record = getMultipleFailed();
+
+  // seems expire but lastTimeCountdown is not empty, maybe system time changed before app bootstraped
+  if (record.expireTimeUTC0 <= Date.now() && record.lastTimeCountdown) {
+    console.debug(
+      '[unlockRateLimit::onBootstrap] find last-time unfinished countdown, re-countdown.',
+    );
+    reCountdown({ restCountdown: record.lastTimeCountdown });
+  } else {
+    // trigger once check
+    shouldRejectUnlockDueToMultipleFailed();
+  }
+})();
