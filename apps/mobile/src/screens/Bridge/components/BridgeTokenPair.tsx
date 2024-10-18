@@ -288,7 +288,16 @@ const TokenPairDrawer = (props: TokenPairDrawerProps) => {
     () => (
       <>
         {!loading && !value?.length && (
-          <View style={styles.container}>
+          <View
+            style={[
+              styles.container,
+              {
+                paddingTop: 120,
+                gap: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+              },
+            ]}>
             <RcIconEmptyCC
               color={colors['neutral-foot']}
               style={styles.image}

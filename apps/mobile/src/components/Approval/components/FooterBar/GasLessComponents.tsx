@@ -243,9 +243,10 @@ export function GasLessActivityToSign({
   const styles = useMemo(() => getStyles(colors), [colors]);
   const isLight = useGetBinaryMode() === 'light';
 
-  const themeColor = !isLight
-    ? gasLessConfig?.dark_color
-    : gasLessConfig?.theme_color;
+  const themeColor = gasLessConfig
+    ? (!isLight ? gasLessConfig?.dark_color : gasLessConfig?.theme_color) ||
+      colors['blue-default']
+    : undefined;
 
   const hiddenAnimated = useSharedValue(0);
 
