@@ -153,7 +153,6 @@ export const BridgeQuoteItem: React.FC<QuoteItemProps> = props => {
                 .toString(),
             )}
           </Text>
-          <Text style={styles.estimatedValueText}>after fees</Text>
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();

@@ -6534,11 +6534,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rabby-wallet/rabby-api@npm:0.7.33":
-  version: 0.7.33
-  resolution: "@rabby-wallet/rabby-api@npm:0.7.33"
+"@rabby-wallet/rabby-api@npm:0.8.2":
+  version: 0.8.2
+  resolution: "@rabby-wallet/rabby-api@npm:0.8.2"
   dependencies:
-    "@rabby-wallet/rabby-sign": ^0.3.3
+    "@rabby-wallet/rabby-sign": 0.4.0
     axios: ^0.27.2
     axios-rate-limit: ^1.3.0
     eth-rpc-errors: ^4.0.3
@@ -6547,7 +6547,7 @@ __metadata:
   peerDependencies:
     "@debank/common": ^0.3.9
     "@rabby-wallet/rabby-sign": ">= 0.3"
-  checksum: f6acfa763643cfaa599a3843adc7689f5a76e2f1e6de49fcdaca56e16b5d86a558e1481c2366da71ad96177b01b0815b80928549cebfb086c97d428b880cb95c
+  checksum: 7752d924d8e865f6f63d8305612c747f962299adb2e904ea650a2b950d1ae75d676fd6013a1220ac1fab8b7d5ba90e6cb447556115d56cf2cb8f4b474de759d9
   languageName: node
   linkType: hard
 
@@ -6558,6 +6558,18 @@ __metadata:
     "@debank/common": ^0.3.5
     "@rabby-wallet/rabby-api": ^0.6.9
   checksum: 1e410ab8b7960e7353ff999f8493d6275262eb7902e2a931ce0e6662dd4e487bf1a6ec9ff70332bd6160b9cfb09cf02f6ad5fbd25aa2b55c607897e7866e20f0
+  languageName: node
+  linkType: hard
+
+"@rabby-wallet/rabby-sign@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@rabby-wallet/rabby-sign@npm:0.4.0"
+  dependencies:
+    fast-deep-equal: ^3.1.3
+    lodash.clonedeep: ^4.5.0
+    sha256-uint8array: ^0.10.3
+    url-parse: ^1.5.1
+  checksum: 53a6d684e14da5b3f445a16563c3923d294cb17d09bb5b65e3bfcc649530007f770f11c65e720a0b3ec003c31b99fbe9e7a429d933d2793cc8a9d500f1324b78
   languageName: node
   linkType: hard
 
@@ -28099,7 +28111,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/persist-store": "workspace:^"
     "@rabby-wallet/rabby-action": 0.1.3
-    "@rabby-wallet/rabby-api": 0.7.33
+    "@rabby-wallet/rabby-api": 0.8.2
     "@rabby-wallet/rabby-security-engine": 2.0.7
     "@rabby-wallet/rabby-swap": 0.0.40
     "@rabby-wallet/service-address": "workspace:^"

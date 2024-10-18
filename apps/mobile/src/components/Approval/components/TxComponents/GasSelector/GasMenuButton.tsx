@@ -113,7 +113,7 @@ export const GasMenuButton: React.FC<Props> = ({
       <Text style={styles.levelText}>
         {t(getGasLevelI18nKey(selectedGas.level ?? 'slow'))}
       </Text>
-      {(selectedGas.level !== 'custom' || showCustomGasPrice) && (
+      {/* {(selectedGas.level !== 'custom' || showCustomGasPrice) && (
         <>
           <View style={styles.dot} />
 
@@ -127,7 +127,7 @@ export const GasMenuButton: React.FC<Props> = ({
               .slice(0, 8)}
           </Text>
         </>
-      )}
+      )} */}
       <ArrowSVG
         color={colors['neutral-foot']}
         style={StyleSheet.flatten({ marginLeft: 2 })}
