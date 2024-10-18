@@ -27,6 +27,14 @@ const getStyles = createGetStyles(colors => {
     left: {
       flexDirection: 'row',
       alignItems: 'center',
+      flexShrink: 1,
+      width: '100%',
+    },
+    nameAndAddr: {
+      marginLeft: 8,
+      flexShrink: 1,
+      width: '100%',
+      paddingRight: 8,
     },
     aliasName: {
       color: colors['blue-default'],
@@ -40,6 +48,9 @@ const getStyles = createGetStyles(colors => {
       marginTop: 2,
     },
 
+    rightCol: {
+      flexShrink: 0,
+    },
     priceText: {
       color: colors['blue-default'],
       fontSize: 13,
@@ -71,8 +82,8 @@ export default function FromAddressInfo({
     <View style={[styles.container, style]}>
       <View style={styles.left}>
         <RcWalletIcon width={24} height={24} className="rounded-[24px]" />
-        <View style={{ marginLeft: 8 }}>
-          <Text style={styles.aliasName}>
+        <View style={styles.nameAndAddr}>
+          <Text style={styles.aliasName} numberOfLines={1}>
             {currentAccount?.aliasName || 'Unknown'}
           </Text>
           {/* TODO: format to lowercase */}
@@ -82,7 +93,7 @@ export default function FromAddressInfo({
         </View>
       </View>
 
-      <View>
+      <View style={styles.rightCol}>
         <Text style={styles.priceText}>{usdValue}</Text>
       </View>
     </View>
