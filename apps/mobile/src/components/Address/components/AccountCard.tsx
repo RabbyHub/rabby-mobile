@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 
 import { useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import { IDisplayedAccountWithBalance } from '@/hooks/accountToDisplay';
 import { formatUsdValue } from '@/utils/number';
 import { formatAddressToShow } from '@/utils/address';
@@ -65,13 +65,15 @@ export default function AccountCard({
           style={styles.checkbox}
         />
       )}
-      <View style={[styles.inner]}>
+      <View style={[styles.main]}>
         <View style={[styles.leftCol]}>
           <WalletBrandImage brandType={account.brandName} size={32} />
 
           <View style={styles.leftTextInfos}>
             <View style={styles.leftInnerLine}>
-              <Text style={styles.name}>{account.aliasName}</Text>
+              <Text style={styles.name} numberOfLines={1}>
+                {account.aliasName.repeat(10)}
+              </Text>
               {inWhitelist && (
                 <RcIconAddressWhitelistCC
                   color={colors['neutral-foot']}
@@ -123,7 +125,7 @@ const getStyles = createGetStyles(colors => {
       flexShrink: 0,
     },
 
-    inner: {
+    main: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -134,21 +136,29 @@ const getStyles = createGetStyles(colors => {
       paddingHorizontal: 16,
       flexShrink: 1,
       width: '100%',
+      // ...makeDebugBorder('green'),
     },
 
     leftCol: {
       flexDirection: 'row',
       alignItems: 'center',
+      flexShrink: 1,
+      maxWidth: '100%',
+      // ...makeDebugBorder('yellow'),
     },
 
     leftTextInfos: {
       flexDirection: 'column',
       marginLeft: 12,
+      flexShrink: 1,
+      // ...makeDebugBorder(),
     },
     leftInnerLine: {
       marginTop: 4,
       flexDirection: 'row',
       alignItems: 'center',
+      width: '100%',
+      paddingRight: 8,
     },
 
     name: {
@@ -157,6 +167,8 @@ const getStyles = createGetStyles(colors => {
       fontSize: 16,
       fontStyle: 'normal',
       fontWeight: '500',
+      width: '100%',
+      flexShrink: 1,
     },
 
     addressText: {
@@ -166,7 +178,10 @@ const getStyles = createGetStyles(colors => {
       color: colors['neutral-body'],
     },
 
-    rightCol: {},
+    rightCol: {
+      flexShrink: 0,
+      // ...makeDebugBorder('red'),
+    },
     balanceText: {
       color: colors['neutral-title1'],
       textAlign: 'right',
