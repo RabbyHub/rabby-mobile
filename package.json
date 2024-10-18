@@ -14,6 +14,34 @@
       "packages/*"
     ]
   },
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json --verbose",
+    "build:clean": "rimraf dist '**/*.tsbuildinfo' && yarn build",
+    "build:docs": "yarn workspaces foreach --parallel --interlaced --verbose run build:docs",
+    "build:watch": "yarn run build --watch",
+    "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
+    "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
+    "postinstall": "patch-package && yarn build && yarn apps/mobile postinstall",
+    "install-husky": "husky install",
+    "lint": "yarn lint:eslint && yarn lint:misc --check && yarn constraints",
+    "lint:eslint": "eslint . --cache --ext js,ts",
+    "lint:fix": "yarn lint:eslint --fix && yarn constraints --fix && yarn lint:misc --write && yarn",
+    "lint:misc": "prettier '**/*.json' '**/*.md' '!**/CHANGELOG.md' '!**/CHANGELOG.old.md' '**/*.yml' '!.yarnrc.yml' '!merged-packages/**' --ignore-path .gitignore",
+    "normalize": "yarn constraints",
+    "prepack": "./scripts/prepack.sh",
+    "prepare": "husky install",
+    "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
+    "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
+    "setup": "yarn install-husky && yarn install",
+    "start": "cd apps/mobile && yarn start",
+    "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
+    "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
+    "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
+    "update-readme-content": "ts-node scripts/update-readme-content.ts"
+  },
+  "simple-git-hooks": {
+    "pre-push": "yarn lint"
+  },
   "lint-staged": {
     "apps/mobile/*.{js,jsx,ts,tsx}": [
       "yarn workspace rabby-mobile lint:commit:fix"
@@ -21,34 +49,6 @@
     "apps/dev-console-cra/*.{js,jsx,ts,tsx}": [
       "yarn workspace dev-console-cra lint:commit:fix"
     ]
-  },
-  "scripts": {
-    "prepare": "husky install",
-    "install-husky": "husky install",
-    "build": "tsc --build tsconfig.build.json --verbose",
-    "build:clean": "rimraf dist '**/*.tsbuildinfo' && yarn build",
-    "build:docs": "yarn workspaces foreach --parallel --interlaced --verbose run build:docs",
-    "build:watch": "yarn run build --watch",
-    "changelog:validate": "yarn workspaces foreach --parallel --interlaced --verbose run changelog:validate",
-    "child-workspace-package-names-as-json": "ts-node scripts/child-workspace-package-names-as-json.ts",
-    "lint": "yarn lint:eslint && yarn lint:misc --check && yarn constraints",
-    "lint:eslint": "eslint . --cache --ext js,ts",
-    "lint:fix": "yarn lint:eslint --fix && yarn constraints --fix && yarn lint:misc --write && yarn",
-    "lint:misc": "prettier '**/*.json' '**/*.md' '!**/CHANGELOG.md' '!**/CHANGELOG.old.md' '**/*.yml' '!.yarnrc.yml' '!merged-packages/**' --ignore-path .gitignore",
-    "normalize": "yarn constraints",
-    "prepack": "./scripts/prepack.sh",
-    "prepare-preview-builds": "./scripts/prepare-preview-builds.sh",
-    "publish-previews": "yarn workspaces foreach --parallel --verbose run publish:preview",
-    "postinstall": "yarn build && yarn apps/mobile postinstall",
-    "setup": "yarn install-husky && yarn install",
-    "test": "yarn test:verbose --silent --collectCoverage=false --reporters=jest-silent-reporter",
-    "test:clean": "yarn workspaces foreach --parallel --verbose run test:clean && yarn test",
-    "test:verbose": "yarn workspaces foreach --parallel --verbose run test:verbose",
-    "update-readme-content": "ts-node scripts/update-readme-content.ts",
-    "start": "cd apps/mobile && yarn start"
-  },
-  "simple-git-hooks": {
-    "pre-push": "yarn lint"
   },
   "dependencies": {
     "@babel/runtime": "^7.20.0",
@@ -85,6 +85,7 @@
     "jest-silent-reporter": "^0.5.0",
     "lint-staged": "^15.2.0",
     "nock": "^13.3.1",
+    "patch-package": "^8.0.0",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.4.5",
     "rimraf": "^3.0.2",
