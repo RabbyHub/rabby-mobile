@@ -6169,6 +6169,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^17.0.34
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6189,6 +6190,7 @@ __metadata:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/rabby-api": 0.7.25
     "@types/jest": ^27.4.1
+    "@types/node": ^17.0.34
     "@types/sinon": ^9.0.10
     bignumber.js: ^9.1.2
     deepmerge: ^4.2.2
@@ -6227,6 +6229,7 @@ __metadata:
     "@rabby-wallet/gnosis-sdk": 1.3.8
     "@rabby-wallet/keyring-utils": ^0.1.0
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6251,6 +6254,7 @@ __metadata:
     "@keystonehq/metamask-airgapped-keyring": ^0.13.1
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-usb": ^1.0.10
     deepmerge: ^4.2.2
@@ -6278,6 +6282,7 @@ __metadata:
     "@rabby-wallet/base-utils": "workspace:^"
     "@rabby-wallet/keyring-utils": "workspace:^"
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-hid": ^1.0.6
     deepmerge: ^4.2.2
@@ -6308,6 +6313,7 @@ __metadata:
     "@types/bytebuffer": ^5.0.48
     "@types/hdkey": ^2.0.3
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@types/w3c-web-usb": ^1.0.10
     deepmerge: ^4.2.2
@@ -6404,6 +6410,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^18
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6431,7 +6438,7 @@ __metadata:
     "@metamask/eth-json-rpc-provider": ^2.3.0
     "@metamask/json-rpc-engine": ^7.3.0
     "@metamask/utils": ^8.2.0
-    "@types/node": ^16.18.54
+    "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^5.62.0
     "@typescript-eslint/parser": ^5.62.0
     bn.js: ^5.2.1
@@ -6458,7 +6465,7 @@ __metadata:
     rimraf: ^3.0.2
     simple-git-hooks: ^2.8.0
     ts-node: ^10.9.1
-    typescript: ~4.8.4
+    typescript: ^5
     which: ^3.0.0
   languageName: unknown
   linkType: soft
@@ -6469,6 +6476,7 @@ __metadata:
   dependencies:
     "@metamask/auto-changelog": ^3.4.3
     "@types/jest": ^27.4.1
+    "@types/node": ^17.0.34
     "@types/once": ^1.4.0
     "@types/readable-stream": 4.0.0
     "@types/sinon": ^9.0.10
@@ -6494,6 +6502,7 @@ __metadata:
     "@rabby-wallet/base-utils": ^0.1.0
     "@types/jest": ^27.4.1
     "@types/lodash.clonedeep": ^4.5.9
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     "@vue/reactivity": ^3.3.11
     debounce: ^2.0.0
@@ -6673,6 +6682,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@rabby-wallet/universal-providers": "workspace:^"
     "@types/jest": ^27.4.1
+    "@types/node": ^17.0.34
     "@types/sinon": ^9.0.10
     babel-loader: ^9.1.3
     deepmerge: ^4.2.2
@@ -6699,6 +6709,7 @@ __metadata:
     "@metamask/auto-changelog": ^3.4.3
     "@rabby-wallet/persist-store": ^0.1.0
     "@types/jest": ^27.4.1
+    "@types/node": ^20.14.8
     "@types/sinon": ^9.0.10
     deepmerge: ^4.2.2
     ethereumjs-util: ^7.1.5
@@ -6757,7 +6768,7 @@ __metadata:
     "@rabby-wallet/object-multiplex": "workspace:^"
     "@types/chrome": ^0.0.233
     "@types/jest": ^28.1.6
-    "@types/node": ^17.0.23
+    "@types/node": ^17.0.34
     "@types/uuid": ^9.0.1
     "@types/webextension-polyfill": ^0.10.0
     "@typescript-eslint/eslint-plugin": ^5.43.0
@@ -9297,17 +9308,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^16.11.26, @types/node@npm:^16.11.48, @types/node@npm:^16.18.54":
+"@types/node@npm:^16.11.26, @types/node@npm:^16.11.48":
   version: 16.18.70
   resolution: "@types/node@npm:16.18.70::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fnode%2F-%2Fnode-16.18.70.tgz"
   checksum: 0c8a1ee93f6c0940629fbf6245ff22e0c7423b7c7c74c47e7171dc6342d279c2f931d50894c3d1b9a66238469b2b3d2d3c7fcf21eb3af6a03fc588f9ab6db849
   languageName: node
   linkType: hard
 
-"@types/node@npm:^17.0.23, @types/node@npm:^17.0.34":
+"@types/node@npm:^17.0.34":
   version: 17.0.45
   resolution: "@types/node@npm:17.0.45::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fnode%2F-%2Fnode-17.0.45.tgz"
   checksum: aa04366b9103b7d6cfd6b2ef64182e0eaa7d4462c3f817618486ea0422984c51fc69fd0d436eae6c9e696ddfdbec9ccaa27a917f7c2e8c75c5d57827fe3d95e8
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^18":
+  version: 18.19.39
+  resolution: "@types/node@npm:18.19.39"
+  dependencies:
+    undici-types: ~5.26.4
+  checksum: d1de755983127b405458c427ae2cf77c89d120a617ca70999086a75fb0b6c6dbc1bdddfe1a8a7374c9ae55ed0589a2bd023ffb3b09ee25440c013afc6502dfe6
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^20.14.8":
+  version: 20.14.9
+  resolution: "@types/node@npm:20.14.9"
+  dependencies:
+    undici-types: ~5.26.4
+  checksum: 5e9eda1ac8c6cc6bcd1063903ae195eaede9aad1bdad00408a919409cfbcdd2d6535aa3d50346f0d385528f9e03dafc7d1b3bad25aedb1dcd79a6ad39d06c35d
   languageName: node
   linkType: hard
 
@@ -13294,7 +13323,7 @@ __metadata:
 
 "chalk@npm:5.3.0":
   version: 5.3.0
-  resolution: "chalk@npm:5.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fchalk%2F-%2Fchalk-5.3.0.tgz"
+  resolution: "chalk@npm:5.3.0"
   checksum: 623922e077b7d1e9dedaea6f8b9e9352921f8ae3afe739132e0e00c275971bdd331268183b2628cf4ab1727c45ea1f28d7e24ac23ce1db1eb653c414ca8a5a80
   languageName: node
   linkType: hard
@@ -19802,7 +19831,7 @@ __metadata:
 
 "iconv-lite@npm:0.4.24":
   version: 0.4.24
-  resolution: "iconv-lite@npm:0.4.24::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ficonv-lite%2F-%2Ficonv-lite-0.4.24.tgz"
+  resolution: "iconv-lite@npm:0.4.24"
   dependencies:
     safer-buffer: ">= 2.1.2 < 3"
   checksum: bd9f120f5a5b306f0bc0b9ae1edeb1577161503f5f8252a20f1a9e56ef8775c9959fd01c55f2d3a39d9a8abaf3e30c1abeb1895f367dcbbe0a8fd1c9ca01c4f6
@@ -29599,9 +29628,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:3.6.2, readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
+"readable-stream@npm:3.6.2":
   version: 3.6.2
-  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
+  resolution: "readable-stream@npm:3.6.2"
   dependencies:
     inherits: ^2.0.3
     string_decoder: ^1.1.1
@@ -29622,6 +29651,17 @@ __metadata:
     string_decoder: ~1.1.1
     util-deprecate: ~1.0.1
   checksum: 65645467038704f0c8aaf026a72fbb588a9e2ef7a75cd57a01702ee9db1c4a1e4b03aaad36861a6a0926546a74d174149c8c207527963e0c2d3eee2f37678a42
+  languageName: node
+  linkType: hard
+
+"readable-stream@npm:^3.0.6, readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0, readable-stream@npm:^3.5.0, readable-stream@npm:^3.6.0, readable-stream@npm:^3.6.2":
+  version: 3.6.2
+  resolution: "readable-stream@npm:3.6.2::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-3.6.2.tgz"
+  dependencies:
+    inherits: ^2.0.3
+    string_decoder: ^1.1.1
+    util-deprecate: ^1.0.1
+  checksum: bdcbe6c22e846b6af075e32cf8f4751c2576238c5043169a1c221c92ee2878458a816a4ea33f4c67623c0b6827c8a400409bfb3cf0bf3381392d0b1dfb52ac8d
   languageName: node
   linkType: hard
 
@@ -33518,6 +33558,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^5":
+  version: 5.5.3
+  resolution: "typescript@npm:5.5.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 4b4f14313484d5c86064d04ba892544801fa551f5cf72719b540b498056fec7fc192d0bbdb2ba1448e759b1548769956da9e43e7c16781e8d8856787b0575004
+  languageName: node
+  linkType: hard
+
 "typescript@npm:~4.4.0":
   version: 4.4.4
   resolution: "typescript@npm:4.4.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ftypescript%2F-%2Ftypescript-4.4.4.tgz"
@@ -33555,6 +33605,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 2eee5c37cad4390385db5db5a8e81470e42e8f1401b0358d7390095d6f681b410f2c4a0c496c6ff9ebd775423c7785cdace7bcdad76c7bee283df3d9718c0f20
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@^5#~builtin<compat/typescript>":
+  version: 5.5.3
+  resolution: "typescript@patch:typescript@npm%3A5.5.3#~builtin<compat/typescript>::version=5.5.3&hash=d73830"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 6853be4607706cc1ad2f16047cf1cd72d39f79acd5f9716e1d23bc0e462c7f59be7458fe58a21665e7657a05433d7ab8419d093a5a4bd5f3a33f879b35d2769b
   languageName: node
   linkType: hard
 
