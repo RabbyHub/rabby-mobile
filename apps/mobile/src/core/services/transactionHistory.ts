@@ -55,6 +55,8 @@ export interface TransactionHistoryItem {
     actionData: ParsedActionData;
     requiredData: ActionRequireData;
   };
+
+  $ctx?: any;
 }
 
 export interface TransactionSigningItem {
@@ -381,9 +383,8 @@ export class TransactionHistoryService {
                 target.maxGasTx?.explain?.calcSuccess,
             )
           : true,
-        // createBy: target?.$ctx?.ga ? 'rabby' : 'dapp',
-        // source: target?.$ctx?.ga?.source || '',
-        // trigger: target?.$ctx?.ga?.trigger || '',
+        source: target?.$ctx?.ga?.source || '',
+        trigger: target?.$ctx?.ga?.trigger || '',
         networkType: chain?.isTestnet ? 'Custom Network' : 'Integrated Network',
       });
     }
@@ -575,6 +576,10 @@ export class TransactionGroup {
 
   constructor({ txs }: { txs: TransactionHistoryItem[] }) {
     this.txs = txs;
+  }
+
+  get $ctx() {
+    return this.maxGasTx.$ctx;
   }
 
   get address() {

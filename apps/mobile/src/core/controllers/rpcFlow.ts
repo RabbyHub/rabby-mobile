@@ -348,7 +348,7 @@ function reportStatsData() {
       category: statsData?.category,
       success: statsData?.signedSuccess,
       preExecSuccess: statsData?.preExecSuccess,
-      createBy: statsData?.createBy,
+      createdBy: statsData?.createdBy,
       source: statsData?.source,
       trigger: statsData?.trigger,
     };
@@ -364,7 +364,7 @@ function reportStatsData() {
       category: statsData?.category,
       success: statsData?.submitSuccess,
       preExecSuccess: statsData?.preExecSuccess,
-      createBy: statsData?.createBy,
+      createdBy: statsData?.createdBy,
       source: statsData?.source,
       trigger: statsData?.trigger,
     });

@@ -158,7 +158,7 @@ export const LedgerHardwareWaiting = ({
           preExecSuccess: explain
             ? explain?.calcSuccess && explain?.pre_exec?.success
             : true,
-          createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+          createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
           source: params?.$ctx?.ga?.source || '',
           trigger: params?.$ctx?.ga?.trigger || '',
         });

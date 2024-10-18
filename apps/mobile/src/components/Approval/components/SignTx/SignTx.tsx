@@ -844,7 +844,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       category: KEYRING_CATEGORY_MAP[currentAccount.type],
       preExecSuccess:
         checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-      createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
       source: params?.$ctx?.ga?.source || '',
       trigger: params?.$ctx?.ga?.trigger || '',
     });
@@ -1180,7 +1180,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         type: currentAccount.brandName,
         category: KEYRING_CATEGORY_MAP[currentAccount.type],
         chainId: chain.serverId,
-        createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
         source: params?.$ctx?.ga?.source || '',
         trigger: params?.$ctx?.ga?.trigger || '',
       });
