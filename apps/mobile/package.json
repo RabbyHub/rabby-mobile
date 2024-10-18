@@ -69,7 +69,7 @@
     "@rabby-wallet/object-multiplex": "workspace:^",
     "@rabby-wallet/persist-store": "workspace:^",
     "@rabby-wallet/rabby-action": "0.1.3",
-    "@rabby-wallet/rabby-api": "0.7.35",
+    "@rabby-wallet/rabby-api": "0.7.33",
     "@rabby-wallet/rabby-security-engine": "2.0.7",
     "@rabby-wallet/rabby-swap": "0.0.40",
     "@rabby-wallet/service-address": "workspace:^",
