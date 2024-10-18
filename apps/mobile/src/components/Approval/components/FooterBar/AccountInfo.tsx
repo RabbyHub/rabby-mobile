@@ -1,25 +1,17 @@
-import clsx from 'clsx';
 import React from 'react';
-import { WalletConnectAccount } from './WalletConnectAccount';
 import { Chain } from '@/constant/chains';
 import { useTranslation } from 'react-i18next';
-import { CommonAccount } from './CommonAccount';
 import { Account } from '@/core/services/preference';
 import useCurrentBalance from '@/hooks/useCurrentBalance';
 import { splitNumberByStep } from '@/utils/number';
 import { contactService } from '@/core/services';
-import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
-import { KEYRING_ICONS, KEYRING_ICONS_WHITE } from '@/constant/icon';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useThemeColors } from '@/hooks/theme';
 import { Tip } from '@/components/Tip';
 import { StyleSheet, Text, View } from 'react-native';
 import { AddressViewer } from '@/components/AddressViewer';
 import { AppColorsVariants } from '@/constant/theme';
-import { LedgerAccount } from './LedgerAccount';
-import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
-import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
-import GnosisSVG from '@/assets/icons/wallet/safe.svg';
-import { PrivateKeySVG, SeedPhraseSVG } from '@/assets/icons/address';
+import { getWalletIcon } from '@/utils/walletInfo';
+import { TruncatedText } from '@/components/TruncatedText';
 
 export interface Props {
   account: Account;
@@ -33,6 +25,7 @@ const getStyles = (colors: AppColorsVariants) =>
       backgroundColor: colors['neutral-card-3'],
       borderRadius: 8,
       padding: 12,
+      paddingHorizontal: 16,
       gap: 12,
     },
     addressInfoContainer: {
@@ -40,18 +33,20 @@ const getStyles = (colors: AppColorsVariants) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       height: 18,
+      gap: 16,
     },
     addressContainer: {
       gap: 6,
       flexDirection: 'row',
       alignItems: 'center',
+      overflow: 'hidden',
     },
     nickname: {
-      maxWidth: 170,
       overflow: 'hidden',
       fontSize: 15,
       lineHeight: 20,
       color: colors['neutral-body'],
+      maxWidth: 130,
     },
     addressViewer: {
       fontSize: 13,
@@ -90,66 +85,32 @@ export const AccountInfo: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
-  const binaryTheme = useGetBinaryMode();
-  const isDarkTheme = binaryTheme === 'dark';
+  const BrandIcon = getWalletIcon(account?.brandName);
+  const [enableNicknameTip, setEnableNicknameTip] = React.useState(false);
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.addressInfoContainer}>
         <View style={styles.addressContainer}>
-          <Tip content={nickname}>
-            <Text style={styles.nickname}>{nickname}</Text>
+          <BrandIcon width={20} height={20} />
+          <Tip content={enableNicknameTip ? nickname : undefined}>
+            <TruncatedText
+              onTruncate={setEnableNicknameTip}
+              text={nickname}
+              numberOfLines={1}
+              style={styles.nickname}
+            />
           </Tip>
-          <AddressViewer showArrow={false} address={account.address} />
+          <AddressViewer
+            disabledPress
+            showArrow={false}
+            address={account.address}
+          />
         </View>
         {isTestnet ? null : (
           <Text style={styles.balance}>${displayBalance}</Text>
         )}
       </View>
-      {account?.type === KEYRING_CLASS.WALLETCONNECT && (
-        <WalletConnectAccount chain={chain} account={account} />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.LEDGER && <LedgerAccount />}
-      {account?.type === KEYRING_CLASS.WATCH && (
-        <CommonAccount
-          icon={
-            (isDarkTheme ? KEYRING_ICONS_WHITE : KEYRING_ICONS)[
-              KEYRING_CLASS.WATCH
-            ]
-          }
-          tip={t('page.signFooterBar.addressTip.watchAddress')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.KEYSTONE && (
-        <CommonAccount
-          icon={KeystoneSVG}
-          tip={t('page.signFooterBar.addressTip.keystone')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.HARDWARE.ONEKEY && (
-        <CommonAccount
-          icon={OneKeySVG}
-          tip={t('page.signFooterBar.addressTip.onekey')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.GNOSIS && (
-        <CommonAccount
-          icon={GnosisSVG}
-          tip={t('page.signFooterBar.addressTip.safe')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.PRIVATE_KEY && (
-        <CommonAccount
-          icon={PrivateKeySVG}
-          tip={t('page.signFooterBar.addressTip.privateKey')}
-        />
-      )}
-      {account?.type === KEYRING_CLASS.MNEMONIC && (
-        <CommonAccount
-          icon={SeedPhraseSVG}
-          tip={t('page.signFooterBar.addressTip.seedPhrase')}
-        />
-      )}
     </View>
   );
 };
