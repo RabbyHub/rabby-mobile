@@ -124,7 +124,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
               isCurrentAddress && styles.currentAddressText,
             ])}
             numberOfLines={1}>
-            {walletName.repeat(10)}
+            {walletName}
           </Text>
           {!!walletNameIndex && !isCurrentAddress && (
             <Text

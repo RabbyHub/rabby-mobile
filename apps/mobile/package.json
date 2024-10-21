@@ -1,6 +1,6 @@
 {
   "name": "rabby-mobile",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "repository": {
     "type": "git",
@@ -25,8 +25,8 @@
     "restart": "yarn start --reset-cache",
     "start": "yarn ensure-git-hooks && yarn build:deps && yarn build-inpage && react-native start",
     "sync:data": "node ./scripts/sync.js",
-    "syncrnversion": "./node_modules/.bin/react-native-version --never-amend  --never-increment-build",
-    "syncrnversion:incb": "./node_modules/.bin/react-native-version --never-amend",
+    "syncrnversion": "./node_modules/.bin/react-native-version --never-amend --never-increment-build && yarn android:buildversion",
+    "android:buildversion": "react-native-version --never-amend --target android --increment-build",
     "test": "jest",
     "postversion": "react-native-version --never-amend"
   },
