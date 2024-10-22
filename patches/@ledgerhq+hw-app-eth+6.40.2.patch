@@ -1,0 +1,19 @@
+diff --git a/node_modules/@ledgerhq/hw-app-eth/lib/utils.js b/node_modules/@ledgerhq/hw-app-eth/lib/utils.js
+index ee15c51..cac53f7 100644
+--- a/node_modules/@ledgerhq/hw-app-eth/lib/utils.js
++++ b/node_modules/@ledgerhq/hw-app-eth/lib/utils.js
+@@ -42,9 +42,12 @@ const decodeTxInfo = (rawTx) => {
+     const VALID_TYPES = [1, 2];
+     const txType = VALID_TYPES.includes(rawTx[0]) ? rawTx[0] : null;
+     const rlpData = txType === null ? rawTx : rawTx.slice(1);
+-    const rlpTx = (0, rlp_1.decode)(rlpData).map(hex => Buffer.from(hex.slice(2), "hex"));
++    let rlpDecoded = (0, rlp_1.decode)(rlpData);
++    if (!Array.isArray(rlpDecoded)) {
++      rlpDecoded = Buffer.from(rlpDecoded)
++    }
++    const rlpTx = rlpDecoded.map(hex => Buffer.from(hex.slice(2), "hex"));
+     let chainIdTruncated = 0;
+-    const rlpDecoded = (0, rlp_1.decode)(rlpData);
+     let decodedTx;
+     if (txType === 2) {
+         // EIP1559
