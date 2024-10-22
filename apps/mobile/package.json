@@ -51,7 +51,7 @@
     "@ethereumjs/tx": "5.1.0",
     "@ethereumjs/util": "^9.0.1",
     "@gorhom/bottom-sheet": "alpha",
-    "@ledgerhq/react-native-hw-transport-ble": "6.33.4",
+    "@ledgerhq/react-native-hw-transport-ble": "6.33.2",
     "@metamask/abi-utils": "2.0.2",
     "@metamask/eth-sig-util": "5.1.0",
     "@ngraveio/bc-ur": "1.1.6",

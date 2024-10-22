@@ -47,31 +47,31 @@ jobs:
           echo "HOME is $HOME"
           echo "which node $(which node)"
 
-      - name: '[Linux] Setup Nodejs and Yarn'
+      - name: "[Linux] Setup Nodejs and Yarn"
         if: runner.os == 'Linux'
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: '[Linux] Setup Ruby & Fastlane'
+      - name: "[Linux] Setup Ruby & Fastlane"
         if: runner.os == 'Linux'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.2'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
-      - name: '[Linux] Setup Java'
+      - name: "[Linux] Setup Java"
         if: runner.os == 'Linux'
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '17'
 
-      - name: '[Linux] Setup Android SDK'
+      - name: "[Linux] Setup Android SDK"
         if: runner.os == 'Linux'
         uses: android-actions/setup-android@v3
 
-      - name: '[macOS] Setup Xcode'
+      - name: "[macOS] Setup Xcode"
         if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         id: setup-xcode
@@ -83,7 +83,6 @@ jobs:
         run: |
           echo "REALLY_UPLOAD value: $REALLY_UPLOAD";
           yarn install;
-          yarn postinstall;
           cd apps/mobile;
           bundle install;
           yarn prepare-archive;

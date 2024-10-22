@@ -66,8 +66,7 @@ jobs:
         shell: bash
         run: |
           cd apps/mobile;
-          yarn install;
-          yarn postinstall;
+          yarn;
           yarn prepare-archive;
 
           # security unlock-keychain -p ${{ secrets.KEYCHAIN_PASS }} ~/Library/Keychains/login.keychain-db

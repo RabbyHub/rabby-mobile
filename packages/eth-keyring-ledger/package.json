@@ -31,8 +31,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "^6.40.0",
-    "@ledgerhq/hw-transport": "^6.31.4",
+    "@ledgerhq/hw-app-eth": "6.29.9",
+    "@ledgerhq/hw-transport": "^6.30.3",
     "@rabby-wallet/base-utils": "workspace:^",
     "@rabby-wallet/keyring-utils": "workspace:^",
     "eth-sig-util": "^3.0.1",
