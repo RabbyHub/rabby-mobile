@@ -2,6 +2,12 @@ import { RABBY_MOBILE_KR_PWD } from '@/constant/encryptor';
 import { BroadcastEvent } from '@/constant/event';
 import { keyringService, sessionService } from '../services';
 import { makeEEClass } from './event';
+import { formatTimeReadable } from '@/utils/time';
+import {
+  resetMultipleFailed,
+  checkMultipleFailed,
+  shouldRejectUnlockDueToMultipleFailed,
+} from '../utils/unlockRateLimit';
 
 export const enum PasswordStatus {
   Unknown = -1,
@@ -204,15 +210,34 @@ export function isUnlocked() {
   return keyringService.isUnlocked();
 }
 
+export type UnlockResultErrors = {
+  error: string;
+  formFieldError?: string;
+  toastError?: string;
+};
 async function unlockWallet(password: string) {
   const unlockResult = {
     error: '',
-  };
+    formFieldError: '',
+    toastError: '',
+  } as UnlockResultErrors;
+
+  const checkReject = shouldRejectUnlockDueToMultipleFailed();
+  if (checkReject.reject) {
+    unlockResult.error = ERRORS.INCORRECT_PASSWORD;
+    unlockResult.formFieldError = 'Too many failed attempts';
+    unlockResult.toastError = `Too many failed attempts, please try again after ${formatTimeReadable(
+      Math.floor(checkReject.timeDiff / 1e3),
+    )}`;
+    return unlockResult;
+  }
 
   try {
     await keyringService.verifyPassword(password);
+    resetMultipleFailed();
   } catch (err) {
-    unlockResult.error = 'Incorrect Password';
+    unlockResult.error = ERRORS.INCORRECT_PASSWORD;
+    checkMultipleFailed();
     return unlockResult;
   }
 

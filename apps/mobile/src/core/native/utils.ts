@@ -20,6 +20,9 @@ interface NativeModulesStatic {
     iosProtectFromScreenRecording(): void;
     iosUnprotectFromScreenRecording(): void;
   };
+  RNTimeChanged: NativeModule & {
+    exitAppForSecurity(): void;
+  };
 }
 
 export const IS_ANDROID = Platform.OS === 'android';
