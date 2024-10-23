@@ -360,18 +360,18 @@ const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
       ],
     );
   } else {
-    Alert.alert(
-      'Warning',
-      `Time settings changed, will quit app for security.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            RNTimeChanged.exitAppForSecurity();
-          },
-        },
-      ],
-    );
+    // Alert.alert(
+    //   'Warning',
+    //   `Time settings changed, will quit app for security.`,
+    //   [
+    //     {
+    //       text: 'OK',
+    //       onPress: () => {
+    //         RNTimeChanged.exitAppForSecurity();
+    //       },
+    //     },
+    //   ],
+    // );
   }
 }, 1000);
 

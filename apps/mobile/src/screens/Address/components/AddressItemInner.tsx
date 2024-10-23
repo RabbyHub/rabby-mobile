@@ -118,35 +118,35 @@ export const AddressItemInner = (props: AddressItemProps) => {
       </View>
       <View style={styles.centerInner}>
         <View style={styles.titleView}>
-          <Text
-            style={StyleSheet.flatten([
-              styles.title,
-              isCurrentAddress && styles.currentAddressText,
-            ])}
-            numberOfLines={1}>
-            {walletName}
-          </Text>
-          {!!walletNameIndex && !isCurrentAddress && (
+          <View style={styles.titleTextArea}>
             <Text
               style={StyleSheet.flatten([
-                styles.walletIndexText,
+                styles.title,
                 isCurrentAddress && styles.currentAddressText,
-              ])}>
-              #{walletNameIndex}
+              ])}
+              numberOfLines={1}>
+              {walletName}
             </Text>
-          )}
+            {!!walletNameIndex && !isCurrentAddress && (
+              <Text style={StyleSheet.flatten([styles.walletIndexText])}>
+                #{walletNameIndex}
+              </Text>
+            )}
+          </View>
 
-          {inWhitelist && (
-            <RcIconAddressWhitelistCC
-              style={styles.tagIcon}
-              color={
-                isCurrentAddress
-                  ? themeColors['neutral-title-2']
-                  : themeColors['neutral-foot']
-              }
-            />
-          )}
-          {pinned && <RcIconAddressPinned style={styles.tagIcon} />}
+          <View style={styles.titleIconArea}>
+            {inWhitelist && (
+              <RcIconAddressWhitelistCC
+                style={styles.tagIcon}
+                color={
+                  isCurrentAddress
+                    ? themeColors['neutral-title-2']
+                    : themeColors['neutral-foot']
+                }
+              />
+            )}
+            {pinned && <RcIconAddressPinned style={styles.tagIcon} />}
+          </View>
         </View>
 
         <View style={styles.addressBox}>
@@ -289,23 +289,39 @@ export const getStyles = (colors: AppColorsVariants) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'flex-start',
       gap: 2,
       flexShrink: 1,
       width: '100%',
       paddingRight: 8,
       // ...makeDebugBorder(),
     },
+    titleTextArea: {
+      flexShrink: 1,
+      maxWidth: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+    },
+    titleIconArea: {
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      // ...makeDebugBorder('green'),
+    },
     title: {
       fontSize: 15,
       fontWeight: '600',
+      maxWidth: '100%',
       color: colors['neutral-title-1'],
-      flexShrink: 1,
-      width: '100%',
+      // ...makeDebugBorder('red'),
     },
     walletIndexText: {
       color: colors['neutral-foot'],
       fontSize: 14,
       fontWeight: '400',
+      // ...makeDebugBorder('yellow'),
     },
     addressBox: {
       display: 'flex',
