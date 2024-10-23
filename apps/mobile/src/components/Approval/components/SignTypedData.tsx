@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { WaitingSignMessageComponent } from './map';
+import { WaitingSignComponent } from './map';
 import { FooterBar } from './FooterBar/FooterBar';
 import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TypedDataActions';
@@ -317,7 +317,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
     if (isGnosis && params.account) {
       if (
-        WaitingSignMessageComponent[params.account.type] &&
+        WaitingSignComponent[params.account.type] &&
         ![KEYRING_CLASS.PRIVATE_KEY, KEYRING_CLASS.MNEMONIC].includes(
           params.account.type as any,
         )
@@ -333,7 +333,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
         );
 
         resolveApproval({
-          uiRequestComponent: WaitingSignMessageComponent[params.account.type],
+          uiRequestComponent: WaitingSignComponent[params.account.type],
           type: params.account.type,
           address: params.account.address,
           data: params.data,
@@ -375,12 +375,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       }
       return;
     }
-    if (
-      currentAccount?.type &&
-      WaitingSignMessageComponent[currentAccount?.type]
-    ) {
+    if (currentAccount?.type && WaitingSignComponent[currentAccount?.type]) {
       resolveApproval({
-        uiRequestComponent: WaitingSignMessageComponent[currentAccount?.type],
+        uiRequestComponent: WaitingSignComponent[currentAccount?.type],
         type: currentAccount.type,
         address: currentAccount.address,
         extra: {

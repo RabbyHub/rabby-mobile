@@ -89,8 +89,8 @@ android {
         applicationId "com.debank.rabbymobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 100033
-        versionName "0.3.0"
+        versionCode 100035
+        versionName "0.3.1"
     }
     splits {
         abi {
@@ -132,7 +132,7 @@ android {
     // }
     buildTypes {
         debug {
-            defaultConfig.minSdkVersion 24
+            // defaultConfig.minSdkVersion 24
             signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             // debuggable true

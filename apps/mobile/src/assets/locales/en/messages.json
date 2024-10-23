@@ -37,7 +37,7 @@
       "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.",
       "nativeTokenNotEngouthForGas": "Gas balance is not enough",
       "nonceLowerThanExpect": "Nonce is too low, the minimum should be {{0}}",
-      "canOnlyUseImportedAddress": "You can only use imported addresses to sign",
+      "canOnlyUseImportedAddress": "You cannot sign transactions with a watch-only address.",
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
@@ -62,7 +62,10 @@
       "gasAccount": {
         "totalCost": "Total cost: ",
         "currentTxCost": "Gas amount sent to your address: ",
-        "gasCost": "Gas cost for sending Gas to your address: "
+        "gasCost": "Gas cost for transferring gas to your address: ",
+        "estimatedGas": "Estimated Gas: ",
+        "maxGas": "Max Gas: ",
+        "sendGas": "The Gas transfer to you for current transaction: "
       },
       "balanceChange": {
         "successTitle": "Simulation Results",
@@ -650,7 +653,7 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search",
+        "searchInputPlaceholder": "Enter an address or scan",
         "title": "To"
       },
       "sendButton": "Send",
@@ -702,7 +705,7 @@
         "title": "To",
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search"
+        "searchInputPlaceholder": "Enter an address or scan"
       },
       "nftInfoFieldLabel": {
         "Collection": "Collection",
@@ -906,7 +909,7 @@
       "two-step-approve-details": "Token USDT requires 2 transactions to change allowance.First you would need to reset allowance to zero, and only then set new allowance value.",
       "process-with-two-step-approve": "Proceed with two step approve",
       "fetch-best-quote": "Fetching the Best quote",
-      "usd-after-fees": "≈ {{usd}} after fees",
+      "usd-after-fees": "≈ {{usd}} ",
       "no-fees-for-wrap": "No Rabby fees for Wrap",
       "No-available-quote": "No available quote",
       "price-impact": "Price Impact",
@@ -949,7 +952,7 @@
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
-      "estimated-value": "≈ {{value}} after fees",
+      "estimated-value": "≈ {{value}} ",
       "best": "Best",
       "bridge-cost": "Bridge cost",
       "rabby-fee": "Rabby fee",
@@ -1231,7 +1234,7 @@
           "fractionTips": "Calculate based on the price of the linked ERC20 token."
         },
         "tokenButton": {
-          "subTitle": "The token in this list will not be added to total balance"
+          "subTitle": "Tokens on this list will not be added to the total balance."
         },
         "table": {
           "assetAmount": "Asset / Amount",
@@ -1486,15 +1489,15 @@
         "imported": "Already imported",
         "ble": {
           "title": "Connect Ledger",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "scan": {
           "title": "Searching for Device",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "notFound": {
           "title": "Device Not Found",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X",
+          "description": "Turn on Bluetooth and unlock Ledger",
           "buttonText": "View Ledger support tutorial"
         },
         "select": {

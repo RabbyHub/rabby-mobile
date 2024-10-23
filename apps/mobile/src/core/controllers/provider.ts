@@ -532,7 +532,7 @@ class ProviderController extends BaseController {
       preExecSuccess: cacheExplain
         ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
         : true,
-      createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+      createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
       source: options?.data?.$ctx?.ga?.source || '',
       trigger: options?.data?.$ctx?.ga?.trigger || '',
       reported: false,
@@ -607,6 +607,7 @@ class ProviderController extends BaseController {
             ? createDappBySession(INTERNAL_REQUEST_SESSION)
             : dappService.getDapp(origin),
           isPending: true,
+          $ctx: options?.data?.$ctx,
         });
         transactionHistoryService.removeSigningTx(signingTxId!);
         if (hash) {
@@ -652,7 +653,7 @@ class ProviderController extends BaseController {
           preExecSuccess: cacheExplain
             ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
             : true,
-          createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+          createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
           source: options?.data?.$ctx?.ga?.source || '',
           trigger: options?.data?.$ctx?.ga?.trigger || '',
         });

@@ -59,17 +59,20 @@ export function useManagePasswordUI() {
 export function useWalletPasswordInfo(options?: { autoFetch?: boolean }) {
   const { isLoading, lockInfo, fetchLockInfo } = useLoadLockInfo();
 
-  const setupPassword = useCallback(
-    async (newPassword: string) => {
-      const result = await apisLock.setupWalletPassword(newPassword);
-      await fetchLockInfo();
+  // /**
+  //  * @deprecated not used now
+  //  */
+  // const setupPassword = useCallback(
+  //   async (newPassword: string) => {
+  //     const result = await apisLock.setupWalletPassword(newPassword);
+  //     await fetchLockInfo();
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
-    },
-    [fetchLockInfo],
-  );
+  //     if (result.error) {
+  //       throw new Error(result.error);
+  //     }
+  //   },
+  //   [fetchLockInfo],
+  // );
 
   const updatePassword = useCallback(
     async (oldPassword: string, newPassword: string) => {
@@ -101,7 +104,7 @@ export function useWalletPasswordInfo(options?: { autoFetch?: boolean }) {
     lockInfo,
     fetchLockInfo,
 
-    setupPassword,
+    // setupPassword,
     updatePassword,
   };
 }

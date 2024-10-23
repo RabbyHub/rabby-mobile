@@ -52,7 +52,7 @@ export type StatsData = {
   chainId: string;
   category: string;
   preExecSuccess: boolean;
-  createBy: string;
+  createdBy: string;
   source: any;
   trigger: any;
   reported: boolean;
@@ -264,7 +264,7 @@ export class NotificationService extends Events {
           success: explain
             ? explain.calcSuccess && explain.pre_exec.success
             : true,
-          createBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
+          createdBy: data?.params.$ctx?.ga ? 'rabby' : 'dapp',
           source: data?.params.$ctx?.ga?.source || '',
           trigger: data?.params.$ctx?.ga?.trigger || '',
         });

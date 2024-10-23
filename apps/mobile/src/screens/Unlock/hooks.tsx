@@ -6,7 +6,7 @@ import { atomByMMKV } from '@/core/storage/mmkv';
 import { useBiometrics } from '@/hooks/biometrics';
 import { toast } from '@/components/Toast';
 import { Alert } from 'react-native';
-import { IS_IOS } from '@/core/native/utils';
+import { UnlockResultErrors } from '@/core/apis/lock';
 
 export enum UNLOCK_STATE {
   IDLE = 0,
@@ -25,7 +25,8 @@ export function useUnlockApp() {
 
   const unlockApp = useCallback(
     async (password: string) => {
-      if (stateRef.current.status !== UNLOCK_STATE.IDLE) return { error: '' };
+      if (stateRef.current.status !== UNLOCK_STATE.IDLE)
+        return { error: '' } as UnlockResultErrors;
 
       setUnlockState(prev => ({ ...prev, status: UNLOCK_STATE.UNLOCKING }));
 

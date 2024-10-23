@@ -1,8 +1,9 @@
 import { useCallback, useEffect } from 'react';
+import { atom, useAtom } from 'jotai';
 
 import RNScreenshotPrevent from '@/core/native/RNScreenshotPrevent';
+import '@/core/native/RNTimeChanged';
 import { IS_IOS } from '@/core/native/utils';
-import { atom, useAtom } from 'jotai';
 
 /**
  * @description Prevents the user from taking a screenshot,

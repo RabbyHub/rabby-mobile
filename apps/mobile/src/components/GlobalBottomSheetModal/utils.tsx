@@ -21,7 +21,10 @@ import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
 import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
 import { SettingOneKey } from '../HDSetting/SettingOneKey';
 import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
-import { TipTermOfUseModalInner } from '@/screens/ManagePassword/components/TipTermOfUseModalInner';
+import {
+  TipTermOfUseModalInner,
+  TipPrivacyPolicyInner,
+} from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
 import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
 import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
@@ -29,6 +32,7 @@ import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
 import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
 import { SeedPhraseRestoreFromCloud } from '../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
+import { WalletConnectConnection } from '../CommonPopup/WalletConnectConnection';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -51,6 +55,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
+  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: ['80%'],
   [MODAL_NAMES.TIP_TERM_OF_USE]: ['80%'],
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
@@ -60,6 +65,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
+  [MODAL_NAMES.WALLET_CONNECT]: [300],
 };
 
 export const APPROVAL_SNAP_POINTS: Record<
@@ -105,9 +111,11 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD]: SeedPhraseBackupToCloud,
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
+  [MODAL_NAMES.WALLET_CONNECT]: WalletConnectConnection,
 
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
+  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: TipPrivacyPolicyInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,

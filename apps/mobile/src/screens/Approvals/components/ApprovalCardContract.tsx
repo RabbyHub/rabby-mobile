@@ -147,7 +147,7 @@ function CardProto({
         <View style={styles.floorLeft}>
           {chainLogoUrl ? (
             <ChainIconImage
-              style={styles.chainIcon}
+              containerStyle={styles.chainIcon}
               size={20}
               source={{ uri: chainLogoUrl }}
             />

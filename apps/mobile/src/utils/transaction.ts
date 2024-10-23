@@ -1,6 +1,8 @@
-import { CHAINS_ENUM } from '@/constant/chains';
+import { Chain, CHAINS_ENUM } from '@/constant/chains';
 import { DEFAULT_GAS_LIMIT_RATIO, MINIMUM_GAS_LIMIT } from '@/constant/gas';
 import { KEYRING_CATEGORY_MAP } from '@rabby-wallet/keyring-utils';
+import { addressUtils } from '@rabby-wallet/base-utils';
+
 import type {
   ExplainTxResponse,
   GasLevel,
@@ -11,8 +13,9 @@ import { isHexString } from 'ethereumjs-util';
 import { ethers } from 'ethers';
 import abi from 'human-standard-token-abi';
 import { hexToString, isHex, stringToHex } from 'web3-utils';
-import { findChain } from './chain';
+import { findChain, getChain } from './chain';
 import i18n from './i18n';
+import { openExternalUrl } from '@/core/utils/linking';
 
 export const is1559Tx = (tx: Tx) => {
   if (!('maxFeePerGas' in tx) || !('maxPriorityFeePerGas' in tx)) {
@@ -446,3 +449,35 @@ export const checkGasAndNonce = ({
   }
   return errors;
 };
+
+export function openTxExternalUrl(input: {
+  chain?: string | Chain | null;
+  txHash?: string;
+  address?: string;
+}) {
+  const result = {
+    canOpen: false,
+    openPromise: null as ReturnType<typeof openExternalUrl> | null,
+  };
+  const { chain, txHash, address } = input;
+  if (!chain) return result;
+
+  const chainItem = typeof chain === 'string' ? getChain(chain) : chain;
+  if (!chainItem) return result;
+
+  result.canOpen = !!chainItem?.scanLink;
+
+  if (!result.canOpen) return result;
+
+  if (txHash) {
+    result.openPromise = openExternalUrl(
+      addressUtils.getTxScanLink(chainItem?.scanLink, txHash),
+    );
+  } else if (address) {
+    result.openPromise = openExternalUrl(
+      addressUtils.getAddressScanLink(chainItem?.scanLink, address),
+    );
+  }
+
+  return result;
+}

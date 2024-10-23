@@ -24,6 +24,7 @@ import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useScanner } from '@/screens/Scanner/ScannerScreen';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -113,11 +114,13 @@ export default function ToAddressControl({
         </View>
       </View>
       <FormInput
-        className="mt-[8]"
-        containerStyle={styles.inputContainer}
+        containerStyle={[
+          styles.inputContainer,
+          !formValues.to && styles.withoutValue,
+        ]}
         ref={formInputRef}
         disableFocusingStyle
-        inputStyle={styles.input}
+        inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
         clearable={false}
         customIcon={ctx => {
@@ -144,7 +147,7 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter address or search',
+          placeholder: 'Enter an address or scan',
           placeholderTextColor: colors['neutral-foot'],
           style: {
             paddingTop: 0,
@@ -207,7 +210,7 @@ export default function ToAddressControl({
 }
 
 const SIZES = {
-  INPUT_CONTAINER_H: 64,
+  INPUT_CONTAINER_H: IS_ANDROID ? 64 : 60,
   SCAN_BTN_H: 64,
   SCAN_BTN_W: 32,
   SCAN_ICON_SIZE: 20,
@@ -270,7 +273,6 @@ const getStyles = createGetStyles(colors => {
 
     entryWhitelist: {
       marginLeft: 8,
-      paddingLeft: 8,
     },
 
     entryWhitelistIcon: {
@@ -279,10 +281,19 @@ const getStyles = createGetStyles(colors => {
     },
 
     inputContainer: {
+      height: SIZES.INPUT_CONTAINER_H,
       borderRadius: 4,
       flexShrink: 0,
-      paddingVertical: 17,
+      // ...makeDebugBorder('yellow'),
+      paddingVertical: 12,
       width: '100%',
+      marginTop: 8,
+    },
+
+    withoutValue: {
+      ...(!IS_ANDROID && {
+        height: 'auto',
+      }),
     },
 
     input: {
@@ -293,8 +304,12 @@ const getStyles = createGetStyles(colors => {
       // paddingTop: Platform.OS === 'ios' ? 12 : 0,
       paddingTop: 12,
       paddingHorizontal: 12,
-      // flexDirection: 'row',
-      // alignItems: 'center',
+      fontSize: 15,
+      fontWeight: IS_ANDROID ? 'normal' : '600',
+    },
+
+    inputWithoutValue: {
+      fontWeight: '400',
     },
 
     scanButtonContainer: {

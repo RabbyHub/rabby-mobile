@@ -112,8 +112,11 @@ function useUnlockForm(navigation: ReturnType<typeof useRabbyAppNavigation>) {
       try {
         const result = await unlockApp(values.password);
         if (result.error) {
-          helpers?.setFieldError('password', t('page.unlock.password.error'));
-          toast.show(result.error);
+          helpers?.setFieldError(
+            'password',
+            result.formFieldError || t('page.unlock.password.error'),
+          );
+          toast.show(result.toastError || result.error);
         } else {
           updateUnlockTime();
         }
