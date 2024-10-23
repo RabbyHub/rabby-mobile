@@ -1,3 +1,4 @@
+import '@exodus/patch-broken-hermes-typed-arrays';
 import {
   setJSExceptionHandler,
   setNativeExceptionHandler,

@@ -3717,6 +3717,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@exodus/patch-broken-hermes-typed-arrays@npm:^1.0.0-alpha.1":
+  version: 1.0.0-alpha.1
+  resolution: "@exodus/patch-broken-hermes-typed-arrays@npm:1.0.0-alpha.1"
+  checksum: b47e1d48fb07a686e03fc63da8022575a0d31f01b086e04ef4188eb74566e8f2125a76ffe1e8e38b1b668747ab17241190cf05610587dbe953b5a3a35092389b
+  languageName: node
+  linkType: hard
+
 "@expo/config-plugins@npm:^7.2.5":
   version: 7.9.2
   resolution: "@expo/config-plugins@npm:7.9.2"
@@ -5010,18 +5017,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/domain-service@npm:^1.2.7":
-  version: 1.2.7
-  resolution: "@ledgerhq/domain-service@npm:1.2.7"
+"@ledgerhq/domain-service@npm:^1.2.9":
+  version: 1.2.9
+  resolution: "@ledgerhq/domain-service@npm:1.2.9"
   dependencies:
     "@ledgerhq/errors": ^6.19.1
     "@ledgerhq/logs": ^6.12.0
-    "@ledgerhq/types-live": ^6.52.1
+    "@ledgerhq/types-live": ^6.52.3
     axios: 1.7.7
     eip55: ^2.1.1
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: fdd19d8b5cbf48fac46100116a7e1b432643d43c2efebae3f24dfa1f8b48b4b891ad59d83f007c7a13baebc6e7bef0379a52a8d73f4128f95137c4fc7cb4acc1
+  checksum: 19f5b120ef61c1a6655a665c81ce03275a905fd3b6f6ea940e02a6ef5b80f583a0d3c82fc2733c683db570f20b7f81a0299325be3f46db83d3ad2d59bfbf6784
   languageName: node
   linkType: hard
 
@@ -5060,23 +5067,23 @@ __metadata:
   linkType: hard
 
 "@ledgerhq/hw-app-eth@npm:^6.40.0":
-  version: 6.40.0
-  resolution: "@ledgerhq/hw-app-eth@npm:6.40.0"
+  version: 6.40.2
+  resolution: "@ledgerhq/hw-app-eth@npm:6.40.2"
   dependencies:
     "@ethersproject/abi": ^5.5.0
     "@ethersproject/rlp": ^5.5.0
     "@ledgerhq/cryptoassets-evm-signatures": ^13.5.1
-    "@ledgerhq/domain-service": ^1.2.7
+    "@ledgerhq/domain-service": ^1.2.9
     "@ledgerhq/errors": ^6.19.1
     "@ledgerhq/evm-tools": ^1.2.4
     "@ledgerhq/hw-transport": ^6.31.4
     "@ledgerhq/hw-transport-mocker": ^6.29.4
     "@ledgerhq/logs": ^6.12.0
-    "@ledgerhq/types-live": ^6.52.1
+    "@ledgerhq/types-live": ^6.52.3
     axios: 1.7.7
     bignumber.js: ^9.1.2
     semver: ^7.3.5
-  checksum: f4b1860014a72c54b335719e9ba4d07a347b38ce6f4ab6d802af502768a2611351a7d47bdd380f47bdd3e1b183b8391306308e1340cefd08ede72ac78143ad52
+  checksum: 09085fdd204ee8df3744f29a3c0b122916f55e6b9916747c047d18794246b01216d76581d60fa82628566050a287be2761846997c841fbe5cbcf38031366a7c7
   languageName: node
   linkType: hard
 
@@ -5156,13 +5163,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ledgerhq/types-live@npm:^6.52.1":
-  version: 6.52.1
-  resolution: "@ledgerhq/types-live@npm:6.52.1"
+"@ledgerhq/types-live@npm:^6.52.3":
+  version: 6.52.3
+  resolution: "@ledgerhq/types-live@npm:6.52.3"
   dependencies:
     bignumber.js: ^9.1.2
     rxjs: ^7.8.1
-  checksum: 89b665a2fe643b05f438a7753a8f71560c44bdcdef91b5bb740de99d183c93d2b1577f70247cdc82b81c31069981984151c8a382e5698362111ba68db6e8472d
+  checksum: c0560c424cc82bef04cc110222c642855d3b579942dcbe9717fb9e0219bd9240f5cc65f4c56e06f23c3a8899a4dce1fb3c0ff650e0f9321ed5521dd7becae8f9
   languageName: node
   linkType: hard
 
@@ -6419,6 +6426,7 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.20.0
     "@debank/common": ^0.3.54
+    "@exodus/patch-broken-hermes-typed-arrays": ^1.0.0-alpha.1
     "@lavamoat/allow-scripts": ^2.3.1
     "@metamask/create-release-branch": ^1.1.0
     "@metamask/eslint-config": ^12.2.0
