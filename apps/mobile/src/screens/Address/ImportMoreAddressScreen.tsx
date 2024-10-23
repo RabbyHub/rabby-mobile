@@ -146,9 +146,10 @@ export const ImportMoreAddressScreen = () => {
         return apiLedger;
       case KEYRING_TYPE.OneKeyKeyring:
         return apiOneKey;
-
-      default:
+      case KEYRING_TYPE.KeystoneKeyring:
         return apiKeystone;
+      default:
+        return null;
     }
   }, [state]);
 
@@ -213,7 +214,7 @@ export const ImportMoreAddressScreen = () => {
   const loadAddress = React.useCallback(
     async (index: number) => {
       const res =
-        state.type === KEYRING_TYPE?.HdKeyring
+        state.type === KEYRING_TYPE.HdKeyring
           ? await apiKeyring.requestKeyring(
               KEYRING_TYPE.HdKeyring,
               'getAddresses',
@@ -221,23 +222,26 @@ export const ImportMoreAddressScreen = () => {
               index,
               index + 1,
             )
-          : await apiHD.getAddresses(index, index + 1);
-      // avoid blocking the UI thread
-      await new Promise(resolve => setTimeout(resolve, 1));
-      const balance = await getAccountBalance(res[0].address);
-      if (stoppedRef.current) {
-        return;
+          : (await apiHD?.getAddresses(index, index + 1)) || [];
+
+      if (res[0]) {
+        // avoid blocking the UI thread
+        await new Promise(resolve => setTimeout(resolve, 1));
+        const balance = await getAccountBalance(res[0].address);
+        if (stoppedRef.current) {
+          return;
+        }
+        setAccounts(prev => {
+          return [
+            ...prev,
+            {
+              address: res[0].address,
+              index: res[0].index,
+              balance,
+            },
+          ];
+        });
       }
-      setAccounts(prev => {
-        return [
-          ...prev,
-          {
-            address: res[0].address,
-            index: res[0].index,
-            balance,
-          },
-        ];
-      });
     },
     [apiHD, state?.keyringId, state.type],
   );
@@ -249,7 +253,8 @@ export const ImportMoreAddressScreen = () => {
     let i = start;
     try {
       maxCountRef.current =
-        (await apiHD.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+        (await apiHD?.getMaxAccountLimit()) ?? MAX_ACCOUNT_COUNT;
+
       for (; i < start + maxCountRef.current; ) {
         if (stoppedRef.current) {
           break;
@@ -330,7 +335,7 @@ export const ImportMoreAddressScreen = () => {
         }
       });
     } else {
-      apiHD.getCurrentAccounts().then(res => {
+      apiHD?.getCurrentAccounts().then(res => {
         if (res) {
           setCurrentAccounts(res);
         }
@@ -392,7 +397,7 @@ export const ImportMoreAddressScreen = () => {
 
     try {
       for (const acc of selectedAccounts) {
-        await apiHD.importAddress(acc.index - 1);
+        await apiHD?.importAddress(acc.index - 1);
       }
 
       navigate(RootNames.StackAddress, {

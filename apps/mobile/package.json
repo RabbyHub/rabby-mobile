@@ -45,7 +45,7 @@
     "@babel/plugin-transform-export-namespace-from": "^7.23.4",
     "@debank/common": "0.3.58",
     "@debank/festats": "1.0.4",
-    "@debank/rabby-rn-security": "^0.1.1",
+    "@debank/rabby-sign-bvm": "0.1.16",
     "@eth-optimism/contracts-ts": "^0.17.0",
     "@ethereumjs/common": "4.2.0",
     "@ethereumjs/tx": "5.1.0",
