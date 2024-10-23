@@ -4,7 +4,7 @@ import { appStorage } from '../storage/mmkv';
 const MULTIPLE_FAILED_CONF = {
   key: '@failed_unlock',
   limit: 5,
-  duration: (5 * 60 + 30) * 1000,
+  duration: (1 * 60 + 6) * 1000,
 };
 
 /**
