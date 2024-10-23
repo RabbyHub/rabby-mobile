@@ -357,9 +357,16 @@ class LedgerKeyring {
       // return a Transaction that is frozen if the originally provided
       // transaction was also frozen.
       const messageToSign = tx.getMessageToSign(false);
-      const rawTxHex = Buffer.isBuffer(messageToSign)
+      let rawTxHex = Buffer.isBuffer(messageToSign)
         ? messageToSign.toString('hex')
         : ethUtil.rlp.encode(messageToSign).toString('hex');
+
+      // FIXME: This is a temporary fix for the issue with the Ledger device, waiting for a fix from Ledger
+      if (!Array.isArray(ethUtil.rlp.decode(Buffer.from(rawTxHex, 'hex')))) {
+        console.log('rlpTx not an array');
+        rawTxHex = Buffer.from(messageToSign).toString('hex');
+      }
+
       return this._signTransaction(
         address,
         rawTxHex,
