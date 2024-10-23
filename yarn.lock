@@ -2227,20 +2227,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@debank/rabby-rn-security@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@debank/rabby-rn-security@npm:0.1.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40debank%2Frabby-rn-security%2F-%2Frabby-rn-security-0.1.1.tgz"
-  dependencies:
-    fastestsmallesttextencoderdecoder: ^1.0.22
-    sha256-uint8array: 0.10.3
-  checksum: cff7f24a000c62601d69b2b88509e6e8e34f0db4956d0c1329fa444ba874b30fc567c72d5fe08d1f7f1b711b353830992434d73d317829ec55b3bba85833e9dd
-  languageName: node
-  linkType: hard
-
-"@debank/rabby-sign-bvm@npm:0.1.15":
-  version: 0.1.15
-  resolution: "@debank/rabby-sign-bvm@npm:0.1.15"
-  checksum: cacd13aac205878925f0c9df77ce5adc97143fb8a96c42f9866e3cedc69a0719e4cf84d14d9e1fb22c6ab0e9a3461be6cc5f9ea848036b00bbbce4e124101eff
+"@debank/rabby-sign-bvm@npm:0.1.16":
+  version: 0.1.16
+  resolution: "@debank/rabby-sign-bvm@npm:0.1.16"
+  checksum: a3644b539d40c2662b226339306be5c8ea72041f555a8dc6a443e0be965c2290af1b29ef115e728a7762ce28af77dcc3c9e54e6c9037dfbd25166a942838a59e
   languageName: node
   linkType: hard
 
@@ -18043,13 +18033,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastestsmallesttextencoderdecoder@npm:^1.0.22":
-  version: 1.0.22
-  resolution: "fastestsmallesttextencoderdecoder@npm:1.0.22::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ffastestsmallesttextencoderdecoder%2F-%2Ffastestsmallesttextencoderdecoder-1.0.22.tgz"
-  checksum: cc5e6c3b4c13de41a24e1311af4d0726e85d9edd75af8a13282f9e5f2751805d869455352a0bf065ab59c9c240d078b7abd98d676da9257666402e56ce9395d0
-  languageName: node
-  linkType: hard
-
 "fastq@npm:^1.6.0":
   version: 1.16.0
   resolution: "fastq@npm:1.16.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Ffastq%2F-%2Ffastq-1.16.0.tgz"
@@ -28164,8 +28147,7 @@ __metadata:
     "@babel/runtime": ^7.20.0
     "@debank/common": 0.3.58
     "@debank/festats": 1.0.4
-    "@debank/rabby-rn-security": ^0.1.1
-    "@debank/rabby-sign-bvm": 0.1.15
+    "@debank/rabby-sign-bvm": 0.1.16
     "@eth-optimism/contracts-ts": ^0.17.0
     "@ethereumjs/common": 4.2.0
     "@ethereumjs/tx": 5.1.0
@@ -30914,13 +30896,6 @@ __metadata:
   version: 1.0.4
   resolution: "sha1-file@npm:1.0.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fsha1-file%2F-%2Fsha1-file-1.0.4.tgz"
   checksum: d27cd0297c7be7bb08cb77e78a3825b9e5b6f4715b4679db47b42769f41f331ee4be3678cdf94502e2544199fe8ee619dfbc5481c4347f04eeaea4aa112f7a4e
-  languageName: node
-  linkType: hard
-
-"sha256-uint8array@npm:0.10.3":
-  version: 0.10.3
-  resolution: "sha256-uint8array@npm:0.10.3::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fsha256-uint8array%2F-%2Fsha256-uint8array-0.10.3.tgz"
-  checksum: c8142bb1e53ab7aff07a953562825672753bc9450a95a07e6dbda46a41dbfd5efdfceed3682ad4eb776432bd32494058265080191d8cde3ccd28b005a653039c
   languageName: node
   linkType: hard
 
