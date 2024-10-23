@@ -97,6 +97,9 @@ export async function setupWalletPassword(newPassword: string) {
   return result;
 }
 
+/**
+ * @deprecated not used now
+ */
 export async function updateWalletPassword(
   oldPassword: string,
   newPassword: string,
@@ -121,6 +124,9 @@ export async function updateWalletPassword(
   return result;
 }
 
+/**
+ * @warn ONLY used in test package, not used in production
+ */
 export async function clearCustomPassword(currentPassword: string) {
   const result = getInitError(currentPassword);
   if (result.error) return result;
