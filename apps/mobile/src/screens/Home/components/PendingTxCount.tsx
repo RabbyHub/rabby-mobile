@@ -1,4 +1,7 @@
-import { RcIconHistory } from '@/assets/icons/home';
+import {
+  RcIconHistoryFocusLight,
+  RcIconHistoryLight,
+} from '@/assets/icons/bottom-bar';
 import { AppColorsVariants } from '@/constant/theme';
 import { transactionHistoryService } from '@/core/services';
 import { useCurrentAccount } from '@/hooks/account';
@@ -9,7 +12,13 @@ import { useInterval, useRequest } from 'ahooks';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export const PendingTxCount = () => {
+export const PendingTxCount = ({
+  focused,
+  size = 24,
+}: {
+  focused?: boolean;
+  size?: number;
+}) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { currentAccount } = useCurrentAccount();
@@ -36,11 +45,24 @@ export const PendingTxCount = () => {
 
   return count ? (
     <View style={styles.container}>
-      <Spin color={colors['blue-default']} style={styles.spin} />
-      <Text style={styles.count}>{count > 9 ? 9 : count}</Text>
+      <Spin
+        color={focused ? colors['blue-default'] : colors['orange-default']}
+        style={styles.spin}
+      />
+      <Text
+        style={[
+          styles.count,
+          {
+            color: focused ? colors['blue-default'] : colors['orange-default'],
+          },
+        ]}>
+        {count > 9 ? 9 : count}
+      </Text>
     </View>
+  ) : focused ? (
+    <RcIconHistoryFocusLight width={size} height={size} />
   ) : (
-    <RcIconHistory style={styles.actionIcon} />
+    <RcIconHistoryLight width={size} height={size} />
   );
 };
 

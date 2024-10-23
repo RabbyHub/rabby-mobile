@@ -171,7 +171,7 @@ class OneKeyKeyring extends EventEmitter {
       const devicePromise = this._deviceConnectId
         ? this.bridge.getFeatures(this._deviceConnectId).then(res => {
             if (!res.success) {
-              reject('searchDevices failed');
+              reject(res.payload?.error || 'searchDevices failed');
               return undefined;
             }
 
@@ -182,7 +182,7 @@ class OneKeyKeyring extends EventEmitter {
           })
         : this.bridge.searchDevices().then(res => {
             if (!res.success) {
-              reject('searchDevices failed');
+              reject(res.payload?.error || 'searchDevices failed');
               return undefined;
             }
 

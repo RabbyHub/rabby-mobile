@@ -8,6 +8,7 @@ export { default as RcIconInfoCC } from './info-cc.svg';
 export { default as RcIconInfoFillCC } from './icon-info-fill.svg';
 export { default as RcIconInfo2CC } from './info2-cc.svg';
 export { default as RcIconCopyCC } from './copy-cc.svg';
+export { default as RcIconCopyRegularCC } from './copy-regular-cc.svg';
 export { default as IconCommonInfo } from './info.svg';
 export { default as IconTick } from './tick.svg';
 export { default as IconToastSuccess } from './toast-success.svg';
@@ -29,3 +30,4 @@ export { default as RcIconCloseCC } from './icon-close-cc.svg';
 export { default as RcIconCloseCircleCC } from './icon-close-circle-cc.svg';
 
 export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';
+export { default as RcIconJumpCC } from './jump-cc.svg';

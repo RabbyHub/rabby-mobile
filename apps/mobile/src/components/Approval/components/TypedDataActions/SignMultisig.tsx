@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SignMultiSigActions } from '@rabby-wallet/rabby-api/dist/types';
 import { Col, Row, Table } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
-import { MultiSigRequireData } from './utils';
+import { MultiSigRequireData } from '@rabby-wallet/rabby-action';
 import LogoWithText from '../Actions/components/LogoWithText';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Chain } from '@/constant/chains';

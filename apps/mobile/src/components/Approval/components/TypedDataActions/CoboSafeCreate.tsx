@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Col, Row, Table } from '../Actions/components/Table';
 import * as Values from '../Actions/components/Values';
 import LogoWithText from '../Actions/components/LogoWithText';
-import { TypedDataActionData } from './utils';
+import { ParsedTypedDataActionData } from '@rabby-wallet/rabby-action';
 import { Text, View } from 'react-native';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
@@ -11,7 +11,7 @@ import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
 const CoboSafeCreate = ({
   data,
 }: {
-  data: TypedDataActionData['coboSafeCreate'];
+  data: ParsedTypedDataActionData['coboSafeCreate'];
 }) => {
   const { t } = useTranslation();
   const commonStyle = useCommonStyle();

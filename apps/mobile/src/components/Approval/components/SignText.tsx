@@ -13,13 +13,17 @@ import { ParseTextResponse } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { useTranslation } from 'react-i18next';
-import { dappService, preferenceService } from '@/core/services';
+import {
+  dappService,
+  keyringService,
+  preferenceService,
+} from '@/core/services';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import {
-  formatSecurityEngineCtx,
   parseAction,
-  TextActionData,
-} from './TextActions/utils';
+  formatSecurityEngineContext,
+  ParsedTextActionData,
+} from '@rabby-wallet/rabby-action';
 import { hex2Text } from '@/constant/tx';
 import { openapi, testOpenapi } from '@/core/request';
 import { apiSecurityEngine } from '@/core/apis';
@@ -33,6 +37,8 @@ import { getKRCategoryByType } from '@/utils/transaction';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { stats } from '@/utils/stats';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
+import { CHAINS } from '@debank/common';
+import { getTimeSpan } from '@/utils/time';
 
 interface SignTextProps {
   data: string[];
@@ -60,7 +66,7 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   const [footerShowShadow, setFooterShowShadow] = useState(false);
   const [engineResults, setEngineResults] = useState<Result[]>([]);
   const [parsedActionData, setParsedActionData] =
-    useState<TextActionData | null>(null);
+    useState<ParsedTextActionData | null>(null);
   const { executeEngine } = useSecurityEngine();
   const { userData, rules, currentTx, ...apiApprovalSecurityEngine } =
     useApprovalSecurityEngine();
@@ -217,9 +223,17 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
   };
 
   const executeSecurityEngine = async () => {
-    const ctx = formatSecurityEngineCtx({
-      actionData: parsedActionData!,
+    const ctx = await formatSecurityEngineContext({
+      type: 'text',
+      actionData: parsedActionData || ({} as any),
       origin: session.origin,
+      isTestnet: false,
+      chainId: findChain({ id: chainId })?.serverId || CHAINS.ETH.serverId,
+      requireData: null,
+      provider: {
+        getTimeSpan,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+      },
     });
     const result = await executeEngine(ctx);
     setEngineResults(result);
@@ -273,11 +287,24 @@ export const SignText = ({ params }: { params: SignTextProps }) => {
     signText: string,
     sender: string,
   ) => {
-    const parsed = parseAction(textActionData, signText, sender);
+    const parsed = parseAction({
+      type: 'text',
+      data: textActionData.action,
+      text: signText,
+      sender,
+    });
     setParsedActionData(parsed);
-    const ctx = formatSecurityEngineCtx({
+    const ctx = await formatSecurityEngineContext({
+      type: 'text',
       actionData: parsed,
       origin: params.session.origin,
+      chainId: findChain({ id: chainId })?.serverId || CHAINS.ETH.serverId,
+      isTestnet: false,
+      requireData: null,
+      provider: {
+        getTimeSpan,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+      },
     });
     const result = await executeEngine(ctx);
     setEngineResults(result);

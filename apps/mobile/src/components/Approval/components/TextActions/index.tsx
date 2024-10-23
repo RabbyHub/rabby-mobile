@@ -1,7 +1,7 @@
 import { Result } from '@rabby-wallet/rabby-security-engine';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TextActionData, getActionTypeText } from './utils';
+import { getActionTypeText } from './utils';
 import CreateKey from './CreateKey';
 import VerifyAddress from './VerifyAddress';
 import { NoActionAlert } from '../NoActionAlert/NoActionAlert';
@@ -23,6 +23,7 @@ import { Card } from '../Actions/components/Card';
 import { OriginInfo } from '../OriginInfo';
 import { Divide } from '../Actions/components/Divide';
 import { getActionsStyle } from '../Actions';
+import { ParsedTextActionData } from '@rabby-wallet/rabby-action';
 
 export const getMessageStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -77,7 +78,7 @@ const Actions = ({
   origin,
   originLogo,
 }: {
-  data: TextActionData | null;
+  data: ParsedTextActionData | null;
   engineResults: Result[];
   raw: string;
   message: string;

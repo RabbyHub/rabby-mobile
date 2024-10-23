@@ -22,7 +22,9 @@ import {
   GasLessConfig,
   GasLessNotEnough,
   GasLessActivityToSign,
+  GasAccountTips,
 } from './GasLessComponents';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
 
 interface Props extends Omit<ActionGroupProps, 'account'> {
   chain?: Chain;
@@ -44,6 +46,14 @@ interface Props extends Omit<ActionGroupProps, 'account'> {
   Header?: React.ReactNode;
   gasLessConfig?: GasLessConfig;
   isGasNotEnough?: boolean;
+  gasMethod?: 'native' | 'gasAccount';
+  gasAccountCost?: GasAccountCheckResult;
+  onChangeGasAccount?: () => void;
+  isGasAccountLogin?: boolean;
+  isWalletConnect?: boolean;
+  gasAccountCanPay?: boolean;
+  noCustomRPC?: boolean;
+  canGotoUseGasAccount?: boolean;
 }
 
 const getStyles = (colors: AppColorsVariants) =>
@@ -181,6 +191,14 @@ export const FooterBar: React.FC<Props> = ({
   gasLessFailedReason,
   isWatchAddr,
   gasLessConfig,
+  gasAccountCost,
+  gasMethod,
+  onChangeGasAccount,
+  isGasAccountLogin,
+  isWalletConnect,
+  gasAccountCanPay,
+  noCustomRPC,
+  canGotoUseGasAccount,
   ...props
 }) => {
   const [account, setAccount] = React.useState<Account>();
@@ -223,6 +241,8 @@ export const FooterBar: React.FC<Props> = ({
     });
     return map;
   }, [engineResults]);
+
+  const payGasByGasAccount = gasMethod === 'gasAccount';
 
   const handleClickRule = (id: string) => {
     const rule = rules.find(item => item.id === id);
@@ -286,10 +306,23 @@ export const FooterBar: React.FC<Props> = ({
         />
         <ActionGroup
           account={account}
-          gasLess={useGasLess}
+          gasLess={useGasLess && !payGasByGasAccount}
           {...props}
-          disabledProcess={useGasLess ? false : props.disabledProcess}
-          enableTooltip={useGasLess ? false : props.enableTooltip}
+          disabledProcess={
+            payGasByGasAccount
+              ? !gasAccountCanPay ||
+                (!!securityLevel && !!hasUnProcessSecurityResult)
+              : useGasLess
+              ? false
+              : props.disabledProcess
+          }
+          enableTooltip={
+            payGasByGasAccount
+              ? false
+              : useGasLess
+              ? false
+              : props.enableTooltip
+          }
           gasLessThemeColor={
             isDarkTheme ? gasLessConfig?.dark_color : gasLessConfig?.theme_color
           }
@@ -330,8 +363,9 @@ export const FooterBar: React.FC<Props> = ({
         )}
 
         {showGasLess &&
-          (!securityLevel || !hasUnProcessSecurityResult) &&
-          (canUseGasLess ? (
+        !payGasByGasAccount &&
+        (!securityLevel || !hasUnProcessSecurityResult) ? (
+          canUseGasLess ? (
             <GasLessActivityToSign
               gasLessEnable={useGasLess}
               handleFreeGas={() => {
@@ -340,8 +374,22 @@ export const FooterBar: React.FC<Props> = ({
               gasLessConfig={gasLessConfig}
             />
           ) : isWatchAddr ? null : (
-            <GasLessNotEnough gasLessFailedReason={gasLessFailedReason} />
-          ))}
+            <GasLessNotEnough
+              gasLessFailedReason={gasLessFailedReason}
+              canGotoUseGasAccount={canGotoUseGasAccount}
+              onChangeGasAccount={onChangeGasAccount}
+            />
+          )
+        ) : null}
+
+        {payGasByGasAccount && !gasAccountCanPay ? (
+          <GasAccountTips
+            gasAccountCost={gasAccountCost}
+            isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={isWalletConnect}
+            noCustomRPC={noCustomRPC}
+          />
+        ) : null}
       </View>
     </View>
   );

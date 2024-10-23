@@ -3,7 +3,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ParsedActionData, SendRequireData } from './utils';
+import { ParsedActionData, SendRequireData } from '@rabby-wallet/rabby-action';
 import { formatTokenAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Table, Col, Row } from './components/Table';

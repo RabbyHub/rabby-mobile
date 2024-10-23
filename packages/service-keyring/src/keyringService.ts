@@ -137,6 +137,7 @@ export class KeyringService extends RNEventEmitter {
     this.memStore.updateState({ isUnlocked: true });
   }
 
+  // TODO: add strict check for newPassowrd in logic layer too.
   async updatePassword(oldPassword: string, newPassword: string) {
     await this.verifyPassword(oldPassword);
 

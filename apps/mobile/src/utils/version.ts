@@ -8,7 +8,7 @@ import { toast } from '@/components/Toast';
 import { devLog } from './logger';
 
 import { AppBuildChannel, BUILD_CHANNEL } from '@/constant/env';
-import { APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
+import { PROD_APPLICATION_ID, APP_URLS, APP_VERSIONS } from '@/constant';
 import { sleep } from './async';
 
 export type RemoteVersionRes = {
@@ -54,7 +54,7 @@ function getLatestApkPath() {
   const targetBase = `${RNFS.CachesDirectoryPath}/install`;
   RNFS.mkdir(targetBase);
 
-  return `${targetBase}/${APPLICATION_ID}.apk`;
+  return `${targetBase}/${PROD_APPLICATION_ID}.apk`;
 }
 export type DownloadLatestApkResult = {
   downloadResult: RNFS.DownloadResult;
@@ -99,16 +99,17 @@ export async function downloadLatestApk(options?: {
   });
 }
 
-export async function getUpgradeInfo() {
+export async function getUpgradeInfo(options?: { forceLocalVersion?: string }) {
   // use version from package.json on devlopment
-  const localVersion = APP_VERSIONS.forCheckUpgrade;
+  const localVersion =
+    options?.forceLocalVersion || APP_VERSIONS.forCheckUpgrade;
 
   // allow store check failed, fallback to compare with version.json
   const storeVersion = await Promise.race([
     VersionCheck.getLatestVersion({
       ...(isAndroid && {
         provider: 'playStore',
-        packageName: APPLICATION_ID,
+        packageName: PROD_APPLICATION_ID,
       }),
       // {
       //   provider: 'appStore',
@@ -129,9 +130,9 @@ export async function getUpgradeInfo() {
     selfHostUpgrade = {};
   }
 
-  const storeUrl = await VersionCheck.getStoreUrl().catch(
-    () => APP_URLS.STORE_URL,
-  );
+  const storeUrl = await VersionCheck.getStoreUrl({
+    packageName: PROD_APPLICATION_ID,
+  }).catch(() => APP_URLS.STORE_URL);
 
   const finalRemoteInfo: MergedRemoteVersion = {
     version: storeVersion || selfHostUpgrade.version || localVersion,

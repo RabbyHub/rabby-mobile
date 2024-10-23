@@ -32,12 +32,17 @@ export type RootStackParamsList = {
     isExistedKR?: boolean;
   };
   [RootNames.Scanner]?: {};
+  [RootNames.RestoreFromCloud]?: {};
 };
 
 export type BottomTabParamsList = {
   [RootNames.Home]?: {};
   [RootNames.Dapps]?: {};
   [RootNames.Points]?: {};
+  [RootNames.History]?: {};
+  [RootNames.Settings]?: {
+    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
+  };
 };
 
 type GetStartedNavigatorParamsList = {
@@ -71,6 +76,7 @@ export type AddressNavigatorParamList = {
   [RootNames.ImportPrivateKey]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.AddMnemonic]?: {};
+  [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
   [RootNames.CreateMnemonicBackup]?: {};
   [RootNames.CreateMnemonicVerify]?: {};
@@ -80,6 +86,7 @@ export type AddressNavigatorParamList = {
   [RootNames.BackupMnemonic]?: {
     data: string;
   };
+  [RootNames.RestoreFromCloud]?: {};
 };
 
 export type AccountNavigatorParamList = {
@@ -87,7 +94,6 @@ export type AccountNavigatorParamList = {
 };
 
 export type TransactionNavigatorParamList = {
-  [RootNames.History]?: {};
   [RootNames.HistoryFilterScam]?: {};
   [RootNames.Send]?: {};
   [RootNames.SendNFT]?: {
@@ -98,21 +104,18 @@ export type TransactionNavigatorParamList = {
   [RootNames.GnosisTransactionQueue]?: {};
   [RootNames.Receive]?: {};
   [RootNames.Approvals]?: {};
-  [RootNames.GasTopUp]?: {};
   [RootNames.Bridge]?: {};
+  [RootNames.GasAccount]?: {};
 };
 
 export type SettingNavigatorParamList = {
-  [RootNames.Settings]?: {
-    // enterActionType?: 'setBiometrics' | 'setAutoLockTime';
-  };
   [RootNames.ProviderControllerTester]?: {};
   [RootNames.SetPassword]?:
     | {
         actionAfterSetup: 'backScreen';
         replaceStack: typeof RootNames.StackAddress;
         replaceScreen:
-          | typeof RootNames.CreateMnemonic
+          | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
           | typeof RootNames.ImportMnemonic;
       }

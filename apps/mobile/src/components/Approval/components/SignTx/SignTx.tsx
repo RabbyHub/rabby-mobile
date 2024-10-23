@@ -30,15 +30,21 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { WaitingSignComponent } from '../map';
 import { isHexString } from 'ethereumjs-util';
 import {
-  ActionRequireData,
-  ParsedActionData,
   fetchActionRequiredData,
-  formatSecurityEngineCtx,
   parseAction,
-} from '../Actions/utils';
-import { openapi } from '@/core/request';
-import { apiCustomRPC, apiProvider, apiSecurityEngine } from '@/core/apis';
+  formatSecurityEngineContext,
+  ActionRequireData,
+  ParsedTransactionActionData,
+} from '@rabby-wallet/rabby-action';
+import { openapi, testOpenapi } from '@/core/request';
 import {
+  apiCustomRPC,
+  apiKeyring,
+  apiProvider,
+  apiSecurityEngine,
+} from '@/core/apis';
+import {
+  ALIAS_ADDRESS,
   DEFAULT_GAS_LIMIT_RATIO,
   GAS_TOP_UP_ADDRESS,
   SAFE_GAS_LIMIT_RATIO,
@@ -48,8 +54,10 @@ import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine
 import { SUPPORT_1559_KEYRING_TYPE } from '@/constant/tx';
 import {
   dappService,
+  keyringService,
   preferenceService,
   transactionHistoryService,
+  whitelistService,
 } from '@/core/services';
 import { toast } from '@/components/Toast';
 import RuleDrawer from '../SecurityEngine/RuleDrawer';
@@ -86,6 +94,9 @@ import { SignTestnetTx } from '../SignTestnetTx';
 import { GasLessConfig } from '../FooterBar/GasLessComponents';
 import { CustomRPCErrorModal } from './CustomRPCErrorModal';
 import { useCustomRPC } from '@/hooks/useCustomRPC';
+import { findChain, isTestnet } from '@/utils/chain';
+import { getTimeSpan } from '@/utils/time';
+import { useGasAccountTxsCheck } from '@/screens/GasAccount/hooks/checkTsx';
 
 interface SignTxProps<TData extends any[] = any[]> {
   params: {
@@ -195,7 +206,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       contract_protocol_name: '',
     },
   });
-  const [actionData, setActionData] = useState<ParsedActionData>({});
+  const [actionData, setActionData] = useState<ParsedTransactionActionData>({});
   const [actionRequireData, setActionRequireData] =
     useState<ActionRequireData>(null);
   const { t } = useTranslation();
@@ -417,20 +428,45 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
 
   const [noCustomRPC, setNoCustomRPC] = useState(true);
 
-  // useEffect(() => {
-  //   const hasCustomRPC = async () => {
-  //     if (chain?.enum) {
-  //       const b = await wallet.hasCustomRPC(chain?.enum);
-  // if (b) {
-  //   setGasLessFailedReason(
-  //     t('page.signFooterBar.gasless.customRpcUnavailableTip')
-  //   );
-  // }
-  //       setNoCustomRPC(!b);
-  //     }
-  //   };
-  //   hasCustomRPC();
-  // }, [chain?.enum]);
+  const txs = useMemo(() => {
+    return [
+      {
+        ...tx,
+        nonce: realNonce,
+        gasPrice: tx.gasPrice || tx.maxFeePerGas,
+        gas: gasLimit,
+      },
+    ] as Tx[];
+  }, [tx, realNonce, gasLimit]);
+
+  const {
+    gasAccountCost,
+    gasMethod,
+    setGasMethod,
+    isGasAccountLogin,
+    gasAccountCanPay,
+    canGotoUseGasAccount,
+  } = useGasAccountTxsCheck({
+    isReady,
+    txs,
+    noCustomRPC,
+    isSupportedAddr,
+  });
+
+  useEffect(() => {
+    const hasCustomRPC = async () => {
+      if (chain?.enum) {
+        const b = await apiCustomRPC.hasCustomRPC(chain?.enum);
+        if (b) {
+          setGasLessFailedReason(
+            t('page.signFooterBar.gasless.customRpcUnavailableTip'),
+          );
+        }
+        setNoCustomRPC(!b);
+      }
+    };
+    hasCustomRPC();
+  }, [chain?.enum, t]);
   const [gasLessConfig, setGasLessConfig] = useState<GasLessConfig | undefined>(
     undefined,
   );
@@ -552,35 +588,55 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       })
       .then(async actionData => {
         return preExecPromise.then(async res => {
-          const parsed = parseAction(
-            actionData.action,
-            res.balance_change,
-            {
-              ...tx,
-              gas: '0x0',
-              nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
-              value: tx.value || '0x0',
-            },
-            res.pre_exec_version,
-            res.gas.gas_used,
-          );
-          const requiredData = await fetchActionRequiredData({
-            origin: origin || '',
-            actionData: parsed,
-            contractCall: actionData.contract_call,
-            chainId: chain.serverId,
-            address,
+          const parsed = parseAction({
+            type: 'transaction',
+            data: actionData.action,
+            balanceChange: res.balance_change,
             tx: {
               ...tx,
               gas: '0x0',
               nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
               value: tx.value || '0x0',
             },
+            preExecVersion: res.pre_exec_version,
+            gasUsed: res.gas.gas_used,
+            sender: tx.from,
           });
-          const ctx = formatSecurityEngineCtx({
+          const requiredData = await fetchActionRequiredData({
+            type: 'transaction',
+            actionData: parsed,
+            contractCall: actionData.contract_call,
+            chainId: chain.serverId,
+            sender: address,
+            walletProvider: {
+              hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
+              getWhitelist: async () => whitelistService.getWhitelist(),
+              isWhitelistEnabled: async () =>
+                whitelistService.isWhitelistEnabled(),
+              getPendingTxsByNonce: async (...args) =>
+                transactionHistoryService.getPendingTxsByNonce(...args),
+              findChain,
+              ALIAS_ADDRESS,
+            },
+            tx: {
+              ...tx,
+              gas: '0x0',
+              nonce: (updateNonce ? recommendNonce : tx.nonce) || '0x1',
+              value: tx.value || '0x0',
+            },
+            apiProvider: isTestnet(chain.serverId) ? testOpenapi : openapi,
+          });
+          const ctx = await formatSecurityEngineContext({
+            type: 'transaction',
             actionData: parsed,
             requireData: requiredData,
             chainId: chain.serverId,
+            isTestnet: isTestnet(chain.serverId),
+            provider: {
+              getTimeSpan,
+              hasAddress: keyringService.hasAddress.bind(keyringService),
+            },
           });
           const result = await executeEngine(ctx);
           setEngineResults(result);
@@ -770,7 +826,8 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         pushType: pushInfo.type,
         lowGasDeadline: pushInfo.lowGasDeadline,
         reqId,
-        isGasLess: useGasLess,
+        isGasLess: gasMethod === 'native' ? useGasLess : false,
+        isGasAccount: gasAccountCanPay,
       });
 
       return;
@@ -787,7 +844,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       category: KEYRING_CATEGORY_MAP[currentAccount.type],
       preExecSuccess:
         checkErrors.length > 0 || !txDetail?.pre_exec.success ? false : true,
-      createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+      createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
       source: params?.$ctx?.ga?.source || '',
       trigger: params?.$ctx?.ga?.trigger || '',
     });
@@ -960,7 +1017,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           gas: gasLimit,
         },
         usdValue: Math.max(sendUsdValue.toNumber(), receiveUsdValue.toNumber()),
-        preExecSuccess: txDetail?.pre_exec.success || false,
+        preExecSuccess: txDetail?.pre_exec?.success || false,
         gasUsed: txDetail?.gas?.gas_used || 0,
       });
 
@@ -969,7 +1026,13 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
       setGasLessLoading(false);
       setGasLessConfig(
         res.is_gasless && res?.promotion?.config
-          ? res?.promotion?.config
+          ? res.promotion.id === '0ca5aaa5f0c9217e6f45fe1d109c24fb'
+            ? {
+                ...res.promotion.config,
+                dark_color: '',
+                theme_color: '',
+              }
+            : res?.promotion?.config
           : undefined,
       );
     } catch (error) {
@@ -1117,7 +1180,7 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
         type: currentAccount.brandName,
         category: KEYRING_CATEGORY_MAP[currentAccount.type],
         chainId: chain.serverId,
-        createBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
+        createdBy: params?.$ctx?.ga ? 'rabby' : 'dapp',
         source: params?.$ctx?.ga?.source || '',
         trigger: params?.$ctx?.ga?.trigger || '',
       });
@@ -1208,10 +1271,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
   });
 
   const executeSecurityEngine = async () => {
-    const ctx = formatSecurityEngineCtx({
+    const ctx = await formatSecurityEngineContext({
+      type: 'transaction',
       actionData: actionData,
       requireData: actionRequireData,
       chainId: chain.serverId,
+      isTestnet: isTestnet(chain.serverId),
+      provider: {
+        getTimeSpan,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+      },
     });
     const result = await executeEngine(ctx);
     setEngineResults(result);
@@ -1413,6 +1482,9 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
           <FooterBar
             Header={
               <GasSelectorHeader
+                gasAccountCost={gasAccountCost}
+                gasMethod={gasMethod}
+                onChangeGasMethod={setGasMethod}
                 pushType={pushInfo.type}
                 disabled={isGnosisAccount || isCoboArugsAccount}
                 isReady={isReady}
@@ -1454,6 +1526,16 @@ const SignMainnetTx = ({ params, origin }: SignTxProps) => {
                 gasPriceMedian={gasPriceMedian}
               />
             }
+            noCustomRPC={noCustomRPC}
+            gasMethod={gasMethod}
+            gasAccountCost={gasAccountCost}
+            gasAccountCanPay={gasAccountCanPay}
+            canGotoUseGasAccount={canGotoUseGasAccount}
+            isGasAccountLogin={isGasAccountLogin}
+            isWalletConnect={
+              currentAccountType === KEYRING_TYPE.WalletConnectKeyring
+            }
+            onChangeGasAccount={() => setGasMethod('gasAccount')}
             isWatchAddr={
               currentAccountType === KEYRING_TYPE.WatchAddressKeyring
             }

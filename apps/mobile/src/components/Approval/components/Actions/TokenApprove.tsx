@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { TokenItem } from '@rabby-wallet/rabby-api/dist/types';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveTokenRequireData, ParsedActionData } from './utils';
+import {
+  ApproveTokenRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { ellipsisOverflowedText } from '@/utils/text';
 import { getCustomTxParamsData } from '@/utils/transaction';
@@ -157,7 +160,7 @@ const ApproveAmountModal = ({
             value={customAmount}
             onChange={e => handleChange(e.nativeEvent.text)}
             // autoFocus
-            style={styles.inputText}
+            customStyle={styles.inputText}
             addonAfter={
               <Text style={styles.addonText}>
                 ≈{' '}
@@ -366,16 +369,6 @@ const TokenApprove = ({
             engineResult={engineResultMap['1022']}
             dangerText={t('page.signTx.tokenApprove.eoaAddress')}
             title={t('page.signTx.addressTypeTitle')}
-          />
-
-          <SecurityListItem
-            id="1025"
-            title={t('page.signTx.interacted')}
-            engineResult={engineResultMap['1025']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
           />
 
           <SecurityListItem

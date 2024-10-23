@@ -16,7 +16,6 @@ import { ImportMoreAddressScreen } from '../Address/ImportMoreAddressScreen';
 import { ImportMoreAddressScreenButton } from '../Address/ImportMoreAddressScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
 import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
-import { ScannerButton } from '../Address/ScannerButton';
 import { ImportSeedPhraseScreen } from '../Address/ImportSeedPhraseScreen';
 import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
 import { CreateSeedPhraseRickCheckScreen } from '../Address/CreateSeedPhraseRiskCheckScreen';
@@ -25,6 +24,10 @@ import { CreateSeedPhraseVerifyScreen } from '../Address/CreateSeedPhraseVerifyS
 import { BackSeedPhraseScreen } from '../Address/BackSeedPhraseScreen';
 import { AddSeedPhraseScreen } from '../Address/AddSeedPhraseScreen/AddSeedPhraseScreen';
 import { strings } from '@/utils/i18n';
+import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen';
+import { CloudBackupButton } from '../Address/CloudBackupButton';
+import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
+import { IS_IOS } from '@/core/native/utils';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -64,17 +67,19 @@ export function AddressNavigator() {
           title: 'Current Address',
           headerRight: ({ tintColor }) => (
             <CustomTouchableOpacity
+              style={{
+                borderRadius: 4,
+                backgroundColor: colors['neutral-card-1'],
+                paddingHorizontal: 6,
+                paddingVertical: 4,
+              }}
               hitSlop={hitSlop}
               onPress={() => {
                 navigation.push(RootNames.StackAddress, {
                   screen: RootNames.ImportNewAddress,
                 });
               }}>
-              <RcIconHeaderAddAccount
-                width={24}
-                height={24}
-                color={tintColor}
-              />
+              <RcIconHeaderAddAccount width={20} height={20} />
             </CustomTouchableOpacity>
           ),
         })}
@@ -143,7 +148,6 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
-          headerRight: ScannerButton,
         }}
       />
       <AddressStack.Screen
@@ -155,8 +159,12 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
-          headerRight: ScannerButton,
+          headerRight: CloudBackupButton,
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.PreCreateMnemonic}
+        component={PreCreateSeedPhraseScreen}
       />
       <AddressStack.Screen
         name={RootNames.CreateMnemonic}
@@ -220,6 +228,15 @@ export function AddressNavigator() {
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.RestoreFromCloud}
+        component={RestoreFromCloud}
+        options={mergeScreenOptions({
+          headerTitle: 'Restore from ' + (IS_IOS ? 'iCloud' : 'Google Drive'),
+          headerShadowVisible: false,
+          headerShown: true,
+        })}
       />
     </AddressStack.Navigator>
   );

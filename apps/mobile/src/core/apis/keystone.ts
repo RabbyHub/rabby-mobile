@@ -74,7 +74,6 @@ export async function getCurrentUsedHDPathType() {
   const keyring = await getKeyring<KeystoneKeyring>(
     KEYRING_TYPE.KeystoneKeyring,
   );
-  await keyring.readKeyring();
   const res = await keyring.getCurrentUsedHDPathType();
   return res as unknown as LedgerHDPathType;
 }
@@ -154,4 +153,12 @@ export async function submitQRHardwareSignature(
   );
 
   return keyring.submitSignature(requestId, cbor);
+}
+
+export async function getMaxAccountLimit() {
+  const keyring = await getKeyring<KeystoneKeyring>(
+    KEYRING_TYPE.KeystoneKeyring,
+  );
+
+  return keyring.getMaxAccountLimit();
 }

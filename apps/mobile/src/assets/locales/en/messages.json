@@ -35,9 +35,9 @@
       "gasLimitNotEnough": "Gas limit is less than 21000. Transaction can't be submitted",
       "gasLimitLessThanExpect": "Gas limit is low. There is 1% chance that the transaction may fail.",
       "gasLimitLessThanGasUsed": "Gas limit is too low. There is 95% chance that the transaction may fail.",
-      "nativeTokenNotEngouthForGas": "Gas balance is not enough for transaction",
+      "nativeTokenNotEngouthForGas": "Gas balance is not enough",
       "nonceLowerThanExpect": "Nonce is too low, the minimum should be {{0}}",
-      "canOnlyUseImportedAddress": "You can only use imported addresses to sign",
+      "canOnlyUseImportedAddress": "You cannot sign transactions with a watch-only address.",
       "multiSigChainNotMatch": "Multi-signature addresses are not on this chain and cannot initiate transactions",
       "safeAddressNotSupportChain": "Current safe address is not supported on {{0}} chain",
       "noGasRequired": "No gas required",
@@ -59,6 +59,14 @@
       "myNativeTokenBalance": "My Gas balance: ",
       "gasLimitEmptyAlert": "Please input gas limit",
       "gasLimitMinValueAlert": "Gas limit should be more than 21000",
+      "gasAccount": {
+        "totalCost": "Total cost: ",
+        "currentTxCost": "Gas amount sent to your address: ",
+        "gasCost": "Gas cost for transferring gas to your address: ",
+        "estimatedGas": "Estimated Gas: ",
+        "maxGas": "Max Gas: ",
+        "sendGas": "The Gas transfer to you for current transaction: "
+      },
       "balanceChange": {
         "successTitle": "Simulation Results",
         "failedTitle": "Simulation Failed",
@@ -100,6 +108,15 @@
       },
       "wrapToken": "Wrap Token",
       "unwrap": "Unwrap Token",
+      "transferOwner": {
+        "title": "Transfer Assets Ownership",
+        "description": "Description",
+        "transferTo": "Transfer to"
+      },
+      "swapLimitPay": {
+        "title": "Swap Token Limit Pay",
+        "maxPay": "Maximum pay"
+      },
       "send": {
         "title": "Send Token",
         "sendToken": "Send token",
@@ -332,17 +349,28 @@
       "keystoneConnected": "Keystone is connected",
       "ledgerConnected": "Ledger is connected",
       "importedByLedger": "Imported by Ledger",
-      "signAndSubmitButton": "Sign and Create",
+      "signAndSubmitButton": "Sign",
       "confirm": "Confirm",
       "confirmWithPassword": "Confirm with Password",
       "gasless": {
-        "unavailable": "Gas is not enough and not qualify for Free Gas",
+        "unavailable": "Gas Balance is not enough",
         "notEnough": "Gas balance is not enough",
-        "GetFreeGasToSign": "Get Free Gas to sign",
+        "GetFreeGasToSign": "Get Free Gas",
         "rabbyPayGas": "Rabby'll pay for the gas needed – just sign on",
         "customRpcUnavailableTip": "Custom RPCs are not supported for Free Gas",
         "walletConnectUnavailableTip": "Mobile wallet connected via WalletConnect is not supported for Free Gas",
         "watchUnavailableTip": "Watch-only address is not supported for Free Gas"
+      },
+      "gasAccount": {
+        "customRPC": "Not supported when using custom RPC",
+        "notEnough": "GasAccount is not enough",
+        "useGasAccount": "Use GasAccount",
+        "WalletConnectTips": "WalletConnect is not supported by GasAccount",
+        "chainNotSupported": "This chain is not supported by GasAccount",
+        "loginFirst": "Please log in to GasAccount first",
+        "login": "Log in",
+        "gotIt": "Got it",
+        "deposit": "Deposit"
       },
       "walletConnect": {
         "connectedButCantSign": "Connected but unable to sign.",
@@ -625,7 +653,7 @@
       "sectionTo": {
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search",
+        "searchInputPlaceholder": "Enter an address or scan",
         "title": "To"
       },
       "sendButton": "Send",
@@ -677,7 +705,7 @@
         "title": "To",
         "addrValidator__empty": "Please input address",
         "addrValidator__invalid": "This address is invalid",
-        "searchInputPlaceholder": "Enter address or search"
+        "searchInputPlaceholder": "Enter an address or scan"
       },
       "nftInfoFieldLabel": {
         "Collection": "Collection",
@@ -881,7 +909,7 @@
       "two-step-approve-details": "Token USDT requires 2 transactions to change allowance.First you would need to reset allowance to zero, and only then set new allowance value.",
       "process-with-two-step-approve": "Proceed with two step approve",
       "fetch-best-quote": "Fetching the Best quote",
-      "usd-after-fees": "≈ {{usd}} after fees",
+      "usd-after-fees": "≈ {{usd}} ",
       "no-fees-for-wrap": "No Rabby fees for Wrap",
       "No-available-quote": "No available quote",
       "price-impact": "Price Impact",
@@ -924,7 +952,7 @@
       "need-to-approve-token-before-bridge": "Need to approve token before bridge",
       "via-bridge": "via {{bridge}}",
       "duration": "{{duration}} min",
-      "estimated-value": "≈ {{value}} after fees",
+      "estimated-value": "≈ {{value}} ",
       "best": "Best",
       "bridge-cost": "Bridge cost",
       "rabby-fee": "Rabby fee",
@@ -1039,7 +1067,7 @@
         "metamaskTooltip": "You prefer to use MetaMask with this dapp. Update this settings anytime in Settings > MetaMask Preferred Dapps",
         "connected": "Connected",
         "notConnected": "Not connected",
-        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp’s webpage.",
+        "connectedDapp": "Rabby is not connected to the current Dapp.To connect, find and click the connect button on the Dapp's webpage.",
         "noDappFound": "No Dapp found",
         "disconnectAll": "Disconnect All",
         "disconnectRecentlyUsed": {
@@ -1097,7 +1125,7 @@
         "goToSwap": "Go to Swap",
         "claim": "Claim",
         "viewYourClaimCode": "View your claim code on DeBank",
-        "noCode": "You haven’t activated claim code for this address",
+        "noCode": "You haven't activated claim code for this address",
         "freeGasNoCode": "Please click the button below to visit DeBank and get the claim code using your current address first.",
         "learnMoreOnDebank": "Learn more on DeBank",
         "rabbyValuedUserNo": "Rabby Valued User No.{{num}}",
@@ -1206,7 +1234,7 @@
           "fractionTips": "Calculate based on the price of the linked ERC20 token."
         },
         "tokenButton": {
-          "subTitle": "The token in this list will not be added to total balance"
+          "subTitle": "Tokens on this list will not be added to the total balance."
         },
         "table": {
           "assetAmount": "Asset / Amount",
@@ -1390,7 +1418,33 @@
         "inputInvalidCount_one": "1 input do not conform to Seed Phrase norms, please check.",
         "inputInvalidCount_other": "{{count}} inputs do not conform to Seed Phrase norms, please check.",
         "passphrase": "Passphrase",
-        "maxAccountCount": "Maximum 50 addresses each time"
+        "maxAccountCount": "Maximum 50 addresses each time",
+        "createdSuccess": "Your seed phrase has been created",
+        "chooseBackupMethodTitle": "Choose a backup method",
+        "chooseBackupMethodDesc": "Backups let you restore your wallet if you delete the app or lose your device.",
+        "icloudBackup": "iCloud Backup",
+        "googleDriveBackup": "Google Drive Backup",
+        "manuallyBackup": "Manually Backup",
+        "backupUnlockTitle": "Encrypt with App Password",
+        "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
+        "backupUnlockPlaceholder": "Enter the Password to Confirm",
+        "backupUnlockButton": "Continue",
+        "backupUploadToICloud": "Backing Up to iCloud...",
+        "backupUploadToGDrive": "Backing Up to Google Drive...",
+        "backupSuccessICloud": "Backed Up to iCloud",
+        "backupSuccessGDrive": "Backed Up to Google Drive",
+        "backupFailedTitle": "Backup Failed",
+        "backupFailedButton": "Retry",
+        "backupRestoreLoadingText": "Searching for backup seed phrase...",
+        "backupRestoreTitle": "{{count}} seed phrase found",
+        "backupRestoreButton": "Import Seed Phrase",
+        "backupRestoreUnlockTitle": "Enter Backup Password",
+        "backupRestoreUnlockDesc": "Use the same password you set to encrypt your backups.",
+        "backupRestoreDownloadTitle": "Importing Seed Phrase...",
+        "backupRestoreEmpty": "No backup seed phrase found",
+        "backupRestoreImported": "Imported",
+        "backupErrorCloudNotAvailable": "iCloud unavailable",
+        "backupRestoreCreatedAt": "Backup Time: "
       },
       "metamask": {
         "step1": " Export seed phrase or private key from MetaMask \n <1>Click to view tutorial <1/></1>",
@@ -1435,15 +1489,15 @@
         "imported": "Already imported",
         "ble": {
           "title": "Connect Ledger",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "scan": {
           "title": "Searching for Device",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X"
+          "description": "Turn on Bluetooth and unlock Ledger"
         },
         "notFound": {
           "title": "Device Not Found",
-          "description": "Turn on Bluetooth and unlock Ledger Nano X",
+          "description": "Turn on Bluetooth and unlock Ledger",
           "buttonText": "View Ledger support tutorial"
         },
         "select": {
@@ -2057,7 +2111,7 @@
       "Predict": {
         "completed": "Transaction Completed",
         "predictFailed": "Packing time prediction failed",
-        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can’t complete"
+        "skipNonce": "Your address has Nonce skipped on Ethereum chain causing current transaction can't complete"
       }
     },
     "dappSearch": {
@@ -2166,9 +2220,110 @@
     },
     "sign": {
       "transactionSpeed": "Transaction Speed"
+    },
+    "miniSignFooterBar": {
+      "signWithLedger": "Sign with Ledger",
+      "status": {
+        "txCreated": "Transaction created",
+        "txSigned": "Signed. Creating transaction",
+        "txSending": "Sending signing request",
+        "txSendings": "Sending signing request({{current}}/{{total}})"
+      }
+    },
+    "gasAccount": {
+      "title": "GasAccount",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "gasExceed": "GasAccount balance cannot exceed $1000",
+      "logout": "Log out current GasAccount",
+      "history": {
+        "noHistory": "No history"
+      },
+      "loginInTip": {
+        "title": "Deposit USDC / USDT",
+        "desc": "Pay Gas Fees on All Chains",
+        "login": "Log in GasAccount",
+        "gotIt": "Got it"
+      },
+      "loginConfirmModal": {
+        "title": "Log in with Current Address",
+        "desc": "Once confirmed you can only log in with this address"
+      },
+      "logoutConfirmModal": {
+        "title": "Log out current GasAccount",
+        "desc": "Once logged out, you will no longer be able to use GasAccount to pay for gas fees.",
+        "logout": "Log out"
+      },
+      "depositPopup": {
+        "title": "Deposit",
+        "desc": "Make a deposit to Rabby's DeBank L2 Account with no extra fees—withdraw anytime.",
+        "amount": "Amount",
+        "token": "Token",
+        "selectToken": "Select Token to Deposit"
+      },
+      "withdrawPopup": {
+        "title": "Withdraw",
+        "desc": "You can withdraw your GasAccount balance to your DeBank L2 Wallet. Log in to your DeBank L2 Wallet to transfer the funds to a supported blockchain as needed.",
+        "amount": "Amount",
+        "to": "To"
+      },
+      "withdrawConfirmModal": {
+        "title": "Transferred to your DeBank L2 Wallet",
+        "button": "View on DeBank"
+      },
+      "GasAccountDepositTipPopup": {
+        "title": "Open GasAccount and Deposit",
+        "gotIt": "Got it"
+      }
     }
   },
   "component": {
+    "gasAccount": {
+      "title": "GasAccount",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "gasExceed": "GasAccount balance cannot exceed $1000",
+      "logout": "Log out current GasAccount",
+      "history": {
+        "noHistory": "No history"
+      },
+      "loginInTip": {
+        "title": "Deposit USDC / USDT",
+        "desc": "Pay Gas Fees on All Chains",
+        "login": "Log in GasAccount",
+        "gotIt": "Got it"
+      },
+      "loginConfirmModal": {
+        "title": "Log in with Current Address",
+        "desc": "Once confirmed you can only log in with this address"
+      },
+      "logoutConfirmModal": {
+        "title": "Log out current GasAccount",
+        "desc": "Once logged out, you will no longer be able to use GasAccount to pay for gas fees.",
+        "logout": "Log out"
+      },
+      "depositPopup": {
+        "title": "Deposit",
+        "desc": "Make a deposit to Rabby's DeBank L2 Account with no extra fees—withdraw anytime.",
+        "amount": "Amount",
+        "token": "Token",
+        "selectToken": "Select Token to Deposit"
+      },
+      "withdrawPopup": {
+        "title": "Withdraw",
+        "desc": "You can withdraw your GasAccount balance to your DeBank L2 Wallet. Log in to your DeBank L2 Wallet to transfer the funds to a supported blockchain as needed.",
+        "amount": "Amount",
+        "to": "To"
+      },
+      "withdrawConfirmModal": {
+        "title": "Transferred to your DeBank L2 Wallet",
+        "button": "View on DeBank APP"
+      },
+      "GasAccountDepositTipPopup": {
+        "title": "Open GasAccount and Deposit",
+        "gotIt": "Got it"
+      }
+    },
     "AccountSearchInput": {
       "noMatchAddress": "No match address",
       "AddressItem": {

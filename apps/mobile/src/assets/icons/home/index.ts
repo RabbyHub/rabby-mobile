@@ -7,7 +7,6 @@ import { default as RcIconSwapCC } from './swap-cc.svg';
 import { default as RcIconReceiveCC } from './receive-cc.svg';
 import { default as RcIconMoreCC } from './more-cc.svg';
 import { default as RcIconApprovalCC } from './approvals-cc.svg';
-import { default as RcIconGasTopUpCC } from './gas-top-up-cc.svg';
 import { default as RcIconHeaderEyeCC } from './header-eye-cc.svg';
 import { default as RcIconHeaderEyeCloseCC } from './header-eye-close-cc.svg';
 import { default as RcIconQueueCC } from './queue-cc.svg';
@@ -32,8 +31,8 @@ export const RcIconHistory = makeThemeIconFromCC(RcIconHistoryCC, {
 export const RcIconHeaderAddAccount = makeThemeIconFromCC(
   RcIconHeaderAddAccountCC,
   {
-    onLight: ThemeColors.light['neutral-title-1'],
-    onDark: ThemeColors.dark['neutral-title-1'],
+    onLight: ThemeColors.light['blue-default'],
+    onDark: ThemeColors.dark['blue-default'],
   },
 );
 
@@ -79,11 +78,6 @@ export const RcIconMore = makeThemeIconFromCC(RcIconMoreCC, {
 });
 
 export const RcIconApproval = makeThemeIconFromCC(RcIconApprovalCC, {
-  onLight: ThemeColors.light['neutral-body'],
-  onDark: ThemeColors.dark['neutral-body'],
-});
-
-export const RcIconGasTopUp = makeThemeIconFromCC(RcIconGasTopUpCC, {
   onLight: ThemeColors.light['neutral-body'],
   onDark: ThemeColors.dark['neutral-body'],
 });

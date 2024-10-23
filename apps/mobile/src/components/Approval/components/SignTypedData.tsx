@@ -7,11 +7,11 @@ import RuleDrawer from './SecurityEngine/RuleDrawer';
 import Actions from './TypedDataActions';
 import {
   parseAction,
-  fetchRequireData,
-  TypedDataRequireData,
-  TypedDataActionData,
-  formatSecurityEngineCtx,
-} from './TypedDataActions/utils';
+  formatSecurityEngineContext,
+  fetchActionRequiredData,
+  ActionRequireData,
+  ParsedTypedDataActionData,
+} from '@rabby-wallet/rabby-action';
 import { Level } from '@rabby-wallet/rabby-security-engine/dist/rules';
 import { findChain, isTestnetChainId } from '@/utils/chain';
 import { Account } from '@/core/services/preference';
@@ -25,7 +25,13 @@ import { Skeleton } from '@rneui/themed';
 import { useApprovalSecurityEngine } from '../hooks/useApprovalSecurityEngine';
 import { apiKeyring, apiSecurityEngine } from '@/core/apis';
 import { parseSignTypedDataMessage } from './SignTypedDataExplain/parseSignTypedDataMessage';
-import { dappService, preferenceService } from '@/core/services';
+import {
+  dappService,
+  keyringService,
+  preferenceService,
+  transactionHistoryService,
+  whitelistService,
+} from '@/core/services';
 import { openapi, testOpenapi } from '@/core/request';
 import { ScrollView, Text, View } from 'react-native';
 import useAsync from 'react-use/lib/useAsync';
@@ -40,6 +46,10 @@ import { adjustV } from '@/utils/gnosis';
 import { apisKeyring } from '@/core/apis/keyring';
 import { useEnterPassphraseModal } from '@/hooks/useEnterPassphraseModal';
 import { TestnetTag } from './TestnetTag';
+import { normalizeTypeData } from './TypedDataActions/utils';
+import { CHAINS } from '@debank/common';
+import { ALIAS_ADDRESS } from '@/constant/gas';
+import { getTimeSpan } from '@/utils/time';
 
 interface SignTypedDataProps {
   method: string;
@@ -92,9 +102,9 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   //   },
   // });
   const [actionRequireData, setActionRequireData] =
-    useState<TypedDataRequireData>(null);
+    useState<ActionRequireData>(null);
   const [parsedActionData, setParsedActionData] =
-    useState<TypedDataActionData | null>(null);
+    useState<ParsedTypedDataActionData | null>(null);
   const [cantProcessReason, setCantProcessReason] =
     useState<ReactNode | null>();
   const securityLevel = useMemo(() => {
@@ -160,7 +170,8 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     if (!isSignTypedDataV1) {
       try {
         const v = JSON.parse(data[1]);
-        return v;
+        const normalized = normalizeTypeData(v);
+        return normalized;
       } catch (error) {
         console.error('parse signTypedData error: ', error);
         return null;
@@ -383,7 +394,7 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
 
   const init = async () => {};
 
-  const getRequireData = async (data: TypedDataActionData) => {
+  const getRequireData = async (data: ParsedTypedDataActionData) => {
     const currentAccount = isGnosis
       ? account
       : await preferenceService.getCurrentAccount();
@@ -397,11 +408,41 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
       }
     }
     if (currentAccount) {
-      const requireData = await fetchRequireData(data, currentAccount.address);
+      let chainServerId: string | undefined;
+      if (data.chainId) {
+        chainServerId = findChain({
+          id: Number(data.chainId),
+        })?.serverId;
+      }
+
+      const requireData = await fetchActionRequiredData({
+        type: 'typed_data',
+        actionData: data,
+        sender: currentAccount.address,
+        chainId: chainServerId || CHAINS.ETH.serverId,
+        walletProvider: {
+          hasPrivateKeyInWallet: apiKeyring.hasPrivateKeyInWallet,
+          hasAddress: keyringService.hasAddress.bind(keyringService),
+          getWhitelist: async () => whitelistService.getWhitelist(),
+          isWhitelistEnabled: async () => whitelistService.isWhitelistEnabled(),
+          getPendingTxsByNonce: async (...args) =>
+            transactionHistoryService.getPendingTxsByNonce(...args),
+          findChain,
+          ALIAS_ADDRESS,
+        },
+        apiProvider: isTestnetChainId(data.chainId) ? testOpenapi : openapi,
+      });
       setActionRequireData(requireData);
-      const ctx = await formatSecurityEngineCtx({
+      const ctx = await formatSecurityEngineContext({
+        type: 'typed_data',
         actionData: data,
         requireData,
+        chainId: chainServerId || CHAINS.ETH.serverId,
+        isTestnet: isTestnetChainId(data.chainId),
+        provider: {
+          getTimeSpan,
+          hasAddress: keyringService.hasAddress.bind(keyringService),
+        },
         origin: params.session.origin,
       });
       const result = await executeEngine(ctx);
@@ -411,9 +452,25 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
   };
 
   const executeSecurityEngine = async () => {
-    const ctx = await formatSecurityEngineCtx({
-      actionData: parsedActionData!,
+    if (!parsedActionData) {
+      return;
+    }
+    let chainServerId: string | undefined;
+    if (parsedActionData.chainId) {
+      chainServerId = findChain({
+        id: Number(parsedActionData.chainId),
+      })?.serverId;
+    }
+    const ctx = await formatSecurityEngineContext({
+      type: 'typed_data',
+      actionData: parsedActionData,
       requireData: actionRequireData,
+      chainId: chainServerId || CHAINS.ETH.serverId,
+      isTestnet: isTestnetChainId(parsedActionData.chainId),
+      provider: {
+        getTimeSpan,
+        hasAddress: keyringService.hasAddress.bind(keyringService),
+      },
       origin: params.session.origin,
     });
     const result = await executeEngine(ctx);
@@ -460,7 +517,12 @@ export const SignTypedData = ({ params }: { params: SignTypedDataProps }) => {
     const sender = isSignTypedDataV1 ? params.data[1] : params.data[0];
     if (!loading) {
       if (typedDataActionData) {
-        const parsed = parseAction(typedDataActionData, signTypedData, sender);
+        const parsed = parseAction({
+          type: 'typed_data',
+          data: typedDataActionData.action,
+          typedData: signTypedData,
+          sender,
+        });
         setParsedActionData(parsed);
         getRequireData(parsed);
       } else {

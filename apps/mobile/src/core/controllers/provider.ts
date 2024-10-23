@@ -128,6 +128,7 @@ interface ApprovalRes extends Tx {
   lowGasDeadline?: number;
   reqId?: string;
   isGasLess?: boolean;
+  isGasAccount?: boolean;
 }
 
 interface Web3WalletPermission {
@@ -437,6 +438,7 @@ class ProviderController extends BaseController {
     const lowGasDeadline = approvalRes.lowGasDeadline;
     const preReqId = approvalRes.reqId;
     const isGasLess = approvalRes.isGasLess || false;
+    const isGasAccount = approvalRes.isGasAccount || false;
 
     let signedTransactionSuccess = false;
     delete txParams.isSend;
@@ -454,6 +456,7 @@ class ProviderController extends BaseController {
     delete approvalRes.reqId;
     delete txParams.isCoboSafe;
     delete approvalRes.isGasLess;
+    delete approvalRes.isGasAccount;
 
     let is1559 = is1559Tx(approvalRes);
     if (
@@ -516,8 +519,6 @@ class ProviderController extends BaseController {
 
     const { explain: cacheExplain, rawTx, action } = approvingTx;
 
-    console.log('c', cacheExplain);
-
     const chainItem = findChainByEnum(chain);
 
     const statsData: StatsData = {
@@ -531,7 +532,7 @@ class ProviderController extends BaseController {
       preExecSuccess: cacheExplain
         ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
         : true,
-      createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+      createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
       source: options?.data?.$ctx?.ga?.source || '',
       trigger: options?.data?.$ctx?.ga?.trigger || '',
       reported: false,
@@ -606,6 +607,7 @@ class ProviderController extends BaseController {
             ? createDappBySession(INTERNAL_REQUEST_SESSION)
             : dappService.getDapp(origin),
           isPending: true,
+          $ctx: options?.data?.$ctx,
         });
         transactionHistoryService.removeSigningTx(signingTxId!);
         if (hash) {
@@ -651,7 +653,7 @@ class ProviderController extends BaseController {
           preExecSuccess: cacheExplain
             ? cacheExplain.pre_exec?.success && cacheExplain.calcSuccess
             : true,
-          createBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
+          createdBy: options?.data?.$ctx?.ga ? 'rabby' : 'dapp',
           source: options?.data?.$ctx?.ga?.source || '',
           trigger: options?.data?.$ctx?.ga?.trigger || '',
         });
@@ -761,6 +763,7 @@ class ProviderController extends BaseController {
               req_id: preReqId || '',
               origin,
               is_gasless: isGasLess,
+              is_gas_account: isGasAccount,
             });
 
             hash = res.req.tx_id || undefined;

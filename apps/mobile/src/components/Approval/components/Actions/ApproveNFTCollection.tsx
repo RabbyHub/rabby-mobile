@@ -3,7 +3,10 @@ import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chain } from '@/constant/chains';
 import { Result } from '@rabby-wallet/rabby-security-engine';
-import { ApproveNFTRequireData, ParsedActionData } from './utils';
+import {
+  ApproveNFTRequireData,
+  ParsedActionData,
+} from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from './components/Table';
 import * as Values from './components/Values';
 import { ProtocolListItem } from './components/ProtocolListItem';
@@ -106,16 +109,6 @@ const ApproveNFTCollection = ({
             engineResult={engineResultMap['1053']}
             dangerText={t('page.signTx.tokenApprove.eoaAddress')}
             title={t('page.signTx.addressTypeTitle')}
-          />
-
-          <SecurityListItem
-            id="1056"
-            engineResult={engineResultMap['1056']}
-            warningText={<Values.Interacted value={false} />}
-            defaultText={
-              <Values.Interacted value={requireData.hasInteraction} />
-            }
-            title={t('page.signTx.interacted')}
           />
 
           <SecurityListItem

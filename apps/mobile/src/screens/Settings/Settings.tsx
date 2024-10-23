@@ -1,5 +1,12 @@
 import React, { useCallback, useRef } from 'react';
-import { Linking, Platform, ScrollView, Text, View } from 'react-native';
+import {
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 
@@ -14,12 +21,15 @@ import {
   RcScreenshot,
   RcFollowUs,
   RcInfo,
+  RcTermsOfUse,
   RcPrivacyPolicy,
   RcScreenRecord,
   RcThemeMode,
   RcWhitelist,
   RcAddCustomNetwork,
   RcRPC,
+  RcGoogleDrive,
+  RcGoogleSignout,
 } from '@/assets/icons/settings';
 import RcFooterLogo from '@/assets/icons/settings/footer-logo.svg';
 
@@ -40,7 +50,7 @@ import { type SettingConfBlock, Block } from './Block';
 import { useSheetWebViewTester } from './sheetModals/hooks';
 import SheetWebViewTester from './sheetModals/SheetWebViewTester';
 
-import { SwitchToggleType } from '@/components';
+import type { SwitchToggleType } from '@/components';
 import { SwitchAllowScreenshot } from './components/SwitchAllowScreenshot';
 import { SwitchBiometricsAuthentication } from './components/SwitchBiometricsAuthentication';
 import { SwitchWhitelistEnable } from './components/SwitchWhitelistEnable';
@@ -90,6 +100,20 @@ import ThemeSelectorModal, {
   useThemeSelectorModalVisible,
 } from './sheetModals/ThemeSelector';
 import { RABBY_GENESIS_NFT_DATA } from '../SendNFT/testData';
+import {
+  deleteAllBackups,
+  getBackupsFromCloud,
+  saveMnemonicToCloud,
+} from '@/core/utils/cloudBackup';
+import { IS_ANDROID } from '@/core/native/utils';
+import { useGoogleSign } from '@/hooks/cloudStorage';
+import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { ScreenSpecificStatusBar } from '@/components/FocusAwareStatusBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DevForceLocalVersionSelector, {
+  useLocalVersionSelectorModalVisible,
+} from './sheetModals/DevForceLocalVersionSelector';
+import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -144,9 +168,9 @@ function SettingsBlocks() {
   const { setThemeSelectorModalVisible } = useThemeSelectorModalVisible();
   const { appThemeText } = useAppTheme();
 
-  const navParams = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.Settings)?.params,
-  ) as SettingNavigatorParamList['Settings'];
+  // const navParams = useNavigationState(
+  //   s => s.routes.find(r => r.name === RootNames.Settings)?.params,
+  // ) as SettingNavigatorParamList['Settings'];
 
   // useMount(() => {
   //   console.debug(
@@ -170,6 +194,8 @@ function SettingsBlocks() {
   const navigation = useRabbyAppNavigation();
 
   const biometricsComputed = useBiometricsComputed();
+
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const settingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -350,10 +376,17 @@ function SettingsBlocks() {
             },
           },
           {
+            label: 'Term Of Use',
+            icon: RcTermsOfUse,
+            onPress: async () => {
+              viewTermsOfUse();
+            },
+          },
+          {
             label: 'Privacy Policy',
             icon: RcPrivacyPolicy,
             onPress: async () => {
-              openExternalUrl(APP_URLS.PRIVACY_POLICY);
+              viewPrivacyPolicy();
             },
           },
         ].filter(Boolean),
@@ -455,6 +488,10 @@ function DevSettingsBlocks() {
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
+  const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
+  const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
+    useLocalVersionSelectorModalVisible();
+
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
       ...(isSelfhostRegPkg && {
@@ -471,7 +508,21 @@ function DevSettingsBlocks() {
                 </Text>
               ),
               // TODO: only show in non-production mode
-              visible: !!__DEV__ || BUILD_CHANNEL === 'selfhost-reg',
+              visible: NEED_DEVSETTINGBLOCKS,
+            },
+            {
+              label: 'Force Local version',
+              icon: RcInfo,
+              onPress: () => {
+                setLocalVersionSelectorModalVisible(true);
+              },
+              rightTextNode: (
+                <Text style={{ color: colors['neutral-body'] }}>
+                  Runtime: {currentLocalVersion}
+                </Text>
+              ),
+              // TODO: only show in non-production mode
+              visible: NEED_DEVSETTINGBLOCKS,
             },
             {
               label: allowScreenshot
@@ -493,6 +544,40 @@ function DevSettingsBlocks() {
               disabled: !hasSetupCustomPassword,
               onPress: () => {
                 requestLockWalletAndBackToUnlockScreen();
+              },
+            },
+            isLoginedGoogle
+              ? {
+                  label: 'Signout google drive',
+                  icon: RcGoogleSignout,
+                  onPress: async () => {
+                    await doGoogleSignOut();
+                  },
+                  visible: IS_ANDROID,
+                }
+              : {
+                  label: 'Sign google drive',
+                  icon: RcGoogleDrive,
+                  onPress: () => {
+                    doGoogleSign()
+                      .then(async e => {
+                        console.log('loginIfNeeded done', e.needLogin);
+                        await saveMnemonicToCloud({
+                          mnemonic: 'testtest',
+                          password: 'test',
+                        });
+                      })
+                      .catch(e => {
+                        console.error('loginIfNeeded error', e);
+                      });
+                  },
+                  visible: IS_ANDROID,
+                },
+            {
+              label: 'Clear Cloud Backup',
+              icon: RcClearPending,
+              onPress: () => {
+                deleteAllBackups();
               },
             },
             {
@@ -638,6 +723,8 @@ function DevSettingsBlocks() {
           </Block>
         );
       })}
+
+      <DevForceLocalVersionSelector />
     </>
   );
 }
@@ -660,8 +747,10 @@ export default function SettingsScreen(): JSX.Element {
     containerPaddingBottom: 0,
   });
 
+  const { bottom } = useSafeAreaInsets();
+
   return (
-    <NormalScreenContainer
+    <RootScreenContainer
       fitStatuBar
       style={[
         styles.container,
@@ -669,9 +758,13 @@ export default function SettingsScreen(): JSX.Element {
           paddingBottom: safeSizes.containerPaddingBottom,
         },
       ]}>
+      <ScreenSpecificStatusBar screenName={RootNames.Settings} />
       <ScrollView
         style={[styles.scrollableView]}
-        contentContainerStyle={[styles.scrollableContentStyle]}>
+        contentContainerStyle={[
+          styles.scrollableContentStyle,
+          { paddingBottom: 12 + bottom },
+        ]}>
         <SettingsBlocks />
         {NEED_DEVSETTINGBLOCKS && <DevSettingsBlocks />}
         <View style={[styles.bottomFooter]}>
@@ -684,7 +777,7 @@ export default function SettingsScreen(): JSX.Element {
       <ManagePasswordSheetModal height={422} />
 
       <SheetWebViewTester />
-    </NormalScreenContainer>
+    </RootScreenContainer>
   );
 }
 

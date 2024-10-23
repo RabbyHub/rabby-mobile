@@ -23,15 +23,23 @@ import { splitNumberByStep } from '@/utils/number';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
 import { toastCopyAddressSuccess } from '@/components/AddressViewer/CopyAddress';
+import { makeDebugBorder } from '@/utils/styles';
 
 interface AddressItemProps {
   wallet: KeyringAccountWithAlias;
   isCurrentAddress?: boolean;
   isInModal?: boolean;
   isInList?: boolean;
+  showUsd?: boolean;
 }
 export const AddressItemInner = (props: AddressItemProps) => {
-  const { wallet, isCurrentAddress, isInModal, isInList } = props;
+  const {
+    wallet,
+    isCurrentAddress,
+    isInModal,
+    isInList,
+    showUsd = true,
+  } = props;
   const { isAddrOnWhitelist } = useWhitelist();
 
   const themeColors = useThemeColors();
@@ -108,38 +116,37 @@ export const AddressItemInner = (props: AddressItemProps) => {
           type={wallet.type}
         />
       </View>
-      <View>
-        <View>
-          <View style={styles.titleView}>
+      <View style={styles.centerInner}>
+        <View style={styles.titleView}>
+          <Text
+            style={StyleSheet.flatten([
+              styles.title,
+              isCurrentAddress && styles.currentAddressText,
+            ])}
+            numberOfLines={1}>
+            {walletName}
+          </Text>
+          {!!walletNameIndex && !isCurrentAddress && (
             <Text
               style={StyleSheet.flatten([
-                styles.title,
+                styles.walletIndexText,
                 isCurrentAddress && styles.currentAddressText,
               ])}>
-              {walletName}
+              #{walletNameIndex}
             </Text>
-            {!!walletNameIndex && !isCurrentAddress && (
-              <Text
-                style={StyleSheet.flatten([
-                  styles.walletIndexText,
-                  isCurrentAddress && styles.currentAddressText,
-                ])}>
-                #{walletNameIndex}
-              </Text>
-            )}
+          )}
 
-            {inWhitelist && (
-              <RcIconAddressWhitelistCC
-                style={styles.tagIcon}
-                color={
-                  isCurrentAddress
-                    ? themeColors['neutral-title-2']
-                    : themeColors['neutral-foot']
-                }
-              />
-            )}
-            {pinned && <RcIconAddressPinned style={styles.tagIcon} />}
-          </View>
+          {inWhitelist && (
+            <RcIconAddressWhitelistCC
+              style={styles.tagIcon}
+              color={
+                isCurrentAddress
+                  ? themeColors['neutral-title-2']
+                  : themeColors['neutral-foot']
+              }
+            />
+          )}
+          {pinned && <RcIconAddressPinned style={styles.tagIcon} />}
         </View>
 
         <View style={styles.addressBox}>
@@ -163,7 +170,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
               }
             />
           </TouchableOpacity>
-          {!isCurrentAddress && (
+          {!isCurrentAddress && showUsd && (
             <Text
               style={StyleSheet.flatten([
                 styles.text,
@@ -175,13 +182,7 @@ export const AddressItemInner = (props: AddressItemProps) => {
         </View>
       </View>
       {isInModal ? null : isCurrentAddress || isInList ? (
-        <View
-          style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}>
+        <View style={styles.usdInfoWrapper}>
           <Text
             style={{
               color: isInList
@@ -257,8 +258,16 @@ export const getStyles = (colors: AppColorsVariants) => {
       width: 14,
       height: 14,
     },
+    usdInfoWrapper: {
+      marginLeft: 'auto',
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     infoIconWrapper: {
       marginLeft: 'auto',
+      flexShrink: 0,
       width: 32,
       height: 64,
       justifyContent: 'center',
@@ -273,16 +282,25 @@ export const getStyles = (colors: AppColorsVariants) => {
       width: 16,
       height: 16,
     },
+    centerInner: {
+      flexShrink: 1,
+    },
     titleView: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 2,
+      flexShrink: 1,
+      width: '100%',
+      paddingRight: 8,
+      // ...makeDebugBorder(),
     },
     title: {
       fontSize: 15,
       fontWeight: '600',
       color: colors['neutral-title-1'],
+      flexShrink: 1,
+      width: '100%',
     },
     walletIndexText: {
       color: colors['neutral-foot'],
@@ -306,11 +324,6 @@ export const getStyles = (colors: AppColorsVariants) => {
       fontSize: 16,
       backgroundColor: 'transparent',
       padding: 10,
-    },
-    rightAction: {
-      alignItems: 'center',
-      flex: 1,
-      justifyContent: 'center',
     },
     actionIcon: {
       width: 24,

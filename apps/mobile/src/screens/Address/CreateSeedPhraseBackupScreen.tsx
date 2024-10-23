@@ -31,7 +31,7 @@ export const CreateSeedPhraseBackupScreen = () => {
   });
 
   const { data: seedPhrase } = useRequest(async () => {
-    const res = await apiMnemonic.generatePreMnemonic();
+    const res = await apiMnemonic.getPreMnemonics();
     return res as string;
   });
 

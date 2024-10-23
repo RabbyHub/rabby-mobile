@@ -1,7 +1,6 @@
 import React, { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { default as RcIconGasLight } from '@/assets/icons/sign/tx/gas-light.svg';
 import { default as RcIconGasDark } from '@/assets/icons/sign/tx/gas-dark.svg';
-import { default as RcIconQuestion } from '@/assets/icons/sign/tx/question-cc.svg';
 
 import { useTranslation } from 'react-i18next';
 import { default as RcIconLogo } from '@/assets/icons/sign/tx/rabby.svg';
@@ -38,7 +37,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { renderText } from '@/utils/renderNode';
 import { colord } from 'colord';
-import { Tip } from '@/components/Tip';
+import { Button } from '@/components/Button';
+import { RcIconGasAccount } from '@/assets/icons/gas-account';
+import { GasAccountCheckResult } from '@rabby-wallet/rabby-api/dist/types';
+import {
+  GasAccountDepositTipPopup,
+  GasAccountLogInTipPopup,
+} from '@/screens/GasAccount/components/GasAccountTxPopups';
 
 const RcIconGas = makeThemeIcon(RcIconGasLight, RcIconGasDark);
 
@@ -53,8 +58,12 @@ export type GasLessConfig = {
 
 export function GasLessNotEnough({
   gasLessFailedReason,
+  onChangeGasAccount,
+  canGotoUseGasAccount,
 }: {
   gasLessFailedReason?: string;
+  onChangeGasAccount?: () => void;
+  canGotoUseGasAccount?: boolean;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -69,25 +78,21 @@ export function GasLessNotEnough({
       <RcIconGas
         width={16}
         height={16}
-        color={colors['neutral-title-1']}
+        color={colors['neutral-foot']}
         style={{ marginRight: 4 }}
       />
       <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
-        {t('page.signFooterBar.gasless.unavailable')}
+        {t('page.signFooterBar.gasless.notEnough')}
       </Text>
-      {gasLessFailedReason ? (
-        <Tip
-          content={gasLessFailedReason}
-          isVisible={visible}
-          onClose={() => {
-            setVisible(false);
-          }}>
-          <RcIconQuestion
-            color={colors['neutral-foot']}
-            width={14}
-            height={14}
-          />
-        </Tip>
+
+      {canGotoUseGasAccount ? (
+        <TouchableOpacity
+          style={[styles.gasAccountBtn, { paddingHorizontal: 8 }]}
+          onPress={onChangeGasAccount}>
+          <Text style={styles.gasAccountTipBtnText}>
+            {t('page.signFooterBar.gasAccount.useGasAccount')}
+          </Text>
+        </TouchableOpacity>
       ) : null}
     </Pressable>
   );
@@ -238,9 +243,10 @@ export function GasLessActivityToSign({
   const styles = useMemo(() => getStyles(colors), [colors]);
   const isLight = useGetBinaryMode() === 'light';
 
-  const themeColor = !isLight
-    ? gasLessConfig?.dark_color
-    : gasLessConfig?.theme_color;
+  const themeColor = gasLessConfig
+    ? (!isLight ? gasLessConfig?.dark_color : gasLessConfig?.theme_color) ||
+      colors['blue-default']
+    : undefined;
 
   const hiddenAnimated = useSharedValue(0);
 
@@ -367,6 +373,7 @@ export const GasLessAnimatedWrapper = (
   props: PropsWithChildren<{
     gasLess?: boolean;
     title: string;
+    icon?: React.ReactNode;
     titleStyle: StyleProp<TextStyle>;
     buttonStyle: StyleProp<ViewStyle>;
     showOrigin: boolean;
@@ -526,6 +533,12 @@ export const GasLessAnimatedWrapper = (
           ]}>
           <Animated.View style={blueBgStyle} />
 
+          {props?.icon ? (
+            <Animated.View style={{ marginRight: 8 }}>
+              {props?.icon}
+            </Animated.View>
+          ) : null}
+
           {renderText(props.title, {
             style: StyleSheet.flatten([
               props.titleStyle,
@@ -543,6 +556,106 @@ export const GasLessAnimatedWrapper = (
     </>
   );
 };
+
+export function GasAccountTips({
+  gasAccountCost,
+  isGasAccountLogin,
+  isWalletConnect,
+  noCustomRPC,
+}: {
+  gasAccountCost?: GasAccountCheckResult;
+  isGasAccountLogin?: boolean;
+  isWalletConnect?: boolean;
+  noCustomRPC?: boolean;
+}) {
+  const { t } = useTranslation();
+
+  const colors = useThemeColors();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
+  const [tipPopupVisible, setTipPopupVisible] = useState(false);
+
+  console.log('isWalletConnect', 'isWalletConnect');
+
+  const [tip, btnText] = useMemo(() => {
+    if (!noCustomRPC) {
+      return [t('page.signFooterBar.gasAccount.customRPC'), null];
+    }
+    if (isWalletConnect) {
+      return [t('page.signFooterBar.gasAccount.WalletConnectTips'), null];
+    }
+    if (!isGasAccountLogin) {
+      return [
+        t('page.signFooterBar.gasAccount.loginFirst'),
+        t('page.signFooterBar.gasAccount.login'),
+      ];
+    }
+    if (gasAccountCost?.chain_not_support) {
+      return [t('page.signFooterBar.gasAccount.chainNotSupported'), null];
+    }
+    if (!gasAccountCost?.balance_is_enough) {
+      return [
+        t('page.signFooterBar.gasAccount.notEnough'),
+        t('page.signFooterBar.gasAccount.deposit'),
+      ];
+    }
+    return [null, null];
+  }, [
+    noCustomRPC,
+    isWalletConnect,
+    isGasAccountLogin,
+    gasAccountCost?.chain_not_support,
+    gasAccountCost?.balance_is_enough,
+    t,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      setTipPopupVisible(false);
+    };
+  }, []);
+
+  if (
+    !isWalletConnect &&
+    isGasAccountLogin &&
+    gasAccountCost?.balance_is_enough &&
+    !gasAccountCost.chain_not_support &&
+    noCustomRPC
+  ) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.securityLevelTip, { paddingHorizontal: 8 }]}>
+      <View style={styles.tipTriangle} />
+      <RcIconGasAccount width={16} height={16} />
+      <Text style={[styles.text, { marginHorizontal: 4, marginRight: 6 }]}>
+        {tip}
+      </Text>
+
+      {btnText ? (
+        <TouchableOpacity
+          style={styles.gasAccountBtn}
+          onPress={() => setTipPopupVisible(true)}>
+          <Text style={styles.gasAccountTipBtnText}>{btnText}</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      <GasAccountDepositTipPopup
+        visible={
+          !isWalletConnect && isGasAccountLogin ? tipPopupVisible : false
+        }
+        onClose={() => setTipPopupVisible(false)}
+      />
+      <GasAccountLogInTipPopup
+        visible={
+          !isWalletConnect && !isGasAccountLogin ? tipPopupVisible : false
+        }
+        onClose={() => setTipPopupVisible(false)}
+      />
+    </View>
+  );
+}
 
 const getStyles = createGetStyles(colors => ({
   securityLevelTip: {
@@ -626,6 +739,20 @@ const getStyles = createGetStyles(colors => ({
   },
   linearGradientText: {
     fontSize: 11,
+    color: colors['neutral-title-2'],
+  },
+  gasAccountBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 72,
+    height: 28,
+    backgroundColor: colors['blue-default'],
+    borderRadius: 6,
+    marginLeft: 'auto',
+  },
+  gasAccountTipBtnText: {
+    fontSize: 12,
+    fontWeight: '500',
     color: colors['neutral-title-2'],
   },
 }));

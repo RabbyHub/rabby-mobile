@@ -1,11 +1,20 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from 'react-native';
+import {
+  FootButtonProps,
+  FooterButton,
+} from '@/components/FooterButton/FooterButton';
 import { ScreenLayouts } from '@/constant/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ButtonProps } from '../Button';
+import { FooterButtonGroup } from '../FooterButton/FooterButtonGroup';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -32,7 +41,9 @@ interface Props {
   children: React.ReactNode;
   onPressButton: () => void;
   buttonText: string;
-  btnProps?: ButtonProps;
+  btnProps?: FootButtonProps;
+  style?: StyleProp<ViewStyle>;
+  onCancel?: () => void;
 }
 
 /**
@@ -46,12 +57,28 @@ interface Props {
  * |-------------|
  * |Footer Button|
  * |-------------|
+ *
+ * or
+ *
+ * |-------------|
+ * | Header Area |
+ * |-------------|
+ * |             |
+ * |             |
+ * |             |
+ * |             |
+ * |             |
+ * |-------------|
+ * |Cancel Confirm|
+ * |-------------|
  */
 export const FooterButtonScreenContainer: React.FC<Props> = ({
   buttonText,
   onPressButton,
   children,
   btnProps,
+  style,
+  onCancel,
 }) => {
   const { top } = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -63,16 +90,32 @@ export const FooterButtonScreenContainer: React.FC<Props> = ({
       style={StyleSheet.flatten([
         styles.root,
         { paddingTop: top + ScreenLayouts.headerAreaHeight },
+        style,
       ])}
       behavior="padding">
       <ScrollView style={styles.main}>{children}</ScrollView>
-      <FooterButton
-        titleStyle={styles.footerButtonTitle}
-        disabledStyle={styles.footerButtonDisabled}
-        title={buttonText}
-        onPress={onPressButton}
-        {...btnProps}
-      />
+
+      {onCancel ? (
+        <FooterButtonGroup
+          style={StyleSheet.flatten([
+            { paddingBottom: 35, marginTop: 0 },
+            btnProps?.footerStyle,
+          ])}
+          onCancel={onCancel}
+          onConfirm={onPressButton}
+          confirmText={buttonText}
+          loading={btnProps?.loading}
+          disabled={btnProps?.disabled}
+        />
+      ) : (
+        <FooterButton
+          titleStyle={styles.footerButtonTitle}
+          disabledStyle={styles.footerButtonDisabled}
+          title={buttonText}
+          onPress={onPressButton}
+          {...btnProps}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };

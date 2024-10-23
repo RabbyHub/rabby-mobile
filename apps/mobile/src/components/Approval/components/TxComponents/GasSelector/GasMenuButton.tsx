@@ -32,6 +32,7 @@ interface Props {
   onSelect: (gas: GasLevel) => void;
   onCustom: () => void;
   showCustomGasPrice: boolean;
+  disabled?: boolean;
 }
 
 const GasLevelIcon: React.FC<{ level: string; isActive }> = ({
@@ -63,6 +64,7 @@ export const GasMenuButton: React.FC<Props> = ({
   onSelect,
   onCustom,
   showCustomGasPrice,
+  disabled,
 }) => {
   const { styles } = useThemeStyles(getStyle);
   const { t } = useTranslation();
@@ -104,41 +106,47 @@ export const GasMenuButton: React.FC<Props> = ({
   );
   const customGasInfo = gasList.find(g => g.level === 'custom')!;
 
+  const mode = useGetBinaryMode();
+
+  const Content = selectedGas ? (
+    <TouchableOpacity style={styles.menuButton} disabled={disabled}>
+      <Text style={styles.levelText}>
+        {t(getGasLevelI18nKey(selectedGas.level ?? 'slow'))}
+      </Text>
+      {/* {(selectedGas.level !== 'custom' || showCustomGasPrice) && (
+        <>
+          <View style={styles.dot} />
+
+          <Text style={styles.gwei}>
+            {new BigNumber(
+              (selectedGas.level === 'custom'
+                ? customGasInfo.price
+                : selectedGas.price) / 1e9,
+            )
+              .toFixed()
+              .slice(0, 8)}
+          </Text>
+        </>
+      )} */}
+      <ArrowSVG
+        color={colors['neutral-foot']}
+        style={StyleSheet.flatten({ marginLeft: 2 })}
+      />
+    </TouchableOpacity>
+  ) : (
+    <Skeleton width={100} height={20} />
+  );
+  if (disabled) {
+    return Content;
+  }
   return (
     <MenuView
       title={t('page.sign.transactionSpeed')}
       actions={actions}
       shouldOpenOnLongPress={false}
-      themeVariant={useGetBinaryMode() ?? 'light'}
+      themeVariant={mode ?? 'light'}
       onPressAction={onPressAction}>
-      {selectedGas ? (
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.levelText}>
-            {t(getGasLevelI18nKey(selectedGas.level ?? 'slow'))}
-          </Text>
-          {(selectedGas.level !== 'custom' || showCustomGasPrice) && (
-            <>
-              <View style={styles.dot} />
-
-              <Text style={styles.gwei}>
-                {new BigNumber(
-                  (selectedGas.level === 'custom'
-                    ? customGasInfo.price
-                    : selectedGas.price) / 1e9,
-                )
-                  .toFixed()
-                  .slice(0, 8)}
-              </Text>
-            </>
-          )}
-          <ArrowSVG
-            color={colors['neutral-foot']}
-            style={StyleSheet.flatten({ marginLeft: 2 })}
-          />
-        </TouchableOpacity>
-      ) : (
-        <Skeleton width={100} height={20} />
-      )}
+      {Content}
     </MenuView>
   );
 };

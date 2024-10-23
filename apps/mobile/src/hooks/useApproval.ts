@@ -3,6 +3,7 @@ import { Approval } from '@/core/services/notification';
 import { eventBus, EVENT_ACTIVE_WINDOW } from '@/utils/events';
 import React, { useCallback } from 'react';
 import { useApprovalPopup } from './useApprovalPopup';
+import { useDeviceConnect } from './useDeviceConnect';
 
 export const useApproval = () => {
   const getApproval: () => Promise<Approval | null> = useCallback(async () => {
@@ -10,6 +11,7 @@ export const useApproval = () => {
     return approval;
   }, []);
   const { showPopup, enablePopup, closePopup } = useApprovalPopup();
+  const deviceConnect = useDeviceConnect();
 
   const resolveApproval = async (
     data?: any,
@@ -17,6 +19,11 @@ export const useApproval = () => {
     forceReject = false,
     approvalId?: string,
   ) => {
+    // handle connect
+    if (!deviceConnect(data.type)) {
+      return;
+    }
+
     const approval = await getApproval();
 
     if (approval) {

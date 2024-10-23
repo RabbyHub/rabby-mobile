@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import TouchableView from '@/components/Touchable/TouchableView';
 import { useThemeColors } from '@/hooks/theme';
@@ -8,6 +8,7 @@ import { FormInput } from '@/components/Form/Input';
 import {
   RcWhiteListEnabled,
   RcWhiteListDisabled,
+  RcIconInnerScanner,
 } from '@/assets/icons/address';
 import { RcEditPenCC } from '@/assets/icons/send';
 
@@ -20,6 +21,10 @@ import {
 } from '../hooks/useSendNFT';
 import { SelectAddressSheetModal } from '@/components/Address/SelectAddressSheetModal';
 import { ModalEditContact } from '@/components/Address/SheetModalEditContact';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { useScanner } from '@/screens/Scanner/ScannerScreen';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const RcEditPen = makeThemeIconFromCC(RcEditPenCC, 'blue-default');
 
@@ -46,11 +51,24 @@ export default function ToAddressControl({
     callbacks: { handleFieldChange },
   } = useSendNFTInternalContext();
   const colors = useThemeColors();
+  const scanner = useScanner();
+
   const styles = getStyles(colors);
 
   const { t } = useTranslation();
 
   const { errors } = useSendNFTFormik();
+
+  const openCamera = useCallback(() => {
+    navigate(RootNames.Scanner);
+  }, []);
+
+  useEffect(() => {
+    if (scanner.text) {
+      handleFieldChange('to', scanner.text);
+      scanner.clear();
+    }
+  }, [handleFieldChange, scanner]);
 
   const formInputRef = useRef<TextInput>(null);
   useInputBlurOnEvents(formInputRef);
@@ -96,15 +114,32 @@ export default function ToAddressControl({
         </View>
       </View>
       <FormInput
-        className="mt-[8]"
-        containerStyle={styles.inputContainer}
+        containerStyle={[
+          styles.inputContainer,
+          !formValues.to && styles.withoutValue,
+        ]}
         ref={formInputRef}
         disableFocusingStyle
-        inputStyle={styles.input}
+        inputStyle={[styles.input, !formValues.to && styles.inputWithoutValue]}
         hasError={!!errors.to}
+        clearable={false}
+        customIcon={ctx => {
+          if (formValues.to) {
+            return null;
+          }
+          return (
+            <TouchableView
+              onPress={openCamera}
+              style={StyleSheet.flatten([
+                ctx.iconStyle,
+                styles.scanButtonContainer,
+              ])}>
+              <RcIconInnerScanner style={styles.scanIcon} />
+            </TouchableView>
+          );
+        }}
         inputProps={{
           ...inputProps,
-          numberOfLines: 2,
           multiline: true,
           value: formValues.to,
           onChangeText: value => {
@@ -112,8 +147,12 @@ export default function ToAddressControl({
           },
           onBlur: formik.handleBlur('to'),
           // placeholder: t('page.sendToken.sectionTo.searchInputPlaceholder'),
-          placeholder: 'Enter address',
+          placeholder: 'Enter an address or scan',
           placeholderTextColor: colors['neutral-foot'],
+          style: {
+            paddingTop: 0,
+            paddingBottom: 0,
+          },
         }}
       />
       {/* extra info area */}
@@ -169,6 +208,13 @@ export default function ToAddressControl({
     </View>
   );
 }
+
+const SIZES = {
+  INPUT_CONTAINER_H: IS_ANDROID ? 64 : 60,
+  SCAN_BTN_H: 64,
+  SCAN_BTN_W: 32,
+  SCAN_ICON_SIZE: 20,
+};
 
 const getStyles = createGetStyles(colors => {
   return {
@@ -227,7 +273,6 @@ const getStyles = createGetStyles(colors => {
 
     entryWhitelist: {
       marginLeft: 8,
-      paddingLeft: 8,
     },
 
     entryWhitelistIcon: {
@@ -236,10 +281,19 @@ const getStyles = createGetStyles(colors => {
     },
 
     inputContainer: {
+      height: SIZES.INPUT_CONTAINER_H,
       borderRadius: 4,
-
+      flexShrink: 0,
+      // ...makeDebugBorder('yellow'),
+      paddingVertical: 12,
       width: '100%',
-      height: 64,
+      marginTop: 8,
+    },
+
+    withoutValue: {
+      ...(!IS_ANDROID && {
+        height: 'auto',
+      }),
     },
 
     input: {
@@ -250,8 +304,26 @@ const getStyles = createGetStyles(colors => {
       // paddingTop: Platform.OS === 'ios' ? 12 : 0,
       paddingTop: 12,
       paddingHorizontal: 12,
-      // flexDirection: 'row',
-      // alignItems: 'center',
+      fontSize: 15,
+      fontWeight: IS_ANDROID ? 'normal' : '600',
+    },
+
+    inputWithoutValue: {
+      fontWeight: '400',
+    },
+
+    scanButtonContainer: {
+      flexShrink: 0,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingRight: 12,
+    },
+
+    scanIcon: {
+      width: SIZES.SCAN_ICON_SIZE,
+      height: SIZES.SCAN_ICON_SIZE,
+      color: colors['neutral-title1'],
     },
 
     extraView: {

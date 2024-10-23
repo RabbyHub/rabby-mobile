@@ -40,9 +40,14 @@ import { BridgeHeader } from './BridgeHeader';
 import { openapi } from '@/core/request';
 import pRetry from 'p-retry';
 import { stats } from '@/utils/stats';
-import { bridgeToken } from '../hooks/bridge';
+import { bridgeToken, buildBridgeToken } from '../hooks/bridge';
 import { toast } from '@/components/Toast';
 import { RcIconMaxButton } from '@/assets/icons/swap';
+import { useMemoizedFn, useRequest } from 'ahooks';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
 
 const getStyles = createGetStyles(colors => ({
   container: {
@@ -223,6 +228,8 @@ export const BridgeContent = () => {
     return t('page.bridge.title');
   }, [selectedBridgeQuote, expired, t]);
 
+  const [isShowSign, setIsShowSign] = useState(false);
+
   const gotoBridge = async () => {
     if (
       !inSufficient &&
@@ -313,6 +320,122 @@ export const BridgeContent = () => {
       }
     }
   };
+
+  const buildTxs = async () => {
+    if (
+      !inSufficient &&
+      payToken &&
+      receiveToken &&
+      selectedBridgeQuote?.bridge_id &&
+      currentAccount?.address
+    ) {
+      try {
+        setFetchingBridgeQuote(true);
+        const { tx } = await pRetry(
+          () =>
+            openapi.getBridgeQuote({
+              aggregator_id: selectedBridgeQuote.aggregator.id,
+              bridge_id: selectedBridgeQuote.bridge_id,
+              from_token_id: payToken.id,
+              user_addr: currentAccount?.address,
+              from_chain_id: payToken.chain,
+              from_token_raw_amount: new BigNumber(payAmount)
+                .times(10 ** payToken.decimals)
+                .toFixed(0, 1)
+                .toString(),
+              to_chain_id: receiveToken.chain,
+              to_token_id: receiveToken.id,
+            }),
+          { retries: 1 },
+        );
+        stats.report('bridgeQuoteResult', {
+          aggregatorIds: selectedBridgeQuote.aggregator.id,
+          bridgeId: selectedBridgeQuote.bridge_id,
+          fromChainId: payToken.chain,
+          fromTokenId: payToken.id,
+          toTokenId: receiveToken.id,
+          toChainId: receiveToken.chain,
+          status: tx ? 'success' : 'fail',
+          payAmount: payAmount,
+        });
+        return buildBridgeToken(
+          {
+            to: tx.to,
+            value: tx.value,
+            data: tx.data,
+            payTokenRawAmount: new BigNumber(payAmount)
+              .times(10 ** payToken.decimals)
+              .toFixed(0, 1)
+              .toString(),
+            chainId: tx.chainId,
+            shouldApprove: !!selectedBridgeQuote.shouldApproveToken,
+            shouldTwoStepApprove: !!selectedBridgeQuote.shouldTwoStepApprove,
+            payTokenId: payToken.id,
+            payTokenChainServerId: payToken.chain,
+            info: {
+              aggregator_id: selectedBridgeQuote.aggregator.id,
+              bridge_id: selectedBridgeQuote.bridge_id,
+              from_chain_id: payToken.chain,
+              from_token_id: payToken.id,
+              from_token_amount: payAmount,
+              to_chain_id: receiveToken.chain,
+              to_token_id: receiveToken.id,
+              to_token_amount: selectedBridgeQuote.to_token_amount,
+              tx: tx,
+              rabby_fee: selectedBridgeQuote.rabby_fee.usd_value,
+            },
+          },
+          {
+            ga: {
+              category: 'Bridge',
+              source: 'bridge',
+              trigger: 'bridge',
+            },
+          },
+        );
+      } catch (error) {
+        toast.info((error as any)?.message || String(error));
+        stats.report('bridgeQuoteResult', {
+          aggregatorIds: selectedBridgeQuote.aggregator.id,
+          bridgeId: selectedBridgeQuote.bridge_id,
+          fromChainId: payToken.chain,
+          fromTokenId: payToken.id,
+          toTokenId: receiveToken.id,
+          toChainId: receiveToken.chain,
+          status: 'fail',
+          payAmount: payAmount,
+        });
+        console.error(error);
+      } finally {
+        setFetchingBridgeQuote(false);
+      }
+    }
+  };
+
+  const {
+    data: txs,
+    runAsync: runBuildTxs,
+    mutate: mutateTxs,
+  } = useRequest(buildTxs, {
+    manual: true,
+  });
+
+  const handleBridge = useMemoizedFn(async () => {
+    if (
+      [
+        KEYRING_TYPE.SimpleKeyring,
+        KEYRING_TYPE.HdKeyring,
+        KEYRING_CLASS.HARDWARE.LEDGER,
+      ].includes((currentAccount?.type || '') as any)
+    ) {
+      await runBuildTxs();
+      setIsShowSign(true);
+    } else {
+      gotoBridge();
+    }
+  });
+
+  const navigation = useNavigation();
 
   return (
     <NormalScreenContainer>
@@ -459,7 +582,7 @@ export const BridgeContent = () => {
               setTwoStepApproveModalVisible(true);
               return;
             }
-            gotoBridge();
+            handleBridge();
           }}
           title={btnText}
           titleStyle={styles.btnTitle}
@@ -479,7 +602,7 @@ export const BridgeContent = () => {
         onCancel={() => {
           setTwoStepApproveModalVisible(false);
         }}
-        onConfirm={gotoBridge}
+        onConfirm={handleBridge}
       />
 
       {payToken && receiveToken && Number(payAmount) > 0 && chain ? (
@@ -499,6 +622,27 @@ export const BridgeContent = () => {
           setSelectedBridgeQuote={setSelectedBridgeQuote}
         />
       ) : null}
+
+      <MiniApproval
+        visible={isShowSign}
+        txs={txs}
+        onReject={() => {
+          setIsShowSign(false);
+          mutateTxs([]);
+        }}
+        onResolve={() => {
+          setTimeout(() => {
+            setIsShowSign(false);
+            mutateTxs([]);
+
+            navigation.dispatch(
+              StackActions.replace(RootNames.StackRoot, {
+                screen: RootNames.Home,
+              }),
+            );
+          }, 500);
+        }}
+      />
     </NormalScreenContainer>
   );
 };

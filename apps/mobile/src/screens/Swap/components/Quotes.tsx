@@ -22,13 +22,19 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { TDexQuoteData, useSwapSettings, useSwapViewDexIdList } from '../hooks';
+import {
+  TDexQuoteData,
+  useSwapSettings,
+  useSwapSupportedDexList,
+  useSwapViewDexIdList,
+} from '../hooks';
 import { refreshIdAtom } from '../hooks/atom';
 import { isSwapWrapToken } from '../utils';
 import { QuoteListLoading, QuoteLoading } from './loading';
 import { DexQuoteItem, QuoteItemProps } from './QuoteItem';
 import { SwapRefreshBtn } from './SwapRefreshBtn';
 import { isSameAddress } from '@rabby-wallet/base-utils/dist/isomorphic/address';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface QuotesProps
   extends Omit<
@@ -309,13 +315,18 @@ export const QuoteList = (props: QuotesProps) => {
   const colors = useThemeColors();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  // const ViewDexIdList = useSwapViewDexIdList();
+  const [supportDexList] = useSwapSupportedDexList();
+  const supportDexListLength = supportDexList.length;
 
   const { height: screenHeight } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
 
   const height = useMemo(() => {
-    return Math.min(520, screenHeight * 0.9);
-  }, [screenHeight]);
+    return Math.min(
+      screenHeight * 0.8,
+      80 + bottom + 100 * supportDexListLength,
+    );
+  }, [screenHeight, supportDexListLength, bottom]);
 
   const snapPoints = useMemo(() => [height], [height]);
 

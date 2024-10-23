@@ -25,7 +25,6 @@ import { getWalletIcon } from '@/utils/walletInfo';
 import { AppColorsVariants } from '@/constant/theme';
 import { CommonSignal } from '@/components/WalletConnect/SessionSignal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { PendingTxCount } from './components/PendingTxCount';
 import { useUpgradeInfo } from '@/hooks/version';
 import { useTranslation } from 'react-i18next';
 import RcInfoCC from '@/assets/icons/home/info-cc.svg';
@@ -34,6 +33,7 @@ import { CurveBottomSheetModal } from './components/CurveBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import usePrevious from 'ahooks/lib/usePrevious';
 import useCachedValue from '@/hooks/common/useCachedValue';
+import { GasAccountDashBoardHeader } from '../GasAccount/components/DashBoardHeader';
 
 export default function HomeHeaderArea() {
   const { t } = useTranslation();
@@ -100,37 +100,6 @@ export default function HomeHeaderArea() {
     });
   }, [navigation]);
 
-  const handlePressIcon = React.useCallback(
-    (type: 'history' | 'settings' | 'add-account') => {
-      switch (type) {
-        default:
-          break;
-        case 'settings': {
-          navigation.push(RootNames.StackSettings, {
-            screen: RootNames.Settings,
-            params: {},
-          });
-          break;
-        }
-        case 'add-account': {
-          navigation.push(RootNames.StackAddress, {
-            screen: RootNames.ImportNewAddress,
-            params: {},
-          });
-          break;
-        }
-        case 'history': {
-          navigation.push(RootNames.StackTransaction, {
-            screen: RootNames.History,
-            params: {},
-          });
-          break;
-        }
-      }
-    },
-    [navigation],
-  );
-
   const { remoteVersion } = useUpgradeInfo();
 
   const curveBottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -178,7 +147,16 @@ export default function HomeHeaderArea() {
           <RcIconHeaderRightArrow style={styles.accountRightArrow} />
         </TouchableView>
         <View style={styles.rightActionsBox}>
-          <TouchableView onPress={() => handlePressIcon('history')}>
+          <TouchableView
+            onPress={() => {
+              navigation.push(RootNames.StackTransaction, {
+                screen: RootNames.GasAccount,
+                params: {},
+              });
+            }}>
+            <GasAccountDashBoardHeader />
+          </TouchableView>
+          {/* <TouchableView onPress={() => handlePressIcon('history')}>
             <PendingTxCount />
           </TouchableView>
           <TouchableView
@@ -191,7 +169,7 @@ export default function HomeHeaderArea() {
                 !remoteVersion.couldUpgrade && styles.hideReddot,
               ]}
             />
-          </TouchableView>
+          </TouchableView> */}
         </View>
       </View>
 
@@ -289,8 +267,8 @@ const getStyles = (colors: AppColorsVariants, width: number) =>
     touchBox: {
       maxWidth: width - 20 - 107,
       paddingHorizontal: 8,
-      height: 48,
-      paddingVertical: 10,
+      height: 40,
+      paddingVertical: 8,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',

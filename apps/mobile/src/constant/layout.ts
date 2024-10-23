@@ -56,10 +56,10 @@ export const RootNames = {
   Swap: 'Swap',
   GnosisTransactionQueue: 'GnosisTransactionQueue',
   Approvals: 'Approvals',
-  GasTopUp: 'GasTopUp',
   History: 'History',
   HistoryFilterScam: 'HistoryFilterScam',
   Bridge: 'Bridge',
+  GasAccount: 'GasAccount',
 
   AccountTransaction: 'AccountTransaction',
   MyBundle: 'MyBundle',
@@ -78,12 +78,14 @@ export const RootNames = {
   ImportPrivateKey: 'ImportPrivateKey',
   ImportMnemonic: 'ImportMnemonic',
   CreateMnemonic: 'CreateMnemonic',
+  PreCreateMnemonic: 'PreCreateMnemonic',
   AddMnemonic: 'AddMnemonic',
   CreateMnemonicBackup: 'CreateMnemonicBackup',
   CreateMnemonicVerify: 'CreateMnemonicVerify',
   Scanner: 'Scanner',
   BackupPrivateKey: 'BackupPrivateKey',
   BackupMnemonic: 'BackupMnemonic',
+  RestoreFromCloud: 'RestoreFromCloud',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -182,7 +184,6 @@ function makeScreenSpecConfig() {
       GnosisTransactionQueue: card2DefaultConf,
 
       Approvals: bg2DefaultConf,
-      GasTopUp: blueLightConf,
 
       SetPassword: blueLightConf,
       SetBiometricsAuthentication: bg1DefaultConf,
