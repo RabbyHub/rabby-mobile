@@ -6273,7 +6273,6 @@ __metadata:
   resolution: "@rabby-wallet/eth-keyring-ledger@workspace:packages/eth-keyring-ledger"
   dependencies:
     "@ethereumjs/tx": 5
-    "@ethersproject/rlp": 5.7.0
     "@ledgerhq/devices": ^8.2.0
     "@ledgerhq/hw-app-eth": ^6.40.0
     "@ledgerhq/hw-transport": ^6.31.4
