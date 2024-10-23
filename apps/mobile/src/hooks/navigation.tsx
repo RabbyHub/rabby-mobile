@@ -176,6 +176,11 @@ export function resetNavigationTo(
   }
 }
 
+async function canLockWallet() {
+  const lockInfo = await apisLock.getRabbyLockInfo();
+  return lockInfo.isUseCustomPwd;
+}
+
 export async function requestLockWalletAndBackToUnlockScreen(): Promise<{
   canLockWallet: boolean;
 }> {
@@ -335,26 +340,38 @@ type OnTimeChangedCtx = Parameters<
   Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
 >[0];
 const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
-  const result = await requestLockWalletAndBackToUnlockScreen();
-  if (result.canLockWallet) {
+  if (await canLockWallet()) {
     checkMultipleFailed({ forceRecountdownIfInFreezing: true });
     Alert.alert(
       'Auto Lock',
-      `Time settings changed, auto lock wallet for security.`,
-    );
-  } else {
-    Alert.alert(
-      'Warning',
-      `Time settings changed, will quit app for security.`,
+      `Time settings changed, you can lock wallet first if the change is not made by you.`,
       [
         {
-          text: 'OK',
-          onPress: () => {
-            RNTimeChanged.exitAppForSecurity();
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Lock',
+          onPress: async () => {
+            await requestLockWalletAndBackToUnlockScreen();
           },
         },
       ],
     );
+  } else {
+    // Alert.alert(
+    //   'Warning',
+    //   `Time settings changed, will quit app for security.`,
+    //   [
+    //     {
+    //       text: 'OK',
+    //       onPress: () => {
+    //         RNTimeChanged.exitAppForSecurity();
+    //       },
+    //     },
+    //   ],
+    // );
   }
 }, 1000);
 

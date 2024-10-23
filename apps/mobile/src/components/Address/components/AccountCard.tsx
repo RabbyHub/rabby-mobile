@@ -167,7 +167,7 @@ const getStyles = createGetStyles(colors => {
       fontSize: 16,
       fontStyle: 'normal',
       fontWeight: '500',
-      width: '100%',
+      maxWidth: '100%',
       flexShrink: 1,
     },
 
