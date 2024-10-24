@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
-index 07f73fd..3911233 100644
+index 07f73fd..7a410d7 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 +++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 @@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
@@ -11,10 +11,11 @@ index 07f73fd..3911233 100644
  import android.view.Gravity;
  import android.view.View;
  import android.view.ViewGroup;
-@@ -17,8 +19,11 @@ import android.webkit.ValueCallback;
+@@ -17,8 +19,12 @@ import android.webkit.ValueCallback;
  import android.webkit.WebChromeClient;
  import android.webkit.WebView;
  import android.webkit.WebViewClient;
++import android.webkit.JsResult;
 +import android.webkit.JsPromptResult;
  import android.widget.FrameLayout;
 +import android.widget.Button;
@@ -23,7 +24,7 @@ index 07f73fd..3911233 100644
  import androidx.annotation.RequiresApi;
  import androidx.core.content.ContextCompat;
  
-@@ -28,6 +33,7 @@ import com.facebook.react.bridge.WritableMap;
+@@ -28,6 +34,7 @@ import com.facebook.react.bridge.WritableMap;
  import com.facebook.react.common.build.ReactBuildConfig;
  import com.facebook.react.modules.core.PermissionAwareActivity;
  import com.facebook.react.modules.core.PermissionListener;
@@ -31,7 +32,7 @@ index 07f73fd..3911233 100644
  import com.facebook.react.uimanager.UIManagerHelper;
  import com.reactnativecommunity.webview.events.TopLoadingProgressEvent;
  import com.reactnativecommunity.webview.events.TopOpenWindowEvent;
-@@ -36,6 +42,24 @@ import java.util.ArrayList;
+@@ -36,6 +43,24 @@ import java.util.ArrayList;
  import java.util.Collections;
  import java.util.List;
  
@@ -56,7 +57,7 @@ index 07f73fd..3911233 100644
  public class RNCWebChromeClient extends WebChromeClient implements LifecycleEventListener {
      protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
-@@ -54,6 +78,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -54,6 +79,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      protected View mVideoView;
      protected WebChromeClient.CustomViewCallback mCustomViewCallback;
@@ -64,7 +65,7 @@ index 07f73fd..3911233 100644
  
      /*
       * - Permissions -
-@@ -144,30 +169,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
@@ -110,7 +111,7 @@ index 07f73fd..3911233 100644
              // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
              if (androidPermission != null) {
                  if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), androidPermission) == PackageManager.PERMISSION_GRANTED) {
-@@ -178,40 +206,107 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -178,40 +207,125 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
  
@@ -223,8 +224,26 @@ index 07f73fd..3911233 100644
      }
  
 +    @Override
++    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++            result.cancel();
++            return true;
++        } else
++            return super.onJsAlert(view, url, message, result);
++    }
++
++    @Override
++    public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++            result.cancel();
++            return true;
++        } else
++            return super.onJsConfirm(view, url, message, result);
++    }
++
++    @Override
 +    public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
-+        if (blockJsDuringLoading) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
 +            result.cancel();
 +            return true;
 +        } else
@@ -235,7 +254,7 @@ index 07f73fd..3911233 100644
          Activity activity = this.mWebView.getThemedReactContext().getCurrentActivity();
          if (activity == null) {
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19c..10fbd50 100644
+index d59e19c..ebbeaa2 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
@@ -347,27 +366,51 @@ index d59e19c..10fbd50 100644
      }
  
      @Override
+diff --git a/node_modules/react-native-webview/apple/RNCWebView.mm b/node_modules/react-native-webview/apple/RNCWebView.mm
+index 1ae84c8..229c4b0 100644
+--- a/node_modules/react-native-webview/apple/RNCWebView.mm
++++ b/node_modules/react-native-webview/apple/RNCWebView.mm
+@@ -275,6 +275,7 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+     REMAP_WEBVIEW_PROP(allowUniversalAccessFromFileURLs)
+     REMAP_WEBVIEW_PROP(allowsInlineMediaPlayback)
+     REMAP_WEBVIEW_PROP(webviewDebuggingEnabled)
++    REMAP_WEBVIEW_PROP(disableJsPromptLike)
+     REMAP_WEBVIEW_PROP(allowsAirPlayForMediaPlayback)
+     REMAP_WEBVIEW_PROP(mediaPlaybackRequiresUserAction)
+     REMAP_WEBVIEW_PROP(automaticallyAdjustContentInsets)
 diff --git a/node_modules/react-native-webview/apple/RNCWebViewImpl.m b/node_modules/react-native-webview/apple/RNCWebViewImpl.m
-index 77abeaf..e517e9b 100644
+index 77abeaf..e5363e8 100644
 --- a/node_modules/react-native-webview/apple/RNCWebViewImpl.m
 +++ b/node_modules/react-native-webview/apple/RNCWebViewImpl.m
-@@ -145,6 +145,7 @@ @implementation RNCWebViewImpl
+@@ -145,6 +145,8 @@ @implementation RNCWebViewImpl
    UIStatusBarStyle _savedStatusBarStyle;
  #endif // !TARGET_OS_OSX
    BOOL _savedStatusBarHidden;
 +  BOOL _disablePromptDuringLoading;
++  BOOL _disableJsPromptLike;
  
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
    UIScrollViewContentInsetAdjustmentBehavior _savedContentInsetAdjustmentBehavior;
-@@ -179,6 +180,7 @@ - (instancetype)initWithFrame:(CGRect)frame
+@@ -179,6 +181,8 @@ - (instancetype)initWithFrame:(CGRect)frame
      _injectedJavaScriptForMainFrameOnly = YES;
      _injectedJavaScriptBeforeContentLoaded = nil;
      _injectedJavaScriptBeforeContentLoadedForMainFrameOnly = YES;
 +    _disablePromptDuringLoading = YES;
++    _disableJsPromptLike = NO;
  
  #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
      _savedContentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-@@ -685,6 +687,7 @@ -(void)keyboardDisplacementFix
+@@ -588,6 +592,9 @@ - (void)setWebviewDebuggingEnabled:(BOOL)webviewDebuggingEnabled {
+       _webView.inspectable = _webviewDebuggingEnabled;
+ }
+ #endif
++- (void)setDisableJsPromptLike:(BOOL)disableJsPromptLike {
++  _disableJsPromptLike = disableJsPromptLike;
++}
+ 
+ #ifdef RCT_NEW_ARCH_ENABLED
+ - (void)destroyWebView
+@@ -685,6 +692,7 @@ -(void)keyboardDisplacementFix
  - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context{
    if ([keyPath isEqual:@"estimatedProgress"] && object == self.webView) {
      if(_onLoadingProgress){
@@ -375,7 +418,7 @@ index 77abeaf..e517e9b 100644
        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
        [event addEntriesFromDictionary:@{@"progress":[NSNumber numberWithDouble:self.webView.estimatedProgress]}];
        _onLoadingProgress(event);
-@@ -762,6 +765,7 @@ - (void)userContentController:(WKUserContentController *)userContentController
+@@ -762,6 +770,7 @@ - (void)userContentController:(WKUserContentController *)userContentController
        NSMutableDictionary<NSString *, id> *event = [self baseEvent];
        [event addEntriesFromDictionary: @{@"navigationType": message.body}];
        _onLoadingFinish(event);
@@ -383,47 +426,108 @@ index 77abeaf..e517e9b 100644
      }
    } else if ([message.name isEqualToString:MessageHandlerName]) {
      if (_onMessage) {
-@@ -1162,11 +1166,13 @@ - (void)                    webView:(WKWebView *)webView
+@@ -1156,17 +1165,45 @@ - (void)                    webView:(WKWebView *)webView
+ 
+ #pragma mark - WKNavigationDelegate methods
+ 
++/**
++ * one method to construct dialog title information based on the frame,
++ * if get host, show it as title, otherwise show a default title
++ */
++- (NSString *)constructDialogTitle:(WKFrameInfo *)frame
++{
++    // get url from frame
++    NSURL *urlObject = frame.request.URL;
++    BOOL invalidBaseURL = !urlObject.scheme || !urlObject.host;
++    NSString *baseURL = invalidBaseURL ? @"" : [NSString stringWithFormat:@"%@://%@%@",
++      urlObject.scheme,
++      urlObject.host,
++      urlObject.port ? [NSString stringWithFormat:@":%@", urlObject.port] : @""
++    ];
++
++    return baseURL.length ? [NSString stringWithFormat:@"Message from \n'%@'", baseURL] : @"Message from 3rd party";
++}
++
+ /**
+  * alert
+  */
  - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
  {
- #if !TARGET_OS_OSX
+-#if !TARGET_OS_OSX
 -  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:message preferredStyle:UIAlertControllerStyleAlert];
 -  [alert addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
--    completionHandler();
++  if(_disablePromptDuringLoading || _disableJsPromptLike) {
+     completionHandler();
 -  }]];
 -  [[self topViewController] presentViewController:alert animated:YES completion:NULL];
++    return ;
++  }
++#if !TARGET_OS_OSX
++  NSString* dialogTitle = [self constructDialogTitle:frame];
 +  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.7 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:message preferredStyle:UIAlertControllerStyleAlert];
-+    [alert addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-+      completionHandler();
-+    }]];
++    UIAlertController *alert = [UIAlertController alertControllerWithTitle:dialogTitle message:message preferredStyle:UIAlertControllerStyleAlert];
++    [alert addAction:[UIAlertAction actionWithTitle:@"Ok"
++                                    style:UIAlertActionStyleDefault
++                                    handler:^(UIAlertAction *action) {
++                                        completionHandler();
++                                    }
++                     ]];
 +    [[self topViewController] presentViewController:alert animated:YES completion:NULL];
 +  });
  #else
    NSAlert *alert = [[NSAlert alloc] init];
    [alert setMessageText:message];
-@@ -1179,6 +1185,8 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
- /**
+@@ -1180,12 +1217,18 @@ - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSStrin
   * confirm
   */
-+
-+
  - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(BOOL))completionHandler{
- #if !TARGET_OS_OSX
-   UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:message preferredStyle:UIAlertControllerStyleAlert];
-@@ -1205,6 +1213,11 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
-  * prompt
-  */
- - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *))completionHandler{
-+  if(_disablePromptDuringLoading) {
++  if(_disablePromptDuringLoading || _disableJsPromptLike) {
 +    completionHandler(nil);
 +    return ;
 +  }
 +
  #if !TARGET_OS_OSX
-   UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:prompt preferredStyle:UIAlertControllerStyleAlert];
+-  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:message preferredStyle:UIAlertControllerStyleAlert];
+-  [alert addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
++  NSString* dialogTitle = [self constructDialogTitle:frame];
++  UIAlertController *alert = [UIAlertController alertControllerWithTitle:dialogTitle message:message preferredStyle:UIAlertControllerStyleAlert];
++  [alert addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+     completionHandler(YES);
+   }]];
+-  [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
++  [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+     completionHandler(NO);
+   }]];
+   [[self topViewController] presentViewController:alert animated:YES completion:NULL];
+@@ -1205,16 +1248,23 @@ - (void)webView:(WKWebView *)webView runJavaScriptConfirmPanelWithMessage:(NSStr
+  * prompt
+  */
+ - (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *))completionHandler{
++  if(_disablePromptDuringLoading || _disableJsPromptLike) {
++    completionHandler(nil);
++    return ;
++  }
++
+ #if !TARGET_OS_OSX
+-  UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"" message:prompt preferredStyle:UIAlertControllerStyleAlert];
++  NSString *dialogTitle = [self constructDialogTitle:frame];
++  UIAlertController *alert = [UIAlertController alertControllerWithTitle:dialogTitle message:prompt preferredStyle:UIAlertControllerStyleAlert];
    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-@@ -1253,21 +1266,21 @@ - (void)                         webView:(WKWebView *)webView
+     textField.text = defaultText;
+   }];
+-  UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+-    completionHandler([[alert.textFields lastObject] text]);
++  UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
++      NSString *result = [[alert.textFields lastObject] text];
++      completionHandler(result);
+   }];
+   [alert addAction:okAction];
+-  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
++  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+     completionHandler(nil);
+   }];
+   [alert addAction:cancelAction];
+@@ -1253,21 +1303,21 @@ - (void)                         webView:(WKWebView *)webView
    requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
                          initiatedByFrame:(WKFrameInfo *)frame
                                      type:(WKMediaCaptureType)type
@@ -460,7 +564,7 @@ index 77abeaf..e517e9b 100644
  }
  #endif
  
-@@ -1535,6 +1548,7 @@ - (void)webView:(WKWebView *)webView
+@@ -1535,6 +1585,7 @@ - (void)webView:(WKWebView *)webView
    }
  
    if (_onLoadingFinish) {
@@ -468,3 +572,17 @@ index 77abeaf..e517e9b 100644
      _onLoadingFinish([self baseEvent]);
    }
  }
+diff --git a/node_modules/react-native-webview/lib/WebViewTypes.d.ts b/node_modules/react-native-webview/lib/WebViewTypes.d.ts
+index 7cbd835..882321f 100644
+--- a/node_modules/react-native-webview/lib/WebViewTypes.d.ts
++++ b/node_modules/react-native-webview/lib/WebViewTypes.d.ts
+@@ -1066,5 +1066,9 @@ export interface WebViewSharedProps extends ViewProps {
+      * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
+      */
+     webviewDebuggingEnabled?: boolean;
++    /**
++     * Disallow calling `window.alert`, `window.confirm`, `window.prompt` from webview. The default value is `false`.
++     */
++    disableJsPromptLike?: boolean;
+ }
+ export {};

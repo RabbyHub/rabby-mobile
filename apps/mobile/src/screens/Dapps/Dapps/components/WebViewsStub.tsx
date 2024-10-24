@@ -327,6 +327,7 @@ export function OpenedDappWebViewStub() {
                  */
                 nestedScrollEnabled: false,
                 allowsInlineMediaPlayback: true,
+                disableJsPromptLike: !isActiveDapp,
               }}
               bottomNavH={
                 isConnected
