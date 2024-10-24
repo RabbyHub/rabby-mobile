@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
-index 07f73fd..3911233 100644
+index 07f73fd..7a410d7 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 +++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebChromeClient.java
 @@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
@@ -11,10 +11,11 @@ index 07f73fd..3911233 100644
  import android.view.Gravity;
  import android.view.View;
  import android.view.ViewGroup;
-@@ -17,8 +19,11 @@ import android.webkit.ValueCallback;
+@@ -17,8 +19,12 @@ import android.webkit.ValueCallback;
  import android.webkit.WebChromeClient;
  import android.webkit.WebView;
  import android.webkit.WebViewClient;
++import android.webkit.JsResult;
 +import android.webkit.JsPromptResult;
  import android.widget.FrameLayout;
 +import android.widget.Button;
@@ -23,7 +24,7 @@ index 07f73fd..3911233 100644
  import androidx.annotation.RequiresApi;
  import androidx.core.content.ContextCompat;
  
-@@ -28,6 +33,7 @@ import com.facebook.react.bridge.WritableMap;
+@@ -28,6 +34,7 @@ import com.facebook.react.bridge.WritableMap;
  import com.facebook.react.common.build.ReactBuildConfig;
  import com.facebook.react.modules.core.PermissionAwareActivity;
  import com.facebook.react.modules.core.PermissionListener;
@@ -31,7 +32,7 @@ index 07f73fd..3911233 100644
  import com.facebook.react.uimanager.UIManagerHelper;
  import com.reactnativecommunity.webview.events.TopLoadingProgressEvent;
  import com.reactnativecommunity.webview.events.TopOpenWindowEvent;
-@@ -36,6 +42,24 @@ import java.util.ArrayList;
+@@ -36,6 +43,24 @@ import java.util.ArrayList;
  import java.util.Collections;
  import java.util.List;
  
@@ -56,7 +57,7 @@ index 07f73fd..3911233 100644
  public class RNCWebChromeClient extends WebChromeClient implements LifecycleEventListener {
      protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER);
-@@ -54,6 +78,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -54,6 +79,7 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      protected View mVideoView;
      protected WebChromeClient.CustomViewCallback mCustomViewCallback;
@@ -64,7 +65,7 @@ index 07f73fd..3911233 100644
  
      /*
       * - Permissions -
-@@ -144,30 +169,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -144,30 +170,33 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
  
      @Override
      public void onPermissionRequest(final PermissionRequest request) {
@@ -110,7 +111,7 @@ index 07f73fd..3911233 100644
              // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
              if (androidPermission != null) {
                  if (ContextCompat.checkSelfPermission(this.mWebView.getThemedReactContext(), androidPermission) == PackageManager.PERMISSION_GRANTED) {
-@@ -178,40 +206,107 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
+@@ -178,40 +207,125 @@ public class RNCWebChromeClient extends WebChromeClient implements LifecycleEven
              }
          }
  
@@ -223,8 +224,26 @@ index 07f73fd..3911233 100644
      }
  
 +    @Override
++    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++            result.cancel();
++            return true;
++        } else
++            return super.onJsAlert(view, url, message, result);
++    }
++
++    @Override
++    public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
++            result.cancel();
++            return true;
++        } else
++            return super.onJsConfirm(view, url, message, result);
++    }
++
++    @Override
 +    public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
-+        if (blockJsDuringLoading) {
++        if (blockJsDuringLoading || mWebView.disableJsPromptLike) {
 +            result.cancel();
 +            return true;
 +        } else
@@ -235,7 +254,7 @@ index 07f73fd..3911233 100644
          Activity activity = this.mWebView.getThemedReactContext().getCurrentActivity();
          if (activity == null) {
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index d59e19c..10fbd50 100644
+index d59e19c..ebbeaa2 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -1,7 +1,9 @@
@@ -468,3 +487,17 @@ index 77abeaf..e517e9b 100644
      _onLoadingFinish([self baseEvent]);
    }
  }
+diff --git a/node_modules/react-native-webview/lib/WebViewTypes.d.ts b/node_modules/react-native-webview/lib/WebViewTypes.d.ts
+index 7cbd835..882321f 100644
+--- a/node_modules/react-native-webview/lib/WebViewTypes.d.ts
++++ b/node_modules/react-native-webview/lib/WebViewTypes.d.ts
+@@ -1066,5 +1066,9 @@ export interface WebViewSharedProps extends ViewProps {
+      * Enables WebView remote debugging using Chrome (Android) or Safari (iOS).
+      */
+     webviewDebuggingEnabled?: boolean;
++    /**
++     * Disallow calling `window.alert`, `window.confirm`, `window.prompt` from webview. The default value is `false`.
++     */
++    disableJsPromptLike?: boolean;
+ }
+ export {};
