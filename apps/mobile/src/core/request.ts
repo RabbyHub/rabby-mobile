@@ -1,7 +1,7 @@
 import { OpenApiService } from '@rabby-wallet/rabby-api';
 import { RabbyApiPlugin } from '@rabby-wallet/rabby-api/dist/plugins/intf';
 
-import { gS } from '@debank/rabby-sign-bvm/es/sign-rabby';
+import { gS } from '@rabby-wallet/rabby-sign-bvm/es/sign-rabby';
 import { APP_VERSIONS } from '@/constant';
 
 const SIGN_HDS = [
