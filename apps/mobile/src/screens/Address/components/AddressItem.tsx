@@ -14,7 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
-import { KEYRING_TYPE } from '../../../../../../packages/keyring-utils/src/types';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils/src/types';
 import { SessionStatusBar } from '@/components/WalletConnect/SessionStatusBar';
 import { AddressItemInner, getStyles } from './AddressItemInner';
 
@@ -88,7 +88,7 @@ export const AddressItem = (props: AddressItemProps) => {
       return (
         <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
           <RectButton
-            style={[styles.rightAction, { backgroundColor: color }]}
+            style={[{ backgroundColor: color }]}
             onPress={pressHandler}>
             {type === 'pin' && <RcIconAddressPin style={styles.actionIcon} />}
             {type === 'delete' && (
@@ -98,13 +98,7 @@ export const AddressItem = (props: AddressItemProps) => {
         </Animated.View>
       );
     },
-    [
-      styles.rightAction,
-      styles.actionIcon,
-      removeAccount,
-      wallet,
-      togglePinAddressAsync,
-    ],
+    [styles.actionIcon, removeAccount, wallet, togglePinAddressAsync],
   );
 
   const disableDeleteButton =

@@ -42,6 +42,7 @@ import { RootNames } from '@/constant/layout';
 import {
   SHOULD_SUPPORT_DARK_MODE,
   useAppTheme,
+  useTheme2024,
   useThemeColors,
   useThemeStyles,
 } from '@/hooks/theme';
@@ -66,7 +67,7 @@ import {
 } from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
-import { createGetStyles } from '@/utils/styles';
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   StackActions,
@@ -456,7 +457,7 @@ function SettingsBlocks() {
 }
 
 function DevSettingsBlocks() {
-  const { colors } = useThemeStyles(getStyles);
+  const { colors, colors2024, styles } = useTheme2024({ getStyle: getStyles });
   const navigation = useRabbyAppNavigation();
 
   const { hasSetupCustomPassword, openManagePasswordSheetModal } =
@@ -730,7 +731,7 @@ function DevSettingsBlocks() {
 }
 
 export default function SettingsScreen(): JSX.Element {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles } = useTheme2024({ getStyle: getStyles });
 
   const {
     computed: { couldSetupBiometrics },
@@ -781,14 +782,14 @@ export default function SettingsScreen(): JSX.Element {
   );
 }
 
-const getStyles = createGetStyles(colors => {
+const getStyles = createGetStyles2024(ctx => {
   return {
     container: {
       position: 'relative',
       flex: 0,
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: colors['neutral-bg-2'],
+      backgroundColor: ctx.classicalColors['neutral-bg-2'],
       // paddingBottom: LAYOUTS.fiexedFooterHeight,
     },
     scrollableContentStyle: {
