@@ -253,6 +253,29 @@ index 07f73fd..7a410d7 100644
      private PermissionAwareActivity getPermissionAwareActivity() {
          Activity activity = this.mWebView.getThemedReactContext().getCurrentActivity();
          if (activity == null) {
+diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
+index 6664b6f..0435296 100644
+--- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
++++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebView.java
+@@ -68,6 +68,7 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+     private OnScrollDispatchHelper mOnScrollDispatchHelper;
+     protected boolean hasScrollEvent = false;
+     protected boolean nestedScrollEnabled = false;
++    protected boolean disableJsPromptLike = false;
+     protected ProgressChangedFilter progressChangedFilter;
+ 
+     /**
+@@ -102,6 +103,10 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
+         this.nestedScrollEnabled = nestedScrollEnabled;
+     }
+ 
++    public void setDisableJsPromptLike(boolean val) {
++        this.disableJsPromptLike = val;
++    }
++
+     @Override
+     public void onHostResume() {
+         // do nothing
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 index d59e19c..ebbeaa2 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
@@ -366,6 +389,39 @@ index d59e19c..ebbeaa2 100644
      }
  
      @Override
+diff --git a/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
+index 5bae4aa..47caeb2 100644
+--- a/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
++++ b/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
+@@ -331,6 +331,12 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper>
+         mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
+     }
+ 
++    @Override
++    @ReactProp(name = "disableJsPromptLike")
++    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
++        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
++    }
++
+     /* iOS PROPS - no implemented here */
+     @Override
+     public void setAllowingReadAccessToURL(RNCWebViewWrapper view, @Nullable String value) {}
+diff --git a/node_modules/react-native-webview/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/node_modules/react-native-webview/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
+index 709117a..9ffbae5 100644
+--- a/node_modules/react-native-webview/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
++++ b/node_modules/react-native-webview/android/src/oldarch/com/reactnativecommunity/webview/RNCWebViewManager.java
+@@ -268,6 +268,11 @@ public class RNCWebViewManager extends ViewGroupManager<RNCWebViewWrapper> {
+         mRNCWebViewManagerImpl.setWebviewDebuggingEnabled(view, value);
+     }
+ 
++    @ReactProp(name = "disableJsPromptLike")
++    public void setDisableJsPromptLike(RNCWebViewWrapper view, boolean value) {
++        mRNCWebViewManagerImpl.setDisableJsPromptLike(view, value);
++    }
++
+     @ReactProp(name = "userAgent")
+     public void setUserAgent(RNCWebViewWrapper view, @Nullable String value) {
+         mRNCWebViewManagerImpl.setUserAgent(view, value);
 diff --git a/node_modules/react-native-webview/apple/RNCWebView.mm b/node_modules/react-native-webview/apple/RNCWebView.mm
 index 1ae84c8..229c4b0 100644
 --- a/node_modules/react-native-webview/apple/RNCWebView.mm
