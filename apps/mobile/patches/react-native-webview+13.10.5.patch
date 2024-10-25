@@ -389,6 +389,21 @@ index d59e19c..ebbeaa2 100644
      }
  
      @Override
+diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+index 4600a8d..a0af496 100644
+--- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
++++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+@@ -705,4 +705,10 @@ class RNCWebViewManagerImpl {
+     fun setWebviewDebuggingEnabled(viewWrapper: RNCWebViewWrapper, enabled: Boolean) {
+         RNCWebView.setWebContentsDebuggingEnabled(enabled)
+     }
++
++    fun setDisableJsPromptLike(viewWrapper: RNCWebViewWrapper, enabled: Boolean) {
++        val view = viewWrapper.webView
++        view.setDisableJsPromptLike(enabled)
++//        RNCWebView.setDisableJsPromptLike(enabled)
++    }
+ }
 diff --git a/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java b/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
 index 5bae4aa..47caeb2 100644
 --- a/node_modules/react-native-webview/android/src/newarch/com/reactnativecommunity/webview/RNCWebViewManager.java
@@ -434,6 +449,18 @@ index 1ae84c8..229c4b0 100644
      REMAP_WEBVIEW_PROP(allowsAirPlayForMediaPlayback)
      REMAP_WEBVIEW_PROP(mediaPlaybackRequiresUserAction)
      REMAP_WEBVIEW_PROP(automaticallyAdjustContentInsets)
+diff --git a/node_modules/react-native-webview/apple/RNCWebViewImpl.h b/node_modules/react-native-webview/apple/RNCWebViewImpl.h
+index ba9adf7..1a2d15a 100644
+--- a/node_modules/react-native-webview/apple/RNCWebViewImpl.h
++++ b/node_modules/react-native-webview/apple/RNCWebViewImpl.h
+@@ -81,6 +81,7 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *)request
+ @property (nonatomic, assign) CGFloat decelerationRate;
+ @property (nonatomic, assign) BOOL allowsInlineMediaPlayback;
+ @property (nonatomic, assign) BOOL webviewDebuggingEnabled;
++@property (nonatomic, assign) BOOL disableJsPromptLike;
+ @property (nonatomic, assign) BOOL allowsAirPlayForMediaPlayback;
+ @property (nonatomic, assign) BOOL bounces;
+ @property (nonatomic, assign) BOOL mediaPlaybackRequiresUserAction;
 diff --git a/node_modules/react-native-webview/apple/RNCWebViewImpl.m b/node_modules/react-native-webview/apple/RNCWebViewImpl.m
 index 77abeaf..e5363e8 100644
 --- a/node_modules/react-native-webview/apple/RNCWebViewImpl.m
@@ -628,6 +655,18 @@ index 77abeaf..e5363e8 100644
      _onLoadingFinish([self baseEvent]);
    }
  }
+diff --git a/node_modules/react-native-webview/apple/RNCWebViewManager.mm b/node_modules/react-native-webview/apple/RNCWebViewManager.mm
+index 1d22028..2960b92 100644
+--- a/node_modules/react-native-webview/apple/RNCWebViewManager.mm
++++ b/node_modules/react-native-webview/apple/RNCWebViewManager.mm
+@@ -63,6 +63,7 @@ - (RNCView *)view
+ RCT_EXPORT_VIEW_PROPERTY(allowUniversalAccessFromFileURLs, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(allowsInlineMediaPlayback, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(webviewDebuggingEnabled, BOOL)
++RCT_EXPORT_VIEW_PROPERTY(disableJsPromptLike, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(allowsAirPlayForMediaPlayback, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(mediaPlaybackRequiresUserAction, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(dataDetectorTypes, WKDataDetectorTypes)
 diff --git a/node_modules/react-native-webview/lib/WebViewTypes.d.ts b/node_modules/react-native-webview/lib/WebViewTypes.d.ts
 index 7cbd835..882321f 100644
 --- a/node_modules/react-native-webview/lib/WebViewTypes.d.ts
