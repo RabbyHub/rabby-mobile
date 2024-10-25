@@ -19,6 +19,7 @@ export async function getKeyring<T = KeyringInstance>(
     isNewKey = true;
   }
 
+  console.log('是这里吗, keyring', type);
   if (isNewKey) {
     await keyringService.addKeyring(keyring);
     callbackOnNewKeyring?.(keyring);

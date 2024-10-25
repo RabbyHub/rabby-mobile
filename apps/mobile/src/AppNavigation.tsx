@@ -43,7 +43,6 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
 import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import UnlockScreen from './screens/Unlock/Unlock';
-import { useAppUnlocked } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import {
   AppStatusBar,
@@ -79,7 +78,6 @@ export default function AppNavigation({
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
   const { setNavigationReady } = useSetNavigationReady();
 
   const { setCurrentRouteName } = useSetCurrentRouteName();
@@ -110,12 +108,14 @@ export default function AppNavigation({
   const onReady = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onReady'] & object
   >(() => {
+    // for test: 部分 name 不需要解锁
     setNavigationReady(true);
     let readyRootName = navigationRef.getCurrentRoute()?.name!;
-    if (!isAppUnlocked) {
-      replace(RootNames.Unlock);
-      readyRootName = RootNames.Unlock;
-    }
+    // 暂时不需要跳转到解锁页面
+    // if (!isAppUnlocked) {
+    //   replace(RootNames.Unlock);
+    //   readyRootName = RootNames.Unlock;
+    // }
     onRouteChange(readyRootName);
 
     analytics.logScreenView({
@@ -123,16 +123,29 @@ export default function AppNavigation({
       screen_class: readyRootName,
     });
     matomoLogScreenView({ name: readyRootName });
-  }, [setNavigationReady, isAppUnlocked, onRouteChange]);
+  }, [setNavigationReady, onRouteChange]);
 
   const onStateChange = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
   >(
     _navState => {
       const previousRouteName = routeNameRef.current;
-      const currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
+      let currentRouteName = navigationRef?.current?.getCurrentRoute()?.name;
+
+      const NO_UNLOCK_NAMES = [
+        RootNames.Home,
+        RootNames.CurrentAddress,
+        RootNames.ImportNewAddress,
+      ];
 
       if (previousRouteName !== currentRouteName) {
+        // if (
+        //   !isAppUnlocked &&
+        //   !NO_UNLOCK_NAMES.includes(currentRouteName as any)
+        // ) {
+        //   replace(RootNames.Unlock);
+        //   currentRouteName = RootNames.Unlock;
+        // }
         onRouteChange(currentRouteName);
 
         analytics.logScreenView({

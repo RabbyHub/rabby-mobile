@@ -22,25 +22,27 @@ const isIOS = Platform.OS === 'ios';
 // } from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
-  appUnlocked: false,
+  // appUnlocked: false,
   pwdStatus: PasswordStatus.Unknown,
 });
 appLockAtom.onMount = setAppLock => {
+  console.log('啊啊444');
+
   setAppLock(prev => ({
     ...prev,
-    appUnlocked: keyringService.isUnlocked(),
+    // appUnlocked: keyringService.isUnlocked(),
   }));
 };
 
 export function useAppUnlocked() {
-  const [{ appUnlocked, pwdStatus }, setAppLock] = useAtom(appLockAtom);
+  const [{ pwdStatus }, setAppLock] = useAtom(appLockAtom);
 
   // const hasSetupCustomPassword = useMemo(() => {
   //   return pwdStatus === PasswordStatus.Custom;
   // }, [pwdStatus]);
 
   return {
-    isAppUnlocked: appUnlocked,
+    // isAppUnlocked: appUnlocked,
     // hasSetupCustomPassword,
     setAppLock,
   };
@@ -68,8 +70,10 @@ export function useTryUnlockAppWithBuiltinOnTop() {
 
   const getTriedUnlock = React.useCallback(async () => {
     return tryAutoUnlockPromiseRef.current.then(async result => {
+      console.log('啊啊啊333');
+
       setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
+        // appUnlocked: keyringService.isUnlocked(),
         pwdStatus: result.lockInfo.pwdStatus,
       });
       return result;
@@ -91,9 +95,10 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
 
     try {
       const response = await apisLock.getRabbyLockInfo();
+      console.log('啊啊啊2222');
 
       setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
+        // appUnlocked: keyringService.isUnlocked(),
         pwdStatus: response.pwdStatus,
       });
 

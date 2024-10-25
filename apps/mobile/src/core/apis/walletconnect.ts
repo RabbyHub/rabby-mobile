@@ -7,6 +7,7 @@ import { Account } from '../services/preference';
 import { getKeyring } from './keyring';
 
 export async function initWalletConnectKeyring() {
+  console.log('是我的问题吗');
   return getKeyring<WalletConnectKeyring>(
     KEYRING_TYPE.WalletConnectKeyring,
     keyring => {

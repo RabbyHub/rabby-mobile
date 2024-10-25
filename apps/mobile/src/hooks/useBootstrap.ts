@@ -50,7 +50,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { isAppUnlocked, setAppLock } = useAppUnlocked();
+  const { setAppLock } = useAppUnlocked();
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {
@@ -59,7 +59,7 @@ export function useInitializeAppOnTop() {
 
     try {
       await initServices();
-      await initApis();
+      // await initApis();
       await Promise.race([syncMainChainList(), sleep(5000)]);
     } catch (error) {
       console.error('useInitializeAppOnTop::', error);
@@ -91,12 +91,12 @@ export function useInitializeAppOnTop() {
   }, [setAppLock, doInitializeApis, fetchAccounts]);
 
   React.useEffect(() => {
-    if (isAppUnlocked) {
-      doInitializeApis();
-    }
-  }, [doInitializeApis, isAppUnlocked]);
+    // if (isAppUnlocked) {
+    doInitializeApis();
+    // }
+  }, [doInitializeApis]);
 
-  return { isAppUnlocked };
+  return {};
 }
 
 const loadEntryScriptsAtom = atom({

@@ -155,6 +155,7 @@ export class KeyringService extends RNEventEmitter {
   }
 
   isUnlocked() {
+    console.log('又来读一遍么');
     return this.memStore.getState().isUnlocked;
   }
 
@@ -403,7 +404,7 @@ export class KeyringService extends RNEventEmitter {
    * @param options.onAddedAddress
    */
   addNewAccount(
-    selectedKeyring: KeyringInstance | KeyringIntf
+    selectedKeyring: KeyringInstance | KeyringIntf,
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -726,7 +727,10 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = typeof this.onCreateKeyring === 'function' ? this.onCreateKeyring(Keyring) : new Keyring({});
+    const keyring =
+      typeof this.onCreateKeyring === 'function'
+        ? this.onCreateKeyring(Keyring)
+        : new Keyring({});
     await keyring.deserialize(data);
 
     // getAccounts also validates the accounts for some keyrings
@@ -791,6 +795,8 @@ export class KeyringService extends RNEventEmitter {
         }, []);
       },
     );
+
+    console.log('addrs.map(normalizeAddress);', addrs.map(normalizeAddress));
     return addrs.map(normalizeAddress);
   }
 
@@ -908,7 +914,7 @@ export class KeyringService extends RNEventEmitter {
 
   async getAllVisibleAccountsArray() {
     const typedAccounts = await this.getAllTypedVisibleAccounts();
-    const result: KeyringAccount[] = [];
+    let result: KeyringAccount[] = [];
     typedAccounts.forEach(accountGroup => {
       result.push(
         ...accountGroup.accounts.map(account => ({
@@ -919,6 +925,17 @@ export class KeyringService extends RNEventEmitter {
         })),
       );
     });
+
+    // for test
+    result = [
+      {
+        address: '0x5853ed4f26a3fcea565b3fbc698bb19cdf6deb85',
+        brandName: 'Simple Key Pair',
+        byImport: undefined,
+        type: 'Simple Key Pair',
+      },
+    ] as any;
+    console.log('getAllVisibleAccountsArray', result);
 
     return result;
   }

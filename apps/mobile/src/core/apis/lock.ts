@@ -207,6 +207,7 @@ async function tryAutoUnlockRabbyMobile() {
 }
 
 export function isUnlocked() {
+  console.log('应该还没到我这吧');
   return keyringService.isUnlocked();
 }
 

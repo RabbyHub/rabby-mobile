@@ -44,7 +44,7 @@ const rneuiTheme = createTheme({
 type AppProps = { rabbitCode: string };
 
 function MainScreen({ rabbitCode }: AppProps) {
-  const { isAppUnlocked } = useInitializeAppOnTop();
+  // const { isAppUnlocked } = useInitializeAppOnTop();
   const { couldRender, securityChainOnTop } = useBootstrapApp({ rabbitCode });
   const { binaryTheme } = useAppTheme({ isAppTop: true });
 
@@ -65,10 +65,8 @@ function MainScreen({ rabbitCode }: AppProps) {
   });
 
   useEffect(() => {
-    if (isAppUnlocked) {
-      initAccounts();
-    }
-  }, [isAppUnlocked, initAccounts]);
+    initAccounts();
+  }, [initAccounts]);
 
   return (
     <AppProvider value={{ securityChain: securityChainOnTop }}>
