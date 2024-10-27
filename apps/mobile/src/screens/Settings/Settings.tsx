@@ -623,6 +623,23 @@ function DevSettingsBlocks() {
           ],
         },
       }),
+      complayground: {
+        label: 'Component Playground (Not present on production package)',
+        icon: RcEarth,
+        items: [
+          {
+            label: '[Sample] New User GetStarted 2024',
+            icon: RcEarth,
+            onPress: () => {
+              navigation.dispatch(
+                StackActions.replace(RootNames.StackGetStarted, {
+                  screen: RootNames.SampleNewUserGetStarted2024,
+                }),
+              );
+            },
+          },
+        ],
+      },
       ...(__DEV__ && {
         devlab: {
           label: 'Dev Lab',

@@ -45,6 +45,7 @@ export const RootNames = {
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
+  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */
@@ -162,6 +163,7 @@ function makeScreenSpecConfig() {
         androidStatusBarBg: 'rgba(0, 0, 0, 1)',
       },
       GetStarted: blueLightConf,
+      SampleNewUserGetStarted2024: blueLightConf,
 
       Home: bg1DefaultConf,
       Unlock: bg1DefaultConf,
