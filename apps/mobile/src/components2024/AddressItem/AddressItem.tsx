@@ -1,18 +1,22 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { StyleProp, StyleSheet, View, TextStyle } from 'react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
 import { KeyringAccountWithAlias, useAccounts } from '@/hooks/account';
-import { getWalletIcon } from '@/utils/walletInfo';
 import { splitNumberByStep } from '@/utils/number';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 
 const { isSameAddress } = addressUtils;
 
 interface ChildrenProps {
-  WalletIcon: React.FC<{ style?: StyleProp<TextStyle> }>;
+  WalletIcon: React.FC<{
+    height: number;
+    width: number;
+    style?: StyleProp<TextStyle>;
+  }>;
   WalletName: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletAddress: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
@@ -44,10 +48,14 @@ export const AddressItem = (props: AddressItemProps) => {
   const address = ellipsisAddress(account.address);
   const usdValue = `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`;
 
-  const WalletIcon = useMemo(() => {
-    return getWalletIcon(account.brandName, isLight);
-  }, [account.brandName, isLight]);
-
+  const WalletIconWrapper = useCallback(
+    (_props: Omit<WalletIconProps, 'isLight' | 'type'>) => {
+      return (
+        <WalletIcon type={account.brandName} isLight={isLight} {..._props} />
+      );
+    },
+    [account.brandName, isLight],
+  );
   const WalletName = useCallback(
     ({ style }: { style?: StyleProp<TextStyle> }) => {
       return (
@@ -86,11 +94,16 @@ export const AddressItem = (props: AddressItemProps) => {
   return (
     <View>
       {props.children ? (
-        props.children({ WalletIcon, WalletName, WalletAddress, WalletBalance })
+        props.children({
+          WalletIcon: WalletIconWrapper,
+          WalletName,
+          WalletAddress,
+          WalletBalance,
+        })
       ) : (
         <View style={styles.root}>
           <View style={styles.leftContainer}>
-            <WalletIcon
+            <WalletIconWrapper
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
             />
