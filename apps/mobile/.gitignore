@@ -72,6 +72,7 @@ yarn-error.log
 tmp.iconset
 
 ios/Package
+ios/RabbyMobile/Resources
 
 /*/deployments/tmp
 

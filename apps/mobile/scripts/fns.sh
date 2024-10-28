@@ -133,3 +133,31 @@ unix_replace_variables() {
 
     echo "Replace finished, result in $output_file"
 }
+
+cp_assets() {
+  local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  local project_dir=$(dirname $script_dir)
+
+  mkdir -p $project_dir/android/app/src/main/assets/fonts
+  cp $project_dir/assets/fonts/* $project_dir/android/app/src/main/assets/fonts/
+
+  mkdir -p $project_dir/ios/RabbyMobile/Resources
+  cp $project_dir/assets/fonts/* $project_dir/ios/RabbyMobile/Resources/
+}
+
+func_to_exec=$1
+
+if [ ! -z $func_to_exec ]; then
+  case $func_to_exec in
+    "--source-only")
+      # do nothing
+      ;;
+    "cp_assets")
+      cp_assets
+      ;;
+    *)
+      echo "Invalid function to execute: $func_to_exec"
+      exit 1;
+      ;;
+  esac
+fi

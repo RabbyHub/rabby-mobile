@@ -9,12 +9,18 @@ project_dir=$(dirname "$script_dir")
 # repo_dir=$project_dir
 repo_dir=$(dirname $(dirname "$project_dir"))
 
+. $script_dir/fns.sh --source-only
+
 echo "PostInstall script:"
 
 echo "1. Build Inpage Bridge..."
 cd $repo_dir/packages/rn-webview-bridge
 ./scripts/build-inpage-bridge.sh
 
+echo "2. Copy Assets..."
 cd $repo_dir/apps/mobile;
-echo "2. Patch npm packages"
+cp_assets;
+
+cd $repo_dir/apps/mobile;
+echo "3. Patch npm packages"
 yarn patch-package
