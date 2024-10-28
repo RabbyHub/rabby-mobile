@@ -1,7 +1,7 @@
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 
-import type { AuthenticationModalProps } from '../AuthenticationModal/AuthenticationModal';
+import type { AuthenticationModalProps } from '@/components/AuthenticationModal/AuthenticationModal';
 import type { NFTDetailPopupProps } from '@/screens/NftDetail/PopupInner';
 
 export enum MODAL_NAMES {

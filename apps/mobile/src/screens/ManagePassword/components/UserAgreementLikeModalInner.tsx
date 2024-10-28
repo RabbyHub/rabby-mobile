@@ -37,7 +37,7 @@ export function useShowUserAgreementLikeModal() {
   const openedModal2IdRef = React.useRef<string>('');
   const viewPrivacyPolicy = React.useCallback(() => {
     openedModal2IdRef.current = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.TIP_PRIVACY_POLYCY,
+      name: MODAL_NAMES.TIP_PRIVACY_POLICY,
       title: '',
       bottomSheetModalProps: {
         onDismiss: () => {
