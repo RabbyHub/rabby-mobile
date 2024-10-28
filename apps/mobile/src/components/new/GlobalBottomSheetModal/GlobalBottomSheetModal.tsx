@@ -3,7 +3,7 @@ import { useThemeColors } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
+import { AppBottomSheetModal } from '../../customized/BottomSheet';
 import {
   APPROVAL_MODAL_NAMES,
   CreateParams,
@@ -15,9 +15,9 @@ import {
 import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useRefreshAutoLockPanResponder } from '../AutoLockView';
+import { useRefreshAutoLockPanResponder } from '../../AutoLockView';
 import { globalSheetModalEvents } from './event';
-import { APPROVAL_SNAP_POINTS } from '../Approval/components/map';
+import { APPROVAL_SNAP_POINTS } from '../../Approval/components/map';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;

@@ -1,38 +1,38 @@
 import { APPROVAL_MODAL_NAMES, CreateParams, MODAL_NAMES } from './types';
-import { Approval } from '../Approval';
-import { SwitchAddress } from '../CommonPopup/SwitchAddress';
-import { SwitchChain } from '../CommonPopup/SwitchChain';
-import { CancelConnect } from '../CommonPopup/CancelConnect';
-import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
-import SimpleConfirmInner from '../CommonPopup/SimpleConfirm';
-import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
-import { SelectChain } from '../SelectChain';
-import { CancelTxPopup } from '../CancelTxPopup';
-import { SelectSortedChain } from '../SelectSortedChain';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
+import { Approval } from '../../Approval';
+import { SwitchAddress } from '../../CommonPopup/SwitchAddress';
+import { SwitchChain } from '../../CommonPopup/SwitchChain';
+import { CancelConnect } from '../../CommonPopup/CancelConnect';
+import { CancelApproval } from '../../CommonPopup/CancelApproval/CancelApproval';
+import SimpleConfirmInner from '../../CommonPopup/SimpleConfirm';
+import { ViewRawDetail } from '../../Approval/components/TxComponents/ViewRawModal';
+import { SelectChain } from '../../SelectChain';
+import { CancelTxPopup } from '../../CancelTxPopup';
+import { SelectSortedChain } from '../../SelectSortedChain';
+import { AppBottomSheetModal } from '../../customized/BottomSheet';
 import type { ThemeColors } from '@/constant/theme';
-import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
-import { SettingLedger } from '../HDSetting/SettingLedger';
-import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
-import { ConnectKeystone } from '../ConnectKeystone/ConnectKeystone';
-import { SettingKeystone } from '../HDSetting/SettingKeystone';
-import { ConnectOneKey } from '../ConnectOneKey/ConnectOneKey';
-import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
-import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
-import { SettingOneKey } from '../HDSetting/SettingOneKey';
-import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
+import { ConnectLedger } from '../../ConnectLedger/ConnectLedger';
+import { SettingLedger } from '../../HDSetting/SettingLedger';
+import { TipUpgradeModalInner } from '../../Upgrade/TipUpgrade';
+import { ConnectKeystone } from '../../ConnectKeystone/ConnectKeystone';
+import { SettingKeystone } from '../../HDSetting/SettingKeystone';
+import { ConnectOneKey } from '../../ConnectOneKey/ConnectOneKey';
+import { OneKeyInputPassphrase } from '../../OneKeyModal/OneKeyInputPassphrase';
+import { OneKeyInputPin } from '../../OneKeyModal/OneKeyInputPin';
+import { SettingOneKey } from '../../HDSetting/SettingOneKey';
+import { OneKeyPinOrPassphrase } from '../../OneKeyModal/OneKeyPinOrPassphrase';
 import {
   TipTermOfUseModalInner,
   TipPrivacyPolicyInner,
 } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
-import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
+import { AuthenticationModal } from '../../AuthenticationModal/AuthenticationModal';
+import { SettingHDKeyring } from '../../HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
-import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
-import { SeedPhraseRestoreFromCloud } from '../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
-import { BackupNotAvailableScreen } from '../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
-import { WalletConnectConnection } from '../CommonPopup/WalletConnectConnection';
+import { SeedPhraseBackupToCloud } from '../../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
+import { SeedPhraseRestoreFromCloud } from '../../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
+import { BackupNotAvailableScreen } from '../../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
+import { WalletConnectConnection } from '../../CommonPopup/WalletConnectConnection';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
