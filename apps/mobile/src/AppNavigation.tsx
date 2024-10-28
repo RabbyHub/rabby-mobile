@@ -53,6 +53,7 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -157,6 +158,7 @@ export default function AppNavigation({
       style={{ flex: 1, backgroundColor: colors['neutral-bg-2'] }}>
       <AppStatusBar __isTop__ />
       <GlobalBottomSheetModal />
+      <GlobalBottomSheetModal2024 />
       <NavigationContainer
         ref={navigationRef}
         // key={userId}

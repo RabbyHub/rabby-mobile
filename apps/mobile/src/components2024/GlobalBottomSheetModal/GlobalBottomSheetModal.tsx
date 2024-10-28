@@ -1,9 +1,9 @@
 import React from 'react';
-import { useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useApproval } from '@/hooks/useApproval';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
 import {
   APPROVAL_MODAL_NAMES,
   CreateParams,
@@ -15,9 +15,10 @@ import {
 import { makeBottomSheetProps, MODAL_VIEWS, SNAP_POINTS } from './utils';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useRefreshAutoLockPanResponder } from '../AutoLockView';
+import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
-import { APPROVAL_SNAP_POINTS } from '../Approval/components/map';
+import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
+import LinearGradient from 'react-native-linear-gradient';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
@@ -26,11 +27,11 @@ type ModalData = {
   ref: React.RefObject<AppBottomSheetModal>;
 };
 
-export const GlobalBottomSheetModal = () => {
+export const GlobalBottomSheetModal2024 = () => {
   const modalRefs = React.useRef<Record<string, ModalData['ref']>>({});
   const [modals, setModals] = React.useState<ModalData[]>([]);
 
-  const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
 
   React.useEffect(() => {
     modalRefs.current = modals.reduce((acc, modal) => {
@@ -163,6 +164,8 @@ export const GlobalBottomSheetModal = () => {
 
   const { panResponder } = useRefreshAutoLockPanResponder();
 
+  const isDarkTheme = useGetBinaryMode() === 'dark';
+
   return (
     <View>
       {modals.map(modal => {
@@ -190,18 +193,24 @@ export const GlobalBottomSheetModal = () => {
             ref={modal.ref}
             name={modal.id}
             children={
-              enableDynamicSizing ? (
-                <BottomSheetView {...panResponder.panHandlers}>
+              <LinearGradient
+                colors={
+                  isDarkTheme ? ['#131416', '#131416'] : ['#fff', '#F9F9F9']
+                }>
+                {enableDynamicSizing ? (
+                  <BottomSheetView {...panResponder.panHandlers}>
+                    <ModalView {...modalViewProps} />
+                  </BottomSheetView>
+                ) : (
                   <ModalView {...modalViewProps} />
-                </BottomSheetView>
-              ) : (
-                <ModalView {...modalViewProps} />
-              )
+                )}
+              </LinearGradient>
             }
             stackBehavior="push"
             {...makeBottomSheetProps({
               params: modal.params,
-              colors,
+              colors: colors2024,
+              isDarkTheme,
             })}
           />
         );
