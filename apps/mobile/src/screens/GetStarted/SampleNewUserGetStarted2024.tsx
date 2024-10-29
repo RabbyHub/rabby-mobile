@@ -16,7 +16,10 @@ import { keyringService, preferenceService } from '@/core/services';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
 // import { Button } from '@rneui/themed';
-import { Button } from '@/components/Button';
+// import { Button } from '@/components/Button';
+import { Button } from '@/components2024/Button';
+import { Card } from '@/components2024/Card';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import axios from 'axios';
 import {
@@ -106,10 +109,6 @@ function SampleGetStartedScreen2024(): JSX.Element {
             for Ethereum and all EVM chains
           </Text>
           <Button
-            height={56}
-            containerStyle={styles.buttonContainerStyle}
-            buttonStyle={styles.buttonStyle}
-            titleStyle={styles.buttonTitleStyle}
             type="primary"
             title="Create New Address"
             // onPress={handleGoToHome}
@@ -217,7 +216,6 @@ const getStyles = createGetStyles2024(ctx =>
       // ...makeDebugBorder(),
     },
     buttonContainerStyle: {
-      marginTop: 32,
       width: 268,
       borderRadius: 56,
     },
