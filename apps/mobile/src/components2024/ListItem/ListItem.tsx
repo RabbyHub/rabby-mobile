@@ -1,7 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
@@ -19,6 +19,7 @@ export interface ListItemProps {
   subText?: string;
   onPress?: () => void;
   disableArrow?: boolean;
+  disabled?: boolean;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -28,10 +29,17 @@ export const ListItem: React.FC<ListItemProps> = ({
   Icon,
   iconSrc,
   disableArrow = false,
+  disabled,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
-    <TouchableOpacity disabled={!onPress} onPress={onPress} style={styles.root}>
+    <TouchableOpacity
+      disabled={!onPress && !disabled}
+      onPress={disabled ? undefined : onPress}
+      style={StyleSheet.flatten([
+        styles.root,
+        disabled ? styles.rootDisabled : undefined,
+      ])}>
       <View style={styles.leftContainer}>
         {iconSrc ? (
           <Image
@@ -63,14 +71,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  rootDisabled: {
+    opacity: 0.6,
+  },
   leftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   image: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
   },
   textContainer: {
     gap: 4,

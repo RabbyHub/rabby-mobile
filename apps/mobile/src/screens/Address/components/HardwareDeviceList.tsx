@@ -6,16 +6,15 @@ import LedgerSVG from '@/assets/icons/wallet/ledger.svg';
 import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
 import KeystoneSVG from '@/assets/icons/wallet/keystone.svg';
 import { HardwareSVG } from '@/assets/icons/address';
-import { toast } from '@/components/Toast';
-import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_CATEGORY, KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { apiKeystone } from '@/core/apis';
 import { useImportKeystone } from '@/components/ConnectKeystone/useImportKeystone';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -28,11 +27,11 @@ const styles = StyleSheet.create({
 
 export const HardwareDeviceList = () => {
   const handleLedger = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_LEDGER,
       onDone: () => {
         setTimeout(() => {
-          removeGlobalBottomSheetModal(id);
+          removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
     });
@@ -58,22 +57,22 @@ export const HardwareDeviceList = () => {
       return;
     }
 
-    const id = createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_KEYSTONE,
       onDone: () => {
         setTimeout(() => {
-          removeGlobalBottomSheetModal(id);
+          removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
     });
   }, [goImport]);
 
   const handleOneKey = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_ONEKEY,
       onDone: () => {
         setTimeout(() => {
-          removeGlobalBottomSheetModal(id);
+          removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
     });
