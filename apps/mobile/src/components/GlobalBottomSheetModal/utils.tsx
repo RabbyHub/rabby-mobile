@@ -55,7 +55,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SETTING_ONEKEY]: ['55%'],
   [MODAL_NAMES.TIP_UPGRADE]: ['50%'],
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: ['80%'],
-  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: ['80%'],
+  [MODAL_NAMES.TIP_PRIVACY_POLICY]: ['80%'],
   [MODAL_NAMES.TIP_TERM_OF_USE]: ['80%'],
   [MODAL_NAMES.ONEKEY_INPUT_PIN]: [540],
   [MODAL_NAMES.ONEKEY_INPUT_PASSPHRASE]: [540],
@@ -66,25 +66,6 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.WALLET_CONNECT]: [300],
-};
-
-export const APPROVAL_SNAP_POINTS: Record<
-  APPROVAL_MODAL_NAMES,
-  (string | number)[]
-> = {
-  [APPROVAL_MODAL_NAMES.Connect]: ['90%'],
-  [APPROVAL_MODAL_NAMES.SignText]: ['100%'],
-  [APPROVAL_MODAL_NAMES.SignTypedData]: ['100%'],
-  [APPROVAL_MODAL_NAMES.SignTx]: ['100%'],
-  [APPROVAL_MODAL_NAMES.WatchAddressWaiting]: [360, 400],
-  [APPROVAL_MODAL_NAMES.LedgerHardwareWaiting]: [400, 455],
-  [APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting]: [440, 455],
-  [APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting]: [400, 455],
-  [APPROVAL_MODAL_NAMES.PrivatekeyWaiting]: [200, 255],
-  [APPROVAL_MODAL_NAMES.ETHSign]: [300],
-  [APPROVAL_MODAL_NAMES.Unknown]: [300],
-  [APPROVAL_MODAL_NAMES.AddChain]: ['90%'],
-  [APPROVAL_MODAL_NAMES.AddAsset]: ['90%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -112,10 +93,9 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: SeedPhraseRestoreFromCloud,
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: BackupNotAvailableScreen,
   [MODAL_NAMES.WALLET_CONNECT]: WalletConnectConnection,
-
   [MODAL_NAMES.TIP_UPGRADE]: TipUpgradeModalInner,
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: MarkdownInWebViewInner,
-  [MODAL_NAMES.TIP_PRIVACY_POLYCY]: TipPrivacyPolicyInner,
+  [MODAL_NAMES.TIP_PRIVACY_POLICY]: TipPrivacyPolicyInner,
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
