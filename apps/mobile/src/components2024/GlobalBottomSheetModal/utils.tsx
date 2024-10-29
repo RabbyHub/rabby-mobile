@@ -1,38 +1,39 @@
-import { APPROVAL_MODAL_NAMES, CreateParams, MODAL_NAMES } from './types';
-import { Approval } from '../Approval';
-import { SwitchAddress } from '../CommonPopup/SwitchAddress';
-import { SwitchChain } from '../CommonPopup/SwitchChain';
-import { CancelConnect } from '../CommonPopup/CancelConnect';
-import { CancelApproval } from '../CommonPopup/CancelApproval/CancelApproval';
-import SimpleConfirmInner from '../CommonPopup/SimpleConfirm';
-import { ViewRawDetail } from '../Approval/components/TxComponents/ViewRawModal';
-import { SelectChain } from '../SelectChain';
-import { CancelTxPopup } from '../CancelTxPopup';
-import { SelectSortedChain } from '../SelectSortedChain';
-import { AppBottomSheetModal } from '../customized/BottomSheet';
-import type { ThemeColors } from '@/constant/theme';
-import { ConnectLedger } from '../ConnectLedger/ConnectLedger';
-import { SettingLedger } from '../HDSetting/SettingLedger';
-import { TipUpgradeModalInner } from '../Upgrade/TipUpgrade';
-import { ConnectKeystone } from '../ConnectKeystone/ConnectKeystone';
-import { SettingKeystone } from '../HDSetting/SettingKeystone';
-import { ConnectOneKey } from '../ConnectOneKey/ConnectOneKey';
-import { OneKeyInputPassphrase } from '../OneKeyModal/OneKeyInputPassphrase';
-import { OneKeyInputPin } from '../OneKeyModal/OneKeyInputPin';
-import { SettingOneKey } from '../HDSetting/SettingOneKey';
-import { OneKeyPinOrPassphrase } from '../OneKeyModal/OneKeyPinOrPassphrase';
+import { CreateParams, MODAL_NAMES } from './types';
+import { Approval } from '@/components//Approval';
+import { SwitchAddress } from '@/components/CommonPopup/SwitchAddress';
+import { SwitchChain } from '@/components/CommonPopup/SwitchChain';
+import { CancelConnect } from '@/components/CommonPopup/CancelConnect';
+import { CancelApproval } from '@/components/CommonPopup/CancelApproval/CancelApproval';
+import SimpleConfirmInner from '@/components/CommonPopup/SimpleConfirm';
+import { ViewRawDetail } from '@/components/Approval/components/TxComponents/ViewRawModal';
+import { SelectChain } from '@/components/SelectChain';
+import { CancelTxPopup } from '@/components/CancelTxPopup';
+import { SelectSortedChain } from '@/components/SelectSortedChain';
+import { AppBottomSheetModal } from '@/components/customized/BottomSheet';
+import type { ThemeColors2024 } from '@/constant/theme';
+import { ConnectLedger } from '@/components/ConnectLedger/ConnectLedger';
+import { SettingLedger } from '@/components/HDSetting/SettingLedger';
+import { TipUpgradeModalInner } from '@/components/Upgrade/TipUpgrade';
+import { ConnectKeystone } from '@/components/ConnectKeystone/ConnectKeystone';
+import { SettingKeystone } from '@/components/HDSetting/SettingKeystone';
+import { ConnectOneKey } from '@/components/ConnectOneKey/ConnectOneKey';
+import { OneKeyInputPassphrase } from '@/components/OneKeyModal/OneKeyInputPassphrase';
+import { OneKeyInputPin } from '@/components/OneKeyModal/OneKeyInputPin';
+import { SettingOneKey } from '@/components/HDSetting/SettingOneKey';
+import { OneKeyPinOrPassphrase } from '@/components/OneKeyModal/OneKeyPinOrPassphrase';
 import {
   TipTermOfUseModalInner,
   TipPrivacyPolicyInner,
 } from '@/screens/ManagePassword/components/UserAgreementLikeModalInner';
-import { AuthenticationModal } from '../AuthenticationModal/AuthenticationModal';
-import { SettingHDKeyring } from '../HDSetting/SettingHDKeyring';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
+import { SettingHDKeyring } from '@/components/HDSetting/SettingHDKeyring';
 import { MarkdownInWebViewInner } from '@/screens/Settings/sheetModals/MarkdownInWebViewTester';
 import { NFTDetailPopupInner } from '@/screens/NftDetail/PopupInner';
-import { SeedPhraseBackupToCloud } from '../SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
-import { SeedPhraseRestoreFromCloud } from '../SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
-import { BackupNotAvailableScreen } from '../SeedPhraseBackupToCloud/BackupNotAvailableScreen';
-import { WalletConnectConnection } from '../CommonPopup/WalletConnectConnection';
+import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud/SeedPhraseBackupToCloud';
+import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
+import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
+import { WalletConnectConnection } from '@/components/CommonPopup/WalletConnectConnection';
+import React from 'react';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -103,64 +104,19 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
 
 export function makeBottomSheetProps(ctx: {
   params: CreateParams;
-  colors: (typeof ThemeColors)['light'];
+  colors: (typeof ThemeColors2024)['light'];
   prevProps?: any;
+  isDarkTheme: boolean;
 }): Partial<React.ComponentProps<typeof AppBottomSheetModal>> {
-  if (ctx.params.approvalComponent === 'Connect') {
-    return {
-      handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-1'],
-      },
-      handleIndicatorStyle: {
-        backgroundColor: ctx.colors['neutral-line'],
-      },
-    };
-  }
-
-  if (ctx.params?.name === MODAL_NAMES.VIEW_RAW_DETAILS) {
-    return {
-      handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-2'],
-      },
-      handleIndicatorStyle: {
-        backgroundColor: ctx.colors['neutral-line'],
-      },
-    };
-  }
-
-  if (ctx.params?.name === MODAL_NAMES.APPROVAL) {
-    if (
-      [
-        APPROVAL_MODAL_NAMES.KeystoneHardwareWaiting,
-        APPROVAL_MODAL_NAMES.LedgerHardwareWaiting,
-        APPROVAL_MODAL_NAMES.PrivatekeyWaiting,
-        APPROVAL_MODAL_NAMES.OneKeyHardwareWaiting,
-        APPROVAL_MODAL_NAMES.WatchAddressWaiting,
-        APPROVAL_MODAL_NAMES.ETHSign,
-        APPROVAL_MODAL_NAMES.AddAsset,
-        APPROVAL_MODAL_NAMES.AddChain,
-        APPROVAL_MODAL_NAMES.Unknown,
-      ].includes(ctx.params.approvalComponent as APPROVAL_MODAL_NAMES)
-    ) {
-      return {
-        handleStyle: {
-          backgroundColor: 'transparent',
-        },
-      };
-    }
-    return {
-      handleStyle: {
-        backgroundColor: ctx.colors['neutral-bg-4'],
-      },
-      handleIndicatorStyle: {
-        backgroundColor: ctx.colors['neutral-line'],
-      },
-    };
-  }
-
   return {
+    handleStyle: {
+      backgroundColor: ctx.isDarkTheme ? '#131416' : '#ffff',
+    },
+    handleIndicatorStyle: {
+      backgroundColor: '#d1d4db',
+    },
     backgroundStyle: {
-      backgroundColor: ctx.colors['neutral-bg-1'],
+      borderRadius: 16,
     },
   };
 }

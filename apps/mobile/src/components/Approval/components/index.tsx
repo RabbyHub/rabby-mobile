@@ -1,13 +1,31 @@
-export { Connect } from './Connect';
-export { SignText } from './SignText';
-export { SignTypedData } from './SignTypedData';
-export { SignTx } from './SignTx/SignTx';
-export { WatchAddressWaiting } from './WatchAddressWaiting';
-export { LedgerHardwareWaiting } from './LedgerHardwareWaiting/LedgerHardwareWaiting';
-export { OneKeyHardwareWaiting } from './OneKeyHardwareWaiting/OneKeyHardwareWaiting';
-export { KeystoneHardwareWaiting } from './KeystoneHardwareWaiting/KeystoneHardwareWaiting';
-export { PrivatekeyWaiting } from './PrivatekeyWaiting/PrivatekeyWaiting';
-export { ETHSign } from './ETHSign/ETHSign';
-export { Unknown } from './Unknown/Unknown';
-export { AddChain } from './AddChain/AddChain';
-export { AddAsset } from './AddAsset/AddAsset';
+import { Connect } from './Connect';
+import { SignText } from './SignText';
+import { SignTypedData } from './SignTypedData';
+import { SignTx } from './SignTx/SignTx';
+import { WatchAddressWaiting } from './WatchAddressWaiting';
+import { LedgerHardwareWaiting } from './LedgerHardwareWaiting/LedgerHardwareWaiting';
+import { OneKeyHardwareWaiting } from './OneKeyHardwareWaiting/OneKeyHardwareWaiting';
+import { KeystoneHardwareWaiting } from './KeystoneHardwareWaiting/KeystoneHardwareWaiting';
+import { PrivatekeyWaiting } from './PrivatekeyWaiting/PrivatekeyWaiting';
+import { ETHSign } from './ETHSign/ETHSign';
+import { Unknown } from './Unknown/Unknown';
+import { AddChain } from './AddChain/AddChain';
+import { AddAsset } from './AddAsset/AddAsset';
+
+export const ApprovalComponent = {
+  Connect,
+  SignText,
+  SignTypedData,
+  SignTx,
+  WatchAddressWaiting,
+  LedgerHardwareWaiting,
+  OneKeyHardwareWaiting,
+  KeystoneHardwareWaiting,
+  PrivatekeyWaiting,
+  ETHSign,
+  Unknown,
+  AddChain,
+  AddAsset,
+};
+
+export type ApprovalComponentType = keyof typeof ApprovalComponent;
