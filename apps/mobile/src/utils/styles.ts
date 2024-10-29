@@ -1,4 +1,10 @@
 import { AppColorsVariants, AppColors2024Variants } from '@/constant/theme';
+import { IS_IOS } from '@/core/native/utils';
+import {
+  FontNames,
+  FontWeightEnum,
+  getFontWeightType,
+} from '@/core/utils/fonts';
 import { bizNumberUtils } from '@rabby-wallet/biz-utils';
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
@@ -101,105 +107,12 @@ export function makeDebugBorder(color = 'blue'): ViewStyle {
   });
 }
 
-const enum FontWeightEnum {
-  thin = 100,
-  extraLight = 200,
-  ultraLight = 200,
-  light = 300,
-  normal = 400,
-  medium = 500,
-  semiBold = 600,
-  bold = 700,
-  extraBold = 800,
-  ultraBold = 800,
-  heavy = 900,
-}
-/**
- * @description mutate fontFamily based on the input's fontFamily & fontWeight
- *
- * 100	Thin (Hairline)
- * 200	Extra Light (Ultra Light)
- * 300	Light
- * 400	Normal (Regular)
- * 500	Medium
- * 600	Semi Bold (Demi Bold)
- * 700	Bold
- * 800	Extra Bold (Ultra Bold)
- * 900	Black (Heavy)
- * @returns
- */
-function getFontWeightType(fontWeight?: string | number) {
-  const fwStr = (fontWeight + '').toLowerCase();
-  const fontWeightNumber = bizNumberUtils.coerceInteger(fontWeight, -1);
-
-  const result = {
-    supertype: FontWeightEnum.normal,
-    type: FontWeightEnum.normal,
-  };
-
-  if (!fontWeight) return result;
-
-  if (['heavy'].includes(fwStr) || fontWeightNumber >= 900) {
-    result.supertype = FontWeightEnum.heavy;
-    result.type = FontWeightEnum.heavy;
-  } else if (
-    ['ultrabold', 'extrabold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.heavy - 100
-  ) {
-    result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.extraBold;
-  } else if (
-    ['bold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.bold - 100
-  ) {
-    result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.bold;
-  } else if (
-    ['semibold', 'demibold'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.semiBold - 100
-  ) {
-    result.supertype = FontWeightEnum.bold;
-    result.type = FontWeightEnum.semiBold;
-  } else if (
-    ['medium'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.medium - 100
-  ) {
-    result.supertype = FontWeightEnum.medium;
-    result.type = FontWeightEnum.medium;
-  } else if (
-    ['normal', 'regular'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.normal - 100
-  ) {
-    result.supertype = FontWeightEnum.normal;
-    result.type = FontWeightEnum.normal;
-  } else if (
-    ['light'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.light - 100
-  ) {
-    result.supertype = FontWeightEnum.light;
-    result.type = FontWeightEnum.light;
-  } else if (
-    ['extralight', 'ultralight'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.extraLight - 100
-  ) {
-    result.supertype = FontWeightEnum.light;
-    result.type = FontWeightEnum.extraLight;
-  } else if (
-    ['thin', 'hairline'].includes(fwStr) ||
-    fontWeightNumber > FontWeightEnum.thin - 100
-  ) {
-    result.supertype = FontWeightEnum.thin;
-    result.type = FontWeightEnum.thin;
-  }
-
-  return result;
-}
-
 function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
   input: T,
 ): T {
   try {
     input = JSON.parse(JSON.stringify(input));
+    // if (IS_IOS) return input;
     Object.keys(input).forEach(key => {
       const debugSymbol = input[key]?.['__DEBUG_FONT_STYLE__'];
       delete input[key]['__DEBUG_FONT_STYLE__'];
@@ -225,23 +138,23 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
       if (lcFontFamily && /sf(.?)pro(.?)rounded/i.test(lcFontFamily)) {
         switch (fwTypeResult.supertype) {
           case FontWeightEnum.bold: {
-            input[key].fontFamily = 'SF-Pro-Rounded-Bold';
+            input[key].fontFamily = FontNames.sf_pro_rounded_bold;
             delete input[key].fontWeight;
             break;
           }
           case FontWeightEnum.light: {
-            input[key].fontFamily = 'SF-Pro-Rounded-Light';
+            input[key].fontFamily = FontNames.sf_pro_rounded_light;
             delete input[key].fontWeight;
             break;
           }
           default: {
-            input[key].fontFamily = 'SF-Pro-Rounded-Regular';
+            input[key].fontFamily = FontNames.sf_pro_rounded_regular;
             delete input[key].fontWeight;
             break;
           }
         }
       } else if (lcFontFamily && /sf(.?)pro(.?)/i.test(lcFontFamily)) {
-        input[key].fontFamily = 'SF-Pro-Text-Regular';
+        input[key].fontFamily = FontNames.sf_pro_text_regular;
       }
 
       if (__DEV__ && shouldDevLog) {
