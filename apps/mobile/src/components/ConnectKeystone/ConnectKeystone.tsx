@@ -1,7 +1,6 @@
 import { RootNames } from '@/constant/layout';
 import { apiKeystone } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_TYPE,
