@@ -80,11 +80,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 22,
     color: colors2024['neutral-title-1'],
     fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   subText: {
     fontSize: 15,
     lineHeight: 20,
     color: colors2024['neutral-body'],
     fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
   },
 }));
