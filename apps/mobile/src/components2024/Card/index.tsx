@@ -40,9 +40,9 @@ export const Card = (props: CardProps) => {
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     borderRadius: 30,
-    backgroundColor: ctx.colors2024['card-light-bg1'],
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
     overflow: 'hidden',
-    borderColor: ctx.colors2024['card-light-line'],
+    borderColor: ctx.colors2024['neutral-line'],
     borderWidth: 1,
     borderStyle: 'solid',
     display: 'flex',
