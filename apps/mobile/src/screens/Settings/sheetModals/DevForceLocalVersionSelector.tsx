@@ -91,7 +91,7 @@ export default function DevForceLocalVersionSelector({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Theme mode</Text>
+        <Text style={styles.title}>Force local version</Text>
         <View style={styles.mainContainer}>
           {LocalVersionOptions.map((item, idx) => {
             const itemKey = `thememode-${item.title}-${item.value}`;

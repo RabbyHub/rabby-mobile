@@ -114,6 +114,12 @@ import DevForceLocalVersionSelector, {
   useLocalVersionSelectorModalVisible,
 } from './sheetModals/DevForceLocalVersionSelector';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
+import CloudDriveTestItemModal, {
+  useCloudDriveTestItemModalVisible,
+} from './sheetModals/DevCloudDrive';
+import WalletLockTestItemModal, {
+  useWalletLockTestItemModalVisible,
+} from './sheetModals/DevWalletLock';
 
 const LAYOUTS = {
   fiexedFooterHeight: 50,
@@ -488,9 +494,12 @@ function DevSettingsBlocks() {
   const switchAllowScreenshotRef = useRef<SwitchToggleType>(null);
   const switchShowFloatingAutoLockCountdownRef = useRef<SwitchToggleType>(null);
 
-  const { isLoginedGoogle, doGoogleSign, doGoogleSignOut } = useGoogleSign();
   const { currentLocalVersion, setLocalVersionSelectorModalVisible } =
     useLocalVersionSelectorModalVisible();
+
+  const { setCloudDriveTestItemModalVisible } =
+    useCloudDriveTestItemModalVisible();
+  const { setWalletTestItemModalVisible } = useWalletLockTestItemModalVisible();
 
   const devSettingsBlocks: Record<string, SettingConfBlock> = (() => {
     return {
@@ -511,7 +520,7 @@ function DevSettingsBlocks() {
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
-              label: 'Force Local version',
+              label: 'Force local version',
               icon: RcInfo,
               onPress: () => {
                 setLocalVersionSelectorModalVisible(true);
@@ -525,6 +534,20 @@ function DevSettingsBlocks() {
               visible: NEED_DEVSETTINGBLOCKS,
             },
             {
+              label: '[Security] Wallet Lock & Password',
+              icon: RcLockWallet,
+              onPress: async () => {
+                setWalletTestItemModalVisible(true);
+              },
+            },
+            {
+              label: '[Cloud] Test Memonics Backup',
+              icon: RcGoogleDrive,
+              onPress: async () => {
+                setCloudDriveTestItemModalVisible(true);
+              },
+            },
+            {
               label: allowScreenshot
                 ? `Allow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`
                 : `Disallow ${isIOS ? 'ScreenRecord' : 'Screenshot'}`,
@@ -536,49 +559,6 @@ function DevSettingsBlocks() {
                 switchAllowScreenshotRef.current?.toggle();
               },
               visible: __DEV__,
-            },
-            // only valid if custom password given
-            {
-              label: 'Lock Wallet',
-              icon: RcLockWallet,
-              disabled: !hasSetupCustomPassword,
-              onPress: () => {
-                requestLockWalletAndBackToUnlockScreen();
-              },
-            },
-            isLoginedGoogle
-              ? {
-                  label: 'Signout google drive',
-                  icon: RcGoogleSignout,
-                  onPress: async () => {
-                    await doGoogleSignOut();
-                  },
-                  visible: IS_ANDROID,
-                }
-              : {
-                  label: 'Sign google drive',
-                  icon: RcGoogleDrive,
-                  onPress: () => {
-                    doGoogleSign()
-                      .then(async e => {
-                        console.log('loginIfNeeded done', e.needLogin);
-                        await saveMnemonicToCloud({
-                          mnemonic: 'testtest',
-                          password: 'test',
-                        });
-                      })
-                      .catch(e => {
-                        console.error('loginIfNeeded error', e);
-                      });
-                  },
-                  visible: IS_ANDROID,
-                },
-            {
-              label: 'Clear Cloud Backup',
-              icon: RcClearPending,
-              onPress: () => {
-                deleteAllBackups();
-              },
             },
             {
               label: (
@@ -597,27 +577,6 @@ function DevSettingsBlocks() {
                   />
                 </View>
               ),
-            },
-            {
-              label: 'Last Unlock Offset',
-              icon: RcCountdown,
-              // onPress: () => {},
-              rightNode: (
-                <Text>
-                  <LastUnlockTimeLabel />
-                </Text>
-              ),
-            },
-            {
-              label: hasSetupCustomPassword
-                ? 'Clear Password'
-                : 'Set Up Password',
-              icon: RcManagePassword,
-              onPress: () => {
-                openManagePasswordSheetModal();
-              },
-              visible:
-                APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
             },
           ],
         },
@@ -725,6 +684,9 @@ function DevSettingsBlocks() {
       })}
 
       <DevForceLocalVersionSelector />
+
+      <CloudDriveTestItemModal />
+      <WalletLockTestItemModal />
     </>
   );
 }
