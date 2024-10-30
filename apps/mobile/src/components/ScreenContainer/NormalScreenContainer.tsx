@@ -13,6 +13,7 @@ export default function NormalScreenContainer<
   T extends ReactNativeViewAs = 'View',
 >({
   as = 'View' as T,
+  noHeader = false,
   children,
   style,
   fitStatuBar,
@@ -20,6 +21,7 @@ export default function NormalScreenContainer<
 }: React.PropsWithChildren<
   {
     as?: T;
+    noHeader?: boolean;
     className?: ViewProps['className'];
     fitStatuBar?: boolean;
     style?: React.ComponentProps<typeof View>['style'];
@@ -27,7 +29,7 @@ export default function NormalScreenContainer<
     overwriteStyle?: React.ComponentProps<typeof View>['style'];
   } & React.ComponentProps<ReactNativeViewAsMap[T]>
 >) {
-  const { safeOffHeader } = useSafeSizes();
+  const { safeOffHeader, safeTop } = useSafeSizes();
   const colors = useThemeColors();
 
   const ViewComp = useMemo(() => getViewComponentByAs(as), [as]);
@@ -38,7 +40,7 @@ export default function NormalScreenContainer<
         style,
         fitStatuBar && { marginTop: -1 },
         {
-          paddingTop: safeOffHeader,
+          paddingTop: noHeader ? safeTop : safeOffHeader,
           flexDirection: 'column',
           width: '100%',
           height: '100%',

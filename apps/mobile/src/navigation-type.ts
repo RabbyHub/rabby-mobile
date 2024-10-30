@@ -22,7 +22,7 @@ export type RootStackParamsList = {
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
-  [RootNames.StackTestkits]: NavigatorScreenParams<GetStartedNavigatorParamsList>;
+  [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
@@ -53,6 +53,7 @@ type GetStartedNavigatorParamsList = {
 type TestKitsNavigatorParamsList = {
   [RootNames.SampleNewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
+  [RootNames.DevUIFormShowCase]?: {};
 };
 
 export type AddressNavigatorParamList = {

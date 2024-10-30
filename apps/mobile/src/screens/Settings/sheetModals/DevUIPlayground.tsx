@@ -81,6 +81,17 @@ export default function DevUIPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Form',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIFormShowCase,
+            }),
+          );
+        },
+      },
     ];
 
     return list.filter(item => item.visible !== false);
