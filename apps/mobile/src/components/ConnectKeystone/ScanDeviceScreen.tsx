@@ -18,7 +18,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 48,
+    paddingHorizontal: 24,
   },
   text: {
     fontSize: 17,
@@ -29,7 +29,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   imageWrapper: {
-    marginTop: 40,
+    marginTop: 24,
     position: 'relative',
   },
   progress: {
@@ -38,8 +38,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     left: -15,
   },
   scanner: {
-    width: 240,
-    height: 240,
+    width: 250,
+    height: 250,
   },
   titleText: {
     fontSize: 20,
