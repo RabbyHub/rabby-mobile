@@ -1,19 +1,39 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { useNavigation } from '@react-navigation/native';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeProdBorder,
+} from '@/utils/styles';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { NextInput } from '@/components2024/Form/Input';
 import { RcIconCorrectCC } from '@/assets/icons/common';
+import { RcIconScannerCC } from '@/assets/icons/address';
+import TouchableView from '@/components/Touchable/TouchableView';
 
 function wrapSampleInput<
   T extends typeof NextInput | typeof NextInput.Password,
->(Input: T) {
+>(
+  Input: T,
+  options?: {
+    initialSampleValue?: string;
+  },
+) {
+  const { initialSampleValue = 'rabbywallet' } = options ?? {};
+
   return function SampleInput(props: React.ComponentProps<T>) {
     const [sampleValue, setSampleValue] = useState(
-      props.inputProps?.value ?? 'rabbywallet',
+      props.inputProps?.value ?? initialSampleValue,
     );
     const onChange = useCallback((value: string) => {
       setSampleValue(value);
@@ -35,9 +55,13 @@ function wrapSampleInput<
 
 const BaseInput = wrapSampleInput(NextInput);
 const PasswordInput = wrapSampleInput(NextInput.Password);
+const TextAreaInput = wrapSampleInput(NextInput.TextArea, {
+  initialSampleValue:
+    'monkey flower bed banana  orange kid sky eye nose coffee feed food',
+});
 
 function DevUIFormShowCase(): JSX.Element {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, colors } = useTheme2024({
     getStyle: getStyles,
     isLight: true,
   });
@@ -45,7 +69,10 @@ function DevUIFormShowCase(): JSX.Element {
   const navigation = useNavigation();
 
   return (
-    <NormalScreenContainer style={styles.screen} noHeader>
+    <NormalScreenContainer
+      style={styles.screen}
+      noHeader
+      overwriteStyle={{ backgroundColor: colors['neutral-card-1'] }}>
       <ScrollView
         nestedScrollEnabled={false}
         contentContainerStyle={styles.screenScrollableView}
@@ -59,7 +86,7 @@ function DevUIFormShowCase(): JSX.Element {
           </Text>
           <View style={{ flexDirection: 'column' }}>
             <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
-              Default{' '.repeat(100)}
+              Summary{' '.repeat(100)}
               <Text style={{ marginBottom: 12 }}>
                 `NextInput` is the basic input component for theme 2024, its
                 based on `TextInput` from react-native, and also adapt to
@@ -161,7 +188,8 @@ function DevUIFormShowCase(): JSX.Element {
             </View>
             <View style={[styles.propertyDesc, { marginVertical: 12 }]}>
               <Text style={styles.propertyType}>
-                customIcon: boolean{' '.repeat(100)}
+                customIcon: {'React.ReactNode | (ctx) => React.ReactNode'}{' '}
+                {' '.repeat(100)}
               </Text>
               <Text style={{ marginBottom: 12 }}>
                 Provide `customIcon` on Right
@@ -185,15 +213,6 @@ function DevUIFormShowCase(): JSX.Element {
             </View>
           </View>
         </View>
-
-        {/* <View
-          style={{
-            marginVertical: 16,
-            borderTopWidth: 2,
-            borderStyle: 'dotted',
-            borderTopColor: colors2024['neutral-foot'],
-          }}
-        /> */}
 
         <View style={styles.showCaseRowsContainer}>
           <Text
@@ -234,7 +253,7 @@ function DevUIFormShowCase(): JSX.Element {
 
               <PasswordInput
                 initialPasswordVisible
-                fieldName="New password"
+                fieldName="Confirm password"
                 inputProps={{
                   placeholder: 'Must be at least 8 characters',
                 }}
@@ -252,6 +271,55 @@ function DevUIFormShowCase(): JSX.Element {
             </View>
           </View>
         </View>
+
+        <View style={styles.showCaseRowsContainer}>
+          <Text
+            style={[styles.componentName, { fontSize: 24, marginBottom: 12 }]}>
+            NextInput.TextArea
+          </Text>
+          <View style={{ flexDirection: 'column' }}>
+            <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
+              Default
+            </Text>
+            <TextAreaInput
+              inputProps={{
+                placeholder: 'Enter memonics',
+              }}
+            />
+            <View style={[styles.propertyDesc, { marginVertical: 12 }]}>
+              <Text style={styles.propertyType}>
+                customIcon: {'React.ReactNode | (ctx) => React.ReactNode'}{' '}
+                {' '.repeat(100)}
+              </Text>
+              <Text style={{ marginBottom: 12 }}>
+                Provide `customIcon` on Right-Bottom, the wrapper of icon is
+                positioned <Text style={{ fontWeight: 'bold' }}>absolute</Text>,
+                so you can change its position by changing `top`, `right`,
+                `bottom`, `left` property
+              </Text>
+
+              <TextAreaInput
+                inputProps={{
+                  placeholder: 'Enter memonics',
+                }}
+                customIcon={ctx => {
+                  return (
+                    <TouchableView
+                      style={[ctx.wrapperStyle, makeProdBorder('yellow')]}
+                      onPress={() => {
+                        Alert.alert('Please implement Scan QR code!');
+                      }}>
+                      <RcIconScannerCC
+                        style={ctx.iconStyle}
+                        color={colors2024['neutral-title-1']}
+                      />
+                    </TouchableView>
+                  );
+                }}
+              />
+            </View>
+          </View>
+        </View>
       </ScrollView>
     </NormalScreenContainer>
   );
@@ -261,11 +329,10 @@ const CONTENT_W = Dimensions.get('screen').width - 24;
 const getStyles = createGetStyles2024(ctx =>
   StyleSheet.create({
     screen: {
-      backgroundColor: ctx.colors['neutral-card1'],
+      backgroundColor: 'black',
       flexDirection: 'column',
       justifyContent: 'center',
-      // paddingTop: 0,
-      // height: '100%',
+      height: '100%',
     },
     areaTitle: {
       fontSize: 36,

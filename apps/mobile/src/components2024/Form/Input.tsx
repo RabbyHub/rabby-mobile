@@ -88,7 +88,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
       position: 'relative',
       top: INPUT_SIZES.PADDING_TOP,
     },
-    closeIconWrapper: {
+    rightIconWrapper: {
       flexShrink: 0,
       height: '100%',
       justifyContent: 'center',
@@ -118,7 +118,6 @@ const getFormInputStyles = createGetStyles2024(ctx => {
 
 type InputType = 'TextInput' | 'BottomSheetTextInput';
 type RenderCtx = {
-  clearable?: boolean;
   wrapperStyle: StyleProp<ViewStyle>;
   iconStyle: StyleProp<ViewStyle>;
 };
@@ -135,6 +134,7 @@ const NextInputComponent = React.forwardRef<
       | React.ReactNode
       | ((
           ctx: RenderCtx & {
+            clearable?: boolean;
             onPressClear?: React.ComponentProps<
               typeof TouchableOpacity
             >['onPress'];
@@ -222,7 +222,7 @@ const NextInputComponent = React.forwardRef<
     );
 
     const formattedClearIcon = useMemo(() => {
-      const clearWrapperStyle = StyleSheet.flatten([styles.closeIconWrapper]);
+      const clearWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
       const clearIconStyle = StyleSheet.flatten([styles.closeIcon]);
 
       if (typeof clearIcon === 'function') {
@@ -255,19 +255,18 @@ const NextInputComponent = React.forwardRef<
     const formmatedCustomIcon = useMemo(() => {
       if (!customIcon) return null;
 
-      const iconWrapperStyle = StyleSheet.flatten([styles.closeIconWrapper]);
+      const iconWrapperStyle = StyleSheet.flatten([styles.rightIconWrapper]);
       const iconStyle = StyleSheet.flatten([styles.closeIcon]);
 
       if (typeof customIcon === 'function') {
         return customIcon({
-          clearable,
           iconStyle,
           wrapperStyle: iconWrapperStyle,
           onPressCustom: _onPressCustom,
         });
       }
       return customIcon;
-    }, [styles, customIcon, clearable, _onPressCustom]);
+    }, [styles, customIcon, _onPressCustom]);
 
     const hasCustomIcon = !!formattedClearIcon || !!formmatedCustomIcon;
 
@@ -327,12 +326,15 @@ const NextInputComponent = React.forwardRef<
 
 export const NextInput = Object.assign(NextInputComponent, {
   Password: PasswordInput,
+  TextArea: TextAreaInput,
 });
+
+export type NextInputProps = React.ComponentProps<typeof NextInput>;
 
 function PasswordInput({
   initialPasswordVisible = false,
   ...props
-}: React.ComponentProps<typeof NextInput> & {
+}: NextInputProps & {
   initialPasswordVisible?: boolean;
 }) {
   const { styles, colors2024 } = useTheme2024({
@@ -390,6 +392,60 @@ const getPasswordInputStyles = createGetStyles2024(ctx => {
       height: 56,
       borderRadius: 12,
       backgroundColor: ctx.colors2024['neutral-bg-2'],
+    },
+  };
+});
+
+function TextAreaInput(props: Omit<NextInputProps, 'fieldName'>) {
+  const { styles } = useTheme2024({ getStyle: getTextAreaInputStyles });
+
+  const customIconProp = useMemo(() => {
+    const prop_customIcon = props.customIcon;
+    if (typeof prop_customIcon === 'function') {
+      return (ctx => {
+        ctx.wrapperStyle = StyleSheet.flatten([
+          ctx.wrapperStyle,
+          styles.overrideCustomIconStyle,
+        ]);
+        return prop_customIcon(ctx);
+      }) as NextInputProps['customIcon'];
+    }
+
+    return customIconProp;
+  }, [props.customIcon, styles.overrideCustomIconStyle]);
+
+  return (
+    <NextInput
+      {...props}
+      fieldName=""
+      containerStyle={[styles.taContainer, props.containerStyle]}
+      customIcon={customIconProp}
+      inputProps={{
+        placeholderTextColor: '#9B9B9B',
+        ...props.inputProps,
+        style: {
+          backgroundColor: 'transparent',
+        },
+        multiline: true,
+        textAlignVertical: 'top',
+      }}
+    />
+  );
+}
+
+const getTextAreaInputStyles = createGetStyles2024(ctx => {
+  return {
+    taContainer: {
+      height: 176,
+      borderRadius: 12,
+      backgroundColor: ctx.colors2024['neutral-bg-2'],
+    },
+    overrideCustomIconStyle: {
+      width: 'auto',
+      height: 'auto',
+      position: 'absolute',
+      bottom: 14,
+      right: 14,
     },
   };
 });
