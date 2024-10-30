@@ -29,21 +29,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   item: {
-    padding: 16,
-    backgroundColor: colors2024['neutral-card-2'],
-    borderRadius: 8,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   list: {
     marginTop: 22,
     width: '100%',
   },
   listWrapper: {
-    rowGap: 24,
     alignItems: 'stretch',
+    padding: 0,
+    paddingVertical: 12,
   },
   titleText: {
     fontSize: 20,
@@ -122,6 +118,7 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
           <Card style={styles.listWrapper}>
             {devices.map(device => (
               <ListItem
+                style={styles.item}
                 onPress={() => handlePress(device)}
                 title={device.name || ''}
                 Icon={DeviceLogo}
