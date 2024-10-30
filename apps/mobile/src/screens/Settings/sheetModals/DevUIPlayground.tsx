@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text } from 'react-native';
-import { RcArrowRightCC, RcIconCheckmarkCC } from '@/assets/icons/common';
+import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
 import { useSheetModals } from '@/hooks/useSheetModal';
@@ -10,84 +10,76 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { atom, useAtom } from 'jotai';
 import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
-import {
-  RcCountdown,
-  RcLockWallet,
-  RcManagePassword,
-} from '@/assets/icons/settings';
-import { DevTestItem, makeNoop } from './devTest';
-import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
-import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
-import { LastUnlockTimeLabel } from '../components/LockAbout';
-import { APP_FEATURE_SWITCH } from '@/constant';
 
-const walletLockTestItemModalVisibleAtom = atom(false);
-export function useWalletLockTestItemModalVisible() {
-  const [walletLockTestItemModalVisible, setWalletTestItemModalVisible] =
-    useAtom(walletLockTestItemModalVisibleAtom);
+import { RcCode } from '@/assets/icons/settings';
+import { DevTestItem, makeNoop } from './devTest';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { StackActions } from '@react-navigation/native';
+import { RootNames } from '@/constant/layout';
+
+const devUIPlaygroundModalVisibleAtom = atom(false);
+export function useDevUIPlaygroundModalVisible() {
+  const [devUIPlaygroundModalVisible, setDevUIPlaygroundModalVisible] = useAtom(
+    devUIPlaygroundModalVisibleAtom,
+  );
 
   return {
-    walletLockTestItemModalVisible,
-    setWalletTestItemModalVisible,
+    devUIPlaygroundModalVisible,
+    setDevUIPlaygroundModalVisible,
   };
 }
 
-export default function WalletLockTestItemModal({
+export default function DevUIPlaygroundModal({
   onCancel,
 }: RNViewProps & {
   onCancel?(): void;
 }) {
   const modalRef = useRef<AppBottomSheetModal>(null);
   const { toggleShowSheetModal } = useSheetModals({
-    cloudDriveTest: modalRef,
+    devUIPlayground: modalRef,
   });
 
   const {
-    walletLockTestItemModalVisible: visible,
-    setWalletTestItemModalVisible,
-  } = useWalletLockTestItemModalVisible();
+    devUIPlaygroundModalVisible: visible,
+    setDevUIPlaygroundModalVisible,
+  } = useDevUIPlaygroundModalVisible();
 
   useEffect(() => {
-    toggleShowSheetModal('cloudDriveTest', visible || 'destroy');
+    toggleShowSheetModal('devUIPlayground', visible || 'destroy');
   }, [visible, toggleShowSheetModal]);
 
   const { styles, colors } = useThemeStyles(getStyles);
 
   const handleCancel = useCallback(() => {
-    setWalletTestItemModalVisible(false);
+    setDevUIPlaygroundModalVisible(false);
     onCancel?.();
-  }, [setWalletTestItemModalVisible, onCancel]);
+  }, [setDevUIPlaygroundModalVisible, onCancel]);
 
-  const { hasSetupCustomPassword, openManagePasswordSheetModal } =
-    useManagePasswordOnSettings();
+  const navigation = useRabbyAppNavigation();
 
   const Items = (() => {
     const list: DevTestItem[] = [
       {
-        label: 'Lock Wallet',
-        icon: <RcLockWallet style={styles.labelIcon} />,
-        disabled: !hasSetupCustomPassword,
+        label: 'New Get Started 2024',
+        icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
-          requestLockWalletAndBackToUnlockScreen();
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.SampleNewUserGetStarted2024,
+            }),
+          );
         },
       },
       {
-        label: hasSetupCustomPassword ? 'Clear Password' : 'Set Up Password',
-        icon: <RcManagePassword style={styles.labelIcon} />,
+        label: 'Text & Colors',
+        icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {
-          openManagePasswordSheetModal();
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIFontShowCase,
+            }),
+          );
         },
-        visible: APP_FEATURE_SWITCH.customizePassword || hasSetupCustomPassword,
-      },
-      {
-        label: 'Time Since Last Unlock',
-        icon: <RcCountdown style={styles.labelIcon} />,
-        // onPress: () => {},
-        rightNode: (
-          <Text>
-            <LastUnlockTimeLabel />
-          </Text>
-        ),
       },
     ];
 
@@ -116,15 +108,10 @@ export default function WalletLockTestItemModal({
             paddingBottom: safeSizes.containerPaddingBottom,
           },
         ]}>
-        <Text style={styles.title}>Test Wallet Lock</Text>
+        <Text style={styles.title}>Component Playground</Text>
         <View style={styles.mainContainer}>
           {Items.map((item, idx) => {
             const itemKey = `testitem-${item.label}`;
-            const rightNode =
-              typeof item.rightNode === 'function'
-                ? item.rightNode()
-                : item.rightNode;
-            const disabledPress = item.disabled || !item.onPress;
 
             return (
               <TouchableView
@@ -134,17 +121,17 @@ export default function WalletLockTestItemModal({
                   { opacity: item.disabled ? 0.6 : 1 },
                 ]}
                 key={itemKey}
-                disabled={disabledPress}
+                disabled={!item.onPress}
                 onPress={() => {
                   item.onPress?.();
 
-                  setWalletTestItemModalVisible(false);
+                  setDevUIPlaygroundModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
-                {rightNode || <RcArrowRightCC color={colors['neutral-foot']} />}
+                <RcArrowRightCC color={colors['neutral-foot']} />
               </TouchableView>
             );
           })}

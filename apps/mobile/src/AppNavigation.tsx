@@ -54,6 +54,7 @@ import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -216,6 +217,10 @@ export default function AppNavigation({
                 backgroundColor: colors['neutral-bg1'],
               },
             })}
+          />
+          <RootStack.Screen
+            name={RootNames.StackTestkits}
+            component={TestkitsNavigator}
           />
           <RootStack.Screen
             name={RootNames.AccountTransaction}

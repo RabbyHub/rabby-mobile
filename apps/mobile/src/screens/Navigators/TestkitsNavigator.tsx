@@ -4,10 +4,12 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import GetStartedScreen from '../GetStarted/GetStarted';
+import SampleGetStartedScreen2024 from '../GetStarted/SampleNewUserGetStarted2024';
+import DevUIFontShowCase from '../Testkits/DevUIFontShowCase';
 
 const Stack = createCustomNativeStackNavigator();
 
-export function GetStartedNavigator() {
+export function TestkitsNavigator() {
   // const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== SettingNavigator Render =========');
@@ -19,11 +21,22 @@ export function GetStartedNavigator() {
         statusBarColor: colors['blue-default'],
       }}>
       <Stack.Screen
-        name={RootNames.GetStarted}
+        name={RootNames.TestKits}
         component={GetStartedScreen}
         // options={{
         //   navigationBarHidden: true,
         // }}
+      />
+      <Stack.Screen
+        name={RootNames.SampleNewUserGetStarted2024}
+        component={SampleGetStartedScreen2024}
+        // options={{
+        //   navigationBarHidden: true,
+        // }}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIFontShowCase}
+        component={DevUIFontShowCase}
       />
     </Stack.Navigator>
   );
