@@ -632,7 +632,7 @@ function DevSettingsBlocks() {
             icon: RcEarth,
             onPress: () => {
               navigation.dispatch(
-                StackActions.replace(RootNames.StackGetStarted, {
+                StackActions.push(RootNames.StackGetStarted, {
                   screen: RootNames.SampleNewUserGetStarted2024,
                 }),
               );
