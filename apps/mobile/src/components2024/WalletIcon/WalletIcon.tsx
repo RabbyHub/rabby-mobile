@@ -9,8 +9,8 @@ export interface WalletIconProps {
   type: keyof typeof WALLET_NAME | EValue | string;
   isLight?: boolean;
   style?: StyleProp<ImageStyle>;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   borderRadius?: number;
 }
 
@@ -18,9 +18,9 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   type,
   isLight,
   style,
-  width,
-  height,
-  borderRadius = 24,
+  width = 40,
+  height = 40,
+  borderRadius = 14,
 }) => {
   const Icon = getWalletIcon2024(type, isLight);
 
@@ -31,7 +31,9 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
       height={height}
       style={StyleSheet.flatten([
         {
-          borderRadius: borderRadius || 24,
+          borderRadius,
+          width,
+          height,
         },
         style,
       ])}
