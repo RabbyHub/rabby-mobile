@@ -41,7 +41,9 @@ export const GasAccountCurrentAddress = ({
         transparent && { backgroundColor: 'transparent' },
       ]}>
       <WalletIcon style={styles.icon} />
-      <Text style={styles.aliasText}>{alias}</Text>
+      <Text style={styles.aliasText} numberOfLines={1}>
+        {alias}
+      </Text>
       <AddressViewer
         address={account?.address || currentAccount!.address}
         showArrow={false}
@@ -152,12 +154,14 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors['neutral-card-2'],
+    maxWidth: '100%',
   },
   icon: {
     width: 24,
     height: 24,
   },
   aliasText: {
+    flexShrink: 1,
     marginLeft: 8,
     marginRight: 4,
     fontSize: 15,

@@ -54,6 +54,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { ReserveGasPopup } from '@/components/ReserveGasPopup';
 import { MiniApproval } from '@/components/Approval/components/MiniSignTx/MiniSignTx';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { LowCreditModal, useLowCreditState } from './components/LowCreditModal';
 
 const Swap = () => {
   const { t } = useTranslation();
@@ -126,6 +127,13 @@ const Swap = () => {
     { visible: isShowRabbyFeePopup, dexName, dexFeeDesc },
     setIsShowRabbyFeePopup,
   ] = useRabbyFeeVisible();
+
+  const {
+    lowCreditToken,
+    lowCreditVisible,
+    setLowCreditToken,
+    setLowCreditVisible,
+  } = useLowCreditState();
 
   const showMEVGuardedSwitch = useMemo(
     () => chain === CHAINS_ENUM.ETH,
@@ -428,6 +436,11 @@ const Swap = () => {
                     setPayToken(undefined);
                   }
                   setReceiveToken(token);
+
+                  if (token?.low_credit_score) {
+                    setLowCreditToken(token);
+                    setLowCreditVisible(true);
+                  }
                 }}
                 chainId={chainServerId}
                 type={'swapTo'}
@@ -659,6 +672,12 @@ const Swap = () => {
             );
           }, 500);
         }}
+      />
+
+      <LowCreditModal
+        token={lowCreditToken}
+        visible={lowCreditVisible}
+        onCancel={() => setLowCreditVisible(false)}
       />
     </NormalScreenContainer>
   );

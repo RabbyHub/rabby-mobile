@@ -318,6 +318,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
   is_verified: boolean;
   time_at: number;
   price_24h_change?: number | null;
+  low_credit_score?: boolean;
   _amountStr?: string;
   _priceStr?: string;
   _amountChange?: number;
@@ -356,6 +357,7 @@ export class DisplayedToken implements AbstractPortfolioToken {
     this.name = token.name;
     this.time_at = token.time_at;
     this.price_24h_change = token.price_24h_change;
+    this.low_credit_score = token.low_credit_score;
 
     // 默认是它
     this._usdValueChangeStr = '-';
