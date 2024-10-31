@@ -14,6 +14,8 @@ import { Text, View } from 'react-native';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import PasteButton from '@/components2024/PasteButton';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 export const ImportPrivateKeyScreen = () => {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -85,8 +87,14 @@ export const ImportPrivateKeyScreen = () => {
         />
         <View style={styles.tipWrapper}>
           <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-          {/* TODO: show BottomSheet */}
-          <HelpIcon style={styles.tipIcon} />
+          <HelpIcon
+            style={styles.tipIcon}
+            onPress={() => {
+              createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.PRIVATE_KEY,
+              });
+            }}
+          />
         </View>
       </View>
     </FooterButtonScreenContainer>

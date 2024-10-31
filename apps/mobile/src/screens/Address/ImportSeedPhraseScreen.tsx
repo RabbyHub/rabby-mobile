@@ -20,6 +20,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { Text, View } from 'react-native';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import SeedPhrase from '@/assets2024/icons/common/seed-phrase.svg';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { RcIconScannerCC } from '@/assets/icons/address';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
@@ -44,6 +48,7 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   textArea: {
     marginTop: 20,
+    backgroundColor: '#F2F4F7',
   },
   pasteButton: {
     marginTop: 58,
@@ -68,7 +73,7 @@ const getStyles = createGetStyles2024(ctx => ({
 }));
 
 export const ImportSeedPhraseScreen = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const [mnemonics, setMnemonics] = React.useState<string>('');
@@ -206,13 +211,32 @@ export const ImportSeedPhraseScreen = () => {
       }}>
       <View style={styles.container}>
         <SeedPhrase style={styles.icon} />
-        <PasteTextArea
-          enableScan
+        <NextInput.TextArea
           style={styles.textArea}
-          value={mnemonics}
-          onChange={importing ? undefined : setMnemonics}
-          placeholder="Enter your seed phrase with space"
-          error={error}
+          tipText={error}
+          inputProps={{
+            placeholder: 'Enter your seed phrase',
+            value: mnemonics,
+            onChangeText: text => {
+              if (importing) {
+                return;
+              }
+              setMnemonics(text);
+            },
+          }}
+          // eslint-disable-next-line react/no-unstable-nested-components
+          customIcon={ctx => (
+            <TouchableView
+              style={ctx.wrapperStyle}
+              onPress={() => {
+                navigate(RootNames.Scanner);
+              }}>
+              <RcIconScannerCC
+                style={ctx.iconStyle}
+                color={colors2024['neutral-title-1']}
+              />
+            </TouchableView>
+          )}
         />
         <PasteButton
           style={styles.pasteButton}
@@ -224,9 +248,15 @@ export const ImportSeedPhraseScreen = () => {
           }}
         />
         <View style={styles.tipWrapper}>
-          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-          {/* TODO: show BottomSheet */}
-          <HelpIcon style={styles.tipIcon} />
+          <Text style={styles.tip}>What's a Seed Phrase</Text>
+          <HelpIcon
+            style={styles.tipIcon}
+            onPress={() => {
+              createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.SEED_PHRASE,
+              });
+            }}
+          />
         </View>
       </View>
     </FooterButtonScreenContainer>

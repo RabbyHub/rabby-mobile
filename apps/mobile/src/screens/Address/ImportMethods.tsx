@@ -15,6 +15,8 @@ import SeedPhraseIcon from '@/assets2024/icons/common/seed-phrase.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import HardWareIcon from '@/assets2024/icons/common/hardward.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
+import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
@@ -67,8 +69,14 @@ function ImportMethods(): JSX.Element {
       </View>
       <View style={styles.tipWrapper}>
         <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-        {/* TODO: show BottomSheet */}
-        <HelpIcon style={styles.tipIcon} />
+        <HelpIcon
+          style={styles.tipIcon}
+          onPress={() => {
+            createGlobalBottomSheetModal2024({
+              name: MODAL_NAMES.SAFE_IMPORT_RABBY,
+            });
+          }}
+        />
       </View>
     </NormalScreenContainer>
   );

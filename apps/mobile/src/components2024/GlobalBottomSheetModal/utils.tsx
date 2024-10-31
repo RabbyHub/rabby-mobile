@@ -33,6 +33,9 @@ import { SeedPhraseBackupToCloud } from '@/components/SeedPhraseBackupToCloud/Se
 import { SeedPhraseRestoreFromCloud } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud';
 import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/BackupNotAvailableScreen';
 import { WalletConnectConnection } from '@/components/CommonPopup/WalletConnectConnection';
+import { SeedPhrase } from '@/components2024/Descriptions/SeedPhrase';
+import { SafeImportRabby } from '@/components2024/Descriptions/SafeImportRabby';
+import { PrivateKey } from '@/components2024/Descriptions/PrivateKey';
 import React from 'react';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
@@ -67,6 +70,9 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD]: [],
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.WALLET_CONNECT]: [300],
+  [MODAL_NAMES.SAFE_IMPORT_RABBY]: [674],
+  [MODAL_NAMES.SEED_PHRASE]: [674],
+  [MODAL_NAMES.PRIVATE_KEY]: [674],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -100,6 +106,9 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.TIP_TERM_OF_USE]: TipTermOfUseModalInner,
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
+  [MODAL_NAMES.SAFE_IMPORT_RABBY]: SafeImportRabby,
+  [MODAL_NAMES.SEED_PHRASE]: SeedPhrase,
+  [MODAL_NAMES.PRIVATE_KEY]: PrivateKey,
 };
 
 export function makeBottomSheetProps(ctx: {
