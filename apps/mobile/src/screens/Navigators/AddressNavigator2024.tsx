@@ -61,8 +61,8 @@ export function AddressNavigator2024() {
         name={RootNames.CreateNewAddressThird}
         component={CreateNewAddressThird}
         options={mergeScreenOptions({
-          headerTitle: '2. Set password',
-          title: '2. Set password',
+          headerTitle: '3. Choose a backup method',
+          title: '3. Choose a backup method',
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             color: colors['neutral-title-1'],

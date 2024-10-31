@@ -134,7 +134,7 @@ export const Button = ({
 
   return (
     <View
-      style={[styles.container, containerStyle]}
+      style={StyleSheet.flatten([styles.container, containerStyle])}
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}

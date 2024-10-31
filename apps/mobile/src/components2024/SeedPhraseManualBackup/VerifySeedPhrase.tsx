@@ -1,44 +1,91 @@
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { AppColorsVariants } from '@/constant/theme';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useMemoizedFn } from 'ahooks';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { CheckboxItem } from './components/CheckboxItem';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
-import { RcIconInfoCC } from '@/assets/icons/common';
-import { ListItem } from '../ListItem/ListItem';
+import { BlurView, BlurViewProps } from '@react-native-community/blur';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
+import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
+import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import { Button } from '../Button';
+import { WordsMatrix } from '@/components2024/WordsMatrix';
+import { apiMnemonic } from '@/core/apis';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
-    marginTop: 40,
-    marginBottom: 24,
+    // marginTop: 20,
+    marginBottom: 20,
+    display: 'flex',
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  tips: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 23,
+  blueText: {
+    marginHorizontal: 4,
+    fontWeight: '700',
+    color: colors2024['brand-default'],
+    lineHeight: 22,
+  },
+  tipsText: {
+    lineHeight: 22,
+    color: colors2024['neutral-secondary'],
+    fontWeight: '400',
+    fontSize: 17,
+    marginTop: 0,
     textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
   },
-  list: {
+  listText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    // textAlign: 'center',
+    // width: '95%',
+    flex: 1,
+    fontFamily: 'SF Pro Rounded',
+  },
+  title: {
+    // marginTop: -12,
+  },
+  dotItem: {
+    marginLeft: 8,
+    marginRight: 0,
+    fontSize: 32,
+    transform: [{ translateY: -12 }],
+    // flex: 1,
+    width: 16,
+  },
+  listContainer: {
     flexDirection: 'column',
+    justifyContent: 'flex-start',
+    display: 'flex',
+    width: '100%',
     gap: 12,
   },
+  listItem: {
+    // gap: 4,
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    display: 'flex',
+  },
   agreementWrapper: {
-    position: 'absolute',
-    bottom: 72,
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-start',
     flexWrap: 'nowrap',
-    paddingHorizontal: 32,
+    marginTop: 12,
+    // paddingHorizontal: 10,
   },
   agreementCheckbox: {
     marginRight: 6,
@@ -55,7 +102,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   agreementText: {
     fontSize: 14,
     lineHeight: 20,
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-foot'],
   },
   userAgreementTouchText: {
     fontSize: 14,
@@ -66,6 +113,66 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // position: 'relative',
     // top: 0,
     // ...makeDebugBorder(),
+  },
+  container: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    // paddingTop: 12,
+    paddingBottom: 0,
+    paddingHorizontal: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    // alignItems: 'space-around',
+    // justifyContent: 'space-between',
+    height: '95%',
+    gap: 12,
+    // height: "700",
+  },
+  btnContainer: {
+    width: '100%',
+    // height: 180,
+    marginTop: 25,
+  },
+  content: {
+    width: '100%',
+    flex: 1,
+  },
+  wordContainer: {
+    position: 'relative',
+  },
+  mask: {
+    // backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 1,
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  maskWraper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  tapText: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 22,
+    marginTop: 16,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
+  },
+  tapDesc: {
+    color: colors2024['neutral-InvertHighlight'],
+    fontWeight: '400',
+    fontSize: 16,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 
@@ -78,64 +185,42 @@ export const VerifySeedPhrase: React.FC<Props> = ({ onConfirm }) => {
   const { t } = useTranslation();
   const [checked, setChecked] = React.useState(false);
 
-  const QUESTIONS = React.useMemo(() => {
-    return [
-      {
-        index: 1 as const,
-        content: t('page.newAddress.seedPhrase.importQuestion1'),
-        checked: false,
-      },
-      {
-        index: 2 as const,
-        content: t('page.newAddress.seedPhrase.importQuestion2'),
-        checked: false,
-      },
-      {
-        index: 3 as const,
-        content: t('page.newAddress.seedPhrase.importQuestion3'),
-        checked: false,
-      },
-    ];
-  }, [t]);
+  const appThemeMode = useGetBinaryMode();
+  const { data: seedPhrase } = useRequest(async () => {
+    const res = await apiMnemonic.getPreMnemonics();
+    return res as string;
+  });
+
+  const words = React.useMemo(() => {
+    return seedPhrase?.split(' ') || [];
+  }, [seedPhrase]);
 
   return (
-    <FooterButtonScreenContainer
-      btnProps={{
-        disabled: !checked,
-      }}
-      buttonText={t('page.newAddress.seedPhrase.showSeedPhrase')}
-      onPressButton={onConfirm}>
-      <View style={styles.tipsWarper}>
-        <Text style={styles.tips}>
-          {t('page.newAddress.seedPhrase.riskTips')}
-        </Text>
-      </View>
-      <View style={styles.list}>
-        {QUESTIONS.map(q => {
-          return (
-            <>
-              <Text>{'·'}</Text>
-              <ListItem title={q.content} />
-            </>
-          );
-        })}
-      </View>
-      <TouchableView
-        style={styles.agreementWrapper}
-        onPress={() => {
-          setChecked(!checked);
-        }}>
-        <View style={styles.agreementCheckbox}>
-          <CheckBoxCircled checked={checked} />
-        </View>
-        <View style={styles.agreementTextWrapper}>
-          <Text style={styles.agreementText}>
-            {t(
-              'page.nextComponent.createNewAddress.UnderstandsecurityPrecautions',
-            )}
+    <View style={styles.container}>
+      <View style={styles.container}>
+        <AppBottomSheetModalTitle
+          style={styles.title}
+          title={t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')}
+        />
+        <View style={styles.tipsWarper}>
+          <Text style={styles.tipsText}>
+            {t('page.nextComponent.createNewAddress.selectWords')}
+          </Text>
+          <Text style={styles.blueText}>{`${''}#4, #8, and #12`}</Text>
+          <Text style={styles.tipsText}>
+            {t('page.nextComponent.createNewAddress.inOrder')}
           </Text>
         </View>
-      </TouchableView>
-    </FooterButtonScreenContainer>
+        <View style={styles.wordContainer}>
+          <WordsMatrix words={words} showBagde={false} />
+        </View>
+      </View>
+      <Button
+        containerStyle={styles.btnContainer}
+        type="primary"
+        title={t('page.nextComponent.createNewAddress.Confirm')}
+        onPress={onConfirm}
+      />
+    </View>
   );
 };
