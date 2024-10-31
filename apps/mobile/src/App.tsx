@@ -59,7 +59,7 @@ function MainScreen({ rabbitCode }: AppProps) {
     const accounts = await keyringService.getAllVisibleAccountsArray();
     if (!accounts?.length) {
       replace(RootNames.StackGetStarted, {
-        screen: RootNames.GetStarted,
+        screen: RootNames.GetStartedScreen2024,
       });
     }
   });

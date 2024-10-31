@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { RcArrowRightCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -12,10 +12,11 @@ import AutoLockView from '@/components/AutoLockView';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
 import { RcCode } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop } from './devTest';
+import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
+import { useAccounts } from '@/hooks/account';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -57,17 +58,36 @@ export default function DevUIPlaygroundModal({
 
   const navigation = useRabbyAppNavigation();
 
+  const { accounts } = useAccounts();
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
         label: 'New Get Started 2024',
         icon: <RcCode style={styles.labelIcon} />,
+        disabled: !!accounts.length,
+        onDisabledPress: () => {
+          if (accounts.length) {
+            Alert.alert(
+              'Warning',
+              accounts.length > 1
+                ? `You have ${accounts.length} accounts, please remove them first`
+                : 'You have an account, please remove it first',
+            );
+            return { keepModalVisible: true };
+          }
+        },
         onPress: () => {
           navigation.dispatch(
-            StackActions.push(RootNames.StackTestkits, {
-              screen: RootNames.SampleNewUserGetStarted2024,
+            StackActions.push(RootNames.StackGetStarted, {
+              screen: RootNames.GetStartedScreen2024,
             }),
           );
+          // navigation.dispatch(
+          //   StackActions.push(RootNames.StackTestkits, {
+          //     screen: RootNames.SampleNewUserGetStarted2024,
+          //   }),
+          // );
         },
       },
       {
@@ -136,25 +156,20 @@ export default function DevUIPlaygroundModal({
             const itemKey = `testitem-${item.label}`;
 
             return (
-              <TouchableView
-                style={[
-                  styles.settingItem,
-                  idx > 0 && styles.notFirstOne,
-                  { opacity: item.disabled ? 0.6 : 1 },
-                ]}
+              <GeneralTestItem
+                {...item}
                 key={itemKey}
-                disabled={!item.onPress}
-                onPress={() => {
-                  item.onPress?.();
-
-                  setDevUIPlaygroundModalVisible(false);
+                itemIndex={idx}
+                afterPress={async result => {
+                  if (!result?.keepModalVisible)
+                    setDevUIPlaygroundModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
                 <RcArrowRightCC color={colors['neutral-foot']} />
-              </TouchableView>
+              </GeneralTestItem>
             );
           })}
         </View>

@@ -47,7 +47,7 @@ function HomeScreen(): JSX.Element {
     if (!accounts?.length) {
       navigation.dispatch(
         StackActions.replace(RootNames.StackGetStarted, {
-          screen: RootNames.GetStarted,
+          screen: RootNames.GetStartedScreen2024,
         }),
       );
       // navigate(RootNames.StackAddress, {

@@ -18,7 +18,8 @@ export function GetStartedNavigator() {
       screenOptions={{
         headerShown: false,
         statusBarColor: colors['blue-default'],
-      }}>
+      }}
+      initialRouteName={RootNames.GetStartedScreen2024}>
       <Stack.Screen
         name={RootNames.GetStarted}
         component={GetStartedScreen}

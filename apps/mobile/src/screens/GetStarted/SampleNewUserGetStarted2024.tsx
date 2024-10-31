@@ -18,10 +18,7 @@ import { navigate } from '@/utils/navigation';
 // import { Button } from '@rneui/themed';
 // import { Button } from '@/components/Button';
 import { Button } from '@/components2024/Button';
-import { Card } from '@/components2024/Card';
-import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import axios from 'axios';
 import {
   StackActions,
   useFocusEffect,
@@ -34,19 +31,26 @@ import TouchableText from '@/components/Touchable/TouchableText';
 function SampleGetStartedScreen2024(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const [isInited, setIsInited] = useState(false);
+  const [getStaretd, setGetStaretd] = useState<{
+    localHasAccounts: boolean;
+    processedInit: boolean;
+  }>({
+    localHasAccounts: false,
+    processedInit: false,
+  });
+
   const handleGoToHome = useCallback(async () => {
-    if (!isInited) return;
+    if (!getStaretd.processedInit) return;
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
     }
 
     navigate(RootNames.StackRoot, { screen: RootNames.Home });
-  }, [isInited]);
+  }, [getStaretd.processedInit]);
 
   const handleGoToCreate = useCallback(async () => {
-    if (!isInited) return;
+    if (!getStaretd.processedInit) return;
     if (!keyringService.isUnlocked()) {
       navigate(RootNames.Unlock);
       return;
@@ -55,25 +59,26 @@ function SampleGetStartedScreen2024(): JSX.Element {
     navigate(RootNames.StackAddress2024, {
       screen: RootNames.CreateNewAddress,
     });
-  }, [isInited]);
+  }, [getStaretd.processedInit]);
 
   const navigation = useNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
-    setIsInited(false);
+    setGetStaretd(prev => ({ ...prev, processedInit: false }));
     try {
       const accounts = await keyringService.getAllVisibleAccountsArray();
-      // if (accounts?.length) {
-      //   navigation.dispatch(
-      //     StackActions.replace(RootNames.StackRoot, {
-      //       screen: RootNames.Home,
-      //     }),
-      //   );
-      // }
+      setGetStaretd(prev => ({ ...prev, localHasAccounts: !!accounts.length }));
+      if (accounts?.length) {
+        navigation.dispatch(
+          StackActions.replace(RootNames.StackRoot, {
+            screen: RootNames.Home,
+          }),
+        );
+      }
     } catch (err) {
       console.error(err);
     } finally {
-      setIsInited(true);
+      setGetStaretd(prev => ({ ...prev, processedInit: true }));
     }
   });
 
@@ -108,20 +113,39 @@ function SampleGetStartedScreen2024(): JSX.Element {
             {'\n'}
             for Ethereum and all EVM chains
           </Text>
-          <Button
-            type="primary"
-            title="Create New Address"
-            onPress={handleGoToCreate}
-          />
-          <TouchableText
-            style={styles.touchableText}
-            onPress={() => {
-              navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportMethods,
-              });
-            }}>
-            I already have a address
-          </TouchableText>
+          {!getStaretd.localHasAccounts ? (
+            <>
+              <Button
+                type="primary"
+                title="Create New Address"
+                disabled={
+                  !getStaretd.processedInit || getStaretd.localHasAccounts
+                }
+                onPress={handleGoToCreate}
+              />
+              <TouchableText
+                style={styles.touchableText}
+                disabled={
+                  !getStaretd.processedInit || getStaretd.localHasAccounts
+                }
+                onPress={() => {
+                  navigate(RootNames.StackAddress, {
+                    screen: RootNames.ImportMethods,
+                  });
+                }}>
+                I already have a address
+              </TouchableText>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              title="Go to Home"
+              disabled={
+                !getStaretd.processedInit || !getStaretd.localHasAccounts
+              }
+              onPress={handleGoToHome}
+            />
+          )}
         </View>
       </View>
     </View>

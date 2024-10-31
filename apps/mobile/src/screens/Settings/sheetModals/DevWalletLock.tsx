@@ -15,7 +15,7 @@ import {
   RcLockWallet,
   RcManagePassword,
 } from '@/assets/icons/settings';
-import { DevTestItem, makeNoop } from './devTest';
+import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
@@ -124,28 +124,23 @@ export default function WalletLockTestItemModal({
               typeof item.rightNode === 'function'
                 ? item.rightNode()
                 : item.rightNode;
-            const disabledPress = item.disabled || !item.onPress;
 
             return (
-              <TouchableView
-                style={[
-                  styles.settingItem,
-                  idx > 0 && styles.notFirstOne,
-                  { opacity: item.disabled ? 0.6 : 1 },
-                ]}
+              <GeneralTestItem
+                {...item}
                 key={itemKey}
-                disabled={disabledPress}
-                onPress={() => {
-                  item.onPress?.();
-
-                  setWalletTestItemModalVisible(false);
+                itemIndex={idx}
+                afterPress={async result => {
+                  if (!result?.keepModalVisible)
+                    if (!result?.keepModalVisible)
+                      setWalletTestItemModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.settingItemLabel}>{item.label}</Text>
                 </View>
                 {rightNode || <RcArrowRightCC color={colors['neutral-foot']} />}
-              </TouchableView>
+              </GeneralTestItem>
             );
           })}
         </View>

@@ -45,6 +45,7 @@ export const RootNames = {
   CustomTestnet: 'CustomTestnet',
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
+  /** @deprecated */
   GetStarted: 'GetStarted',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
@@ -178,7 +179,8 @@ function makeScreenSpecConfig() {
         androidStatusBarBg: 'rgba(0, 0, 0, 1)',
       },
       GetStarted: blueLightConf,
-      SampleNewUserGetStarted2024: blueLightConf,
+      GetStartedScreen2024: bg1DefaultConf,
+      SampleNewUserGetStarted2024: bg1DefaultConf,
 
       Home: bg1DefaultConf,
       Unlock: bg1DefaultConf,
