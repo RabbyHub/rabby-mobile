@@ -50,6 +50,18 @@ function SampleGetStartedScreen2024(): JSX.Element {
     navigate(RootNames.StackRoot, { screen: RootNames.Home });
   }, [isInited]);
 
+  const handleGoToCreate = useCallback(async () => {
+    if (!isInited) return;
+    if (!keyringService.isUnlocked()) {
+      navigate(RootNames.Unlock);
+      return;
+    }
+
+    navigate(RootNames.StackAddress2024, {
+      screen: RootNames.CreateNewAddress,
+    });
+  }, [isInited]);
+
   useEffect(() => {
     if (isShowModal) {
       setCode('');
@@ -111,7 +123,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
           <Button
             type="primary"
             title="Create New Address"
-            // onPress={handleGoToHome}
+            onPress={handleGoToCreate}
           />
           <TouchableText style={styles.touchableText}>
             I already have a address

@@ -1346,6 +1346,14 @@
       },
       "noNft": "No NFT"
     },
+    "nextComponent": {
+      "createNewAddress": {
+        "addressTopTips": "Use it to send and receive crypto on blockchain",
+        "Continue": "Continue",
+        "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
+        "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost."
+      }
+    },
     "newAddress": {
       "title": "Add an Address",
       "importSeedPhrase": "Import Seed Phrase",

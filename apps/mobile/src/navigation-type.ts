@@ -20,6 +20,7 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
+  [RootNames.StackAddress2024]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.NftDetail]?: {};

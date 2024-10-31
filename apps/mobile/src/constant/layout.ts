@@ -66,6 +66,7 @@ export const RootNames = {
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
+  StackAddress2024: 'StackAddress2024',
   CurrentAddress: 'CurrentAddress',
   ImportNewAddress: 'ImportNewAddress',
   ImportSuccess: 'ImportSuccess',
@@ -73,6 +74,9 @@ export const RootNames = {
   ImportSafeAddress: 'ImportSafeAddress',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
+  CreateNewAddress: 'CreateNewAddress',
+  CreateNewAddressSecond: 'CreateNewAddressSecond',
+  CreateNewAddressThird: 'CreateNewAddressThird',
 
   ImportLedger: 'ImportLedger',
   ImportMoreAddress: 'ImportMoreAddress',
