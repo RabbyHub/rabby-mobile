@@ -12,11 +12,7 @@ import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 const { isSameAddress } = addressUtils;
 
 interface ChildrenProps {
-  WalletIcon: React.FC<{
-    height: number;
-    width: number;
-    style?: StyleProp<TextStyle>;
-  }>;
+  WalletIcon: React.FC<WalletIconProps>;
   WalletName: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletAddress: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
@@ -25,17 +21,14 @@ interface ChildrenProps {
 type AddressItemProps =
   | {
       account: KeyringAccountWithAlias;
-      isLight?: boolean;
       children?: (props: ChildrenProps) => React.ReactNode;
     }
   | {
       address: string;
-      isLight?: boolean;
       children?: (props: ChildrenProps) => React.ReactNode;
     };
 
 export const AddressItem = (props: AddressItemProps) => {
-  const { isLight } = props;
   const { accounts } = useAccounts();
   const account =
     'account' in props
@@ -49,12 +42,10 @@ export const AddressItem = (props: AddressItemProps) => {
   const usdValue = `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`;
 
   const WalletIconWrapper = useCallback(
-    (_props: Omit<WalletIconProps, 'isLight' | 'type'>) => {
-      return (
-        <WalletIcon type={account.brandName} isLight={isLight} {..._props} />
-      );
+    (_props: Omit<WalletIconProps, 'type'>) => {
+      return <WalletIcon type={account.brandName} {..._props} />;
     },
-    [account.brandName, isLight],
+    [account.brandName],
   );
   const WalletName = useCallback(
     ({ style }: { style?: StyleProp<TextStyle> }) => {
