@@ -23,6 +23,7 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
+  GetStartedScreen2024: 'GetStartedScreen2024',
 
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',

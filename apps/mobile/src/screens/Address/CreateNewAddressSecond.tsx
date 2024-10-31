@@ -62,15 +62,16 @@ import {
   KEYCHAIN_AUTH_TYPES,
   RequestGenericPurpose,
 } from '@/core/apis/keychain';
+import { clearCustomPassword } from '@/core/apis/lock';
 
 const INIT_FORM_DATA = __DEV__
   ? {
       password: APP_TEST_PWD,
       confirmPassword: APP_TEST_PWD,
       checked: true,
-      switch: true,
+      switch: false,
     }
-  : { password: '', confirmPassword: '', checked: true, switch: true };
+  : { password: '', confirmPassword: '', checked: true, switch: false };
 
 const LAYOUTS = {
   footerButtonHeight: 52,
@@ -110,7 +111,7 @@ function useSetupPasswordForm(toggleBiometrics) {
                 t('page.createPassword.confirmError'),
               ),
         }),
-      switch: Yup.boolean().default(INIT_FORM_DATA.switch).oneOf([true]),
+      switch: Yup.boolean().default(INIT_FORM_DATA.switch),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
   }, [t]);
@@ -122,7 +123,7 @@ function useSetupPasswordForm(toggleBiometrics) {
 
   // const { updateSetPasswordFirst } = useSetPasswordFirstState();
 
-  const { fetchLockInfo } = useLoadLockInfo();
+  // const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useAppFormik({
     initialValues: yupSchema.getDefault(),
@@ -145,12 +146,12 @@ function useSetupPasswordForm(toggleBiometrics) {
       });
 
       try {
+        await clearCustomPassword(values.password); // only for test
         const result = await apisLock.setupWalletPassword(values.password);
         console.log('values.password', values.password);
         if (result.error) {
           toast.show(result.error);
         } else {
-          toast.success('Setup Password Successfully');
           await toggleBiometrics?.(values.switch, {
             validatedPassword: values.password,
           });
@@ -158,6 +159,8 @@ function useSetupPasswordForm(toggleBiometrics) {
           navigate(RootNames.StackAddress2024, {
             screen: RootNames.CreateNewAddressThird,
           });
+
+          toast.success('Setup Password Successfully');
         }
       } finally {
         toastHide();
@@ -284,7 +287,7 @@ function MainListBlocks() {
                 style={styles.labelText}>{`Enable ${defaultTypeLabel}?`}</Text>
               <View style={styles.valueView}>
                 <AppSwitch
-                  value={useFaceId}
+                  value={formik.values.switch}
                   onValueChange={value => {
                     if (!isBiometricsEnabled) {
                       return;

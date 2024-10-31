@@ -49,6 +49,7 @@ export type BottomTabParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
+  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
@@ -59,6 +60,9 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
+  [RootNames.CreateNewAddress]?: {};
+  [RootNames.CreateNewAddressSecond]?: {};
+  [RootNames.CreateNewAddressThird]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportSuccess]?: {
     address: string | string[];

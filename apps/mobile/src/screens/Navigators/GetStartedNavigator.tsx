@@ -4,6 +4,7 @@ import { useStackScreenConfig } from '@/hooks/navigation';
 import { useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import GetStartedScreen from '../GetStarted/GetStarted';
+import GetStartedScreen2024 from '../GetStarted/SampleNewUserGetStarted2024';
 
 const Stack = createCustomNativeStackNavigator();
 
@@ -21,6 +22,13 @@ export function GetStartedNavigator() {
       <Stack.Screen
         name={RootNames.GetStarted}
         component={GetStartedScreen}
+        // options={{
+        //   navigationBarHidden: true,
+        // }}
+      />
+      <Stack.Screen
+        name={RootNames.GetStartedScreen2024}
+        component={GetStartedScreen2024}
         // options={{
         //   navigationBarHidden: true,
         // }}

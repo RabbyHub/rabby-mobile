@@ -59,7 +59,7 @@ const getStyles = createGetStyles2024(ctx => ({
     marginRight: 8,
   },
   currentBlock: {
-    backgroundColor: ctx.colors2024['brand-light-1'],
+    backgroundColor: ctx.colors2024['brand-light-4'],
   },
   hasDoneBlock: {
     backgroundColor: ctx.colors2024['brand-default'],
