@@ -1,7 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PasteTextArea } from './components/PasteTextArea';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
@@ -46,9 +45,13 @@ const getStyles = createGetStyles2024(ctx => ({
   qAndASection: {
     marginBottom: 24,
   },
-  textArea: {
+  textContainer: {
     marginTop: 20,
-    backgroundColor: '#F2F4F7',
+  },
+  textArea: {
+    marginTop: 14,
+    paddingHorizontal: 20,
+    backgroundColor: ctx.colors['neutral-card-1'],
   },
   pasteButton: {
     marginTop: 58,
@@ -211,33 +214,37 @@ export const ImportSeedPhraseScreen = () => {
       }}>
       <View style={styles.container}>
         <SeedPhrase style={styles.icon} />
-        <NextInput.TextArea
-          style={styles.textArea}
-          tipText={error}
-          inputProps={{
-            placeholder: 'Enter your seed phrase',
-            value: mnemonics,
-            onChangeText: text => {
-              if (importing) {
-                return;
-              }
-              setMnemonics(text);
-            },
-          }}
-          // eslint-disable-next-line react/no-unstable-nested-components
-          customIcon={ctx => (
-            <TouchableView
-              style={ctx.wrapperStyle}
-              onPress={() => {
-                navigate(RootNames.Scanner);
-              }}>
-              <RcIconScannerCC
-                style={ctx.iconStyle}
-                color={colors2024['neutral-title-1']}
-              />
-            </TouchableView>
-          )}
-        />
+        <View>
+          <NextInput.TextArea
+            style={styles.textContainer}
+            tipText={error}
+            hasError={!!error}
+            inputStyle={styles.textArea}
+            inputProps={{
+              placeholder: 'Enter your seed phrase',
+              value: mnemonics,
+              onChangeText: text => {
+                if (importing) {
+                  return;
+                }
+                setMnemonics(text);
+              },
+            }}
+            // eslint-disable-next-line react/no-unstable-nested-components
+            customIcon={ctx => (
+              <TouchableView
+                style={ctx.wrapperStyle}
+                onPress={() => {
+                  navigate(RootNames.Scanner);
+                }}>
+                <RcIconScannerCC
+                  style={ctx.iconStyle}
+                  color={colors2024['neutral-title-1']}
+                />
+              </TouchableView>
+            )}
+          />
+        </View>
         <PasteButton
           style={styles.pasteButton}
           onPaste={text => {

@@ -116,6 +116,7 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     alignItems: 'center',
     position: 'relative',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   icon: {
     width: 40,

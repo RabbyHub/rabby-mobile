@@ -73,28 +73,33 @@ export const ImportPrivateKeyScreen = () => {
       onPressButton={handleConfirm}>
       <View style={styles.container}>
         <PrivateKeyIcon style={styles.icon} />
-        <NextInput.TextArea
-          style={styles.textArea}
-          tipText={error}
-          inputProps={{
-            placeholder: 'Enter your Private Key',
-            value: privateKey,
-            onChangeText: setPrivateKey,
-          }}
-          // eslint-disable-next-line react/no-unstable-nested-components
-          customIcon={ctx => (
-            <TouchableView
-              style={ctx.wrapperStyle}
-              onPress={() => {
-                navigate(RootNames.Scanner);
-              }}>
-              <RcIconScannerCC
-                style={ctx.iconStyle}
-                color={colors2024['neutral-title-1']}
-              />
-            </TouchableView>
-          )}
-        />
+        <View>
+          <NextInput.TextArea
+            style={styles.textContainer}
+            inputStyle={styles.textArea}
+            tipText={error}
+            hasError={!!error}
+            fieldErrorTextStyle={styles.error}
+            inputProps={{
+              placeholder: 'Enter your Private Key',
+              value: privateKey,
+              onChangeText: setPrivateKey,
+            }}
+            // eslint-disable-next-line react/no-unstable-nested-components
+            customIcon={ctx => (
+              <TouchableView
+                style={ctx.wrapperStyle}
+                onPress={() => {
+                  navigate(RootNames.Scanner);
+                }}>
+                <RcIconScannerCC
+                  style={ctx.iconStyle}
+                  color={colors2024['neutral-title-1']}
+                />
+              </TouchableView>
+            )}
+          />
+        </View>
 
         <PasteButton
           style={styles.pasteButton}
@@ -161,8 +166,16 @@ const getStyles = createGetStyles2024(ctx => ({
   qAndASection: {
     marginBottom: 24,
   },
-  textArea: {
+  textContainer: {
     marginTop: 20,
+  },
+  textArea: {
+    marginTop: 14,
+    paddingHorizontal: 20,
+    backgroundColor: ctx.colors['neutral-card-1'],
+  },
+  error: {
+    textAlign: 'left',
   },
   pasteButton: {
     marginTop: 58,
