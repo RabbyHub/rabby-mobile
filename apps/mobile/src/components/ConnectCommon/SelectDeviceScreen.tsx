@@ -62,7 +62,7 @@ export type Props = {
   titleText: string;
   descriptionText: string;
   currentDeviceText: string;
-  DeviceLogo: React.FC<SvgProps>;
+  DeviceLogo: React.ReactElement<any, any>;
 };
 
 export const CommonSelectDeviceScreen: React.FC<Props> = ({

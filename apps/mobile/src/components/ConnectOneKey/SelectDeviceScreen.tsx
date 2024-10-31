@@ -5,7 +5,8 @@ import {
   Props,
 } from '../ConnectCommon/SelectDeviceScreen';
 import { useTranslation } from 'react-i18next';
-import OneKeySVG from '@/assets/icons/wallet/onekey.svg';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 export const SelectDeviceScreen: React.FC<
   Pick<Props, 'errorCode' | 'onSelect' | 'currentDeviceId'> & {
@@ -25,7 +26,9 @@ export const SelectDeviceScreen: React.FC<
       descriptionText={t('page.newAddress.onekey.select.description')}
       currentDeviceText={t('page.newAddress.onekey.select.currentDevice')}
       devices={deviceMeta}
-      DeviceLogo={OneKeySVG}
+      DeviceLogo={
+        <WalletIcon type={KEYRING_TYPE.OneKeyKeyring} borderRadius={20} />
+      }
     />
   );
 };
