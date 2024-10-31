@@ -16,9 +16,12 @@ import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import PasteButton from '@/components2024/PasteButton';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { NextInput } from '@/components2024/Form/Input';
+import TouchableView from '@/components/Touchable/TouchableView';
+import { RcIconScannerCC } from '@/assets/icons/address';
 
 export const ImportPrivateKeyScreen = () => {
-  const { styles } = useTheme2024({ getStyle: getStyles });
+  const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();
   const [privateKey, setPrivateKey] = React.useState<string>('');
@@ -70,13 +73,27 @@ export const ImportPrivateKeyScreen = () => {
       onPressButton={handleConfirm}>
       <View style={styles.container}>
         <PrivateKeyIcon style={styles.icon} />
-        <PasteTextArea
+        <NextInput.TextArea
           style={styles.textArea}
-          value={privateKey}
-          onChange={setPrivateKey}
-          placeholder="Enter your Private Key"
-          error={error}
-          enableScan
+          tipText={error}
+          inputProps={{
+            placeholder: 'Enter your Private Key',
+            value: privateKey,
+            onChangeText: setPrivateKey,
+          }}
+          // eslint-disable-next-line react/no-unstable-nested-components
+          customIcon={ctx => (
+            <TouchableView
+              style={ctx.wrapperStyle}
+              onPress={() => {
+                navigate(RootNames.Scanner);
+              }}>
+              <RcIconScannerCC
+                style={ctx.iconStyle}
+                color={colors2024['neutral-title-1']}
+              />
+            </TouchableView>
+          )}
         />
 
         <PasteButton
