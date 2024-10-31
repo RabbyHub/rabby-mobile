@@ -1,22 +1,17 @@
 import { apiMnemonic } from '@/core/apis';
-import {
-  decryptFiles,
-  detectCloudIsAvailable,
-  getBackupsFromCloud,
-  saveMnemonicToCloud,
-} from '@/core/utils/cloudBackup';
 import { useRequest } from 'ahooks';
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { ReadRisk } from './ReadRisk';
 import { VerifySeedPhrase } from './VerifySeedPhrase';
 import { WriteSeedPhrase } from './WriteSeedPhrase';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
 }
 
-export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
+export const SeedPhraseManualBackup: React.FC<Props> = ({ onDone }) => {
   const { data: mnemonic } = useRequest(async () => {
     const res = await apiMnemonic.getPreMnemonics();
     return res as string;
@@ -37,10 +32,8 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
       //   setStep('write_seed_phrase');
       //   break;
       case 'write_seed_phrase':
-        setStep('verify_seed_phrase');
-        break;
-      case 'verify_seed_phrase':
-        // goto successful page
+        // setStep('verify_seed_phrase');
+        onDone();
         break;
       default:
         break;
@@ -55,16 +48,16 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
       //   return WriteSeedPhrase;
       case 'write_seed_phrase':
         return WriteSeedPhrase;
-      case 'verify_seed_phrase':
-        return VerifySeedPhrase;
+      // case 'verify_seed_phrase':
+      //   return VerifySeedPhrase;
       default:
         return ReadRisk;
     }
   }, [step]);
 
   return (
-    <View>
+    <BottomSheetView>
       <Components onConfirm={handleNextTick} />
-    </View>
+    </BottomSheetView>
   );
 };

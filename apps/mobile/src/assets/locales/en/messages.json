@@ -1350,12 +1350,20 @@
       "createNewAddress": {
         "addressTopTips": "Use it to send and receive crypto on blockchain",
         "Continue": "Continue",
+        "Confirm": "Confirm",
         "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
         "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost.",
         "passwordMin": "Must be at least 8 characters",
         "whatIsSeedPhrase": "What's a Seed Phrase",
         "icloudBackup": "iCloud Backup",
-        "UnderstandsecurityPrecautions": "I understand these security precautions."
+        "UnderstandsecurityPrecautions": "I understand these security precautions.",
+        "selectWords": "Select words",
+        "inOrder": "in the correct order.",
+        "WriteSeedPhrase": "This is your seed phrase. Write it down on a paper and keep it in a safe place. You'll be asked to re-enter this phrase (in order) on the next step.",
+        "WriteDownSeedPhrase": "Write Down Your Seed Phrase",
+        "VerifyDownSeedPhrase": "Verify seed phrase ",
+        "BackupSeedPhrase": "Manually Backup Seed Phrase",
+        "riskTips": "Before you begin, please read and keep these security tips in mind:"
       }
     },
     "newAddress": {

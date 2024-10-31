@@ -77,7 +77,8 @@ function MainListBlocks() {
     );
 
     console.log('firstAddress', firstAddress);
-    setNewAddress(firstAddress[0].address);
+    const address = firstAddress[0].address;
+    setNewAddress(address);
     return {
       seedPhrase,
       words,

@@ -13,32 +13,68 @@ import { ListItem } from '../ListItem/ListItem';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { CheckBoxCircled } from '@/components/Icons/Checkbox';
+import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
+import { Button } from '../Button';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
-    marginTop: 40,
-    marginBottom: 24,
+    // marginTop: 20,
+    marginBottom: 20,
   },
-  tips: {
-    color: colors2024['neutral-title-1'],
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 23,
+  tipsText: {
+    color: colors2024['neutral-secondary'],
+    fontWeight: '400',
+    fontSize: 17,
+    marginTop: 0,
     textAlign: 'center',
+    fontFamily: 'SF Pro Rounded',
   },
-  list: {
+  listText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 20,
+    // textAlign: 'center',
+    // width: '95%',
+    flex: 1,
+    fontFamily: 'SF Pro Rounded',
+  },
+  title: {
+    // marginTop: -12,
+  },
+  dotItem: {
+    marginLeft: 8,
+    marginRight: 0,
+    fontSize: 32,
+    transform: [{ translateY: -12 }],
+    // flex: 1,
+    width: 16,
+  },
+  listContainer: {
     flexDirection: 'column',
+    justifyContent: 'flex-start',
+    display: 'flex',
+    width: '100%',
     gap: 12,
   },
+  listItem: {
+    // gap: 4,
+    backgroundColor: colors2024['neutral-bg-2'],
+    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    display: 'flex',
+  },
   agreementWrapper: {
-    position: 'absolute',
-    bottom: 72,
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-start',
     flexWrap: 'nowrap',
-    paddingHorizontal: 32,
+    marginTop: 12,
+    // paddingHorizontal: 10,
   },
   agreementCheckbox: {
     marginRight: 6,
@@ -55,7 +91,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   agreementText: {
     fontSize: 14,
     lineHeight: 20,
-    color: colors2024['neutral-body'],
+    color: colors2024['neutral-foot'],
   },
   userAgreementTouchText: {
     fontSize: 14,
@@ -66,6 +102,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // position: 'relative',
     // top: 0,
     // ...makeDebugBorder(),
+  },
+  container: {
+    backgroundColor: colors2024['neutral-bg-1'],
+    // paddingTop: 12,
+    paddingBottom: 0,
+    paddingHorizontal: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    // alignItems: 'space-around',
+    // justifyContent: 'space-between',
+    height: '95%',
+    gap: 12,
+    // height: "700",
+  },
+  btnContainer: {
+    width: '100%',
+    // height: 180,
+    marginTop: 25,
+  },
+  content: {
+    width: '100%',
+    flex: 1,
   },
 }));
 
@@ -99,43 +157,51 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
   }, [t]);
 
   return (
-    <FooterButtonScreenContainer
-      btnProps={{
-        disabled: !checked,
-      }}
-      buttonText={t('page.newAddress.seedPhrase.showSeedPhrase')}
-      onPressButton={onConfirm}>
-      <View style={styles.tipsWarper}>
-        <Text style={styles.tips}>
-          {t('page.newAddress.seedPhrase.riskTips')}
-        </Text>
-      </View>
-      <View style={styles.list}>
-        {QUESTIONS.map(q => {
-          return (
-            <>
-              <Text>{'·'}</Text>
-              <ListItem title={q.content} />
-            </>
-          );
-        })}
-      </View>
-      <TouchableView
-        style={styles.agreementWrapper}
-        onPress={() => {
-          setChecked(!checked);
-        }}>
-        <View style={styles.agreementCheckbox}>
-          <CheckBoxCircled checked={checked} />
-        </View>
-        <View style={styles.agreementTextWrapper}>
-          <Text style={styles.agreementText}>
-            {t(
-              'page.nextComponent.createNewAddress.UnderstandsecurityPrecautions',
-            )}
+    <View style={styles.container}>
+      <View style={styles.container}>
+        <AppBottomSheetModalTitle
+          style={styles.title}
+          title={t('page.nextComponent.createNewAddress.BackupSeedPhrase')}
+        />
+        <View style={styles.tipsWarper}>
+          <Text style={styles.tipsText}>
+            {t('page.nextComponent.createNewAddress.riskTips')}
           </Text>
         </View>
-      </TouchableView>
-    </FooterButtonScreenContainer>
+        <View style={styles.listContainer}>
+          {QUESTIONS.map(q => {
+            return (
+              <View style={styles.listItem}>
+                <Text style={styles.dotItem}>{'·'}</Text>
+                <Text style={styles.listText}>{q.content}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <TouchableView
+          style={styles.agreementWrapper}
+          onPress={() => {
+            setChecked(!checked);
+          }}>
+          <View style={styles.agreementCheckbox}>
+            <CheckBoxCircled checked={checked} />
+          </View>
+          <View style={styles.agreementTextWrapper}>
+            <Text style={styles.agreementText}>
+              {t(
+                'page.nextComponent.createNewAddress.UnderstandsecurityPrecautions',
+              )}
+            </Text>
+          </View>
+        </TouchableView>
+      </View>
+      <Button
+        disabled={!checked}
+        containerStyle={styles.btnContainer}
+        type="primary"
+        title={t('page.nextComponent.createNewAddress.Confirm')}
+        onPress={onConfirm}
+      />
+    </View>
   );
 };
