@@ -21,7 +21,7 @@ export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
   }, []);
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
-      return require('@/assets/icons/address/icloud.png');
+      return require('@/assets2024/icons/common/icloud.svg');
     }
     return require('@/assets/icons/address/gdrive.png');
   }, []);

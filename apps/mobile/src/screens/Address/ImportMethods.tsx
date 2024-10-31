@@ -61,7 +61,13 @@ function ImportMethods(): JSX.Element {
             <PrivateKeyIcon style={styles.icon} />
             <Text style={styles.importType}>Import Private Key</Text>
           </Card>
-          <Card style={styles.importItem}>
+          <Card
+            style={styles.importItem}
+            onPress={() => {
+              navigate(RootNames.StackAddress, {
+                screen: RootNames.ImportHardwareAddress,
+              });
+            }}>
             <HardWareIcon style={styles.icon} />
             <Text style={styles.importType}>Connect Hardware Wallets</Text>
           </Card>
