@@ -34,7 +34,7 @@ import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FormInput } from '@/components/Form/Input';
+import { NextInput } from '@/components2024/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { useRequest } from 'ahooks';
@@ -93,7 +93,7 @@ function useSetupPasswordForm(toggleBiometrics) {
     const passSchema = Yup.string()
       .default(INIT_FORM_DATA.password)
       .required(t('page.createPassword.passwordRequired'))
-      .min(8, t('page.createPassword.passwordMin'));
+      .min(8, t('page.nextComponent.createPassword.passwordMin'));
     return Yup.object({
       password: passSchema,
       confirmPassword: Yup.string()
@@ -231,10 +231,10 @@ function MainListBlocks() {
         <View style={styles.bodyContainer}>
           <View style={styles.formWrapper}>
             <View style={styles.inputHorizontalGroup}>
-              <FormInput
+              <NextInput.Password
+                // initialPasswordVisible
                 ref={passwordInputRef}
-                style={styles.inputContainer}
-                inputStyle={styles.input}
+                fieldName="New password"
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
                     editable: false,
@@ -250,13 +250,14 @@ function MainListBlocks() {
                     formik.setFieldValue('password', text, true);
                   },
                 }}
-                errorText={formik.errors.password}
+                hasError={Boolean(formik.errors.password)}
+                tipText={formik.errors.password}
               />
 
-              <FormInput
+              <NextInput.Password
+                fieldName="Confirm password"
                 ref={confirmPasswordInputRef}
-                style={[styles.inputContainer, { marginTop: 20 }]}
-                inputStyle={styles.input}
+                style={{ marginTop: 20 }}
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
                     editable: false,
@@ -274,7 +275,8 @@ function MainListBlocks() {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
                 }}
-                errorText={formik.errors.confirmPassword}
+                hasError={Boolean(formik.errors.confirmPassword)}
+                tipText={formik.errors.confirmPassword}
               />
             </View>
             <View style={styles.switchContainer}>

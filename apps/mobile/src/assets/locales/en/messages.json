@@ -1351,7 +1351,8 @@
         "addressTopTips": "Use it to send and receive crypto on blockchain",
         "Continue": "Continue",
         "passwordTopTips": "This password will be used to unlock your wallet and encrypt your local data.",
-        "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost."
+        "backupSeedPhrase": "Backup your seed phrase to restore your wallet if the app is deleted or your device is lost.",
+        "passwordMin": "Must be at least 8 characters"
       }
     },
     "newAddress": {
