@@ -45,10 +45,17 @@ export const RootNames = {
   CustomRPC: 'CustomRPC',
   SetBiometricsAuthentication: 'SetBiometricsAuthentication',
   GetStarted: 'GetStarted',
-  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
   /* warning: dev only ------ start */
   ProviderControllerTester: 'ProviderControllerTester',
   /* warning: dev only ------ end */
+
+  /* warning: testkits only ------ start */
+  StackTestkits: 'StackTestkits',
+  TestKits: 'TestKits',
+  SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
+  DevUIFontShowCase: 'DevUIFontShowCase',
+  DevUIFormShowCase: 'DevUIFormShowCase',
+  /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',
   Send: 'Send',

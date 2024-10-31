@@ -3,6 +3,8 @@ export { default as RcIconRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRightCC } from './arrow-right-cc.svg';
 export { default as RcArrowRight2CC } from './right-2-cc.svg';
 
+export { default as RcIconCorrectCC } from './correct-cc.svg';
+
 export { default as RcArrowDownCC } from './arrow-down-cc.svg';
 export { default as RcIconInfoCC } from './info-cc.svg';
 export { default as RcIconInfoFillCC } from './icon-info-fill.svg';
@@ -32,3 +34,8 @@ export { default as RcIconCloseCircleCC } from './icon-close-circle-cc.svg';
 
 export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';
 export { default as RcIconJumpCC } from './jump-cc.svg';
+
+export { default as RcIconEyeCC } from './eye-cc.svg';
+export { default as RcIconEyeCloseCC } from './eye-close-cc.svg';
+
+export { default as RcQrCodeCC } from './qrcode-cc.svg';

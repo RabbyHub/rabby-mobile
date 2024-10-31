@@ -1,7 +1,15 @@
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import ArrowRightCC from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
@@ -20,6 +28,7 @@ export interface ListItemProps {
   onPress?: () => void;
   disableArrow?: boolean;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -30,6 +39,7 @@ export const ListItem: React.FC<ListItemProps> = ({
   iconSrc,
   disableArrow = false,
   disabled,
+  style,
 }) => {
   const { styles } = useTheme2024({ getStyle });
   return (
@@ -39,6 +49,7 @@ export const ListItem: React.FC<ListItemProps> = ({
       style={StyleSheet.flatten([
         styles.root,
         disabled ? styles.rootDisabled : undefined,
+        style,
       ])}>
       <View style={styles.leftContainer}>
         {iconSrc ? (

@@ -1594,7 +1594,7 @@
         },
         "scan": {
           "title": "Scan Keystone to Connect",
-          "description": "Scan the QR code on the Keystone hardware wallet"
+          "description": "Scan the QR-code on your Keystone wallet"
         }
       },
       "walletConnect": {

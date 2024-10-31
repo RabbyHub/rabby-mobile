@@ -23,6 +23,7 @@ export type RootStackParamsList = {
   [RootNames.StackAddress2024]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
+  [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
   [RootNames.ImportMoreAddress]?: {
     type: KEYRING_TYPE;
@@ -48,6 +49,12 @@ export type BottomTabParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
+};
+
+type TestKitsNavigatorParamsList = {
+  [RootNames.SampleNewUserGetStarted2024]?: {};
+  [RootNames.DevUIFontShowCase]?: {};
+  [RootNames.DevUIFormShowCase]?: {};
 };
 
 export type AddressNavigatorParamList = {

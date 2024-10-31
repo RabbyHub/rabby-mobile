@@ -7,6 +7,7 @@ import { toastIndicator } from '../Toast';
 import { SvgProps } from 'react-native-svg';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
+import { Card } from '@/components2024/Card';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -28,35 +29,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
   },
   item: {
-    padding: 16,
-    backgroundColor: colors2024['neutral-card-2'],
-    borderRadius: 8,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   list: {
-    marginTop: 24,
+    marginTop: 22,
     width: '100%',
   },
   listWrapper: {
-    rowGap: 24,
+    alignItems: 'stretch',
+    padding: 0,
+    paddingVertical: 12,
   },
-
-  // currentDeviceTagText: {
-  //   fontSize: 12,
-  //   lineHeight: 14,
-  //   color: colors2024['green-default'],
-  // },
-  // currentDeviceTag: {
-  //   paddingHorizontal: 4,
-  //   paddingVertical: 2,
-  //   borderWidth: 0.5,
-  //   borderColor: colors2024['green-default'],
-  //   borderRadius: 2,
-  //   marginLeft: -4,
-  // },
   titleText: {
     fontSize: 20,
     color: colors2024['neutral-title-1'],
@@ -131,16 +115,17 @@ export const CommonSelectDeviceScreen: React.FC<Props> = ({
       <View style={styles.main}>
         <Text style={styles.text}>{descriptionText}</Text>
         <ScrollView style={styles.list}>
-          <View style={styles.listWrapper}>
+          <Card style={styles.listWrapper}>
             {devices.map(device => (
               <ListItem
+                style={styles.item}
                 onPress={() => handlePress(device)}
                 title={device.name || ''}
                 Icon={DeviceLogo}
                 disabled={locked}
               />
             ))}
-          </View>
+          </Card>
         </ScrollView>
       </View>
     </View>

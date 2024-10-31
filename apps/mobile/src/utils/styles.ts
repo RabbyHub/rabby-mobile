@@ -107,6 +107,13 @@ export function makeDebugBorder(color = 'blue'): ViewStyle {
   });
 }
 
+export function makeProdBorder(color = 'blue'): ViewStyle {
+  return {
+    borderWidth: 1,
+    borderColor: color,
+  };
+}
+
 function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
   input: T,
 ): T {
