@@ -1,7 +1,7 @@
 import { AppColorsVariants } from '@/constant/theme';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PasteTextArea } from './components/PasteTextArea';
 import { QandASection } from './components/QandASection';
@@ -17,6 +17,7 @@ import { toast } from '@/components/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import * as bip39 from '@scure/bip39';
+import PasteButton from '@/components2024/PasteButton';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -192,6 +193,11 @@ export const ImportSeedPhraseScreen = () => {
         answer={t(
           'page.newAddress.seedPhrase.isItSafeToImportItInRabby.answer',
         )}
+      />
+      <PasteButton
+        onPaste={text => {
+          console.log('PasteButton-logger:xx ', text);
+        }}
       />
     </FooterButtonScreenContainer>
   );

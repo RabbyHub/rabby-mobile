@@ -76,6 +76,7 @@ export const RootNames = {
   CurrentAddress: 'CurrentAddress',
   ImportNewAddress: 'ImportNewAddress',
   ImportSuccess: 'ImportSuccess',
+  ImportMethods: 'ImportMethods',
   ImportWatchAddress: 'ImportWatchAddress',
   ImportSafeAddress: 'ImportSafeAddress',
   AddressDetail: 'AddressDetail',

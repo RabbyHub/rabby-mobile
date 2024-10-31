@@ -28,6 +28,7 @@ import { PreCreateSeedPhraseScreen } from '../Address/PreCreateSeedPhraseScreen'
 import { CloudBackupButton } from '../Address/CloudBackupButton';
 import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
+import ImportMethods from '../Address/ImportMethods';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -111,6 +112,19 @@ export function AddressNavigator() {
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportMethods}
+        component={ImportMethods}
+        options={mergeScreenOptions({
+          headerTitle: 'Select Import Method',
+          title: 'Select Import Method',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontWeight: '800',
+            color: colors['neutral-title-1'],
+          },
+        })}
       />
       <AddressStack.Screen
         name={RootNames.ImportSafeAddress}

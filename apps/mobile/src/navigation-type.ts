@@ -59,6 +59,7 @@ type TestKitsNavigatorParamsList = {
 export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
   [RootNames.ImportNewAddress]?: {};
+  [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {
     address: string | string[];
     brandName: string;
