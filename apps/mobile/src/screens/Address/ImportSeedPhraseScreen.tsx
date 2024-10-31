@@ -253,7 +253,29 @@ export const ImportSeedPhraseScreen = () => {
             style={styles.tipIcon}
             onPress={() => {
               createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.SEED_PHRASE,
+                name: MODAL_NAMES.DESCRIPTION,
+                title: "What is a 'Seed phrase'",
+                sections: [
+                  {
+                    description:
+                      'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
+                  },
+                  {
+                    title: 'Backup',
+                    description:
+                      'If you lose your seed phrase, you won’t be able to restore your wallet.',
+                  },
+                  {
+                    title: 'Never Share It',
+                    description:
+                      'Never share your seed phrase—anyone with access to it can control your funds.',
+                  },
+                  {
+                    title: 'Safety',
+                    description:
+                      'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
+                  },
+                ],
               });
             }}
           />

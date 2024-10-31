@@ -108,7 +108,29 @@ export const ImportPrivateKeyScreen = () => {
             style={styles.tipIcon}
             onPress={() => {
               createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.PRIVATE_KEY,
+                name: MODAL_NAMES.DESCRIPTION,
+                title: "What's a private key",
+                sections: [
+                  {
+                    description:
+                      'A private key is a string of letters and numbers used to access and control your address. You can use it to recover your address on any device.',
+                  },
+                  {
+                    title: 'Backup',
+                    description:
+                      'If you lose your private key, you won’t be able to restore your wallet.',
+                  },
+                  {
+                    title: 'Never Share It',
+                    description:
+                      'Never share your private key—anyone with access to it can control your funds.',
+                  },
+                  {
+                    title: 'Safety',
+                    description:
+                      'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
+                  },
+                ],
               });
             }}
           />

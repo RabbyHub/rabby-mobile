@@ -73,7 +73,30 @@ function ImportMethods(): JSX.Element {
           style={styles.tipIcon}
           onPress={() => {
             createGlobalBottomSheetModal2024({
-              name: MODAL_NAMES.SAFE_IMPORT_RABBY,
+              name: MODAL_NAMES.DESCRIPTION,
+              title: 'Is it safe to import it in Rabby?',
+              sections: [
+                {
+                  title: 'Unique Identifier',
+                  description:
+                    'A Web3 wallet address is a unique string of characters that represents your identity on the blockchain.',
+                },
+                {
+                  title: 'Send and Receive Crypto',
+                  description:
+                    'It allows you to send, receive, and store cryptocurrencies securely.',
+                },
+                {
+                  title: 'Access dApps',
+                  description:
+                    'Your wallet address is used to connect to decentralized applications (dApps) and interact with blockchain-based services.',
+                },
+                {
+                  title: 'Ownership and Control',
+                  description:
+                    'You fully own and control the assets linked to your address, with access secured by private keys or recovery phrases.',
+                },
+              ],
             });
           }}
         />

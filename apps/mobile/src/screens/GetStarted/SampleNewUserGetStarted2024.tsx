@@ -61,6 +61,16 @@ function SampleGetStartedScreen2024(): JSX.Element {
     });
   }, [getStaretd.processedInit]);
 
+  const handleGoToImport = useCallback(async () => {
+    if (!getStaretd.processedInit) return;
+    if (!keyringService.isUnlocked()) {
+      navigate(RootNames.Unlock);
+      return;
+    }
+
+    navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
+  }, [getStaretd.processedInit]);
+
   const navigation = useNavigation();
 
   const initAccounts = useMemoizedFn(async () => {
@@ -128,11 +138,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
                 disabled={
                   !getStaretd.processedInit || getStaretd.localHasAccounts
                 }
-                onPress={() => {
-                  navigate(RootNames.StackAddress, {
-                    screen: RootNames.ImportMethods,
-                  });
-                }}>
+                onPress={handleGoToImport}>
                 I already have a address
               </TouchableText>
             </>
