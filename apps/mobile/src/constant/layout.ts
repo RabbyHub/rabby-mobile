@@ -55,6 +55,7 @@ export const RootNames = {
   SampleNewUserGetStarted2024: 'SampleNewUserGetStarted2024',
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIFormShowCase: 'DevUIFormShowCase',
+  DevUIAccountShowCase: 'DevUIAccountShowCase',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',

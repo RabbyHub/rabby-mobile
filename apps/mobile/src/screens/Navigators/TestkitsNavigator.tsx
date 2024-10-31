@@ -7,6 +7,7 @@ import GetStartedScreen from '../GetStarted/GetStarted';
 import SampleGetStartedScreen2024 from '../GetStarted/SampleNewUserGetStarted2024';
 import DevUIFontShowCase from '../Testkits/DevUIFontShowCase';
 import DevUIFormShowCase from '../Testkits/DevUIFormShowCase';
+import DevUIAccountShowCase from '../Testkits/DevUIAccountShowCase';
 
 const Stack = createCustomNativeStackNavigator();
 
@@ -42,6 +43,10 @@ export function TestkitsNavigator() {
       <Stack.Screen
         name={RootNames.DevUIFormShowCase}
         component={DevUIFormShowCase}
+      />
+      <Stack.Screen
+        name={RootNames.DevUIAccountShowCase}
+        component={DevUIAccountShowCase}
       />
     </Stack.Navigator>
   );

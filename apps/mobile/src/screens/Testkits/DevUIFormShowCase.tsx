@@ -86,7 +86,9 @@ function DevUIFormShowCase(): JSX.Element {
           </Text>
           <View style={{ flexDirection: 'column' }}>
             <Text style={[styles.propertyDesc, { marginVertical: 12 }]}>
-              Summary{' '.repeat(100)}
+              <Text style={[{ fontSize: 18, fontWeight: '700' }]}>
+                Summary{' '.repeat(100)}
+              </Text>
               <Text style={{ marginBottom: 12 }}>
                 `NextInput` is the basic input component for theme 2024, its
                 based on `TextInput` from react-native, and also adapt to

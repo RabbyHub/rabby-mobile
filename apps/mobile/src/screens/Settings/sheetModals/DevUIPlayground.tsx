@@ -82,6 +82,17 @@ export default function DevUIPlaygroundModal({
         },
       },
       {
+        label: 'Account, Brand & Address',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIAccountShowCase,
+            }),
+          );
+        },
+      },
+      {
         label: 'Form',
         icon: <RcCode style={styles.labelIcon} />,
         onPress: () => {

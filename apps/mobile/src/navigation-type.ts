@@ -54,6 +54,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.SampleNewUserGetStarted2024]?: {};
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
+  [RootNames.DevUIAccountShowCase]?: {};
 };
 
 export type AddressNavigatorParamList = {
