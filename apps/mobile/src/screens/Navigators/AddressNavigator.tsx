@@ -29,6 +29,7 @@ import { CloudBackupButton } from '../Address/CloudBackupButton';
 import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
+import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -94,6 +95,18 @@ export function AddressNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             // fontWeight: '500',
+            color: colors['neutral-title-1'],
+          },
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportHardwareAddress}
+        component={ImportHardwareAddressScreen}
+        options={mergeScreenOptions({
+          headerTitle: 'Connect Hardware Wallets',
+          title: 'Connect Hardware Wallets',
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
             color: colors['neutral-title-1'],
           },
         })}

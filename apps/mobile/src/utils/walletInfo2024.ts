@@ -25,7 +25,10 @@ export const getWalletIcon2024 = (
     return OneKeyPNG;
   }
 
-  if (brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName) {
+  if (
+    brandName === HARDWARE_KEYRING_TYPES.Keystone.brandName ||
+    brandName === KEYRING_CLASS.HARDWARE.KEYSTONE
+  ) {
     return KeystonePNG;
   }
 

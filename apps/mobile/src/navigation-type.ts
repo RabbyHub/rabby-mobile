@@ -82,6 +82,7 @@ export type AddressNavigatorParamList = {
     byImport?: string;
   };
   [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
