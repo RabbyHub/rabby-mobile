@@ -20,6 +20,7 @@ export type RootStackParamsList = {
   [RootNames.StackSettings]: NavigatorScreenParams<SettingNavigatorParamList>;
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
+  [RootNames.StackAddress2024]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
@@ -48,6 +49,7 @@ export type BottomTabParamsList = {
 
 type GetStartedNavigatorParamsList = {
   [RootNames.GetStarted]?: {};
+  [RootNames.GetStartedScreen2024]?: {};
 };
 
 type TestKitsNavigatorParamsList = {
@@ -59,6 +61,9 @@ type TestKitsNavigatorParamsList = {
 
 export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
+  [RootNames.CreateNewAddress]?: {};
+  [RootNames.CreateNewAddressSecond]?: {};
+  [RootNames.CreateNewAddressThird]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {

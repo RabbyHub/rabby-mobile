@@ -22,6 +22,7 @@ import NotFoundScreen from './screens/NotFound';
 
 import MyBundleScreen from './screens/Assets/MyBundle';
 
+import { AddressNavigator2024 } from './screens/Navigators/AddressNavigator2024';
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
@@ -237,6 +238,10 @@ export default function AppNavigation({
           <RootStack.Screen
             name={RootNames.StackAddress}
             component={AddressNavigator}
+          />
+          <RootStack.Screen
+            name={RootNames.StackAddress2024}
+            component={AddressNavigator2024}
           />
           <RootStack.Screen
             name={RootNames.StackFavoritePopularDapps}

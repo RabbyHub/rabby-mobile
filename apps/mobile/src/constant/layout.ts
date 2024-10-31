@@ -23,6 +23,7 @@ export const ScreenColors = {
 
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
+  GetStartedScreen2024: 'GetStartedScreen2024',
 
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',
@@ -74,6 +75,7 @@ export const RootNames = {
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
+  StackAddress2024: 'StackAddress2024',
   CurrentAddress: 'CurrentAddress',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
@@ -83,6 +85,9 @@ export const RootNames = {
   ImportSafeAddress: 'ImportSafeAddress',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
+  CreateNewAddress: 'CreateNewAddress',
+  CreateNewAddressSecond: 'CreateNewAddressSecond',
+  CreateNewAddressThird: 'CreateNewAddressThird',
 
   ImportLedger: 'ImportLedger',
   ImportMoreAddress: 'ImportMoreAddress',
