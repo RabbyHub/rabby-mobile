@@ -12,7 +12,7 @@ import { WalletIcon, WalletIconProps } from '../WalletIcon/WalletIcon';
 const { isSameAddress } = addressUtils;
 
 interface ChildrenProps {
-  WalletIcon: React.FC<WalletIconProps>;
+  WalletIcon: React.FC<Omit<WalletIconProps, 'type'>>;
   WalletName: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletAddress: React.FC<{ style?: StyleProp<TextStyle> }>;
   WalletBalance: React.FC<{ style?: StyleProp<TextStyle> }>;
@@ -95,6 +95,7 @@ export const AddressItem = (props: AddressItemProps) => {
         <View style={styles.root}>
           <View style={styles.leftContainer}>
             <WalletIconWrapper
+              borderRadius={12}
               width={styles.walletIcon.width}
               height={styles.walletIcon.height}
             />
