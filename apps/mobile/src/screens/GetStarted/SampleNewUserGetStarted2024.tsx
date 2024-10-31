@@ -113,7 +113,13 @@ function SampleGetStartedScreen2024(): JSX.Element {
             title="Create New Address"
             // onPress={handleGoToHome}
           />
-          <TouchableText style={styles.touchableText}>
+          <TouchableText
+            style={styles.touchableText}
+            onPress={() => {
+              navigate(RootNames.StackAddress, {
+                screen: RootNames.ImportMethods,
+              });
+            }}>
             I already have a address
           </TouchableText>
         </View>

@@ -62,8 +62,7 @@ function GetStartedScreen(): JSX.Element {
       return;
     }
 
-    navigate(RootNames.StackAddress, { screen: RootNames.ImportMethods });
-    // navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // if (preferenceService.getPreference('isInvited')) {
     //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
     // } else {
