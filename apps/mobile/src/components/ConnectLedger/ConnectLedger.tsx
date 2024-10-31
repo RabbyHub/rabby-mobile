@@ -3,7 +3,6 @@ import { RootNames } from '@/constant/layout';
 import { ledgerErrorHandler, LEDGER_ERROR_CODES } from '@/hooks/ledger/error';
 import { useLedgerImport } from '@/hooks/ledger/useLedgerImport';
 import { navigate } from '@/utils/navigation';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAtom } from 'jotai';

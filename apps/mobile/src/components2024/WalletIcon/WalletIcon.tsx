@@ -1,15 +1,17 @@
-import { getWalletIcon } from '@/utils/walletInfo';
+import { getWalletIcon2024 } from '@/utils/walletInfo2024';
 import { KEYRING_TYPE, WALLET_NAME } from '@rabby-wallet/keyring-utils';
-import { StyleProp, ViewStyle } from 'react-native';
+import { ImageStyle, StyleProp, StyleSheet } from 'react-native';
+import { Image } from 'react-native';
 
 type EValue = `${KEYRING_TYPE}`;
 
 export interface WalletIconProps {
   type: keyof typeof WALLET_NAME | EValue | string;
   isLight?: boolean;
-  style?: StyleProp<ViewStyle>;
+  style?: StyleProp<ImageStyle>;
   width: number;
   height: number;
+  borderRadius?: number;
 }
 
 export const WalletIcon: React.FC<WalletIconProps> = ({
@@ -18,8 +20,21 @@ export const WalletIcon: React.FC<WalletIconProps> = ({
   style,
   width,
   height,
+  borderRadius = 24,
 }) => {
-  const Icon = getWalletIcon(type, isLight);
+  const Icon = getWalletIcon2024(type, isLight);
 
-  return <Icon width={width} height={height} style={style} />;
+  return (
+    <Image
+      source={Icon}
+      width={width}
+      height={height}
+      style={StyleSheet.flatten([
+        {
+          borderRadius: borderRadius || 24,
+        },
+        style,
+      ])}
+    />
+  );
 };
