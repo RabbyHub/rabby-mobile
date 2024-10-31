@@ -34,11 +34,6 @@ import TouchableText from '@/components/Touchable/TouchableText';
 function SampleGetStartedScreen2024(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
-  const [isShowModal, setIsShowModal] = useState(false);
-  const [isFocus, setIsFocus] = useState(false);
-  const [code, setCode] = useState('');
-  const [errMessage, setErrMessage] = useState('');
-
   const [isInited, setIsInited] = useState(false);
   const handleGoToHome = useCallback(async () => {
     if (!isInited) return;
@@ -61,13 +56,6 @@ function SampleGetStartedScreen2024(): JSX.Element {
       screen: RootNames.CreateNewAddress,
     });
   }, [isInited]);
-
-  useEffect(() => {
-    if (isShowModal) {
-      setCode('');
-      setErrMessage('');
-    }
-  }, [isShowModal]);
 
   const navigation = useNavigation();
 
@@ -208,6 +196,7 @@ const getStyles = createGetStyles2024(ctx =>
       textAlign: 'center',
       fontWeight: '500',
       marginTop: 32,
+      marginBottom: 32,
     },
     modalTitle: {
       color: ctx.colors['neutral-title-1'],
