@@ -160,6 +160,7 @@ export function AddressNavigator() {
           headerTitle: 'Import Private Key',
           title: 'Import Private Key',
           headerTitleStyle: {
+            fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
         }}
@@ -171,6 +172,7 @@ export function AddressNavigator() {
           headerTitle: 'Import Seed Phrase',
           title: 'Import Seed Phrase',
           headerTitleStyle: {
+            fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
           },
           headerRight: CloudBackupButton,

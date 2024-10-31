@@ -1,10 +1,7 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PasteTextArea } from './components/PasteTextArea';
-import { QandASection } from './components/QandASection';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
@@ -18,28 +15,63 @@ import { useFocusEffect } from '@react-navigation/native';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import * as bip39 from '@scure/bip39';
 import PasteButton from '@/components2024/PasteButton';
+import { NextInput } from '@/components2024/Form/Input';
+import { createGetStyles2024 } from '@/utils/styles';
+import { Text, View } from 'react-native';
+import HelpIcon from '@/assets2024/icons/common/help.svg';
+import SeedPhrase from '@/assets2024/icons/common/seed-phrase.svg';
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    itemAddressWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      columnGap: 4,
-    },
-    qAndASection: {
-      marginBottom: 24,
-    },
-    textArea: {
-      marginBottom: 32,
-    },
-  });
+const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    marginTop: 8,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+  },
+  itemAddressWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 4,
+  },
+  qAndASection: {
+    marginBottom: 24,
+  },
+  textArea: {
+    marginTop: 20,
+  },
+  pasteButton: {
+    marginTop: 58,
+  },
+  tipWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 260,
+    gap: 4,
+    width: '100%',
+  },
+  tip: {
+    color: ctx.colors2024['neutral-info'],
+    fontWeight: '400',
+    fontSize: 16,
+  },
+  tipIcon: {
+    width: 16,
+    height: 16,
+  },
+}));
 
 export const ImportSeedPhraseScreen = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
   const { t } = useTranslation();
   const [mnemonics, setMnemonics] = React.useState<string>('');
-  const [passphrase, setpassphrase] = React.useState<string>('');
   const [error, setError] = React.useState<string>();
   const duplicateAddressModal = useDuplicateAddressModal();
   const scanner = useScanner();
@@ -49,7 +81,7 @@ export const ImportSeedPhraseScreen = () => {
 
   const importSeedPhrase = React.useCallback(() => {
     apiMnemonic
-      .generateKeyringWithMnemonic(mnemonics, passphrase, true)
+      .generateKeyringWithMnemonic(mnemonics, '', true)
       .then(async ({ keyringId, isExistedKR }) => {
         const firstAddress = await requestKeyring(
           KEYRING_TYPE.HdKeyring,
@@ -71,7 +103,7 @@ export const ImportSeedPhraseScreen = () => {
             await new Promise(resolve => setTimeout(resolve, 1));
             await apiMnemonic.activeAndPersistAccountsByMnemonics(
               mnemonics,
-              passphrase,
+              '',
               firstAddress as any,
               true,
             );
@@ -83,7 +115,7 @@ export const ImportSeedPhraseScreen = () => {
                 isFirstImport: true,
                 address: [firstAddress?.[0].address],
                 mnemonics,
-                passphrase,
+                passphrase: '',
                 keyringId: keyringId || undefined,
                 isExistedKR,
               },
@@ -96,7 +128,7 @@ export const ImportSeedPhraseScreen = () => {
         navigate(RootNames.ImportMoreAddress, {
           type: KEYRING_TYPE.HdKeyring,
           mnemonics,
-          passphrase,
+          passphrase: '',
           keyringId: keyringId || undefined,
           isExistedKR,
         });
@@ -135,7 +167,7 @@ export const ImportSeedPhraseScreen = () => {
         importToastHiddenRef.current?.();
         setImporting(false);
       });
-  }, [duplicateAddressModal, mnemonics, passphrase]);
+  }, [duplicateAddressModal, mnemonics]);
 
   const handleConfirm = React.useCallback(() => {
     setImporting(true);
@@ -172,33 +204,31 @@ export const ImportSeedPhraseScreen = () => {
       btnProps={{
         loading: importing,
       }}>
-      <PasteTextArea
-        enableScan
-        style={styles.textArea}
-        value={mnemonics}
-        onChange={importing ? undefined : setMnemonics}
-        placeholder="Enter your seed phrase with space"
-        error={error}
-      />
-      <QandASection
-        style={styles.qAndASection}
-        question={t('page.newAddress.seedPhrase.whatIsASeedPhrase.question')}
-        answer={t('page.newAddress.seedPhrase.whatIsASeedPhrase.answer')}
-      />
-      <QandASection
-        style={styles.qAndASection}
-        question={t(
-          'page.newAddress.seedPhrase.isItSafeToImportItInRabby.question',
-        )}
-        answer={t(
-          'page.newAddress.seedPhrase.isItSafeToImportItInRabby.answer',
-        )}
-      />
-      <PasteButton
-        onPaste={text => {
-          console.log('PasteButton-logger:xx ', text);
-        }}
-      />
+      <View style={styles.container}>
+        <SeedPhrase style={styles.icon} />
+        <PasteTextArea
+          enableScan
+          style={styles.textArea}
+          value={mnemonics}
+          onChange={importing ? undefined : setMnemonics}
+          placeholder="Enter your seed phrase with space"
+          error={error}
+        />
+        <PasteButton
+          style={styles.pasteButton}
+          onPaste={text => {
+            if (importing) {
+              return;
+            }
+            setMnemonics(text);
+          }}
+        />
+        <View style={styles.tipWrapper}>
+          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+          {/* TODO: show BottomSheet */}
+          <HelpIcon style={styles.tipIcon} />
+        </View>
+      </View>
     </FooterButtonScreenContainer>
   );
 };

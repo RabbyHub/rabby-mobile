@@ -1,5 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  StyleProp,
+  ViewStyle,
+  StyleSheet,
+} from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -7,9 +13,10 @@ import IconPaste from '@/assets2024/icons/common/paste.svg';
 
 interface IProps {
   onPaste: (text: string) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-const PasteButton: React.FC<IProps> = ({ onPaste }) => {
+const PasteButton: React.FC<IProps> = ({ onPaste, style }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const onPressPaste = () => {
     Clipboard.getString().then(text => {
@@ -18,7 +25,10 @@ const PasteButton: React.FC<IProps> = ({ onPaste }) => {
     });
   };
   return (
-    <TouchableOpacity hitSlop={6} onPress={onPressPaste} style={styles.button}>
+    <TouchableOpacity
+      hitSlop={6}
+      onPress={onPressPaste}
+      style={StyleSheet.flatten([styles.button, style])}>
       <IconPaste width={16} height={16} color={colors2024['neutral-foot']} />
       <Text style={styles.pasteButtonText}>Paste</Text>
     </TouchableOpacity>

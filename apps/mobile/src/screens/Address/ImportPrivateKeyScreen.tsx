@@ -1,10 +1,7 @@
-import { AppColorsVariants } from '@/constant/theme';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PasteTextArea } from './components/PasteTextArea';
-import { QandASection } from './components/QandASection';
 import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { apiPrivateKey } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
@@ -12,25 +9,15 @@ import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
-
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    itemAddressWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      columnGap: 4,
-    },
-    qAndASection: {
-      marginBottom: 24,
-    },
-    textArea: {
-      marginBottom: 32,
-    },
-  });
+import { createGetStyles2024 } from '@/utils/styles';
+import { Text, View } from 'react-native';
+import HelpIcon from '@/assets2024/icons/common/help.svg';
+import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
+import PasteButton from '@/components2024/PasteButton';
 
 export const ImportPrivateKeyScreen = () => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle: getStyles });
+
   const { t } = useTranslation();
   const [privateKey, setPrivateKey] = React.useState<string>('');
   const [error, setError] = React.useState<string>();
@@ -79,28 +66,75 @@ export const ImportPrivateKeyScreen = () => {
     <FooterButtonScreenContainer
       buttonText={t('global.Confirm')}
       onPressButton={handleConfirm}>
-      <PasteTextArea
-        style={styles.textArea}
-        value={privateKey}
-        onChange={setPrivateKey}
-        placeholder="Enter your Private Key"
-        error={error}
-        enableScan
-      />
-      <QandASection
-        style={styles.qAndASection}
-        question={t('page.newAddress.privateKey.whatIsAPrivateKey.question')}
-        answer={t('page.newAddress.privateKey.whatIsAPrivateKey.answer')}
-      />
-      <QandASection
-        style={styles.qAndASection}
-        question={t(
-          'page.newAddress.privateKey.isItSafeToImportItInRabby.question',
-        )}
-        answer={t(
-          'page.newAddress.privateKey.isItSafeToImportItInRabby.answer',
-        )}
-      />
+      <View style={styles.container}>
+        <PrivateKeyIcon style={styles.icon} />
+        <PasteTextArea
+          style={styles.textArea}
+          value={privateKey}
+          onChange={setPrivateKey}
+          placeholder="Enter your Private Key"
+          error={error}
+          enableScan
+        />
+
+        <PasteButton
+          style={styles.pasteButton}
+          onPaste={text => {
+            setPrivateKey(text);
+          }}
+        />
+        <View style={styles.tipWrapper}>
+          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+          {/* TODO: show BottomSheet */}
+          <HelpIcon style={styles.tipIcon} />
+        </View>
+      </View>
     </FooterButtonScreenContainer>
   );
 };
+
+const getStyles = createGetStyles2024(ctx => ({
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    marginTop: 8,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+  },
+  itemAddressWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 4,
+  },
+  qAndASection: {
+    marginBottom: 24,
+  },
+  textArea: {
+    marginTop: 20,
+  },
+  pasteButton: {
+    marginTop: 58,
+  },
+  tipWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    width: '100%',
+    marginTop: 260,
+  },
+  tip: {
+    color: ctx.colors2024['neutral-info'],
+    fontWeight: '400',
+    fontSize: 16,
+  },
+  tipIcon: {
+    width: 16,
+    height: 16,
+  },
+}));

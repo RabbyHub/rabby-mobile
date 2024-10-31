@@ -27,6 +27,13 @@ function ImportMethods(): JSX.Element {
           <Card
             style={styles.importItem}
             onPress={() => {
+              if (
+                shouldRedirectToSetPasswordBefore({
+                  screen: RootNames.ImportMnemonic,
+                })
+              ) {
+                return;
+              }
               navigate(RootNames.StackAddress, {
                 screen: RootNames.ImportMnemonic,
               });
