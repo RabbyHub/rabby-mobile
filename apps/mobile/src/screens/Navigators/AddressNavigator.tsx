@@ -108,6 +108,8 @@ export function AddressNavigator() {
           headerTintColor: colors['neutral-title-1'],
           headerTitleStyle: {
             color: colors['neutral-title-1'],
+            fontWeight: '800',
+            fontFamily: 'SF Pro Rounded',
           },
         })}
       />
@@ -175,6 +177,7 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+            fontFamily: 'SF Pro Rounded',
           },
         }}
       />
@@ -187,6 +190,7 @@ export function AddressNavigator() {
           headerTitleStyle: {
             fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+            fontFamily: 'SF Pro Rounded',
           },
           headerRight: CloudBackupButton,
         }}
