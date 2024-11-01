@@ -120,6 +120,7 @@ const Swap = () => {
     gasList,
     reserveGasOpen,
     closeReserveGasOpen,
+    passGasPrice,
   } = useTokenPair(currentAccount!.address);
 
   const refresh = useSetAtom(refreshIdAtom);
@@ -226,9 +227,10 @@ const Swap = () => {
             pay_token_id: payToken.id,
             unlimited: unlimitedAllowance,
             shouldTwoStepApprove: activeProvider.shouldTwoStepApprove,
-            gasPrice: payTokenIsNativeToken
-              ? gasList?.find(e => e.level === gasLevel)?.price
-              : undefined,
+            gasPrice:
+              payTokenIsNativeToken && passGasPrice
+                ? gasList?.find(e => e.level === gasLevel)?.price
+                : undefined,
             postSwapParams: {
               quote: {
                 pay_token_id: payToken.id,
@@ -278,9 +280,10 @@ const Swap = () => {
             pay_token_id: payToken.id,
             unlimited: unlimitedAllowance,
             shouldTwoStepApprove: activeProvider.shouldTwoStepApprove,
-            gasPrice: payTokenIsNativeToken
-              ? gasList?.find(e => e.level === gasLevel)?.price
-              : undefined,
+            gasPrice:
+              payTokenIsNativeToken && passGasPrice
+                ? gasList?.find(e => e.level === gasLevel)?.price
+                : undefined,
             postSwapParams: {
               quote: {
                 pay_token_id: payToken.id,
