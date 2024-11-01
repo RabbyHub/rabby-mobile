@@ -17,8 +17,10 @@ import { toast } from '@/components/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const GasAccountCurrentAddress = ({
+  twoColumn,
   transparent,
 }: {
+  twoColumn?: boolean;
   transparent?: boolean;
 }) => {
   const colors = useThemeColors();
@@ -33,6 +35,45 @@ export const GasAccountCurrentAddress = ({
       account?.brandName ? account?.brandName : currentAccount?.brandName || '',
     );
   }, [account?.brandName, currentAccount?.brandName]);
+
+  if (twoColumn) {
+    return (
+      <View
+        style={[
+          styles.currentAddressContainer,
+          { height: 56, paddingVertical: 0, alignItems: 'center', gap: 10 },
+          transparent && { backgroundColor: 'transparent' },
+        ]}>
+        <WalletIcon style={styles.icon} />
+        <View
+          style={{
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 2,
+          }}>
+          <Text
+            style={[styles.aliasText, { fontSize: 13, marginLeft: 0 }]}
+            numberOfLines={1}>
+            {alias}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AddressViewer
+              address={account?.address || currentAccount!.address}
+              showArrow={false}
+              addressStyle={{ fontSize: 12 }}
+            />
+            <CopyAddressIcon
+              address={account?.address || currentAccount!.address}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View

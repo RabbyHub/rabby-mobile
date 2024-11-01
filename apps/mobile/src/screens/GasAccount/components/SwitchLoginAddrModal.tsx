@@ -34,7 +34,7 @@ export const SwitchLoginAddrBeforeDepositModal: React.FC<
             {t('page.gasAccount.switchLoginAddressBeforeDeposit.desc')}
           </Text>
           <View style={styles.accountContainer}>
-            <GasAccountCurrentAddress />
+            <GasAccountCurrentAddress twoColumn />
           </View>
           <Button
             title={t('global.ok')}
@@ -61,7 +61,7 @@ const getStyles = createGetStyles(colors => ({
   container: {
     width: 320,
     backgroundColor: colors['neutral-bg1'],
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
   },
@@ -75,14 +75,17 @@ const getStyles = createGetStyles(colors => ({
     fontSize: 14,
     color: colors['neutral-body'],
     textAlign: 'center',
-    marginVertical: 20,
+    marginBottom: 16,
   },
   accountContainer: {
-    marginBottom: 32,
+    marginHorizontal: 5,
+    marginBottom: 28,
+    alignSelf: 'stretch',
   },
 
   containerStyle: {
     width: '100%',
+    height: 40,
   },
   titleStyle: {
     fontSize: 15,
@@ -93,5 +96,6 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['blue-default'],
     borderRadius: 6,
     width: '100%',
+    height: '100%',
   },
 }));
