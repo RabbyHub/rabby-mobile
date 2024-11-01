@@ -1,99 +1,46 @@
-import { FocusAwareStatusBar, Text } from '@/components';
-import RootScreenContainer from '@/components/ScreenContainer/RootScreenContainer';
+import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { contactService, preferenceService } from '@/core/services';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import {
   useIsFocused,
   useNavigation,
   useNavigationState,
 } from '@react-navigation/native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Keyboard,
-  ScrollView,
+  StyleProp,
   StyleSheet,
-  TouchableOpacity,
+  TextInput,
+  TextStyle,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { AddressInput } from './components/AddressInput';
-import ImportSuccessSVG from '@/assets/icons/address/import-success.svg';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
+
+import { Card } from '@/components2024/Card';
+
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RcIconRightCC } from '@/assets/icons/common';
-import { navigate } from '@/utils/navigation';
 import { matomoRequestEvent } from '@/utils/analytics';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { getKRCategoryByType } from '@/utils/transaction';
 import { Chain } from '@/constant/chains';
-import { GnosisSupportChainList } from './ImportSafeAddressScreen';
+import { Button } from '@/components2024/Button';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { ellipsisAddress } from '@/utils/address';
+import { createGetStyles2024 } from '@/utils/styles';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen = () => {
-  const colors = useThemeColors();
+  const { styles } = useTheme2024({ getStyle });
+
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
-  const { safeOffHeader } = useSafeSizes();
 
-  const styles = React.useMemo(
-    () =>
-      StyleSheet.create({
-        rootContainer: {
-          display: 'flex',
-          backgroundColor: colors['blue-default'],
-        },
-        list: {
-          rowGap: 14,
-          flex: 1,
-        },
-        titleContainer: {
-          width: '100%',
-          height: 320 - safeOffHeader,
-          flexShrink: 0,
-          backgroundColor: colors['blue-default'],
-          color: colors['neutral-title-2'],
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        title: {
-          fontSize: 24,
-          fontWeight: '700',
-          color: colors['neutral-title-2'],
-          marginTop: 25,
-        },
-        inputContainer: {
-          backgroundColor: colors['neutral-bg-2'],
-          paddingVertical: 24,
-          paddingHorizontal: 20,
-          rowGap: 16,
-        },
-        keyboardView: {
-          flex: 1,
-          height: '100%',
-          backgroundColor: colors['neutral-bg-2'],
-        },
-        ledgerButton: {
-          backgroundColor: colors['neutral-bg-2'],
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingBottom: 32,
-        },
-        ledgerButtonText: {
-          color: colors['blue-default'],
-          fontSize: 14,
-        },
-      }),
-
-    [colors, safeOffHeader],
-  );
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportSuccess)?.params,
   ) as {
@@ -189,38 +136,59 @@ export const ImportSuccessScreen = () => {
     }
   }, [isFocus, state, accounts, switchAccount, importAddresses]);
 
-  const handleImportMore = React.useCallback(() => {
-    if (!state.isFirstImport) {
-      return;
-    }
-    navigate(RootNames.ImportMoreAddress, {
-      type: state.type,
-      brand: state.brandName,
-      mnemonics: state.mnemonics,
-      passphrase: state.passphrase,
-      keyringId: state.keyringId,
-    });
-  }, [state]);
+  const WalletAddress = useCallback(
+    ({ address, style }: { address: string; style?: StyleProp<TextStyle> }) => {
+      return (
+        <Text style={StyleSheet.flatten([styles.addressText, style])}>
+          {ellipsisAddress(address)}
+        </Text>
+      );
+    },
+    [styles.addressText],
+  );
 
   return (
-    <RootScreenContainer hideBottomBar style={styles.rootContainer}>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          Keyboard.dismiss();
-        }}>
-        <View style={styles.keyboardView}>
-          <View style={styles.titleContainer}>
-            <ImportSuccessSVG />
-            <Text style={styles.title}>Added successfully</Text>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        Keyboard.dismiss();
+      }}>
+      <View style={styles.container}>
+        {importAddresses.length === 1 ? (
+          <View style={styles.itemContainer}>
+            <WalletIcon
+              type={state.type}
+              width={100}
+              height={100}
+              style={styles.icon}
+            />
+            <TextInput
+              style={styles.inputInner}
+              value={importAddresses?.[0]?.aliasName || ''}
+              onChange={nativeEvent => {
+                const _aliasName = nativeEvent.nativeEvent.text;
+                const newImportAddresses = [...importAddresses];
+                newImportAddresses[0] = {
+                  address: importAddresses?.[0]?.aliasName || '',
+                  aliasName: _aliasName,
+                };
+                setImportAddresses(newImportAddresses);
+              }}
+              blurOnSubmit
+              autoFocus
+              clearButtonMode="while-editing"
+            />
+            <WalletAddress address={importAddresses?.[0]?.address || ''} />
           </View>
-          <ScrollView automaticallyAdjustKeyboardInsets>
-            <View style={styles.inputContainer}>
-              {importAddresses.map((item, index) => (
-                <AddressInput
-                  key={item.address}
-                  address={item.address}
-                  aliasName={item.aliasName}
-                  onChange={_aliasName => {
+        ) : (
+          importAddresses.map((item, index) => (
+            <Card key={item.address} style={styles.addressItem}>
+              <WalletIcon type={state.type} width={50} height={50} />
+              <View>
+                <TextInput
+                  style={styles.listInput}
+                  value={item.aliasName}
+                  onChange={nativeEvent => {
+                    const _aliasName = nativeEvent.nativeEvent.text;
                     const newImportAddresses = [...importAddresses];
                     newImportAddresses[index] = {
                       address: item.address,
@@ -228,33 +196,107 @@ export const ImportSuccessScreen = () => {
                     };
                     setImportAddresses(newImportAddresses);
                   }}
+                  blurOnSubmit
+                  autoFocus
+                  clearButtonMode="while-editing"
                 />
-              ))}
-              {state?.supportChainList?.length ? (
-                <GnosisSupportChainList
-                  data={state?.supportChainList}
-                  style={{ marginTop: 0 }}
-                />
-              ) : null}
-            </View>
-          </ScrollView>
-          {state.isFirstImport && (
-            <TouchableOpacity
-              onPress={handleImportMore}
-              style={styles.ledgerButton}>
-              <Text style={styles.ledgerButtonText}>Import more address</Text>
-              <RcIconRightCC
-                width={16}
-                height={16}
-                color={colors['blue-default']}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableWithoutFeedback>
-
-      <FooterButton title="Done" onPress={handleDone} />
-      <FocusAwareStatusBar backgroundColor={colors['blue-default']} />
-    </RootScreenContainer>
+                <WalletAddress address={item.address} />
+              </View>
+            </Card>
+          ))
+        )}
+        <Text style={styles.resultTip}>
+          {importAddresses.length > 1
+            ? `${importAddresses.length} Addresses`
+            : ''}
+          &nbsp;Imported successfully!
+        </Text>
+        <Button
+          containerStyle={styles.btnContainer}
+          type="primary"
+          title="Done"
+          onPress={handleDone}
+        />
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  container: {
+    height: '100%',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  itemContainer: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  icon: {
+    marginTop: 233,
+    borderRadius: 16,
+  },
+  addressText: {
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '400',
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+  },
+  inputInner: {
+    width: '100%',
+    marginTop: 15,
+    textAlignVertical: 'center',
+    height: 54,
+    padding: 0,
+    fontSize: 36,
+    border: 0,
+    backgroundColor: 'transparent',
+    lineHeight: 42,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+  },
+  resultTip: {
+    width: '100%',
+    marginTop: 28,
+    fontWeight: '800',
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: 'center',
+    color: colors2024['blue-default'],
+  },
+  btnContainer: {
+    width: '100%',
+    position: 'absolute',
+    bottom: 40,
+  },
+  addressItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 11,
+    width: '100%',
+  },
+  listInput: {
+    width: '100%',
+    textAlignVertical: 'center',
+    padding: 0,
+    fontSize: 18.8,
+    border: 0,
+    backgroundColor: 'transparent',
+    lineHeight: 25,
+    fontWeight: '700',
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+}));
