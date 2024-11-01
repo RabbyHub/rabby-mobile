@@ -6,8 +6,7 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { Button } from '../Button';
-import { CheckBoxRect } from '@/components2024/Checkbox';
-import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
+import { CheckBoxRect } from '@/components2024/CheckBox';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
@@ -175,8 +174,7 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
             setChecked(!checked);
           }}>
           <View style={styles.agreementCheckbox}>
-            {checked ? <RcIconHasCheckbox /> : <RcIconNoCheck />}
-            {/* <CheckBoxRect checked={checked} /> */}
+            <CheckBoxRect checked={checked} />
           </View>
           <View style={styles.agreementTextWrapper}>
             <Text style={styles.agreementText}>
