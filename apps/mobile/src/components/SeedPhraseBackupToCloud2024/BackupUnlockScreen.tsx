@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
@@ -5,8 +6,8 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { FooterButtonScreenContainer } from '../ScreenContainer/FooterButtonScreenContainer';
 import { BackupIcon } from './BackupIcon';
+import { Button } from '@/components2024/Button';
 import { NextInput } from '@/components2024/Form/Input';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
@@ -39,36 +40,26 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
-    paddingTop: 24,
+    padding: 24,
     height: 460,
   },
   inputWrapper: {
     width: '100%',
-    marginTop: 22,
+    marginTop: 24,
+    marginBottom: 40,
+  },
+  btnContainer: {
+    // marginTop: 44,
+    width: '100%',
   },
 }));
 
 interface Props {
   onConfirm: (password: string) => void;
-  description?: string;
-  title?: string;
-  onCancel?: () => void;
-  ignoreValidation?: boolean;
-  isError?: boolean;
-  onClearError?: () => void;
 }
 
-export const BackupUnlockScreen: React.FC<Props> = ({
-  onConfirm,
-  description,
-  title,
-  onCancel,
-  ignoreValidation,
-  isError,
-  onClearError,
-}) => {
+export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
   const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
-  const colors = useThemeColors();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
@@ -81,43 +72,24 @@ export const BackupUnlockScreen: React.FC<Props> = ({
 
     setLoading(true);
     try {
-      if (!ignoreValidation) {
-        await keyringService.verifyPassword(password);
-      }
-      onConfirm(password);
+      await keyringService.verifyPassword(password);
+      await onConfirm(password);
     } catch (e) {
       setError(t('page.unlock.password.error'));
     } finally {
       setLoading(false);
     }
-  }, [ignoreValidation, onConfirm, password, t]);
-
-  React.useEffect(() => {
-    if (isError) {
-      setError(t('page.unlock.password.error'));
-    }
-  }, [isError, t]);
+  }, [onConfirm, password, t]);
 
   return (
-    <FooterButtonScreenContainer
-      onCancel={onCancel}
-      style={styles.container}
-      btnProps={{
-        disabled: !password,
-        footerStyle: {
-          paddingBottom: 60,
-        },
-        loading,
-      }}
-      buttonText={t('page.newAddress.seedPhrase.backupUnlockButton')}
-      onPressButton={handleConfirm}>
+    <View style={styles.container}>
       <View style={styles.root}>
-        <BackupIcon status="unlock" isGray />
+        <BackupIcon status={loading ? 'uploading' : 'unlock'} isGray />
         <Text style={styles.title}>
-          {title || t('page.newAddress.seedPhrase.backupUnlockTitle')}
+          {t('page.newAddress.seedPhrase.backupUnlockTitle')}
         </Text>
         <Text style={styles.description}>
-          {description || t('page.newAddress.seedPhrase.backupUnlockDesc')}
+          {t('page.newAddress.seedPhrase.backupUnlockDesc')}
         </Text>
         <View style={styles.inputWrapper}>
           <NextInput.Password
@@ -133,12 +105,24 @@ export const BackupUnlockScreen: React.FC<Props> = ({
               onChangeText: v => {
                 setPassword(v);
                 setError('');
-                onClearError?.();
               },
             }}
+            hasError={Boolean(error)}
+            tipText={error}
           />
         </View>
       </View>
-    </FooterButtonScreenContainer>
+      <Button
+        disabled={!password}
+        containerStyle={styles.btnContainer}
+        buttonStyle={{
+          borderRadius: 100,
+        }}
+        type="primary"
+        loading={loading}
+        title={t('page.nextComponent.createNewAddress.Confirm')}
+        onPress={handleConfirm}
+      />
+    </View>
   );
 };

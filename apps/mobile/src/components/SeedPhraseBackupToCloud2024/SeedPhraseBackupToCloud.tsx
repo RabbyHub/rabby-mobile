@@ -33,14 +33,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         return;
       }
 
-      const toastHide = toastWithIcon(() => (
-        <ActivityIndicator style={{ marginRight: 6 }} />
-      ))('Backing up', {
-        duration: 1e6,
-        position: toast.positions.CENTER,
-        hideOnPress: false,
-      });
-
       try {
         const filename = await saveMnemonicToCloud({
           mnemonic: seedPhrase,
@@ -55,8 +47,6 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
       } catch (e) {
         console.log('backup error', e);
         toast.show(t('page.newAddress.seedPhrase.backupFailedTitle'));
-      } finally {
-        toastHide();
       }
     },
     [onDone, t, seedPhrase],

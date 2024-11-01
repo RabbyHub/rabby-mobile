@@ -38,10 +38,6 @@ function MainListBlocks() {
   const handleBackupToCloud = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD,
-      // bottomSheetModalProps: {
-      //   enableDynamicSizing: true,
-      //   maxDynamicContentSize: 460,
-      // },
       paramState: state,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
@@ -171,7 +167,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    bottom: 40,
+    bottom: 60,
   },
   text: {
     color: colors2024['neutral-secondary'],

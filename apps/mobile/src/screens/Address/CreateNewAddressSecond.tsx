@@ -321,13 +321,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 40,
+    bottom: 60,
   },
   text: {
     color: colors2024['neutral-secondary'],
     fontWeight: '400',
     fontSize: 17,
-    marginTop: 0,
+    marginTop: 34,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
   },
@@ -350,7 +350,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 44,
+    marginTop: 36,
     paddingHorizontal: 8,
   },
   container: {
@@ -367,14 +367,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexShrink: 1,
     height: '100%',
     paddingHorizontal: 0,
-    paddingTop: 32,
+    paddingTop: 12,
     paddingBottom: 24,
     // ...makeDebugBorder()
   },
   formWrapper: {
     width: '100%',
     height: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     flexDirection: 'column',
     // justifyContent: 'space-between',
     alignItems: 'center',
@@ -395,7 +395,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   agreementWrapper: {
     position: 'absolute',
-    bottom: 72,
+    bottom: 108,
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',

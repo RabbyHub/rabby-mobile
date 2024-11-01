@@ -137,7 +137,11 @@ export const Button = ({
 
   return (
     <View
-      style={StyleSheet.flatten([styles.container, containerStyle])}
+      style={StyleSheet.flatten([
+        styles.container,
+        containerStyle,
+        type === 'primary' && styles.shadowButton,
+      ])}
       testID="RABBY_BUTTON_WRAPPER">
       <TouchableComponentInternal
         onPress={handleOnPress}
@@ -204,6 +208,19 @@ const getStyle = createGetStyles2024(ctx => ({
     width: '100%',
     // height: '100%',
     height: 56,
+  },
+  shadowButton: {
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(112, 132, 255, 0.10)', // 阴影颜色
+        shadowOffset: { width: 0, height: 8 }, // 阴影偏移
+        shadowOpacity: 0.1, // 阴影透明度
+        shadowRadius: 24, // 阴影模糊半径
+      },
+      android: {
+        elevation: 10, // Android 中的阴影效果
+      },
+    }),
   },
   title: {
     fontSize: 20,

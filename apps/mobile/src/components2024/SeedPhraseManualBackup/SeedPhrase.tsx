@@ -17,7 +17,7 @@ import { toast } from '@/components/Toast';
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
     // marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     display: 'flex',
     flexWrap: 'wrap',
     flexDirection: 'row',
@@ -25,7 +25,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   tipsWarperBottom: {
-    marginBottom: 40,
+    marginBottom: 30,
   },
   blueText: {
     marginHorizontal: 4,

@@ -135,7 +135,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 40,
+    bottom: 60,
   },
   text: {
     color: colors2024['neutral-secondary'],
