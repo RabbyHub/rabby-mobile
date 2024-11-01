@@ -10,10 +10,10 @@ import {
   useCurrentAccount,
 } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
-import { AddressItemInner } from './AddressItemInner';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import { FooterButtonGroup } from '@/components/FooterButton/FooterButtonGroup';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 
 const { isSameAddress } = addressUtils;
 
@@ -88,12 +88,14 @@ export const DuplicateAddressModal: React.FC = () => {
             {t('page.newAddress.privateKey.repeatImportTips')}
           </Text>
           <View style={styles.body}>
-            {currentAccount && (
-              <AddressItemInner isInModal wallet={currentAccount} />
-            )}
+            {currentAccount && <AddressItem address={currentAccount.address} />}
           </View>
 
-          <FooterButtonGroup onCancel={onCancel} onConfirm={onConfirm} />
+          <FooterButtonGroup
+            style={styles.btns}
+            onCancel={onCancel}
+            onConfirm={onConfirm}
+          />
         </View>
       </View>
     </Modal>
@@ -110,16 +112,18 @@ const getStyles = createGetStyles(colors => ({
     alignItems: 'center',
   },
   container: {
-    maxWidth: 350,
+    maxWidth: 352,
     backgroundColor: colors['neutral-bg1'],
-    paddingVertical: 20,
+    paddingVertical: 24,
     borderRadius: 16,
   },
   title: {
     fontSize: 18,
     color: colors['neutral-title1'],
     fontWeight: '500',
-    paddingHorizontal: 20,
+    lineHeight: 22,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
   body: {
     backgroundColor: colors['neutral-card2'],
@@ -128,5 +132,10 @@ const getStyles = createGetStyles(colors => ({
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  btns: {
+    padding: 0,
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
 }));
