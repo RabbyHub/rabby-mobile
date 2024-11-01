@@ -1,10 +1,13 @@
 import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
 import React from 'react';
-import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
 import { IS_IOS } from '@/core/native/utils';
 import { Image } from 'react-native';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const hitSlop = {
   top: 10,
@@ -15,8 +18,13 @@ const hitSlop = {
 
 export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
   const onPress = React.useCallback(() => {
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.RestoreFromCloud,
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.RESTORE_FROM_CLOUD,
+      onDone: () => {
+        setTimeout(() => {
+          removeGlobalBottomSheetModal2024(id);
+        }, 0);
+      },
     });
   }, []);
   const CloudImageSrc = React.useMemo(() => {

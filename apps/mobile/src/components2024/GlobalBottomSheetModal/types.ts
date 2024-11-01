@@ -41,6 +41,7 @@ export enum MODAL_NAMES {
   'AUTHENTICATION' = 'AUTHENTICATION',
   'NFT_DETAIL' = 'NFT_DETAIL',
   'DESCRIPTION' = 'DESCRIPTION',
+  'RESTORE_FROM_CLOUD' = 'RESTORE_FROM_CLOUD',
 }
 
 export enum APPROVAL_MODAL_NAMES {
@@ -79,6 +80,7 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
     typeof import('../Descriptions').Descriptions
   >;
+  [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {

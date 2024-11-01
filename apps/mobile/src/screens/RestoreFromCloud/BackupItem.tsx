@@ -1,4 +1,3 @@
-import { createGetStyles } from '@/utils/styles';
 import {
   StyleProp,
   StyleSheet,
@@ -7,19 +6,19 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useThemeStyles } from '@/hooks/theme';
-import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
-import dayjs from 'dayjs';
-import React from 'react';
-import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
-import { isNumber, noop } from 'lodash';
-import { formatUsdValue } from '@/utils/number';
-import { getAccountBalance } from '@/components/HDSetting/util';
-import { isAddress } from 'web3-utils';
-import { useTranslation } from 'react-i18next';
-import { BackupData } from '@/core/utils/cloudBackup';
+import { useTheme2024 } from '@/hooks/theme';
 
-const getStyles = createGetStyles(colors => ({
+import { createGetStyles2024 } from '@/utils/styles';
+import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
+import React from 'react';
+import { noop } from 'lodash';
+import { isAddress } from 'web3-utils';
+import { BackupData } from '@/core/utils/cloudBackup';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { Card } from '@/components2024/Card';
+import { Skeleton } from '@rneui/themed';
+
+const getStyle = createGetStyles2024(colors => ({
   root: {
     borderWidth: 1,
     borderColor: 'transparent',
@@ -35,15 +34,13 @@ const getStyles = createGetStyles(colors => ({
   },
   body: {
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   bodyTitle: {
     color: colors['neutral-title-1'],
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 20,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
   },
   bodyDesc: {
     color: colors['neutral-foot'],
@@ -64,6 +61,14 @@ const getStyles = createGetStyles(colors => ({
   },
   itemAddress: {
     fontSize: 15,
+  },
+  checkBox: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 24,
+    width: '100%',
   },
   importedText: {
     color: colors['neutral-foot'],
@@ -91,19 +96,7 @@ export const BackupItem: React.FC<BackupItemProps> = ({
   index,
   style,
 }) => {
-  const { t } = useTranslation();
-  const { styles } = useThemeStyles(getStyles);
-  const [balance, setBalance] = React.useState<number>();
-  const createdAtStr = React.useMemo(
-    () => dayjs(Number(item.createdAt)).format('YYYY-MM-DD HH:mm'),
-    [item.createdAt],
-  );
-  React.useEffect(() => {
-    if (!isAddress(item.address)) {
-      return;
-    }
-    getAccountBalance(item.address, true).then(setBalance);
-  }, [item.address]);
+  const { styles } = useTheme2024({ getStyle });
 
   if (!isAddress(item.address)) {
     return null;
@@ -118,33 +111,62 @@ export const BackupItem: React.FC<BackupItemProps> = ({
         imported && styles.rootImported,
         style,
       ])}>
-      <View style={styles.body}>
-        <View>
-          <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
-          <Text style={styles.bodyDesc}>
-            {t('page.newAddress.seedPhrase.backupRestoreCreatedAt')}
-            {createdAtStr}
-          </Text>
+      <Card style={styles.body}>
+        <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
+        <View style={styles.checkBox}>
+          {imported ? (
+            <View style={styles.imported}>
+              <RcIconCheckedFilledCC width={16} height={16} />
+            </View>
+          ) : selected ? (
+            <RcIconCheckedFilledCC width={24} height={24} />
+          ) : (
+            <RcIconUncheckCC width={24} height={24} />
+          )}
+          <AddressItem address={item.address} />
         </View>
-        {imported ? (
-          <View style={styles.imported}>
-            <RcIconCheckedFilledCC width={16} height={16} />
-            <Text style={styles.importedText}>
-              {t('page.newAddress.seedPhrase.backupRestoreImported')}
-            </Text>
-          </View>
-        ) : selected ? (
-          <RcIconCheckedFilledCC width={24} height={24} />
-        ) : (
-          <RcIconUncheckCC width={24} height={24} />
-        )}
-      </View>
-      <View style={styles.footer}>
-        <AddressAndCopy address={item.address} style={styles.itemAddress} />
-        {isNumber(balance) && (
-          <Text style={styles.itemBalance}>{formatUsdValue(balance)}</Text>
-        )}
-      </View>
+      </Card>
     </TouchableOpacity>
   );
 };
+
+export const BackupItemSkeleton = () => {
+  const { styles } = useTheme2024({ getStyle: getSkeletonStyle });
+
+  return (
+    <Card style={styles.card}>
+      <Skeleton height={29} skeletonStyle={styles.header} />
+      <View style={styles.main}>
+        <Skeleton circle width={47} height={47} />
+        <View style={styles.section}>
+          <Skeleton height={19} />
+          <Skeleton height={19} />
+        </View>
+      </View>
+    </Card>
+  );
+};
+
+const getSkeletonStyle = createGetStyles2024(ctx => ({
+  card: {
+    marginBottom: 12,
+    display: 'flex',
+  },
+  header: {
+    width: '100%',
+    height: 29,
+  },
+  main: {
+    marginTop: 24,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  section: {
+    flex: 1,
+    display: 'flex',
+    gap: 4,
+  },
+}));

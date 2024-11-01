@@ -10,8 +10,8 @@ import { IS_IOS } from '@/core/native/utils';
 import React from 'react';
 import { useThemeColors } from '@/hooks/theme';
 import { AppColorsVariants } from '@/constant/theme';
-import BackupErrorSVG from '@/assets/icons/address/backup-error.svg';
-import BackupInfoSVG from '@/assets/icons/address/backup-info.svg';
+import BackupErrorSVG from '@/assets2024/icons/common/cancel.svg';
+import BackupInfoSVG from '@/assets2024/icons/common/tip.svg';
 import BackupLockSVG from '@/assets/icons/address/backup-lock.svg';
 import BackupSuccessSVG from '@/assets/icons/address/backup-success.svg';
 import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
@@ -46,8 +46,6 @@ const getStyles = (colors: AppColorsVariants) =>
       position: 'absolute',
       bottom: -5,
       right: -5,
-      borderWidth: 2,
-      borderColor: 'white',
       borderRadius: 100,
       zIndex: 1,
     },

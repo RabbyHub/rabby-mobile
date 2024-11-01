@@ -36,6 +36,7 @@ import { BackupNotAvailableScreen } from '@/components/SeedPhraseBackupToCloud/B
 import { WalletConnectConnection } from '@/components/CommonPopup/WalletConnectConnection';
 import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
+import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -71,6 +72,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE]: [348],
   [MODAL_NAMES.WALLET_CONNECT]: [300],
   [MODAL_NAMES.DESCRIPTION]: [674],
+  [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -106,6 +108,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModal,
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
+  [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,
 };
 
 export function makeBottomSheetProps(ctx: {
