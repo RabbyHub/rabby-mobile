@@ -328,7 +328,11 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
-          title={t('page.nextComponent.createNewAddress.Confirm')}
+          title={
+            currentSelecting
+              ? t('page.nextComponent.createNewAddress.Verify')
+              : t('page.nextComponent.createNewAddress.savedPhrase')
+          }
           onPress={currentSelecting ? handleVerify : handleGoSelect}
         />
       )}

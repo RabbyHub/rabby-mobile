@@ -1,13 +1,13 @@
-import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { useTheme2024 } from '@/hooks/theme';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { Button } from '../Button';
-import { CheckBoxRect } from '@/components2024/Checkbox/CheckBoxRect';
+import { CheckBoxRect } from '@/components2024/Checkbox';
+import { RcIconNoCheck, RcIconHasCheckbox } from '@/assets/icons/common';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
@@ -72,7 +72,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   agreementCheckbox: {
     marginRight: 6,
     position: 'relative',
-    top: 1,
+    // top: 1,
   },
   agreementTextWrapper: {
     position: 'relative',
@@ -125,7 +125,7 @@ interface Props {
 export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { t } = useTranslation();
-  const [checked, setChecked] = React.useState(false);
+  const [checked, setChecked] = useState(true);
 
   const QUESTIONS = React.useMemo(() => {
     return [
@@ -175,7 +175,8 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
             setChecked(!checked);
           }}>
           <View style={styles.agreementCheckbox}>
-            <CheckBoxRect checked={checked} />
+            {checked ? <RcIconHasCheckbox /> : <RcIconNoCheck />}
+            {/* <CheckBoxRect checked={checked} /> */}
           </View>
           <View style={styles.agreementTextWrapper}>
             <Text style={styles.agreementText}>

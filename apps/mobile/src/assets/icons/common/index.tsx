@@ -38,4 +38,6 @@ export { default as RcIconJumpCC } from './jump-cc.svg';
 export { default as RcIconEyeCC } from './eye-cc.svg';
 export { default as RcIconEyeCloseCC } from './eye-close-cc.svg';
 
+export { default as RcIconHasCheckbox } from '@/assets/icons/nextComponent/IconHasCheckbox.svg';
+export { default as RcIconNoCheck } from '@/assets/icons/nextComponent/IconNoCheck.svg';
 export { default as RcQrCodeCC } from './qrcode-cc.svg';

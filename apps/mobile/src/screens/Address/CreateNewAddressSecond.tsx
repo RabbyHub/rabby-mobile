@@ -26,7 +26,7 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { navigate } from '@/utils/navigation';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { CheckBoxRect } from '@/components2024/Checkbox/CheckBoxRect';
+import { CheckBoxRect } from '@/components2024/CheckBox';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import { AppSwitch } from '@/components';
@@ -278,7 +278,6 @@ function MainListBlocks() {
               <View style={styles.agreementCheckbox}>
                 <CheckBoxRect checked={formik.values.checked} />
               </View>
-
               <View style={styles.agreementTextWrapper}>
                 {/* <Trans i18nKey="page.createPassword.agree" t={t}>
                 </Trans> */}
@@ -407,7 +406,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   agreementCheckbox: {
     marginRight: 6,
     position: 'relative',
-    top: 1,
   },
   agreementTextWrapper: {
     position: 'relative',

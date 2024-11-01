@@ -1363,6 +1363,8 @@
         "WriteDownSeedPhrase": "Write Down Your Seed Phrase",
         "VerifyDownSeedPhrase": "Verify seed phrase ",
         "BackupSeedPhrase": "Manually Backup Seed Phrase",
+        "savedPhrase": "I've Saved the Phrase",
+        "Verify": "Verify",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
       }
     },
