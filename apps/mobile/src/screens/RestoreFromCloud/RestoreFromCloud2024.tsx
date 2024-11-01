@@ -125,7 +125,6 @@ export const RestoreFromCloud2024: React.FC<{
           </Text>
         </View>
         <View style={styles.loadingList}>
-          Loading
           <BackupItemSkeleton />
           <BackupItemSkeleton />
         </View>
