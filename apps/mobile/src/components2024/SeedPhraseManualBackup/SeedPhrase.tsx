@@ -189,6 +189,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [isHidden, setIsHidden] = React.useState(true);
+  const [isSelect, setIsSelect] = React.useState(false);
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
@@ -200,7 +201,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     () => _.sortBy(_.shuffle(_.range(1, words.length + 1)).slice(0, 3)),
     [words],
   );
-  const handleSelect = useCallback(
+  const onSelect = useCallback(
     (index: number) => {
       if (isHidden) {
         return;
@@ -232,7 +233,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     });
   });
 
-  const handleVerify = async () => {
+  const handleVerify = useMemoizedFn(async () => {
     if (validate()) {
       const mnemonics = seedPhrase;
       const passphrase = '';
@@ -248,7 +249,16 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     } else {
       toast.show('Verification failed');
     }
-  };
+  });
+
+  const handleGoSelect = useMemoizedFn(() => {
+    setIsSelect(true);
+  });
+
+  const currentSelecting = useMemo(
+    () => !isHidden && isSelect,
+    [isSelect, isHidden],
+  );
 
   return (
     <View style={styles.container}>
@@ -256,7 +266,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         <AppBottomSheetModalTitle
           style={styles.title}
           title={
-            isHidden
+            !currentSelecting
               ? t('page.nextComponent.createNewAddress.WriteDownSeedPhrase')
               : t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')
           }
@@ -264,9 +274,9 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         <View
           style={StyleSheet.flatten([
             styles.tipsWarper,
-            !isHidden && styles.tipsWarperBottom,
+            currentSelecting && styles.tipsWarperBottom,
           ])}>
-          {isHidden ? (
+          {!currentSelecting ? (
             <Text style={styles.tipsText}>
               {t('page.nextComponent.createNewAddress.WriteSeedPhrase')}
             </Text>
@@ -307,10 +317,10 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
             </BlurView>
           )}
           <WordsMatrix
-            words={isHidden ? words : shuffledWords}
+            words={!currentSelecting ? words : shuffledWords}
             selectArr={selectArr}
-            isSelectIng={!isHidden}
-            onSelect={handleSelect}
+            isSelectIng={currentSelecting}
+            onSelect={onSelect}
           />
         </View>
       </View>
@@ -319,7 +329,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Confirm')}
-          onPress={handleVerify}
+          onPress={currentSelecting ? handleVerify : handleGoSelect}
         />
       )}
     </View>

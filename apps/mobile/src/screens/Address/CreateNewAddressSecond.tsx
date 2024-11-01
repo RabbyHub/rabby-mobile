@@ -26,7 +26,7 @@ import { toast, toastWithIcon } from '@/components/Toast';
 import { navigate } from '@/utils/navigation';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { CheckBoxCircled } from '@/components/Icons/Checkbox';
+import { CheckBoxRect } from '@/components2024/Checkbox/CheckBoxRect';
 import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import { AppSwitch } from '@/components';
@@ -276,7 +276,7 @@ function MainListBlocks() {
                 formik.setFieldValue('checked', !formik.values.checked, true);
               }}>
               <View style={styles.agreementCheckbox}>
-                <CheckBoxCircled checked={formik.values.checked} />
+                <CheckBoxRect checked={formik.values.checked} />
               </View>
 
               <View style={styles.agreementTextWrapper}>
