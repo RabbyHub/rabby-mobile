@@ -15,23 +15,35 @@ import { wordlist } from '@scure/bip39/wordlists/english';
 import * as bip39 from '@scure/bip39';
 import PasteButton from '@/components2024/PasteButton';
 import { NextInput } from '@/components2024/Form/Input';
-import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { StyleSheet, Text, View } from 'react-native';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import SeedPhrase from '@/assets2024/icons/common/seed-phrase.svg';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconScannerCC } from '@/assets/icons/address';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { FooterButtonContainer } from '@/components2024/ScreenContainer/FooterButtonContainer';
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     position: 'relative',
     height: '100%',
     width: '100%',
-    marginTop: 8,
+    paddingHorizontal: 20,
+    // marginTop: 8,
+    // ...makeDebugBorder(),
+  },
+  topContent: {
+    alignItems: 'center',
+    flexShrink: 0,
+    // height: '100%',
   },
   icon: {
     width: 40,
@@ -60,9 +72,10 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 260,
+    marginBottom: 28,
     gap: 4,
     width: '100%',
+    // ...makeDebugBorder('yellow'),
   },
   tip: {
     color: ctx.colors2024['neutral-info'],
@@ -72,6 +85,15 @@ const getStyles = createGetStyles2024(ctx => ({
   tipIcon: {
     width: 16,
     height: 16,
+  },
+
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-InvertHighlight'],
   },
 }));
 
@@ -206,60 +228,67 @@ export const ImportSeedPhraseScreen = () => {
   });
 
   return (
-    <FooterButtonScreenContainer
-      buttonText={t('global.Confirm')}
-      onPressButton={handleConfirm}
-      btnProps={{
+    <FooterButtonContainer
+      buttonProps={{
+        title: t('global.Confirm'),
+        onPress: handleConfirm,
         loading: importing,
+      }}
+      footerBottomOffset={16}
+      footerContainerStyle={{
+        paddingHorizontal: 20,
       }}>
       <View style={styles.container}>
-        <SeedPhrase style={styles.icon} />
-        <View>
-          <NextInput.TextArea
-            style={styles.textContainer}
-            tipText={error}
-            hasError={!!error}
-            inputStyle={styles.textArea}
-            inputProps={{
-              placeholder: 'Enter your seed phrase',
-              value: mnemonics,
-              onChangeText: text => {
-                if (importing) {
-                  return;
-                }
-                setMnemonics(text);
-              },
+        <View style={styles.topContent}>
+          <SeedPhrase style={styles.icon} />
+          <View>
+            <NextInput.TextArea
+              style={styles.textContainer}
+              tipText={error}
+              hasError={!!error}
+              inputStyle={styles.textArea}
+              inputProps={{
+                placeholder: 'Enter your seed phrase',
+                value: mnemonics,
+                onChangeText: text => {
+                  if (importing) {
+                    return;
+                  }
+                  setMnemonics(text);
+                },
+              }}
+              // eslint-disable-next-line react/no-unstable-nested-components
+              customIcon={ctx => (
+                <TouchableView
+                  style={ctx.wrapperStyle}
+                  onPress={() => {
+                    navigate(RootNames.Scanner);
+                  }}>
+                  <RcIconScannerCC
+                    style={ctx.iconStyle}
+                    color={colors2024['neutral-title-1']}
+                  />
+                </TouchableView>
+              )}
+            />
+          </View>
+          <PasteButton
+            style={styles.pasteButton}
+            onPaste={text => {
+              if (importing) {
+                return;
+              }
+              setMnemonics(text);
             }}
-            // eslint-disable-next-line react/no-unstable-nested-components
-            customIcon={ctx => (
-              <TouchableView
-                style={ctx.wrapperStyle}
-                onPress={() => {
-                  navigate(RootNames.Scanner);
-                }}>
-                <RcIconScannerCC
-                  style={ctx.iconStyle}
-                  color={colors2024['neutral-title-1']}
-                />
-              </TouchableView>
-            )}
           />
         </View>
-        <PasteButton
-          style={styles.pasteButton}
-          onPaste={text => {
-            if (importing) {
-              return;
-            }
-            setMnemonics(text);
-          }}
-        />
+
         <View style={styles.tipWrapper}>
           <Text style={styles.tip}>What's a Seed Phrase</Text>
           <HelpIcon
             style={styles.tipIcon}
             onPress={() => {
-              createGlobalBottomSheetModal2024({
+              const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
                 title: "What is a 'Seed phrase'",
                 sections: [
@@ -283,11 +312,20 @@ export const ImportSeedPhraseScreen = () => {
                       'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
                   },
                 ],
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
+                },
               });
             }}
           />
         </View>
       </View>
-    </FooterButtonScreenContainer>
+    </FooterButtonContainer>
   );
 };

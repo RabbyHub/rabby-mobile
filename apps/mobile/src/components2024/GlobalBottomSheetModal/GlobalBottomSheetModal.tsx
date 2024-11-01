@@ -101,8 +101,6 @@ export const GlobalBottomSheetModal2024 = () => {
       );
     }
     delete modalRefs.current[key];
-    // const modalInst = modals.find(modal => modal.id === key);
-    // modalInst?.params.onCancel?.();
 
     setModals(prev => {
       return prev.filter(modal => modal.id !== key);

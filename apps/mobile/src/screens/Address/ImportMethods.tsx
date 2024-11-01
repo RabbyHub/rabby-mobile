@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
@@ -15,7 +15,10 @@ import SeedPhraseIcon from '@/assets2024/icons/common/seed-phrase.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import HardWareIcon from '@/assets2024/icons/common/hardward.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 function ImportMethods(): JSX.Element {
@@ -78,8 +81,9 @@ function ImportMethods(): JSX.Element {
         <HelpIcon
           style={styles.tipIcon}
           onPress={() => {
-            createGlobalBottomSheetModal2024({
+            const modalId = createGlobalBottomSheetModal2024({
               name: MODAL_NAMES.DESCRIPTION,
+              bottomSheetModalProps: { enableDismissOnClose: true },
               title: 'Is it safe to import it in Rabby?',
               sections: [
                 {
@@ -103,6 +107,15 @@ function ImportMethods(): JSX.Element {
                     'You fully own and control the assets linked to your address, with access secured by private keys or recovery phrases.',
                 },
               ],
+              nextButtonProps: {
+                title: (
+                  <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                ),
+                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                onPress: () => {
+                  removeGlobalBottomSheetModal2024(modalId);
+                },
+              },
             });
           }}
         />
@@ -158,6 +171,14 @@ const getStyles = createGetStyles2024(ctx => ({
   tipIcon: {
     width: 16,
     height: 16,
+  },
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-InvertHighlight'],
   },
 }));
 

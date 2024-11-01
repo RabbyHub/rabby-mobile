@@ -26,6 +26,7 @@ export function useSafeSizes() {
 
   return {
     safeTop: top,
+    headerHeight: ScreenLayouts.headerAreaHeight,
     safeOffHeader: ScreenLayouts.headerAreaHeight + top,
     safeOffScreenTop: Dimensions.get('screen').height - top,
     safeOffBottom: bottom,

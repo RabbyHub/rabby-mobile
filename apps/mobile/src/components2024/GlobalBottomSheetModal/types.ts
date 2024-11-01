@@ -1,3 +1,5 @@
+import React from 'react';
+
 import type { BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/src/types';
 
@@ -74,12 +76,14 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.__TEST_MARKDOWN_IN_WEBVIEW]: {};
   [MODAL_NAMES.AUTHENTICATION]: AuthenticationModalProps;
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupProps;
+  [MODAL_NAMES.DESCRIPTION]: React.ComponentProps<
+    typeof import('../Descriptions').Descriptions
+  >;
 };
 
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
-  /** @deprecated use bottomSheetModalProps.onDismiss directly */
   onCancel?: () => void;
   bottomSheetModalProps?: Partial<BottomSheetModalProps>;
   /**

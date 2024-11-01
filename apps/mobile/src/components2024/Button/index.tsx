@@ -19,22 +19,25 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 
-export type ButtonProps = TouchableOpacityProps &
-  TouchableNativeFeedbackProps & {
-    title?:
-      | string
-      | ((ctx: { titleStyle?: TextStyle }) => ReactNode)
-      | React.ReactElement<{}>;
-    titleStyle?: StyleProp<TextStyle>;
-    buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
-    type?: 'primary' | 'ghost';
-    loading?: boolean;
-    loadingStyle?: StyleProp<ViewStyle>;
-    containerStyle?: StyleProp<ViewStyle>;
-    TouchableComponent?: typeof React.Component;
-    ViewComponent?: typeof React.Component;
-    disabled?: boolean;
-  };
+export type ButtonProps = Omit<
+  TouchableOpacityProps &
+    TouchableNativeFeedbackProps & {
+      title?:
+        | string
+        | ((ctx: { titleStyle?: TextStyle }) => ReactNode)
+        | React.ReactElement<{}>;
+      titleStyle?: StyleProp<TextStyle>;
+      buttonStyle?: StyleProp<ViewStyle> | StyleProp<ViewStyle>[];
+      type?: 'primary' | 'ghost';
+      loading?: boolean;
+      loadingStyle?: StyleProp<ViewStyle>;
+      containerStyle?: StyleProp<ViewStyle>;
+      TouchableComponent?: typeof React.Component;
+      ViewComponent?: typeof React.Component;
+      disabled?: boolean;
+    },
+  'children'
+>;
 
 export const Button = ({
   title = '',
