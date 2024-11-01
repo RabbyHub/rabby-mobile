@@ -66,6 +66,7 @@ export const LowCreditModal: React.FC<LowCreditModalProps> = ({
             chain={token.chain}
             logo={token.logo_url}
             chainSize={20}
+            chainIconPosition="tr"
           />
           <Text style={styles.tokenSymbol}>{getTokenSymbol(token)}</Text>
           <TouchableOpacity
@@ -149,7 +150,9 @@ const getStyles = createGetStyles(colors => ({
   desc: {
     width: '100%',
     backgroundColor: colors['neutral-card2'],
+    height: 52,
     padding: 10,
+    paddingRight: 9,
     borderRadius: 6,
     marginBottom: 32,
   },
@@ -160,6 +163,7 @@ const getStyles = createGetStyles(colors => ({
   },
   containerStyle: {
     width: '100%',
+    height: 40,
   },
   titleStyle: {
     fontSize: 15,
@@ -170,5 +174,6 @@ const getStyles = createGetStyles(colors => ({
     backgroundColor: colors['blue-default'],
     borderRadius: 6,
     width: '100%',
+    height: '100%',
   },
 }));
