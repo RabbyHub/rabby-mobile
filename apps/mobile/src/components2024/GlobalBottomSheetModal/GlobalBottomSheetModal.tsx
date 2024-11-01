@@ -194,6 +194,8 @@ export const GlobalBottomSheetModal2024 = () => {
             name={modal.id}
             children={
               <LinearGradient
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{ flex: 1 }}
                 colors={
                   isDarkTheme ? ['#131416', '#131416'] : ['#fff', '#F9F9F9']
                 }>
