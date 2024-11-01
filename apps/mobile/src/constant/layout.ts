@@ -58,6 +58,7 @@ export const RootNames = {
   DevUIFontShowCase: 'DevUIFontShowCase',
   DevUIFormShowCase: 'DevUIFormShowCase',
   DevUIAccountShowCase: 'DevUIAccountShowCase',
+  DevUIScreenContainerShowCase: 'DevUIScreenContainerShowCase',
   /* warning: testkits only ------ start */
 
   StackTransaction: 'StackTransaction',

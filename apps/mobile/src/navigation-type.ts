@@ -57,6 +57,7 @@ type TestKitsNavigatorParamsList = {
   [RootNames.DevUIFontShowCase]?: {};
   [RootNames.DevUIFormShowCase]?: {};
   [RootNames.DevUIAccountShowCase]?: {};
+  [RootNames.DevUIScreenContainerShowCase]?: {};
 };
 
 export type AddressNavigatorParamList = {

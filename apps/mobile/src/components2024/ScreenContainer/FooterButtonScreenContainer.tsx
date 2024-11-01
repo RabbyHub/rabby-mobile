@@ -51,6 +51,7 @@ const getStyle = createGetStyles2024(ctx =>
 );
 
 interface FooterButtonContainer2024Props {
+  noHeader?: boolean;
   children: React.ReactNode;
   buttonProps?: ButtonProps;
   buttonGroupProps?: React.ComponentProps<
@@ -88,9 +89,10 @@ interface FooterButtonContainer2024Props {
  * |Cancel Confirm|
  * |------------- |
  */
-export const FooterButtonContainer: React.FC<
+export const FooterButtonScreenContainer: React.FC<
   FooterButtonContainer2024Props
 > = ({
+  noHeader,
   children,
   buttonProps,
   buttonGroupProps,
@@ -102,19 +104,20 @@ export const FooterButtonContainer: React.FC<
   const { safeOffHeader, androidOnlyBottomOffset } = useSafeSizes();
   const { styles } = useTheme2024({ getStyle });
 
-  const { winHeight, bottomOffset } = useMemo(() => {
+  const { winHeight, bottomOffset, headerOffset } = useMemo(() => {
     return {
       winHeight: Dimensions.get('screen').height,
       bottomOffset: androidOnlyBottomOffset + footerBottomOffset,
+      headerOffset: noHeader ? 0 : safeOffHeader,
     };
-  }, [androidOnlyBottomOffset, footerBottomOffset]);
+  }, [androidOnlyBottomOffset, footerBottomOffset, noHeader, safeOffHeader]);
 
   return (
     <KeyboardAvoidingView
       keyboardVerticalOffset={-20}
       style={StyleSheet.flatten([
         styles.root,
-        { height: winHeight, paddingTop: safeOffHeader },
+        { height: winHeight, paddingTop: headerOffset },
         style,
       ])}
       behavior="padding">
@@ -123,9 +126,7 @@ export const FooterButtonContainer: React.FC<
           styles.main,
           {
             maxHeight:
-              winHeight -
-              safeOffHeader -
-              (footerContainerHeight + bottomOffset),
+              winHeight - headerOffset - (footerContainerHeight + bottomOffset),
           },
         ]}>
         {children}

@@ -1,7 +1,6 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import { apiMnemonic } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -26,7 +25,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
-import { FooterButtonContainer } from '@/components2024/ScreenContainer/FooterButtonContainer';
+import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 
 const getStyles = createGetStyles2024(ctx => ({
   container: {
@@ -228,7 +227,7 @@ export const ImportSeedPhraseScreen = () => {
   });
 
   return (
-    <FooterButtonContainer
+    <FooterButtonScreenContainer
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
@@ -326,6 +325,6 @@ export const ImportSeedPhraseScreen = () => {
           />
         </View>
       </View>
-    </FooterButtonContainer>
+    </FooterButtonScreenContainer>
   );
 };

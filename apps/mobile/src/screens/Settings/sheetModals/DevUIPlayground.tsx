@@ -123,6 +123,17 @@ export default function DevUIPlaygroundModal({
           );
         },
       },
+      {
+        label: 'Screen Container',
+        icon: <RcCode style={styles.labelIcon} />,
+        onPress: () => {
+          navigation.dispatch(
+            StackActions.push(RootNames.StackTestkits, {
+              screen: RootNames.DevUIScreenContainerShowCase,
+            }),
+          );
+        },
+      },
     ];
 
     return list.filter(item => item.visible !== false);
