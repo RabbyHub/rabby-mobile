@@ -4,9 +4,9 @@ import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
 import { Text } from '../Text';
 import ErrorCircleSVG from '@/assets/icons/address/error-circle.svg';
 import { useTheme2024 } from '@/hooks/theme';
-import { FooterButton } from '../FooterButton/FooterButton';
 import { SvgProps } from 'react-native-svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Button } from '@/components2024/Button';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -52,6 +52,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
   },
+  footerButton: {
+    marginBottom: 54,
+    paddingHorizontal: 20,
+  },
 }));
 
 type Props = {
@@ -85,7 +89,12 @@ export const CommonNotFoundDeviceScreen: React.FC<Props> = ({
         </View>
       </View>
       {footerButtonText ? (
-        <FooterButton onPress={onFooterButton} title={footerButtonText} />
+        <Button
+          style={styles.footerButton}
+          type="primary"
+          onPress={onFooterButton}
+          title={footerButtonText}
+        />
       ) : null}
     </View>
   );

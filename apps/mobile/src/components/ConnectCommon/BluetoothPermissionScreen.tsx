@@ -2,11 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
-import { FooterButton } from '../FooterButton/FooterButton';
 import { Text } from '../Text';
 import { useTheme2024 } from '@/hooks/theme';
 import { SvgProps } from 'react-native-svg';
 import { createGetStyles2024 } from '@/utils/styles';
+import { Button } from '@/components2024/Button';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -36,6 +36,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
   },
+  footerButton: {
+    marginBottom: 54,
+    paddingHorizontal: 20,
+  },
 }));
 
 type Props = {
@@ -61,7 +65,12 @@ export const CommonBluetoothPermissionScreen: React.FC<Props> = ({
         <Text style={styles.text}>{descriptionText}</Text>
         <DeviceLogo style={styles.logo} />
       </View>
-      <FooterButton type="primary" onPress={onNext} title={t('global.next')} />
+      <Button
+        style={styles.footerButton}
+        type="primary"
+        onPress={onNext}
+        title={t('global.next')}
+      />
     </View>
   );
 };
