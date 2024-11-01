@@ -1,12 +1,9 @@
-import TouchableView, {
-  SilentTouchableView,
-} from '@/components/Touchable/TouchableView';
+import { SilentTouchableView } from '@/components/Touchable/TouchableView';
 
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import React, { FC, useMemo } from 'react';
+import React, { FC } from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface Props {
   style?: StyleProp<ViewStyle>;
@@ -35,7 +32,7 @@ export const WordsMatrix: FC<Props> = ({
 
   return (
     <View style={[styles.grid, style]}>
-      {checkedWords.map((word, idx, list) => {
+      {checkedWords.map((word, idx) => {
         const number = idx + 1;
         return (
           <Component
@@ -43,24 +40,18 @@ export const WordsMatrix: FC<Props> = ({
               styles.gridItem,
               selectArr.includes(idx) && styles.selectGridItem,
             ])}
+            key={`word-item-${word}-${idx}`}
             viewStyle={StyleSheet.flatten([
               styles.gridItem,
               selectArr.includes(idx) && styles.selectGridItem,
             ])}
             onPress={() => onSelect?.(idx)}>
-            {/* <View
-              key={`word-item-${word}-${idx}`}
-              style={StyleSheet.flatten([
-                styles.gridItemInner,
-                selectArr.includes(number) && styles.selectGridItem,
-              ])}> */}
             {!isSelectIng && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{number}.</Text>
               </View>
             )}
             <Text style={styles.text}>{word}</Text>
-            {/* </View> */}
           </Component>
         );
       })}

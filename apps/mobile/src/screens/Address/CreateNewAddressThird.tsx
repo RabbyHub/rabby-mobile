@@ -1,66 +1,39 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useRef, useState } from 'react';
+import React from 'react';
 
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  Text,
-  input,
-  TextInput,
-  StyleProp,
-  TextStyle,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from 'react-native';
+import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 
 import { default as RcIconHelp } from '@/assets/icons/nextComponent/IconHelp.svg';
+import HelpIcon from '@/assets2024/icons/common/help.svg';
 import { RootNames } from '@/constant/layout';
-import { RootStackParamsList } from '@/navigation-type';
-import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  KEYRING_CATEGORY,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
-import { ICloudIcon } from '@/assets/icons/address/icloud-icon';
-import { GDriveIcon } from '@/assets/icons/address/gdrive-icon';
-import { shuffle, sortBy, range } from 'lodash';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ListItem } from '@/components2024/ListItem/ListItem';
 import { ProgressBar } from '@/components2024/progressBar';
-import { useRequest } from 'ahooks';
-import { apiMnemonic } from '@/core/apis';
-import { generateKeyringWithMnemonic } from '@/core/apis/mnemonic';
-import { requestKeyring } from '@/core/apis/keyring';
-import useAsync from 'react-use/lib/useAsync';
-import { ellipsisAddress } from '@/utils/address';
-import { contactService } from '@/core/services';
-import { navigate } from '@/utils/navigation';
-import { IS_IOS } from '@/core/native/utils';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
-type AddressStackProps = NativeStackScreenProps<
-  RootStackParamsList,
-  'StackAddress'
->;
 function MainListBlocks() {
   const { t } = useTranslation();
-  const [newAddress, setNewAddress] = useState('');
-  const [addressAlias, setAddressAlias] = useState('Seed Phrase 1 #1');
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { styles } = useTheme2024({ getStyle });
   const nav = useNavigation();
+
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.CreateNewAddressThird)?.params,
+  ) as {
+    address: string;
+    alias: string;
+    seedPhrase: string;
+  };
+  console.log('state3', state);
 
   const handleBackupToCloud = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
@@ -69,41 +42,22 @@ function MainListBlocks() {
       //   enableDynamicSizing: true,
       //   maxDynamicContentSize: 460,
       // },
-      onDone: isNoMnemonic => {
-        setTimeout(() => {
-          removeGlobalBottomSheetModal2024(id);
-        }, 0);
-        if (isNoMnemonic) {
-          nav.goBack();
-        }
+      paramState: state,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
       },
     });
-  }, [nav]);
+  }, [state]);
 
   const handleBackupToPaper = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
-      onDone: isNoMnemonic => {
-        setTimeout(() => {
-          removeGlobalBottomSheetModal2024(id);
-        }, 0);
-        if (isNoMnemonic) {
-          nav.goBack();
-        }
+      paramState: state,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
       },
     });
-  }, [nav]);
-
-  const handleContinue = useCallback(() => {
-    contactService.setAlias({
-      address: newAddress,
-      alias: addressAlias,
-    });
-    console.log('exe handleContinue');
-    navigate(RootNames.StackAddress2024, {
-      screen: RootNames.CreateNewAddressSecond,
-    });
-  }, [newAddress, addressAlias]);
+  }, [state]);
 
   return (
     <TouchableWithoutFeedback
@@ -133,7 +87,36 @@ function MainListBlocks() {
           <Text style={[styles.tipText]}>
             {t('page.nextComponent.createNewAddress.whatIsSeedPhrase')}
           </Text>
-          <RcIconHelp />
+          <HelpIcon
+            style={styles.tipIcon}
+            onPress={() => {
+              createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.DESCRIPTION,
+                title: "What is a 'Seed phrase'",
+                sections: [
+                  {
+                    description:
+                      'A seed phrase is a series of words used to access and control your address. You can use it to recover your address on any device.',
+                  },
+                  {
+                    title: 'Backup',
+                    description:
+                      'If you lose your seed phrase, you won’t be able to restore your wallet.',
+                  },
+                  {
+                    title: 'Never Share It',
+                    description:
+                      'Never share your seed phrase—anyone with access to it can control your funds.',
+                  },
+                  {
+                    title: 'Safety',
+                    description:
+                      'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
+                  },
+                ],
+              });
+            }}
+          />
         </View>
       </View>
     </TouchableWithoutFeedback>
@@ -197,6 +180,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 34,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
+  },
+  tipIcon: {
+    width: 16,
+    height: 16,
   },
   tipText: {
     color: colors2024['neutral-info'],

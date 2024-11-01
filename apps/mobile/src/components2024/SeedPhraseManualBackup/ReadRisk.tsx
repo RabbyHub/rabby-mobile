@@ -118,8 +118,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
-    // height: 180,
-    marginTop: 25,
   },
   content: {
     width: '100%',
@@ -171,7 +169,7 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
         <View style={styles.listContainer}>
           {QUESTIONS.map(q => {
             return (
-              <View style={styles.listItem}>
+              <View style={styles.listItem} key={q.index}>
                 <Text style={styles.dotItem}>{'·'}</Text>
                 <Text style={styles.listText}>{q.content}</Text>
               </View>

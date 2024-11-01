@@ -1,11 +1,10 @@
 import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
-import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { FooterButtonScreenContainer } from '../ScreenContainer/FooterButtonScreenContainer';
 import { BackupIcon } from './BackupIcon';
 import { NextInput } from '@/components2024/Form/Input';

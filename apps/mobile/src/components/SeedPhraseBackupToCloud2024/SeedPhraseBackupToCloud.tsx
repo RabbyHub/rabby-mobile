@@ -5,96 +5,86 @@ import {
   getBackupsFromCloud,
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
-import { useRequest } from 'ahooks';
 import React from 'react';
-import { View } from 'react-native';
-import { BackupErrorScreen } from './BackupErrorScreen';
-import { BackupNotAvailableScreen } from './BackupNotAvailableScreen';
-import { BackupSuccessScreen } from './BackupSuccessScreen';
+import { ActivityIndicator, View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
-import { BackupUploadScreen } from './BackupUploadScreen';
-import { toast } from '../Toast';
+import { toast, toastWithIcon } from '../Toast';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
+  paramState: {
+    address: string;
+    alias: string;
+    seedPhrase: string;
+  };
 }
 
-export const SeedPhraseBackupToCloud: React.FC<Props> = ({ onDone }) => {
-  const { data: mnemonic } = useRequest(async () => {
-    const res = await apiMnemonic.getPreMnemonics();
-    return res as string;
-  });
+export const SeedPhraseBackupToCloud: React.FC<Props> = ({
+  onDone,
+  paramState,
+}) => {
+  const { seedPhrase } = paramState;
   const { t } = useTranslation();
-  const [step, setStep] = React.useState<
-    | 'backup_unlock'
-    | 'backup_uploading'
-    | 'backup_success'
-    | 'backup_error'
-    | 'backup_not_available'
-  >('backup_unlock');
-  const [inputPassword, setInputPassword] = React.useState('');
-
   const handleUpload = React.useCallback(
     async password => {
-      setInputPassword(password);
-
       if (!password) {
-        setStep('backup_unlock');
+        toast.show('must have password');
         return;
       }
 
-      if (!mnemonic) {
-        console.log('no mnemonic');
-        onDone(true);
-        return;
-      }
+      const toastHide = toastWithIcon(() => (
+        <ActivityIndicator style={{ marginRight: 6 }} />
+      ))('Backing up', {
+        duration: 1e6,
+        position: toast.positions.CENTER,
+        hideOnPress: false,
+      });
 
-      // setStep('backup_uploading');
-      toast.show('Backup Successful');
-      // upload seedPhrase to cloud
       try {
         const filename = await saveMnemonicToCloud({
-          mnemonic,
+          mnemonic: seedPhrase,
           password,
         });
         // check if the mnemonic is uploaded successfully
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
-
-        setStep('backup_success');
-        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(mnemonic);
+        toast.show('Backup Successful');
+        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(seedPhrase);
         onDone();
       } catch (e) {
         console.log('backup error', e);
-        setStep('backup_error');
         toast.show(t('page.newAddress.seedPhrase.backupFailedTitle'));
+      } finally {
+        toastHide();
       }
     },
-    [mnemonic, onDone, t],
+    [onDone, t, seedPhrase],
   );
 
   React.useEffect(() => {
     detectCloudIsAvailable().then(isAvailable => {
       if (!isAvailable) {
-        setStep('backup_not_available');
+        // setStep('backup_not_available');
+        toast.show(
+          t('page.newAddress.seedPhrase.backupErrorCloudNotAvailable'),
+        );
+        onDone();
       }
     });
-  }, []);
+  }, [onDone, t]);
 
   return (
     <View>
-      {step === 'backup_unlock' && (
-        <BackupUnlockScreen onConfirm={handleUpload} />
-      )}
-      {step === 'backup_uploading' && <BackupUploadScreen />}
+      <BackupUnlockScreen onConfirm={handleUpload} />
+      {/* {step === 'backup_uploading' && <BackupUploadScreen />}
       {step === 'backup_success' && <BackupSuccessScreen />}
       {step === 'backup_error' && (
         <BackupErrorScreen onConfirm={() => handleUpload(inputPassword)} />
       )}
       {step === 'backup_not_available' && (
         <BackupNotAvailableScreen onConfirm={onDone} />
-      )}
+      )} */}
     </View>
   );
 };

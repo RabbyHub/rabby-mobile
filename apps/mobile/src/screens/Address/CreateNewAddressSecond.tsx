@@ -1,53 +1,26 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
-  ScrollView,
-  StyleSheet,
   View,
   Text,
-  input,
   TextInput,
-  StyleProp,
-  TextStyle,
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
 import * as Yup from 'yup';
 import { RootNames } from '@/constant/layout';
-import { RootStackParamsList } from '@/navigation-type';
-import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  KEYRING_CATEGORY,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
-import { shuffle, sortBy, range } from 'lodash';
-import {
-  useFocusEffect,
-  useNavigation,
-  useNavigationState,
-} from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Card } from '@/components2024/Card';
+import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { NextInput } from '@/components2024/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
-import { useRequest } from 'ahooks';
-import { apiMnemonic, apisKeychain, apisLock } from '@/core/apis';
-import { generateKeyringWithMnemonic } from '@/core/apis/mnemonic';
-import { requestKeyring } from '@/core/apis/keyring';
-import useAsync from 'react-use/lib/useAsync';
-import { ellipsisAddress } from '@/utils/address';
-import { contactService } from '@/core/services';
+import { apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
-import { useLoadLockInfo } from '@/hooks/useLock';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components/Toast';
 import { navigate } from '@/utils/navigation';
@@ -58,10 +31,6 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import { AppSwitch } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
-import {
-  KEYCHAIN_AUTH_TYPES,
-  RequestGenericPurpose,
-} from '@/core/apis/keychain';
 import { clearCustomPassword } from '@/core/apis/lock';
 
 const INIT_FORM_DATA = __DEV__
@@ -73,22 +42,13 @@ const INIT_FORM_DATA = __DEV__
     }
   : { password: '', confirmPassword: '', checked: true, switch: false };
 
-const LAYOUTS = {
-  footerButtonHeight: 52,
-  fixedFooterPaddingHorizontal: 20,
-  fixedFooterPaddingVertical: 20,
-  get fixedFooterHeight() {
-    return (
-      this.footerButtonHeight +
-      this.fixedFooterPaddingVertical * 2 +
-      (IS_IOS ? 12 : 0)
-    );
-  },
-};
-
 const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
-function useSetupPasswordForm(toggleBiometrics) {
+function useSetupPasswordForm(
+  toggleBiometrics,
+  navigateParams,
+  isBiometricsEnabled,
+) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     const passSchema = Yup.string()
@@ -111,10 +71,10 @@ function useSetupPasswordForm(toggleBiometrics) {
                 t('page.createPassword.confirmError'),
               ),
         }),
-      switch: Yup.boolean().default(INIT_FORM_DATA.switch),
+      switch: Yup.boolean().default(isBiometricsEnabled),
       checked: Yup.boolean().default(INIT_FORM_DATA.checked).oneOf([true]),
     });
-  }, [t]);
+  }, [t, isBiometricsEnabled]);
 
   // const navigation = useRabbyAppNavigation();
   // const navParams = useNavigationState(
@@ -158,6 +118,7 @@ function useSetupPasswordForm(toggleBiometrics) {
 
           navigate(RootNames.StackAddress2024, {
             screen: RootNames.CreateNewAddressThird,
+            params: navigateParams,
           });
 
           toast.success('Setup Password Successfully');
@@ -177,10 +138,18 @@ function useSetupPasswordForm(toggleBiometrics) {
 
 function MainListBlocks() {
   const { t } = useTranslation();
-  const [newAddress, setNewAddress] = useState('');
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const inputRef = useRef<TextInput>(null);
-  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
+  const { viewTermsOfUse } = useShowUserAgreementLikeModal();
+
+  const state = useNavigationState(
+    s =>
+      s.routes.find(r => r.name === RootNames.CreateNewAddressSecond)?.params,
+  ) as {
+    address: string;
+    alias: string;
+    seedPhrase: string;
+  };
+  console.log('state2', state);
 
   const {
     computed: {
@@ -189,13 +158,14 @@ function MainListBlocks() {
       isFaceID,
       defaultTypeLabel,
     },
-    biometrics: { authEnabled },
     fetchBiometrics,
     toggleBiometrics,
   } = useBiometrics({ autoFetch: true });
-  const { formik, shouldDisabled } = useSetupPasswordForm(toggleBiometrics);
-
-  const [useFaceId, setUseFaceId] = useState(authEnabled);
+  const { formik, shouldDisabled } = useSetupPasswordForm(
+    toggleBiometrics,
+    state,
+    isBiometricsEnabled,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -289,7 +259,10 @@ function MainListBlocks() {
                 <AppSwitch
                   value={formik.values.switch}
                   onValueChange={value => {
-                    if (!isBiometricsEnabled) {
+                    if (!couldSetupBiometrics) {
+                      toast.show(
+                        `your phone can not support ${defaultTypeLabel}`,
+                      );
                       return;
                     }
                     formik.setFieldValue('switch', value, true);

@@ -1,14 +1,10 @@
-import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
-import { AppColorsVariants } from '@/constant/theme';
-import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import React, { useCallback } from 'react';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useMemoizedFn } from 'ahooks';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { BlurView, BlurViewProps } from '@react-native-community/blur';
-import TouchableView from '@/components/Touchable/TouchableView';
+import { BlurView } from '@react-native-community/blur';
 import { createGetStyles2024 } from '@/utils/styles';
-import { CheckBoxCircled } from '@/components/Icons/Checkbox';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
@@ -135,8 +131,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
-    // height: 180,
-    marginTop: 25,
   },
   content: {
     width: '100%',
@@ -184,38 +178,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
 
 interface Props {
   onConfirm: () => void;
+  paramState: {
+    address: string;
+    alias: string;
+    seedPhrase: string;
+  };
 }
 
-export const WriteSeedPhrase: React.FC<Props> = ({ onConfirm }) => {
-  const { styles, colors2024 } = useTheme2024({ getStyle });
+export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
+  const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
   const [isHidden, setIsHidden] = React.useState(true);
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
-  const { data } = useRequest(async () => {
-    const seedPhrase = await apiMnemonic.getPreMnemonics();
-    const words = seedPhrase.split(' ') || [];
-    const shuffledWords = _.shuffle(words);
-    const shuffledNumbers = _.sortBy(
-      _.shuffle(_.range(1, words.length + 1)).slice(0, 3),
-    );
+  const { seedPhrase } = paramState;
 
-    return {
-      seedPhrase,
-      shuffledWords,
-      shuffledNumbers,
-      words,
-    };
-  });
-
-  const { shuffledWords, shuffledNumbers, words, seedPhrase } = data || {
-    shuffledWords: [],
-    shuffledNumbers: [],
-    words: [],
-  };
-
-  console.log('words', words);
+  const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
+  const shuffledWords = useMemo(() => _.shuffle(words), [words]);
+  const shuffledNumbers = useMemo(
+    () => _.sortBy(_.shuffle(_.range(1, words.length + 1)).slice(0, 3)),
+    [words],
+  );
   const handleSelect = useCallback(
     (index: number) => {
       if (isHidden) {
@@ -239,7 +223,7 @@ export const WriteSeedPhrase: React.FC<Props> = ({ onConfirm }) => {
       return false;
     }
     return selectArr.every((n, index) => {
-      const number = data?.shuffledNumbers?.[index];
+      const number = shuffledNumbers?.[index];
       const word = shuffledWords?.[n];
       if (number == null || !word) {
         return false;

@@ -2,11 +2,9 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React, { useCallback, useRef, useState } from 'react';
 
 import {
-  ScrollView,
   StyleSheet,
   View,
   Text,
-  input,
   TextInput,
   StyleProp,
   TextStyle,
@@ -15,27 +13,13 @@ import {
 } from 'react-native';
 
 import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
-import { default as RcPrivateKey } from '@/assets/icons/nextComponent/IconPrivateKey.svg';
-import { default as RcHardwareWallet } from '@/assets/icons/nextComponent/IconHardwareWallet.svg';
 import { RootNames } from '@/constant/layout';
-import { RootStackParamsList } from '@/navigation-type';
-import { matomoRequestEvent } from '@/utils/analytics';
-import {
-  KEYRING_CATEGORY,
-  KEYRING_CLASS,
-  KEYRING_TYPE,
-} from '@rabby-wallet/keyring-utils';
-import { shuffle, sortBy, range } from 'lodash';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Card } from '@/components2024/Card';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
-import { FormInput } from '@/components/Form/Input';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
-import { useRequest } from 'ahooks';
 import { apiMnemonic } from '@/core/apis';
 import { generateKeyringWithMnemonic } from '@/core/apis/mnemonic';
 import { requestKeyring } from '@/core/apis/keyring';
@@ -44,29 +28,16 @@ import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
 
-type AddressStackProps = NativeStackScreenProps<
-  RootStackParamsList,
-  'StackAddress'
->;
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
   const [addressAlias, setAddressAlias] = useState('Seed Phrase 1 #1');
-  const { styles, colors2024 } = useTheme2024({ getStyle });
-  const inputRef = useRef<TextInput>(null);
+  const { styles } = useTheme2024({ getStyle });
 
   const { value, loading, error } = useAsync(async () => {
     const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
     const words = seedPhrase.split(' ');
-    // const shuffledWords = shuffle(words);
-    // const shuffledNumbers = sortBy(
-    //   shuffle(range(1, words.length + 1)).slice(0, 3),
-    // );
-    console.log('seedPhrase', seedPhrase);
-    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
-      seedPhrase,
-      '',
-    );
+    const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
 
     const firstAddress = await requestKeyring(
       KEYRING_TYPE.HdKeyring,
@@ -76,7 +47,6 @@ function MainListBlocks() {
       1,
     );
 
-    console.log('firstAddress', firstAddress);
     const address = firstAddress[0].address;
     setNewAddress(address);
     return {
@@ -105,8 +75,13 @@ function MainListBlocks() {
     console.log('exe handleContinue');
     navigate(RootNames.StackAddress2024, {
       screen: RootNames.CreateNewAddressSecond,
+      params: {
+        address: newAddress,
+        alias: addressAlias,
+        seedPhrase: value?.seedPhrase,
+      },
     });
-  }, [newAddress, addressAlias]);
+  }, [newAddress, addressAlias, value?.seedPhrase]);
 
   return (
     <TouchableWithoutFeedback
@@ -119,10 +94,8 @@ function MainListBlocks() {
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
         <RcSeedPhrase style={styles.icon} />
-        {/* <View style={styles.inputContainer}> */}
         <TextInput
           style={styles.inputInner}
-          // onSubmitEditing={handleInputSubmit}
           value={addressAlias}
           // placeholder={'Seed Phrase 1 #1'}
           onChange={nativeEvent => {
