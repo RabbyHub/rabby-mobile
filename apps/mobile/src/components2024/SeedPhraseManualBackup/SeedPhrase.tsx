@@ -10,9 +10,13 @@ import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
 import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
-import { apiMnemonic } from '@/core/apis';
+import { navigate } from '@/utils/navigation';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { toast } from '@/components/Toast';
+import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { keyringService } from '@/core/services';
+import { RootNames } from '@/constant/layout';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
@@ -182,6 +186,7 @@ interface Props {
     address: string;
     alias: string;
     seedPhrase: string;
+    firstAddress: any;
   };
 }
 
@@ -193,7 +198,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
-  const { seedPhrase } = paramState;
+  const { seedPhrase, alias, address, firstAddress } = paramState;
 
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
   const shuffledWords = useMemo(() => _.shuffle(words), [words]);
@@ -238,11 +243,28 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
       const mnemonics = seedPhrase;
       const passphrase = '';
       try {
-        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(
+        onConfirm?.();
+        await activeAndPersistAccountsByMnemonics(
           mnemonics,
           passphrase,
+          firstAddress as any,
+          true,
         );
-        onConfirm?.();
+        keyringService.removePreMnemonics();
+        return navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportSuccess,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            brandName: KEYRING_CLASS.MNEMONIC,
+            isFirstImport: true,
+            isFirstCreate: true,
+            address: [address],
+            mnemonics,
+            passphrase,
+            isExistedKR: false,
+            alias,
+          },
+        });
       } catch (e) {
         console.log('addMnemonicKeyringAndGotoSuccessScreen error', e);
       }

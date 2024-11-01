@@ -48,10 +48,12 @@ export const ImportSuccessScreen = () => {
     brandName: string;
     deepLink: string;
     isFirstImport: boolean;
+    isFirstCreate: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
     mnemonics?: string;
     passphrase?: string;
+    alias?: string;
     keyringId?: number;
   };
   const [importAddresses, setImportAddresses] = React.useState<
@@ -97,7 +99,10 @@ export const ImportSuccessScreen = () => {
     setImportAddresses(
       addresses.map(address => ({
         address,
-        aliasName: contactService.getAliasByAddress(address)?.alias || '',
+        aliasName:
+          state.isFirstCreate && state.alias
+            ? state.alias
+            : contactService.getAliasByAddress(address)?.alias || '',
       })),
     );
 
@@ -162,6 +167,7 @@ export const ImportSuccessScreen = () => {
               style={styles.icon}
             />
             <TextInput
+              editable={!state.isFirstCreate}
               style={styles.inputInner}
               value={importAddresses?.[0]?.aliasName || ''}
               onChange={nativeEvent => {
@@ -255,7 +261,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 54,
     padding: 0,
     fontSize: 36,
-    border: 0,
+    borderWidth: 0,
     backgroundColor: 'transparent',
     lineHeight: 42,
     fontWeight: '700',
@@ -290,7 +296,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlignVertical: 'center',
     padding: 0,
     fontSize: 18.8,
-    border: 0,
+    borderWidth: 0,
     backgroundColor: 'transparent',
     lineHeight: 25,
     fontWeight: '700',

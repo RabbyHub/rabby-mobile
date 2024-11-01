@@ -73,11 +73,13 @@ export type AddressNavigatorParamList = {
     deepLink?: string;
     realBrandName?: string;
     isFirstImport?: boolean;
+    isFirstCreate?: boolean;
     type: KEYRING_TYPE;
     supportChainList?: Chain[];
     mnemonics?: string;
     passphrase?: string;
     keyringId?: number;
+    alias?: string;
     isExistedKR?: boolean;
   };
   [RootNames.ImportWatchAddress]?: {};

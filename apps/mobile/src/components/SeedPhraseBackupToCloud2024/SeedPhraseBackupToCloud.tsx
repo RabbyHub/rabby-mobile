@@ -10,6 +10,11 @@ import { ActivityIndicator, View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
 import { toast, toastWithIcon } from '../Toast';
 import { useTranslation } from 'react-i18next';
+import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
+import { keyringService } from '@/core/services';
+import { navigate } from '@/utils/navigation';
+import { RootNames } from '@/constant/layout';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
@@ -17,6 +22,7 @@ interface Props {
     address: string;
     alias: string;
     seedPhrase: string;
+    firstAddress: any;
   };
 }
 
@@ -24,7 +30,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
   onDone,
   paramState,
 }) => {
-  const { seedPhrase } = paramState;
+  const { seedPhrase, alias, address, firstAddress } = paramState;
   const { t } = useTranslation();
   const handleUpload = React.useCallback(
     async password => {
@@ -42,14 +48,36 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
         toast.show('Backup Successful');
-        await apiMnemonic.addMnemonicKeyringAndGotoSuccessScreen(seedPhrase);
         onDone();
+        const mnemonics = seedPhrase;
+        const passphrase = '';
+        await activeAndPersistAccountsByMnemonics(
+          mnemonics,
+          passphrase,
+          firstAddress as any,
+          true,
+        );
+        keyringService.removePreMnemonics();
+        navigate(RootNames.StackAddress, {
+          screen: RootNames.ImportSuccess,
+          params: {
+            type: KEYRING_TYPE.HdKeyring,
+            brandName: KEYRING_CLASS.MNEMONIC,
+            isFirstImport: true,
+            isFirstCreate: true,
+            address: [address],
+            mnemonics,
+            passphrase,
+            isExistedKR: false,
+            alias,
+          },
+        });
       } catch (e) {
         console.log('backup error', e);
         toast.show(t('page.newAddress.seedPhrase.backupFailedTitle'));
       }
     },
-    [onDone, t, seedPhrase],
+    [onDone, t, seedPhrase, address, alias, firstAddress],
   );
 
   React.useEffect(() => {

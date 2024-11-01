@@ -27,6 +27,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
+import { Skeleton } from '@rneui/themed';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -37,7 +38,10 @@ function MainListBlocks() {
   const { value, loading, error } = useAsync(async () => {
     const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
     const words = seedPhrase.split(' ');
-    const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
+    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+      seedPhrase,
+      '',
+    );
 
     const firstAddress = await requestKeyring(
       KEYRING_TYPE.HdKeyring,
@@ -46,7 +50,6 @@ function MainListBlocks() {
       0,
       1,
     );
-
     const address = firstAddress[0].address;
     setNewAddress(address);
     return {
@@ -79,9 +82,10 @@ function MainListBlocks() {
         address: newAddress,
         alias: addressAlias,
         seedPhrase: value?.seedPhrase,
+        firstAddress: value?.firstAddress,
       },
     });
-  }, [newAddress, addressAlias, value?.seedPhrase]);
+  }, [newAddress, addressAlias, value]);
 
   return (
     <TouchableWithoutFeedback
@@ -94,19 +98,27 @@ function MainListBlocks() {
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
         <RcSeedPhrase style={styles.icon} />
-        <TextInput
-          style={styles.inputInner}
-          value={addressAlias}
-          // placeholder={'Seed Phrase 1 #1'}
-          onChange={nativeEvent => {
-            setAddressAlias(nativeEvent.nativeEvent.text);
-          }}
-          blurOnSubmit
-          autoFocus
-          clearButtonMode="while-editing"
-        />
-        {/* </View> */}
-        <WalletAddress />
+        {loading ? (
+          <>
+            <Skeleton style={[styles.item1, styles.inputInner]} />
+            <Skeleton style={[styles.item2]} />
+          </>
+        ) : (
+          <>
+            <TextInput
+              style={styles.inputInner}
+              value={addressAlias}
+              // placeholder={'Seed Phrase 1 #1'}
+              onChange={nativeEvent => {
+                setAddressAlias(nativeEvent.nativeEvent.text);
+              }}
+              blurOnSubmit
+              autoFocus
+              clearButtonMode="while-editing"
+            />
+            <WalletAddress />
+          </>
+        )}
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -127,6 +139,16 @@ function CreateNewAddress(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  item1: {
+    width: '100%',
+    height: 54,
+    borderRadius: 8,
+  },
+  item2: {
+    width: 102,
+    height: 20,
+    borderRadius: 2,
+  },
   icon: {
     marginTop: -12,
     marginBottom: -68,
@@ -173,7 +195,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 54,
     padding: 0,
     fontSize: 36,
-    border: 0,
+    borderWidth: 0,
     backgroundColor: 'transparent',
     lineHeight: 42,
     fontWeight: '700',

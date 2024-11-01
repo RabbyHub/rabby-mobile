@@ -54,7 +54,7 @@ function useSetupPasswordForm(
     const passSchema = Yup.string()
       .default(INIT_FORM_DATA.password)
       .required(t('page.createPassword.passwordRequired'))
-      .min(8, t('page.nextComponent.createPassword.passwordMin'));
+      .min(8, t('page.nextComponent.createNewAddress.passwordMin'));
     return Yup.object({
       password: passSchema,
       confirmPassword: Yup.string()
@@ -106,9 +106,8 @@ function useSetupPasswordForm(
       });
 
       try {
-        await clearCustomPassword(values.password); // only for test
+        // await clearCustomPassword(values.password); // only for test
         const result = await apisLock.setupWalletPassword(values.password);
-        console.log('values.password', values.password);
         if (result.error) {
           toast.show(result.error);
         } else {
@@ -148,6 +147,7 @@ function MainListBlocks() {
     address: string;
     alias: string;
     seedPhrase: string;
+    firstAddress: any;
   };
   console.log('state2', state);
 

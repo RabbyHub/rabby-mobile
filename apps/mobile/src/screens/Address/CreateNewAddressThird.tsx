@@ -3,12 +3,11 @@ import React from 'react';
 
 import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 
-import { default as RcIconHelp } from '@/assets/icons/nextComponent/IconHelp.svg';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import { RootNames } from '@/constant/layout';
 import { default as RcIconBackupCloud } from '@/assets/icons/nextComponent/IconBackupCloud.svg';
 import { default as RcIconBackupManual } from '@/assets/icons/nextComponent/IconBackupManual.svg';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigationState } from '@react-navigation/native';
 import { Card } from '@/components2024/Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
@@ -24,7 +23,6 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  const nav = useNavigation();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.CreateNewAddressThird)?.params,
@@ -32,6 +30,7 @@ function MainListBlocks() {
     address: string;
     alias: string;
     seedPhrase: string;
+    firstAddress: any;
   };
   console.log('state3', state);
 
@@ -218,7 +217,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 54,
     padding: 0,
     fontSize: 36,
-    border: 0,
+    borderWidth: 0,
     backgroundColor: 'transparent',
     lineHeight: 42,
     fontWeight: '700',
