@@ -103,7 +103,7 @@ function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
       });
 
       try {
-        await clearCustomPassword(values.password); // only for test
+        // await clearCustomPassword(values.password); // only for test
         const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
