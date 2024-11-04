@@ -33,13 +33,11 @@ import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
-import { useTranslation } from 'react-i18next';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen = () => {
   const { styles } = useTheme2024({ getStyle });
-  const { t } = useTranslation();
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
@@ -211,7 +209,6 @@ export const ImportSuccessScreen = () => {
                         setImportAddresses(newImportAddresses);
                       }}
                       blurOnSubmit
-                      autoFocus
                       clearButtonMode="while-editing"
                     />
                     <WalletAddress address={item.address} />
@@ -221,9 +218,7 @@ export const ImportSuccessScreen = () => {
             </ScrollView>
           )}
           <Text style={styles.resultTip}>
-            {state.isFirstCreate
-              ? t('page.nextComponent.createNewAddress.createdSuccessfully')
-              : importAddresses.length > 1
+            {importAddresses.length > 1
               ? `${importAddresses.length} Addresses`
               : ''}
             &nbsp;{state.isFirstCreate ? 'Created' : 'Imported'} successfully!
@@ -246,6 +241,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     display: 'flex',
     paddingHorizontal: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
     marginBottom: 20,
   },
   addressList: {
@@ -264,7 +260,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
   },
   icon: {
-    borderRadius: 16,
+    borderRadius: 24,
   },
   addressText: {
     fontSize: 16,
@@ -295,7 +291,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontSize: 20,
     lineHeight: 24,
     textAlign: 'center',
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
   },
   btnContainer: {
     width: '100%',

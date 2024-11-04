@@ -38,7 +38,7 @@ const PasteButton: React.FC<IProps> = ({ onPaste, style }) => {
 const getStyle = createGetStyles2024(ctx => ({
   button: {
     borderWidth: 1,
-    borderColor: ctx.colors2024['blue-default'],
+    borderColor: ctx.colors2024['brand-default'],
     borderRadius: 8,
     width: 85,
     height: 34,
@@ -49,7 +49,7 @@ const getStyle = createGetStyles2024(ctx => ({
     flexDirection: 'row',
   },
   pasteButtonText: {
-    color: ctx.colors2024['blue-default'],
+    color: ctx.colors2024['brand-default'],
     fontWeight: '700',
     fontSize: 14,
     lineHeight: 18,
