@@ -340,10 +340,10 @@ type OnTimeChangedCtx = Parameters<
   Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
 >[0];
 const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
-  if (await canLockWallet()) {
+  if (IS_ANDROID && (await canLockWallet())) {
     checkMultipleFailed({ forceRecountdownIfInFreezing: true });
     Alert.alert(
-      'Auto Lock',
+      'Time changed',
       `Time settings changed, you can lock wallet first if the change is not made by you.`,
       [
         {
