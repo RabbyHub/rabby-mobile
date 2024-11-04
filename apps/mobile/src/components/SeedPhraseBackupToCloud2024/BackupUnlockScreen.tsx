@@ -14,18 +14,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   title: {
     color: colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: '700',
+    lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
     marginTop: 28,
   },
   root: {
     alignItems: 'center',
   },
   description: {
-    color: colors2024['neutral-foot'],
-    fontSize: 14,
-    lineHeight: 18,
+    color: colors2024['neutral-secondary'],
+    fontSize: 17,
+    // lineHeight: 22,
     textAlign: 'center',
     marginTop: 16,
+    fontWeight: '400',
   },
   input: {
     borderWidth: 1,
@@ -46,11 +49,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   inputWrapper: {
     width: '100%',
     marginTop: 24,
-    marginBottom: 40,
+    marginBottom: 25,
   },
   btnContainer: {
     // marginTop: 44,
     width: '100%',
+  },
+  inputStyle: {
+    borderWidth: 0,
   },
 }));
 
@@ -95,6 +101,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
           <NextInput.Password
             // initialPasswordVisible
             as={'BottomSheetTextInput'}
+            containerStyle={styles.inputStyle}
             fieldName="New password"
             inputProps={{
               value: password,

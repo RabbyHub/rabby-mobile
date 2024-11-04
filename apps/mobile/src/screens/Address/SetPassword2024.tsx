@@ -33,6 +33,7 @@ import { useBiometrics } from '@/hooks/biometrics';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
+import { clearCustomPassword } from '@/core/apis/lock';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -103,7 +104,7 @@ function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
       });
 
       try {
-        // await clearCustomPassword(values.password); // only for test
+        await clearCustomPassword(values.password); // only for test
         const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
@@ -324,8 +325,12 @@ function MainListBlocks() {
 }
 
 function SetPassword2024(): JSX.Element {
+  const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      style={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <MainListBlocks />
     </NormalScreenContainer>
   );

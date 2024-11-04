@@ -1,7 +1,13 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React from 'react';
 
-import { View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableWithoutFeedback,
+  Keyboard,
+  StyleSheet,
+} from 'react-native';
 
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import { RootNames } from '@/constant/layout';
@@ -19,6 +25,7 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import LinearGradient from 'react-native-linear-gradient';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -85,7 +92,7 @@ function MainListBlocks() {
           <HelpIcon
             style={styles.tipIcon}
             onPress={() => {
-              createGlobalBottomSheetModal2024({
+              const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
                 title: "What is a 'Seed phrase'",
                 sections: [
@@ -109,6 +116,15 @@ function MainListBlocks() {
                       'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
                   },
                 ],
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
+                },
               });
             }}
           />
@@ -119,10 +135,20 @@ function MainListBlocks() {
 }
 
 function CreateChooseBackup(): JSX.Element {
+  const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
-      <MainListBlocks />
-    </NormalScreenContainer>
+    <LinearGradient
+      colors={['#FFF', '#F9F9F9']} // 渐变颜色
+      start={{ x: 0, y: 0 }} // 渐变起始位置
+      end={{ x: 0, y: 1 }} // 渐变结束位置
+      // style={{
+      //   height: '100%',
+      // }}
+    >
+      <NormalScreenContainer>
+        <MainListBlocks />
+      </NormalScreenContainer>
+    </LinearGradient>
   );
 }
 
@@ -131,6 +157,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: -12,
     marginBottom: -68,
     borderRadius: 16,
+  },
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: colors2024['neutral-InvertHighlight'],
   },
   quickTag: {
     position: 'absolute',
@@ -152,7 +186,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   listItem: {
     position: 'relative',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 12,
     borderRadius: 30,
     display: 'flex',
     alignItems: 'flex-start',
@@ -173,6 +207,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '400',
     fontSize: 17,
     marginTop: 34,
+    marginBottom: 12,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
   },

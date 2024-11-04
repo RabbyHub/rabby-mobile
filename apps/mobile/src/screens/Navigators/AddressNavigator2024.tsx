@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -14,6 +14,7 @@ const AddressStack = createCustomNativeStackNavigator();
 export function AddressNavigator2024() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
+  const { colors2024, color } = useTheme2024();
   // console.log('============== SettingNavigator Render =========');
 
   return (
@@ -24,9 +25,9 @@ export function AddressNavigator2024() {
         headerStyle: {
           backgroundColor: 'transparent',
         },
-        headerTintColor: colors['neutral-title-1'],
+        headerTintColor: colors2024['neutral-title-1'],
         headerTitleStyle: {
-          color: colors['neutral-title-1'],
+          color: colors2024['neutral-title-1'],
           fontWeight: '500',
           fontSize: DEFAULT_NAVBAR_FONT_SIZE,
         },
@@ -39,9 +40,12 @@ export function AddressNavigator2024() {
         options={mergeScreenOptions({
           headerTitle: '1. Name Your Address',
           title: '1. Name Your Address',
-          headerTintColor: colors['neutral-title-1'],
+          headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: {
-            color: colors['neutral-title-1'],
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontSize: 20,
+            fontFamily: 'SF Pro Rounded',
           },
         })}
       />
@@ -51,9 +55,12 @@ export function AddressNavigator2024() {
         options={mergeScreenOptions({
           headerTitle: '2. Set password',
           title: '2. Set password',
-          headerTintColor: colors['neutral-title-1'],
+          headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: {
-            color: colors['neutral-title-1'],
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontSize: 20,
+            fontFamily: 'SF Pro Rounded',
           },
         })}
       />
@@ -63,9 +70,12 @@ export function AddressNavigator2024() {
         options={mergeScreenOptions({
           headerTitle: '3. Choose a backup method',
           title: '3. Choose a backup method',
-          headerTintColor: colors['neutral-title-1'],
+          headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: {
-            color: colors['neutral-title-1'],
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontSize: 20,
+            fontFamily: 'SF Pro Rounded',
           },
         })}
       />

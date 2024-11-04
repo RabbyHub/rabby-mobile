@@ -11,7 +11,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-
+import { NextInput } from '@/components2024/Form/Input';
 import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -32,8 +32,8 @@ import { Skeleton } from '@rneui/themed';
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
-  const [addressAlias, setAddressAlias] = useState('Seed Phrase 1 #1');
-  const { styles } = useTheme2024({ getStyle });
+  const [addressAlias, setAddressAlias] = useState('');
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { value, loading, error } = useAsync(async () => {
     const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
@@ -52,6 +52,7 @@ function MainListBlocks() {
     );
     const address = firstAddress[0].address;
     setNewAddress(address);
+    setAddressAlias(ellipsisAddress(address));
     return {
       seedPhrase,
       words,
@@ -81,7 +82,7 @@ function MainListBlocks() {
         screen: RootNames.CreateChooseBackup,
         params: {
           address: newAddress,
-          alias: addressAlias,
+          alias: addressAlias || ellipsisAddress(newAddress),
           seedPhrase: value?.seedPhrase,
           firstAddress: value?.firstAddress,
         },
@@ -108,23 +109,28 @@ function MainListBlocks() {
         <RcSeedPhrase style={styles.icon} />
         {loading ? (
           <>
-            <Skeleton style={[styles.item1, styles.inputInner]} />
+            <Skeleton style={[styles.item1]} />
             <Skeleton style={[styles.item2]} />
           </>
         ) : (
           <>
-            <TextInput
-              style={styles.inputInner}
-              value={addressAlias}
-              // placeholder={'Seed Phrase 1 #1'}
-              onChange={nativeEvent => {
-                setAddressAlias(nativeEvent.nativeEvent.text);
+            <NextInput
+              containerStyle={styles.inputContainer}
+              clearable={true}
+              inputStyle={styles.inputInner}
+              inputProps={{
+                value: addressAlias,
+                inputMode: 'text',
+                returnKeyType: 'done',
+                textAlign: 'center',
+                placeholder: ellipsisAddress(newAddress),
+                placeholderTextColor: colors2024['neutral-info'],
+                onChangeText(text) {
+                  setAddressAlias(text);
+                },
               }}
-              blurOnSubmit
-              autoFocus
-              clearButtonMode="while-editing"
             />
-            <WalletAddress />
+            <WalletAddress style={styles.walletAddress} />
           </>
         )}
         <Button
@@ -139,8 +145,13 @@ function MainListBlocks() {
 }
 
 function CreateNewAddress(): JSX.Element {
+  const { colors2024 } = useTheme2024({ getStyle });
+
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      style={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <MainListBlocks />
     </NormalScreenContainer>
   );
@@ -149,8 +160,9 @@ function CreateNewAddress(): JSX.Element {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   item1: {
     width: '100%',
-    height: 54,
+    height: 44,
     borderRadius: 8,
+    marginTop: 12,
   },
   item2: {
     width: 102,
@@ -184,12 +196,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 20,
     marginBottom: 20,
   },
-  inputContainer: {
-    marginVertical: 8,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   addressText: {
     fontSize: 16,
     lineHeight: 20,
@@ -197,18 +203,28 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-secondary'],
     fontFamily: 'SF Pro Rounded',
   },
-  inputInner: {
+  inputContainer: {
     width: '100%',
-    textAlignVertical: 'center',
-    height: 54,
+    height: 72,
     padding: 0,
-    fontSize: 36,
+    margin: 0,
     borderWidth: 0,
     backgroundColor: 'transparent',
+    // display: 'flex',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // lineHeight: 42,
+  },
+  walletAddress: {
+    marginTop: -18,
+  },
+  inputInner: {
+    // width: '100%',
+    fontSize: 36,
     lineHeight: 42,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
+    // fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
   },
 }));
