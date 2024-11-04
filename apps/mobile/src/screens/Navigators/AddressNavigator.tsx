@@ -30,6 +30,7 @@ import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
+import { redirectToAddAddressEntry } from '@/utils/navigation';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -77,9 +78,7 @@ export function AddressNavigator() {
               }}
               hitSlop={hitSlop}
               onPress={() => {
-                navigation.push(RootNames.StackAddress, {
-                  screen: RootNames.ImportNewAddress,
-                });
+                redirectToAddAddressEntry({ action: 'push' });
               }}>
               <RcIconHeaderAddAccount width={20} height={20} />
             </CustomTouchableOpacity>

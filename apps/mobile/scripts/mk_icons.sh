@@ -35,9 +35,9 @@ mk_ios_icons() {
     1024 1024 "1x" logo-1024w.png $ios_icons_dir/AppIcon.appiconset
 
     ## LaunchScreen.imageset
-    91 79 "1x" splash-logo-512w.png $ios_icons_dir/LaunchScreen.imageset
-    182 158 "2x" splash-logo-512w.png $ios_icons_dir/LaunchScreen.imageset
-    273 237 "3x" splash-logo-512w.png $ios_icons_dir/LaunchScreen.imageset
+    91 79 "1x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
+    182 158 "2x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
+    273 237 "3x" splash-logo-blue-512w.png $ios_icons_dir/LaunchScreen.imageset
 
     ## For Deployment
     512 512 "512w" logo-1024w.png $script_dir/deployments/ios/
@@ -57,18 +57,18 @@ mk_ios_icons() {
 }
 
 android_splash_icons=(
-  mipmap-mdpi splash_logo.png
-  mipmap-hdpi splash_logo@2x.png
-  mipmap-xhdpi splash_logo@3x.png
-  mipmap-xxhdpi splash_logo@3x.png
-  mipmap-xxxhdpi splash_logo@3x.png
+  mipmap-mdpi splash_logo_blue.png
+  mipmap-hdpi splash_logo_blue@2x.png
+  mipmap-xhdpi splash_logo_blue@3x.png
+  mipmap-xxhdpi splash_logo_blue@3x.png
+  mipmap-xxxhdpi splash_logo_blue@3x.png
 )
 
 mk_android_icons() {
   # launch screen
   $project_dir/node_modules/.bin/s2v \
     -t "#FFF" \
-    -i $script_dir/bundles/splash-logo.svg \
+    -i $script_dir/bundles/splash-logo-blue.svg \
     -o $project_dir/android/app/src/main/res/drawable/ic_launch_screen.xml
 
   # replace #FF000000 with #FFFFFF

@@ -1,3 +1,4 @@
+import { RootNames } from '@/constant/layout';
 import { RootStackParamsList } from '@/navigation-type';
 import {
   StackActions,
@@ -67,3 +68,40 @@ export const redirectBackErrorHandler = (
     });
   }
 };
+
+export function redirectToAddAddressEntry(options?: {
+  action?: 'push' | 'replace' | 'resetTo';
+}) {
+  // navigate(RootNames.StackAddress, {
+  //   screen: RootNames.ImportNewAddress,
+  // });
+
+  const action = options?.action || 'push';
+
+  switch (action) {
+    case 'replace':
+      replace(RootNames.StackGetStarted, {
+        screen: RootNames.GetStartedScreen2024,
+      });
+      break;
+    case 'resetTo':
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [
+          {
+            name: 'Root',
+            state: {
+              index: 0,
+              routes: [{ name: RootNames.GetStartedScreen2024 }],
+            },
+          },
+        ],
+      });
+      break;
+    default:
+      navigate(RootNames.StackGetStarted, {
+        screen: RootNames.GetStartedScreen2024,
+      });
+      break;
+  }
+}

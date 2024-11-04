@@ -30,6 +30,7 @@ import { useOpenDappView } from '../Dapps/hooks/useDappView';
 import { RootStackParamsList } from '@/navigation-type';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { toast } from '@/components/Toast';
+import { redirectToAddAddressEntry } from '@/utils/navigation';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -75,10 +76,8 @@ export default function CurrentAddressScreen(): JSX.Element {
     toast.show('Coming Soon :)');
   }, []);
   const gotoAddAddress = React.useCallback(() => {
-    navigation.push(RootNames.StackAddress, {
-      screen: RootNames.ImportNewAddress,
-    });
-  }, [navigation]);
+    redirectToAddAddressEntry({ action: 'push' });
+  }, []);
 
   const sectionData = useMemo(() => {
     const restAccounts = [...accounts];
@@ -129,17 +128,7 @@ export default function CurrentAddressScreen(): JSX.Element {
 
   useEffect(() => {
     if (!accounts?.length) {
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: RootNames.StackAddress,
-            params: {
-              screen: RootNames.ImportNewAddress,
-            },
-          },
-        ],
-      });
+      redirectToAddAddressEntry({ action: 'resetTo' });
     }
   }, [accounts, navigation]);
 

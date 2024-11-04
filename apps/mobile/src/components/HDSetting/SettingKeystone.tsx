@@ -17,8 +17,7 @@ import { useThemeColors } from '@/hooks/theme';
 import RcIconArrowRight from '@/assets/icons/approval/edit-arrow-right.svg';
 import { TouchableOpacity } from '@gorhom/bottom-sheet';
 import { Button } from '@/components';
-import { navigate } from '@/utils/navigation';
-import { RootNames } from '@/constant/layout';
+import { redirectToAddAddressEntry } from '@/utils/navigation';
 
 const getStyles = (colors: AppColorsVariants) =>
   StyleSheet.create({
@@ -188,9 +187,7 @@ export const SettingKeystone: React.FC<{
     await apiKeystone.removeAddressAndForgetDevice();
     setVisible(false);
     onDone();
-    navigate(RootNames.StackAddress, {
-      screen: RootNames.ImportNewAddress,
-    });
+    redirectToAddAddressEntry();
   }, [onDone]);
 
   return (

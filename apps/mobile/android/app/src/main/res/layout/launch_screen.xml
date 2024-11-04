@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary_dark"
+    android:background="@color/launchscreen_bg"
     android:orientation="vertical">
 
     <!-- https://developer.android.com/reference/android/view/ViewGroup.MarginLayoutParams#attr_android%3alayout_marginBottom -->
