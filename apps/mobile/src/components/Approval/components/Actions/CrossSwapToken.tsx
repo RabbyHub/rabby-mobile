@@ -251,13 +251,21 @@ const CrossSwapToken = ({
               {!engineResultMap['1096'] && (
                 <>
                   <SubCol>
-                    <SubRow isTitle>{t('page.signTx.address')}</SubRow>
+                    <SubRow isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.signTx.address')}
+                      </Text>
+                    </SubRow>
                     <SubRow>
                       <Values.AccountAlias address={receiver} />
                     </SubRow>
                   </SubCol>
                   <SubCol>
-                    <SubRow isTitle>{t('page.addressDetail.source')}</SubRow>
+                    <SubRow isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.addressDetail.source')}
+                      </Text>
+                    </SubRow>
                     <SubRow>
                       <Values.KnownAddress address={receiver} />
                     </SubRow>
@@ -282,6 +290,7 @@ const CrossSwapToken = ({
                 rank: requireData.rank,
                 address: requireData.id,
                 chain,
+                hasInteraction: requireData.hasInteraction,
               }}>
               <View ref={crossSwapTokenAddressRef}>
                 <Values.Address address={requireData.id} chain={chain} />
@@ -301,6 +310,16 @@ const CrossSwapToken = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.interacted')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Boolean value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
           {isInWhitelist && (

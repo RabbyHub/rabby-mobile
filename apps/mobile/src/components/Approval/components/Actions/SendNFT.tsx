@@ -154,7 +154,9 @@ const SendNFT = ({
           )}
           {!!requireData.name && (
             <SubCol nested={!isLabelAddress}>
-              <SubRow>{isLabelAddress ? t('page.signTx.label') : ' '}</SubRow>
+              <SubRow>
+                <Text>{isLabelAddress ? t('page.signTx.label') : ' '}</Text>
+              </SubRow>
               <SubRow>
                 {isLabelAddress ? (
                   <LogoWithText

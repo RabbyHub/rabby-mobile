@@ -196,7 +196,16 @@ const MultiSwap = ({
               <ProtocolListItem protocol={requireData.protocol} />
             </SubRow>
           </SubCol>
-
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.interacted')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Boolean value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
           {isInWhitelist && (
             <SubCol>
               <SubRow isTitle>

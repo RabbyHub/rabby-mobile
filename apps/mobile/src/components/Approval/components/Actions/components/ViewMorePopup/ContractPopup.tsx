@@ -22,6 +22,7 @@ interface ContractData {
   bornAt: number | null;
   rank: number | null;
   title?: string;
+  hasInteraction: boolean;
 }
 
 export interface Props {
@@ -79,6 +80,16 @@ export const ContractPopup: React.FC<Props> = ({ data }) => {
               value={data.protocol}
               textStyle={commonStyle.detailPrimaryText}
             />
+          </Row>
+        </Col>
+        <Col>
+          <Row style={styles.firstRow}>
+            <Text style={commonStyle.detailRowTitleText}>
+              {t('page.signTx.interacted')}
+            </Text>
+          </Row>
+          <Row>
+            <Values.Boolean value={data.hasInteraction} />
           </Row>
         </Col>
         <Col>
