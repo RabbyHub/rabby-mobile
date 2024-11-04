@@ -3,7 +3,6 @@ import {
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
-import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud2024/BackupIcon';
 import {
@@ -17,9 +16,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { BackupItem, BackupItemSkeleton } from './BackupItem';
 import { Button } from '@/components2024/Button';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+
 import { IS_IOS } from '@/core/native/utils';
 
 const { isSameAddress } = addressUtils;
@@ -140,15 +141,7 @@ export const RestoreFromCloud2024: React.FC<{
   const len = selectedFilenames.length;
 
   return (
-    <FooterButtonScreenContainer
-      onPressButton={handleRestore}
-      btnProps={{
-        disabled: !len || loading,
-      }}
-      style={styles.screenContainer}
-      buttonText={`${t('page.newAddress.seedPhrase.backupRestoreButton')} ${
-        len ? `(${len})` : ''
-      }`}>
+    <BottomSheetView style={styles.screenContainer}>
       <View style={styles.body}>
         <View>
           <BackupIcon status="success" />
@@ -156,7 +149,10 @@ export const RestoreFromCloud2024: React.FC<{
             {`Restore Fromm ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
           </Text>
         </View>
-        <View style={styles.backupList}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          style={styles.backupList}>
           {loading ? (
             <>
               <BackupItemSkeleton />
@@ -179,9 +175,17 @@ export const RestoreFromCloud2024: React.FC<{
               );
             })
           )}
-        </View>
+        </ScrollView>
       </View>
-    </FooterButtonScreenContainer>
+      <Button
+        title={`${t('page.newAddress.seedPhrase.backupRestoreButton')} ${
+          len ? `(${len})` : ''
+        }`}
+        onPress={handleRestore}
+        disabled={!len || loading}
+        style={styles.importConfirm}
+      />
+    </BottomSheetView>
   );
 };
 
@@ -231,18 +235,30 @@ const getStyle = createGetStyles2024(colors => ({
   },
   screenContainer: {
     paddingTop: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
+    height: '100%',
+    flex: 1,
+    justifyContent: 'space-between',
   },
   body: {
     marginTop: 20,
+    display: 'flex',
+    flex: 1,
   },
   backupItem: {
     marginBottom: 16,
   },
   backupList: {
     marginTop: 32,
+    marginBottom: 20,
+    flex: 1,
   },
   loadingList: {
     marginTop: 32,
     paddingHorizontal: 25,
+  },
+  importConfirm: {
+    marginBottom: 35,
   },
 }));
