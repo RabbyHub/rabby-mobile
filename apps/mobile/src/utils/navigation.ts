@@ -70,15 +70,42 @@ export const redirectBackErrorHandler = (
 };
 
 export function redirectToAddAddressEntry(options?: {
-  action?: 'push' | 'replace' | 'resetTo';
+  action?: `${'' | 'classical:'}${'push' | 'replace' | 'resetTo'}`;
 }) {
   // navigate(RootNames.StackAddress, {
   //   screen: RootNames.ImportNewAddress,
   // });
 
-  const action = options?.action || 'push';
+  const action = options?.action || 'classical:push';
 
   switch (action) {
+    case 'classical:push': {
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.ImportNewAddress,
+      });
+      break;
+    }
+    case 'classical:replace': {
+      replace(RootNames.StackAddress, {
+        screen: RootNames.ImportNewAddress,
+      });
+      break;
+    }
+    case 'classical:resetTo': {
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [
+          {
+            name: 'Root',
+            state: {
+              index: 0,
+              routes: [{ name: RootNames.ImportNewAddress }],
+            },
+          },
+        ],
+      });
+      break;
+    }
     case 'replace':
       replace(RootNames.StackGetStarted, {
         screen: RootNames.GetStartedScreen2024,
@@ -98,6 +125,7 @@ export function redirectToAddAddressEntry(options?: {
         ],
       });
       break;
+    case 'push':
     default:
       navigate(RootNames.StackGetStarted, {
         screen: RootNames.GetStartedScreen2024,

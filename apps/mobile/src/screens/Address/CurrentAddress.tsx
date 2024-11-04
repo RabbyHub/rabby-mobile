@@ -76,7 +76,7 @@ export default function CurrentAddressScreen(): JSX.Element {
     toast.show('Coming Soon :)');
   }, []);
   const gotoAddAddress = React.useCallback(() => {
-    redirectToAddAddressEntry({ action: 'push' });
+    redirectToAddAddressEntry({ action: 'classical:push' });
   }, []);
 
   const sectionData = useMemo(() => {
@@ -128,7 +128,7 @@ export default function CurrentAddressScreen(): JSX.Element {
 
   useEffect(() => {
     if (!accounts?.length) {
-      redirectToAddAddressEntry({ action: 'resetTo' });
+      redirectToAddAddressEntry({ action: 'classical:resetTo' });
     }
   }, [accounts, navigation]);
 

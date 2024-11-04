@@ -78,7 +78,7 @@ export function AddressNavigator() {
               }}
               hitSlop={hitSlop}
               onPress={() => {
-                redirectToAddAddressEntry({ action: 'push' });
+                redirectToAddAddressEntry({ action: 'classical:push' });
               }}>
               <RcIconHeaderAddAccount width={20} height={20} />
             </CustomTouchableOpacity>
