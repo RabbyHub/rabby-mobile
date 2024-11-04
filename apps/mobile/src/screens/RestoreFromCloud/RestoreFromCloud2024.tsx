@@ -146,7 +146,7 @@ export const RestoreFromCloud2024: React.FC<{
         <View>
           <BackupIcon status="success" />
           <Text style={styles.restoreTitle}>
-            {`Restore Fromm ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
+            {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
           </Text>
         </View>
         <ScrollView

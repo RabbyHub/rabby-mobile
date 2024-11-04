@@ -28,6 +28,11 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 
 const getStyles = createGetStyles2024(ctx => ({
+  screen: {
+    // TODO: get card1 color
+    // backgroundColor: ctx.colors2024['card1'],
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+  },
   container: {
     display: 'flex',
     alignItems: 'center',
@@ -58,11 +63,11 @@ const getStyles = createGetStyles2024(ctx => ({
   },
   textContainer: {
     marginTop: 20,
+    backgroundColor: ctx.colors2024['neutral-bg-2'],
   },
   textArea: {
     marginTop: 14,
     paddingHorizontal: 20,
-    backgroundColor: ctx.colors['neutral-card-1'],
   },
   pasteButton: {
     marginTop: 58,
@@ -233,6 +238,7 @@ export const ImportSeedPhraseScreen = () => {
         onPress: handleConfirm,
         loading: importing,
       }}
+      style={styles.screen}
       footerBottomOffset={16}
       footerContainerStyle={{
         paddingHorizontal: 20,
