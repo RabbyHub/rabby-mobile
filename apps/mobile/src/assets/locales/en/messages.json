@@ -1365,6 +1365,7 @@
         "BackupSeedPhrase": "Manually Backup Seed Phrase",
         "savedPhrase": "I've Saved the Phrase",
         "Verify": "Verify",
+        "createdSuccessfully": "Created successfully!",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
       }
     },

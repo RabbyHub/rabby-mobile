@@ -275,6 +275,7 @@ const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
 } = {
   [RootNames.CreateMnemonic]: getProtectedConf(),
+  [RootNames.CreateNewAddressThird]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),

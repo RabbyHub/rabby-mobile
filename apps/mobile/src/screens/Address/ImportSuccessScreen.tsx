@@ -33,11 +33,13 @@ import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
+import { useTranslation } from 'react-i18next';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen = () => {
   const { styles } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
@@ -219,7 +221,9 @@ export const ImportSuccessScreen = () => {
             </ScrollView>
           )}
           <Text style={styles.resultTip}>
-            {importAddresses.length > 1
+            {state.isFirstCreate
+              ? t('page.nextComponent.createNewAddress.createdSuccessfully')
+              : importAddresses.length > 1
               ? `${importAddresses.length} Addresses`
               : ''}
             &nbsp;{state.isFirstCreate ? 'Created' : 'Imported'} successfully!
