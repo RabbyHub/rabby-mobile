@@ -6,17 +6,22 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { useTheme2024 } from '@/hooks/theme';
-
-import { createGetStyles2024 } from '@/utils/styles';
-import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
-import React from 'react';
 import { noop } from 'lodash';
+import React from 'react';
 import { isAddress } from 'web3-utils';
+import dayjs from 'dayjs';
+import { Skeleton } from '@rneui/themed';
+
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+
+import { RcIconCheckedFilledCC, RcIconUncheckCC } from '@/assets/icons/common';
 import { BackupData } from '@/core/utils/cloudBackup';
 import { AddressItem } from '@/components2024/AddressItem/AddressItem';
 import { Card } from '@/components2024/Card';
-import { Skeleton } from '@rneui/themed';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { getAccountBalance } from '@/components/HDSetting/util';
+import { ellipsisAddress } from '@/utils/address';
 
 const getStyle = createGetStyles2024(colors => ({
   root: {
@@ -35,6 +40,18 @@ const getStyle = createGetStyles2024(colors => ({
   body: {
     padding: 16,
     alignItems: 'flex-start',
+  },
+  header: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    alignItems: 'center',
+  },
+  time: {
+    color: colors.colors2024['neutral-secondary'],
+    fontSize: 14,
+    lineHeight: 18,
   },
   bodyTitle: {
     color: colors['neutral-title-1'],
@@ -78,6 +95,9 @@ const getStyle = createGetStyles2024(colors => ({
   imported: {
     flexDirection: 'row',
   },
+  addressItemWrapper: {
+    flex: 1,
+  },
 }));
 
 interface BackupItemProps {
@@ -97,6 +117,18 @@ export const BackupItem: React.FC<BackupItemProps> = ({
   style,
 }) => {
   const { styles } = useTheme2024({ getStyle });
+  const [balance, setBalance] = React.useState<number>();
+  const createdAtStr = React.useMemo(
+    () => dayjs(Number(item.createdAt)).format('YYYY/MM/DD HH:mm'),
+    [item.createdAt],
+  );
+
+  React.useEffect(() => {
+    if (!isAddress(item.address)) {
+      return;
+    }
+    getAccountBalance(item.address, true).then(setBalance);
+  }, [item.address]);
 
   if (!isAddress(item.address)) {
     return null;
@@ -112,7 +144,10 @@ export const BackupItem: React.FC<BackupItemProps> = ({
         style,
       ])}>
       <Card style={styles.body}>
-        <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
+        <View style={styles.header}>
+          <Text style={styles.bodyTitle}>Seed Phrase {index + 1}</Text>
+          <Text style={styles.time}>{createdAtStr}</Text>
+        </View>
         <View style={styles.checkBox}>
           {imported ? (
             <View style={styles.imported}>
@@ -123,7 +158,17 @@ export const BackupItem: React.FC<BackupItemProps> = ({
           ) : (
             <RcIconUncheckCC width={24} height={24} />
           )}
-          <AddressItem address={item.address} />
+          <View style={styles.addressItemWrapper}>
+            <AddressItem
+              account={{
+                brandName: KEYRING_CLASS.MNEMONIC,
+                aliasName: ellipsisAddress(item.address),
+                address: item.address,
+                balance,
+                type: KEYRING_CLASS.MNEMONIC,
+              }}
+            />
+          </View>
         </View>
       </Card>
     </TouchableOpacity>

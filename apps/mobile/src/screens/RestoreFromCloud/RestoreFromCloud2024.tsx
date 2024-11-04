@@ -112,32 +112,6 @@ export const RestoreFromCloud2024: React.FC<{
     }
   }, [backups, importedFiles]);
 
-  if (loading) {
-    return (
-      <NormalScreenContainer
-        noHeader
-        overwriteStyle={styles.loadingContainer}
-        style={StyleSheet.flatten([loading && styles.rootLoading])}>
-        <View style={styles.loading}>
-          <BackupIcon status="loading" />
-          <Text style={styles.restoreTitle}>
-            {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
-          </Text>
-        </View>
-        <View style={styles.loadingList}>
-          <BackupItemSkeleton />
-          <BackupItemSkeleton />
-        </View>
-        <Button
-          containerStyle={styles.btnContainer}
-          type="primary"
-          title="Back"
-          onPress={onDone}
-        />
-      </NormalScreenContainer>
-    );
-  }
-
   if (!backups?.length) {
     return (
       <NormalScreenContainer
@@ -169,7 +143,7 @@ export const RestoreFromCloud2024: React.FC<{
     <FooterButtonScreenContainer
       onPressButton={handleRestore}
       btnProps={{
-        disabled: !len,
+        disabled: !len || loading,
       }}
       style={styles.screenContainer}
       buttonText={`${t('page.newAddress.seedPhrase.backupRestoreButton')} ${
@@ -183,21 +157,28 @@ export const RestoreFromCloud2024: React.FC<{
           </Text>
         </View>
         <View style={styles.backupList}>
-          {backups.map((item, index) => {
-            const imported = importedFiles.includes(item.filename);
-            const selected = selectedFilenames.includes(item.filename);
-            return (
-              <BackupItem
-                key={index}
-                item={item}
-                selected={selected}
-                imported={imported}
-                onPress={() => handleSelect(item.filename)}
-                index={index}
-                style={styles.backupItem}
-              />
-            );
-          })}
+          {loading ? (
+            <>
+              <BackupItemSkeleton />
+              <BackupItemSkeleton />
+            </>
+          ) : (
+            backups.map((item, index) => {
+              const imported = importedFiles.includes(item.filename);
+              const selected = selectedFilenames.includes(item.filename);
+              return (
+                <BackupItem
+                  key={index}
+                  item={item}
+                  selected={selected}
+                  imported={imported}
+                  onPress={() => handleSelect(item.filename)}
+                  index={index}
+                  style={styles.backupItem}
+                />
+              );
+            })
+          )}
         </View>
       </View>
     </FooterButtonScreenContainer>
