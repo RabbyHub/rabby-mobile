@@ -28306,7 +28306,7 @@ __metadata:
     react-native-vision-camera: ^3.6.17
     react-native-wagmi-charts: ^2.3.2
     react-native-walkthrough-tooltip: ^1.5.0
-    react-native-webview: ^13.10.5
+    react-native-webview: 13.10.5
     react-test-renderer: 18.2.0
     react-use: 17.4.2
     reactotron-react-native: ^5.0.4
@@ -29295,7 +29295,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-webview@npm:^13.10.5":
+"react-native-webview@npm:13.10.5":
   version: 13.10.5
   resolution: "react-native-webview@npm:13.10.5"
   dependencies:
