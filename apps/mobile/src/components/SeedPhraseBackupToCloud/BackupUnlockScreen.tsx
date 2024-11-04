@@ -1,15 +1,15 @@
 import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { createGetStyles } from '@/utils/styles';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { FooterButtonScreenContainer } from '../ScreenContainer/FooterButtonScreenContainer';
-import { BackupIcon } from './BackupIcon';
+import { Text, View } from 'react-native';
+import { BackupIcon } from '@/components/SeedPhraseBackupToCloud2024/BackupIcon';
+import { NextInput } from '@/components2024/Form/Input';
+import { createGetStyles2024 } from '@/utils/styles';
+import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 
-const getStyles = createGetStyles(colors => ({
+const getStyle = createGetStyles2024(colors => ({
   title: {
     color: colors['neutral-title-1'],
     fontSize: 20,
@@ -27,20 +27,15 @@ const getStyles = createGetStyles(colors => ({
     marginTop: 16,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors['neutral-line'],
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    width: '100%',
-    color: colors['neutral-title-1'],
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginTop: 28,
+    marginTop: 23,
   },
   container: {
     backgroundColor: colors['neutral-bg-1'],
     paddingTop: 24,
     height: 460,
+    paddingHorizontal: 20,
+    display: 'flex',
+    justifyContent: 'space-between',
   },
   errorText: {
     color: colors['red-default'],
@@ -51,6 +46,11 @@ const getStyles = createGetStyles(colors => ({
   },
   inputWrapper: {
     width: '100%',
+  },
+  btns: {
+    padding: 0,
+    marginTop: 20,
+    paddingBottom: 50,
   },
 }));
 
@@ -74,8 +74,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   onClearError,
 }) => {
   const [password, setPassword] = React.useState<string>(APP_TEST_PWD);
-  const colors = useThemeColors();
-  const { styles } = useThemeStyles(getStyles);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const [error, setError] = React.useState<string>();
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
@@ -105,18 +104,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({
   }, [isError, t]);
 
   return (
-    <FooterButtonScreenContainer
-      onCancel={onCancel}
-      style={styles.container}
-      btnProps={{
-        disabled: !password,
-        footerStyle: {
-          paddingBottom: 50,
-        },
-        loading,
-      }}
-      buttonText={t('page.newAddress.seedPhrase.backupUnlockButton')}
-      onPressButton={handleConfirm}>
+    <View style={styles.container}>
       <View style={styles.root}>
         <BackupIcon status="unlock" isGray />
         <Text style={styles.title}>
@@ -126,30 +114,37 @@ export const BackupUnlockScreen: React.FC<Props> = ({
           {description || t('page.newAddress.seedPhrase.backupUnlockDesc')}
         </Text>
         <View style={styles.inputWrapper}>
-          <BottomSheetTextInput
-            secureTextEntry
-            value={password}
-            onChangeText={v => {
-              setPassword(v);
-              setError('');
-              onClearError?.();
-            }}
-            placeholderTextColor={colors['neutral-foot']}
-            style={StyleSheet.flatten([
-              styles.input,
-              {
-                borderColor: error
-                  ? colors['red-default']
-                  : colors['neutral-line'],
+          <NextInput.Password
+            // initialPasswordVisible
+            as={'BottomSheetTextInput'}
+            fieldName="Enter the Password to Confirm"
+            inputProps={{
+              value: password,
+              secureTextEntry: true,
+              inputMode: 'text',
+              placeholder: t(
+                'page.newAddress.seedPhrase.backupUnlockPlaceholder',
+              ),
+              placeholderTextColor: colors2024['neutral-foot'],
+              onChangeText: v => {
+                setPassword(v);
+                setError('');
+                onClearError?.();
               },
-            ])}
-            placeholder={t(
-              'page.newAddress.seedPhrase.backupUnlockPlaceholder',
-            )}
+            }}
+            style={styles.input}
+            hasError={Boolean(error)}
+            tipText={error}
           />
-          <Text style={styles.errorText}>{error}</Text>
         </View>
       </View>
-    </FooterButtonScreenContainer>
+      <FooterButtonGroup
+        style={styles.btns}
+        onCancel={onCancel}
+        disable={!password}
+        loading={loading}
+        onConfirm={handleConfirm}
+      />
+    </View>
   );
 };

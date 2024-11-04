@@ -1,17 +1,27 @@
 import { useTheme2024 } from '@/hooks/theme';
-import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Button } from '@/components2024/Button';
 
 export const FooterButtonGroup: React.FC<{
-  onCancel: () => void;
-  onConfirm: () => void;
+  onCancel?: () => void;
+  onConfirm?: () => void;
   cancelText?: string;
   confirmText?: string;
+  disable?: boolean;
+  loading?: boolean;
   style?: StyleProp<ViewStyle>;
-}> = ({ onCancel, onConfirm, cancelText, confirmText, style }) => {
+}> = ({
+  onCancel,
+  onConfirm,
+  cancelText,
+  confirmText,
+  style,
+  disable,
+  loading,
+}) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { t } = useTranslation();
 
@@ -24,6 +34,8 @@ export const FooterButtonGroup: React.FC<{
         containerStyle={styles.btnContainer}
         title={cancelText}
         onPress={onCancel}
+        disabled={disable}
+        loading={loading}
         type={'ghost'}
       />
       <View style={styles.btnGap} />
@@ -32,6 +44,8 @@ export const FooterButtonGroup: React.FC<{
         containerStyle={styles.btnContainer}
         title={confirmText}
         onPress={onConfirm}
+        disabled={disable}
+        loading={loading}
         type={'primary'}
       />
     </View>

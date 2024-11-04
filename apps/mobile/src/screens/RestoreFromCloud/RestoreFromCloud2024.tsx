@@ -178,9 +178,7 @@ export const RestoreFromCloud2024: React.FC<{
         </ScrollView>
       </View>
       <Button
-        title={`${t('page.newAddress.seedPhrase.backupRestoreButton')} ${
-          len ? `(${len})` : ''
-        }`}
+        title={t('global.confirm')}
         onPress={handleRestore}
         disabled={!len || loading}
         style={styles.importConfirm}
