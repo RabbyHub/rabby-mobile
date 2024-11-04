@@ -9,7 +9,13 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { createGetStyles2024 } from '@/utils/styles';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  Keyboard,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import PasteButton from '@/components2024/PasteButton';
@@ -80,87 +86,91 @@ export const ImportPrivateKeyScreen = () => {
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
-      <View style={styles.container}>
-        <View style={styles.topContent}>
-          <PrivateKeyIcon style={styles.icon} />
-          <View>
-            <NextInput.TextArea
-              style={styles.textContainer}
-              inputStyle={styles.textArea}
-              tipText={error}
-              hasError={!!error}
-              fieldErrorTextStyle={styles.error}
-              inputProps={{
-                placeholder: 'Enter your Private Key',
-                value: privateKey,
-                onChangeText: setPrivateKey,
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <View style={styles.topContent}>
+            <PrivateKeyIcon style={styles.icon} />
+            <View>
+              <NextInput.TextArea
+                style={styles.textContainer}
+                inputStyle={styles.textArea}
+                tipText={error}
+                hasError={!!error}
+                fieldErrorTextStyle={styles.error}
+                inputProps={{
+                  placeholder: 'Enter your Private Key',
+                  value: privateKey,
+                  onChangeText: setPrivateKey,
+                }}
+                // eslint-disable-next-line react/no-unstable-nested-components
+                customIcon={ctx => (
+                  <TouchableView
+                    style={ctx.wrapperStyle}
+                    onPress={() => {
+                      navigate(RootNames.Scanner);
+                    }}>
+                    <RcIconScannerCC
+                      style={ctx.iconStyle}
+                      color={colors2024['neutral-title-1']}
+                    />
+                  </TouchableView>
+                )}
+              />
+            </View>
+
+            <PasteButton
+              style={styles.pasteButton}
+              onPaste={text => {
+                setPrivateKey(text);
               }}
-              // eslint-disable-next-line react/no-unstable-nested-components
-              customIcon={ctx => (
-                <TouchableView
-                  style={ctx.wrapperStyle}
-                  onPress={() => {
-                    navigate(RootNames.Scanner);
-                  }}>
-                  <RcIconScannerCC
-                    style={ctx.iconStyle}
-                    color={colors2024['neutral-title-1']}
-                  />
-                </TouchableView>
-              )}
             />
           </View>
-
-          <PasteButton
-            style={styles.pasteButton}
-            onPaste={text => {
-              setPrivateKey(text);
-            }}
-          />
+          <View style={styles.tipWrapper}>
+            <Text style={styles.tip}>What is 'Private Key'</Text>
+            <HelpIcon
+              style={styles.tipIcon}
+              onPress={() => {
+                const modalId = createGlobalBottomSheetModal2024({
+                  name: MODAL_NAMES.DESCRIPTION,
+                  title: "What's a private key",
+                  sections: [
+                    {
+                      description:
+                        'A private key is a string of letters and numbers used to access and control your address. You can use it to recover your address on any device.',
+                    },
+                    {
+                      title: 'Backup',
+                      description:
+                        'If you lose your private key, you won’t be able to restore your wallet.',
+                    },
+                    {
+                      title: 'Never Share It',
+                      description:
+                        'Never share your private key—anyone with access to it can control your funds.',
+                    },
+                    {
+                      title: 'Safety',
+                      description:
+                        'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
+                    },
+                  ],
+                  nextButtonProps: {
+                    title: (
+                      <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                    ),
+                    titleStyle: StyleSheet.flatten([
+                      styles.modalNextButtonText,
+                    ]),
+                    onPress: () => {
+                      removeGlobalBottomSheetModal2024(modalId);
+                    },
+                  },
+                });
+              }}
+            />
+          </View>
         </View>
-        <View style={styles.tipWrapper}>
-          <Text style={styles.tip}>What is 'Private Key'</Text>
-          <HelpIcon
-            style={styles.tipIcon}
-            onPress={() => {
-              const modalId = createGlobalBottomSheetModal2024({
-                name: MODAL_NAMES.DESCRIPTION,
-                title: "What's a private key",
-                sections: [
-                  {
-                    description:
-                      'A private key is a string of letters and numbers used to access and control your address. You can use it to recover your address on any device.',
-                  },
-                  {
-                    title: 'Backup',
-                    description:
-                      'If you lose your private key, you won’t be able to restore your wallet.',
-                  },
-                  {
-                    title: 'Never Share It',
-                    description:
-                      'Never share your private key—anyone with access to it can control your funds.',
-                  },
-                  {
-                    title: 'Safety',
-                    description:
-                      'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
-                  },
-                ],
-                nextButtonProps: {
-                  title: (
-                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                  ),
-                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-                  onPress: () => {
-                    removeGlobalBottomSheetModal2024(modalId);
-                  },
-                },
-              });
-            }}
-          />
-        </View>
-      </View>
+      </TouchableWithoutFeedback>
     </FooterButtonScreenContainer>
   );
 };
