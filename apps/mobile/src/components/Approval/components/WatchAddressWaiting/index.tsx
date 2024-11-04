@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import Process from './Process';
 import { useApproval } from '@/hooks/useApproval';
 import { useCommonPopupView } from '@/hooks/useCommonPopupView';
-import { useSessionStatus } from '@/hooks/useSessionStatus';
 import { eventBus, EVENTS } from '@/utils/events';
 import { WALLETCONNECT_STATUS_MAP } from '@rabby-wallet/eth-walletconnect-keyring/type';
 import { toast } from '@/components/Toast';
@@ -54,7 +53,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
     approvalId: string;
   }>();
   const [isClickDone, setIsClickDone] = useState(false);
-  const { status: sessionStatus } = useSessionStatus(currentAccount!);
   const { t } = useTranslation();
   const { openWalletByBrandName } = useValidWalletServices();
 
@@ -240,15 +238,6 @@ export const WatchAddressWaiting = ({ params }: { params: ApprovalParams }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signFinishedData, isClickDone]);
-
-  useEffect(() => {
-    if (sessionStatus === 'DISCONNECTED') {
-      setVisible(false);
-      toast.info(t('page.signFooterBar.ledger.notConnected'));
-    } else {
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionStatus]);
 
   useEffect(() => {
     if (currentAccount) {

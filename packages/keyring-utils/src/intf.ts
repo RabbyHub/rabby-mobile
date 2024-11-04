@@ -73,6 +73,9 @@ export declare class KeyringIntf {
 
   unlock?(...args: any[]): Promise<any | void>;
 
+  /**
+   * @deprecated
+   */
   getAccountsWithBrand?(
     ...args: any[]
   ): Promise<AccountItemWithBrandQueryResult[]>;

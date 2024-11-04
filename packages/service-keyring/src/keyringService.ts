@@ -32,9 +32,19 @@ import { normalizeAddress } from './utils/address';
 import type { EncryptorAdapter } from './utils/encryptor';
 import { nodeEncryptor } from './utils/encryptor';
 
+/**
+ * need password to decrypt the field in keyring
+ */
+// partial KeyringTypeName
+const PROTECTED_KEYRING_FIELD: Partial<Record<KeyringTypeName, string[]>> = {
+  [KEYRING_TYPE.SimpleKeyring]: ['privateKeys'],
+  [KEYRING_TYPE.HdKeyring]: ['mnemonic'],
+};
+
 type KeyringState = {
   booted?: string;
   vault?: string;
+  unencryptedKeyringData?: KeyringSerializedData[];
 };
 
 type MemStoreState = {
@@ -84,9 +94,12 @@ export class KeyringService extends RNEventEmitter {
   #password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
+
   private readonly contactService?: ContactBookService;
-  private onSetAddressAlias?: OnSetAddressAlias;
-  private onCreateKeyring?: OnCreateKeyring;
+
+  private readonly onSetAddressAlias?: OnSetAddressAlias;
+
+  private readonly onCreateKeyring?: OnCreateKeyring;
 
   constructor(
     options?: KeyringServiceOptions & {
@@ -120,9 +133,22 @@ export class KeyringService extends RNEventEmitter {
   }
 
   loadStore(initState: Partial<KeyringState>) {
+    const keyringData = initState.unencryptedKeyringData || [];
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
+      unencryptedKeyringData: keyringData,
+    });
+
+    console.log('keyringData', JSON.stringify(keyringData));
+
+    // eslint-disable-next-line no-void
+    void Promise.all(
+      keyringData.map(data => {
+        return this.restoreKeyring(data);
+      }),
+    ).then((result: KeyringInstance[]) => {
+      this.keyrings = result;
     });
   }
 
@@ -154,8 +180,14 @@ export class KeyringService extends RNEventEmitter {
     return Boolean(this.store.getState().booted);
   }
 
+  // For test: 或许替换掉 isUnlocked，换成 isDecrypted
   isUnlocked() {
+    return Boolean(this.keyrings);
     return this.memStore.getState().isUnlocked;
+  }
+
+  hasSubmitPassword() {
+    return Boolean(this.#password);
   }
 
   hasVault() {
@@ -403,7 +435,7 @@ export class KeyringService extends RNEventEmitter {
    * @param options.onAddedAddress
    */
   addNewAccount(
-    selectedKeyring: KeyringInstance | KeyringIntf
+    selectedKeyring: KeyringInstance | KeyringIntf,
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -649,7 +681,7 @@ export class KeyringService extends RNEventEmitter {
       );
     }
 
-    return Promise.all(
+    const serializedKeyrings = await Promise.all(
       this.keyrings.map(async keyring => {
         return Promise.all([keyring.type, keyring.serialize()]).then(
           serializedKeyringArray => {
@@ -657,21 +689,31 @@ export class KeyringService extends RNEventEmitter {
             return {
               type: serializedKeyringArray[0],
               data: serializedKeyringArray[1],
-            };
+            } as KeyringSerializedData;
           },
         );
       }),
-    )
-      .then(serializedKeyrings => {
-        return this.encryptor.encrypt(
-          this.#password as string,
-          serializedKeyrings as unknown as Buffer,
-        );
-      })
-      .then(encryptedString => {
-        this.store.updateState({ vault: encryptedString });
-        return true;
-      });
+    );
+
+    const unencryptedKeyringData = serializedKeyrings.map(({ type, data }) => {
+      const protectedFields = PROTECTED_KEYRING_FIELD[type];
+
+      if (protectedFields) {
+        protectedFields.forEach(field => {
+          delete data[field];
+        });
+      }
+      return { type, data };
+    });
+
+    const encryptedString = await this.encryptor.encrypt(
+      this.#password as string,
+      serializedKeyrings as unknown as Buffer,
+    );
+
+    this.store.updateState({ vault: encryptedString, unencryptedKeyringData });
+
+    return true;
   }
 
   /**
@@ -726,7 +768,10 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = typeof this.onCreateKeyring === 'function' ? this.onCreateKeyring(Keyring) : new Keyring({});
+    const keyring =
+      typeof this.onCreateKeyring === 'function'
+        ? this.onCreateKeyring(Keyring)
+        : new Keyring({});
     await keyring.deserialize(data);
 
     // getAccounts also validates the accounts for some keyrings
