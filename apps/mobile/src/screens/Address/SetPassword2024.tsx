@@ -32,6 +32,7 @@ import { useShowUserAgreementLikeModal } from '../ManagePassword/components/User
 import { AppSwitch } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
 import { clearCustomPassword } from '@/core/apis/lock';
+import { useLoadLockInfo } from '@/hooks/useLock';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -44,11 +45,7 @@ const INIT_FORM_DATA = __DEV__
 
 const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
-function useSetupPasswordForm(
-  toggleBiometrics,
-  navigateParams,
-  isBiometricsEnabled,
-) {
+function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     const passSchema = Yup.string()
@@ -83,7 +80,7 @@ function useSetupPasswordForm(
 
   // const { updateSetPasswordFirst } = useSetPasswordFirstState();
 
-  // const { fetchLockInfo } = useLoadLockInfo();
+  const { fetchLockInfo } = useLoadLockInfo();
 
   const formik = useAppFormik({
     initialValues: yupSchema.getDefault(),
@@ -106,20 +103,17 @@ function useSetupPasswordForm(
       });
 
       try {
-        // await clearCustomPassword(values.password); // only for test
+        await clearCustomPassword(values.password); // only for test
         const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
         } else {
+          await fetchLockInfo();
           await toggleBiometrics?.(values.switch, {
             validatedPassword: values.password,
           });
 
-          navigate(RootNames.StackAddress2024, {
-            screen: RootNames.CreateNewAddressThird,
-            params: navigateParams,
-          });
-
+          onFinish();
           toast.success('Setup Password Successfully');
         }
       } finally {
@@ -141,13 +135,9 @@ function MainListBlocks() {
   const { viewTermsOfUse } = useShowUserAgreementLikeModal();
 
   const state = useNavigationState(
-    s =>
-      s.routes.find(r => r.name === RootNames.CreateNewAddressSecond)?.params,
+    s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
   ) as {
-    address: string;
-    alias: string;
-    seedPhrase: string;
-    firstAddress: any;
+    onFinish: () => {};
   };
   console.log('state2', state);
 
@@ -163,7 +153,7 @@ function MainListBlocks() {
   } = useBiometrics({ autoFetch: true });
   const { formik, shouldDisabled } = useSetupPasswordForm(
     toggleBiometrics,
-    state,
+    state.onFinish,
     isBiometricsEnabled,
   );
 
@@ -309,7 +299,7 @@ function MainListBlocks() {
   );
 }
 
-function CreateNewAddressSecond(): JSX.Element {
+function SetPassword2024(): JSX.Element {
   return (
     <NormalScreenContainer>
       <MainListBlocks />
@@ -431,4 +421,4 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default CreateNewAddressSecond;
+export default SetPassword2024;

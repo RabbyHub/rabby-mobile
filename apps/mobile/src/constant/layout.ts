@@ -88,8 +88,8 @@ export const RootNames = {
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
-  CreateNewAddressSecond: 'CreateNewAddressSecond',
-  CreateNewAddressThird: 'CreateNewAddressThird',
+  SetPassword2024: 'SetPassword2024',
+  CreateChooseBackup: 'CreateChooseBackup',
 
   ImportLedger: 'ImportLedger',
   ImportMoreAddress: 'ImportMoreAddress',

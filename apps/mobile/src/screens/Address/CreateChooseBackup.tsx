@@ -25,7 +25,7 @@ function MainListBlocks() {
   const { styles } = useTheme2024({ getStyle });
 
   const state = useNavigationState(
-    s => s.routes.find(r => r.name === RootNames.CreateNewAddressThird)?.params,
+    s => s.routes.find(r => r.name === RootNames.CreateChooseBackup)?.params,
   ) as {
     address: string;
     alias: string;
@@ -118,7 +118,7 @@ function MainListBlocks() {
   );
 }
 
-function CreateNewAddressThird(): JSX.Element {
+function CreateChooseBackup(): JSX.Element {
   return (
     <NormalScreenContainer>
       <MainListBlocks />
@@ -227,4 +227,4 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
 }));
 
-export default CreateNewAddressThird;
+export default CreateChooseBackup;

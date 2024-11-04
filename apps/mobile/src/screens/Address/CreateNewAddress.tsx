@@ -76,13 +76,21 @@ function MainListBlocks() {
       alias: addressAlias,
     });
     console.log('exe handleContinue');
+    const onSetupPasswordDone = () => {
+      navigate(RootNames.StackAddress2024, {
+        screen: RootNames.CreateChooseBackup,
+        params: {
+          address: newAddress,
+          alias: addressAlias,
+          seedPhrase: value?.seedPhrase,
+          firstAddress: value?.firstAddress,
+        },
+      });
+    };
     navigate(RootNames.StackAddress2024, {
-      screen: RootNames.CreateNewAddressSecond,
+      screen: RootNames.SetPassword2024,
       params: {
-        address: newAddress,
-        alias: addressAlias,
-        seedPhrase: value?.seedPhrase,
-        firstAddress: value?.firstAddress,
+        onFinish: onSetupPasswordDone,
       },
     });
   }, [newAddress, addressAlias, value]);

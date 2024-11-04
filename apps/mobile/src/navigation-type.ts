@@ -63,8 +63,8 @@ type TestKitsNavigatorParamsList = {
 export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
   [RootNames.CreateNewAddress]?: {};
-  [RootNames.CreateNewAddressSecond]?: {};
-  [RootNames.CreateNewAddressThird]?: {};
+  [RootNames.SetPassword2024]?: {};
+  [RootNames.CreateChooseBackup]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};
   [RootNames.ImportSuccess]?: {
