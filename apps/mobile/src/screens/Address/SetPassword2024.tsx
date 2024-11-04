@@ -1,10 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import {
   View,
@@ -28,7 +23,6 @@ import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
 import { toast, toastWithIcon } from '@/components/Toast';
-import { navigate } from '@/utils/navigation';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CheckBoxRect } from '@/components2024/CheckBox';
@@ -36,9 +30,9 @@ import TouchableText from '@/components/Touchable/TouchableText';
 import { useShowUserAgreementLikeModal } from '../ManagePassword/components/UserAgreementLikeModalInner';
 import { AppSwitch } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
-import { clearCustomPassword } from '@/core/apis/lock';
 import { useLoadLockInfo } from '@/hooks/useLock';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -180,6 +174,18 @@ function MainListBlocks() {
       title: state.title,
     });
   }, [setNavigationOptions, state.title]);
+
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderTitleText>{state.title || '2. set password'}</HeaderTitleText>
+    );
+  }, [state.title]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+    });
+  }, [setNavigationOptions, getHeaderTitle, state.title]);
 
   const passwordInputRef = React.useRef<TextInput>(null);
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
