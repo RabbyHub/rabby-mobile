@@ -1,5 +1,10 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 
 import {
   View,
@@ -33,6 +38,7 @@ import { AppSwitch } from '@/components';
 import { useBiometrics } from '@/hooks/biometrics';
 import { clearCustomPassword } from '@/core/apis/lock';
 import { useLoadLockInfo } from '@/hooks/useLock';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 const INIT_FORM_DATA = __DEV__
   ? {
@@ -138,8 +144,11 @@ function MainListBlocks() {
     s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
   ) as {
     onFinish: () => {};
+    title: string;
+    hideProgress: boolean;
   };
   console.log('state2', state);
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
 
   const {
     computed: {
@@ -162,6 +171,15 @@ function MainListBlocks() {
       fetchBiometrics();
     }, [fetchBiometrics]),
   );
+
+  useEffect(() => {
+    if (!state.title) {
+      return;
+    }
+    setNavigationOptions({
+      title: state.title,
+    });
+  }, [setNavigationOptions, state.title]);
 
   const passwordInputRef = React.useRef<TextInput>(null);
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
@@ -187,7 +205,7 @@ function MainListBlocks() {
         onTouchInputAway();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={2} />
+        {!state.hideProgress && <ProgressBar amount={3} currentCount={2} />}
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.passwordTopTips')}
         </Text>

@@ -22,27 +22,33 @@ const styles = StyleSheet.create({
 });
 
 export const ImportAddressList = () => {
-  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const handlePrivateKey = React.useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportPrivateKey })
+      shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.ImportPrivateKey,
+      })
     )
       return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
     });
-  }, [shouldRedirectToSetPasswordBefore]);
+  }, [shouldRedirectToSetPasswordBefore2024]);
 
   const handleSeedPhrase = React.useCallback(() => {
-    if (shouldRedirectToSetPasswordBefore({ screen: RootNames.ImportMnemonic }))
+    if (
+      shouldRedirectToSetPasswordBefore2024({
+        backScreen: RootNames.ImportMnemonic,
+      })
+    )
       return;
 
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,
     });
-  }, [shouldRedirectToSetPasswordBefore]);
+  }, [shouldRedirectToSetPasswordBefore2024]);
 
   return (
     <View>

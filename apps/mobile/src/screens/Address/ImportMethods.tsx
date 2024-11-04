@@ -23,7 +23,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
@@ -33,8 +33,8 @@ function ImportMethods(): JSX.Element {
             style={styles.importItem}
             onPress={() => {
               if (
-                shouldRedirectToSetPasswordBefore({
-                  screen: RootNames.ImportMnemonic,
+                shouldRedirectToSetPasswordBefore2024({
+                  backScreen: RootNames.ImportMnemonic,
                 })
               ) {
                 return;
@@ -50,8 +50,8 @@ function ImportMethods(): JSX.Element {
             style={styles.importItem}
             onPress={() => {
               if (
-                shouldRedirectToSetPasswordBefore({
-                  screen: RootNames.ImportPrivateKey,
+                shouldRedirectToSetPasswordBefore2024({
+                  backScreen: RootNames.ImportPrivateKey,
                 })
               ) {
                 return;

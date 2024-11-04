@@ -299,7 +299,39 @@ export function useSetPasswordFirst() {
     [navigation, lockInfo],
   );
 
+  const shouldRedirectToSetPasswordBefore2024 = React.useCallback(
+    ({
+      backScreen,
+    }: {
+      backScreen?: (SettingNavigatorParamList['SetPassword'] & {
+        actionAfterSetup: 'backScreen';
+      })['replaceScreen'];
+    }) => {
+      if (!APP_FEATURE_SWITCH.customizePassword) return false;
+      if (lockInfo.pwdStatus === PasswordStatus.Custom) return false;
+
+      if (backScreen) {
+        navigation.push(RootNames.StackAddress2024, {
+          screen: RootNames.SetPassword2024,
+          params: {
+            title: 'Set Password',
+            hideProgress: true,
+            onFinish: () => {
+              navigation.replace(RootNames.StackAddress, {
+                screen: backScreen,
+              });
+            },
+          },
+        });
+        return true;
+      }
+      return false;
+    },
+    [navigation, lockInfo],
+  );
+
   return {
     shouldRedirectToSetPasswordBefore,
+    shouldRedirectToSetPasswordBefore2024,
   };
 }
