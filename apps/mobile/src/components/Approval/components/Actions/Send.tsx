@@ -128,6 +128,18 @@ const Send = ({
               />
             </SubRow>
           </SubCol>
+          {requireData.protocol && (
+            <SubCol>
+              <SubRow isTitle>
+                <Text style={commonStyle.subRowTitleText}>
+                  {t('page.signTx.protocol')}
+                </Text>
+              </SubRow>
+              <SubRow>
+                <Values.Protocol value={requireData.protocol} />
+              </SubRow>
+            </SubCol>
+          )}
           {!!requireData.contract && (
             <SubCol>
               <SubRow isTitle>
