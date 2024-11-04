@@ -10,6 +10,7 @@ import {
 import React, { useCallback } from 'react';
 import {
   Keyboard,
+  ScrollView,
   StyleProp,
   StyleSheet,
   TextInput,
@@ -158,65 +159,72 @@ export const ImportSuccessScreen = () => {
         Keyboard.dismiss();
       }}>
       <View style={styles.container}>
-        {importAddresses.length === 1 ? (
-          <View style={styles.itemContainer}>
-            <WalletIcon
-              type={state.type}
-              width={100}
-              height={100}
-              style={styles.icon}
-            />
-            <TextInput
-              editable={!state.isFirstCreate}
-              style={styles.inputInner}
-              value={importAddresses?.[0]?.aliasName || ''}
-              onChange={nativeEvent => {
-                const _aliasName = nativeEvent.nativeEvent.text;
-                const newImportAddresses = [...importAddresses];
-                newImportAddresses[0] = {
-                  address: importAddresses?.[0]?.aliasName || '',
-                  aliasName: _aliasName,
-                };
-                setImportAddresses(newImportAddresses);
-              }}
-              blurOnSubmit
-              autoFocus
-              clearButtonMode="while-editing"
-            />
-            <WalletAddress address={importAddresses?.[0]?.address || ''} />
-          </View>
-        ) : (
-          importAddresses.map((item, index) => (
-            <Card key={item.address} style={styles.addressItem}>
-              <WalletIcon type={state.type} width={50} height={50} />
-              <View>
-                <TextInput
-                  style={styles.listInput}
-                  value={item.aliasName}
-                  onChange={nativeEvent => {
-                    const _aliasName = nativeEvent.nativeEvent.text;
-                    const newImportAddresses = [...importAddresses];
-                    newImportAddresses[index] = {
-                      address: item.address,
-                      aliasName: _aliasName,
-                    };
-                    setImportAddresses(newImportAddresses);
-                  }}
-                  blurOnSubmit
-                  autoFocus
-                  clearButtonMode="while-editing"
-                />
-                <WalletAddress address={item.address} />
-              </View>
-            </Card>
-          ))
-        )}
-        <Text style={styles.resultTip}>
-          {importAddresses.length > 1
-            ? `${importAddresses.length} Addresses`
-            : ''}
-          &nbsp;Imported successfully!
-        </Text>
+        <View style={styles.addressList}>
+          {importAddresses.length === 1 ? (
+            <View style={styles.itemContainer}>
+              <WalletIcon
+                type={state.type}
+                width={100}
+                height={100}
+                style={styles.icon}
+              />
+              <TextInput
+                editable={!state.isFirstCreate}
+                style={styles.inputInner}
+                value={importAddresses?.[0]?.aliasName || ''}
+                onChange={nativeEvent => {
+                  const _aliasName = nativeEvent.nativeEvent.text;
+                  const newImportAddresses = [...importAddresses];
+                  newImportAddresses[0] = {
+                    address: importAddresses?.[0]?.aliasName || '',
+                    aliasName: _aliasName,
+                  };
+                  setImportAddresses(newImportAddresses);
+                }}
+                blurOnSubmit
+                autoFocus
+                clearButtonMode="while-editing"
+              />
+              <WalletAddress address={importAddresses?.[0]?.address || ''} />
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+              style={styles.scrollList}>
+              {importAddresses.map((item, index) => (
+                <Card key={index} style={styles.addressItem}>
+                  <WalletIcon type={state.type} width={50} height={50} />
+                  <View>
+                    <TextInput
+                      style={styles.listInput}
+                      value={item.aliasName}
+                      onChange={nativeEvent => {
+                        const _aliasName = nativeEvent.nativeEvent.text;
+                        const newImportAddresses = [...importAddresses];
+                        newImportAddresses[index] = {
+                          address: item.address,
+                          aliasName: _aliasName,
+                        };
+                        setImportAddresses(newImportAddresses);
+                      }}
+                      blurOnSubmit
+                      autoFocus
+                      clearButtonMode="while-editing"
+                    />
+                    <WalletAddress address={item.address} />
+                  </View>
+                </Card>
+              ))}
+            </ScrollView>
+          )}
+          <Text style={styles.resultTip}>
+            {importAddresses.length > 1
+              ? `${importAddresses.length} Addresses`
+              : ''}
+            &nbsp;{state.isFirstCreate ? 'Created' : 'Imported'} successfully!
+          </Text>
+        </View>
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -233,18 +241,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: '100%',
     position: 'relative',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
     paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  addressList: {
+    display: 'flex',
+    justifyContent: 'center',
+    flex: 1,
+    alignItems: 'center',
+  },
+  scrollList: {
+    width: '100%',
+    maxHeight: '60%',
+    display: 'flex',
   },
   itemContainer: {
     display: 'flex',
     alignItems: 'center',
   },
   icon: {
-    marginTop: 233,
     borderRadius: 16,
   },
   addressText: {
@@ -280,8 +295,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   btnContainer: {
     width: '100%',
-    position: 'absolute',
-    bottom: 40,
+    marginBottom: 56,
   },
   addressItem: {
     display: 'flex',
@@ -289,6 +303,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 11,
+    marginBottom: 12,
     width: '100%',
   },
   listInput: {
