@@ -2,7 +2,7 @@ import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { HeaderButtonProps } from '@react-navigation/native-stack/lib/typescript/src/types';
 import React from 'react';
 import { IS_IOS } from '@/core/native/utils';
-import { Image } from 'react-native';
+import { Image, Keyboard } from 'react-native';
 import {
   createGlobalBottomSheetModal2024,
   removeGlobalBottomSheetModal2024,
@@ -18,6 +18,7 @@ const hitSlop = {
 
 export const CloudBackupButton: React.FC<HeaderButtonProps> = ({}) => {
   const onPress = React.useCallback(() => {
+    Keyboard.dismiss();
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.RESTORE_FROM_CLOUD,
       onDone: () => {

@@ -58,7 +58,7 @@ export const Button = ({
   const { currentColor, bgColor } = useMemo(() => {
     const colorMap = {
       primary: {
-        bg: colors2024['blue-default'],
+        bg: colors2024['brand-default'],
         currentColor: colors2024['neutral-InvertHighlight'],
       },
       ghost: {
