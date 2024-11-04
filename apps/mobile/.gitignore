@@ -89,6 +89,8 @@ scripts/tmp
 /android/app/src/main/assets/custom/vconsole.min.js
 /android/app/src/main/assets/fonts/*
 /src/**/vconsole.min.js
+/ios/RabbyMobile/Resources/*.ttf
+/ios/RabbyMobile/Resources/*.otf
 
 # android/sentry.properties
 # ios/sentry.properties
