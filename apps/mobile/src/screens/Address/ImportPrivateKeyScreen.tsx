@@ -1,8 +1,7 @@
 import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PasteTextArea } from './components/PasteTextArea';
-import { FooterButtonScreenContainer } from '@/components/ScreenContainer/FooterButtonScreenContainer';
+import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { apiPrivateKey } from '@/core/apis';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
@@ -10,11 +9,14 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { createGetStyles2024 } from '@/utils/styles';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import HelpIcon from '@/assets2024/icons/common/help.svg';
 import PrivateKeyIcon from '@/assets2024/icons/common/private-key.svg';
 import PasteButton from '@/components2024/PasteButton';
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { NextInput } from '@/components2024/Form/Input';
 import TouchableView from '@/components/Touchable/TouchableView';
@@ -69,50 +71,58 @@ export const ImportPrivateKeyScreen = () => {
 
   return (
     <FooterButtonScreenContainer
-      buttonText={t('global.Confirm')}
-      onPressButton={handleConfirm}>
+      buttonProps={{
+        title: t('global.Confirm'),
+        onPress: handleConfirm,
+      }}
+      footerBottomOffset={16}
+      footerContainerStyle={{
+        paddingHorizontal: 20,
+      }}>
       <View style={styles.container}>
-        <PrivateKeyIcon style={styles.icon} />
-        <View>
-          <NextInput.TextArea
-            style={styles.textContainer}
-            inputStyle={styles.textArea}
-            tipText={error}
-            hasError={!!error}
-            fieldErrorTextStyle={styles.error}
-            inputProps={{
-              placeholder: 'Enter your Private Key',
-              value: privateKey,
-              onChangeText: setPrivateKey,
+        <View style={styles.topContent}>
+          <PrivateKeyIcon style={styles.icon} />
+          <View>
+            <NextInput.TextArea
+              style={styles.textContainer}
+              inputStyle={styles.textArea}
+              tipText={error}
+              hasError={!!error}
+              fieldErrorTextStyle={styles.error}
+              inputProps={{
+                placeholder: 'Enter your Private Key',
+                value: privateKey,
+                onChangeText: setPrivateKey,
+              }}
+              // eslint-disable-next-line react/no-unstable-nested-components
+              customIcon={ctx => (
+                <TouchableView
+                  style={ctx.wrapperStyle}
+                  onPress={() => {
+                    navigate(RootNames.Scanner);
+                  }}>
+                  <RcIconScannerCC
+                    style={ctx.iconStyle}
+                    color={colors2024['neutral-title-1']}
+                  />
+                </TouchableView>
+              )}
+            />
+          </View>
+
+          <PasteButton
+            style={styles.pasteButton}
+            onPaste={text => {
+              setPrivateKey(text);
             }}
-            // eslint-disable-next-line react/no-unstable-nested-components
-            customIcon={ctx => (
-              <TouchableView
-                style={ctx.wrapperStyle}
-                onPress={() => {
-                  navigate(RootNames.Scanner);
-                }}>
-                <RcIconScannerCC
-                  style={ctx.iconStyle}
-                  color={colors2024['neutral-title-1']}
-                />
-              </TouchableView>
-            )}
           />
         </View>
-
-        <PasteButton
-          style={styles.pasteButton}
-          onPaste={text => {
-            setPrivateKey(text);
-          }}
-        />
         <View style={styles.tipWrapper}>
-          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+          <Text style={styles.tip}>What is 'Private Key'</Text>
           <HelpIcon
             style={styles.tipIcon}
             onPress={() => {
-              createGlobalBottomSheetModal2024({
+              const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
                 title: "What's a private key",
                 sections: [
@@ -136,6 +146,15 @@ export const ImportPrivateKeyScreen = () => {
                       'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
                   },
                 ],
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
+                },
               });
             }}
           />
@@ -149,10 +168,15 @@ const getStyles = createGetStyles2024(ctx => ({
   container: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     position: 'relative',
     height: '100%',
     width: '100%',
-    marginTop: 8,
+    paddingHorizontal: 20,
+  },
+  topContent: {
+    alignItems: 'center',
+    flexShrink: 0,
   },
   icon: {
     width: 40,
@@ -186,7 +210,7 @@ const getStyles = createGetStyles2024(ctx => ({
     justifyContent: 'center',
     gap: 4,
     width: '100%',
-    marginTop: 260,
+    marginBottom: 28,
   },
   tip: {
     color: ctx.colors2024['neutral-info'],
@@ -196,5 +220,13 @@ const getStyles = createGetStyles2024(ctx => ({
   tipIcon: {
     width: 16,
     height: 16,
+  },
+  modalNextButtonText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+    textAlign: 'center',
+    color: ctx.colors2024['neutral-InvertHighlight'],
   },
 }));
