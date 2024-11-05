@@ -336,43 +336,46 @@ export function useAppPreventScreenshotOnScreen() {
   }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
 }
 
-type OnTimeChangedCtx = Parameters<
-  Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
->[0];
-const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
-  if (IS_ANDROID && (await canLockWallet())) {
-    checkMultipleFailed({ forceRecountdownIfInFreezing: true });
-    Alert.alert(
-      'Time changed',
-      `Time settings changed, you can lock wallet first if the change is not made by you.`,
-      [
-        {
-          text: 'Cancel',
-          onPress: () => {},
-          style: 'cancel',
-        },
-        {
-          text: 'Lock',
-          onPress: async () => {
-            await requestLockWalletAndBackToUnlockScreen();
+if (__DEV__) {
+  type OnTimeChangedCtx = Parameters<
+    Parameters<typeof RNTimeChanged.subscribeTimeChanged>[0]
+  >[0];
+  /** @deprecated */
+  const handleTimeChanged = debounce(async (ctx: OnTimeChangedCtx) => {
+    if (await canLockWallet()) {
+      checkMultipleFailed({ forceRecountdownIfInFreezing: true });
+      Alert.alert(
+        'Time changed',
+        `Time settings changed, you can lock wallet first if the change is not made by you.`,
+        [
+          {
+            text: 'Cancel',
+            onPress: () => {},
+            style: 'cancel',
           },
-        },
-      ],
-    );
-  } else {
-    // Alert.alert(
-    //   'Warning',
-    //   `Time settings changed, will quit app for security.`,
-    //   [
-    //     {
-    //       text: 'OK',
-    //       onPress: () => {
-    //         RNTimeChanged.exitAppForSecurity();
-    //       },
-    //     },
-    //   ],
-    // );
-  }
-}, 1000);
+          {
+            text: 'Lock',
+            onPress: async () => {
+              await requestLockWalletAndBackToUnlockScreen();
+            },
+          },
+        ],
+      );
+    } else {
+      // Alert.alert(
+      //   'Warning',
+      //   `Time settings changed, will quit app for security.`,
+      //   [
+      //     {
+      //       text: 'OK',
+      //       onPress: () => {
+      //         RNTimeChanged.exitAppForSecurity();
+      //       },
+      //     },
+      //   ],
+      // );
+    }
+  }, 1000);
 
-RNTimeChanged.subscribeTimeChanged(handleTimeChanged);
+  RNTimeChanged.subscribeTimeChanged(handleTimeChanged);
+}
