@@ -33,7 +33,7 @@ deployment_local_dir="$script_dir/deployments/android"
 rm -rf $deployment_local_dir && mkdir -p $deployment_local_dir;
 
 build_selfhost() {
-  yarn;
+  yarn && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     bundle exec fastlane android selfhost
@@ -48,7 +48,7 @@ build_selfhost() {
 }
 
 build_appstore() {
-  yarn;
+  yarn && yarn link-assets;
   if [ $RABBY_HOST_OS != "Windows" ]; then
     echo "[deploy-android] build with fastlane."
     bundle exec fastlane android playstore
