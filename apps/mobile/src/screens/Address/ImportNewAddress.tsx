@@ -1,13 +1,7 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React from 'react';
 
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { default as RcWatchAddress } from '@/assets/icons/address/watch.svg';
 import { default as RcBuilding } from '@/assets/icons/address/building-cc.svg';
@@ -26,7 +20,6 @@ import { ImportAddressList } from './components/ImportAddressList';
 import { CreateAddressList } from './components/CreateAddressList';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import { makeDebugBorder } from '@/utils/styles';
-import { navigate } from '@/utils/navigation';
 
 type AddressStackProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -53,7 +46,6 @@ function MainListBlocks() {
       <View style={styles.section}>
         <WalletConnectList />
       </View>
-
       <View style={styles.section}>
         <WalletHeadline Icon={RcBuilding}>Institutional Wallets</WalletHeadline>
         <WalletItem

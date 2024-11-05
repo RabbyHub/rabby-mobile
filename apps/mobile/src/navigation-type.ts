@@ -91,8 +91,10 @@ export type AddressNavigatorParamList = {
     byImport?: string;
   };
   [RootNames.ImportPrivateKey]?: {};
+  [RootNames.ImportPrivateKey2024]?: {};
   [RootNames.ImportHardwareAddress]?: {};
   [RootNames.ImportMnemonic]?: {};
+  [RootNames.ImportMnemonic2024]?: {};
   [RootNames.AddMnemonic]?: {};
   [RootNames.PreCreateMnemonic]?: {};
   [RootNames.CreateMnemonic]?: {};
@@ -135,7 +137,9 @@ export type SettingNavigatorParamList = {
         replaceScreen:
           | typeof RootNames.PreCreateMnemonic
           | typeof RootNames.ImportPrivateKey
-          | typeof RootNames.ImportMnemonic;
+          | typeof RootNames.ImportMnemonic
+          | typeof RootNames.ImportMnemonic2024
+          | typeof RootNames.ImportPrivateKey2024;
       }
     | {
         actionAfterSetup: 'onSettings';

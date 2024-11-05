@@ -17,7 +17,7 @@ import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { BackupItem, BackupItemSkeleton } from './BackupItem';
+import { BackupItem, BackupItemSkeleton } from './BackupItem2024';
 import { Button } from '@/components2024/Button';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 

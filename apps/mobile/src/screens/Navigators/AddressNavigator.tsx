@@ -31,6 +31,9 @@ import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
 import { redirectToAddAddressEntry } from '@/utils/navigation';
+import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
+import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
+import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -174,6 +177,17 @@ export function AddressNavigator() {
           headerTitle: 'Import Private Key',
           title: 'Import Private Key',
           headerTitleStyle: {
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+          },
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportPrivateKey2024}
+        component={ImportPrivateKeyScreen2024}
+        options={{
+          headerTitle: 'Import Private Key',
+          title: 'Import Private Key',
+          headerTitleStyle: {
             fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
             fontFamily: 'SF Pro Rounded',
@@ -187,11 +201,23 @@ export function AddressNavigator() {
           headerTitle: 'Import Seed Phrase',
           title: 'Import Seed Phrase',
           headerTitleStyle: {
+            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
+          },
+          headerRight: CloudBackupButton,
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportMnemonic2024}
+        component={ImportSeedPhraseScreen2024}
+        options={{
+          headerTitle: 'Import Seed Phrase',
+          title: 'Import Seed Phrase',
+          headerTitleStyle: {
             fontWeight: '800',
             fontSize: DEFAULT_NAVBAR_FONT_SIZE,
             fontFamily: 'SF Pro Rounded',
           },
-          headerRight: CloudBackupButton,
+          headerRight: CloudBackupButton2024,
         }}
       />
       <AddressStack.Screen

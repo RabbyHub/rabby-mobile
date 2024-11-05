@@ -186,33 +186,34 @@ export const ImportSuccessScreen = () => {
               <WalletAddress address={importAddresses?.[0]?.address || ''} />
             </View>
           ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-              style={styles.scrollList}>
-              {importAddresses.map((item, index) => (
-                <Card key={index} style={styles.addressItem}>
-                  <WalletIcon type={state.type} width={50} height={50} />
-                  <View>
-                    <TextInput
-                      style={styles.listInput}
-                      value={item.aliasName}
-                      onChange={nativeEvent => {
-                        const _aliasName = nativeEvent.nativeEvent.text;
-                        const newImportAddresses = [...importAddresses];
-                        newImportAddresses[index] = {
-                          address: item.address,
-                          aliasName: _aliasName,
-                        };
-                        setImportAddresses(newImportAddresses);
-                      }}
-                      blurOnSubmit
-                    />
-                    <WalletAddress address={item.address} />
-                  </View>
-                </Card>
-              ))}
-            </ScrollView>
+            <View style={styles.scrollList}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}>
+                {importAddresses.map((item, index) => (
+                  <Card key={index} style={styles.addressItem}>
+                    <WalletIcon type={state.type} width={50} height={50} />
+                    <View>
+                      <TextInput
+                        style={styles.listInput}
+                        value={item.aliasName}
+                        onChange={nativeEvent => {
+                          const _aliasName = nativeEvent.nativeEvent.text;
+                          const newImportAddresses = [...importAddresses];
+                          newImportAddresses[index] = {
+                            address: item.address,
+                            aliasName: _aliasName,
+                          };
+                          setImportAddresses(newImportAddresses);
+                        }}
+                        blurOnSubmit
+                      />
+                      <WalletAddress address={item.address} />
+                    </View>
+                  </Card>
+                ))}
+              </ScrollView>
+            </View>
           )}
           <Text style={styles.resultTip}>
             {importAddresses.length > 1

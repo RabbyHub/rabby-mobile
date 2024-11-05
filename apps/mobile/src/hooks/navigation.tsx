@@ -278,6 +278,8 @@ const PROTECTED_SCREENS: {
   [RootNames.CreateNewAddressThird]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
+  [RootNames.ImportMnemonic2024]: getProtectedConf(),
+  [RootNames.ImportPrivateKey2024]: getProtectedConf(),
   [RootNames.CreateMnemonicBackup]: getProtectedConf(),
   [RootNames.CreateMnemonicVerify]: getProtectedConf(),
   [RootNames.BackupMnemonic]: getProtectedConf(),

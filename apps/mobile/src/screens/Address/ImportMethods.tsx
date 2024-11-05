@@ -34,13 +34,13 @@ function ImportMethods(): JSX.Element {
             onPress={() => {
               if (
                 shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportMnemonic,
+                  backScreen: RootNames.ImportMnemonic2024,
                 })
               ) {
                 return;
               }
               navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportMnemonic,
+                screen: RootNames.ImportMnemonic2024,
               });
             }}>
             <SeedPhraseIcon style={styles.icon} />
@@ -51,14 +51,14 @@ function ImportMethods(): JSX.Element {
             onPress={() => {
               if (
                 shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportPrivateKey,
+                  backScreen: RootNames.ImportPrivateKey2024,
                 })
               ) {
                 return;
               }
 
               navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportPrivateKey,
+                screen: RootNames.ImportPrivateKey2024,
               });
             }}>
             <PrivateKeyIcon style={styles.icon} />

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WalletHeadline } from './WalletHeadline';
 import { WalletItem } from './WalletItem';
@@ -10,7 +10,6 @@ import {
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { useSetPasswordFirst } from '@/hooks/useLock';
-import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 const styles = StyleSheet.create({
   walletItem: {
@@ -22,12 +21,12 @@ const styles = StyleSheet.create({
 });
 
 export const ImportAddressList = () => {
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
+  const { shouldRedirectToSetPasswordBefore } = useSetPasswordFirst();
 
   const handlePrivateKey = React.useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore2024({
-        backScreen: RootNames.ImportPrivateKey,
+      shouldRedirectToSetPasswordBefore({
+        screen: RootNames.ImportPrivateKey,
       })
     )
       return;
@@ -35,12 +34,12 @@ export const ImportAddressList = () => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportPrivateKey,
     });
-  }, [shouldRedirectToSetPasswordBefore2024]);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   const handleSeedPhrase = React.useCallback(() => {
     if (
-      shouldRedirectToSetPasswordBefore2024({
-        backScreen: RootNames.ImportMnemonic,
+      shouldRedirectToSetPasswordBefore({
+        screen: RootNames.ImportMnemonic,
       })
     )
       return;
@@ -48,7 +47,7 @@ export const ImportAddressList = () => {
     navigate(RootNames.StackAddress, {
       screen: RootNames.ImportMnemonic,
     });
-  }, [shouldRedirectToSetPasswordBefore2024]);
+  }, [shouldRedirectToSetPasswordBefore]);
 
   return (
     <View>
