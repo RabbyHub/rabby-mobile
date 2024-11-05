@@ -157,14 +157,14 @@ cleanup_fonts_assets() {
 
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
-    rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf && \
-    cp $project_dir/assets/fonts/Anton-Regular.ttf $project_dir/android/app/src/main/assets/fonts/;
+    rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf;
 
-  local android_target=$project_dir/android/app/src/main/res/font
-  echo "cleanup and copy fonts to $android_target..."
-  rm -f $android_target/sf_pro_all.ttf && \
-    cp $project_dir/assets/fonts/SF-Pro.ttf $android_target/sf_pro_all.ttf
+  local android_assets_target=$project_dir/android/app/src/main/assets
+  # local android_font_target=$project_dir/android/app/src/main/res/font
+  echo "cleanup and copy fonts to $android_assets_target/fonts..."
+  mkdir -p $android_assets_target/fonts/ && cp $project_dir/assets/fonts/SF-Pro.ttf $android_assets_target/fonts/
 
+  # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
 func_to_exec=$1
