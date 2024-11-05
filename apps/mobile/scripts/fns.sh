@@ -134,12 +134,12 @@ unix_replace_variables() {
     echo "Replace finished, result in $output_file"
 }
 
-cp_assets() {
+cleanup_fonts_assets() {
   local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
   local project_dir=$(dirname $script_dir)
 
   local targets=(
-    $project_dir/android/app/src/main/assets/fonts
+    # $project_dir/android/app/src/main/assets/fonts
     $project_dir/ios/RabbyMobile/Resources/
   )
 
@@ -149,6 +149,14 @@ cp_assets() {
     rm -rf $target && mkdir -p $target;
     cp $project_dir/assets/fonts/* $target
   done
+
+  mkdir -p $project_dir/android/app/src/main/assets/fonts && \
+    rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf && \
+    cp $project_dir/assets/fonts/Anton-Regular.ttf $project_dir/android/app/src/main/assets/fonts/;
+
+  rm -rf $project_dir/android/app/src/main/res/font/*.*tf && \
+    cp $project_dir/assets/fonts/SF-Pro.ttf $project_dir/android/app/src/main/res/font/sf_pro_all.ttf
+
 }
 
 func_to_exec=$1
@@ -158,8 +166,8 @@ if [ ! -z $func_to_exec ]; then
     "--source-only")
       # do nothing
       ;;
-    "cp_assets")
-      cp_assets
+    "cleanup_fonts_assets")
+      cleanup_fonts_assets
       ;;
     *)
       echo "Invalid function to execute: $func_to_exec"

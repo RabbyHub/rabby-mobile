@@ -1,5 +1,6 @@
 module.exports = {
-  assets: ['./assets/fonts', './assets/custom'],
-  iosAssets: [],
-  androidAssets: [],
+  assets: ['./assets/custom'],
+  iosAssets: ['assets/fonts'],
+  // also copy to res/font manually
+  androidAssets: ['assets/fonts/Anton-Regular.ttf'],
 };

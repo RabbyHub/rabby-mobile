@@ -17,7 +17,7 @@
     "ensure-git-hooks": "yarn ../../ install-husky",
     "postinstall": "yarn build:deps && yarn build-inpage && patch-package",
     "ios": "react-native run-ios",
-    "link-assets": "react-native-asset && sh ./scripts/fns.sh cp_assets",
+    "link-assets": "react-native-asset && sh ./scripts/fns.sh cleanup_fonts_assets",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "lint:commit:fix": "eslint ./src --quiet --fix --ext .js,.jsx,.ts,.tsx --max-warnings=-1",
     "lint:fix": "eslint ./src --fix --ext .js,.jsx,.ts,.tsx",

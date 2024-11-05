@@ -2,20 +2,20 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "assets/fonts/Anton-Regular.ttf",
-      "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
-    },
-    {
-      "path": "assets/fonts/SF-Pro.ttf",
-      "sha1": "8fc4279ddebaa3e983bca0e45ad104dcda04189d"
-    },
-    {
       "path": "assets/custom/InpageBridgeWeb3.js",
       "sha1": "f2aed5b46e6094bd1807de546e57d80ddcbf08a6"
     },
     {
       "path": "assets/custom/vconsole.min.js",
       "sha1": "f14c26a8bc8928808c4f163dd5279100e471494e"
+    },
+    {
+      "path": "assets/fonts/Anton-Regular.ttf",
+      "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
+    },
+    {
+      "path": "assets/fonts/SF-Pro.ttf",
+      "sha1": "8fc4279ddebaa3e983bca0e45ad104dcda04189d"
     }
   ]
 }
