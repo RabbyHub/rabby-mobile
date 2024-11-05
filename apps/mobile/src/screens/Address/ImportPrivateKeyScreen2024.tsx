@@ -97,6 +97,14 @@ export const ImportPrivateKeyScreen2024 = () => {
                 tipText={error}
                 hasError={!!error}
                 fieldErrorTextStyle={styles.error}
+                containerStyle={Object.assign(
+                  {},
+                  !!error
+                    ? {}
+                    : {
+                        borderColor: 'transparent',
+                      },
+                )}
                 inputProps={{
                   placeholder: 'Enter your Private Key',
                   value: privateKey,

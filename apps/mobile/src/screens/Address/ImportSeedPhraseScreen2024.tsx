@@ -259,6 +259,14 @@ export const ImportSeedPhraseScreen2024 = () => {
                 tipText={error}
                 hasError={!!error}
                 inputStyle={styles.textArea}
+                containerStyle={Object.assign(
+                  {},
+                  !!error
+                    ? {}
+                    : {
+                        borderColor: 'transparent',
+                      },
+                )}
                 inputProps={{
                   placeholder: 'Enter your seed phrase',
                   value: mnemonics,
