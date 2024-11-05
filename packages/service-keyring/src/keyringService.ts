@@ -48,6 +48,9 @@ type KeyringState = {
 };
 
 type MemStoreState = {
+  /**
+   * @deprecated
+   */
   isUnlocked: boolean;
   keyringTypes: any[];
   keyrings: any[];
@@ -672,9 +675,10 @@ export class KeyringService extends RNEventEmitter {
    */
   async persistAllKeyrings(): Promise<boolean> {
     if (!this.#password || typeof this.#password !== 'string') {
-      return Promise.reject(
-        new Error('KeyringService - password is not a string'),
-      );
+      // return Promise.reject(
+      //   new Error('KeyringService - password is not a string'),
+      // );
+      await this.unlockRequest();
     }
 
     const serializedKeyrings = await Promise.all(
@@ -1009,10 +1013,15 @@ export class KeyringService extends RNEventEmitter {
 
   async generatePreMnemonic(): Promise<string> {
     if (!this.#password) {
-      throw new Error('background.error.unlock');
+      // throw new Error('background.error.unlock');
+      await this.unlockRequest();
     }
     const mnemonic = this.generateMnemonic();
-    const preMnemonics = await this.encryptor.encrypt(this.#password, mnemonic);
+    const preMnemonics = await this.encryptor.encrypt(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.#password!,
+      mnemonic,
+    );
     this.memStore.updateState({ preMnemonics });
 
     return mnemonic;
@@ -1028,11 +1037,13 @@ export class KeyringService extends RNEventEmitter {
     }
 
     if (!this.#password) {
-      throw new Error('background.error.unlock');
+      // throw new Error('background.error.unlock');
+      await this.unlockRequest();
     }
 
     return await this.encryptor.decrypt(
-      this.#password,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.#password!,
       this.memStore.getState().preMnemonics,
     );
   }
@@ -1093,6 +1104,23 @@ export class KeyringService extends RNEventEmitter {
         ...keryings.map(item => (item as any).index),
         keryings.length - 1,
       ) + 1;
+  }
+
+  async unlockRequest() {
+    if (this.#password) {
+      return true;
+    }
+
+    return new Promise((resolve, reject) => {
+      this.once('unlock-response', result => {
+        if (result) {
+          resolve(true);
+        } else {
+          reject(new Error('background.error.unlock'));
+        }
+      });
+      this.emit('unlock-request');
+    });
   }
 }
 /* eslint-enable jsdoc/check-tag-names */

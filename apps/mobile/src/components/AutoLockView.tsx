@@ -137,6 +137,18 @@ function ForAppNav(props: Props<'View'>) {
     };
   }, []);
 
+  // handle unlockRequest
+  React.useEffect(() => {
+    const handler = () => {
+      requestLockWalletAndBackToUnlockScreen();
+    };
+    keyringService.addListener('unlock-request', handler);
+
+    return () => {
+      keyringService.removeListener('unlock-request', handler);
+    };
+  }, []);
+
   return <AutoLockView {...props} />;
 }
 

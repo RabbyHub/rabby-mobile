@@ -207,7 +207,7 @@ async function tryAutoUnlockRabbyMobile() {
 }
 
 export function isUnlocked() {
-  return keyringService.isLoaded();
+  return keyringService.hasSubmitPassword();
 }
 
 export type UnlockResultErrors = {

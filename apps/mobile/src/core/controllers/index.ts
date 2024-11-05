@@ -26,6 +26,7 @@ export default async function provider<T = void>(
         message: 'wallet must has at least one account',
       });
     }
+    await keyringService.unlockRequest();
   }
 
   return rpcFlow(req) as any;
