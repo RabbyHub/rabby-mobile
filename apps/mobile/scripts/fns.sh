@@ -133,3 +133,53 @@ unix_replace_variables() {
 
     echo "Replace finished, result in $output_file"
 }
+
+cleanup_fonts_assets() {
+  local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
+  local project_dir=$(dirname $script_dir)
+
+  # local targets=(
+  #   # $project_dir/android/app/src/main/assets/fonts
+  #   $project_dir/ios/RabbyMobile/Resources/
+  # )
+  # for target in "${targets[@]}"
+  # do
+  #   echo "cleanup and copy fonts to $target..."
+  #   rm -rf $target && mkdir -p $target;
+  #   cp $project_dir/assets/fonts/* $target
+  # done
+
+  # iOS
+  local ios_target=$project_dir/ios/RabbyMobile/Resources/
+  echo "cleanup and copy fonts to $ios_target..."
+  rm -rf $ios_target && mkdir -p $ios_target;
+  cp $project_dir/assets/fonts/* $ios_target
+
+  # Android
+  mkdir -p $project_dir/android/app/src/main/assets/fonts && \
+    rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf && \
+    cp $project_dir/assets/fonts/Anton-Regular.ttf $project_dir/android/app/src/main/assets/fonts/;
+
+  local android_target=$project_dir/android/app/src/main/res/font
+  echo "cleanup and copy fonts to $android_target..."
+  rm -f $android_target/sf_pro_all.ttf && \
+    cp $project_dir/assets/fonts/SF-Pro.ttf $android_target/sf_pro_all.ttf
+
+}
+
+func_to_exec=$1
+
+if [ ! -z $func_to_exec ]; then
+  case $func_to_exec in
+    "--source-only")
+      # do nothing
+      ;;
+    "cleanup_fonts_assets")
+      cleanup_fonts_assets
+      ;;
+    *)
+      echo "Invalid function to execute: $func_to_exec"
+      exit 1;
+      ;;
+  esac
+fi

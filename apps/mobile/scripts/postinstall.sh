@@ -18,3 +18,6 @@ cd $repo_dir/packages/rn-webview-bridge
 cd $repo_dir/apps/mobile;
 echo "2. Patch npm packages"
 yarn patch-package
+
+echo "3. Link Assets"
+yarn link-assets
