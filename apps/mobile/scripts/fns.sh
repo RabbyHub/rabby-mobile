@@ -153,16 +153,16 @@ cleanup_fonts_assets() {
   local ios_target=$project_dir/ios/RabbyMobile/Resources/
   echo "cleanup and copy fonts to $ios_target..."
   rm -rf $ios_target && mkdir -p $ios_target;
-  cp $project_dir/assets/fonts/* $ios_target
+  # cp $project_dir/assets/fonts/* $ios_target
 
   # Android
   mkdir -p $project_dir/android/app/src/main/assets/fonts && \
     rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf;
 
-  local android_assets_target=$project_dir/android/app/src/main/assets
-  # local android_font_target=$project_dir/android/app/src/main/res/font
-  echo "cleanup and copy fonts to $android_assets_target/fonts..."
-  mkdir -p $android_assets_target/fonts/ && cp $project_dir/assets/fonts/SF-Pro.ttf $android_assets_target/fonts/
+  # local android_assets_target=$project_dir/android/app/src/main/assets
+  # # local android_font_target=$project_dir/android/app/src/main/res/font
+  # echo "cleanup and copy fonts to $android_assets_target/fonts..."
+  # mkdir -p $android_assets_target/fonts/ && cp $project_dir/assets/fonts/SF-Pro.ttf $android_assets_target/fonts/
 
   # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }

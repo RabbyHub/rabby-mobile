@@ -78,9 +78,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Rabby needs microphone access to record audio</string>
 	<key>UIAppFonts</key>
-	<array>
-		<string>SF-Pro.ttf</string>
-	</array>
+	<array/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen.storyboard</string>
 	<key>UIRequiredDeviceCapabilities</key>

@@ -8,10 +8,6 @@
     {
       "path": "assets/custom/vconsole.min.js",
       "sha1": "f14c26a8bc8928808c4f163dd5279100e471494e"
-    },
-    {
-      "path": "assets/fonts/SF-Pro.ttf",
-      "sha1": "8fc4279ddebaa3e983bca0e45ad104dcda04189d"
     }
   ]
 }
