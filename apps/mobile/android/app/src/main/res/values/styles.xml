@@ -6,7 +6,7 @@
         <item name="android:textColor">@color/text</item>
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:fontFamily">@font/sf_pro</item>
+        <!-- <item name="android:fontFamily">@font/sf_pro</item> -->
     </style>
     <style name="SplashScreenTheme" parent="SplashScreen_SplashTheme">
         <item name="colorPrimaryDark">@color/status_bar_color</item>
