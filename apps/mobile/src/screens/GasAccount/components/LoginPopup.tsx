@@ -190,6 +190,7 @@ const getStyles = createGetStyles(colors => ({
     marginBottom: 30,
     fontSize: 14,
     color: colors['neutral-body'],
+    textAlign: 'center',
   },
   twoBtnContainer: {
     // width: 170,
