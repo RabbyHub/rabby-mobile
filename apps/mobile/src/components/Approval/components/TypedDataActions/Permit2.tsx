@@ -7,17 +7,14 @@ import {
   ParsedTypedDataActionData,
 } from '@rabby-wallet/rabby-action';
 import { Table, Col, Row } from '../Actions/components/Table';
-import LogoWithText from '../Actions/components/LogoWithText';
 import * as Values from '../Actions/components/Values';
 import ViewMore from '../Actions/components/ViewMore';
 import { SecurityListItem } from '../Actions/components/SecurityListItem';
 import { ProtocolListItem } from '../Actions/components/ProtocolListItem';
 import { StyleSheet, Text, View } from 'react-native';
 import { useApprovalSecurityEngine } from '../../hooks/useApprovalSecurityEngine';
-import { formatAmount } from '@/utils/number';
 import { ellipsisTokenSymbol, getTokenSymbol } from '@/utils/token';
 import { Chain } from '@/constant/chains';
-import DescItem from '../Actions/components/DescItem';
 import useCommonStyle from '../../hooks/useCommonStyle';
 import { TokenAmountItem } from '../Actions/components/TokenAmountItem';
 import { SubTable, SubCol, SubRow } from '../Actions/components/SubTable';
@@ -165,6 +162,17 @@ const Permit2 = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
+            </SubRow>
+          </SubCol>
+
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
 

@@ -70,7 +70,7 @@ const getStyles = (colors: AppColorsVariants) =>
 
 interface Props {
   address: string;
-  chain: Chain;
+  chain?: Chain;
   onWhitelist: boolean;
   onBlacklist: boolean;
   visible: boolean;
@@ -113,7 +113,7 @@ const UserListDrawer = ({
       <BottomSheetView style={styles.mainView}>
         <AppBottomSheetModalTitle
           title={t('page.signTx.myMarkWithContract', {
-            chainName: chain.name,
+            chainName: chain?.name,
           })}
         />
         <View style={styles.footer}>
