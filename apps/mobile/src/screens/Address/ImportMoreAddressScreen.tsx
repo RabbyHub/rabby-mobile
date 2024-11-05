@@ -40,6 +40,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { LedgerHDPathType } from '@rabby-wallet/eth-keyring-ledger/dist/utils';
 import { AddressAndCopy } from '@/components/Address/AddressAndCopy';
+import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 
 const { isSameAddress } = addressUtils;
 
@@ -195,13 +196,11 @@ export const ImportMoreAddressScreen = () => {
   const [loading, setLoading] = React.useState(false);
   const maxCountRef = React.useRef(MAX_ACCOUNT_COUNT);
 
-  const mnemonicKeyringRef = React.useRef<
-    ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
-  >(undefined);
-  const getMnemonicKeyring = React.useCallback(() => {
+  const mnemonicKeyringRef = React.useRef<HdKeyring>();
+  const getMnemonicKeyring = React.useCallback(async () => {
     if (state.type === KEYRING_TYPE.HdKeyring && state.mnemonics) {
       if (!mnemonicKeyringRef.current) {
-        mnemonicKeyringRef.current = apiMnemonic.getKeyringByMnemonic(
+        mnemonicKeyringRef.current = await apiMnemonic.getKeyringByMnemonic(
           state.mnemonics!,
           state.passphrase!,
         );

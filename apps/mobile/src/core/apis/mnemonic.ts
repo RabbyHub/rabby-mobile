@@ -42,10 +42,12 @@ export const createKeyringWithMnemonics = async (mnemonic: string) => {
   // return this._setCurrentAccountFromKeyring(keyring);
 };
 
-export const getKeyringByMnemonic = (
+export const getKeyringByMnemonic = async (
   mnemonic: string,
   passphrase = '',
-): HdKeyring | undefined => {
+) => {
+  await keyringService.unlockRequest();
+
   const keyring = keyringService.keyrings.find(item => {
     const k = item as unknown as HdKeyring;
     return (
@@ -61,7 +63,8 @@ export const getKeyringByMnemonic = (
   return keyring;
 };
 
-const _getMnemonicKeyringByAddress = (address: string) => {
+const _getMnemonicKeyringByAddress = async (address: string) => {
+  await keyringService.unlockRequest();
   return keyringService.keyrings.find(item => {
     const k = item as unknown as HdKeyring;
 
@@ -100,19 +103,20 @@ const removeMnemonicKeyringFromStash = keyring => {
   }
 };
 
-const removePublicKeyFromStash = (publicKey: string) => {
-  const keyring = getMnemonicKeyRingFromPublicKey(publicKey);
+const removePublicKeyFromStash = async (publicKey: string) => {
+  const keyring = await getMnemonicKeyRingFromPublicKey(publicKey);
   if (keyring) {
     removeMnemonicKeyringFromStash(keyring);
   }
 };
 
 export const removeMnemonicsKeyRingByPublicKey = async (publicKey: string) => {
-  removePublicKeyFromStash(publicKey);
+  await removePublicKeyFromStash(publicKey);
   keyringService.removeKeyringByPublicKey(publicKey);
 };
 
-const getMnemonicKeyRingFromPublicKey = (publicKey: string) => {
+const getMnemonicKeyRingFromPublicKey = async (publicKey: string) => {
+  await keyringService.unlockRequest();
   const targetKeyring = keyringService.keyrings?.find(item => {
     const k = item as unknown as HdKeyring;
     if (
@@ -128,14 +132,14 @@ const getMnemonicKeyRingFromPublicKey = (publicKey: string) => {
   return targetKeyring;
 };
 
-export const getMnemonicFromPublicKey = (publicKey: string) => {
-  const targetKeyring = getMnemonicKeyRingFromPublicKey(publicKey);
+export const getMnemonicFromPublicKey = async (publicKey: string) => {
+  const targetKeyring = await getMnemonicKeyRingFromPublicKey(publicKey);
 
   return targetKeyring?.mnemonic;
 };
 
-export const getMnemonicKeyRingIdFromPublicKey = (publicKey: string) => {
-  const targetKeyring = getMnemonicKeyRingFromPublicKey(publicKey);
+export const getMnemonicKeyRingIdFromPublicKey = async (publicKey: string) => {
+  const targetKeyring = await getMnemonicKeyRingFromPublicKey(publicKey);
   let keyringId;
   if (targetKeyring) {
     keyringId = updateKeyringInStash(targetKeyring);
@@ -143,8 +147,8 @@ export const getMnemonicKeyRingIdFromPublicKey = (publicKey: string) => {
   return keyringId;
 };
 
-export const getMnemonicByAddress = (address: string) => {
-  const keyring = _getMnemonicKeyringByAddress(address);
+export const getMnemonicByAddress = async (address: string) => {
+  const keyring = await _getMnemonicKeyringByAddress(address);
   if (!keyring) {
     throw new Error(t('background.error.notFoundKeyringByAddress'));
   }
@@ -199,7 +203,7 @@ export const checkPassphraseBelongToMnemonic = async (
 };
 
 export const getMnemonicAddressInfo = async (address: string) => {
-  const keyring = _getMnemonicKeyringByAddress(address);
+  const keyring = await _getMnemonicKeyringByAddress(address);
   if (!keyring) {
     throw new Error(t('background.error.notFoundKeyringByAddress'));
   }
@@ -218,7 +222,7 @@ export const generateKeyringWithMnemonic = async (
     throw new Error(t('background.error.invalidMnemonic'));
   }
   // If import twice use same keyring
-  let keyring = getKeyringByMnemonic(mnemonic, passphrase);
+  let keyring = await getKeyringByMnemonic(mnemonic, passphrase);
   const result = {
     keyringId: null as number | null,
     isExistedKR: false,
@@ -262,13 +266,13 @@ export const checkHasMnemonic = () => {
   }
 };
 
-export const requestHDKeyringByMnemonics = (
+export const requestHDKeyringByMnemonics = async (
   mnemonics: string,
   methodName: string,
   passphrase: string,
   ...params: any[]
 ) => {
-  const keyring = getKeyringByMnemonic(mnemonics, passphrase);
+  const keyring = await getKeyringByMnemonic(mnemonics, passphrase);
   if (!keyring) {
     throw new Error('failed to requestHDKeyringByMnemonics, no keyring found.');
   }
@@ -283,7 +287,7 @@ export const activeAndPersistAccountsByMnemonics = async (
   accountsToImport: Required<Pick<Account, 'address' | 'aliasName'>>[],
   addDefaultAlias = false,
 ) => {
-  const keyring = getKeyringByMnemonic(mnemonics, passphrase);
+  const keyring = await getKeyringByMnemonic(mnemonics, passphrase);
 
   if (!keyring) {
     throw new Error('[activeAndPersistAccountsByMnemonics] no keyring found.');
@@ -339,7 +343,7 @@ export const activeAndPersistAccountsByMnemonics = async (
 };
 
 export const getKeyringAccountsByAddress = async (address: string) => {
-  const keyring = _getMnemonicKeyringByAddress(address);
+  const keyring = await _getMnemonicKeyringByAddress(address);
   if (!keyring) {
     throw new Error(t('background.error.notFoundKeyringByAddress'));
   }

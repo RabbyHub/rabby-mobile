@@ -27,8 +27,9 @@ export const useSeedPhrase = () => {
     async (publicKey: string) => {
       if (publicKey) {
         await invokeEnterPassphrase(publicKey);
-        const keyringId =
-          apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
+        const keyringId = await apiMnemonic.getMnemonicKeyRingIdFromPublicKey(
+          publicKey,
+        );
         const data = await apiMnemonic.getMnemonicKeyring(
           'publickey',
           publicKey,

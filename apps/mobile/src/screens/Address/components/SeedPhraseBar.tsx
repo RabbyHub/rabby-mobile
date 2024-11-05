@@ -29,7 +29,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
       },
       async onFinished() {
         const passphrase = await invokeEnterPassphrase(address);
-        const mnemonics = await apiMnemonic.getMnemonicByAddress(address)!;
+        const mnemonics = (await apiMnemonic.getMnemonicByAddress(address))!;
         const result = await apiMnemonic.generateKeyringWithMnemonic(
           mnemonics,
           passphrase,
