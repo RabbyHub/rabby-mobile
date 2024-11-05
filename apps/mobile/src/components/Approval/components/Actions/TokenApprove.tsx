@@ -363,6 +363,16 @@ const TokenApprove = ({
               />
             </SubRow>
           </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
 
           <SecurityListItem
             id="1022"

@@ -17,8 +17,10 @@ import { toast } from '@/components/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const GasAccountCurrentAddress = ({
+  twoColumn,
   transparent,
 }: {
+  twoColumn?: boolean;
   transparent?: boolean;
 }) => {
   const colors = useThemeColors();
@@ -34,6 +36,45 @@ export const GasAccountCurrentAddress = ({
     );
   }, [account?.brandName, currentAccount?.brandName]);
 
+  if (twoColumn) {
+    return (
+      <View
+        style={[
+          styles.currentAddressContainer,
+          { height: 56, paddingVertical: 0, alignItems: 'center', gap: 10 },
+          transparent && { backgroundColor: 'transparent' },
+        ]}>
+        <WalletIcon style={styles.icon} />
+        <View
+          style={{
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 2,
+          }}>
+          <Text
+            style={[styles.aliasText, { fontSize: 13, marginLeft: 0 }]}
+            numberOfLines={1}>
+            {alias}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <AddressViewer
+              address={account?.address || currentAccount!.address}
+              showArrow={false}
+              addressStyle={{ fontSize: 12 }}
+            />
+            <CopyAddressIcon
+              address={account?.address || currentAccount!.address}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
@@ -41,7 +82,9 @@ export const GasAccountCurrentAddress = ({
         transparent && { backgroundColor: 'transparent' },
       ]}>
       <WalletIcon style={styles.icon} />
-      <Text style={styles.aliasText}>{alias}</Text>
+      <Text style={styles.aliasText} numberOfLines={1}>
+        {alias}
+      </Text>
       <AddressViewer
         address={account?.address || currentAccount!.address}
         showArrow={false}
@@ -152,12 +195,14 @@ const getStyles = createGetStyles(colors => ({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors['neutral-card-2'],
+    maxWidth: '100%',
   },
   icon: {
     width: 24,
     height: 24,
   },
   aliasText: {
+    flexShrink: 1,
     marginLeft: 8,
     marginRight: 4,
     fontSize: 15,
