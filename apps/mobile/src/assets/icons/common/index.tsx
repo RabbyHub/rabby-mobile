@@ -31,3 +31,5 @@ export { default as RcIconCloseCircleCC } from './icon-close-circle-cc.svg';
 
 export { default as RcIconNotMatchedCC } from './not-matched-cc.svg';
 export { default as RcIconJumpCC } from './jump-cc.svg';
+
+export { default as RcIconExternalLinkCC } from './external-link-cc.svg';
