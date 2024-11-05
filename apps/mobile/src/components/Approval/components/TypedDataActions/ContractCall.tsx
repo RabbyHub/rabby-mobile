@@ -85,6 +85,7 @@ const ContractCall = ({
                 protocol: requireData.protocol,
                 rank: requireData.rank,
                 address: requireData.id,
+                hasInteraction: requireData.hasInteraction,
                 chain,
               }}>
               <View ref={contractCallAddressRef}>
@@ -105,6 +106,16 @@ const ContractCall = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
           {isInWhitelist && (

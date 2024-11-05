@@ -103,6 +103,17 @@ const ApproveNFT = ({
             </SubRow>
           </SubCol>
 
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.interacted')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Boolean value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+
           <SecurityListItem
             id="1043"
             engineResult={engineResultMap['1043']}
