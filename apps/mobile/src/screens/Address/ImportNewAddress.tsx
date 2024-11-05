@@ -48,15 +48,10 @@ function MainListBlocks() {
         </>
       )}
       <View style={styles.section}>
-        {/* TEST */}
-        <TouchableOpacity
-          onPress={() => {
-            navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportHardwareAddress,
-            });
-          }}>
-          <Text>Connect Hardware Wallets</Text>
-        </TouchableOpacity>
+        <HardwareDeviceList />
+      </View>
+      <View style={styles.section}>
+        <WalletConnectList />
       </View>
 
       <View style={styles.section}>
