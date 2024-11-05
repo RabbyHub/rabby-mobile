@@ -182,8 +182,6 @@ export const ImportSuccessScreen = () => {
                   setImportAddresses(newImportAddresses);
                 }}
                 blurOnSubmit
-                autoFocus
-                clearButtonMode="while-editing"
               />
               <WalletAddress address={importAddresses?.[0]?.address || ''} />
             </View>
@@ -209,7 +207,6 @@ export const ImportSuccessScreen = () => {
                         setImportAddresses(newImportAddresses);
                       }}
                       blurOnSubmit
-                      clearButtonMode="while-editing"
                     />
                     <WalletAddress address={item.address} />
                   </View>
