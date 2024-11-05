@@ -82,6 +82,21 @@ export type AddressNavigatorParamList = {
     alias?: string;
     isExistedKR?: boolean;
   };
+  [RootNames.ImportSuccess2024]?: {
+    address: string | string[];
+    brandName: string;
+    deepLink?: string;
+    realBrandName?: string;
+    isFirstImport?: boolean;
+    isFirstCreate?: boolean;
+    type: KEYRING_TYPE;
+    supportChainList?: Chain[];
+    mnemonics?: string;
+    passphrase?: string;
+    keyringId?: number;
+    alias?: string;
+    isExistedKR?: boolean;
+  };
   [RootNames.ImportWatchAddress]?: {};
   [RootNames.ImportSafeAddress]?: {};
   [RootNames.AddressDetail]: {

@@ -59,7 +59,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         );
         keyringService.removePreMnemonics();
         navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
+          screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.HdKeyring,
             brandName: KEYRING_CLASS.MNEMONIC,

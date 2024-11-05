@@ -417,3 +417,75 @@ export const addMnemonicKeyringAndGotoSuccessScreen = async (
     },
   });
 };
+
+// TODO: if address is existed, return keyringId
+export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
+  input: string | string[],
+  passphrase = '',
+) => {
+  const arr = Array.isArray(input) ? input : [input];
+  const addresses: string[] = [];
+  const currentAddressInfo = {
+    keyringId: null,
+    isExistedKR: false,
+  } as {
+    keyringId: number | null;
+    isExistedKR: boolean;
+  };
+
+  for (let i = 0; i < arr.length; i++) {
+    const mnemonics = arr[i];
+    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
+      mnemonics,
+      passphrase,
+    );
+
+    const firstAddress = await requestKeyring(
+      KEYRING_TYPE.HdKeyring,
+      'getAddresses',
+      keyringId ?? null,
+      0,
+      1,
+    );
+
+    addresses.push(firstAddress[0].address);
+    currentAddressInfo.keyringId = keyringId;
+    currentAddressInfo.isExistedKR = isExistedKR;
+
+    await new Promise(resolve => setTimeout(resolve, 1));
+    await activeAndPersistAccountsByMnemonics(
+      mnemonics,
+      passphrase,
+      firstAddress as any,
+      true,
+    );
+  }
+
+  keyringService.removePreMnemonics();
+
+  if (addresses.length === 1) {
+    return navigate(RootNames.StackAddress, {
+      screen: RootNames.ImportSuccess2024,
+      params: {
+        type: KEYRING_TYPE.HdKeyring,
+        brandName: KEYRING_CLASS.MNEMONIC,
+        isFirstImport: true,
+        address: addresses,
+        mnemonics: arr[0],
+        passphrase,
+        keyringId: currentAddressInfo.keyringId || undefined,
+        isExistedKR: currentAddressInfo.isExistedKR,
+      },
+    });
+  }
+
+  return navigate(RootNames.StackAddress, {
+    screen: RootNames.ImportSuccess2024,
+    params: {
+      type: KEYRING_TYPE.HdKeyring,
+      brandName: KEYRING_CLASS.MNEMONIC,
+      isFirstImport: false,
+      address: addresses,
+    },
+  });
+};

@@ -42,7 +42,7 @@ export const ImportPrivateKeyScreen2024 = () => {
       .importPrivateKey(privateKey)
       .then(([account]) => {
         navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
+          screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.SimpleKeyring,
             brandName: KEYRING_CLASS.PRIVATE_KEY,

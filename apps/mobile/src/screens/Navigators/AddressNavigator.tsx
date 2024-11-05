@@ -34,6 +34,7 @@ import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
+import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -118,6 +119,14 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportSuccess}
         component={ImportSuccessScreen}
+        options={{
+          title: 'Added successfully',
+          headerTintColor: colors['neutral-title-2'],
+        }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSuccess2024}
+        component={ImportSuccessScreen2024}
         options={{
           title: 'Added successfully',
           headerTintColor: colors['neutral-title-2'],

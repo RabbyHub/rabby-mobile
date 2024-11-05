@@ -149,7 +149,7 @@ export const ImportSeedPhraseScreen2024 = () => {
               true,
             );
             return navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportSuccess,
+              screen: RootNames.ImportSuccess2024,
               params: {
                 type: KEYRING_TYPE.HdKeyring,
                 brandName: KEYRING_CLASS.MNEMONIC,

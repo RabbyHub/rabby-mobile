@@ -82,6 +82,7 @@ export const RootNames = {
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
   ImportSuccess: 'ImportSuccess',
+  ImportSuccess2024: 'ImportSuccess2024',
   ImportMethods: 'ImportMethods',
   ImportWatchAddress: 'ImportWatchAddress',
   ImportSafeAddress: 'ImportSafeAddress',
@@ -198,6 +199,7 @@ function makeScreenSpecConfig() {
       ImportWatchAddress: blueLightConf,
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,
+      ImportSuccess2024: blueLightConf,
 
       // Send: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       // Swap: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,

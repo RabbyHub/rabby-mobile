@@ -1,8 +1,8 @@
 import {
-  createGlobalBottomSheetModal,
-  removeGlobalBottomSheetModal,
-} from '@/components/GlobalBottomSheetModal';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { BackupIcon } from '@/components/SeedPhraseBackupToCloud2024/BackupIcon';
 import {
@@ -51,20 +51,20 @@ export const RestoreFromCloud2024: React.FC<{
   }, []);
 
   const handleRestore = React.useCallback(() => {
-    const id = createGlobalBottomSheetModal({
-      name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD,
+    onDone();
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024,
       bottomSheetModalProps: {
-        enableDynamicSizing: true,
-        maxDynamicContentSize: 460,
+        snapPoints: [460],
       },
       onDone: () => {
         setTimeout(() => {
-          removeGlobalBottomSheetModal(id);
+          removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
       files: backups?.filter(item => selectedFilenames.includes(item.filename)),
     });
-  }, [backups, selectedFilenames]);
+  }, [backups, onDone, selectedFilenames]);
 
   const handleSelect = React.useCallback((filename: string) => {
     setSelectedFilenames(prev => {
@@ -78,10 +78,10 @@ export const RestoreFromCloud2024: React.FC<{
   React.useEffect(() => {
     detectCloudIsAvailable().then(result => {
       if (!result) {
-        const id = createGlobalBottomSheetModal({
+        const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE,
           onConfirm: () => {
-            removeGlobalBottomSheetModal(id);
+            removeGlobalBottomSheetModal2024(id);
           },
         });
       }

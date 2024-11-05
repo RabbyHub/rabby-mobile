@@ -251,7 +251,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         );
         keyringService.removePreMnemonics();
         navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
+          screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.HdKeyring,
             brandName: KEYRING_CLASS.MNEMONIC,
