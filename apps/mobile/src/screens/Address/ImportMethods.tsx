@@ -178,7 +178,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     lineHeight: 24,
     textAlign: 'center',
-    color: ctx.colors2024['neutral-InvertHighlight'],
+    color: ctx.colors2024['brand-default'],
   },
 }));
 

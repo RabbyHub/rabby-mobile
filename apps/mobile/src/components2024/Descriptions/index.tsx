@@ -44,6 +44,7 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 25,
+    fontFamily: 'SF Pro Rounded',
   },
   sectionContainer: {
     paddingBottom: 32,
@@ -58,11 +59,13 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 20,
     lineHeight: 24,
     color: ctx.colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
   },
   sectionDesc: {
     fontWeight: '400',
     fontSize: 16,
     lineHeight: 24,
     color: ctx.colors2024['neutral-foot'],
+    fontFamily: 'SF Pro Rounded',
   },
 }));
