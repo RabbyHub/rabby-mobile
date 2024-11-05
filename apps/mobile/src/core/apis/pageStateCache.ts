@@ -12,7 +12,7 @@ export function hasPageStateCache() {
 }
 
 export function getPageStateCache() {
-  if (!keyringService.isUnlocked()) return null;
+  if (!keyringService.isLoaded()) return null;
 
   // return pageStateCacheService.get();
   return null;

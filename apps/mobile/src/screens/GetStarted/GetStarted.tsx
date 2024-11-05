@@ -23,7 +23,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { APP_VERSIONS } from '@/constant';
-import { useAppUnlocked } from '@/hooks/useLock';
+import { useAppLoaded } from '@/hooks/useLock';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -57,7 +57,7 @@ function GetStartedScreen(): JSX.Element {
   const [isInited, setIsInited] = useState(false);
   const handleGetStarted = useCallback(async () => {
     if (!isInited) return;
-    if (!keyringService.isUnlocked()) {
+    if (!keyringService.isLoaded()) {
       navigate(RootNames.Unlock);
       return;
     }
@@ -128,13 +128,13 @@ function GetStartedScreen(): JSX.Element {
     }
   });
 
-  const { isAppUnlocked } = useAppUnlocked();
+  const { isAppLoaded } = useAppLoaded();
   useFocusEffect(
     useCallback(() => {
-      if (isAppUnlocked) {
+      if (isAppLoaded) {
         initAccounts();
       }
-    }, [isAppUnlocked, initAccounts]),
+    }, [isAppLoaded, initAccounts]),
   );
 
   return (

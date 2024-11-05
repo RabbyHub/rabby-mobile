@@ -346,7 +346,7 @@ class ProviderController extends BaseController {
   ethAccounts = async ({ session: { origin } }: { session: Session }) => {
     if (
       !dappService.getDapp(origin)?.isConnected ||
-      !keyringService.isUnlocked()
+      !keyringService.isLoaded()
     ) {
       return [];
     }
@@ -1336,7 +1336,7 @@ class ProviderController extends BaseController {
   @Reflect.metadata('SAFE', true)
   walletGetPermissions = ({ session: { origin } }: { session: Session }) => {
     const result: Web3WalletPermission[] = [];
-    if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
+    if (keyringService.isLoaded() && dappService.getConnectedDapp(origin)) {
       result.push({ parentCapability: 'eth_accounts' });
     }
     return result;
@@ -1347,7 +1347,7 @@ class ProviderController extends BaseController {
    */
   @Reflect.metadata('SAFE', true)
   walletRevokePermissions = ({ session: { origin }, data: { params } }) => {
-    if (keyringService.isUnlocked() && dappService.getConnectedDapp(origin)) {
+    if (keyringService.isLoaded() && dappService.getConnectedDapp(origin)) {
       if (params?.[0] && 'eth_accounts' in params[0]) {
         dappService.removeDapp(origin);
       }

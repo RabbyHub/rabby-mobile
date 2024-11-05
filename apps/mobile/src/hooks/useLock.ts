@@ -22,25 +22,25 @@ const isIOS = Platform.OS === 'ios';
 // } from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
-  appUnlocked: false,
+  appLoaded: false,
   pwdStatus: PasswordStatus.Unknown,
 });
 appLockAtom.onMount = setAppLock => {
   setAppLock(prev => ({
     ...prev,
-    appUnlocked: keyringService.isUnlocked(),
+    appLoaded: keyringService.isLoaded(),
   }));
 };
 
-export function useAppUnlocked() {
-  const [{ appUnlocked, pwdStatus }, setAppLock] = useAtom(appLockAtom);
+export function useAppLoaded() {
+  const [{ appLoaded, pwdStatus }, setAppLock] = useAtom(appLockAtom);
 
   // const hasSetupCustomPassword = useMemo(() => {
   //   return pwdStatus === PasswordStatus.Custom;
   // }, [pwdStatus]);
 
   return {
-    isAppUnlocked: appUnlocked,
+    isAppLoaded: appLoaded,
     // hasSetupCustomPassword,
     setAppLock,
   };
@@ -64,12 +64,12 @@ const tryAutoUnlockPromiseRef = {
  * @description only use this hooks on the top level of your app
  */
 export function useTryUnlockAppWithBuiltinOnTop() {
-  const { setAppLock } = useAppUnlocked();
+  const { setAppLock } = useAppLoaded();
 
   const getTriedUnlock = React.useCallback(async () => {
     return tryAutoUnlockPromiseRef.current.then(async result => {
       setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
+        appLoaded: keyringService.isLoaded(),
         pwdStatus: result.lockInfo.pwdStatus,
       });
       return result;
@@ -93,7 +93,7 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
       const response = await apisLock.getRabbyLockInfo();
 
       setAppLock({
-        appUnlocked: keyringService.isUnlocked(),
+        appLoaded: keyringService.isLoaded(),
         pwdStatus: response.pwdStatus,
       });
 

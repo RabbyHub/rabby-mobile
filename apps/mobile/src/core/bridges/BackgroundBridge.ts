@@ -85,7 +85,7 @@ export class BackgroundBridge extends EventEmitter {
   }
 
   isUnlocked() {
-    return keyringService.isUnlocked();
+    return keyringService.isLoaded();
   }
 
   onUnlock() {

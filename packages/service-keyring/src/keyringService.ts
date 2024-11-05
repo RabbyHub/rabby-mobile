@@ -140,8 +140,6 @@ export class KeyringService extends RNEventEmitter {
       unencryptedKeyringData: keyringData,
     });
 
-    console.log('keyringData', JSON.stringify(keyringData));
-
     // eslint-disable-next-line no-void
     void Promise.all(
       keyringData.map(data => {
@@ -180,10 +178,8 @@ export class KeyringService extends RNEventEmitter {
     return Boolean(this.store.getState().booted);
   }
 
-  // For test: 或许替换掉 isUnlocked，换成 isDecrypted
-  isUnlocked() {
-    return Boolean(this.keyrings);
-    return this.memStore.getState().isUnlocked;
+  isLoaded() {
+    return Boolean(this.keyrings) || this.memStore.getState().isUnlocked;
   }
 
   hasSubmitPassword() {

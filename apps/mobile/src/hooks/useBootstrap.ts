@@ -10,7 +10,7 @@ import { sleep } from '@/utils/async';
 import { SPA_urlChangeListener } from '@rabby-wallet/rn-webview-bridge';
 import { sendUserAddressEvent } from '@/core/apis/analytics';
 import { loadSecurityChain, useGlobal } from './global';
-import { useAppUnlocked, useTryUnlockAppWithBuiltinOnTop } from './useLock';
+import { useAppLoaded, useTryUnlockAppWithBuiltinOnTop } from './useLock';
 import { useNavigationReady } from './navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { useAccounts } from './account';
@@ -50,7 +50,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { isAppUnlocked, setAppLock } = useAppUnlocked();
+  const { isAppLoaded, setAppLock } = useAppLoaded();
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {
@@ -71,14 +71,14 @@ export function useInitializeAppOnTop() {
   React.useEffect(() => {
     const onUnlock = () => {
       console.debug('useBootstrap::onUnlock');
-      setAppLock(prev => ({ ...prev, appUnlocked: true }));
+      setAppLock(prev => ({ ...prev, appLoaded: true }));
       sendUserAddressEvent();
 
       doInitializeApis();
       fetchAccounts();
     };
     const onLock = () => {
-      setAppLock(prev => ({ ...prev, appUnlocked: false }));
+      setAppLock(prev => ({ ...prev, appLoaded: false }));
       fetchAccounts();
     };
     keyringService.on('unlock', onUnlock);
@@ -91,12 +91,12 @@ export function useInitializeAppOnTop() {
   }, [setAppLock, doInitializeApis, fetchAccounts]);
 
   React.useEffect(() => {
-    if (isAppUnlocked) {
+    if (isAppLoaded) {
       doInitializeApis();
     }
-  }, [doInitializeApis, isAppUnlocked]);
+  }, [doInitializeApis, isAppLoaded]);
 
-  return { isAppUnlocked };
+  return { isAppLoaded };
 }
 
 const loadEntryScriptsAtom = atom({

@@ -43,7 +43,7 @@ import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/Glob
 import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
 import { ScannerScreen } from './screens/Scanner/ScannerScreen';
 import UnlockScreen from './screens/Unlock/Unlock';
-import { useAppUnlocked } from './hooks/useLock';
+import { useAppLoaded } from './hooks/useLock';
 import { BackgroundSecureBlurView } from './components/customized/BlurViews';
 import {
   AppStatusBar,
@@ -79,7 +79,7 @@ export default function AppNavigation({
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
 
-  const { isAppUnlocked } = useAppUnlocked();
+  const { isAppLoaded } = useAppLoaded();
   const { setNavigationReady } = useSetNavigationReady();
 
   const { setCurrentRouteName } = useSetCurrentRouteName();
@@ -112,7 +112,7 @@ export default function AppNavigation({
   >(() => {
     setNavigationReady(true);
     let readyRootName = navigationRef.getCurrentRoute()?.name!;
-    if (!isAppUnlocked) {
+    if (!isAppLoaded) {
       replace(RootNames.Unlock);
       readyRootName = RootNames.Unlock;
     }
@@ -123,7 +123,7 @@ export default function AppNavigation({
       screen_class: readyRootName,
     });
     matomoLogScreenView({ name: readyRootName });
-  }, [setNavigationReady, isAppUnlocked, onRouteChange]);
+  }, [setNavigationReady, isAppLoaded, onRouteChange]);
 
   const onStateChange = useCallback<
     React.ComponentProps<typeof NavigationContainer>['onStateChange'] & object
