@@ -28,12 +28,14 @@ import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
 import { Skeleton } from '@rneui/themed';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
   const [addressAlias, setAddressAlias] = useState('');
   const { styles, colors2024 } = useTheme2024({ getStyle });
+  const navigation = useRabbyAppNavigation();
 
   const { value, loading, error } = useAsync(async () => {
     const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
@@ -78,7 +80,7 @@ function MainListBlocks() {
     });
     console.log('exe handleContinue');
     const onSetupPasswordDone = () => {
-      navigate(RootNames.StackAddress2024, {
+      navigation.replace(RootNames.StackAddress2024, {
         screen: RootNames.CreateChooseBackup,
         params: {
           address: newAddress,
@@ -88,13 +90,13 @@ function MainListBlocks() {
         },
       });
     };
-    navigate(RootNames.StackAddress2024, {
+    navigation.replace(RootNames.StackAddress2024, {
       screen: RootNames.SetPassword2024,
       params: {
         onFinish: onSetupPasswordDone,
       },
     });
-  }, [newAddress, addressAlias, value]);
+  }, [newAddress, addressAlias, value, navigation]);
 
   return (
     <TouchableWithoutFeedback
@@ -116,7 +118,7 @@ function MainListBlocks() {
           <>
             <NextInput
               containerStyle={styles.inputContainer}
-              clearable={true}
+              // clearable={false}
               inputStyle={styles.inputInner}
               inputProps={{
                 value: addressAlias,
@@ -145,13 +147,8 @@ function MainListBlocks() {
 }
 
 function CreateNewAddress(): JSX.Element {
-  const { colors2024 } = useTheme2024({ getStyle });
-
   return (
-    <NormalScreenContainer
-      style={{
-        backgroundColor: colors2024['neutral-bg-1'],
-      }}>
+    <NormalScreenContainer>
       <MainListBlocks />
     </NormalScreenContainer>
   );
@@ -195,6 +192,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     paddingHorizontal: 20,
     marginBottom: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   addressText: {
     fontSize: 16,

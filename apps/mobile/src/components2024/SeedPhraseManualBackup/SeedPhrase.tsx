@@ -243,7 +243,6 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
       const mnemonics = seedPhrase;
       const passphrase = '';
       try {
-        onConfirm?.();
         await activeAndPersistAccountsByMnemonics(
           mnemonics,
           passphrase,
@@ -251,7 +250,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
           true,
         );
         keyringService.removePreMnemonics();
-        return navigate(RootNames.StackAddress, {
+        navigate(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess,
           params: {
             type: KEYRING_TYPE.HdKeyring,
@@ -265,6 +264,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
             alias,
           },
         });
+        onConfirm?.();
       } catch (e) {
         console.log('addMnemonicKeyringAndGotoSuccessScreen error', e);
       }

@@ -89,7 +89,7 @@ export const BackupIcon: React.FC<Props> = ({
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
       return isGray
-        ? require('@/assets/icons/address/icloud-gray.png')
+        ? require('@/assets/icons/address/icloud-gray-new.png')
         : require('@/assets/icons/address/icloud.png');
     }
     return isGray
@@ -138,6 +138,7 @@ export const BackupIcon: React.FC<Props> = ({
               color={colors['blue-default']}
               size={100}
               trackWidth={2.5}
+              borderRadius={4}
             />
           </View>
         )}

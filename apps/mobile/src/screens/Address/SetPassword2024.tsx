@@ -223,6 +223,7 @@ function MainListBlocks() {
                 // initialPasswordVisible
                 ref={passwordInputRef}
                 fieldName="New password"
+                containerStyle={styles.inputStyle}
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
                     editable: false,
@@ -232,8 +233,6 @@ function MainListBlocks() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
-                  placeholder: t('page.createPassword.passwordPlaceholder'),
-                  placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldValue('password', text, true);
                   },
@@ -246,6 +245,7 @@ function MainListBlocks() {
                 fieldName="Confirm password"
                 ref={confirmPasswordInputRef}
                 style={{ marginTop: 20 }}
+                containerStyle={styles.inputStyle}
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
                     editable: false,
@@ -325,12 +325,8 @@ function MainListBlocks() {
 }
 
 function SetPassword2024(): JSX.Element {
-  const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer
-      style={{
-        backgroundColor: colors2024['neutral-bg-1'],
-      }}>
+    <NormalScreenContainer>
       <MainListBlocks />
     </NormalScreenContainer>
   );
@@ -341,6 +337,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     width: '100%',
     position: 'absolute',
     bottom: 60,
+  },
+  inputStyle: {
+    borderWidth: 0,
+    backgroundColor: colors2024['neutral-bg-2'],
   },
   text: {
     color: colors2024['neutral-secondary'],
@@ -369,7 +369,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 36,
+    marginTop: 24,
     paddingHorizontal: 8,
   },
   container: {
@@ -380,6 +380,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     gap: 12,
     paddingHorizontal: 20,
     marginBottom: 20,
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   bodyContainer: {
     // backgroundColor: colors['neutral-bg2'],

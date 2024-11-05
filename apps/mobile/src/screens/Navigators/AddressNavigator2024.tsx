@@ -38,9 +38,13 @@ export function AddressNavigator2024() {
         name={RootNames.CreateNewAddress}
         component={CreateNewAddress}
         options={mergeScreenOptions({
+          headerLeft: () => null,
           headerTitle: '1. Name Your Address',
           title: '1. Name Your Address',
           headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',
@@ -53,9 +57,13 @@ export function AddressNavigator2024() {
         name={RootNames.SetPassword2024}
         component={SetPassword2024}
         options={mergeScreenOptions({
+          headerLeft: () => null,
           headerTitle: '2. Set password',
           title: '2. Set password',
           headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],
             fontWeight: '800',
@@ -68,8 +76,12 @@ export function AddressNavigator2024() {
         name={RootNames.CreateChooseBackup}
         component={CreateChooseBackup}
         options={mergeScreenOptions({
+          headerLeft: () => null,
           headerTitle: '3. Choose a backup method',
           title: '3. Choose a backup method',
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: {
             color: colors2024['neutral-title-1'],

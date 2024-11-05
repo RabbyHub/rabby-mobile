@@ -26,6 +26,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
+import { IS_IOS } from '@/core/native/utils';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -74,7 +75,11 @@ function MainListBlocks() {
         <Card style={styles.listItem} onPress={handleBackupToCloud}>
           <ListItem
             Icon={RcIconBackupCloud}
-            title={t('page.nextComponent.createNewAddress.icloudBackup')}
+            title={
+              IS_IOS
+                ? t('page.newAddress.seedPhrase.icloudBackup')
+                : t('page.newAddress.seedPhrase.googleDriveBackup')
+            }
           />
           <Text style={styles.quickTag}>{'Quick'}</Text>
         </Card>
@@ -137,18 +142,18 @@ function MainListBlocks() {
 function CreateChooseBackup(): JSX.Element {
   const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <LinearGradient
-      colors={['#FFF', '#F9F9F9']} // 渐变颜色
-      start={{ x: 0, y: 0 }} // 渐变起始位置
-      end={{ x: 0, y: 1 }} // 渐变结束位置
-      // style={{
-      //   height: '100%',
-      // }}
-    >
-      <NormalScreenContainer>
+    <NormalScreenContainer>
+      <LinearGradient
+        colors={['#FFF', '#F9F9F9']} // 渐变颜色
+        start={{ x: 0, y: 0 }} // 渐变起始位置
+        end={{ x: 0, y: 1 }} // 渐变结束位置
+        // style={{
+        //   height: '100%',
+        // }}
+      >
         <MainListBlocks />
-      </NormalScreenContainer>
-    </LinearGradient>
+      </LinearGradient>
+    </NormalScreenContainer>
   );
 }
 
@@ -168,20 +173,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   quickTag: {
     position: 'absolute',
-    right: 24,
+    right: 20,
     top: 32,
-    color: colors2024['blue-default'],
+    color: colors2024['brand-default'],
     fontWeight: '700',
     fontSize: 12,
     lineHeight: 16,
-    textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
     width: 44,
     height: 24,
     padding: 4,
     paddingHorizontal: 6,
     borderRadius: 8,
-    backgroundColor: colors2024['blue-light-4'],
+    backgroundColor: colors2024['brand-light-1'],
   },
   listItem: {
     position: 'relative',
