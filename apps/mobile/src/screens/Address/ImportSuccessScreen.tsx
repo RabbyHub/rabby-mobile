@@ -176,7 +176,7 @@ export const ImportSuccessScreen = () => {
                   const _aliasName = nativeEvent.nativeEvent.text;
                   const newImportAddresses = [...importAddresses];
                   newImportAddresses[0] = {
-                    address: importAddresses?.[0]?.aliasName || '',
+                    address: importAddresses?.[0]?.address || '',
                     aliasName: _aliasName,
                   };
                   setImportAddresses(newImportAddresses);
