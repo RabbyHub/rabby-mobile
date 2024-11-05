@@ -86,9 +86,13 @@ scripts/deployments/android/*.aab
 scripts/tmp
 
 **/InpageBridgeWeb3.js
+/src/**/vconsole.min.js
 /android/app/src/main/assets/custom/vconsole.min.js
 /android/app/src/main/assets/fonts/*
-/src/**/vconsole.min.js
+/android/app/src/main/res/font/*.ttf
+/android/app/src/main/res/font/*.otf
+/ios/RabbyMobile/Resources/*.ttf
+/ios/RabbyMobile/Resources/*.otf
 
 # android/sentry.properties
 # ios/sentry.properties
