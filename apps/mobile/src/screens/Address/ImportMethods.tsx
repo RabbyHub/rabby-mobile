@@ -83,28 +83,15 @@ function ImportMethods(): JSX.Element {
           onPress={() => {
             const modalId = createGlobalBottomSheetModal2024({
               name: MODAL_NAMES.DESCRIPTION,
-              bottomSheetModalProps: { enableDismissOnClose: true },
+              bottomSheetModalProps: {
+                enableDismissOnClose: true,
+                snapPoints: ['40%'],
+              },
               title: 'Is it safe to import it in Rabby?',
               sections: [
                 {
-                  title: 'Unique Identifier',
                   description:
-                    'A Web3 wallet address is a unique string of characters that represents your identity on the blockchain.',
-                },
-                {
-                  title: 'Send and Receive Crypto',
-                  description:
-                    'It allows you to send, receive, and store cryptocurrencies securely.',
-                },
-                {
-                  title: 'Access dApps',
-                  description:
-                    'Your wallet address is used to connect to decentralized applications (dApps) and interact with blockchain-based services.',
-                },
-                {
-                  title: 'Ownership and Control',
-                  description:
-                    'You fully own and control the assets linked to your address, with access secured by private keys or recovery phrases.',
+                    'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
                 },
               ],
               nextButtonProps: {
@@ -178,7 +165,8 @@ const getStyles = createGetStyles2024(ctx => ({
     fontWeight: '700',
     lineHeight: 24,
     textAlign: 'center',
-    color: ctx.colors2024['brand-default'],
+    backgroundColor: ctx.colors2024['brand-default'],
+    color: ctx.colors2024['neutral-InvertHighlight'],
   },
 }));
 
