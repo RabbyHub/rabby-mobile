@@ -162,7 +162,7 @@ cleanup_fonts_assets() {
 
   local android_target=$project_dir/android/app/src/main/res/font
   echo "cleanup and copy fonts to $android_target..."
-  rm -rf $android_target/*.*tf && \
+  rm -f $android_target/sf_pro_all.ttf && \
     cp $project_dir/assets/fonts/SF-Pro.ttf $android_target/sf_pro_all.ttf
 
 }

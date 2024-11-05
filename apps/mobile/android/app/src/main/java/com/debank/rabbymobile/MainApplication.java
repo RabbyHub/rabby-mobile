@@ -59,6 +59,7 @@ public class MainApplication extends Application implements ReactApplication {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     OkHttpClientProvider.setOkHttpClientFactory(new UserAgentClientFactory());
+    ReactFontManager.getInstance().addCustomFont(this, "Roboto", R.font.roboto);
     ReactFontManager.getInstance().addCustomFont(this, "SF Pro", R.font.sf_pro);
     // AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
