@@ -113,7 +113,7 @@ export const RestoreFromCloud2024: React.FC<{
     }
   }, [backups, importedFiles]);
 
-  if (!backups?.length) {
+  if (!backups?.length && !loading) {
     return (
       <NormalScreenContainer
         noHeader
@@ -159,7 +159,7 @@ export const RestoreFromCloud2024: React.FC<{
               <BackupItemSkeleton />
             </>
           ) : (
-            backups.map((item, index) => {
+            backups?.map((item, index) => {
               const imported = importedFiles.includes(item.filename);
               const selected = selectedFilenames.includes(item.filename);
               return (
