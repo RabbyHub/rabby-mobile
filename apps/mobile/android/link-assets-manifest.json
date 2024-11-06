@@ -8,10 +8,6 @@
     {
       "path": "assets/custom/vconsole.min.js",
       "sha1": "f14c26a8bc8928808c4f163dd5279100e471494e"
-    },
-    {
-      "path": "assets/fonts/Anton-Regular.ttf",
-      "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
     }
   ]
 }
