@@ -105,11 +105,15 @@ export function useTuneStatusBarOnRouteChange() {
 
   const tuneOnRouteChange = React.useCallback(
     (currentRouteName?: string) => {
-      currentRouteName = currentRouteName || getLatestNavigationName()!;
+      const nextRouteName = currentRouteName || getLatestNavigationName()!;
 
       __DEV__ &&
-        console.debug('tuneOnRouteChange::currentRouteName', currentRouteName);
-      tuneStatusBar({ currentScreen: currentRouteName });
+        console.debug(
+          'tuneOnRouteChange:: nextRouteName %s; currentRouteName %s',
+          nextRouteName,
+          currentRouteName,
+        );
+      tuneStatusBar({ currentScreen: nextRouteName });
 
       return currentRouteName;
     },

@@ -4,10 +4,7 @@ import { Keyboard, PanResponder, View, ViewProps } from 'react-native';
 import { apisAutoLock } from '@/core/apis';
 import { getLatestNavigationName } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
-import {
-  requestLockWalletAndBackToUnlockScreen,
-  useCurrentRouteName,
-} from '@/hooks/navigation';
+import { requestLockWallet, useCurrentRouteName } from '@/hooks/navigation';
 import { keyringService } from '@/core/services';
 import { throttle } from 'lodash';
 import { autoLockEvent } from '@/core/apis/autoLock';
@@ -38,7 +35,7 @@ function useAutoLockIfTimeout(currentRouteName: string | null) {
 
       const hasBeenUnlock = routeName === RootNames.Unlock;
       if (!hasBeenUnlock) {
-        requestLockWalletAndBackToUnlockScreen();
+        requestLockWallet();
       } else {
         ctx.delayLock();
       }
@@ -134,18 +131,6 @@ function ForAppNav(props: Props<'View'>) {
 
       hideEvent.remove();
       showEvent.remove();
-    };
-  }, []);
-
-  // handle unlockRequest
-  React.useEffect(() => {
-    const handler = () => {
-      requestLockWalletAndBackToUnlockScreen();
-    };
-    keyringService.addListener('unlock-request', handler);
-
-    return () => {
-      keyringService.removeListener('unlock-request', handler);
     };
   }, []);
 

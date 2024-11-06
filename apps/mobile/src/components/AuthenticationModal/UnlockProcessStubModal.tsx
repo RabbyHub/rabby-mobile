@@ -5,11 +5,14 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { apisKeychain, apisLock } from '@/core/apis';
 import { IS_IOS } from '@/core/native/utils';
 import { useThemeStyles } from '@/hooks/theme';
-import { usePasswordStatus } from '@/hooks/useLock';
+import { useAppLoaded, usePasswordStatus } from '@/hooks/useLock';
 import { createGetStyles, makeDebugBorder } from '@/utils/styles';
 import type { ValidationBehaviorProps } from '@/core/apis/lock';
 
-import { AppBottomSheetModalTitle } from '../customized/BottomSheet';
+import {
+  AppBottomSheetModal,
+  AppBottomSheetModalTitle,
+} from '../customized/BottomSheet';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
@@ -25,7 +28,9 @@ import TouchableView from '../Touchable/TouchableView';
 import { useBiometricsComputed } from '@/hooks/biometrics';
 import {
   BottomSheetBackdropProps,
+  BottomSheetModalProps,
   BottomSheetTextInput,
+  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { Button } from '../Button';
@@ -36,6 +41,9 @@ import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
 import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
+import { requestLockWallet } from '@/hooks/navigation';
+import { keyringService } from '@/core/services';
+import { useUnlockApp } from '@/screens/Unlock/hooks';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -46,14 +54,29 @@ const SIZES = {
   bioAuthButtonSize: 48,
 };
 
-export interface BasicAuthenticationModalProps extends ValidationBehaviorProps {
+type UIAuthType = 'none' | 'password' | 'biometrics';
+type UnlockCtx = {
+  hasSetupCustomPassword?: boolean;
+  authType?: UIAuthType;
+  getValidatedPassword: () => string;
+};
+export interface UnlockProcessStubModalProps {
   confirmText?: string;
   cancelText?: string;
-  title: string;
+  title?: string;
   description?: string;
   checklist?: string[];
   placeholder?: string;
+  isUnlocking?: boolean;
   onCancel?(): void;
+  /**
+   * @description external-defined validatie password user input.
+   * Throw an error to interrupt the post process, and `error.message` will be shown.
+   *
+   * @param password
+   */
+  validationHandler?(password: string): void | Promise<void>;
+  onValidatedPassword?(ctx: UnlockCtx): void;
   disableValidation?: boolean;
   authType?:
     | Exclude<apisLock.UIAuthType, 'none'>[]
@@ -93,6 +116,7 @@ type AuthState = {
 };
 
 function FooterButtonGroup({
+  isUnlocking,
   onCancel,
   onConfirm,
   authState,
@@ -100,8 +124,9 @@ function FooterButtonGroup({
   style,
   disabled,
 }: {
-  onCancel: () => void;
-  onConfirm: () => void;
+  isUnlocking?: boolean;
+  onCancel?: () => void;
+  onConfirm?: () => void;
   authState: AuthState;
   bioActive?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -122,6 +147,7 @@ function FooterButtonGroup({
   return (
     <View style={StyleSheet.flatten([footerStyles.buttonGroup, style])}>
       <Button
+        disabled={isUnlocking}
         title={t('global.Cancel')}
         containerStyle={footerStyles.btnContainer}
         buttonStyle={footerStyles.cancelStyle}
@@ -132,6 +158,7 @@ function FooterButtonGroup({
         <>
           <View style={footerStyles.btnGap} />
           <Button
+            loading={isUnlocking}
             icon={ctx =>
               authState.authType !== 'biometrics' ? null : (
                 <BiometricsIcon
@@ -222,22 +249,19 @@ const DFLT_VALIDATE = async (password: string) => {
   return apisLock.throwErrorIfInvalidPwd(password);
 };
 
-export const BasicAuthenticationModal = ({
-  title,
-  onFinished,
+const ModalInner = ({
+  title = 'Unlock to Continue',
+  isUnlocking,
+  onCancel,
+  onValidatedPassword,
   validationHandler = DFLT_VALIDATE,
   description,
   placeholder,
-  $createParams,
-  // disableValidation: propNoValidation = !validationHandler,
   authType: authTypes = /* propNoValidation ? ['none'] :  */ [
     'biometrics',
     'password',
   ],
-}: GlobalModalViewProps<
-  MODAL_NAMES.AUTHENTICATION,
-  BasicAuthenticationModalProps
->) => {
+}: UnlockProcessStubModalProps) => {
   const { t } = useTranslation();
   const { styles, colors } = useThemeStyles(getStyle);
   const { safeSizes } = useSafeAndroidBottomSizes({
@@ -276,7 +300,7 @@ export const BasicAuthenticationModal = ({
         await validationHandler?.(password);
         apisLock.updateUnlockTime();
       }
-      onFinished?.({
+      onValidatedPassword?.({
         ...onFinishedReturnBase,
         authType: 'password',
         getValidatedPassword: () => password,
@@ -288,7 +312,7 @@ export const BasicAuthenticationModal = ({
   }, [
     disableValidation,
     onFinishedReturnBase,
-    onFinished,
+    onValidatedPassword,
     password,
     validationHandler,
   ]);
@@ -331,7 +355,7 @@ export const BasicAuthenticationModal = ({
           purpose: apisKeychain.RequestGenericPurpose.DECRYPT_PWD,
           onPlainPassword: async password => {
             await validationHandler?.(password);
-            onFinished?.({
+            onValidatedPassword?.({
               ...onFinishedReturnBase,
               authType: 'biometrics',
               getValidatedPassword: () => password,
@@ -355,7 +379,7 @@ export const BasicAuthenticationModal = ({
     setBioAuth,
     disableValidation,
     validationHandler,
-    onFinished,
+    onValidatedPassword,
     onFinishedReturnBase,
   ]);
 
@@ -426,7 +450,7 @@ export const BasicAuthenticationModal = ({
                   ])}
                   placeholder={
                     placeholder ??
-                    t('component.BasicAuthenticationModal.passwordPlaceholder')
+                    t('component.UnlockProcessStubModal.passwordPlaceholder')
                   }
                 />
                 {__DEV__ && bioComputed.isBiometricsEnabled && (
@@ -457,85 +481,102 @@ export const BasicAuthenticationModal = ({
         </View>
       </View>
       <FooterButtonGroup
+        isUnlocking={isUnlocking}
         authState={{ authType: currentAuthType }}
         // bioActive={bioAuthRef.current.stage !== BioAuthStage['idle']}
         style={StyleSheet.flatten([
           styles.footerButtonGroup,
           { marginBottom: safeSizes.footerButtonGroupMb },
         ])}
-        onCancel={$createParams.onCancel ?? noop}
+        onCancel={onCancel}
         onConfirm={handleConfirm}
       />
     </AutoLockView>
   );
 };
 
-BasicAuthenticationModal.show = async (
-  showConfig: BasicAuthenticationModalProps & {
-    /** @default {true} */
-    closableOnBackdropPress?: boolean;
-    closeDuration?: number;
-  },
-) => {
-  const {
-    closeDuration = IS_IOS ? 0 : 300,
-    closableOnBackdropPress = true,
-    onCancel,
-    ...props
-  } = showConfig;
-  let disableValidation = showConfig.disableValidation;
-  const lockInfo = await apisLock.getRabbyLockInfo();
-  if (!lockInfo.isUseCustomPwd) {
-    // enforce disableValidation to be false if the app doesn't have a custom password
-    disableValidation = true;
-  } else if (typeof showConfig.disableValidation !== 'boolean') {
-    disableValidation = false;
-  }
+export function UnlockProcessStubModal({
+  bottomSheetModalProps,
+  ...props
+}: UnlockProcessStubModalProps & {
+  bottomSheetModalProps?: BottomSheetModalProps;
+}) {
+  const [unlockStage, setUnlockProcess] = React.useState({
+    visible: __DEV__,
+    isUnlocking: false,
+  });
 
-  const renderBackdrop = (props: BottomSheetBackdropProps) => {
+  const modalRef = React.useRef<AppBottomSheetModal>(null);
+  React.useEffect(() => {
+    if (unlockStage.visible) {
+      modalRef.current?.present();
+    } else {
+      modalRef.current?.dismiss();
+    }
+  }, [unlockStage.visible]);
+
+  // handle unlockRequest
+  React.useEffect(() => {
+    const handler = () => {
+      setUnlockProcess(prev => ({ ...prev, visible: true }));
+    };
+    keyringService.addListener('unlock-request', handler);
+
+    return () => {
+      keyringService.removeListener('unlock-request', handler);
+    };
+  }, []);
+  const { unlockApp } = useUnlockApp();
+  const { fetchLoadInfo } = useAppLoaded();
+
+  const renderBackdrop = useCallback((props: BottomSheetBackdropProps) => {
     return (
       <AppBottomSheetBackdrop
         {...props}
         pressBehavior="none"
-        onPress={() => {
-          if (!closableOnBackdropPress) return;
-
-          onCancel?.();
-          hideModal();
-        }}
+        onPress={() => void 0}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
       />
     );
-  };
+  }, []);
 
-  const modalId = createGlobalBottomSheetModal({
-    name: MODAL_NAMES.AUTHENTICATION,
-    bottomSheetModalProps: {
-      enableDynamicSizing: true,
-      backdropComponent: renderBackdrop,
-    },
-    ...props,
-    onCancel: () => {
-      try {
-        onCancel?.();
-      } catch (err) {
-        console.error(err);
-      }
-      hideModal();
-    },
-    disableValidation,
-    onFinished(ctx) {
-      hideModal();
-      props.onFinished?.(ctx);
-    },
-  });
+  return (
+    <AppBottomSheetModal
+      {...bottomSheetModalProps}
+      ref={modalRef}
+      backdropComponent={renderBackdrop}
+      enableDismissOnClose={true}
+      enableDynamicSizing>
+      <BottomSheetView>
+        <ModalInner
+          {...props}
+          authType={['password']}
+          isUnlocking={unlockStage.isUnlocking}
+          onCancel={() => {
+            setUnlockProcess(prev => ({ ...prev, visible: false }));
+          }}
+          onValidatedPassword={async ctx => {
+            setUnlockProcess(prev => ({ ...prev, isUnlocking: true }));
+            const unlockResult = await unlockApp(ctx.getValidatedPassword());
+            fetchLoadInfo();
 
-  const hideModal = () => {
-    return removeGlobalBottomSheetModal(modalId, { duration: closeDuration });
-  };
-  return { modalId, hideModal };
-};
+            setTimeout(() => {
+              setUnlockProcess(prev => ({
+                ...prev,
+                visible: false,
+                isUnlocking: false,
+              }));
+            }, 250);
+            keyringService.emit('unlock-response', {
+              success: !unlockResult.error,
+            });
+          }}
+        />
+      </BottomSheetView>
+    </AppBottomSheetModal>
+  );
+}
 
 const getStyle = createGetStyles(colors => {
   return {

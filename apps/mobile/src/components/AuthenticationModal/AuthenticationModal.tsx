@@ -23,7 +23,10 @@ import { noop } from 'lodash';
 import { BiometricsIcon } from './BiometricsIcon';
 import TouchableView from '../Touchable/TouchableView';
 import { useBiometricsComputed } from '@/hooks/biometrics';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetBackdropProps,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 import { Button } from '../Button';
 import { useRefState } from '@/hooks/common/useRefState';
@@ -32,6 +35,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { BioAuthStage, coerceAuthType, filterAuthTypes } from './hooks';
 import AutoLockView from '../AutoLockView';
 import { APP_TEST_PWD } from '@/constant';
+import AppBottomSheetBackdrop from '../patches/BottomSheetBackdrop';
 
 const SIZES = {
   /* input:(pt:24+h:48) + errorText:(mt:12+h:20) + pb:24 */
@@ -508,10 +512,17 @@ export const AuthenticationModal = ({
 
 AuthenticationModal.show = async (
   showConfig: AuthenticationModalProps & {
+    /** @default {true} */
+    closableOnBackdropPress?: boolean;
     closeDuration?: number;
   },
 ) => {
-  const { closeDuration = IS_IOS ? 0 : 300, onCancel, ...props } = showConfig;
+  const {
+    closeDuration = IS_IOS ? 0 : 300,
+    closableOnBackdropPress = true,
+    onCancel,
+    ...props
+  } = showConfig;
   let disableValidation = showConfig.disableValidation;
   const lockInfo = await apisLock.getRabbyLockInfo();
   if (!lockInfo.isUseCustomPwd) {
@@ -521,10 +532,28 @@ AuthenticationModal.show = async (
     disableValidation = false;
   }
 
-  const id = createGlobalBottomSheetModal({
+  const renderBackdrop = (props: BottomSheetBackdropProps) => {
+    return (
+      <AppBottomSheetBackdrop
+        {...props}
+        pressBehavior="none"
+        onPress={() => {
+          if (!closableOnBackdropPress) return;
+
+          onCancel?.();
+          hideModal();
+        }}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+      />
+    );
+  };
+
+  const modalId = createGlobalBottomSheetModal({
     name: MODAL_NAMES.AUTHENTICATION,
     bottomSheetModalProps: {
       enableDynamicSizing: true,
+      backdropComponent: !closableOnBackdropPress ? undefined : renderBackdrop,
     },
     ...props,
     onCancel: () => {
@@ -543,9 +572,9 @@ AuthenticationModal.show = async (
   });
 
   const hideModal = () => {
-    return removeGlobalBottomSheetModal(id, { duration: closeDuration });
+    return removeGlobalBottomSheetModal(modalId, { duration: closeDuration });
   };
-  return { hideModal };
+  return { modalId, hideModal };
 };
 
 const getStyle = createGetStyles(colors => {

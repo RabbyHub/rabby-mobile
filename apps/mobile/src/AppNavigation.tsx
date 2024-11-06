@@ -53,6 +53,7 @@ import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import { UnlockProcessStubModal } from './components/AuthenticationModal/UnlockProcessStubModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -277,6 +278,8 @@ export default function AppNavigation({
       </NavigationContainer>
       <GlobalSecurityTipStubModal />
       <BackgroundSecureBlurView />
+
+      <UnlockProcessStubModal />
 
       <FloatViewAutoLockCount />
     </AutoLockView.ForAppNav>

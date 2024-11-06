@@ -249,14 +249,15 @@ async function unlockWallet(password: string) {
 
 export async function lockWallet() {
   await keyringService.setLocked();
-  sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
+  // sessionService.broadcastEvent(BroadcastEvent.accountsChanged, []);
   sessionService.broadcastEvent(BroadcastEvent.lock);
 }
 
 export function getAppLoadState() {
   type Names = typeof import('@/constant/layout').RootNames;
   const result = {
-    isLoaded: keyringService.isLoaded(),
+    appLoaded: keyringService.isLoaded(),
+    appUnlocked: keyringService.isUnlocked(),
     appHasUnencryptedKeyringData: keyringService.hasUnencryptedKeyringData(),
     targetScreenType: 'GetStarted' as Names['GetStarted'] | Names['Home'],
   };

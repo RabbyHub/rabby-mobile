@@ -23,10 +23,11 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { useAppLoaded } from '@/hooks/useLock';
-import { BasicAuthenticationModal } from '@/components/AuthenticationModal/BasicAuthenticationModal';
+import { UnlockProcessStubModal } from '@/components/AuthenticationModal/UnlockProcessStubModal';
 import { useTranslation } from 'react-i18next';
 import { toast, toastIndicator } from '@/components/Toast';
 import { useAccounts } from '@/hooks/account';
+import { AuthenticationModal } from '@/components/AuthenticationModal/AuthenticationModal';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
@@ -67,7 +68,7 @@ function GetStartedScreen(): JSX.Element {
     if (modalIdRef.current) return;
 
     let finished = false;
-    const { modalId } = await BasicAuthenticationModal.show({
+    const { modalId } = await AuthenticationModal.show({
       confirmText: t('global.confirm'),
       cancelText: t('global.Cancel'),
       title: '[Upgrade] Use App at locked State',

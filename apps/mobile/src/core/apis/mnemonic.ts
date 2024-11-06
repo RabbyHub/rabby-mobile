@@ -22,8 +22,12 @@ import {
 } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
 
-export const getMnemonics = async (password: string, address: string) => {
-  await throwErrorIfInvalidPwd(password);
+export const getMnemonics = async (options: {
+  password?: string;
+  address: string;
+}) => {
+  const { password, address } = options;
+  // await throwErrorIfInvalidPwd(password);
   const keyring = await keyringService.getKeyringForAccount(
     address,
     KEYRING_CLASS.MNEMONIC,

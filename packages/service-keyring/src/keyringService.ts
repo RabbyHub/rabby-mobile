@@ -6,7 +6,7 @@
 /* eslint-disable jsdoc/require-returns */
 /* eslint-disable jsdoc/require-description */
 import { ObservableStore } from '@metamask/obs-store';
-import { addressUtils, RNEventEmitter } from '@rabby-wallet/base-utils';
+import { addressUtils, RNEventEmitter, stringUtils } from '@rabby-wallet/base-utils';
 import {
   DisplayKeyring,
   generateAliasName,
@@ -328,8 +328,8 @@ export class KeyringService extends RNEventEmitter {
     // set locked
     this.#password = null;
     this.memStore.updateState({ isUnlocked: false });
-    // remove keyrings
-    this.keyrings = [];
+    // // remove keyrings
+    // this.keyrings = [];
     await this._updateMemStoreKeyrings();
     this.emit('lock');
     return this.fullUpdate();
@@ -1193,14 +1193,19 @@ export class KeyringService extends RNEventEmitter {
     }
 
     return new Promise((resolve, reject) => {
+      const unlockId = stringUtils.randString();
       this.once('unlock-response', result => {
+        if (result.unlockId !== unlockId) {
+          console.warn(`response.unlockId ${result.unlockId} not match request.unlockId ${unlockId}`);
+        }
+
         if (result) {
           resolve(true);
         } else {
           reject(new Error('background.error.unlock'));
         }
       });
-      this.emit('unlock-request');
+      this.emit('unlock-request', { unlockId });
     });
   }
 }

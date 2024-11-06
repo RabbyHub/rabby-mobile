@@ -22,6 +22,7 @@ const isIOS = Platform.OS === 'ios';
 // } from '@/core/native/ReactNativeSecurity';
 
 const appLockAtom = atom({
+  appUnlocked: false,
   appLoaded: false,
   appHasUnencryptedKeyringData: false,
   pwdStatus: PasswordStatus.Unknown,
@@ -29,6 +30,7 @@ const appLockAtom = atom({
 appLockAtom.onMount = setAppLock => {
   setAppLock(prev => ({
     ...prev,
+    appUnlocked: keyringService.isUnlocked(),
     appLoaded: keyringService.isLoaded(),
     appHasUnencryptedKeyringData: keyringService.hasUnencryptedKeyringData(),
   }));
@@ -37,14 +39,15 @@ appLockAtom.onMount = setAppLock => {
 export function useAppLoaded({
   autoFetch = false,
 }: { autoFetch?: boolean } = {}) {
-  const [{ appLoaded, appHasUnencryptedKeyringData, pwdStatus }, setAppLock] =
+  const [{ appLoaded, appHasUnencryptedKeyringData, appUnlocked }, setAppLock] =
     useAtom(appLockAtom);
 
   const fetchLoadInfo = useCallback(() => {
     const nextState = apisLock.getAppLoadState();
     setAppLock(prev => ({
       ...prev,
-      appLoaded: nextState.isLoaded,
+      appUnlocked: nextState.appUnlocked,
+      appLoaded: nextState.appLoaded,
       appHasUnencryptedKeyringData: nextState.appHasUnencryptedKeyringData,
     }));
 
@@ -63,6 +66,7 @@ export function useAppLoaded({
 
   return {
     isAppLoaded: appLoaded,
+    appUnlocked: appUnlocked,
     appHasUnencryptedKeyringData,
     // hasSetupCustomPassword,
     setAppLock,

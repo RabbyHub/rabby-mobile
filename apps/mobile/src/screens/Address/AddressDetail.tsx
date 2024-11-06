@@ -250,61 +250,106 @@ const AddressInfo = (props: AddressInfoProps) => {
   const handlePressBackupPrivateKey = useCallback(() => {
     let data = '';
 
-    AuthenticationModal.show({
-      confirmText: t('global.confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.backup-private-key'),
-      validationHandler: async (password: string) => {
-        data = await apiPrivateKey.getPrivateKey(password, {
-          address: account.address,
-          type: account.type,
-        });
+    const afterValidated = () => {
+      if (!data) return;
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.BackupPrivateKey,
+        params: {
+          data,
+        },
+      });
+    };
 
-        if (account.type === KEYRING_TYPE.HdKeyring) {
-          await invokeEnterPassphrase(account.address);
-        }
-      },
-      onFinished(ctx) {
-        if (ctx.hasSetupCustomPassword && !data) {
-          return;
-        }
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.BackupPrivateKey,
-          params: {
-            data,
-          },
-        });
-      },
-    });
-  }, [account, invokeEnterPassphrase, t]);
+    const doValidate = async (password?: string) => {
+      data = await apiPrivateKey.getPrivateKey({
+        address: account.address,
+        type: account.type,
+      });
+
+      if (account.type === KEYRING_TYPE.HdKeyring) {
+        await invokeEnterPassphrase(account.address);
+      }
+    };
+    doValidate().then(() => afterValidated());
+
+    // AuthenticationModal.show({
+    //   confirmText: t('global.confirm'),
+    //   cancelText: t('global.Cancel'),
+    //   title: t('page.addressDetail.backup-private-key'),
+    //   validationHandler: async (password: string) => {
+    //     data = await apiPrivateKey.getPrivateKey(password, {
+    //       address: account.address,
+    //       type: account.type,
+    //     });
+
+    //     if (account.type === KEYRING_TYPE.HdKeyring) {
+    //       await invokeEnterPassphrase(account.address);
+    //     }
+    //   },
+    //   onFinished(ctx) {
+    //     if (ctx.hasSetupCustomPassword && !data) {
+    //       return;
+    //     }
+    //     navigate(RootNames.StackAddress, {
+    //       screen: RootNames.BackupPrivateKey,
+    //       params: {
+    //         data,
+    //       },
+    //     });
+    //   },
+    // });
+  }, [account, invokeEnterPassphrase]);
 
   const handlePressBackupSeedPhrase = useCallback(() => {
     let data = '';
 
-    AuthenticationModal.show({
-      confirmText: t('global.confirm'),
-      cancelText: t('global.Cancel'),
-      title: t('page.addressDetail.backup-seed-phrase'),
-      validationHandler: async (password: string) => {
-        data = await apiMnemonic.getMnemonics(password, account.address);
+    const afterValidated = () => {
+      if (!data) return;
+      navigate(RootNames.StackAddress, {
+        screen: RootNames.BackupMnemonic,
+        params: {
+          data,
+        },
+      });
+    };
 
-        if (account.type === KEYRING_TYPE.HdKeyring) {
-          await invokeEnterPassphrase(account.address);
-        }
-      },
-      onFinished(ctx) {
-        if (ctx.hasSetupCustomPassword && !data) {
-          return;
-        }
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.BackupMnemonic,
-          params: {
-            data,
-          },
-        });
-      },
-    });
-  }, [account, invokeEnterPassphrase, t]);
+    const doValidate = async (password?: string) => {
+      data = await apiMnemonic.getMnemonics({
+        /* password,  */ address: account.address,
+      });
+
+      if (account.type === KEYRING_TYPE.HdKeyring) {
+        await invokeEnterPassphrase(account.address);
+      }
+    };
+    doValidate().then(() => afterValidated());
+
+    // AuthenticationModal.show({
+    //   confirmText: t('global.confirm'),
+    //   cancelText: t('global.Cancel'),
+    //   title: t('page.addressDetail.backup-seed-phrase'),
+    //   validationHandler: async (password?: string) => {
+    //   data = await apiMnemonic.getMnemonics({
+    //     /* password,  */ address: account.address,
+    //   });
+
+    //   if (account.type === KEYRING_TYPE.HdKeyring) {
+    //     await invokeEnterPassphrase(account.address);
+    //   }
+    // },
+    //   onFinished(ctx) {
+    //     if (ctx.hasSetupCustomPassword && !data) {
+    //       return;
+    //     }
+    //     navigate(RootNames.StackAddress, {
+    //       screen: RootNames.BackupMnemonic,
+    //       params: {
+    //         data,
+    //       },
+    //     });
+    //   },
+    // });
+  }, [account, invokeEnterPassphrase]);
 
   const accountInfo = useAccountInfo(
     account.type,

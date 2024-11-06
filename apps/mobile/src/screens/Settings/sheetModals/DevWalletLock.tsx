@@ -18,7 +18,7 @@ import {
 } from '@/assets/icons/settings';
 import { DevTestItem, makeNoop } from './devTest';
 import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
-import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
+import { requestLockWallet } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
 import { useAppLoaded } from '@/hooks/useLock';
@@ -64,7 +64,8 @@ export default function WalletLockTestItemModal({
   const { hasSetupCustomPassword, openManagePasswordSheetModal } =
     useManagePasswordOnSettings();
 
-  const { appHasUnencryptedKeyringData } = useAppLoaded({ autoFetch: true });
+  const { appHasUnencryptedKeyringData, appUnlocked, fetchLoadInfo } =
+    useAppLoaded({ autoFetch: true });
 
   const Items = (() => {
     const list: DevTestItem[] = [
@@ -72,9 +73,11 @@ export default function WalletLockTestItemModal({
         label: 'Lock Wallet',
         icon: <RcLockWallet style={styles.labelIcon} />,
         disabled: !hasSetupCustomPassword,
-        onPress: () => {
-          requestLockWalletAndBackToUnlockScreen();
+        onPress: async () => {
+          await requestLockWallet({ backToUnlockScreen: false });
+          fetchLoadInfo();
         },
+        visible: appUnlocked,
       },
       {
         label: hasSetupCustomPassword ? 'Clear Password' : 'Set Up Password',

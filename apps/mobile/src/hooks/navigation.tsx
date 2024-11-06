@@ -181,9 +181,12 @@ async function canLockWallet() {
   return lockInfo.isUseCustomPwd;
 }
 
-export async function requestLockWalletAndBackToUnlockScreen(): Promise<{
+export async function requestLockWallet(options?: {
+  backToUnlockScreen?: boolean;
+}): Promise<{
   canLockWallet: boolean;
 }> {
+  const { backToUnlockScreen = false } = options || {};
   const lockInfo = await apisLock.getRabbyLockInfo();
   const result = { canLockWallet: false };
   if (!lockInfo.isUseCustomPwd) return result;
@@ -194,9 +197,13 @@ export async function requestLockWalletAndBackToUnlockScreen(): Promise<{
     await apisLock.lockWallet();
   }
 
-  console.debug('will back to unlock screen');
-  const navigation = getReadyNavigationInstance();
-  if (navigation) resetNavigationTo(navigation, 'Unlock');
+  if (backToUnlockScreen) {
+    console.debug('will back to unlock screen');
+    const navigation = getReadyNavigationInstance();
+    if (navigation) resetNavigationTo(navigation, 'Unlock');
+  } else {
+    console.debug('will not back to unlock screen');
+  }
 
   return result;
 }
@@ -356,7 +363,7 @@ if (__DEV__) {
           {
             text: 'Lock',
             onPress: async () => {
-              await requestLockWalletAndBackToUnlockScreen();
+              await requestLockWallet();
             },
           },
         ],

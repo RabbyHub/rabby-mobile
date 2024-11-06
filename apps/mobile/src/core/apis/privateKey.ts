@@ -4,11 +4,16 @@ import { t } from 'i18next';
 import { _setCurrentAccountFromKeyring } from './keyring';
 import { throwErrorIfInvalidPwd } from './lock';
 
-export const getPrivateKey = async (
-  password: string,
-  { address, type }: { address: string; type: string },
-) => {
-  await throwErrorIfInvalidPwd(password);
+export const getPrivateKey = async ({
+  password,
+  address,
+  type,
+}: {
+  password?: string;
+  address: string;
+  type: string;
+}) => {
+  // await throwErrorIfInvalidPwd(password);
   const keyring = await keyringService.getKeyringForAccount(address, type);
   if (!keyring) {
     return null;

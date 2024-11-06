@@ -60,10 +60,7 @@ import { APP_FEATURE_SWITCH, APP_URLS, APP_VERSIONS } from '@/constant';
 import { clearPendingTxs } from '@/core/apis/transactions';
 import { openExternalUrl } from '@/core/utils/linking';
 import { useCurrentAccount } from '@/hooks/account';
-import {
-  requestLockWalletAndBackToUnlockScreen,
-  useRabbyAppNavigation,
-} from '@/hooks/navigation';
+import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useUpgradeInfo } from '@/hooks/version';
 import { SettingNavigatorParamList } from '@/navigation-type';
 import { createGetStyles } from '@/utils/styles';
