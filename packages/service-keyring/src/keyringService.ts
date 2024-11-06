@@ -859,6 +859,7 @@ export class KeyringService extends RNEventEmitter {
     type?: string | KeyringTypeName,
     includeWatchKeyring = true,
   ): Promise<any> {
+    await this.unlockRequest();
     const hexed = normalizeAddress(address).toLowerCase();
     log.debug(`KeyringService - getKeyringForAccount: ${hexed}`);
     let keyrings = type
