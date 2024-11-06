@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 
@@ -23,17 +23,39 @@ const isIOS = Platform.OS === 'ios';
 
 const appLockAtom = atom({
   appLoaded: false,
+  appHasUnencryptedKeyringData: false,
   pwdStatus: PasswordStatus.Unknown,
 });
 appLockAtom.onMount = setAppLock => {
   setAppLock(prev => ({
     ...prev,
     appLoaded: keyringService.isLoaded(),
+    appHasUnencryptedKeyringData: keyringService.hasUnencryptedKeyringData(),
   }));
 };
 
-export function useAppLoaded() {
-  const [{ appLoaded, pwdStatus }, setAppLock] = useAtom(appLockAtom);
+export function useAppLoaded({
+  autoFetch = false,
+}: { autoFetch?: boolean } = {}) {
+  const [{ appLoaded, appHasUnencryptedKeyringData, pwdStatus }, setAppLock] =
+    useAtom(appLockAtom);
+
+  const fetchLoadInfo = useCallback(() => {
+    const nextState = apisLock.getAppLoadState();
+    setAppLock(prev => ({
+      ...prev,
+      appLoaded: nextState.isLoaded,
+      appHasUnencryptedKeyringData: nextState.appHasUnencryptedKeyringData,
+    }));
+
+    return nextState;
+  }, [setAppLock]);
+
+  useEffect(() => {
+    if (autoFetch) {
+      fetchLoadInfo();
+    }
+  }, [autoFetch, fetchLoadInfo]);
 
   // const hasSetupCustomPassword = useMemo(() => {
   //   return pwdStatus === PasswordStatus.Custom;
@@ -41,8 +63,10 @@ export function useAppLoaded() {
 
   return {
     isAppLoaded: appLoaded,
+    appHasUnencryptedKeyringData,
     // hasSetupCustomPassword,
     setAppLock,
+    fetchLoadInfo,
   };
 }
 
@@ -68,10 +92,13 @@ export function useTryUnlockAppWithBuiltinOnTop() {
 
   const getTriedUnlock = React.useCallback(async () => {
     return tryAutoUnlockPromiseRef.current.then(async result => {
-      setAppLock({
+      setAppLock(prev => ({
+        ...prev,
         appLoaded: keyringService.isLoaded(),
+        appHasUnencryptedKeyringData:
+          keyringService.hasUnencryptedKeyringData(),
         pwdStatus: result.lockInfo.pwdStatus,
-      });
+      }));
       return result;
     });
   }, [setAppLock]);
@@ -92,10 +119,11 @@ export function useLoadLockInfo(options?: { autoFetch?: boolean }) {
     try {
       const response = await apisLock.getRabbyLockInfo();
 
-      setAppLock({
+      setAppLock(prev => ({
+        ...prev,
         appLoaded: keyringService.isLoaded(),
         pwdStatus: response.pwdStatus,
-      });
+      }));
 
       return response;
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { RcArrowRightCC, RcIconCheckmarkCC } from '@/assets/icons/common';
 
 import { AppBottomSheetModal } from '@/components';
@@ -21,6 +21,8 @@ import { useManagePasswordOnSettings } from '@/screens/ManagePassword/hooks';
 import { requestLockWalletAndBackToUnlockScreen } from '@/hooks/navigation';
 import { LastUnlockTimeLabel } from '../components/LockAbout';
 import { APP_FEATURE_SWITCH } from '@/constant';
+import { useAppLoaded } from '@/hooks/useLock';
+import { apisLock } from '@/core/apis';
 
 const walletLockTestItemModalVisibleAtom = atom(false);
 export function useWalletLockTestItemModalVisible() {
@@ -62,6 +64,8 @@ export default function WalletLockTestItemModal({
   const { hasSetupCustomPassword, openManagePasswordSheetModal } =
     useManagePasswordOnSettings();
 
+  const { appHasUnencryptedKeyringData } = useAppLoaded({ autoFetch: true });
+
   const Items = (() => {
     const list: DevTestItem[] = [
       {
@@ -89,6 +93,30 @@ export default function WalletLockTestItemModal({
             <LastUnlockTimeLabel />
           </Text>
         ),
+      },
+      {
+        label: `Back to 'must unlock to use app'`,
+        icon: <RcManagePassword style={styles.labelIcon} />,
+        onPress: () => {
+          if (!appHasUnencryptedKeyringData) return;
+
+          apisLock.devOnlyBackToMUST_UNLOCK_TO_USE_APP();
+
+          if (__DEV__) {
+            Alert.alert(
+              'Restart required',
+              'Now you should reloading JS or restart app to see the effect',
+              [{ text: 'OK', onPress: makeNoop }],
+            );
+          } else {
+            Alert.alert(
+              'Restart required',
+              'Now you should restart app to see the effect',
+              [{ text: 'OK', onPress: makeNoop }],
+            );
+          }
+        },
+        visible: appHasUnencryptedKeyringData,
       },
     ];
 

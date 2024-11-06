@@ -253,6 +253,27 @@ export async function lockWallet() {
   sessionService.broadcastEvent(BroadcastEvent.lock);
 }
 
+export function getAppLoadState() {
+  type Names = typeof import('@/constant/layout').RootNames;
+  const result = {
+    isLoaded: keyringService.isLoaded(),
+    appHasUnencryptedKeyringData: keyringService.hasUnencryptedKeyringData(),
+    targetScreenType: 'GetStarted' as Names['GetStarted'] | Names['Home'],
+  };
+
+  // const hasSetupCustomPassword = pwdStatus === PasswordStatus.Custom;
+
+  if (result.appHasUnencryptedKeyringData) {
+    result.targetScreenType = 'Home';
+  }
+
+  return result;
+}
+
+export function devOnlyBackToMUST_UNLOCK_TO_USE_APP() {
+  keyringService.devOnlyRemoveUnencryptedKeyringData();
+}
+
 const { EventEmitter: UnlockTimeEvent } = makeEEClass<{
   updated: (time: number) => void;
 }>();

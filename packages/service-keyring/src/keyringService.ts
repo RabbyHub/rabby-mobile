@@ -75,10 +75,24 @@ export type KeyringServiceOptions = {
 };
 
 export class KeyringService extends RNEventEmitter {
+  #password: string | null = null;
+  // keyrings: KeyringInstance[] = [];
+
+  #_keyrings: KeyringInstance[] = [];
+  set keyrings(values: KeyringInstance[]) {
+    this.#_keyrings = values;
+    this.emit('keyrings-updated', [...this.#_keyrings]);
+  }
+  #_pushKeyring(kr: KeyringInstance) {
+    this.#_keyrings.push(kr);
+    this.emit('keyrings-updated', [...this.#_keyrings]);
+  }
+  get keyrings() {
+    return [...this.#_keyrings];
+  }
   //
   // PUBLIC METHODS
   //
-  keyrings: KeyringInstance[];
 
   keyringClasses: KeyringClassType[] = [];
 
@@ -93,8 +107,6 @@ export class KeyringService extends RNEventEmitter {
   store!: ObservableStore<KeyringState>;
 
   memStore: ObservableStore<MemStoreState>;
-
-  #password: string | null = null;
 
   private readonly encryptor: EncryptorAdapter;
 
@@ -136,23 +148,28 @@ export class KeyringService extends RNEventEmitter {
   }
 
   loadStore(initState: Partial<KeyringState>) {
-    const keyringData = initState.unencryptedKeyringData;
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
-      unencryptedKeyringData: keyringData,
+      unencryptedKeyringData: initState.unencryptedKeyringData || undefined,
     });
 
-    if (keyringData) {
-      // eslint-disable-next-line no-void
-      void Promise.all(
-        keyringData.map(data => {
-          return this.restoreKeyring(data);
-        }),
-      ).then((result: KeyringInstance[]) => {
-        this.keyrings = result;
-      });
+    if (initState.unencryptedKeyringData) {
+      this.#restoreUnencryptedKeyringData(initState.unencryptedKeyringData);
     }
+  }
+
+  #restoreUnencryptedKeyringData(unencryptedKeyringData?: KeyringSerializedData[]) {
+    if (!unencryptedKeyringData) return ;
+
+    // eslint-disable-next-line no-void
+    void Promise.all(
+      unencryptedKeyringData.map(data => {
+        return this.restoreKeyring(data);
+      }),
+    ).then((result: KeyringInstance[]) => {
+      this.keyrings = result;
+    });
   }
 
   private async _setupBoot(password: string) {
@@ -183,8 +200,17 @@ export class KeyringService extends RNEventEmitter {
     return Boolean(this.store.getState().booted);
   }
 
+  hasUnencryptedKeyringData() {
+    return Boolean(this.store.getState().unencryptedKeyringData);
+  }
+
   isLoaded() {
-    return Boolean(this.keyrings) || this.memStore.getState().isUnlocked;
+    return Boolean(this.keyrings)/*  || this.memStore.getState().isUnlocked */;
+  }
+
+  /** @deprecated */
+  isUnlocked() {
+    return Boolean(this.#password) && this.memStore.getState().isUnlocked
   }
 
   hasSubmitPassword() {
@@ -657,7 +683,7 @@ export class KeyringService extends RNEventEmitter {
         return this.checkForDuplicate(keyring.type, accounts);
       })
       .then(() => {
-        this.keyrings.push(keyring);
+        this.#_pushKeyring(keyring);
         return this.persistAllKeyrings();
       })
       .then(() => this._updateMemStoreKeyrings())
@@ -665,6 +691,57 @@ export class KeyringService extends RNEventEmitter {
       .then(() => {
         return keyring as T;
       });
+  }
+
+  /**
+   * @description enter unlocked state with `password` user provided, and process `fn` function.
+   * whatever the process is success or fail, keyring will return to state before entering unlocked state.
+   */
+  async #_makeUnlockedProcess<T extends () => any>(password: string, fn: T): Promise<ReturnType<T>> {
+    let err: Error | undefined;
+    let result: any = null;
+    let previousPwdState = null as null | string;
+    try {
+      await this.verifyPassword(password);
+      previousPwdState = this.#password || null;
+      this.#password = password;
+      result = await fn();
+    } catch (error: any) {
+      err = error;
+      console.error('_makeUnlockedProcess', error);
+    } finally {
+      this.#password = previousPwdState;
+    }
+
+    return result;
+  }
+
+  async devOnlyRemoveUnencryptedKeyringData() {
+    this.store.updateState({ unencryptedKeyringData: undefined });
+    console.debug('You need to restart the app to see the effect');
+  }
+
+  async generateUnencryptedKeyringDataIfNotExist(password: string) {
+    const result = {
+      needGenerate: false,
+      success: false,
+    }
+    if (!this.store.getState().unencryptedKeyringData) {
+      result.needGenerate = true;
+      await this.#_makeUnlockedProcess(password, async () => {
+        try {
+          this.keyrings = await this.unlockKeyrings(password);
+          await this.persistAllKeyrings();
+          this.#restoreUnencryptedKeyringData(this.store.getState().unencryptedKeyringData);
+          result.success = true;
+        } catch (error) {
+          console.error('generateUnencryptedKeyringDataIfNotExist', error);
+          result.success = false;
+        }
+      });
+    }
+
+    return result;
   }
 
   /**
@@ -778,7 +855,7 @@ export class KeyringService extends RNEventEmitter {
 
     // getAccounts also validates the accounts for some keyrings
     await keyring.getAccounts();
-    this.keyrings.push(keyring);
+    this.#_pushKeyring(keyring);
     return keyring;
   }
 
@@ -920,6 +997,7 @@ export class KeyringService extends RNEventEmitter {
         brandName:
           typeof account === 'string' ? keyring.type : account.brandName,
       }));
+
 
       return {
         type: keyring.type,

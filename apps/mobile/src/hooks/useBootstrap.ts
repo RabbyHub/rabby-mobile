@@ -50,7 +50,7 @@ const DEBUG_IN_PAGE_SCRIPTS = {
  * @description only call this hook on the top level component
  */
 export function useInitializeAppOnTop() {
-  const { isAppLoaded, setAppLock } = useAppLoaded();
+  const { isAppLoaded, setAppLock } = useAppLoaded({ autoFetch: true });
 
   const apiInitializedRef = React.useRef(false);
   const doInitializeApis = React.useCallback(async () => {

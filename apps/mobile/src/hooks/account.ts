@@ -25,6 +25,7 @@ import { coerceFloat } from '@/utils/number';
 import { requestOpenApiMultipleNets } from '@/utils/openapi';
 import { apiBalance } from '@/core/apis';
 import { useAtomicRequest } from './common/useAtomicAction';
+import debounce from 'lodash.debounce';
 
 export type KeyringAccountWithAlias = KeyringAccount & {
   aliasName?: string;
@@ -34,9 +35,14 @@ export type KeyringAccountWithAlias = KeyringAccount & {
 const accountsAtom = atom<KeyringAccountWithAlias[]>([]);
 
 accountsAtom.onMount = setAtom => {
-  fetchAllAccounts().then(accounts => {
-    setAtom(accounts || []);
-  });
+  const fetchHandler = () => {
+    fetchAllAccounts().then(accounts => {
+      setAtom(accounts || []);
+    });
+  };
+
+  fetchHandler();
+  keyringService.addListener('keyrings-updated', debounce(fetchHandler, 500));
 };
 
 export const currentAccountAtom = atom<null | KeyringAccountWithAlias>(null);

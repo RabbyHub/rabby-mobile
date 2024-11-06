@@ -79,7 +79,7 @@ export default function AppNavigation({
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
 
-  const { isAppLoaded } = useAppLoaded();
+  const { isAppLoaded } = useAppLoaded({ autoFetch: true });
   const { setNavigationReady } = useSetNavigationReady();
 
   const { setCurrentRouteName } = useSetCurrentRouteName();

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Platform,
@@ -22,96 +22,30 @@ import {
   useFocusEffect,
   useNavigation,
 } from '@react-navigation/native';
-import { APP_VERSIONS } from '@/constant';
 import { useAppLoaded } from '@/hooks/useLock';
+import { BasicAuthenticationModal } from '@/components/AuthenticationModal/BasicAuthenticationModal';
+import { useTranslation } from 'react-i18next';
+import { toast, toastIndicator } from '@/components/Toast';
+import { useAccounts } from '@/hooks/account';
 
 function GetStartedScreen(): JSX.Element {
   const colors = useThemeColors();
+  const { t } = useTranslation();
 
   const styles = getStyles(colors);
-  const [isShowModal, setIsShowModal] = useState(false);
-  const [isFocus, setIsFocus] = useState(false);
-  const [code, setCode] = useState('');
-  const [errMessage, setErrMessage] = useState('');
 
-  const { runAsync: invite, loading: isInviteLoading } = useRequest(
-    (id: string) => {
-      return axios.get<{ is_valid: boolean; code: number }>(
-        'https://app-api.rabby.io/promotion/invitation',
-        {
-          params: {
-            id,
-          },
-          headers: {
-            'X-Client': 'rabbymobile',
-            'X-Version': APP_VERSIONS.fromJs,
-          },
-        },
-      );
-    },
-    {
-      manual: true,
-    },
-  );
-
-  const [isInited, setIsInited] = useState(false);
-  const handleGetStarted = useCallback(async () => {
-    if (!isInited) return;
-    if (!keyringService.isLoaded()) {
-      navigate(RootNames.Unlock);
-      return;
-    }
-
-    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
-    // if (preferenceService.getPreference('isInvited')) {
-    //   navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
-    // } else {
-    //   setIsShowModal(true);
-    // }
-  }, [isInited]);
-
-  const handleInvite = async () => {
-    setErrMessage('');
-
-    const INVALID_CODE = 'Invalid invitation code';
-    const INVALID_VERSION = 'Invalid code, Please update to the latest version';
-
-    if (!code?.trim()) {
-      setErrMessage(INVALID_CODE);
-      return;
-    }
-    try {
-      const { data } = await invite(code?.trim());
-
-      if (data?.is_valid) {
-        preferenceService.setPreference({
-          isInvited: true,
-        });
-        navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportNewAddress,
-        });
-        setIsShowModal(false);
-      } else if (+data?.code === 2) {
-        setErrMessage(INVALID_VERSION);
-      } else {
-        setErrMessage(INVALID_CODE);
-      }
-    } catch (e) {
-      setErrMessage(INVALID_CODE);
-    }
-  };
-
-  useEffect(() => {
-    if (isShowModal) {
-      setCode('');
-      setErrMessage('');
-    }
-  }, [isShowModal]);
+  const [getStartedInfo, setGsInfo] = useState({
+    isInited: false,
+    shouldUpgradeKeyringData: false,
+  });
 
   const navigation = useNavigation();
 
-  const initAccounts = useMemoizedFn(async () => {
-    setIsInited(false);
+  const { appHasUnencryptedKeyringData, fetchLoadInfo } = useAppLoaded();
+
+  const redirectToHomeIfHasAccounts = useMemoizedFn(async () => {
+    setGsInfo(prev => ({ ...prev, isInited: false }));
+    fetchLoadInfo();
     try {
       const accounts = await keyringService.getAllVisibleAccountsArray();
       if (accounts?.length) {
@@ -124,17 +58,83 @@ function GetStartedScreen(): JSX.Element {
     } catch (err) {
       console.error(err);
     } finally {
-      setIsInited(true);
+      setGsInfo(prev => ({ ...prev, isInited: true }));
     }
   });
 
-  const { isAppLoaded } = useAppLoaded();
+  const modalIdRef = useRef<string | null>(null);
+  const unlockToGenerateUnencryptedKeyringData = useCallback(async () => {
+    if (modalIdRef.current) return;
+
+    let finished = false;
+    const { modalId } = await BasicAuthenticationModal.show({
+      confirmText: t('global.confirm'),
+      cancelText: t('global.Cancel'),
+      title: '[Upgrade] Use App at locked State',
+      description:
+        'App need to unlock to upgrade data to use new feature "Use App at locked State", This is just one demo text for preview, change it before production release',
+      closableOnBackdropPress: false,
+      authType: ['password'],
+      validationHandler: async (password: string) => {
+        const hideToast = toastIndicator('Upgrading', {
+          duration: 6000,
+          position: toast.positions.CENTER,
+          hideOnPress: false,
+        });
+        try {
+          await keyringService.generateUnencryptedKeyringDataIfNotExist(
+            password,
+          );
+          finished = true;
+        } catch (error) {
+          console.error(error);
+        } finally {
+          modalIdRef.current = null;
+          hideToast();
+        }
+      },
+      onCancel: () => {
+        modalIdRef.current = null;
+      },
+      onFinished(ctx) {
+        redirectToHomeIfHasAccounts();
+
+        if (ctx.hasSetupCustomPassword && !finished) {
+          return;
+        }
+        modalIdRef.current = null;
+      },
+    });
+
+    modalIdRef.current = modalId;
+  }, [t, redirectToHomeIfHasAccounts]);
+
+  const handleGetStarted = useCallback(async () => {
+    if (!getStartedInfo.isInited) return;
+    if (getStartedInfo.shouldUpgradeKeyringData) {
+      await unlockToGenerateUnencryptedKeyringData();
+      return;
+    }
+    // if (!keyringService.isLoaded()) {
+    //   navigate(RootNames.Unlock);
+    //   return;
+    // }
+
+    navigate(RootNames.StackAddress, { screen: RootNames.ImportNewAddress });
+  }, [
+    getStartedInfo.isInited,
+    getStartedInfo.shouldUpgradeKeyringData,
+    unlockToGenerateUnencryptedKeyringData,
+  ]);
+
   useFocusEffect(
     useCallback(() => {
-      if (isAppLoaded) {
-        initAccounts();
+      const loadState = fetchLoadInfo();
+
+      if (loadState.targetScreenType === 'Home') {
+        redirectToHomeIfHasAccounts();
       }
-    }, [isAppLoaded, initAccounts]),
+    }, [fetchLoadInfo, redirectToHomeIfHasAccounts]),
   );
 
   return (
@@ -164,81 +164,24 @@ function GetStartedScreen(): JSX.Element {
 
       {/* button area */}
       <View style={styles.buttonArea}>
-        <Button
-          disabled={!isInited}
-          buttonStyle={styles.buttonStyle}
-          titleStyle={styles.buttonTitleStyle}
-          title="Get Started"
-          onPress={handleGetStarted}
-        />
+        {!appHasUnencryptedKeyringData ? (
+          <Button
+            disabled={appHasUnencryptedKeyringData}
+            buttonStyle={styles.buttonStyle}
+            titleStyle={styles.buttonTitleStyle}
+            title="Upgrade Data Required"
+            onPress={unlockToGenerateUnencryptedKeyringData}
+          />
+        ) : (
+          <Button
+            disabled={!getStartedInfo.isInited}
+            buttonStyle={styles.buttonStyle}
+            titleStyle={styles.buttonTitleStyle}
+            title="Get Started"
+            onPress={handleGetStarted}
+          />
+        )}
       </View>
-
-      <Modal
-        visible={isShowModal}
-        className="w-[353] max-w-[100%]"
-        onRequestClose={() => {
-          setIsShowModal(false);
-        }}
-        transparent
-        animationType="fade">
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setIsShowModal(false);
-          }}>
-          <View style={styles.overlay}>
-            <View
-              style={styles.modalContent}
-              onStartShouldSetResponder={() => true}>
-              <Text style={styles.modalTitle}>
-                Enter Invite Code to get started
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  isFocus ? styles.inputFocus : null,
-                  errMessage ? styles.inputError : null,
-                ]}
-                onFocus={() => {
-                  setIsFocus(true);
-                }}
-                onBlur={() => {
-                  setIsFocus(false);
-                }}
-                onChangeText={v => {
-                  setCode(v);
-                }}
-                value={code}
-              />
-              <View className="h-[16] mt-[10]">
-                {errMessage ? (
-                  <Text style={styles.errorMsg}>{errMessage}</Text>
-                ) : null}
-              </View>
-              <View style={styles.modalFooter}>
-                <View style={styles.flex1}>
-                  <Button
-                    title="Cancel"
-                    buttonStyle={styles.cancelStyle}
-                    titleStyle={styles.cancelTitleStyle}
-                    onPress={() => {
-                      setIsShowModal(false);
-                    }}
-                  />
-                </View>
-                <View style={styles.flex1}>
-                  <Button
-                    title="Next"
-                    buttonStyle={styles.confirmStyle}
-                    titleStyle={styles.confirmTitleStyle}
-                    loading={isInviteLoading}
-                    onPress={handleInvite}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </View>
   );
 }
