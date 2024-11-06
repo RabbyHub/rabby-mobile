@@ -136,21 +136,23 @@ export class KeyringService extends RNEventEmitter {
   }
 
   loadStore(initState: Partial<KeyringState>) {
-    const keyringData = initState.unencryptedKeyringData || [];
+    const keyringData = initState.unencryptedKeyringData;
     this.store = new ObservableStore({
       booted: initState.booted || undefined,
       vault: initState.vault || undefined,
       unencryptedKeyringData: keyringData,
     });
 
-    // eslint-disable-next-line no-void
-    void Promise.all(
-      keyringData.map(data => {
-        return this.restoreKeyring(data);
-      }),
-    ).then((result: KeyringInstance[]) => {
-      this.keyrings = result;
-    });
+    if (keyringData) {
+      // eslint-disable-next-line no-void
+      void Promise.all(
+        keyringData.map(data => {
+          return this.restoreKeyring(data);
+        }),
+      ).then((result: KeyringInstance[]) => {
+        this.keyrings = result;
+      });
+    }
   }
 
   private async _setupBoot(password: string) {
