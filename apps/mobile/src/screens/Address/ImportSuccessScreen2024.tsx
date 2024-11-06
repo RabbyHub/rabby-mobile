@@ -37,7 +37,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen2024 = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
   const navigation = useNavigation<ImportSuccessScreenProps['navigation']>();
@@ -172,6 +172,10 @@ export const ImportSuccessScreen2024 = () => {
                 editable={!state?.isFirstCreate}
                 style={styles.inputInner}
                 value={importAddresses?.[0]?.aliasName || ''}
+                placeholder={ellipsisAddress(
+                  importAddresses?.[0]?.address || '',
+                )}
+                placeholderTextColor={colors2024['neutral-info']}
                 onChange={nativeEvent => {
                   const _aliasName = nativeEvent.nativeEvent.text;
                   const newImportAddresses = [...importAddresses];
@@ -206,6 +210,8 @@ export const ImportSuccessScreen2024 = () => {
                           };
                           setImportAddresses(newImportAddresses);
                         }}
+                        placeholder={ellipsisAddress(item.address)}
+                        placeholderTextColor={colors2024['neutral-info']}
                         blurOnSubmit
                       />
                       <WalletAddress address={item.address} />

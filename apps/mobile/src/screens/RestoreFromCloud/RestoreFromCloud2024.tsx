@@ -181,7 +181,7 @@ export const RestoreFromCloud2024: React.FC<{
         title={t('global.confirm')}
         onPress={handleRestore}
         disabled={!len || loading}
-        style={styles.importConfirm}
+        containerStyle={styles.importConfirm}
       />
     </BottomSheetView>
   );
@@ -245,7 +245,7 @@ const getStyle = createGetStyles2024(colors => ({
     flex: 1,
   },
   backupItem: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   backupList: {
     marginTop: 32,
