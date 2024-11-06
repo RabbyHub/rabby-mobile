@@ -64,13 +64,12 @@ export const getKeyringByMnemonic = async (
 };
 
 const _getMnemonicKeyringByAddress = async (address: string) => {
-  await keyringService.unlockRequest();
   return keyringService.keyrings.find(item => {
     const k = item as unknown as HdKeyring;
 
     return (
       k.type === KEYRING_CLASS.MNEMONIC &&
-      k.mnemonic &&
+      // k.mnemonic &&
       k.accounts.includes(address)
     );
   }) as unknown as HdKeyring;
