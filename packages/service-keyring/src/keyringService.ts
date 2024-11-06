@@ -697,13 +697,13 @@ export class KeyringService extends RNEventEmitter {
 
     const unencryptedKeyringData = serializedKeyrings.map(({ type, data }) => {
       const protectedFields = PROTECTED_KEYRING_FIELD[type];
-
+      const newData = { ...data };
       if (protectedFields) {
         protectedFields.forEach(field => {
-          delete data[field];
+          delete newData[field];
         });
       }
-      return { type, data };
+      return { type, data: newData };
     });
 
     const encryptedString = await this.encryptor.encrypt(

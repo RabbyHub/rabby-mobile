@@ -320,26 +320,29 @@ export const ImportMoreAddressScreen = () => {
   }, [handleLoadAddress, setting]);
 
   React.useEffect(() => {
-    if (state.type === KEYRING_TYPE.HdKeyring) {
-      const api = getMnemonicKeyring();
-      api?.getAccounts().then(res => {
-        if (res) {
-          const accounts = res.map((address, idx) => {
-            return {
-              address,
-              index: api?.getInfoByAddress(address)?.index ?? idx,
-            };
-          });
-          setCurrentAccounts(accounts);
-        }
-      });
-    } else {
-      apiHD?.getCurrentAccounts().then(res => {
-        if (res) {
-          setCurrentAccounts(res);
-        }
-      });
-    }
+    const fn = async () => {
+      if (state.type === KEYRING_TYPE.HdKeyring) {
+        const api = await getMnemonicKeyring();
+        api?.getAccounts().then(res => {
+          if (res) {
+            const accounts = res.map((address, idx) => {
+              return {
+                address,
+                index: api?.getInfoByAddress(address)?.index ?? idx,
+              };
+            });
+            setCurrentAccounts(accounts);
+          }
+        });
+      } else {
+        apiHD?.getCurrentAccounts().then(res => {
+          if (res) {
+            setCurrentAccounts(res);
+          }
+        });
+      }
+    };
+    fn();
   }, [apiHD, getMnemonicKeyring, state.type]);
 
   React.useEffect(() => {
