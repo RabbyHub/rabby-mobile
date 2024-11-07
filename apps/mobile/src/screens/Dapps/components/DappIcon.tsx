@@ -1,14 +1,12 @@
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { useThemeStyles } from '@/hooks/theme';
 import { getOriginName, hashCode } from '@/utils/common';
 import { createGetStyles } from '@/utils/styles';
 import { Image } from '@rneui/themed';
 import React, { useMemo } from 'react';
 import {
-  // Image,
   ImageStyle,
   ImageURISource,
   StyleProp,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
