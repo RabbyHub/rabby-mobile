@@ -11,11 +11,10 @@ import {
   TouchableNativeFeedbackProps,
   View,
   ViewStyle,
-  TextProps,
   TouchableOpacityProps,
   TouchableOpacity,
 } from 'react-native';
-import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { renderText } from '@/utils/renderNode';
 import { createGetStyles2024 } from '@/utils/styles';
 
@@ -195,7 +194,6 @@ const getStyle = createGetStyles2024(ctx => ({
     overflow: 'hidden',
     display: 'flex',
     gap: 8,
-    borderRadius: 100,
   },
   button: {
     overflow: 'hidden',
@@ -204,7 +202,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
     paddingHorizontal: 0,
     width: '100%',
-    // height: '100%',
+    borderRadius: 100,
     height: 56,
   },
   shadowButton: {
