@@ -95,7 +95,7 @@ export default function HomeHeaderArea() {
 
   const handlePressCurrentAccount = React.useCallback(() => {
     navigation.push(RootNames.StackAddress, {
-      screen: RootNames.CurrentAddress,
+      screen: RootNames.AddressList,
       params: {},
     });
   }, [navigation]);

@@ -2,10 +2,10 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
-import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
+import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
@@ -35,8 +35,29 @@ import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen202
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
+import { Text } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 
 const AddressStack = createCustomNativeStackNavigator();
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  headerRight: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  headerRightText: {
+    color: colors2024['brand-default'],
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  headerTitleText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+  },
+}));
 
 const hitSlop = {
   top: 10,
@@ -48,7 +69,7 @@ const hitSlop = {
 export function AddressNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
-  // console.log('============== SettingNavigator Render =========');
+  const { colors2024, styles } = useTheme2024({ getStyle });
 
   return (
     <AddressStack.Navigator
@@ -67,26 +88,14 @@ export function AddressNavigator() {
         headerTitle: '',
       })}>
       <AddressStack.Screen
-        name={RootNames.CurrentAddress}
-        component={CurrentAddressScreen}
-        options={({ navigation }) => ({
-          headerTitle: 'Current Address',
-          title: 'Current Address',
-          headerRight: ({ tintColor }) => (
-            <CustomTouchableOpacity
-              style={{
-                borderRadius: 4,
-                backgroundColor: colors['neutral-card-1'],
-                paddingHorizontal: 6,
-                paddingVertical: 4,
-              }}
-              hitSlop={hitSlop}
-              onPress={() => {
-                redirectToAddAddressEntry({ action: 'classical:push' });
-              }}>
-              <RcIconHeaderAddAccount width={20} height={20} />
-            </CustomTouchableOpacity>
-          ),
+        name={RootNames.AddressList}
+        component={AddressListScreen}
+        options={() => ({
+          headerTitle: 'Address',
+          title: 'Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+          headerRight: AddressListScreenButton,
         })}
       />
       <AddressStack.Screen
@@ -108,12 +117,8 @@ export function AddressNavigator() {
         options={mergeScreenOptions({
           headerTitle: 'Connect Hardware Wallets',
           title: 'Connect Hardware Wallets',
-          headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            color: colors['neutral-title-1'],
-            fontWeight: '800',
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen

@@ -347,7 +347,7 @@ export function OpenedDappWebViewStub() {
                     ]}
                     onPress={() => {
                       navigate(RootNames.StackAddress, {
-                        screen: RootNames.CurrentAddress,
+                        screen: RootNames.AddressList,
                         params: {
                           backToDappOnClose: activeDapp?.origin,
                         },

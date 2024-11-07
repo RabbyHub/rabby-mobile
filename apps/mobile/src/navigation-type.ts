@@ -61,7 +61,7 @@ type TestKitsNavigatorParamsList = {
 };
 
 export type AddressNavigatorParamList = {
-  [RootNames.CurrentAddress]?: {};
+  [RootNames.AddressList]?: {};
   [RootNames.CreateNewAddress]?: {};
   [RootNames.SetPassword2024]?: {};
   [RootNames.CreateChooseBackup]?: {};
@@ -122,6 +122,7 @@ export type AddressNavigatorParamList = {
     data: string;
   };
   [RootNames.RestoreFromCloud]?: {};
+  [RootNames.WatchAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {

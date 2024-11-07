@@ -6,11 +6,11 @@ import {
   StyleProp,
   StyleSheet,
   View,
-  PressableProps,
-  Pressable,
+  TouchableOpacityProps,
+  TouchableOpacity,
 } from 'react-native';
 
-interface CardProps extends PressableProps {
+interface CardProps extends TouchableOpacityProps {
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
   Component?: typeof React.Component;
@@ -22,7 +22,7 @@ export const Card = (props: CardProps) => {
     style,
     onPress,
     onLongPress,
-    Component = onPress || onLongPress ? Pressable : View,
+    Component = onPress || onLongPress ? TouchableOpacity : View,
   } = props;
 
   const { styles } = useTheme2024({ getStyle: getStyles });

@@ -78,7 +78,7 @@ export const RootNames = {
 
   StackAddress: 'StackAddress',
   StackAddress2024: 'StackAddress2024',
-  CurrentAddress: 'CurrentAddress',
+  AddressList: 'AddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
   ImportSuccess: 'ImportSuccess',
@@ -107,6 +107,7 @@ export const RootNames = {
   BackupPrivateKey: 'BackupPrivateKey',
   BackupMnemonic: 'BackupMnemonic',
   RestoreFromCloud: 'RestoreFromCloud',
+  WatchAddressList: 'WatchAddressList',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;
@@ -195,7 +196,7 @@ function makeScreenSpecConfig() {
       // History: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
 
       // ImportNewAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
-      // CurrentAddress: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
+      // AddressList: !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       ImportWatchAddress: blueLightConf,
       ImportSafeAddress: blueLightConf,
       ImportSuccess: blueLightConf,

@@ -38,6 +38,7 @@ import { Descriptions } from '@/components2024/Descriptions';
 import React from 'react';
 import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
 import { SeedPhraseRestoreFromCloud2024 } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud2024';
+import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -75,6 +76,7 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.WALLET_CONNECT]: [300],
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
+  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -113,6 +115,7 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.NFT_DETAIL]: NFTDetailPopupInner,
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,
+  [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: AddressQuickManager,
 };
 
 export function makeBottomSheetProps(ctx: {

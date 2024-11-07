@@ -169,7 +169,6 @@ export const GlobalBottomSheetModal2024 = () => {
       {modals.map(modal => {
         const ModalView = MODAL_VIEWS[modal.params.name];
         const bottomSheetModalProps = modal.params.bottomSheetModalProps;
-        const enableDynamicSizing = bottomSheetModalProps?.enableDynamicSizing;
 
         const modalViewProps = {
           ...modal.params,
@@ -191,20 +190,19 @@ export const GlobalBottomSheetModal2024 = () => {
             ref={modal.ref}
             name={modal.id}
             children={
-              <LinearGradient
+              <BottomSheetView
                 // eslint-disable-next-line react-native/no-inline-styles
                 style={{ flex: 1 }}
-                colors={
-                  isDarkTheme ? ['#131416', '#131416'] : ['#fff', '#F9F9F9']
-                }>
-                {enableDynamicSizing ? (
-                  <BottomSheetView {...panResponder.panHandlers}>
-                    <ModalView {...modalViewProps} />
-                  </BottomSheetView>
-                ) : (
+                {...panResponder.panHandlers}>
+                <LinearGradient
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  style={{ flex: 1 }}
+                  colors={
+                    isDarkTheme ? ['#131416', '#131416'] : ['#fff', '#F9F9F9']
+                  }>
                   <ModalView {...modalViewProps} />
-                )}
-              </LinearGradient>
+                </LinearGradient>
+              </BottomSheetView>
             }
             stackBehavior="push"
             {...makeBottomSheetProps({
