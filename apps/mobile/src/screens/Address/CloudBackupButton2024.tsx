@@ -30,9 +30,9 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
   }, []);
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
-      return require('@/assets/icons/address/icloud.png');
+      return require('@/assets2024/icons/common/icloud2x.png');
     }
-    return require('@/assets/icons/address/gdrive.png');
+    return require('@/assets/icons/address/gdrive-gray.png');
   }, []);
 
   return (
@@ -40,8 +40,8 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
       <Image
         // eslint-disable-next-line react-native/no-inline-styles
         style={{
-          width: 32,
-          height: 32,
+          width: 28,
+          height: 28,
         }}
         source={CloudImageSrc}
       />

@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { APP_TEST_PWD } from '@/constant';
 import { keyringService } from '@/core/services';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

@@ -18,7 +18,7 @@ import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
 
 interface Props {
-  status:
+  status?:
     | 'success'
     | 'error'
     | 'unlock'

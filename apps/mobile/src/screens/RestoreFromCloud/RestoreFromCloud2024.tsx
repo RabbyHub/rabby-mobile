@@ -120,7 +120,7 @@ export const RestoreFromCloud2024: React.FC<{
         overwriteStyle={styles.loadingContainer}
         style={StyleSheet.flatten([styles.rootLoading])}>
         <View style={styles.empty}>
-          <BackupIcon status="info" />
+          <BackupIcon status="info" isGray />
           <Text style={styles.restoreTitle}>
             {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
           </Text>
@@ -144,7 +144,7 @@ export const RestoreFromCloud2024: React.FC<{
     <BottomSheetView style={styles.screenContainer}>
       <View style={styles.body}>
         <View>
-          <BackupIcon status="success" />
+          <BackupIcon status={loading ? 'loading' : undefined} isGray />
           <Text style={styles.restoreTitle}>
             {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
           </Text>
