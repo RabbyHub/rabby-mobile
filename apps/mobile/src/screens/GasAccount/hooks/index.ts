@@ -279,3 +279,18 @@ export const gotoDeBankAppL2 = () => {
       gotoAppStore();
     });
 };
+
+export const useAml = () => {
+  const { accountId } = useGasAccountSign();
+
+  const { value } = useAsync(async () => {
+    if (accountId) {
+      return openapi.getGasAccountAml(accountId);
+    }
+    return {
+      is_risk: false,
+    };
+  }, [accountId]);
+
+  return value?.is_risk;
+};

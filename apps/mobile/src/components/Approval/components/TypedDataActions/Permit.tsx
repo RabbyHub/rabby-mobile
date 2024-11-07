@@ -149,6 +149,17 @@ const Permit = ({
             </SubRow>
           </SubCol>
 
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
+
           <SecurityListItem
             id="1077"
             engineResult={engineResultMap['1077']}

@@ -136,8 +136,7 @@ export default function CloudDriveTestItemModal({
                 itemIndex={idx}
                 afterPress={async result => {
                   if (!result?.keepModalVisible)
-                    if (!result?.keepModalVisible)
-                      setCloudDriveTestItemModalVisible(false);
+                    setCloudDriveTestItemModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>

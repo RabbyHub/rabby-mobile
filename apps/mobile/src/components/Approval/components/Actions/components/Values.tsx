@@ -174,12 +174,12 @@ const AddressMark = ({
   onWhitelist: boolean;
   onBlacklist: boolean;
   address: string;
-  chain: Chain;
+  chain?: Chain;
   isContract?: boolean;
   textStyle?: TextStyle;
   onChange(): void;
 }) => {
-  const chainId = chain.serverId;
+  const chainId = chain?.serverId;
   const { t } = useTranslation();
   const { init } = useApprovalSecurityEngine();
   const [visible, setVisible] = React.useState(false);

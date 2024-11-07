@@ -174,6 +174,16 @@ const Permit2 = ({
               />
             </SubRow>
           </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.subRowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
+            </SubRow>
+          </SubCol>
 
           <SecurityListItem
             id="1109"

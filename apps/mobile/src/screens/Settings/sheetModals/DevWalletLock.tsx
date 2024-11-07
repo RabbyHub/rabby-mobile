@@ -132,8 +132,7 @@ export default function WalletLockTestItemModal({
                 itemIndex={idx}
                 afterPress={async result => {
                   if (!result?.keepModalVisible)
-                    if (!result?.keepModalVisible)
-                      setWalletTestItemModalVisible(false);
+                    setWalletTestItemModalVisible(false);
                 }}>
                 <View style={styles.leftCol}>
                   <View style={styles.iconWrapper}>{item.icon}</View>

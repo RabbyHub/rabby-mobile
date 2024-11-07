@@ -16,7 +16,7 @@ export const enum FontWeightEnum {
 }
 
 export const FontNames = {
-  sf_pro_text_regular: IS_IOS ? 'SFProText-Regular' : 'SF-Pro-Text-Regular',
+  sf_pro: IS_IOS ? 'SF Pro' : 'Roboto',
   sf_pro_rounded_bold: IS_IOS ? 'SFProRounded-Bold' : 'SF-Pro-Rounded-Bold',
   sf_pro_rounded_light: IS_IOS ? 'SFProRounded-Light' : 'SF-Pro-Rounded-Light',
   sf_pro_rounded_regular: IS_IOS

@@ -205,7 +205,7 @@ export const GasAccountHistory = () => {
       ListHeaderComponent={ListHeaderComponent}
       renderItem={renderItem}
       extraData={txList?.rechargeList.length}
-      keyExtractor={item => `${item.tx_id}${item.chain_id}`}
+      keyExtractor={item => `${item.tx_id}-${item.create_at}-${item.chain_id}`}
       onEndReached={loadMore}
       onEndReachedThreshold={0.6}
       ListFooterComponent={ListEndLoader}

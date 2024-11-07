@@ -233,12 +233,15 @@ export const useTokenPair = (userAddress: string) => {
     return false;
   }, [chainInfo?.nativeTokenAddress, payToken]);
 
+  const [passGasPrice, setUseGasPrice] = useState(false);
+
   const handleAmountChange = useCallback((e: string) => {
     const v = formatSpeicalAmount(e);
     if (!/^\d*(\.\d*)?$/.test(v)) {
       return;
     }
     setPayAmount(v);
+    setUseGasPrice(false);
     setQuoteLoading(true);
   }, []);
 
@@ -300,6 +303,11 @@ export const useTokenPair = (userAddress: string) => {
 
   const closeReserveGasOpen = useCallback(() => {
     setReserveGasOpen(false);
+  }, []);
+
+  const closeReserveGasOpenAndUpdatePayAmount = useCallback(() => {
+    setReserveGasOpen(false);
+
     if (payToken && gasPriceRef.current !== undefined) {
       const val = tokenAmountBn(payToken).minus(
         new BigNumber(gasLimit)
@@ -314,9 +322,10 @@ export const useTokenPair = (userAddress: string) => {
     (gasLevel: GasLevel) => {
       gasPriceRef.current = gasLevel.level === 'custom' ? 0 : gasLevel.price;
       setGasLevel(gasLevel.level as GasLevelType);
-      closeReserveGasOpen();
+      closeReserveGasOpenAndUpdatePayAmount();
+      setUseGasPrice(true);
     },
-    [closeReserveGasOpen],
+    [closeReserveGasOpenAndUpdatePayAmount],
   );
 
   const handleBalance = useCallback(() => {
@@ -692,6 +701,7 @@ export const useTokenPair = (userAddress: string) => {
     gasList,
     reserveGasOpen,
     closeReserveGasOpen,
+    passGasPrice,
   };
 };
 
