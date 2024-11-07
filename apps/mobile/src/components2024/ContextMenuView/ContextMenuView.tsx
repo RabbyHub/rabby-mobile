@@ -38,7 +38,9 @@ export const ContextMenuView: React.FC<Props> = ({
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
         collisionPadding={10}>
-        {menuConfig.menuTitle && <ContextMenu.Label>123</ContextMenu.Label>}
+        {menuConfig.menuTitle && (
+          <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
+        )}
         {menuConfig.menuActions?.map(action => (
           <ContextMenu.Item key={action.key} onSelect={action.action}>
             <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
