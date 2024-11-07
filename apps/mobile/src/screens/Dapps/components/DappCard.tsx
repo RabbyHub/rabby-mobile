@@ -1,29 +1,19 @@
+import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
 import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
-import { useThemeColors } from '@/hooks/theme';
+import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { DappInfo } from '@/core/services/dappService';
-import React, { useState } from 'react';
-import {
-  Image,
-  Platform,
-  StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { findChain } from '@/utils/chain';
+import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
+import { stringUtils } from '@rabby-wallet/base-utils';
+import React from 'react';
+import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import RcIconDisconnect from '@/assets/icons/dapp/icon-disconnect-circle.svg';
-import RcIconMore from '@/assets/icons/dapp/icon-more.svg';
-import { makeTriangleStyle } from '@/utils/styles';
-import { Tip } from '@/components';
-import { findChain } from '@/utils/chain';
-import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 
 export const DappCardListBy = ({
   data,
@@ -31,54 +21,20 @@ export const DappCardListBy = ({
   data: DappInfo['info']['collected_list'];
 }) => {
   const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const [isShowTooltip, setIsShowTooltip] = useState(false);
+  const { styles } = useTheme2024({ getStyle });
   return data?.length ? (
-    <Tip
-      isVisible={isShowTooltip}
-      onClose={() => {
-        setIsShowTooltip(false);
-      }}
-      content={
-        <View style={styles.tooltip}>
-          <Text style={styles.tooltipTitle}>
-            {Platform.OS === 'ios' ? 'Website' : 'Dapps'} has been list by
-          </Text>
-          <View style={styles.tooltipList}>
-            {data.map(item => {
-              return (
-                <View style={styles.tooltipListItem} key={item.logo_url}>
-                  <Image
-                    style={styles.tooltipListItemIcon}
-                    source={{ uri: item.logo_url }}
-                  />
-                  <Text style={styles.tooltipListItemText}>{item.name}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      }>
-      <TouchableWithoutFeedback
-        disallowInterruption={true}
-        hitSlop={{ left: 30, right: 30, top: 50, bottom: 50 }}
-        onPress={() => {
-          setIsShowTooltip(true);
-        }}>
-        <View style={styles.listBy}>
-          {data.slice(0, 6).map(item => {
-            return (
-              <Image
-                style={styles.listByIcon}
-                source={{ uri: item.logo_url }}
-                key={item.logo_url}
-              />
-            );
-          })}
-          {data.length > 6 ? <RcIconMore /> : null}
-        </View>
-      </TouchableWithoutFeedback>
-    </Tip>
+    <View style={styles.listBy}>
+      {data.slice(0, 6).map(item => {
+        return (
+          <Image
+            style={styles.listByIcon}
+            source={{ uri: item.logo_url }}
+            key={item.logo_url}
+          />
+        );
+      })}
+      {/* {data.length > 6 ? <RcIconMore /> : null} */}
+    </View>
   ) : null;
 };
 
@@ -95,8 +51,7 @@ export const DappCard = ({
   onFavoritePress?: (dapp: DappInfo) => void;
   isActive?: boolean;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
 
   const chain = findChain({ enum: data.chainId });
 
@@ -126,7 +81,7 @@ export const DappCard = ({
                 <TestnetChainLogo
                   name={chain.name}
                   style={styles.chainIcon}
-                  size={16}
+                  size={styles.chainIcon.width}
                 />
               ) : (
                 <Image
@@ -163,6 +118,7 @@ export const DappCard = ({
         <TouchableWithoutFeedback
           style={styles.dappAction}
           disallowInterruption={true}
+          hitSlop={10}
           onPress={() => {
             onFavoritePress?.(data);
           }}>
@@ -172,8 +128,7 @@ export const DappCard = ({
       {data.info?.description && !isActive ? (
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
-            <View style={styles.triangle} />
-            <Text style={styles.dappDescText} numberOfLines={3}>
+            <Text style={styles.dappDescText} numberOfLines={1}>
               {data.info.description}
             </Text>
           </View>
@@ -183,159 +138,129 @@ export const DappCard = ({
   );
 };
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
-    dappCard: {
-      borderRadius: 8,
-      backgroundColor: colors['neutral-card-1'],
-      borderWidth: 1,
-      borderColor: 'transparent',
-    },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  dappCard: {
+    borderRadius: 30,
+    backgroundColor: colors2024['neutral-bg-1'],
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+  },
 
-    dappContent: {
-      flex: 1,
-      flexDirection: 'column',
-      gap: 2,
-      overflow: 'hidden',
-    },
-    dappOrigin: {
-      fontSize: 16,
-      fontWeight: '500',
-      fontStyle: 'normal',
-      lineHeight: 19,
-      color: colors['neutral-title-1'],
-    },
-    dappInfo: {
-      flexDirection: 'row',
-      gap: 6,
-      alignItems: 'center',
-      // flexWrap: 'wrap',
-      overflow: 'hidden',
-      color: colors['neutral-body'],
-    },
+  dappContent: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 2,
+    overflow: 'hidden',
+  },
+  dappOrigin: {
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+    fontSize: 17,
+    lineHeight: 22,
+    color: colors2024['brand-default'],
+  },
+  dappInfo: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    // flexWrap: 'wrap',
+    overflow: 'hidden',
+    color: colors2024['neutral-body'],
+  },
 
-    dappName: {
-      flexShrink: 1,
-    },
+  dappName: {
+    flexShrink: 1,
+  },
 
-    dappInfoText: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-      flexShrink: 0,
-    },
+  dappInfoText: {
+    fontSize: 13,
+    lineHeight: 16,
+    color: colors2024['neutral-foot'],
+    flexShrink: 0,
+  },
 
-    divider: {
-      width: 1,
-      height: 12,
-      backgroundColor: colors['neutral-line'],
-    },
+  divider: {
+    width: 1,
+    height: 12,
+    backgroundColor: colors2024['neutral-line'],
+  },
 
-    dappAction: {
-      padding: 8,
-      marginRight: -8,
-    },
-    body: {
-      flexDirection: 'row',
-      gap: 12,
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingTop: 14,
-      paddingBottom: 12,
-    },
-    footer: {
-      paddingHorizontal: 16,
-      paddingBottom: 16,
-    },
-    dappDesc: {
-      position: 'relative',
-      backgroundColor: colors['neutral-card-3'],
-      padding: 8,
-      borderRadius: 4,
-    },
-    dappDescText: {
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors['neutral-body'],
-    },
-    dappIconWraper: {
-      position: 'relative',
-    },
-    dappIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-    },
-    dappIconCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 40,
-      borderWidth: 1.5,
-      borderColor: colors['green-default'],
-      position: 'absolute',
-      top: -4,
-      left: -4,
-    },
-    chainIcon: {
-      width: 16,
-      height: 16,
-      borderRadius: 16,
-      position: 'absolute',
-      right: -2,
-      bottom: -2,
-    },
-    listBy: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    listByIcon: {
-      width: 12,
-      height: 12,
-      borderRadius: 12,
-      opacity: 0.7,
-    },
-    tooltip: {
-      padding: 12,
-    },
-    tooltipTitle: {
-      color: colors['neutral-title2'],
-      marginBottom: 6,
-      fontSize: 12,
-      lineHeight: 14,
-    },
-    tooltipList: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-    },
-    tooltipListItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    tooltipListItemIcon: {
-      width: 12,
-      height: 12,
-      borderRadius: 12,
-      flexShrink: 0,
-    },
-    tooltipListItemText: {
-      color: colors['neutral-title2'],
-      fontSize: 12,
-      lineHeight: 14,
-    },
-    triangle: {
-      position: 'absolute',
-      left: 8,
-      top: -8,
-      ...makeTriangleStyle({
-        dir: 'up',
-        size: 7,
-        color: colors['neutral-card-3'],
-      }),
-      borderTopWidth: 1,
-      borderLeftWidth: 7,
-      borderRightWidth: 7,
-    },
-  });
+  dappAction: {
+    padding: 8,
+    marginRight: -8,
+  },
+  body: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  dappDesc: {
+    position: 'relative',
+    backgroundColor: colors2024['neutral-bg-2'],
+    padding: 8,
+    borderRadius: 12,
+  },
+  dappDescText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+  },
+  dappIconWraper: {
+    position: 'relative',
+  },
+  dappIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 1000,
+  },
+  dappIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 40,
+    borderWidth: 1.5,
+    borderColor: colors2024['green-default'],
+    position: 'absolute',
+    top: -4,
+    left: -4,
+  },
+  chainIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 16,
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+  },
+  listBy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  listByIcon: {
+    width: 12,
+    height: 12,
+    borderRadius: 12,
+    opacity: 0.7,
+  },
+
+  triangle: {
+    position: 'absolute',
+    left: 8,
+    top: -8,
+    ...makeTriangleStyle({
+      dir: 'up',
+      size: 7,
+      color: colors2024['neutral-card-3'],
+    }),
+    borderTopWidth: 1,
+    borderLeftWidth: 7,
+    borderRightWidth: 7,
+  },
+}));

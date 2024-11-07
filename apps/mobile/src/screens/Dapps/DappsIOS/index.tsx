@@ -3,34 +3,29 @@ import React, { useMemo } from 'react';
 
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeStyles } from '@/hooks/theme';
-import { useNavigation } from '@react-navigation/native';
 import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 // import { useRequest } from 'ahooks';
-import { AppColorsVariants } from '@/constant/theme';
-import { useDappsHome } from '@/hooks/useDappsHome';
-import { SearchBar } from '@rneui/themed';
-import {
-  useActiveViewSheetModalRefs,
-  useOpenDappView,
-} from '../hooks/useDappView';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { findChainByEnum } from '@/utils/chain';
-import { openapi } from '@/core/request';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import { CHAINS_ENUM } from '@/constant/chains';
+import { ScreenLayouts } from '@/constant/layout';
+import { AppColorsVariants } from '@/constant/theme';
+import { openapi } from '@/core/request';
+import { DappInfo } from '@/core/services/dappService';
+import { useDappsHome } from '@/hooks/useDappsHome';
+import { findChainByEnum } from '@/utils/chain';
+import { isPossibleDomain } from '@/utils/url';
+import { stringUtils } from '@rabby-wallet/base-utils';
+import { SearchBar } from '@rneui/themed';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { DappCardList } from '../Dapps/components/DappCardList';
+import { useOpenDappView } from '../hooks/useDappView';
 import { LinkCard } from '../SearchDapps/components/LinkCard';
 import { SearchDappCardList } from '../SearchDapps/components/SearchDappCardList';
 import { SearchEmpty } from '../SearchDapps/components/SearchEmpty';
-import { SearchSuggest } from '../SearchDapps/components/SearchSuggest';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import { DappInfo } from '@/core/services/dappService';
-import { isPossibleDomain } from '@/utils/url';
-import { DappCardList } from '../Dapps/components/DappCardList';
 import { EmptyDapps } from './components/EmptyDapps';
-import { ScreenLayouts } from '@/constant/layout';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export function DappsIOSScreen(): JSX.Element {
   const { styles, colors } = useThemeStyles(getStyles);
@@ -178,23 +173,12 @@ export function DappsIOSScreen(): JSX.Element {
         {!isFocus && !searchText ? (
           <View style={styles.container}>
             <DappCardList
-              sections={dappSections}
+              data={dappSections[1]?.data}
               onPress={dapp => {
                 openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
               }}
               onFavoritePress={dapp => {
                 updateFavorite(dapp.origin, !dapp.isFavorite);
-              }}
-              onClosePress={dapp => {
-                // for 'inUse' section, close it rather than remove it.
-                closeOpenedDapp(dapp.origin);
-              }}
-              onRemovePress={dapp => {
-                // for 'favorites' section, close it rather than remove it.
-                removeDapp(dapp.origin);
-              }}
-              onDisconnectPress={dapp => {
-                disconnectDapp(dapp.origin);
               }}
               ListEmptyComponent={EmptyDapps}
             />
