@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 
 import { Card } from '@/components2024/Card';
-
+import FireIcon from '@/assets2024/icons/common/party-fire.svg';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
@@ -228,6 +228,7 @@ export const ImportSuccessScreen2024 = () => {
             &nbsp;{state?.isFirstCreate ? 'Created' : 'Imported'} successfully!
           </Text>
         </View>
+        {importAddresses.length < 3 && <FireIcon style={styles.fire} />}
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -323,5 +324,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     marginBottom: 4,
+  },
+  fire: {
+    width: 134,
+    height: 134,
+    position: 'absolute',
+    bottom: 149,
+    left: '50%',
+    transform: [{ translateX: -50 }],
   },
 }));
