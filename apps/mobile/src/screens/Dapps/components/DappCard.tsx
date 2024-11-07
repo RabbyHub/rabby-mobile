@@ -3,9 +3,9 @@ import RcIconStarFull from '@/assets/icons/dapp/icon-star-full.svg';
 import RcIconStar from '@/assets/icons/dapp/icon-star.svg';
 import { TestnetChainLogo } from '@/components/Chain/TestnetChainLogo';
 import { DappInfo } from '@/core/services/dappService';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
-import { createGetStyles2024, makeTriangleStyle } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { Image, StyleProp, Text, View, ViewStyle } from 'react-native';
@@ -20,7 +20,6 @@ export const DappCardListBy = ({
 }: {
   data: DappInfo['info']['collected_list'];
 }) => {
-  const colors = useThemeColors();
   const { styles } = useTheme2024({ getStyle });
   return data?.length ? (
     <View style={styles.listBy}>
@@ -33,7 +32,6 @@ export const DappCardListBy = ({
           />
         );
       })}
-      {/* {data.length > 6 ? <RcIconMore /> : null} */}
     </View>
   ) : null;
 };
@@ -44,12 +42,14 @@ export const DappCard = ({
   onPress,
   onFavoritePress,
   style,
+  isShowDesc = false,
 }: {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   isActive?: boolean;
+  isShowDesc?: boolean;
 }) => {
   const { styles } = useTheme2024({ getStyle });
 
@@ -103,9 +103,7 @@ export const DappCard = ({
           </Text>
           <View style={styles.dappInfo}>
             {data.info?.name ? (
-              <Text
-                style={[styles.dappInfoText, styles.dappName]}
-                numberOfLines={1}>
+              <Text style={[styles.dappName]} numberOfLines={1}>
                 {data.info?.name}
               </Text>
             ) : null}
@@ -125,7 +123,7 @@ export const DappCard = ({
           {data.isFavorite ? <RcIconStarFull /> : <RcIconStar />}
         </TouchableWithoutFeedback>
       </View>
-      {data.info?.description && !isActive ? (
+      {data.info?.description && !isActive && isShowDesc ? (
         <View style={styles.footer}>
           <View style={styles.dappDesc}>
             <Text style={styles.dappDescText} numberOfLines={1}>
@@ -149,7 +147,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   dappContent: {
     flex: 1,
     flexDirection: 'column',
-    gap: 2,
+    gap: 4,
     overflow: 'hidden',
   },
   dappOrigin: {
@@ -163,20 +161,16 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     gap: 6,
     alignItems: 'center',
-    // flexWrap: 'wrap',
     overflow: 'hidden',
-    color: colors2024['neutral-body'],
   },
 
   dappName: {
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '500',
     flexShrink: 1,
-  },
-
-  dappInfoText: {
-    fontSize: 13,
-    lineHeight: 16,
-    color: colors2024['neutral-foot'],
-    flexShrink: 0,
   },
 
   divider: {
@@ -248,19 +242,5 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 12,
     borderRadius: 12,
     opacity: 0.7,
-  },
-
-  triangle: {
-    position: 'absolute',
-    left: 8,
-    top: -8,
-    ...makeTriangleStyle({
-      dir: 'up',
-      size: 7,
-      color: colors2024['neutral-card-3'],
-    }),
-    borderTopWidth: 1,
-    borderLeftWidth: 7,
-    borderRightWidth: 7,
   },
 }));
