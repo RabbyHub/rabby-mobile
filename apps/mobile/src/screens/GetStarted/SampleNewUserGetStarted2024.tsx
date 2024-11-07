@@ -1,31 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Dimensions,
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 
-import { RcIconLogo, RcIconLogoBlue } from '@/assets/icons/common';
+import { RcIconLogoBlue } from '@/assets/icons/common';
 import { RootNames } from '@/constant/layout';
-import { keyringService, preferenceService } from '@/core/services';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { keyringService } from '@/core/services';
+import { useTheme2024 } from '@/hooks/theme';
 import { navigate } from '@/utils/navigation';
-// import { Button } from '@rneui/themed';
-// import { Button } from '@/components/Button';
 import { Button } from '@/components2024/Button';
-import { useMemoizedFn, useRequest } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import {
   StackActions,
   useFocusEffect,
   useNavigation,
 } from '@react-navigation/native';
 import { useAppUnlocked } from '@/hooks/useLock';
-import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
+import { createGetStyles2024 } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 
 function SampleGetStartedScreen2024(): JSX.Element {

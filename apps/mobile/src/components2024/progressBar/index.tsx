@@ -51,6 +51,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['brand-default'],
     fontWeight: '700',
     fontSize: 12,
+    fontFamily: 'SF Pro Rounded',
     marginLeft: 12,
   },
   block: {

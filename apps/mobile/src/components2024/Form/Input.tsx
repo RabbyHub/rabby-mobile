@@ -57,6 +57,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
     fieldName: {
       fontSize: 12,
       color: ctx.colors2024['neutral-info'],
+      fontFamily: 'SF Pro Rounded',
       marginBottom: 8,
       position: 'absolute',
       left: INPUT_SIZES.PADDING_HORIZONTAL,
@@ -108,6 +109,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
     formFieldTipText: {
       fontSize: 14,
       fontWeight: '400',
+      fontFamily: 'SF Pro Rounded',
       textAlign: 'left',
     },
     formFieldErrorText: {

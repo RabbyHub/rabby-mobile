@@ -82,7 +82,7 @@ export const ImportPrivateKeyScreen2024 = () => {
         onPress: handleConfirm,
       }}
       style={styles.screen}
-      footerBottomOffset={16}
+      footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
@@ -241,6 +241,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-info'],
     fontWeight: '400',
     fontSize: 16,
+    fontFamily: 'SF Pro Rounded',
   },
   tipIcon: {
     width: 16,

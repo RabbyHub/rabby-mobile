@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { useTheme2024, useThemeColors } from '@/hooks/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
 import CreateNewAddress from '../Address/CreateNewAddress';
@@ -13,8 +13,7 @@ const AddressStack = createCustomNativeStackNavigator();
 
 export function AddressNavigator2024() {
   const { mergeScreenOptions } = useStackScreenConfig();
-  const colors = useThemeColors();
-  const { colors2024, color } = useTheme2024();
+  const { colors2024 } = useTheme2024();
   // console.log('============== SettingNavigator Render =========');
 
   return (

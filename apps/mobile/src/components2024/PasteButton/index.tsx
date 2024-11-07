@@ -52,6 +52,7 @@ const getStyle = createGetStyles2024(ctx => ({
     color: ctx.colors2024['brand-default'],
     fontWeight: '700',
     fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
     lineHeight: 18,
   },
 }));

@@ -52,11 +52,13 @@ const getStyle = createGetStyles2024(colors => ({
     color: colors.colors2024['neutral-secondary'],
     fontSize: 14,
     lineHeight: 18,
+    fontFamily: 'SF Pro Rounded',
   },
   bodyTitle: {
     color: colors['neutral-title-1'],
     fontSize: 20,
     fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
     lineHeight: 24,
   },
   bodyDesc: {

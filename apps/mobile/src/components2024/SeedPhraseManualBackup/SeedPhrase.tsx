@@ -35,6 +35,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: 4,
     fontWeight: '700',
     color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
   },
   tipsText: {
@@ -58,6 +59,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   title: {
     // marginTop: -12,
+    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['neutral-title-1'],
   },
   dotItem: {
     marginLeft: 8,

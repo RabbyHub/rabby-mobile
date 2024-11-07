@@ -140,6 +140,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
   },
   tipWrapper: {
     display: 'flex',
@@ -154,6 +155,7 @@ const getStyles = createGetStyles2024(ctx => ({
     color: ctx.colors2024['neutral-info'],
     fontWeight: '400',
     fontSize: 16,
+    fontFamily: 'SF Pro Rounded',
   },
   tipIcon: {
     width: 16,
@@ -167,6 +169,7 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     backgroundColor: ctx.colors2024['brand-default'],
     color: ctx.colors2024['neutral-InvertHighlight'],
+    borderWidth: 1,
   },
 }));
 

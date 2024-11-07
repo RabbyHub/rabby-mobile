@@ -30,13 +30,19 @@ export const Descriptions: React.FC<{
           </View>
         ))}
       </View>
-      {nextButtonProps && <Button {...nextButtonProps} />}
+      {nextButtonProps && (
+        <Button containerStyle={styles.button} {...nextButtonProps} />
+      )}
     </AutoLockView>
   );
 };
 const getStyles = createGetStyles2024(ctx => ({
   container: {
     paddingHorizontal: 25,
+    height: '100%',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
   },
   title: {
     fontSize: 20,
@@ -67,5 +73,10 @@ const getStyles = createGetStyles2024(ctx => ({
     lineHeight: 24,
     color: ctx.colors2024['neutral-foot'],
     fontFamily: 'SF Pro Rounded',
+  },
+  button: {
+    position: 'absolute',
+    bottom: 56,
+    width: '100%',
   },
 }));

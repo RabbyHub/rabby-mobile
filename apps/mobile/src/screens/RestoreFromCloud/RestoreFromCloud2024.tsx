@@ -203,7 +203,7 @@ const getStyle = createGetStyles2024(colors => ({
   btnContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 40,
+    bottom: 56,
     paddingHorizontal: 24,
   },
   restoreTitle: {
@@ -211,6 +211,7 @@ const getStyle = createGetStyles2024(colors => ({
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
+    fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
     color: colors.colors2024['neutral-title-1'],
   },
@@ -218,6 +219,7 @@ const getStyle = createGetStyles2024(colors => ({
     marginTop: 14,
     color: colors.colors2024['neutral-secondary'],
     fontSize: 17,
+    fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
   },
   root: {},
@@ -257,6 +259,6 @@ const getStyle = createGetStyles2024(colors => ({
     paddingHorizontal: 25,
   },
   importConfirm: {
-    marginBottom: 35,
+    marginBottom: 56,
   },
 }));

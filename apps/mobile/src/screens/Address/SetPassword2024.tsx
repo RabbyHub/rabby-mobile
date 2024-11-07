@@ -178,9 +178,11 @@ function MainListBlocks() {
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText>{state.title || '2. set password'}</HeaderTitleText>
+      <HeaderTitleText style={styles.headerTitleStyle}>
+        {state.title || '2. Set password'}
+      </HeaderTitleText>
     );
-  }, [state.title]);
+  }, [state.title, styles.headerTitleStyle]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -336,7 +338,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 60,
+    bottom: 48,
   },
   inputStyle: {
     borderWidth: 0,
@@ -415,7 +417,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   agreementWrapper: {
     position: 'absolute',
-    bottom: 108,
+    bottom: 96,
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -448,6 +450,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     // position: 'relative',
     // top: 0,
     // ...makeDebugBorder(),
+  },
+  headerTitleStyle: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
   },
 }));
 

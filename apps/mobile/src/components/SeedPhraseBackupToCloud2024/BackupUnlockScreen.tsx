@@ -17,13 +17,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontWeight: '700',
     lineHeight: 24,
     fontFamily: 'SF Pro Rounded',
-    marginTop: 28,
+    marginTop: 25,
   },
   root: {
     alignItems: 'center',
   },
   description: {
     color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
     fontSize: 17,
     // lineHeight: 22,
     textAlign: 'center',
@@ -33,6 +34,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   input: {
     borderWidth: 1,
     borderColor: colors2024['neutral-line'],
+    fontFamily: 'SF Pro Rounded',
     backgroundColor: 'transparent',
     borderRadius: 8,
     width: '100%',
@@ -44,16 +46,19 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
     padding: 24,
-    height: 460,
+    height: '100%',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
   },
   inputWrapper: {
     width: '100%',
-    marginTop: 24,
-    marginBottom: 25,
+    marginTop: 23,
   },
   btnContainer: {
-    // marginTop: 44,
     width: '100%',
+    position: 'absolute',
+    bottom: 56,
   },
   inputStyle: {
     borderWidth: 0,
