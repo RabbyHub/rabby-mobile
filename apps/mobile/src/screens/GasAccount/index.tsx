@@ -2,6 +2,7 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import { createGetStyles } from '@/utils/styles';
 import { Text, View } from 'react-native';
 import {
+  useAml,
   useGasAccountGoBack,
   useGasAccountInfo,
   useGasAccountLogin,
@@ -23,8 +24,11 @@ import GasAccountLogoutPopup from './components/LogoutPopup';
 import {
   useGasAccountLoginVisible,
   useGasAccountLogoutVisible,
+  useGasAccountSign,
 } from './hooks/atom';
 import { GasAccountWrapperBg } from './components/WrapperBg';
+import { SwitchLoginAddrBeforeDepositModal } from './components/SwitchLoginAddrModal';
+import { useCurrentAccount } from '@/hooks/account';
 
 const DEPOSIT_LIMIT = 1000;
 
@@ -34,6 +38,8 @@ export const GasAccountScreen = () => {
   const [showDesposit, setShowDesposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [loginVisible, setLoginVisible] = useGasAccountLoginVisible();
+
+  const [switchAddrVisible, setSwitchAddrVisible] = useState(false);
 
   const styles = useMemo(() => getStyles(colors), [colors]);
   const { value, loading } = useGasAccountInfo();
@@ -47,15 +53,28 @@ export const GasAccountScreen = () => {
 
   const gotoDashboard = useGasAccountGoBack();
 
+  const { accountId } = useGasAccountSign();
+
+  const { currentAccount } = useCurrentAccount();
+
   const gotoDesposit = () => {
+    if (accountId && currentAccount?.address !== accountId) {
+      setSwitchAddrVisible(true);
+      return;
+    }
     setShowDesposit(true);
   };
 
   const { isLogin } = useGasAccountLogin({ value, loading });
 
+  const isRisk = useAml();
+
   const balance = value?.account?.balance || 0;
 
-  const canDesposit = useMemo(() => balance < DEPOSIT_LIMIT, [balance]);
+  const canDesposit = useMemo(
+    () => !isRisk && balance < DEPOSIT_LIMIT,
+    [balance, isRisk],
+  );
 
   const [logoutPopupVisible, setLogoutPopupVisible] =
     useGasAccountLogoutVisible();
@@ -107,7 +126,11 @@ export const GasAccountScreen = () => {
             <Tip
               placement="top"
               content={
-                !canDesposit ? t('component.gasAccount.gasExceed') : undefined
+                !canDesposit
+                  ? isRisk
+                    ? t('page.gasAccount.risk')
+                    : t('component.gasAccount.gasExceed')
+                  : undefined
               }>
               <Button
                 type="primary"
@@ -149,6 +172,11 @@ export const GasAccountScreen = () => {
         onClose={() => {
           setLogoutPopupVisible(false);
         }}
+      />
+
+      <SwitchLoginAddrBeforeDepositModal
+        visible={switchAddrVisible}
+        onCancel={() => setSwitchAddrVisible(false)}
       />
     </NormalScreenContainer>
   );

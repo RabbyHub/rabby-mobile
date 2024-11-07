@@ -161,13 +161,21 @@ const UnWrapToken = ({
               {!engineResultMap['1093'] && (
                 <>
                   <SubCol>
-                    <SubRow isTitle>{t('page.signTx.address')}</SubRow>
+                    <SubRow isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.signTx.address')}
+                      </Text>
+                    </SubRow>
                     <SubRow>
                       <Values.AccountAlias address={receiver} />
                     </SubRow>
                   </SubCol>
                   <SubCol>
-                    <SubRow isTitle>{t('page.addressDetail.source')}</SubRow>
+                    <SubRow isTitle>
+                      <Text style={commonStyle.rowTitleText}>
+                        {t('page.addressDetail.source')}
+                      </Text>
+                    </SubRow>
                     <SubRow>
                       <Values.KnownAddress address={receiver} />
                     </SubRow>
@@ -191,6 +199,7 @@ const UnWrapToken = ({
                 protocol: requireData.protocol,
                 rank: requireData.rank,
                 address: requireData.id,
+                hasInteraction: requireData.hasInteraction,
                 chain,
               }}>
               <View ref={unwrapTokenAddressRef}>
@@ -211,6 +220,16 @@ const UnWrapToken = ({
                 style={commonStyle.subRowText}
                 protocol={requireData.protocol}
               />
+            </SubRow>
+          </SubCol>
+          <SubCol>
+            <SubRow isTitle>
+              <Text style={commonStyle.rowTitleText}>
+                {t('page.signTx.hasInteraction')}
+              </Text>
+            </SubRow>
+            <SubRow>
+              <Values.Interacted value={requireData.hasInteraction} />
             </SubRow>
           </SubCol>
           {isInWhitelist && (

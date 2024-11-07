@@ -19,8 +19,11 @@ cd $repo_dir/packages/rn-webview-bridge
 
 echo "2. Copy Assets..."
 cd $repo_dir/apps/mobile;
-cp_assets;
+cleanup_fonts_assets;
 
 cd $repo_dir/apps/mobile;
 echo "3. Patch npm packages"
 yarn patch-package
+
+echo "3. Link Assets"
+yarn link-assets

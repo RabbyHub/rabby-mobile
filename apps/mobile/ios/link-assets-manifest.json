@@ -2,10 +2,6 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "assets/fonts/Anton-Regular.ttf",
-      "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
-    },
-    {
       "path": "assets/fonts/SF-Pro-Rounded-Bold.otf",
       "sha1": "b39fbfb2d62812824b4515cf31b8cbd543365042"
     },
@@ -16,10 +12,6 @@
     {
       "path": "assets/fonts/SF-Pro-Rounded-Regular.otf",
       "sha1": "694453f1c9d8afe3dcd252181ae61ed27b8a433d"
-    },
-    {
-      "path": "assets/fonts/SF-Pro-Text-Regular.ttf",
-      "sha1": "fc1b6a2f59da1c8eb05248ce8b25ba30f244e5de"
     },
     {
       "path": "assets/custom/InpageBridgeWeb3.js",

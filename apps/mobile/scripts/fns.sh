@@ -134,15 +134,37 @@ unix_replace_variables() {
     echo "Replace finished, result in $output_file"
 }
 
-cp_assets() {
+cleanup_fonts_assets() {
   local script_dir="$( cd "$( dirname "$0"  )" && pwd  )"
   local project_dir=$(dirname $script_dir)
 
-  mkdir -p $project_dir/android/app/src/main/assets/fonts
+  # local targets=(
+  #   # $project_dir/android/app/src/main/assets/fonts
+  #   $project_dir/ios/RabbyMobile/Resources/
+  # )
+  # for target in "${targets[@]}"
+  # do
+  #   echo "cleanup and copy fonts to $target..."
+  #   rm -rf $target && mkdir -p $target;
+  #   cp $project_dir/assets/fonts/* $target
+  # done
+
+  # iOS
+  local ios_target=$project_dir/ios/RabbyMobile/Resources/
+  echo "cleanup and copy fonts to $ios_target..."
+  rm -rf $ios_target && mkdir -p $ios_target;
+  cp $project_dir/assets/fonts/* $ios_target
+
+  # Android
+  mkdir -p $project_dir/android/app/src/main/assets/fonts && \
+    rm -rf $project_dir/android/app/src/main/assets/fonts/*.ttf;
+
+  local android_assets_target=$project_dir/android/app/src/main/assets
+  # local android_font_target=$project_dir/android/app/src/main/res/font
+  echo "cleanup and copy fonts to $android_assets_target/fonts..."
   cp $project_dir/assets/fonts/* $project_dir/android/app/src/main/assets/fonts/
 
-  mkdir -p $project_dir/ios/RabbyMobile/Resources
-  cp $project_dir/assets/fonts/* $project_dir/ios/RabbyMobile/Resources/
+  # rm -f $android_assets_target/sf_pro_all.ttf && cp $project_dir/assets/fonts/* $ios_target
 }
 
 func_to_exec=$1
@@ -152,8 +174,8 @@ if [ ! -z $func_to_exec ]; then
     "--source-only")
       # do nothing
       ;;
-    "cp_assets")
-      cp_assets
+    "cleanup_fonts_assets")
+      cleanup_fonts_assets
       ;;
     *)
       echo "Invalid function to execute: $func_to_exec"

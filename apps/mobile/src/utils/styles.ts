@@ -107,6 +107,13 @@ export function makeDebugBorder(color = 'blue'): ViewStyle {
   });
 }
 
+export function makeProdBorder(color = 'blue'): ViewStyle {
+  return {
+    borderWidth: 1,
+    borderColor: color,
+  };
+}
+
 function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
   input: T,
 ): T {
@@ -154,7 +161,7 @@ function mutateStyles<T extends NamedStyles<T> | NamedStyles<any>>(
           }
         }
       } else if (lcFontFamily && /sf(.?)pro(.?)/i.test(lcFontFamily)) {
-        input[key].fontFamily = FontNames.sf_pro_text_regular;
+        input[key].fontFamily = FontNames.sf_pro;
       }
 
       if (__DEV__ && shouldDevLog) {
