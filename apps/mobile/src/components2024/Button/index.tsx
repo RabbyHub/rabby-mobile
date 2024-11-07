@@ -35,6 +35,7 @@ export type ButtonProps = Omit<
       TouchableComponent?: typeof React.Component;
       ViewComponent?: typeof React.Component;
       disabled?: boolean;
+      icon?: ReactNode | ((ctx: { titleStyle?: TextStyle }) => ReactNode);
     },
   'children'
 >;
@@ -50,6 +51,7 @@ export const Button = ({
   loading = false,
   loadingStyle,
   disabled = false,
+  icon,
   ViewComponent = View,
   ...rest
 }: ButtonProps) => {
@@ -135,6 +137,13 @@ export const Button = ({
     return title;
   }, [title, titleStyle]);
 
+  const iconNode = useMemo(() => {
+    if (typeof icon === 'function') {
+      return icon({ titleStyle });
+    }
+    return icon;
+  }, [icon, titleStyle]);
+
   return (
     <View
       style={StyleSheet.flatten([styles.container, containerStyle])}
@@ -160,14 +169,11 @@ export const Button = ({
           )}
           {!loading && (
             <>
-              {/* {iconNode && !iconRight && (
-                <View
-                  style={StyleSheet.flatten([
-                    styles.iconContainer,
-                  ])}>
+              {iconNode && (
+                <View style={StyleSheet.flatten([styles.iconContainer])}>
                   {iconNode}
                 </View>
-              )} */}
+              )}
               {/* Title for Button */}
               {!!textNode &&
                 renderText(textNode, {

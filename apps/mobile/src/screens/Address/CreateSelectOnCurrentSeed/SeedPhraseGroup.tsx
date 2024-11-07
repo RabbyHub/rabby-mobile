@@ -1,0 +1,104 @@
+import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
+import { StyleSheet, View, Text, StyleProp, ViewStyle } from 'react-native';
+import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
+import { AddressItemInner } from '../components/AddressItemInner';
+import { Button } from '@/components2024/Button';
+import { useTranslation } from 'react-i18next';
+import { default as RcIconCreateSeed } from '@/assets2024/icons/common/IconAddCreate.svg';
+
+interface Props {
+  index: number;
+  data: TypeKeyringGroup;
+  onAddAddress: (pk: string) => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+export const SeedPhraseGroup: React.FC<Props> = ({
+  index,
+  data,
+  onAddAddress,
+  style,
+}) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+
+  return (
+    <View style={StyleSheet.flatten([styles.main, style])}>
+      <View style={styles.headline}>
+        <Text style={styles.headlineText}>Seed Phrase {index + 1}</Text>
+      </View>
+      <View style={styles.body}>
+        {data.list.map(item => (
+          <View key={item.address} style={styles.item}>
+            <AddressItemInner isInList wallet={item} showUsd={false} />
+          </View>
+        ))}
+      </View>
+      <View style={styles.footer}>
+        <Button
+          onPress={() => onAddAddress(data.publicKey!)}
+          buttonStyle={styles.button}
+          titleStyle={styles.buttonText}
+          title={t('page.manageAddress.add-address')}
+          icon={
+            <RcIconCreateSeed
+              color={colors2024['blue-default']}
+              width={20}
+              height={20}
+            />
+          }
+        />
+      </View>
+    </View>
+  );
+};
+
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  main: {
+    borderRadius: 6,
+  },
+  titleText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+    textAlign: 'left',
+    color: colors2024['neutral-title-1'],
+    // marginRight: 4,
+  },
+  headline: {
+    padding: 20,
+    // borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors2024['neutral-line'],
+  },
+  headlineText: {
+    fontSize: 16,
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+  },
+  body: {
+    paddingHorizontal: 16,
+  },
+  item: {
+    paddingVertical: 14,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+  },
+  button: {
+    backgroundColor: colors2024['brand-light-1'],
+    height: 42,
+  },
+  buttonText: {
+    color: colors2024['brand-default'],
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 20,
+    textAlign: 'left',
+  },
+}));

@@ -24,7 +24,7 @@ export const ScreenColors = {
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
   GetStartedScreen2024: 'GetStartedScreen2024',
-
+  CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',
   Unlock: 'Unlock',
@@ -89,6 +89,7 @@ export const RootNames = {
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
+  CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 

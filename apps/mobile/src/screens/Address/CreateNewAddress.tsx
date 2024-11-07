@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   StyleSheet,
@@ -14,7 +14,7 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
 import { RootNames } from '@/constant/layout';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -29,6 +29,9 @@ import { contactService } from '@/core/services';
 import { navigate } from '@/utils/navigation';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useNavigationState } from '@react-navigation/native';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -36,9 +39,46 @@ function MainListBlocks() {
   const [addressAlias, setAddressAlias] = useState('');
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.CreateNewAddress)?.params,
+  ) as {
+    noSetupPassword?: boolean;
+    useCurrentSeed?: boolean;
+    mnemonics?: string;
+    title?: string;
+  };
+
+  useEffect(() => {
+    if (!state.title) {
+      return;
+    }
+    setNavigationOptions({
+      title: state.title,
+    });
+  }, [setNavigationOptions, state.title]);
+
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderTitleText>{state.title || '2. Name Your Address'}</HeaderTitleText>
+    );
+  }, [state.title]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      // headerLeft: () => null,
+    });
+  }, [setNavigationOptions, getHeaderTitle, state.title]);
 
   const { value, loading, error } = useAsync(async () => {
-    const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
+    let seedPhrase = '';
+    if (state.mnemonics) {
+      seedPhrase = state.mnemonics;
+    } else {
+      seedPhrase = await apiMnemonic.generatePreMnemonic();
+    }
     const words = seedPhrase.split(' ');
     const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
       seedPhrase,
@@ -79,6 +119,7 @@ function MainListBlocks() {
       alias: addressAlias,
     });
     console.log('exe handleContinue');
+
     const onSetupPasswordDone = () => {
       navigation.replace(RootNames.StackAddress2024, {
         screen: RootNames.CreateChooseBackup,
@@ -90,13 +131,39 @@ function MainListBlocks() {
         },
       });
     };
-    navigation.replace(RootNames.StackAddress2024, {
-      screen: RootNames.SetPassword2024,
+    if (state.noSetupPassword) {
+      onSetupPasswordDone();
+    } else {
+      navigation.replace(RootNames.StackAddress2024, {
+        screen: RootNames.SetPassword2024,
+        params: {
+          onFinish: onSetupPasswordDone,
+        },
+      });
+    }
+  }, [newAddress, addressAlias, value, navigation, state]);
+
+  const handleDone = useCallback(async () => {
+    contactService.setAlias({
+      address: newAddress,
+      alias: addressAlias,
+    });
+    console.log('exe handleDone');
+
+    navigation.replace(RootNames.StackAddress, {
+      screen: RootNames.ImportSuccess2024,
       params: {
-        onFinish: onSetupPasswordDone,
+        type: KEYRING_TYPE.HdKeyring,
+        brandName: KEYRING_CLASS.MNEMONIC,
+        isFirstCreate: true,
+        address: [newAddress],
+        mnemonics: state?.mnemonics,
+        passphrase: '',
+        isExistedKR: false,
+        alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, value, navigation]);
+  }, [newAddress, addressAlias, state, navigation]);
 
   return (
     <TouchableWithoutFeedback
@@ -104,7 +171,7 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={1} />
+        <ProgressBar amount={3} currentCount={state.noSetupPassword ? 2 : 1} />
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
@@ -139,7 +206,7 @@ function MainListBlocks() {
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
-          onPress={handleContinue}
+          onPress={state.useCurrentSeed ? handleDone : handleContinue}
         />
       </View>
     </TouchableWithoutFeedback>

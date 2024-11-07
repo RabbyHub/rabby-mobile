@@ -1371,6 +1371,11 @@
         "Verify": "Verify",
         "createdSuccessfully": "Created successfully!",
         "riskTips": "Before you begin, please read and keep these security tips in mind:"
+      },
+      "addAddress": {
+        "createAddress": "Create Address",
+        "importAddress": "Import Address",
+        "hardwareWallet": "Hardware Wallet"
       }
     },
     "newAddress": {
