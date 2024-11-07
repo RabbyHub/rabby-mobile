@@ -16,8 +16,10 @@ export const ProgressBar = (props: ProgressBarProps) => {
   return (
     <View style={StyleSheet.flatten([styles.container])}>
       {new Array(amount).fill(null).map((_, index) => {
+        const key = `block-${index}`;
         return (
           <View
+            key={key}
             style={[
               styles.block,
               index + 1 === currentCount
