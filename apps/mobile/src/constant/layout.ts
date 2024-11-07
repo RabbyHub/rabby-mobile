@@ -6,6 +6,7 @@ export const ModalLayouts = {
   titleTopOffset: 8,
 };
 
+// for DappWebViewControl
 export const ScreenLayouts = {
   headerAreaHeight: 56,
   bottomBarHeight: 60,
@@ -15,6 +16,14 @@ export const ScreenLayouts = {
   defaultWebViewNavBottomSheetHeight: 52 + 40,
   dappWebViewNavBottomSheetHeight: 302,
   inConnectedDappWebViewNavBottomSheetHeight: 302 /*  - 120 */,
+};
+
+// for DappWebViewControl2
+export const ScreenLayouts2 = {
+  headerAreaHeight: 56,
+
+  dappWebViewControlHeaderHeight: 56,
+  dappWebViewControlNavHeight: 68,
 };
 
 export const ScreenColors = {
