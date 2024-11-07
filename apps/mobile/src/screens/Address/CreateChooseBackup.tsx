@@ -142,7 +142,10 @@ function MainListBlocks() {
 function CreateChooseBackup(): JSX.Element {
   const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      overwriteStyle={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <LinearGradient
         colors={['#FFF', '#F9F9F9']} // 渐变颜色
         start={{ x: 0, y: 0 }} // 渐变起始位置

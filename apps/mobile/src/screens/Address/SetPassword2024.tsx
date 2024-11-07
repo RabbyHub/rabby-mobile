@@ -327,8 +327,12 @@ function MainListBlocks() {
 }
 
 function SetPassword2024(): JSX.Element {
+  const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      overwriteStyle={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <MainListBlocks />
     </NormalScreenContainer>
   );
@@ -338,7 +342,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   btnContainer: {
     width: '100%',
     position: 'absolute',
-    bottom: 48,
+    bottom: 56,
   },
   inputStyle: {
     borderWidth: 0,
@@ -417,7 +421,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   agreementWrapper: {
     position: 'absolute',
-    bottom: 96,
+    bottom: 104,
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',

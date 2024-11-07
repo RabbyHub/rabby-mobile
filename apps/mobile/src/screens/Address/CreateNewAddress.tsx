@@ -1,11 +1,10 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   StyleProp,
   TextStyle,
   TouchableWithoutFeedback,
@@ -26,7 +25,6 @@ import { requestKeyring } from '@/core/apis/keyring';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
-import { navigate } from '@/utils/navigation';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 
@@ -147,8 +145,12 @@ function MainListBlocks() {
 }
 
 function CreateNewAddress(): JSX.Element {
+  const { colors2024 } = useTheme2024({ getStyle });
   return (
-    <NormalScreenContainer>
+    <NormalScreenContainer
+      overwriteStyle={{
+        backgroundColor: colors2024['neutral-bg-1'],
+      }}>
       <MainListBlocks />
     </NormalScreenContainer>
   );

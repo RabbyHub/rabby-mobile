@@ -37,7 +37,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   footerButton: {
-    marginBottom: 54,
+    marginBottom: 56,
     paddingHorizontal: 20,
   },
 }));

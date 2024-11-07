@@ -32,7 +32,7 @@ const getStyle = createGetStyles2024(colors => ({
   container: {
     backgroundColor: colors['neutral-bg-1'],
     paddingTop: 24,
-    height: 460,
+    height: '100%',
     paddingHorizontal: 20,
     display: 'flex',
     justifyContent: 'space-between',
@@ -50,7 +50,7 @@ const getStyle = createGetStyles2024(colors => ({
   btns: {
     padding: 0,
     marginTop: 20,
-    paddingBottom: 50,
+    paddingBottom: 56,
   },
 }));
 
