@@ -2,11 +2,14 @@ import { toast } from '@/components/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
+import { Skeleton } from '@rneui/themed';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList } from 'react-native';
+import { FlatList, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { Card } from '../Card';
 import { AccountListItem, ViewAccount } from './AccountListItem';
+import { PlaceholderView } from './PlaceholderView';
 
 const { isSameAddress } = addressUtils;
 
@@ -15,6 +18,7 @@ export interface Props {
   currentAccounts: ViewAccount[];
   selectedAccounts: ViewAccount[];
   handleSelectIndex: (address: string, index: number) => void;
+  loading?: boolean;
 }
 
 export type { ViewAccount } from './AccountListItem';
@@ -24,9 +28,10 @@ export const AccountListView: React.FC<Props> = ({
   currentAccounts,
   selectedAccounts,
   handleSelectIndex,
+  loading,
 }) => {
   const { t } = useTranslation();
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
 
   return (
     <Card style={styles.root}>
@@ -59,6 +64,7 @@ export const AccountListView: React.FC<Props> = ({
             />
           );
         }}
+        ListFooterComponent={<>{loading && <PlaceholderView />}</>}
       />
     </Card>
   );
@@ -69,6 +75,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flex: 1,
     marginHorizontal: 20,
     paddingRight: 0,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
   },
   list: {
     width: '100%',

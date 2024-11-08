@@ -39,6 +39,7 @@ import { Button } from '../Button';
 const { isSameAddress } = addressUtils;
 
 export const MAX_ACCOUNT_COUNT = 50;
+const MAX_STEP_COUNT = 10;
 
 export interface Props {
   params: {
@@ -65,7 +66,6 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         return null;
     }
   }, [params]);
-
   const hdType = React.useMemo(() => {
     switch (params.type) {
       case KEYRING_TYPE.LedgerKeyring:
@@ -106,6 +106,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const [importing, setImporting] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const maxCountRef = React.useRef(MAX_ACCOUNT_COUNT);
+  const stepCountRef = React.useRef(
+    params.type === KEYRING_TYPE.HdKeyring ? MAX_STEP_COUNT : 1,
+  );
 
   const mnemonicKeyringRef = React.useRef<
     ReturnType<typeof apiMnemonic.getKeyringByMnemonic> | undefined
@@ -132,25 +135,35 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
               'getAddresses',
               params?.keyringId ?? null,
               index,
-              index + 1,
+              index + stepCountRef.current,
             )
-          : (await apiHD?.getAddresses(index, index + 1)) || [];
+          : (await apiHD?.getAddresses(index, index + stepCountRef.current)) ||
+            [];
 
-      if (res[0]) {
+      if (res.length) {
         // avoid blocking the UI thread
         await new Promise(resolve => setTimeout(resolve, 1));
-        const balance = await getAccountBalance(res[0].address);
+        const balances = await Promise.all(
+          res.map(async a => {
+            return {
+              address: a.address,
+              balance: await getAccountBalance(a.address),
+            };
+          }),
+        );
         if (stoppedRef.current) {
           return;
         }
         setAccounts(prev => {
           return [
             ...prev,
-            {
-              address: res[0].address,
-              index: res[0].index,
-              balance,
-            },
+            ...balances.map((b, idx) => {
+              return {
+                address: b.address,
+                index: res[idx].index,
+                balance: b.balance,
+              };
+            }),
           ];
         });
       }
@@ -172,7 +185,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           break;
         }
         await loadAddress(i);
-        i++;
+        i += stepCountRef.current;
       }
     } catch (err: any) {
       const errorCode = ledgerErrorHandler(err);
@@ -389,7 +402,9 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         <Text style={styles.nameText}>{params.account.aliasName}</Text>
         <View style={styles.loading}>
           <Text style={styles.loadingText}>
-            Generating addresses, please wait...
+            {!accounts.length
+              ? 'Generating addresses, please wait...'
+              : 'Select addresses to add'}
           </Text>
         </View>
       </View>
@@ -398,6 +413,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
         currentAccounts={currentAccounts}
         selectedAccounts={selectedAccounts}
         handleSelectIndex={handleSelectIndex}
+        loading={loading}
       />
       {selectedAccounts.length ? (
         <View style={styles.footerButton}>
