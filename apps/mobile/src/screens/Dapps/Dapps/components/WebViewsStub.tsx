@@ -6,9 +6,7 @@ import {
   useActiveViewSheetModalRefs,
   OPEN_DAPP_VIEW_INDEXES,
 } from '../../hooks/useDappView';
-import { BottomSheetContent } from './DappWebViewControlWidgets';
 import { devLog } from '@/utils/logger';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import {
   BottomSheetBackdropProps,
   BottomSheetModalProps,
@@ -24,10 +22,6 @@ import TouchableView from '@/components/Touchable/TouchableView';
 import { RootNames, ScreenLayouts2 } from '@/constant/layout';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS } from 'react-native-reanimated';
-import { BottomNavControl } from '@/components/WebView/Widgets';
-import { RcIconDisconnect } from '@/assets/icons/dapp';
-import { toast } from '@/components/Toast';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import {
@@ -47,8 +41,9 @@ import DeviceUtils from '@/core/utils/device';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import AutoLockView from '@/components/AutoLockView';
 import { globalSetActiveDappState } from '@/core/bridges/state';
-import TouchableText from '@/components/Touchable/TouchableText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -169,10 +164,17 @@ function useSafeSnapshots() {
   const { top } = useSafeAreaInsets();
 
   const snapPoints = useMemo(() => {
-    const presets = getDefaultSnapPoints().fromWindow;
+    const defaultSp = getDefaultSnapPoints();
 
-    return [presets[0], presets[1]];
-  }, []);
+    if (IS_ANDROID) {
+      const presets = defaultSp.fromWindow;
+
+      return [presets[0], presets[1]];
+    }
+
+    const presets = defaultSp.fromScreen;
+    return [presets[0], Math.max(presets[1], defaultSp.fromScreen[1]) - top];
+  }, [top]);
 
   return { snapPoints, bgOffTop: top };
 }
@@ -256,7 +258,7 @@ export function OpenedDappWebViewStub() {
     handleBottomSheetChanges,
   );
 
-  const { snapPoints, bgOffTop } = useSafeSnapshots();
+  const { snapPoints } = useSafeSnapshots();
 
   return (
     <OpenedDappBottomSheetModal
@@ -302,6 +304,7 @@ export function OpenedDappWebViewStub() {
         )}
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
+          const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
           const key = `${dappInfo.origin}-${dappInfo.dappTabId}-${idx}`;
 
@@ -381,55 +384,18 @@ export function OpenedDappWebViewStub() {
               // headerNode={({ header }) => {
               //   return <WebViewControlHeader headerNode={header} />;
               // }}
-              // navControlContent={({ webviewState, webviewActions }) => {
-              //   return (
-              //     <BottomSheetContent
-              //       dappInfo={dappInfo}
-              //       onPressCloseDapp={() => {
-              //         activeDappWebViewControlRef.current?.closeWebViewNavModal();
-
-              //         hideDappSheetModal();
-              //         closeActiveOpenedDapp();
-              //       }}
-              //       bottomNavBar={
-              //         <BottomNavControl
-              //           webviewState={webviewState}
-              //           webviewActions={webviewActions}
-              //           onPressButton={ctx => {
-              //             ctx.defaultAction(ctx);
-
-              //             switch (ctx.type) {
-              //               case 'back':
-              //               case 'forward':
-              //               case 'reload':
-              //               case 'home':
-              //                 activeDappWebViewControlRef.current?.closeWebViewNavModal();
-              //                 break;
-              //               default:
-              //                 break;
-              //             }
-              //           }}
-              //           afterNode={
-              //             <BottomNavControl.TouchableItem
-              //               disabled={!isConnected}
-              //               onPress={() => {
-              //                 if (!isConnected) return;
-
-              //                 disconnectDapp(dappInfo.origin);
-              //                 toast.success('Disconnected');
-              //               }}>
-              //               <RcIconDisconnect
-              //                 isActive={isConnected}
-              //                 width={26}
-              //                 height={26}
-              //               />
-              //             </BottomNavControl.TouchableItem>
-              //           }
-              //         />
-              //       }
-              //     />
-              //   );
-              // }}
+              navControlContent={({ webviewState, webviewActions }) => {
+                return (
+                  <BottomNavControl2
+                    webviewState={webviewState}
+                    webviewActions={webviewActions}
+                    favoriated={isFavorited}
+                    onPressButton={ctx => {
+                      ctx.defaultAction(ctx);
+                    }}
+                  />
+                );
+              }}
             />
           );
         })}

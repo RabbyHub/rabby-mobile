@@ -13,6 +13,9 @@ import {
 import TouchableView from '@/components/Touchable/TouchableView';
 import { makeDebugBorder } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
+import { DropdownMenuView, MenuAction } from './DropdownMenuView';
+import { urlUtils } from '@rabby-wallet/base-utils';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const BOTTOM_NAV_CONTROL_PRESS_OPACITY = 0.3;
 
@@ -56,17 +59,19 @@ export type BottomNavControlCbCtx = {
 };
 
 type OnPressButtonCtx = {
-  type: 'back' | 'forward' | 'reload' | 'more';
+  type: 'back' | 'forward' | 'reload' | 'favorite' | 'disconnect';
   event?: GestureResponderEvent;
 };
 
 export function BottomNavControl2({
   webviewState,
   webviewActions,
+  favoriated,
   afterNode,
-  onPressMore,
+  // onPressMore,
   onPressButton,
 }: BottomNavControlCbCtx & {
+  favoriated?: boolean;
   afterNode?:
     | React.ReactNode
     | ((
@@ -74,7 +79,7 @@ export function BottomNavControl2({
           TouchableItem: typeof TouchableItem;
         },
       ) => React.ReactNode);
-  onPressMore?: (ctx: BottomNavControlCbCtx) => void;
+  // onPressMore?: (ctx: BottomNavControlCbCtx) => void;
   /**
    * @description customize all button press event
    */
@@ -86,12 +91,12 @@ export function BottomNavControl2({
   ) => void;
 }) {
   const { colors2024 } = useTheme2024();
-  const onPressNavMore = useCallback(() => {
-    onPressMore?.({
-      webviewState,
-      webviewActions,
-    });
-  }, [onPressMore, webviewState, webviewActions]);
+  // const onPressNavMore = useCallback(() => {
+  //   onPressMore?.({
+  //     webviewState,
+  //     webviewActions,
+  //   });
+  // }, [onPressMore, webviewState, webviewActions]);
 
   const renderedAfterNode = useMemo(() => {
     if (typeof afterNode === 'function') {
@@ -119,9 +124,6 @@ export function BottomNavControl2({
         case 'reload':
           webviewActions.handleReload();
           break;
-        case 'more':
-          // WIP
-          break;
         default:
           break;
       }
@@ -145,6 +147,58 @@ export function BottomNavControl2({
     },
     [webviewState, webviewActions, onPressButton, builtInOnPressButton],
   );
+
+  const menuConfigs = React.useMemo(() => {
+    const urlInfo = urlUtils.canoicalizeDappUrl(webviewState.url);
+
+    const menuActions = [
+      {
+        title: 'Favorite',
+        iosIconSource: favoriated
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png'),
+        androidIconName: favoriated
+          ? 'ic_rabby_menu_favorite_filled'
+          : 'ic_rabby_menu_favorite',
+        key: 'favorite',
+        onSelect: () => {
+          console.debug('Favorite clicked');
+          onPressButtonInternal({ type: 'favorite' });
+        },
+      },
+      {
+        title: 'Disconnect',
+        textColor: colors2024['red-dark'],
+        iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
+        androidIconName: 'ic_rabby_menu_disconnect',
+        key: 'disconnect',
+        onSelect: () => {
+          console.debug('Disconnect clicked');
+          onPressButtonInternal({ type: 'disconnect' });
+        },
+      },
+    ].filter(Boolean);
+
+    if (IS_ANDROID) {
+      return {
+        menuActions: [
+          // patch for Android
+          {
+            title: urlInfo.hostname,
+            key: 'hostname',
+            disabled: true,
+            onSelect: () => void 0,
+          },
+          ...menuActions,
+        ],
+      } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
+    }
+
+    return {
+      iosMenuTitle: urlInfo.hostname,
+      menuActions: menuActions.reverse(),
+    } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
+  }, [webviewState.url, colors2024, favoriated, onPressButtonInternal]);
 
   return (
     <View style={[bottomNavStyles.navControls]}>
@@ -180,12 +234,12 @@ export function BottomNavControl2({
         onPress={event => onPressButtonInternal({ type: 'reload', event })}>
         <RcIconNavReload isActive width={31} height={30} />
       </TouchableView>
-      <TouchableView
-        pressOpacity={BOTTOM_NAV_CONTROL_PRESS_OPACITY}
-        style={[bottomNavStyles.navControlItem]}
-        onPress={event => onPressButtonInternal({ type: 'more', event })}>
-        <RcIconMore isActive width={31} height={30} />
-      </TouchableView>
+      <View style={[bottomNavStyles.navControlItem]}>
+        <DropdownMenuView menuConfig={menuConfigs}>
+          <RcIconMore isActive width={31} height={30} />
+        </DropdownMenuView>
+      </View>
+
       {renderedAfterNode || null}
     </View>
   );
