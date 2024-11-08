@@ -4,7 +4,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView } from 'react-native';
+import { FlatList } from 'react-native';
 import { Card } from '../Card';
 import { AccountListItem, ViewAccount } from './AccountListItem';
 
@@ -30,8 +30,10 @@ export const AccountListView: React.FC<Props> = ({
 
   return (
     <Card style={styles.root}>
-      <ScrollView style={styles.scrollView}>
-        {accounts.map(account => {
+      <FlatList
+        style={styles.list}
+        data={accounts}
+        renderItem={({ item: account }) => {
           const isImported = currentAccounts.some(a =>
             isSameAddress(a.address, account.address),
           );
@@ -56,8 +58,8 @@ export const AccountListView: React.FC<Props> = ({
               onPress={onPress}
             />
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </Card>
   );
 };
@@ -68,7 +70,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginHorizontal: 20,
     paddingRight: 0,
   },
-  scrollView: {
+  list: {
     width: '100%',
   },
   info: {

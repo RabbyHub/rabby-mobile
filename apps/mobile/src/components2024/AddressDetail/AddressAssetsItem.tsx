@@ -52,13 +52,11 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
       )}
 
       {account.type === KEYRING_TYPE.GnosisKeyring ? (
-        <Item style={styles.subItemView}>
-          <GnosisSafeInfoBar
-            address={account.address}
-            type={account.type}
-            brandName={account.brandName}
-          />
-        </Item>
+        <GnosisSafeInfoBar
+          address={account.address}
+          type={account.type}
+          brandName={account.brandName}
+        />
       ) : null}
 
       {accountInfo && (

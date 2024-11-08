@@ -9,7 +9,7 @@ import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 
 export interface Props {
-  type: 'address' | 'watch-address';
+  type: 'address' | 'watch-address' | 'safe-address';
 }
 
 const hitSlop = {

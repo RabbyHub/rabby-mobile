@@ -85,6 +85,13 @@ export const AddressBackupItem: React.FC<AddressInfoProps> = props => {
     });
   }, [account.address, account.type, invokeEnterPassphrase, onCancel, t]);
 
+  if (
+    account.type !== KEYRING_TYPE.HdKeyring &&
+    account.type !== KEYRING_TYPE.SimpleKeyring
+  ) {
+    return null;
+  }
+
   return (
     <Card style={styles.card}>
       {account.type === KEYRING_TYPE.HdKeyring && (

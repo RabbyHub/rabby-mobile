@@ -1,6 +1,6 @@
 import { useAccounts } from '@/hooks/account';
 import React from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressItemInner2024 } from '@/screens/Address/components/AddressItemInner2024';
@@ -16,6 +16,9 @@ export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
   onCancel: () => void;
 }
+
+// eslint-disable-next-line react-native/no-inline-styles
+const ItemSeparatorComponent = () => <View style={{ height: 12 }} />;
 
 export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const { accounts } = useAccounts({
@@ -46,9 +49,12 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const showAddressDetail = useAddressDetailModal();
 
   return (
-    <ScrollView style={styles.root}>
-      <View style={styles.list}>
-        {accountList.map(account => (
+    <View style={styles.root}>
+      <FlatList
+        data={accountList}
+        keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        renderItem={({ item: account }) => (
           <View style={styles.addressItem} key={account.type + account.address}>
             <View style={styles.itemLeft}>
               <TouchableOpacity
@@ -91,9 +97,9 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
               </TouchableOpacity>
             </View>
           </View>
-        ))}
-      </View>
-    </ScrollView>
+        )}
+      />
+    </View>
   );
 };
 
@@ -101,11 +107,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     paddingHorizontal: 16,
     paddingTop: 30,
-  },
-  list: {
-    flex: 1,
-    gap: 12,
-    paddingBottom: 54,
+    paddingBottom: 30,
   },
   addressItem: {
     borderRadius: 30,

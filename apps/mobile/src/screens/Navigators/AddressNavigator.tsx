@@ -40,6 +40,11 @@ import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { Text } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
+import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
+import {
+  SafeAddressListScreen,
+  SafeAddressScreen,
+} from '../Address/SafeAddressScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -92,14 +97,40 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.AddressList}
         component={AddressListScreen}
-        options={() => ({
+        options={mergeScreenOptions({
           headerTitle: 'Address',
           title: 'Address',
           headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
-          headerRight: AddressListScreenButton,
+          // eslint-disable-next-line react/no-unstable-nested-components
+          headerRight: () => <AddressListScreenButton type="address" />,
         })}
       />
+      <AddressStack.Screen
+        name={RootNames.WatchAddressList}
+        component={WatchAddressListScreen}
+        options={mergeScreenOptions({
+          headerTitle: 'Watch-Only Address',
+          title: 'Watch-Only Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+          // eslint-disable-next-line react/no-unstable-nested-components
+          headerRight: () => <AddressListScreenButton type="watch-address" />,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.SafeAddressList}
+        component={SafeAddressListScreen}
+        options={mergeScreenOptions({
+          headerTitle: 'Safe Address',
+          title: 'Safe Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerTitleStyle: styles.headerTitleText,
+          // eslint-disable-next-line react/no-unstable-nested-components
+          headerRight: () => <AddressListScreenButton type="safe-address" />,
+        })}
+      />
+
       <AddressStack.Screen
         name={RootNames.ImportNewAddress}
         component={ImportNewAddressScreen}

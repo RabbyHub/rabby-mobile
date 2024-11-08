@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GnosisAdminItem } from './GnosisAdminItem';
+import { Item } from './Item';
 
 export const GnosisSafeInfoBar = ({
   address,
@@ -66,55 +67,57 @@ export const GnosisSafeInfoBar = ({
     }
   }, [address]);
 
-  if (safeInfo) {
-    return (
-      <>
-        <View style={styles.listItem}>
-          <View style={styles.listItemContent}>
-            <View>
-              <Text style={styles.listItemLabel}>
-                {t('page.addressDetail.admins')}
-              </Text>
-              <View style={styles.tabsContainer}>
-                <View style={styles.tabs}>
-                  {safeInfo?.map(item => {
-                    const isAcitve =
-                      activeData?.chain?.enum === item?.chain?.enum;
-                    return (
-                      <TouchableOpacity
-                        onPress={() => {
-                          setActiveData(item);
-                        }}
-                        key={item?.chain?.enum}>
-                        <View
-                          style={[
-                            styles.tabItem,
-                            isAcitve && styles.tabItemActive,
-                          ]}>
-                          <Text
-                            style={[
-                              styles.tabItemTitle,
-                              isAcitve && styles.tabItemTitleActive,
-                            ]}>
-                            {item?.chain?.name}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-              <Text style={styles.listItemDesc}>
-                Any transaction requires{' '}
-                <Text
-                  style={
-                    styles.listItemDescStrong
-                  }>{`${activeData?.data?.threshold}/${activeData?.data?.owners.length}`}</Text>{' '}
-                confirmations
-              </Text>
-            </View>
+  if (!safeInfo) {
+    return null;
+  }
+
+  return (
+    <>
+      <Item label={t('page.addressDetail.admins')} />
+      <Item
+        style={{
+          marginTop: -12,
+        }}>
+        <View>
+          <View style={styles.tabs}>
+            {safeInfo?.map(item => {
+              const isAcitve = activeData?.chain?.enum === item?.chain?.enum;
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    setActiveData(item);
+                  }}
+                  key={item?.chain?.enum}>
+                  <View
+                    style={[styles.tabItem, isAcitve && styles.tabItemActive]}>
+                    <Text
+                      style={[
+                        styles.tabItemTitle,
+                        isAcitve && styles.tabItemTitleActive,
+                      ]}>
+                      {item?.chain?.name}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+
+          <Text style={styles.listItemDesc}>
+            Any transaction requires{' '}
+            <Text
+              style={
+                styles.listItemDescStrong
+              }>{`${activeData?.data?.threshold}/${activeData?.data?.owners.length}`}</Text>{' '}
+            confirmations
+          </Text>
         </View>
+      </Item>
+
+      <Item
+        style={{
+          flexDirection: 'column',
+        }}>
         {activeData?.data?.owners.map((owner, index, list) => (
           <GnosisAdminItem
             address={owner}
@@ -127,10 +130,9 @@ export const GnosisSafeInfoBar = ({
             }
           />
         ))}
-      </>
-    );
-  }
-  return null;
+      </Item>
+    </>
+  );
 };
 
 const getStyles = (colors: AppColorsVariants) => {
