@@ -16,12 +16,7 @@ import { DevTestItem, makeNoop, GeneralTestItem } from './testDevUtils';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { StackActions } from '@react-navigation/native';
 import { RootNames } from '@/constant/layout';
-import {
-  createGlobalBottomSheetModal2024,
-  removeGlobalBottomSheetModal2024,
-} from '@/components2024/GlobalBottomSheetModal';
 import { useAccounts } from '@/hooks/account';
-import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 const devUIPlaygroundModalVisibleAtom = atom(false);
 export function useDevUIPlaygroundModalVisible() {
@@ -93,18 +88,6 @@ export default function DevUIPlaygroundModal({
           //     screen: RootNames.SampleNewUserGetStarted2024,
           //   }),
           // );
-        },
-      },
-      {
-        label: 'Add address',
-        icon: <RcCode style={styles.labelIcon} />,
-        onPress: () => {
-          const id = createGlobalBottomSheetModal2024({
-            name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
-            onDone: () => {
-              removeGlobalBottomSheetModal2024(id);
-            },
-          });
         },
       },
       {
