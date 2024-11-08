@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React from 'react';
 
 import { useStackScreenConfig } from '@/hooks/navigation';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
 import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
 import CurrentAddressScreen from '@/screens/Address/CurrentAddress';
@@ -11,10 +11,12 @@ import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
+import { ImportWatchAddressScreen2024 } from '../Address/ImportWatchAddressScreen2024';
 import AddressDetailScreen from '../Address/AddressDetail';
 import { ImportMoreAddressScreen } from '../Address/ImportMoreAddressScreen';
 import { ImportMoreAddressScreenButton } from '../Address/ImportMoreAddressScreenButton';
 import { ImportSafeAddressScreen } from '../Address/ImportSafeAddressScreen';
+import { ImportSafeAddressScreen2024 } from '../Address/ImportSafeAddressScreen2024';
 import { ImportPrivateKeyScreen } from '../Address/ImportPrivateKeyScreen';
 import { ImportSeedPhraseScreen } from '../Address/ImportSeedPhraseScreen';
 import { BackupPrivateKeyScreen } from '../Address/BackupPrivateKeyScreen';
@@ -48,6 +50,7 @@ const hitSlop = {
 export function AddressNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
+  const { colors2024 } = useTheme2024();
   // console.log('============== SettingNavigator Render =========');
 
   return (
@@ -135,6 +138,24 @@ export function AddressNavigator() {
       <AddressStack.Screen
         name={RootNames.ImportWatchAddress}
         component={ImportWatchAddressScreen}
+        options={mergeScreenOptions({
+          headerTitle: 'Add Watch-only Address',
+          title: 'Add Watch-only Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontSize: 20,
+            fontFamily: 'SF Pro Rounded',
+          },
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportWatchAddress2024}
+        component={ImportWatchAddressScreen2024}
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
@@ -158,6 +179,24 @@ export function AddressNavigator() {
         options={{
           headerTintColor: colors['neutral-title-2'],
         }}
+      />
+      <AddressStack.Screen
+        name={RootNames.ImportSafeAddress2024}
+        component={ImportSafeAddressScreen2024}
+        options={mergeScreenOptions({
+          headerTitle: 'Add Safe Address',
+          title: 'Add Safe Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: {
+            color: colors2024['neutral-title-1'],
+            fontWeight: '800',
+            fontSize: 20,
+            fontFamily: 'SF Pro Rounded',
+          },
+        })}
       />
       <AddressStack.Screen
         name={RootNames.AddressDetail}

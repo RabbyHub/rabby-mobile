@@ -38,7 +38,7 @@ function MainListBlocks() {
     address: string;
     alias: string;
     seedPhrase: string;
-    firstAddress: any;
+    accountsToCreate: any;
   };
   console.log('state3', state);
 

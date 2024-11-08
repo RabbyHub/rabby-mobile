@@ -45,6 +45,31 @@ export const useSeedPhrase = () => {
     [invokeEnterPassphrase],
   );
 
+  const handleAddSeedPhraseAddress2024 = useCallback(
+    async (publicKey: string, accounts: string[]) => {
+      if (publicKey) {
+        const keyringId =
+          apiMnemonic.getMnemonicKeyRingIdFromPublicKey(publicKey);
+        const data = await apiMnemonic.getMnemonicKeyring(
+          'publickey',
+          publicKey,
+        );
+
+        navigate(RootNames.StackAddress2024, {
+          screen: RootNames.CreateNewAddress,
+          params: {
+            useCurrentSeed: true,
+            mnemonics: data.mnemonic,
+            keyringId,
+            title: '3. Name Your Address',
+            accounts,
+          },
+        });
+      }
+    },
+    [],
+  );
+
   const seedPhraseList = useMemo(() => {
     if (accountGroup && value) {
       const publicKeys = value.map(e => e.publicKey!);
@@ -66,6 +91,7 @@ export const useSeedPhrase = () => {
   return {
     seedPhraseList,
     handleAddSeedPhraseAddress,
+    handleAddSeedPhraseAddress2024,
   };
 };
 

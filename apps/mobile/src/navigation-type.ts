@@ -64,6 +64,10 @@ export type AddressNavigatorParamList = {
   [RootNames.CurrentAddress]?: {};
   [RootNames.CreateNewAddress]?: {};
   [RootNames.SetPassword2024]?: {};
+  [RootNames.ImportSafeAddress2024]?: {};
+  [RootNames.ImportWatchAddress2024]?: {};
+  [RootNames.CreateSelectOnCurrentSeed]?: {};
+  [RootNames.CreateSelectMethod]?: {};
   [RootNames.CreateChooseBackup]?: {};
   [RootNames.ImportNewAddress]?: {};
   [RootNames.ImportMethods]?: {};

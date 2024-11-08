@@ -33,6 +33,7 @@ import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
 import { createGetStyles2024 } from '@/utils/styles';
+import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -100,10 +101,9 @@ export const ImportSuccessScreen2024 = () => {
     setImportAddresses(
       addresses.map(address => ({
         address,
-        aliasName:
-          state?.isFirstCreate && state?.alias
-            ? state?.alias
-            : contactService.getAliasByAddress(address)?.alias || '',
+        aliasName: state?.alias
+          ? state?.alias
+          : contactService.getAliasByAddress(address)?.alias || '',
       })),
     );
 
@@ -188,6 +188,12 @@ export const ImportSuccessScreen2024 = () => {
                 blurOnSubmit
               />
               <WalletAddress address={importAddresses?.[0]?.address || ''} />
+              {state?.supportChainList?.length ? (
+                <GnosisSupportChainList
+                  data={state?.supportChainList}
+                  style={{ marginBottom: 12 }}
+                />
+              ) : null}
             </View>
           ) : (
             <View style={styles.scrollList}>

@@ -1,4 +1,3 @@
-import { apiMnemonic } from '@/core/apis';
 import {
   decryptFiles,
   detectCloudIsAvailable,
@@ -6,9 +5,9 @@ import {
   saveMnemonicToCloud,
 } from '@/core/utils/cloudBackup';
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
-import { toast, toastWithIcon } from '../Toast';
+import { toast } from '../Toast';
 import { useTranslation } from 'react-i18next';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
@@ -22,7 +21,7 @@ interface Props {
     address: string;
     alias: string;
     seedPhrase: string;
-    firstAddress: any;
+    accountsToCreate: any;
   };
 }
 
@@ -30,7 +29,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
   onDone,
   paramState,
 }) => {
-  const { seedPhrase, alias, address, firstAddress } = paramState;
+  const { seedPhrase, alias, address, accountsToCreate } = paramState;
   const { t } = useTranslation();
   const handleUpload = React.useCallback(
     async password => {
@@ -54,8 +53,8 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         await activeAndPersistAccountsByMnemonics(
           mnemonics,
           passphrase,
-          firstAddress as any,
-          true,
+          accountsToCreate as any,
+          false,
         );
         keyringService.removePreMnemonics();
         navigate(RootNames.StackAddress, {
@@ -77,7 +76,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         toast.show(t('page.newAddress.seedPhrase.backupFailedTitle'));
       }
     },
-    [onDone, t, seedPhrase, address, alias, firstAddress],
+    [onDone, t, seedPhrase, address, alias, accountsToCreate],
   );
 
   React.useEffect(() => {

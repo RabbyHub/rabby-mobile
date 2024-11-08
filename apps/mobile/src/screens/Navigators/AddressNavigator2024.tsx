@@ -40,6 +40,7 @@ export function AddressNavigator2024() {
         name={RootNames.CreateSelectMethod}
         component={CreateSelectMethod}
         options={mergeScreenOptions({
+          headerLeft: () => null,
           headerTitle: '1. Select Creation Method',
           title: '1. Select Creation Method',
           headerTintColor: colors2024['neutral-title-1'],

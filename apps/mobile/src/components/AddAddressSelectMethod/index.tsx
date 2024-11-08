@@ -67,6 +67,9 @@ export const AddAddressSelectMethod: React.FC<Props> = ({ onDone }) => {
           onPress={() => {
             navigate(RootNames.StackAddress, {
               screen: RootNames.ImportMethods,
+              params: {
+                hasCurrentAddress: true,
+              },
             });
             onDone();
           }}

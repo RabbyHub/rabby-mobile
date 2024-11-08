@@ -210,6 +210,7 @@ const getStyle = createGetStyles2024(ctx => ({
     alignItems: 'center',
     paddingHorizontal: 0,
     width: '100%',
+    borderRadius: 100,
     // height: '100%',
     height: 56,
   },

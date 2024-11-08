@@ -2,15 +2,17 @@ import { createGetStyles, createGetStyles2024 } from '@/utils/styles';
 import { StyleSheet, View, Text, StyleProp, ViewStyle } from 'react-native';
 import { useTheme2024, useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { TypeKeyringGroup } from '@/hooks/useWalletTypeData';
-import { AddressItemInner } from '../components/AddressItemInner';
 import { Button } from '@/components2024/Button';
 import { useTranslation } from 'react-i18next';
 import { default as RcIconCreateSeed } from '@/assets2024/icons/common/IconAddCreate.svg';
+import { AddressItem } from '@/components2024/AddressItem/AddressItem';
+import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
+import { ellipsisAddress } from '@/utils/address';
 
 interface Props {
   index: number;
   data: TypeKeyringGroup;
-  onAddAddress: (pk: string) => void;
+  onAddAddress: (pk: string, accounts: string[]) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -32,13 +34,24 @@ export const SeedPhraseGroup: React.FC<Props> = ({
       <View style={styles.body}>
         {data.list.map(item => (
           <View key={item.address} style={styles.item}>
-            <AddressItemInner isInList wallet={item} showUsd={false} />
+            <AddressItem
+              account={{
+                brandName: KEYRING_CLASS.MNEMONIC,
+                aliasName: ellipsisAddress(item.address),
+                address: item.address,
+                balance: item.balance,
+                type: KEYRING_CLASS.MNEMONIC,
+              }}
+            />
           </View>
         ))}
       </View>
       <View style={styles.footer}>
         <Button
-          onPress={() => onAddAddress(data.publicKey!)}
+          onPress={() => {
+            const addressArr = data.list.map(e => e.address);
+            onAddAddress(data.publicKey!, addressArr);
+          }}
           buttonStyle={styles.button}
           titleStyle={styles.buttonText}
           title={t('page.manageAddress.add-address')}
@@ -82,7 +95,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 16,
   },
   item: {
-    paddingVertical: 14,
+    paddingVertical: 8,
   },
   footer: {
     paddingHorizontal: 16,

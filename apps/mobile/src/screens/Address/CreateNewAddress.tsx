@@ -21,7 +21,10 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { apiMnemonic } from '@/core/apis';
-import { generateKeyringWithMnemonic } from '@/core/apis/mnemonic';
+import {
+  activeAndPersistAccountsByMnemonics,
+  generateKeyringWithMnemonic,
+} from '@/core/apis/mnemonic';
 import { requestKeyring } from '@/core/apis/keyring';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
@@ -33,6 +36,8 @@ import { useNavigationState } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 
+const MAX_ACCOUNT_COUNT = 50;
+
 function MainListBlocks() {
   const { t } = useTranslation();
   const [newAddress, setNewAddress] = useState('');
@@ -43,62 +48,79 @@ function MainListBlocks() {
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.CreateNewAddress)?.params,
-  ) as {
-    noSetupPassword?: boolean;
-    useCurrentSeed?: boolean;
-    mnemonics?: string;
-    title?: string;
-  };
+  ) as
+    | {
+        noSetupPassword?: boolean;
+        useCurrentSeed?: boolean;
+        mnemonics?: string;
+        title?: string;
+        accounts: string[]; // current active addrees
+      }
+    | undefined;
 
   useEffect(() => {
-    if (!state.title) {
+    if (!state?.title) {
       return;
     }
     setNavigationOptions({
-      title: state.title,
+      title: state?.title,
     });
-  }, [setNavigationOptions, state.title]);
+  }, [setNavigationOptions, state?.title]);
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText>{state.title || '2. Name Your Address'}</HeaderTitleText>
+      <HeaderTitleText>
+        {state?.title || '1. Name Your Address'}
+      </HeaderTitleText>
     );
-  }, [state.title]);
+  }, [state?.title]);
 
   React.useEffect(() => {
     setNavigationOptions({
       headerTitle: getHeaderTitle,
       // headerLeft: () => null,
     });
-  }, [setNavigationOptions, getHeaderTitle, state.title]);
+  }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
     let seedPhrase = '';
-    if (state.mnemonics) {
-      seedPhrase = state.mnemonics;
+    let accountsToCreate;
+    if (state?.mnemonics) {
+      seedPhrase = state?.mnemonics;
+      const currentAddressArr = state?.accounts;
+      const api = apiMnemonic.getKeyringByMnemonic(seedPhrase, '');
+      for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
+        console.log('requestKeyring res find count', i);
+        const res = await api?.getAddresses(i, i + 1);
+        const idx = currentAddressArr.findIndex(
+          item => item === res?.[0].address,
+        );
+        if (idx === -1) {
+          accountsToCreate = res;
+          break; // has find a address
+        }
+      }
     } else {
+      // first create
       seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
+      accountsToCreate = await requestKeyring(
+        KEYRING_TYPE.HdKeyring,
+        'getAddresses',
+        keyringId ?? null,
+        0,
+        1,
+      );
     }
     const words = seedPhrase.split(' ');
-    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
-      seedPhrase,
-      '',
-    );
-
-    const firstAddress = await requestKeyring(
-      KEYRING_TYPE.HdKeyring,
-      'getAddresses',
-      keyringId ?? null,
-      0,
-      1,
-    );
-    const address = firstAddress[0].address;
+    const address = accountsToCreate?.[0].address;
+    console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
     setAddressAlias(ellipsisAddress(address));
     return {
       seedPhrase,
       words,
-      firstAddress,
+      accountsToCreate,
     };
   });
 
@@ -127,11 +149,11 @@ function MainListBlocks() {
           address: newAddress,
           alias: addressAlias || ellipsisAddress(newAddress),
           seedPhrase: value?.seedPhrase,
-          firstAddress: value?.firstAddress,
+          accountsToCreate: value?.accountsToCreate,
         },
       });
     };
-    if (state.noSetupPassword) {
+    if (state?.noSetupPassword) {
       onSetupPasswordDone();
     } else {
       navigation.replace(RootNames.StackAddress2024, {
@@ -150,6 +172,12 @@ function MainListBlocks() {
     });
     console.log('exe handleDone');
 
+    await activeAndPersistAccountsByMnemonics(
+      state?.mnemonics || '',
+      '',
+      value?.accountsToCreate,
+      false,
+    );
     navigation.replace(RootNames.StackAddress, {
       screen: RootNames.ImportSuccess2024,
       params: {
@@ -163,7 +191,7 @@ function MainListBlocks() {
         alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, state, navigation]);
+  }, [newAddress, addressAlias, state, navigation, value]);
 
   return (
     <TouchableWithoutFeedback
@@ -171,7 +199,12 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={state.noSetupPassword ? 2 : 1} />
+        <ProgressBar
+          amount={3}
+          currentCount={
+            state?.useCurrentSeed ? 3 : state?.noSetupPassword ? 2 : 1
+          }
+        />
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
@@ -206,7 +239,7 @@ function MainListBlocks() {
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
-          onPress={state.useCurrentSeed ? handleDone : handleContinue}
+          onPress={state?.useCurrentSeed ? handleDone : handleContinue}
         />
       </View>
     </TouchableWithoutFeedback>

@@ -21,8 +21,8 @@ import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
-  const { seedPhraseList, handleAddSeedPhraseAddress } = useSeedPhrase();
-  console.log('seedPhraseList', seedPhraseList[0]);
+  const { seedPhraseList, handleAddSeedPhraseAddress2024 } = useSeedPhrase();
+  console.log('seedPhraseList', seedPhraseList?.[0]?.list);
   const state = useNavigationState(
     s =>
       s.routes.find(r => r.name === RootNames.CreateSelectOnCurrentSeed)
@@ -41,7 +41,7 @@ function MainListBlocks() {
       <ScrollView style={styles.main}>
         {seedPhraseList.map((item, index) => (
           <SeedPhraseGroup
-            onAddAddress={handleAddSeedPhraseAddress}
+            onAddAddress={handleAddSeedPhraseAddress2024}
             key={index}
             index={index}
             data={item}
@@ -75,7 +75,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   main: {
     // paddingHorizontal: 20,
     width: '100%',
-    marginTop: 20,
+    marginTop: 32,
   },
   group: {
     marginBottom: 20,
