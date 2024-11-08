@@ -100,7 +100,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     paddingHorizontal: 16,
     paddingTop: 30,
-    flex: 1,
   },
   list: {
     flex: 1,
