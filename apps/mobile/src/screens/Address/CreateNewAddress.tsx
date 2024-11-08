@@ -1,5 +1,5 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   StyleSheet,
@@ -13,20 +13,28 @@ import {
 import { NextInput } from '@/components2024/Form/Input';
 import { default as RcSeedPhrase } from '@/assets/icons/nextComponent/IconSeedPhrase.svg';
 import { RootNames } from '@/constant/layout';
-import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useTranslation } from 'react-i18next';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { ProgressBar } from '@/components2024/progressBar';
 import { Button } from '@/components2024/Button';
 import { apiMnemonic } from '@/core/apis';
-import { generateKeyringWithMnemonic } from '@/core/apis/mnemonic';
+import {
+  activeAndPersistAccountsByMnemonics,
+  generateKeyringWithMnemonic,
+} from '@/core/apis/mnemonic';
 import { requestKeyring } from '@/core/apis/keyring';
 import useAsync from 'react-use/lib/useAsync';
 import { ellipsisAddress } from '@/utils/address';
 import { contactService } from '@/core/services';
 import { Skeleton } from '@rneui/themed';
 import { useRabbyAppNavigation } from '@/hooks/navigation';
+import { useNavigationState } from '@react-navigation/native';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
+
+const MAX_ACCOUNT_COUNT = 50;
 
 function MainListBlocks() {
   const { t } = useTranslation();
@@ -34,29 +42,83 @@ function MainListBlocks() {
   const [addressAlias, setAddressAlias] = useState('');
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const navigation = useRabbyAppNavigation();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
+
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.CreateNewAddress)?.params,
+  ) as
+    | {
+        noSetupPassword?: boolean;
+        useCurrentSeed?: boolean;
+        mnemonics?: string;
+        title?: string;
+        accounts: string[]; // current active addrees
+      }
+    | undefined;
+
+  useEffect(() => {
+    if (!state?.title) {
+      return;
+    }
+    setNavigationOptions({
+      title: state?.title,
+    });
+  }, [setNavigationOptions, state?.title]);
+
+  const getHeaderTitle = React.useCallback(() => {
+    return (
+      <HeaderTitleText>
+        {state?.title || '1. Name Your Address'}
+      </HeaderTitleText>
+    );
+  }, [state?.title]);
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+      // headerLeft: () => null,
+    });
+  }, [setNavigationOptions, getHeaderTitle, state?.title]);
 
   const { value, loading, error } = useAsync(async () => {
-    const seedPhrase: string = await apiMnemonic.generatePreMnemonic();
+    let seedPhrase = '';
+    let accountsToCreate;
+    if (state?.mnemonics) {
+      seedPhrase = state?.mnemonics;
+      const currentAddressArr = state?.accounts;
+      const api = apiMnemonic.getKeyringByMnemonic(seedPhrase, '');
+      for (let i = 0; i < MAX_ACCOUNT_COUNT; i++) {
+        console.log('requestKeyring res find count', i);
+        const res = await api?.getAddresses(i, i + 1);
+        const idx = currentAddressArr.findIndex(
+          item => item === res?.[0].address,
+        );
+        if (idx === -1) {
+          accountsToCreate = res;
+          break; // has find a address
+        }
+      }
+    } else {
+      // first create
+      seedPhrase = await apiMnemonic.generatePreMnemonic();
+      const { keyringId } = await generateKeyringWithMnemonic(seedPhrase, '');
+      accountsToCreate = await requestKeyring(
+        KEYRING_TYPE.HdKeyring,
+        'getAddresses',
+        keyringId ?? null,
+        0,
+        1,
+      );
+    }
     const words = seedPhrase.split(' ');
-    const { keyringId, isExistedKR } = await generateKeyringWithMnemonic(
-      seedPhrase,
-      '',
-    );
-
-    const firstAddress = await requestKeyring(
-      KEYRING_TYPE.HdKeyring,
-      'getAddresses',
-      keyringId ?? null,
-      0,
-      1,
-    );
-    const address = firstAddress[0].address;
+    const address = accountsToCreate?.[0].address;
+    console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
     setAddressAlias(ellipsisAddress(address));
     return {
       seedPhrase,
       words,
-      firstAddress,
+      accountsToCreate,
     };
   });
 
@@ -77,6 +139,7 @@ function MainListBlocks() {
       alias: addressAlias,
     });
     console.log('exe handleContinue');
+
     const onSetupPasswordDone = () => {
       navigation.replace(RootNames.StackAddress2024, {
         screen: RootNames.CreateChooseBackup,
@@ -84,17 +147,49 @@ function MainListBlocks() {
           address: newAddress,
           alias: addressAlias || ellipsisAddress(newAddress),
           seedPhrase: value?.seedPhrase,
-          firstAddress: value?.firstAddress,
+          accountsToCreate: value?.accountsToCreate,
         },
       });
     };
-    navigation.replace(RootNames.StackAddress2024, {
-      screen: RootNames.SetPassword2024,
+    if (state?.noSetupPassword) {
+      onSetupPasswordDone();
+    } else {
+      navigation.replace(RootNames.StackAddress2024, {
+        screen: RootNames.SetPassword2024,
+        params: {
+          onFinish: onSetupPasswordDone,
+        },
+      });
+    }
+  }, [newAddress, addressAlias, value, navigation, state]);
+
+  const handleDone = useCallback(async () => {
+    contactService.setAlias({
+      address: newAddress,
+      alias: addressAlias,
+    });
+    console.log('exe handleDone');
+
+    await activeAndPersistAccountsByMnemonics(
+      state?.mnemonics || '',
+      '',
+      value?.accountsToCreate,
+      false,
+    );
+    navigation.replace(RootNames.StackAddress, {
+      screen: RootNames.ImportSuccess2024,
       params: {
-        onFinish: onSetupPasswordDone,
+        type: KEYRING_TYPE.HdKeyring,
+        brandName: KEYRING_CLASS.MNEMONIC,
+        isFirstCreate: true,
+        address: [newAddress],
+        mnemonics: state?.mnemonics,
+        passphrase: '',
+        isExistedKR: false,
+        alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, value, navigation]);
+  }, [newAddress, addressAlias, state, navigation, value]);
 
   return (
     <TouchableWithoutFeedback
@@ -102,7 +197,12 @@ function MainListBlocks() {
         Keyboard.dismiss();
       }}>
       <View style={[styles.container]}>
-        <ProgressBar amount={3} currentCount={1} />
+        <ProgressBar
+          amount={3}
+          currentCount={
+            state?.useCurrentSeed ? 3 : state?.noSetupPassword ? 2 : 1
+          }
+        />
         <Text style={[styles.text]}>
           {t('page.nextComponent.createNewAddress.addressTopTips')}
         </Text>
@@ -137,7 +237,7 @@ function MainListBlocks() {
           containerStyle={styles.btnContainer}
           type="primary"
           title={t('page.nextComponent.createNewAddress.Continue')}
-          onPress={handleContinue}
+          onPress={state?.useCurrentSeed ? handleDone : handleContinue}
         />
       </View>
     </TouchableWithoutFeedback>

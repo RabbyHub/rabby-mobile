@@ -192,7 +192,7 @@ interface Props {
     address: string;
     alias: string;
     seedPhrase: string;
-    firstAddress: any;
+    accountsToCreate: any;
   };
 }
 
@@ -204,7 +204,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
-  const { seedPhrase, alias, address, firstAddress } = paramState;
+  const { seedPhrase, alias, address, accountsToCreate } = paramState;
 
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
   const shuffledWords = useMemo(() => _.shuffle(words), [words]);
@@ -252,8 +252,8 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         await activeAndPersistAccountsByMnemonics(
           mnemonics,
           passphrase,
-          firstAddress as any,
-          true,
+          accountsToCreate as any,
+          false,
         );
         keyringService.removePreMnemonics();
         navigate(RootNames.StackAddress, {

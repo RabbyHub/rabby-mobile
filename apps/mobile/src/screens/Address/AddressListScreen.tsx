@@ -18,6 +18,11 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import WalletSVG from '@/assets2024/icons/common/wallet-cc.svg';
 import ArrowRightSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
+import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -69,7 +74,14 @@ export function AddressListScreen(): JSX.Element {
   const navigation = useNavigation<CurrentAddressProps['navigation']>();
 
   const gotoAddAddress = React.useCallback(() => {
-    redirectToAddAddressEntry({ action: 'classical:push' });
+    // redirectToAddAddressEntry({ action: 'classical:push' });
+
+    const id = createGlobalBottomSheetModal2024({
+      name: MODAL_NAMES.ADD_ADDRESS_SELECT_METHOD,
+      onDone: () => {
+        removeGlobalBottomSheetModal2024(id);
+      },
+    });
   }, []);
 
   const hasWatchAddress = React.useMemo(() => {

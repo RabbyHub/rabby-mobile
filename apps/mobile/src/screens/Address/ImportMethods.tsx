@@ -20,15 +20,34 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useNavigationState } from '@react-navigation/native';
+import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
+import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
+  const state = useNavigationState(
+    s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
+  ) as
+    | {
+        hasCurrentAddress?: boolean; // if has address
+      }
+    | undefined;
+  // const state = undefined;
+
   return (
     <NormalScreenContainer overwriteStyle={styles.wrapper}>
-      <View style={[styles.blockView]}>
+      <View
+        style={StyleSheet.flatten([
+          styles.blockView,
+          state?.hasCurrentAddress && styles.noMarginTop,
+        ])}>
         <View style={styles.section}>
+          {state?.hasCurrentAddress && (
+            <Text style={styles.titleText}>Import Address</Text>
+          )}
           <Card
             style={styles.importItem}
             onPress={() => {
@@ -64,49 +83,90 @@ function ImportMethods(): JSX.Element {
             <PrivateKeyIcon style={styles.icon} />
             <Text style={styles.importType}>Import Private Key</Text>
           </Card>
-          <Card
-            style={styles.importItem}
-            onPress={() => {
-              navigate(RootNames.StackAddress, {
-                screen: RootNames.ImportHardwareAddress,
-              });
-            }}>
-            <HardWareIcon style={styles.icon} />
-            <Text style={styles.importType}>Connect Hardware Wallets</Text>
-          </Card>
+          {state?.hasCurrentAddress && (
+            <>
+              <Text style={styles.titleText}>Import Safe Address</Text>
+              <Card
+                style={styles.importItem}
+                onPress={() => {
+                  navigate(RootNames.StackAddress, {
+                    screen: RootNames.ImportSafeAddress2024,
+                  });
+                }}>
+                <WalletIcon
+                  type={KEYRING_TYPE.GnosisKeyring}
+                  width={40}
+                  height={40}
+                  style={styles.icon}
+                />
+                <Text style={styles.importType}>Safe</Text>
+              </Card>
+              <Text style={styles.titleText}>Import Watch-only Address</Text>
+              <Card
+                style={styles.importItem}
+                onPress={() => {
+                  navigate(RootNames.StackAddress, {
+                    screen: RootNames.ImportWatchAddress2024,
+                  });
+                }}>
+                <WalletIcon
+                  type={KEYRING_TYPE.WatchAddressKeyring}
+                  width={40}
+                  height={40}
+                  style={styles.icon}
+                />
+                <Text style={styles.importType}>Watch-only Address</Text>
+              </Card>
+            </>
+          )}
+
+          {!state?.hasCurrentAddress && (
+            <Card
+              style={styles.importItem}
+              onPress={() => {
+                navigate(RootNames.StackAddress, {
+                  screen: RootNames.ImportHardwareAddress,
+                });
+              }}>
+              <HardWareIcon style={styles.icon} />
+              <Text style={styles.importType}>Connect Hardware Wallets</Text>
+            </Card>
+          )}
         </View>
       </View>
-      <View style={styles.tipWrapper}>
-        <Text style={styles.tip}>Is it safe to import into Rabby</Text>
-        <HelpIcon
-          style={styles.tipIcon}
-          onPress={() => {
-            const modalId = createGlobalBottomSheetModal2024({
-              name: MODAL_NAMES.DESCRIPTION,
-              bottomSheetModalProps: {
-                enableDismissOnClose: true,
-                snapPoints: ['40%'],
-              },
-              title: 'Is it safe to import it in Rabby?',
-              sections: [
-                {
-                  description:
-                    'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+      {!state?.hasCurrentAddress && (
+        <View style={styles.tipWrapper}>
+          <Text style={styles.tip}>Is it safe to import into Rabby</Text>
+          <HelpIcon
+            style={styles.tipIcon}
+            onPress={() => {
+              const modalId = createGlobalBottomSheetModal2024({
+                name: MODAL_NAMES.DESCRIPTION,
+                bottomSheetModalProps: {
+                  enableDismissOnClose: true,
+                  snapPoints: ['40%'],
                 },
-              ],
-              nextButtonProps: {
-                title: (
-                  <Text style={styles.modalNextButtonText}>I Got It.</Text>
-                ),
-                titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
-                onPress: () => {
-                  removeGlobalBottomSheetModal2024(modalId);
+                title: 'Is it safe to import it in Rabby?',
+                sections: [
+                  {
+                    description:
+                      'Your data is securely encrypted and stored locally on your device. Rabby does not have access to your private information, and it is never shared with third parties.',
+                  },
+                ],
+                nextButtonProps: {
+                  title: (
+                    <Text style={styles.modalNextButtonText}>I Got It.</Text>
+                  ),
+                  titleStyle: StyleSheet.flatten([styles.modalNextButtonText]),
+                  onPress: () => {
+                    removeGlobalBottomSheetModal2024(modalId);
+                  },
                 },
-              },
-            });
-          }}
-        />
-      </View>
+              });
+            }}
+          />
+        </View>
+      )}
     </NormalScreenContainer>
   );
 }
@@ -121,6 +181,9 @@ const getStyles = createGetStyles2024(ctx => ({
   icon: {
     width: 40,
     height: 40,
+  },
+  noMarginTop: {
+    marginTop: 0,
   },
   blockView: {
     width: '92%',
@@ -160,6 +223,16 @@ const getStyles = createGetStyles2024(ctx => ({
   tipIcon: {
     width: 16,
     height: 16,
+  },
+  titleText: {
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+    textAlign: 'left',
+    color: ctx.colors2024['neutral-secondary'],
+    marginTop: 20,
+    marginBottom: 12,
   },
   modalNextButtonText: {
     fontFamily: 'SF Pro Rounded',

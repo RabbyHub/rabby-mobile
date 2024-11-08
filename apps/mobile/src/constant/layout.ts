@@ -24,7 +24,7 @@ export const ScreenColors = {
 export const RootNames = {
   StackGetStarted: 'StackGetStarted',
   GetStartedScreen2024: 'GetStartedScreen2024',
-
+  CreateSelectMethod: 'CreateSelectMethod',
   StackRoot: 'StackRoot',
   NotFound: 'NotFound',
   Unlock: 'Unlock',
@@ -85,10 +85,13 @@ export const RootNames = {
   ImportSuccess2024: 'ImportSuccess2024',
   ImportMethods: 'ImportMethods',
   ImportWatchAddress: 'ImportWatchAddress',
+  ImportWatchAddress2024: 'ImportWatchAddress2024',
   ImportSafeAddress: 'ImportSafeAddress',
+  ImportSafeAddress2024: 'ImportSafeAddress2024',
   AddressDetail: 'AddressDetail',
   NftDetail: 'NftDetail',
   CreateNewAddress: 'CreateNewAddress',
+  CreateSelectOnCurrentSeed: 'CreateSelectOnCurrentSeed',
   SetPassword2024: 'SetPassword2024',
   CreateChooseBackup: 'CreateChooseBackup',
 
