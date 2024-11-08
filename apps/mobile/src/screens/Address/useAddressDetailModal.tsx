@@ -8,12 +8,19 @@ import React from 'react';
 
 export const useAddressDetailModal = () => {
   const gotoDetail = React.useCallback(
-    ({ account }: { account: KeyringAccountWithAlias }) => {
+    ({
+      account,
+      onCancel,
+    }: {
+      account: KeyringAccountWithAlias;
+      onCancel?: () => void;
+    }) => {
       const id = createGlobalBottomSheetModal2024({
         name: MODAL_NAMES.ADDRESS_DETAIL,
         account,
         onCancel: () => {
           removeGlobalBottomSheetModal2024(id);
+          onCancel?.();
         },
       });
     },

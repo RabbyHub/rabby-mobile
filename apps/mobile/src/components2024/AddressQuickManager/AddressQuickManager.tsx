@@ -14,9 +14,10 @@ import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
+  onCancel: () => void;
 }
 
-export const AddressQuickManager: React.FC<Props> = ({ type }) => {
+export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const { accounts } = useAccounts({
     disableAutoFetch: true,
   });
@@ -78,7 +79,7 @@ export const AddressQuickManager: React.FC<Props> = ({ type }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  showAddressDetail({ account });
+                  showAddressDetail({ account, onCancel });
                 }}
                 hitSlop={10}
                 style={styles.button}>

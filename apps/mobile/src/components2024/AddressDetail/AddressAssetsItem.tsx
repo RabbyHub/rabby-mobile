@@ -14,10 +14,11 @@ import { Item } from './Item';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
+  onCancel: () => void;
 }
 
 export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
-  const { account } = props;
+  const { account, onCancel } = props;
   const { styles } = useTheme2024({ getStyle });
   const { t } = useTranslation();
 
@@ -46,7 +47,7 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
 
       {account.type === KEYRING_TYPE.HdKeyring && (
         <Item style={styles.subItemView}>
-          <SeedPhraseBar account={account} />
+          <SeedPhraseBar account={account} onCancel={onCancel} />
         </Item>
       )}
 

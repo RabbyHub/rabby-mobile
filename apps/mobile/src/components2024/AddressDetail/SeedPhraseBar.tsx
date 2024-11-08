@@ -7,15 +7,19 @@ import ArrowSVG from '@/assets2024/icons/common/arrow-right-cc.svg';
 import { Text, TouchableOpacity } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
-import { createGlobalBottomSheetModal2024 } from '../GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
 import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
   account: KeyringAccountWithAlias;
+  onCancel: () => void;
 }
 
-export const SeedPhraseBar: React.FC<Props> = ({ account }) => {
+export const SeedPhraseBar: React.FC<Props> = ({ account, onCancel }) => {
   const { address } = account;
   const { t } = useTranslation();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
@@ -38,7 +42,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ account }) => {
         );
         const keyringId = result.keyringId;
 
-        createGlobalBottomSheetModal2024({
+        const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.IMPORT_MORE_ADDRESS,
           params: {
             type: KEYRING_TYPE.HdKeyring,
@@ -47,6 +51,10 @@ export const SeedPhraseBar: React.FC<Props> = ({ account }) => {
             keyringId: keyringId || undefined,
             isExistedKR: result.isExistedKR,
             account,
+          },
+          onCancel: () => {
+            removeGlobalBottomSheetModal2024(id);
+            onCancel();
           },
         });
       },

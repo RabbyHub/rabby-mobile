@@ -58,7 +58,7 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
     <View style={styles.root}>
       <AddressInfoItem account={account} />
       <View style={styles.cardList}>
-        <AddressAssetsItem account={account} />
+        <AddressAssetsItem onCancel={onCancel} account={account} />
         <AddressBackupItem onCancel={onCancel} account={account} />
         <Card style={styles.card}>
           <Item

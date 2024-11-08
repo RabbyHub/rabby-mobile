@@ -1,4 +1,7 @@
-import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
+import {
+  createGlobalBottomSheetModal2024,
+  removeGlobalBottomSheetModal2024,
+} from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -34,11 +37,14 @@ export const AddressListScreenButton: React.FC<Props> = ({
 }) => {
   const { styles } = useTheme2024({ getStyle });
   const onPress = React.useCallback(() => {
-    createGlobalBottomSheetModal2024({
+    const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       type,
       bottomSheetModalProps: {
         enableDynamicSizing: true,
+      },
+      onCancel: () => {
+        removeGlobalBottomSheetModal2024(id);
       },
     });
   }, [type]);

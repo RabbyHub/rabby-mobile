@@ -49,9 +49,10 @@ export interface Props {
     account: KeyringAccountWithAlias;
     brand: string;
   };
+  onCancel: () => void;
 }
 
-export const ImportMoreAddress: React.FC<Props> = ({ params }) => {
+export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
   const apiHD = React.useMemo(() => {
     switch (params.type) {
       case KEYRING_TYPE.LedgerKeyring:
@@ -285,7 +286,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params }) => {
         )
           .then(() => {
             navigate(RootNames.StackAddress, {
-              screen: RootNames.ImportSuccess,
+              screen: RootNames.ImportSuccess2024,
               params: {
                 type: hdType,
                 brandName: hdBrandName,
@@ -300,6 +301,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params }) => {
           .finally(() => {
             importToastHiddenRef.current?.();
             setImporting(false);
+            onCancel();
           });
       });
 
@@ -327,13 +329,14 @@ export const ImportMoreAddress: React.FC<Props> = ({ params }) => {
     }
     setImporting(false);
   }, [
-    apiHD,
-    hdBrandName,
-    hdType,
-    selectedAccounts,
+    params.type,
     params.mnemonics,
     params.passphrase,
-    params.type,
+    selectedAccounts,
+    hdType,
+    hdBrandName,
+    onCancel,
+    apiHD,
   ]);
 
   React.useEffect(() => {
@@ -396,16 +399,17 @@ export const ImportMoreAddress: React.FC<Props> = ({ params }) => {
         selectedAccounts={selectedAccounts}
         handleSelectIndex={handleSelectIndex}
       />
-      <View style={styles.footerButton}>
-        <Button
-          buttonStyle={styles.button}
-          type="primary"
-          title={t('global.confirm')}
-          onPress={handleConfirm}
-          disabled={importing || !selectedAccounts.length}
-          loading={importing}
-        />
-      </View>
+      {selectedAccounts.length ? (
+        <View style={styles.footerButton}>
+          <Button
+            type="primary"
+            title={t('global.confirm')}
+            onPress={handleConfirm}
+            disabled={importing || !selectedAccounts.length}
+            loading={importing}
+          />
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -449,6 +453,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     bottom: 54,
     left: 0,
     right: 0,
+    marginHorizontal: 24,
   },
-  button: {},
 }));
