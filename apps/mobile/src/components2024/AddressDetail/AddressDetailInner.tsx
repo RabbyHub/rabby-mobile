@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, usePinAddresses } from '@/hooks/account';
 import { useWhitelist } from '@/hooks/whitelist';
@@ -13,6 +13,8 @@ import { Item } from './Item';
 import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import DeleteSVG from '@/assets2024/icons/common/delete-cc.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
+import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
+import { useQrCodeModal } from '../QrCodeModal /useQrCodeModal';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
@@ -21,7 +23,7 @@ interface AddressInfoProps {
 
 export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
   const { account, onCancel } = props;
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, colors2024 } = useTheme2024({ getStyle });
   const { isAddrOnWhitelist, addWhitelist, removeWhitelist } = useWhitelist();
   const inWhiteList = useMemo(
     () => isAddrOnWhitelist(account.address),
@@ -53,9 +55,24 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
     [togglePinAddressAsync, account.address, account.brandName],
   );
   const removeAccount = useDeleteAccountModal();
+  const qrCodeModal = useQrCodeModal();
 
   return (
     <View style={styles.root}>
+      <View style={styles.qrCodeView}>
+        <TouchableOpacity
+          style={styles.qrCode}
+          hitSlop={10}
+          onPress={() => {
+            qrCodeModal.show(account.address);
+          }}>
+          <QrcodeSVG
+            width={20}
+            height={20}
+            color={colors2024['neutral-body']}
+          />
+        </TouchableOpacity>
+      </View>
       <AddressInfoItem account={account} />
       <View style={styles.cardList}>
         <AddressAssetsItem onCancel={onCancel} account={account} />
@@ -105,5 +122,11 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   labelText: {
     color: colors2024['red-default'],
+  },
+  qrCode: {},
+  qrCodeView: {
+    alignItems: 'flex-end',
+    paddingRight: 24,
+    paddingTop: 10,
   },
 }));

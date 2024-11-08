@@ -57,6 +57,7 @@ import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView'
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
 import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
+import { QrCodeModal } from './components2024/QrCodeModal /QrCodeModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -173,6 +174,7 @@ export default function AppNavigation({
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <DuplicateAddressModal />
         <AliasNameEditModal />
+        <QrCodeModal />
 
         <RootStack.Navigator
           screenOptions={{

@@ -116,7 +116,9 @@ export const GnosisSafeInfoBar = ({
 
       <Item
         style={{
+          marginTop: -12,
           flexDirection: 'column',
+          alignItems: 'flex-start',
         }}>
         {activeData?.data?.owners.map((owner, index, list) => (
           <GnosisAdminItem

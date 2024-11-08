@@ -66,6 +66,7 @@ export const AddressInfoItem: React.FC<AddressInfoProps> = props => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   addressInfoView: {
     padding: 20,
+    paddingTop: 13,
     gap: 12,
     flexDirection: 'row',
     flex: 1,
