@@ -1935,7 +1935,7 @@
       "source": "Source",
       "hd-path": "HD Path",
       "manage-seed-phrase": "Manage Seed Phrase",
-      "manage-addresses-under-this-seed-phrase": "Manage addresses under this Seed Phrase",
+      "manage-addresses-under-this-seed-phrase": "Create Address under this Seed Phrase",
       "safeModuleAddress": "Safe Module Address",
       "coboSafeErrorModule": "Address has expired, please delete and import the address again.",
       "importedDelegatedAddress": "Imported Delegated address"

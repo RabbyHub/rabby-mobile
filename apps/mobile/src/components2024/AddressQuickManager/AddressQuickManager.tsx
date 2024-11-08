@@ -10,6 +10,7 @@ import MoreSVG from '@/assets2024/icons/common/more-cc.svg';
 import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
+import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -41,6 +42,7 @@ export const AddressQuickManager: React.FC<Props> = ({ type }) => {
   }, [accounts, type]);
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
+  const showAddressDetail = useAddressDetailModal();
 
   return (
     <ScrollView style={styles.root}>
@@ -74,7 +76,12 @@ export const AddressQuickManager: React.FC<Props> = ({ type }) => {
                   height={20}
                 />
               </TouchableOpacity>
-              <TouchableOpacity hitSlop={10} style={styles.button}>
+              <TouchableOpacity
+                onPress={() => {
+                  showAddressDetail({ account });
+                }}
+                hitSlop={10}
+                style={styles.button}>
                 <MoreSVG
                   color={colors2024['neutral-body']}
                   width={20}
