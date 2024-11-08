@@ -46,7 +46,7 @@ export const AddressAssetsItem: React.FC<AddressInfoProps> = props => {
 
       {account.type === KEYRING_TYPE.HdKeyring && (
         <Item style={styles.subItemView}>
-          <SeedPhraseBar address={account.address} />
+          <SeedPhraseBar account={account} />
         </Item>
       )}
 

@@ -1,5 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import { StyleProp, StyleSheet, View, TextStyle } from 'react-native';
+import {
+  StyleProp,
+  StyleSheet,
+  View,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
 import { ellipsisAddress } from '@/utils/address';
@@ -23,11 +29,13 @@ type AddressItemProps =
       account: KeyringAccountWithAlias;
       children?: (props: ChildrenProps) => React.ReactNode;
       fetchAccount?: boolean;
+      style?: StyleProp<ViewStyle>;
     }
   | {
       address: string;
       children?: (props: ChildrenProps) => React.ReactNode;
       fetchAccount?: boolean;
+      style?: StyleProp<ViewStyle>;
     };
 
 export const AddressItem = (props: AddressItemProps) => {
@@ -99,7 +107,7 @@ export const AddressItem = (props: AddressItemProps) => {
   );
 
   return (
-    <View>
+    <View style={props.style}>
       {props.children ? (
         props.children({
           WalletIcon: WalletIconWrapper,

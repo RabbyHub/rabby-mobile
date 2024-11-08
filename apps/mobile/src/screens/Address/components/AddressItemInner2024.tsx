@@ -15,6 +15,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'space-between',
     borderWidth: 0,
     borderRadius: 0,
+    flex: 1,
+    flexGrow: 1,
+  },
+  rootItem: {
+    flexDirection: 'row',
+    flex: 1,
+    flexGrow: 1,
+    marginRight: 20,
   },
   item: {
     flexDirection: 'row',
@@ -23,10 +31,18 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   itemInfo: {
     gap: 6,
+    flexGrow: 1,
+    flex: 1,
   },
   itemNameText: {
     fontSize: 17,
     lineHeight: 22,
+  },
+  itemNameTextHasPinned: {
+    paddingRight: 52,
+  },
+  itemNamePinned: {
+    marginLeft: -52,
   },
   itemBalanceText: {
     fontSize: 17,
@@ -69,14 +85,21 @@ export const AddressItemInner2024 = (props: AddressItemProps) => {
 
   return (
     <Card style={StyleSheet.flatten([styles.card, style])}>
-      <InnerAddressItem account={account}>
+      <InnerAddressItem style={styles.rootItem} account={account}>
         {({ WalletIcon, WalletName, WalletBalance }) => (
           <View style={styles.item}>
             <WalletIcon width={40} height={40} />
             <View style={styles.itemInfo}>
               <View style={styles.itemName}>
-                <WalletName style={styles.itemNameText} />
-                {pinned && <PinBadge />}
+                <WalletName
+                  style={StyleSheet.flatten([
+                    styles.itemNameText,
+                    pinned && styles.itemNameTextHasPinned,
+                  ])}
+                />
+                <View style={styles.itemNamePinned}>
+                  {pinned && <PinBadge />}
+                </View>
               </View>
               <WalletBalance style={styles.itemBalanceText} />
             </View>

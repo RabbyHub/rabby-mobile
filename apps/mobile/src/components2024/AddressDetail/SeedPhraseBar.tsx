@@ -9,12 +9,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGlobalBottomSheetModal2024 } from '../GlobalBottomSheetModal';
 import { MODAL_NAMES } from '../GlobalBottomSheetModal/types';
+import { KeyringAccountWithAlias } from '@/hooks/account';
 
 interface Props {
-  address: string;
+  account: KeyringAccountWithAlias;
 }
 
-export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
+export const SeedPhraseBar: React.FC<Props> = ({ account }) => {
+  const { address } = account;
   const { t } = useTranslation();
   const invokeEnterPassphrase = useEnterPassphraseModal('address');
   const { styles, colors2024 } = useTheme2024({ getStyle });
@@ -44,6 +46,7 @@ export const SeedPhraseBar: React.FC<Props> = ({ address }) => {
             passphrase,
             keyringId: keyringId || undefined,
             isExistedKR: result.isExistedKR,
+            account,
           },
         });
       },

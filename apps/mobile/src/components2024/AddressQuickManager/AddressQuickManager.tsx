@@ -115,12 +115,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 24,
-    justifyContent: 'space-between',
     backgroundColor: colors2024['neutral-bg-1'],
   },
   itemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexGrow: 1,
+    flex: 1,
   },
   card: {
     padding: 0,
