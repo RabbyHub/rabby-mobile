@@ -39,6 +39,8 @@ import React from 'react';
 import { RestoreFromCloud2024 } from '@/screens/RestoreFromCloud/RestoreFromCloud2024';
 import { SeedPhraseRestoreFromCloud2024 } from '@/components/SeedPhraseRestoreFromCloud/SeedPhraseRestoreFromCloud2024';
 import { AddressQuickManager } from '../AddressQuickManager/AddressQuickManager';
+import { AddressDetail } from '../AddressDetail/AddressDetail';
+import { ImportMoreAddress } from '../ImportMoreAddress/ImportMoreAddress';
 
 type SnapPoints = Record<MODAL_NAMES, (string | number)[] | undefined>;
 export const SNAP_POINTS: SnapPoints = {
@@ -77,6 +79,8 @@ export const SNAP_POINTS: SnapPoints = {
   [MODAL_NAMES.DESCRIPTION]: [674],
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: ['85%'],
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: undefined,
+  [MODAL_NAMES.ADDRESS_DETAIL]: ['85%'],
+  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ['85%'],
 };
 
 export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
@@ -116,6 +120,8 @@ export const MODAL_VIEWS: Record<MODAL_NAMES, React.FC<any>> = {
   [MODAL_NAMES.DESCRIPTION]: Descriptions,
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: RestoreFromCloud2024,
   [MODAL_NAMES.ADDRESS_QUICK_MANAGER]: AddressQuickManager,
+  [MODAL_NAMES.ADDRESS_DETAIL]: AddressDetail,
+  [MODAL_NAMES.IMPORT_MORE_ADDRESS]: ImportMoreAddress,
 };
 
 export function makeBottomSheetProps(ctx: {

@@ -12,6 +12,7 @@ import {
 import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
+import { useAddressDetailModal } from '../useAddressDetailModal';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -31,6 +32,8 @@ export const AddressItem = (props: AddressItemProps) => {
   const { styles } = useTheme2024({ getStyle });
   const removeAccount = useDeleteAccountModal();
   const editAliasName = useAliasNameEditModal();
+  const showAddressDetail = useAddressDetailModal();
+
   const onDetail = useCallback(() => {
     switchAccount(account);
     navigate(RootNames.StackRoot, { screen: RootNames.Home });
@@ -51,6 +54,9 @@ export const AddressItem = (props: AddressItemProps) => {
         title: 'Address Detail',
         icon: require('@/assets2024/icons/menu/detail.png'),
         key: 'detail',
+        action() {
+          showAddressDetail({ account });
+        },
       },
       {
         title: 'Delete',
@@ -61,7 +67,7 @@ export const AddressItem = (props: AddressItemProps) => {
         },
       },
     ] as MenuAction[];
-  }, [account, editAliasName, removeAccount]);
+  }, [account, showAddressDetail, editAliasName, removeAccount]);
 
   return (
     <TouchableOpacity style={styles.root} onPress={onDetail}>
