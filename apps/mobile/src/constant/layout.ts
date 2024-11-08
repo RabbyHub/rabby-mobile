@@ -108,6 +108,7 @@ export const RootNames = {
   BackupMnemonic: 'BackupMnemonic',
   RestoreFromCloud: 'RestoreFromCloud',
   WatchAddressList: 'WatchAddressList',
+  SafeAddressList: 'SafeAddressList',
 } as const;
 
 export type AppRootName = keyof typeof RootNames;

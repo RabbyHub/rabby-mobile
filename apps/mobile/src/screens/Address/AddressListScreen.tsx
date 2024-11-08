@@ -24,6 +24,22 @@ type CurrentAddressProps = NativeStackScreenProps<
   'StackAddress'
 >;
 
+const OtherAddressNav = ({ onPress, text }) => {
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.sectionFooter}>
+      <Text style={styles.headlineText}>{text}</Text>
+      <ArrowRightSVG
+        style={styles.arrow}
+        width={14}
+        height={14}
+        color={colors2024['neutral-secondary']}
+      />
+    </TouchableOpacity>
+  );
+};
+
 export function AddressListScreen(): JSX.Element {
   const { accounts } = useAccounts();
   const { pinAddresses: highlightedAddresses } = usePinAddresses({
@@ -55,6 +71,13 @@ export function AddressListScreen(): JSX.Element {
   const gotoAddAddress = React.useCallback(() => {
     redirectToAddAddressEntry({ action: 'classical:push' });
   }, []);
+
+  const hasWatchAddress = React.useMemo(() => {
+    return accounts.some(account => account.type === KEYRING_CLASS.WATCH);
+  }, [accounts]);
+  const hasSafeAddress = React.useMemo(() => {
+    return accounts.some(account => account.type === KEYRING_CLASS.GNOSIS);
+  }, [accounts]);
 
   const sectionData = useMemo(() => {
     const restAccounts = [...accounts];
@@ -100,6 +123,12 @@ export function AddressListScreen(): JSX.Element {
     });
   }, [navigation]);
 
+  const onGotoSafeAddress = React.useCallback(() => {
+    navigation.navigate(RootNames.StackAddress, {
+      screen: RootNames.SafeAddressList,
+    });
+  }, [navigation]);
+
   return (
     <FooterButtonScreenContainer
       footerContainerStyle={styles.footer}
@@ -117,14 +146,15 @@ export function AddressListScreen(): JSX.Element {
         type: 'ghost',
         onPress: gotoAddAddress,
         buttonStyle: {
+          marginTop: 20,
           width: 200,
           margin: 'auto',
           backgroundColor: 'transparent',
         },
       }}
-      footerBottomOffset={56}>
+      footerBottomOffset={76}>
       <View style={styles.headline}>
-        <Text style={styles.headlineText}>My Address</Text>
+        <Text style={styles.headlineText}>My Address ({accounts?.length})</Text>
       </View>
       <SectionList
         initialNumToRender={15}
@@ -148,19 +178,20 @@ export function AddressListScreen(): JSX.Element {
         )}
         renderSectionFooter={() => {
           return (
-            <TouchableOpacity
-              onPress={onGotoWatchAddress}
-              style={styles.sectionFooter}>
-              <Text style={styles.headlineText}>
-                Imported Watch-only address
-              </Text>
-              <ArrowRightSVG
-                style={styles.arrow}
-                width={14}
-                height={14}
-                color={colors2024['neutral-secondary']}
-              />
-            </TouchableOpacity>
+            <View>
+              {hasSafeAddress && (
+                <OtherAddressNav
+                  onPress={onGotoSafeAddress}
+                  text={'Imported Safe Address'}
+                />
+              )}
+              {hasWatchAddress && (
+                <OtherAddressNav
+                  onPress={onGotoWatchAddress}
+                  text={'Imported Watch-only address'}
+                />
+              )}
+            </View>
           );
         }}
       />

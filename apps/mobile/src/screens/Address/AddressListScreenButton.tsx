@@ -1,10 +1,9 @@
-import { CustomTouchableOpacity } from '@/components/CustomTouchableOpacity';
 import { createGlobalBottomSheetModal2024 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 
 export interface Props {
   type: 'address' | 'watch-address';
@@ -34,22 +33,22 @@ export const AddressListScreenButton: React.FC<Props> = ({
   type = 'address',
 }) => {
   const { styles } = useTheme2024({ getStyle });
-  const onPress = () => {
+  const onPress = React.useCallback(() => {
     createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
-      // type,
+      type,
       bottomSheetModalProps: {
         enableDynamicSizing: true,
       },
     });
-  };
+  }, [type]);
 
   return (
-    <CustomTouchableOpacity
+    <TouchableOpacity
       style={styles.headerRight}
       hitSlop={hitSlop}
       onPress={onPress}>
       <Text style={styles.headerRightText}>Edit</Text>
-    </CustomTouchableOpacity>
+    </TouchableOpacity>
   );
 };

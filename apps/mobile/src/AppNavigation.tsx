@@ -56,6 +56,7 @@ import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStu
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
+import { AliasNameEditModal } from './components2024/AliasNameEditModal/AliasNameEditModal';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -171,6 +172,7 @@ export default function AppNavigation({
         // linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <DuplicateAddressModal />
+        <AliasNameEditModal />
 
         <RootStack.Navigator
           screenOptions={{

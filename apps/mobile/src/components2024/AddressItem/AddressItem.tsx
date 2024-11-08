@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleProp, StyleSheet, View, TextStyle } from 'react-native';
 import { Text } from '@/components';
 import { useTheme2024 } from '@/hooks/theme';
@@ -22,24 +22,40 @@ type AddressItemProps =
   | {
       account: KeyringAccountWithAlias;
       children?: (props: ChildrenProps) => React.ReactNode;
+      fetchAccount?: boolean;
     }
   | {
       address: string;
       children?: (props: ChildrenProps) => React.ReactNode;
+      fetchAccount?: boolean;
     };
 
 export const AddressItem = (props: AddressItemProps) => {
-  const { accounts } = useAccounts();
-  const account =
-    'account' in props
-      ? props.account
-      : accounts.find(a => isSameAddress(a.address, props.address))!;
-
   const { styles } = useTheme2024({ getStyle });
+  const { accounts } = useAccounts({
+    disableAutoFetch: props?.fetchAccount ? false : true,
+  });
+  const account = useMemo(
+    () =>
+      'account' in props
+        ? props.account
+        : accounts.find(a => isSameAddress(a.address, props.address))!,
+    [accounts, props],
+  );
 
-  const walletName = account?.aliasName || account?.brandName;
-  const address = ellipsisAddress(account.address);
-  const usdValue = `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`;
+  const walletName = useMemo(
+    () => account?.aliasName || account?.brandName,
+    [account?.aliasName, account?.brandName],
+  );
+
+  const address = useMemo(
+    () => ellipsisAddress(account.address),
+    [account?.address],
+  );
+  const usdValue = useMemo(
+    () => `$${splitNumberByStep(account.balance?.toFixed(2) || 0)}`,
+    [account?.balance],
+  );
 
   const WalletIconWrapper = useCallback(
     (_props: Omit<WalletIconProps, 'type'>) => {

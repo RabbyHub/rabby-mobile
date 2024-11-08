@@ -123,6 +123,7 @@ export type AddressNavigatorParamList = {
   };
   [RootNames.RestoreFromCloud]?: {};
   [RootNames.WatchAddressList]?: {};
+  [RootNames.SafeAddressList]?: {};
 };
 
 export type AccountNavigatorParamList = {
