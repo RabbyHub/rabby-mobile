@@ -2,8 +2,9 @@ import { Chain } from '@/constant/chains';
 import { AppColorsVariants } from '@/constant/theme';
 import { apisSafe } from '@/core/apis/safe';
 import { useAccounts } from '@/hooks/account';
-import { useThemeColors } from '@/hooks/theme';
+import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { findChain } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
 import { BasicSafeInfo } from '@rabby-wallet/gnosis-sdk';
 import { useRequest } from 'ahooks';
 import { sortBy } from 'lodash';
@@ -22,8 +23,7 @@ export const GnosisSafeInfoBar = ({
   brandName: string;
 }) => {
   const { t } = useTranslation();
-  const themeColors = useThemeColors();
-  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+  const { styles } = useTheme2024({ getStyle });
   const [activeData, setActiveData] = useState<
     | {
         chain?: Chain | null;
@@ -74,10 +74,7 @@ export const GnosisSafeInfoBar = ({
   return (
     <>
       <Item label={t('page.addressDetail.admins')} />
-      <Item
-        style={{
-          marginTop: -12,
-        }}>
+      <Item style={styles.subItem}>
         <View>
           <View style={styles.tabs}>
             {safeInfo?.map(item => {
@@ -116,7 +113,7 @@ export const GnosisSafeInfoBar = ({
 
       <Item
         style={{
-          marginTop: -12,
+          marginTop: -24,
           flexDirection: 'column',
           alignItems: 'flex-start',
         }}>
@@ -137,52 +134,56 @@ export const GnosisSafeInfoBar = ({
   );
 };
 
-const getStyles = (colors: AppColorsVariants) => {
-  return StyleSheet.create({
-    listItem: {
-      marginTop: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors['neutral-line'],
-      paddingTop: 20,
-    },
-    listItemContent: {},
-    listItemLabel: {
-      color: colors['neutral-title-1'],
-      fontSize: 16,
-      fontWeight: '500',
-      marginBottom: 8,
-    },
-    tabsContainer: {
-      marginBottom: 10,
-    },
-    tabs: {
-      flexDirection: 'row',
-      gap: 16,
-      flexWrap: 'wrap',
-    },
-    tabItem: {
-      borderBottomColor: 'transparent',
-      borderBottomWidth: 2,
-    },
-    tabItemTitle: {
-      color: colors['neutral-body'],
-      fontSize: 14,
-      lineHeight: 17,
-      fontWeight: '500',
-    },
-    tabItemTitleActive: {
-      color: colors['blue-default'],
-    },
-    tabItemActive: {
-      borderBottomColor: colors['blue-default'],
-    },
-    listItemDesc: {
-      color: colors['neutral-foot'],
-      fontSize: 14,
-    },
-    listItemDescStrong: {
-      color: colors['neutral-title-1'],
-      fontWeight: '500',
-    },
-  });
-};
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  listItem: {
+    marginTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors2024['neutral-line'],
+    paddingTop: 20,
+  },
+  subItem: {
+    marginTop: -12,
+  },
+  listItemContent: {},
+  listItemLabel: {
+    color: colors2024['neutral-title-1'],
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  tabsContainer: {
+    marginBottom: 10,
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  tabItem: {
+    borderBottomColor: 'transparent',
+    borderBottomWidth: 2,
+  },
+  tabItemTitle: {
+    color: colors2024['neutral-body'],
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '500',
+    fontFamily: 'SF Pro Rounded',
+  },
+  tabItemTitleActive: {
+    color: colors2024['brand-default'],
+  },
+  tabItemActive: {
+    borderBottomColor: colors2024['brand-default'],
+  },
+  listItemDesc: {
+    color: colors2024['neutral-foot'],
+    fontSize: 14,
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 8,
+  },
+  listItemDescStrong: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '500',
+  },
+}));
