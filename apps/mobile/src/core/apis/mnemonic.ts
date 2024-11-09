@@ -3,8 +3,8 @@ import { navigate } from '@/utils/navigation';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import {
   KEYRING_CLASS,
-  generateAliasName,
   KEYRING_TYPE,
+  KeyringTypeName,
 } from '@rabby-wallet/keyring-utils';
 import { t } from 'i18next';
 import {
@@ -13,6 +13,7 @@ import {
   keyringService,
   preferenceService,
 } from '../services';
+import { onSetAddressAlias } from '../services/keyringParams';
 import { Account } from '../services/preference';
 import {
   _getKeyringByType,
@@ -317,22 +318,13 @@ export const activeAndPersistAccountsByMnemonics = async (
     brandName: keyring.type,
   };
   if (addDefaultAlias) {
-    accountsToImport.forEach(({ address }, index) => {
-      if (
-        !accounts.includes(address) &&
-        !contactService.getContactByAddress(address)
-      ) {
-        const alias = generateAliasName({
-          keyringType: keyring.type,
-          brandName: keyring.type,
-          keyringCount: keyring?.index,
-          addressCount: (currentLength ?? 0) + index,
-        });
-        contactService.setAlias({
-          address,
-          alias,
-        });
-      }
+    accountsToImport.forEach(({ address }) => {
+      const curAccount = {
+        address,
+        type: keyring.type as KeyringTypeName,
+        brandName: keyring.type,
+      };
+      onSetAddressAlias(undefined, curAccount, contactService);
     });
   }
   preferenceService.setCurrentAccount(_account as any);

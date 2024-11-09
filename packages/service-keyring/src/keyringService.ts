@@ -45,7 +45,7 @@ type MemStoreState = {
 };
 
 type OnSetAddressAlias = (
-  keyring: KeyringInstance | KeyringIntf,
+  keyring: KeyringInstance | KeyringIntf | undefined,
   account: AccountItemWithBrandQueryResult,
   contactService?: ContactBookService,
 ) => Promise<void>;
@@ -403,7 +403,7 @@ export class KeyringService extends RNEventEmitter {
    * @param options.onAddedAddress
    */
   addNewAccount(
-    selectedKeyring: KeyringInstance | KeyringIntf
+    selectedKeyring: KeyringInstance | KeyringIntf,
   ): Promise<string[] | AccountItemWithBrandQueryResult[]> {
     let _accounts: string[] | AccountItemWithBrandQueryResult[] = [];
 
@@ -726,7 +726,10 @@ export class KeyringService extends RNEventEmitter {
   ): Promise<any> {
     const { type, data } = serialized;
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = typeof this.onCreateKeyring === 'function' ? this.onCreateKeyring(Keyring) : new Keyring({});
+    const keyring =
+      typeof this.onCreateKeyring === 'function'
+        ? this.onCreateKeyring(Keyring)
+        : new Keyring({});
     await keyring.deserialize(data);
 
     // getAccounts also validates the accounts for some keyrings

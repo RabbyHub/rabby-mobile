@@ -9,7 +9,7 @@ export const useSortAddressList = (accounts: KeyringAccountWithAlias[]) => {
   });
 
   const list = useMemo(() => {
-    const restAccounts = accounts;
+    const restAccounts = [...accounts];
     let highlightedAccounts: typeof accounts = [];
 
     highlightedAddresses.forEach(highlighted => {
