@@ -181,6 +181,10 @@ export const GlobalBottomSheetModal2024 = () => {
             enableContentPanningGesture={false}
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+            }}
             {...bottomSheetModalProps}
             onDismiss={() => {
               handleDismiss(modal.id);
