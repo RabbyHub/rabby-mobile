@@ -9,6 +9,7 @@ import {
 } from '@react-navigation/native';
 import React, { useCallback } from 'react';
 import {
+  Dimensions,
   Keyboard,
   ScrollView,
   StyleProp,
@@ -32,8 +33,14 @@ import { Chain } from '@/constant/chains';
 import { Button } from '@/components2024/Button';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { ellipsisAddress } from '@/utils/address';
-import { createGetStyles2024 } from '@/utils/styles';
+import {
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
 import { GnosisSupportChainList } from './ImportSafeAddressScreen2024';
+import Lottie from 'lottie-react-native';
+import AnimationImportSuccess from '@/assets2024/animations/animation-import-success.json';
 
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
@@ -153,12 +160,30 @@ export const ImportSuccessScreen2024 = () => {
     [styles.addressText],
   );
 
+  // const [animationFinished, setAnimationFinished] = React.useState(false);
+
   return (
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}>
       <View style={styles.container}>
+        <Lottie
+          source={AnimationImportSuccess}
+          style={[
+            styles.animationLayer /* animationFinished && styles.hideAnimation */,
+          ]}
+          // onAnimationFinish={() => { setAnimationFinished(true) }}
+          // onAnimationFailure={() => { setAnimationFinished(true) }}
+          // duration={3000}
+          loop={false}
+          autoPlay
+          {...(__DEV__ &&
+            {
+              // duration: 5000,
+              // loop: true,
+            })}
+        />
         <View style={styles.addressList}>
           {importAddresses.length === 1 ? (
             <View style={styles.itemContainer}>
@@ -234,7 +259,6 @@ export const ImportSuccessScreen2024 = () => {
             &nbsp;{state?.isFirstCreate ? 'Created' : 'Imported'} successfully!
           </Text>
         </View>
-        {importAddresses.length < 3 && <FireIcon style={styles.fire} />}
         <Button
           containerStyle={styles.btnContainer}
           type="primary"
@@ -246,97 +270,116 @@ export const ImportSuccessScreen2024 = () => {
   );
 };
 
-const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  container: {
-    height: '100%',
-    position: 'relative',
-    display: 'flex',
-    paddingHorizontal: 20,
-    backgroundColor: colors2024['neutral-bg-1'],
-    marginBottom: 20,
-  },
-  addressList: {
-    display: 'flex',
-    justifyContent: 'center',
-    flex: 1,
-    alignItems: 'center',
-  },
-  scrollList: {
-    width: '100%',
-    maxHeight: '60%',
-    display: 'flex',
-  },
-  itemContainer: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  icon: {
-    borderRadius: 24,
-  },
-  addressText: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '400',
-    color: colors2024['neutral-secondary'],
-    fontFamily: 'SF Pro Rounded',
-  },
-  inputInner: {
-    width: '100%',
-    marginTop: 15,
-    textAlignVertical: 'center',
-    height: 54,
-    padding: 0,
-    fontSize: 36,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    lineHeight: 42,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-  },
-  resultTip: {
-    width: '100%',
-    marginTop: 28,
-    fontWeight: '800',
-    fontSize: 20,
-    lineHeight: 24,
-    textAlign: 'center',
-    color: colors2024['brand-default'],
-  },
-  btnContainer: {
-    width: '100%',
-    marginBottom: 56,
-  },
-  addressItem: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 11,
-    marginBottom: 12,
-    width: '100%',
-  },
-  listInput: {
-    width: '100%',
-    textAlignVertical: 'center',
-    padding: 0,
-    fontSize: 18.8,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    lineHeight: 25,
-    fontWeight: '700',
-    color: colors2024['neutral-title-1'],
-    fontFamily: 'SF Pro Rounded',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  fire: {
-    width: 134,
-    height: 134,
-    position: 'absolute',
-    bottom: 149,
-    left: '50%',
-    transform: [{ translateX: -50 }],
-  },
-}));
+const getStyle = createGetStyles2024(({ colors2024 }) => {
+  const winLayout = Dimensions.get('window');
+
+  return {
+    container: {
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      display: 'flex',
+      paddingHorizontal: 20,
+      backgroundColor: colors2024['neutral-bg-1'],
+      marginBottom: 20,
+    },
+    animationLayer: {
+      width: winLayout.width,
+      height: '100%',
+      minHeight: winLayout.height,
+      // ...makeDevOnlyStyle({
+      //   backgroundColor: 'blue',
+      // }),
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    hideAnimation: { display: 'none' },
+    addressList: {
+      display: 'flex',
+      justifyContent: 'center',
+      flex: 1,
+      alignItems: 'center',
+    },
+    scrollList: {
+      width: '100%',
+      maxHeight: '60%',
+      display: 'flex',
+    },
+    itemContainer: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    icon: {
+      borderRadius: 24,
+    },
+    addressText: {
+      fontSize: 16,
+      lineHeight: 20,
+      fontWeight: '400',
+      color: colors2024['neutral-secondary'],
+      fontFamily: 'SF Pro Rounded',
+    },
+    inputInner: {
+      width: '100%',
+      marginTop: 15,
+      textAlignVertical: 'center',
+      height: 54,
+      padding: 0,
+      fontSize: 36,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      lineHeight: 42,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+    },
+    resultTip: {
+      width: '100%',
+      marginTop: 28,
+      fontWeight: '800',
+      fontSize: 20,
+      lineHeight: 24,
+      textAlign: 'center',
+      color: colors2024['brand-default'],
+    },
+    btnContainer: {
+      width: '100%',
+      marginBottom: 56,
+    },
+    addressItem: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      gap: 11,
+      marginBottom: 12,
+      width: '100%',
+    },
+    listInput: {
+      width: '100%',
+      textAlignVertical: 'center',
+      padding: 0,
+      fontSize: 18.8,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      lineHeight: 25,
+      fontWeight: '700',
+      color: colors2024['neutral-title-1'],
+      fontFamily: 'SF Pro Rounded',
+      textAlign: 'center',
+      marginBottom: 4,
+    },
+    fire: {
+      width: 134,
+      height: 134,
+      position: 'absolute',
+      bottom: 149,
+      left: '50%',
+      transform: [{ translateX: -50 }],
+    },
+  };
+});
