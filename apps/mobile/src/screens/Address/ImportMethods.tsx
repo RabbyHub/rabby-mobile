@@ -147,6 +147,8 @@ function ImportMethods(): JSX.Element {
                 bottomSheetModalProps: {
                   enableDismissOnClose: true,
                   snapPoints: ['40%'],
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
                 },
                 title: 'Is it safe to import it in Rabby?',
                 sections: [
@@ -245,7 +247,6 @@ const getStyles = createGetStyles2024(ctx => ({
     textAlign: 'center',
     backgroundColor: ctx.colors2024['brand-default'],
     color: ctx.colors2024['neutral-InvertHighlight'],
-    borderWidth: 1,
   },
 }));
 

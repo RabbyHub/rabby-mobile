@@ -20,8 +20,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
-    // marginTop: 20,
-    marginBottom: 10,
+    marginTop: 20,
     display: 'flex',
     flexWrap: 'wrap',
     flexDirection: 'row',
@@ -122,9 +121,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   userAgreementTouchable: {
     padding: 0,
-    // position: 'relative',
-    // top: 0,
-    // ...makeDebugBorder(),
+  },
+  rootContainer: {
+    paddingHorizontal: 24,
+    height: '100%',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
   },
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
@@ -133,14 +136,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'column',
-    // alignItems: 'space-around',
-    // justifyContent: 'space-between',
     height: '95%',
-    gap: 12,
-    // height: "700",
+    width: '100%',
   },
   btnContainer: {
     width: '100%',
+    position: 'absolute',
+    bottom: 56,
   },
   content: {
     width: '100%',
@@ -148,9 +150,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   wordContainer: {
     position: 'relative',
+    marginTop: 36,
   },
   mask: {
-    // backgroundColor: 'rgba(0,0,0,0.6)',
     zIndex: 1,
     position: 'absolute',
     width: '100%',
@@ -289,7 +291,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.rootContainer}>
       <View style={styles.container}>
         <AppBottomSheetModalTitle
           style={styles.title}

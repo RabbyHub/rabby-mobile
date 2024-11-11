@@ -45,6 +45,10 @@ function MainListBlocks() {
   const handleBackupToCloud = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_BACKUP_TO_CLOUD,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       paramState: state,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
@@ -55,6 +59,10 @@ function MainListBlocks() {
   const handleBackupToPaper = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       paramState: state,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
@@ -100,6 +108,10 @@ function MainListBlocks() {
               const modalId = createGlobalBottomSheetModal2024({
                 name: MODAL_NAMES.DESCRIPTION,
                 title: "What is a 'Seed phrase'",
+                bottomSheetModalProps: {
+                  enableContentPanningGesture: true,
+                  enablePanDownToClose: true,
+                },
                 sections: [
                   {
                     description:

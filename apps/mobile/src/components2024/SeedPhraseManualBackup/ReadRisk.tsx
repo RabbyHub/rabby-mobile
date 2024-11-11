@@ -10,8 +10,7 @@ import { CheckBoxRect } from '@/components2024/CheckBox';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
-    // marginTop: 20,
-    marginBottom: 20,
+    marginTop: 20,
   },
   tipsText: {
     color: colors2024['neutral-secondary'],
@@ -49,6 +48,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'flex-start',
     display: 'flex',
     width: '100%',
+    marginTop: 56,
     gap: 12,
   },
   listItem: {
@@ -67,8 +67,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'center',
     alignItems: 'flex-start',
     flexWrap: 'nowrap',
-    marginTop: 12,
-    // paddingHorizontal: 10,
+    marginTop: 16,
   },
   agreementCheckbox: {
     marginRight: 6,
@@ -94,25 +93,25 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   userAgreementTouchable: {
     padding: 0,
-    // position: 'relative',
-    // top: 0,
-    // ...makeDebugBorder(),
+  },
+  rootContainer: {
+    paddingHorizontal: 24,
+    height: '100%',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
   },
   container: {
     backgroundColor: colors2024['neutral-bg-1'],
-    // paddingTop: 12,
     paddingBottom: 0,
-    paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'column',
-    // alignItems: 'space-around',
-    // justifyContent: 'space-between',
-    height: '95%',
-    gap: 12,
-    // height: "700",
+    width: '100%',
   },
   btnContainer: {
     width: '100%',
+    position: 'absolute',
+    bottom: 56,
   },
   content: {
     width: '100%',
@@ -150,7 +149,7 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
   }, [t]);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.rootContainer}>
       <View style={styles.container}>
         <AppBottomSheetModalTitle
           style={styles.title}

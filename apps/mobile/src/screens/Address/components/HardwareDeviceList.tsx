@@ -29,6 +29,10 @@ export const HardwareDeviceList = () => {
   const handleLedger = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_LEDGER,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);
@@ -59,6 +63,10 @@ export const HardwareDeviceList = () => {
 
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_KEYSTONE,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);
@@ -70,6 +78,10 @@ export const HardwareDeviceList = () => {
   const handleOneKey = React.useCallback(() => {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.CONNECT_ONEKEY,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);

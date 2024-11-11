@@ -21,6 +21,10 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
     Keyboard.dismiss();
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.RESTORE_FROM_CLOUD,
+      bottomSheetModalProps: {
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
+      },
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);

@@ -56,6 +56,8 @@ export const RestoreFromCloud2024: React.FC<{
       name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024,
       bottomSheetModalProps: {
         snapPoints: [460],
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
       },
       onDone: () => {
         setTimeout(() => {
@@ -80,6 +82,10 @@ export const RestoreFromCloud2024: React.FC<{
       if (!result) {
         const id = createGlobalBottomSheetModal2024({
           name: MODAL_NAMES.SEED_PHRASE_BACKUP_NOT_AVAILABLE,
+          bottomSheetModalProps: {
+            enableContentPanningGesture: true,
+            enablePanDownToClose: true,
+          },
           onConfirm: () => {
             removeGlobalBottomSheetModal2024(id);
           },
