@@ -75,7 +75,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
       paddingRight: 0,
     },
     errorInputContainer: {
-      borderColor: ctx.colors['red-default'],
+      borderColor: ctx.colors2024['red-default'],
     },
     input: {
       flexShrink: 1,
@@ -114,7 +114,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
       color: ctx.colors2024['neutral-info'],
     },
     formFieldErrorText: {
-      color: ctx.colors['red-default'],
+      color: ctx.colors2024['red-default'],
     },
   };
 });
