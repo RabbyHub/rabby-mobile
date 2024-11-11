@@ -43,6 +43,7 @@ const getStyles = createGetStyles2024(ctx => ({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    height: 26,
   },
   textContainer: {
     marginLeft: 12,

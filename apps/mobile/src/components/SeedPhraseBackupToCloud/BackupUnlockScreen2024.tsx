@@ -11,20 +11,22 @@ import { FooterButtonGroup } from '@/components2024/FooterButtonGroup';
 
 const getStyle = createGetStyles2024(colors => ({
   title: {
-    color: colors['neutral-title-1'],
+    color: colors.colors2024['neutral-title-1'],
     fontSize: 20,
-    fontWeight: '500',
-    marginTop: 28,
+    lineHeight: 24,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+    marginTop: 25,
   },
   root: {
     alignItems: 'center',
   },
   description: {
-    color: colors['neutral-foot'],
+    color: colors.colors2024['neutral-secondary'],
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 22,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: 17,
   },
   input: {
     marginTop: 23,

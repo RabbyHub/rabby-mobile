@@ -22,6 +22,7 @@ import { Card } from '@/components2024/Card';
 import { KEYRING_CLASS } from '@rabby-wallet/keyring-utils';
 import { getAccountBalance } from '@/components/HDSetting/util';
 import { ellipsisAddress } from '@/utils/address';
+import { CheckBoxRect } from '@/components2024/CheckBox';
 
 const getStyle = createGetStyles2024(colors => ({
   root: {
@@ -38,7 +39,8 @@ const getStyle = createGetStyles2024(colors => ({
     borderColor: 'transparent',
   },
   body: {
-    padding: 16,
+    paddingVertical: 21,
+    paddingHorizontal: 24,
     alignItems: 'flex-start',
   },
   header: {
@@ -155,10 +157,8 @@ export const BackupItem: React.FC<BackupItemProps> = ({
             <View style={styles.imported}>
               <RcIconCheckedFilledCC width={16} height={16} />
             </View>
-          ) : selected ? (
-            <RcIconCheckedFilledCC width={24} height={24} />
           ) : (
-            <RcIconUncheckCC width={24} height={24} />
+            <CheckBoxRect checked={selected} />
           )}
           <View style={styles.addressItemWrapper}>
             <AddressItem

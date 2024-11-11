@@ -114,6 +114,7 @@ export const Button = ({
       },
       buttonStyle,
       isDisabled && {
+        // TODO: disable for ghost
         backgroundColor: colors2024['brand-disable'],
       },
     ]);

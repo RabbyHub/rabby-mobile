@@ -100,9 +100,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
   },
   container: {
-    backgroundColor: colors2024['neutral-bg-1'],
     paddingBottom: 0,
     display: 'flex',
     flexDirection: 'column',

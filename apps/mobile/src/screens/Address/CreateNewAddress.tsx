@@ -114,7 +114,7 @@ function MainListBlocks() {
     const address = accountsToCreate?.[0].address;
     console.log('requestKeyring res ', accountsToCreate, address, seedPhrase);
     setNewAddress(address);
-    setAddressAlias(ellipsisAddress(address));
+    // TODO: default set alias Name
     return {
       seedPhrase,
       words,
@@ -220,6 +220,7 @@ function MainListBlocks() {
               inputStyle={styles.inputInner}
               inputProps={{
                 value: addressAlias,
+                autoFocus: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
                 textAlign: 'center',
