@@ -62,6 +62,7 @@ export const AddressItem = (props: AddressItemProps) => {
         title: 'Delete',
         icon: require('@/assets2024/icons/menu/delete.png'),
         key: 'delete',
+        destructive: true,
         action() {
           removeAccount({ account });
         },

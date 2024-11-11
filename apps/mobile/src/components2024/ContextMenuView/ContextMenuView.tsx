@@ -7,6 +7,9 @@ export interface MenuAction {
   action?: () => void;
   key: string;
   icon: ImageSourcePropType;
+  disabled?: boolean;
+  // like delete, text will be red
+  destructive?: boolean;
 }
 
 type Props = {
@@ -42,7 +45,11 @@ export const ContextMenuView: React.FC<Props> = ({
           <ContextMenu.Label>{menuConfig.menuTitle}</ContextMenu.Label>
         )}
         {menuConfig.menuActions?.map(action => (
-          <ContextMenu.Item key={action.key} onSelect={action.action}>
+          <ContextMenu.Item
+            destructive={action.destructive}
+            disabled={action.disabled}
+            key={action.key}
+            onSelect={action.action}>
             <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
             <ContextMenu.ItemImage source={action.icon} />
           </ContextMenu.Item>
