@@ -235,12 +235,16 @@ function MainListBlocks() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
+                  placeholder: '',
                   onChangeText(text) {
                     formik.setFieldValue('password', text, true);
                   },
                 }}
                 hasError={Boolean(formik.errors.password)}
-                tipText={formik.errors.password}
+                tipText={
+                  formik.errors.password ||
+                  t('page.nextComponent.createNewAddress.passwordMin')
+                }
               />
 
               <NextInput.Password
@@ -257,16 +261,17 @@ function MainListBlocks() {
                   secureTextEntry: true,
                   inputMode: 'text',
                   returnKeyType: 'done',
-                  placeholder: t(
-                    'page.createPassword.confirmPasswordPlaceholder',
-                  ),
+                  placeholder: '',
                   placeholderTextColor: colors2024['neutral-foot'],
                   onChangeText(text) {
                     formik.setFieldValue('confirmPassword', text, true);
                   },
                 }}
                 hasError={Boolean(formik.errors.confirmPassword)}
-                tipText={formik.errors.confirmPassword}
+                tipText={
+                  formik.errors.confirmPassword ||
+                  t('page.nextComponent.createNewAddress.passwordMin')
+                }
               />
             </View>
             <View style={styles.switchContainer}>

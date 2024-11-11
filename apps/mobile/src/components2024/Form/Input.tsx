@@ -111,6 +111,7 @@ const getFormInputStyles = createGetStyles2024(ctx => {
       fontWeight: '400',
       fontFamily: 'SF Pro Rounded',
       textAlign: 'left',
+      color: ctx.colors2024['neutral-info'],
     },
     formFieldErrorText: {
       color: ctx.colors['red-default'],
