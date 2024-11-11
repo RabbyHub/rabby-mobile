@@ -102,6 +102,7 @@ export const ImportSafeAddressScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
+      as="View"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleNext,

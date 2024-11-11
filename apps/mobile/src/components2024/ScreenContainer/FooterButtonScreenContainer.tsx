@@ -14,6 +14,11 @@ import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { Button, ButtonProps } from '../Button';
 import { FooterButtonGroup } from '../FooterButtonGroup';
 import { useSafeSizes } from '@/hooks/useAppLayout';
+import {
+  getViewComponentByAs,
+  ReactNativeViewAs,
+  ReactNativeViewAsMap,
+} from '@/hooks/common/useReactNativeViews';
 
 const getStyle = createGetStyles2024(ctx =>
   StyleSheet.create({
@@ -89,9 +94,10 @@ interface FooterButtonContainer2024Props {
  * |Cancel Confirm|
  * |------------- |
  */
-export const FooterButtonScreenContainer: React.FC<
-  FooterButtonContainer2024Props
-> = ({
+export const FooterButtonScreenContainer = <
+  T extends ReactNativeViewAs = 'View',
+>({
+  as: _as = 'KeyboardAvoidingView' as T,
   noHeader,
   children,
   buttonProps,
@@ -100,7 +106,9 @@ export const FooterButtonScreenContainer: React.FC<
   footerContainerHeight = 56,
   footerBottomOffset = 0,
   footerContainerStyle,
-}) => {
+}: FooterButtonContainer2024Props & { as?: T } & React.ComponentProps<
+    ReactNativeViewAsMap[T]
+  >) => {
   const { safeOffHeader, androidOnlyBottomOffset } = useSafeSizes();
   const { styles } = useTheme2024({ getStyle });
 
@@ -112,15 +120,19 @@ export const FooterButtonScreenContainer: React.FC<
     };
   }, [androidOnlyBottomOffset, footerBottomOffset, noHeader, safeOffHeader]);
 
+  const ViewComp = useMemo(() => getViewComponentByAs(_as), [_as]);
+
   return (
-    <KeyboardAvoidingView
-      keyboardVerticalOffset={-20}
+    <ViewComp
+      {...(_as === 'KeyboardAvoidingView' && {
+        keyboardVerticalOffset: -20,
+        behavior: 'padding',
+      })}
       style={StyleSheet.flatten([
         styles.root,
         { height: winHeight, paddingTop: headerOffset },
         style,
-      ])}
-      behavior="padding">
+      ])}>
       <View
         style={[
           styles.main,
@@ -141,6 +153,6 @@ export const FooterButtonScreenContainer: React.FC<
         {buttonGroupProps && <FooterButtonGroup {...buttonGroupProps} />}
         {buttonProps && <Button type={'primary'} {...buttonProps} />}
       </View>
-    </KeyboardAvoidingView>
+    </ViewComp>
   );
 };

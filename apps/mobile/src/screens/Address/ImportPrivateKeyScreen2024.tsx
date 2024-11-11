@@ -77,6 +77,7 @@ export const ImportPrivateKeyScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
+      as="View"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleConfirm,
