@@ -42,6 +42,8 @@ export const AddressListScreenButton: React.FC<Props> = ({
       type,
       bottomSheetModalProps: {
         enableDynamicSizing: true,
+        enableContentPanningGesture: true,
+        enablePanDownToClose: true,
       },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(id);

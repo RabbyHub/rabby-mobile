@@ -23,9 +23,11 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useNavigationState } from '@react-navigation/native';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { useTranslation } from 'react-i18next';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
+  const { t } = useTranslation();
   const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const state = useNavigationState(
@@ -209,6 +211,7 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 4,
     width: '100%',
     position: 'absolute',

@@ -182,8 +182,7 @@ export const GnosisSupportChainList = ({
   style,
 }: {
   data: Chain[];
-  style?: StyleProp<ViewStyle>;
-}) => {
+} & RNViewProps) => {
   const { styles } = useTheme2024({ getStyle: getStyles });
 
   const { t } = useTranslation();

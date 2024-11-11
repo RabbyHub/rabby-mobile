@@ -162,6 +162,10 @@ export const ImportPrivateKeyScreen2024 = () => {
                         'Your private key is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your private key.',
                     },
                   ],
+                  bottomSheetModalProps: {
+                    enableContentPanningGesture: true,
+                    enablePanDownToClose: true,
+                  },
                   nextButtonProps: {
                     title: (
                       <Text style={styles.modalNextButtonText}>I Got It.</Text>
@@ -233,6 +237,7 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 4,
     width: '100%',
     marginBottom: 28,

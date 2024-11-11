@@ -82,6 +82,7 @@ const getStyles = createGetStyles2024(ctx => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 28,
     gap: 4,
     width: '100%',
@@ -334,6 +335,10 @@ export const ImportSeedPhraseScreen2024 = () => {
                         'Your seed phrase is stored locally on your device and encrypted with your password. Only you can access it. Rabby cannot retrieve or access your seed phrase.',
                     },
                   ],
+                  bottomSheetModalProps: {
+                    enableContentPanningGesture: true,
+                    enablePanDownToClose: true,
+                  },
                   nextButtonProps: {
                     title: (
                       <Text style={styles.modalNextButtonText}>I Got It.</Text>
