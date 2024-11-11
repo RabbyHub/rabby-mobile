@@ -14,7 +14,7 @@ $RNFirebaseAsStaticFramework = true
 $RNGoogleMobileAdsAsStaticFramework = true
 $RNAdMobAsStaticFramework = true
 
-platform :ios, min_ios_version_supported
+platform :ios, '14'
 prepare_react_native_project!
 
 # ⬇️ uncomment wanted permissions
