@@ -33,6 +33,7 @@ import { useRabbyAppNavigation } from '@/hooks/navigation';
 import { useNavigationState } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
+import LinearGradient from 'react-native-linear-gradient';
 
 const MAX_ACCOUNT_COUNT = 50;
 
@@ -209,8 +210,21 @@ function MainListBlocks() {
         <RcSeedPhrase style={styles.icon} />
         {loading ? (
           <>
-            <Skeleton style={[styles.item1]} />
-            <Skeleton style={[styles.item2]} />
+            <Skeleton
+              circle
+              width={254}
+              height={48}
+              animation="wave"
+              LinearGradientComponent={LinearGradient}
+              style={[styles.item1]}
+            />
+            <Skeleton
+              circle
+              width={102}
+              height={20}
+              animation="wave"
+              LinearGradientComponent={LinearGradient}
+            />
           </>
         ) : (
           <>
@@ -259,15 +273,7 @@ function CreateNewAddress(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   item1: {
-    width: '100%',
-    height: 44,
-    borderRadius: 8,
     marginTop: 12,
-  },
-  item2: {
-    width: 102,
-    height: 20,
-    borderRadius: 2,
   },
   icon: {
     marginTop: -12,
