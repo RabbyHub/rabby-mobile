@@ -6,9 +6,7 @@ import {
   useActiveViewSheetModalRefs,
   OPEN_DAPP_VIEW_INDEXES,
 } from '../../hooks/useDappView';
-import { BottomSheetContent } from './DappWebViewControlWidgets';
 import { devLog } from '@/utils/logger';
-import { useSafeSizes } from '@/hooks/useAppLayout';
 import {
   BottomSheetBackdropProps,
   BottomSheetModalProps,
@@ -16,18 +14,14 @@ import {
   useBottomSheetGestureHandlers,
 } from '@gorhom/bottom-sheet';
 
-import DappWebViewControl, {
-  DappWebViewControlType,
-} from '@/components/WebView/DappWebViewControl';
+import DappWebViewControl2, {
+  DappWebViewControl2Type,
+} from '@/components/WebView/DappWebViewControl2/DappWebViewControl2';
 import { useDapps } from '@/hooks/useDapps';
 import TouchableView from '@/components/Touchable/TouchableView';
-import { RootNames, ScreenLayouts } from '@/constant/layout';
+import { RootNames, ScreenLayouts2 } from '@/constant/layout';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS } from 'react-native-reanimated';
-import { BottomNavControl } from '@/components/WebView/Widgets';
-import { RcIconDisconnect } from '@/assets/icons/dapp';
-import { toast } from '@/components/Toast';
-import { canoicalizeDappUrl } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useCurrentAccount, useWalletBrandLogo } from '@/hooks/account';
 import { navigate } from '@/utils/navigation';
 import {
@@ -47,8 +41,9 @@ import DeviceUtils from '@/core/utils/device';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
 import AutoLockView from '@/components/AutoLockView';
 import { globalSetActiveDappState } from '@/core/bridges/state';
-import TouchableText from '@/components/Touchable/TouchableText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
+import { IS_ANDROID } from '@/core/native/utils';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -102,6 +97,10 @@ function WebViewControlHeader({ headerNode }: { headerNode: React.ReactNode }) {
           <AppBottomSheetHandle
             animatedIndex={animatedIndex}
             animatedPosition={animatedPosition}
+            style={{
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+            }}
           />
         </Animated.View>
         <Animated.View
@@ -146,24 +145,38 @@ function useForceExpandOnceOnBootstrap(
 
 function getDefaultSnapPoints() {
   const scrLayout = Dimensions.get('screen');
+  const winLayout = Dimensions.get('window');
 
-  return [
-    Math.max(1, Math.floor(scrLayout.height * 0.01)),
-    parseFloat(scrLayout.height.toFixed(2)),
-  ] as const;
+  return {
+    fromScreen: [
+      Math.max(1, Math.floor(scrLayout.height * 0.01)),
+      parseFloat(scrLayout.height.toFixed(2)),
+    ],
+    fromWindow: [
+      Math.max(1, Math.floor(winLayout.height * 0.01)),
+      parseFloat(winLayout.height.toFixed(2)),
+    ],
+  } as const;
 }
-const DEFAULT_RANGES = getDefaultSnapPoints();
+// const DEFAULT_RANGES = getDefaultSnapPoints().fromScreen;
 // const DEFAULT_RANGES = ['1%', '100%'];
 function useSafeSnapshots() {
   const { top } = useSafeAreaInsets();
 
   const snapPoints = useMemo(() => {
-    const presets = getDefaultSnapPoints();
+    const defaultSp = getDefaultSnapPoints();
 
-    return [presets[0], Math.max(presets[1], DEFAULT_RANGES[1]) - top];
+    if (IS_ANDROID) {
+      const presets = defaultSp.fromWindow;
+
+      return [presets[0], presets[1]];
+    }
+
+    const presets = defaultSp.fromScreen;
+    return [presets[0], Math.max(presets[1], defaultSp.fromScreen[1]) - top];
   }, [top]);
 
-  return { snapPoints };
+  return { snapPoints, bgOffTop: top };
 }
 export function OpenedDappWebViewStub() {
   const { colors, styles } = useThemeStyles(getWebViewStubStyles);
@@ -181,7 +194,7 @@ export function OpenedDappWebViewStub() {
     sheetModalRefs: { openedDappWebviewSheetModalRef },
   } = useActiveViewSheetModalRefs();
 
-  const activeDappWebViewControlRef = useRef<DappWebViewControlType>(null);
+  const activeDappWebViewControlRef = useRef<DappWebViewControl2Type>(null);
 
   useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
 
@@ -255,7 +268,10 @@ export function OpenedDappWebViewStub() {
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
       backgroundStyle={{
-        backgroundColor: colors['neutral-bg1'],
+        paddingTop: 0,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        backgroundColor: __DEV__ ? 'transparent' : colors['neutral-bg1'],
       }}
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
@@ -288,11 +304,12 @@ export function OpenedDappWebViewStub() {
         )}
         {openedDappItems.map((dappInfo, idx) => {
           const isConnected = !!dappInfo && isDappConnected(dappInfo.origin);
+          const isFavorited = dappInfo.maybeDappInfo?.isFavorite ?? false;
           const isActiveDapp = activeDapp?.origin === dappInfo.origin;
           const key = `${dappInfo.origin}-${dappInfo.dappTabId}-${idx}`;
 
           return (
-            <DappWebViewControl
+            <DappWebViewControl2
               key={key}
               ref={inst => {
                 if (isActiveDapp) {
@@ -329,19 +346,14 @@ export function OpenedDappWebViewStub() {
                 allowsInlineMediaPlayback: true,
                 disableJsPromptLike: !isActiveDapp,
               }}
-              bottomNavH={
-                isConnected
-                  ? ScreenLayouts.dappWebViewNavBottomSheetHeight
-                  : ScreenLayouts.inConnectedDappWebViewNavBottomSheetHeight
-              }
-              headerLeft={() => {
+              headerRight={() => {
                 if (!RcWalletIcon) return null;
 
                 return (
                   <TouchableView
                     style={[
                       {
-                        height: ScreenLayouts.dappWebViewControlHeaderHeight,
+                        height: ScreenLayouts2.dappWebViewControlHeaderHeight,
                         justifyContent: 'center',
                       },
                     ]}
@@ -362,85 +374,25 @@ export function OpenedDappWebViewStub() {
                     />
                   </TouchableView>
                 );
-
-                // what: render for connected chain icon
-                // if (!isConnected) return null;
-                // if (!dappInfo.maybeDappInfo?.chainId) return null;
-
-                // return (
-                //   <TouchableView
-                //     style={[
-                //       {
-                //         height: ScreenLayouts.dappWebViewControlHeaderHeight,
-                //         justifyContent: 'center',
-                //       },
-                //     ]}
-                //     onPress={() => {}}>
-                //     <ChainIconImage
-                //       chainEnum={dappInfo.maybeDappInfo?.chainId}
-                //       size={24}
-                //       width={24}
-                //       height={24}
-                //     />
-                //   </TouchableView>
-                // );
               }}
-              headerNode={({ header }) => {
-                return <WebViewControlHeader headerNode={header} />;
+              onPressClose={ctx => {
+                activeDappWebViewControlRef.current?.closeWebViewNavModal();
+
+                hideDappSheetModal();
+                closeActiveOpenedDapp();
               }}
-              bottomSheetContent={({ webviewState, webviewActions }) => {
+              // headerNode={({ header }) => {
+              //   return <WebViewControlHeader headerNode={header} />;
+              // }}
+              navControlContent={({ webviewState, webviewActions }) => {
                 return (
-                  <BottomSheetContent
-                    dappInfo={dappInfo}
-                    onPressCloseDapp={() => {
-                      activeDappWebViewControlRef.current?.closeWebViewNavModal();
-
-                      hideDappSheetModal();
-                      closeActiveOpenedDapp();
+                  <BottomNavControl2
+                    webviewState={webviewState}
+                    webviewActions={webviewActions}
+                    favoriated={isFavorited}
+                    onPressButton={ctx => {
+                      ctx.defaultAction(ctx);
                     }}
-                    bottomNavBar={
-                      <BottomNavControl
-                        webviewState={webviewState}
-                        webviewActions={webviewActions}
-                        onPressHome={() => {
-                          if (!activeDapp) return;
-
-                          webviewActions.go(
-                            canoicalizeDappUrl(activeDapp.origin).httpOrigin,
-                          );
-                        }}
-                        onPressButton={ctx => {
-                          ctx.defaultAction(ctx);
-
-                          switch (ctx.type) {
-                            case 'back':
-                            case 'forward':
-                            case 'reload':
-                            case 'home':
-                              activeDappWebViewControlRef.current?.closeWebViewNavModal();
-                              break;
-                            default:
-                              break;
-                          }
-                        }}
-                        afterNode={
-                          <BottomNavControl.TouchableItem
-                            disabled={!isConnected}
-                            onPress={() => {
-                              if (!isConnected) return;
-
-                              disconnectDapp(dappInfo.origin);
-                              toast.success('Disconnected');
-                            }}>
-                            <RcIconDisconnect
-                              isActive={isConnected}
-                              width={26}
-                              height={26}
-                            />
-                          </BottomNavControl.TouchableItem>
-                        }
-                      />
-                    }
                   />
                 );
               }}

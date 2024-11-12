@@ -54,6 +54,26 @@ mk_ios_icons() {
 
       sips -z $h $w $image_godfile_dir/$godfile --out $targetdir/icon_${w}x${h}@${scale}.png
   done
+
+  local ios_png_svg_src="$script_dir/bundles/ic_rabby_icons";
+  local target_dir="$project_dir/src/assets/icons/ios_ic_rabby_icons";
+  mkdir -p $target_dir;
+  rm -rf $target_dir/ic_rabby*.png
+
+  if [ -f svg2png ]; then
+    echo "no svg2png command found, run \`npm i -g svg2png\` to install it."
+  else
+    for svgfile in $ios_png_svg_src/ic_rabby*.svg
+    do
+      rm -f $target;
+      local bname=$(basename -s .svg $svgfile)
+      # customized drawable icons to android_drawable
+      svg2png \
+        $ios_png_svg_src/$bname.svg \
+        -w 128 -h 128 \
+        -o $target_dir/$bname.png
+    done
+  fi
 }
 
 android_splash_icons=(
@@ -87,11 +107,25 @@ mk_android_icons() {
     -t "#FFF" \
     -i $script_dir/bundles/ic_launcher.svg \
     -o $script_dir/bundles/ic_launcher_logo_core.xml
-
   # replace #FF000000 with #FFFFFF
   sed -i '' 's/#FF000000/#FFFFFF/g' $script_dir/bundles/ic_launcher_logo_core.xml
 
   echo "[mk_android_icons] generate app's logo by Image Assets in Android Studio."
+
+  local android_drawable_src="$script_dir/bundles/ic_rabby_icons";
+  local target_dir="$project_dir/android/app/src/main/res/drawable";
+  rm -rf $target_dir/ic_rabby*.xml
+
+  for svgfile in $android_drawable_src/ic_rabby*.svg
+  do
+    rm -f $target;
+    local bname=$(basename -s .svg $svgfile)
+    # customized drawable icons to android_drawable
+    $project_dir/node_modules/.bin/s2v \
+      -t "#FFF" \
+      -i $android_drawable_src/$bname.svg \
+      -o $target_dir/$bname.xml
+  done
 
   # local android_icons_dir=$project_dir/android/app/src/main/res;
 

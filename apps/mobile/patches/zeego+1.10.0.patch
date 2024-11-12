@@ -1,0 +1,81 @@
+diff --git a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
+index 59d62eb..6e75943 100644
+--- a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
++++ b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
+@@ -176,7 +176,12 @@ If you want to use a custom component as your <Content />, you can use the creat
+         menuAttributes.hidden = true;
+       }
+ 
++      if (child.props.androidIcon) {
++        menuAttributes.androidIcon = child.props.androidIcon;
++      }
++
+       let icon;
++      let androidIconDesc;
+ 
+       if (typeof child.props.children == 'string') {
+         title = child.props.children;
+@@ -212,6 +217,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+ 
+           if (imageChild) {
+             const {
++              androidIcon,
+               androidIconName
+             } = imageChild.props;
+ 
+@@ -228,6 +234,10 @@ If you want to use a custom component as your <Content />, you can use the creat
+             }
+           }
+         }
++
++        if (iconChildren !== null && iconChildren !== void 0 && (_iconChildren$ = iconChildren[0]) !== null && _iconChildren$ !== void 0 && _iconChildren$.props.androidIcon) {
++          androidIconDesc = iconChildren[0].props.androidIcon;
++        }
+       }
+ 
+       if (title) {
+@@ -259,7 +269,8 @@ If you want to use a custom component as your <Content />, you can use the creat
+           title,
+           subtitle,
+           menuAttributes,
+-          icon
++          icon,
++          androidIconDesc,
+         };
+       }
+ 
+@@ -282,6 +293,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+           if (item) {
+             const {
+               icon,
++              androidIconDesc,
+               title,
+               key,
+               menuAttributes,
+@@ -291,6 +303,7 @@ If you want to use a custom component as your <Content />, you can use the creat
+               id: key,
+               title,
+               image: icon,
++              imageColor: androidIconDesc ? androidIconDesc.color : undefined,
+               attributes: menuAttributes,
+               subtitle
+             };
+diff --git a/node_modules/zeego/lib/typescript/menu/types.d.ts b/node_modules/zeego/lib/typescript/menu/types.d.ts
+index 4ecd414..64bfab4 100644
+--- a/node_modules/zeego/lib/typescript/menu/types.d.ts
++++ b/node_modules/zeego/lib/typescript/menu/types.d.ts
+@@ -96,6 +96,14 @@ export interface MenuItemCommonProps {
+      * @platform android
+      */
+     androidIconName?: string;
++    /**
++     * customize the color of the android icon
++     *
++     * @platform android
++     */
++    androidIcon?: {
++      color: string;
++    }
+ }
+ export type MenuItemIconProps = MenuItemCommonProps & {
+     /**

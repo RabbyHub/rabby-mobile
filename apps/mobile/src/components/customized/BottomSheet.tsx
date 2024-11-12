@@ -1,10 +1,8 @@
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
-  BottomSheetHandle,
   BottomSheetModal,
   BottomSheetModalProps,
-  BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import React, { forwardRef, useCallback, useMemo } from 'react';
@@ -150,8 +148,7 @@ export const OpenedDappBottomSheetModal = forwardRef<
       {...props}
       enableContentPanningGesture={false}
       enableHandlePanningGesture={false}
-      // @ts-expect-error
-      handleHeight={0}
+      // handleHeight={0}
       // special, allow inner BottomSheetModal's backdrop can override this
       handleComponent={null}
       ref={ref}
@@ -220,8 +217,7 @@ export const DappNavCardBottomSheetModal = forwardRef<
       enableHandlePanningGesture={true}
       enableContentPanningGesture={true}
       name="webviewNavRef"
-      // @ts-expect-error
-      handleHeight={28}
+      // handleHeight={28}
       snapPoints={[safeSizes.topSnapPoint]}
       backgroundStyle={styles.sheetModal}
       ref={ref}>

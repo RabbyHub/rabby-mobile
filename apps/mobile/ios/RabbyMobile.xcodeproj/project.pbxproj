@@ -23,7 +23,6 @@
 		152EF762CEDC4B0E8E81321B /* InpageBridgeWeb3.js in Resources */ = {isa = PBXBuildFile; fileRef = C024E23FD86443E380C7FBC6 /* InpageBridgeWeb3.js */; };
 		32F0761826914D50858989D1 /* SF-Pro-Rounded-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 86E6687BF1374D09963AF757 /* SF-Pro-Rounded-Regular.otf */; };
 		3FB3928D597B4F3786F9EF3F /* vconsole.min.js in Resources */ = {isa = PBXBuildFile; fileRef = 821CAA7F3D014D818B010EC1 /* vconsole.min.js */; };
-		519790FE657C4F50AF86DDFB /* Anton-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */; };
 		51DB8D34711D4F68A2797FC9 /* SF-Pro-Rounded-Light.otf in Resources */ = {isa = PBXBuildFile; fileRef = 4BFA1069E45840979CD0510B /* SF-Pro-Rounded-Light.otf */; };
 		61119C058F0C8F2FBCC8530A /* Pods_RabbyMobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA3D14902716EB42CC78905B /* Pods_RabbyMobile.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -66,7 +65,6 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = RabbyMobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = RabbyMobile/main.m; sourceTree = "<group>"; };
 		27139CD09BB343AA82B6CE59 /* SF-Pro-Rounded-Bold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Bold.otf"; path = "../assets/fonts/SF-Pro-Rounded-Bold.otf"; sourceTree = "<group>"; };
-		335D3FC80A2B47D280DA705A /* Anton-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Anton-Regular.ttf"; path = "../assets/fonts/Anton-Regular.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-RabbyMobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.debug.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		4BFA1069E45840979CD0510B /* SF-Pro-Rounded-Light.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "SF-Pro-Rounded-Light.otf"; path = "../assets/fonts/SF-Pro-Rounded-Light.otf"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-RabbyMobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RabbyMobile.release.xcconfig"; path = "Target Support Files/Pods-RabbyMobile/Pods-RabbyMobile.release.xcconfig"; sourceTree = "<group>"; };

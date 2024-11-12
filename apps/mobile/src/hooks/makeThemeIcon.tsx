@@ -4,9 +4,9 @@ import { Image, ImageSourcePropType, ImageProps } from 'react-native';
 import type { ColorValue } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { SvgProps } from 'react-native-svg';
-import { useGetBinaryMode, useThemeColors } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024, useThemeColors } from '@/hooks/theme';
 import { ColorOrVariant, pickColorVariants } from '@/core/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { AppColors2024Variants, AppColorsVariants } from '@/constant/theme';
 
 export const makeThemeIcon = (
   LightIcon: React.FC<SvgProps>,
@@ -63,6 +63,30 @@ export function makeActiveIconFromCC(
         ? colorsOrGetColors(colors)
         : colorsOrGetColors;
     }, [colors]);
+
+    return (
+      <IconCC {...otherProps} color={isActive ? activeColor : inactiveColor} />
+    );
+  });
+}
+export function makeActiveIcon2024FromCC(
+  IconCC: React.FC<SvgProps>,
+  colorsOrGetColors:
+    | ActiveColors
+    | ((ctx: {
+        colors: AppColorsVariants;
+        colors2024: AppColors2024Variants;
+      }) => ActiveColors),
+) {
+  return memo((props: SvgProps & { isActive?: boolean }) => {
+    const { isActive, ...otherProps } = props;
+    const { colors, colors2024 } = useTheme2024();
+
+    const { activeColor, inactiveColor } = useMemo(() => {
+      return typeof colorsOrGetColors === 'function'
+        ? colorsOrGetColors({ colors, colors2024 })
+        : colorsOrGetColors;
+    }, [colors, colors2024]);
 
     return (
       <IconCC {...otherProps} color={isActive ? activeColor : inactiveColor} />
