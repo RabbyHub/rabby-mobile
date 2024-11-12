@@ -14,7 +14,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { useAppUnlocked } from '@/hooks/useLock';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import TouchableText from '@/components/Touchable/TouchableText';
 
 function SampleGetStartedScreen2024(): JSX.Element {
@@ -150,8 +150,8 @@ function SampleGetStartedScreen2024(): JSX.Element {
 const LOGO_SIZE = {
   wrapperWidth: 156,
   wrapperHeight: 156,
-  width: 86,
-  height: 76,
+  width: 114,
+  height: 99,
 };
 
 const getStyles = createGetStyles2024(ctx =>
@@ -203,8 +203,8 @@ const getStyles = createGetStyles2024(ctx =>
     appName: {
       fontFamily: 'SF Pro Rounded',
       fontWeight: '700',
-      color: ctx.colors['neutral-title-1'],
-      fontSize: 24,
+      color: ctx.colors2024['neutral-title-1'],
+      fontSize: 22,
       lineHeight: 28,
     },
     appDesc: {
