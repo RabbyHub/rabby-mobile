@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { StyleProp, Text, View, ViewStyle } from 'react-native';
-import { DappCardList } from '../DappCardList';
+import { DappHistoryCardList } from './DappHistoryCardList';
 import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
 
 export const DappHistorySection = ({
@@ -30,7 +30,7 @@ export const DappHistorySection = ({
 
   return (
     <View style={[styles.container, style]}>
-      <DappCardList
+      <DappHistoryCardList
         data={data}
         onPress={onPress}
         onFavoritePress={onFavoritePress}

@@ -37,16 +37,38 @@ export const DappCardListBy = ({
 };
 
 export const DappCard = ({
-  isActive,
   data,
   onPress,
+  ...rest
+}: {
+  data: DappInfo;
+  style?: StyleProp<ViewStyle>;
+  onPress?: (dapp: DappInfo) => void;
+  onFavoritePress?: (dapp: DappInfo) => void;
+  isActive?: boolean;
+  isShowDesc?: boolean;
+}) => {
+  // const { styles } = useTheme2024({ getStyle });
+
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        onPress?.(data);
+      }}>
+      <DappCardInner data={data} {...rest} />
+    </TouchableOpacity>
+  );
+};
+
+export const DappCardInner = ({
+  isActive,
+  data,
   onFavoritePress,
   style,
   isShowDesc = false,
 }: {
   data: DappInfo;
   style?: StyleProp<ViewStyle>;
-  onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
   isActive?: boolean;
   isShowDesc?: boolean;
@@ -56,11 +78,7 @@ export const DappCard = ({
   const chain = findChain({ enum: data.chainId });
 
   return (
-    <TouchableOpacity
-      style={[styles.dappCard, style]}
-      onPress={() => {
-        onPress?.(data);
-      }}>
+    <View style={[styles.dappCard, style]}>
       <View style={styles.body} onStartShouldSetResponder={() => true}>
         <View style={styles.dappIconWraper}>
           <DappIcon
@@ -132,7 +150,7 @@ export const DappCard = ({
           </View>
         </View>
       ) : null}
-    </TouchableOpacity>
+    </View>
   );
 };
 

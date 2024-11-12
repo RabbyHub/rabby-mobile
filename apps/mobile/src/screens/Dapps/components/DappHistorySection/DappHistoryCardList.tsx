@@ -1,11 +1,13 @@
 import { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
-import { DappCard } from './DappCard';
+import { ContextMenuView } from '@/components2024/ContextMenuView/ContextMenuView';
+import { DappCardInner } from '../DappCard';
+import { noop } from 'lodash';
 
-export const DappCardList = ({
+export const DappHistoryCardList = ({
   data,
   onPress,
   onFavoritePress,
@@ -37,11 +39,30 @@ export const DappCardList = ({
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <DappCard
-              data={item}
-              onPress={onPress}
-              onFavoritePress={onFavoritePress}
-            />
+            <TouchableOpacity
+              onPress={() => {
+                onPress?.(item);
+              }}
+              onLongPress={noop}>
+              <ContextMenuView
+                menuConfig={{
+                  menuTitle: item.origin,
+                  menuActions: [
+                    {
+                      title: 'Delete',
+                      icon: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png'),
+                      androidIconName: 'ic_rabby_menu_favorite_filled',
+                      key: 'favorite',
+                      action: () => {
+                        console.debug('Favorite clicked');
+                        // onPressButtonInternal({ type: 'favorite' });
+                      },
+                    },
+                  ],
+                }}>
+                <DappCardInner data={item} onFavoritePress={onFavoritePress} />
+              </ContextMenuView>
+            </TouchableOpacity>
           </View>
         );
       }}

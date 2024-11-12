@@ -15,7 +15,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappFavoriteSection } from '../components/DappFavoriteSection/index';
-import { DappHistorySection } from '../components/DappHisotrySection';
+import { DappHistorySection } from '../components/DappHistorySection';
 import { DappSearchSection } from '../components/DappSearchSection';
 import { useOpenDappView } from '../hooks/useDappView';
 import { useSearchDapps } from '../hooks/useSearchDapps';
