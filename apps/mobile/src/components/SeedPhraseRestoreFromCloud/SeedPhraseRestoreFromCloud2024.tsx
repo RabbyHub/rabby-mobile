@@ -3,9 +3,9 @@ import { BackupData, decryptFiles } from '@/core/utils/cloudBackup';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { BackupErrorScreen } from '../SeedPhraseBackupToCloud/BackupErrorScreen';
+import { BackupErrorScreen } from '../SeedPhraseBackupToCloud/BackupErrorScreen2024';
 import { BackupUnlockScreen } from '../SeedPhraseBackupToCloud/BackupUnlockScreen2024';
-import { BackupRestoreScreen } from './BackupRestoreScreen';
+import { BackupRestoreScreen } from './BackupRestoreScreen2024';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;

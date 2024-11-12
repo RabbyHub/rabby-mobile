@@ -8,14 +8,14 @@ import {
 } from 'react-native';
 import { IS_IOS } from '@/core/native/utils';
 import React from 'react';
-import { useThemeColors } from '@/hooks/theme';
-import { AppColorsVariants } from '@/constant/theme';
+import { useTheme2024 } from '@/hooks/theme';
 import BackupErrorSVG from '@/assets2024/icons/common/cancel.svg';
 import BackupInfoSVG from '@/assets2024/icons/common/tip.svg';
 import BackupLockSVG from '@/assets/icons/address/backup-lock.svg';
 import BackupSuccessSVG from '@/assets/icons/address/backup-success.svg';
 import BackupUploadSVG from '@/assets/icons/address/backup-upload.svg';
 import { MaterialIndicator } from 'react-native-indicators';
+import { createGetStyles2024 } from '@/utils/styles';
 
 interface Props {
   status?:
@@ -31,52 +31,53 @@ interface Props {
   descriptionStyle?: StyleProp<TextStyle>;
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    progress: {
-      position: 'absolute',
-      top: -10,
-      left: -10,
-    },
-    statusIcon: {
-      width: 28,
-      height: 28,
-    },
-    statusIconWrapper: {
-      position: 'absolute',
-      bottom: -5,
-      right: -5,
-      borderRadius: 100,
-      zIndex: 1,
-    },
-    cloudIcon: {
-      width: 80,
-      height: 80,
-    },
-    root: {
-      position: 'relative',
-      alignItems: 'center',
-    },
-    description: {
-      color: colors['neutral-title-1'],
-      fontSize: 20,
-      fontWeight: '500',
-      marginTop: 36,
-    },
-    iconWrapper: {
-      position: 'relative',
-    },
-    errorText: {
-      color: colors['red-default'],
-      marginTop: 28,
-    },
-    successText: {
-      color: colors['green-default'],
-    },
-    statusIconDownloading: {
-      transform: [{ rotate: '180deg' }],
-    },
-  });
+const getStyle = createGetStyles2024(colors => ({
+  progress: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+  },
+  statusIcon: {
+    width: 28,
+    height: 28,
+  },
+  statusIconWrapper: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    borderRadius: 100,
+    zIndex: 1,
+  },
+  cloudIcon: {
+    width: 80,
+    height: 80,
+  },
+  root: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  description: {
+    marginTop: 36,
+    color: colors['neutral-title-1'],
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    fontFamily: 'SF Pro Rounded',
+  },
+  iconWrapper: {
+    position: 'relative',
+  },
+  errorText: {
+    color: colors['red-default'],
+    marginTop: 28,
+  },
+  successText: {
+    color: colors['green-default'],
+  },
+  statusIconDownloading: {
+    transform: [{ rotate: '180deg' }],
+  },
+}));
 
 export const BackupIcon: React.FC<Props> = ({
   status,
@@ -84,8 +85,8 @@ export const BackupIcon: React.FC<Props> = ({
   description,
   descriptionStyle,
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles, colors2024 } = useTheme2024({ getStyle });
+
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
       return isGray
@@ -135,7 +136,7 @@ export const BackupIcon: React.FC<Props> = ({
           status === 'loading') && (
           <View style={styles.progress}>
             <MaterialIndicator
-              color={colors['blue-default']}
+              color={colors2024['brand-default']}
               size={100}
               trackWidth={2.5}
               borderRadius={4}

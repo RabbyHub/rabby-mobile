@@ -182,7 +182,7 @@ export const GlobalBottomSheetModal2024 = () => {
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
             style={{
-              borderRadius: 16,
+              borderRadius: 32,
               overflow: 'hidden',
             }}
             {...bottomSheetModalProps}

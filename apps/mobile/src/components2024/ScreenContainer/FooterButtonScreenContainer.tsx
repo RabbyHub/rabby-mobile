@@ -26,7 +26,7 @@ const getStyle = createGetStyles2024(ctx =>
       height: '100%',
       position: 'relative',
       backgroundColor: 'transparent',
-      ...makeDebugBorder('green'),
+      // ...makeDebugBorder('green'),
     },
     main: {
       flex: 1,

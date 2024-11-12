@@ -115,13 +115,14 @@ export const Button = ({
         borderWidth: 1,
       },
       buttonStyle,
-      isDisabled && type === 'ghost'
-        ? {
-            borderColor: colors2024['brand-disable'],
-          }
-        : {
-            backgroundColor: colors2024['brand-disable'],
-          },
+      isDisabled &&
+        (type === 'ghost'
+          ? {
+              borderColor: colors2024['brand-disable'],
+            }
+          : {
+              backgroundColor: colors2024['brand-disable'],
+            }),
     ]);
   }, [disabled, bgColor, styles.button, buttonStyle, type, colors2024]);
 
