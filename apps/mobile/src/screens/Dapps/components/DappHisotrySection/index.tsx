@@ -4,7 +4,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { StyleProp, Text, View, ViewStyle } from 'react-native';
-import { DappCardList } from '../../Dapps/components/DappCardList';
+import { DappCardList } from '../DappCardList';
 import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
 
 export const DappHistorySection = ({

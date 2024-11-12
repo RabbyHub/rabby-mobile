@@ -27,10 +27,11 @@ export class BrowserHistoryService extends StoreServiceBase<
         storageAdapter: options?.storageAdapter,
       },
     );
+
     this.store.browserHistory = Object.entries(
       this.store.browserHistory || {},
     ).reduce((result, [origin, item]) => {
-      if (item.createdAt >= Date.now() - 30 * 24 * 60 * 60 * 1000) {
+      if (item.createdAt > Date.now() - 30 * 24 * 60 * 60 * 1000) {
         result[origin.toLowerCase()] = item;
       }
       return result;
@@ -45,9 +46,12 @@ export class BrowserHistoryService extends StoreServiceBase<
     createdAt?: number;
   }) {
     const origin = _origin.toLowerCase();
-    this.store.browserHistory[origin] = {
-      origin,
-      createdAt: createdAt || Date.now(),
+    this.store.browserHistory = {
+      ...this.store.browserHistory,
+      [origin]: {
+        origin,
+        createdAt: createdAt || Date.now(),
+      },
     };
   }
 

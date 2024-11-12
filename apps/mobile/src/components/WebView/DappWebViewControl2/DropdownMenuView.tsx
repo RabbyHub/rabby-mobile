@@ -30,6 +30,7 @@ export const DropdownMenuView: React.FC<Props> = ({
   loop = true,
   alignOffset = 5,
   avoidCollisions = true,
+  side = 'top',
 }) => {
   return (
     <DropdownMenu.Root
@@ -43,7 +44,7 @@ export const DropdownMenuView: React.FC<Props> = ({
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Content
-        side={'top'}
+        side={side}
         sideOffset={-5}
         align={'center'}
         loop={loop}

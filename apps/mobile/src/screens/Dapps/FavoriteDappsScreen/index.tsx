@@ -1,24 +1,17 @@
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React from 'react';
 
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { useDapps } from '@/hooks/useDapps';
-import { DappInfo } from '@/core/services/dappService';
-import { useNavigation } from '@react-navigation/native';
-import { useMemoizedFn, useRequest } from 'ahooks';
-import { StyleSheet, View } from 'react-native';
-import { FavoriteDappCardList } from './components/FavoriteDappCardList';
-import { openapi } from '@/core/request';
-import { FooterButton } from '@/components/FooterButton/FooterButton';
-import { stringUtils } from '@rabby-wallet/base-utils';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { DappCardList } from '../Dapps/components/DappCardList';
 import { useDappsHome } from '@/hooks/useDappsHome';
+import { useMemoizedFn } from 'ahooks';
+import { StyleSheet } from 'react-native';
+import { DappCardList } from '../components/DappCardList';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { styles } = useThemeStyles(getStyles);
-  const { navigation, setNavigationOptions } = useSafeSetNavigationOptions();
+  const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
   const getHeaderTitle = useMemoizedFn(() => {
@@ -26,6 +19,12 @@ export function FavoriteDappsScreen(): JSX.Element {
       <HeaderTitleText>Favorites（{favoriteApps.length}）</HeaderTitleText>
     );
   });
+
+  React.useEffect(() => {
+    setNavigationOptions({
+      headerTitle: getHeaderTitle,
+    });
+  }, [setNavigationOptions, getHeaderTitle]);
 
   return (
     <NormalScreenContainer style={styles.page}>

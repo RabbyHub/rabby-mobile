@@ -1,10 +1,10 @@
 import { createCustomNativeStackNavigator as createNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import React, { useRef, useCallback } from 'react';
 import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
+import React, { useCallback, useRef } from 'react';
 import { ColorSchemeName } from 'react-native';
 
 import { useThemeColors } from '@/hooks/theme';
@@ -22,40 +22,38 @@ import NotFoundScreen from './screens/NotFound';
 
 import MyBundleScreen from './screens/Assets/MyBundle';
 
-import { AddressNavigator2024 } from './screens/Navigators/AddressNavigator2024';
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
+import { AddressNavigator2024 } from './screens/Navigators/AddressNavigator2024';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
-import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
 
 import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
-import {
-  AccountNavigatorParamList,
-  FavoriteDappsNavigatorParamList,
-  RootStackParamsList,
-  SearchDappsNavigatorParamList,
-} from './navigation-type';
-import TransactionNavigator from './screens/Navigators/TransactionNavigator';
-import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
-import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
-import { ScannerScreen } from './screens/Scanner/ScannerScreen';
-import UnlockScreen from './screens/Unlock/Unlock';
-import { useAppUnlocked } from './hooks/useLock';
-import { BackgroundSecureBlurView } from './components/customized/BlurViews';
+import usePrevious from 'ahooks/lib/usePrevious';
 import {
   AppStatusBar,
   useTuneStatusBarOnRouteChange,
 } from './components/AppStatusBar';
-import usePrevious from 'ahooks/lib/usePrevious';
 import AutoLockView from './components/AutoLockView';
+import { BackgroundSecureBlurView } from './components/customized/BlurViews';
+import { GlobalBottomSheetModal } from './components/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStubModal';
-import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
+import { useAppUnlocked } from './hooks/useLock';
+import {
+  AccountNavigatorParamList,
+  FavoriteDappsNavigatorParamList,
+  RootStackParamsList,
+} from './navigation-type';
+import { DuplicateAddressModal } from './screens/Address/components/DuplicateAddressModal';
+import { FavoriteDappsScreen } from './screens/Dapps/FavoriteDappsScreen';
 import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
-import { FavoriteDappsScreen } from './screens/Dapps/FavoriteDapps';
+import TransactionNavigator from './screens/Navigators/TransactionNavigator';
+import { ScannerScreen } from './screens/Scanner/ScannerScreen';
+import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
+import UnlockScreen from './screens/Unlock/Unlock';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
@@ -63,9 +61,6 @@ const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
 const FavoriteDappsStack =
   createNativeStackNavigator<FavoriteDappsNavigatorParamList>();
-
-const SearchDappsStack =
-  createNativeStackNavigator<SearchDappsNavigatorParamList>();
 
 const RootOptions = { animation: 'none' } as const;
 const RootStackOptions = {
@@ -249,11 +244,6 @@ export default function AppNavigation({
             component={FavoriteDappsNavigator}
           />
           <RootStack.Screen
-            name={RootNames.StackSearchDapps}
-            options={{ headerShown: false }}
-            component={SearchDappsNavigator}
-          />
-          <RootStack.Screen
             name={RootNames.NftDetail}
             component={NFTDetailScreen}
             options={mergeScreenOptions({
@@ -352,36 +342,5 @@ function FavoriteDappsNavigator() {
         }}
       />
     </FavoriteDappsStack.Navigator>
-  );
-}
-
-function SearchDappsNavigator() {
-  const { mergeScreenOptions } = useStackScreenConfig();
-  const colors = useThemeColors();
-  // console.log('============== FavoritePopularNavigator Render =========');
-
-  return (
-    <SearchDappsStack.Navigator
-      screenOptions={mergeScreenOptions({
-        headerShown: false,
-        gestureEnabled: false,
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: 'transparent',
-        },
-        headerTitleStyle: {
-          color: colors['neutral-title-1'],
-          fontWeight: 'normal',
-        },
-        headerTintColor: colors['neutral-title-1'],
-      })}>
-      <SearchDappsStack.Screen
-        name={RootNames.SearchDapps}
-        component={SearchDappsScreen}
-        // options={{
-        //   title: 'Favorite Popular Dapp',
-        // }}
-      />
-    </SearchDappsStack.Navigator>
   );
 }

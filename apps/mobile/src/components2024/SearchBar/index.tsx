@@ -8,12 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import {
-  RcIconCloseCC,
-  RcIconCloseCircleCC,
-  RcNextSearchCC,
-} from '@/assets/icons/common';
-import { makeThemeIconFromCC } from '@/hooks/makeThemeIcon';
+import { RcIconCloseCC, RcNextSearchCC } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
@@ -21,10 +16,6 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
-
-const RcIconClose = makeThemeIconFromCC(RcIconCloseCircleCC, 'neutral-foot');
-
-const CLOSE_ICON_WRAPPER_WIDTH = 40;
 
 export interface Props
   extends Pick<
@@ -68,7 +59,6 @@ export const NextSearchBar: React.FC<Props> = ({
         <TouchableWithoutFeedback
           hitSlop={8}
           onPress={() => {
-            console.log('???');
             inputRef.current?.focus();
           }}>
           <RcNextSearchCC

@@ -3,7 +3,8 @@ import { useThemeColors } from '@/hooks/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
-import { DappCard } from '../../components/DappCard';
+import { DappCard } from './DappCard';
+import { DropdownMenuView } from '@/components/WebView/DappWebViewControl2/DropdownMenuView';
 
 export const DappCardList = ({
   data,
@@ -37,11 +38,28 @@ export const DappCardList = ({
       renderItem={({ item }) => {
         return (
           <View style={styles.listItem}>
-            <DappCard
-              data={item}
-              onPress={onPress}
-              onFavoritePress={onFavoritePress}
-            />
+            <DropdownMenuView
+              menuConfig={{
+                iosMenuTitle: item.origin,
+                menuActions: [
+                  {
+                    title: 'Favorite',
+                    iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png'),
+                    androidIconName: 'ic_rabby_menu_favorite_filled',
+                    key: 'favorite',
+                    onSelect: () => {
+                      console.debug('Favorite clicked');
+                      // onPressButtonInternal({ type: 'favorite' });
+                    },
+                  },
+                ],
+              }}>
+              <DappCard
+                data={item}
+                onPress={onPress}
+                onFavoritePress={onFavoritePress}
+              />
+            </DropdownMenuView>
           </View>
         );
       }}

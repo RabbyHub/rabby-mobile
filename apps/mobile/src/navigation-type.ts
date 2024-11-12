@@ -172,7 +172,3 @@ export type SettingNavigatorParamList = {
 export type FavoriteDappsNavigatorParamList = {
   [RootNames.FavoriteDapps]?: {};
 };
-
-export type SearchDappsNavigatorParamList = {
-  [RootNames.SearchDapps]?: {};
-};

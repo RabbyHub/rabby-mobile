@@ -19,7 +19,7 @@ import {
 } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
 
-export const SearchDappCardList = ({
+export const DappSearchCardList = ({
   data,
   onPress,
   onFavoritePress,
