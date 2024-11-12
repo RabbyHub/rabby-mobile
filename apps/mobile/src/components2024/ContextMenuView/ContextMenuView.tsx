@@ -36,7 +36,7 @@ export const ContextMenuView: React.FC<Props> = ({
           borderRadius: 30,
         },
       }}>
-      <ContextMenu.Trigger>{children}</ContextMenu.Trigger>
+      <ContextMenu.Trigger isAnchoredToRight>{children}</ContextMenu.Trigger>
 
       <ContextMenu.Content
         loop={loop}

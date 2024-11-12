@@ -8,7 +8,6 @@ import { getKeyringParams } from '../utils/getKeyringParams';
 
 export const onSetAddressAlias: KeyringServiceOptions['onSetAddressAlias'] &
   object = async (keyring, account, contactService) => {
-  console.log('exe 没有进来吗');
   const { address } = account;
   if (!contactService) {
     if (__DEV__) {

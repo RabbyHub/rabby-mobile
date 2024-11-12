@@ -13,6 +13,7 @@ import { useDeleteAccountModal } from '../useDeleteAccountModal';
 import { AddressItemInner2024 } from './AddressItemInner2024';
 import { useAliasNameEditModal } from '@/components2024/AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '../useAddressDetailModal';
+import { noop } from 'lodash';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
@@ -81,7 +82,7 @@ export const AddressItem = (props: AddressItemProps) => {
   }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
   return (
-    <TouchableOpacity style={styles.root} onPress={onDetail}>
+    <TouchableOpacity style={styles.root} onPress={onDetail} onLongPress={noop}>
       <ContextMenuView
         menuConfig={{
           menuTitle: account.aliasName,

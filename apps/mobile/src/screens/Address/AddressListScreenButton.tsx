@@ -40,11 +40,6 @@ export const AddressListScreenButton: React.FC<Props> = ({
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.ADDRESS_QUICK_MANAGER,
       type,
-      bottomSheetModalProps: {
-        enableDynamicSizing: true,
-        enableContentPanningGesture: true,
-        enablePanDownToClose: true,
-      },
       onCancel: () => {
         removeGlobalBottomSheetModal2024(id);
       },

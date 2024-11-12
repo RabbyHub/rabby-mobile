@@ -1,5 +1,5 @@
 diff --git a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
-index 59d62eb..6e75943 100644
+index 59d62eb..b0504fa 100644
 --- a/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
 +++ b/node_modules/zeego/lib/module/menu/create-android-menu/index.android.js
 @@ -176,7 +176,12 @@ If you want to use a custom component as your <Content />, you can use the creat
@@ -60,11 +60,46 @@ index 59d62eb..6e75943 100644
                attributes: menuAttributes,
                subtitle
              };
+@@ -373,11 +386,16 @@ If you want to use a custom component as your <Content />, you can use the creat
+ 
+     const triggerItem = (_trigger$targetChildr = trigger.targetChildren) === null || _trigger$targetChildr === void 0 ? void 0 : _trigger$targetChildr[0];
+     let shouldOpenOnLongPress = Menu === 'ContextMenu';
++    let isAnchoredToRight = false
+ 
+     if (triggerItem !== null && triggerItem !== void 0 && triggerItem.props.action) {
+       shouldOpenOnLongPress = triggerItem.props.action === 'longPress';
+     }
+ 
++    if (triggerItem !== null && triggerItem !== void 0 && triggerItem.props.isAnchoredToRight) {
++      isAnchoredToRight = triggerItem.props.isAnchoredToRight;
++    }
++
+     return /*#__PURE__*/React.createElement(MenuView, {
+       title: menuTitle,
+       onPressAction: _ref11 => {
+@@ -389,7 +407,8 @@ If you want to use a custom component as your <Content />, you can use the creat
+         (_callbacks$nativeEven = callbacks[nativeEvent.event]) === null || _callbacks$nativeEven === void 0 ? void 0 : _callbacks$nativeEven.call(callbacks);
+       },
+       shouldOpenOnLongPress: shouldOpenOnLongPress,
+-      actions: menuItems
++      actions: menuItems,
++      isAnchoredToRight: isAnchoredToRight
+     }, triggerItem);
+   }, 'Root');
+   const Separator = create(_ => {
 diff --git a/node_modules/zeego/lib/typescript/menu/types.d.ts b/node_modules/zeego/lib/typescript/menu/types.d.ts
-index 4ecd414..64bfab4 100644
+index 4ecd414..ea890fa 100644
 --- a/node_modules/zeego/lib/typescript/menu/types.d.ts
 +++ b/node_modules/zeego/lib/typescript/menu/types.d.ts
-@@ -96,6 +96,14 @@ export interface MenuItemCommonProps {
+@@ -39,6 +39,7 @@ export type MenuTriggerProps = {
+      * Only applies for `ios` and `android`.
+      */
+     action?: 'press' | 'longPress';
++    isAnchoredToRight?: boolean;
+ };
+ export type MenuContentProps = {
+     children: React.ReactNode;
+@@ -96,6 +97,14 @@ export interface MenuItemCommonProps {
       * @platform android
       */
      androidIconName?: string;
