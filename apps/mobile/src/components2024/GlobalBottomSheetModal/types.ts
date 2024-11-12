@@ -88,6 +88,8 @@ export type MODAL_CREATE_PARAMS = {
   [MODAL_NAMES.RESTORE_FROM_CLOUD]: {};
 };
 
+export type MODAL_ID = `${MODAL_NAMES}_${string}`;
+
 export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
   name: T;
   approvalComponent?: APPROVAL_MODAL_NAMES;
@@ -98,6 +100,10 @@ export type CreateParams<T extends MODAL_NAMES = MODAL_NAMES> = {
    * @default false
    */
   allowAndroidHarewareBack?: boolean;
+  /**
+   * @description specify whether preventing screenshot on modal open
+   */
+  preventScreenshotOnModalOpen?: boolean;
   [key: string]: any;
 } & (T extends keyof MODAL_CREATE_PARAMS ? MODAL_CREATE_PARAMS[T] : {});
 
@@ -125,12 +131,12 @@ export enum EVENT_NAMES {
 }
 
 export type GlobalSheetModalListeners = {
-  [EVENT_NAMES.CREATE]: (id: string, params: CreateParams) => any;
-  [EVENT_NAMES.REMOVE]: (key: string, params?: RemoveParams) => any;
-  [EVENT_NAMES.CLOSED]: (key: string) => any;
-  [EVENT_NAMES.PRESENT]: (key: string) => any;
-  [EVENT_NAMES.PRESENTED]: (key: string) => any;
-  [EVENT_NAMES.DISMISS]: (key: string) => any;
+  [EVENT_NAMES.CREATE]: (id: MODAL_ID, params: CreateParams) => any;
+  [EVENT_NAMES.REMOVE]: (key: MODAL_ID, params?: RemoveParams) => any;
+  [EVENT_NAMES.CLOSED]: (key: MODAL_ID) => any;
+  [EVENT_NAMES.PRESENT]: (key: MODAL_ID) => any;
+  [EVENT_NAMES.PRESENTED]: (key: MODAL_ID) => any;
+  [EVENT_NAMES.DISMISS]: (key: MODAL_ID) => any;
 
   [EVENT_NAMES.SNAP_TO_INDEX]: (key: string, index: number) => any;
 };

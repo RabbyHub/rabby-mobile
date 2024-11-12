@@ -9,6 +9,7 @@ import {
   CreateParams,
   EVENT_NAMES,
   GlobalSheetModalListeners,
+  MODAL_ID,
   MODAL_NAMES,
 } from './types';
 
@@ -19,11 +20,12 @@ import { useRefreshAutoLockPanResponder } from '@/components/AutoLockView';
 import { globalSheetModalEvents } from './event';
 import { APPROVAL_SNAP_POINTS } from '@/components/Approval/components/map';
 import LinearGradient from 'react-native-linear-gradient';
+import { useSensitiveGlobalModalsOpened } from './security';
 
 type ModalData = {
   snapPoints: (string | number)[] | undefined;
   params: CreateParams;
-  id: string;
+  id: MODAL_ID;
   ref: React.RefObject<AppBottomSheetModal>;
 };
 
@@ -42,7 +44,7 @@ export const GlobalBottomSheetModal2024 = () => {
 
   const handlePresent = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.PRESENT]
-  >((key: string) => {
+  >(key => {
     const currentModal = modalRefs.current[key];
 
     if (!currentModal) {
@@ -59,6 +61,9 @@ export const GlobalBottomSheetModal2024 = () => {
   }, []);
 
   const [getApproval] = useApproval();
+
+  const { markAtSensitiveModal, removeAtSensitiveModal } =
+    useSensitiveGlobalModalsOpened();
 
   const handleCreate = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.CREATE]
@@ -84,16 +89,20 @@ export const GlobalBottomSheetModal2024 = () => {
           ref: React.createRef<AppBottomSheetModal>(),
         },
       ]);
+      if (params.preventScreenshotOnModalOpen) {
+        markAtSensitiveModal(id);
+      }
+
       setTimeout(() => {
         handlePresent(id);
       }, 0);
     },
-    [getApproval, handlePresent],
+    [getApproval, handlePresent, markAtSensitiveModal],
   );
 
   const handleRemove = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.REMOVE]
-  >((key: string, params) => {
+  >((key, params) => {
     if (modalRefs.current[key]) {
       // Empty object as props causes flash, undefined is preferred
       modalRefs.current[key].current?.close(
@@ -113,11 +122,13 @@ export const GlobalBottomSheetModal2024 = () => {
   const handleDismiss = React.useCallback<
     GlobalSheetModalListeners[EVENT_NAMES.DISMISS]
   >(
-    (key: string) => {
+    key => {
       globalSheetModalEvents.emit(EVENT_NAMES.DISMISS, key);
+      removeAtSensitiveModal(key);
+
       handleRemove(key);
     },
-    [handleRemove],
+    [handleRemove, removeAtSensitiveModal],
   );
 
   const handleSnapToIndex = React.useCallback<
@@ -179,6 +190,7 @@ export const GlobalBottomSheetModal2024 = () => {
           <AppBottomSheetModal
             topInset={height.top}
             enableContentPanningGesture={false}
+            enableDismissOnClose
             keyboardBlurBehavior="restore"
             snapPoints={modal.snapPoints}
             style={{

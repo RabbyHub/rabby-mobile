@@ -15,7 +15,7 @@ import {
 import {
   ProtectedConf,
   ProtectType,
-  useAtSensitiveScreen,
+  useAtSensitiveScene,
 } from '@/hooks/navigation';
 import { getReadyNavigationInstance } from '@/utils/navigation';
 import { BlurView } from '@react-native-community/blur';
@@ -76,18 +76,18 @@ export default function SecurityTipStubModal({
 
 function useGlobalSecurityTipForScreenCapture() {
   const { isBeingCaptured } = useIOSScreenIsBeingCaptured();
-  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
+  const { atSensitiveScene, $protectedConf } = useAtSensitiveScene();
 
   return {
     shouldShowSecurityTip:
-      atSensitiveScreen &&
+      atSensitiveScene &&
       isBeingCaptured &&
       $protectedConf.iosBlurType === ProtectType.SafeTipModal,
     onOk: $protectedConf.onOk,
   };
 }
 function useGlobalSecurityTipForScreenShot() {
-  const { $protectedConf } = useAtSensitiveScreen();
+  const { $protectedConf } = useAtSensitiveScene();
   const onIsScreenshottedJustNow = React.useCallback<
     (Parameters<typeof useIOSScreenshotted>[0] &
       object)['onIsScreenshottedJustNow'] &

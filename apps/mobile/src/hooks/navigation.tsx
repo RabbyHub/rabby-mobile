@@ -29,6 +29,7 @@ import { apisLock } from '@/core/apis';
 import { IS_ANDROID, IS_IOS } from '@/core/native/utils';
 import RNTimeChanged from '@/core/native/RNTimeChanged';
 import { checkMultipleFailed } from '@/core/utils/unlockRateLimit';
+import { useSensitiveGlobalModalsOpened } from '@/components2024/GlobalBottomSheetModal/security';
 
 type NavigationInstance =
   | NativeStackScreenProps<RootStackParamsList>['navigation']
@@ -275,7 +276,6 @@ const PROTECTED_SCREENS: {
   [P in AppRootName]?: ProtectedConf;
 } = {
   [RootNames.CreateMnemonic]: getProtectedConf(),
-  [RootNames.CreateNewAddressThird]: getProtectedConf(),
   [RootNames.ImportMnemonic]: getProtectedConf(),
   [RootNames.ImportPrivateKey]: getProtectedConf(),
   [RootNames.ImportMnemonic2024]: getProtectedConf(),
@@ -290,7 +290,7 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
   const result = {
     $routeName: routeName,
     $protectedConf: { ...defaultProtectedConf },
-    atSensitiveScreen: false,
+    _atSensitiveScreen: false,
   };
 
   if (!routeName || !PROTECTED_SCREENS[routeName]) return result;
@@ -300,26 +300,32 @@ function getAtSensitveScreenInfo(routeName: string | undefined) {
     ...PROTECTED_SCREENS[routeName],
   };
 
-  result.atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
+  result._atSensitiveScreen = !!PROTECTED_SCREENS[routeName];
 
   return result;
 }
 
-export function useAtSensitiveScreen() {
+export function useAtSensitiveScene() {
   const currentRouteName = useAtomValue(currentRouteNameAtom);
+  const { anySensitiveModalOpened } = useSensitiveGlobalModalsOpened();
 
-  return useMemo(
-    () => getAtSensitveScreenInfo(currentRouteName),
-    [currentRouteName],
-  );
+  return useMemo(() => {
+    const srnInfo = getAtSensitveScreenInfo(currentRouteName);
+    return {
+      ...srnInfo,
+      anySensitiveModalOpened,
+      atSensitiveScene: srnInfo._atSensitiveScreen || anySensitiveModalOpened,
+    };
+  }, [currentRouteName, anySensitiveModalOpened]);
 }
 /**
  * @description call this hook only once on the top level of your app
  */
 export function useAppPreventScreenshotOnScreen() {
-  const { atSensitiveScreen, $protectedConf } = useAtSensitiveScreen();
+  const { atSensitiveScene, $protectedConf, anySensitiveModalOpened } =
+    useAtSensitiveScene();
 
-  usePreventScreenshot(atSensitiveScreen);
+  usePreventScreenshot(atSensitiveScene);
 
   const { isBeingCaptured } = useIOSScreenRecording({
     isTop: true,
@@ -331,12 +337,12 @@ export function useAppPreventScreenshotOnScreen() {
     if (!IS_IOS) return;
     if ($protectedConf.iosBlurType === ProtectType.SafeTipModal) return;
 
-    if (isBeingCaptured && atSensitiveScreen) {
+    if (isBeingCaptured && atSensitiveScene) {
       RNScreenshotPrevent.iosProtectFromScreenRecording();
     } else {
       RNScreenshotPrevent.iosUnprotectFromScreenRecording();
     }
-  }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScreen]);
+  }, [$protectedConf.iosBlurType, isBeingCaptured, atSensitiveScene]);
 }
 
 if (__DEV__) {

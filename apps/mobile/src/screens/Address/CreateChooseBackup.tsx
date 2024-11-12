@@ -63,6 +63,7 @@ function MainListBlocks() {
         enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
+      preventScreenshotOnModalOpen: true,
       paramState: state,
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);

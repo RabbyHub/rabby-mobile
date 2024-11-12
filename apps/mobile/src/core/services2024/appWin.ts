@@ -1,6 +1,7 @@
 import {
   CreateParams,
   EVENT_NAMES,
+  MODAL_ID,
   MODAL_NAMES,
   RemoveParams,
 } from '@/components2024/GlobalBottomSheetModal/types';
@@ -13,14 +14,14 @@ const createGlobalBottomSheetModal = <T extends MODAL_NAMES = MODAL_NAMES>(
   params: CreateParams<T>,
 ) => {
   params.name = params.name ?? MODAL_NAMES.APPROVAL;
-  const id = `${params.name}_${uniqueId(`gBm_`)}`;
+  const id = `${params.name}_${uniqueId(`gBm_`)}` as MODAL_ID;
   globalSheetModalEvents.emit(EVENT_NAMES.CREATE, id, params);
 
   return id;
 };
 
 async function removeGlobalBottomSheetModal(
-  id?: string | null,
+  id?: MODAL_ID | null,
   params?: RemoveParams & {
     waitMaxtime?: number;
   },
@@ -54,7 +55,7 @@ const globalBottomSheetModalAddListener = (
   globalSheetModalEvents.on(eventName, callback);
 };
 
-const presentGlobalBottomSheetModal = (key: string) => {
+const presentGlobalBottomSheetModal = (key: MODAL_ID) => {
   globalSheetModalEvents.emit(EVENT_NAMES.PRESENT, key);
 };
 
