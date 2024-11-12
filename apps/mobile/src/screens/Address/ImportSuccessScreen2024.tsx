@@ -46,7 +46,7 @@ import AnimationImportSuccess from '@/assets2024/animations/animation-import-suc
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen2024 = () => {
-  const inputRef = React.useRef(null);
+  const inputRef = React.useRef<TextInput>(null);
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
@@ -172,30 +172,32 @@ export const ImportSuccessScreen2024 = () => {
         Keyboard.dismiss();
       }}>
       <View style={styles.container}>
-        <Lottie
-          source={AnimationImportSuccess}
-          style={[
-            styles.animationLayer /* animationFinished && styles.hideAnimation */,
-          ]}
-          onAnimationFinish={() => {
-            setTimeout(() => {
-              inputRef.current?.focus();
-            }, 500);
-          }}
-          onAnimationFailure={() => {
-            setTimeout(() => {
-              inputRef.current?.focus();
-            }, 500);
-          }}
-          // duration={3000}
-          loop={false}
-          autoPlay
-          {...(__DEV__ &&
-            {
-              // duration: 5000,
-              // loop: true,
-            })}
-        />
+        <View pointerEvents="none" style={styles.animationLayer}>
+          <Lottie
+            source={AnimationImportSuccess}
+            style={[
+              styles.animationLottie /* animationFinished && styles.hideAnimation */,
+            ]}
+            onAnimationFinish={() => {
+              setTimeout(() => {
+                inputRef.current?.focus();
+              }, 500);
+            }}
+            onAnimationFailure={() => {
+              setTimeout(() => {
+                inputRef.current?.focus();
+              }, 500);
+            }}
+            // duration={3000}
+            loop={false}
+            autoPlay
+            {...(__DEV__ &&
+              {
+                // duration: 5000,
+                // loop: true,
+              })}
+          />
+        </View>
         <View style={styles.addressList}>
           {importAddresses.length === 1 ? (
             <View style={styles.itemContainer}>
@@ -316,6 +318,10 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       left: 0,
       right: 0,
       bottom: 0,
+    },
+    animationLottie: {
+      width: '100%',
+      height: '100%',
     },
     hideAnimation: { display: 'none' },
     addressList: {
