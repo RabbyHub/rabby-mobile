@@ -26,7 +26,6 @@ import { AddressNavigator2024 } from './screens/Navigators/AddressNavigator2024'
 import { AddressNavigator } from './screens/Navigators/AddressNavigator';
 import { SettingNavigator } from './screens/Navigators/SettingsNavigator';
 
-import { FavoritePopularDappsScreen } from './screens/Dapps/FavoritePopularDapps';
 import SearchDappsScreen from './screens/Dapps/SearchDapps';
 import { GetStartedNavigator } from './screens/Navigators/GetStartedNavigator';
 import { NFTDetailScreen } from './screens/NftDetail';
@@ -35,7 +34,7 @@ import BottomTabNavigator from './screens/Navigators/BottomTabNavigator';
 
 import {
   AccountNavigatorParamList,
-  FavoritePopularDappsNavigatorParamList,
+  FavoriteDappsNavigatorParamList,
   RootStackParamsList,
   SearchDappsNavigatorParamList,
 } from './navigation-type';
@@ -56,13 +55,14 @@ import { GlobalSecurityTipStubModal } from './components/Security/SecurityTipStu
 import { FloatViewAutoLockCount } from './screens/Settings/components/FloatView';
 import { GlobalBottomSheetModal2024 } from './components2024/GlobalBottomSheetModal/GlobalBottomSheetModal';
 import { TestkitsNavigator } from './screens/Navigators/TestkitsNavigator';
+import { FavoriteDappsScreen } from './screens/Dapps/FavoriteDapps';
 
 const RootStack = createNativeStackNavigator<RootStackParamsList>();
 
 const AccountStack = createNativeStackNavigator<AccountNavigatorParamList>();
 
-const FavoritePopularDappsStack =
-  createNativeStackNavigator<FavoritePopularDappsNavigatorParamList>();
+const FavoriteDappsStack =
+  createNativeStackNavigator<FavoriteDappsNavigatorParamList>();
 
 const SearchDappsStack =
   createNativeStackNavigator<SearchDappsNavigatorParamList>();
@@ -245,8 +245,8 @@ export default function AppNavigation({
             component={AddressNavigator2024}
           />
           <RootStack.Screen
-            name={RootNames.StackFavoritePopularDapps}
-            component={FavoritePopularDappsNavigator}
+            name={RootNames.StackFavoriteDapps}
+            component={FavoriteDappsNavigator}
           />
           <RootStack.Screen
             name={RootNames.StackSearchDapps}
@@ -325,13 +325,13 @@ function AccountNavigator() {
   );
 }
 
-function FavoritePopularDappsNavigator() {
+function FavoriteDappsNavigator() {
   const { mergeScreenOptions } = useStackScreenConfig();
   const colors = useThemeColors();
   // console.log('============== FavoritePopularNavigator Render =========');
 
   return (
-    <FavoritePopularDappsStack.Navigator
+    <FavoriteDappsStack.Navigator
       screenOptions={mergeScreenOptions({
         gestureEnabled: false,
         headerTitleAlign: 'center',
@@ -344,14 +344,14 @@ function FavoritePopularDappsNavigator() {
         },
         headerTintColor: colors['neutral-title-1'],
       })}>
-      <FavoritePopularDappsStack.Screen
-        name={RootNames.FavoritePopularDapps}
-        component={FavoritePopularDappsScreen}
+      <FavoriteDappsStack.Screen
+        name={RootNames.FavoriteDapps}
+        component={FavoriteDappsScreen}
         options={{
-          title: 'Favorite Popular Dapp',
+          title: 'Favorite Dapp',
         }}
       />
-    </FavoritePopularDappsStack.Navigator>
+    </FavoriteDappsStack.Navigator>
   );
 }
 

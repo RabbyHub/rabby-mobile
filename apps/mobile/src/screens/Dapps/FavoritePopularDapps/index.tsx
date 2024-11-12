@@ -77,11 +77,6 @@ export function FavoritePopularDappsScreen(): JSX.Element {
           }}
         />
       </View>
-      <FooterButton
-        width={248}
-        onPress={handleFavorite}
-        title={'Add to Favorites'}
-      />
     </NormalScreenContainer>
   );
 }

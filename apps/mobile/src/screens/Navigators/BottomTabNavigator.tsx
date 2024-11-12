@@ -232,7 +232,7 @@ export default function BottomTabNavigator() {
             },
             headerTitle: 'Dapps',
             headerTransparent: true,
-            headerShown: true,
+            headerShown: false,
             tabBarLabel: ({ focused }) => (
               <BottomTabLabel
                 focused={focused}

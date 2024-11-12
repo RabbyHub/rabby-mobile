@@ -34,8 +34,8 @@ export const RootNames = {
   Points: 'Points',
 
   Dapps: 'Dapps',
-  StackFavoritePopularDapps: 'StackFavoritePopularDapps',
-  FavoritePopularDapps: 'FavoritePopularDapps',
+  StackFavoriteDapps: 'StackFavoriteDapps',
+  FavoriteDapps: 'FavoriteDapps',
   StackSearchDapps: 'StackSearchDapps',
   SearchDapps: 'SearchDapps',
 

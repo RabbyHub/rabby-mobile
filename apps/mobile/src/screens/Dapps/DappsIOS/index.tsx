@@ -1,50 +1,36 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import React, { useMemo } from 'react';
 
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
-import { useThemeStyles } from '@/hooks/theme';
-import { Keyboard, Platform, StyleSheet, View } from 'react-native';
+import { useTheme2024 } from '@/hooks/theme';
+import { Keyboard, View } from 'react-native';
 // import { useRequest } from 'ahooks';
-import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
-import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { RcNextLeftCC } from '@/assets/icons/common';
+import { NextSearchBar } from '@/components2024/SearchBar';
 import { CHAINS_ENUM } from '@/constant/chains';
 import { ScreenLayouts } from '@/constant/layout';
-import { AppColorsVariants } from '@/constant/theme';
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
 import { useDappsHome } from '@/hooks/useDappsHome';
 import { findChainByEnum } from '@/utils/chain';
-import { isPossibleDomain } from '@/utils/url';
+import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { SearchBar } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { DappCardList } from '../Dapps/components/DappCardList';
+import {
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
+import { DappCard } from '../components/DappCard';
+import { DappFavoriteSection } from '../components/DappFavoriteSection/index';
+import { DappHistorySection } from '../components/DappHisotrySection';
 import { useOpenDappView } from '../hooks/useDappView';
+import { useParsePossibleURL } from '../hooks/useParsePossibleURL';
+import { DappSearchEmpty } from '../SearchDapps/components/DappSearchEmpty';
 import { LinkCard } from '../SearchDapps/components/LinkCard';
 import { SearchDappCardList } from '../SearchDapps/components/SearchDappCardList';
-import { SearchEmpty } from '../SearchDapps/components/SearchEmpty';
-import { EmptyDapps } from './components/EmptyDapps';
 
 export function DappsIOSScreen(): JSX.Element {
-  const { styles, colors } = useThemeStyles(getStyles);
-
-  const getHeaderTitle = React.useCallback(() => {
-    return (
-      <HeaderTitleText>
-        {Platform.OS === 'ios' ? 'Explore' : 'Dapps'}
-      </HeaderTitleText>
-    );
-  }, []);
-
-  const { setNavigationOptions } = useSafeSetNavigationOptions();
-  React.useEffect(() => {
-    setNavigationOptions({
-      headerTitle: getHeaderTitle,
-    });
-  }, [setNavigationOptions, getHeaderTitle]);
-
   const {
     dappSections,
     updateFavorite,
@@ -52,17 +38,19 @@ export function DappsIOSScreen(): JSX.Element {
     disconnectDapp,
     dapps,
     addDapp,
+    favoriteApps,
   } = useDappsHome();
   const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
 
   const ref = React.useRef<any>(null);
   const [chain, setChain] = React.useState<CHAINS_ENUM>();
   const [searchText, setSearchText] = React.useState('');
-  const [isFocus, setIsFoucs] = React.useState(false);
+  const [isFocus, setIsFocus] = React.useState(false);
 
   const debouncedSearchValue = useDebounce(searchText, {
     wait: 500,
   });
+  const url = useParsePossibleURL(debouncedSearchValue);
 
   const { data, loading, loadMore } = useInfiniteScroll(
     async d => {
@@ -101,119 +89,118 @@ export function DappsIOSScreen(): JSX.Element {
       },
     },
   );
-  const list = useMemo(() => {
-    return (data?.list || []).map(info => {
+  const { list, currentDapp } = useMemo(() => {
+    const list: DappInfo[] = [];
+    let currentDapp: DappInfo | null = null;
+    (data?.list || []).forEach(info => {
       const origin = stringUtils.ensurePrefix(info.id, 'https://');
       const local = dapps[origin];
 
-      return {
+      const dappInfo = {
         ...local,
         origin,
         info,
-      } as DappInfo;
-    });
-  }, [dapps, data]);
+      };
 
-  const isDomain = isPossibleDomain(debouncedSearchValue);
+      if (origin === url) {
+        currentDapp = dappInfo;
+      } else {
+        list.push(dappInfo);
+      }
+    });
+    return {
+      list,
+      currentDapp,
+    };
+  }, [dapps, data?.list, url]);
+  const { styles, colors2024 } = useTheme2024({
+    getStyle,
+  });
+
+  const navigation = useNavigation();
 
   return (
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <NormalScreenContainer style={styles.page}>
+      <NormalScreenContainer noHeader style={styles.page}>
         <View style={styles.header}>
-          <SearchBar
-            ref={ref}
-            platform="ios"
-            placeholder="Search name or URL"
-            placeholderTextColor={colors['neutral-foot']}
-            containerStyle={styles.searchContainer}
-            inputContainerStyle={[
-              styles.searchInputContainer,
-              isFocus ? styles.searchInputContainerFocus : null,
-            ]}
-            inputStyle={styles.searchInput}
-            searchIcon={
-              <RcIconSearch style={styles.searchIcon} width={16} height={16} />
-            }
-            clearIcon={
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  ref?.current?.clear();
-                }}>
-                <RcIconClose />
-              </TouchableWithoutFeedback>
-            }
+          <TouchableOpacity
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
+            }}>
+            <RcNextLeftCC color={colors2024['neutral-title-1']} />
+          </TouchableOpacity>
+          <NextSearchBar
+            style={styles.searchBar}
+            placeholder="Search Dapp name or URL"
             value={searchText}
             onChangeText={v => {
               setSearchText(v);
               setChain(undefined);
-              // runSearch(v);
-            }}
-            // showCancel
-            showLoading={loading}
-            cancelButtonProps={{
-              buttonTextStyle: styles.cancelButton,
-            }}
-            // onClear={() => {
-            //   setSearchText('');
-            // }}
-            onCancel={() => {
-              // navigation.goBack();
             }}
             onFocus={() => {
-              setIsFoucs(true);
+              setIsFocus(true);
             }}
             onBlur={() => {
-              setIsFoucs(false);
+              setIsFocus(false);
             }}
           />
         </View>
         {!isFocus && !searchText ? (
           <View style={styles.container}>
-            <DappCardList
-              data={dappSections[1]?.data}
-              onPress={dapp => {
-                openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
-              }}
-              onFavoritePress={dapp => {
-                updateFavorite(dapp.origin, !dapp.isFavorite);
-              }}
-              ListEmptyComponent={EmptyDapps}
+            <DappHistorySection
+              style={{ height: '100%' }}
+              data={favoriteApps}
+              HeaderComponent={<DappFavoriteSection data={favoriteApps} />}
             />
           </View>
         ) : (
           <View style={styles.container}>
             {debouncedSearchValue ? (
               <>
-                <LinkCard
-                  url={debouncedSearchValue}
-                  onPress={generalUrl => {
-                    // TODO: should we validate the url?
-                    openUrlAsDapp(generalUrl, { showSheetModalFirst: true });
-                    Keyboard.dismiss();
-                  }}
-                />
-                <SearchDappCardList
-                  chain={chain}
-                  onChainChange={setChain}
-                  onEndReached={loadMore}
-                  data={list}
-                  loading={loading}
-                  empty={<SearchEmpty isDomain={isDomain} />}
-                  total={data?.page?.total}
-                  onPress={dapp => {
-                    openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
-                    Keyboard.dismiss();
-                  }}
-                  onFavoritePress={dapp => {
-                    addDapp({
-                      ...dapp,
-                      isFavorite: !dapp.isFavorite,
-                    });
-                  }}
-                />
+                {url ? (
+                  currentDapp ? (
+                    <View style={styles.sectionTop}>
+                      <DappCard data={currentDapp} isShowDesc />
+                    </View>
+                  ) : (
+                    <LinkCard
+                      url={url}
+                      onPress={generalUrl => {
+                        // TODO: should we validate the url?
+                        openUrlAsDapp(generalUrl, {
+                          showSheetModalFirst: true,
+                        });
+                        Keyboard.dismiss();
+                      }}
+                    />
+                  )
+                ) : null}
+                {list?.length ? (
+                  <SearchDappCardList
+                    chain={chain}
+                    onChainChange={setChain}
+                    onEndReached={loadMore}
+                    data={list}
+                    loading={loading}
+                    total={data?.page?.total}
+                    onPress={dapp => {
+                      openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
+                      Keyboard.dismiss();
+                    }}
+                    onFavoritePress={dapp => {
+                      addDapp({
+                        ...dapp,
+                        isFavorite: !dapp.isFavorite,
+                      });
+                    }}
+                  />
+                ) : null}
+                {!url && !list?.length && !loading ? <DappSearchEmpty /> : null}
               </>
             ) : null}
           </View>
@@ -223,55 +210,27 @@ export function DappsIOSScreen(): JSX.Element {
   );
 }
 
-const getStyles = (colors: AppColorsVariants) =>
-  StyleSheet.create({
-    page: {
-      backgroundColor: colors['neutral-bg-2'],
-    },
-    container: {
-      flex: 1,
-      paddingBottom: ScreenLayouts.bottomBarHeight + 12,
-    },
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  page: {},
+  container: {
+    flex: 1,
+    paddingBottom: ScreenLayouts.bottomBarHeight + 12,
+    paddingTop: 24,
+  },
 
-    searchContainer: {
-      backgroundColor: 'transparent',
-      paddingVertical: 6,
-      paddingHorizontal: 0,
-      marginRight: 0,
-    },
-    searchInputContainer: {
-      backgroundColor: colors['neutral-card-1'],
-      borderRadius: 8,
-      borderWidth: 0.5,
-      borderBottomWidth: 0.5, // don't delete
-      borderColor: colors['neutral-line'],
-      height: 50,
-      marginLeft: 0,
-      paddingRight: 0,
-      marginRight: 0,
-    },
-    searchInputContainerFocus: {
-      borderColor: colors['blue-default'],
-      marginRight: 58,
-    },
-    searchInput: {
-      color: colors['neutral-title-1'],
-      fontSize: 14,
-      lineHeight: undefined,
-    },
-    searchIcon: {
-      width: 16,
-      height: 16,
-      color: colors['neutral-foot'],
-      marginLeft: 6,
-    },
-    cancelButton: {
-      fontSize: 14,
-      lineHeight: 17,
-      color: colors['blue-default'],
-      paddingRight: 0,
-    },
-    header: {
-      paddingHorizontal: 20,
-    },
-  });
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+  },
+  searchBar: {
+    flex: 1,
+  },
+  sectionTop: {
+    paddingHorizontal: 20,
+    // marginBottom: 24,
+  },
+}));

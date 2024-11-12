@@ -1,30 +1,16 @@
-import { DappInfo } from '@/core/services/dappService';
 import { useThemeColors } from '@/hooks/theme';
+import { DappInfo } from '@/core/services/dappService';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
 
-export const DappCardList = ({
+export const FavoriteDappCardList = ({
   data,
   onPress,
-  onFavoritePress,
-  ListEmptyComponent,
-  ListHeaderComponent,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
-  onFavoritePress?: (dapp: DappInfo) => void;
-  ListHeaderComponent?:
-    | React.ComponentType<any>
-    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-    | null
-    | undefined;
-  ListEmptyComponent?:
-    | React.ComponentType<any>
-    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-    | null
-    | undefined;
 }) => {
   const colors = useThemeColors();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
@@ -40,13 +26,17 @@ export const DappCardList = ({
             <DappCard
               data={item}
               onPress={onPress}
-              onFavoritePress={onFavoritePress}
+              onFavoritePress={onPress}
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                borderColor: item.isFavorite
+                  ? colors['blue-default']
+                  : 'transparent',
+              }}
             />
           </View>
         );
       }}
-      ListHeaderComponent={ListHeaderComponent}
-      ListEmptyComponent={ListEmptyComponent}
     />
   );
 };
@@ -54,8 +44,14 @@ export const DappCardList = ({
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     list: {
-      marginBottom: 20,
       paddingHorizontal: 20,
+    },
+    listHeader: {
+      fontSize: 14,
+      lineHeight: 17,
+      color: colors['neutral-foot'],
+      paddingBottom: 8,
+      paddingTop: 12,
     },
     listItem: {
       marginBottom: 12,

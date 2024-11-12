@@ -1,13 +1,9 @@
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
-import { isPossibleDomain } from '@/utils/url';
-import React, { useMemo } from 'react';
+import { RcIconGlobeCC, RcIconJumpCC } from '@/assets/icons/dapp';
+import { useTheme2024 } from '@/hooks/theme';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
 import { StyleProp, Text, ViewStyle } from 'react-native';
-import RcIconGlobe from '@/assets/icons/dapp/icon-globe.svg';
-import RcIconJump from '@/assets/icons/dapp/icon-jump.svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { isOrHasWithAllowedProtocol } from '@/constant/dappView';
-import { createGetStyles } from '@/utils/styles';
-import { stringUtils, urlUtils } from '@rabby-wallet/base-utils';
 
 export const LinkCard = ({
   url,
@@ -18,31 +14,20 @@ export const LinkCard = ({
   style?: StyleProp<ViewStyle>;
   onPress?: (origin: string) => void;
 }) => {
-  const { styles } = useThemeStyles(getStyles);
+  const { styles, colors2024 } = useTheme2024({
+    getStyle,
+  });
 
-  const _url = useMemo(() => {
-    const str = url.trim().toLowerCase();
-    if (!str) return null;
-    const parsedResult = urlUtils.safeParseURL(str);
-    if (
-      parsedResult?.protocol &&
-      !isOrHasWithAllowedProtocol(parsedResult?.protocol)
-    )
-      return null;
-
-    if (isPossibleDomain(str)) return stringUtils.ensurePrefix(str, 'https://');
-  }, [url]);
-
-  if (_url) {
+  if (url) {
     return (
       <TouchableOpacity
-        onPress={() => onPress?.(_url)}
+        onPress={() => onPress?.(url)}
         style={[styles.card, style]}>
-        <RcIconGlobe />
+        <RcIconGlobeCC color={colors2024['neutral-info']} />
         <Text style={styles.text} numberOfLines={1}>
-          {_url}
+          {url}
         </Text>
-        <RcIconJump />
+        <RcIconJumpCC color={colors2024['neutral-body']} />
       </TouchableOpacity>
     );
   }
@@ -50,24 +35,23 @@ export const LinkCard = ({
   return null;
 };
 
-const getStyles = createGetStyles(
-  (colors: ReturnType<typeof useThemeColors>) => ({
-    card: {
-      flexDirection: 'row',
-      gap: 6,
-      alignItems: 'center',
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      backgroundColor: colors['neutral-card-1'],
-      borderRadius: 8,
-      marginHorizontal: 20,
-      marginBottom: 20,
-    },
-    text: {
-      flex: 1,
-      fontSize: 14,
-      lineHeight: 17,
-      color: colors['neutral-body'],
-    },
-  }),
-);
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors2024['neutral-bg-1'],
+    padding: 24,
+    borderWidth: 1,
+    borderColor: colors2024['neutral-line'],
+    gap: 8,
+    borderRadius: 30,
+  },
+  text: {
+    flex: 1,
+    color: colors2024['brand-default'],
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+}));

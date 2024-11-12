@@ -2,35 +2,24 @@ import React, { useMemo, useState } from 'react';
 
 import RcIconClose from '@/assets/icons/dapp/icon-close-circle.svg';
 import RcIconSearch from '@/assets/icons/dapp/icon-search.svg';
+import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
+import { CHAINS_ENUM } from '@/constant/chains';
 import { ScreenLayouts } from '@/constant/layout';
 import { openapi } from '@/core/request';
 import { DappInfo } from '@/core/services/dappService';
 import { useThemeStyles } from '@/hooks/theme';
 import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
+import { createGetStyles } from '@/utils/styles';
 import { isPossibleDomain } from '@/utils/url';
-import { CHAINS_ENUM } from '@/constant/chains';
 import { stringUtils } from '@rabby-wallet/base-utils';
-import { useNavigation } from '@react-navigation/native';
 import { SearchBar } from '@rneui/themed';
 import { useDebounce, useInfiniteScroll } from 'ahooks';
-import {
-  Keyboard,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
-import {
-  useActiveViewSheetModalRefs,
-  useOpenDappView,
-  useOpenUrlView,
-} from '../hooks/useDappView';
+import { Keyboard, TouchableWithoutFeedback, View } from 'react-native';
+import { useOpenDappView } from '../hooks/useDappView';
 import { LinkCard } from './components/LinkCard';
 import { SearchDappCardList } from './components/SearchDappCardList';
-import { SearchEmpty } from './components/SearchEmpty';
 import { SearchSuggest } from './components/SearchSuggest';
-import { createGetStyles } from '@/utils/styles';
-import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 
 export function SearchDappsScreen(): JSX.Element {
   const { colors, styles } = useThemeStyles(getStyles);
@@ -178,7 +167,6 @@ export function SearchDappsScreen(): JSX.Element {
               onEndReached={loadMore}
               data={list}
               loading={loading}
-              empty={<SearchEmpty isDomain={isDomain} />}
               total={data?.page?.total}
               onPress={dapp => {
                 openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });

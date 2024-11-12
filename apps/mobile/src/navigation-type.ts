@@ -21,7 +21,7 @@ export type RootStackParamsList = {
   [RootNames.StackTransaction]: NavigatorScreenParams<TransactionNavigatorParamList>;
   [RootNames.StackAddress]: NavigatorScreenParams<AddressNavigatorParamList>;
   [RootNames.StackAddress2024]: NavigatorScreenParams<AddressNavigatorParamList>;
-  [RootNames.StackFavoritePopularDapps]: NavigatorScreenParams<FavoritePopularDappsNavigatorParamList>;
+  [RootNames.StackFavoriteDapps]: NavigatorScreenParams<FavoriteDappsNavigatorParamList>;
   [RootNames.StackSearchDapps]: NavigatorScreenParams<SearchDappsNavigatorParamList>;
   [RootNames.StackTestkits]: NavigatorScreenParams<TestKitsNavigatorParamsList>;
   [RootNames.NftDetail]?: {};
@@ -169,8 +169,8 @@ export type SettingNavigatorParamList = {
   };
 };
 
-export type FavoritePopularDappsNavigatorParamList = {
-  [RootNames.FavoritePopularDapps]?: {};
+export type FavoriteDappsNavigatorParamList = {
+  [RootNames.FavoriteDapps]?: {};
 };
 
 export type SearchDappsNavigatorParamList = {

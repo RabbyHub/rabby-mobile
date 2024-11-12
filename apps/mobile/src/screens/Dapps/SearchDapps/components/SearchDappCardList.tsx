@@ -1,29 +1,23 @@
 import RcIconClose from '@/assets/icons/dapp/icon-close.svg';
-import RcIconDropdown from '@/assets/icons/dapp/icon-dropdown.svg';
-import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
+import RcIconRight from '@/assets/icons/dapp/icon-right.svg';
 import {
   createGlobalBottomSheetModal,
   removeGlobalBottomSheetModal,
 } from '@/components/GlobalBottomSheetModal';
-import { useThemeColors } from '@/hooks/theme';
-import { findChainByEnum } from '@/utils/chain';
+import { MODAL_NAMES } from '@/components/GlobalBottomSheetModal/types';
 import { CHAINS_ENUM } from '@/constant/chains';
-import React, { ReactNode } from 'react';
-import {
-  Image,
-  Keyboard,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { DappInfo } from '@/core/services/dappService';
+import { useTheme2024 } from '@/hooks/theme';
+import { findChainByEnum } from '@/utils/chain';
+import { createGetStyles2024 } from '@/utils/styles';
+import React from 'react';
+import { Image, Keyboard, Platform, Text, View } from 'react-native';
 import {
   FlatList,
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappCard } from '../../components/DappCard';
-import { DappInfo } from '@/core/services/dappService';
 
 export const SearchDappCardList = ({
   data,
@@ -34,7 +28,6 @@ export const SearchDappCardList = ({
   chain,
   onChainChange,
   loading,
-  empty,
 }: {
   data: DappInfo[];
   onPress?: (dapp: DappInfo) => void;
@@ -44,15 +37,11 @@ export const SearchDappCardList = ({
   chain?: CHAINS_ENUM;
   onChainChange?: (chain?: CHAINS_ENUM) => void;
   loading?: boolean;
-  empty?: ReactNode;
 }) => {
-  const colors = useThemeColors();
-  const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const { styles } = useTheme2024({ getStyle });
   const chainInfo = React.useMemo(() => {
     return findChainByEnum(chain);
   }, [chain]);
-
-  const isEmpty = !loading && !total;
 
   const activeSelectChainPopup = () => {
     const id = createGlobalBottomSheetModal({
@@ -103,16 +92,14 @@ export const SearchDappCardList = ({
               </TouchableWithoutFeedback>
             </View>
           ) : (
-            <View className="flex-row items-center gap-[2]">
+            <View style={styles.selectChain}>
               <Text style={styles.selectChainText}>Select Chain</Text>
-              <RcIconDropdown />
+              <RcIconRight />
             </View>
           )}
         </TouchableOpacity>
       </View>
-      {isEmpty ? (
-        empty
-      ) : (
+      {loading ? null : (
         <FlatList
           data={data}
           style={styles.list}
@@ -126,6 +113,7 @@ export const SearchDappCardList = ({
                   data={item}
                   onFavoritePress={onFavoritePress}
                   onPress={onPress}
+                  isShowDesc
                 />
               </View>
             );
@@ -136,38 +124,40 @@ export const SearchDappCardList = ({
   );
 };
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
-    list: {
-      paddingHorizontal: 20,
-      flex: 1,
-    },
-    listHeader: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      height: 32,
-      marginBottom: 8,
-      paddingHorizontal: 20,
-    },
-    listHeaderText: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-foot'],
-    },
-    listHeaderTextStrong: {
-      fontSize: 13,
-      lineHeight: 16,
-      color: colors['neutral-body'],
-      fontWeight: '500',
-    },
-    listItem: {
-      marginBottom: 12,
-    },
-    selectChainText: {
-      color: colors['neutral-body'],
-      fontSize: 13,
-      lineHeight: 16,
-      fontWeight: '500',
-    },
-  });
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  list: {
+    paddingHorizontal: 20,
+    flex: 1,
+  },
+  listHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  listHeaderText: {
+    fontSize: 20,
+    lineHeight: 24,
+    color: colors2024['neutral-title-1'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '700',
+  },
+  listHeaderTextStrong: {},
+  listItem: {
+    marginBottom: 12,
+  },
+  selectChain: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  selectChainText: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors2024['neutral-secondary'],
+    fontFamily: 'SF Pro Rounded',
+    fontWeight: '500',
+  },
+}));

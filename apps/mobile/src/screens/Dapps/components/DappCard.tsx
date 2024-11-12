@@ -229,8 +229,8 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 16,
     borderRadius: 16,
     position: 'absolute',
-    right: -2,
-    bottom: -2,
+    right: 0,
+    bottom: -2.5,
   },
   listBy: {
     flexDirection: 'row',

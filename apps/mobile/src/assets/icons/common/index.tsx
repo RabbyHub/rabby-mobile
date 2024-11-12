@@ -19,6 +19,8 @@ export { default as RcIconLogoBlue } from './logo-blue.svg';
 export { default as IconCheckCC } from './check-cc.svg';
 export { default as IconRabbyWalletLogo } from './rabby-wallet-logo.svg';
 export { default as RcSearchCC } from './search-cc.svg';
+export { default as RcNextSearchCC } from './next-search-cc.svg';
+export { default as RcNextLeftCC } from './next-left-cc.svg';
 
 export { default as RcIconCheckedFilledCC } from './icon-checked-filled-cc.svg';
 export { default as RcIconCheckedCC } from './icon-checked-cc.svg';
