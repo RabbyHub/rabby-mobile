@@ -11,6 +11,7 @@ import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useAliasNameEditModal } from '../AliasNameEditModal/useAliasNameEditModal';
 import { useAddressDetailModal } from '@/screens/Address/useAddressDetailModal';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 export interface Props {
   type: 'address' | 'watch-address' | 'safe-address';
@@ -49,8 +50,9 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
   const showAddressDetail = useAddressDetailModal();
 
   return (
-    <View style={styles.root}>
+    <BottomSheetScrollView style={styles.root}>
       <FlatList
+        style={styles.list}
         data={accountList}
         keyExtractor={item => `${item.address}-${item.type}-${item.brandName}`}
         ItemSeparatorComponent={ItemSeparatorComponent}
@@ -99,15 +101,16 @@ export const AddressQuickManager: React.FC<Props> = ({ type, onCancel }) => {
           </View>
         )}
       />
-    </View>
+    </BottomSheetScrollView>
   );
 };
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     paddingHorizontal: 16,
-    paddingTop: 30,
-    paddingBottom: 30,
+  },
+  list: {
+    marginBottom: 56,
   },
   addressItem: {
     borderRadius: 30,
