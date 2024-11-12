@@ -7,6 +7,7 @@ import { dappService } from '@/core/services/shared';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { dappsAtom } from '@/core/storage/serviceStoreStub';
 import { apisDapp } from '@/core/apis';
+import { useMemoizedFn } from 'ahooks';
 
 export function useDapps() {
   const [dapps, setDapps] = useAtom(dappsAtom);
@@ -59,9 +60,17 @@ export function useDapps() {
     [dapps],
   );
 
+  const setDapp = useMemoizedFn((data: DappInfo) => {
+    dappService.addDapp({
+      ...dappService.getDapp(data.origin),
+      ...data,
+    });
+  });
+
   return {
     dapps,
     getDapps,
+    setDapp,
     addDapp,
     updateFavorite,
     removeDapp,

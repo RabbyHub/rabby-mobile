@@ -16,7 +16,7 @@ import { findChainByEnum } from '@/utils/chain';
 import { createGetStyles2024 } from '@/utils/styles';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useNavigation } from '@react-navigation/native';
-import { useDebounce, useInfiniteScroll } from 'ahooks';
+import { useDebounce, useInfiniteScroll, useMemoizedFn } from 'ahooks';
 import {
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -29,16 +29,19 @@ import { useParsePossibleURL } from '../hooks/useParsePossibleURL';
 import { DappSearchEmpty } from '../SearchDapps/components/DappSearchEmpty';
 import { LinkCard } from '../SearchDapps/components/LinkCard';
 import { SearchDappCardList } from '../SearchDapps/components/SearchDappCardList';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 
 export function DappsIOSScreen(): JSX.Element {
   const {
-    dappSections,
+    browserHistoryList,
     updateFavorite,
     removeDapp,
     disconnectDapp,
     dapps,
     addDapp,
     favoriteApps,
+    setBrowserHistory,
+    setDapp,
   } = useDappsHome();
   const { openUrlAsDapp, closeOpenedDapp } = useOpenDappView();
 
@@ -119,12 +122,26 @@ export function DappsIOSScreen(): JSX.Element {
 
   const navigation = useNavigation();
 
+  const handleOpenURL = useMemoizedFn((url: string) => {
+    openUrlAsDapp(url, {
+      showSheetModalFirst: true,
+    });
+    setBrowserHistory(safeGetOrigin(url));
+  });
+
+  const handleFavoriteDapp = dapp => {
+    setDapp({
+      ...dapp,
+      isFavorite: !dapp.isFavorite,
+    });
+  };
+
   return (
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <NormalScreenContainer noHeader style={styles.page}>
+      <NormalScreenContainer noHeader overwriteStyle={styles.page}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
@@ -154,8 +171,19 @@ export function DappsIOSScreen(): JSX.Element {
           <View style={styles.container}>
             <DappHistorySection
               style={{ height: '100%' }}
-              data={favoriteApps}
-              HeaderComponent={<DappFavoriteSection data={favoriteApps} />}
+              data={browserHistoryList}
+              onPress={dapp => {
+                handleOpenURL(dapp.origin);
+              }}
+              onFavoritePress={handleFavoriteDapp}
+              HeaderComponent={
+                <DappFavoriteSection
+                  data={favoriteApps}
+                  onPress={dapp => {
+                    handleOpenURL(dapp.origin);
+                  }}
+                />
+              }
             />
           </View>
         ) : (
@@ -165,19 +193,17 @@ export function DappsIOSScreen(): JSX.Element {
                 {url ? (
                   currentDapp ? (
                     <View style={styles.sectionTop}>
-                      <DappCard data={currentDapp} isShowDesc />
+                      <DappCard
+                        data={currentDapp}
+                        isShowDesc
+                        onFavoritePress={handleFavoriteDapp}
+                        onPress={dapp => {
+                          handleOpenURL(dapp.origin);
+                        }}
+                      />
                     </View>
                   ) : (
-                    <LinkCard
-                      url={url}
-                      onPress={generalUrl => {
-                        // TODO: should we validate the url?
-                        openUrlAsDapp(generalUrl, {
-                          showSheetModalFirst: true,
-                        });
-                        Keyboard.dismiss();
-                      }}
-                    />
+                    <LinkCard url={url} onPress={handleOpenURL} />
                   )
                 ) : null}
                 {list?.length ? (
@@ -189,15 +215,9 @@ export function DappsIOSScreen(): JSX.Element {
                     loading={loading}
                     total={data?.page?.total}
                     onPress={dapp => {
-                      openUrlAsDapp(dapp.origin, { showSheetModalFirst: true });
-                      Keyboard.dismiss();
+                      handleOpenURL(dapp.origin);
                     }}
-                    onFavoritePress={dapp => {
-                      addDapp({
-                        ...dapp,
-                        isFavorite: !dapp.isFavorite,
-                      });
-                    }}
+                    onFavoritePress={handleFavoriteDapp}
                   />
                 ) : null}
                 {!url && !list?.length && !loading ? <DappSearchEmpty /> : null}
@@ -211,7 +231,9 @@ export function DappsIOSScreen(): JSX.Element {
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  page: {},
+  page: {
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     paddingBottom: ScreenLayouts.bottomBarHeight + 12,

@@ -4,21 +4,20 @@ import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { StyleProp, Text, View, ViewStyle } from 'react-native';
-import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
 import { DappCardList } from '../../Dapps/components/DappCardList';
+import { DappHistorySectionEmpty } from './DappHistorySectionEmpty';
 
 export const DappHistorySection = ({
   HeaderComponent,
   data,
   style,
+  onPress,
+  onFavoritePress,
 }: {
   data: DappInfo[];
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
-  isActive?: boolean;
-
-  isShowDesc?: boolean;
   HeaderComponent?:
     | React.ComponentType<any>
     | React.ReactElement<any, string | React.JSXElementConstructor<any>>
@@ -33,6 +32,8 @@ export const DappHistorySection = ({
     <View style={[styles.container, style]}>
       <DappCardList
         data={data}
+        onPress={onPress}
+        onFavoritePress={onFavoritePress}
         ListHeaderComponent={
           <>
             {HeaderComponent}
