@@ -168,6 +168,8 @@ export function AddressNavigator() {
         options={{
           title: 'Added successfully',
           headerTintColor: colors['neutral-title-2'],
+          // FIXME: not work
+          gestureEnabled: false,
         }}
       />
       <AddressStack.Screen

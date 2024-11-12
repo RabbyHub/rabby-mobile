@@ -112,11 +112,14 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
               value: password,
               secureTextEntry: true,
               inputMode: 'text',
-              placeholder: t('page.createPassword.passwordPlaceholder'),
               placeholderTextColor: colors2024['neutral-foot'],
               onChangeText: v => {
                 setPassword(v);
-                setError('');
+                setError(
+                  v?.length < 8
+                    ? t('page.createPassword.passwordPlaceholder')
+                    : '',
+                );
               },
             }}
             hasError={Boolean(error)}

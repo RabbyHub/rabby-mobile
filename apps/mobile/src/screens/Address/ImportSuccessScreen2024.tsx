@@ -8,6 +8,7 @@ import {
   useNavigationState,
 } from '@react-navigation/native';
 import React, { useCallback } from 'react';
+
 import {
   Dimensions,
   Keyboard,
@@ -21,7 +22,7 @@ import {
 } from 'react-native';
 
 import { Card } from '@/components2024/Card';
-import FireIcon from '@/assets2024/icons/common/party-fire.svg';
+import { NextInput } from '@/components2024/Form/Input';
 import { useAccounts, useCurrentAccount } from '@/hooks/account';
 import { addressUtils } from '@rabby-wallet/base-utils';
 import { RootStackParamsList } from '@/navigation-type';
@@ -108,9 +109,11 @@ export const ImportSuccessScreen2024 = () => {
     setImportAddresses(
       addresses.map(address => ({
         address,
-        aliasName: state?.alias
-          ? state?.alias
-          : contactService.getAliasByAddress(address)?.alias || '',
+        aliasName:
+          state?.alias ||
+          contactService.getAliasByAddress(address)?.alias ||
+          ellipsisAddress(address || '') ||
+          '',
       })),
     );
 
@@ -193,24 +196,30 @@ export const ImportSuccessScreen2024 = () => {
                 height={100}
                 style={styles.icon}
               />
-              <TextInput
-                editable={!state?.isFirstCreate}
-                style={styles.inputInner}
-                value={importAddresses?.[0]?.aliasName || ''}
-                placeholder={ellipsisAddress(
-                  importAddresses?.[0]?.address || '',
-                )}
-                placeholderTextColor={colors2024['neutral-info']}
-                onChange={nativeEvent => {
-                  const _aliasName = nativeEvent.nativeEvent.text;
-                  const newImportAddresses = [...importAddresses];
-                  newImportAddresses[0] = {
-                    address: importAddresses?.[0]?.address || '',
-                    aliasName: _aliasName,
-                  };
-                  setImportAddresses(newImportAddresses);
+              <NextInput
+                containerStyle={styles.inputContainer}
+                inputStyle={styles.inputInner}
+                inputProps={{
+                  showSoftInputOnFocus: false,
+                  editable: !state?.isFirstCreate,
+                  value: importAddresses?.[0]?.aliasName || '',
+                  inputMode: 'text',
+                  returnKeyType: 'done',
+                  textAlign: 'center',
+                  placeholder: ellipsisAddress(
+                    importAddresses?.[0]?.address || '',
+                  ),
+                  blurOnSubmit: true,
+                  placeholderTextColor: colors2024['neutral-info'],
+                  onChangeText(text) {
+                    const newImportAddresses = [...importAddresses];
+                    newImportAddresses[0] = {
+                      address: importAddresses?.[0]?.address || '',
+                      aliasName: text,
+                    };
+                    setImportAddresses(newImportAddresses);
+                  },
                 }}
-                blurOnSubmit
               />
               <WalletAddress address={importAddresses?.[0]?.address || ''} />
               {state?.supportChainList?.length ? (
@@ -322,6 +331,14 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       color: colors2024['neutral-secondary'],
       fontFamily: 'SF Pro Rounded',
     },
+    inputContainer: {
+      width: '100%',
+      height: 72,
+      padding: 0,
+      margin: 0,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+    },
     inputInner: {
       width: '100%',
       marginTop: 15,
@@ -344,6 +361,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       fontSize: 20,
       lineHeight: 24,
       textAlign: 'center',
+      fontFamily: 'SF Pro Rounded',
       color: colors2024['brand-default'],
     },
     btnContainer: {
