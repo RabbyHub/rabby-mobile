@@ -64,7 +64,9 @@ export const Button = ({
       },
       ghost: {
         bg: colors2024['neutral-bg-1'],
-        currentColor: colors2024['brand-default'],
+        currentColor: disabled
+          ? colors2024['brand-disable']
+          : colors2024['brand-default'],
       },
     };
     return {
@@ -72,7 +74,7 @@ export const Button = ({
         colorMap[type].currentColor || colors2024['neutral-InvertHighlight'],
       bgColor: colorMap[type].bg || colors2024['blue-default'],
     };
-  }, [type, colors2024]);
+  }, [colors2024, disabled, type]);
 
   const handleOnPress = useCallback(
     (evt: any) => {
@@ -113,10 +115,13 @@ export const Button = ({
         borderWidth: 1,
       },
       buttonStyle,
-      isDisabled && {
-        // TODO: disable for ghost
-        backgroundColor: colors2024['brand-disable'],
-      },
+      isDisabled && type === 'ghost'
+        ? {
+            borderColor: colors2024['brand-disable'],
+          }
+        : {
+            backgroundColor: colors2024['brand-disable'],
+          },
     ]);
   }, [disabled, bgColor, styles.button, buttonStyle, type, colors2024]);
 
