@@ -46,6 +46,7 @@ import AnimationImportSuccess from '@/assets2024/animations/animation-import-suc
 type ImportSuccessScreenProps = NativeStackScreenProps<RootStackParamsList>;
 
 export const ImportSuccessScreen2024 = () => {
+  const inputRef = React.useRef(null);
   const { styles, colors2024 } = useTheme2024({ getStyle });
 
   const { accounts, fetchAccounts } = useAccounts({ disableAutoFetch: true });
@@ -176,8 +177,16 @@ export const ImportSuccessScreen2024 = () => {
           style={[
             styles.animationLayer /* animationFinished && styles.hideAnimation */,
           ]}
-          // onAnimationFinish={() => { setAnimationFinished(true) }}
-          // onAnimationFailure={() => { setAnimationFinished(true) }}
+          onAnimationFinish={() => {
+            setTimeout(() => {
+              inputRef.current?.focus();
+            }, 500);
+          }}
+          onAnimationFailure={() => {
+            setTimeout(() => {
+              inputRef.current?.focus();
+            }, 500);
+          }}
           // duration={3000}
           loop={false}
           autoPlay
@@ -199,6 +208,7 @@ export const ImportSuccessScreen2024 = () => {
               <NextInput
                 containerStyle={styles.inputContainer}
                 inputStyle={styles.inputInner}
+                ref={inputRef}
                 inputProps={{
                   showSoftInputOnFocus: false,
                   editable: !state?.isFirstCreate,
@@ -241,6 +251,7 @@ export const ImportSuccessScreen2024 = () => {
                       <TextInput
                         style={styles.listInput}
                         value={item.aliasName}
+                        ref={index === 0 ? inputRef : null}
                         onChange={nativeEvent => {
                           const _aliasName = nativeEvent.nativeEvent.text;
                           const newImportAddresses = [...importAddresses];
@@ -300,6 +311,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => {
       //   backgroundColor: 'blue',
       // }),
       position: 'absolute',
+      zIndex: 999,
       top: 0,
       left: 0,
       right: 0,
