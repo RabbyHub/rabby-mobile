@@ -11,6 +11,7 @@ import React from 'react';
 import { isAddress } from 'web3-utils';
 import dayjs from 'dayjs';
 import { Skeleton } from '@rneui/themed';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
@@ -182,12 +183,34 @@ export const BackupItemSkeleton = () => {
 
   return (
     <Card style={styles.card}>
-      <Skeleton height={29} skeletonStyle={styles.header} />
+      <Skeleton
+        height={29}
+        animation="wave"
+        circle
+        skeletonStyle={styles.header}
+        LinearGradientComponent={LinearGradient}
+      />
       <View style={styles.main}>
-        <Skeleton circle width={47} height={47} />
+        <Skeleton
+          circle
+          LinearGradientComponent={LinearGradient}
+          animation="wave"
+          width={47}
+          height={47}
+        />
         <View style={styles.section}>
-          <Skeleton height={19} />
-          <Skeleton height={19} />
+          <Skeleton
+            LinearGradientComponent={LinearGradient}
+            animation="wave"
+            circle
+            height={19}
+          />
+          <Skeleton
+            LinearGradientComponent={LinearGradient}
+            animation="wave"
+            circle
+            height={19}
+          />
         </View>
       </View>
     </Card>
