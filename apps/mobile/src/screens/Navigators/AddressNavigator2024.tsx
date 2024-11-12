@@ -10,12 +10,22 @@ import CreateSelectMethod from '../Address/CreateSelectMethod';
 import SetPassword2024 from '../Address/SetPassword2024';
 import CreateSelectOnCurrentSeed from '../Address/CreateSelectOnCurrentSeed/index';
 import CreateChooseBackup from '../Address/CreateChooseBackup';
+import { createGetStyles2024 } from '@/utils/styles';
 
 const AddressStack = createCustomNativeStackNavigator();
 
+const getStyle = createGetStyles2024(({ colors2024 }) => ({
+  headerTitleText: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
+  },
+}));
+
 export function AddressNavigator2024() {
   const { mergeScreenOptions } = useStackScreenConfig();
-  const { colors2024 } = useTheme2024();
+  const { colors2024, styles } = useTheme2024({ getStyle });
   // console.log('============== SettingNavigator Render =========');
 
   return (
@@ -27,11 +37,7 @@ export function AddressNavigator2024() {
           backgroundColor: 'transparent',
         },
         headerTintColor: colors2024['neutral-title-1'],
-        headerTitleStyle: {
-          color: colors2024['neutral-title-1'],
-          fontWeight: '500',
-          fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-        },
+        headerTitleStyle: styles.headerTitleText,
         headerTitle: '',
       })}>
       {/* 2024新组件改版 */}
@@ -46,12 +52,7 @@ export function AddressNavigator2024() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -65,12 +66,7 @@ export function AddressNavigator2024() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -84,12 +80,7 @@ export function AddressNavigator2024() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -103,12 +94,7 @@ export function AddressNavigator2024() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -122,12 +108,7 @@ export function AddressNavigator2024() {
             backgroundColor: colors2024['neutral-bg-1'],
           },
           headerTintColor: colors2024['neutral-title-1'],
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
     </AddressStack.Navigator>

@@ -67,11 +67,11 @@ function MainListBlocks() {
 
   const getHeaderTitle = React.useCallback(() => {
     return (
-      <HeaderTitleText>
+      <HeaderTitleText style={styles.title}>
         {state?.title || '1. Name Your Address'}
       </HeaderTitleText>
     );
-  }, [state?.title]);
+  }, [state?.title, styles.title]);
 
   React.useEffect(() => {
     setNavigationOptions({
@@ -327,6 +327,13 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
     textAlign: 'center',
+  },
+  title: {
+    color: colors2024['neutral-title-1'],
+    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: 'SF Pro Rounded',
+    lineHeight: 24,
   },
 }));
 

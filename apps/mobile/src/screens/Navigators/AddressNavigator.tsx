@@ -4,10 +4,8 @@ import React from 'react';
 import { useStackScreenConfig } from '@/hooks/navigation';
 import { useTheme2024, useThemeColors } from '@/hooks/theme';
 import { createCustomNativeStackNavigator } from '@/utils/CustomNativeStackNavigator';
-import { CustomTouchableOpacity } from '../../components/CustomTouchableOpacity';
 import { AddressListScreen } from '@/screens/Address/AddressListScreen';
 import { DEFAULT_NAVBAR_FONT_SIZE, RootNames } from '@/constant/layout';
-import { RcIconHeaderAddAccount } from '@/assets/icons/home';
 import ImportNewAddressScreen from '@/screens/Address/ImportNewAddress';
 import { ImportSuccessScreen } from '../Address/ImportSuccessScreen';
 import { ImportWatchAddressScreen } from '../Address/ImportWatchAddressScreen';
@@ -32,19 +30,14 @@ import { RestoreFromCloud } from '../RestoreFromCloud/RestoreFromCloud';
 import { IS_IOS } from '@/core/native/utils';
 import ImportMethods from '../Address/ImportMethods';
 import { ImportHardwareAddressScreen } from '../Address/ImportHardwareAddress';
-import { redirectToAddAddressEntry } from '@/utils/navigation';
 import { ImportPrivateKeyScreen2024 } from '../Address/ImportPrivateKeyScreen2024';
 import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen2024';
 import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
-import { Text } from 'react-native';
 import { createGetStyles2024 } from '@/utils/styles';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
-import {
-  SafeAddressListScreen,
-  SafeAddressScreen,
-} from '../Address/SafeAddressScreen';
+import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
 
 const AddressStack = createCustomNativeStackNavigator();
 
@@ -63,6 +56,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['neutral-title-1'],
     fontWeight: '800',
     fontFamily: 'SF Pro Rounded',
+    fontSize: 20,
   },
 }));
 
@@ -189,12 +183,7 @@ export function AddressNavigator() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -204,10 +193,7 @@ export function AddressNavigator() {
           headerTitle: 'Select Import Method',
           title: 'Select Import Method',
           headerTintColor: colors['neutral-title-1'],
-          headerTitleStyle: {
-            fontWeight: '800',
-            color: colors['neutral-title-1'],
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -227,12 +213,7 @@ export function AddressNavigator() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
-          headerTitleStyle: {
-            color: colors2024['neutral-title-1'],
-            fontWeight: '800',
-            fontSize: 20,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         })}
       />
       <AddressStack.Screen
@@ -272,11 +253,7 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Import Private Key',
           title: 'Import Private Key',
-          headerTitleStyle: {
-            fontWeight: '800',
-            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
         }}
       />
       <AddressStack.Screen
@@ -297,11 +274,7 @@ export function AddressNavigator() {
         options={{
           headerTitle: 'Import Seed Phrase',
           title: 'Import Seed Phrase',
-          headerTitleStyle: {
-            fontWeight: '800',
-            fontSize: DEFAULT_NAVBAR_FONT_SIZE,
-            fontFamily: 'SF Pro Rounded',
-          },
+          headerTitleStyle: styles.headerTitleText,
           headerRight: CloudBackupButton2024,
         }}
       />
