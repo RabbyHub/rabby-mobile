@@ -14,7 +14,7 @@ import { useDeleteAccountModal } from '@/screens/Address/useDeleteAccountModal';
 import DeleteSVG from '@/assets2024/icons/common/delete-cc.svg';
 import { AppSwitch2024 } from '@/components/customized/Switch2024';
 import QrcodeSVG from '@/assets2024/icons/common/qrcode-cc.svg';
-import { useQrCodeModal } from '../QrCodeModal /useQrCodeModal';
+import { useQrCodeModal } from '../QrCodeModal/useQrCodeModal';
 
 interface AddressInfoProps {
   account: KeyringAccountWithAlias;
