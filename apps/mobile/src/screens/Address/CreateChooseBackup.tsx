@@ -60,7 +60,7 @@ function MainListBlocks() {
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_MANUAL_BACKUP,
       bottomSheetModalProps: {
-        enableContentPanningGesture: true,
+        enableContentPanningGesture: false,
         enablePanDownToClose: true,
       },
       paramState: state,

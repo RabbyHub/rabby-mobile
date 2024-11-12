@@ -7,6 +7,7 @@ import { createGetStyles2024 } from '@/utils/styles';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import { Button } from '../Button';
 import { CheckBoxRect } from '@/components2024/CheckBox';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   tipsWarper: {
@@ -65,7 +66,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     height: 32,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexWrap: 'nowrap',
     marginTop: 16,
   },
@@ -80,6 +81,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     justifyContent: 'flex-start',
     alignItems: 'center',
     flexWrap: 'nowrap',
+    top: 2,
   },
   agreementText: {
     fontSize: 14,
@@ -150,7 +152,7 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
 
   return (
     <View style={styles.rootContainer}>
-      <View style={styles.container}>
+      <BottomSheetHandlableView style={styles.container}>
         <AppBottomSheetModalTitle
           style={styles.title}
           title={t('page.nextComponent.createNewAddress.BackupSeedPhrase')}
@@ -186,7 +188,7 @@ export const ReadRisk: React.FC<Props> = ({ onConfirm }) => {
             </Text>
           </View>
         </TouchableView>
-      </View>
+      </BottomSheetHandlableView>
       <Button
         disabled={!checked}
         containerStyle={styles.btnContainer}

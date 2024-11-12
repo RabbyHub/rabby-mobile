@@ -2,9 +2,9 @@ import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { useMemoizedFn } from 'ahooks';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import { createGetStyles2024 } from '@/utils/styles';
+import { createGetStyles2024, makeDebugBorder } from '@/utils/styles';
 import { default as RcIconEye } from '@/assets/icons/nextComponent/IconEye.svg';
 import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
@@ -15,20 +15,24 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { toast } from '@/components/Toast';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
+import { type Account } from '@/core/services/preference';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
+import { BottomSheetHandlableView } from '@/components/customized/BottomSheetHandle';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
-  tipsWarper: {
+  tipsWrapper: {
     marginTop: 20,
+    height: 66,
     display: 'flex',
     flexWrap: 'wrap',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  tipsWarperBottom: {
-    marginBottom: 30,
+    flexShrink: 0,
+    // ...makeDebugBorder(),
   },
   blueText: {
     marginHorizontal: 4,
@@ -47,6 +51,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
   },
+  verifyTipsText: {
+    width: '100%',
+    maxWidth: 190,
+    // ...makeDebugBorder(),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
   listText: {
     color: colors2024['neutral-title-1'],
     fontWeight: '500',
@@ -58,7 +71,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     fontFamily: 'SF Pro Rounded',
   },
   title: {
-    // marginTop: -12,
+    flexShrink: 0,
     fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
@@ -124,24 +137,34 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 0,
   },
   rootContainer: {
-    paddingHorizontal: 23,
+    paddingHorizontal: 24,
+    paddingBottom: SIZES.btnContainerBottom,
     height: '100%',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
     backgroundColor: colors2024['neutral-bg-1'],
+    // ...makeDebugBorder('red'),
   },
   container: {
+    flexShrink: 1,
     paddingBottom: 0,
     display: 'flex',
     flexDirection: 'column',
-    height: '95%',
+    height: '100%',
     width: '100%',
+    // ...makeDebugBorder('yellow'),
+  },
+  btnWrapper: {
+    flexShrink: 0,
+    height: 56,
+    marginTop: SIZES.btnContainerTopOffset,
+    // position: 'absolute',
+    // bottom: 35,
   },
   btnContainer: {
     width: '100%',
-    position: 'absolute',
-    bottom: 56,
+    height: '100%',
   },
   content: {
     width: '100%',
@@ -150,6 +173,17 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   wordContainer: {
     position: 'relative',
     marginTop: 36,
+    flexShrink: 1,
+    height: '100%',
+    flexDirection: 'column',
+  },
+  blurViewContainer: {
+    maxHeight: 430,
+    overflow: 'hidden',
+  },
+  wordsMatrix: {
+    // ...makeDebugBorder('pink'),
+    marginRight: -8,
   },
   mask: {
     zIndex: 1,
@@ -193,9 +227,14 @@ interface Props {
     address: string;
     alias: string;
     seedPhrase: string;
-    accountsToCreate: any;
+    accountsToCreate?: Required<Pick<Account, 'address' | 'aliasName'>>[];
   };
 }
+
+const SIZES = {
+  btnContainerTopOffset: 28,
+  btnContainerBottom: 35,
+};
 
 export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const { styles } = useTheme2024({ getStyle });
@@ -205,7 +244,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const [selectArr, setSelectArr] = React.useState<number[]>([]);
 
   const appThemeMode = useGetBinaryMode();
-  const { seedPhrase, alias, address, accountsToCreate } = paramState;
+  const { seedPhrase, alias, address, accountsToCreate = [] } = paramState;
 
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
   const shuffledWords = useMemo(() => _.shuffle(words), [words]);
@@ -253,7 +292,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
         await activeAndPersistAccountsByMnemonics(
           mnemonics,
           passphrase,
-          accountsToCreate as any,
+          accountsToCreate,
           false,
         );
         keyringService.removePreMnemonics();
@@ -289,41 +328,50 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
     [isSelect, isHidden],
   );
 
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    ...SIZES,
+  });
+
+  const WordMatrixWrapper = isHidden ? View : BottomSheetScrollView;
+
   return (
-    <View style={styles.rootContainer}>
-      <View style={styles.container}>
-        <AppBottomSheetModalTitle
-          style={styles.title}
-          title={
-            !currentSelecting
-              ? t('page.nextComponent.createNewAddress.WriteDownSeedPhrase')
-              : t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')
-          }
-        />
-        <View
-          style={StyleSheet.flatten([
-            styles.tipsWarper,
-            currentSelecting && styles.tipsWarperBottom,
-          ])}>
-          {!currentSelecting ? (
-            <Text style={styles.tipsText}>
-              {t('page.nextComponent.createNewAddress.WriteSeedPhrase')}
-            </Text>
-          ) : (
-            <>
+    <View
+      style={[
+        styles.rootContainer,
+        { paddingBottom: safeSizes.btnContainerBottom },
+      ]}>
+      <View style={[styles.container]}>
+        <BottomSheetHandlableView>
+          <AppBottomSheetModalTitle
+            style={styles.title}
+            title={
+              !currentSelecting
+                ? t('page.nextComponent.createNewAddress.WriteDownSeedPhrase')
+                : t('page.nextComponent.createNewAddress.VerifyDownSeedPhrase')
+            }
+          />
+          <View style={styles.tipsWrapper}>
+            {!currentSelecting ? (
               <Text style={styles.tipsText}>
-                {t('page.nextComponent.createNewAddress.selectWords')}
+                {t('page.nextComponent.createNewAddress.WriteSeedPhrase')}
               </Text>
-              <Text style={styles.blueText}>
-                {`#${shuffledNumbers[0]}, #${shuffledNumbers[1]}, and #${shuffledNumbers[2]}`}
-              </Text>
-              <Text style={styles.tipsText}>
-                {t('page.nextComponent.createNewAddress.inOrder')}
-              </Text>
-            </>
-          )}
-        </View>
-        <View style={styles.wordContainer}>
+            ) : (
+              <View style={styles.verifyTipsText}>
+                <Text style={styles.tipsText}>
+                  {t('page.nextComponent.createNewAddress.selectWords')}
+                </Text>
+                <Text style={styles.blueText}>
+                  {`#${shuffledNumbers[0]}, #${shuffledNumbers[1]}, and #${shuffledNumbers[2]}`}
+                </Text>
+                <Text style={styles.tipsText}>
+                  {t('page.nextComponent.createNewAddress.inOrder')}
+                </Text>
+              </View>
+            )}
+          </View>
+        </BottomSheetHandlableView>
+        <WordMatrixWrapper
+          style={[styles.wordContainer, isHidden && styles.blurViewContainer]}>
           {isHidden && (
             <BlurView
               style={styles.mask}
@@ -350,21 +398,24 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
             selectArr={selectArr}
             isSelectIng={currentSelecting}
             onSelect={onSelect}
+            style={[styles.wordsMatrix]}
           />
-        </View>
+        </WordMatrixWrapper>
       </View>
-      {!isHidden && (
-        <Button
-          containerStyle={styles.btnContainer}
-          type="primary"
-          title={
-            currentSelecting
-              ? t('page.nextComponent.createNewAddress.Verify')
-              : t('page.nextComponent.createNewAddress.savedPhrase')
-          }
-          onPress={currentSelecting ? handleVerify : handleGoSelect}
-        />
-      )}
+      <View style={[styles.btnWrapper]}>
+        {!isHidden && (
+          <Button
+            containerStyle={styles.btnContainer}
+            type="primary"
+            title={
+              currentSelecting
+                ? t('page.nextComponent.createNewAddress.Verify')
+                : t('page.nextComponent.createNewAddress.savedPhrase')
+            }
+            onPress={currentSelecting ? handleVerify : handleGoSelect}
+          />
+        )}
+      </View>
     </View>
   );
 };
