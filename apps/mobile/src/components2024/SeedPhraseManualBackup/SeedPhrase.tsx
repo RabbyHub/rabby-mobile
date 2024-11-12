@@ -36,6 +36,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     color: colors2024['brand-default'],
     fontFamily: 'SF Pro Rounded',
     lineHeight: 22,
+    fontSize: 17,
   },
   tipsText: {
     lineHeight: 22,
@@ -123,7 +124,7 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     padding: 0,
   },
   rootContainer: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 23,
     height: '100%',
     position: 'relative',
     display: 'flex',
@@ -132,7 +133,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   },
   container: {
     paddingBottom: 0,
-    paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'column',
     height: '95%',

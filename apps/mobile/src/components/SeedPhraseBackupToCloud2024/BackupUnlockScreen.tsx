@@ -116,9 +116,7 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
               onChangeText: v => {
                 setPassword(v);
                 setError(
-                  v?.length < 8
-                    ? t('page.createPassword.passwordPlaceholder')
-                    : '',
+                  v?.length < 8 ? t('page.createPassword.passwordMinTip') : '',
                 );
               },
             }}
