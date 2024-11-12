@@ -1,6 +1,7 @@
 import * as ContextMenu from 'zeego/context-menu';
 import type { ContextMenuContentProps } from '@radix-ui/react-context-menu';
 import { ImageSourcePropType } from 'react-native';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export interface MenuAction {
   title: string;
@@ -10,6 +11,7 @@ export interface MenuAction {
   disabled?: boolean;
   // like delete, text will be red
   destructive?: boolean;
+  androidIconName?: string;
 }
 
 type Props = {
@@ -51,7 +53,12 @@ export const ContextMenuView: React.FC<Props> = ({
             key={action.key}
             onSelect={action.action}>
             <ContextMenu.ItemTitle>{action.title}</ContextMenu.ItemTitle>
-            <ContextMenu.ItemImage source={action.icon} />
+
+            {IS_ANDROID ? (
+              <ContextMenu.ItemIcon androidIconName={action.androidIconName} />
+            ) : (
+              <ContextMenu.ItemImage source={action.icon} />
+            )}
           </ContextMenu.Item>
         ))}
       </ContextMenu.Content>

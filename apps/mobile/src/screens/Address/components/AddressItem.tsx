@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { useTheme2024 } from '@/hooks/theme';
+import { useGetBinaryMode, useTheme2024 } from '@/hooks/theme';
 import { KeyringAccountWithAlias, useCurrentAccount } from '@/hooks/account';
 import { RootNames } from '@/constant/layout';
 import { navigate } from '@/utils/navigation';
@@ -39,11 +39,15 @@ export const AddressItem = (props: AddressItemProps) => {
     navigate(RootNames.StackRoot, { screen: RootNames.Home });
   }, [account, switchAccount]);
 
+  const isDarkTheme = useGetBinaryMode() === 'dark';
   const menuActions = React.useMemo(() => {
     return [
       {
         title: 'Edit',
-        icon: require('@/assets2024/icons/menu/edit.png'),
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_edit.png'),
+        androidIconName: 'ic_rabby_menu_edit',
         key: 'edit',
         action() {
           editAliasName.show(account);
@@ -52,23 +56,29 @@ export const AddressItem = (props: AddressItemProps) => {
 
       {
         title: 'Address Detail',
-        icon: require('@/assets2024/icons/menu/detail.png'),
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_more.png'),
         key: 'detail',
+        androidIconName: 'ic_rabby_menu_more',
         action() {
           showAddressDetail({ account });
         },
       },
       {
         title: 'Delete',
-        icon: require('@/assets2024/icons/menu/delete.png'),
+        icon: isDarkTheme
+          ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete_dark.png')
+          : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_delete.png'),
         key: 'delete',
+        androidIconName: 'ic_rabby_menu_delete',
         destructive: true,
         action() {
           removeAccount({ account });
         },
       },
     ] as MenuAction[];
-  }, [account, showAddressDetail, editAliasName, removeAccount]);
+  }, [isDarkTheme, editAliasName, account, showAddressDetail, removeAccount]);
 
   return (
     <TouchableOpacity style={styles.root} onPress={onDetail}>
