@@ -135,12 +135,13 @@ export const ImportWatchAddressScreen2024 = () => {
 
   return (
     <FooterButtonScreenContainer
+      as="View"
       buttonProps={{
         title: t('global.Confirm'),
         onPress: handleDone,
       }}
       style={styles.screen}
-      footerBottomOffset={16}
+      footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>

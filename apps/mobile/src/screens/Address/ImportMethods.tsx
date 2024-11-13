@@ -52,6 +52,7 @@ function ImportMethods(): JSX.Element {
           )}
           <Card
             style={styles.importItem}
+            hasArrow={state?.hasCurrentAddress}
             onPress={() => {
               if (
                 shouldRedirectToSetPasswordBefore2024({
@@ -68,6 +69,7 @@ function ImportMethods(): JSX.Element {
             <Text style={styles.importType}>Import Seed Phrase</Text>
           </Card>
           <Card
+            hasArrow={state?.hasCurrentAddress}
             style={styles.importItem}
             onPress={() => {
               if (
@@ -89,6 +91,7 @@ function ImportMethods(): JSX.Element {
             <>
               <Text style={styles.titleText}>Import Safe Address</Text>
               <Card
+                hasArrow={state?.hasCurrentAddress}
                 style={styles.importItem}
                 onPress={() => {
                   navigate(RootNames.StackAddress, {
@@ -105,6 +108,7 @@ function ImportMethods(): JSX.Element {
               </Card>
               <Text style={styles.titleText}>Import Watch-only Address</Text>
               <Card
+                hasArrow={state?.hasCurrentAddress}
                 style={styles.importItem}
                 onPress={() => {
                   navigate(RootNames.StackAddress, {
@@ -124,6 +128,7 @@ function ImportMethods(): JSX.Element {
 
           {!state?.hasCurrentAddress && (
             <Card
+              hasArrow={state?.hasCurrentAddress}
               style={styles.importItem}
               onPress={() => {
                 navigate(RootNames.StackAddress, {
@@ -190,7 +195,8 @@ const getStyles = createGetStyles2024(ctx => ({
     marginTop: 0,
   },
   blockView: {
-    width: '92%',
+    width: '100%',
+    paddingHorizontal: 24,
     marginTop: 34,
   },
   section: {

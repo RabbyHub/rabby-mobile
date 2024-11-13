@@ -108,7 +108,7 @@ export const ImportSafeAddressScreen2024 = () => {
         onPress: handleNext,
       }}
       style={styles.screen}
-      footerBottomOffset={16}
+      footerBottomOffset={56}
       footerContainerStyle={{
         paddingHorizontal: 20,
       }}>
