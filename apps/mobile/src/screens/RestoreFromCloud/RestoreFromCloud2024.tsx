@@ -128,7 +128,7 @@ export const RestoreFromCloud2024: React.FC<{
         <View style={styles.empty}>
           <BackupIcon status="info" isGray />
           <Text style={styles.restoreTitle}>
-            {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
+            {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
           </Text>
           <Text style={styles.loadingText}>
             {t('page.newAddress.seedPhrase.backupRestoreEmpty')}
@@ -152,7 +152,7 @@ export const RestoreFromCloud2024: React.FC<{
         <View>
           <BackupIcon status={loading ? 'loading' : undefined} isGray />
           <Text style={styles.restoreTitle}>
-            {`Restore From ${IS_IOS ? 'ICloud' : 'Google Drive'}`}
+            {`Restore From ${IS_IOS ? 'iCloud' : 'Google Drive'}`}
           </Text>
         </View>
         <ScrollView
