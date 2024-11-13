@@ -7,7 +7,7 @@ import {
 import React from 'react';
 import { View } from 'react-native';
 import { BackupUnlockScreen } from './BackupUnlockScreen';
-import { toast } from '../Toast';
+import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
@@ -46,7 +46,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
         // check if the mnemonic is uploaded successfully
         const files = await getBackupsFromCloud([filename]);
         await decryptFiles({ password, files });
-        toast.show('Backup Successful');
+        toast.success('Backup Successful');
         onDone();
         const mnemonics = seedPhrase;
         const passphrase = '';
