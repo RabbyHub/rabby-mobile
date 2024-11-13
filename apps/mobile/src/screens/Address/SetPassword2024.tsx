@@ -133,7 +133,7 @@ function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles, colors2024 } = useTheme2024({ getStyle });
-  const { viewTermsOfUse } = useShowUserAgreementLikeModal();
+  const { viewTermsOfUse, viewPrivacyPolicy } = useShowUserAgreementLikeModal();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
@@ -301,8 +301,6 @@ function MainListBlocks() {
                 <CheckBoxRect checked={formik.values.checked} />
               </View>
               <View style={styles.agreementTextWrapper}>
-                {/* <Trans i18nKey="page.createPassword.agree" t={t}>
-                </Trans> */}
                 <Text style={styles.agreementText}>
                   I have read and agree to the{' '}
                 </Text>
@@ -314,6 +312,16 @@ function MainListBlocks() {
                     viewTermsOfUse();
                   }}>
                   Term of Use
+                </TouchableText>
+                <Text style={styles.agreementText}> and </Text>
+                <TouchableText
+                  style={styles.userAgreementTouchText}
+                  touchableProps={{ style: styles.userAgreementTouchable }}
+                  onPress={evt => {
+                    evt.stopPropagation();
+                    viewPrivacyPolicy();
+                  }}>
+                  Privacy Policy
                 </TouchableText>
               </View>
             </TouchableView>
@@ -427,12 +435,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   agreementWrapper: {
     position: 'absolute',
     bottom: 104,
-    height: 32,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-start',
     flexWrap: 'nowrap',
-    paddingHorizontal: 32,
+    paddingHorizontal: 30,
+    width: '100%',
   },
   agreementCheckbox: {
     marginRight: 6,
@@ -443,16 +451,21 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
   },
   agreementText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
     color: colors2024['neutral-body'],
   },
   userAgreementTouchText: {
-    fontSize: 14,
-    color: colors2024['blue-default'],
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    fontFamily: 'SF Pro Rounded',
+    color: colors2024['brand-default'],
   },
   userAgreementTouchable: {
     padding: 0,
