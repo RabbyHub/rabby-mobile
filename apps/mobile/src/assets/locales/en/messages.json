@@ -1460,6 +1460,7 @@
         "backupUnlockTitle": "Encrypt with App Password",
         "backupUnlockDesc": "Keep your password safe to restore backups. Rabby Wallet doesn't store it and can't recover it.",
         "backupUnlockPlaceholder": "Enter the Password to Confirm",
+        "passwordMinTip": "Must be at least 8 characters",
         "backupUnlockButton": "Continue",
         "backupUploadToICloud": "Backing Up to iCloud...",
         "backupUploadToGDrive": "Backing Up to Google Drive...",

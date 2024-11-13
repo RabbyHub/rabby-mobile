@@ -124,9 +124,6 @@ export const BackupUnlockScreen: React.FC<Props> = ({
               value: password,
               secureTextEntry: true,
               inputMode: 'text',
-              placeholder: t(
-                'page.newAddress.seedPhrase.backupUnlockPlaceholder',
-              ),
               placeholderTextColor: colors2024['neutral-foot'],
               onChangeText: v => {
                 setPassword(v);
@@ -136,7 +133,8 @@ export const BackupUnlockScreen: React.FC<Props> = ({
             }}
             style={styles.input}
             hasError={Boolean(error)}
-            tipText={error}
+            fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
+            tipText={t('page.newAddress.seedPhrase.passwordMinTip') || error}
           />
         </View>
       </View>

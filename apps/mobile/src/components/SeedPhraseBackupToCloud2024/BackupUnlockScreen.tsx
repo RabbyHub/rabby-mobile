@@ -115,13 +115,12 @@ export const BackupUnlockScreen: React.FC<Props> = ({ onConfirm }) => {
               placeholderTextColor: colors2024['neutral-foot'],
               onChangeText: v => {
                 setPassword(v);
-                setError(
-                  v?.length < 8 ? t('page.createPassword.passwordMinTip') : '',
-                );
+                setError('');
               },
             }}
             hasError={Boolean(error)}
-            tipText={error}
+            fieldErrorContainerStyle={{ paddingLeft: 4, marginTop: 8 }}
+            tipText={t('page.createPassword.passwordMinTip') || error}
           />
         </View>
       </View>
