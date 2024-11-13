@@ -1,6 +1,7 @@
 import { RootNames } from '@/constant/layout';
 import { RootStackParamsList } from '@/navigation-type';
 import {
+  CommonActions,
   StackActions,
   createNavigationContainerRef,
 } from '@react-navigation/native';
@@ -133,3 +134,17 @@ export function redirectToAddAddressEntry(options?: {
       break;
   }
 }
+
+export const replaceToFirst = ((name: any, params?: object) => {
+  if (navigationRef.isReady()) {
+    navigationRef.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name, params }],
+      }),
+    );
+  } else {
+    // You can decide what to do if react navigation is not ready
+    // You can ignore this, or add these actions to a queue you can call later
+  }
+}) as typeof navigationRef.navigate;

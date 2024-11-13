@@ -2,7 +2,7 @@ import { useTheme2024 } from '@/hooks/theme';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiMnemonic } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
@@ -150,7 +150,7 @@ export const ImportSeedPhraseScreen2024 = () => {
               firstAddress as any,
               true,
             );
-            return navigate(RootNames.StackAddress, {
+            return replaceToFirst(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
                 type: KEYRING_TYPE.HdKeyring,

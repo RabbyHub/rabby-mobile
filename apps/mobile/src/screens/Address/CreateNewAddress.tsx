@@ -34,6 +34,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
 import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import LinearGradient from 'react-native-linear-gradient';
+import { replaceToFirst } from '@/utils/navigation';
 
 const MAX_ACCOUNT_COUNT = 50;
 
@@ -177,7 +178,7 @@ function MainListBlocks() {
       value?.accountsToCreate,
       false,
     );
-    navigation.replace(RootNames.StackAddress, {
+    replaceToFirst(RootNames.StackAddress, {
       screen: RootNames.ImportSuccess2024,
       params: {
         type: KEYRING_TYPE.HdKeyring,
@@ -190,7 +191,7 @@ function MainListBlocks() {
         alias: addressAlias || ellipsisAddress(newAddress),
       },
     });
-  }, [newAddress, addressAlias, state, navigation, value]);
+  }, [newAddress, addressAlias, state, value]);
 
   return (
     <TouchableWithoutFeedback

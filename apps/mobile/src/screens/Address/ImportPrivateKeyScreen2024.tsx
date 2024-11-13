@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { apiPrivateKey } from '@/core/apis';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
@@ -41,7 +41,7 @@ export const ImportPrivateKeyScreen2024 = () => {
     apiPrivateKey
       .importPrivateKey(privateKey)
       .then(([account]) => {
-        navigate(RootNames.StackAddress, {
+        replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.SimpleKeyring,

@@ -10,7 +10,7 @@ import { AppBottomSheetModalTitle } from '@/components/customized/BottomSheet';
 import _ from 'lodash';
 import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
-import { navigate } from '@/utils/navigation';
+import { replaceToFirst } from '@/utils/navigation';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { toast } from '@/components/Toast';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
@@ -296,7 +296,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
           false,
         );
         keyringService.removePreMnemonics();
-        navigate(RootNames.StackAddress, {
+        replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.HdKeyring,

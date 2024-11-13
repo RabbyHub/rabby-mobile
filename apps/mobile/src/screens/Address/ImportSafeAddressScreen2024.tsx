@@ -2,7 +2,7 @@ import { Text } from '@/components';
 import { RootNames } from '@/constant/layout';
 import { apisSafe } from '@/core/apis/safe';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { replaceToFirst } from '@/utils/navigation';
 import { isValidAddress } from '@ethereumjs/util';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
@@ -77,7 +77,7 @@ export const ImportSafeAddressScreen2024 = () => {
         input,
         (chainList || []).map(chain => chain.network),
       );
-      navigate(RootNames.StackAddress, {
+      replaceToFirst(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.GnosisKeyring,

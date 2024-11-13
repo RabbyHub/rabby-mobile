@@ -11,7 +11,7 @@ import { toast } from '@/components2024/Toast';
 import { useTranslation } from 'react-i18next';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
-import { navigate } from '@/utils/navigation';
+import { replaceToFirst } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 
@@ -57,7 +57,7 @@ export const SeedPhraseBackupToCloud: React.FC<Props> = ({
           false,
         );
         keyringService.removePreMnemonics();
-        navigate(RootNames.StackAddress, {
+        replaceToFirst(RootNames.StackAddress, {
           screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.HdKeyring,

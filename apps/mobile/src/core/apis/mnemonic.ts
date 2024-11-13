@@ -1,5 +1,5 @@
 import { RootNames } from '@/constant/layout';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import HdKeyring from '@rabby-wallet/eth-hd-keyring';
 import {
   KEYRING_CLASS,
@@ -456,7 +456,7 @@ export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
   keyringService.removePreMnemonics();
 
   if (addresses.length === 1) {
-    return navigate(RootNames.StackAddress, {
+    return replaceToFirst(RootNames.StackAddress, {
       screen: RootNames.ImportSuccess2024,
       params: {
         type: KEYRING_TYPE.HdKeyring,
@@ -471,7 +471,7 @@ export const addMnemonicKeyringAndGotoSuccessScreen2024 = async (
     });
   }
 
-  return navigate(RootNames.StackAddress, {
+  return replaceToFirst(RootNames.StackAddress, {
     screen: RootNames.ImportSuccess2024,
     params: {
       type: KEYRING_TYPE.HdKeyring,

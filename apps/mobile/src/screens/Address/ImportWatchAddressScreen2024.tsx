@@ -5,7 +5,7 @@ import { RootNames } from '@/constant/layout';
 import { apisAddress } from '@/core/apis';
 import { openapi } from '@/core/request';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import { isValidHexAddress } from '@metamask/utils';
 import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import React, { useEffect } from 'react';
@@ -67,7 +67,7 @@ export const ImportWatchAddressScreen2024 = () => {
     try {
       Keyboard.dismiss();
       await apisAddress.addWatchAddress(address);
-      navigate(RootNames.StackAddress, {
+      replaceToFirst(RootNames.StackAddress, {
         screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.WatchAddressKeyring,

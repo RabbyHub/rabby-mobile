@@ -10,7 +10,7 @@ import {
   apiOneKey,
 } from '@/core/apis';
 import { useTheme2024 } from '@/hooks/theme';
-import { navigate } from '@/utils/navigation';
+import { navigate, replaceToFirst } from '@/utils/navigation';
 import {
   HARDWARE_KEYRING_TYPES,
   KEYRING_CLASS,
@@ -298,7 +298,7 @@ export const ImportMoreAddress: React.FC<Props> = ({ params, onCancel }) => {
           true,
         )
           .then(() => {
-            navigate(RootNames.StackAddress, {
+            replaceToFirst(RootNames.StackAddress, {
               screen: RootNames.ImportSuccess2024,
               params: {
                 type: hdType,
