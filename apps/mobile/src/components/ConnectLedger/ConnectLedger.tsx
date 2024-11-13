@@ -100,7 +100,7 @@ export const ConnectLedger: React.FC<{
 
       if (address) {
         navigate(RootNames.StackAddress, {
-          screen: RootNames.ImportSuccess,
+          screen: RootNames.ImportSuccess2024,
           params: {
             type: KEYRING_TYPE.LedgerKeyring,
             brandName: KEYRING_CLASS.HARDWARE.LEDGER,
