@@ -47,7 +47,7 @@ export const ConnectOneKey: React.FC<{
 
     if (address) {
       navigate(RootNames.StackAddress, {
-        screen: RootNames.ImportSuccess,
+        screen: RootNames.ImportSuccess2024,
         params: {
           type: KEYRING_TYPE.OneKeyKeyring,
           brandName: KEYRING_CLASS.HARDWARE.ONEKEY,
