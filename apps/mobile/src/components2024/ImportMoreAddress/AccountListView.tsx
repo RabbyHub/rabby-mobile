@@ -1,4 +1,4 @@
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { addressUtils } from '@rabby-wallet/base-utils';

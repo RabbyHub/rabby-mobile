@@ -12,7 +12,7 @@ import { Button } from '../Button';
 import { WordsMatrix } from '@/components2024/WordsMatrix';
 import { replaceToFirst } from '@/utils/navigation';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { activeAndPersistAccountsByMnemonics } from '@/core/apis/mnemonic';
 import { keyringService } from '@/core/services';
 import { type Account } from '@/core/services/preference';

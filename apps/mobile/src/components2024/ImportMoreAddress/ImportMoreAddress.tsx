@@ -16,7 +16,7 @@ import {
   KEYRING_CLASS,
   KEYRING_TYPE,
 } from '@rabby-wallet/keyring-utils';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useAtom } from 'jotai';
 import { settingAtom } from '@/components/HDSetting/MainContainer';
 import { getAccountBalance } from '@/components/HDSetting/util';

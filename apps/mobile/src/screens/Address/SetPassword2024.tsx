@@ -22,7 +22,7 @@ import { apisLock } from '@/core/apis';
 import { APP_FEATURE_SWITCH, APP_TEST_PWD } from '@/constant';
 import { IS_IOS } from '@/core/native/utils';
 import { getFormikErrorsCount, useAppFormik } from '@/utils/patch';
-import { toast, toastWithIcon } from '@/components/Toast';
+import { toast, toastWithIcon } from '@/components2024/Toast';
 import { useInputBlurOnTouchaway } from '@/components/Form/hooks';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { CheckBoxRect } from '@/components2024/CheckBox';

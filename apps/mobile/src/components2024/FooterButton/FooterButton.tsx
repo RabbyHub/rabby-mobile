@@ -1,7 +1,7 @@
 import { useThemeStyles } from '@/hooks/theme';
 import { createGetStyles } from '@/utils/styles';
 import React from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { ButtonProps, Button } from '../Button';
 
 export type FootButtonProps = ButtonProps & {

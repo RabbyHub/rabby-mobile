@@ -8,7 +8,7 @@ import { KEYRING_CLASS, KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
 import { useDuplicateAddressModal } from './components/DuplicateAddressModal';
 import { useScanner } from '../Scanner/ScannerScreen';
 import { requestKeyring } from '@/core/apis/keyring';
-import { toast } from '@/components/Toast';
+import { toast } from '@/components2024/Toast';
 import { useFocusEffect } from '@react-navigation/native';
 import { wordlist } from '@scure/bip39/wordlists/english';
 import * as bip39 from '@scure/bip39';
