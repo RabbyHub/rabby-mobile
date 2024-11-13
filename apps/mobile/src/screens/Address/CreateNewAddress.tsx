@@ -8,6 +8,8 @@ import {
   StyleProp,
   TextStyle,
   TouchableWithoutFeedback,
+  NativeSyntheticEvent,
+  TextInputSubmitEditingEventData,
   Keyboard,
 } from 'react-native';
 import { NextInput } from '@/components2024/Form/Input';
@@ -193,6 +195,15 @@ function MainListBlocks() {
     });
   }, [newAddress, addressAlias, state, value]);
 
+  const onSubmitEditing = React.useCallback(
+    (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => {
+      if (!e.nativeEvent.text) {
+        setAddressAlias(ellipsisAddress(newAddress));
+      }
+    },
+    [newAddress],
+  );
+
   return (
     <TouchableWithoutFeedback
       onPress={() => {
@@ -238,9 +249,10 @@ function MainListBlocks() {
                 autoFocus: true,
                 inputMode: 'text',
                 returnKeyType: 'done',
-                textAlign: 'center',
+                // textAlign: 'center',
                 placeholder: ellipsisAddress(newAddress),
                 placeholderTextColor: colors2024['neutral-info'],
+                onSubmitEditing,
                 onChangeText(text) {
                   setAddressAlias(text);
                 },
