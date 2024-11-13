@@ -201,6 +201,7 @@ const getStyle = createGetStyles2024(colors => ({
   loadingContainer: {
     paddingHorizontal: 0,
     paddingTop: 0,
+    backgroundColor: 'transparent',
   },
   empty: {
     alignItems: 'center',

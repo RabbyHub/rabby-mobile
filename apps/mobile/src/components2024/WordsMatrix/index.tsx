@@ -65,6 +65,9 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     flexWrap: 'wrap',
     borderRadius: 8,
     gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
   },
   selectGridItem: {
     borderWidth: 1,
