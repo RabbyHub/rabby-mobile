@@ -213,6 +213,7 @@ const getStyles = createGetStyles2024(ctx => ({
     fontSize: 18,
     lineHeight: 22,
     fontWeight: '700',
+    color: ctx.colors2024['neutral-title-1'],
     fontFamily: 'SF Pro Rounded',
   },
   tipWrapper: {

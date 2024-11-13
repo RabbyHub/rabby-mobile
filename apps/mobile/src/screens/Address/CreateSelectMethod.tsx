@@ -94,11 +94,15 @@ function MainListBlocks() {
 }
 
 function CreateSelectMethod(): JSX.Element {
-  const { colors2024 } = useTheme2024({ getStyle });
+  const { colors2024, isLight } = useTheme2024({ getStyle });
   return (
     <NormalScreenContainer>
       <LinearGradient
-        colors={['#FFF', '#F9F9F9']} // 渐变颜色
+        colors={
+          isLight
+            ? ['#FFF', '#F9F9F9']
+            : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
+        } // 渐变颜色
         start={{ x: 0, y: 0 }} // 渐变起始位置
         end={{ x: 0, y: 1 }} // 渐变结束位置
         // style={{

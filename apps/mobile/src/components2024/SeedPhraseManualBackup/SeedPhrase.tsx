@@ -246,11 +246,14 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
   const appThemeMode = useGetBinaryMode();
   const { seedPhrase, alias, address, accountsToCreate = [] } = paramState;
 
+  const [shuffleCount, setShuffleCount] = React.useState(0);
   const words = useMemo(() => seedPhrase.split(' ') || [], [seedPhrase]);
-  const shuffledWords = useMemo(() => _.shuffle(words), [words]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const shuffledWords = useMemo(() => _.shuffle(words), [words, shuffleCount]);
   const shuffledNumbers = useMemo(
     () => _.sortBy(_.shuffle(_.range(1, words.length + 1)).slice(0, 3)),
-    [words],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [words, shuffleCount],
   );
   const onSelect = useCallback(
     (index: number) => {
@@ -316,6 +319,7 @@ export const SeedPhrase: React.FC<Props> = ({ onConfirm, paramState }) => {
       }
     } else {
       toast.show('Verification failed');
+      setShuffleCount(val => val + 1);
     }
   });
 

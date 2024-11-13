@@ -217,9 +217,7 @@ export const GnosisSupportChainList = ({
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
-    // TODO: get card1 color
-    // backgroundColor: ctx.colors2024['card1'],
-    backgroundColor: 'rgba(255, 255, 255, 1)',
+    backgroundColor: ctx.colors2024['neutral-bg-1'],
   },
   container: {
     display: 'flex',

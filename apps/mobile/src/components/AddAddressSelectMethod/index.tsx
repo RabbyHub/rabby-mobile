@@ -1,11 +1,11 @@
 import { apiMnemonic } from '@/core/apis';
 import { detectCloudIsAvailable } from '@/core/utils/cloudBackup';
 import React from 'react';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { ActivityIndicator, View, Text, Image } from 'react-native';
 import { toast, toastWithIcon } from '../Toast';
 import { useTranslation } from 'react-i18next';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
-import IconHardWare from '@/assets2024/icons/common/IconHardWare.svg';
+import IconHardWare from '@/assets2024/icons/common/IconHardWare.png';
 import IconImport from '@/assets2024/icons/common/IconImport.svg';
 import IconCreate from '@/assets2024/icons/common/IconCreate.svg';
 import { navigate } from '@/utils/navigation';
@@ -71,7 +71,7 @@ export const AddAddressSelectMethod: React.FC<Props> = ({ onDone }) => {
           }}
           style={styles.importItem}
           title={t('page.nextComponent.addAddress.hardwareWallet')}
-          Icon={<IconHardWare style={styles.icon} />}
+          Icon={<Image source={IconHardWare} style={styles.icon} />}
         />
       </View>
     </NormalScreenContainer>
