@@ -7,18 +7,27 @@ import {
   StyleSheet,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { trigger } from 'react-native-haptic-feedback';
+
 import { createGetStyles2024 } from '@/utils/styles';
 import { useTheme2024 } from '@/hooks/theme';
 import IconPaste from '@/assets2024/icons/common/paste.svg';
 
 interface IProps {
   onPaste: (text: string) => void;
+  disableTrigger?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-const PasteButton: React.FC<IProps> = ({ onPaste, style }) => {
+const PasteButton: React.FC<IProps> = ({ onPaste, style, disableTrigger }) => {
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const onPressPaste = () => {
+    if (!disableTrigger) {
+      trigger('impactLight', {
+        enableVibrateFallback: true,
+        ignoreAndroidSystemSettings: false,
+      });
+    }
     Clipboard.getString().then(text => {
       onPaste(text);
       Clipboard.setString('');
