@@ -8,7 +8,11 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { RcIconCloseCC, RcNextSearchCC } from '@/assets/icons/common';
+import {
+  RcIconCloseCC,
+  RcNextCloseCircle,
+  RcNextSearchCC,
+} from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
 import { createGetStyles2024 } from '@/utils/styles';
 import { useMemoizedFn } from 'ahooks';
@@ -17,25 +21,20 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 
-export interface Props
-  extends Pick<
-    TextInputProps,
-    'value' | 'onChange' | 'onChangeText' | 'onBlur' | 'onFocus'
-  > {
+export interface Props extends Omit<TextInputProps, 'style'> {
   style?: StyleProp<ViewStyle>;
-  placeholder?: string;
   onCancel?(): void;
 }
 
 export const NextSearchBar: React.FC<Props> = ({
   style,
-  placeholder,
   value,
   onChangeText,
   onChange,
   onBlur,
   onFocus,
   onCancel,
+  ...rest
 }) => {
   const { styles, colors2024 } = useTheme2024({
     getStyle,
@@ -69,13 +68,12 @@ export const NextSearchBar: React.FC<Props> = ({
         <TextInput
           ref={inputRef}
           style={[styles.input, isEmpty ? styles.placeholder : null]}
-          numberOfLines={1}
-          placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
           onChange={onChange}
           onBlur={handleBlur}
           onFocus={handleFocus}
+          {...rest}
         />
         {!isEmpty ? (
           <TouchableWithoutFeedback
@@ -84,7 +82,7 @@ export const NextSearchBar: React.FC<Props> = ({
               onChangeText?.('');
               console.log('xx');
             }}>
-            <RcIconCloseCC
+            <RcNextCloseCircle
               style={styles.closeIcon}
               color={colors2024['neutral-secondary']}
             />
@@ -119,7 +117,6 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     borderRadius: 30,
     backgroundColor: colors2024['neutral-bg-2'],
     paddingHorizontal: 8,
-    paddingVertical: 12,
     gap: 8,
   },
 
@@ -127,14 +124,15 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
   closeIcon: {},
   input: {
     flex: 1,
-
     fontFamily: 'SF Pro Rounded',
+    height: 46,
     fontSize: 17,
-    lineHeight: 22,
+    // lineHeight: 22,
     fontWeight: '700',
     color: colors2024['neutral-title-1'],
-
-    verticalAlign: 'middle',
+    textAlignVertical: 'center',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   placeholder: {
     fontFamily: 'SF Pro Rounded',

@@ -13,11 +13,13 @@ export const DappHistorySection = ({
   style,
   onPress,
   onFavoritePress,
+  onDeletePress,
 }: {
   data: DappInfo[];
   style?: StyleProp<ViewStyle>;
   onPress?: (dapp: DappInfo) => void;
   onFavoritePress?: (dapp: DappInfo) => void;
+  onDeletePress?: (dapp: DappInfo) => void;
   HeaderComponent?:
     | React.ComponentType<any>
     | React.ReactElement<any, string | React.JSXElementConstructor<any>>
@@ -34,6 +36,7 @@ export const DappHistorySection = ({
         data={data}
         onPress={onPress}
         onFavoritePress={onFavoritePress}
+        onDeletePress={onDeletePress}
         ListHeaderComponent={
           <>
             {HeaderComponent}

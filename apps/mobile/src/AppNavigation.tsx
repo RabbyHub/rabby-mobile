@@ -337,9 +337,13 @@ function FavoriteDappsNavigator() {
       <FavoriteDappsStack.Screen
         name={RootNames.FavoriteDapps}
         component={FavoriteDappsScreen}
-        options={{
-          title: 'Favorite Dapp',
-        }}
+        options={mergeScreenOptions({
+          headerTintColor: colors['neutral-title-1'],
+          headerTitleStyle: {
+            fontWeight: '800',
+            color: colors['neutral-title-1'],
+          },
+        })}
       />
     </FavoriteDappsStack.Navigator>
   );

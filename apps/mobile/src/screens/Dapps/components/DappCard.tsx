@@ -14,6 +14,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native-gesture-handler';
 import { DappIcon } from './DappIcon';
+import { noop } from 'lodash';
 
 export const DappCardListBy = ({
   data,
@@ -135,6 +136,8 @@ export const DappCardInner = ({
           style={styles.dappAction}
           disallowInterruption={true}
           hitSlop={10}
+          onLongPress={noop}
+          // delayLongPress={100}
           onPress={() => {
             onFavoritePress?.(data);
           }}>

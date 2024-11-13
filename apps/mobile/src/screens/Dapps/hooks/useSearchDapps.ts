@@ -1,3 +1,4 @@
+import { TextInputProps } from 'react-native';
 /* eslint-disable @typescript-eslint/no-shadow */
 // import { useOpenDappView } from '../hooks/useDappView';
 import { CHAINS_ENUM } from '@/constant/chains';
@@ -7,7 +8,7 @@ import { useDapps } from '@/hooks/useDapps';
 import { findChainByEnum } from '@/utils/chain';
 import { stringUtils } from '@rabby-wallet/base-utils';
 import { useDebounce, useInfiniteScroll, useSetState } from 'ahooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParsePossibleURL } from './useParsePossibleURL';
 
 export const useSearchDapps = () => {
@@ -65,7 +66,7 @@ export const useSearchDapps = () => {
 
   const { list, currentDapp } = useMemo(() => {
     const list: DappInfo[] = [];
-    let currentDapp: DappInfo | null = null;
+    let _currentDapp: DappInfo | null = null;
 
     (data?.list || []).forEach(info => {
       const origin = stringUtils.ensurePrefix(info.id, 'https://');
@@ -75,19 +76,23 @@ export const useSearchDapps = () => {
         ...local,
         origin,
         info,
-      };
+      } as DappInfo;
 
-      if (origin === url) {
-        currentDapp = dappInfo;
+      if (!_currentDapp && origin === url) {
+        _currentDapp = dappInfo;
       } else {
         list.push(dappInfo);
       }
     });
     return {
       list,
-      currentDapp,
+      currentDapp: _currentDapp as DappInfo | null,
     };
   }, [dapps, data?.list, url]);
+
+  const returnKeyType = useMemo(() => {
+    return url ? ('go' as const) : undefined;
+  }, [url]);
 
   return {
     list,
@@ -98,5 +103,6 @@ export const useSearchDapps = () => {
     loading,
     loadMore,
     currentURL: url,
+    returnKeyType,
   };
 };

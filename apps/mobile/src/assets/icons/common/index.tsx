@@ -21,6 +21,7 @@ export { default as IconRabbyWalletLogo } from './rabby-wallet-logo.svg';
 export { default as RcSearchCC } from './search-cc.svg';
 export { default as RcNextSearchCC } from './next-search-cc.svg';
 export { default as RcNextLeftCC } from './next-left-cc.svg';
+export { default as RcNextCloseCircle } from './next-close-circle.svg';
 
 export { default as RcIconCheckedFilledCC } from './icon-checked-filled-cc.svg';
 export { default as RcIconCheckedCC } from './icon-checked-cc.svg';

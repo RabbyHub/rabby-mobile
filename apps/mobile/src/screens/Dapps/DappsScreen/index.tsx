@@ -19,10 +19,16 @@ import { DappHistorySection } from '../components/DappHistorySection';
 import { DappSearchSection } from '../components/DappSearchSection';
 import { useOpenDappView } from '../hooks/useDappView';
 import { useSearchDapps } from '../hooks/useSearchDapps';
+import { DappInfo } from '@/core/services/dappService';
 
 export function DappsScreen(): JSX.Element {
-  const { browserHistoryList, favoriteApps, setBrowserHistory, setDapp } =
-    useDappsHome();
+  const {
+    browserHistoryList,
+    favoriteApps,
+    setBrowserHistory,
+    setDapp,
+    removeBrowserHistory,
+  } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
 
   const { styles, colors2024 } = useTheme2024({
@@ -37,6 +43,7 @@ export function DappsScreen(): JSX.Element {
       showSheetModalFirst: true,
     });
     setBrowserHistory(safeGetOrigin(url));
+    Keyboard.dismiss();
   });
 
   const handleFavoriteDapp = dapp => {
@@ -45,6 +52,10 @@ export function DappsScreen(): JSX.Element {
       isFavorite: !dapp.isFavorite,
     });
   };
+
+  const handleDeleteHistory = useMemoizedFn((dapp: DappInfo) => {
+    removeBrowserHistory(dapp.origin);
+  });
 
   return (
     <TouchableWithoutFeedback
@@ -81,6 +92,16 @@ export function DappsScreen(): JSX.Element {
                 isFocus: false,
               });
             }}
+            returnKeyType={searchState.returnKeyType}
+            onSubmitEditing={() => {
+              const url =
+                searchState.currentDapp?.origin || searchState.currentURL;
+              if (url) {
+                handleOpenURL(url);
+              }
+              // console.log('keyPress', e.nativeEvent.key, url);
+            }}
+            // enterKeyHint={searchState.returnKeyType ? 'go' : undefined}
           />
         </View>
         {!searchState.state.isFocus && !searchState.state.searchText ? (
@@ -92,6 +113,7 @@ export function DappsScreen(): JSX.Element {
                 handleOpenURL(dapp.origin);
               }}
               onFavoritePress={handleFavoriteDapp}
+              onDeletePress={handleDeleteHistory}
               HeaderComponent={
                 <DappFavoriteSection
                   data={favoriteApps}
@@ -128,6 +150,7 @@ export function DappsScreen(): JSX.Element {
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {
+    // todo
     backgroundColor: '#fff',
   },
   container: {

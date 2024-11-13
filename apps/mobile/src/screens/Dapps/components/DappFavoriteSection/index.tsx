@@ -42,12 +42,14 @@ export const DappFavoriteSection = ({
             Favorites {data?.length ? `(${data.length})` : ''}
           </Text>
         </View>
-        <TouchableOpacity hitSlop={8} onPress={handlePressAll}>
-          <View style={styles.headerExtra}>
-            <Text style={styles.headerExtraText}>All</Text>
-            <RcIconRight />
-          </View>
-        </TouchableOpacity>
+        {data?.length ? (
+          <TouchableOpacity hitSlop={8} onPress={handlePressAll}>
+            <View style={styles.headerExtra}>
+              <Text style={styles.headerExtraText}>All</Text>
+              <RcIconRight />
+            </View>
+          </TouchableOpacity>
+        ) : null}
       </View>
       {list?.length ? (
         <View style={styles.list}>

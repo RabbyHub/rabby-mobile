@@ -2,10 +2,8 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React from 'react';
 
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import HeaderTitleText from '@/components/ScreenHeader/HeaderTitleText';
 import { useThemeColors, useThemeStyles } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
-import { useMemoizedFn } from 'ahooks';
 import { StyleSheet } from 'react-native';
 import { DappCardList } from '../components/DappCardList';
 
@@ -14,20 +12,16 @@ export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
-  const getHeaderTitle = useMemoizedFn(() => {
-    return (
-      <HeaderTitleText>Favorites（{favoriteApps.length}）</HeaderTitleText>
-    );
-  });
-
   React.useEffect(() => {
+    const title = `Favorites（${favoriteApps.length}）`;
     setNavigationOptions({
-      headerTitle: getHeaderTitle,
+      headerTitle: title,
+      title,
     });
-  }, [setNavigationOptions, getHeaderTitle]);
+  }, [setNavigationOptions, favoriteApps.length]);
 
   return (
-    <NormalScreenContainer style={styles.page}>
+    <NormalScreenContainer overwriteStyle={styles.page}>
       <DappCardList data={favoriteApps} />
     </NormalScreenContainer>
   );
@@ -35,5 +29,8 @@ export function FavoriteDappsScreen(): JSX.Element {
 
 const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
-    page: {},
+    page: {
+      // todo
+      backgroundColor: '#fff',
+    },
   });
