@@ -2,13 +2,16 @@ import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenCont
 import React from 'react';
 
 import { useSafeSetNavigationOptions } from '@/components/AppStatusBar';
-import { useThemeColors, useThemeStyles } from '@/hooks/theme';
+import { DappInfo } from '@/core/services/dappService';
+import { useTheme2024 } from '@/hooks/theme';
 import { useDappsHome } from '@/hooks/useDappsHome';
-import { StyleSheet } from 'react-native';
+import { createGetStyles2024 } from '@/utils/styles';
+import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
+import { useMemoizedFn } from 'ahooks';
 import { DappCardList } from '../components/DappCardList';
+import { useOpenDappView } from '../hooks/useDappView';
 
 export function FavoriteDappsScreen(): JSX.Element {
-  const { styles } = useThemeStyles(getStyles);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
   const { favoriteApps } = useDappsHome();
 
@@ -20,17 +23,43 @@ export function FavoriteDappsScreen(): JSX.Element {
     });
   }, [setNavigationOptions, favoriteApps.length]);
 
+  const { setBrowserHistory, setDapp } = useDappsHome();
+  const { openUrlAsDapp } = useOpenDappView();
+
+  const { styles } = useTheme2024({
+    getStyle,
+  });
+
+  const handleOpenURL = useMemoizedFn((url: string) => {
+    openUrlAsDapp(url, {
+      showSheetModalFirst: true,
+    });
+    setBrowserHistory(safeGetOrigin(url));
+  });
+
+  const handleFavoriteDapp = useMemoizedFn((dapp: DappInfo) => {
+    setDapp({
+      ...dapp,
+      isFavorite: !dapp.isFavorite,
+    });
+  });
+
   return (
     <NormalScreenContainer overwriteStyle={styles.page}>
-      <DappCardList data={favoriteApps} />
+      <DappCardList
+        data={favoriteApps}
+        onFavoritePress={handleFavoriteDapp}
+        onPress={dapp => {
+          handleOpenURL(dapp.origin);
+        }}
+      />
     </NormalScreenContainer>
   );
 }
 
-const getStyles = (colors: ReturnType<typeof useThemeColors>) =>
-  StyleSheet.create({
-    page: {
-      // todo
-      backgroundColor: '#fff',
-    },
-  });
+const getStyle = createGetStyles2024(() => ({
+  page: {
+    // todo
+    backgroundColor: '#fff',
+  },
+}));
