@@ -7,7 +7,6 @@ import { useTheme2024 } from '@/hooks/theme';
 import NormalScreenContainer from '@/components/ScreenContainer/NormalScreenContainer';
 import { Card } from '@/components2024/Card';
 
-import { useSetPasswordFirst } from '@/hooks/useLock';
 import { navigate } from '@/utils/navigation';
 import { RootNames } from '@/constant/layout';
 
@@ -23,12 +22,9 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useNavigationState } from '@react-navigation/native';
 import { WalletIcon } from '@/components2024/WalletIcon/WalletIcon';
 import { KEYRING_TYPE } from '@rabby-wallet/keyring-utils';
-import { useTranslation } from 'react-i18next';
 
 function ImportMethods(): JSX.Element {
   const { styles } = useTheme2024({ getStyle: getStyles });
-  const { t } = useTranslation();
-  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.ImportMethods)?.params,
@@ -54,13 +50,6 @@ function ImportMethods(): JSX.Element {
             style={styles.importItem}
             hasArrow={state?.hasCurrentAddress}
             onPress={() => {
-              if (
-                shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportMnemonic2024,
-                })
-              ) {
-                return;
-              }
               navigate(RootNames.StackAddress, {
                 screen: RootNames.ImportMnemonic2024,
               });
@@ -72,14 +61,6 @@ function ImportMethods(): JSX.Element {
             hasArrow={state?.hasCurrentAddress}
             style={styles.importItem}
             onPress={() => {
-              if (
-                shouldRedirectToSetPasswordBefore2024({
-                  backScreen: RootNames.ImportPrivateKey2024,
-                })
-              ) {
-                return;
-              }
-
               navigate(RootNames.StackAddress, {
                 screen: RootNames.ImportPrivateKey2024,
               });

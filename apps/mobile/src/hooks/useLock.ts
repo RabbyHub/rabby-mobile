@@ -330,8 +330,46 @@ export function useSetPasswordFirst() {
     [navigation, lockInfo],
   );
 
+  const asyncSetPassword = (
+    backScreen?: (SettingNavigatorParamList['SetPassword'] & {
+      actionAfterSetup: 'backScreen';
+    })['replaceScreen'],
+  ) => {
+    return new Promise<void>((resolve, reject) => {
+      if (!APP_FEATURE_SWITCH.customizePassword) {
+        return resolve();
+      }
+      if (lockInfo.pwdStatus === PasswordStatus.Custom) {
+        return resolve();
+      }
+      const timeout = setTimeout(
+        () => reject(new Error('Timeout')),
+        // 10 mins timeout
+        10 * 60 * 1000,
+      );
+
+      navigation.push(RootNames.StackAddress2024, {
+        screen: RootNames.SetPassword2024,
+        params: {
+          title: 'Set Password',
+          hideProgress: true,
+          onFinish: () => {
+            clearTimeout(timeout);
+            resolve();
+            if (backScreen) {
+              navigation.replace(RootNames.StackAddress, {
+                screen: backScreen,
+              });
+            }
+          },
+        },
+      });
+    });
+  };
+
   return {
     shouldRedirectToSetPasswordBefore,
     shouldRedirectToSetPasswordBefore2024,
+    asyncSetPassword,
   };
 }

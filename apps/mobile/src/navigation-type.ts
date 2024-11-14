@@ -34,6 +34,11 @@ export type RootStackParamsList = {
   };
   [RootNames.Scanner]?: {};
   [RootNames.RestoreFromCloud]?: {};
+  [RootNames.SetPassword2024]?: {
+    onFinish: () => void;
+    title: string;
+    hideProgress: boolean;
+  };
 };
 
 export type BottomTabParamsList = {

@@ -8,6 +8,8 @@ import {
   removeGlobalBottomSheetModal2024,
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
+import { useSetPasswordFirst } from '@/hooks/useLock';
+import { RootNames } from '@/constant/layout';
 
 const hitSlop = {
   top: 10,
@@ -17,6 +19,8 @@ const hitSlop = {
 };
 
 export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
+  const { asyncSetPassword } = useSetPasswordFirst();
+
   const onPress = React.useCallback(() => {
     Keyboard.dismiss();
     const id = createGlobalBottomSheetModal2024({
@@ -25,13 +29,14 @@ export const CloudBackupButton2024: React.FC<HeaderButtonProps> = ({}) => {
         enableContentPanningGesture: true,
         enablePanDownToClose: true,
       },
+      onCheckPassword: () => asyncSetPassword(RootNames.ImportMnemonic2024),
       onDone: () => {
         setTimeout(() => {
           removeGlobalBottomSheetModal2024(id);
         }, 0);
       },
     });
-  }, []);
+  }, [asyncSetPassword]);
   const CloudImageSrc = React.useMemo(() => {
     if (IS_IOS) {
       return require('@/assets2024/icons/common/icloud2x.png');

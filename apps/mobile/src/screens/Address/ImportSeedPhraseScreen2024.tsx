@@ -32,6 +32,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { FooterButtonScreenContainer } from '@/components2024/ScreenContainer/FooterButtonScreenContainer';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 const getStyles = createGetStyles2024(ctx => ({
   screen: {
@@ -120,6 +121,7 @@ export const ImportSeedPhraseScreen2024 = () => {
 
   const [importing, setImporting] = React.useState(false);
   const importToastHiddenRef = React.useRef<() => void>(() => {});
+  const { asyncSetPassword } = useSetPasswordFirst();
 
   const importSeedPhrase = React.useCallback(() => {
     apiMnemonic
@@ -212,15 +214,21 @@ export const ImportSeedPhraseScreen2024 = () => {
   }, [duplicateAddressModal, mnemonics]);
 
   const handleConfirm = React.useCallback(() => {
-    setImporting(true);
-    importToastHiddenRef.current = toast.show('Importing...', {
-      duration: 100000,
-    });
+    asyncSetPassword()
+      .then(() => {
+        setImporting(true);
+        importToastHiddenRef.current = toast.show('Importing...', {
+          duration: 100000,
+        });
 
-    setTimeout(() => {
-      importSeedPhrase();
-    }, 10);
-  }, [importSeedPhrase]);
+        setTimeout(() => {
+          importSeedPhrase();
+        }, 10);
+      })
+      .catch(err => {
+        console.log('Timeout Error', err);
+      });
+  }, [asyncSetPassword, importSeedPhrase]);
 
   React.useEffect(() => {
     setError(undefined);

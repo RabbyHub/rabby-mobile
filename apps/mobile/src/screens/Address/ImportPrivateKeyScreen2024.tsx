@@ -27,6 +27,7 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { NextInput } from '@/components2024/Form/Input';
 import TouchableView from '@/components/Touchable/TouchableView';
 import { RcIconScannerCC } from '@/assets/icons/address';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 export const ImportPrivateKeyScreen2024 = () => {
   const { styles, colors2024 } = useTheme2024({ getStyle: getStyles });
@@ -36,8 +37,9 @@ export const ImportPrivateKeyScreen2024 = () => {
   const [error, setError] = React.useState<string>();
   const duplicateAddressModal = useDuplicateAddressModal();
   const scanner = useScanner();
+  const { asyncSetPassword } = useSetPasswordFirst();
 
-  const handleConfirm = React.useCallback(() => {
+  const importPrivateKey = React.useCallback(() => {
     apiPrivateKey
       .importPrivateKey(privateKey)
       .then(([account]) => {
@@ -63,6 +65,16 @@ export const ImportPrivateKeyScreen2024 = () => {
         }
       });
   }, [duplicateAddressModal, privateKey]);
+
+  const handleConfirm = React.useCallback(() => {
+    asyncSetPassword()
+      .then(() => {
+        importPrivateKey();
+      })
+      .catch(err => {
+        console.log('Timeout Error', err);
+      });
+  }, [asyncSetPassword, importPrivateKey]);
 
   React.useEffect(() => {
     setError(undefined);

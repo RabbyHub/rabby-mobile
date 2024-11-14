@@ -27,7 +27,8 @@ const { isSameAddress } = addressUtils;
 
 export const RestoreFromCloud2024: React.FC<{
   onDone: () => void;
-}> = ({ onDone }) => {
+  onCheckPassword?: () => Promise<void>;
+}> = ({ onDone, onCheckPassword }) => {
   const [backups, setBackups] = React.useState<BackupData[]>();
   const [loading, setLoading] = React.useState(true);
   const { styles } = useTheme2024({ getStyle });
@@ -50,8 +51,11 @@ export const RestoreFromCloud2024: React.FC<{
       });
   }, []);
 
-  const handleRestore = React.useCallback(() => {
+  const handleRestore = React.useCallback(async () => {
     onDone();
+    if (onCheckPassword) {
+      await onCheckPassword();
+    }
     const id = createGlobalBottomSheetModal2024({
       name: MODAL_NAMES.SEED_PHRASE_RESTORE_FROM_CLOUD2024,
       bottomSheetModalProps: {
@@ -66,7 +70,7 @@ export const RestoreFromCloud2024: React.FC<{
       },
       files: backups?.filter(item => selectedFilenames.includes(item.filename)),
     });
-  }, [backups, onDone, selectedFilenames]);
+  }, [backups, onCheckPassword, onDone, selectedFilenames]);
 
   const handleSelect = React.useCallback((filename: string) => {
     setSelectedFilenames(prev => {
