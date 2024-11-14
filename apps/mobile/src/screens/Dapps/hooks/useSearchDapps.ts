@@ -25,6 +25,8 @@ export const useSearchDapps = () => {
 
   const debouncedSearchValue = useDebounce(searchState.searchText, {
     wait: 500,
+    trailing: true,
+    leading: true,
   });
   const url = useParsePossibleURL(debouncedSearchValue);
 

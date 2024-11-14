@@ -44,7 +44,7 @@ export const DappSearchSection: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      {!!searchText ? (
+      {searchText && !loading ? (
         <>
           {currentURL ? (
             currentDapp ? (
