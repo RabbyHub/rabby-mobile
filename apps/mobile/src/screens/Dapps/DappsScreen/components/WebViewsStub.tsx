@@ -176,11 +176,12 @@ function getDefaultSnapPoints() {
 function useSafeSizes() {
   const { top } = useSafeAreaInsets();
 
-  const offTop = IS_ANDROID ? top + 0 : top + 0;
-
-  const { snapPoints, webviewMaxHeight } = useMemo(() => {
+  const { snapPoints, webviewMaxHeight, containerPaddingTop } = useMemo(() => {
     const defaultSp = getDefaultSnapPoints();
     const fromScreen = defaultSp.fromScreen;
+
+    const offTop = IS_ANDROID ? top + 0 : 0;
+    const pt = IS_ANDROID ? 0 : top;
 
     return {
       snapPoints: [fromScreen[0], fromScreen[1] - offTop],
@@ -188,8 +189,9 @@ function useSafeSizes() {
         defaultSp.scrLayout.height -
         ScreenLayouts2.dappWebViewControlHeaderHeight -
         ScreenLayouts2.dappWebViewControlNavHeight,
+      containerPaddingTop: pt,
     };
-  }, [offTop]);
+  }, [top]);
 
   const { safeSizes } = useSafeAndroidBottomSizes({
     containerPaddingBottom: 0,
@@ -198,6 +200,7 @@ function useSafeSizes() {
   return {
     snapPoints,
     webviewMaxHeight,
+    containerPaddingTop,
     containerPaddingBottom: safeSizes.containerPaddingBottom,
   };
 }
@@ -283,8 +286,12 @@ export function OpenedDappWebViewStub() {
     handleBottomSheetChanges,
   );
 
-  const { snapPoints, webviewMaxHeight, containerPaddingBottom } =
-    useSafeSizes();
+  const {
+    snapPoints,
+    webviewMaxHeight,
+    containerPaddingTop,
+    containerPaddingBottom,
+  } = useSafeSizes();
 
   const hasOpenedDapps = !!openedDappItems.length;
 
@@ -317,6 +324,7 @@ export function OpenedDappWebViewStub() {
           styles.bsView,
           !!openedDappItems.length && styles.bsViewOpened,
           {
+            paddingTop: containerPaddingTop,
             paddingBottom: containerPaddingBottom,
           },
         ]}>
