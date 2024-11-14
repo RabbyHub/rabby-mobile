@@ -113,12 +113,14 @@ export const AddressDetailInner: React.FC<AddressInfoProps> = props => {
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   root: {
     flex: 1,
+    marginBottom: 56,
   },
   cardList: {
     gap: 12,
   },
   card: {
     marginHorizontal: 16,
+    width: 'auto',
   },
   labelText: {
     color: colors2024['red-default'],

@@ -73,6 +73,7 @@ const getStyle = createGetStyles2024(({}) => ({
   card: {
     gap: 24,
     marginHorizontal: 16,
+    width: 'auto',
   },
   subItemView: {
     marginTop: -12,
