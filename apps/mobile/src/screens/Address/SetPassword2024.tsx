@@ -46,7 +46,12 @@ const INIT_FORM_DATA = __DEV__
 
 const DISABLE_SET_PASSWORD = !APP_FEATURE_SWITCH.customizePassword;
 
-function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
+function useSetupPasswordForm(
+  toggleBiometrics,
+  onFinish,
+  isBiometricsEnabled,
+  delaySetPassword,
+) {
   const { t } = useTranslation();
   const yupSchema = React.useMemo(() => {
     const passSchema = Yup.string()
@@ -103,19 +108,30 @@ function useSetupPasswordForm(toggleBiometrics, onFinish, isBiometricsEnabled) {
         hideOnPress: false,
       });
 
-      try {
+      const updatePassword = async () => {
         await clearCustomPassword(values.password);
         const result = await apisLock.setupWalletPassword(values.password);
         if (result.error) {
           toast.show(result.error);
+          return false;
         } else {
           await fetchLockInfo();
           await toggleBiometrics?.(values.switch, {
             validatedPassword: values.password,
           });
-
-          onFinish();
-          toast.success('Setup Password Successfully');
+          return true;
+        }
+      };
+      try {
+        if (delaySetPassword) {
+          toastHide();
+          onFinish(updatePassword);
+        } else {
+          const success = await updatePassword();
+          if (success) {
+            onFinish();
+            toast.success('Setup Password Successfully');
+          }
         }
       } finally {
         toastHide();
@@ -138,9 +154,10 @@ function MainListBlocks() {
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.SetPassword2024)?.params,
   ) as {
-    onFinish: () => {};
+    onFinish: (cb: any) => {};
     title: string;
     hideProgress: boolean;
+    delaySetPassword?: boolean;
   };
   console.log('state2', state);
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -159,6 +176,7 @@ function MainListBlocks() {
     toggleBiometrics,
     state.onFinish,
     isBiometricsEnabled,
+    state.delaySetPassword,
   );
 
   useFocusEffect(

@@ -39,6 +39,7 @@ function MainListBlocks() {
     alias: string;
     seedPhrase: string;
     accountsToCreate: any;
+    onFinish?: () => {};
   };
   console.log('state3', state);
 
@@ -51,6 +52,7 @@ function MainListBlocks() {
       },
       paramState: state,
       onDone: () => {
+        state.onFinish?.();
         removeGlobalBottomSheetModal2024(id);
       },
     });
@@ -66,6 +68,7 @@ function MainListBlocks() {
       preventScreenshotOnModalOpen: true,
       paramState: state,
       onDone: () => {
+        state.onFinish?.();
         removeGlobalBottomSheetModal2024(id);
       },
     });

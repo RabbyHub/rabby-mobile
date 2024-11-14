@@ -144,7 +144,7 @@ function MainListBlocks() {
     });
     console.log('exe handleContinue');
 
-    const onSetupPasswordDone = () => {
+    const onSetupPasswordDone = (cb?: () => Promise<boolean>) => {
       navigation.replace(RootNames.StackAddress, {
         screen: RootNames.CreateChooseBackup,
         params: {
@@ -152,6 +152,7 @@ function MainListBlocks() {
           alias: addressAlias || ellipsisAddress(newAddress),
           seedPhrase: value?.seedPhrase,
           accountsToCreate: value?.accountsToCreate,
+          onFinish: cb,
         },
       });
     };
@@ -162,6 +163,7 @@ function MainListBlocks() {
         screen: RootNames.SetPassword2024,
         params: {
           onFinish: onSetupPasswordDone,
+          delaySetPassword: true,
         },
       });
     }
