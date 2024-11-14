@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 
 import {
-  RcIconCloseCC,
   RcNextCloseCircle,
+  RcNextCloseCircleDark,
   RcNextSearchCC,
 } from '@/assets/icons/common';
 import { useTheme2024 } from '@/hooks/theme';
@@ -36,7 +36,7 @@ export const NextSearchBar: React.FC<Props> = ({
   onCancel,
   ...rest
 }) => {
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -82,10 +82,17 @@ export const NextSearchBar: React.FC<Props> = ({
               onChangeText?.('');
               console.log('xx');
             }}>
-            <RcNextCloseCircle
-              style={styles.closeIcon}
-              color={colors2024['neutral-secondary']}
-            />
+            {isLight ? (
+              <RcNextCloseCircle
+                style={styles.closeIcon}
+                color={colors2024['neutral-secondary']}
+              />
+            ) : (
+              <RcNextCloseCircleDark
+                style={styles.closeIcon}
+                color={colors2024['neutral-secondary']}
+              />
+            )}
           </TouchableWithoutFeedback>
         ) : null}
       </View>

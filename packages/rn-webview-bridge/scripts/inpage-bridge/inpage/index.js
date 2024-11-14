@@ -1,4 +1,7 @@
-import { initializeProvider, shimWeb3 } from '@rabby-wallet/universal-providers';
+import {
+  initializeProvider,
+  shimWeb3,
+} from '@rabby-wallet/universal-providers';
 import ObjectMultiplex from '@rabby-wallet/object-multiplex';
 import * as pump from 'pump';
 import { v4 as uuid } from 'uuid';
@@ -17,7 +20,7 @@ const rabbyStream = new ReactNativePostMessageStream({
 });
 
 // Initialize provider object (window.ethereum)
-initializeProvider({
+const rabbyProvider = initializeProvider({
   connectionStream: rabbyStream,
   shouldSendMetadata: false,
   jsonRpcStreamName: CHANNEL_PROVIDER,
@@ -27,6 +30,35 @@ initializeProvider({
     icon: process.env.RABBY_BUILD_ICON,
     rdns: process.env.RABBY_BUILD_APP_ID,
   },
+});
+
+const domReadyCall = callback => {
+  if (document.readyState === 'loading') {
+    const domContentLoadedHandler = () => {
+      callback();
+      document.removeEventListener('DOMContentLoaded', domContentLoadedHandler);
+    };
+    document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
+  } else {
+    callback();
+  }
+};
+
+domReadyCall(() => {
+  const origin = location.origin;
+  const icon =
+    document.querySelector('head > link[rel~="icon"]')?.href ||
+    document.querySelector('head > meta[itemprop="image"]')?.content;
+
+  const name =
+    document.title ||
+    document.querySelector('head > meta[name="title"]')?.content ||
+    origin;
+
+  rabbyProvider.request({
+    method: 'tabCheckin',
+    params: { icon, name, origin },
+  });
 });
 
 // Set content script post-setup function
@@ -41,16 +73,15 @@ Object.defineProperty(window, '_rabbySetupProvider', {
 });
 
 // notify webview inpage initialization is complete
-window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
-  JSON.stringify(
-    {
+window.ReactNativeWebView &&
+  window.ReactNativeWebView.postMessage(
+    JSON.stringify({
       type: 'RabbyContentScript:InpageLoaded',
       payload: {
         time: Date.now(),
-      }
-    }
-  )
-);
+      },
+    }),
+  );
 
 // Functions
 
@@ -67,7 +98,7 @@ function setupProviderStreams() {
   // so we can handle the channels individually
   const pageMux = new ObjectMultiplex();
   pageMux.setMaxListeners(25);
-  pump(pageMux, pageStream, pageMux, (err) =>
+  pump(pageMux, pageStream, pageMux, err =>
     logStreamDisconnectWarning('Rabby Inpage Multiplex', err),
   );
 
@@ -77,7 +108,7 @@ function setupProviderStreams() {
   });
   const appMux = new ObjectMultiplex();
   appMux.setMaxListeners(25);
-  pump(appMux, appStream, appMux, (err) => {
+  pump(appMux, appStream, appMux, err => {
     logStreamDisconnectWarning('Rabby Background Multiplex', err);
     notifyProviderOfStreamFailure();
   });
@@ -99,7 +130,7 @@ function setupProviderStreams() {
 function forwardTrafficBetweenMuxes(channelName, muxA, muxB) {
   const channelA = muxA.createStream(channelName);
   const channelB = muxB.createStream(channelName);
-  pump(channelA, channelB, channelA, (err) =>
+  pump(channelA, channelB, channelA, err =>
     logStreamDisconnectWarning(
       `muxed traffic for channel "${channelName}" failed.`,
       err,

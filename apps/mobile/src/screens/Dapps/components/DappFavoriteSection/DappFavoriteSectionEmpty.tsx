@@ -3,13 +3,14 @@ import { createGetStyles2024 } from '@/utils/styles';
 import React from 'react';
 import { Text, View } from 'react-native';
 import RcIconEmpty from '@/assets/icons/dapp/dapp-favorite-empty.svg';
+import RcIconEmptyDark from '@/assets/icons/dapp/dapp-favorite-empty-dark.svg';
 
 export const DappFavoriteSectionEmpty = () => {
-  const { styles } = useTheme2024({ getStyle });
+  const { styles, isLight } = useTheme2024({ getStyle });
 
   return (
     <View style={styles.empty}>
-      <RcIconEmpty />
+      {isLight ? <RcIconEmpty /> : <RcIconEmptyDark />}
       <Text style={styles.emptyText}>No Dapps added yet</Text>
     </View>
   );

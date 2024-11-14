@@ -10,6 +10,7 @@ import { safeGetOrigin } from '@rabby-wallet/base-utils/dist/isomorphic/url';
 import { useMemoizedFn } from 'ahooks';
 import { DappCardList } from '../components/DappCardList';
 import { useOpenDappView } from '../hooks/useDappView';
+import LinearGradient from 'react-native-linear-gradient';
 
 export function FavoriteDappsScreen(): JSX.Element {
   const { setNavigationOptions } = useSafeSetNavigationOptions();
@@ -26,7 +27,7 @@ export function FavoriteDappsScreen(): JSX.Element {
   const { setBrowserHistory, setDapp } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
 
-  const { styles } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -45,21 +46,29 @@ export function FavoriteDappsScreen(): JSX.Element {
   });
 
   return (
-    <NormalScreenContainer overwriteStyle={styles.page}>
-      <DappCardList
-        data={favoriteApps}
-        onFavoritePress={handleFavoriteDapp}
-        onPress={dapp => {
-          handleOpenURL(dapp.origin);
-        }}
-      />
-    </NormalScreenContainer>
+    <LinearGradient
+      colors={
+        isLight
+          ? ['#fff', '#F9F9F9']
+          : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
+      }
+      start={{ x: 0, y: 0.0728 }}
+      end={{ x: 0, y: 0.1614 }}>
+      <NormalScreenContainer overwriteStyle={styles.page}>
+        <DappCardList
+          data={favoriteApps}
+          onFavoritePress={handleFavoriteDapp}
+          onPress={dapp => {
+            handleOpenURL(dapp.origin);
+          }}
+        />
+      </NormalScreenContainer>
+    </LinearGradient>
   );
 }
 
 const getStyle = createGetStyles2024(() => ({
   page: {
-    // todo
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
 }));

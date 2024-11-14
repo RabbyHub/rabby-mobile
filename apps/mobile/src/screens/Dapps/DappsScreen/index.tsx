@@ -20,6 +20,7 @@ import { DappSearchSection } from '../components/DappSearchSection';
 import { useOpenDappView } from '../hooks/useDappView';
 import { useSearchDapps } from '../hooks/useSearchDapps';
 import { DappInfo } from '@/core/services/dappService';
+import LinearGradient from 'react-native-linear-gradient';
 
 export function DappsScreen(): JSX.Element {
   const {
@@ -31,7 +32,7 @@ export function DappsScreen(): JSX.Element {
   } = useDappsHome();
   const { openUrlAsDapp } = useOpenDappView();
 
-  const { styles, colors2024 } = useTheme2024({
+  const { styles, colors2024, isLight } = useTheme2024({
     getStyle,
   });
 
@@ -62,96 +63,105 @@ export function DappsScreen(): JSX.Element {
       onPress={() => {
         Keyboard.dismiss();
       }}>
-      <NormalScreenContainer noHeader overwriteStyle={styles.page}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              }
-            }}>
-            <RcNextLeftCC color={colors2024['neutral-title-1']} />
-          </TouchableOpacity>
-          <NextSearchBar
-            style={styles.searchBar}
-            placeholder="Search Dapp name or URL"
-            value={searchState.state.searchText}
-            onChangeText={v => {
-              searchState.setState({
-                chain: undefined,
-                searchText: v,
-              });
-            }}
-            onFocus={() => {
-              searchState.setState({
-                isFocus: true,
-              });
-            }}
-            onBlur={() => {
-              searchState.setState({
-                isFocus: false,
-              });
-            }}
-            returnKeyType={searchState.returnKeyType}
-            onSubmitEditing={() => {
-              const url =
-                searchState.currentDapp?.origin || searchState.currentURL;
-              if (url) {
-                handleOpenURL(url);
-              }
-              // console.log('keyPress', e.nativeEvent.key, url);
-            }}
-            // enterKeyHint={searchState.returnKeyType ? 'go' : undefined}
-          />
-        </View>
-        {!searchState.state.isFocus && !searchState.state.searchText ? (
-          <View style={styles.container}>
-            <DappHistorySection
-              style={{ height: '100%' }}
-              data={browserHistoryList}
-              onPress={dapp => {
-                handleOpenURL(dapp.origin);
+      <LinearGradient
+        colors={
+          isLight
+            ? ['#fff', '#F9F9F9']
+            : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
+        }
+        start={{ x: 0, y: 0.1185 }}
+        end={{ x: 0, y: 0.5235 }}>
+        <NormalScreenContainer noHeader overwriteStyle={styles.page}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                }
+                Keyboard.dismiss();
+              }}>
+              <RcNextLeftCC color={colors2024['neutral-title-1']} />
+            </TouchableOpacity>
+            <NextSearchBar
+              style={styles.searchBar}
+              placeholder="Search Dapp name or URL"
+              value={searchState.state.searchText}
+              onChangeText={v => {
+                searchState.setState({
+                  chain: undefined,
+                  searchText: v,
+                });
               }}
-              onFavoritePress={handleFavoriteDapp}
-              onDeletePress={handleDeleteHistory}
-              HeaderComponent={
-                <DappFavoriteSection
-                  data={favoriteApps}
-                  onPress={dapp => {
-                    handleOpenURL(dapp.origin);
-                  }}
-                />
-              }
+              onFocus={() => {
+                searchState.setState({
+                  isFocus: true,
+                });
+              }}
+              onBlur={() => {
+                searchState.setState({
+                  isFocus: false,
+                });
+              }}
+              returnKeyType={searchState.returnKeyType}
+              onSubmitEditing={() => {
+                const url =
+                  searchState.currentDapp?.origin || searchState.currentURL;
+                if (url) {
+                  handleOpenURL(url);
+                }
+                // console.log('keyPress', e.nativeEvent.key, url);
+              }}
+              // enterKeyHint={searchState.returnKeyType ? 'go' : undefined}
             />
           </View>
-        ) : (
-          <DappSearchSection
-            list={searchState.list}
-            loadMore={searchState.loadMore}
-            loading={searchState.loading}
-            total={searchState.total}
-            onChainChange={c => {
-              searchState.setState({
-                chain: c,
-              });
-            }}
-            chain={searchState.state.chain}
-            onFavoritePress={handleFavoriteDapp}
-            onOpenURL={handleOpenURL}
-            currentDapp={searchState.currentDapp}
-            currentURL={searchState.currentURL}
-            searchText={searchState.state.searchText}
-          />
-        )}
-      </NormalScreenContainer>
+          {!searchState.state.isFocus && !searchState.state.searchText ? (
+            <View style={styles.container}>
+              <DappHistorySection
+                style={{ height: '100%' }}
+                data={browserHistoryList}
+                onPress={dapp => {
+                  handleOpenURL(dapp.origin);
+                }}
+                onFavoritePress={handleFavoriteDapp}
+                onDeletePress={handleDeleteHistory}
+                HeaderComponent={
+                  <DappFavoriteSection
+                    data={favoriteApps}
+                    onPress={dapp => {
+                      handleOpenURL(dapp.origin);
+                    }}
+                  />
+                }
+              />
+            </View>
+          ) : (
+            <DappSearchSection
+              list={searchState.list}
+              loadMore={searchState.loadMore}
+              loading={searchState.loading}
+              total={searchState.total}
+              onChainChange={c => {
+                searchState.setState({
+                  chain: c,
+                });
+              }}
+              chain={searchState.state.chain}
+              onFavoritePress={handleFavoriteDapp}
+              onOpenURL={handleOpenURL}
+              currentDapp={searchState.currentDapp}
+              currentURL={searchState.currentURL}
+              searchText={searchState.state.searchText}
+            />
+          )}
+        </NormalScreenContainer>
+      </LinearGradient>
     </TouchableWithoutFeedback>
   );
 }
 
 const getStyle = createGetStyles2024(({ colors2024 }) => ({
   page: {
-    // todo
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
