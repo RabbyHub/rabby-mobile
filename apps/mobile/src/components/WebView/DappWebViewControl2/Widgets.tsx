@@ -66,12 +66,14 @@ type OnPressButtonCtx = {
 export function BottomNavControl2({
   webviewState,
   webviewActions,
-  favoriated,
+  isFavorited,
+  isConnected,
   afterNode,
   // onPressMore,
   onPressButton,
 }: BottomNavControlCbCtx & {
-  favoriated?: boolean;
+  isFavorited?: boolean;
+  isConnected?: boolean;
   afterNode?:
     | React.ReactNode
     | ((
@@ -154,10 +156,10 @@ export function BottomNavControl2({
     const menuActions = [
       {
         title: 'Favorite',
-        iosIconSource: favoriated
+        iosIconSource: isFavorited
           ? require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite_filled.png')
           : require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_favorite.png'),
-        androidIconName: favoriated
+        androidIconName: isFavorited
           ? 'ic_rabby_menu_favorite_filled'
           : 'ic_rabby_menu_favorite',
         key: 'favorite',
@@ -166,7 +168,7 @@ export function BottomNavControl2({
           onPressButtonInternal({ type: 'favorite' });
         },
       },
-      {
+      isConnected && {
         title: 'Disconnect',
         textColor: colors2024['red-dark'],
         iosIconSource: require('@/assets/icons/ios_ic_rabby_icons/ic_rabby_menu_disconnect.png'),
@@ -198,7 +200,13 @@ export function BottomNavControl2({
       iosMenuTitle: urlInfo.hostname,
       menuActions: menuActions.reverse(),
     } as React.ComponentProps<typeof DropdownMenuView>['menuConfig'];
-  }, [webviewState.url, colors2024, favoriated, onPressButtonInternal]);
+  }, [
+    webviewState.url,
+    colors2024,
+    isFavorited,
+    isConnected,
+    onPressButtonInternal,
+  ]);
 
   return (
     <View style={[bottomNavStyles.navControls]}>

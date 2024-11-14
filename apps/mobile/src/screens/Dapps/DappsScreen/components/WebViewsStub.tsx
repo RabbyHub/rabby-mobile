@@ -44,6 +44,7 @@ import { globalSetActiveDappState } from '@/core/bridges/state';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
 import { IS_ANDROID } from '@/core/native/utils';
+import { toast } from '@/components/Toast';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <RefreshAutoLockBottomSheetBackdrop
@@ -198,7 +199,7 @@ export function OpenedDappWebViewStub() {
 
   useForceExpandOnceOnBootstrap(openedDappWebviewSheetModalRef);
 
-  const { isDappConnected, disconnectDapp } = useDapps();
+  const { isDappConnected, disconnectDapp, updateFavorite } = useDapps();
 
   const hideDappSheetModal = useCallback(() => {
     collapseDappWebViewModal();
@@ -389,9 +390,23 @@ export function OpenedDappWebViewStub() {
                   <BottomNavControl2
                     webviewState={webviewState}
                     webviewActions={webviewActions}
-                    favoriated={isFavorited}
+                    isFavorited={isFavorited}
+                    isConnected={isConnected}
                     onPressButton={ctx => {
-                      ctx.defaultAction(ctx);
+                      switch (ctx.type) {
+                        case 'disconnect': {
+                          disconnectDapp(dappInfo.origin);
+                          toast.success('Disconnected');
+                          break;
+                        }
+                        case 'favorite': {
+                          updateFavorite(dappInfo.origin, !isFavorited);
+                          break;
+                        }
+                        default:
+                          ctx.defaultAction(ctx);
+                          break;
+                      }
                     }}
                   />
                 );
