@@ -17,6 +17,15 @@ module.exports = {
     ],
   ],
   plugins: [
+    ['lodash'],
+    [
+      'import',
+      {
+        libraryName: 'ahooks',
+        camel2DashComponentName: false,
+        camel2UnderlineComponentName: false,
+      },
+    ],
     [
       'transform-define',
       {
