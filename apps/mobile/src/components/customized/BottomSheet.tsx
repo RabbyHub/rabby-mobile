@@ -141,14 +141,13 @@ export type AppBottomSheetModal = BottomSheetModal;
 
 export const OpenedDappBottomSheetModal = forwardRef<
   BottomSheetModal,
-  Omit<React.ComponentProps<typeof BottomSheetModal>, 'handleComponent'>
+  Omit<BottomSheetModalProps, 'handleComponent'>
 >((props, ref) => {
   return (
     <BottomSheetModal
       {...props}
       enableContentPanningGesture={false}
       enableHandlePanningGesture={false}
-      // handleHeight={0}
       // special, allow inner BottomSheetModal's backdrop can override this
       handleComponent={null}
       ref={ref}

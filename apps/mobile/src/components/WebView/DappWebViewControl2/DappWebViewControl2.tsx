@@ -100,6 +100,7 @@ type DappWebViewControlProps = {
         ctx: BottomNavControlCbCtx & { bottomNavBar: React.ReactNode },
       ) => React.ReactNode);
   webviewProps?: React.ComponentProps<typeof WebView>;
+  webviewContainerMaxHeight?: number;
   webviewNode?:
     | React.ReactNode
     | ((ctx: { webview: React.ReactNode | null }) => React.ReactNode);
@@ -183,9 +184,9 @@ const DappWebViewControl2 = React.forwardRef<
       headerNode,
       navControlContent,
       webviewProps,
+      webviewContainerMaxHeight = Dimensions.get('screen').height,
       webviewNode,
       style,
-      onSelfClose,
     },
     ref,
   ) => {
@@ -324,13 +325,6 @@ const DappWebViewControl2 = React.forwardRef<
       return convertToWebviewUrl(_initialUrl);
     }, [dappOrigin, _initialUrl]);
 
-    const { cutOffSizes } = useSafeAndroidBottomSizes({
-      webviewNodeContainerMaxH:
-        Dimensions.get('window').height -
-        ScreenLayouts2.dappWebViewControlHeaderHeight -
-        ScreenLayouts2.dappWebViewControlNavHeight,
-    });
-
     const renderedWebviewNode = useMemo(() => {
       if (!entryScriptWeb3Loaded) return null;
 
@@ -427,9 +421,11 @@ const DappWebViewControl2 = React.forwardRef<
           // renderToHardwareTextureAndroid
           style={[
             styles.dappWebViewContainer,
-            {
-              maxHeight: cutOffSizes.webviewNodeContainerMaxH,
-            },
+            !webviewContainerMaxHeight
+              ? {}
+              : {
+                  maxHeight: webviewContainerMaxHeight,
+                },
           ]}>
           {renderedWebviewNode}
         </View>
@@ -448,7 +444,7 @@ const getStyles = createGetStyles2024(ctx =>
       backgroundColor: 'transparent',
       width: '100%',
       height: '100%',
-      paddingVertical: 10,
+      // ...makeDebugBorder('blue')
     },
     dappWebViewHeadContainer: {
       flexShrink: 0,
@@ -458,9 +454,10 @@ const getStyles = createGetStyles2024(ctx =>
       alignItems: 'center',
       width: '100%',
       maxWidth: Dimensions.get('window').width,
-      minHeight: ScreenLayouts2.dappWebViewControlHeaderHeight,
+      height: ScreenLayouts2.dappWebViewControlHeaderHeight,
       paddingHorizontal: 20,
       paddingVertical: 0,
+      paddingTop: 10,
       backgroundColor: ctx.colors['neutral-bg-1'],
       // ...makeDebugBorder('red'),
     },
@@ -504,6 +501,7 @@ const getStyles = createGetStyles2024(ctx =>
       flexShrink: 1,
       flex: 1,
       height: '100%',
+      // ...makeDebugBorder('green')
     },
     dappWebView: {
       flex: 1,

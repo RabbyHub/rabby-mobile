@@ -61,7 +61,7 @@ const toastBiometricsFailed = (message?: string) => {
 const toastLoading = toastWithIcon(() => (
   <ActivityIndicator style={{ marginRight: 6 }} />
 ));
-const toastUnlocking = () => toastLoading('Unlocking');
+const toastUnlocking = () => toastLoading('Unlocking', { duration: 3000 });
 
 function BiometricsIcon(props: { isFaceID?: boolean }) {
   const { isFaceID = isIOS } = props;
