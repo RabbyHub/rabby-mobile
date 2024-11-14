@@ -22,7 +22,7 @@ function MainListBlocks() {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
   const { seedPhraseList, handleAddSeedPhraseAddress2024 } = useSeedPhrase();
-  console.log('seedPhraseList', seedPhraseList?.[0]?.list);
+  console.log('seedPhraseList', seedPhraseList);
   const state = useNavigationState(
     s =>
       s.routes.find(r => r.name === RootNames.CreateSelectOnCurrentSeed)

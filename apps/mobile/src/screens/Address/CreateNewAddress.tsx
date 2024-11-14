@@ -145,7 +145,7 @@ function MainListBlocks() {
     console.log('exe handleContinue');
 
     const onSetupPasswordDone = () => {
-      navigation.replace(RootNames.StackAddress2024, {
+      navigation.replace(RootNames.StackAddress, {
         screen: RootNames.CreateChooseBackup,
         params: {
           address: newAddress,
@@ -158,7 +158,7 @@ function MainListBlocks() {
     if (state?.noSetupPassword) {
       onSetupPasswordDone();
     } else {
-      navigation.replace(RootNames.StackAddress2024, {
+      navigation.replace(RootNames.StackAddress, {
         screen: RootNames.SetPassword2024,
         params: {
           onFinish: onSetupPasswordDone,

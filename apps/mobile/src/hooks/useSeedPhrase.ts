@@ -55,7 +55,7 @@ export const useSeedPhrase = () => {
           publicKey,
         );
 
-        navigate(RootNames.StackAddress2024, {
+        navigate(RootNames.StackAddress, {
           screen: RootNames.CreateNewAddress,
           params: {
             useCurrentSeed: true,

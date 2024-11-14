@@ -35,6 +35,11 @@ import { ImportSeedPhraseScreen2024 } from '../Address/ImportSeedPhraseScreen202
 import { CloudBackupButton2024 } from '../Address/CloudBackupButton2024';
 import { ImportSuccessScreen2024 } from '../Address/ImportSuccessScreen2024';
 import { createGetStyles2024 } from '@/utils/styles';
+import CreateNewAddress from '../Address/CreateNewAddress';
+import CreateSelectMethod from '../Address/CreateSelectMethod';
+import SetPassword2024 from '../Address/SetPassword2024';
+import CreateSelectOnCurrentSeed from '../Address/CreateSelectOnCurrentSeed/index';
+import CreateChooseBackup from '../Address/CreateChooseBackup';
 import { AddressListScreenButton } from '../Address/AddressListScreenButton';
 import { WatchAddressListScreen } from '../Address/WatchAddressListScreen';
 import { SafeAddressListScreen } from '../Address/SafeAddressScreen';
@@ -211,6 +216,76 @@ export function AddressNavigator() {
           headerStyle: {
             backgroundColor: colors2024['neutral-bg-1'],
           },
+          headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateSelectMethod}
+        component={CreateSelectMethod}
+        options={mergeScreenOptions({
+          headerLeft: () => null,
+          headerTitle: '1. Select Creation Method',
+          title: '1. Select Creation Method',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateNewAddress}
+        component={CreateNewAddress}
+        options={mergeScreenOptions({
+          headerLeft: () => null,
+          headerTitle: '1. Name Your Address',
+          title: '1. Name Your Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateSelectOnCurrentSeed}
+        component={CreateSelectOnCurrentSeed}
+        options={mergeScreenOptions({
+          headerLeft: () => null,
+          headerTitle: '2. Add Address',
+          title: '2. Add Address',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.SetPassword2024}
+        component={SetPassword2024}
+        options={mergeScreenOptions({
+          headerLeft: () => null,
+          headerTitle: '2. Set password',
+          title: '2. Set password',
+          headerTintColor: colors2024['neutral-title-1'],
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTitleStyle: styles.headerTitleText,
+        })}
+      />
+      <AddressStack.Screen
+        name={RootNames.CreateChooseBackup}
+        component={CreateChooseBackup}
+        options={mergeScreenOptions({
+          headerLeft: () => null,
+          headerTitle: '3. Choose a backup method',
+          title: '3. Choose a backup method',
+          headerStyle: {
+            backgroundColor: colors2024['neutral-bg-1'],
+          },
+          headerTintColor: colors2024['neutral-title-1'],
           headerTitleStyle: styles.headerTitleText,
         })}
       />

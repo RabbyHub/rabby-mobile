@@ -16,9 +16,13 @@ import { ListItem } from '@/components2024/ListItem/ListItem';
 
 interface Props {
   onDone: (isNoMnemonic?: boolean) => void;
+  shouldRedirectToSetPasswordBefore2024: any;
 }
 
-export const AddAddressSelectMethod: React.FC<Props> = ({ onDone }) => {
+export const AddAddressSelectMethod: React.FC<Props> = ({
+  onDone,
+  shouldRedirectToSetPasswordBefore2024,
+}) => {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle: getStyles });
 
@@ -39,7 +43,16 @@ export const AddAddressSelectMethod: React.FC<Props> = ({ onDone }) => {
       <View style={styles.section}>
         <ListItem
           onPress={() => {
-            navigate(RootNames.StackAddress2024, {
+            if (
+              shouldRedirectToSetPasswordBefore2024({
+                backScreen: RootNames.CreateSelectMethod,
+              })
+            ) {
+              onDone();
+              return;
+            }
+
+            navigate(RootNames.StackAddress, {
               screen: RootNames.CreateSelectMethod,
             });
             onDone();

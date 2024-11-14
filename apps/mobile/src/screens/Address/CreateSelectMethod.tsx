@@ -29,10 +29,12 @@ import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import LinearGradient from 'react-native-linear-gradient';
 import { IS_IOS } from '@/core/native/utils';
 import { navigate } from '@/utils/navigation';
+import { useSeedPhrase } from '@/hooks/useSeedPhrase';
 
 function MainListBlocks() {
   const { t } = useTranslation();
   const { styles } = useTheme2024({ getStyle });
+  const { seedPhraseList } = useSeedPhrase();
 
   const state = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.CreateChooseBackup)?.params,
@@ -45,10 +47,10 @@ function MainListBlocks() {
   console.log('state3', state);
 
   const handleCreateNewSeed = React.useCallback(() => {
-    navigate(RootNames.StackAddress2024, {
+    navigate(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
       params: {
-        noSetupPassword: 2,
+        noSetupPassword: true,
         useCurrentSeed: false,
         title: '2. Name Your Address',
       },
@@ -56,7 +58,7 @@ function MainListBlocks() {
   }, []);
 
   const handleCreateCurrentSeed = React.useCallback(() => {
-    navigate(RootNames.StackAddress2024, {
+    navigate(RootNames.StackAddress, {
       screen: RootNames.CreateSelectOnCurrentSeed,
     });
   }, []);
@@ -79,15 +81,19 @@ function MainListBlocks() {
             {'Create new seed phrase and an new address'}
           </Text>
         </Card>
-        <Card style={styles.listItem} onPress={handleCreateCurrentSeed}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>Create on Current Seed Phrase </Text>
-            <IcRightArrow />
-          </View>
-          <Text style={styles.tipText}>
-            {'Create address on one of your imported seed phrase'}
-          </Text>
-        </Card>
+        {Boolean(seedPhraseList.length) && (
+          <Card style={styles.listItem} onPress={handleCreateCurrentSeed}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.titleText}>
+                Create on Current Seed Phrase{' '}
+              </Text>
+              <IcRightArrow />
+            </View>
+            <Text style={styles.tipText}>
+              {'Create address on one of your imported seed phrase'}
+            </Text>
+          </Card>
+        )}
       </View>
     </TouchableWithoutFeedback>
   );

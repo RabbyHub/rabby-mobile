@@ -45,7 +45,7 @@ function SampleGetStartedScreen2024(): JSX.Element {
       return;
     }
 
-    navigate(RootNames.StackAddress2024, {
+    navigate(RootNames.StackAddress, {
       screen: RootNames.CreateNewAddress,
     });
   }, [getStaretd.processedInit]);

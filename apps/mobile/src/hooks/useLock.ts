@@ -311,7 +311,7 @@ export function useSetPasswordFirst() {
       if (lockInfo.pwdStatus === PasswordStatus.Custom) return false;
 
       if (backScreen) {
-        navigation.push(RootNames.StackAddress2024, {
+        navigation.push(RootNames.StackAddress, {
           screen: RootNames.SetPassword2024,
           params: {
             title: 'Set Password',

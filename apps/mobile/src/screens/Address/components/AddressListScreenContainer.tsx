@@ -17,6 +17,7 @@ import {
 } from '@/components2024/GlobalBottomSheetModal';
 import { MODAL_NAMES } from '@/components2024/GlobalBottomSheetModal/types';
 import { useOpenDappView } from '@/screens/Dapps/hooks/useDappView';
+import { useSetPasswordFirst } from '@/hooks/useLock';
 
 type CurrentAddressProps = NativeStackScreenProps<
   RootStackParamsList,
@@ -27,6 +28,7 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
   const { accounts } = useAccounts();
   const { styles, colors2024 } = useTheme2024({ getStyle });
   const { openUrlAsDapp } = useOpenDappView();
+  const { shouldRedirectToSetPasswordBefore2024 } = useSetPasswordFirst();
 
   const navState = useNavigationState(
     s => s.routes.find(r => r.name === RootNames.AddressList)?.params,
@@ -56,8 +58,9 @@ export const AddressListScreenContainer: React.FC<any> = ({ children }) => {
       onDone: () => {
         removeGlobalBottomSheetModal2024(id);
       },
+      shouldRedirectToSetPasswordBefore2024,
     });
-  }, []);
+  }, [shouldRedirectToSetPasswordBefore2024]);
 
   useEffect(() => {
     if (!accounts?.length) {

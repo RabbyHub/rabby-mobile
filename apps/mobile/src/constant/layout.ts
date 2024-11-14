@@ -77,7 +77,6 @@ export const RootNames = {
   MyBundle: 'MyBundle',
 
   StackAddress: 'StackAddress',
-  StackAddress2024: 'StackAddress2024',
   AddressList: 'AddressList',
   ImportNewAddress: 'ImportNewAddress',
   ImportHardwareAddress: 'ImportHardwareAddress',
