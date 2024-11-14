@@ -1,5 +1,6 @@
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { AppColorsVariants, ThemeColors } from './theme';
+import { IS_ANDROID } from '@/core/native/utils';
 
 export const ModalLayouts = {
   defaultHeightPercentText: '80%' as `${number}%`,
@@ -22,7 +23,7 @@ export const ScreenLayouts = {
 export const ScreenLayouts2 = {
   headerAreaHeight: 56,
 
-  dappWebViewControlHeaderHeight: 56,
+  dappWebViewControlHeaderHeight: (IS_ANDROID ? 10 : 0) /* padding-top */ + 56,
   dappWebViewControlNavHeight: 68,
 };
 
@@ -185,9 +186,9 @@ function makeScreenSpecConfig() {
       '@default': !isDarkTheme ? card2DefaultConf : bg1DefaultConf,
       '@bg1default': { ...bg1DefaultConf },
       '@openeddapp': {
-        barStyle: 'light-content',
+        barStyle: 'dark-content',
         iosStatusBarStyle: adaptiveIosStatusBarStyle,
-        androidStatusBarBg: 'rgba(0, 0, 0, 1)',
+        androidStatusBarBg: 'rgba(255, 255, 255, 1)',
       },
       GetStarted: blueLightConf,
       GetStartedScreen2024: bg1DefaultConf,

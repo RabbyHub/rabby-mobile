@@ -34,8 +34,13 @@ import {
 } from '@/components';
 import { useHandleBackPressClosable } from '@/hooks/useAppGesture';
 import { useFocusEffect } from '@react-navigation/native';
-import { createGetStyles, makeDebugBorder } from '@/utils/styles';
-import { useThemeStyles } from '@/hooks/theme';
+import {
+  createGetStyles,
+  createGetStyles2024,
+  makeDebugBorder,
+  makeDevOnlyStyle,
+} from '@/utils/styles';
+import { useTheme2024, useThemeStyles } from '@/hooks/theme';
 import { useRefState } from '@/hooks/common/useRefState';
 import DeviceUtils from '@/core/utils/device';
 import { RefreshAutoLockBottomSheetBackdrop } from '@/components/patches/refreshAutoLockUI';
@@ -45,14 +50,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNavControl2 } from '@/components/WebView/DappWebViewControl2/Widgets';
 import { IS_ANDROID } from '@/core/native/utils';
 import { toast } from '@/components/Toast';
+import { useSafeAndroidBottomSizes } from '@/hooks/useAppLayout';
 
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <RefreshAutoLockBottomSheetBackdrop
-    {...props}
-    disappearsOnIndex={0}
-    appearsOnIndex={1}
-  />
-);
+const renderBackdrop = (props: Omit<BottomSheetBackdropProps, 'style'>) => {
+  // const { colors2024 } = useTheme2024();
+  return (
+    <RefreshAutoLockBottomSheetBackdrop
+      {...props}
+      // style={undefined}
+      disappearsOnIndex={0}
+      appearsOnIndex={1}
+    />
+  );
+};
 
 /**
  * @description make sure put this Component under BottomSheetView
@@ -149,10 +159,12 @@ function getDefaultSnapPoints() {
   const winLayout = Dimensions.get('window');
 
   return {
+    scrLayout,
     fromScreen: [
       Math.max(1, Math.floor(scrLayout.height * 0.01)),
       parseFloat(scrLayout.height.toFixed(2)),
     ],
+    winLayout,
     fromWindow: [
       Math.max(1, Math.floor(winLayout.height * 0.01)),
       parseFloat(winLayout.height.toFixed(2)),
@@ -161,26 +173,38 @@ function getDefaultSnapPoints() {
 }
 // const DEFAULT_RANGES = getDefaultSnapPoints().fromScreen;
 // const DEFAULT_RANGES = ['1%', '100%'];
-function useSafeSnapshots() {
+function useSafeSizes() {
   const { top } = useSafeAreaInsets();
 
-  const snapPoints = useMemo(() => {
+  const offTop = IS_ANDROID ? top + 0 : top + 0;
+
+  const { snapPoints, webviewMaxHeight } = useMemo(() => {
     const defaultSp = getDefaultSnapPoints();
+    const fromScreen = defaultSp.fromScreen;
 
-    if (IS_ANDROID) {
-      const presets = defaultSp.fromWindow;
+    return {
+      snapPoints: [fromScreen[0], fromScreen[1] - offTop],
+      webviewMaxHeight:
+        defaultSp.scrLayout.height -
+        ScreenLayouts2.dappWebViewControlHeaderHeight -
+        ScreenLayouts2.dappWebViewControlNavHeight,
+    };
+  }, [offTop]);
 
-      return [presets[0], presets[1]];
-    }
+  const { safeSizes } = useSafeAndroidBottomSizes({
+    containerPaddingBottom: 0,
+  });
 
-    const presets = defaultSp.fromScreen;
-    return [presets[0], Math.max(presets[1], defaultSp.fromScreen[1]) - top];
-  }, [top]);
-
-  return { snapPoints, bgOffTop: top };
+  return {
+    snapPoints,
+    webviewMaxHeight,
+    containerPaddingBottom: safeSizes.containerPaddingBottom,
+  };
 }
 export function OpenedDappWebViewStub() {
-  const { colors, styles } = useThemeStyles(getWebViewStubStyles);
+  const { colors, colors2024, styles } = useTheme2024({
+    getStyle: getWebViewStubStyles,
+  });
   const {
     openedDappItems,
     activeDapp,
@@ -259,21 +283,29 @@ export function OpenedDappWebViewStub() {
     handleBottomSheetChanges,
   );
 
-  const { snapPoints } = useSafeSnapshots();
+  const { snapPoints, webviewMaxHeight, containerPaddingBottom } =
+    useSafeSizes();
+
+  const hasOpenedDapps = !!openedDappItems.length;
 
   return (
     <OpenedDappBottomSheetModal
       index={OPEN_DAPP_VIEW_INDEXES.collapsed}
       {...(isIOS && { detached: false })}
-      // bottomInset={safeOffBottom}
       backdropComponent={renderBackdrop}
       enablePanDownToClose={false}
-      backgroundStyle={{
-        paddingTop: 0,
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-        backgroundColor: __DEV__ ? 'transparent' : colors['neutral-bg1'],
+      // containerComponent={React.Fragment}
+      containerStyle={{
+        ...(hasOpenedDapps && {
+          height: '100%',
+          backgroundColor: 'transparent',
+          // ...makeDevOnlyStyle({
+          //   backgroundColor: 'red',
+          // }),
+        }),
       }}
+      handleStyle={{ height: 0 }}
+      backgroundStyle={styles.modalBg}
       name="openedDappWebviewSheetModalRef"
       ref={openedDappWebviewSheetModalRef}
       snapPoints={snapPoints}
@@ -284,6 +316,9 @@ export function OpenedDappWebViewStub() {
         style={[
           styles.bsView,
           !!openedDappItems.length && styles.bsViewOpened,
+          {
+            paddingBottom: containerPaddingBottom,
+          },
         ]}>
         {!openedDappItems.length && (
           <BottomSheetHandlableView
@@ -333,6 +368,7 @@ export function OpenedDappWebViewStub() {
                   closeOpenedDapp(dappInfo.origin);
                 }
               }}
+              webviewContainerMaxHeight={webviewMaxHeight}
               webviewProps={{
                 /**
                  * @platform ios
@@ -419,17 +455,26 @@ export function OpenedDappWebViewStub() {
   );
 }
 
-const getWebViewStubStyles = createGetStyles(colors => {
+const getWebViewStubStyles = createGetStyles2024(ctx => {
   return {
+    modalBg: {
+      paddingTop: 0,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      backgroundColor: ctx.colors2024['neutral-InvertHighlight'],
+    },
     bsView: {
+      paddingVertical: 0,
       alignItems: 'center',
       justifyContent: 'center',
+      height: '100%',
       /** @why keep '100%' for iOS layout, but could set as windowHeight for Android */
-      height: DeviceUtils.isAndroid()
+      maxHeight: DeviceUtils.isAndroid()
         ? Dimensions.get('window').height
         : '100%',
       minHeight: 20,
       backgroundColor: 'transparent',
+      // ...makeDebugBorder('black'),
     },
     bsViewOpened: {
       height: '100%',
