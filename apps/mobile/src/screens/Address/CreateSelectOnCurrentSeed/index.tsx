@@ -54,15 +54,11 @@ function MainListBlocks() {
 }
 
 function CreateSelectOnCurrentSeed(): JSX.Element {
-  const { colors2024, isLight } = useTheme2024({ getStyle });
+  const { colors2024 } = useTheme2024({ getStyle });
   return (
     <NormalScreenContainer>
       <LinearGradient
-        colors={
-          isLight
-            ? ['#FFF', '#F9F9F9']
-            : [colors2024['neutral-bg-2'], colors2024['neutral-bg-2']]
-        } // 渐变颜色
+        colors={[colors2024['neutral-bg-1'], colors2024['neutral-bg-3']]} // 渐变颜色
         start={{ x: 0, y: 0 }} // 渐变起始位置
         end={{ x: 0, y: 1 }} // 渐变结束位置
         // style={{
