@@ -130,6 +130,7 @@ const NextInputComponent = React.forwardRef<
     as?: InputType;
     containerStyle?: React.ComponentProps<typeof View>['style'];
     fieldName?: string;
+    fieldNameStyle?: React.ComponentProps<typeof Text>['style'];
     inputProps?: Omit<TextInputProps | BottomSheetTextInputProps, 'onChange'>;
     inputStyle?: React.ComponentProps<typeof TextInput>['style'];
     clearable?: boolean;
@@ -167,6 +168,7 @@ const NextInputComponent = React.forwardRef<
       containerStyle,
       inputProps,
       inputStyle,
+      fieldNameStyle,
       clearable,
       clearIcon,
       customIcon,
@@ -289,7 +291,12 @@ const NextInputComponent = React.forwardRef<
             !!fieldName && styles.inputContainerWithFieldName,
             viewProps?.style,
           ])}>
-          {fieldName && <Text style={styles.fieldName}>{fieldName}</Text>}
+          {fieldName && (
+            <Text
+              style={StyleSheet.flatten([styles.fieldName, fieldNameStyle])}>
+              {fieldName}
+            </Text>
+          )}
           <JSXComponent
             {...inputProps}
             onFocus={onFocus}

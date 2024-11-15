@@ -243,6 +243,8 @@ function MainListBlocks() {
                 // initialPasswordVisible
                 ref={passwordInputRef}
                 fieldName="New password"
+                fieldNameStyle={styles.absoluteLeft}
+                inputStyle={styles.paddingLeft}
                 containerStyle={styles.inputStyle}
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
@@ -270,6 +272,8 @@ function MainListBlocks() {
                 ref={confirmPasswordInputRef}
                 style={{ marginTop: 20 }}
                 containerStyle={styles.inputStyle}
+                fieldNameStyle={styles.absoluteLeft}
+                inputStyle={styles.paddingLeft}
                 inputProps={{
                   ...(DISABLE_SET_PASSWORD && {
                     editable: false,
@@ -386,6 +390,12 @@ const getStyle = createGetStyles2024(({ colors2024 }) => ({
     marginTop: 34,
     textAlign: 'center',
     fontFamily: 'SF Pro Rounded',
+  },
+  paddingLeft: {
+    paddingLeft: 16,
+  },
+  absoluteLeft: {
+    left: 16,
   },
   labelText: {
     width: '50%',
