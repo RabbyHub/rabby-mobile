@@ -348,7 +348,7 @@ export function useSetPasswordFirst() {
         10 * 60 * 1000,
       );
 
-      navigation.push(RootNames.StackAddress2024, {
+      navigation.push(RootNames.StackAddress, {
         screen: RootNames.SetPassword2024,
         params: {
           title: 'Set Password',
